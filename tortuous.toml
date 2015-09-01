@@ -1,19 +1,16 @@
-[[backends]]
-name = "backend1"
-servers = ["server1", "server2"]
+[backends]
+  [backends.backend1]
+  servers = ["server1", "server2"]
 
-[[servers]]
-name = "server1"
-url = "http://172.17.0.2:80"
+[servers]
+  [servers.server1]
+  url = "http://172.17.0.2:80"
+  [servers.server2]
+  url = "http://172.17.0.3:80"
 
-[[servers]]
-name = "server2"
-url = "http://172.17.0.3:80"
-
-[[routes]]
-name = "route1"
-backends = ["backend1"]
-  [[rules]]
-  [[rules.1]]
-  category = "Host"
-  value = "test.zenika.fr"
+[routes]
+  [routes.route1]
+  backends = ["backend1"]
+    [routes.route1.rules.test_zenika]
+    category = "Host"
+    value = "test.zenika.fr"

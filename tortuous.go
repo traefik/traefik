@@ -16,12 +16,10 @@ import (
 )
 
 type Backend struct {
-	Name string
 	Servers []string
 }
 
 type Server struct {
-	Name string
 	Url string
 }
 
@@ -31,14 +29,14 @@ type Rule struct {
 }
 
 type Route struct {
-	Name string
+	Backends []string
 	Rules map[string]Rule
 }
 
 type Config struct {
-	Backends []Backend
-	Servers []Server
-	Routes []Route
+	Backends map[string]Backend
+	Servers map[string]Server
+	Routes map[string]Route
 }
 
 var srv *graceful.Server
@@ -60,7 +58,11 @@ func main() {
 	systemRouter.Methods("GET").Path("/").HandlerFunc(GetPidHandler)
 	go http.ListenAndServe(":8000", systemRouter)
 
+	userRouter := mux.NewRouter()
 
+	/*for i := range config.Routes {
+		fmt.Printf("%+v\n", config.Routes[i] )
+	}*/
 
 	fwd, _ := forward.New()
 	lb, _ := roundrobin.New(fwd)
@@ -68,7 +70,6 @@ func main() {
 	lb.UpsertServer(testutils.ParseURI("http://172.17.0.2:80"))
 	lb.UpsertServer(testutils.ParseURI("http://172.17.0.3:80"))
 
-	userRouter := mux.NewRouter()
 	userRouter.Host("test.zenika.fr").Handler(lb)
 
 	goAway := false
