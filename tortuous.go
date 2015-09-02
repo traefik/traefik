@@ -7,17 +7,18 @@ import (
 	"os"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
-	"github.com/mailgun/oxy/testutils"
 	"time"
 	"net"
 	"os/signal"
 	"syscall"
 	"github.com/BurntSushi/toml"
 	"encoding/json"
+	"reflect"
+	"net/url"
 )
 
 type Backend struct {
-	Servers []string
+	Servers map[string]Server
 }
 
 type Server struct {
@@ -45,7 +46,6 @@ var userRouter *mux.Router
 var config = new(Config)
 
 func main() {
-
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -69,13 +69,12 @@ func main() {
 		if (goAway){
 			break
 		}
-		fmt.Println("Started")
 		srv = &graceful.Server{
 			Timeout: 10 * time.Second,
 			NoSignalHandling: true,
 
 			ConnState: func(conn net.Conn, state http.ConnState) {
-				fmt.Println( "Connection ", state)
+				// conn has a new state
 			},
 
 			Server: &http.Server{
@@ -85,6 +84,7 @@ func main() {
 		}
 
 		go srv.ListenAndServe()
+		fmt.Println("Started")
 		<- srv.StopChan()
 		fmt.Println("Stopped")
 	}
@@ -105,14 +105,16 @@ func LoadConfig() *mux.Router{
 		newRoute:= router.NewRoute()
 		for ruleName, rule := range route.Rules{
 			fmt.Println("Creating rule", ruleName)
-			newRoute = newRoute.Host(rule.Value)
+			newRoutes := Invoke(newRoute, rule.Category, rule.Value)
+			newRoute = newRoutes[0].Interface().(*mux.Route)
 		}
 		for _, backendName := range route.Backends {
 			fmt.Println("Creating backend", backendName)
 			lb, _ := roundrobin.New(fwd)
-			for _, serverName := range config.Backends[backendName].Servers {
+			for serverName, server := range config.Backends[backendName].Servers {
 				fmt.Println("Creating server", serverName)
-				lb.UpsertServer(testutils.ParseURI(config.Servers[serverName].Url))
+				url, _ := url.Parse(server.Url)
+				lb.UpsertServer(url)
 			}
 			newRoute.Handler(lb)
 		}
@@ -136,3 +138,12 @@ func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(rw, "%s", jsonRes)
 	}
 }
+
+func Invoke(any interface{}, name string, args... interface{}) []reflect.Value {
+	inputs := make([]reflect.Value, len(args))
+	for i, _ := range args {
+		inputs[i] = reflect.ValueOf(args[i])
+	}
+	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
+}
+
