@@ -1,0 +1,16 @@
+[backends]{{range .Containers}}
+  [backends.{{.Config.Hostname}}]
+    [backends.{{.Config.Hostname}}.servers.{{.Config.Hostname}}]
+    url = "http://{{.NetworkSettings.IPAddress}}:80"
+{{end}}
+
+[routes]{{range .Containers}}
+  [routes.{{.Config.Hostname}}]
+  backends = ["{{.Config.Hostname}}"]
+    [routes.{{.Config.Hostname}}.rules.{{.Config.Hostname}}-hostname]
+    category = "Host"
+    value = "{{.Config.Hostname}}.zenika.fr"
+    [routes.{{.Config.Hostname}}.rules.{{.Config.Hostname}}-name]
+    category = "Host"
+    value = "{{.Name | replace "/"}}.zenika.fr"
+{{end}}

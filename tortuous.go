@@ -12,9 +12,12 @@ import (
 	"os/signal"
 	"syscall"
 	"github.com/BurntSushi/toml"
-	"encoding/json"
 	"reflect"
 	"net/url"
+	"github.com/fsouza/go-dockerclient"
+	"github.com/leekchan/gtf"
+	"bytes"
+	"github.com/unrolled/render"
 )
 
 type Backend struct {
@@ -37,13 +40,13 @@ type Route struct {
 
 type Config struct {
 	Backends map[string]Backend
-	Servers map[string]Server
 	Routes map[string]Route
 }
 
 var srv *graceful.Server
 var userRouter *mux.Router
 var config = new(Config)
+var renderer = render.New()
 
 func main() {
 	sigs := make(chan os.Signal, 1)
@@ -90,33 +93,71 @@ func main() {
 	}
 }
 
-func LoadConfig() *mux.Router{
-	if metadata, err := toml.DecodeFile("tortuous.toml", config); err != nil {
-		fmt.Println(err)
-		return nil
-	}else{
-		fmt.Printf("Loaded config: %+v\n", metadata )
+func LoadDockerConfig(){
+	endpoint := "unix:///var/run/docker.sock"
+	client, _ := docker.NewClient(endpoint)
+	containerList, _ := client.ListContainers(docker.ListContainersOptions{})
+ 	containersInspected := []docker.Container{}
+	for _, container := range containerList {
+		containerInspected, _ := client.InspectContainer(container.ID)
+		containersInspected = append(containersInspected, *containerInspected)
 	}
+	containers := struct {
+		Containers []docker.Container
+	}{
+		containersInspected,
+	}
+	tmpl, err := gtf.New("docker.tmpl").ParseFiles("docker.tmpl")
+	if err != nil { panic(err) }
+
+	var buffer bytes.Buffer
+
+	err = tmpl.Execute(&buffer, containers)
+	if err != nil { panic(err) }
+
+	fmt.Println(buffer.String())
+
+	if _, err := toml.Decode(buffer.String(), config); err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func LoadFileConfig(){
+	if _, err := toml.DecodeFile("tortuous.toml", config); err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+
+func LoadConfig() *mux.Router{
+	//LoadDockerConfig()
+	LoadFileConfig()
 
 	router := mux.NewRouter()
 	for routeName, route := range config.Routes {
 		fmt.Println("Creating route", routeName)
 		fwd, _ := forward.New()
-		newRoute:= router.NewRoute()
+		newRoutes:= []*mux.Route{}
 		for ruleName, rule := range route.Rules{
 			fmt.Println("Creating rule", ruleName)
-			newRoutes := Invoke(newRoute, rule.Category, rule.Value)
-			newRoute = newRoutes[0].Interface().(*mux.Route)
+			newRouteReflect := Invoke(router.NewRoute(), rule.Category, rule.Value)
+			newRoute := newRouteReflect[0].Interface().(*mux.Route)
+			newRoutes = append(newRoutes, newRoute)
 		}
 		for _, backendName := range route.Backends {
 			fmt.Println("Creating backend", backendName)
 			lb, _ := roundrobin.New(fwd)
+			rb, _ := roundrobin.NewRebalancer(lb)
 			for serverName, server := range config.Backends[backendName].Servers {
 				fmt.Println("Creating server", serverName)
 				url, _ := url.Parse(server.Url)
-				lb.UpsertServer(url)
+				rb.UpsertServer(url)
 			}
-			newRoute.Handler(lb)
+			for _, route := range newRoutes {
+				route.Handler(lb)
+			}
 		}
 	}
 	return router
@@ -124,19 +165,16 @@ func LoadConfig() *mux.Router{
 
 func ReloadConfigHandler(rw http.ResponseWriter, r *http.Request) {
 	userRouter = LoadConfig()
+	renderer.JSON(rw, http.StatusOK, map[string]interface{}{"status": "reloaded"})
 }
 
 func RestartHandler(rw http.ResponseWriter, r *http.Request) {
 	srv.Stop(10 * time.Second)
+	renderer.JSON(rw, http.StatusOK, map[string]interface{}{"status": "restarted"})
 }
 
 func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
-	if jsonRes, err := json.Marshal(config); err != nil {
-		fmt.Println(err)
-		return
-	}else{
-		fmt.Fprintf(rw, "%s", jsonRes)
-	}
+	renderer.JSON(rw, http.StatusOK, config)
 }
 
 func Invoke(any interface{}, name string, args... interface{}) []reflect.Value {
