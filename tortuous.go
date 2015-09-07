@@ -18,16 +18,16 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-type Configuration struct {
+type FileConfiguration struct {
 	Docker *DockerProvider
 	File *FileProvider
 }
 
 var srv *graceful.Server
-var serviceRouter *mux.Router
+var configurationRouter *mux.Router
 var renderer = render.New()
-var currentService = new(Service)
-var serviceChan = make(chan *Service)
+var currentConfiguration = new(Configuration)
+var configurationChan = make(chan *Configuration)
 var providers = []Provider{}
 
 func main() {
@@ -41,15 +41,15 @@ func main() {
 
 	go func() {
 		for {
-			service := <-serviceChan
-			log.Println("Service receveived", service)
-			if service == nil {
-				log.Println("Skipping nil service")
-			} else if(reflect.DeepEqual(currentService, service)){
-				log.Println("Skipping same service")
+			configuration := <-configurationChan
+			log.Println("Configuration receveived", configuration)
+			if configuration == nil {
+				log.Println("Skipping empty configuration")
+			} else if(reflect.DeepEqual(currentConfiguration, configuration)){
+				log.Println("Skipping same configuration")
 			} else{
-				currentService = service
-				serviceRouter = LoadConfig(service)
+				currentConfiguration = configuration
+				configurationRouter = LoadConfig(configuration)
 				srv.Stop(10 * time.Second)
 				time.Sleep(3 * time.Second)
 			}
@@ -66,11 +66,11 @@ func main() {
 		providers = append(providers, configuration.File)
 	}
 
-	go func() {
-		for _, provider := range providers {
-			provider.Provide(serviceChan)
-		}
-	}()
+	for _, provider := range providers {
+		go func() {
+			provider.Provide(configurationChan)
+		}()
+	}
 
 	goAway := false
 	go func() {
@@ -94,7 +94,7 @@ func main() {
 
 			Server: &http.Server{
 				Addr:    ":8001",
-				Handler: serviceRouter,
+				Handler: configurationRouter,
 			},
 		}
 
@@ -105,9 +105,9 @@ func main() {
 	}
 }
 
-func LoadConfig(service *Service) *mux.Router {
+func LoadConfig(configuration *Configuration) *mux.Router {
 	router := mux.NewRouter()
-	for routeName, route := range service.Routes {
+	for routeName, route := range configuration.Routes {
 		log.Println("Creating route", routeName)
 		fwd, _ := forward.New()
 		newRoutes := []*mux.Route{}
@@ -121,7 +121,7 @@ func LoadConfig(service *Service) *mux.Router {
 			log.Println("Creating backend", backendName)
 			lb, _ := roundrobin.New(fwd)
 			rb, _ := roundrobin.NewRebalancer(lb)
-			for serverName, server := range service.Backends[backendName].Servers {
+			for serverName, server := range configuration.Backends[backendName].Servers {
 				log.Println("Creating server", serverName)
 				url, _ := url.Parse(server.Url)
 				rb.UpsertServer(url)
@@ -135,7 +135,7 @@ func LoadConfig(service *Service) *mux.Router {
 }
 
 func DeployService() {
-	serviceRouter = LoadConfig(currentService)
+	configurationRouter = LoadConfig(currentConfiguration)
 }
 
 func ReloadConfigHandler(rw http.ResponseWriter, r *http.Request) {
@@ -149,7 +149,7 @@ func RestartHandler(rw http.ResponseWriter, r *http.Request) {
 }
 
 func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
-	renderer.JSON(rw, http.StatusOK, currentService)
+	renderer.JSON(rw, http.StatusOK, currentConfiguration)
 }
 
 func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
@@ -160,8 +160,8 @@ func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
 }
 
-func LoadFileConfig() *Configuration  {
-	configuration := new(Configuration)
+func LoadFileConfig() *FileConfiguration  {
+	configuration := new(FileConfiguration)
 	if _, err := toml.DecodeFile("tortuous.toml", configuration); err != nil {
 		log.Fatal("Error reading file:", err)
 	}

@@ -19,7 +19,7 @@ type Route struct {
 	Rules    map[string]Rule
 }
 
-type Service struct {
+type Configuration struct {
 	Backends map[string]Backend
 	Routes   map[string]Route
 }

@@ -14,7 +14,7 @@ type FileProvider struct {
 	Filename string
 }
 
-func (provider *FileProvider) Provide(serviceChan chan<- *Service){
+func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Println(err)
@@ -37,9 +37,9 @@ func (provider *FileProvider) Provide(serviceChan chan<- *Service){
 			case event := <-watcher.Events:
 				if(strings.Contains(event.Name,file.Name())){
 					log.Println("File event:", event)
-					service := provider.LoadFileConfig(file.Name())
-					if(service != nil) {
-						serviceChan <- service
+					configuration := provider.LoadFileConfig(file.Name())
+					if(configuration != nil) {
+						configurationChan <- configuration
 					}
 				}
 			case error := <-watcher.Errors:
@@ -58,17 +58,17 @@ func (provider *FileProvider) Provide(serviceChan chan<- *Service){
 	}
 
 
-	service:= provider.LoadFileConfig(file.Name())
-	serviceChan <- service
+	configuration := provider.LoadFileConfig(file.Name())
+	configurationChan <- configuration
 	<-done
 }
 
 
-func (provider *FileProvider) LoadFileConfig(filename string) *Service  {
-	service := new(Service)
-	if _, err := toml.DecodeFile(filename, service); err != nil {
+func (provider *FileProvider) LoadFileConfig(filename string) *Configuration {
+	configuration := new(Configuration)
+	if _, err := toml.DecodeFile(filename, configuration); err != nil {
 		log.Println("Error reading file:", err)
 		return nil
 	}
-	return service
+	return configuration
 }

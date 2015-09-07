@@ -1,5 +1,5 @@
 package main
-import(
+import (
 	"github.com/fsouza/go-dockerclient"
 	"github.com/leekchan/gtf"
 	"bytes"
@@ -8,32 +8,34 @@ import(
 )
 
 type DockerProvider struct {
-	Watch bool
-	Endpoint string
+	Watch        bool
+	Endpoint     string
 	dockerClient *docker.Client
 }
 
-func (provider *DockerProvider) Provide(serviceChan chan<- *Service){
+func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration) {
 	provider.dockerClient, _ = docker.NewClient(provider.Endpoint)
 	dockerEvents := make(chan *docker.APIEvents)
-	if(provider.Watch) {
+	if (provider.Watch) {
 		provider.dockerClient.AddEventListener(dockerEvents)
 	}
 	go func() {
 		for {
 			event := <-dockerEvents
 			log.Println("Event receveived", event)
-			service:= provider.loadDockerConfig()
-			serviceChan <- service
+			configuration := provider.loadDockerConfig()
+			if (configuration != nil) {
+				configurationChan <- configuration
+			}
 		}
 	}()
 
-	service:= provider.loadDockerConfig()
-	serviceChan <- service
+	configuration := provider.loadDockerConfig()
+	configurationChan <- configuration
 }
 
-func (provider *DockerProvider) loadDockerConfig() *Service {
-	service := new(Service)
+func (provider *DockerProvider) loadDockerConfig() *Configuration {
+	configuration := new(Configuration)
 	containerList, _ := provider.dockerClient.ListContainers(docker.ListContainersOptions{})
 	containersInspected := []docker.Container{}
 	for _, container := range containerList {
@@ -59,9 +61,9 @@ func (provider *DockerProvider) loadDockerConfig() *Service {
 		return nil
 	}
 
-	if _, err := toml.Decode(buffer.String(), service); err != nil {
-		log.Println("Error creating docker service:", err)
+	if _, err := toml.Decode(buffer.String(), configuration); err != nil {
+		log.Println("Error creating docker configuration:", err)
 		return nil
 	}
-	return service
+	return configuration
 }
