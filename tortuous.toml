@@ -16,4 +16,3 @@
     [routes.route2.rules.test_zenika_2]
     category = "Path"
     value = "/test"
-

@@ -1,12 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/fsouza/go-dockerclient"
 	"github.com/gorilla/mux"
-	"github.com/leekchan/gtf"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
 	"github.com/tylerb/graceful"
@@ -19,17 +14,19 @@ import (
 	"reflect"
 	"syscall"
 	"time"
+	"log"
 )
 
 var srv *graceful.Server
-var userRouter *mux.Router
+var systemRouter *mux.Router
 var renderer = render.New()
 var currentService = new(Service)
-var serviceChan = make(chan Service)
+var serviceChan = make(chan *Service)
 var providers = []Provider{}
 
 func main() {
-	providers = append(providers, new(DockerProvider))
+	//providers = append(providers, new(DockerProvider))
+	providers = append(providers, new(FileProvider))
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -42,21 +39,30 @@ func main() {
 	go func() {
 		for {
 			service := <-serviceChan
-			fmt.Println("Service receveived", service)
-			currentService = &service
-			userRouter = LoadConfig(service)
-			srv.Stop(10 * time.Second)
+			log.Println("Service receveived", service)
+			if service == nil {
+				log.Println("Skipping nil service")
+			} else if(reflect.DeepEqual(currentService, service)){
+				log.Println("Skipping same service")
+			} else{
+				currentService = service
+				systemRouter = LoadConfig(service)
+				srv.Stop(10 * time.Second)
+				time.Sleep(3 * time.Second)
+			}
 		}
 	}()
 
-	for _, provider := range providers {
-		provider.Provide(serviceChan)
-	}
+	go func() {
+		for _, provider := range providers {
+			provider.Provide(serviceChan)
+		}
+	}()
 
 	goAway := false
 	go func() {
 		sig := <-sigs
-		fmt.Println("I have to go...", sig)
+		log.Println("I have to go...", sig)
 		goAway = true
 		srv.Stop(10 * time.Second)
 	}()
@@ -75,87 +81,35 @@ func main() {
 
 			Server: &http.Server{
 				Addr:    ":8001",
-				Handler: userRouter,
+				Handler: systemRouter,
 			},
 		}
 
 		go srv.ListenAndServe()
-		fmt.Println("Started")
+		log.Println("Started")
 		<-srv.StopChan()
-		fmt.Println("Stopped")
+		log.Println("Stopped")
 	}
 }
 
-func LoadDockerConfig(client *docker.Client, service Service) {
-	containerList, _ := client.ListContainers(docker.ListContainersOptions{})
-	containersInspected := []docker.Container{}
-	for _, container := range containerList {
-		containerInspected, _ := client.InspectContainer(container.ID)
-		containersInspected = append(containersInspected, *containerInspected)
-	}
-	containers := struct {
-		Containers []docker.Container
-	}{
-		containersInspected,
-	}
-	tmpl, err := gtf.New("docker.tmpl").ParseFiles("docker.tmpl")
-	if err != nil {
-		panic(err)
-	}
-
-	var buffer bytes.Buffer
-
-	err = tmpl.Execute(&buffer, containers)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(buffer.String())
-
-	if _, err := toml.Decode(buffer.String(), service); err != nil {
-		fmt.Println(err)
-		return
-	}
-}
-
-func LoadFileConfig(service Service) {
-	if _, err := toml.DecodeFile("tortuous.toml", service); err != nil {
-		fmt.Println(err)
-		return
-	}
-}
-
-func LoadConfig(service Service) *mux.Router {
-	/*endpoint := "unix:///var/run/docker.sock"
-	client, _ := docker.NewClient(endpoint)
-	dockerEvents := make(chan *docker.APIEvents)
-	LoadDockerConfig(client)
-	client.AddEventListener(dockerEvents)
-	go func() {
-		for {
-			event := <-dockerEvents
-			fmt.Println("Event receveived", event)
-		}
-	}()*/
-	//LoadFileConfig()
-
+func LoadConfig(service *Service) *mux.Router {
 	router := mux.NewRouter()
 	for routeName, route := range service.Routes {
-		fmt.Println("Creating route", routeName)
+		log.Println("Creating route", routeName)
 		fwd, _ := forward.New()
 		newRoutes := []*mux.Route{}
 		for ruleName, rule := range route.Rules {
-			fmt.Println("Creating rule", ruleName)
+			log.Println("Creating rule", ruleName)
 			newRouteReflect := Invoke(router.NewRoute(), rule.Category, rule.Value)
 			newRoute := newRouteReflect[0].Interface().(*mux.Route)
 			newRoutes = append(newRoutes, newRoute)
 		}
 		for _, backendName := range route.Backends {
-			fmt.Println("Creating backend", backendName)
+			log.Println("Creating backend", backendName)
 			lb, _ := roundrobin.New(fwd)
 			rb, _ := roundrobin.NewRebalancer(lb)
 			for serverName, server := range service.Backends[backendName].Servers {
-				fmt.Println("Creating server", serverName)
+				log.Println("Creating server", serverName)
 				url, _ := url.Parse(server.Url)
 				rb.UpsertServer(url)
 			}
@@ -168,7 +122,7 @@ func LoadConfig(service Service) *mux.Router {
 }
 
 func DeployService() {
-	userRouter = LoadConfig(*currentService)
+	systemRouter = LoadConfig(currentService)
 }
 
 func ReloadConfigHandler(rw http.ResponseWriter, r *http.Request) {
