@@ -10,6 +10,7 @@ import (
 )
 
 type FileProvider struct {
+	Watch bool
 	Filename string
 }
 
@@ -45,7 +46,9 @@ func (provider *FileProvider) Provide(serviceChan chan<- *Service){
 		}
 	}()
 
-	err = watcher.Add(filepath.Dir(file.Name()))
+	if(provider.Watch){
+		err = watcher.Add(filepath.Dir(file.Name()))
+	}
 
 	if err != nil {
 		log.Println(err)

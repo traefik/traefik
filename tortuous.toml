@@ -1,5 +1,7 @@
-#[docker]
-#endpoint = "unix:///var/run/docker.sock"
+[docker]
+endpoint = "unix:///var/run/docker.sock"
+watch = true
 
-[file]
-filename = "file.toml"
+#[file]
+#filename = "file.toml"
+#watch = true

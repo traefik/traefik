@@ -8,6 +8,7 @@ import(
 )
 
 type DockerProvider struct {
+	Watch bool
 	Endpoint string
 	dockerClient *docker.Client
 }
@@ -15,7 +16,9 @@ type DockerProvider struct {
 func (provider *DockerProvider) Provide(serviceChan chan<- *Service){
 	provider.dockerClient, _ = docker.NewClient(provider.Endpoint)
 	dockerEvents := make(chan *docker.APIEvents)
-	provider.dockerClient.AddEventListener(dockerEvents)
+	if(provider.Watch) {
+		provider.dockerClient.AddEventListener(dockerEvents)
+	}
 	go func() {
 		for {
 			event := <-dockerEvents
