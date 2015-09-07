@@ -36,9 +36,11 @@ func (provider *FileProvider) Provide(serviceChan chan<- *Service){
 			select {
 			case event := <-watcher.Events:
 				if(strings.Contains(event.Name,file.Name())){
-					log.Println("event:", event)
+					log.Println("File event:", event)
 					service := provider.LoadFileConfig(file.Name())
-					serviceChan <- service
+					if(service != nil) {
+						serviceChan <- service
+					}
 				}
 			case error := <-watcher.Errors:
 				log.Println("error:", error)

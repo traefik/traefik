@@ -31,15 +31,6 @@ var serviceChan = make(chan *Service)
 var providers = []Provider{}
 
 func main() {
-	configuration := LoadFileConfig()
-	if(configuration.Docker != nil){
-		providers = append(providers, configuration.Docker)
-	}
-
-	if(configuration.File != nil){
-		providers = append(providers, configuration.File)
-	}
-
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -64,6 +55,16 @@ func main() {
 			}
 		}
 	}()
+
+	configuration := LoadFileConfig()
+	log.Println("Configuration loaded", configuration)
+	if(configuration.Docker != nil){
+		providers = append(providers, configuration.Docker)
+	}
+
+	if(configuration.File != nil){
+		providers = append(providers, configuration.File)
+	}
 
 	go func() {
 		for _, provider := range providers {
