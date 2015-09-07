@@ -15,18 +15,30 @@ import (
 	"syscall"
 	"time"
 	"log"
+	"github.com/BurntSushi/toml"
 )
 
+type Configuration struct {
+	Docker *DockerProvider
+	File *FileProvider
+}
+
 var srv *graceful.Server
-var systemRouter *mux.Router
+var serviceRouter *mux.Router
 var renderer = render.New()
 var currentService = new(Service)
 var serviceChan = make(chan *Service)
 var providers = []Provider{}
 
 func main() {
-	//providers = append(providers, new(DockerProvider))
-	providers = append(providers, new(FileProvider))
+	configuration := LoadFileConfig()
+	if(configuration.Docker != nil){
+		providers = append(providers, configuration.Docker)
+	}
+
+	if(configuration.File != nil){
+		providers = append(providers, configuration.File)
+	}
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -46,7 +58,7 @@ func main() {
 				log.Println("Skipping same service")
 			} else{
 				currentService = service
-				systemRouter = LoadConfig(service)
+				serviceRouter = LoadConfig(service)
 				srv.Stop(10 * time.Second)
 				time.Sleep(3 * time.Second)
 			}
@@ -81,7 +93,7 @@ func main() {
 
 			Server: &http.Server{
 				Addr:    ":8001",
-				Handler: systemRouter,
+				Handler: serviceRouter,
 			},
 		}
 
@@ -122,7 +134,7 @@ func LoadConfig(service *Service) *mux.Router {
 }
 
 func DeployService() {
-	systemRouter = LoadConfig(currentService)
+	serviceRouter = LoadConfig(currentService)
 }
 
 func ReloadConfigHandler(rw http.ResponseWriter, r *http.Request) {
@@ -145,4 +157,12 @@ func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 		inputs[i] = reflect.ValueOf(args[i])
 	}
 	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
+}
+
+func LoadFileConfig() *Configuration  {
+	configuration := new(Configuration)
+	if _, err := toml.DecodeFile("tortuous.toml", configuration); err != nil {
+		log.Fatal("Error reading file:", err)
+	}
+	return configuration
 }

@@ -4,23 +4,29 @@ import (
 	"log"
 	"gopkg.in/fsnotify.v1"
 	"github.com/BurntSushi/toml"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type FileProvider struct {
+	Filename string
 }
 
 func (provider *FileProvider) Provide(serviceChan chan<- *Service){
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 	defer watcher.Close()
 
-
-	err = watcher.Add(".")
+	file, err := os.Open(provider.Filename)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
+	defer file.Close()
 
 	done := make(chan bool)
 	// Process events
@@ -28,28 +34,34 @@ func (provider *FileProvider) Provide(serviceChan chan<- *Service){
 		for {
 			select {
 			case event := <-watcher.Events:
-			if(event.Name == "./tortuous.toml"){
-				log.Println("event:", event)
-				service := provider.LoadFileConfig()
-				serviceChan <- service
-			}
+				if(strings.Contains(event.Name,file.Name())){
+					log.Println("event:", event)
+					service := provider.LoadFileConfig(file.Name())
+					serviceChan <- service
+				}
 			case error := <-watcher.Errors:
 				log.Println("error:", error)
 			}
 		}
 	}()
 
+	err = watcher.Add(filepath.Dir(file.Name()))
 
-	service:= provider.LoadFileConfig()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+
+	service:= provider.LoadFileConfig(file.Name())
 	serviceChan <- service
 	<-done
-	log.Println("DONE")
 }
 
 
-func (provider *FileProvider) LoadFileConfig() *Service  {
+func (provider *FileProvider) LoadFileConfig(filename string) *Service  {
 	service := new(Service)
-	if _, err := toml.DecodeFile("tortuous.toml", service); err != nil {
+	if _, err := toml.DecodeFile(filename, service); err != nil {
 		log.Println("Error reading file:", err)
 		return nil
 	}

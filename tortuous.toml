@@ -1,18 +1,5 @@
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "http://172.17.0.2:80"
-    [backends.backend1.servers.server2]
-    url = "http://172.17.0.3:80"
+#[docker]
+#endpoint = "unix:///var/run/docker.sock"
 
-[routes]
-  [routes.route1]
-  backends = ["backend1"]
-    [routes.route1.rules.test_zenika_1]
-    category = "Host"
-    value = "test.zenika.fr"
-  [routes.route2]
-  backends = ["backend1"]
-    [routes.route2.rules.test_zenika_2]
-    category = "Path"
-    value = "/test"
+[file]
+filename = "file.toml"

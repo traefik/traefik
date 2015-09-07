@@ -8,12 +8,12 @@ import(
 )
 
 type DockerProvider struct {
+	Endpoint string
 	dockerClient *docker.Client
 }
 
 func (provider *DockerProvider) Provide(serviceChan chan<- *Service){
-	endpoint := "unix:///var/run/docker.sock"
-	provider.dockerClient, _ = docker.NewClient(endpoint)
+	provider.dockerClient, _ = docker.NewClient(provider.Endpoint)
 	dockerEvents := make(chan *docker.APIEvents)
 	provider.dockerClient.AddEventListener(dockerEvents)
 	go func() {
