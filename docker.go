@@ -1,17 +1,17 @@
 package main
 import(
 	"github.com/fsouza/go-dockerclient"
-	"fmt"
 	"github.com/leekchan/gtf"
 	"bytes"
 	"github.com/BurntSushi/toml"
+	"log"
 )
 
 type DockerProvider struct {
 	dockerClient *docker.Client
 }
 
-func (provider *DockerProvider) Provide(serviceChan chan<- Service){
+func (provider *DockerProvider) Provide(serviceChan chan<- *Service){
 	endpoint := "unix:///var/run/docker.sock"
 	provider.dockerClient, _ = docker.NewClient(endpoint)
 	dockerEvents := make(chan *docker.APIEvents)
@@ -19,15 +19,14 @@ func (provider *DockerProvider) Provide(serviceChan chan<- Service){
 	go func() {
 		for {
 			event := <-dockerEvents
-			fmt.Println("Event receveived", event)
+			log.Println("Event receveived", event)
 			service:= provider.loadDockerConfig()
-			serviceChan <- *service
+			serviceChan <- service
 		}
 	}()
 
 	service:= provider.loadDockerConfig()
-	fmt.Println("Sending service")
-	serviceChan <- *service
+	serviceChan <- service
 }
 
 func (provider *DockerProvider) loadDockerConfig() *Service {
@@ -55,10 +54,8 @@ func (provider *DockerProvider) loadDockerConfig() *Service {
 		panic(err)
 	}
 
-	fmt.Println(buffer.String())
-
 	if _, err := toml.Decode(buffer.String(), service); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 		return nil
 	}
 	return service
