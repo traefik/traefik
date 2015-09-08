@@ -29,11 +29,12 @@
 
 <div class="container">
     <div class="row">
-        <div class="panel panel-default col-md-5">
+
+        <div class="panel-default col-md-6">
             <div class="panel-heading">Backends</div>
             <div class="panel-body">
                 {{range $keyBackends, $valueBackends := .Configuration.Backends}}
-                <div class="panel panel-primary">
+                <div class="panel panel-primary" id="{{$keyBackends}}">
                     <div class="panel-heading">{{$keyBackends}}</div>
                     <table class="table table-striped table-hover">
                         <tr>
@@ -52,7 +53,7 @@
             </div>
         </div>
 
-        <div class="panel panel-default col-md-5 col-md-offset-2">
+        <div class="panel-default col-md-6">
             <div class="panel-heading">Routes</div>
             <div class="panel-body">
                 {{range $keyRoutes, $valueRoutes := .Configuration.Routes}}
@@ -60,7 +61,10 @@
                     <div class="panel-heading">{{$keyRoutes}}</div>
                     <div class="panel-body">
                         {{range $backend := $valueRoutes.Backends}}
-                        <button type="button" class="btn btn-info">{{$backend}}</button>
+                        <!--<button type="button" class="btn btn-info">{{$backend}}</button>-->
+                        <a class="btn btn-info" role="button" data-toggle="collapse" href="#{{$backend}}" aria-expanded="false">
+                            {{$backend}}
+                        </a>
                         {{end}}
                     </div>
                     <table class="table table-striped table-hover">
@@ -81,7 +85,9 @@
                 {{end}}
             </div>
         </div>
+
     </div>
 </div>
+
 </body>
 </html>
