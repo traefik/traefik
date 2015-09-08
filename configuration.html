@@ -27,28 +27,61 @@
     </div>
 </nav>
 
-<div class="panel panel-default">
-    <div class="panel-heading">Backends</div>
-
-    <div class="panel-body">
-    {{range $keyBackends, $valueBackends := .Configuration.Backends}}
-    <div class="panel panel-default">
-        <div class="panel-heading">Backend {{$keyBackends}}</div>
-        <div class="panel-body">
-            {{range $keyServers, $valueServers := $valueBackends.Servers}}
-            <div class="panel panel-default">
-                <div class="panel-heading">Server {{$keyServers}}</div>
-                <div class="panel-body">
-                    Url: {{$valueServers.Url}}
+<div class="container">
+    <div class="row">
+        <div class="panel panel-default col-md-5">
+            <div class="panel-heading">Backends</div>
+            <div class="panel-body">
+                {{range $keyBackends, $valueBackends := .Configuration.Backends}}
+                <div class="panel panel-primary">
+                    <div class="panel-heading">{{$keyBackends}}</div>
+                    <table class="table table-striped table-hover">
+                        <tr>
+                            <td><em>Server</em></td>
+                            <td><em>URL</em></td>
+                        </tr>
+                        {{range $keyServers, $valueServers := $valueBackends.Servers}}
+                        <tr>
+                            <td>{{$keyServers}}</td>
+                            <td><code>{{$valueServers.Url}}</code></td>
+                        </tr>
+                        {{end}}
+                    </table>
                 </div>
+                {{end}}
             </div>
-            {{end}}
+        </div>
+
+        <div class="panel panel-default col-md-5 col-md-offset-2">
+            <div class="panel-heading">Routes</div>
+            <div class="panel-body">
+                {{range $keyRoutes, $valueRoutes := .Configuration.Routes}}
+                <div class="panel panel-primary">
+                    <div class="panel-heading">{{$keyRoutes}}</div>
+                    <div class="panel-body">
+                        {{range $backend := $valueRoutes.Backends}}
+                        <button type="button" class="btn btn-info">{{$backend}}</button>
+                        {{end}}
+                    </div>
+                    <table class="table table-striped table-hover">
+                        <tr>
+                            <td><em>Rule</em></td>
+                            <td><em>Category</em></td>
+                            <td><em>Value</em></td>
+                        </tr>
+                        {{range $keyRules, $valueRules := $valueRoutes.Rules}}
+                        <tr>
+                            <td>{{$keyRules}}</td>
+                            <td>{{$valueRules.Category}}</td>
+                            <td>{{$valueRules.Value}}</td>
+                        </tr>
+                        {{end}}
+                    </table>
+                </div>
+                {{end}}
+            </div>
         </div>
     </div>
-    {{end}}
-    </div>
-
 </div>
-
 </body>
 </html>

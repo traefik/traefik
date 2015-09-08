@@ -15,10 +15,13 @@ watch = true
     url = "http://172.17.0.2:80"
     [backends.backend1.servers.server2]
     url = "http://172.17.0.3:80"
+  [backends.backend2]
+    [backends.backend2.servers.server1]
+    url = "http://172.17.0.2:80"
 
 [routes]
   [routes.route1]
-  backends = ["backend1"]
+  backends = ["backend1", "backend2"]
     [routes.route1.rules.test_zenika_1]
     category = "Host"
     value = "test.zenika.fr"
