@@ -8,6 +8,10 @@ import (
 	"github.com/unrolled/render"
 	"fmt"
 	"html/template"
+	"io/ioutil"
+	"encoding/json"
+	"log"
+	"reflect"
 )
 
 var renderer = render.New()
@@ -22,8 +26,21 @@ type Page struct {
 
 func (provider *WebProvider) Provide(configurationChan chan<- *Configuration){
 	systemRouter := mux.NewRouter()
-	systemRouter.Methods("GET").PathPrefix("/html/").Handler(handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(GetHtmlConfigHandler)))
-	systemRouter.Methods("GET").PathPrefix("/json/").Handler(handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(GetConfigHandler)))
+	systemRouter.Methods("GET").PathPrefix("/web/").Handler(handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(GetHtmlConfigHandler)))
+	systemRouter.Methods("GET").PathPrefix("/api/").Handler(handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(GetConfigHandler)))
+	systemRouter.Methods("POST").PathPrefix("/api/").Handler(handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(
+		func(rw http.ResponseWriter, r *http.Request){
+			configuration := new(Configuration)
+			b, _ := ioutil.ReadAll(r.Body)
+			err:= json.Unmarshal(b, configuration)
+			log.Println(err)
+			if (err!= nil && reflect.DeepEqual(new(Configuration), configuration)) {
+				configurationChan <- configuration
+				renderer.JSON(rw, http.StatusCreated, map[string]string{"result": "OK"})
+			}else{
+				renderer.JSON(rw, http.StatusBadRequest, map[string]string{"result": "error"})
+			}
+	})))
 	systemRouter.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
 
 	go http.ListenAndServe(provider.Address, systemRouter)
