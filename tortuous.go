@@ -5,7 +5,6 @@ import (
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
 	"github.com/tylerb/graceful"
-	"github.com/unrolled/render"
 	"net"
 	"net/http"
 	"net/url"
@@ -16,16 +15,17 @@ import (
 	"time"
 	"log"
 	"github.com/BurntSushi/toml"
+	"github.com/gorilla/handlers"
 )
 
 type FileConfiguration struct {
 	Docker *DockerProvider
 	File *FileProvider
+	Web *WebProvider
 }
 
 var srv *graceful.Server
 var configurationRouter *mux.Router
-var renderer = render.New()
 var currentConfiguration = new(Configuration)
 var configurationChan = make(chan *Configuration)
 var providers = []Provider{}
@@ -33,11 +33,6 @@ var providers = []Provider{}
 func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-	systemRouter := mux.NewRouter()
-	systemRouter.Methods("POST").Path("/reload").HandlerFunc(ReloadConfigHandler)
-	systemRouter.Methods("GET").Path("/").HandlerFunc(GetConfigHandler)
-	go http.ListenAndServe(":8000", systemRouter)
 
 	go func() {
 		for {
@@ -57,7 +52,6 @@ func main() {
 	}()
 
 	configuration := LoadFileConfig()
-	log.Println("Configuration loaded", configuration)
 	if(configuration.Docker != nil){
 		providers = append(providers, configuration.Docker)
 	}
@@ -66,9 +60,15 @@ func main() {
 		providers = append(providers, configuration.File)
 	}
 
+	if(configuration.Web != nil){
+		providers = append(providers, configuration.Web)
+	}
+
 	for _, provider := range providers {
+		log.Printf("Starting provider %v %+v\n", reflect.TypeOf(provider), provider)
+		currentProvider := provider
 		go func() {
-			provider.Provide(configurationChan)
+			currentProvider.Provide(configurationChan)
 		}()
 	}
 
@@ -127,29 +127,11 @@ func LoadConfig(configuration *Configuration) *mux.Router {
 				rb.UpsertServer(url)
 			}
 			for _, route := range newRoutes {
-				route.Handler(lb)
+				route.Handler(handlers.CombinedLoggingHandler(os.Stdout, lb))
 			}
 		}
 	}
 	return router
-}
-
-func DeployService() {
-	configurationRouter = LoadConfig(currentConfiguration)
-}
-
-func ReloadConfigHandler(rw http.ResponseWriter, r *http.Request) {
-	DeployService()
-	srv.Stop(10 * time.Second)
-	renderer.JSON(rw, http.StatusOK, map[string]interface{}{"status": "reloaded"})
-}
-
-func RestartHandler(rw http.ResponseWriter, r *http.Request) {
-	renderer.JSON(rw, http.StatusOK, map[string]interface{}{"status": "restarted"})
-}
-
-func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
-	renderer.JSON(rw, http.StatusOK, currentConfiguration)
 }
 
 func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {

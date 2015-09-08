@@ -2,6 +2,9 @@
 #endpoint = "unix:///var/run/docker.sock"
 #watch = true
 
+[web]
+address = ":8010"
+
 [file]
 filename = "tortuous.toml"
 watch = true

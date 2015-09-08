@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{.Title}}</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/bootstrap/css/bootstrap-theme.min.css">
+    <script src="/static/jquery-2.1.4.min.js"></script>
+    <script src="/static/bootstrap/js/bootstrap.min.js"></script>
+
+    <style type="text/css">
+        body {padding-bottom: 70px;}
+        .content {margin:10px;}
+    </style>
+</head>
+
+<body>
+<nav class="navbar navbar-default" role="navigation">
+    <div class="navbar-header">
+        <a class="navbar-brand" href="/html/">Tortuous</a>
+    </div>
+    <div class="collapse navbar-collapse navbar-ex1-collapse">
+        <ul class="nav navbar-nav">
+            <li><a href="/html/">Configuration</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="panel panel-default">
+    <div class="panel-heading">Backends</div>
+
+    <div class="panel-body">
+    {{range $keyBackends, $valueBackends := .Configuration.Backends}}
+    <div class="panel panel-default">
+        <div class="panel-heading">Backend {{$keyBackends}}</div>
+        <div class="panel-body">
+            {{range $keyServers, $valueServers := $valueBackends.Servers}}
+            <div class="panel panel-default">
+                <div class="panel-heading">Server {{$keyServers}}</div>
+                <div class="panel-body">
+                    Url: {{$valueServers.Url}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+    </div>
+
+</div>
+
+</body>
+</html>
