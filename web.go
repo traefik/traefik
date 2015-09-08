@@ -17,7 +17,6 @@ type WebProvider struct {
 }
 
 type Page struct {
-	Title string
 	Configuration Configuration
 }
 
@@ -41,5 +40,5 @@ func GetHtmlConfigHandler(response http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		http.Error(response, fmt.Sprintf("error parsing url %v", err), 500)
 	}
-	templates.ExecuteTemplate(response, "configuration.html", Page{Title: "Home", Configuration:*currentConfiguration})
+	templates.ExecuteTemplate(response, "configuration.html", Page{Configuration:*currentConfiguration})
 }
