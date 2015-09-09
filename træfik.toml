@@ -6,7 +6,7 @@ watch = true
 address = ":8010"
 
 #[file]
-#filename = "ramify.toml"
+#filename = "træfik.toml"
 #watch = true
 
 [backends]

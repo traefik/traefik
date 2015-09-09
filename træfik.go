@@ -20,8 +20,8 @@ import (
 
 type FileConfiguration struct {
 	Docker *DockerProvider
-	File *FileProvider
-	Web *WebProvider
+	File   *FileProvider
+	Web    *WebProvider
 }
 
 var srv *graceful.Server
@@ -40,9 +40,9 @@ func main() {
 			log.Println("Configuration receveived", configuration)
 			if configuration == nil {
 				log.Println("Skipping empty configuration")
-			} else if(reflect.DeepEqual(currentConfiguration, configuration)){
+			} else if (reflect.DeepEqual(currentConfiguration, configuration)) {
 				log.Println("Skipping same configuration")
-			} else{
+			} else {
 				currentConfiguration = configuration
 				configurationRouter = LoadConfig(configuration)
 				srv.Stop(10 * time.Second)
@@ -52,15 +52,15 @@ func main() {
 	}()
 
 	configuration := LoadFileConfig()
-	if(configuration.Docker != nil){
+	if (configuration.Docker != nil) {
 		providers = append(providers, configuration.Docker)
 	}
 
-	if(configuration.File != nil){
+	if (configuration.File != nil) {
 		providers = append(providers, configuration.File)
 	}
 
-	if(configuration.Web != nil){
+	if (configuration.Web != nil) {
 		providers = append(providers, configuration.Web)
 	}
 
@@ -107,6 +107,7 @@ func main() {
 
 func LoadConfig(configuration *Configuration) *mux.Router {
 	router := mux.NewRouter()
+	backends := map[string]http.Handler{}
 	for routeName, route := range configuration.Routes {
 		log.Println("Creating route", routeName)
 		fwd, _ := forward.New()
@@ -118,16 +119,21 @@ func LoadConfig(configuration *Configuration) *mux.Router {
 			newRoutes = append(newRoutes, newRoute)
 		}
 		for _, backendName := range route.Backends {
-			log.Println("Creating backend", backendName)
-			lb, _ := roundrobin.New(fwd)
-			rb, _ := roundrobin.NewRebalancer(lb)
-			for serverName, server := range configuration.Backends[backendName].Servers {
-				log.Println("Creating server", serverName)
-				url, _ := url.Parse(server.Url)
-				rb.UpsertServer(url)
+			if (backends[backendName] ==nil) {
+				log.Println("Creating backend", backendName)
+				lb, _ := roundrobin.New(fwd)
+				rb, _ := roundrobin.NewRebalancer(lb)
+				for serverName, server := range configuration.Backends[backendName].Servers {
+					log.Println("Creating server", serverName)
+					url, _ := url.Parse(server.Url)
+					rb.UpsertServer(url)
+				}
+				backends[backendName]=lb
+			}else {
+				log.Println("Reusing backend", backendName)
 			}
 			for _, route := range newRoutes {
-				route.Handler(handlers.CombinedLoggingHandler(os.Stdout, lb))
+				route.Handler(handlers.CombinedLoggingHandler(os.Stdout, backends[backendName]))
 			}
 		}
 	}
@@ -142,9 +148,9 @@ func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
 }
 
-func LoadFileConfig() *FileConfiguration  {
+func LoadFileConfig() *FileConfiguration {
 	configuration := new(FileConfiguration)
-	if _, err := toml.DecodeFile("ramify.toml", configuration); err != nil {
+	if _, err := toml.DecodeFile("træfik.toml", configuration); err != nil {
 		log.Fatal("Error reading file:", err)
 	}
 	return configuration

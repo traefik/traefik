@@ -1,25 +1,12 @@
 [backends]{{range .Containers}}
-  [backends.backend-{{.Config.Hostname}}]
-    [backends.backend-{{.Config.Hostname}}.servers.server-{{.Config.Hostname}}]
-
-    {{/* Only one exposed port! */}}
-    {{if eq (len .Config.ExposedPorts) 1}}
-    {{$ip := .NetworkSettings.IPAddress}}
-    {{range $keyPort, $valuePort := .Config.ExposedPorts}}
-    url = "http://{{$ip}}:{{$keyPort.Port}}"
-    {{end}}
-    {{else}}
-
-    {{end}}
+    [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/"}}]
+    url = "http://{{.NetworkSettings.IPAddress}}:{{getPort .}}"
 {{end}}
 
-[routes]{{range .Containers}}
-  [routes.route-{{.Config.Hostname}}]
-  backends = ["backend-{{.Config.Hostname}}"]
-    [routes.route-{{.Config.Hostname}}.rules.rule-{{.Config.Hostname}}-hostname]
+[routes]{{range $host, $containers := .Hosts}}
+  [routes.route-{{$host}}]
+  backends = [{{range $container := $containers}}"backend-{{getBackend $container}}",{{end}}]
+    [routes.route-{{$host}}.rules.rule-host-{{$host}}]
     category = "Host"
-    value = "{{.Config.Hostname}}.zenika.fr"
-    [routes.route-{{.Config.Hostname}}.rules.rule-{{.Config.Hostname}}-name]
-    category = "Host"
-    value = "{{.Name | replace "/"}}.zenika.fr"
+    value = "{{$host}}.zenika.fr"
 {{end}}
