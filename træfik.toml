@@ -1,7 +1,10 @@
+port = ":8001"
+
 [docker]
 endpoint = "unix:///var/run/docker.sock"
 watch = true
 domain = "toto.fr"
+filename = "docker.tmpl"
 
 [web]
 address = ":8010"

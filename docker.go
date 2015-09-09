@@ -34,6 +34,7 @@ type DockerProvider struct {
 	Watch        bool
 	Endpoint     string
 	dockerClient *docker.Client
+	Filename     string
 	Domain       string
 }
 
@@ -72,14 +73,14 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 	templateObjects := struct {
 		Containers []docker.Container
 		Hosts      map[string][]docker.Container
-		Domain string
+		Domain     string
 	}{
 		containersInspected,
 		hosts,
 		provider.Domain,
 	}
 	gtf.Inject(DockerFuncMap)
-	tmpl, err := template.New("docker.tmpl").Funcs(DockerFuncMap).ParseFiles("docker.tmpl")
+	tmpl, err := template.New(provider.Filename).Funcs(DockerFuncMap).ParseFiles(provider.Filename)
 	if err != nil {
 		log.Println("Error reading file:", err)
 		return nil

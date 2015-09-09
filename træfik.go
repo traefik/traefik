@@ -19,6 +19,7 @@ import (
 )
 
 type FileConfiguration struct {
+	Port string
 	Docker *DockerProvider
 	File   *FileProvider
 	Web    *WebProvider
@@ -98,7 +99,7 @@ func main() {
 			},
 
 			Server: &http.Server{
-				Addr:    ":8001",
+				Addr:    configuration.Port,
 				Handler: configurationRouter,
 			},
 		}
