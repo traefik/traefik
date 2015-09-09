@@ -15,7 +15,7 @@ type Rule struct {
 }
 
 type Route struct {
-	Backends []string
+	Backend string
 	Rules    map[string]Rule
 }
 

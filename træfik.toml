@@ -22,12 +22,12 @@ address = ":8010"
 
 [routes]
   [routes.route1]
-  backends = ["backend1", "backend2"]
+  backend = "backend2"
     [routes.route1.rules.test_zenika_1]
     category = "Host"
     value = "test.zenika.fr"
   [routes.route2]
-  backends = ["backend1"]
+  backend = "backend1"
     [routes.route2.rules.test_zenika_2]
     category = "Path"
     value = "/test"

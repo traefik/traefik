@@ -33,6 +33,7 @@ var providers = []Provider{}
 func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	globalConfigFile := "træfik.toml"
 
 	go func() {
 		for {
@@ -51,12 +52,16 @@ func main() {
 		}
 	}()
 
-	configuration := LoadFileConfig()
+	configuration := LoadFileConfig(globalConfigFile)
 	if (configuration.Docker != nil) {
 		providers = append(providers, configuration.Docker)
 	}
 
 	if (configuration.File != nil) {
+		if (len(configuration.File.Filename) == 0) {
+			// no filename, setting to global config file
+			configuration.File.Filename = globalConfigFile
+		}
 		providers = append(providers, configuration.File)
 	}
 
@@ -118,23 +123,21 @@ func LoadConfig(configuration *Configuration) *mux.Router {
 			newRoute := newRouteReflect[0].Interface().(*mux.Route)
 			newRoutes = append(newRoutes, newRoute)
 		}
-		for _, backendName := range route.Backends {
-			if (backends[backendName] ==nil) {
-				log.Println("Creating backend", backendName)
-				lb, _ := roundrobin.New(fwd)
-				rb, _ := roundrobin.NewRebalancer(lb)
-				for serverName, server := range configuration.Backends[backendName].Servers {
-					log.Println("Creating server", serverName)
-					url, _ := url.Parse(server.Url)
-					rb.UpsertServer(url)
-				}
-				backends[backendName]=lb
-			}else {
-				log.Println("Reusing backend", backendName)
+		if (backends[route.Backend] ==nil) {
+			log.Println("Creating backend", route.Backend)
+			lb, _ := roundrobin.New(fwd)
+			rb, _ := roundrobin.NewRebalancer(lb)
+			for serverName, server := range configuration.Backends[route.Backend].Servers {
+				log.Println("Creating server", serverName)
+				url, _ := url.Parse(server.Url)
+				rb.UpsertServer(url)
 			}
-			for _, route := range newRoutes {
-				route.Handler(handlers.CombinedLoggingHandler(os.Stdout, backends[backendName]))
-			}
+			backends[route.Backend]=lb
+		}else {
+			log.Println("Reusing backend", route.Backend)
+		}
+		for _, muxRoute := range newRoutes {
+			muxRoute.Handler(handlers.CombinedLoggingHandler(os.Stdout, backends[route.Backend]))
 		}
 	}
 	return router
@@ -148,9 +151,9 @@ func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
 }
 
-func LoadFileConfig() *FileConfiguration {
+func LoadFileConfig(file string) *FileConfiguration {
 	configuration := new(FileConfiguration)
-	if _, err := toml.DecodeFile("træfik.toml", configuration); err != nil {
+	if _, err := toml.DecodeFile(file, configuration); err != nil {
 		log.Fatal("Error reading file:", err)
 	}
 	return configuration

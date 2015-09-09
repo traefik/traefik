@@ -5,7 +5,8 @@
 
 [routes]{{range $host, $containers := .Hosts}}
   [routes.route-{{$host}}]
-  backends = [{{range $container := $containers}}"backend-{{getBackend $container}}",{{end}}]
+  {{$container := index $containers 0}}
+  backend = "backend-{{getBackend $container}}"
     [routes.route-{{$host}}.rules.rule-host-{{$host}}]
     category = "Host"
     value = "{{$host}}.{{$.Domain}}"
