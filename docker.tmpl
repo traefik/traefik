@@ -1,7 +1,16 @@
 [backends]{{range .Containers}}
   [backends.backend-{{.Config.Hostname}}]
     [backends.backend-{{.Config.Hostname}}.servers.server-{{.Config.Hostname}}]
-    url = "http://{{.NetworkSettings.IPAddress}}:80"
+
+    {{/* Only one exposed port! */}}
+    {{if eq (len .Config.ExposedPorts) 1}}
+    {{$ip := .NetworkSettings.IPAddress}}
+    {{range $keyPort, $valuePort := .Config.ExposedPorts}}
+    url = "http://{{$ip}}:{{$keyPort.Port}}"
+    {{end}}
+    {{else}}
+
+    {{end}}
 {{end}}
 
 [routes]{{range .Containers}}
