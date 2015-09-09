@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/unrolled/render"
 	"fmt"
-	"html/template"
 	"io/ioutil"
 	"encoding/json"
 	"log"
@@ -50,11 +49,5 @@ func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
 }
 
 func GetHtmlConfigHandler(response http.ResponseWriter, request *http.Request) {
-	templates := template.Must(template.ParseFiles("configuration.html"))
-	response.Header().Set("Content-type", "text/html")
-	err := request.ParseForm()
-	if err != nil {
-		http.Error(response, fmt.Sprintf("error parsing url %v", err), 500)
-	}
-	templates.ExecuteTemplate(response, "configuration.html", Page{Configuration:*currentConfiguration})
+	renderer.HTML(response, http.StatusOK, "configuration", Page{Configuration:*currentConfiguration})
 }
