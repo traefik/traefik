@@ -40,11 +40,28 @@ var MarathonFuncMap = template.FuncMap{
 func (provider *MarathonProvider) Provide(configurationChan chan <- *Configuration) {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
+	config.EventsInterface = "docker0"
 	if client, err := marathon.NewClient(config); err != nil {
 		log.Println("Failed to create a client for marathon, error: %s", err)
 		return
 	} else {
 		provider.marathonClient = client
+		update := make(marathon.EventsChannel,5)
+		if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
+			log.Println("Failed to register for subscriptions, %s", err)
+		} else {
+			go func() {
+				for {
+					event := <-update
+					log.Println("Marathon event receveived", event)
+					configuration := provider.loadMarathonConfig()
+					if (configuration != nil) {
+						configurationChan <- configuration
+					}
+				}
+			}()
+		}
+
 		configuration := provider.loadMarathonConfig()
 		configurationChan <- configuration
 	}
@@ -93,8 +110,6 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 		log.Println("Error creating marathon configuration:", err)
 		return nil
 	}
-
-	log.Println(buffer.String())
 
 	return configuration
 }

@@ -52,7 +52,7 @@ func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration
 		go func() {
 			for {
 				event := <-dockerEvents
-				log.Println("Event receveived", event)
+				log.Println("Docker event receveived", event)
 				configuration := provider.loadDockerConfig()
 				if (configuration != nil) {
 					configurationChan <- configuration

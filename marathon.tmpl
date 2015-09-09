@@ -5,7 +5,7 @@
 
 [routes]{{range .Applications}}
   [routes.route{{.ID | replace "/" "-"}}]
-  backend = ".backend{{.ID | replace "/" "-"}}"
+  backend = "backend{{.ID | replace "/" "-"}}"
     [routes.route-{{getHost .}}.rules.rule-host-{{getHost .}}]
     category = "Host"
     value = "{{getHost .}}.{{$.Domain}}"
