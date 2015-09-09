@@ -8,5 +8,5 @@
   backends = [{{range $container := $containers}}"backend-{{getBackend $container}}",{{end}}]
     [routes.route-{{$host}}.rules.rule-host-{{$host}}]
     category = "Host"
-    value = "{{$host}}.zenika.fr"
+    value = "{{$host}}.{{$.Domain}}"
 {{end}}

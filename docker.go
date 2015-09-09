@@ -34,6 +34,7 @@ type DockerProvider struct {
 	Watch        bool
 	Endpoint     string
 	dockerClient *docker.Client
+	Domain       string
 }
 
 func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration) {
@@ -70,10 +71,12 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 
 	templateObjects := struct {
 		Containers []docker.Container
-		Hosts map[string][]docker.Container
+		Hosts      map[string][]docker.Container
+		Domain string
 	}{
 		containersInspected,
 		hosts,
+		provider.Domain,
 	}
 	gtf.Inject(DockerFuncMap)
 	tmpl, err := template.New("docker.tmpl").Funcs(DockerFuncMap).ParseFiles("docker.tmpl")
