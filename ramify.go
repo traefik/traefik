@@ -144,7 +144,7 @@ func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 
 func LoadFileConfig() *FileConfiguration  {
 	configuration := new(FileConfiguration)
-	if _, err := toml.DecodeFile("tortuous.toml", configuration); err != nil {
+	if _, err := toml.DecodeFile("ramify.toml", configuration); err != nil {
 		log.Fatal("Error reading file:", err)
 	}
 	return configuration

@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"encoding/json"
 	"log"
-	"reflect"
 )
 
 var renderer = render.New()
@@ -33,12 +32,12 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration){
 			configuration := new(Configuration)
 			b, _ := ioutil.ReadAll(r.Body)
 			err:= json.Unmarshal(b, configuration)
-			log.Println(err)
-			if (err!= nil && reflect.DeepEqual(new(Configuration), configuration)) {
+			if (err == nil) {
 				configurationChan <- configuration
-				renderer.JSON(rw, http.StatusCreated, map[string]string{"result": "OK"})
+				GetConfigHandler(rw, r)
 			}else{
-				renderer.JSON(rw, http.StatusBadRequest, map[string]string{"result": "error"})
+				log.Printf("Error parsing configuration %+v\n", err)
+				http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 			}
 	})))
 	systemRouter.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
