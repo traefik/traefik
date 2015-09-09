@@ -1,0 +1,12 @@
+[backends]{{range .Tasks}}
+    [backends.backend{{.AppID | replace "/" "-"}}.servers.server-{{.ID | replace "." "-"}}]
+    url = "http://{{.Host}}:{{getPort .}}"
+{{end}}
+
+[routes]{{range .Applications}}
+  [routes.route{{.ID | replace "/" "-"}}]
+  backend = ".backend{{.ID | replace "/" "-"}}"
+    [routes.route-{{getHost .}}.rules.rule-host-{{getHost .}}]
+    category = "Host"
+    value = "{{getHost .}}.{{$.Domain}}"
+{{end}}

@@ -8,6 +8,15 @@ import (
 	"text/template"
 	"strings"
 )
+
+type DockerProvider struct {
+	Watch        bool
+	Endpoint     string
+	dockerClient *docker.Client
+	Filename     string
+	Domain       string
+}
+
 var DockerFuncMap = template.FuncMap{
 	"getBackend": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {
@@ -30,33 +39,30 @@ var DockerFuncMap = template.FuncMap{
 	},
 	"getHost": getHost,
 }
-type DockerProvider struct {
-	Watch        bool
-	Endpoint     string
-	dockerClient *docker.Client
-	Filename     string
-	Domain       string
-}
 
 func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration) {
-	provider.dockerClient, _ = docker.NewClient(provider.Endpoint)
-	dockerEvents := make(chan *docker.APIEvents)
-	if (provider.Watch) {
-		provider.dockerClient.AddEventListener(dockerEvents)
-	}
-	go func() {
-		for {
-			event := <-dockerEvents
-			log.Println("Event receveived", event)
-			configuration := provider.loadDockerConfig()
-			if (configuration != nil) {
-				configurationChan <- configuration
-			}
+	if client, err := docker.NewClient(provider.Endpoint); err != nil {
+		log.Fatalf("Failed to create a client for docker, error: %s", err)
+	} else {
+		provider.dockerClient = client
+		dockerEvents := make(chan *docker.APIEvents)
+		if (provider.Watch) {
+			provider.dockerClient.AddEventListener(dockerEvents)
 		}
-	}()
+		go func() {
+			for {
+				event := <-dockerEvents
+				log.Println("Event receveived", event)
+				configuration := provider.loadDockerConfig()
+				if (configuration != nil) {
+					configurationChan <- configuration
+				}
+			}
+		}()
 
-	configuration := provider.loadDockerConfig()
-	configurationChan <- configuration
+		configuration := provider.loadDockerConfig()
+		configurationChan <- configuration
+	}
 }
 
 func (provider *DockerProvider) loadDockerConfig() *Configuration {

@@ -1,16 +1,22 @@
 port = ":8001"
 
-[docker]
-endpoint = "unix:///var/run/docker.sock"
+#[docker]
+#endpoint = "unix:///var/run/docker.sock"
+#watch = true
+#domain = "toto.fr"
+#filename = "docker.tmpl"
+
+[marathon]
+endpoint = "http://127.0.0.1:8080"
 watch = true
 domain = "toto.fr"
-filename = "docker.tmpl"
+filename = "marathon.tmpl"
 
 [web]
 address = ":8010"
 
 #[file]
-#filename = "træfik.toml"
+#filename = "rules.toml"
 #watch = true
 
 [backends]

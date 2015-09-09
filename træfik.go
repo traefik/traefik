@@ -23,6 +23,7 @@ type FileConfiguration struct {
 	Docker *DockerProvider
 	File   *FileProvider
 	Web    *WebProvider
+	Marathon *MarathonProvider
 }
 
 var srv *graceful.Server
@@ -56,6 +57,10 @@ func main() {
 	configuration := LoadFileConfig(globalConfigFile)
 	if (configuration.Docker != nil) {
 		providers = append(providers, configuration.Docker)
+	}
+
+	if (configuration.Marathon != nil) {
+		providers = append(providers, configuration.Marathon)
 	}
 
 	if (configuration.File != nil) {
