@@ -31,7 +31,7 @@ var MarathonFuncMap = template.FuncMap{
 				return value
 			}
 		}
-		return application.ID
+		return strings.Replace(application.ID, "/", "", 1)
 	},
 	"replace": func(s1 string, s2 string, s3 string) string {
 		return strings.Replace(s3, s1, s2, -1)
