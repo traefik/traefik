@@ -46,20 +46,22 @@ func (provider *MarathonProvider) Provide(configurationChan chan <- *Configurati
 		return
 	} else {
 		provider.marathonClient = client
-		update := make(marathon.EventsChannel,5)
-		if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
-			log.Println("Failed to register for subscriptions, %s", err)
-		} else {
-			go func() {
-				for {
-					event := <-update
-					log.Println("Marathon event receveived", event)
-					configuration := provider.loadMarathonConfig()
-					if (configuration != nil) {
-						configurationChan <- configuration
+		update := make(marathon.EventsChannel, 5)
+		if (provider.Watch) {
+			if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
+				log.Println("Failed to register for subscriptions, %s", err)
+			} else {
+				go func() {
+					for {
+						event := <-update
+						log.Println("Marathon event receveived", event)
+						configuration := provider.loadMarathonConfig()
+						if (configuration != nil) {
+							configurationChan <- configuration
+						}
 					}
-				}
-			}()
+				}()
+			}
 		}
 
 		configuration := provider.loadMarathonConfig()

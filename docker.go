@@ -48,17 +48,17 @@ func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration
 		dockerEvents := make(chan *docker.APIEvents)
 		if (provider.Watch) {
 			provider.dockerClient.AddEventListener(dockerEvents)
-		}
-		go func() {
-			for {
-				event := <-dockerEvents
-				log.Println("Docker event receveived", event)
-				configuration := provider.loadDockerConfig()
-				if (configuration != nil) {
-					configurationChan <- configuration
+			go func() {
+				for {
+					event := <-dockerEvents
+					log.Println("Docker event receveived", event)
+					configuration := provider.loadDockerConfig()
+					if (configuration != nil) {
+						configurationChan <- configuration
+					}
 				}
-			}
-		}()
+			}()
+		}
 
 		configuration := provider.loadDockerConfig()
 		configurationChan <- configuration
