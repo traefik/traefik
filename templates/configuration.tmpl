@@ -44,7 +44,7 @@
                         {{range $keyServers, $valueServers := $valueBackends.Servers}}
                         <tr>
                             <td>{{$keyServers}}</td>
-                            <td><code>{{$valueServers.Url}}</code></td>
+                            <td><code><A href="{{$valueServers.Url}}">{{$valueServers.Url}}</A></code></td>
                         </tr>
                         {{end}}
                     </table>
