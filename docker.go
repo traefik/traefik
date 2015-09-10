@@ -20,7 +20,7 @@ type DockerProvider struct {
 var DockerFuncMap = template.FuncMap{
 	"getBackend": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {
-			if (key == "træfik.backend") {
+			if (key == "traefik.backend") {
 				return value
 			}
 		}
@@ -28,7 +28,7 @@ var DockerFuncMap = template.FuncMap{
 	},
 	"getPort": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {
-			if (key == "træfik.port") {
+			if (key == "traefik.port") {
 				return value
 			}
 		}
@@ -39,7 +39,7 @@ var DockerFuncMap = template.FuncMap{
 	},
 	"getWeight": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {
-			if (key == "træfik.weight") {
+			if (key == "traefik.weight") {
 				return value
 			}
 		}
@@ -120,7 +120,7 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 
 func getHost(container docker.Container) string {
 	for key, value := range container.Config.Labels {
-		if (key == "træfik.host") {
+		if (key == "traefik.host") {
 			return value
 		}
 	}

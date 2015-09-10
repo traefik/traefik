@@ -28,7 +28,7 @@ var MarathonFuncMap = template.FuncMap{
 	},
 	"getHost": func(application marathon.Application) string {
 		for key, value := range application.Labels {
-			if (key == "træfik.host") {
+			if (key == "traefik.host") {
 				return value
 			}
 		}
@@ -36,7 +36,7 @@ var MarathonFuncMap = template.FuncMap{
 	},
 	"getWeight": func(application marathon.Application) string {
 		for key, value := range application.Labels {
-			if (key == "træfik.weight") {
+			if (key == "traefik.weight") {
 				return value
 			}
 		}
