@@ -11,11 +11,12 @@ import (
 )
 
 type MarathonProvider struct {
-	Watch          bool
-	Endpoint       string
-	marathonClient marathon.Marathon
-	Domain         string
-	Filename       string
+	Watch            bool
+	Endpoint         string
+	marathonClient   marathon.Marathon
+	Domain           string
+	Filename         string
+	NetworkInterface string
 }
 
 var MarathonFuncMap = template.FuncMap{
@@ -40,7 +41,7 @@ var MarathonFuncMap = template.FuncMap{
 func (provider *MarathonProvider) Provide(configurationChan chan <- *Configuration) {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
-	config.EventsInterface = "docker0"
+	config.EventsInterface = provider.NetworkInterface
 	if client, err := marathon.NewClient(config); err != nil {
 		log.Println("Failed to create a client for marathon, error: %s", err)
 		return

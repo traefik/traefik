@@ -5,7 +5,6 @@ import (
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
 	"github.com/tylerb/graceful"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,14 +17,6 @@ import (
 	"github.com/gorilla/handlers"
 )
 
-type FileConfiguration struct {
-	Port string
-	Docker *DockerProvider
-	File   *FileProvider
-	Web    *WebProvider
-	Marathon *MarathonProvider
-}
-
 var srv *graceful.Server
 var configurationRouter *mux.Router
 var currentConfiguration = new(Configuration)
@@ -33,10 +24,11 @@ var configurationChan = make(chan *Configuration)
 var providers = []Provider{}
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	globalConfigFile := "træfik.toml"
-
+	configurationRouter = LoadDefaultConfig()
 	go func() {
 		for {
 			configuration := <-configurationChan
@@ -88,7 +80,7 @@ func main() {
 		sig := <-sigs
 		log.Println("I have to go...", sig)
 		goAway = true
-		srv.Stop(10 * time.Second)
+		srv.Stop(time.Duration(configuration.GraceTimeOut) * time.Second)
 	}()
 
 	for {
@@ -96,12 +88,8 @@ func main() {
 			break
 		}
 		srv = &graceful.Server{
-			Timeout:          10 * time.Second,
+			Timeout:          time.Duration(configuration.GraceTimeOut) * time.Second,
 			NoSignalHandling: true,
-
-			ConnState: func(conn net.Conn, state http.ConnState) {
-				// conn has a new state
-			},
 
 			Server: &http.Server{
 				Addr:    configuration.Port,
@@ -109,15 +97,28 @@ func main() {
 			},
 		}
 
-		go srv.ListenAndServe()
+		go func() {
+			srv.ListenAndServe()
+		}()
 		log.Println("Started")
 		<-srv.StopChan()
 		log.Println("Stopped")
 	}
 }
 
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	renderer.HTML(w, http.StatusNotFound, "notFound", nil)
+}
+
+func LoadDefaultConfig() *mux.Router {
+	router := mux.NewRouter()
+	router.NotFoundHandler = handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(notFoundHandler))
+	return router
+}
+
 func LoadConfig(configuration *Configuration) *mux.Router {
 	router := mux.NewRouter()
+	router.NotFoundHandler = handlers.CombinedLoggingHandler(os.Stdout, http.HandlerFunc(notFoundHandler))
 	backends := map[string]http.Handler{}
 	for routeName, route := range configuration.Routes {
 		log.Println("Creating route", routeName)
@@ -144,6 +145,10 @@ func LoadConfig(configuration *Configuration) *mux.Router {
 		}
 		for _, muxRoute := range newRoutes {
 			muxRoute.Handler(handlers.CombinedLoggingHandler(os.Stdout, backends[route.Backend]))
+			err := muxRoute.GetError()
+			if err != nil {
+				log.Println("Error building route", err)
+			}
 		}
 	}
 	return router
@@ -157,10 +162,11 @@ func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
 }
 
-func LoadFileConfig(file string) *FileConfiguration {
-	configuration := new(FileConfiguration)
+func LoadFileConfig(file string) *GlobalConfiguration {
+	configuration := NewGlobalConfiguration()
 	if _, err := toml.DecodeFile(file, configuration); err != nil {
 		log.Fatal("Error reading file:", err)
 	}
+	log.Printf("Global configuration loaded %+v\n", configuration)
 	return configuration
 }

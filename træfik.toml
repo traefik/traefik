@@ -1,4 +1,5 @@
 port = ":8001"
+graceTimeOut = 10
 
 #[docker]
 #endpoint = "unix:///var/run/docker.sock"
@@ -11,6 +12,7 @@ endpoint = "http://127.0.0.1:8080"
 watch = true
 domain = "toto.fr"
 filename = "marathon.tmpl"
+networkInterface = "eth0"
 
 [web]
 address = ":8010"

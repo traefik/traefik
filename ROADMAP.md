@@ -1,3 +1,4 @@
+* Default configuration values
 * Godoc
 * Weights
 * Licence
