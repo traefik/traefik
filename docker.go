@@ -24,7 +24,7 @@ var DockerFuncMap = template.FuncMap{
 				return value
 			}
 		}
-		return container.Config.Hostname
+		return getHost(container)
 	},
 	"getPort": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {
@@ -36,6 +36,9 @@ var DockerFuncMap = template.FuncMap{
 			return key.Port()
 		}
 		return ""
+	},
+	"replace": func(s1 string, s2 string, s3 string) string {
+		return strings.Replace(s3, s1, s2, -1)
 	},
 	"getHost": getHost,
 }
@@ -113,5 +116,5 @@ func getHost(container docker.Container) string {
 			return value
 		}
 	}
-	return strings.TrimPrefix(container.Name, "/")
+	return strings.Replace(strings.Replace(container.Name, "/", "", -1), ".", "-", -1)
 }

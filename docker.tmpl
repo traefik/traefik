@@ -1,5 +1,5 @@
 [backends]{{range .Containers}}
-    [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/"}}]
+    [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/" "" | replace "." "-"}}]
     url = "http://{{.NetworkSettings.IPAddress}}:{{getPort .}}"
 {{end}}
 
