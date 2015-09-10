@@ -82,9 +82,11 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 	containersInspected := []docker.Container{}
 	hosts := map[string][]docker.Container{}
 	for _, container := range containerList {
-		containerInspected, _ := provider.dockerClient.InspectContainer(container.ID)
-		containersInspected = append(containersInspected, *containerInspected)
-		hosts[getHost(*containerInspected)] = append(hosts[getHost(*containerInspected)], *containerInspected)
+		if(container.Labels["traefik.enable"] != "false"){
+			containerInspected, _ := provider.dockerClient.InspectContainer(container.ID)
+			containersInspected = append(containersInspected, *containerInspected)
+			hosts[getHost(*containerInspected)] = append(hosts[getHost(*containerInspected)], *containerInspected)
+		}
 	}
 
 	templateObjects := struct {
