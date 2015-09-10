@@ -8,6 +8,7 @@ import (
 	"text/template"
 	"strings"
 	"strconv"
+	"github.com/BurntSushi/ty/fun"
 )
 
 type MarathonProvider struct {
@@ -86,19 +87,53 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 		log.Println("Failed to create a client for marathon, error: %s", err)
 		return nil
 	}
+
 	tasks, err := provider.marathonClient.AllTasks()
 	if (err != nil) {
 		log.Println("Failed to create a client for marathon, error: %s", err)
 		return nil
 	}
 
+	//filter tasks
+	filteredTasks := fun.Filter(func(task marathon.Task) bool {
+		if (len(task.Ports) == 0) {
+			log.Println("Filtering marathon task without port", task.AppID)
+			return false
+		}
+		application := getApplication(task, applications.Apps)
+		_, err := strconv.Atoi(application.Labels["traefik.port"])
+		if (len(application.Ports) > 1 &&  err != nil) {
+			log.Println("Filtering marathon task with more than 1 port and no traefik.port label", task.AppID)
+			return false
+		}
+		if (application.Labels["traefik.enable"] == "false") {
+			log.Println("Filtering disabled marathon task", task.AppID)
+			return false
+		}
+		return true
+	}, tasks.Tasks).([]marathon.Task)
+
+	//filter apps
+	filteredApps := fun.Filter(func(app marathon.Application) bool {
+		//get ports from app tasks
+		if (!fun.Exists(func(task marathon.Task) bool {
+			if (task.AppID == app.ID) {
+				return true
+			}
+			return false
+		}, filteredTasks)) {
+			return false
+		}
+		return true
+	}, applications.Apps).([]marathon.Application)
+
 	templateObjects := struct {
 		Applications []marathon.Application
 		Tasks        []marathon.Task
 		Domain       string
 	}{
-		applications.Apps,
-		tasks.Tasks,
+		filteredApps,
+		filteredTasks,
 		provider.Domain,
 	}
 
@@ -123,4 +158,13 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 	}
 
 	return configuration
+}
+
+func getApplication(task marathon.Task, apps []marathon.Application) *marathon.Application {
+	for _, application := range apps {
+		if (application.ID == task.AppID) {
+			return &application
+		}
+	}
+	return nil
 }

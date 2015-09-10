@@ -7,6 +7,8 @@ import (
 	"log"
 	"text/template"
 	"strings"
+	"github.com/BurntSushi/ty/fun"
+	"strconv"
 )
 
 type DockerProvider struct {
@@ -62,10 +64,12 @@ func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration
 			go func() {
 				for {
 					event := <-dockerEvents
-					log.Println("Docker event receveived", event)
-					configuration := provider.loadDockerConfig()
-					if (configuration != nil) {
-						configurationChan <- configuration
+					if(event.Status == "start" || event.Status == "die"){
+						log.Println("Docker event receveived", event)
+						configuration := provider.loadDockerConfig()
+						if (configuration != nil) {
+							configurationChan <- configuration
+						}
 					}
 				}
 			}()
@@ -81,12 +85,33 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 	containerList, _ := provider.dockerClient.ListContainers(docker.ListContainersOptions{})
 	containersInspected := []docker.Container{}
 	hosts := map[string][]docker.Container{}
+
+	// get inspect containers
 	for _, container := range containerList {
-		if(container.Labels["traefik.enable"] != "false"){
-			containerInspected, _ := provider.dockerClient.InspectContainer(container.ID)
-			containersInspected = append(containersInspected, *containerInspected)
-			hosts[getHost(*containerInspected)] = append(hosts[getHost(*containerInspected)], *containerInspected)
+		containerInspected, _ := provider.dockerClient.InspectContainer(container.ID)
+		containersInspected = append(containersInspected, *containerInspected)
+	}
+
+	// filter containers
+	filteredContainers := fun.Filter(func(container docker.Container) bool {
+		if (len(container.NetworkSettings.Ports) == 0) {
+			log.Println("Filtering container without port", container.Name)
+			return false
 		}
+		_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
+		if (len(container.NetworkSettings.Ports) > 1 &&  err != nil) {
+			log.Println("Filtering container with more than 1 port and no traefik.port label", container.Name)
+			return false
+		}
+		if (container.Config.Labels["traefik.enable"] == "false") {
+			log.Println("Filtering disabled container", container.Name)
+			return false
+		}
+		return true
+	}, containersInspected).([]docker.Container)
+
+	for _, container := range filteredContainers {
+		hosts[getHost(container)] = append(hosts[getHost(container)], container)
 	}
 
 	templateObjects := struct {
@@ -94,7 +119,7 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 		Hosts      map[string][]docker.Container
 		Domain     string
 	}{
-		containersInspected,
+		filteredContainers,
 		hosts,
 		provider.Domain,
 	}

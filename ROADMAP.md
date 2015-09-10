@@ -1,8 +1,6 @@
 * Default configuration values
 * Godoc
 * Licence
-* Filter no exposed port apps
-* Filter traefik.enabled=false apps
 * Add traefik.indlude all/enabled policy
 * SSL frontend support
 * SSL backends support
@@ -11,7 +9,9 @@
 * Kubernetes support
 * Smart configuration diff
 * README
-
+* API enhancements
 
 * ~~GraceTimeout~~
 * ~~Weights~~
+* ~~Filter traefik.enabled=false apps~~
+* ~~Filter no exposed port apps~~
