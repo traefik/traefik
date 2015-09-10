@@ -137,7 +137,7 @@ func LoadConfig(configuration *Configuration) *mux.Router {
 			for serverName, server := range configuration.Backends[route.Backend].Servers {
 				log.Println("Creating server", serverName)
 				url, _ := url.Parse(server.Url)
-				rb.UpsertServer(url)
+				rb.UpsertServer(url, roundrobin.Weight(server.Weight))
 			}
 			backends[route.Backend]=lb
 		}else {

@@ -1,35 +1,38 @@
 port = ":8001"
 graceTimeOut = 10
 
-#[docker]
-#endpoint = "unix:///var/run/docker.sock"
-#watch = true
-#domain = "toto.fr"
-#filename = "docker.tmpl"
+# [docker]
+# endpoint = "unix:///var/run/docker.sock"
+# watch = true
+# domain = "toto.fr"
+# filename = "docker.tmpl"
 
 [marathon]
 endpoint = "http://127.0.0.1:8080"
+networkInterface = "eth0"
 watch = true
 domain = "toto.fr"
 filename = "marathon.tmpl"
-networkInterface = "eth0"
 
 [web]
 address = ":8010"
 
-#[file]
-#filename = "rules.toml"
-#watch = true
+# [file]
+# filename = "rules.toml"
+# watch = true
 
 [backends]
   [backends.backend1]
     [backends.backend1.servers.server1]
     url = "http://172.17.0.2:80"
+    weight = 10
     [backends.backend1.servers.server2]
     url = "http://172.17.0.3:80"
+    weight = 1
   [backends.backend2]
     [backends.backend2.servers.server1]
     url = "http://172.17.0.2:80"
+    weight = 100
 
 [routes]
   [routes.route1]

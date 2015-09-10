@@ -24,6 +24,7 @@ type Backend struct {
 
 type Server struct {
 	Url string
+	Weight int
 }
 
 type Rule struct {

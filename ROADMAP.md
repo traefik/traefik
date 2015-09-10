@@ -2,7 +2,6 @@
 * Godoc
 * Weights
 * Licence
-* GraceTimeout
 * Filter no exposed port apps
 * Filter træfik.enabled=false apps
 * Add træfik.indlude all/enabled policy
@@ -14,3 +13,5 @@
 * Smart configuration diff
 * README
 
+
+* ~~GraceTimeout~~

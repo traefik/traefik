@@ -37,6 +37,14 @@ var DockerFuncMap = template.FuncMap{
 		}
 		return ""
 	},
+	"getWeight": func(container docker.Container) string {
+		for key, value := range container.Config.Labels {
+			if (key == "træfik.weight") {
+				return value
+			}
+		}
+		return "0"
+	},
 	"replace": func(s1 string, s2 string, s3 string) string {
 		return strings.Replace(s3, s1, s2, -1)
 	},

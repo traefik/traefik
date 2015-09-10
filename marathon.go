@@ -34,6 +34,14 @@ var MarathonFuncMap = template.FuncMap{
 		}
 		return strings.Replace(application.ID, "/", "", 1)
 	},
+	"getWeight": func(application marathon.Application) string {
+		for key, value := range application.Labels {
+			if (key == "træfik.weight") {
+				return value
+			}
+		}
+		return "0"
+	},
 	"replace": func(s1 string, s2 string, s3 string) string {
 		return strings.Replace(s3, s1, s2, -1)
 	},

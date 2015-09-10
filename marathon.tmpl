@@ -1,6 +1,13 @@
+{{$apps := .Applications}}
 [backends]{{range .Tasks}}
     [backends.backend{{.AppID | replace "/" "-"}}.servers.server-{{.ID | replace "." "-"}}]
     url = "http://{{.Host}}:{{getPort .}}"
+    {{$appID := .AppID}}
+    {{range $apps}}
+    {{if eq $appID .ID}}
+    weight = {{getWeight .}}
+    {{end}}
+    {{end}}
 {{end}}
 
 [routes]{{range .Applications}}
