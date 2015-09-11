@@ -40,11 +40,13 @@
                         <tr>
                             <td><em>Server</em></td>
                             <td><em>URL</em></td>
+                            <td><em>Weight</em></td>
                         </tr>
                         {{range $keyServers, $valueServers := $valueBackends.Servers}}
                         <tr>
                             <td>{{$keyServers}}</td>
                             <td><code><A href="{{$valueServers.Url}}">{{$valueServers.Url}}</A></code></td>
+                            <td>{{$valueServers.Weight}}</td>
                         </tr>
                         {{end}}
                     </table>
