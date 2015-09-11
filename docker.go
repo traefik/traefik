@@ -18,6 +18,15 @@ type DockerProvider struct {
 	Domain       string
 }
 
+func NewDockerProvider() *DockerProvider {
+	dockerProvider := new(DockerProvider)
+	// default
+	dockerProvider.Watch = true
+	dockerProvider.Domain = "traefik"
+
+	return dockerProvider
+}
+
 var DockerFuncMap = template.FuncMap{
 	"getBackend": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {

@@ -19,6 +19,16 @@ type MarathonProvider struct {
 	NetworkInterface string
 }
 
+func NewMarathonProvider() *MarathonProvider {
+	marathonProvider := new(MarathonProvider)
+	// default values
+	marathonProvider.Watch = true
+	marathonProvider.Domain = "traefik"
+	marathonProvider.NetworkInterface = "eth0"
+
+	return marathonProvider
+}
+
 var MarathonFuncMap = template.FuncMap{
 	"getPort": func(task marathon.Task) string {
 		for _, port := range task.Ports {

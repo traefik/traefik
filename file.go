@@ -13,6 +13,14 @@ type FileProvider struct {
 	Filename string
 }
 
+func NewFileProvider() *FileProvider {
+	fileProvider := new(FileProvider)
+	// default values
+	fileProvider.Watch = true
+
+	return fileProvider
+}
+
 func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
