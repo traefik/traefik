@@ -1,12 +1,10 @@
  # /træfɪk/
 
-* Logs
 * Default configuration values
 * Retry with streams
 * Static files
 * Licence
 * Add traefik.indlude all/enabled policy
-* SSL frontend support
 * SSL backends support
 * Consul support
 * README
@@ -24,3 +22,5 @@
 * ~~Weights~~
 * ~~Filter traefik.enabled=false apps~~
 * ~~Filter no exposed port apps~~
+* ~~Logs~~
+* ~~SSL frontend support~~

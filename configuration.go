@@ -6,6 +6,7 @@ type GlobalConfiguration struct {
 	AccessLogsFile    string
 	TraefikLogsFile   string
 	TraefikLogsStdout bool
+	CertFile, KeyFile string
 	LogLevel          string
 	Docker            *DockerProvider
 	File              *FileProvider
