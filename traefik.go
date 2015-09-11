@@ -201,13 +201,13 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 			}
 			backends[route.Backend]=lb
 		}else {
-			log.Debug("Reusing backend", route.Backend)
+			log.Debug("Reusing backend %s", route.Backend)
 		}
 		for _, muxRoute := range newRoutes {
 			if (len(gloablConfiguration.AccessLogsFile) > 0 ) {
 				fi, err := os.OpenFile(gloablConfiguration.AccessLogsFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
 				if err != nil {
-					log.Fatal("Error opening file", err)
+					log.Fatal("Error opening file ", err)
 				}
 				muxRoute.Handler(handlers.CombinedLoggingHandler(fi, backends[route.Backend]))
 			}else {
@@ -215,7 +215,7 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 			}
 			err := muxRoute.GetError()
 			if err != nil {
-				log.Error("Error building route", err)
+				log.Error("Error building route ", err)
 			}
 		}
 	}
@@ -233,7 +233,7 @@ func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 func LoadFileConfig(file string) *GlobalConfiguration {
 	configuration := NewGlobalConfiguration()
 	if _, err := toml.DecodeFile(file, configuration); err != nil {
-		log.Fatal("Error reading file", err)
+		log.Fatal("Error reading file ", err)
 	}
 	log.Debug("Global configuration loaded %+v", configuration)
 	return configuration

@@ -123,19 +123,27 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 		provider.Domain,
 	}
 	gtf.Inject(DockerFuncMap)
-	buf, err := Asset("providerTemplates/docker.tmpl")
-	if err != nil {
-		log.Error("Error reading file", err)
-	}
-	tmpl, err := template.New(provider.Filename).Funcs(DockerFuncMap).Parse(string(buf))
-	if err != nil {
-		log.Error("Error reading file", err)
-		return nil
+	tmpl := template.New(provider.Filename).Funcs(DockerFuncMap)
+	if(len(provider.Filename) > 0){
+		_, err := tmpl.ParseFiles(provider.Filename)
+		if err != nil {
+			log.Error("Error reading file", err)
+			return nil
+		}
+	}else{
+		buf, err := Asset("providerTemplates/docker.tmpl")
+		if err != nil {
+			log.Error("Error reading file", err)
+		}
+		_, err = tmpl.Parse(string(buf))
+		if err != nil {
+			log.Error("Error reading file", err)
+			return nil
+		}
 	}
 
 	var buffer bytes.Buffer
-
-	err = tmpl.Execute(&buffer, templateObjects)
+	err := tmpl.Execute(&buffer, templateObjects)
 	if err != nil {
 		log.Error("Error with docker template", err)
 		return nil

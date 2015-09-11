@@ -138,14 +138,23 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 	}
 
 	gtf.Inject(MarathonFuncMap)
-	buf, err := Asset("providerTemplates/marathon.tmpl")
-	if err != nil {
-		log.Error("Error reading file", err)
-	}
-	tmpl, err := template.New(provider.Filename).Funcs(MarathonFuncMap).ParseFiles(string(buf))
-	if err != nil {
-		log.Error("Error reading file:", err)
-		return nil
+	tmpl := template.New(provider.Filename).Funcs(DockerFuncMap)
+	if(len(provider.Filename) > 0){
+		_, err := tmpl.ParseFiles(provider.Filename)
+		if err != nil {
+			log.Error("Error reading file", err)
+			return nil
+		}
+	}else{
+		buf, err := Asset("providerTemplates/marathon.tmpl")
+		if err != nil {
+			log.Error("Error reading file", err)
+		}
+		_, err = tmpl.Parse(string(buf))
+		if err != nil {
+			log.Error("Error reading file", err)
+			return nil
+		}
 	}
 
 	var buffer bytes.Buffer
