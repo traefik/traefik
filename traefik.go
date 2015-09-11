@@ -16,17 +16,23 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/gorilla/handlers"
 	"github.com/unrolled/render"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-var currentConfiguration = new(Configuration)
-var log = logging.MustGetLogger("traefik")
-var templatesRenderer = render.New(render.Options{
-	Directory: "templates",
-	Asset: Asset,
-	AssetNames: AssetNames,
-})
+
+var (
+	globalConfigFile = kingpin.Arg("conf", "Main configration file.").Default("traefik.toml").String()
+	currentConfiguration = new(Configuration)
+	log = logging.MustGetLogger("traefik")
+	templatesRenderer = render.New(render.Options{
+		Directory: "templates",
+		Asset: Asset,
+		AssetNames: AssetNames,
+	})
+)
 
 func main() {
+	kingpin.Parse()
 	var srv *graceful.Server
 	var configurationRouter *mux.Router
 	var configurationChan = make(chan *Configuration)
@@ -36,8 +42,7 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// load global configuration
-	globalConfigFile := "traefik.toml"
-	gloablConfiguration := LoadFileConfig(globalConfigFile)
+	gloablConfiguration := LoadFileConfig(*globalConfigFile)
 
 	// logging
 	backends := []logging.Backend{}
@@ -98,7 +103,7 @@ func main() {
 	if (gloablConfiguration.File != nil) {
 		if (len(gloablConfiguration.File.Filename) == 0) {
 			// no filename, setting to global config file
-			gloablConfiguration.File.Filename = globalConfigFile
+			gloablConfiguration.File.Filename = *globalConfigFile
 		}
 		providers = append(providers, gloablConfiguration.File)
 	}
