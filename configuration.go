@@ -1,12 +1,16 @@
 package main
 
 type GlobalConfiguration struct {
-	Port string
-	GraceTimeOut int64
-	Docker *DockerProvider
-	File   *FileProvider
-	Web    *WebProvider
-	Marathon *MarathonProvider
+	Port              string
+	GraceTimeOut      int64
+	AccessLogsFile    string
+	TraefikLogsFile   string
+	TraefikLogsStdout bool
+	LogLevel          string
+	Docker            *DockerProvider
+	File              *FileProvider
+	Web               *WebProvider
+	Marathon          *MarathonProvider
 }
 
 func NewGlobalConfiguration() *GlobalConfiguration {
@@ -23,7 +27,7 @@ type Backend struct {
 }
 
 type Server struct {
-	Url string
+	Url    string
 	Weight int
 }
 
@@ -34,7 +38,7 @@ type Rule struct {
 
 type Route struct {
 	Backend string
-	Rules    map[string]Rule
+	Rules   map[string]Rule
 }
 
 type Configuration struct {

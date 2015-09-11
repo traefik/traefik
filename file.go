@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"gopkg.in/fsnotify.v1"
 	"github.com/BurntSushi/toml"
 	"os"
@@ -17,14 +16,14 @@ type FileProvider struct {
 func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Println(err)
+		log.Error("Error creating file watcher", err)
 		return
 	}
 	defer watcher.Close()
 
 	file, err := os.Open(provider.Filename)
 	if err != nil {
-		log.Println(err)
+		log.Error("Error opening file", err)
 		return
 	}
 	defer file.Close()
@@ -36,14 +35,14 @@ func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
 			select {
 			case event := <-watcher.Events:
 				if(strings.Contains(event.Name,file.Name())){
-					log.Println("File event:", event)
+					log.Debug("File event:", event)
 					configuration := provider.LoadFileConfig(file.Name())
 					if(configuration != nil) {
 						configurationChan <- configuration
 					}
 				}
 			case error := <-watcher.Errors:
-				log.Println("error:", error)
+				log.Error("Watcher event error", error)
 			}
 		}
 	}()
@@ -53,7 +52,7 @@ func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
 	}
 
 	if err != nil {
-		log.Println(err)
+		log.Error("Error adding file watcher", err)
 		return
 	}
 
@@ -67,7 +66,7 @@ func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
 func (provider *FileProvider) LoadFileConfig(filename string) *Configuration {
 	configuration := new(Configuration)
 	if _, err := toml.DecodeFile(filename, configuration); err != nil {
-		log.Println("Error reading file:", err)
+		log.Error("Error reading file:", err)
 		return nil
 	}
 	return configuration

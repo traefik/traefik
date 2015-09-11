@@ -1,15 +1,24 @@
+ # /træfɪk/
+
+* Logs
 * Default configuration values
-* Godoc
+* Retry with streams
+* Static files
 * Licence
 * Add traefik.indlude all/enabled policy
 * SSL frontend support
 * SSL backends support
-* Etcd support
 * Consul support
-* Kubernetes support
-* Smart configuration diff
 * README
 * API enhancements
+* Godoc
+* Website
+
+
+* Kubernetes support
+* Etcd support
+* Smart configuration diff
+
 
 * ~~GraceTimeout~~
 * ~~Weights~~

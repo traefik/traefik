@@ -4,7 +4,6 @@ import (
 	"github.com/leekchan/gtf"
 	"bytes"
 	"github.com/BurntSushi/toml"
-	"log"
 	"text/template"
 	"strings"
 	"github.com/BurntSushi/ty/fun"
@@ -65,7 +64,7 @@ func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration
 				for {
 					event := <-dockerEvents
 					if(event.Status == "start" || event.Status == "die"){
-						log.Println("Docker event receveived", event)
+						log.Debug("Docker event receveived %+v", event)
 						configuration := provider.loadDockerConfig()
 						if (configuration != nil) {
 							configurationChan <- configuration
@@ -95,16 +94,16 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 	// filter containers
 	filteredContainers := fun.Filter(func(container docker.Container) bool {
 		if (len(container.NetworkSettings.Ports) == 0) {
-			log.Println("Filtering container without port", container.Name)
+			log.Debug("Filtering container without port %s", container.Name)
 			return false
 		}
 		_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
 		if (len(container.NetworkSettings.Ports) > 1 &&  err != nil) {
-			log.Println("Filtering container with more than 1 port and no traefik.port label", container.Name)
+			log.Debug("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
 			return false
 		}
 		if (container.Config.Labels["traefik.enable"] == "false") {
-			log.Println("Filtering disabled container", container.Name)
+			log.Debug("Filtering disabled container %s", container.Name)
 			return false
 		}
 		return true
@@ -126,7 +125,7 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 	gtf.Inject(DockerFuncMap)
 	tmpl, err := template.New(provider.Filename).Funcs(DockerFuncMap).ParseFiles(provider.Filename)
 	if err != nil {
-		log.Println("Error reading file:", err)
+		log.Error("Error reading file", err)
 		return nil
 	}
 
@@ -134,12 +133,12 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 
 	err = tmpl.Execute(&buffer, templateObjects)
 	if err != nil {
-		log.Println("Error with docker template:", err)
+		log.Error("Error with docker template", err)
 		return nil
 	}
 
 	if _, err := toml.Decode(buffer.String(), configuration); err != nil {
-		log.Println("Error creating docker configuration:", err)
+		log.Error("Error creating docker configuration", err)
 		return nil
 	}
 	return configuration
