@@ -18,6 +18,8 @@ func NewGlobalConfiguration() *GlobalConfiguration {
 	// default values
 	globalConfiguration.Port = ":8080"
 	globalConfiguration.GraceTimeOut = 10
+	globalConfiguration.LogLevel = "ERROR"
+	globalConfiguration.TraefikLogsStdout = true
 
 	return globalConfiguration
 }
