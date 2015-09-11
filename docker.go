@@ -123,7 +123,11 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 		provider.Domain,
 	}
 	gtf.Inject(DockerFuncMap)
-	tmpl, err := template.New(provider.Filename).Funcs(DockerFuncMap).ParseFiles(provider.Filename)
+	buf, err := Asset("providerTemplates/docker.tmpl")
+	if err != nil {
+		log.Error("Error reading file", err)
+	}
+	tmpl, err := template.New(provider.Filename).Funcs(DockerFuncMap).Parse(string(buf))
 	if err != nil {
 		log.Error("Error reading file", err)
 		return nil

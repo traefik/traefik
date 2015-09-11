@@ -138,7 +138,11 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 	}
 
 	gtf.Inject(MarathonFuncMap)
-	tmpl, err := template.New(provider.Filename).Funcs(MarathonFuncMap).ParseFiles(provider.Filename)
+	buf, err := Asset("providerTemplates/marathon.tmpl")
+	if err != nil {
+		log.Error("Error reading file", err)
+	}
+	tmpl, err := template.New(provider.Filename).Funcs(MarathonFuncMap).ParseFiles(string(buf))
 	if err != nil {
 		log.Error("Error reading file:", err)
 		return nil
