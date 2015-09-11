@@ -15,10 +15,16 @@ import (
 	"github.com/op/go-logging"
 	"github.com/BurntSushi/toml"
 	"github.com/gorilla/handlers"
+	"github.com/unrolled/render"
 )
 
 var currentConfiguration = new(Configuration)
 var log = logging.MustGetLogger("traefik")
+var templatesRenderer = render.New(render.Options{
+	Directory: "templates",
+	Asset: Asset,
+	AssetNames: AssetNames,
+})
 
 func main() {
 	var srv *graceful.Server
@@ -145,7 +151,7 @@ func main() {
 }
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	renderer.HTML(w, http.StatusNotFound, "notFound", nil)
+	templatesRenderer.HTML(w, http.StatusNotFound, "notFound", nil)
 }
 
 func LoadDefaultConfig(gloablConfiguration *GlobalConfiguration) *mux.Router {

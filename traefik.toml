@@ -1,8 +1,8 @@
 port = ":8001"
 graceTimeOut = 10
-traefikLogsFile = "log/traefik.log"
+# traefikLogsFile = "log/traefik.log"
 traefikLogsStdout = true
-accessLogsFile = "log/access.log"
+# accessLogsFile = "log/access.log"
 logLevel = "DEBUG"
 
 [docker]

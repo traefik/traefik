@@ -3,18 +3,11 @@ package main
 import (
 	"github.com/gorilla/mux"
 	"net/http"
-	"github.com/unrolled/render"
 	"fmt"
 	"io/ioutil"
 	"encoding/json"
 	"github.com/elazarl/go-bindata-assetfs"
 )
-
-var renderer = render.New(render.Options{
-	Directory: "templates",
-	Asset: Asset,
-	AssetNames: AssetNames,
-})
 
 type WebProvider struct {
 	Address string
@@ -47,9 +40,9 @@ func (provider *WebProvider) Provide(configurationChan chan <- *Configuration) {
 }
 
 func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
-	renderer.JSON(rw, http.StatusOK, currentConfiguration)
+	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration)
 }
 
 func GetHtmlConfigHandler(response http.ResponseWriter, request *http.Request) {
-	renderer.HTML(response, http.StatusOK, "configuration", Page{Configuration:*currentConfiguration})
+	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configuration:*currentConfiguration})
 }
