@@ -4,6 +4,8 @@ graceTimeOut = 10
 traefikLogsStdout = true
 # accessLogsFile = "log/access.log"
 logLevel = "DEBUG"
+# CertFile = "traefik.crt"
+# KeyFile = "traefik.key"
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"
