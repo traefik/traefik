@@ -66,11 +66,11 @@ func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration
 		log.Fatalf("Failed to create a client for docker, error: %s", err)
 	} else {
 		provider.dockerClient = client
-		info, err := provider.dockerClient.Info()
+		_, err := provider.dockerClient.Info()
 		if (err != nil){
 			log.Fatalf("Docker connection error %+v", err)
 		}
-		log.Debug("Docker info %=v", info)
+		log.Debug("Docker connection established")
 		dockerEvents := make(chan *docker.APIEvents)
 		if (provider.Watch) {
 			provider.dockerClient.AddEventListener(dockerEvents)
