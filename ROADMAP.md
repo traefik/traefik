@@ -1,7 +1,6 @@
  # /træfɪk/
 
 * Providers recovery
-* Use Negroni middlewares for metrics, grace, logs
 * tls client verification
 * Default configuration values
 * Retry with streams
@@ -28,3 +27,5 @@
 * ~~SSL frontend support~~
 * ~~Static files~~
 * ~~Metrics~~
+* ~~Dockerfile~~
+* ~~Use Negroni middlewares for metrics, grace, logs~~

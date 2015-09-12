@@ -142,6 +142,7 @@ func main() {
 		var negroni = negroni.New()
 		negroni.Use(metrics)
 		negroni.Use(loggerMiddleware)
+		//negroni.Use(middlewares.NewRoutes(configurationRouter))
 		negroni.UseHandler(configurationRouter)
 
 		srv = &graceful.Server{

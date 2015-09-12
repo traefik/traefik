@@ -6,15 +6,17 @@ import (
 	"github.com/BurntSushi/ty/fun"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/leekchan/gtf"
+	"github.com/cenkalti/backoff"
 	"strconv"
 	"strings"
 	"text/template"
+	"errors"
+	"time"
 )
 
 type DockerProvider struct {
 	Watch        bool
 	Endpoint     string
-	dockerClient *docker.Client
 	Filename     string
 	Domain       string
 }
@@ -62,50 +64,60 @@ var DockerFuncMap = template.FuncMap{
 	"getHost": getHost,
 }
 
-func (provider *DockerProvider) Provide(configurationChan chan<- *Configuration) {
-	if client, err := docker.NewClient(provider.Endpoint); err != nil {
+func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration) {
+	if dockerClient, err := docker.NewClient(provider.Endpoint); err != nil {
 		log.Fatalf("Failed to create a client for docker, error: %s", err)
 	} else {
-		provider.dockerClient = client
-		_, err := provider.dockerClient.Info()
+		err := dockerClient.Ping()
 		if err != nil {
 			log.Fatalf("Docker connection error %+v", err)
 		}
 		log.Debug("Docker connection established")
 		dockerEvents := make(chan *docker.APIEvents)
 		if provider.Watch {
-			provider.dockerClient.AddEventListener(dockerEvents)
+			dockerClient.AddEventListener(dockerEvents)
+			log.Debug("Docker listening")
 			go func() {
-				for {
-					event := <-dockerEvents
-					if event == nil {
-						log.Fatalf("Docker connection error %+v", err)
-					}
-					if event.Status == "start" || event.Status == "die" {
-						log.Debug("Docker event receveived %+v", event)
-						configuration := provider.loadDockerConfig()
-						if configuration != nil {
-							configurationChan <- configuration
+				operation := func() error {
+					for {
+						event := <-dockerEvents
+						if event == nil {
+							return errors.New("Docker event nil")
+//							log.Fatalf("Docker connection error")
+						}
+						if (event.Status == "start" || event.Status == "die" ) {
+							log.Debug("Docker event receveived %+v", event)
+							configuration := provider.loadDockerConfig(dockerClient)
+							if configuration != nil {
+								configurationChan <- configuration
+							}
 						}
 					}
+				}
+				notify := func(err error, time time.Duration) {
+					log.Error("Docker connection error %+v, retrying in %s", err, time)
+				}
+				err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+				if err != nil {
+					log.Fatalf("Cannot connect to docker server %+v", err)
 				}
 			}()
 		}
 
-		configuration := provider.loadDockerConfig()
+		configuration := provider.loadDockerConfig(dockerClient)
 		configurationChan <- configuration
 	}
 }
 
-func (provider *DockerProvider) loadDockerConfig() *Configuration {
+func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *Configuration {
 	configuration := new(Configuration)
-	containerList, _ := provider.dockerClient.ListContainers(docker.ListContainersOptions{})
+	containerList, _ := dockerClient.ListContainers(docker.ListContainersOptions{})
 	containersInspected := []docker.Container{}
 	hosts := map[string][]docker.Container{}
 
 	// get inspect containers
 	for _, container := range containerList {
-		containerInspected, _ := provider.dockerClient.InspectContainer(container.ID)
+		containerInspected, _ := dockerClient.InspectContainer(container.ID)
 		containersInspected = append(containersInspected, *containerInspected)
 	}
 
