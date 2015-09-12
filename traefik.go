@@ -46,6 +46,9 @@ func main() {
 	// load global configuration
 	gloablConfiguration := LoadFileConfig(*globalConfigFile)
 
+	loggerMiddleware := middlewares.NewLogger(gloablConfiguration.AccessLogsFile)
+	defer loggerMiddleware.Close()
+
 	// logging
 	backends := []logging.Backend{}
 	level, err := logging.LogLevel(gloablConfiguration.LogLevel)
@@ -55,6 +58,7 @@ func main() {
 
 	if len(gloablConfiguration.TraefikLogsFile) > 0 {
 		fi, err := os.OpenFile(gloablConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		defer fi.Close()
 		if err != nil {
 			log.Fatal("Error opening file", err)
 		} else {
@@ -137,7 +141,7 @@ func main() {
 		// middlewares
 		var negroni = negroni.New()
 		negroni.Use(metrics)
-		negroni.Use(middlewares.NewLogger(gloablConfiguration.AccessLogsFile))
+		negroni.Use(loggerMiddleware)
 		negroni.UseHandler(configurationRouter)
 
 		srv = &graceful.Server{

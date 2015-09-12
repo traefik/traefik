@@ -29,9 +29,13 @@ func NewLogger(file string) *Logger {
 }
 
 func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if(l.file == nil){
+	if (l.file == nil) {
 		next(rw, r)
-	}else{
+	}else {
 		handlers.CombinedLoggingHandler(l.file, next).ServeHTTP(rw, r)
 	}
+}
+
+func (l *Logger) Close() {
+	l.file.Close()
 }
