@@ -17,12 +17,14 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/unrolled/render"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/thoas/stats"
 )
 
 
 var (
 	globalConfigFile = kingpin.Arg("conf", "Main configration file.").Default("traefik.toml").String()
 	currentConfiguration = new(Configuration)
+	metrics =  stats.New()
 	log = logging.MustGetLogger("traefik")
 	templatesRenderer = render.New(render.Options{
 		Directory: "templates",
@@ -138,7 +140,7 @@ func main() {
 
 			Server: &http.Server{
 				Addr:    gloablConfiguration.Port,
-				Handler: configurationRouter,
+				Handler: metrics.Handler(configurationRouter),
 			},
 		}
 
@@ -188,12 +190,11 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 	for routeName, route := range configuration.Routes {
 		log.Debug("Creating route %s", routeName)
 		fwd, _ := forward.New()
-		newRoutes := []*mux.Route{}
+		newRoute := router.NewRoute()
 		for ruleName, rule := range route.Rules {
 			log.Debug("Creating rule %s", ruleName)
-			newRouteReflect := Invoke(router.NewRoute(), rule.Category, rule.Value)
-			newRoute := newRouteReflect[0].Interface().(*mux.Route)
-			newRoutes = append(newRoutes, newRoute)
+			newRouteReflect := Invoke(newRoute, rule.Category, rule.Value)
+			newRoute = newRouteReflect[0].Interface().(*mux.Route)
 		}
 		if (backends[route.Backend] ==nil) {
 			log.Debug("Creating backend %s", route.Backend)
@@ -208,20 +209,18 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 		}else {
 			log.Debug("Reusing backend %s", route.Backend)
 		}
-		for _, muxRoute := range newRoutes {
-			if (len(gloablConfiguration.AccessLogsFile) > 0 ) {
-				fi, err := os.OpenFile(gloablConfiguration.AccessLogsFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-				if err != nil {
-					log.Fatal("Error opening file ", err)
-				}
-				muxRoute.Handler(handlers.CombinedLoggingHandler(fi, backends[route.Backend]))
-			}else {
-				muxRoute.Handler(backends[route.Backend])
-			}
-			err := muxRoute.GetError()
+		if (len(gloablConfiguration.AccessLogsFile) > 0 ) {
+			fi, err := os.OpenFile(gloablConfiguration.AccessLogsFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
 			if err != nil {
-				log.Error("Error building route ", err)
+				log.Fatal("Error opening file ", err)
 			}
+			newRoute.Handler(handlers.CombinedLoggingHandler(fi, backends[route.Backend]))
+		}else {
+			newRoute.Handler(backends[route.Backend])
+		}
+		err := newRoute.GetError()
+		if err != nil {
+			log.Error("Error building route ", err)
 		}
 	}
 	return router

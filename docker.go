@@ -77,6 +77,9 @@ func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration
 			go func() {
 				for {
 					event := <-dockerEvents
+					if (event == nil){
+						log.Fatalf("Docker connection error %+v", err)
+					}
 					if(event.Status == "start" || event.Status == "die"){
 						log.Debug("Docker event receveived %+v", event)
 						configuration := provider.loadDockerConfig()

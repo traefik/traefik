@@ -20,6 +20,7 @@ type Page struct {
 func (provider *WebProvider) Provide(configurationChan chan <- *Configuration) {
 	systemRouter := mux.NewRouter()
 	systemRouter.Methods("GET").PathPrefix("/web/").Handler(http.HandlerFunc(GetHtmlConfigHandler))
+	systemRouter.Methods("GET").PathPrefix("/metrics/").Handler(http.HandlerFunc(GetStatsHandler))
 	systemRouter.Methods("GET").PathPrefix("/api/").Handler(http.HandlerFunc(GetConfigHandler))
 	systemRouter.Methods("POST").PathPrefix("/api/").Handler(http.HandlerFunc(
 		func(rw http.ResponseWriter, r *http.Request) {
@@ -45,4 +46,8 @@ func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
 
 func GetHtmlConfigHandler(response http.ResponseWriter, request *http.Request) {
 	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configuration:*currentConfiguration})
+}
+
+func GetStatsHandler(rw http.ResponseWriter, r *http.Request) {
+	templatesRenderer.JSON(rw, http.StatusOK, metrics.Data())
 }
