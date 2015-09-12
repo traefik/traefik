@@ -1,10 +1,17 @@
 package main
 
 import (
+	"github.com/BurntSushi/toml"
+	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
+	"github.com/op/go-logging"
+	"github.com/thoas/stats"
 	"github.com/tylerb/graceful"
+	"github.com/unrolled/render"
+	"gopkg.in/alecthomas/kingpin.v2"
+	"./middlewares"
 	"net/http"
 	"net/url"
 	"os"
@@ -12,23 +19,16 @@ import (
 	"reflect"
 	"syscall"
 	"time"
-	"github.com/op/go-logging"
-	"github.com/BurntSushi/toml"
-	"github.com/gorilla/handlers"
-	"github.com/unrolled/render"
-	"gopkg.in/alecthomas/kingpin.v2"
-	"github.com/thoas/stats"
 )
 
-
 var (
-	globalConfigFile = kingpin.Arg("conf", "Main configration file.").Default("traefik.toml").String()
+	globalConfigFile     = kingpin.Arg("conf", "Main configration file.").Default("traefik.toml").String()
 	currentConfiguration = new(Configuration)
-	metrics =  stats.New()
-	log = logging.MustGetLogger("traefik")
-	templatesRenderer = render.New(render.Options{
-		Directory: "templates",
-		Asset: Asset,
+	metrics              = stats.New()
+	log                  = logging.MustGetLogger("traefik")
+	templatesRenderer    = render.New(render.Options{
+		Directory:  "templates",
+		Asset:      Asset,
 		AssetNames: AssetNames,
 	})
 )
@@ -53,11 +53,11 @@ func main() {
 		log.Fatal("Error getting level", err)
 	}
 
-	if (len(gloablConfiguration.TraefikLogsFile) > 0 ) {
-		fi, err := os.OpenFile(gloablConfiguration.TraefikLogsFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if len(gloablConfiguration.TraefikLogsFile) > 0 {
+		fi, err := os.OpenFile(gloablConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Fatal("Error opening file", err)
-		}else {
+		} else {
 			logBackend := logging.NewLogBackend(fi, "", 0)
 			logBackendFormatter := logging.NewBackendFormatter(logBackend, logging.GlogFormatter)
 			logBackendLeveled := logging.AddModuleLevel(logBackend)
@@ -65,7 +65,7 @@ func main() {
 			backends = append(backends, logBackendFormatter)
 		}
 	}
-	if (gloablConfiguration.TraefikLogsStdout) {
+	if gloablConfiguration.TraefikLogsStdout {
 		logBackend := logging.NewLogBackend(os.Stdout, "", 0)
 		logBackendFormatter := logging.NewBackendFormatter(logBackend, format)
 		logBackendLeveled := logging.AddModuleLevel(logBackend)
@@ -73,7 +73,6 @@ func main() {
 		backends = append(backends, logBackendFormatter)
 	}
 	logging.SetBackend(backends...)
-
 
 	configurationRouter = LoadDefaultConfig(gloablConfiguration)
 
@@ -84,32 +83,32 @@ func main() {
 			log.Info("Configuration receveived %+v", configuration)
 			if configuration == nil {
 				log.Info("Skipping empty configuration")
-			} else if (reflect.DeepEqual(currentConfiguration, configuration)) {
+			} else if reflect.DeepEqual(currentConfiguration, configuration) {
 				log.Info("Skipping same configuration")
 			} else {
 				currentConfiguration = configuration
 				configurationRouter = LoadConfig(configuration, gloablConfiguration)
-				srv.Stop(10 * time.Second)
+				srv.Stop(time.Duration(gloablConfiguration.GraceTimeOut) * time.Second)
 				time.Sleep(3 * time.Second)
 			}
 		}
 	}()
 
 	// configure providers
-	if (gloablConfiguration.Docker != nil) {
+	if gloablConfiguration.Docker != nil {
 		providers = append(providers, gloablConfiguration.Docker)
 	}
-	if (gloablConfiguration.Marathon != nil) {
+	if gloablConfiguration.Marathon != nil {
 		providers = append(providers, gloablConfiguration.Marathon)
 	}
-	if (gloablConfiguration.File != nil) {
-		if (len(gloablConfiguration.File.Filename) == 0) {
+	if gloablConfiguration.File != nil {
+		if len(gloablConfiguration.File.Filename) == 0 {
 			// no filename, setting to global config file
 			gloablConfiguration.File.Filename = *globalConfigFile
 		}
 		providers = append(providers, gloablConfiguration.File)
 	}
-	if (gloablConfiguration.Web != nil) {
+	if gloablConfiguration.Web != nil {
 		providers = append(providers, gloablConfiguration.Web)
 	}
 
@@ -134,18 +133,25 @@ func main() {
 		if goAway {
 			break
 		}
+
+		// middlewares
+		var negroni = negroni.New()
+		negroni.Use(metrics)
+		negroni.Use(middlewares.NewLogger(gloablConfiguration.AccessLogsFile))
+		negroni.UseHandler(configurationRouter)
+
 		srv = &graceful.Server{
-			Timeout: time.Duration(gloablConfiguration.GraceTimeOut) * time.Second,
+			Timeout:          time.Duration(gloablConfiguration.GraceTimeOut) * time.Second,
 			NoSignalHandling: true,
 
 			Server: &http.Server{
 				Addr:    gloablConfiguration.Port,
-				Handler: metrics.Handler(configurationRouter),
+				Handler: negroni,
 			},
 		}
 
 		go func() {
-			if (len(gloablConfiguration.CertFile) > 0 && len(gloablConfiguration.KeyFile) > 0) {
+			if len(gloablConfiguration.CertFile) > 0 && len(gloablConfiguration.KeyFile) > 0 {
 				srv.ListenAndServeTLS(gloablConfiguration.CertFile, gloablConfiguration.KeyFile)
 			} else {
 				srv.ListenAndServe()
@@ -163,29 +169,13 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 
 func LoadDefaultConfig(gloablConfiguration *GlobalConfiguration) *mux.Router {
 	router := mux.NewRouter()
-	if (len(gloablConfiguration.AccessLogsFile) > 0 ) {
-		fi, err := os.OpenFile(gloablConfiguration.AccessLogsFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-		if err != nil {
-			log.Fatal("Error opening file", err)
-		}
-		router.NotFoundHandler = handlers.CombinedLoggingHandler(fi, http.HandlerFunc(notFoundHandler))
-	}else {
-		router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	}
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	return router
 }
 
 func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfiguration) *mux.Router {
 	router := mux.NewRouter()
-	if (len(gloablConfiguration.AccessLogsFile) > 0 ) {
-		fi, err := os.OpenFile(gloablConfiguration.AccessLogsFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-		if err != nil {
-			log.Fatal("Error opening file", err)
-		}
-		router.NotFoundHandler = handlers.CombinedLoggingHandler(fi, http.HandlerFunc(notFoundHandler))
-	}else {
-		router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	}
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	backends := map[string]http.Handler{}
 	for routeName, route := range configuration.Routes {
 		log.Debug("Creating route %s", routeName)
@@ -196,7 +186,7 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 			newRouteReflect := Invoke(newRoute, rule.Category, rule.Value)
 			newRoute = newRouteReflect[0].Interface().(*mux.Route)
 		}
-		if (backends[route.Backend] ==nil) {
+		if backends[route.Backend] == nil {
 			log.Debug("Creating backend %s", route.Backend)
 			lb, _ := roundrobin.New(fwd)
 			rb, _ := roundrobin.NewRebalancer(lb)
@@ -205,19 +195,11 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 				url, _ := url.Parse(server.Url)
 				rb.UpsertServer(url, roundrobin.Weight(server.Weight))
 			}
-			backends[route.Backend]=lb
-		}else {
+			backends[route.Backend] = lb
+		} else {
 			log.Debug("Reusing backend %s", route.Backend)
 		}
-		if (len(gloablConfiguration.AccessLogsFile) > 0 ) {
-			fi, err := os.OpenFile(gloablConfiguration.AccessLogsFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-			if err != nil {
-				log.Fatal("Error opening file ", err)
-			}
-			newRoute.Handler(handlers.CombinedLoggingHandler(fi, backends[route.Backend]))
-		}else {
-			newRoute.Handler(backends[route.Backend])
-		}
+		newRoute.Handler(backends[route.Backend])
 		err := newRoute.GetError()
 		if err != nil {
 			log.Error("Error building route ", err)

@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
-	"net/http"
-	"fmt"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
 	"github.com/elazarl/go-bindata-assetfs"
+	"github.com/gorilla/mux"
+	"io/ioutil"
+	"net/http"
 )
 
 type WebProvider struct {
@@ -17,7 +17,7 @@ type Page struct {
 	Configuration Configuration
 }
 
-func (provider *WebProvider) Provide(configurationChan chan <- *Configuration) {
+func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 	systemRouter := mux.NewRouter()
 	systemRouter.Methods("GET").PathPrefix("/web/").Handler(http.HandlerFunc(GetHtmlConfigHandler))
 	systemRouter.Methods("GET").PathPrefix("/metrics/").Handler(http.HandlerFunc(GetStatsHandler))
@@ -27,10 +27,10 @@ func (provider *WebProvider) Provide(configurationChan chan <- *Configuration) {
 			configuration := new(Configuration)
 			b, _ := ioutil.ReadAll(r.Body)
 			err := json.Unmarshal(b, configuration)
-			if (err == nil) {
+			if err == nil {
 				configurationChan <- configuration
 				GetConfigHandler(rw, r)
-			}else {
+			} else {
 				log.Error("Error parsing configuration %+v\n", err)
 				http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 			}
@@ -45,7 +45,7 @@ func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
 }
 
 func GetHtmlConfigHandler(response http.ResponseWriter, request *http.Request) {
-	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configuration:*currentConfiguration})
+	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configuration: *currentConfiguration})
 }
 
 func GetStatsHandler(rw http.ResponseWriter, r *http.Request) {

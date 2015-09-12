@@ -1,15 +1,15 @@
 package main
 
 import (
-	"gopkg.in/fsnotify.v1"
 	"github.com/BurntSushi/toml"
+	"gopkg.in/fsnotify.v1"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
 type FileProvider struct {
-	Watch bool
+	Watch    bool
 	Filename string
 }
 
@@ -21,7 +21,7 @@ func NewFileProvider() *FileProvider {
 	return fileProvider
 }
 
-func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
+func (provider *FileProvider) Provide(configurationChan chan<- *Configuration) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Error("Error creating file watcher", err)
@@ -42,10 +42,10 @@ func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
 		for {
 			select {
 			case event := <-watcher.Events:
-				if(strings.Contains(event.Name,file.Name())){
+				if strings.Contains(event.Name, file.Name()) {
 					log.Debug("File event:", event)
 					configuration := provider.LoadFileConfig(file.Name())
-					if(configuration != nil) {
+					if configuration != nil {
 						configurationChan <- configuration
 					}
 				}
@@ -55,7 +55,7 @@ func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
 		}
 	}()
 
-	if(provider.Watch){
+	if provider.Watch {
 		err = watcher.Add(filepath.Dir(file.Name()))
 	}
 
@@ -64,12 +64,10 @@ func (provider *FileProvider) Provide(configurationChan chan<- *Configuration){
 		return
 	}
 
-
 	configuration := provider.LoadFileConfig(file.Name())
 	configurationChan <- configuration
 	<-done
 }
-
 
 func (provider *FileProvider) LoadFileConfig(filename string) *Configuration {
 	configuration := new(Configuration)

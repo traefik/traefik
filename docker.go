@@ -1,13 +1,14 @@
 package main
+
 import (
-	"github.com/fsouza/go-dockerclient"
-	"github.com/leekchan/gtf"
 	"bytes"
 	"github.com/BurntSushi/toml"
-	"text/template"
-	"strings"
 	"github.com/BurntSushi/ty/fun"
+	"github.com/fsouza/go-dockerclient"
+	"github.com/leekchan/gtf"
 	"strconv"
+	"strings"
+	"text/template"
 )
 
 type DockerProvider struct {
@@ -30,7 +31,7 @@ func NewDockerProvider() *DockerProvider {
 var DockerFuncMap = template.FuncMap{
 	"getBackend": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {
-			if (key == "traefik.backend") {
+			if key == "traefik.backend" {
 				return value
 			}
 		}
@@ -38,7 +39,7 @@ var DockerFuncMap = template.FuncMap{
 	},
 	"getPort": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {
-			if (key == "traefik.port") {
+			if key == "traefik.port" {
 				return value
 			}
 		}
@@ -49,7 +50,7 @@ var DockerFuncMap = template.FuncMap{
 	},
 	"getWeight": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {
-			if (key == "traefik.weight") {
+			if key == "traefik.weight" {
 				return value
 			}
 		}
@@ -61,29 +62,29 @@ var DockerFuncMap = template.FuncMap{
 	"getHost": getHost,
 }
 
-func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration) {
+func (provider *DockerProvider) Provide(configurationChan chan<- *Configuration) {
 	if client, err := docker.NewClient(provider.Endpoint); err != nil {
 		log.Fatalf("Failed to create a client for docker, error: %s", err)
 	} else {
 		provider.dockerClient = client
 		_, err := provider.dockerClient.Info()
-		if (err != nil){
+		if err != nil {
 			log.Fatalf("Docker connection error %+v", err)
 		}
 		log.Debug("Docker connection established")
 		dockerEvents := make(chan *docker.APIEvents)
-		if (provider.Watch) {
+		if provider.Watch {
 			provider.dockerClient.AddEventListener(dockerEvents)
 			go func() {
 				for {
 					event := <-dockerEvents
-					if (event == nil){
+					if event == nil {
 						log.Fatalf("Docker connection error %+v", err)
 					}
-					if(event.Status == "start" || event.Status == "die"){
+					if event.Status == "start" || event.Status == "die" {
 						log.Debug("Docker event receveived %+v", event)
 						configuration := provider.loadDockerConfig()
-						if (configuration != nil) {
+						if configuration != nil {
 							configurationChan <- configuration
 						}
 					}
@@ -110,16 +111,16 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 
 	// filter containers
 	filteredContainers := fun.Filter(func(container docker.Container) bool {
-		if (len(container.NetworkSettings.Ports) == 0) {
+		if len(container.NetworkSettings.Ports) == 0 {
 			log.Debug("Filtering container without port %s", container.Name)
 			return false
 		}
 		_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
-		if (len(container.NetworkSettings.Ports) > 1 &&  err != nil) {
+		if len(container.NetworkSettings.Ports) > 1 && err != nil {
 			log.Debug("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
 			return false
 		}
-		if (container.Config.Labels["traefik.enable"] == "false") {
+		if container.Config.Labels["traefik.enable"] == "false" {
 			log.Debug("Filtering disabled container %s", container.Name)
 			return false
 		}
@@ -141,13 +142,13 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 	}
 	gtf.Inject(DockerFuncMap)
 	tmpl := template.New(provider.Filename).Funcs(DockerFuncMap)
-	if(len(provider.Filename) > 0){
+	if len(provider.Filename) > 0 {
 		_, err := tmpl.ParseFiles(provider.Filename)
 		if err != nil {
 			log.Error("Error reading file", err)
 			return nil
 		}
-	}else{
+	} else {
 		buf, err := Asset("providerTemplates/docker.tmpl")
 		if err != nil {
 			log.Error("Error reading file", err)
@@ -175,7 +176,7 @@ func (provider *DockerProvider) loadDockerConfig() *Configuration {
 
 func getHost(container docker.Container) string {
 	for key, value := range container.Config.Labels {
-		if (key == "traefik.host") {
+		if key == "traefik.host" {
 			return value
 		}
 	}

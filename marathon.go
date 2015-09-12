@@ -1,13 +1,14 @@
 package main
+
 import (
-	"github.com/gambol99/go-marathon"
-	"github.com/leekchan/gtf"
 	"bytes"
 	"github.com/BurntSushi/toml"
-	"text/template"
-	"strings"
-	"strconv"
 	"github.com/BurntSushi/ty/fun"
+	"github.com/gambol99/go-marathon"
+	"github.com/leekchan/gtf"
+	"strconv"
+	"strings"
+	"text/template"
 )
 
 type MarathonProvider struct {
@@ -38,7 +39,7 @@ var MarathonFuncMap = template.FuncMap{
 	},
 	"getHost": func(application marathon.Application) string {
 		for key, value := range application.Labels {
-			if (key == "traefik.host") {
+			if key == "traefik.host" {
 				return value
 			}
 		}
@@ -46,7 +47,7 @@ var MarathonFuncMap = template.FuncMap{
 	},
 	"getWeight": func(application marathon.Application) string {
 		for key, value := range application.Labels {
-			if (key == "traefik.weight") {
+			if key == "traefik.weight" {
 				return value
 			}
 		}
@@ -57,7 +58,7 @@ var MarathonFuncMap = template.FuncMap{
 	},
 }
 
-func (provider *MarathonProvider) Provide(configurationChan chan <- *Configuration) {
+func (provider *MarathonProvider) Provide(configurationChan chan<- *Configuration) {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
 	config.EventsInterface = provider.NetworkInterface
@@ -67,7 +68,7 @@ func (provider *MarathonProvider) Provide(configurationChan chan <- *Configurati
 	} else {
 		provider.marathonClient = client
 		update := make(marathon.EventsChannel, 5)
-		if (provider.Watch) {
+		if provider.Watch {
 			if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
 				log.Error("Failed to register for subscriptions, %s", err)
 			} else {
@@ -76,7 +77,7 @@ func (provider *MarathonProvider) Provide(configurationChan chan <- *Configurati
 						event := <-update
 						log.Debug("Marathon event receveived", event)
 						configuration := provider.loadMarathonConfig()
-						if (configuration != nil) {
+						if configuration != nil {
 							configurationChan <- configuration
 						}
 					}
@@ -93,30 +94,30 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 	configuration := new(Configuration)
 
 	applications, err := provider.marathonClient.Applications(nil)
-	if (err != nil) {
+	if err != nil {
 		log.Error("Failed to create a client for marathon, error: %s", err)
 		return nil
 	}
 
 	tasks, err := provider.marathonClient.AllTasks()
-	if (err != nil) {
+	if err != nil {
 		log.Error("Failed to create a client for marathon, error: %s", err)
 		return nil
 	}
 
 	//filter tasks
 	filteredTasks := fun.Filter(func(task marathon.Task) bool {
-		if (len(task.Ports) == 0) {
+		if len(task.Ports) == 0 {
 			log.Debug("Filtering marathon task without port", task.AppID)
 			return false
 		}
 		application := getApplication(task, applications.Apps)
 		_, err := strconv.Atoi(application.Labels["traefik.port"])
-		if (len(application.Ports) > 1 &&  err != nil) {
+		if len(application.Ports) > 1 && err != nil {
 			log.Debug("Filtering marathon task with more than 1 port and no traefik.port label", task.AppID)
 			return false
 		}
-		if (application.Labels["traefik.enable"] == "false") {
+		if application.Labels["traefik.enable"] == "false" {
 			log.Debug("Filtering disabled marathon task", task.AppID)
 			return false
 		}
@@ -126,12 +127,12 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 	//filter apps
 	filteredApps := fun.Filter(func(app marathon.Application) bool {
 		//get ports from app tasks
-		if (!fun.Exists(func(task marathon.Task) bool {
-			if (task.AppID == app.ID) {
+		if !fun.Exists(func(task marathon.Task) bool {
+			if task.AppID == app.ID {
 				return true
 			}
 			return false
-		}, filteredTasks)) {
+		}, filteredTasks) {
 			return false
 		}
 		return true
@@ -149,13 +150,13 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 
 	gtf.Inject(MarathonFuncMap)
 	tmpl := template.New(provider.Filename).Funcs(DockerFuncMap)
-	if(len(provider.Filename) > 0){
+	if len(provider.Filename) > 0 {
 		_, err := tmpl.ParseFiles(provider.Filename)
 		if err != nil {
 			log.Error("Error reading file", err)
 			return nil
 		}
-	}else{
+	} else {
 		buf, err := Asset("providerTemplates/marathon.tmpl")
 		if err != nil {
 			log.Error("Error reading file", err)
@@ -185,7 +186,7 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 
 func getApplication(task marathon.Task, apps []marathon.Application) *marathon.Application {
 	for _, application := range apps {
-		if (application.ID == task.AppID) {
+		if application.ID == task.AppID {
 			return &application
 		}
 	}
