@@ -45,17 +45,20 @@ Here is a sample configuration TOML file:
 ```toml
 port = ":80"
 graceTimeOut = 10
-traefikLogsFile = "log/traefik.log"
-traefikLogsStdout = true
-accessLogsFile = "log/access.log"
 logLevel = "DEBUG"
+traefikLogsStdout = true
+# traefikLogsFile = "log/traefik.log"
+# accessLogsFile = "log/access.log"
 # CertFile = "traefik.crt"
 # KeyFile = "traefik.key"
 
-[docker]
-endpoint = "unix:///var/run/docker.sock"
-watch = true
-domain = "localhost"
+[web]
+address = ":8080"
+
+# [docker]
+# endpoint = "unix:///var/run/docker.sock"
+# watch = true
+# domain = "localhost"
 # filename = "docker.tmpl"
 
 # [marathon]
@@ -64,9 +67,6 @@ domain = "localhost"
 # watch = true
 # domain = "localhost"
 # filename = "marathon.tmpl"
-
-[web]
-address = ":8080"
 
 # [file]
 # filename = "rules.toml"
