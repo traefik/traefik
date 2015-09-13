@@ -19,10 +19,10 @@ It supports several backends (Docker, Mesos/Marathon, Consul, Etcd, Rest API, fi
 
 ## Plumbing
 
-* [Oxy](github.com/mailgun/oxy/): an awsome proxy librarymade by Mailgun guys
-* [Gorilla mux](github.com/gorilla/mux): famous request router
-* [Negroni](github.com/codegangsta/negroni): web middlewares made simple
-* [Graceful](github.com/tylerb/graceful): graceful shutdown of http.Handler servers
+* [Oxy](https://github.com/mailgun/oxy/): an awsome proxy librarymade by Mailgun guys
+* [Gorilla mux](https://github.com/gorilla/mux): famous request router
+* [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
+* [Graceful](https://github.com/tylerb/graceful): graceful shutdown of http.Handler servers
 
 ## Quick start
 
