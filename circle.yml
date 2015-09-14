@@ -8,19 +8,23 @@ dependencies:
   pre:
     - go generate
     - CGO_ENABLED=0 go build -a -installsuffix nocgo .
+    - go get github.com/mitchellh/gox
+    - go get github.com/tcnksm/ghr
+    - gox -verbose -os "linux darwin windows" -output "dist/$CIRCLE_PROJECT_REPONAME_{{.OS}}_{{.Arch}}"
+
   override:
     - echo $REPO
     - docker build -t ${REPO,,} .
 
 deployment:
-  hub:
+  github:
+    branch: master
+    commands:
+    - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --prerelease --replace `git describe --tags` dist/
+  dockerhub:
     branch: master
     commands:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push ${REPO,,}:latest
       - docker tag ${REPO,,}:latest ${REPO,,}:$CIRCLE_SHA1
       - docker push ${REPO,,}:$CIRCLE_SHA1
-      - go get github.com/mitchellh/gox
-      - go get github.com/tcnksm/ghr
-      - gox -os "linux darwin windows" -ldflags "-X main.Version $BUILD_VERSION -X main.BuildDate $BUILD_DATE" -output "dist/$CIRCLE_PROJECT_REPONAME_{{.OS}}_{{.Arch}}"
-      - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --prerelease --replace `git describe --tags` dist/
