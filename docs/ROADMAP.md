@@ -1,5 +1,6 @@
- # /træfɪk/
+# /Træfɪk/
 
+* Add traefik.protocol label
 * Providers recovery
 * tls client verification
 * Default configuration values

@@ -2,7 +2,7 @@ port = ":8001"
 graceTimeOut = 10
 # traefikLogsFile = "log/traefik.log"
 traefikLogsStdout = true
-# accessLogsFile = "log/access.log"
+accessLogsFile = "log/access.log"
 logLevel = "DEBUG"
 # CertFile = "traefik.crt"
 # KeyFile = "traefik.key"
@@ -10,7 +10,7 @@ logLevel = "DEBUG"
 [docker]
 endpoint = "unix:///var/run/docker.sock"
 watch = true
-domain = "toto.fr"
+domain = "localhost"
 # filename = "docker.tmpl"
 
 # [marathon]
@@ -23,9 +23,9 @@ domain = "toto.fr"
 [web]
 address = ":8010"
 
-# [file]
+#[file]
 # filename = "rules.toml"
-# watch = true
+watch = true
 
 [backends]
   [backends.backend1]
@@ -37,15 +37,18 @@ address = ":8010"
     weight = 1
   [backends.backend2]
     [backends.backend2.servers.server1]
-    url = "http://172.17.0.2:80"
-    weight = 100
+    url = "https://www.google.fr"
+    weight = 1
+    [backends.backend2.servers.server2]
+    url = "http://www.wikipedia.fr"
+    weight = 2
 
 [routes]
   [routes.route1]
   backend = "backend2"
     [routes.route1.rules.test_zenika_1]
     category = "Host"
-    value = "test.zenika.fr"
+    value = "test.localhost"
   [routes.route2]
   backend = "backend1"
     [routes.route2.rules.test_zenika_2]
