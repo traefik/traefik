@@ -6,6 +6,8 @@ machine:
 
 dependencies:
   pre:
+    - go get
+    - go generate
     - CGO_ENABLED=0 go build -a -installsuffix nocgo .
   override:
     - echo $REPO
