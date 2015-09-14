@@ -20,7 +20,7 @@ deployment:
   github:
     branch: master
     commands:
-      - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace --prerelease --debug pre-release dist/
+      - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace --prerelease --debug v1.0 dist/
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push ${REPO,,}:latest
       - docker tag ${REPO,,}:latest ${REPO,,}:$CIRCLE_SHA1
