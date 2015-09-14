@@ -7,7 +7,7 @@
 # Optional
 # Default: ":80"
 #
-port = ":8081"
+# port = ":80"
 
 # Timeout in seconds.
 # Duration to give active requests a chance to finish during hot-reloads
@@ -58,13 +58,13 @@ port = ":8081"
 #
 # Optional
 #
-[web]
+# [web]
 
 # Web administration port
 #
 # Required
 #
-address = ":8082"
+# address = ":8080"
 
 
 ################################################################
@@ -100,26 +100,26 @@ address = ":8082"
 #
 # Optional
 #
-[docker]
+# [docker]
 
 # Docker server endpoint. Can be a tcp or a unix socket endpoint.
 #
 # Required
 #
-endpoint = "unix:///var/run/docker.sock"
+# endpoint = "unix:///var/run/docker.sock"
 
 # Enable watch docker changes
 #
 # Optional
 #
-watch = true
+# watch = true
 
 # Default domain used.
 # Can be overridden by setting the "traefik.domain" label on a container.
 #
 # Required
 #
-domain = "docker.localhost"
+# domain = "docker.localhost"
 
 # Override default configuration template. For advanced users :)
 #
