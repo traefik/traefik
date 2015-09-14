@@ -20,4 +20,3 @@ deployment:
       - docker push ${REPO,,}:latest
       - docker tag ${REPO,,}:latest ${REPO,,}:$CIRCLE_SHA1
       - docker push ${REPO,,}:$CIRCLE_SHA1
-      - docker -H tcp://$HOST_DEPLOY:5000 run -d -p 80:80 ${REPO,,}

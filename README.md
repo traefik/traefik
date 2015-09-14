@@ -1,5 +1,7 @@
 ![Træfɪk](docs/img/traefik.logo.png "Træfɪk")
 
+[![Circle CI](https://circleci.com/gh/EmileVauge/traefik.svg?style=svg)](https://circleci.com/gh/EmileVauge/traefik)
+
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
 It supports several backends (Docker, Mesos/Marathon, Consul, Etcd, Rest API, file...) to manage its configuration automatically and dynamically (hot-reload).
 
