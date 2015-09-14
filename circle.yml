@@ -20,7 +20,7 @@ deployment:
   github:
     branch: master
     commands:
-    - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --prerelease --replace `git describe --tags` dist/
+    - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --prerelease --replace `git describe --tags --abbrev=0` dist/
   dockerhub:
     branch: master
     commands:

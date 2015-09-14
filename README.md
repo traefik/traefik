@@ -1,6 +1,9 @@
-![Træfɪk](docs/img/traefik.logo.png "Træfɪk")
+![Træfɪk](http://traefik.github.io/traefik.logo.svg  "Træfɪk")
 
-[![Circle CI](https://circleci.com/gh/EmileVauge/traefik.svg?style=svg)](https://circleci.com/gh/EmileVauge/traefik)
+[![Circle CI](https://img.shields.io/circleci/project/EmileVauge/traefik.svg)](https://circleci.com/gh/EmileVauge/traefik)
+[![Forks](https://img.shields.io/github/forks/EmileVauge/traefik.svg)](https://github.com/EmileVauge/traefik)
+[![Stars](https://img.shields.io/github/stars/EmileVauge/traefik.svg)](https://github.com/EmileVauge/traefik)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/EmileVauge/traefik/blob/master/LICENSE.md)
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
 It supports several backends (Docker, Mesos/Marathon, Consul, Etcd, Rest API, file...) to manage its configuration automatically and dynamically (hot-reload).
@@ -30,8 +33,7 @@ It supports several backends (Docker, Mesos/Marathon, Consul, Etcd, Rest API, fi
 
 # Quick start
 
-* The simple way: go to the [releases](https://github.com/emilevauge/traefik/releases) page and get a binary for your platform.
-Just run it!
+* The simple way: grab the latest binary from [![the Github releases page](https://img.shields.io/github/downloads/EmileVauge/traefik/latest/total.svg)](https://github.com/emilevauge/traefik/releases) and just run it with the sample configuration file:
 
 ```
 ./traefik traefik.toml
@@ -40,119 +42,7 @@ Just run it!
 * Use the tiny Docker image:
 
 ```
-docker run -t -p 8081:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml emilevauge/traefik
+docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml emilevauge/traefik
 ```
 
 # Configuration
-
-## Global configuration
-
-```toml
-# traefik.toml
-port = ":80"
-graceTimeOut = 10
-logLevel = "DEBUG"
-traefikLogsStdout = true
-# traefikLogsFile = "log/traefik.log"
-# accessLogsFile = "log/access.log"
-# CertFile = "traefik.crt"
-# KeyFile = "traefik.key"
-```
-
-## File backend
-
-Like any other reverse proxy, Træfɪk can be configured with a file. You have two choices:
-
-* simply add your configuration at the end of the global configuration file ```traefik.tml``` :
-
-```toml
-# traefik.toml
-port = ":80"
-graceTimeOut = 10
-logLevel = "DEBUG"
-traefikLogsStdout = true
-# traefikLogsFile = "log/traefik.log"
-# accessLogsFile = "log/access.log"
-# CertFile = "traefik.crt"
-# KeyFile = "traefik.key"
-
-[file]
-
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "http://172.17.0.2:80"
-    weight = 10
-    [backends.backend1.servers.server2]
-    url = "http://172.17.0.3:80"
-    weight = 1
-  [backends.backend2]
-    [backends.backend2.servers.server1]
-    url = "http://172.17.0.4:80"
-    weight = 1
-
-[routes]
-  [routes.route1]
-  backend = "backend2"
-    [routes.route1.rules.test1]
-    category = "Host"
-    value = "test.localhost"
-  [routes.route2]
-  backend = "backend1"
-    [routes.route2.rules.test2]
-    category = "Path"
-    value = "/test"
-
-```
-
-* or put your configuration in a separate file, for example ```rules.tml```:
-
-```toml
-# traefik.toml
-port = ":80"
-graceTimeOut = 10
-logLevel = "DEBUG"
-traefikLogsStdout = true
-# traefikLogsFile = "log/traefik.log"
-# accessLogsFile = "log/access.log"
-# CertFile = "traefik.crt"
-# KeyFile = "traefik.key"
-
-[file]
-filename = "rules.toml"
-```
-
-```toml
-# rules.toml
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "http://172.17.0.2:80"
-    weight = 10
-    [backends.backend1.servers.server2]
-    url = "http://172.17.0.3:80"
-    weight = 1
-  [backends.backend2]
-    [backends.backend2.servers.server1]
-    url = "http://172.17.0.4:80"
-    weight = 1
-
-[routes]
-  [routes.route1]
-  backend = "backend2"
-    [routes.route1.rules.test1]
-    category = "Host"
-    value = "test.localhost"
-  [routes.route2]
-  backend = "backend1"
-    [routes.route2.rules.test2]
-    category = "Path"
-    value = "/test"
-```
-
-If you want Træfɪk to watch file changes automatically, just add:
-
-```toml
-[file]
-watch = true
-```
