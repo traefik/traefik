@@ -1,0 +1,22 @@
+machine:
+  services:
+    - docker
+  environment:
+    REPO: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+
+dependencies:
+  pre:
+    - CGO_ENABLED=0 go build -a -installsuffix nocgo .
+  override:
+    - echo $REPO
+    - docker build -t ${REPO,,} .
+
+deployment:
+  hub:
+    branch: master
+    commands:
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push ${REPO,,}:latest
+      - docker tag ${REPO,,}:latest ${REPO,,}:$CIRCLE_SHA1
+      - docker push ${REPO,,}:$CIRCLE_SHA1
+      - docker -H tcp://$HOST_DEPLOY:5000 run -d -p 80:80 ${REPO,,}
