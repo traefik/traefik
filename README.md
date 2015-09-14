@@ -1,6 +1,6 @@
-![/Træfɪk/](docs/img/traefik.logo.png "/Træfɪk/")
+![Træfɪk](docs/img/traefik.logo.png "Træfɪk")
 
-/Træfɪk/ is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
+Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
 It supports several backends (Docker, Mesos/Marathon, Consul, Etcd, Rest API, file...) to manage its configuration automatically and dynamically (hot-reload).
 
 ![Backends](docs/img/backends.png "Backends")
@@ -58,7 +58,7 @@ traefikLogsStdout = true
 
 ## File backend
 
-Like any other reverse proxy, /Træfɪk/ can be configured with a file. You have two choices:
+Like any other reverse proxy, Træfɪk can be configured with a file. You have two choices:
 
 * simply add your configuration at the end of the global configuration file ```traefik.tml``` :
 
@@ -147,7 +147,7 @@ filename = "rules.toml"
     value = "/test"
 ```
 
-If you want /Træfɪk/ to watch file changes automatically, just add:
+If you want Træfɪk to watch file changes automatically, just add:
 
 ```toml
 [file]

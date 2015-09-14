@@ -1,4 +1,4 @@
-# /Træfɪk/
+# Træfɪk
 
 * Add traefik.protocol label
 * Providers recovery
