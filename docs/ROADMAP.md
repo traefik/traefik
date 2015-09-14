@@ -1,4 +1,4 @@
-# Træfɪk
+# Træfɪk Roadmap
 
 * Add traefik.protocol label
 * Providers recovery
@@ -7,7 +7,6 @@
 * Retry with streams
 * Licence
 * Add traefik.indlude all/enabled policy
-* SSL backends support
 * Consul support
 * README
 * API enhancements
@@ -26,6 +25,7 @@
 * ~~Filter no exposed port apps~~
 * ~~Logs~~
 * ~~SSL frontend support~~
+* ~~SSL backends support~~
 * ~~Static files~~
 * ~~Metrics~~
 * ~~Dockerfile~~

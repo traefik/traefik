@@ -17,7 +17,7 @@ type GlobalConfiguration struct {
 func NewGlobalConfiguration() *GlobalConfiguration {
 	globalConfiguration := new(GlobalConfiguration)
 	// default values
-	globalConfiguration.Port = ":8080"
+	globalConfiguration.Port = ":80"
 	globalConfiguration.GraceTimeOut = 10
 	globalConfiguration.LogLevel = "ERROR"
 	globalConfiguration.TraefikLogsStdout = true

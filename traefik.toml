@@ -1,56 +1,205 @@
-port = ":8001"
-graceTimeOut = 10
+################################################################
+# Global configuration
+################################################################
+
+# Reverse proxy port
+#
+# Optional
+# Default: ":80"
+#
+# port = ":80"
+
+# Timeout in seconds.
+# Duration to give active requests a chance to finish during hot-reloads
+#
+# Optional
+# Default: 10
+#
+# graceTimeOut = 10
+
+# Traefik logs file
+#
+# Optional
+#
 # traefikLogsFile = "log/traefik.log"
-traefikLogsStdout = true
-accessLogsFile = "log/access.log"
-logLevel = "DEBUG"
+
+# Traefik log to standard output
+#
+# Optional
+# Default: true
+#
+# traefikLogsStdout = true
+
+# Access logs file
+#
+# Optional
+#
+# accessLogsFile = "log/access.log"
+
+# Log level
+#
+# Optional
+# Default: "ERROR"
+#
+# logLevel = "ERROR"
+
+# SSL certificate and key used
+#
+# Optional
+#
 # CertFile = "traefik.crt"
 # KeyFile = "traefik.key"
 
-[docker]
-endpoint = "unix:///var/run/docker.sock"
-watch = true
-domain = "localhost"
+################################################################
+# Web configuration backend
+################################################################
+
+# Enable web configuration backend
+#
+# Optional
+#
+# [web]
+
+# Web administration port
+#
+# Required
+#
+# address = ":8080"
+
+
+################################################################
+# File configuration backend
+################################################################
+
+# Enable file configuration backend
+#
+# Optional
+#
+# [file]
+
+# Rules file
+# If defined, traefik will load rules from this file,
+# otherwise, it will load rules from current file (cf Sample rules below).
+#
+# Optional
+#
+# filename = "rules.toml"
+
+# Enable watch file changes
+#
+# Optional
+#
+# watch = true
+
+
+################################################################
+# Docker configuration backend
+################################################################
+
+# Enable Docker configuration backend
+#
+# Optional
+#
+# [docker]
+
+# Docker server endpoint. Can be a tcp or a unix socket endpoint.
+#
+# Required
+#
+# endpoint = "unix:///var/run/docker.sock"
+
+# Enable watch docker changes
+#
+# Optional
+#
+# watch = true
+
+# Default domain used.
+# Can be overridden by setting the "traefik.domain" label on a container.
+#
+# Required
+#
+# domain = "docker.localhost"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
 # filename = "docker.tmpl"
 
+
+################################################################
+# Mesos/Marathon configuration backend
+################################################################
+
+# Enable Marathon configuration backend
+#
+# Optional
+#
 # [marathon]
+
+# Marathon server endpoint.
+# You can also specify multiple endpoint for Marathon:
+# endpoint := "http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
+#
+# Required
+#
 # endpoint = "http://127.0.0.1:8080"
+
+# Network interface used to call Marathon web services
+# Optional
+# Default: "eth0"
+#
 # networkInterface = "eth0"
+
+# Enable watch Marathon changes
+#
+# Optional
+#
 # watch = true
-# domain = "toto.fr"
+
+# Default domain used.
+# Can be overridden by setting the "traefik.domain" label on an application.
+#
+# Required
+#
+# domain = "marathon.localhost"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
 # filename = "marathon.tmpl"
 
-[web]
-address = ":8010"
 
-#[file]
-# filename = "rules.toml"
-watch = true
 
-[backends]
-  [backends.backend1]
-    [backends.backend1.servers.server1]
-    url = "http://172.17.0.2:80"
-    weight = 10
-    [backends.backend1.servers.server2]
-    url = "http://172.17.0.3:80"
-    weight = 1
-  [backends.backend2]
-    [backends.backend2.servers.server1]
-    url = "https://www.google.fr"
-    weight = 1
-    [backends.backend2.servers.server2]
-    url = "http://www.wikipedia.fr"
-    weight = 2
-
-[routes]
-  [routes.route1]
-  backend = "backend2"
-    [routes.route1.rules.test_zenika_1]
-    category = "Host"
-    value = "test.localhost"
-  [routes.route2]
-  backend = "backend1"
-    [routes.route2.rules.test_zenika_2]
-    category = "Path"
-    value = "/test"
+################################################################
+# Sample rules
+################################################################
+# [backends]
+#   [backends.backend1]
+#     [backends.backend1.servers.server1]
+#     url = "http://172.17.0.2:80"
+#     weight = 10
+#     [backends.backend1.servers.server2]
+#     url = "http://172.17.0.3:80"
+#     weight = 1
+#   [backends.backend2]
+#     [backends.backend2.servers.server1]
+#     url = "http://172.17.0.4:80"
+#     weight = 1
+#     [backends.backend2.servers.server2]
+#     url = "http://172.17.0.5:80"
+#     weight = 2
+#
+# [routes]
+#   [routes.route1]
+#   backend = "backend2"
+#     [routes.route1.rules.test_1]
+#     category = "Host"
+#     value = "test.localhost"
+#   [routes.route2]
+#   backend = "backend1"
+#     [routes.route2.rules.test_2]
+#     category = "Path"
+#     value = "/test"

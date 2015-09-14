@@ -30,16 +30,17 @@ It supports several backends (Docker, Mesos/Marathon, Consul, Etcd, Rest API, fi
 
 # Quick start
 
-* The simple way: go to the [releases](https://github.com/emilevauge/traefik/releases) page and get a binary.
-* Or simply execute:
-
-```
-go get github.com/emilevauge/traefik
-```
-* Just run it!
+* The simple way: go to the [releases](https://github.com/emilevauge/traefik/releases) page and get a binary for your platform.
+Just run it!
 
 ```
 ./traefik traefik.toml
+```
+
+* Use the tiny Docker image:
+
+```
+docker run -t -p 8081:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml emilevauge/traefik
 ```
 
 # Configuration

@@ -10,7 +10,7 @@ dependencies:
     - CGO_ENABLED=0 go build -a -installsuffix nocgo .
     - go get github.com/mitchellh/gox
     - go get github.com/tcnksm/ghr
-    - gox -verbose -os "linux darwin windows" -output "dist/$CIRCLE_PROJECT_REPONAME_{{.OS}}_{{.Arch}}"
+    - gox -verbose -os "linux darwin windows"
 
   override:
     - echo $REPO
