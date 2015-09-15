@@ -188,7 +188,7 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 		newRoute := router.NewRoute()
 		for routeName, route := range frontend.Routes {
 			log.Debug("Creating route %s", routeName)
-			newRouteReflect := Invoke(newRoute, route.Category, route.Value)
+			newRouteReflect := Invoke(newRoute, route.Rule, route.Value)
 			newRoute = newRouteReflect[0].Interface().(*mux.Route)
 		}
 		if backends[frontend.Backend] == nil {

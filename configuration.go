@@ -35,7 +35,7 @@ type Server struct {
 }
 
 type Route struct {
-	Category string
+	Rule string
 	Value    string
 }
 

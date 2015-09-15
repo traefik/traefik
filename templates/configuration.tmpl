@@ -39,13 +39,13 @@
                 <table class="table table-striped table-hover">
                     <tr>
                         <td><em>Route</em></td>
-                        <td><em>Category</em></td>
+                        <td><em>Rule</em></td>
                         <td><em>Value</em></td>
                     </tr>
                     {{range $keyRoutes, $valueRoutes := $valueFrontends.Routes}}
                     <tr>
                         <td>{{$keyRoutes}}</td>
-                        <td>{{$valueRoutes.Category}}</td>
+                        <td>{{$valueRoutes.Rule}}</td>
                         <td>{{$valueRoutes.Value}}</td>
                     </tr>
                     {{end}}

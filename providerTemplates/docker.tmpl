@@ -9,6 +9,6 @@
   {{$container := index $containers 0}}
   backend = "backend-{{getBackend $container}}"
     [frontends.frontend-{{$host}}.routes.route-host-{{$host}}]
-    category = "Host"
+    rule = "Host"
     value = "{{$host}}.{{$.Domain}}"
 {{end}}

@@ -196,10 +196,10 @@
 #   [frontends.frontend1]
 #   backend = "backend2"
 #     [frontends.frontend1.routes.test_1]
-#     category = "Host"
+#     rule = "Host"
 #     value = "test.localhost"
 #   [frontends.frontend2]
 #   backend = "backend1"
 #     [frontends.frontend2.routes.test_2]
-#     category = "Path"
+#     rule = "Path"
 #     value = "/test"

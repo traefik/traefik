@@ -14,6 +14,6 @@
   [frontends.frontend{{.ID | replace "/" "-"}}]
   backend = "backend{{.ID | replace "/" "-"}}"
     [frontends.frontend-{{getHost . | replace "/" "-"}}.routes.route-host-{{getHost . | replace "/" "-"}}]
-    category = "Host"
+    rule = "Host"
     value = "{{getHost . | replace "/" "-"}}.{{$.Domain}}"
 {{end}}
