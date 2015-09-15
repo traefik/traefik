@@ -10,10 +10,10 @@
     {{end}}
 {{end}}
 
-[routes]{{range .Applications}}
-  [routes.route{{.ID | replace "/" "-"}}]
+[frontends]{{range .Applications}}
+  [frontends.frontend{{.ID | replace "/" "-"}}]
   backend = "backend{{.ID | replace "/" "-"}}"
-    [routes.route-{{getHost . | replace "/" "-"}}.rules.rule-host-{{getHost . | replace "/" "-"}}]
+    [frontends.frontend-{{getHost . | replace "/" "-"}}.routes.route-host-{{getHost . | replace "/" "-"}}]
     category = "Host"
     value = "{{getHost . | replace "/" "-"}}.{{$.Domain}}"
 {{end}}

@@ -4,11 +4,11 @@
     weight = {{getWeight .}}
 {{end}}
 
-[routes]{{range $host, $containers := .Hosts}}
-  [routes.route-{{$host}}]
+[frontends]{{range $host, $containers := .Hosts}}
+  [frontends.frontend-{{$host}}]
   {{$container := index $containers 0}}
   backend = "backend-{{getBackend $container}}"
-    [routes.route-{{$host}}.rules.rule-host-{{$host}}]
+    [frontends.frontend-{{$host}}.routes.route-host-{{$host}}]
     category = "Host"
     value = "{{$host}}.{{$.Domain}}"
 {{end}}

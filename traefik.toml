@@ -192,14 +192,14 @@ domain = "docker.localhost"
 #     url = "http://172.17.0.5:80"
 #     weight = 2
 #
-# [routes]
-#   [routes.route1]
+# [frontends]
+#   [frontends.frontend1]
 #   backend = "backend2"
-#     [routes.route1.rules.test_1]
+#     [frontends.frontend1.routes.test_1]
 #     category = "Host"
 #     value = "test.localhost"
-#   [routes.route2]
+#   [frontends.frontend2]
 #   backend = "backend1"
-#     [routes.route2.rules.test_2]
+#     [frontends.frontend2.routes.test_2]
 #     category = "Path"
 #     value = "/test"

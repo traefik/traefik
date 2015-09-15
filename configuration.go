@@ -34,17 +34,17 @@ type Server struct {
 	Weight int
 }
 
-type Rule struct {
+type Route struct {
 	Category string
 	Value    string
 }
 
-type Route struct {
+type Frontend struct {
 	Backend string
-	Rules   map[string]Rule
+	Routes map[string]Route
 }
 
 type Configuration struct {
 	Backends map[string]Backend
-	Routes   map[string]Route
+	Frontends map[string]Frontend
 }

@@ -182,29 +182,29 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	backends := map[string]http.Handler{}
-	for routeName, route := range configuration.Routes {
-		log.Debug("Creating route %s", routeName)
+	for frontendName, frontend := range configuration.Frontends {
+		log.Debug("Creating frontend %s", frontendName)
 		fwd, _ := forward.New()
 		newRoute := router.NewRoute()
-		for ruleName, rule := range route.Rules {
-			log.Debug("Creating rule %s", ruleName)
-			newRouteReflect := Invoke(newRoute, rule.Category, rule.Value)
+		for routeName, route := range frontend.Routes {
+			log.Debug("Creating route %s", routeName)
+			newRouteReflect := Invoke(newRoute, route.Category, route.Value)
 			newRoute = newRouteReflect[0].Interface().(*mux.Route)
 		}
-		if backends[route.Backend] == nil {
-			log.Debug("Creating backend %s", route.Backend)
+		if backends[frontend.Backend] == nil {
+			log.Debug("Creating backend %s", frontend.Backend)
 			lb, _ := roundrobin.New(fwd)
 			rb, _ := roundrobin.NewRebalancer(lb)
-			for serverName, server := range configuration.Backends[route.Backend].Servers {
+			for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 				log.Debug("Creating server %s", serverName)
 				url, _ := url.Parse(server.Url)
 				rb.UpsertServer(url, roundrobin.Weight(server.Weight))
 			}
-			backends[route.Backend] = lb
+			backends[frontend.Backend] = lb
 		} else {
-			log.Debug("Reusing backend %s", route.Backend)
+			log.Debug("Reusing backend %s", frontend.Backend)
 		}
-		newRoute.Handler(backends[route.Backend])
+		newRoute.Handler(backends[frontend.Backend])
 		err := newRoute.GetError()
 		if err != nil {
 			log.Error("Error building route ", err)
