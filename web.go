@@ -19,10 +19,10 @@ type Page struct {
 
 func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 	systemRouter := mux.NewRouter()
-	systemRouter.Methods("GET").PathPrefix("/web/").Handler(http.HandlerFunc(GetHtmlConfigHandler))
-	systemRouter.Methods("GET").PathPrefix("/metrics/").Handler(http.HandlerFunc(GetStatsHandler))
-	systemRouter.Methods("GET").PathPrefix("/api/").Handler(http.HandlerFunc(GetConfigHandler))
-	systemRouter.Methods("POST").PathPrefix("/api/").Handler(http.HandlerFunc(
+	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHtmlConfigHandler))
+	systemRouter.Methods("GET").Path("/metrics").Handler(http.HandlerFunc(GetStatsHandler))
+	systemRouter.Methods("GET").Path("/api").Handler(http.HandlerFunc(GetConfigHandler))
+	systemRouter.Methods("POST").Path("/api").Handler(http.HandlerFunc(
 		func(rw http.ResponseWriter, r *http.Request) {
 			configuration := new(Configuration)
 			b, _ := ioutil.ReadAll(r.Body)
@@ -35,7 +35,11 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 				http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 			}
 		}))
-	systemRouter.PathPrefix("/static").Handler(http.StripPrefix("/static/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "static"})))
+	systemRouter.Methods("GET").Path("/api/backends").Handler(http.HandlerFunc(GetBackendsHandler))
+	systemRouter.Methods("GET").Path("/api/backends/{id}").Handler(http.HandlerFunc(GetBackendHandler))
+	systemRouter.Methods("GET").Path("/api/frontends").Handler(http.HandlerFunc(GetFrontendsHandler))
+	systemRouter.Methods("GET").Path("/api/frontends/{id}").Handler(http.HandlerFunc(GetFrontendHandler))
+	systemRouter.Methods("GET").PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "static"})))
 
 	go http.ListenAndServe(provider.Address, systemRouter)
 }
@@ -50,4 +54,24 @@ func GetHtmlConfigHandler(response http.ResponseWriter, request *http.Request) {
 
 func GetStatsHandler(rw http.ResponseWriter, r *http.Request) {
 	templatesRenderer.JSON(rw, http.StatusOK, metrics.Data())
+}
+
+func GetBackendsHandler(rw http.ResponseWriter, r *http.Request) {
+	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration.Backends)
+}
+
+func GetBackendHandler(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration.Backends[id])
+}
+
+func GetFrontendsHandler(rw http.ResponseWriter, r *http.Request) {
+	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration.Frontends)
+}
+
+func GetFrontendHandler(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration.Frontends[id])
 }
