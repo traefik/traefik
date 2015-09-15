@@ -215,7 +215,7 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 
 func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 	inputs := make([]reflect.Value, len(args))
-	for i, _ := range args {
+	for i := range args {
 		inputs[i] = reflect.ValueOf(args[i])
 	}
 	return reflect.ValueOf(any).MethodByName(name).Call(inputs)

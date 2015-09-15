@@ -4,10 +4,10 @@ Copyright
 package middlewares
 
 import (
+	"encoding/json"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"github.com/gorilla/mux"
-	"encoding/json"
 )
 
 type Routes struct {
@@ -19,8 +19,8 @@ func NewRoutes(router *mux.Router) *Routes {
 }
 
 func (router *Routes) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	routeMatch :=mux.RouteMatch{}
-	if(router.router.Match(r, &routeMatch)){
+	routeMatch := mux.RouteMatch{}
+	if router.router.Match(r, &routeMatch) {
 		json, _ := json.Marshal(routeMatch.Handler)
 		log.Println("Request match route ", json)
 	}
