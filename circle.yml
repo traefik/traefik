@@ -6,15 +6,17 @@ machine:
 
 dependencies:
   pre:
-    - go generate
-    - CGO_ENABLED=0 go build -a -installsuffix nocgo .
-    - go get github.com/mitchellh/gox
     - go get github.com/tcnksm/ghr
-    - gox -verbose -os "linux darwin windows" --output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
-
+    - make validate
   override:
+    - make binary
+
+test:
+  override:
+    - make test
+  post:
     - echo $REPO
-    - docker build -t ${REPO,,} .
+    - make image
 
 deployment:
   github:

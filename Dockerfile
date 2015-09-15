@@ -1,3 +1,3 @@
 FROM scratch
-ADD traefik /
-CMD ["/traefik"]
+COPY dist/traefik_linux-386 /traefik
+ENTRYPOINT ["/traefik"]
