@@ -2,23 +2,23 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
+	"github.com/cenkalti/backoff"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/leekchan/gtf"
-	"github.com/cenkalti/backoff"
 	"strconv"
 	"strings"
 	"text/template"
-	"errors"
 	"time"
 )
 
 type DockerProvider struct {
-	Watch        bool
-	Endpoint     string
-	Filename     string
-	Domain       string
+	Watch    bool
+	Endpoint string
+	Filename string
+	Domain   string
 }
 
 func NewDockerProvider() *DockerProvider {
@@ -45,7 +45,7 @@ var DockerFuncMap = template.FuncMap{
 				return value
 			}
 		}
-		for key, _ := range container.NetworkSettings.Ports {
+		for key := range container.NetworkSettings.Ports {
 			return key.Port()
 		}
 		return ""
@@ -64,7 +64,7 @@ var DockerFuncMap = template.FuncMap{
 	"getHost": getHost,
 }
 
-func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration) {
+func (provider *DockerProvider) Provide(configurationChan chan<- *Configuration) {
 	if dockerClient, err := docker.NewClient(provider.Endpoint); err != nil {
 		log.Fatalf("Failed to create a client for docker, error: %s", err)
 	} else {
@@ -83,9 +83,9 @@ func (provider *DockerProvider) Provide(configurationChan chan <- *Configuration
 						event := <-dockerEvents
 						if event == nil {
 							return errors.New("Docker event nil")
-//							log.Fatalf("Docker connection error")
+							//							log.Fatalf("Docker connection error")
 						}
-						if (event.Status == "start" || event.Status == "die" ) {
+						if event.Status == "start" || event.Status == "die" {
 							log.Debug("Docker event receveived %+v", event)
 							configuration := provider.loadDockerConfig(dockerClient)
 							if configuration != nil {

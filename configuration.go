@@ -35,16 +35,16 @@ type Server struct {
 }
 
 type Route struct {
-	Rule string
-	Value    string
+	Rule  string
+	Value string
 }
 
 type Frontend struct {
 	Backend string
-	Routes map[string]Route
+	Routes  map[string]Route
 }
 
 type Configuration struct {
-	Backends map[string]Backend
+	Backends  map[string]Backend
 	Frontends map[string]Frontend
 }

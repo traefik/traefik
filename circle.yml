@@ -6,18 +6,19 @@ machine:
 
 dependencies:
   pre:
-    - go generate
-    - CGO_ENABLED=0 go build -a -installsuffix nocgo .
-    - go get github.com/mitchellh/gox
     - go get github.com/tcnksm/ghr
-    - gox -verbose -os "linux darwin windows" --output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
-
+    - make validate
   override:
-    - echo $REPO
-    - docker build -t ${REPO,,} .
+    - make binary
+
+test:
+  override:
+    - make test
+  post:
+    - make image
 
 deployment:
-  github:
+  hub:
     branch: master
     commands:
       - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace --prerelease --debug v1.0 dist/

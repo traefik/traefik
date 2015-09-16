@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/BurntSushi/toml"
 	"github.com/codegangsta/negroni"
+	"github.com/emilevauge/traefik/middlewares"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
@@ -11,7 +12,6 @@ import (
 	"github.com/tylerb/graceful"
 	"github.com/unrolled/render"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"./middlewares"
 	"net/http"
 	"net/url"
 	"os"
@@ -215,7 +215,7 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 
 func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 	inputs := make([]reflect.Value, len(args))
-	for i, _ := range args {
+	for i := range args {
 		inputs[i] = reflect.ValueOf(args[i])
 	}
 	return reflect.ValueOf(any).MethodByName(name).Call(inputs)

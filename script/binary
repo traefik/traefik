@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+
+if ! test -e gen.go; then
+	echo >&2 'error: generate must be run before binary'
+	false
+fi
+
+if [ -z "$1" ]; then
+    OS_PLATFORM_ARG=(-os="darwin linux windows")
+else
+    OS_PLATFORM_ARG=($1)
+fi
+
+if [ -z "$2" ]; then
+    OS_ARCH_ARG=(-arch="386 amd64 arm")
+else
+    OS_ARCH_ARG=($2)
+fi
+
+# Get rid of existing binaries
+rm -f dist/traefik*
+
+# Build binaries
+CGO_ENABLED=0 go build -a -installsuffix nocgo .
+gox "${OS_PLATFORM_ARG[@]}" "${OS_ARCH_ARG[@]}" \
+    -output="dist/traefik_{{.OS}}-{{.Arch}}"
+
