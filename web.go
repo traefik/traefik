@@ -68,7 +68,7 @@ func GetBackendHandler(rw http.ResponseWriter, r *http.Request) {
 	if backend, ok := currentConfiguration.Backends[id]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, backend)
 	}else{
-		templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+		http.NotFound(rw, r)
 	}
 }
 
@@ -82,7 +82,7 @@ func GetFrontendHandler(rw http.ResponseWriter, r *http.Request) {
 	if frontend, ok := currentConfiguration.Frontends[id]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, frontend)
 	}else{
-		templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+		http.NotFound(rw, r)
 	}
 }
 
@@ -92,7 +92,7 @@ func GetServersHandler(rw http.ResponseWriter, r *http.Request) {
 	if backend, ok := currentConfiguration.Backends[backend]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, backend.Servers)
 	}else{
-		templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+		http.NotFound(rw, r)
 	}
 }
 
@@ -104,9 +104,9 @@ func GetServerHandler(rw http.ResponseWriter, r *http.Request) {
 		if server, ok := backend.Servers[server]; ok {
 			templatesRenderer.JSON(rw, http.StatusOK, server)
 		}else{
-			templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+			http.NotFound(rw, r)
 		}
 	}else{
-		templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+		http.NotFound(rw, r)
 	}
 }

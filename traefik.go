@@ -170,7 +170,8 @@ func main() {
 }
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	templatesRenderer.HTML(w, http.StatusNotFound, "notFound", nil)
+	http.NotFound(w, r)
+	//templatesRenderer.HTML(w, http.StatusNotFound, "notFound", nil)
 }
 
 func LoadDefaultConfig(gloablConfiguration *GlobalConfiguration) *mux.Router {
