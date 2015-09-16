@@ -20,7 +20,7 @@ type Page struct {
 func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 	systemRouter := mux.NewRouter()
 	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHtmlConfigHandler))
-	systemRouter.Methods("GET").Path("/metrics").Handler(http.HandlerFunc(GetStatsHandler))
+	systemRouter.Methods("GET").Path("/health").Handler(http.HandlerFunc(GetHealthHandler))
 	systemRouter.Methods("GET").Path("/api").Handler(http.HandlerFunc(GetConfigHandler))
 	systemRouter.Methods("POST").Path("/api").Handler(http.HandlerFunc(
 		func(rw http.ResponseWriter, r *http.Request) {
@@ -36,9 +36,11 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 			}
 		}))
 	systemRouter.Methods("GET").Path("/api/backends").Handler(http.HandlerFunc(GetBackendsHandler))
-	systemRouter.Methods("GET").Path("/api/backends/{id}").Handler(http.HandlerFunc(GetBackendHandler))
+	systemRouter.Methods("GET").Path("/api/backends/{backend}").Handler(http.HandlerFunc(GetBackendHandler))
+	systemRouter.Methods("GET").Path("/api/backends/{backend}/servers").Handler(http.HandlerFunc(GetServersHandler))
+	systemRouter.Methods("GET").Path("/api/backends/{backend}/servers/{server}").Handler(http.HandlerFunc(GetServerHandler))
 	systemRouter.Methods("GET").Path("/api/frontends").Handler(http.HandlerFunc(GetFrontendsHandler))
-	systemRouter.Methods("GET").Path("/api/frontends/{id}").Handler(http.HandlerFunc(GetFrontendHandler))
+	systemRouter.Methods("GET").Path("/api/frontends/{frontend}").Handler(http.HandlerFunc(GetFrontendHandler))
 	systemRouter.Methods("GET").PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "static"})))
 
 	go http.ListenAndServe(provider.Address, systemRouter)
@@ -52,7 +54,7 @@ func GetHtmlConfigHandler(response http.ResponseWriter, request *http.Request) {
 	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configuration: *currentConfiguration})
 }
 
-func GetStatsHandler(rw http.ResponseWriter, r *http.Request) {
+func GetHealthHandler(rw http.ResponseWriter, r *http.Request) {
 	templatesRenderer.JSON(rw, http.StatusOK, metrics.Data())
 }
 
@@ -62,8 +64,12 @@ func GetBackendsHandler(rw http.ResponseWriter, r *http.Request) {
 
 func GetBackendHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
-	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration.Backends[id])
+	id := vars["backend"]
+	if backend, ok := currentConfiguration.Backends[id]; ok {
+		templatesRenderer.JSON(rw, http.StatusOK, backend)
+	}else{
+		templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+	}
 }
 
 func GetFrontendsHandler(rw http.ResponseWriter, r *http.Request) {
@@ -72,6 +78,35 @@ func GetFrontendsHandler(rw http.ResponseWriter, r *http.Request) {
 
 func GetFrontendHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["id"]
-	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration.Frontends[id])
+	id := vars["frontend"]
+	if frontend, ok := currentConfiguration.Frontends[id]; ok {
+		templatesRenderer.JSON(rw, http.StatusOK, frontend)
+	}else{
+		templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+	}
+}
+
+func GetServersHandler(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	backend := vars["backend"]
+	if backend, ok := currentConfiguration.Backends[backend]; ok {
+		templatesRenderer.JSON(rw, http.StatusOK, backend.Servers)
+	}else{
+		templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+	}
+}
+
+func GetServerHandler(rw http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	backend := vars["backend"]
+	server := vars["server"]
+	if backend, ok := currentConfiguration.Backends[backend]; ok {
+		if server, ok := backend.Servers[server]; ok {
+			templatesRenderer.JSON(rw, http.StatusOK, server)
+		}else{
+			templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+		}
+	}else{
+		templatesRenderer.JSON(rw, http.StatusNotFound, nil)
+	}
 }
