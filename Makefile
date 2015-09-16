@@ -10,9 +10,12 @@ TRAEFIK_MOUNT := $(if $(BIND_DIR),-v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/e
 
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(GIT_BRANCH))
-TRAEFIK_IMAGE := $(if $(REPO),$(REPO),"emilevauge/traefik")
+REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
+TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"emilevauge/traefik")
 
 DOCKER_RUN_TRAEFIK := docker run $(if $(CIRCLECI),,--rm) -it $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
+
+print-%: ; @echo $*=$($*)
 
 default: binary
 
