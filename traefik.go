@@ -26,12 +26,28 @@ var (
 	currentConfiguration = new(Configuration)
 	metrics              = stats.New()
 	log                  = logging.MustGetLogger("traefik")
+	oxyLogger			 = &OxyLogger{}
 	templatesRenderer    = render.New(render.Options{
 		Directory:  "templates",
 		Asset:      Asset,
 		AssetNames: AssetNames,
 	})
 )
+
+type OxyLogger struct{
+}
+
+func (oxylogger *OxyLogger) Infof(format string, args ...interface{}) {
+	log.Info(format, args...)
+}
+
+func (oxylogger *OxyLogger) Warningf(format string, args ...interface{}) {
+	log.Warning(format, args...)
+}
+
+func (oxylogger *OxyLogger) Errorf(format string, args ...interface{}) {
+	log.Error(format, args...)
+}
 
 func main() {
 	kingpin.Parse()
@@ -187,7 +203,7 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 	for frontendName, frontend := range configuration.Frontends {
 		log.Debug("Creating frontend %s", frontendName)
 		fwd, _ := forward.New()
-		newRoute := router.NewRoute()
+		newRoute := router.NewRoute().Name(frontendName)
 		for routeName, route := range frontend.Routes {
 			log.Debug("Creating route %s", routeName)
 			newRouteReflect := Invoke(newRoute, route.Rule, route.Value)
@@ -196,7 +212,7 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 		if backends[frontend.Backend] == nil {
 			log.Debug("Creating backend %s", frontend.Backend)
 			lb, _ := roundrobin.New(fwd)
-			rb, _ := roundrobin.NewRebalancer(lb)
+			rb, _ := roundrobin.NewRebalancer(lb, roundrobin.RebalancerLogger(oxyLogger))
 			for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 				log.Debug("Creating server %s", serverName)
 				url, _ := url.Parse(server.Url)
@@ -206,6 +222,7 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 		} else {
 			log.Debug("Reusing backend %s", frontend.Backend)
 		}
+//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(gloablConfiguration.Replay)), stream.Logger(oxyLogger))
 		newRoute.Handler(backends[frontend.Backend])
 		err := newRoute.GetError()
 		if err != nil {
