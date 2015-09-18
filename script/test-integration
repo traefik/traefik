@@ -4,5 +4,5 @@ export SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export DEST=.
 
 TESTFLAGS="$TESTFLAGS"
-#go test -v ./integration
+#godep go test -v ./integration
 

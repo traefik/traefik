@@ -1,0 +1,119 @@
+{
+	"ImportPath": "github.com/emilevauge/traefik",
+	"GoVersion": "go1.5.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/BurntSushi/toml",
+			"Rev": "bd2bdf7f18f849530ef7a1c29a4290217cab32a1"
+		},
+		{
+			"ImportPath": "github.com/BurntSushi/ty",
+			"Rev": "6add9cd6ad42d389d6ead1dde60b4ad71e46fd74"
+		},
+		{
+			"ImportPath": "github.com/alecthomas/template",
+			"Rev": "b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0"
+		},
+		{
+			"ImportPath": "github.com/alecthomas/units",
+			"Rev": "6b4e7dc5e3143b85ea77909c72caf89416fc2915"
+		},
+		{
+			"ImportPath": "github.com/cenkalti/backoff",
+			"Rev": "4dc77674aceaabba2c7e3da25d4c823edfb73f99"
+		},
+		{
+			"ImportPath": "github.com/codahale/hdrhistogram",
+			"Rev": "954f16e8b9ef0e5d5189456aa4c1202758e04f17"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/negroni",
+			"Comment": "v0.1-70-gc7477ad",
+			"Rev": "c7477ad8e330bef55bf1ebe300cf8aa67c492d1b"
+		},
+		{
+			"ImportPath": "github.com/elazarl/go-bindata-assetfs",
+			"Rev": "d5cac425555ca5cf00694df246e04f05e6a55150"
+		},
+		{
+			"ImportPath": "github.com/fsouza/go-dockerclient",
+			"Rev": "0239034d42f665efa17fd77c39f891c2f9f32922"
+		},
+		{
+			"ImportPath": "github.com/gambol99/go-marathon",
+			"Rev": "0ba31bcb0d7633ba1888d744c42990eb15281cf1"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
+		},
+		{
+			"ImportPath": "github.com/gorilla/handlers",
+			"Rev": "40694b40f4a928c062f56849989d3e9cd0570e5f"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "f15e0c49460fd49eebe2bcc8486b05d1bef68d3a"
+		},
+		{
+			"ImportPath": "github.com/leekchan/gtf",
+			"Rev": "c102ce5348508f3dee9d788842b8fa7b2c1307fd"
+		},
+		{
+			"ImportPath": "github.com/mailgun/oxy/forward",
+			"Rev": "547c334d658398c05b346c0b79d8f47ba2e1473b"
+		},
+		{
+			"ImportPath": "github.com/mailgun/oxy/memmetrics",
+			"Rev": "547c334d658398c05b346c0b79d8f47ba2e1473b"
+		},
+		{
+			"ImportPath": "github.com/mailgun/oxy/roundrobin",
+			"Rev": "547c334d658398c05b346c0b79d8f47ba2e1473b"
+		},
+		{
+			"ImportPath": "github.com/mailgun/oxy/utils",
+			"Rev": "547c334d658398c05b346c0b79d8f47ba2e1473b"
+		},
+		{
+			"ImportPath": "github.com/mailgun/timetools",
+			"Rev": "fd192d755b00c968d312d23f521eb0cdc6f66bd0"
+		},
+		{
+			"ImportPath": "github.com/op/go-logging",
+			"Rev": "e8d5414f0947014548c2334044a0fac13187dfee"
+		},
+		{
+			"ImportPath": "github.com/thoas/stats",
+			"Rev": "54ed61c2b47e263ae2f01b86837b0c4bd1da28e8"
+		},
+		{
+			"ImportPath": "github.com/tylerb/graceful",
+			"Comment": "v1.2.1",
+			"Rev": "ac9ebe4f1ee151ac1eeeaef32957085cba64d508"
+		},
+		{
+			"ImportPath": "github.com/unrolled/render",
+			"Rev": "26b4e3aac686940fe29521545afad9966ddfc80c"
+		},
+		{
+			"ImportPath": "golang.org/x/net/netutil",
+			"Rev": "d9558e5c97f85372afee28cf2b6059d7d3818919"
+		},
+		{
+			"ImportPath": "gopkg.in/alecthomas/kingpin.v2",
+			"Comment": "v2.0.12",
+			"Rev": "639879d6110b1b0409410c7b737ef0bb18325038"
+		},
+		{
+			"ImportPath": "gopkg.in/fsnotify.v1",
+			"Comment": "v1.2.0",
+			"Rev": "96c060f6a6b7e0d6f75fddd10efeaca3e5d1bcb0"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2/bson",
+			"Comment": "r2015.06.03-5-g22287ba",
+			"Rev": "22287bab4379e1fbf6002fb4eb769888f3fb224c"
+		}
+	]
+}

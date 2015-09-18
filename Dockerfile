@@ -1,3 +1,3 @@
 FROM scratch
-COPY dist/traefik_linux-386 /traefik
+COPY dist/traefik /
 ENTRYPOINT ["/traefik"]
