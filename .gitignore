@@ -3,4 +3,9 @@ gen.go
 .idea
 log
 *.iml
+
 ./traefik
+
+Godeps/_workspace/bin
+Godeps/_workspace/pkg
+
