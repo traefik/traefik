@@ -1,6 +1,9 @@
 {
 	"ImportPath": "github.com/emilevauge/traefik",
 	"GoVersion": "go1.5.1",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",

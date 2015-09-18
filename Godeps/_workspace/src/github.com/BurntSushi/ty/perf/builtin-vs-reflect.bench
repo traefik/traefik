@@ -1,0 +1,35 @@
+benchmark                      old ns/op    new ns/op    delta
+BenchmarkFibonacciMemo-12           5895        43896  +644.63%
+BenchmarkFibonacciNoMemo-12      6827001      6829859   +0.04%
+BenchmarkParMapSquare-12          408320       572307  +40.16%
+BenchmarkParMapPrime-12          5289594      5510075   +4.17%
+BenchmarkMapSquare-12               8499       457844  +5287.03%
+BenchmarkMapPrime-12            34265372     32220176   -5.97%
+BenchmarkShuffle-12               240036      1018408  +324.27%
+BenchmarkSample-12                262565       271122   +3.26%
+BenchmarkSort-12                  137293      7716737  +5520.63%
+BenchmarkQuickSort-12               6325      6051563  +95576.89%
+
+benchmark                     old allocs   new allocs    delta
+BenchmarkFibonacciMemo-12             11          198  1700.00%
+BenchmarkFibonacciNoMemo-12            0            0     n/a%
+BenchmarkParMapSquare-12              21         2038  9604.76%
+BenchmarkParMapPrime-12             7148         9160   28.15%
+BenchmarkMapSquare-12                  1         2014  201300.00%
+BenchmarkMapPrime-12                7105         9173   29.11%
+BenchmarkShuffle-12                    0            7     n/a%
+BenchmarkSample-12                     2           11  450.00%
+BenchmarkSort-12                       1        27032  2703100.00%
+BenchmarkQuickSort-12                  1        22008  2200700.00%
+
+benchmark                      old bytes    new bytes    delta
+BenchmarkFibonacciMemo-12           2449        12083  393.39%
+BenchmarkFibonacciNoMemo-12            0            0     n/a%
+BenchmarkParMapSquare-12            9127        60330  561.01%
+BenchmarkParMapPrime-12           156540       222731   42.28%
+BenchmarkMapSquare-12               8195        58053  608.40%
+BenchmarkMapPrime-12              155952       221255   41.87%
+BenchmarkShuffle-12                    0          500     n/a%
+BenchmarkSample-12                 82785        83383    0.72%
+BenchmarkSort-12                      35       883869  2525240.00%
+BenchmarkQuickSort-12               8195       735645  8876.75%
