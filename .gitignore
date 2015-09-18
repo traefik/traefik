@@ -3,3 +3,6 @@ gen.go
 .idea
 log
 *.iml
+
+Godeps/_workspace/bin
+Godeps/_workspace/pkg
