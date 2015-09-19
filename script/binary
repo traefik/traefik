@@ -7,7 +7,9 @@ if ! test -e gen.go; then
 fi
 
 if [ -z "$1" ]; then
-    OS_PLATFORM_ARG=(-os="darwin linux windows")
+    # Remove windows platform because of
+    # https://github.com/mailgun/log/issues/10
+    OS_PLATFORM_ARG=(-os="darwin linux")
 else
     OS_PLATFORM_ARG=($1)
 fi
