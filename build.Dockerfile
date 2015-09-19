@@ -6,7 +6,10 @@ RUN go get github.com/tcnksm/ghr
 RUN go get github.com/BurntSushi/toml \
     && go get github.com/BurntSushi/ty/fun
 RUN go get github.com/mailgun/oxy/forward \
-    && go get github.com/mailgun/oxy/roundrobin
+    && go get github.com/mailgun/oxy/roundrobin \
+    && go get github.com/mailgun/oxy/cbreaker \
+    && go get github.com/mailgun/log \
+    && go get github.com/mailgun/predicate
 RUN go get github.com/gorilla/handlers \
     && go get github.com/gorilla/mux
 RUN go get github.com/cenkalti/backoff \
