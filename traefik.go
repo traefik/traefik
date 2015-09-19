@@ -19,6 +19,8 @@ import (
 	"reflect"
 	"syscall"
 	"time"
+	fmtlog "log"
+	"github.com/mailgun/oxy/cbreaker"
 )
 
 var (
@@ -34,23 +36,9 @@ var (
 	})
 )
 
-type OxyLogger struct{
-}
-
-func (oxylogger *OxyLogger) Infof(format string, args ...interface{}) {
-	log.Info(format, args...)
-}
-
-func (oxylogger *OxyLogger) Warningf(format string, args ...interface{}) {
-	log.Warning(format, args...)
-}
-
-func (oxylogger *OxyLogger) Errorf(format string, args ...interface{}) {
-	log.Error(format, args...)
-}
-
 func main() {
 	kingpin.Parse()
+	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
 	var srv *graceful.Server
 	var configurationRouter *mux.Router
 	var configurationChan = make(chan *Configuration)
@@ -107,10 +95,15 @@ func main() {
 			} else if reflect.DeepEqual(currentConfiguration, configuration) {
 				log.Info("Skipping same configuration")
 			} else {
-				currentConfiguration = configuration
-				configurationRouter = LoadConfig(configuration, gloablConfiguration)
-				srv.Stop(time.Duration(gloablConfiguration.GraceTimeOut) * time.Second)
-				time.Sleep(3 * time.Second)
+				newConfigurationRouter, err := LoadConfig(configuration, gloablConfiguration)
+				if (err == nil ){
+					currentConfiguration = configuration
+					configurationRouter = newConfigurationRouter
+					srv.Stop(time.Duration(gloablConfiguration.GraceTimeOut) * time.Second)
+					time.Sleep(3 * time.Second)
+				}else{
+					log.Error("Error loading new configuration, aborted ", err)
+				}
 			}
 		}
 	}()
@@ -132,6 +125,7 @@ func main() {
 	if gloablConfiguration.Web != nil {
 		providers = append(providers, gloablConfiguration.Web)
 	}
+	// providers = append(providers, NewConsulProvider())
 
 	// start providers
 	for _, provider := range providers {
@@ -159,6 +153,7 @@ func main() {
 		var negroni = negroni.New()
 		negroni.Use(metrics)
 		negroni.Use(loggerMiddleware)
+		//negroni.Use(middlewares.NewCircuitBreaker(oxyLogger))
 		//negroni.Use(middlewares.NewRoutes(configurationRouter))
 		negroni.UseHandler(configurationRouter)
 
@@ -185,27 +180,16 @@ func main() {
 	}
 }
 
-func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	http.NotFound(w, r)
-	//templatesRenderer.HTML(w, http.StatusNotFound, "notFound", nil)
-}
-
-func LoadDefaultConfig(gloablConfiguration *GlobalConfiguration) *mux.Router {
-	router := mux.NewRouter()
-	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	return router
-}
-
-func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfiguration) *mux.Router {
+func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfiguration) (*mux.Router, error) {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	backends := map[string]http.Handler{}
 	for frontendName, frontend := range configuration.Frontends {
 		log.Debug("Creating frontend %s", frontendName)
-		fwd, _ := forward.New()
+		fwd, _ := forward.New(forward.Logger(oxyLogger))
 		newRoute := router.NewRoute().Name(frontendName)
 		for routeName, route := range frontend.Routes {
-			log.Debug("Creating route %s", routeName)
+			log.Debug("Creating route %s %s:%s", routeName, route.Rule, route.Value)
 			newRouteReflect := Invoke(newRoute, route.Rule, route.Value)
 			newRoute = newRouteReflect[0].Interface().(*mux.Route)
 		}
@@ -214,22 +198,27 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 			lb, _ := roundrobin.New(fwd)
 			rb, _ := roundrobin.NewRebalancer(lb, roundrobin.RebalancerLogger(oxyLogger))
 			for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-				log.Debug("Creating server %s", serverName)
-				url, _ := url.Parse(server.Url)
-				rb.UpsertServer(url, roundrobin.Weight(server.Weight))
+				if url, err := url.Parse(server.Url); err != nil{
+					return nil, err
+				}else{
+					log.Debug("Creating server %s %s", serverName, url.String())
+					rb.UpsertServer(url, roundrobin.Weight(server.Weight))
+				}
 			}
-			backends[frontend.Backend] = lb
+			backends[frontend.Backend] = rb
 		} else {
 			log.Debug("Reusing backend %s", frontend.Backend)
 		}
 //		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(gloablConfiguration.Replay)), stream.Logger(oxyLogger))
-		newRoute.Handler(backends[frontend.Backend])
+		var negroni = negroni.New()
+		negroni.Use(middlewares.NewCircuitBreaker(backends[frontend.Backend], cbreaker.Logger(oxyLogger)))
+		newRoute.Handler(negroni)
 		err := newRoute.GetError()
 		if err != nil {
 			log.Error("Error building route ", err)
 		}
 	}
-	return router
+	return router, nil
 }
 
 func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {

@@ -172,7 +172,7 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 
 	err = tmpl.Execute(&buffer, templateObjects)
 	if err != nil {
-		log.Error("Error with docker template:", err)
+		log.Error("Error with marathon template:", err)
 		return nil
 	}
 

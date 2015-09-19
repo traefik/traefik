@@ -49,3 +49,7 @@ image: build
 
 dist:
 	mkdir dist
+
+run-dev:
+	go build
+	./traefik
