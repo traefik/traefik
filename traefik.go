@@ -69,19 +69,16 @@ func main() {
 		} else {
 			logBackend := logging.NewLogBackend(fi, "", 0)
 			logBackendFormatter := logging.NewBackendFormatter(logBackend, logging.GlogFormatter)
-			logBackendLeveled := logging.AddModuleLevel(logBackend)
-			logBackendLeveled.SetLevel(level, "")
 			backends = append(backends, logBackendFormatter)
 		}
 	}
 	if gloablConfiguration.TraefikLogsStdout {
 		logBackend := logging.NewLogBackend(os.Stdout, "", 0)
 		logBackendFormatter := logging.NewBackendFormatter(logBackend, format)
-		logBackendLeveled := logging.AddModuleLevel(logBackend)
-		logBackendLeveled.SetLevel(level, "")
 		backends = append(backends, logBackendFormatter)
 	}
 	logging.SetBackend(backends...)
+	logging.SetLevel(level, "traefik")
 
 	configurationRouter = LoadDefaultConfig(gloablConfiguration)
 
