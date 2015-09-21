@@ -26,6 +26,6 @@ rm -rf Godeps/_workspace/pkg
 
 # Build binaries
 CGO_ENABLED=0 godep go build -a -installsuffix nocgo -o dist/traefik .
-gox "${OS_PLATFORM_ARG[@]}" "${OS_ARCH_ARG[@]}" \
+GOPATH=`godep path`:$GOPATH gox "${OS_PLATFORM_ARG[@]}" "${OS_ARCH_ARG[@]}" \
     -output="dist/traefik_{{.OS}}-{{.Arch}}"
 

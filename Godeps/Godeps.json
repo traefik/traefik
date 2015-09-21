@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/emilevauge/traefik",
-	"GoVersion": "go1.5.1",
+	"GoVersion": "go1.5",
 	"Packages": [
 		"./..."
 	],
@@ -59,8 +59,17 @@
 			"Rev": "f15e0c49460fd49eebe2bcc8486b05d1bef68d3a"
 		},
 		{
-			"ImportPath": "github.com/leekchan/gtf",
-			"Rev": "c102ce5348508f3dee9d788842b8fa7b2c1307fd"
+			"ImportPath": "github.com/hashicorp/consul/api",
+			"Comment": "v0.5.2-313-gde08067",
+			"Rev": "de080672fee9e6104572eeea89eccdca135bb918"
+		},
+		{
+			"ImportPath": "github.com/mailgun/log",
+			"Rev": "44874009257d4d47ba9806f1b7f72a32a015e4d8"
+		},
+		{
+			"ImportPath": "github.com/mailgun/oxy/cbreaker",
+			"Rev": "547c334d658398c05b346c0b79d8f47ba2e1473b"
 		},
 		{
 			"ImportPath": "github.com/mailgun/oxy/forward",
@@ -77,6 +86,10 @@
 		{
 			"ImportPath": "github.com/mailgun/oxy/utils",
 			"Rev": "547c334d658398c05b346c0b79d8f47ba2e1473b"
+		},
+		{
+			"ImportPath": "github.com/mailgun/predicate",
+			"Rev": "cb0bff91a7ab7cf7571e661ff883fc997bc554a3"
 		},
 		{
 			"ImportPath": "github.com/mailgun/timetools",
