@@ -40,6 +40,9 @@ validate-gofmt: build
 build: dist
 	docker build -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
+shell: build
+	$(DOCKER_RUN_TRAEFIK) /bin/bash
+
 image: build
 	if ! [ -a dist/traefik_linux-386 ] ; \
 	then \
