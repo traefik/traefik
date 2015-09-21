@@ -41,7 +41,7 @@ port = ":8081"
 # Optional
 # Default: "ERROR"
 #
-# logLevel = "ERROR"
+logLevel = "DEBUG"
 
 # SSL certificate and key used
 #
@@ -75,7 +75,7 @@ address = ":8082"
 #
 # Optional
 #
-# [file]
+[file]
 
 # Rules file
 # If defined, traefik will load rules from this file,
@@ -89,7 +89,7 @@ address = ":8082"
 #
 # Optional
 #
-# watch = true
+watch = true
 
 
 ################################################################
@@ -100,26 +100,26 @@ address = ":8082"
 #
 # Optional
 #
-[docker]
+# [docker]
 
 # Docker server endpoint. Can be a tcp or a unix socket endpoint.
 #
 # Required
 #
-endpoint = "unix:///var/run/docker.sock"
+# endpoint = "unix:///var/run/docker.sock"
 
 # Enable watch docker changes
 #
 # Optional
 #
-watch = true
+# watch = true
 
 # Default domain used.
 # Can be overridden by setting the "traefik.domain" label on a container.
 #
 # Required
 #
-domain = "docker.localhost"
+# domain = "docker.localhost"
 
 # Override default configuration template. For advanced users :)
 #
@@ -172,34 +172,68 @@ domain = "docker.localhost"
 # filename = "marathon.tmpl"
 
 
+################################################################
+# Consul KV configuration backend
+################################################################
+
+# Enable Consul KV configuration backend
+#
+# Optional
+#
+# [consul]
+
+# Consul server endpoint
+#
+# Required
+#
+# endpoint = "http://127.0.0.1:8500"
+
+# Enable watch Consul changes
+#
+# Optional
+#
+# watch = true
+
+# Prefix used for KV store.
+#
+# Optional
+#
+# prefix = "traefik"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "consul.tmpl"
+
 
 ################################################################
 # Sample rules
 ################################################################
-# [backends]
-#   [backends.backend1]
-#     [backends.backend1.servers.server1]
-#     url = "http://172.17.0.2:80"
-#     weight = 10
-#     [backends.backend1.servers.server2]
-#     url = "http://172.17.0.3:80"
-#     weight = 1
-#   [backends.backend2]
-#     [backends.backend2.servers.server1]
-#     url = "http://172.17.0.4:80"
-#     weight = 1
-#     [backends.backend2.servers.server2]
-#     url = "http://172.17.0.5:80"
-#     weight = 2
-#
-# [frontends]
-#   [frontends.frontend1]
-#   backend = "backend2"
-#     [frontends.frontend1.routes.test_1]
-#     category = "Host"
-#     value = "test.localhost"
-#   [frontends.frontend2]
-#   backend = "backend1"
-#     [frontends.frontend2.routes.test_2]
-#     category = "Path"
-#     value = "/test"
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    url = "http://172.17.0.2:80"
+    weight = 10
+    [backends.backend1.servers.server2]
+    url = "http://172.17.0.3:80"
+    weight = 1
+  [backends.backend2]
+    [backends.backend2.servers.server1]
+    url = "http://172.17.0.83:80"
+    weight = 3
+    [backends.backend2.servers.server2]
+    url = "http://172.17.0.5:80"
+    weight = 10
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend2"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host"
+    value = "test.localhost"
+  [frontends.frontend2]
+  backend = "backend1"
+    [frontends.frontend2.routes.test_2]
+    rule = "Path"
+    value = "/test"

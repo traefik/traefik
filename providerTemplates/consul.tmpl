@@ -1,0 +1,24 @@
+{{$frontends := "frontends/" | List }}
+{{$backends := "backends/" | List }}
+
+{{range $backends}}
+{{$backend := .}}
+{{$servers := "servers/" | List $backend }}
+{{range $servers}}
+[backends.{{Last $backend}}.servers.{{Last .}}]
+    url = "{{Get . "/url"}}"
+    weight = {{Get . "/weight"}}
+{{end}}
+{{end}}
+
+[frontends]{{range $frontends}}
+  {{$frontend := Last .}}
+  [frontends.{{$frontend}}]
+  backend = "{{Get . "/backend"}}"
+  {{$routes := "routes/" | List .}}
+    {{range $routes}}
+    [frontends.{{$frontend}}.routes.{{Last .}}]
+    rule = "{{Get . "/rule"}}"
+    value = "{{Get . "/value"}}"
+    {{end}}
+{{end}}

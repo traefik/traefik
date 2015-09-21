@@ -5,7 +5,6 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	"github.com/gambol99/go-marathon"
-	"github.com/leekchan/gtf"
 	"strconv"
 	"strings"
 	"text/template"
@@ -148,8 +147,7 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 		provider.Domain,
 	}
 
-	gtf.Inject(MarathonFuncMap)
-	tmpl := template.New(provider.Filename).Funcs(DockerFuncMap)
+	tmpl := template.New(provider.Filename).Funcs(MarathonFuncMap)
 	if len(provider.Filename) > 0 {
 		_, err := tmpl.ParseFiles(provider.Filename)
 		if err != nil {

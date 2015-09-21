@@ -7,7 +7,6 @@ import (
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenkalti/backoff"
 	"github.com/fsouza/go-dockerclient"
-	"github.com/leekchan/gtf"
 	"strconv"
 	"strings"
 	"text/template"
@@ -73,8 +72,8 @@ func (provider *DockerProvider) Provide(configurationChan chan<- *Configuration)
 			log.Fatalf("Docker connection error %+v", err)
 		}
 		log.Debug("Docker connection established")
-		dockerEvents := make(chan *docker.APIEvents)
 		if provider.Watch {
+			dockerEvents := make(chan *docker.APIEvents)
 			dockerClient.AddEventListener(dockerEvents)
 			log.Debug("Docker listening")
 			go func() {
@@ -152,7 +151,6 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 		hosts,
 		provider.Domain,
 	}
-	gtf.Inject(DockerFuncMap)
 	tmpl := template.New(provider.Filename).Funcs(DockerFuncMap)
 	if len(provider.Filename) > 0 {
 		_, err := tmpl.ParseFiles(provider.Filename)

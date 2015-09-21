@@ -12,6 +12,7 @@ type GlobalConfiguration struct {
 	File              *FileProvider
 	Web               *WebProvider
 	Marathon          *MarathonProvider
+	Consul            *ConsulProvider
 }
 
 func NewGlobalConfiguration() *GlobalConfiguration {

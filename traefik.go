@@ -41,7 +41,7 @@ func main() {
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
 	var srv *graceful.Server
 	var configurationRouter *mux.Router
-	var configurationChan = make(chan *Configuration)
+	var configurationChan = make(chan *Configuration, 10)
 	defer close(configurationChan)
 	var providers = []Provider{}
 	var format = logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfile:20.20s} %{level:8.8s} %{id:03x} ▶%{color:reset} %{message}")
@@ -122,7 +122,9 @@ func main() {
 	if gloablConfiguration.Web != nil {
 		providers = append(providers, gloablConfiguration.Web)
 	}
-	// providers = append(providers, NewConsulProvider())
+	if gloablConfiguration.Consul != nil {
+		providers = append(providers, gloablConfiguration.Consul)
+	}
 
 	// start providers
 	for _, provider := range providers {
