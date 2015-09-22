@@ -11,17 +11,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var (
-	webConfiguration *Configuration
-)
-
 type WebProvider struct {
 	Address           string
 	CertFile, KeyFile string
 }
 
 type Page struct {
-	Configuration Configuration
+	Configurations configs
 }
 
 func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
@@ -29,13 +25,20 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
 	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHTMLConfigHandler))
 	systemRouter.Methods("GET").Path("/health").Handler(http.HandlerFunc(GetHealthHandler))
 	systemRouter.Methods("GET").Path("/api").Handler(http.HandlerFunc(GetConfigHandler))
-	systemRouter.Methods("PUT").Path("/api").Handler(http.HandlerFunc(
+	systemRouter.Methods("GET").Path("/api/{provider}").Handler(http.HandlerFunc(GetConfigHandler))
+	systemRouter.Methods("PUT").Path("/api/{provider}").Handler(http.HandlerFunc(
 		func(rw http.ResponseWriter, r *http.Request) {
+			vars := mux.Vars(r)
+			if vars["provider"] != "web" {
+				rw.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintf(rw, "Only 'web' provider can be updated through the REST API")
+				return
+			}
+
 			configuration := new(Configuration)
 			b, _ := ioutil.ReadAll(r.Body)
 			err := json.Unmarshal(b, configuration)
 			if err == nil {
-				webConfiguration = configuration
 				configurationChan <- configMessage{"web", configuration}
 				GetConfigHandler(rw, r)
 			} else {
@@ -43,12 +46,12 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
 				http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 			}
 		}))
-	systemRouter.Methods("GET").Path("/api/backends").Handler(http.HandlerFunc(GetBackendsHandler))
-	systemRouter.Methods("GET").Path("/api/backends/{backend}").Handler(http.HandlerFunc(GetBackendHandler))
-	systemRouter.Methods("GET").Path("/api/backends/{backend}/servers").Handler(http.HandlerFunc(GetServersHandler))
-	systemRouter.Methods("GET").Path("/api/backends/{backend}/servers/{server}").Handler(http.HandlerFunc(GetServerHandler))
-	systemRouter.Methods("GET").Path("/api/frontends").Handler(http.HandlerFunc(GetFrontendsHandler))
-	systemRouter.Methods("GET").Path("/api/frontends/{frontend}").Handler(http.HandlerFunc(GetFrontendHandler))
+	systemRouter.Methods("GET").Path("/api/{provider}/backends").Handler(http.HandlerFunc(GetBackendsHandler))
+	systemRouter.Methods("GET").Path("/api/{provider}/backends/{backend}").Handler(http.HandlerFunc(GetBackendHandler))
+	systemRouter.Methods("GET").Path("/api/{provider}/backends/{backend}/servers").Handler(http.HandlerFunc(GetServersHandler))
+	systemRouter.Methods("GET").Path("/api/{provider}/backends/{backend}/servers/{server}").Handler(http.HandlerFunc(GetServerHandler))
+	systemRouter.Methods("GET").Path("/api/{provider}/frontends").Handler(http.HandlerFunc(GetFrontendsHandler))
+	systemRouter.Methods("GET").Path("/api/{provider}/frontends/{frontend}").Handler(http.HandlerFunc(GetFrontendHandler))
 	systemRouter.Methods("GET").PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "static"})))
 
 	go func() {
@@ -67,26 +70,11 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
 }
 
 func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
-	templatesRenderer.JSON(rw, http.StatusOK, webConfiguration)
+	templatesRenderer.JSON(rw, http.StatusOK, currentConfigurations)
 }
 
 func GetHTMLConfigHandler(response http.ResponseWriter, request *http.Request) {
-	var cfg Configuration
-	cfg.Backends = make(map[string]*Backend)
-	cfg.Frontends = make(map[string]*Frontend)
-
-	// Quick and dirty merge of config for display
-	for _, config := range currentConfigurations {
-		for name, config := range config.Backends {
-			cfg.Backends[name] = config
-		}
-
-		for name, config := range config.Frontends {
-			cfg.Frontends[name] = config
-		}
-	}
-
-	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configuration: cfg})
+	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configurations: currentConfigurations})
 }
 
 func GetHealthHandler(rw http.ResponseWriter, r *http.Request) {
@@ -94,13 +82,14 @@ func GetHealthHandler(rw http.ResponseWriter, r *http.Request) {
 }
 
 func GetBackendsHandler(rw http.ResponseWriter, r *http.Request) {
-	templatesRenderer.JSON(rw, http.StatusOK, webConfiguration.Backends)
+	vars := mux.Vars(r)
+	templatesRenderer.JSON(rw, http.StatusOK, currentConfigurations[vars["provider"]].Backends)
 }
 
 func GetBackendHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["backend"]
-	if backend, ok := webConfiguration.Backends[id]; ok {
+	if backend, ok := currentConfigurations[vars["provider"]].Backends[id]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, backend)
 	} else {
 		http.NotFound(rw, r)
@@ -108,13 +97,14 @@ func GetBackendHandler(rw http.ResponseWriter, r *http.Request) {
 }
 
 func GetFrontendsHandler(rw http.ResponseWriter, r *http.Request) {
-	templatesRenderer.JSON(rw, http.StatusOK, webConfiguration.Frontends)
+	vars := mux.Vars(r)
+	templatesRenderer.JSON(rw, http.StatusOK, currentConfigurations[vars["provider"]].Frontends)
 }
 
 func GetFrontendHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["frontend"]
-	if frontend, ok := webConfiguration.Frontends[id]; ok {
+	if frontend, ok := currentConfigurations[vars["provider"]].Frontends[id]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, frontend)
 	} else {
 		http.NotFound(rw, r)
@@ -124,7 +114,7 @@ func GetFrontendHandler(rw http.ResponseWriter, r *http.Request) {
 func GetServersHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	backend := vars["backend"]
-	if backend, ok := webConfiguration.Backends[backend]; ok {
+	if backend, ok := currentConfigurations[vars["provider"]].Backends[backend]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, backend.Servers)
 	} else {
 		http.NotFound(rw, r)
@@ -135,7 +125,7 @@ func GetServerHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	backend := vars["backend"]
 	server := vars["server"]
-	if backend, ok := webConfiguration.Backends[backend]; ok {
+	if backend, ok := currentConfigurations[vars["provider"]].Backends[backend]; ok {
 		if server, ok := backend.Servers[server]; ok {
 			templatesRenderer.JSON(rw, http.StatusOK, server)
 		} else {
