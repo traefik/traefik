@@ -11,6 +11,7 @@ import (
 
 type WebProvider struct {
 	Address string
+	CertFile, KeyFile string
 }
 
 type Page struct {
@@ -43,7 +44,13 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 	systemRouter.Methods("GET").Path("/api/frontends/{frontend}").Handler(http.HandlerFunc(GetFrontendHandler))
 	systemRouter.Methods("GET").PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "static"})))
 
-	go http.ListenAndServe(provider.Address, systemRouter)
+	go func() {
+		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
+			http.ListenAndServeTLS(provider.Address,provider.CertFile, provider.KeyFile, systemRouter)
+		} else {
+			http.ListenAndServe(provider.Address, systemRouter)
+		}
+	}()
 }
 
 func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {

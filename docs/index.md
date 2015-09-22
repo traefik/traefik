@@ -202,7 +202,15 @@ To enable it:
 ```toml
 [web]
 address = ":8080"
+
+# SSL certificate and key used
+#
+# Optional
+#
+# CertFile = "traefik.crt"
+# KeyFile = "traefik.key"
 ```
+
 * ```/```: provides a simple HTML frontend of Træfik
 
 ![HTML frontend](img/web.frontend.png)

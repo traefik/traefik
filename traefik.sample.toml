@@ -66,6 +66,13 @@
 #
 # address = ":8080"
 
+# SSL certificate and key used
+#
+# Optional
+#
+# CertFile = "traefik.crt"
+# KeyFile = "traefik.key"
+
 
 ################################################################
 # File configuration backend
