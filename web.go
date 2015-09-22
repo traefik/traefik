@@ -22,7 +22,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHtmlConfigHandler))
 	systemRouter.Methods("GET").Path("/health").Handler(http.HandlerFunc(GetHealthHandler))
 	systemRouter.Methods("GET").Path("/api").Handler(http.HandlerFunc(GetConfigHandler))
-	systemRouter.Methods("POST").Path("/api").Handler(http.HandlerFunc(
+	systemRouter.Methods("PUT").Path("/api").Handler(http.HandlerFunc(
 		func(rw http.ResponseWriter, r *http.Request) {
 			configuration := new(Configuration)
 			b, _ := ioutil.ReadAll(r.Body)

@@ -75,7 +75,7 @@ address = ":8082"
 #
 # Optional
 #
-[file]
+# [file]
 
 # Rules file
 # If defined, traefik will load rules from this file,
@@ -89,7 +89,7 @@ address = ":8082"
 #
 # Optional
 #
-watch = true
+# watch = true
 
 
 ################################################################
@@ -100,26 +100,26 @@ watch = true
 #
 # Optional
 #
-# [docker]
+[docker]
 
 # Docker server endpoint. Can be a tcp or a unix socket endpoint.
 #
 # Required
 #
-# endpoint = "unix:///var/run/docker.sock"
+endpoint = "unix:///var/run/docker.sock"
 
 # Enable watch docker changes
 #
 # Optional
 #
-# watch = true
+watch = true
 
 # Default domain used.
 # Can be overridden by setting the "traefik.domain" label on a container.
 #
 # Required
 #
-# domain = "docker.localhost"
+domain = "docker.localhost"
 
 # Override default configuration template. For advanced users :)
 #

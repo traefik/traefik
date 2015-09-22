@@ -1,4 +1,7 @@
-# Træfɪk Roadmap
+![Træfɪk](http://traefik.github.io/traefik.logo.svg "Træfɪk")
+___
+
+# Roadmap
 
 * Add traefik.protocol label
 * Providers recovery
@@ -11,7 +14,6 @@
 * README
 * API enhancements
 * Godoc
-* Website
 
 
 * Kubernetes support
@@ -26,7 +28,8 @@
 * ~~Logs~~
 * ~~SSL frontend support~~
 * ~~SSL backends support~~
-* ~~Static files~~
+* ~~Static files with go-bindata~~
 * ~~Metrics~~
 * ~~Dockerfile~~
 * ~~Use Negroni middlewares for metrics, grace, logs~~
+* ~~Website~~
