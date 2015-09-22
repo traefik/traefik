@@ -1,0 +1,27 @@
+{{$apps := .Applications}}
+[backends]{{range .Tasks}}
+    [backends.backend{{.AppID | replace "/" "-"}}.servers.server-{{.ID | replace "." "-"}}]
+    url = "http://{{.Host}}:{{getPort .}}"
+    {{$appID := .AppID}}
+    {{range $apps}}
+    {{if eq $appID .ID}}
+    weight = {{getWeight .}}
+    {{end}}
+    {{end}}
+{{end}}
+
+[frontends]{{ range $app := .Applications}}
+  {{range $prefix := getPrefixes .}}
+  [frontends.frontend{{$app.ID | replace "/" "-"}}{{$prefix | replace "/" "-"}}]
+  backend = "backend{{$app.ID | replace "/" "-"}}"
+    [frontends.frontend-{{getHost $app | replace "/" "-"}}{{$prefix | replace "/" "-"}}.routes.route-prefix{{$prefix | replace "/" "-"}}]
+    rule = "PathPrefix"
+    value = "{{.}}"
+    {{else}}
+  [frontends.frontend{{.ID | replace "/" "-"}}]
+  backend = "backend{{.ID | replace "/" "-"}}"
+    [frontends.frontend-{{getHost $app | replace "/" "-"}}.routes.route-host-{{getHost $app | replace "/" "-"}}]
+    rule = "Host"
+    value = "{{getHost $app | replace "/" "-"}}.{{$.Domain}}"
+    {{end}}
+{{end}}
