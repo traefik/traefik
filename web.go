@@ -35,6 +35,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
 			b, _ := ioutil.ReadAll(r.Body)
 			err := json.Unmarshal(b, configuration)
 			if err == nil {
+				webConfiguration = configuration
 				configurationChan <- configMessage{"web", configuration}
 				GetConfigHandler(rw, r)
 			} else {
