@@ -46,6 +46,12 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml emilevauge/traefik
 ```
 
+* From sources:
+
+```
+git clone https://github.com/EmileVauge/traefik
+```
+
 # Documentation
 
 You can find the complete documentation [here](docs/index.md).

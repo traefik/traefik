@@ -13,7 +13,7 @@ ___
 * [Consul backend](#consul)
 
 
-## <a id="basics">:anchor:</a> Basics
+## <a id="basics"></a> Basics
 
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
@@ -45,7 +45,7 @@ Various types of load-balancing is supported:
 
 A circuit breaker can also be applied to a backend, preventing high loads on failing servers.
 
-## <a id="global">:anchor:</a> Global configuration
+## <a id="global"></a> Global configuration
 
 ```toml
 # traefik.toml
@@ -103,7 +103,7 @@ A circuit breaker can also be applied to a backend, preventing high loads on fai
 ```
 
 
-## <a id="file">:anchor:</a> File backend
+## <a id="file"></a> File backend
 
 Like any other reverse proxy, Træfɪk can be configured with a file. You have two choices:
 
@@ -194,7 +194,7 @@ If you want Træfɪk to watch file changes automatically, just add:
 watch = true
 ```
 
-## <a id="api">:anchor:</a> API backend
+## <a id="api"></a> API backend
 
 Træfik can be configured using a restful api.
 To enable it:
@@ -307,7 +307,7 @@ $ curl -s "http://localhost:8082/api" | jq .
 * ```/api/frontends/{frontend}```: ```GET``` a frontend
 
 
-## <a id="docker">:anchor:</a> Docker backend
+## <a id="docker"></a> Docker backend
 
 Træfɪk can be configured to use Docker as a backend configuration:
 
@@ -354,7 +354,7 @@ Labels can be used on containers to override default behaviour:
 * ```traefik.port=80```: register this port. Useful when the container exposes multiples ports.
 * ```traefik.weight=10```: assign this weight to the container
 
-## <a id="marathon">:anchor:</a> Marathon backend
+## <a id="marathon"></a> Marathon backend
 
 Træfɪk can be configured to use Marathon as a backend configuration:
 
@@ -410,7 +410,7 @@ Labels can be used on containers to override default behaviour:
 * ```traefik.port=80```: register this port. Useful when the application exposes multiples ports.
 * ```traefik.weight=10```: assign this weight to the application
 
-## <a id="consul">:anchor:</a> Consul backend
+## <a id="consul"></a> Consul backend
 
 Træfɪk can be configured to use Consul as a backend configuration:
 

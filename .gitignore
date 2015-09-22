@@ -4,3 +4,4 @@ gen.go
 log
 *.iml
 ./traefik
+traefik.toml
