@@ -3,5 +3,5 @@ gen.go
 .idea
 log
 *.iml
-./traefik
+traefik
 traefik.toml
