@@ -3,6 +3,8 @@ ___
 
 [![Circle CI](https://img.shields.io/circleci/project/EmileVauge/traefik.svg)](https://circleci.com/gh/EmileVauge/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/EmileVauge/traefik/blob/master/LICENSE.md)
+[![Join the chat at https://gitter.im/EmileVauge/traefik](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/EmileVauge/traefik?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
 It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://consul.io/), [Etcd](https://coreos.com/etcd/), Rest API, file...) to manage its configuration automatically and dynamically.
