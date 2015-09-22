@@ -17,6 +17,7 @@ find_dirs() {
     find . -not \( \
          \( \
          -path './integration/*' \
+         -o -path './Godeps/*' \
          -o -path './.git/*' \
          \) \
          -prune \
@@ -33,7 +34,7 @@ TESTS_FAILED=()
 
 for dir in $TESTDIRS; do
     echo '+ go test' $TESTFLAGS "${dir}"
-    go test ${TESTFLAGS} ${dir}
+    godep go test ${TESTFLAGS} ${dir}
     if [ $? != 0 ]; then
         TESTS_FAILED+=("$dir")
         echo
