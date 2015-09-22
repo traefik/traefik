@@ -68,7 +68,7 @@ func NewConsulProvider() *ConsulProvider {
 	return consulProvider
 }
 
-func (provider *ConsulProvider) Provide(configurationChan chan<- *Configuration) {
+func (provider *ConsulProvider) Provide(configurationChan chan<- configMessage) {
 	config := &api.Config{
 		Address:    provider.Endpoint,
 		Scheme:     "http",
@@ -99,7 +99,7 @@ func (provider *ConsulProvider) Provide(configurationChan chan<- *Configuration)
 						waitIndex = meta.LastIndex
 						configuration := provider.loadConsulConfig()
 						if configuration != nil {
-							configurationChan <- configuration
+							configurationChan <- configMessage{"consul", configuration}
 						}
 					}
 				}
@@ -107,7 +107,7 @@ func (provider *ConsulProvider) Provide(configurationChan chan<- *Configuration)
 		}
 	}
 	configuration := provider.loadConsulConfig()
-	configurationChan <- configuration
+	configurationChan <- configMessage{"consul", configuration}
 }
 
 func (provider *ConsulProvider) loadConsulConfig() *Configuration {

@@ -23,7 +23,7 @@ func NewFileProvider() *FileProvider {
 	return fileProvider
 }
 
-func (provider *FileProvider) Provide(configurationChan chan<- *Configuration) {
+func (provider *FileProvider) Provide(configurationChan chan<- configMessage) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Error("Error creating file watcher", err)
@@ -48,7 +48,7 @@ func (provider *FileProvider) Provide(configurationChan chan<- *Configuration) {
 					log.Debug("File event:", event)
 					configuration := provider.LoadFileConfig(file.Name())
 					if configuration != nil {
-						configurationChan <- configuration
+						configurationChan <- configMessage{"file", configuration}
 					}
 				}
 			case error := <-watcher.Errors:
@@ -67,7 +67,7 @@ func (provider *FileProvider) Provide(configurationChan chan<- *Configuration) {
 	}
 
 	configuration := provider.LoadFileConfig(file.Name())
-	configurationChan <- configuration
+	configurationChan <- configMessage{"file", configuration}
 	<-done
 }
 

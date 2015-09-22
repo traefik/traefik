@@ -11,6 +11,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var (
+	webConfiguration *Configuration
+)
+
 type WebProvider struct {
 	Address           string
 	CertFile, KeyFile string
@@ -20,7 +24,7 @@ type Page struct {
 	Configuration Configuration
 }
 
-func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
+func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
 	systemRouter := mux.NewRouter()
 	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHTMLConfigHandler))
 	systemRouter.Methods("GET").Path("/health").Handler(http.HandlerFunc(GetHealthHandler))
@@ -31,7 +35,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 			b, _ := ioutil.ReadAll(r.Body)
 			err := json.Unmarshal(b, configuration)
 			if err == nil {
-				configurationChan <- configuration
+				configurationChan <- configMessage{"web", configuration}
 				GetConfigHandler(rw, r)
 			} else {
 				log.Errorf("Error parsing configuration %+v", err)
@@ -62,11 +66,26 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 }
 
 func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
-	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration)
+	templatesRenderer.JSON(rw, http.StatusOK, webConfiguration)
 }
 
 func GetHTMLConfigHandler(response http.ResponseWriter, request *http.Request) {
-	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configuration: *currentConfiguration})
+	var cfg Configuration
+	cfg.Backends = make(map[string]*Backend)
+	cfg.Frontends = make(map[string]*Frontend)
+
+	// Quick and dirty merge of config for display
+	for _, config := range currentConfigurations {
+		for name, config := range config.Backends {
+			cfg.Backends[name] = config
+		}
+
+		for name, config := range config.Frontends {
+			cfg.Frontends[name] = config
+		}
+	}
+
+	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configuration: cfg})
 }
 
 func GetHealthHandler(rw http.ResponseWriter, r *http.Request) {
@@ -74,13 +93,13 @@ func GetHealthHandler(rw http.ResponseWriter, r *http.Request) {
 }
 
 func GetBackendsHandler(rw http.ResponseWriter, r *http.Request) {
-	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration.Backends)
+	templatesRenderer.JSON(rw, http.StatusOK, webConfiguration.Backends)
 }
 
 func GetBackendHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["backend"]
-	if backend, ok := currentConfiguration.Backends[id]; ok {
+	if backend, ok := webConfiguration.Backends[id]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, backend)
 	} else {
 		http.NotFound(rw, r)
@@ -88,13 +107,13 @@ func GetBackendHandler(rw http.ResponseWriter, r *http.Request) {
 }
 
 func GetFrontendsHandler(rw http.ResponseWriter, r *http.Request) {
-	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration.Frontends)
+	templatesRenderer.JSON(rw, http.StatusOK, webConfiguration.Frontends)
 }
 
 func GetFrontendHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["frontend"]
-	if frontend, ok := currentConfiguration.Frontends[id]; ok {
+	if frontend, ok := webConfiguration.Frontends[id]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, frontend)
 	} else {
 		http.NotFound(rw, r)
@@ -104,7 +123,7 @@ func GetFrontendHandler(rw http.ResponseWriter, r *http.Request) {
 func GetServersHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	backend := vars["backend"]
-	if backend, ok := currentConfiguration.Backends[backend]; ok {
+	if backend, ok := webConfiguration.Backends[backend]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, backend.Servers)
 	} else {
 		http.NotFound(rw, r)
@@ -115,7 +134,7 @@ func GetServerHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	backend := vars["backend"]
 	server := vars["server"]
-	if backend, ok := currentConfiguration.Backends[backend]; ok {
+	if backend, ok := webConfiguration.Backends[backend]; ok {
 		if server, ok := backend.Servers[server]; ok {
 			templatesRenderer.JSON(rw, http.StatusOK, server)
 		} else {

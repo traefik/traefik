@@ -1,5 +1,5 @@
 package main
 
 type Provider interface {
-	Provide(configurationChan chan<- *Configuration)
+	Provide(configurationChan chan<- configMessage)
 }
