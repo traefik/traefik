@@ -10,6 +10,8 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 
 # Features
 
+[![Join the chat at https://gitter.im/EmileVauge/traefik](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/EmileVauge/traefik?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 * No dependency hell, single binary made with go
 * Simple json Rest API
 * Simple TOML file configuration
