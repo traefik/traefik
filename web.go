@@ -83,55 +83,79 @@ func GetHealthHandler(rw http.ResponseWriter, r *http.Request) {
 
 func GetBackendsHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	templatesRenderer.JSON(rw, http.StatusOK, currentConfigurations[vars["provider"]].Backends)
+	providerId := vars["provider"]
+	if provider, ok := currentConfigurations[providerId]; ok {
+		templatesRenderer.JSON(rw, http.StatusOK, provider.Backends)
+	} else {
+		http.NotFound(rw, r)
+	}
 }
 
 func GetBackendHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["backend"]
-	if backend, ok := currentConfigurations[vars["provider"]].Backends[id]; ok {
-		templatesRenderer.JSON(rw, http.StatusOK, backend)
-	} else {
-		http.NotFound(rw, r)
+	providerId := vars["provider"]
+	backendId := vars["backend"]
+	if provider, ok := currentConfigurations[providerId]; ok {
+		if backend, ok := provider.Backends[backendId]; ok {
+			templatesRenderer.JSON(rw, http.StatusOK, backend)
+			return
+		}
 	}
+	http.NotFound(rw, r)
 }
 
 func GetFrontendsHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	templatesRenderer.JSON(rw, http.StatusOK, currentConfigurations[vars["provider"]].Frontends)
+	providerId := vars["provider"]
+	if provider, ok := currentConfigurations[providerId]; ok {
+		templatesRenderer.JSON(rw, http.StatusOK, provider.Frontends)
+	} else {
+		http.NotFound(rw, r)
+	}
 }
 
 func GetFrontendHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	id := vars["frontend"]
-	if frontend, ok := currentConfigurations[vars["provider"]].Frontends[id]; ok {
-		templatesRenderer.JSON(rw, http.StatusOK, frontend)
-	} else {
-		http.NotFound(rw, r)
+	providerId := vars["provider"]
+	frontendId := vars["frontend"]
+	if provider, ok := currentConfigurations[providerId]; ok {
+		if frontend, ok := provider.Frontends[frontendId]; ok {
+			templatesRenderer.JSON(rw, http.StatusOK, frontend)
+			return
+		}
 	}
+	http.NotFound(rw, r)
 }
 
 func GetServersHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	backend := vars["backend"]
-	if backend, ok := currentConfigurations[vars["provider"]].Backends[backend]; ok {
-		templatesRenderer.JSON(rw, http.StatusOK, backend.Servers)
-	} else {
-		http.NotFound(rw, r)
+	providerId := vars["provider"]
+	backendId := vars["backend"]
+	if provider, ok := currentConfigurations[providerId]; ok {
+		if backend, ok := provider.Backends[backendId]; ok {
+			templatesRenderer.JSON(rw, http.StatusOK, backend.Servers)
+			return
+		}
 	}
+	http.NotFound(rw, r)
 }
 
 func GetServerHandler(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	backend := vars["backend"]
-	server := vars["server"]
-	if backend, ok := currentConfigurations[vars["provider"]].Backends[backend]; ok {
-		if server, ok := backend.Servers[server]; ok {
-			templatesRenderer.JSON(rw, http.StatusOK, server)
-		} else {
-			http.NotFound(rw, r)
+	providerId := vars["provider"]
+	backendId := vars["backend"]
+	serverId := vars["server"]
+	fmt.Printf("%v %v %v\n", providerId, backendId, serverId)
+	if provider, ok := currentConfigurations[providerId]; ok {
+		fmt.Printf("provider OK\n")
+		if backend, ok := provider.Backends[backendId]; ok {
+			fmt.Printf("backend OK\n")
+			if server, ok := backend.Servers[serverId]; ok {
+				fmt.Printf("server OK\n")
+				templatesRenderer.JSON(rw, http.StatusOK, server)
+				return
+			}
 		}
-	} else {
-		http.NotFound(rw, r)
 	}
+	http.NotFound(rw, r)
 }
