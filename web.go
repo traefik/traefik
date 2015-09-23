@@ -145,13 +145,9 @@ func GetServerHandler(rw http.ResponseWriter, r *http.Request) {
 	providerId := vars["provider"]
 	backendId := vars["backend"]
 	serverId := vars["server"]
-	fmt.Printf("%v %v %v\n", providerId, backendId, serverId)
 	if provider, ok := currentConfigurations[providerId]; ok {
-		fmt.Printf("provider OK\n")
 		if backend, ok := provider.Backends[backendId]; ok {
-			fmt.Printf("backend OK\n")
 			if server, ok := backend.Servers[serverId]; ok {
-				fmt.Printf("server OK\n")
 				templatesRenderer.JSON(rw, http.StatusOK, server)
 				return
 			}
