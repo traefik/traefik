@@ -38,7 +38,7 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	//templatesRenderer.HTML(w, http.StatusNotFound, "notFound", nil)
 }
 
-func LoadDefaultConfig(gloablConfiguration *GlobalConfiguration) *mux.Router {
+func LoadDefaultConfig(globalConfiguration *GlobalConfiguration) *mux.Router {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	return router

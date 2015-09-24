@@ -4,8 +4,9 @@ Copyright
 package middlewares
 
 import (
-	"github.com/mailgun/oxy/cbreaker"
 	"net/http"
+
+	"github.com/mailgun/oxy/cbreaker"
 )
 
 type CircuitBreaker struct {

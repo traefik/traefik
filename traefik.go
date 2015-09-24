@@ -1,6 +1,17 @@
 package main
 
 import (
+	fmtlog "log"
+	"net"
+	"net/http"
+	"net/url"
+	"os"
+	"os/signal"
+	"reflect"
+	"strings"
+	"syscall"
+	"time"
+
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
@@ -13,16 +24,6 @@ import (
 	"github.com/tylerb/graceful"
 	"github.com/unrolled/render"
 	"gopkg.in/alecthomas/kingpin.v2"
-	fmtlog "log"
-	"net"
-	"net/http"
-	"net/url"
-	"os"
-	"os/signal"
-	"reflect"
-	"strings"
-	"syscall"
-	"time"
 )
 
 var (
@@ -49,20 +50,20 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// load global configuration
-	gloablConfiguration := LoadFileConfig(*globalConfigFile)
+	globalConfiguration := LoadFileConfig(*globalConfigFile)
 
-	loggerMiddleware := middlewares.NewLogger(gloablConfiguration.AccessLogsFile)
+	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile)
 	defer loggerMiddleware.Close()
 
 	// logging
-	level, err := log.ParseLevel(strings.ToLower(gloablConfiguration.LogLevel))
+	level, err := log.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
 	if err != nil {
 		log.Fatal("Error getting level", err)
 	}
 	log.SetLevel(level)
 
-	if len(gloablConfiguration.TraefikLogsFile) > 0 {
-		fi, err := os.OpenFile(gloablConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if len(globalConfiguration.TraefikLogsFile) > 0 {
+		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		defer fi.Close()
 		if err != nil {
 			log.Fatal("Error opening file", err)
@@ -74,7 +75,7 @@ func main() {
 		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
 
-	configurationRouter = LoadDefaultConfig(gloablConfiguration)
+	configurationRouter = LoadDefaultConfig(globalConfiguration)
 
 	// listen new configurations from providers
 	go func() {
@@ -86,11 +87,11 @@ func main() {
 			} else if reflect.DeepEqual(currentConfiguration, configuration) {
 				log.Info("Skipping same configuration")
 			} else {
-				newConfigurationRouter, err := LoadConfig(configuration, gloablConfiguration)
+				newConfigurationRouter, err := LoadConfig(configuration, globalConfiguration)
 				if err == nil {
 					currentConfiguration = configuration
 					configurationRouter = newConfigurationRouter
-					srv.Stop(time.Duration(gloablConfiguration.GraceTimeOut) * time.Second)
+					srv.Stop(time.Duration(globalConfiguration.GraceTimeOut) * time.Second)
 					time.Sleep(3 * time.Second)
 				} else {
 					log.Error("Error loading new configuration, aborted ", err)
@@ -100,24 +101,24 @@ func main() {
 	}()
 
 	// configure providers
-	if gloablConfiguration.Docker != nil {
-		providers = append(providers, gloablConfiguration.Docker)
+	if globalConfiguration.Docker != nil {
+		providers = append(providers, globalConfiguration.Docker)
 	}
-	if gloablConfiguration.Marathon != nil {
-		providers = append(providers, gloablConfiguration.Marathon)
+	if globalConfiguration.Marathon != nil {
+		providers = append(providers, globalConfiguration.Marathon)
 	}
-	if gloablConfiguration.File != nil {
-		if len(gloablConfiguration.File.Filename) == 0 {
+	if globalConfiguration.File != nil {
+		if len(globalConfiguration.File.Filename) == 0 {
 			// no filename, setting to global config file
-			gloablConfiguration.File.Filename = *globalConfigFile
+			globalConfiguration.File.Filename = *globalConfigFile
 		}
-		providers = append(providers, gloablConfiguration.File)
+		providers = append(providers, globalConfiguration.File)
 	}
-	if gloablConfiguration.Web != nil {
-		providers = append(providers, gloablConfiguration.Web)
+	if globalConfiguration.Web != nil {
+		providers = append(providers, globalConfiguration.Web)
 	}
-	if gloablConfiguration.Consul != nil {
-		providers = append(providers, gloablConfiguration.Consul)
+	if globalConfiguration.Consul != nil {
+		providers = append(providers, globalConfiguration.Consul)
 	}
 
 	// start providers
@@ -134,7 +135,7 @@ func main() {
 		sig := <-sigs
 		log.Infof("I have to go... %+v", sig)
 		goAway = true
-		srv.Stop(time.Duration(gloablConfiguration.GraceTimeOut) * time.Second)
+		srv.Stop(time.Duration(globalConfiguration.GraceTimeOut) * time.Second)
 	}()
 
 	for {
@@ -151,18 +152,18 @@ func main() {
 		negroni.UseHandler(configurationRouter)
 
 		srv = &graceful.Server{
-			Timeout:          time.Duration(gloablConfiguration.GraceTimeOut) * time.Second,
+			Timeout:          time.Duration(globalConfiguration.GraceTimeOut) * time.Second,
 			NoSignalHandling: true,
 
 			Server: &http.Server{
-				Addr:    gloablConfiguration.Port,
+				Addr:    globalConfiguration.Port,
 				Handler: negroni,
 			},
 		}
 
 		go func() {
-			if len(gloablConfiguration.CertFile) > 0 && len(gloablConfiguration.KeyFile) > 0 {
-				err := srv.ListenAndServeTLS(gloablConfiguration.CertFile, gloablConfiguration.KeyFile)
+			if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
+				err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
 				if err != nil {
 					netOpError, ok := err.(*net.OpError)
 					if ok && netOpError.Err.Error() != "use of closed network connection" {
@@ -185,7 +186,7 @@ func main() {
 	}
 }
 
-func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfiguration) (*mux.Router, error) {
+func LoadConfig(configuration *Configuration, globalConfiguration *GlobalConfiguration) (*mux.Router, error) {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	backends := map[string]http.Handler{}
@@ -203,18 +204,18 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 			lb, _ := roundrobin.New(fwd)
 			rb, _ := roundrobin.NewRebalancer(lb, roundrobin.RebalancerLogger(oxyLogger))
 			for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-				if url, err := url.Parse(server.Url); err != nil {
+				url, err := url.Parse(server.URL)
+				if err != nil {
 					return nil, err
-				} else {
-					log.Debugf("Creating server %s %s", serverName, url.String())
-					rb.UpsertServer(url, roundrobin.Weight(server.Weight))
 				}
+				log.Debugf("Creating server %s %s", serverName, url.String())
+				rb.UpsertServer(url, roundrobin.Weight(server.Weight))
 			}
 			backends[frontend.Backend] = rb
 		} else {
 			log.Debugf("Reusing backend %s", frontend.Backend)
 		}
-		//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(gloablConfiguration.Replay)), stream.Logger(oxyLogger))
+		//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(globalConfiguration.Replay)), stream.Logger(oxyLogger))
 		var negroni = negroni.New()
 		negroni.Use(middlewares.NewCircuitBreaker(backends[frontend.Backend], cbreaker.Logger(oxyLogger)))
 		newRoute.Handler(negroni)

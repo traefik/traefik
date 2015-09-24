@@ -2,13 +2,14 @@ package main
 
 import (
 	"bytes"
+	"strconv"
+	"strings"
+	"text/template"
+
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gambol99/go-marathon"
-	"strconv"
-	"strings"
-	"text/template"
 )
 
 type MarathonProvider struct {
@@ -62,32 +63,32 @@ func (provider *MarathonProvider) Provide(configurationChan chan<- *Configuratio
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
 	config.EventsInterface = provider.NetworkInterface
-	if client, err := marathon.NewClient(config); err != nil {
+	client, err := marathon.NewClient(config)
+	if err != nil {
 		log.Errorf("Failed to create a client for marathon, error: %s", err)
 		return
-	} else {
-		provider.marathonClient = client
-		update := make(marathon.EventsChannel, 5)
-		if provider.Watch {
-			if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
-				log.Errorf("Failed to register for subscriptions, %s", err)
-			} else {
-				go func() {
-					for {
-						event := <-update
-						log.Debug("Marathon event receveived", event)
-						configuration := provider.loadMarathonConfig()
-						if configuration != nil {
-							configurationChan <- configuration
-						}
-					}
-				}()
-			}
-		}
-
-		configuration := provider.loadMarathonConfig()
-		configurationChan <- configuration
 	}
+	provider.marathonClient = client
+	update := make(marathon.EventsChannel, 5)
+	if provider.Watch {
+		if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
+			log.Errorf("Failed to register for subscriptions, %s", err)
+		} else {
+			go func() {
+				for {
+					event := <-update
+					log.Debug("Marathon event receveived", event)
+					configuration := provider.loadMarathonConfig()
+					if configuration != nil {
+						configurationChan <- configuration
+					}
+				}
+			}()
+		}
+	}
+
+	configuration := provider.loadMarathonConfig()
+	configurationChan <- configuration
 }
 
 func (provider *MarathonProvider) loadMarathonConfig() *Configuration {

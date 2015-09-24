@@ -4,10 +4,11 @@ Copyright
 package middlewares
 
 import (
-	"github.com/gorilla/handlers"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/handlers"
 )
 
 // Logger is a middleware handler that logs the request as it goes in and the response as it goes out.
@@ -23,9 +24,8 @@ func NewLogger(file string) *Logger {
 			log.Fatal("Error opening file", err)
 		}
 		return &Logger{fi}
-	} else {
-		return &Logger{nil}
 	}
+	return &Logger{nil}
 }
 
 func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
