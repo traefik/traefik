@@ -21,6 +21,7 @@ import (
 	"time"
 	fmtlog "log"
 	"github.com/mailgun/oxy/cbreaker"
+	"net"
 )
 
 var (
@@ -168,9 +169,21 @@ func main() {
 
 		go func() {
 			if len(gloablConfiguration.CertFile) > 0 && len(gloablConfiguration.KeyFile) > 0 {
-				srv.ListenAndServeTLS(gloablConfiguration.CertFile, gloablConfiguration.KeyFile)
+				err := srv.ListenAndServeTLS(gloablConfiguration.CertFile, gloablConfiguration.KeyFile)
+				if (err!= nil ){
+					netOpError, ok := err.(*net.OpError)
+					if ok && netOpError.Err.Error() != "use of closed network connection" {
+						log.Fatal("Error creating server: ", err)
+					}
+				}
 			} else {
-				srv.ListenAndServe()
+				err := srv.ListenAndServe()
+				if (err!= nil ){
+					netOpError, ok := err.(*net.OpError)
+					if ok && netOpError.Err.Error() != "use of closed network connection" {
+						log.Fatal("Error creating server: ", err)
+					}
+				}
 			}
 		}()
 		log.Notice("Started")

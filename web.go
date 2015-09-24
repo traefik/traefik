@@ -46,9 +46,15 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 
 	go func() {
 		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
-			http.ListenAndServeTLS(provider.Address,provider.CertFile, provider.KeyFile, systemRouter)
+			err := http.ListenAndServeTLS(provider.Address,provider.CertFile, provider.KeyFile, systemRouter)
+			if (err!= nil ){
+				log.Fatal("Error creating server: ", err)
+			}
 		} else {
-			http.ListenAndServe(provider.Address, systemRouter)
+			err := http.ListenAndServe(provider.Address, systemRouter)
+			if (err!= nil ){
+				log.Fatal("Error creating server: ", err)
+			}
 		}
 	}()
 }

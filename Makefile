@@ -54,5 +54,6 @@ dist:
 	mkdir dist
 
 run-dev:
+	go generate
 	go build
 	./traefik
