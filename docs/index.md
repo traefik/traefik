@@ -362,6 +362,7 @@ Labels can be used on containers to override default behaviour:
 * ```traefik.port=80```: register this port. Useful when the container exposes multiples ports.
 * ```traefik.weight=10```: assign this weight to the container
 * ```traefik.enable=false```: disable this container in Træfɪk
+* ```traefik.host=bar```: override the default routing from {containerName}.{domain} to bar.{domain}
 
 ## <a id="marathon"></a> Marathon backend
 
@@ -419,6 +420,7 @@ Labels can be used on containers to override default behaviour:
 * ```traefik.port=80```: register this port. Useful when the application exposes multiples ports.
 * ```traefik.weight=10```: assign this weight to the application
 * ```traefik.enable=false```: disable this application in Træfɪk
+* ```traefik.host=bar```: override the default routing from {appName}.{domain} to bar.{domain}
 
 ## <a id="consul"></a> Consul backend
 

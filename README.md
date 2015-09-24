@@ -103,6 +103,8 @@ The idea behind `godep` is the following :
 
 ```bash
 $ godep restore
+# Generate
+$ godep go generate
 # Simple go build
 $ godep go build
 # Using gox to build multiple platform
@@ -132,5 +134,3 @@ ok      github.com/emilevauge/traefik   0.005s  coverage: 4.1% of statements
 
 Test success
 ```
-
-
