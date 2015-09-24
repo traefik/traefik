@@ -1,9 +1,6 @@
 {
 	"ImportPath": "github.com/emilevauge/traefik",
-	"GoVersion": "go1.5",
-	"Packages": [
-		"./..."
-	],
+	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
 			"ImportPath": "github.com/BurntSushi/toml",
@@ -12,6 +9,11 @@
 		{
 			"ImportPath": "github.com/BurntSushi/ty",
 			"Rev": "6add9cd6ad42d389d6ead1dde60b4ad71e46fd74"
+		},
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.8.7",
+			"Rev": "418b41d23a1bf978c06faea5313ba194650ac088"
 		},
 		{
 			"ImportPath": "github.com/alecthomas/template",
@@ -94,10 +96,6 @@
 		{
 			"ImportPath": "github.com/mailgun/timetools",
 			"Rev": "fd192d755b00c968d312d23f521eb0cdc6f66bd0"
-		},
-		{
-			"ImportPath": "github.com/op/go-logging",
-			"Rev": "e8d5414f0947014548c2334044a0fac13187dfee"
 		},
 		{
 			"ImportPath": "github.com/thoas/stats",

@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/hashicorp/consul/api"
-	"text/template"
 	"bytes"
 	"github.com/BurntSushi/toml"
-	"strings"
 	"github.com/BurntSushi/ty/fun"
+	log "github.com/Sirupsen/logrus"
+	"github.com/hashicorp/consul/api"
 	"net/http"
+	"strings"
+	"text/template"
 )
-
 
 type Key struct {
 	Value string
@@ -22,6 +22,7 @@ type ConsulProvider struct {
 	Filename     string
 	consulClient *api.Client
 }
+
 var kvClient *api.KV
 
 var ConsulFuncMap = template.FuncMap{
@@ -33,7 +34,7 @@ var ConsulFuncMap = template.FuncMap{
 			return nil
 		}
 		keysPairs = fun.Filter(func(key string) bool {
-			if (key == joinedKeys) {
+			if key == joinedKeys {
 				return false
 			}
 			return true
@@ -51,7 +52,7 @@ var ConsulFuncMap = template.FuncMap{
 	},
 	"Last": func(key string) string {
 		splittedKey := strings.Split(key, "/")
-		return splittedKey[len(splittedKey) -2]
+		return splittedKey[len(splittedKey)-2]
 	},
 }
 
@@ -64,7 +65,7 @@ func NewConsulProvider() *ConsulProvider {
 	return consulProvider
 }
 
-func (provider *ConsulProvider) Provide(configurationChan chan <- *Configuration) {
+func (provider *ConsulProvider) Provide(configurationChan chan<- *Configuration) {
 	config := &api.Config{
 		Address:    provider.Endpoint,
 		Scheme:     "http",
@@ -106,10 +107,10 @@ func (provider *ConsulProvider) loadConsulConfig() *Configuration {
 	kvClient = provider.consulClient.KV()
 
 	servicesName, _, _ := provider.consulClient.Catalog().Services(nil)
-	for serviceName, _ := range servicesName {
+	for serviceName := range servicesName {
 		catalogServices, _, _ := provider.consulClient.Catalog().Service(serviceName, "", nil)
 		for _, catalogService := range catalogServices {
-			services= append(services, catalogService)
+			services = append(services, catalogService)
 		}
 	}
 

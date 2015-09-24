@@ -2,34 +2,34 @@ package main
 
 import (
 	"github.com/BurntSushi/toml"
+	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/emilevauge/traefik/middlewares"
 	"github.com/gorilla/mux"
+	"github.com/mailgun/oxy/cbreaker"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
-	"github.com/op/go-logging"
 	"github.com/thoas/stats"
 	"github.com/tylerb/graceful"
 	"github.com/unrolled/render"
 	"gopkg.in/alecthomas/kingpin.v2"
+	fmtlog "log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"reflect"
+	"strings"
 	"syscall"
 	"time"
-	fmtlog "log"
-	"github.com/mailgun/oxy/cbreaker"
-	"net"
 )
 
 var (
 	globalConfigFile     = kingpin.Arg("conf", "Main configration file.").Default("traefik.toml").String()
 	currentConfiguration = new(Configuration)
 	metrics              = stats.New()
-	log                  = logging.MustGetLogger("traefik")
-	oxyLogger			 = &OxyLogger{}
+	oxyLogger            = &OxyLogger{}
 	templatesRenderer    = render.New(render.Options{
 		Directory:  "templates",
 		Asset:      Asset,
@@ -45,7 +45,6 @@ func main() {
 	var configurationChan = make(chan *Configuration, 10)
 	defer close(configurationChan)
 	var providers = []Provider{}
-	var format = logging.MustStringFormatter("%{color}%{time:15:04:05.000} %{shortfile:20.20s} %{level:8.8s} %{id:03x} ▶%{color:reset} %{message}")
 	var sigs = make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -56,11 +55,11 @@ func main() {
 	defer loggerMiddleware.Close()
 
 	// logging
-	backends := []logging.Backend{}
-	level, err := logging.LogLevel(gloablConfiguration.LogLevel)
+	level, err := log.ParseLevel(strings.ToLower(gloablConfiguration.LogLevel))
 	if err != nil {
 		log.Fatal("Error getting level", err)
 	}
+	log.SetLevel(level)
 
 	if len(gloablConfiguration.TraefikLogsFile) > 0 {
 		fi, err := os.OpenFile(gloablConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -68,18 +67,12 @@ func main() {
 		if err != nil {
 			log.Fatal("Error opening file", err)
 		} else {
-			logBackend := logging.NewLogBackend(fi, "", 0)
-			logBackendFormatter := logging.NewBackendFormatter(logBackend, logging.GlogFormatter)
-			backends = append(backends, logBackendFormatter)
+			log.SetOutput(fi)
+			log.SetFormatter(&log.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})
 		}
+	} else {
+		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
-	if gloablConfiguration.TraefikLogsStdout {
-		logBackend := logging.NewLogBackend(os.Stdout, "", 0)
-		logBackendFormatter := logging.NewBackendFormatter(logBackend, format)
-		backends = append(backends, logBackendFormatter)
-	}
-	logging.SetBackend(backends...)
-	logging.SetLevel(level, "traefik")
 
 	configurationRouter = LoadDefaultConfig(gloablConfiguration)
 
@@ -87,19 +80,19 @@ func main() {
 	go func() {
 		for {
 			configuration := <-configurationChan
-			log.Info("Configuration receveived %+v", configuration)
+			log.Infof("Configuration receveived %+v", configuration)
 			if configuration == nil {
 				log.Info("Skipping empty configuration")
 			} else if reflect.DeepEqual(currentConfiguration, configuration) {
 				log.Info("Skipping same configuration")
 			} else {
 				newConfigurationRouter, err := LoadConfig(configuration, gloablConfiguration)
-				if (err == nil ){
+				if err == nil {
 					currentConfiguration = configuration
 					configurationRouter = newConfigurationRouter
 					srv.Stop(time.Duration(gloablConfiguration.GraceTimeOut) * time.Second)
 					time.Sleep(3 * time.Second)
-				}else{
+				} else {
 					log.Error("Error loading new configuration, aborted ", err)
 				}
 			}
@@ -129,7 +122,7 @@ func main() {
 
 	// start providers
 	for _, provider := range providers {
-		log.Notice("Starting provider %v %+v", reflect.TypeOf(provider), provider)
+		log.Infof("Starting provider %v %+v", reflect.TypeOf(provider), provider)
 		currentProvider := provider
 		go func() {
 			currentProvider.Provide(configurationChan)
@@ -139,7 +132,7 @@ func main() {
 	goAway := false
 	go func() {
 		sig := <-sigs
-		log.Notice("I have to go... %+v", sig)
+		log.Infof("I have to go... %+v", sig)
 		goAway = true
 		srv.Stop(time.Duration(gloablConfiguration.GraceTimeOut) * time.Second)
 	}()
@@ -170,7 +163,7 @@ func main() {
 		go func() {
 			if len(gloablConfiguration.CertFile) > 0 && len(gloablConfiguration.KeyFile) > 0 {
 				err := srv.ListenAndServeTLS(gloablConfiguration.CertFile, gloablConfiguration.KeyFile)
-				if (err!= nil ){
+				if err != nil {
 					netOpError, ok := err.(*net.OpError)
 					if ok && netOpError.Err.Error() != "use of closed network connection" {
 						log.Fatal("Error creating server: ", err)
@@ -178,7 +171,7 @@ func main() {
 				}
 			} else {
 				err := srv.ListenAndServe()
-				if (err!= nil ){
+				if err != nil {
 					netOpError, ok := err.(*net.OpError)
 					if ok && netOpError.Err.Error() != "use of closed network connection" {
 						log.Fatal("Error creating server: ", err)
@@ -186,9 +179,9 @@ func main() {
 				}
 			}
 		}()
-		log.Notice("Started")
+		log.Info("Started")
 		<-srv.StopChan()
-		log.Notice("Stopped")
+		log.Info("Stopped")
 	}
 }
 
@@ -197,31 +190,31 @@ func LoadConfig(configuration *Configuration, gloablConfiguration *GlobalConfigu
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	backends := map[string]http.Handler{}
 	for frontendName, frontend := range configuration.Frontends {
-		log.Debug("Creating frontend %s", frontendName)
+		log.Debugf("Creating frontend %s", frontendName)
 		fwd, _ := forward.New(forward.Logger(oxyLogger))
 		newRoute := router.NewRoute().Name(frontendName)
 		for routeName, route := range frontend.Routes {
-			log.Debug("Creating route %s %s:%s", routeName, route.Rule, route.Value)
+			log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
 			newRouteReflect := Invoke(newRoute, route.Rule, route.Value)
 			newRoute = newRouteReflect[0].Interface().(*mux.Route)
 		}
 		if backends[frontend.Backend] == nil {
-			log.Debug("Creating backend %s", frontend.Backend)
+			log.Debugf("Creating backend %s", frontend.Backend)
 			lb, _ := roundrobin.New(fwd)
 			rb, _ := roundrobin.NewRebalancer(lb, roundrobin.RebalancerLogger(oxyLogger))
 			for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-				if url, err := url.Parse(server.Url); err != nil{
+				if url, err := url.Parse(server.Url); err != nil {
 					return nil, err
-				}else{
-					log.Debug("Creating server %s %s", serverName, url.String())
+				} else {
+					log.Debugf("Creating server %s %s", serverName, url.String())
 					rb.UpsertServer(url, roundrobin.Weight(server.Weight))
 				}
 			}
 			backends[frontend.Backend] = rb
 		} else {
-			log.Debug("Reusing backend %s", frontend.Backend)
+			log.Debugf("Reusing backend %s", frontend.Backend)
 		}
-//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(gloablConfiguration.Replay)), stream.Logger(oxyLogger))
+		//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(gloablConfiguration.Replay)), stream.Logger(oxyLogger))
 		var negroni = negroni.New()
 		negroni.Use(middlewares.NewCircuitBreaker(backends[frontend.Backend], cbreaker.Logger(oxyLogger)))
 		newRoute.Handler(negroni)
@@ -246,6 +239,6 @@ func LoadFileConfig(file string) *GlobalConfiguration {
 	if _, err := toml.DecodeFile(file, configuration); err != nil {
 		log.Fatal("Error reading file ", err)
 	}
-	log.Debug("Global configuration loaded %+v", configuration)
+	log.Debugf("Global configuration loaded %+v", configuration)
 	return configuration
 }
