@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/BurntSushi/toml"
-	log "github.com/Sirupsen/logrus"
-	"gopkg.in/fsnotify.v1"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	log "github.com/Sirupsen/logrus"
+	"gopkg.in/fsnotify.v1"
 )
 
 type FileProvider struct {

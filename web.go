@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
-	"io/ioutil"
-	"net/http"
 )
 
 type WebProvider struct {
@@ -21,7 +22,7 @@ type Page struct {
 
 func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 	systemRouter := mux.NewRouter()
-	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHtmlConfigHandler))
+	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHTMLConfigHandler))
 	systemRouter.Methods("GET").Path("/health").Handler(http.HandlerFunc(GetHealthHandler))
 	systemRouter.Methods("GET").Path("/api").Handler(http.HandlerFunc(GetConfigHandler))
 	systemRouter.Methods("PUT").Path("/api").Handler(http.HandlerFunc(
@@ -64,7 +65,7 @@ func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
 	templatesRenderer.JSON(rw, http.StatusOK, currentConfiguration)
 }
 
-func GetHtmlConfigHandler(response http.ResponseWriter, request *http.Request) {
+func GetHTMLConfigHandler(response http.ResponseWriter, request *http.Request) {
 	templatesRenderer.HTML(response, http.StatusOK, "configuration", Page{Configuration: *currentConfiguration})
 }
 

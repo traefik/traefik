@@ -3,15 +3,16 @@ package main
 import (
 	"bytes"
 	"errors"
+	"strconv"
+	"strings"
+	"text/template"
+	"time"
+
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
 	"github.com/fsouza/go-dockerclient"
-	"strconv"
-	"strings"
-	"text/template"
-	"time"
 )
 
 type DockerProvider struct {
