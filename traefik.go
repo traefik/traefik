@@ -278,7 +278,7 @@ func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration
 					}
 				case wrr:
 					log.Infof("Creating load-balancer wrr")
-					lb = rr
+					lb = middlewares.NewWebsocketUpgrader(rr)
 					for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 						url, err := url.Parse(server.URL)
 						if err != nil {
