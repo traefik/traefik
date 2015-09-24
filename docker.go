@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
+	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
 	"github.com/fsouza/go-dockerclient"
 	"strconv"
@@ -85,7 +86,7 @@ func (provider *DockerProvider) Provide(configurationChan chan<- *Configuration)
 							//							log.Fatalf("Docker connection error")
 						}
 						if event.Status == "start" || event.Status == "die" {
-							log.Debug("Docker event receveived %+v", event)
+							log.Debugf("Docker event receveived %+v", event)
 							configuration := provider.loadDockerConfig(dockerClient)
 							if configuration != nil {
 								configurationChan <- configuration
@@ -94,7 +95,7 @@ func (provider *DockerProvider) Provide(configurationChan chan<- *Configuration)
 					}
 				}
 				notify := func(err error, time time.Duration) {
-					log.Error("Docker connection error %+v, retrying in %s", err, time)
+					log.Errorf("Docker connection error %+v, retrying in %s", err, time)
 				}
 				err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
 				if err != nil {
@@ -123,16 +124,16 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 	// filter containers
 	filteredContainers := fun.Filter(func(container docker.Container) bool {
 		if len(container.NetworkSettings.Ports) == 0 {
-			log.Debug("Filtering container without port %s", container.Name)
+			log.Debugf("Filtering container without port %s", container.Name)
 			return false
 		}
 		_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
 		if len(container.NetworkSettings.Ports) > 1 && err != nil {
-			log.Debug("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
+			log.Debugf("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
 			return false
 		}
 		if container.Config.Labels["traefik.enable"] == "false" {
-			log.Debug("Filtering disabled container %s", container.Name)
+			log.Debugf("Filtering disabled container %s", container.Name)
 			return false
 		}
 		return true

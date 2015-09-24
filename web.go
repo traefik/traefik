@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
 	"io/ioutil"
@@ -10,7 +11,7 @@ import (
 )
 
 type WebProvider struct {
-	Address string
+	Address           string
 	CertFile, KeyFile string
 }
 
@@ -32,7 +33,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 				configurationChan <- configuration
 				GetConfigHandler(rw, r)
 			} else {
-				log.Error("Error parsing configuration %+v\n", err)
+				log.Errorf("Error parsing configuration %+v", err)
 				http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 			}
 		}))
@@ -46,13 +47,13 @@ func (provider *WebProvider) Provide(configurationChan chan<- *Configuration) {
 
 	go func() {
 		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
-			err := http.ListenAndServeTLS(provider.Address,provider.CertFile, provider.KeyFile, systemRouter)
-			if (err!= nil ){
+			err := http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, systemRouter)
+			if err != nil {
 				log.Fatal("Error creating server: ", err)
 			}
 		} else {
 			err := http.ListenAndServe(provider.Address, systemRouter)
-			if (err!= nil ){
+			if err != nil {
 				log.Fatal("Error creating server: ", err)
 			}
 		}
@@ -80,7 +81,7 @@ func GetBackendHandler(rw http.ResponseWriter, r *http.Request) {
 	id := vars["backend"]
 	if backend, ok := currentConfiguration.Backends[id]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, backend)
-	}else{
+	} else {
 		http.NotFound(rw, r)
 	}
 }
@@ -94,7 +95,7 @@ func GetFrontendHandler(rw http.ResponseWriter, r *http.Request) {
 	id := vars["frontend"]
 	if frontend, ok := currentConfiguration.Frontends[id]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, frontend)
-	}else{
+	} else {
 		http.NotFound(rw, r)
 	}
 }
@@ -104,7 +105,7 @@ func GetServersHandler(rw http.ResponseWriter, r *http.Request) {
 	backend := vars["backend"]
 	if backend, ok := currentConfiguration.Backends[backend]; ok {
 		templatesRenderer.JSON(rw, http.StatusOK, backend.Servers)
-	}else{
+	} else {
 		http.NotFound(rw, r)
 	}
 }
@@ -116,10 +117,10 @@ func GetServerHandler(rw http.ResponseWriter, r *http.Request) {
 	if backend, ok := currentConfiguration.Backends[backend]; ok {
 		if server, ok := backend.Servers[server]; ok {
 			templatesRenderer.JSON(rw, http.StatusOK, server)
-		}else{
+		} else {
 			http.NotFound(rw, r)
 		}
-	}else{
+	} else {
 		http.NotFound(rw, r)
 	}
 }

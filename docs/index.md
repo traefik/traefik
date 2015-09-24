@@ -69,17 +69,11 @@ A circuit breaker can also be applied to a backend, preventing high loads on fai
 # graceTimeOut = 10
 
 # Traefik logs file
+# If not defined, logs to stdout
 #
 # Optional
 #
 # traefikLogsFile = "log/traefik.log"
-
-# Traefik log to standard output
-#
-# Optional
-# Default: true
-#
-# traefikLogsStdout = true
 
 # Access logs file
 #
@@ -114,7 +108,6 @@ Like any other reverse proxy, Træfɪk can be configured with a file. You have t
 port = ":80"
 graceTimeOut = 10
 logLevel = "DEBUG"
-traefikLogsStdout = true
 
 [file]
 
@@ -153,7 +146,6 @@ traefikLogsStdout = true
 port = ":80"
 graceTimeOut = 10
 logLevel = "DEBUG"
-traefikLogsStdout = true
 
 [file]
 filename = "rules.toml"

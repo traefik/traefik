@@ -18,17 +18,11 @@
 # graceTimeOut = 10
 
 # Traefik logs file
+# If not defined, logs to stdout
 #
 # Optional
 #
 # traefikLogsFile = "log/traefik.log"
-
-# Traefik log to standard output
-#
-# Optional
-# Default: true
-#
-# traefikLogsStdout = true
 
 # Access logs file
 #

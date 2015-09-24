@@ -2,25 +2,27 @@
 Copyright
 */
 package main
+
 import (
-	"net/http"
-	"github.com/mailgun/oxy/utils"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	"github.com/mailgun/oxy/utils"
+	"net/http"
 )
 
-type OxyLogger struct{
+type OxyLogger struct {
 }
 
 func (oxylogger *OxyLogger) Infof(format string, args ...interface{}) {
-	log.Debug(format, args...)
+	log.Debugf(format, args...)
 }
 
 func (oxylogger *OxyLogger) Warningf(format string, args ...interface{}) {
-	log.Warning(format, args...)
+	log.Warningf(format, args...)
 }
 
 func (oxylogger *OxyLogger) Errorf(format string, args ...interface{}) {
-	log.Error(format, args...)
+	log.Errorf(format, args...)
 }
 
 type ErrorHandler struct {

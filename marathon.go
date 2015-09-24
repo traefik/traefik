@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
+	log "github.com/Sirupsen/logrus"
 	"github.com/gambol99/go-marathon"
 	"strconv"
 	"strings"
@@ -62,14 +63,14 @@ func (provider *MarathonProvider) Provide(configurationChan chan<- *Configuratio
 	config.URL = provider.Endpoint
 	config.EventsInterface = provider.NetworkInterface
 	if client, err := marathon.NewClient(config); err != nil {
-		log.Error("Failed to create a client for marathon, error: %s", err)
+		log.Errorf("Failed to create a client for marathon, error: %s", err)
 		return
 	} else {
 		provider.marathonClient = client
 		update := make(marathon.EventsChannel, 5)
 		if provider.Watch {
 			if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
-				log.Error("Failed to register for subscriptions, %s", err)
+				log.Errorf("Failed to register for subscriptions, %s", err)
 			} else {
 				go func() {
 					for {
@@ -94,13 +95,13 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 
 	applications, err := provider.marathonClient.Applications(nil)
 	if err != nil {
-		log.Error("Failed to create a client for marathon, error: %s", err)
+		log.Errorf("Failed to create a client for marathon, error: %s", err)
 		return nil
 	}
 
 	tasks, err := provider.marathonClient.AllTasks()
 	if err != nil {
-		log.Error("Failed to create a client for marathon, error: %s", err)
+		log.Errorf("Failed to create a client for marathon, error: %s", err)
 		return nil
 	}
 
