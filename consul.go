@@ -2,13 +2,14 @@ package main
 
 import (
 	"bytes"
+	"net/http"
+	"strings"
+	"text/template"
+
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/consul/api"
-	"net/http"
-	"strings"
-	"text/template"
 )
 
 type Key struct {

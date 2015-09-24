@@ -31,7 +31,7 @@ type Backend struct {
 }
 
 type Server struct {
-	Url    string
+	URL    string `json:"Url"`
 	Weight int
 }
 
