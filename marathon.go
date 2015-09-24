@@ -54,6 +54,14 @@ var MarathonFuncMap = template.FuncMap{
 		}
 		return "0"
 	},
+	"getPrefixes": func(application marathon.Application) ([]string, error) {
+		for key, value := range application.Labels {
+			if key == "traefik.prefixes" {
+				return strings.Split(value, ","), nil
+			}
+		}
+		return []string{}, nil
+	},
 	"replace": func(s1 string, s2 string, s3 string) string {
 		return strings.Replace(s3, s1, s2, -1)
 	},
