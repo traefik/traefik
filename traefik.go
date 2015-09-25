@@ -47,6 +47,7 @@ func main() {
 	defer close(configurationChan)
 	var providers = []Provider{}
 	var sigs = make(chan os.Signal, 1)
+	defer close(sigs)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// load global configuration
@@ -91,7 +92,9 @@ func main() {
 				if err == nil {
 					currentConfiguration = configuration
 					configurationRouter = newConfigurationRouter
-					srv.Stop(time.Duration(globalConfiguration.GraceTimeOut) * time.Second)
+					oldServer := srv
+					srv = prepareServer(configurationRouter, globalConfiguration, loggerMiddleware, metrics)
+					stopServer(oldServer, globalConfiguration)
 					time.Sleep(3 * time.Second)
 				} else {
 					log.Error("Error loading new configuration, aborted ", err)
@@ -135,54 +138,67 @@ func main() {
 		sig := <-sigs
 		log.Infof("I have to go... %+v", sig)
 		goAway = true
-		srv.Stop(time.Duration(globalConfiguration.GraceTimeOut) * time.Second)
+		stopServer(srv, globalConfiguration)
 	}()
+
+	//negroni.Use(middlewares.NewCircuitBreaker(oxyLogger))
+	//negroni.Use(middlewares.NewRoutes(configurationRouter))
+	srv = prepareServer(configurationRouter, globalConfiguration, loggerMiddleware, metrics)
 
 	for {
 		if goAway {
 			break
 		}
 
-		// middlewares
-		var negroni = negroni.New()
-		negroni.Use(metrics)
-		negroni.Use(loggerMiddleware)
-		//negroni.Use(middlewares.NewCircuitBreaker(oxyLogger))
-		//negroni.Use(middlewares.NewRoutes(configurationRouter))
-		negroni.UseHandler(configurationRouter)
-
-		srv = &graceful.Server{
-			Timeout:          time.Duration(globalConfiguration.GraceTimeOut) * time.Second,
-			NoSignalHandling: true,
-
-			Server: &http.Server{
-				Addr:    globalConfiguration.Port,
-				Handler: negroni,
-			},
-		}
-
 		go func() {
-			if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
-				err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
-				if err != nil {
-					netOpError, ok := err.(*net.OpError)
-					if ok && netOpError.Err.Error() != "use of closed network connection" {
-						log.Fatal("Error creating server: ", err)
-					}
-				}
-			} else {
-				err := srv.ListenAndServe()
-				if err != nil {
-					netOpError, ok := err.(*net.OpError)
-					if ok && netOpError.Err.Error() != "use of closed network connection" {
-						log.Fatal("Error creating server: ", err)
-					}
-				}
-			}
+			startServer(srv, globalConfiguration)
 		}()
 		log.Info("Started")
 		<-srv.StopChan()
 		log.Info("Stopped")
+	}
+}
+
+func startServer(srv *graceful.Server, globalConfiguration *GlobalConfiguration){
+	if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
+		err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
+		if err != nil {
+			netOpError, ok := err.(*net.OpError)
+			if ok && netOpError.Err.Error() != "use of closed network connection" {
+				log.Fatal("Error creating server: ", err)
+			}
+		}
+	} else {
+		err := srv.ListenAndServe()
+		if err != nil {
+			netOpError, ok := err.(*net.OpError)
+			if ok && netOpError.Err.Error() != "use of closed network connection" {
+				log.Fatal("Error creating server: ", err)
+			}
+		}
+	}
+}
+
+func stopServer(srv *graceful.Server, globalConfiguration *GlobalConfiguration){
+	srv.Stop(time.Duration(globalConfiguration.GraceTimeOut) * time.Second)
+}
+
+func prepareServer(router *mux.Router, globalConfiguration *GlobalConfiguration, middlewares...negroni.Handler) (*graceful.Server){
+	// middlewares
+	var negroni = negroni.New()
+	for _, middleware := range middlewares {
+		negroni.Use(middleware)
+	}
+	negroni.UseHandler(router)
+
+	return &graceful.Server{
+		Timeout:          time.Duration(globalConfiguration.GraceTimeOut) * time.Second,
+		NoSignalHandling: true,
+
+		Server: &http.Server{
+			Addr:    globalConfiguration.Port,
+			Handler: negroni,
+		},
 	}
 }
 
