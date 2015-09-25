@@ -32,7 +32,7 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 * [Oxy](https://github.com/mailgun/oxy/): an awsome proxy library made by Mailgun guys
 * [Gorilla mux](https://github.com/gorilla/mux): famous request router
 * [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
-* [Graceful](https://github.com/tylerb/graceful): graceful shutdown of http.Handler servers
+* [Manners](https://github.com/mailgun/manners): graceful shutdown of http.Handler servers
 
 # Quick start
 
