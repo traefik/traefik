@@ -48,6 +48,8 @@ var ConsulFuncMap = template.FuncMap{
 		if err != nil {
 			log.Error("Error getting key ", joinedKeys, err)
 			return ""
+		} else if keyPair == nil {
+			return ""
 		}
 		return string(keyPair.Value)
 	},
@@ -75,28 +77,34 @@ func (provider *ConsulProvider) Provide(configurationChan chan<- *Configuration)
 	consulClient, _ := api.NewClient(config)
 	provider.consulClient = consulClient
 	if provider.Watch {
-		var waitIndex uint64
 		keypairs, meta, err := consulClient.KV().Keys("", "", nil)
-		if keypairs == nil && err == nil {
-			log.Error("Key was not found.")
+		if keypairs == nil {
+			log.Error("Key was not found")
+		} else if err != nil {
+			log.Error("Error connecting to consul %s", err)
+		} else {
+			var waitIndex uint64
+			waitIndex = meta.LastIndex
+			go func() {
+				for {
+					opts := api.QueryOptions{
+						WaitIndex: waitIndex,
+					}
+					keypairs, meta, err := consulClient.KV().Keys("", "", &opts)
+					if keypairs == nil {
+						log.Error("Key was not found")
+					} else if err != nil {
+						log.Error("Error connecting to consul %s", err)
+					} else {
+						waitIndex = meta.LastIndex
+						configuration := provider.loadConsulConfig()
+						if configuration != nil {
+							configurationChan <- configuration
+						}
+					}
+				}
+			}()
 		}
-		waitIndex = meta.LastIndex
-		go func() {
-			for {
-				opts := api.QueryOptions{
-					WaitIndex: waitIndex,
-				}
-				keypairs, meta, err := consulClient.KV().Keys("", "", &opts)
-				if keypairs == nil && err == nil {
-					log.Error("Key  was not found.")
-				}
-				waitIndex = meta.LastIndex
-				configuration := provider.loadConsulConfig()
-				if configuration != nil {
-					configurationChan <- configuration
-				}
-			}
-		}()
 	}
 	configuration := provider.loadConsulConfig()
 	configurationChan <- configuration

@@ -187,7 +187,7 @@
 #
 # Required
 #
-# endpoint = "http://127.0.0.1:8500"
+# endpoint = "127.0.0.1:8500"
 
 # Enable watch Consul changes
 #
@@ -214,6 +214,8 @@
 ################################################################
 # [backends]
 #   [backends.backend1]
+#     [backends.backend1.circuitbreaker]
+#       expression = "NetworkErrorRatio() > 0.5"
 #     [backends.backend1.servers.server1]
 #     url = "http://172.17.0.2:80"
 #     weight = 10
@@ -221,6 +223,8 @@
 #     url = "http://172.17.0.3:80"
 #     weight = 1
 #   [backends.backend2]
+#     [backends.backend2.LoadBalancer]
+#       method = "drr"
 #     [backends.backend2.servers.server1]
 #     url = "http://172.17.0.4:80"
 #     weight = 1

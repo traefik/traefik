@@ -4,6 +4,19 @@
 {{range $backends}}
 {{$backend := .}}
 {{$servers := "servers/" | List $backend }}
+
+{{$circuitBreaker := Get . "circuitbreaker/" "expression"}}
+{{with $circuitBreaker}}
+[backends.{{Last $backend}}.circuitBreaker]
+    expression = "{{$circuitBreaker}}"
+{{end}}
+
+{{$loadBalancer := Get . "loadbalancer/" "method"}}
+{{with $loadBalancer}}
+[backends.{{Last $backend}}.loadBalancer]
+    method = "{{$loadBalancer}}"
+{{end}}
+
 {{range $servers}}
 [backends.{{Last $backend}}.servers.{{Last .}}]
     url = "{{Get . "/url"}}"
@@ -12,13 +25,13 @@
 {{end}}
 
 [frontends]{{range $frontends}}
-  {{$frontend := Last .}}
-  [frontends.{{$frontend}}]
-  backend = "{{Get . "/backend"}}"
-  {{$routes := "routes/" | List .}}
-    {{range $routes}}
-    [frontends.{{$frontend}}.routes.{{Last .}}]
-    rule = "{{Get . "/rule"}}"
-    value = "{{Get . "/value"}}"
-    {{end}}
+    {{$frontend := Last .}}
+    [frontends.{{$frontend}}]
+    backend = "{{Get . "/backend"}}"
+    {{$routes := "routes/" | List .}}
+        {{range $routes}}
+        [frontends.{{$frontend}}.routes.{{Last .}}]
+        rule = "{{Get . "/rule"}}"
+        value = "{{Get . "/value"}}"
+        {{end}}
 {{end}}
