@@ -58,6 +58,10 @@ git clone https://github.com/EmileVauge/traefik
 
 You can find the complete documentation [here](docs/index.md).
 
+# Benchmarks
+
+Refer to the [benchmarks section](docs/index.md#benchmarks) in the documentation.
+
 # Contributing
 
 ## Building
