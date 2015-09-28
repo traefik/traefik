@@ -2,7 +2,7 @@ machine:
   pre:
     - sudo docker -d -e lxc -s btrfs -H tcp://0.0.0.0:2375:
         background: true
-    - sleep 5
+    - curl --retry 15 --retry-delay 3 -v http://172.17.42.1:2375/version
   environment:
     REPO: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
     DOCKER_HOST: tcp://172.17.42.1:2375
