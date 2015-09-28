@@ -11,6 +11,7 @@ ___
 * [Docker backend](#docker)
 * [Mesos/Marathon backend](#marathon)
 * [Consul backend](#consul)
+* [Benchmarks](#benchmarks)
 
 
 ## <a id="basics"></a> Basics
@@ -348,6 +349,7 @@ watch = true
 # filename = "docker.tmpl"
 ```
 
+
 Labels can be used on containers to override default behaviour:
 
 * ```traefik.backend=foo```: assign the container to ```foo``` backend
@@ -453,4 +455,135 @@ prefix = "traefik"
 # Optional
 #
 # filename = "consul.tmpl"
+```
+
+
+## <a id="benchmarks"></a> Benchmarks
+
+Here are some early Benchmarks between Nginx and Træfɪk acting as simple load balancers between two servers.
+
+* Nginx:
+
+```sh
+$ docker run -d -e VIRTUAL_HOST=test1.localhost emilevauge/whoami
+$ docker run -d -e VIRTUAL_HOST=test1.localhost emilevauge/whoami
+$ docker run --log-driver=none -d -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro jwilder/nginx-proxy
+$ ab -n 20000 -c 20  -r http://test1.localhost/
+This is ApacheBench, Version 2.3 <$Revision: 1528965 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking test1.localhost (be patient)
+Completed 2000 requests
+Completed 4000 requests
+Completed 6000 requests
+Completed 8000 requests
+Completed 10000 requests
+Completed 12000 requests
+Completed 14000 requests
+Completed 16000 requests
+Completed 18000 requests
+Completed 20000 requests
+Finished 20000 requests
+
+
+Server Software:        nginx/1.9.2
+Server Hostname:        test1.localhost
+Server Port:            80
+
+Document Path:          /
+Document Length:        287 bytes
+
+Concurrency Level:      20
+Time taken for tests:   5.874 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      8900000 bytes
+HTML transferred:       5740000 bytes
+Requests per second:    3404.97 [#/sec] (mean)
+Time per request:       5.874 [ms] (mean)
+Time per request:       0.294 [ms] (mean, across all concurrent requests)
+Transfer rate:          1479.70 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.1      0       2
+Processing:     0    6   2.4      6      35
+Waiting:        0    5   2.3      5      33
+Total:          0    6   2.4      6      36
+
+Percentage of the requests served within a certain time (ms)
+  50%      6
+  66%      6
+  75%      7
+  80%      7
+  90%      9
+  95%     10
+  98%     12
+  99%     13
+ 100%     36 (longest request)
+
+```
+
+* Træfɪk:
+
+```sh
+$ docker run -d -l traefik.backend=test1 -l traefik.host=test1 emilevauge/whoami
+$ docker run -d -l traefik.backend=test1 -l traefik.host=test1 emilevauge/whoami
+docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml -v /var/run/docker.sock:/var/run/docker.sock emilevauge/traefik
+$ ab -n 20000 -c 20  -r http://test1.docker.localhost/
+This is ApacheBench, Version 2.3 <$Revision: 1528965 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking test1.docker.localhost (be patient)
+Completed 2000 requests
+Completed 4000 requests
+Completed 6000 requests
+Completed 8000 requests
+Completed 10000 requests
+Completed 12000 requests
+Completed 14000 requests
+Completed 16000 requests
+Completed 18000 requests
+Completed 20000 requests
+Finished 20000 requests
+
+
+Server Software:        .
+Server Hostname:        test1.docker.localhost
+Server Port:            80
+
+Document Path:          /
+Document Length:        312 bytes
+
+Concurrency Level:      20
+Time taken for tests:   6.545 seconds
+Complete requests:      20000
+Failed requests:        0
+Total transferred:      8600000 bytes
+HTML transferred:       6240000 bytes
+Requests per second:    3055.60 [#/sec] (mean)
+Time per request:       6.545 [ms] (mean)
+Time per request:       0.327 [ms] (mean, across all concurrent requests)
+Transfer rate:          1283.11 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0       7
+Processing:     1    6   2.2      6      22
+Waiting:        1    6   2.1      6      21
+Total:          1    7   2.2      6      22
+
+Percentage of the requests served within a certain time (ms)
+  50%      6
+  66%      7
+  75%      8
+  80%      8
+  90%      9
+  95%     10
+  98%     11
+  99%     13
+ 100%     22 (longest request)
+
 ```
