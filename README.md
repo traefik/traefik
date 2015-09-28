@@ -27,6 +27,12 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 * SSL frontend support
 * WebUI
 
+# Demo
+
+Here is a demo of Træfɪk using Docker backend, showing a load-balancing between two servers, hot reloading of configuration, and graceful shutdown.
+
+[![asciicast](https://asciinema.org/a/4tcyde7riou5vxulo6my3mtko.png)](https://asciinema.org/a/4tcyde7riou5vxulo6my3mtko)
+
 # Plumbing
 
 * [Oxy](https://github.com/mailgun/oxy/): an awsome proxy library made by Mailgun guys
