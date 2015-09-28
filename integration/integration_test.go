@@ -3,12 +3,17 @@ package main
 
 import (
 	"fmt"
-	// "os"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
+	"github.com/emilevauge/traefik/integration/utils"
 
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
@@ -127,4 +132,35 @@ func (s *BaseSuite) startListening(c *check.C) {
 			s.deleted <- true
 		}
 	}
+}
+
+func (s *BaseSuite) traefikCmd(c *check.C, args ...string) (*exec.Cmd, string) {
+	cmd, out, err := utils.RunCommand(traefikBinary, args...)
+	c.Assert(err, checker.IsNil, check.Commentf("Fail to run %s with %v", traefikBinary, args))
+	return cmd, out
+}
+
+func (s *BaseSuite) adaptFileForHost(c *check.C, path string) string {
+	dockerHost := os.Getenv("DOCKER_HOST")
+	if dockerHost == "" {
+		// Default docker socket
+		dockerHost = "unix:///var/run/docker.sock"
+	}
+
+	// Load file
+	tmpl, err := template.ParseFiles(path)
+	c.Assert(err, checker.IsNil)
+
+	folder, prefix := filepath.Split(path)
+	tmpFile, err := ioutil.TempFile(folder, prefix)
+	c.Assert(err, checker.IsNil)
+	defer tmpFile.Close()
+
+	err = tmpl.ExecuteTemplate(tmpFile, prefix, struct{ DockerHost string }{dockerHost})
+	c.Assert(err, checker.IsNil)
+	err = tmpFile.Sync()
+
+	c.Assert(err, checker.IsNil)
+
+	return tmpFile.Name()
 }

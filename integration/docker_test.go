@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"os/exec"
 	"time"
 
@@ -10,7 +11,10 @@ import (
 )
 
 func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
-	cmd := exec.Command(traefikBinary, "fixtures/docker/simple.toml")
+	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	defer os.Remove(file)
+
+	cmd := exec.Command(traefikBinary, file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 

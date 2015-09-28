@@ -10,7 +10,7 @@ logLevel = "DEBUG"
 
 [docker]
 
-# FIXME this should be "dynamic".. xD
-endpoint = "tcp://172.17.42.1:2375"
+# It's dynamagic !
+endpoint = "{{.DockerHost}}"
 
 domain = "docker.localhost"
