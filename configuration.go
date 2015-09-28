@@ -1,5 +1,10 @@
 package main
 
+import (
+	"errors"
+	"strings"
+)
+
 type GlobalConfiguration struct {
 	Port              string
 	GraceTimeOut      int64
@@ -27,7 +32,17 @@ func NewGlobalConfiguration() *GlobalConfiguration {
 }
 
 type Backend struct {
-	Servers map[string]Server
+	Servers        map[string]Server
+	CircuitBreaker *CircuitBreaker
+	LoadBalancer   *LoadBalancer
+}
+
+type LoadBalancer struct {
+	Method string
+}
+
+type CircuitBreaker struct {
+	Expression string
 }
 
 type Server struct {
@@ -46,6 +61,34 @@ type Frontend struct {
 }
 
 type Configuration struct {
-	Backends  map[string]Backend
-	Frontends map[string]Frontend
+	Backends  map[string]*Backend
+	Frontends map[string]*Frontend
 }
+
+// Load Balancer Method
+type LoadBalancerMethod uint8
+
+const (
+	// wrr (default) = Weighted Round Robin
+	wrr LoadBalancerMethod = iota
+	// drr = Dynamic Round Robin
+	drr
+)
+
+var loadBalancerMethodNames = []string{
+	"wrr",
+	"drr",
+}
+
+func NewLoadBalancerMethod(loadBalancer *LoadBalancer) (LoadBalancerMethod, error) {
+	if loadBalancer != nil {
+		for i, name := range loadBalancerMethodNames {
+			if strings.EqualFold(name, loadBalancer.Method) {
+				return LoadBalancerMethod(i), nil
+			}
+		}
+	}
+	return wrr, ErrInvalidLoadBalancerMethod
+}
+
+var ErrInvalidLoadBalancerMethod = errors.New("Invalid method, using default")
