@@ -70,6 +70,11 @@
 			"Rev": "44874009257d4d47ba9806f1b7f72a32a015e4d8"
 		},
 		{
+			"ImportPath": "github.com/mailgun/manners",
+			"Comment": "0.3.1-30-g37136f7",
+			"Rev": "37136f736785d7c6aa3b9a27b4b2dd1028ca6d79"
+		},
+		{
 			"ImportPath": "github.com/mailgun/oxy/cbreaker",
 			"Rev": "547c334d658398c05b346c0b79d8f47ba2e1473b"
 		},
@@ -102,17 +107,8 @@
 			"Rev": "54ed61c2b47e263ae2f01b86837b0c4bd1da28e8"
 		},
 		{
-			"ImportPath": "github.com/tylerb/graceful",
-			"Comment": "v1.2.1",
-			"Rev": "ac9ebe4f1ee151ac1eeeaef32957085cba64d508"
-		},
-		{
 			"ImportPath": "github.com/unrolled/render",
 			"Rev": "26b4e3aac686940fe29521545afad9966ddfc80c"
-		},
-		{
-			"ImportPath": "golang.org/x/net/netutil",
-			"Rev": "d9558e5c97f85372afee28cf2b6059d7d3818919"
 		},
 		{
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v2",

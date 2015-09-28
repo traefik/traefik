@@ -17,13 +17,14 @@ import (
 	"github.com/codegangsta/negroni"
 	"github.com/emilevauge/traefik/middlewares"
 	"github.com/gorilla/mux"
+	"github.com/mailgun/manners"
 	"github.com/mailgun/oxy/cbreaker"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
 	"github.com/thoas/stats"
-	"github.com/tylerb/graceful"
 	"github.com/unrolled/render"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"runtime"
 )
 
 var (
@@ -39,14 +40,18 @@ var (
 )
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	kingpin.Parse()
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
-	var srv *graceful.Server
+	var srv *manners.GracefulServer
 	var configurationRouter *mux.Router
 	var configurationChan = make(chan *Configuration, 10)
 	defer close(configurationChan)
-	var providers = []Provider{}
 	var sigs = make(chan os.Signal, 1)
+	defer close(sigs)
+	var stopChan = make(chan bool)
+	defer close(stopChan)
+	var providers = []Provider{}
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// load global configuration
@@ -91,8 +96,15 @@ func main() {
 				if err == nil {
 					currentConfiguration = configuration
 					configurationRouter = newConfigurationRouter
-					srv.Stop(time.Duration(globalConfiguration.GraceTimeOut) * time.Second)
-					time.Sleep(3 * time.Second)
+					oldServer := srv
+					newsrv := prepareServer(configurationRouter, globalConfiguration, oldServer, loggerMiddleware, metrics)
+					go startServer(newsrv, globalConfiguration)
+					srv = newsrv
+					time.Sleep(2 * time.Second)
+					if oldServer != nil {
+						log.Info("Stopping old server")
+						oldServer.Close()
+					}
 				} else {
 					log.Error("Error loading new configuration, aborted ", err)
 				}
@@ -130,59 +142,71 @@ func main() {
 		}()
 	}
 
-	goAway := false
 	go func() {
 		sig := <-sigs
 		log.Infof("I have to go... %+v", sig)
-		goAway = true
-		srv.Stop(time.Duration(globalConfiguration.GraceTimeOut) * time.Second)
+		log.Info("Stopping server")
+		srv.Close()
+		stopChan <- true
 	}()
 
-	for {
-		if goAway {
-			break
+	//negroni.Use(middlewares.NewCircuitBreaker(oxyLogger))
+	//negroni.Use(middlewares.NewRoutes(configurationRouter))
+	srv = prepareServer(configurationRouter, globalConfiguration, nil, loggerMiddleware, metrics)
+	go startServer(srv, globalConfiguration)
+
+	<-stopChan
+	log.Info("Shutting down")
+}
+
+func startServer(srv *manners.GracefulServer, globalConfiguration *GlobalConfiguration) {
+	log.Info("Starting server")
+	if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
+		err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
+		if err != nil {
+			netOpError, ok := err.(*net.OpError)
+			if ok && netOpError.Err.Error() != "use of closed network connection" {
+				log.Fatal("Error creating server: ", err)
+			}
 		}
+	} else {
+		err := srv.ListenAndServe()
+		if err != nil {
+			netOpError, ok := err.(*net.OpError)
+			if ok && netOpError.Err.Error() != "use of closed network connection" {
+				log.Fatal("Error creating server: ", err)
+			}
+		}
+	}
+	log.Info("Server stopped")
+}
 
-		// middlewares
-		var negroni = negroni.New()
-		negroni.Use(metrics)
-		negroni.Use(loggerMiddleware)
-		//negroni.Use(middlewares.NewCircuitBreaker(oxyLogger))
-		//negroni.Use(middlewares.NewRoutes(configurationRouter))
-		negroni.UseHandler(configurationRouter)
+func prepareServer(router *mux.Router, globalConfiguration *GlobalConfiguration, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) *manners.GracefulServer {
+	log.Info("Preparing server")
+	// middlewares
+	var negroni = negroni.New()
+	for _, middleware := range middlewares {
+		negroni.Use(middleware)
+	}
+	negroni.UseHandler(router)
 
-		srv = &graceful.Server{
-			Timeout:          time.Duration(globalConfiguration.GraceTimeOut) * time.Second,
-			NoSignalHandling: true,
-
-			Server: &http.Server{
+	if oldServer == nil {
+		return manners.NewWithServer(
+			&http.Server{
 				Addr:    globalConfiguration.Port,
 				Handler: negroni,
-			},
+			})
+	} else {
+		server, err := oldServer.HijackListener(&http.Server{
+			Addr:    globalConfiguration.Port,
+			Handler: negroni,
+		}, nil)
+		if err != nil {
+			log.Fatalf("Error hijacking server %s", err)
+			return nil
+		} else {
+			return server
 		}
-
-		go func() {
-			if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
-				err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
-				if err != nil {
-					netOpError, ok := err.(*net.OpError)
-					if ok && netOpError.Err.Error() != "use of closed network connection" {
-						log.Fatal("Error creating server: ", err)
-					}
-				}
-			} else {
-				err := srv.ListenAndServe()
-				if err != nil {
-					netOpError, ok := err.(*net.OpError)
-					if ok && netOpError.Err.Error() != "use of closed network connection" {
-						log.Fatal("Error creating server: ", err)
-					}
-				}
-			}
-		}()
-		log.Info("Started")
-		<-srv.StopChan()
-		log.Info("Stopped")
 	}
 }
 
@@ -215,7 +239,7 @@ func LoadConfig(configuration *Configuration, globalConfiguration *GlobalConfigu
 		} else {
 			log.Debugf("Reusing backend %s", frontend.Backend)
 		}
-		//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(globalConfiguration.Replay)), stream.Logger(oxyLogger))
+		// stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(globalConfiguration.Replay)), stream.Logger(oxyLogger))
 		var negroni = negroni.New()
 		negroni.Use(middlewares.NewCircuitBreaker(backends[frontend.Backend], cbreaker.Logger(oxyLogger)))
 		newRoute.Handler(negroni)
