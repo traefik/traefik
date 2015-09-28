@@ -13,8 +13,8 @@ type CircuitBreaker struct {
 	circuitBreaker *cbreaker.CircuitBreaker
 }
 
-func NewCircuitBreaker(next http.Handler, options ...cbreaker.CircuitBreakerOption) *CircuitBreaker {
-	circuitBreaker, _ := cbreaker.New(next, "NetworkErrorRatio() > 0.5", options...)
+func NewCircuitBreaker(next http.Handler, expression string, options ...cbreaker.CircuitBreakerOption) *CircuitBreaker {
+	circuitBreaker, _ := cbreaker.New(next, expression, options...)
 	return &CircuitBreaker{circuitBreaker}
 }
 

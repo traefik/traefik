@@ -225,27 +225,54 @@ func LoadConfig(configuration *Configuration, globalConfiguration *GlobalConfigu
 		}
 		if backends[frontend.Backend] == nil {
 			log.Debugf("Creating backend %s", frontend.Backend)
-			lb, _ := roundrobin.New(fwd)
-			rb, _ := roundrobin.NewRebalancer(lb, roundrobin.RebalancerLogger(oxyLogger))
-			for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-				url, err := url.Parse(server.URL)
-				if err != nil {
-					return nil, err
-				}
-				log.Debugf("Creating server %s %s", serverName, url.String())
-				rb.UpsertServer(url, roundrobin.Weight(server.Weight))
+			var lb http.Handler
+			rr, _ := roundrobin.New(fwd)
+			lbMethod, err := NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
+			if err != nil {
+				configuration.Backends[frontend.Backend].LoadBalancer = &LoadBalancer{Method: "wrr"}
 			}
-			backends[frontend.Backend] = rb
+			switch lbMethod {
+			case drr:
+				log.Debugf("Creating load-balancer drr")
+				rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
+				lb = rebalancer
+				for serverName, server := range configuration.Backends[frontend.Backend].Servers {
+					url, err := url.Parse(server.URL)
+					if err != nil {
+						return nil, err
+					}
+					log.Debugf("Creating server %s %s", serverName, url.String())
+					rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight))
+				}
+			case wrr:
+				log.Debugf("Creating load-balancer wrr")
+				lb = rr
+				for serverName, server := range configuration.Backends[frontend.Backend].Servers {
+					url, err := url.Parse(server.URL)
+					if err != nil {
+						return nil, err
+					}
+					log.Debugf("Creating server %s %s", serverName, url.String())
+					rr.UpsertServer(url, roundrobin.Weight(server.Weight))
+				}
+			}
+			var negroni = negroni.New()
+			if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
+				log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
+				negroni.Use(middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger)))
+			} else {
+				negroni.UseHandler(lb)
+			}
+			backends[frontend.Backend] = negroni
 		} else {
 			log.Debugf("Reusing backend %s", frontend.Backend)
 		}
-		// stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(globalConfiguration.Replay)), stream.Logger(oxyLogger))
-		var negroni = negroni.New()
-		negroni.Use(middlewares.NewCircuitBreaker(backends[frontend.Backend], cbreaker.Logger(oxyLogger)))
-		newRoute.Handler(negroni)
+		//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(globalConfiguration.Replay)), stream.Logger(oxyLogger))
+
+		newRoute.Handler(backends[frontend.Backend])
 		err := newRoute.GetError()
 		if err != nil {
-			log.Error("Error building route ", err)
+			log.Error("Error building route: %s", err)
 		}
 	}
 	return router, nil

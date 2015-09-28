@@ -39,12 +39,21 @@ Frontends can be defined using the following rules:
 ### HTTP Backends
 
 A backend is responsible to load-balance the traffic coming from one or more frontends to a set of http servers.
-Various types of load-balancing is supported:
+Various methods of load-balancing is supported:
 
-* Weighted round robin
-* Rebalancer: increases weights on servers that perform better than others. It also rolls back to original weights if the servers have changed.
+* ```wrr```: Weighted Round Robin
+* ```drr```: Dynamic Round Robin: increases weights on servers that perform better than others. It also rolls back to original weights if the servers have changed.
 
 A circuit breaker can also be applied to a backend, preventing high loads on failing servers.
+It can be configured using:
+
+* Methods: ```LatencyAtQuantileMS```, ```NetworkErrorRatio```, ```ResponseCodeRatio```
+* Operators:  ```AND```, ```OR```, ```EQ```, ```NEQ```, ```LT```, ```LE```, ```GT```, ```GE```
+
+For example:
+* ```NetworkErrorRatio() > 0.5```
+* ```LatencyAtQuantileMS(50.0) > 50```
+* ```ResponseCodeRatio(500, 600, 0, 600) > 0.5```
 
 ## <a id="global"></a> Global configuration
 
@@ -115,6 +124,8 @@ logLevel = "DEBUG"
 # rules
 [backends]
   [backends.backend1]
+    [backends.backend1.circuitbreaker]
+      expression = "NetworkErrorRatio() > 0.5"
     [backends.backend1.servers.server1]
     url = "http://172.17.0.2:80"
     weight = 10
@@ -122,21 +133,27 @@ logLevel = "DEBUG"
     url = "http://172.17.0.3:80"
     weight = 1
   [backends.backend2]
+    [backends.backend2.LoadBalancer]
+      method = "drr"
     [backends.backend2.servers.server1]
     url = "http://172.17.0.4:80"
     weight = 1
+    [backends.backend2.servers.server2]
+    url = "http://172.17.0.5:80"
+    weight = 2
 
- [frontends]
-   [frontends.frontend1]
-   backend = "backend2"
-     [frontends.frontend1.routes.test_1]
-     rule = "Host"
-     value = "test.localhost"
-   [frontends.frontend2]
-   backend = "backend1"
-     [frontends.frontend2.routes.test_2]
-     rule = "Path"
-     value = "/test"
+[frontends]
+  [frontends.frontend1]
+  backend = "backend2"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host"
+    value = "test.localhost"
+  [frontends.frontend2]
+  backend = "backend1"
+    [frontends.frontend2.routes.test_2]
+    rule = "Path"
+    value = "/test"
+
 
 ```
 
@@ -156,6 +173,8 @@ filename = "rules.toml"
 # rules.toml
 [backends]
   [backends.backend1]
+    [backends.backend1.circuitbreaker]
+      expression = "NetworkErrorRatio() > 0.5"
     [backends.backend1.servers.server1]
     url = "http://172.17.0.2:80"
     weight = 10
@@ -163,9 +182,14 @@ filename = "rules.toml"
     url = "http://172.17.0.3:80"
     weight = 1
   [backends.backend2]
+    [backends.backend2.LoadBalancer]
+      method = "drr"
     [backends.backend2.servers.server1]
     url = "http://172.17.0.4:80"
     weight = 1
+    [backends.backend2.servers.server2]
+    url = "http://172.17.0.5:80"
+    weight = 2
 
 [frontends]
   [frontends.frontend1]
@@ -178,6 +202,7 @@ filename = "rules.toml"
     [frontends.frontend2.routes.test_2]
     rule = "Path"
     value = "/test"
+
 ```
 
 If you want Træfɪk to watch file changes automatically, just add:
