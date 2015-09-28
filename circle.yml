@@ -1,11 +1,15 @@
 machine:
-  services:
-    - docker
+  pre:
+    - sudo docker -d -e lxc -s btrfs -H tcp://0.0.0.0:2375:
+        background: true
+    - curl --retry 15 --retry-delay 3 -v http://172.17.42.1:2375/version
   environment:
     REPO: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+    DOCKER_HOST: tcp://172.17.42.1:2375
 
 dependencies:
   pre:
+    - docker version
     - go get github.com/tcnksm/ghr
     - make validate
   override:
@@ -13,8 +17,10 @@ dependencies:
 
 test:
   override:
-    - make test
+    - make test-unit
+    - make MAKE_DOCKER_HOST=$DOCKER_HOST test-integration
   post:
+    - make crossbinary
     - make image
 
 deployment:

@@ -1,0 +1,16 @@
+# Reverse proxy port
+#
+# Optional
+# Default: ":80"
+#
+# port = ":80"
+#
+# LogLevel
+logLevel = "DEBUG"
+
+[docker]
+
+# It's dynamagic !
+endpoint = "{{.DockerHost}}"
+
+domain = "docker.localhost"
