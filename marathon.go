@@ -67,7 +67,7 @@ var MarathonFuncMap = template.FuncMap{
 	},
 }
 
-func (provider *MarathonProvider) Provide(configurationChan chan<- *Configuration) {
+func (provider *MarathonProvider) Provide(configurationChan chan<- configMessage) {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
 	config.EventsInterface = provider.NetworkInterface
@@ -88,7 +88,7 @@ func (provider *MarathonProvider) Provide(configurationChan chan<- *Configuratio
 					log.Debug("Marathon event receveived", event)
 					configuration := provider.loadMarathonConfig()
 					if configuration != nil {
-						configurationChan <- configuration
+						configurationChan <- configMessage{"marathon", configuration}
 					}
 				}
 			}()
@@ -96,7 +96,7 @@ func (provider *MarathonProvider) Provide(configurationChan chan<- *Configuratio
 	}
 
 	configuration := provider.loadMarathonConfig()
-	configurationChan <- configuration
+	configurationChan <- configMessage{"marathon", configuration}
 }
 
 func (provider *MarathonProvider) loadMarathonConfig() *Configuration {

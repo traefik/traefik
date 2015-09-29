@@ -28,16 +28,23 @@ import (
 )
 
 var (
-	globalConfigFile     = kingpin.Arg("conf", "Main configration file.").Default("traefik.toml").String()
-	currentConfiguration = new(Configuration)
-	metrics              = stats.New()
-	oxyLogger            = &OxyLogger{}
-	templatesRenderer    = render.New(render.Options{
+	globalConfigFile      = kingpin.Arg("conf", "Main configration file.").Default("traefik.toml").String()
+	currentConfigurations = make(configs)
+	metrics               = stats.New()
+	oxyLogger             = &OxyLogger{}
+	templatesRenderer     = render.New(render.Options{
 		Directory:  "templates",
 		Asset:      Asset,
 		AssetNames: AssetNames,
 	})
 )
+
+type configMessage struct {
+	providerName  string
+	configuration *Configuration
+}
+
+type configs map[string]*Configuration
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -45,7 +52,7 @@ func main() {
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
 	var srv *manners.GracefulServer
 	var configurationRouter *mux.Router
-	var configurationChan = make(chan *Configuration, 10)
+	var configurationChan = make(chan configMessage, 10)
 	defer close(configurationChan)
 	var sigs = make(chan os.Signal, 1)
 	defer close(sigs)
@@ -84,17 +91,25 @@ func main() {
 
 	// listen new configurations from providers
 	go func() {
+
 		for {
-			configuration := <-configurationChan
-			log.Infof("Configuration receveived %+v", configuration)
-			if configuration == nil {
+			configMsg := <-configurationChan
+			log.Infof("Configuration receveived from provider %v: %+v", configMsg.providerName, configMsg.configuration)
+			if configMsg.configuration == nil {
 				log.Info("Skipping empty configuration")
-			} else if reflect.DeepEqual(currentConfiguration, configuration) {
+			} else if reflect.DeepEqual(currentConfigurations[configMsg.providerName], configMsg.configuration) {
 				log.Info("Skipping same configuration")
 			} else {
-				newConfigurationRouter, err := LoadConfig(configuration, globalConfiguration)
+				// Copy configurations to new map so we don't change current if LoadConfig fails
+				newConfigurations := make(configs)
+				for k, v := range currentConfigurations {
+					newConfigurations[k] = v
+				}
+				newConfigurations[configMsg.providerName] = configMsg.configuration
+
+				newConfigurationRouter, err := LoadConfig(newConfigurations, globalConfiguration)
 				if err == nil {
-					currentConfiguration = configuration
+					currentConfigurations = newConfigurations
 					configurationRouter = newConfigurationRouter
 					oldServer := srv
 					newsrv := prepareServer(configurationRouter, globalConfiguration, oldServer, loggerMiddleware, metrics)
@@ -210,69 +225,71 @@ func prepareServer(router *mux.Router, globalConfiguration *GlobalConfiguration,
 	}
 }
 
-func LoadConfig(configuration *Configuration, globalConfiguration *GlobalConfiguration) (*mux.Router, error) {
+func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration) (*mux.Router, error) {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	backends := map[string]http.Handler{}
-	for frontendName, frontend := range configuration.Frontends {
-		log.Debugf("Creating frontend %s", frontendName)
-		fwd, _ := forward.New(forward.Logger(oxyLogger))
-		newRoute := router.NewRoute().Name(frontendName)
-		for routeName, route := range frontend.Routes {
-			log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
-			newRouteReflect := Invoke(newRoute, route.Rule, route.Value)
-			newRoute = newRouteReflect[0].Interface().(*mux.Route)
-		}
-		if backends[frontend.Backend] == nil {
-			log.Debugf("Creating backend %s", frontend.Backend)
-			var lb http.Handler
-			rr, _ := roundrobin.New(fwd)
-			lbMethod, err := NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
-			if err != nil {
-				configuration.Backends[frontend.Backend].LoadBalancer = &LoadBalancer{Method: "wrr"}
+	for _, configuration := range configurations {
+		for frontendName, frontend := range configuration.Frontends {
+			log.Debugf("Creating frontend %s", frontendName)
+			fwd, _ := forward.New(forward.Logger(oxyLogger))
+			newRoute := router.NewRoute().Name(frontendName)
+			for routeName, route := range frontend.Routes {
+				log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
+				newRouteReflect := Invoke(newRoute, route.Rule, route.Value)
+				newRoute = newRouteReflect[0].Interface().(*mux.Route)
 			}
-			switch lbMethod {
-			case drr:
-				log.Debugf("Creating load-balancer drr")
-				rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
-				lb = rebalancer
-				for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-					url, err := url.Parse(server.URL)
-					if err != nil {
-						return nil, err
-					}
-					log.Debugf("Creating server %s %s", serverName, url.String())
-					rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight))
+			if backends[frontend.Backend] == nil {
+				log.Debugf("Creating backend %s", frontend.Backend)
+				var lb http.Handler
+				rr, _ := roundrobin.New(fwd)
+				lbMethod, err := NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
+				if err != nil {
+					configuration.Backends[frontend.Backend].LoadBalancer = &LoadBalancer{Method: "wrr"}
 				}
-			case wrr:
-				log.Debugf("Creating load-balancer wrr")
-				lb = rr
-				for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-					url, err := url.Parse(server.URL)
-					if err != nil {
-						return nil, err
+				switch lbMethod {
+				case drr:
+					log.Debugf("Creating load-balancer drr")
+					rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
+					lb = rebalancer
+					for serverName, server := range configuration.Backends[frontend.Backend].Servers {
+						url, err := url.Parse(server.URL)
+						if err != nil {
+							return nil, err
+						}
+						log.Debugf("Creating server %s %s", serverName, url.String())
+						rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight))
 					}
-					log.Debugf("Creating server %s %s", serverName, url.String())
-					rr.UpsertServer(url, roundrobin.Weight(server.Weight))
+				case wrr:
+					log.Debugf("Creating load-balancer wrr")
+					lb = rr
+					for serverName, server := range configuration.Backends[frontend.Backend].Servers {
+						url, err := url.Parse(server.URL)
+						if err != nil {
+							return nil, err
+						}
+						log.Debugf("Creating server %s %s", serverName, url.String())
+						rr.UpsertServer(url, roundrobin.Weight(server.Weight))
+					}
 				}
-			}
-			var negroni = negroni.New()
-			if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
-				log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
-				negroni.Use(middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger)))
+				var negroni = negroni.New()
+				if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
+					log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
+					negroni.Use(middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger)))
+				} else {
+					negroni.UseHandler(lb)
+				}
+				backends[frontend.Backend] = negroni
 			} else {
-				negroni.UseHandler(lb)
+				log.Debugf("Reusing backend %s", frontend.Backend)
 			}
-			backends[frontend.Backend] = negroni
-		} else {
-			log.Debugf("Reusing backend %s", frontend.Backend)
-		}
-		//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(globalConfiguration.Replay)), stream.Logger(oxyLogger))
+			//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(globalConfiguration.Replay)), stream.Logger(oxyLogger))
 
-		newRoute.Handler(backends[frontend.Backend])
-		err := newRoute.GetError()
-		if err != nil {
-			log.Error("Error building route: %s", err)
+			newRoute.Handler(backends[frontend.Backend])
+			err := newRoute.GetError()
+			if err != nil {
+				log.Error("Error building route: %s", err)
+			}
 		}
 	}
 	return router, nil

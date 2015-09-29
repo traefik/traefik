@@ -65,7 +65,7 @@ var DockerFuncMap = template.FuncMap{
 	"getHost": getHost,
 }
 
-func (provider *DockerProvider) Provide(configurationChan chan<- *Configuration) {
+func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) {
 	if dockerClient, err := docker.NewClient(provider.Endpoint); err != nil {
 		log.Fatalf("Failed to create a client for docker, error: %s", err)
 	} else {
@@ -90,7 +90,7 @@ func (provider *DockerProvider) Provide(configurationChan chan<- *Configuration)
 							log.Debugf("Docker event receveived %+v", event)
 							configuration := provider.loadDockerConfig(dockerClient)
 							if configuration != nil {
-								configurationChan <- configuration
+								configurationChan <- configMessage{"docker", configuration}
 							}
 						}
 					}
@@ -106,7 +106,7 @@ func (provider *DockerProvider) Provide(configurationChan chan<- *Configuration)
 		}
 
 		configuration := provider.loadDockerConfig(dockerClient)
-		configurationChan <- configuration
+		configurationChan <- configMessage{"docker", configuration}
 	}
 }
 

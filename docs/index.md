@@ -254,83 +254,109 @@ $ curl -s "http://localhost:8080/health" | jq .
 }
 ```
 
-* ```/api```: ```GET``` or ```PUT``` a configuration
+* ```/api```: ```GET``` configuration for all providers
 
 ```sh
 $ curl -s "http://localhost:8082/api" | jq .
 {
-  "Frontends": {
-    "frontend-traefik": {
-      "Routes": {
-        "route-host-traefik": {
-          "Value": "traefik.docker.localhost",
-          "Rule": "Host"
-        }
+  "file": {
+    "Frontends": {
+      "frontend-traefik": {
+        "Routes": {
+          "route-host-traefik": {
+            "Value": "traefik.docker.localhost",
+            "Rule": "Host"
+          }
+        },
+        "Backend": "backend-test2"
       },
-      "Backend": "backend-test2"
+      "frontend-test": {
+        "Routes": {
+          "route-host-test": {
+            "Value": "test.docker.localhost",
+            "Rule": "Host"
+          }
+        },
+        "Backend": "backend-test1"
+      }
     },
-    "frontend-test": {
-      "Routes": {
-        "route-host-test": {
-          "Value": "test.docker.localhost",
-          "Rule": "Host"
+    "Backends": {
+      "backend-test2": {
+        "Servers": {
+          "server-stoic_brattain": {
+            "Weight": 0,
+            "Url": "http://172.17.0.8:80"
+          },
+          "server-jovial_khorana": {
+            "Weight": 0,
+            "Url": "http://172.17.0.12:80"
+          },
+          "server-jovial_franklin": {
+            "Weight": 0,
+            "Url": "http://172.17.0.11:80"
+          },
+          "server-elegant_panini": {
+            "Weight": 0,
+            "Url": "http://172.17.0.9:80"
+          },
+          "server-adoring_elion": {
+            "Weight": 0,
+            "Url": "http://172.17.0.10:80"
+          }
         }
       },
-      "Backend": "backend-test1"
+      "backend-test1": {
+        "Servers": {
+          "server-trusting_wozniak": {
+            "Weight": 0,
+            "Url": "http://172.17.0.5:80"
+          },
+          "server-sharp_jang": {
+            "Weight": 0,
+            "Url": "http://172.17.0.7:80"
+          },
+          "server-dreamy_feynman": {
+            "Weight": 0,
+            "Url": "http://172.17.0.6:80"
+          }
+        }
+      }
     }
   },
-  "Backends": {
-    "backend-test2": {
-      "Servers": {
-        "server-stoic_brattain": {
-          "Weight": 0,
-          "Url": "http://172.17.0.8:80"
+  "marathon": {
+    "Frontends": {
+      "frontend-marathon": {
+        "Routes": {
+          "route-host-marathon": {
+            "Value": "marathon.docker.localhost",
+            "Rule": "Host"
+          }
         },
-        "server-jovial_khorana": {
-          "Weight": 0,
-          "Url": "http://172.17.0.12:80"
-        },
-        "server-jovial_franklin": {
-          "Weight": 0,
-          "Url": "http://172.17.0.11:80"
-        },
-        "server-elegant_panini": {
-          "Weight": 0,
-          "Url": "http://172.17.0.9:80"
-        },
-        "server-adoring_elion": {
-          "Weight": 0,
-          "Url": "http://172.17.0.10:80"
-        }
-      }
+        "Backend": "backend-marathon"
+      },
     },
-    "backend-test1": {
-      "Servers": {
-        "server-trusting_wozniak": {
-          "Weight": 0,
-          "Url": "http://172.17.0.5:80"
+    "Backends": {
+      "backend-marathon": {
+        "Servers": {
+          "server-marathon-1": {
+            "Weight": 0,
+            "Url": "http://172.17.0.8:802"
+          },
         },
-        "server-sharp_jang": {
-          "Weight": 0,
-          "Url": "http://172.17.0.7:80"
-        },
-        "server-dreamy_feynman": {
-          "Weight": 0,
-          "Url": "http://172.17.0.6:80"
-        }
-      }
-    }
-  }
+      },
+    },
+  },
 }
 
 ```
 
-* ```/api/backends```: ```GET``` backends
-* ```/api/backends/{backend}```: ```GET``` a backend
-* ```/api/backends/{backend}/servers```: ```GET``` servers in a backend
-* ```/api/backends/{backend}/servers/{server}```: ```GET``` a server in a backend
-* ```/api/frontends```: ```GET``` frontends
-* ```/api/frontends/{frontend}```: ```GET``` a frontend
+* ```/api/{provider}```: ```GET``` or ```PUT``` provider
+* ```/api/{provider}/backends```: ```GET``` backends
+* ```/api/{provider}/backends/{backend}```: ```GET``` a backend
+* ```/api/{provider}/backends/{backend}/servers```: ```GET``` servers in a backend
+* ```/api/{provider}/backends/{backend}/servers/{server}```: ```GET``` a server in a backend
+* ```/api/{provider}/frontends```: ```GET``` frontends
+* ```/api/{provider}/frontends/{frontend}```: ```GET``` a frontend
 
 
 ## <a id="docker"></a> Docker backend

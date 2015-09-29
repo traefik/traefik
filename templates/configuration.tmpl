@@ -27,9 +27,10 @@
     <div class="col-md-6">
         <!-- <div class="panel-heading">Frontends</div>
         <div class="panel-body"> -->
-            {{range $keyFrontends, $valueFrontends := .Configuration.Frontends}}
+            {{range $keyProviders, $valueProviders := .Configurations}}
+            {{range $keyFrontends, $valueFrontends := $valueProviders.Frontends}}
             <div class="panel panel-primary">
-                <div class="panel-heading">{{$keyFrontends}}</div>
+              <div class="panel-heading">{{$keyFrontends}} - ({{$keyProviders}})</div>
                 <div class="panel-body">
                     <a class="btn btn-info" role="button" data-toggle="collapse" href="#{{$valueFrontends.Backend}}" aria-expanded="false">
                         {{$valueFrontends.Backend}}
@@ -51,14 +52,16 @@
                 </table>
             </div>
             {{end}}
+            {{end}}
         <!-- </div> -->
     </div>
         <div class="col-md-6">
             <!-- <div class="panel-heading">Backends</div>
             <div class="panel-body"> -->
-                {{range $keyBackends, $valueBackends := .Configuration.Backends}}
+            {{range $keyProviders, $valueProviders := .Configurations}}
+                {{range $keyBackends, $valueBackends := $valueProviders.Backends}}
                 <div class="panel panel-primary" id="{{$keyBackends}}">
-                    <div class="panel-heading">{{$keyBackends}}</div>
+                  <div class="panel-heading">{{$keyBackends}}({{$keyProviders}})</div>
                     <div class="panel-body">
                         {{with $valueBackends.LoadBalancer}}
                         <a class="btn btn-info" role="button">
@@ -86,6 +89,7 @@
                         {{end}}
                     </table>
                 </div>
+                {{end}}
                 {{end}}
             <!-- </div> -->
         </div>
