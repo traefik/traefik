@@ -27,6 +27,10 @@
 			"Rev": "6b4e7dc5e3143b85ea77909c72caf89416fc2915"
 		},
 		{
+			"ImportPath": "github.com/boltdb/bolt",
+			"Rev": "51f99c862475898df9773747d3accd05a7ca33c1"
+		},
+		{
 			"ImportPath": "github.com/cenkalti/backoff",
 			"Rev": "4dc77674aceaabba2c7e3da25d4c823edfb73f99"
 		},
@@ -39,6 +43,19 @@
 			"Comment": "v0.1-70-gc7477ad",
 			"Rev": "c7477ad8e330bef55bf1ebe300cf8aa67c492d1b"
 		},
+        {
+          "ImportPath": "github.com/coreos/go-etcd/etcd",
+          "Comment": "v2.0.0-11-gcc90c7b",
+          "Rev": "cc90c7b091275e606ad0ca7102a23fb2072f3f5e"
+        },
+        {
+          "ImportPath": "github.com/davecgh/go-spew/spew",
+          "Rev": "2df174808ee097f90d259e432cc04442cf60be21"
+        },
+        {
+          "ImportPath": "github.com/docker/libkv",
+          "Rev": "3732f7ff1b56057c3158f10bceb1e79133025373"
+        },
 		{
 			"ImportPath": "github.com/docker/distribution",
 			"Comment": "v2.0.0-467-g9038e48",
@@ -313,6 +330,10 @@
 			"ImportPath": "github.com/mailgun/timetools",
 			"Rev": "fd192d755b00c968d312d23f521eb0cdc6f66bd0"
 		},
+        {
+          "ImportPath": "github.com/samuel/go-zookeeper/zk",
+          "Rev": "fa6674abf3f4580b946a01bf7a1ce4ba8766205b"
+        },
 		{
 			"ImportPath": "github.com/opencontainers/runc/libcontainer/user",
 			"Comment": "v0.0.4-21-g4ab1324",

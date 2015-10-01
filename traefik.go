@@ -12,9 +12,11 @@ import (
 	"syscall"
 	"time"
 
+	"errors"
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/emilevauge/traefik/middlewares"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/manners"
@@ -86,7 +88,7 @@ func main() {
 	} else {
 		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
-
+	log.Debugf("Global configuration loaded %s", spew.Sdump(globalConfiguration))
 	configurationRouter = LoadDefaultConfig(globalConfiguration)
 
 	// listen new configurations from providers
@@ -94,7 +96,8 @@ func main() {
 
 		for {
 			configMsg := <-configurationChan
-			log.Infof("Configuration receveived from provider %v: %+v", configMsg.providerName, configMsg.configuration)
+			log.Infof("Configuration receveived from provider %s: %#v", configMsg.providerName, configMsg.configuration)
+			log.Debugf("Configuration %s", spew.Sdump(configMsg.configuration))
 			if configMsg.configuration == nil {
 				log.Info("Skipping empty configuration")
 			} else if reflect.DeepEqual(currentConfigurations[configMsg.providerName], configMsg.configuration) {
@@ -147,13 +150,25 @@ func main() {
 	if globalConfiguration.Consul != nil {
 		providers = append(providers, globalConfiguration.Consul)
 	}
+	if globalConfiguration.Etcd != nil {
+		providers = append(providers, globalConfiguration.Etcd)
+	}
+	if globalConfiguration.Zookeeper != nil {
+		providers = append(providers, globalConfiguration.Zookeeper)
+	}
+	if globalConfiguration.Boltdb != nil {
+		providers = append(providers, globalConfiguration.Boltdb)
+	}
 
 	// start providers
 	for _, provider := range providers {
 		log.Infof("Starting provider %v %+v", reflect.TypeOf(provider), provider)
 		currentProvider := provider
 		go func() {
-			currentProvider.Provide(configurationChan)
+			err := currentProvider.Provide(configurationChan)
+			if err != nil {
+				log.Errorf("Error starting provider %s", err)
+			}
 		}()
 	}
 
@@ -176,6 +191,7 @@ func main() {
 
 func startServer(srv *manners.GracefulServer, globalConfiguration *GlobalConfiguration) {
 	log.Info("Starting server")
+	log.Debugf("Server %s", spew.Sdump(srv))
 	if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
 		err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
 		if err != nil {
@@ -243,13 +259,16 @@ func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration
 				log.Debugf("Creating backend %s", frontend.Backend)
 				var lb http.Handler
 				rr, _ := roundrobin.New(fwd)
+				if configuration.Backends[frontend.Backend] == nil {
+					return nil, errors.New("Backend not found: " + frontend.Backend)
+				}
 				lbMethod, err := NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
 				if err != nil {
 					configuration.Backends[frontend.Backend].LoadBalancer = &LoadBalancer{Method: "wrr"}
 				}
 				switch lbMethod {
 				case drr:
-					log.Debugf("Creating load-balancer drr")
+					log.Infof("Creating load-balancer drr")
 					rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
 					lb = rebalancer
 					for serverName, server := range configuration.Backends[frontend.Backend].Servers {
@@ -257,31 +276,31 @@ func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration
 						if err != nil {
 							return nil, err
 						}
-						log.Debugf("Creating server %s %s", serverName, url.String())
+						log.Infof("Creating server %s %s", serverName, url.String())
 						rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight))
 					}
 				case wrr:
-					log.Debugf("Creating load-balancer wrr")
+					log.Infof("Creating load-balancer wrr")
 					lb = rr
 					for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 						url, err := url.Parse(server.URL)
 						if err != nil {
 							return nil, err
 						}
-						log.Debugf("Creating server %s %s", serverName, url.String())
+						log.Infof("Creating server %s %s", serverName, url.String())
 						rr.UpsertServer(url, roundrobin.Weight(server.Weight))
 					}
 				}
 				var negroni = negroni.New()
 				if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
-					log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
+					log.Infof("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
 					negroni.Use(middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger)))
 				} else {
 					negroni.UseHandler(lb)
 				}
 				backends[frontend.Backend] = negroni
 			} else {
-				log.Debugf("Reusing backend %s", frontend.Backend)
+				log.Infof("Reusing backend %s", frontend.Backend)
 			}
 			//		stream.New(backends[frontend.Backend], stream.Retry("IsNetworkError() && Attempts() <= " + strconv.Itoa(globalConfiguration.Replay)), stream.Logger(oxyLogger))
 
@@ -306,8 +325,7 @@ func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 func LoadFileConfig(file string) *GlobalConfiguration {
 	configuration := NewGlobalConfiguration()
 	if _, err := toml.DecodeFile(file, configuration); err != nil {
-		log.Fatal("Error reading file ", err)
+		fmtlog.Fatalf("Error reading file: %s", err)
 	}
-	log.Debugf("Global configuration loaded %+v", configuration)
 	return configuration
 }

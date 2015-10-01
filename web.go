@@ -20,7 +20,7 @@ type Page struct {
 	Configurations configs
 }
 
-func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
+func (provider *WebProvider) Provide(configurationChan chan<- configMessage) error {
 	systemRouter := mux.NewRouter()
 	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHTMLConfigHandler))
 	systemRouter.Methods("GET").Path("/health").Handler(http.HandlerFunc(GetHealthHandler))
@@ -67,6 +67,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
 			}
 		}
 	}()
+	return nil
 }
 
 func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {

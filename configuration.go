@@ -10,7 +10,6 @@ type GlobalConfiguration struct {
 	GraceTimeOut      int64
 	AccessLogsFile    string
 	TraefikLogsFile   string
-	TraefikLogsStdout bool
 	CertFile, KeyFile string
 	LogLevel          string
 	Docker            *DockerProvider
@@ -18,6 +17,9 @@ type GlobalConfiguration struct {
 	Web               *WebProvider
 	Marathon          *MarathonProvider
 	Consul            *ConsulProvider
+	Etcd              *EtcdProvider
+	Zookeeper         *ZookepperProvider
+	Boltdb            *BoltDbProvider
 }
 
 func NewGlobalConfiguration() *GlobalConfiguration {
@@ -26,7 +28,6 @@ func NewGlobalConfiguration() *GlobalConfiguration {
 	globalConfiguration.Port = ":80"
 	globalConfiguration.GraceTimeOut = 10
 	globalConfiguration.LogLevel = "ERROR"
-	globalConfiguration.TraefikLogsStdout = true
 
 	return globalConfiguration
 }

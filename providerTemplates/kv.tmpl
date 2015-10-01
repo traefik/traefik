@@ -1,17 +1,17 @@
-{{$frontends := "frontends/" | List }}
-{{$backends := "backends/" | List }}
+{{$frontends := List .Prefix "/frontends/" }}
+{{$backends :=  List .Prefix "/backends/"}}
 
 {{range $backends}}
 {{$backend := .}}
-{{$servers := "servers/" | List $backend }}
+{{$servers := List $backend "/servers/" }}
 
-{{$circuitBreaker := Get . "circuitbreaker/" "expression"}}
+{{$circuitBreaker := Get . "/circuitbreaker/" "expression"}}
 {{with $circuitBreaker}}
 [backends.{{Last $backend}}.circuitBreaker]
     expression = "{{$circuitBreaker}}"
 {{end}}
 
-{{$loadBalancer := Get . "loadbalancer/" "method"}}
+{{$loadBalancer := Get . "/loadbalancer/" "method"}}
 {{with $loadBalancer}}
 [backends.{{Last $backend}}.loadBalancer]
     method = "{{$loadBalancer}}"
@@ -28,7 +28,7 @@
     {{$frontend := Last .}}
     [frontends.{{$frontend}}]
     backend = "{{Get . "/backend"}}"
-    {{$routes := "routes/" | List .}}
+    {{$routes := List . "/routes/"}}
         {{range $routes}}
         [frontends.{{$frontend}}.routes.{{Last .}}]
         rule = "{{Get . "/rule"}}"

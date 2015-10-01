@@ -15,30 +15,21 @@ type FileProvider struct {
 	Filename string
 }
 
-func NewFileProvider() *FileProvider {
-	fileProvider := new(FileProvider)
-	// default values
-	fileProvider.Watch = true
-
-	return fileProvider
-}
-
-func (provider *FileProvider) Provide(configurationChan chan<- configMessage) {
+func (provider *FileProvider) Provide(configurationChan chan<- configMessage) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Error("Error creating file watcher", err)
-		return
+		return err
 	}
 	defer watcher.Close()
 
 	file, err := os.Open(provider.Filename)
 	if err != nil {
 		log.Error("Error opening file", err)
-		return
+		return err
 	}
 	defer file.Close()
 
-	done := make(chan bool)
 	// Process events
 	go func() {
 		for {
@@ -63,12 +54,12 @@ func (provider *FileProvider) Provide(configurationChan chan<- configMessage) {
 
 	if err != nil {
 		log.Error("Error adding file watcher", err)
-		return
+		return err
 	}
 
 	configuration := provider.LoadFileConfig(file.Name())
 	configurationChan <- configMessage{"file", configuration}
-	<-done
+	return nil
 }
 
 func (provider *FileProvider) LoadFileConfig(filename string) *Configuration {

@@ -21,16 +21,6 @@ type MarathonProvider struct {
 	NetworkInterface string
 }
 
-func NewMarathonProvider() *MarathonProvider {
-	marathonProvider := new(MarathonProvider)
-	// default values
-	marathonProvider.Watch = true
-	marathonProvider.Domain = "traefik"
-	marathonProvider.NetworkInterface = "eth0"
-
-	return marathonProvider
-}
-
 var MarathonFuncMap = template.FuncMap{
 	"getPort": func(task marathon.Task) string {
 		for _, port := range task.Ports {
@@ -67,14 +57,14 @@ var MarathonFuncMap = template.FuncMap{
 	},
 }
 
-func (provider *MarathonProvider) Provide(configurationChan chan<- configMessage) {
+func (provider *MarathonProvider) Provide(configurationChan chan<- configMessage) error {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
 	config.EventsInterface = provider.NetworkInterface
 	client, err := marathon.NewClient(config)
 	if err != nil {
 		log.Errorf("Failed to create a client for marathon, error: %s", err)
-		return
+		return err
 	}
 	provider.marathonClient = client
 	update := make(marathon.EventsChannel, 5)
@@ -97,6 +87,7 @@ func (provider *MarathonProvider) Provide(configurationChan chan<- configMessage
 
 	configuration := provider.loadMarathonConfig()
 	configurationChan <- configMessage{"marathon", configuration}
+	return nil
 }
 
 func (provider *MarathonProvider) loadMarathonConfig() *Configuration {

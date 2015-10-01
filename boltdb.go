@@ -1,6 +1,6 @@
 package main
 
-type ConsulProvider struct {
+type BoltDbProvider struct {
 	Watch      bool
 	Endpoint   string
 	Prefix     string
@@ -8,7 +8,7 @@ type ConsulProvider struct {
 	KvProvider *KvProvider
 }
 
-func (provider *ConsulProvider) Provide(configurationChan chan<- configMessage) error {
-	provider.KvProvider = NewConsulProvider(provider)
+func (provider *BoltDbProvider) Provide(configurationChan chan<- configMessage) error {
+	provider.KvProvider = NewBoltDbProvider(provider)
 	return provider.KvProvider.provide(configurationChan)
 }
