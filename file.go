@@ -21,7 +21,6 @@ func (provider *FileProvider) Provide(configurationChan chan<- configMessage) er
 		log.Error("Error creating file watcher", err)
 		return err
 	}
-	defer watcher.Close()
 
 	file, err := os.Open(provider.Filename)
 	if err != nil {
@@ -30,31 +29,30 @@ func (provider *FileProvider) Provide(configurationChan chan<- configMessage) er
 	}
 	defer file.Close()
 
-	// Process events
-	go func() {
-		for {
-			select {
-			case event := <-watcher.Events:
-				if strings.Contains(event.Name, file.Name()) {
-					log.Debug("File event:", event)
-					configuration := provider.LoadFileConfig(file.Name())
-					if configuration != nil {
-						configurationChan <- configMessage{"file", configuration}
-					}
-				}
-			case error := <-watcher.Errors:
-				log.Error("Watcher event error", error)
-			}
-		}
-	}()
-
 	if provider.Watch {
+		// Process events
+		go func() {
+			defer watcher.Close()
+			for {
+				select {
+				case event := <-watcher.Events:
+					if strings.Contains(event.Name, file.Name()) {
+						log.Debug("File event:", event)
+						configuration := provider.LoadFileConfig(file.Name())
+						if configuration != nil {
+							configurationChan <- configMessage{"file", configuration}
+						}
+					}
+				case error := <-watcher.Errors:
+					log.Error("Watcher event error", error)
+				}
+			}
+		}()
 		err = watcher.Add(filepath.Dir(file.Name()))
-	}
-
-	if err != nil {
-		log.Error("Error adding file watcher", err)
-		return err
+		if err != nil {
+			log.Error("Error adding file watcher", err)
+			return err
+		}
 	}
 
 	configuration := provider.LoadFileConfig(file.Name())

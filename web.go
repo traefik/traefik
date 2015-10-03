@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
@@ -25,6 +26,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) err
 	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHTMLConfigHandler))
 	systemRouter.Methods("GET").Path("/health").Handler(http.HandlerFunc(GetHealthHandler))
 	systemRouter.Methods("GET").Path("/api").Handler(http.HandlerFunc(GetConfigHandler))
+	systemRouter.Methods("GET").Path("/api/providers").Handler(http.HandlerFunc(GetProvidersHandler))
 	systemRouter.Methods("GET").Path("/api/{provider}").Handler(http.HandlerFunc(GetConfigHandler))
 	systemRouter.Methods("PUT").Path("/api/{provider}").Handler(http.HandlerFunc(
 		func(rw http.ResponseWriter, r *http.Request) {
@@ -80,6 +82,10 @@ func GetHTMLConfigHandler(response http.ResponseWriter, request *http.Request) {
 
 func GetHealthHandler(rw http.ResponseWriter, r *http.Request) {
 	templatesRenderer.JSON(rw, http.StatusOK, metrics.Data())
+}
+
+func GetProvidersHandler(rw http.ResponseWriter, r *http.Request) {
+	templatesRenderer.JSON(rw, http.StatusOK, fun.Keys(currentConfigurations))
 }
 
 func GetBackendsHandler(rw http.ResponseWriter, r *http.Request) {
