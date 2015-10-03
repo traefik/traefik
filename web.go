@@ -27,8 +27,8 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) err
 	systemRouter.Methods("GET").Path("/health").Handler(http.HandlerFunc(GetHealthHandler))
 	systemRouter.Methods("GET").Path("/api").Handler(http.HandlerFunc(GetConfigHandler))
 	systemRouter.Methods("GET").Path("/api/providers").Handler(http.HandlerFunc(GetProvidersHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}").Handler(http.HandlerFunc(GetConfigHandler))
-	systemRouter.Methods("PUT").Path("/api/{provider}").Handler(http.HandlerFunc(
+	systemRouter.Methods("GET").Path("/api/providers/{provider}").Handler(http.HandlerFunc(GetConfigHandler))
+	systemRouter.Methods("PUT").Path("/api/providers/{provider}").Handler(http.HandlerFunc(
 		func(rw http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
 			if vars["provider"] != "web" {
@@ -48,12 +48,12 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) err
 				http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 			}
 		}))
-	systemRouter.Methods("GET").Path("/api/{provider}/backends").Handler(http.HandlerFunc(GetBackendsHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/backends/{backend}").Handler(http.HandlerFunc(GetBackendHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/backends/{backend}/servers").Handler(http.HandlerFunc(GetServersHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/backends/{backend}/servers/{server}").Handler(http.HandlerFunc(GetServerHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/frontends").Handler(http.HandlerFunc(GetFrontendsHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/frontends/{frontend}").Handler(http.HandlerFunc(GetFrontendHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends").Handler(http.HandlerFunc(GetBackendsHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}").Handler(http.HandlerFunc(GetBackendHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers").Handler(http.HandlerFunc(GetServersHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers/{server}").Handler(http.HandlerFunc(GetServerHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends").Handler(http.HandlerFunc(GetFrontendsHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}").Handler(http.HandlerFunc(GetFrontendHandler))
 	systemRouter.Methods("GET").PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "static"})))
 
 	go func() {

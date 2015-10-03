@@ -11,6 +11,9 @@ ___
 * [Docker backend](#docker)
 * [Mesos/Marathon backend](#marathon)
 * [Consul backend](#consul)
+* [Etcd backend](#etcd)
+* [Zookeeper backend](#zk)
+* [Boltdb backend](#boltdb)
 * [Benchmarks](#benchmarks)
 
 
@@ -257,106 +260,77 @@ $ curl -s "http://localhost:8080/health" | jq .
 * ```/api```: ```GET``` configuration for all providers
 
 ```sh
-$ curl -s "http://localhost:8082/api" | jq .
+$ curl -s "http://localhost:8080/api" | jq .
 {
   "file": {
     "Frontends": {
-      "frontend-traefik": {
+      "frontend2": {
         "Routes": {
-          "route-host-traefik": {
-            "Value": "traefik.docker.localhost",
-            "Rule": "Host"
+          "test_2": {
+            "Value": "/test",
+            "Rule": "Path"
           }
         },
-        "Backend": "backend-test2"
+        "Backend": "backend1"
       },
-      "frontend-test": {
+      "frontend1": {
         "Routes": {
-          "route-host-test": {
-            "Value": "test.docker.localhost",
+          "test_1": {
+            "Value": "test.localhost",
             "Rule": "Host"
           }
         },
-        "Backend": "backend-test1"
+        "Backend": "backend2"
       }
     },
     "Backends": {
-      "backend-test2": {
+      "backend2": {
+        "LoadBalancer": {
+          "Method": "drr"
+        },
+        "CircuitBreaker": null,
         "Servers": {
-          "server-stoic_brattain": {
-            "Weight": 0,
-            "Url": "http://172.17.0.8:80"
+          "server2": {
+            "Weight": 2,
+            "URL": "http://172.17.0.5:80"
           },
-          "server-jovial_khorana": {
-            "Weight": 0,
-            "Url": "http://172.17.0.12:80"
-          },
-          "server-jovial_franklin": {
-            "Weight": 0,
-            "Url": "http://172.17.0.11:80"
-          },
-          "server-elegant_panini": {
-            "Weight": 0,
-            "Url": "http://172.17.0.9:80"
-          },
-          "server-adoring_elion": {
-            "Weight": 0,
-            "Url": "http://172.17.0.10:80"
+          "server1": {
+            "Weight": 1,
+            "URL": "http://172.17.0.4:80"
           }
         }
       },
-      "backend-test1": {
+      "backend1": {
+        "LoadBalancer": {
+          "Method": "wrr"
+        },
+        "CircuitBreaker": {
+          "Expression": "NetworkErrorRatio() > 0.5"
+        },
         "Servers": {
-          "server-trusting_wozniak": {
-            "Weight": 0,
-            "Url": "http://172.17.0.5:80"
+          "server2": {
+            "Weight": 1,
+            "URL": "http://172.17.0.3:80"
           },
-          "server-sharp_jang": {
-            "Weight": 0,
-            "Url": "http://172.17.0.7:80"
-          },
-          "server-dreamy_feynman": {
-            "Weight": 0,
-            "Url": "http://172.17.0.6:80"
+          "server1": {
+            "Weight": 10,
+            "URL": "http://172.17.0.2:80"
           }
         }
       }
     }
-  },
-  "marathon": {
-    "Frontends": {
-      "frontend-marathon": {
-        "Routes": {
-          "route-host-marathon": {
-            "Value": "marathon.docker.localhost",
-            "Rule": "Host"
-          }
-        },
-        "Backend": "backend-marathon"
-      },
-    },
-    "Backends": {
-      "backend-marathon": {
-        "Servers": {
-          "server-marathon-1": {
-            "Weight": 0,
-            "Url": "http://172.17.0.8:802"
-          },
-        },
-      },
-    },
-  },
+  }
 }
-
 ```
 
-* ```/api/{provider}```: ```GET``` or ```PUT``` provider
-* ```/api/{provider}/backends```: ```GET``` backends
-* ```/api/{provider}/backends/{backend}```: ```GET``` a backend
-* ```/api/{provider}/backends/{backend}/servers```: ```GET``` servers in a backend
-* ```/api/{provider}/backends/{backend}/servers/{server}```: ```GET``` a server in a backend
-* ```/api/{provider}/frontends```: ```GET``` frontends
-* ```/api/{provider}/frontends/{frontend}```: ```GET``` a frontend
+* ```/api/providers```: ```GET``` providers
+* ```/api/providers/{provider}```: ```GET``` or ```PUT``` provider
+* ```/api/providers/{provider}/backends```: ```GET``` backends
+* ```/api/providers/{provider}/backends/{backend}```: ```GET``` a backend
+* ```/api/providers/{provider}/backends/{backend}/servers```: ```GET``` servers in a backend
+* ```/api/providers/{provider}/backends/{backend}/servers/{server}```: ```GET``` a server in a backend
+* ```/api/providers/{provider}/frontends```: ```GET``` frontends
+* ```/api/providers/{provider}/frontends/{frontend}```: ```GET``` a frontend
 
 
 ## <a id="docker"></a> Docker backend
@@ -506,6 +480,126 @@ prefix = "traefik"
 # Optional
 #
 # filename = "consul.tmpl"
+```
+
+## <a id="etcd"></a> Etcd backend
+
+Træfɪk can be configured to use Etcd as a backend configuration:
+
+```toml
+################################################################
+# Etcd configuration backend
+################################################################
+
+# Enable Etcd configuration backend
+#
+# Optional
+#
+# [etcd]
+
+# Etcd server endpoint
+#
+# Required
+#
+# endpoint = "127.0.0.1:4001"
+
+# Enable watch Etcd changes
+#
+# Optional
+#
+# watch = true
+
+# Prefix used for KV store.
+#
+# Optional
+#
+# prefix = "/traefik"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "etcd.tmpl"
+```
+
+## <a id="zk"></a> Zookeeper backend
+
+Træfɪk can be configured to use Zookeeper as a backend configuration:
+
+```toml
+################################################################
+# Zookeeper configuration backend
+################################################################
+
+# Enable Zookeeperconfiguration backend
+#
+# Optional
+#
+# [zookeeper]
+
+# Zookeeper server endpoint
+#
+# Required
+#
+# endpoint = "127.0.0.1:2181"
+
+# Enable watch Zookeeper changes
+#
+# Optional
+#
+# watch = true
+
+# Prefix used for KV store.
+#
+# Optional
+#
+# prefix = "/traefik"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "zookeeper.tmpl"
+```
+
+## <a id="boltdb"></a> BoltDB backend
+
+Træfɪk can be configured to use BoltDB as a backend configuration:
+
+```toml
+################################################################
+# BoltDB configuration backend
+################################################################
+
+# Enable BoltDB configuration backend
+#
+# Optional
+#
+# [boltdb]
+
+# BoltDB file
+#
+# Required
+#
+# endpoint = "/my.db"
+
+# Enable watch BoltDB changes
+#
+# Optional
+#
+# watch = true
+
+# Prefix used for KV store.
+#
+# Optional
+#
+# prefix = "/traefik"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "boltdb.tmpl"
 ```
 
 
