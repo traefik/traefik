@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
@@ -20,13 +21,14 @@ type Page struct {
 	Configurations configs
 }
 
-func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
+func (provider *WebProvider) Provide(configurationChan chan<- configMessage) error {
 	systemRouter := mux.NewRouter()
 	systemRouter.Methods("GET").Path("/").Handler(http.HandlerFunc(GetHTMLConfigHandler))
 	systemRouter.Methods("GET").Path("/health").Handler(http.HandlerFunc(GetHealthHandler))
 	systemRouter.Methods("GET").Path("/api").Handler(http.HandlerFunc(GetConfigHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}").Handler(http.HandlerFunc(GetConfigHandler))
-	systemRouter.Methods("PUT").Path("/api/{provider}").Handler(http.HandlerFunc(
+	systemRouter.Methods("GET").Path("/api/providers").Handler(http.HandlerFunc(GetProvidersHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}").Handler(http.HandlerFunc(GetConfigHandler))
+	systemRouter.Methods("PUT").Path("/api/providers/{provider}").Handler(http.HandlerFunc(
 		func(rw http.ResponseWriter, r *http.Request) {
 			vars := mux.Vars(r)
 			if vars["provider"] != "web" {
@@ -46,12 +48,12 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
 				http.Error(rw, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 			}
 		}))
-	systemRouter.Methods("GET").Path("/api/{provider}/backends").Handler(http.HandlerFunc(GetBackendsHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/backends/{backend}").Handler(http.HandlerFunc(GetBackendHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/backends/{backend}/servers").Handler(http.HandlerFunc(GetServersHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/backends/{backend}/servers/{server}").Handler(http.HandlerFunc(GetServerHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/frontends").Handler(http.HandlerFunc(GetFrontendsHandler))
-	systemRouter.Methods("GET").Path("/api/{provider}/frontends/{frontend}").Handler(http.HandlerFunc(GetFrontendHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends").Handler(http.HandlerFunc(GetBackendsHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}").Handler(http.HandlerFunc(GetBackendHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers").Handler(http.HandlerFunc(GetServersHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers/{server}").Handler(http.HandlerFunc(GetServerHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends").Handler(http.HandlerFunc(GetFrontendsHandler))
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}").Handler(http.HandlerFunc(GetFrontendHandler))
 	systemRouter.Methods("GET").PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "static"})))
 
 	go func() {
@@ -67,6 +69,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) {
 			}
 		}
 	}()
+	return nil
 }
 
 func GetConfigHandler(rw http.ResponseWriter, r *http.Request) {
@@ -79,6 +82,10 @@ func GetHTMLConfigHandler(response http.ResponseWriter, request *http.Request) {
 
 func GetHealthHandler(rw http.ResponseWriter, r *http.Request) {
 	templatesRenderer.JSON(rw, http.StatusOK, metrics.Data())
+}
+
+func GetProvidersHandler(rw http.ResponseWriter, r *http.Request) {
+	templatesRenderer.JSON(rw, http.StatusOK, fun.Keys(currentConfigurations))
 }
 
 func GetBackendsHandler(rw http.ResponseWriter, r *http.Request) {

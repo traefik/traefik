@@ -61,7 +61,7 @@
             {{range $keyProviders, $valueProviders := .Configurations}}
                 {{range $keyBackends, $valueBackends := $valueProviders.Backends}}
                 <div class="panel panel-primary" id="{{$keyBackends}}">
-                  <div class="panel-heading">{{$keyBackends}}({{$keyProviders}})</div>
+                  <div class="panel-heading">{{$keyBackends}} - ({{$keyProviders}})</div>
                     <div class="panel-body">
                         {{with $valueBackends.LoadBalancer}}
                         <a class="btn btn-info" role="button">

@@ -47,6 +47,9 @@ validate-govet: build
 build: dist
 	docker build -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
+build-no-cache: dist
+	docker build --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+
 shell: build
 	$(DOCKER_RUN_TRAEFIK) /bin/bash
 

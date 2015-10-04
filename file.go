@@ -15,60 +15,49 @@ type FileProvider struct {
 	Filename string
 }
 
-func NewFileProvider() *FileProvider {
-	fileProvider := new(FileProvider)
-	// default values
-	fileProvider.Watch = true
-
-	return fileProvider
-}
-
-func (provider *FileProvider) Provide(configurationChan chan<- configMessage) {
+func (provider *FileProvider) Provide(configurationChan chan<- configMessage) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Error("Error creating file watcher", err)
-		return
+		return err
 	}
-	defer watcher.Close()
 
 	file, err := os.Open(provider.Filename)
 	if err != nil {
 		log.Error("Error opening file", err)
-		return
+		return err
 	}
 	defer file.Close()
 
-	done := make(chan bool)
-	// Process events
-	go func() {
-		for {
-			select {
-			case event := <-watcher.Events:
-				if strings.Contains(event.Name, file.Name()) {
-					log.Debug("File event:", event)
-					configuration := provider.LoadFileConfig(file.Name())
-					if configuration != nil {
-						configurationChan <- configMessage{"file", configuration}
-					}
-				}
-			case error := <-watcher.Errors:
-				log.Error("Watcher event error", error)
-			}
-		}
-	}()
-
 	if provider.Watch {
+		// Process events
+		go func() {
+			defer watcher.Close()
+			for {
+				select {
+				case event := <-watcher.Events:
+					if strings.Contains(event.Name, file.Name()) {
+						log.Debug("File event:", event)
+						configuration := provider.LoadFileConfig(file.Name())
+						if configuration != nil {
+							configurationChan <- configMessage{"file", configuration}
+						}
+					}
+				case error := <-watcher.Errors:
+					log.Error("Watcher event error", error)
+				}
+			}
+		}()
 		err = watcher.Add(filepath.Dir(file.Name()))
-	}
-
-	if err != nil {
-		log.Error("Error adding file watcher", err)
-		return
+		if err != nil {
+			log.Error("Error adding file watcher", err)
+			return err
+		}
 	}
 
 	configuration := provider.LoadFileConfig(file.Name())
 	configurationChan <- configMessage{"file", configuration}
-	<-done
+	return nil
 }
 
 func (provider *FileProvider) LoadFileConfig(filename string) *Configuration {

@@ -147,7 +147,7 @@
 #
 # endpoint = "http://127.0.0.1:8080"
 
-# Network interface used to call Marathon web services
+# Network interface used to call Marathon web services. Needed in case of multiple network interfaces.
 # Optional
 # Default: "eth0"
 #
@@ -199,13 +199,119 @@
 #
 # Optional
 #
-# prefix = "traefik"
+# prefix = "/traefik"
 
 # Override default configuration template. For advanced users :)
 #
 # Optional
 #
 # filename = "consul.tmpl"
+
+
+################################################################
+# Etcd configuration backend
+################################################################
+
+# Enable Etcd configuration backend
+#
+# Optional
+#
+# [etcd]
+
+# Etcd server endpoint
+#
+# Required
+#
+# endpoint = "127.0.0.1:4001"
+
+# Enable watch Etcd changes
+#
+# Optional
+#
+# watch = true
+
+# Prefix used for KV store.
+#
+# Optional
+#
+# prefix = "/traefik"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "etcd.tmpl"
+
+
+################################################################
+# Zookeeper configuration backend
+################################################################
+
+# Enable Zookeeperconfiguration backend
+#
+# Optional
+#
+# [zookeeper]
+
+# Zookeeper server endpoint
+#
+# Required
+#
+# endpoint = "127.0.0.1:2181"
+
+# Enable watch Zookeeper changes
+#
+# Optional
+#
+# watch = true
+
+# Prefix used for KV store.
+#
+# Optional
+#
+# prefix = "/traefik"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "zookeeper.tmpl"
+
+
+################################################################
+# BoltDB configuration backend
+################################################################
+
+# Enable BoltDB configuration backend
+#
+# Optional
+#
+# [boltdb]
+
+# BoltDB file
+#
+# Required
+#
+# endpoint = "/my.db"
+
+# Enable watch BoltDB changes
+#
+# Optional
+#
+# watch = true
+
+# Prefix used for KV store.
+#
+# Optional
+#
+# prefix = "/traefik"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "boltdb.tmpl"
+
 
 
 

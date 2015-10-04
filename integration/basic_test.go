@@ -15,14 +15,14 @@ func (s *SimpleSuite) TestNoOrInexistentConfigShouldFail(c *check.C) {
 	output, err := cmd.CombinedOutput()
 
 	c.Assert(err, checker.NotNil)
-	c.Assert(string(output), checker.Contains, "Error reading file open traefik.toml: no such file or directory")
+	c.Assert(string(output), checker.Contains, "Error reading file: open traefik.toml: no such file or directory")
 
 	nonExistentFile := "non/existent/file.toml"
 	cmd = exec.Command(traefikBinary, nonExistentFile)
 	output, err = cmd.CombinedOutput()
 
 	c.Assert(err, checker.NotNil)
-	c.Assert(string(output), checker.Contains, fmt.Sprintf("Error reading file open %s: no such file or directory", nonExistentFile))
+	c.Assert(string(output), checker.Contains, fmt.Sprintf("Error reading file: open %s: no such file or directory", nonExistentFile))
 }
 
 func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
@@ -30,7 +30,7 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	output, err := cmd.CombinedOutput()
 
 	c.Assert(err, checker.NotNil)
-	c.Assert(string(output), checker.Contains, "Error reading file Near line 1")
+	c.Assert(string(output), checker.Contains, "Error reading file: Near line 1")
 }
 
 func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {

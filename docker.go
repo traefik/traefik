@@ -22,15 +22,6 @@ type DockerProvider struct {
 	Domain   string
 }
 
-func NewDockerProvider() *DockerProvider {
-	dockerProvider := new(DockerProvider)
-	// default
-	dockerProvider.Watch = true
-	dockerProvider.Domain = "traefik"
-
-	return dockerProvider
-}
-
 var DockerFuncMap = template.FuncMap{
 	"getBackend": func(container docker.Container) string {
 		for key, value := range container.Config.Labels {
@@ -65,13 +56,15 @@ var DockerFuncMap = template.FuncMap{
 	"getHost": getHost,
 }
 
-func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) {
+func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) error {
 	if dockerClient, err := docker.NewClient(provider.Endpoint); err != nil {
-		log.Fatalf("Failed to create a client for docker, error: %s", err)
+		log.Errorf("Failed to create a client for docker, error: %s", err)
+		return err
 	} else {
 		err := dockerClient.Ping()
 		if err != nil {
-			log.Fatalf("Docker connection error %+v", err)
+			log.Errorf("Docker connection error %+v", err)
+			return err
 		}
 		log.Debug("Docker connection established")
 		if provider.Watch {
@@ -108,6 +101,7 @@ func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) 
 		configuration := provider.loadDockerConfig(dockerClient)
 		configurationChan <- configMessage{"docker", configuration}
 	}
+	return nil
 }
 
 func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *Configuration {
