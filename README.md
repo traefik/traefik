@@ -108,8 +108,8 @@ The idea behind `godep` is the following :
 - when checkout(ing) a project, **run `godep restore`** to install
   (`go get …`) the dependencies in the `GOPATH`.
 - if you need another dependency, `go get` it, import and use it in
-  the source, and **run `godep save ./...` to save it in
-  `Godeps/Godeps.json` and vendoring it in `Godeps/_workspace/src`.
+  the source, and **run `godep save ./...`** to save it in
+  `Godeps/Godeps.json`.
 
 ```bash
 $ godep restore
