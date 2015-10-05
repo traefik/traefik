@@ -1,0 +1,23 @@
+<div class="panel panel-success">
+  <div class="panel-heading">
+    <strong><span class="glyphicon glyphicon-tasks" aria-hidden="true"></span> {{backendCtrl.backendId}}</strong> [{{backendCtrl.providerId}}]
+  </div>
+  <div class="panel-body">
+    <table class="panel-table__servers table table-striped table-hover">
+      <tr>
+        <td><em>Server</em></td>
+        <td><em>URL</em></td>
+        <td><em>Weight</em></td>
+      </tr>
+      <tr data-ng-repeat="(serverId, server) in backendCtrl.backend.Servers">
+        <td>{{serverId}}</td>
+        <td><code><a data-ng-href="{{server.url}}">{{server.URL}}</a></code></td>
+        <td>{{server.Weight}}</td>
+      </tr>
+    </table>
+  </div>
+  <div class="panel-footer" data-ng-show="backendCtrl.backend.LoadBalancer || backendCtrl.backend.CircuitBreaker">
+    <span data-ng-show="backendCtrl.backend.LoadBalancer" class="label label-success">Load Balancer: {{backendCtrl.backend.LoadBalancer.Method}}</span>
+    <span data-ng-show="backendCtrl.backend.CircuitBreaker" class="label label-success">Circuit Breaker: {{backendCtrl.backend.CircuitBreaker.Expression}}</span>
+  </div>
+</div>

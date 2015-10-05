@@ -29,12 +29,12 @@ Basically, Træfɪk is a http router, which sends traffic from frontends to http
 
 Frontends can be defined using the following rules:
 
- * ```Headers```: Headers adds a matcher for request header values. It accepts a sequence of key/value pairs to be matched. For example: ```application/json```
- * ```HeadersRegexp```: Regular expressions can be used with headers as well. It accepts a sequence of key/value pairs, where the value has regex support. For example: ```application/(text|json)```
- * ```Host```: Host adds a matcher for the URL host. It accepts a template with zero or more URL variables enclosed by {}. Variables can define an optional regexp pattern to be matched: ```www.traefik.io```, ```{subdomain:[a-z]+}.traefik.io```
- * ```Methods```: Methods adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched, e.g.: ```GET```, ```POST```, ```PUT```
- * ```Path```: Path adds a matcher for the URL path. It accepts a template with zero or more URL variables enclosed by {}. The template must start with a "/". For exemple ```/products/``` ```/articles/{category}/{id:[0-9]+}```
- * ```PathPrefix```: PathPrefix adds a matcher for the URL path prefix. This matches if the given template is a prefix of the full URL path.
+ * `Headers`: Headers adds a matcher for request header values. It accepts a sequence of key/value pairs to be matched. For example: `application/json`
+ * `HeadersRegexp`: Regular expressions can be used with headers as well. It accepts a sequence of key/value pairs, where the value has regex support. For example: `application/(text|json)`
+ * `Host`: Host adds a matcher for the URL host. It accepts a template with zero or more URL variables enclosed by `{}`. Variables can define an optional regexp pattern to be matched: `www.traefik.io`, `{subdomain:[a-z]+}.traefik.io`
+ * `Methods`: Methods adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched, e.g.: `GET`, `POST`, `PUT`
+ * `Path`: Path adds a matcher for the URL path. It accepts a template with zero or more URL variables enclosed by `{}`. The template must start with a `/`. For exemple `/products/` `/articles/{category}/{id:[0-9]+}`
+ * `PathPrefix`: PathPrefix adds a matcher for the URL path prefix. This matches if the given template is a prefix of the full URL path.
 
 
  A frontend is a set of rules that forwards the incoming http traffic to a backend.
@@ -44,19 +44,19 @@ Frontends can be defined using the following rules:
 A backend is responsible to load-balance the traffic coming from one or more frontends to a set of http servers.
 Various methods of load-balancing is supported:
 
-* ```wrr```: Weighted Round Robin
-* ```drr```: Dynamic Round Robin: increases weights on servers that perform better than others. It also rolls back to original weights if the servers have changed.
+* `wrr`: Weighted Round Robin
+* `drr`: Dynamic Round Robin: increases weights on servers that perform better than others. It also rolls back to original weights if the servers have changed.
 
 A circuit breaker can also be applied to a backend, preventing high loads on failing servers.
 It can be configured using:
 
-* Methods: ```LatencyAtQuantileMS```, ```NetworkErrorRatio```, ```ResponseCodeRatio```
-* Operators:  ```AND```, ```OR```, ```EQ```, ```NEQ```, ```LT```, ```LE```, ```GT```, ```GE```
+* Methods: `LatencyAtQuantileMS`, `NetworkErrorRatio`, `ResponseCodeRatio`
+* Operators:  `AND`, `OR`, `EQ`, `NEQ`, `LT`, `LE`, `GT`, `GE`
 
 For example:
-* ```NetworkErrorRatio() > 0.5```
-* ```LatencyAtQuantileMS(50.0) > 50```
-* ```ResponseCodeRatio(500, 600, 0, 600) > 0.5```
+* `NetworkErrorRatio() > 0.5`
+* `LatencyAtQuantileMS(50.0) > 50`
+* `ResponseCodeRatio(500, 600, 0, 600) > 0.5`
 
 ## <a id="global"></a> Global configuration
 
@@ -114,7 +114,7 @@ For example:
 
 Like any other reverse proxy, Træfɪk can be configured with a file. You have two choices:
 
-* simply add your configuration at the end of the global configuration file ```traefik.toml``` :
+* simply add your configuration at the end of the global configuration file `traefik.toml` :
 
 ```toml
 # traefik.toml
@@ -156,11 +156,9 @@ logLevel = "DEBUG"
     [frontends.frontend2.routes.test_2]
     rule = "Path"
     value = "/test"
-
-
 ```
 
-* or put your rules in a separate file, for example ```rules.tml```:
+* or put your rules in a separate file, for example `rules.tml`:
 
 ```toml
 # traefik.toml
@@ -232,11 +230,11 @@ address = ":8080"
 # KeyFile = "traefik.key"
 ```
 
-* ```/```: provides a simple HTML frontend of Træfik
+* `/`: provides a simple HTML frontend of Træfik
 
 ![HTML frontend](img/web.frontend.png)
 
-* ```/health```: ```GET``` json metrics
+* `/health`: `GET` json metrics
 
 ```sh
 $ curl -s "http://localhost:8080/health" | jq .
@@ -257,7 +255,7 @@ $ curl -s "http://localhost:8080/health" | jq .
 }
 ```
 
-* ```/api```: ```GET``` configuration for all providers
+* `/api`: `GET` configuration for all providers
 
 ```sh
 $ curl -s "http://localhost:8080/api" | jq .
@@ -323,14 +321,14 @@ $ curl -s "http://localhost:8080/api" | jq .
 }
 ```
 
-* ```/api/providers```: ```GET``` providers
-* ```/api/providers/{provider}```: ```GET``` or ```PUT``` provider
-* ```/api/providers/{provider}/backends```: ```GET``` backends
-* ```/api/providers/{provider}/backends/{backend}```: ```GET``` a backend
-* ```/api/providers/{provider}/backends/{backend}/servers```: ```GET``` servers in a backend
-* ```/api/providers/{provider}/backends/{backend}/servers/{server}```: ```GET``` a server in a backend
-* ```/api/providers/{provider}/frontends```: ```GET``` frontends
-* ```/api/providers/{provider}/frontends/{frontend}```: ```GET``` a frontend
+* `/api/providers`: `GET` providers
+* `/api/providers/{provider}`: `GET` or `PUT` provider
+* `/api/providers/{provider}/backends`: `GET` backends
+* `/api/providers/{provider}/backends/{backend}`: `GET` a backend
+* `/api/providers/{provider}/backends/{backend}/servers`: `GET` servers in a backend
+* `/api/providers/{provider}/backends/{backend}/servers/{server}`: `GET` a server in a backend
+* `/api/providers/{provider}/frontends`: `GET` frontends
+* `/api/providers/{provider}/frontends/{frontend}`: `GET` a frontend
 
 
 ## <a id="docker"></a> Docker backend
@@ -377,11 +375,11 @@ watch = true
 
 Labels can be used on containers to override default behaviour:
 
-* ```traefik.backend=foo```: assign the container to ```foo``` backend
-* ```traefik.port=80```: register this port. Useful when the container exposes multiples ports.
-* ```traefik.weight=10```: assign this weight to the container
-* ```traefik.enable=false```: disable this container in Træfɪk
-* ```traefik.host=bar```: override the default routing from {containerName}.{domain} to bar.{domain}
+* `traefik.backend=foo`: assign the container to `foo` backend
+* `traefik.port=80`: register this port. Useful when the container exposes multiples ports.
+* `traefik.weight=10`: assign this weight to the container
+* `traefik.enable=false`: disable this container in Træfɪk
+* `traefik.host=bar`: override the default routing from {containerName}.{domain} to bar.{domain}
 
 ## <a id="marathon"></a> Marathon backend
 
@@ -435,12 +433,12 @@ domain = "marathon.localhost"
 
 Labels can be used on containers to override default behaviour:
 
-* ```traefik.backend=foo```: assign the application to ```foo``` backend
-* ```traefik.port=80```: register this port. Useful when the application exposes multiples ports.
-* ```traefik.weight=10```: assign this weight to the application
-* ```traefik.enable=false```: disable this application in Træfɪk
-* ```traefik.host=bar```: override the default routing from {appName}.{domain} to bar.{domain}
-* ```traefik.prefixes=pf1,pf2```: use PathPrefix(es) instead of hostname for routing, use filename="providerTemplates/marathon-prefix.tmpl" with this option
+* `traefik.backend=foo`: assign the application to `foo` backend
+* `traefik.port=80`: register this port. Useful when the application exposes multiples ports.
+* `traefik.weight=10`: assign this weight to the application
+* `traefik.enable=false`: disable this application in Træfɪk
+* `traefik.host=bar`: override the default routing from {appName}.{domain} to bar.{domain}
+* `traefik.prefixes=pf1,pf2`: use PathPrefix(es) instead of hostname for routing, use filename="providerTemplates/marathon-prefix.tmpl" with this option
 
 ## <a id="consul"></a> Consul backend
 

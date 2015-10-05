@@ -1,4 +1,4 @@
-dist
+/dist
 gen.go
 .idea
 log

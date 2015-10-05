@@ -10,74 +10,79 @@ Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microse
 It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
 
 
-# Features
+## Features
 
-* No dependency hell, single binary made with go
-* Simple json Rest API
-* Simple TOML file configuration
-* Multiple backends supported: Docker, Mesos/Marathon, Consul, Etcd, and more to come
-* Watchers for backends, can listen change in backends to apply a new configuration automatically
-* Hot-reloading of configuration. No need to restart the process
-* Graceful shutdown http connections during hot-reloads
-* Circuit breakers on backends
-* Round Robin, rebalancer load-balancers
-* Rest Metrics
-* Tiny docker image included
-* SSL backends support
-* SSL frontend support
-* WebUI
+- No dependency hell, single binary made with go
+- Simple json Rest API
+- Simple TOML file configuration
+- Multiple backends supported: Docker, Mesos/Marathon, Consul, Etcd, and more to come
+- Watchers for backends, can listen change in backends to apply a new configuration automatically
+- Hot-reloading of configuration. No need to restart the process
+- Graceful shutdown http connections during hot-reloads
+- Circuit breakers on backends
+- Round Robin, rebalancer load-balancers
+- Rest Metrics
+- Tiny docker image included
+- SSL backends support
+- SSL frontend support
+- WebUI
 
-# Demo
+## Demo
 
 Here is a demo of Træfɪk using Docker backend, showing a load-balancing between two servers, hot reloading of configuration, and graceful shutdown.
 
 [![asciicast](https://asciinema.org/a/4tcyde7riou5vxulo6my3mtko.png)](https://asciinema.org/a/4tcyde7riou5vxulo6my3mtko)
 
-# Plumbing
+## Plumbing
 
-* [Oxy](https://github.com/mailgun/oxy/): an awsome proxy library made by Mailgun guys
-* [Gorilla mux](https://github.com/gorilla/mux): famous request router
-* [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
-* [Manners](https://github.com/mailgun/manners): graceful shutdown of http.Handler servers
+- [Oxy](https://github.com/mailgun/oxy/): an awsome proxy library made by Mailgun guys
+- [Gorilla mux](https://github.com/gorilla/mux): famous request router
+- [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
+- [Manners](https://github.com/mailgun/manners): graceful shutdown of http.Handler servers
 
-# Quick start
+## Quick start
 
-* The simple way: grab the latest binary from the [releases](https://github.com/emilevauge/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/EmileVauge/traefik/master/traefik.sample.toml):
+- The simple way: grab the latest binary from the [releases](https://github.com/emilevauge/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/EmileVauge/traefik/master/traefik.sample.toml):
 
-```
+```shell
 ./traefik traefik.toml
 ```
 
-* Use the tiny Docker image:
+- Use the tiny Docker image:
 
-```
+```shell
 docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml emilevauge/traefik
 ```
 
-* From sources:
+- From sources:
 
-```
+```shell
 git clone https://github.com/EmileVauge/traefik
 ```
 
-# Documentation
+## Documentation
 
 You can find the complete documentation [here](docs/index.md).
 
-# Benchmarks
+## Benchmarks
 
 Refer to the [benchmarks section](docs/index.md#benchmarks) in the documentation.
 
-# Contributing
+## Web UI
 
-## Building
+You can access to a simple HTML frontend of Træfik.
 
-You need either [Docker](https://github.com/docker/docker) and
-``make``, or `go` and `godep` in order to build traefik.
+![HTML frontend](docs/img/web.frontend.png)
 
-### Using Docker and Makefile
+## Contributing
 
-You need to run the ``binary`` target. This will create binaries for
+### Building
+
+You need either [Docker](https://github.com/docker/docker) and `make`, or `go` and `godep` in order to build traefik.
+
+#### Using Docker and Makefile
+
+You need to run the `binary` target. This will create binaries for
 linux and darwin platforms in the `dist` folder.
 
 ```bash
@@ -101,7 +106,7 @@ $ ls dist/
 traefik*  traefik_darwin-386*  traefik_darwin-amd64*  traefik_linux-386*  traefik_linux-amd64*  traefik_linux-arm*
 ```
 
-### Using `godep`
+#### Using `godep`
 
 The idea behind `godep` is the following :
 
@@ -125,7 +130,7 @@ $ godep go test ./...
 ok      _/home/vincent/src/github/vdemeester/traefik    0.004s
 ```
 
-## Tests
+### Tests
 
 You can run unit tests using the `test-unit` target and the
 integration test using the `test-integration` target.
