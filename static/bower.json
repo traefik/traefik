@@ -1,0 +1,24 @@
+{
+  "name": "traefik",
+  "version": "1.0.0",
+  "homepage": "https://github.com/ldez/traefik",
+  "authors": [
+    "Fernandez Ludovic <ludovic.fernandez@zenika.com>"
+  ],
+  "description": "Front end for Træfɪk",
+  "main": "index.html",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "angularjs#~1.4.7",
+    "bootstrap": "~3.3.5",
+    "angular-resource": "~1.4.7",
+    "angular-ui-router": "~0.2.15"
+  }
+}
