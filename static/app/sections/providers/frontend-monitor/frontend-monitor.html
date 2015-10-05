@@ -1,0 +1,22 @@
+<div class="panel panel-warning">
+  <div class="panel-heading">
+    <strong><span class="glyphicon glyphicon-globe" aria-hidden="true"></span> {{frontendCtrl.frontendId}}</strong> [{{frontendCtrl.providerId}}]
+  </div>
+  <div class="panel-body">
+    <table class="panel-table__routes table table-striped table-hover">
+      <tr>
+        <td><em>Route</em></td>
+        <td><em>Rule</em></td>
+        <td><em>Value</em></td>
+      </tr>
+      <tr data-ng-repeat="(routeId, route) in frontendCtrl.frontend.Routes">
+        <td>{{routeId}}</td>
+        <td>{{route.Rule}}</td>
+        <td><code>{{route.Value}}</code></td>
+      </tr>
+    </table>
+  </div>
+  <div data-bg-show="frontendCtrl.frontend.Backend" class="panel-footer">
+    <span class="label label-warning" role="button" data-toggle="collapse" href="#{{frontendCtrl.frontend.Backend}}" aria-expanded="false">{{frontendCtrl.frontend.Backend}}</span>
+  </div>
+</div>
