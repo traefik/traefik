@@ -18,7 +18,7 @@ func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
 	// TODO validate : run on 80
 	resp, err := http.Get("http://127.0.0.1/")
 
-	// Expected a 404 as we did not comfigure anything
+	// Expected a 404 as we did not configure anything
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 404)
 

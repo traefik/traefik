@@ -1,9 +1,9 @@
 
 @font-face {
     font-family: 'charterregular';
-    src: url('fontss/charter_regular-webfont.eot');
-    src: url('fontss/charter_regular-webfont.eot?#iefix') format('embedded-opentype'),
-         url('fontss/charter_regular-webfont.woff') format('woff');
+    src: url('fonts/charter_regular-webfont.eot');
+    src: url('fonts/charter_regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('fonts/charter_regular-webfont.woff') format('woff');
     font-weight: normal;
     font-style: normal;
 }
@@ -13,7 +13,7 @@
 }
 
 .traefik-text {
-   font-family: 'WebFont', Arial, sans-serif;
+   font-family: 'charterregular', Arial, sans-serif;
 }
 
 .panel-body .panel-table__servers,
