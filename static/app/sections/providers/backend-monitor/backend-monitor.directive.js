@@ -12,8 +12,7 @@
         bindToController: true,
         scope: {
           backend: '=',
-          backendId: '=',
-          providerId: '='
+          backendId: '='
         }
       };
     });

@@ -12,8 +12,7 @@
         bindToController: true,
         scope: {
           frontend: '=',
-          frontendId: '=',
-          providerId: '='
+          frontendId: '='
         }
       };
     });
