@@ -20,3 +20,7 @@
 .panel-body .panel-table__routes {
   margin-bottom: 0;
 }
+
+.tabset-row__providers {
+  margin-top: 3rem;
+}
