@@ -26,4 +26,7 @@ Do `npm install` and `bower install`
   - [UI Router - Documentation](https://github.com/angular-ui/ui-router/wiki)
 - [Bootstrap](http://getbootstrap.com)
 - [Angular Bootstrap](https://angular-ui.github.io/bootstrap)
-
+- [D3](http://d3js.org)
+  - [D3 - Documentation](https://github.com/mbostock/d3/wiki)
+- [NVD3](http://nvd3.org)
+- [Angular nvD3](http://krispo.github.io/angular-nvd3)
