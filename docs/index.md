@@ -232,7 +232,8 @@ address = ":8080"
 
 * `/`: provides a simple HTML frontend of Træfik
 
-![HTML frontend](img/web.frontend.png)
+![Web UI Providers](img/web.frontend.png)
+![Web UI Health](img/traefik-health.png)
 
 * `/health`: `GET` json metrics
 
