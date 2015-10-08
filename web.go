@@ -51,6 +51,8 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) err
 	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers/{server}").HandlerFunc(getServerHandler)
 	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends").HandlerFunc(getFrontendsHandler)
 	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}").HandlerFunc(getFrontendHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes").HandlerFunc(getRoutesHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes/{route}").HandlerFunc(getRouteHandler)
 
 	// Expose dashboard
 	systemRouter.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
@@ -115,6 +117,35 @@ func getBackendHandler(response http.ResponseWriter, request *http.Request) {
 	http.NotFound(response, request)
 }
 
+func getServersHandler(response http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	providerID := vars["provider"]
+	backendID := vars["backend"]
+	if provider, ok := currentConfigurations[providerID]; ok {
+		if backend, ok := provider.Backends[backendID]; ok {
+			templatesRenderer.JSON(response, http.StatusOK, backend.Servers)
+			return
+		}
+	}
+	http.NotFound(response, request)
+}
+
+func getServerHandler(response http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	providerID := vars["provider"]
+	backendID := vars["backend"]
+	serverID := vars["server"]
+	if provider, ok := currentConfigurations[providerID]; ok {
+		if backend, ok := provider.Backends[backendID]; ok {
+			if server, ok := backend.Servers[serverID]; ok {
+				templatesRenderer.JSON(response, http.StatusOK, server)
+				return
+			}
+		}
+	}
+	http.NotFound(response, request)
+}
+
 func getFrontendsHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
@@ -138,28 +169,28 @@ func getFrontendHandler(response http.ResponseWriter, request *http.Request) {
 	http.NotFound(response, request)
 }
 
-func getServersHandler(response http.ResponseWriter, request *http.Request) {
+func getRoutesHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	backendID := vars["backend"]
+	frontendID := vars["frontend"]
 	if provider, ok := currentConfigurations[providerID]; ok {
-		if backend, ok := provider.Backends[backendID]; ok {
-			templatesRenderer.JSON(response, http.StatusOK, backend.Servers)
+		if frontend, ok := provider.Frontends[frontendID]; ok {
+			templatesRenderer.JSON(response, http.StatusOK, frontend.Routes)
 			return
 		}
 	}
 	http.NotFound(response, request)
 }
 
-func getServerHandler(response http.ResponseWriter, request *http.Request) {
+func getRouteHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	backendID := vars["backend"]
-	serverID := vars["server"]
+	frontendID := vars["frontend"]
+	routeID := vars["route"]
 	if provider, ok := currentConfigurations[providerID]; ok {
-		if backend, ok := provider.Backends[backendID]; ok {
-			if server, ok := backend.Servers[serverID]; ok {
-				templatesRenderer.JSON(response, http.StatusOK, server)
+		if frontend, ok := provider.Frontends[frontendID]; ok {
+			if route, ok := frontend.Routes[routeID]; ok {
+				templatesRenderer.JSON(response, http.StatusOK, route)
 				return
 			}
 		}

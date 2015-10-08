@@ -18,7 +18,7 @@ func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 	// TODO validate : run on 80
 	resp, err := http.Get("http://127.0.0.1/")
 

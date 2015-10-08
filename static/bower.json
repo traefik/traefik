@@ -1,7 +1,7 @@
 {
   "name": "traefik",
   "version": "1.0.0",
-  "homepage": "https://github.com/ldez/traefik",
+  "homepage": "http://traefik.io",
   "authors": [
     "Fernandez Ludovic <ludovic.fernandez@zenika.com>"
   ],
@@ -20,6 +20,7 @@
     "bootstrap": "~3.3.5",
     "angular-resource": "~1.4.7",
     "angular-ui-router": "~0.2.15",
-    "angular-bootstrap": "~0.13.4"
+    "angular-bootstrap": "~0.13.4",
+    "angular-nvd3": "~1.0.2"
   }
 }

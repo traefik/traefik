@@ -72,7 +72,8 @@ Refer to the [benchmarks section](docs/index.md#benchmarks) in the documentation
 
 You can access to a simple HTML frontend of Træfik.
 
-![HTML frontend](docs/img/web.frontend.png)
+![Web UI Providers](docs/img/web.frontend.png)
+![Web UI Health](docs/img/traefik-health.png)
 
 ## Contributing
 
