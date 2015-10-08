@@ -232,26 +232,46 @@ address = ":8080"
 
 * `/`: provides a simple HTML frontend of Træfik
 
-![HTML frontend](img/web.frontend.png)
+![Web UI Providers](img/web.frontend.png)
+![Web UI Health](img/traefik-health.png)
 
 * `/health`: `GET` json metrics
 
 ```sh
 $ curl -s "http://localhost:8080/health" | jq .
 {
-  "average_response_time_sec": 0,
-  "average_response_time": "0",
-  "total_response_time_sec": 0,
-  "total_response_time": "0",
-  "total_count": 0,
-  "pid": 12861,
-  "uptime": "7m12.80607635s",
-  "uptime_sec": 432.80607635,
-  "time": "2015-09-22 10:25:16.448023473 +0200 CEST",
-  "unixtime": 1442910316,
-  "status_code_count": {},
-  "total_status_code_count": {},
-  "count": 0
+  // Træfɪk PID
+  "pid": 2458,
+  // Træfɪk server uptime (formated time)
+  "uptime": "39m6.885931127s",
+  //  Træfɪk server uptime in seconds
+  "uptime_sec": 2346.885931127,
+  // current server date
+  "time": "2015-10-07 18:32:24.362238909 +0200 CEST",
+  // current server date in seconds
+  "unixtime": 1444235544,
+  // count HTTP response status code in realtime
+  "status_code_count": {
+    "502": 1
+  },
+  // count HTTP response status code since Træfɪk started
+  "total_status_code_count": {
+    "200": 7,
+    "404": 21,
+    "502": 13
+  },
+  // count HTTP response
+  "count": 1,
+  // count HTTP response
+  "total_count": 41,
+  // sum of all response time (formated time)
+  "total_response_time": "35.456865605s",
+  // sum of all response time in seconds
+  "total_response_time_sec": 35.456865605,
+  // average response time (formated time)
+  "average_response_time": "864.8016ms",
+  // average response time in seconds
+  "average_response_time_sec": 0.8648016000000001
 }
 ```
 
