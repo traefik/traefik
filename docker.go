@@ -22,40 +22,6 @@ type DockerProvider struct {
 	Domain   string
 }
 
-var DockerFuncMap = template.FuncMap{
-	"getBackend": func(container docker.Container) string {
-		for key, value := range container.Config.Labels {
-			if key == "traefik.backend" {
-				return value
-			}
-		}
-		return getHost(container)
-	},
-	"getPort": func(container docker.Container) string {
-		for key, value := range container.Config.Labels {
-			if key == "traefik.port" {
-				return value
-			}
-		}
-		for key := range container.NetworkSettings.Ports {
-			return key.Port()
-		}
-		return ""
-	},
-	"getWeight": func(container docker.Container) string {
-		for key, value := range container.Config.Labels {
-			if key == "traefik.weight" {
-				return value
-			}
-		}
-		return "0"
-	},
-	"replace": func(s1 string, s2 string, s3 string) string {
-		return strings.Replace(s3, s1, s2, -1)
-	},
-	"getHost": getHost,
-}
-
 func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) error {
 	if dockerClient, err := docker.NewClient(provider.Endpoint); err != nil {
 		log.Errorf("Failed to create a client for docker, error: %s", err)
@@ -105,6 +71,47 @@ func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) 
 }
 
 func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *Configuration {
+	var DockerFuncMap = template.FuncMap{
+		"getBackend": func(container docker.Container) string {
+			for key, value := range container.Config.Labels {
+				if key == "traefik.backend" {
+					return value
+				}
+			}
+			return getHost(container)
+		},
+		"getPort": func(container docker.Container) string {
+			for key, value := range container.Config.Labels {
+				if key == "traefik.port" {
+					return value
+				}
+			}
+			for key := range container.NetworkSettings.Ports {
+				return key.Port()
+			}
+			return ""
+		},
+		"getWeight": func(container docker.Container) string {
+			for key, value := range container.Config.Labels {
+				if key == "traefik.weight" {
+					return value
+				}
+			}
+			return "0"
+		},
+		"getDomain": func(container docker.Container) string {
+			for key, value := range container.Config.Labels {
+				if key == "traefik.domain" {
+					return value
+				}
+			}
+			return provider.Domain
+		},
+		"replace": func(s1 string, s2 string, s3 string) string {
+			return strings.Replace(s3, s1, s2, -1)
+		},
+		"getHost": getHost,
+	}
 	configuration := new(Configuration)
 	containerList, _ := dockerClient.ListContainers(docker.ListContainersOptions{})
 	containersInspected := []docker.Container{}

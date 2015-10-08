@@ -21,42 +21,6 @@ type MarathonProvider struct {
 	NetworkInterface string
 }
 
-var MarathonFuncMap = template.FuncMap{
-	"getPort": func(task marathon.Task) string {
-		for _, port := range task.Ports {
-			return strconv.Itoa(port)
-		}
-		return ""
-	},
-	"getHost": func(application marathon.Application) string {
-		for key, value := range application.Labels {
-			if key == "traefik.host" {
-				return value
-			}
-		}
-		return strings.Replace(application.ID, "/", "", 1)
-	},
-	"getWeight": func(application marathon.Application) string {
-		for key, value := range application.Labels {
-			if key == "traefik.weight" {
-				return value
-			}
-		}
-		return "0"
-	},
-	"getPrefixes": func(application marathon.Application) ([]string, error) {
-		for key, value := range application.Labels {
-			if key == "traefik.prefixes" {
-				return strings.Split(value, ","), nil
-			}
-		}
-		return []string{}, nil
-	},
-	"replace": func(s1 string, s2 string, s3 string) string {
-		return strings.Replace(s3, s1, s2, -1)
-	},
-}
-
 func (provider *MarathonProvider) Provide(configurationChan chan<- configMessage) error {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
@@ -91,6 +55,49 @@ func (provider *MarathonProvider) Provide(configurationChan chan<- configMessage
 }
 
 func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
+	var MarathonFuncMap = template.FuncMap{
+		"getPort": func(task marathon.Task) string {
+			for _, port := range task.Ports {
+				return strconv.Itoa(port)
+			}
+			return ""
+		},
+		"getHost": func(application marathon.Application) string {
+			for key, value := range application.Labels {
+				if key == "traefik.host" {
+					return value
+				}
+			}
+			return strings.Replace(application.ID, "/", "", 1)
+		},
+		"getWeight": func(application marathon.Application) string {
+			for key, value := range application.Labels {
+				if key == "traefik.weight" {
+					return value
+				}
+			}
+			return "0"
+		},
+		"getDomain": func(application marathon.Application) string {
+			for key, value := range application.Labels {
+				if key == "traefik.domain" {
+					return value
+				}
+			}
+			return provider.Domain
+		},
+		"getPrefixes": func(application marathon.Application) ([]string, error) {
+			for key, value := range application.Labels {
+				if key == "traefik.prefixes" {
+					return strings.Split(value, ","), nil
+				}
+			}
+			return []string{}, nil
+		},
+		"replace": func(s1 string, s2 string, s3 string) string {
+			return strings.Replace(s3, s1, s2, -1)
+		},
+	}
 	configuration := new(Configuration)
 
 	applications, err := provider.marathonClient.Applications(nil)
