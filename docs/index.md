@@ -321,14 +321,16 @@ $ curl -s "http://localhost:8080/api" | jq .
 }
 ```
 
-* `/api/providers`: `GET` providers
-* `/api/providers/{provider}`: `GET` or `PUT` provider
-* `/api/providers/{provider}/backends`: `GET` backends
-* `/api/providers/{provider}/backends/{backend}`: `GET` a backend
-* `/api/providers/{provider}/backends/{backend}/servers`: `GET` servers in a backend
-* `/api/providers/{provider}/backends/{backend}/servers/{server}`: `GET` a server in a backend
-* `/api/providers/{provider}/frontends`: `GET` frontends
-* `/api/providers/{provider}/frontends/{frontend}`: `GET` a frontend
+- `/api/providers`: `GET` providers
+- `/api/providers/{provider}`: `GET` or `PUT` provider
+- `/api/providers/{provider}/backends`: `GET` backends
+- `/api/providers/{provider}/backends/{backend}`: `GET` a backend
+- `/api/providers/{provider}/backends/{backend}/servers`: `GET` servers in a backend
+- `/api/providers/{provider}/backends/{backend}/servers/{server}`: `GET` a server in a backend
+- `/api/providers/{provider}/frontends`: `GET` frontends
+- `/api/providers/{provider}/frontends/{frontend}`: `GET` a frontend
+- `/api/providers/{provider}/frontends/{frontend}/routes`: `GET` routes in a frontend
+- `/api/providers/{provider}/frontends/{frontend}/routes/{route}`: `GET` a route in a frontend
 
 
 ## <a id="docker"></a> Docker backend
