@@ -380,6 +380,7 @@ Labels can be used on containers to override default behaviour:
 * `traefik.weight=10`: assign this weight to the container
 * `traefik.enable=false`: disable this container in Træfɪk
 * `traefik.host=bar`: override the default routing from {containerName}.{domain} to bar.{domain}
+* `traefik.domain=traefik.localhost`: override the default domain
 
 ## <a id="marathon"></a> Marathon backend
 
@@ -439,6 +440,7 @@ Labels can be used on containers to override default behaviour:
 * `traefik.enable=false`: disable this application in Træfɪk
 * `traefik.host=bar`: override the default routing from {appName}.{domain} to bar.{domain}
 * `traefik.prefixes=pf1,pf2`: use PathPrefix(es) instead of hostname for routing, use filename="providerTemplates/marathon-prefix.tmpl" with this option
+* `traefik.domain=traefik.localhost`: override the default domain
 
 ## <a id="consul"></a> Consul backend
 
