@@ -3,23 +3,25 @@ package main
 import (
 	"errors"
 	"strings"
+	"time"
 )
 
 type GlobalConfiguration struct {
-	Port              string
-	GraceTimeOut      int64
-	AccessLogsFile    string
-	TraefikLogsFile   string
-	CertFile, KeyFile string
-	LogLevel          string
-	Docker            *DockerProvider
-	File              *FileProvider
-	Web               *WebProvider
-	Marathon          *MarathonProvider
-	Consul            *ConsulProvider
-	Etcd              *EtcdProvider
-	Zookeeper         *ZookepperProvider
-	Boltdb            *BoltDbProvider
+	Port                     string
+	GraceTimeOut             int64
+	AccessLogsFile           string
+	TraefikLogsFile          string
+	CertFile, KeyFile        string
+	LogLevel                 string
+	BackendsThrottleDuration time.Duration
+	Docker                   *DockerProvider
+	File                     *FileProvider
+	Web                      *WebProvider
+	Marathon                 *MarathonProvider
+	Consul                   *ConsulProvider
+	Etcd                     *EtcdProvider
+	Zookeeper                *ZookepperProvider
+	Boltdb                   *BoltDbProvider
 }
 
 func NewGlobalConfiguration() *GlobalConfiguration {
@@ -28,6 +30,7 @@ func NewGlobalConfiguration() *GlobalConfiguration {
 	globalConfiguration.Port = ":80"
 	globalConfiguration.GraceTimeOut = 10
 	globalConfiguration.LogLevel = "ERROR"
+	globalConfiguration.BackendsThrottleDuration = time.Duration(2 * time.Second)
 
 	return globalConfiguration
 }
