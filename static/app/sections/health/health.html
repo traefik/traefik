@@ -2,45 +2,42 @@
   <h1 class="text-danger">
     <span class="glyphicon glyphicon-heart" aria-hidden="true"></span> Health
   </h1>
-  <ul class="list-group">
-    <li class="list-group-item">
-      <span>Average response time sec :</span><span class="badge">{{healthCtrl.health.average_response_time_sec}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Average response time :</span><span class="badge">{{healthCtrl.health.average_response_time}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Total response time sec :</span><span class="badge">{{healthCtrl.health.total_response_time_sec}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Total response time :</span><span class="badge">{{healthCtrl.health.total_response_time}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Total count :</span><span class="badge">{{healthCtrl.health.total_count}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>PID :</span><span class="badge">{{healthCtrl.health.pid}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Uptime :</span><span class="badge">{{healthCtrl.health.uptime}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Uptime sec :</span><span class="badge">{{healthCtrl.health.uptime_sec}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Time :</span><span class="badge">{{healthCtrl.health.time}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Unixtime :</span><span class="badge">{{healthCtrl.health.unixtime}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Status code count :</span><span class="badge">{{healthCtrl.health.status_code_count}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Total status code count :</span><span class="badge">{{healthCtrl.health.total_status_code_count}}</span>
-    </li>
-    <li class="list-group-item">
-      <span>Count :</span><span class="badge">{{healthCtrl.health.count}}</span>
-    </li>
-  </ul>
+
+  <div class="row">
+
+    <div class="col-md-6">
+      <div>
+        <nvd3 options="healthCtrl.graph.averageResponseTime.options" data="healthCtrl.graph.averageResponseTime.data" api="healthCtrl.graph.averageResponseTime.api"></nvd3>
+      </div>
+      <ul class="list-group">
+        <li class="list-group-item">
+          <span>Total response time :</span><span class="badge">{{healthCtrl.health.total_response_time}}</span>
+        </li>
+      </ul>
+      <ul class="list-group">
+        <li class="list-group-item">
+          <span>PID :</span><span class="badge">{{healthCtrl.health.pid}}</span>
+        </li>
+        <li class="list-group-item">
+          <span>Uptime :</span><span class="badge">{{healthCtrl.health.uptime}}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="col-md-6">
+      <div>
+        <nvd3 options="healthCtrl.graph.totalStatusCodeCount.options" data="healthCtrl.graph.totalStatusCodeCount.data" api="healthCtrl.graph.totalStatusCodeCount.api"></nvd3>
+      </div>
+      <ul class="list-group">
+        <li class="list-group-item">
+          <span>Total count :</span><span class="badge">{{healthCtrl.health.total_count}}</span>
+        </li>
+        <li class="list-group-item">
+          <span>Count :</span><span class="badge">{{healthCtrl.health.count}}</span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
 </div>
