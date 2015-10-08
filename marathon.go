@@ -112,6 +112,10 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 			return false
 		}
 		application := getApplication(task, applications.Apps)
+		if application == nil {
+			log.Errorf("Unable to get marathon application from task %s", task.AppID)
+			return false
+		}
 		_, err := strconv.Atoi(application.Labels["traefik.port"])
 		if len(application.Ports) > 1 && err != nil {
 			log.Debug("Filtering marathon task with more than 1 port and no traefik.port label", task.AppID)
