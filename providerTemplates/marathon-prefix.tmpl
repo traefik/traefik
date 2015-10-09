@@ -22,6 +22,6 @@
   backend = "backend{{.ID | replace "/" "-"}}"
     [frontends.frontend-{{getHost $app | replace "/" "-"}}.routes.route-host-{{getHost $app | replace "/" "-"}}]
     rule = "Host"
-    value = "{{getHost $app | replace "/" "-"}}.{{$.Domain}}"
+    value = "{{getHost $app | replace "/" "-"}}.{{getDomain .}}"
     {{end}}
 {{end}}
