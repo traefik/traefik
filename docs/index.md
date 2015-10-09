@@ -502,6 +502,45 @@ prefix = "traefik"
 # filename = "consul.tmpl"
 ```
 
+The Keys-Values structure should look (using `prefix = "/traefik"`):
+
+- backend 1
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/backends/backend1/circuitbreaker/expression | `NetworkErrorRatio() > 0.5` |
+| /traefik/backends/backend1/servers/server1/url | `http://172.17.0.2:80` |
+| /traefik/backends/backend1/servers/server1/weight | `10` |
+| /traefik/backends/backend1/servers/server2/url | `http://172.17.0.3:80` |
+| /traefik/backends/backend1/servers/server2/weight | `1` |
+
+- backend 2
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/backends/backend2/loadbalancer/method | `drr` |
+| /traefik/backends/backend2/servers/server1/url | `http://172.17.0.4:80` |
+| /traefik/backends/backend2/servers/server1/weight | `1` |
+| /traefik/backends/backend2/servers/server2/url | `http://172.17.0.5:80` |
+| /traefik/backends/backend2/servers/server2/weight | `2` |
+
+- frontend 1
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/frontends/frontend1/backend | `backend2` |
+| /traefik/frontends/frontend1/routes/test_1/rule | `Host` |
+| /traefik/frontends/frontend1/routes/test_1/value | `test.localhost` |
+
+- frontend 2
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/frontends/frontend2/backend | `backend1` |
+| /traefik/frontends/frontend2/routes/test_2/rule | `Path` |
+| /traefik/frontends/frontend2/routes/test_2/value | `/test` |
+
+
 ## <a id="etcd"></a> Etcd backend
 
 Træfɪk can be configured to use Etcd as a backend configuration:
@@ -542,6 +581,45 @@ Træfɪk can be configured to use Etcd as a backend configuration:
 # filename = "etcd.tmpl"
 ```
 
+The Keys-Values structure should look (using `prefix = "/traefik"`):
+
+- backend 1
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/backends/backend1/circuitbreaker/expression | `NetworkErrorRatio() > 0.5` |
+| /traefik/backends/backend1/servers/server1/url | `http://172.17.0.2:80` |
+| /traefik/backends/backend1/servers/server1/weight | `10` |
+| /traefik/backends/backend1/servers/server2/url | `http://172.17.0.3:80` |
+| /traefik/backends/backend1/servers/server2/weight | `1` |
+
+- backend 2
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/backends/backend2/loadbalancer/method | `drr` |
+| /traefik/backends/backend2/servers/server1/url | `http://172.17.0.4:80` |
+| /traefik/backends/backend2/servers/server1/weight | `1` |
+| /traefik/backends/backend2/servers/server2/url | `http://172.17.0.5:80` |
+| /traefik/backends/backend2/servers/server2/weight | `2` |
+
+- frontend 1
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/frontends/frontend1/backend | `backend2` |
+| /traefik/frontends/frontend1/routes/test_1/rule | `Host` |
+| /traefik/frontends/frontend1/routes/test_1/value | `test.localhost` |
+
+- frontend 2
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/frontends/frontend2/backend | `backend1` |
+| /traefik/frontends/frontend2/routes/test_2/rule | `Path` |
+| /traefik/frontends/frontend2/routes/test_2/value | `/test` |
+
+
 ## <a id="zk"></a> Zookeeper backend
 
 Træfɪk can be configured to use Zookeeper as a backend configuration:
@@ -581,6 +659,44 @@ Træfɪk can be configured to use Zookeeper as a backend configuration:
 #
 # filename = "zookeeper.tmpl"
 ```
+The Keys-Values structure should look (using `prefix = "/traefik"`):
+
+- backend 1
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/backends/backend1/circuitbreaker/expression | `NetworkErrorRatio() > 0.5` |
+| /traefik/backends/backend1/servers/server1/url | `http://172.17.0.2:80` |
+| /traefik/backends/backend1/servers/server1/weight | `10` |
+| /traefik/backends/backend1/servers/server2/url | `http://172.17.0.3:80` |
+| /traefik/backends/backend1/servers/server2/weight | `1` |
+
+- backend 2
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/backends/backend2/loadbalancer/method | `drr` |
+| /traefik/backends/backend2/servers/server1/url | `http://172.17.0.4:80` |
+| /traefik/backends/backend2/servers/server1/weight | `1` |
+| /traefik/backends/backend2/servers/server2/url | `http://172.17.0.5:80` |
+| /traefik/backends/backend2/servers/server2/weight | `2` |
+
+- frontend 1
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/frontends/frontend1/backend | `backend2` |
+| /traefik/frontends/frontend1/routes/test_1/rule | `Host` |
+| /traefik/frontends/frontend1/routes/test_1/value | `test.localhost` |
+
+- frontend 2
+
+| Key | Value |
+| ------------- | ----------- |
+| /traefik/frontends/frontend2/backend | `backend1` |
+| /traefik/frontends/frontend2/routes/test_2/rule | `Path` |
+| /traefik/frontends/frontend2/routes/test_2/value | `/test` |
+
 
 ## <a id="boltdb"></a> BoltDB backend
 
