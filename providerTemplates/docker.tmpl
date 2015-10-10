@@ -10,5 +10,5 @@
   backend = "backend-{{getBackend $container}}"
     [frontends.frontend-{{$host}}.routes.route-host-{{$host}}]
     rule = "Host"
-    value = "{{$host}}.{{$.Domain}}"
+    value = "{{$host}}.{{getDomain $container}}"
 {{end}}
