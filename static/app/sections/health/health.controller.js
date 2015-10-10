@@ -1,4 +1,4 @@
-(function () {
+(function (d3) {
   'use strict';
 
   angular.module('traefik.section.health')
@@ -9,7 +9,7 @@
       vm.graph = {
         averageResponseTime: {},
         totalStatusCodeCount: {}
-      }
+      };
 
       vm.graph.totalStatusCodeCount.options = {
         "chart": {
@@ -71,7 +71,7 @@
             vm.graph.totalStatusCodeCount.data[0].values.push({
               label: code,
               value: totalStatusCodeCount[code]
-            })
+            });
           }
         }
 
@@ -199,6 +199,6 @@
         $interval.cancel(intervalId);
       });
 
-          }]);
+    }]);
 
-})();
+})(d3);

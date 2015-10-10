@@ -32,38 +32,45 @@ func NewGlobalConfiguration() *GlobalConfiguration {
 	return globalConfiguration
 }
 
+// Backend configuration
 type Backend struct {
-	Servers        map[string]Server
-	CircuitBreaker *CircuitBreaker
-	LoadBalancer   *LoadBalancer
+	Servers        map[string]Server `json:"servers,omitempty"`
+	CircuitBreaker *CircuitBreaker   `json:"circuitBreaker,omitempty"`
+	LoadBalancer   *LoadBalancer     `json:"loadBalancer,omitempty"`
 }
 
+// LoadBalancer configuration
 type LoadBalancer struct {
-	Method string
+	Method string `json:"method,omitempty"`
 }
 
+// CircuitBreaker configuration
 type CircuitBreaker struct {
-	Expression string
+	Expression string `json:"expression,omitempty"`
 }
 
+// Server configuration
 type Server struct {
-	URL    string
-	Weight int
+	URL    string `json:"url,omitempty"`
+	Weight int    `json:"weight,omitempty"`
 }
 
+// Route configuration
 type Route struct {
-	Rule  string
-	Value string
+	Rule  string `json:"rule,omitempty"`
+	Value string `json:"value,omitempty"`
 }
 
+// Frontend configuration
 type Frontend struct {
-	Backend string
-	Routes  map[string]Route
+	Backend string           `json:"backend,omitempty"`
+	Routes  map[string]Route `json:"routes,omitempty"`
 }
 
+// Configuration of a provider
 type Configuration struct {
-	Backends  map[string]*Backend
-	Frontends map[string]*Frontend
+	Backends  map[string]*Backend  `json:"backends,omitempty"`
+	Frontends map[string]*Frontend `json:"frontends,omitempty"`
 }
 
 // Load Balancer Method

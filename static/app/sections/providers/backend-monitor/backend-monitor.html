@@ -9,15 +9,15 @@
         <td><em>URL</em></td>
         <td><em>Weight</em></td>
       </tr>
-      <tr data-ng-repeat="(serverId, server) in backendCtrl.backend.Servers">
+      <tr data-ng-repeat="(serverId, server) in backendCtrl.backend.servers">
         <td>{{serverId}}</td>
-        <td><code><a data-ng-href="{{server.url}}">{{server.URL}}</a></code></td>
-        <td>{{server.Weight}}</td>
+        <td><code><a data-ng-href="{{server.url}}">{{server.url}}</a></code></td>
+        <td>{{server.weight}}</td>
       </tr>
     </table>
   </div>
-  <div class="panel-footer" data-ng-show="backendCtrl.backend.LoadBalancer || backendCtrl.backend.CircuitBreaker">
-    <span data-ng-show="backendCtrl.backend.LoadBalancer" class="label label-success">Load Balancer: {{backendCtrl.backend.LoadBalancer.Method}}</span>
-    <span data-ng-show="backendCtrl.backend.CircuitBreaker" class="label label-success">Circuit Breaker: {{backendCtrl.backend.CircuitBreaker.Expression}}</span>
+  <div class="panel-footer" data-ng-show="backendCtrl.backend.loadBalancer || backendCtrl.backend.circuitBreaker">
+    <span data-ng-show="backendCtrl.backend.loadBalancer" class="label label-success">Load Balancer: {{backendCtrl.backend.loadBalancer.method}}</span>
+    <span data-ng-show="backendCtrl.backend.circuitBreaker" class="label label-success">Circuit Breaker: {{backendCtrl.backend.circuitBreaker.expression}}</span>
   </div>
 </div>
