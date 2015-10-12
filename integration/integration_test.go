@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"testing"
 	"text/template"
-	"time"
 
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
@@ -72,7 +71,7 @@ func (s *MarathonSuite) SetUpSuite(c *check.C) {
 
 type BaseSuite struct {
 	composeProject *project.Project
-	listenChan     chan project.ProjectEvent
+	listenChan     chan project.Event
 	started        chan bool
 	stopped        chan bool
 	deleted        chan bool
@@ -82,14 +81,12 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil {
 		s.composeProject.Down()
-		// Waiting for libcompose#55 to be merged
-		// <-s.stopped
-		time.Sleep(2 * time.Second)
+		<-s.stopped
+		defer close(s.stopped)
 
 		s.composeProject.Delete()
-		// Waiting for libcompose#55 to be merged
-		// <-s.deleted
-		time.Sleep(2 * time.Second)
+		<-s.deleted
+		defer close(s.deleted)
 	}
 }
 
@@ -103,32 +100,32 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	c.Assert(err, checker.IsNil)
 	s.composeProject = composeProject
 
-	s.listenChan = make(chan project.ProjectEvent)
+	s.started = make(chan bool)
+	s.stopped = make(chan bool)
+	s.deleted = make(chan bool)
+
+	s.listenChan = make(chan project.Event)
 	go s.startListening(c)
 
 	composeProject.AddListener(s.listenChan)
 
 	composeProject.Start()
 
-	// FIXME Wait for compose to start
-	// Waiting for libcompose#55 to be merged
-	// <-s.started
-	time.Sleep(2 * time.Second)
-
+	// Wait for compose to start
+	<-s.started
+	defer close(s.started)
 }
 
 func (s *BaseSuite) startListening(c *check.C) {
 	for event := range s.listenChan {
-		// FIXME Remove this when it's working (libcompose#55)
-		// fmt.Fprintf(os.Stdout, "Event: %s (%v)\n", event.Event, event)
-		// FIXME Add a timeout on event
-		if event.Event == project.PROJECT_UP_DONE {
+		// FIXME Add a timeout on event ?
+		if event.EventType == project.EventProjectStartDone {
 			s.started <- true
 		}
-		if event.Event == project.PROJECT_DOWN_DONE {
+		if event.EventType == project.EventProjectDownDone {
 			s.stopped <- true
 		}
-		if event.Event == project.PROJECT_DELETE_DONE {
+		if event.EventType == project.EventProjectDeleteDone {
 			s.deleted <- true
 		}
 	}

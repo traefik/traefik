@@ -189,19 +189,19 @@
     "Rev": "f39987afe8d611407887b3094c03d6ba6a766a67"
   }, {
     "ImportPath": "github.com/docker/libcompose/docker",
-    "Rev": "aad672800904307e96a2c21cad1420f3080e0f35"
+    "Rev": "79ef5d150f053a5b12f16b02d8844ed7cf33611a"
   }, {
     "ImportPath": "github.com/docker/libcompose/logger",
-    "Rev": "aad672800904307e96a2c21cad1420f3080e0f35"
+    "Rev": "79ef5d150f053a5b12f16b02d8844ed7cf33611a"
   }, {
     "ImportPath": "github.com/docker/libcompose/lookup",
-    "Rev": "aad672800904307e96a2c21cad1420f3080e0f35"
+    "Rev": "79ef5d150f053a5b12f16b02d8844ed7cf33611a"
   }, {
     "ImportPath": "github.com/docker/libcompose/project",
-    "Rev": "aad672800904307e96a2c21cad1420f3080e0f35"
+    "Rev": "79ef5d150f053a5b12f16b02d8844ed7cf33611a"
   }, {
     "ImportPath": "github.com/docker/libcompose/utils",
-    "Rev": "aad672800904307e96a2c21cad1420f3080e0f35"
+    "Rev": "79ef5d150f053a5b12f16b02d8844ed7cf33611a"
   }, {
     "ImportPath": "github.com/docker/libtrust",
     "Rev": "9cbd2a1374f46905c68a4eb3694a130610adc62a"
