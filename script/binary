@@ -7,8 +7,7 @@ if ! test -e gen.go; then
 fi
 
 rm -f dist/traefik
-rm -rf Godeps/_workspace/pkg
 
 # Build binaries
-CGO_ENABLED=0 godep go build -a -installsuffix nocgo -o dist/traefik .
+CGO_ENABLED=0 go build -a -installsuffix nocgo -o dist/traefik .
 
