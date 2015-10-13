@@ -16,7 +16,6 @@ import (
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/emilevauge/traefik/middlewares"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/manners"
@@ -88,7 +87,7 @@ func main() {
 	} else {
 		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
-	log.Debugf("Global configuration loaded %s", spew.Sdump(globalConfiguration))
+	log.Debugf("Global configuration loaded %+v", globalConfiguration)
 	configurationRouter = LoadDefaultConfig(globalConfiguration)
 
 	// listen new configurations from providers
@@ -97,7 +96,6 @@ func main() {
 		for {
 			configMsg := <-configurationChan
 			log.Infof("Configuration receveived from provider %s: %#v", configMsg.providerName, configMsg.configuration)
-			log.Debugf("Configuration %s", spew.Sdump(configMsg.configuration))
 			if configMsg.configuration == nil {
 				log.Info("Skipping empty configuration")
 			} else if reflect.DeepEqual(currentConfigurations[configMsg.providerName], configMsg.configuration) {
@@ -191,7 +189,6 @@ func main() {
 
 func startServer(srv *manners.GracefulServer, globalConfiguration *GlobalConfiguration) {
 	log.Info("Starting server")
-	log.Debugf("Server %s", spew.Sdump(srv))
 	if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
 		err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
 		if err != nil {
