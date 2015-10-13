@@ -25,13 +25,21 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 - Tiny docker image included
 - SSL backends support
 - SSL frontend support
-- WebUI
+- Clean AngularJS Web UI
+- Websocket support
 
 ## Demo
 
 Here is a demo of Træfɪk using Docker backend, showing a load-balancing between two servers, hot reloading of configuration, and graceful shutdown.
 
 [![asciicast](https://asciinema.org/a/4tcyde7riou5vxulo6my3mtko.png)](https://asciinema.org/a/4tcyde7riou5vxulo6my3mtko)
+
+## Web UI
+
+You can access to a simple HTML frontend of Træfik.
+
+![Web UI Providers](docs/img/web.frontend.png)
+![Web UI Health](docs/img/traefik-health.png)
 
 ## Plumbing
 
@@ -67,13 +75,6 @@ You can find the complete documentation [here](docs/index.md).
 ## Benchmarks
 
 Refer to the [benchmarks section](docs/index.md#benchmarks) in the documentation.
-
-## Web UI
-
-You can access to a simple HTML frontend of Træfik.
-
-![Web UI Providers](docs/img/web.frontend.png)
-![Web UI Health](docs/img/traefik-health.png)
 
 ## Contributing
 
