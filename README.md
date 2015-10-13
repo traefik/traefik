@@ -79,55 +79,57 @@ You can access to a simple HTML frontend of Træfik.
 
 ### Building
 
-You need either [Docker](https://github.com/docker/docker) and `make`, or `go` and `godep` in order to build traefik.
+You need either [Docker](https://github.com/docker/docker) and `make`, or `go` and `glide` in order to build traefik.
 
-#### Using Docker and Makefile
+#### Setting up your `go` environment
+- You need `go` v1.5
+- You need to set `export GO15VENDOREXPERIMENT=1` environment variable
+- If you clone Træfɪk into something like `~/go/src/github.com/traefik`, your `GOPATH` variable will have to be set to `~/go`: export `GOPATH=~/go`.
+
+#### Using `Docker` and `Makefile`
 
 You need to run the `binary` target. This will create binaries for
-linux and darwin platforms in the `dist` folder.
+linux platform in the `dist` folder.
 
 ```bash
 $ make binary
-docker build -t "traefik-dev:your-feature-branch" -f build.Dockerfile .
-# […]
-docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/vincent/src/github/vdemeester/traefik/dist:/go/src/github.com/emilevauge/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate binary
+docker build -t "traefik-dev:no-more-godep-ever" -f build.Dockerfile .
+Sending build context to Docker daemon 295.3 MB
+Step 0 : FROM golang:1.5
+ ---> 8c6473912976
+Step 1 : RUN go get github.com/Masterminds/glide
+[...]
+docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/emile/dev/go/src/github.com/emilevauge/traefik/"dist":/go/src/github.com/emilevauge/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 
 ---> Making bundle: binary (in .)
-Number of parallel builds: 8
-
--->       linux/arm: github.com/emilevauge/traefik
--->    darwin/amd64: github.com/emilevauge/traefik
--->      darwin/386: github.com/emilevauge/traefik
--->       linux/386: github.com/emilevauge/traefik
--->     linux/amd64: github.com/emilevauge/traefik
 
 $ ls dist/
-traefik*  traefik_darwin-386*  traefik_darwin-amd64*  traefik_linux-386*  traefik_linux-amd64*  traefik_linux-arm*
+traefik*
 ```
 
-#### Using `godep`
+#### Using `glide`
 
-The idea behind `godep` is the following :
+The idea behind `glide` is the following :
 
-- when checkout(ing) a project, **run `godep restore`** to install
+- when checkout(ing) a project, **run `glide up`** to install
   (`go get …`) the dependencies in the `GOPATH`.
-- if you need another dependency, `go get` it, import and use it in
-  the source, and **run `godep save ./...`** to save it in
-  `Godeps/Godeps.json`.
+- if you need another dependency, import and use it in
+  the source, and **run `glide get github.com/Masterminds/cookoo`** to save it in
+  `vendor` and add it to your `glide.yaml`.
 
 ```bash
-$ godep restore
-# Generate
-$ godep go generate
+$ glide up --update-vendored
+# generate
+$ go generate
 # Simple go build
-$ godep go build
+$ go build
 # Using gox to build multiple platform
-$ GOPATH=`godep path`:$GOPATH gox "linux darwin" "386 amd64 arm" \
+$ gox "linux darwin" "386 amd64 arm" \
     -output="dist/traefik_{{.OS}}-{{.Arch}}"
 # run other commands like tests
-$ godep go test ./...
+$ go test ./...
 ok      _/home/vincent/src/github/vdemeester/traefik    0.004s
 ```
 
