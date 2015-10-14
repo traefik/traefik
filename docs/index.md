@@ -107,6 +107,16 @@ For example:
 #
 # CertFile = "traefik.crt"
 # KeyFile = "traefik.key"
+
+# Backends throttle duration: minimum duration between 2 events from providers
+# before applying a new configuration. It avoids unnecessary reloads if multiples events
+# are sent in a short amount of time.
+#
+# Optional
+# Default: "2s"
+#
+# BackendsThrottleDuration = "5s"
+
 ```
 
 
