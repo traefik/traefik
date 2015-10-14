@@ -6,5 +6,5 @@ export DEST=.
 TESTFLAGS="$TESTFLAGS -test.timeout=30m -check.v"
 
 cd integration
-GOPATH=`godep path`:$GOPATH go test $TESTFLAGS
+go test $TESTFLAGS
 

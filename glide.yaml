@@ -1,0 +1,147 @@
+package: main
+import:
+  - package: github.com/mailgun/timetools
+    ref:     fd192d755b00c968d312d23f521eb0cdc6f66bd0
+  - package: github.com/coreos/go-etcd
+    ref:     cc90c7b091275e606ad0ca7102a23fb2072f3f5e
+    subpackages:
+      - etcd
+  - package: github.com/davecgh/go-spew
+    ref:     2df174808ee097f90d259e432cc04442cf60be21
+    subpackages:
+      - spew
+  - package: gopkg.in/fsnotify.v1
+    ref:     96c060f6a6b7e0d6f75fddd10efeaca3e5d1bcb0
+  - package: github.com/BurntSushi/ty
+    ref:     6add9cd6ad42d389d6ead1dde60b4ad71e46fd74
+  - package: github.com/hashicorp/consul
+    ref:     de080672fee9e6104572eeea89eccdca135bb918
+    subpackages:
+      - api
+  - package: github.com/alecthomas/template
+    ref:     b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
+  - package: github.com/thoas/stats
+    ref:     54ed61c2b47e263ae2f01b86837b0c4bd1da28e8
+  - package: github.com/vdemeester/shakers
+    ref:     8fe734f75f3a70b651cbfbf8a55a009da09e8dc5
+  - package: github.com/samuel/go-zookeeper
+    ref:     fa6674abf3f4580b946a01bf7a1ce4ba8766205b
+    subpackages:
+      - zk
+  - package: github.com/alecthomas/units
+    ref:     6b4e7dc5e3143b85ea77909c72caf89416fc2915
+  - package: github.com/unrolled/render
+    ref:     26b4e3aac686940fe29521545afad9966ddfc80c
+  - package: github.com/flynn/go-shlex
+    ref:     3f9db97f856818214da2e1057f8ad84803971cff
+  - package: github.com/fsouza/go-dockerclient
+    ref:     0239034d42f665efa17fd77c39f891c2f9f32922
+  - package: github.com/codegangsta/negroni
+    ref:     c7477ad8e330bef55bf1ebe300cf8aa67c492d1b
+  - package: gopkg.in/yaml.v2
+    ref:     7ad95dd0798a40da1ccdff6dff35fd177b5edf40
+  - package: github.com/opencontainers/runc
+    ref:     4ab132458fc3e9dbeea624153e0331952dc4c8d5
+    subpackages:
+      - libcontainer/user
+  - package: github.com/boltdb/bolt
+    ref:     51f99c862475898df9773747d3accd05a7ca33c1
+  - package: github.com/docker/libtrust
+    ref:     9cbd2a1374f46905c68a4eb3694a130610adc62a
+  - package: github.com/elazarl/go-bindata-assetfs
+    ref:     d5cac425555ca5cf00694df246e04f05e6a55150
+  - package: github.com/docker/distribution
+    ref:     9038e48c3b982f8e82281ea486f078a73731ac4e
+  - package: github.com/BurntSushi/toml
+    ref:     bd2bdf7f18f849530ef7a1c29a4290217cab32a1
+  - package: github.com/samalba/dockerclient
+    ref:     cfb489c624b635251a93e74e1e90eb0959c5367f
+  - package: gopkg.in/check.v1
+    ref:     11d3bc7aa68e238947792f30573146a3231fc0f1
+  - package: gopkg.in/alecthomas/kingpin.v2
+    ref:     639879d6110b1b0409410c7b737ef0bb18325038
+  - package: github.com/Sirupsen/logrus
+    ref:     418b41d23a1bf978c06faea5313ba194650ac088
+  - package: golang.org/x/net
+    ref:     d9558e5c97f85372afee28cf2b6059d7d3818919
+    subpackages:
+      - context
+  - package: gopkg.in/mgo.v2
+    ref:     22287bab4379e1fbf6002fb4eb769888f3fb224c
+    subpackages:
+      - bson
+  - package: github.com/gambol99/go-marathon
+    ref:     0ba31bcb0d7633ba1888d744c42990eb15281cf1
+  - package: github.com/mailgun/manners
+    ref:     37136f736785d7c6aa3b9a27b4b2dd1028ca6d79
+  - package: github.com/gorilla/handlers
+    ref:     40694b40f4a928c062f56849989d3e9cd0570e5f
+  - package: github.com/mailgun/log
+    ref:     44874009257d4d47ba9806f1b7f72a32a015e4d8
+  - package: github.com/mailgun/oxy
+    ref:     547c334d658398c05b346c0b79d8f47ba2e1473b
+    subpackages:
+      - cbreaker
+      - forward
+      - memmetrics
+      - roundrobin
+      - utils
+  - package: github.com/docker/docker
+    ref:     f39987afe8d611407887b3094c03d6ba6a766a67
+    subpackages:
+      - autogen
+      - api
+      - cliconfig
+      - daemon/network
+      - graph/tags
+      - image
+      - opts
+      - pkg/archive
+      - pkg/fileutils
+      - pkg/homedir
+      - pkg/httputils
+      - pkg/ioutils
+      - pkg/jsonmessage
+      - pkg/mflag
+      - pkg/nat
+      - pkg/parsers
+      - pkg/pools
+      - pkg/promise
+      - pkg/random
+      - pkg/stdcopy
+      - pkg/stringid
+      - pkg/symlink
+      - pkg/system
+      - pkg/tarsum
+      - pkg/term
+      - pkg/timeutils
+      - pkg/tlsconfig
+      - pkg/ulimit
+      - pkg/units
+      - pkg/urlutil
+      - pkg/useragent
+      - pkg/version
+      - registry
+      - runconfig
+      - utils
+      - volume
+  - package: github.com/docker/libcompose
+    ref:     79ef5d150f053a5b12f16b02d8844ed7cf33611a
+    subpackages:
+      - docker
+      - logger
+      - lookup
+      - project
+      - utils
+  - package: github.com/cenkalti/backoff
+    ref:     4dc77674aceaabba2c7e3da25d4c823edfb73f99
+  - package: github.com/gorilla/context
+    ref:     215affda49addc4c8ef7e2534915df2c8c35c6cd
+  - package: github.com/docker/libkv
+    ref:     3732f7ff1b56057c3158f10bceb1e79133025373
+  - package: github.com/codahale/hdrhistogram
+    ref:     954f16e8b9ef0e5d5189456aa4c1202758e04f17
+  - package: github.com/mailgun/predicate
+    ref:     cb0bff91a7ab7cf7571e661ff883fc997bc554a3
+  - package: github.com/gorilla/mux
+    ref:     f15e0c49460fd49eebe2bcc8486b05d1bef68d3a
