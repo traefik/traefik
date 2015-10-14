@@ -30,7 +30,10 @@ import (
 )
 
 var (
+	Version               = ""
+	BuildDate             = ""
 	globalConfigFile      = kingpin.Arg("conf", "Main configration file.").Default("traefik.toml").String()
+	version               = kingpin.Flag("version", "Get Version.").Short('v').Bool()
 	currentConfigurations = make(configs)
 	metrics               = stats.New()
 	oxyLogger             = &OxyLogger{}
@@ -50,6 +53,7 @@ type configs map[string]*Configuration
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	kingpin.Version(Version + " built on the " + BuildDate)
 	kingpin.Parse()
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
 	var srv *manners.GracefulServer
