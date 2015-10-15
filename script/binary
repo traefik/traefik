@@ -8,6 +8,13 @@ fi
 
 rm -f dist/traefik
 
-# Build binaries
-CGO_ENABLED=0 go build -a -installsuffix nocgo -o dist/traefik .
+if [ -z "$VERSION" ]; then
+    VERSION=$(git rev-parse HEAD)
+fi
 
+if [ -z "$DATE" ]; then
+    DATE=$(date -u '+%Y-%m-%d_%I:%M:%S%p')
+fi
+
+# Build binaries
+CGO_ENABLED=0 go build -ldflags "-X main.Version=$VERSION -X main.BuildDate=$DATE" -a -installsuffix nocgo -o dist/traefik .

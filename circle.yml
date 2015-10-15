@@ -6,6 +6,7 @@ machine:
   environment:
     REPO: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
     DOCKER_HOST: tcp://172.17.42.1:2375
+    VERSION: v1.0.alpha.$CIRCLE_BUILD_NUM
 
 dependencies:
   pre:
@@ -27,8 +28,8 @@ deployment:
   hub:
     branch: master
     commands:
-      - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --prerelease v1.0.alpha.$CIRCLE_BUILD_NUM dist/
+      - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --prerelease ${VERSION} dist/
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push ${REPO,,}:latest
-      - docker tag ${REPO,,}:latest ${REPO,,}:v1.0.alpha.$CIRCLE_BUILD_NUM
-      - docker push ${REPO,,}:v1.0.alpha.$CIRCLE_BUILD_NUM
+      - docker tag ${REPO,,}:latest ${REPO,,}:${VERSION}
+      - docker push ${REPO,,}:${VERSION}

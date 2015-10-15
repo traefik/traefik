@@ -20,10 +20,17 @@ else
     OS_ARCH_ARG=($2)
 fi
 
+if [ -z "$VERSION" ]; then
+    VERSION=$(git rev-parse HEAD)
+fi
+
+if [ -z "$DATE" ]; then
+    DATE=$(date -u '+%Y-%m-%d_%I:%M:%S%p')
+fi
+
 # Get rid of existing binaries
 rm -f dist/traefik_*
 
 # Build binaries
-gox "${OS_PLATFORM_ARG[@]}" "${OS_ARCH_ARG[@]}" \
+gox -ldflags "-X main.Version=$VERSION -X main.BuildDate=$DATE" "${OS_PLATFORM_ARG[@]}" "${OS_ARCH_ARG[@]}" \
     -output="dist/traefik_{{.OS}}-{{.Arch}}"
-
