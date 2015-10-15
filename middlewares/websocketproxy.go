@@ -73,15 +73,16 @@ func NewProxy(target *url.URL) *WebsocketProxy {
 // ServeHTTP implements the http.Handler that proxies WebSocket connections.
 func (w *WebsocketProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if w.Backend == nil {
-		log.Println("websocketproxy: backend function is not defined")
-		http.Error(rw, "internal server error (code: 1)", http.StatusInternalServerError)
+		log.Errorf("Websocketproxy: backend function is not defined")
+		http.Error(rw, "Backend not found", http.StatusInternalServerError)
+		http.NotFound(rw, req)
 		return
 	}
 
 	backendURL := w.Backend(req)
 	if backendURL == nil {
-		log.Println("websocketproxy: backend URL is nil")
-		http.Error(rw, "internal server error (code: 2)", http.StatusInternalServerError)
+		log.Errorf("Websocketproxy: backend URL is nil")
+		http.Error(rw, "Backend URL is nil", http.StatusInternalServerError)
 		return
 	}
 
@@ -131,7 +132,8 @@ func (w *WebsocketProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// http://tools.ietf.org/html/draft-ietf-hybi-websocket-multiplexing-01
 	connBackend, resp, err := dialer.Dial(backendURL.String(), nil)
 	if err != nil {
-		log.Printf("websocketproxy: couldn't dial to remote backend url %s, %s, %+v", backendURL.String(), err, resp)
+		log.Errorf("Websocketproxy: couldn't dial to remote backend url %s, %s, %+v", backendURL.String(), err, resp)
+		http.NotFound(rw, req)
 		return
 	}
 	defer connBackend.Close()
@@ -152,7 +154,8 @@ func (w *WebsocketProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	// Also pass the header that we gathered from the Dial handshake.
 	connPub, err := upgrader.Upgrade(rw, req, upgradeHeader)
 	if err != nil {
-		log.Printf("websocketproxy: couldn't upgrade %s\n", err)
+		log.Errorf("Websocketproxy: couldn't upgrade %s", err)
+		http.NotFound(rw, req)
 		return
 	}
 	defer connPub.Close()
