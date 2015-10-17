@@ -104,15 +104,15 @@ func main() {
 			configMsg := <-configurationChan
 			log.Infof("Configuration receveived from provider %s: %#v", configMsg.providerName, configMsg.configuration)
 			lastConfigs[configMsg.providerName] = &configMsg
-			if time.Now().After(lastReceivedConfiguration.Add(time.Duration(globalConfiguration.BackendsThrottleDuration))) {
-				log.Infof("Last %s config received more than %s, OK", configMsg.providerName, globalConfiguration.BackendsThrottleDuration)
+			if time.Now().After(lastReceivedConfiguration.Add(time.Duration(globalConfiguration.ProvidersThrottleDuration))) {
+				log.Infof("Last %s config received more than %s, OK", configMsg.providerName, globalConfiguration.ProvidersThrottleDuration)
 				// last config received more than n s ago
 				configurationChanValidated <- configMsg
 			} else {
-				log.Infof("Last %s config received less than %s, waiting...", configMsg.providerName, globalConfiguration.BackendsThrottleDuration)
+				log.Infof("Last %s config received less than %s, waiting...", configMsg.providerName, globalConfiguration.ProvidersThrottleDuration)
 				go func() {
-					<-time.After(globalConfiguration.BackendsThrottleDuration)
-					if time.Now().After(lastReceivedConfiguration.Add(time.Duration(globalConfiguration.BackendsThrottleDuration))) {
+					<-time.After(globalConfiguration.ProvidersThrottleDuration)
+					if time.Now().After(lastReceivedConfiguration.Add(time.Duration(globalConfiguration.ProvidersThrottleDuration))) {
 						log.Infof("Waited for %s config, OK", configMsg.providerName)
 						configurationChanValidated <- *lastConfigs[configMsg.providerName]
 					}
@@ -124,7 +124,6 @@ func main() {
 	go func() {
 		for {
 			configMsg := <-configurationChanValidated
-			log.Debugf("Configuration %s", spew.Sdump(configMsg.configuration))
 			if configMsg.configuration == nil {
 				log.Info("Skipping empty configuration")
 			} else if reflect.DeepEqual(currentConfigurations[configMsg.providerName], configMsg.configuration) {

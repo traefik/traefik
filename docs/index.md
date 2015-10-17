@@ -115,7 +115,7 @@ For example:
 # Optional
 # Default: "2s"
 #
-# BackendsThrottleDuration = "5s"
+# ProvidersThrottleDuration = "5s"
 
 ```
 
