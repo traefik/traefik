@@ -15,7 +15,23 @@ func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	time.Sleep(500 * time.Millisecond)
-	// TODO validate : run on 80
+	resp, err := http.Get("http://127.0.0.1/")
+
+	// Expected a 404 as we did not configure anything
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, 404)
+
+	killErr := cmd.Process.Kill()
+	c.Assert(killErr, checker.IsNil)
+}
+
+// #56 regression test, make sure it does not fail
+func (s *FileSuite) TestSimpleConfigurationNoPanic(c *check.C) {
+	cmd := exec.Command(traefikBinary, "fixtures/file/56-simple-panic.toml")
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+
+	time.Sleep(500 * time.Millisecond)
 	resp, err := http.Get("http://127.0.0.1/")
 
 	// Expected a 404 as we did not configure anything
