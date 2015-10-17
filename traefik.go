@@ -59,6 +59,8 @@ func main() {
 	var configurationRouter *mux.Router
 	var configurationChan = make(chan configMessage, 10)
 	defer close(configurationChan)
+	var configurationChanValidated = make(chan configMessage, 10)
+	defer close(configurationChanValidated)
 	var sigs = make(chan os.Signal, 1)
 	defer close(sigs)
 	var stopChan = make(chan bool)
@@ -96,10 +98,32 @@ func main() {
 
 	// listen new configurations from providers
 	go func() {
-
+		lastReceivedConfiguration := time.Unix(0, 0)
+		lastConfigs := make(map[string]*configMessage)
 		for {
 			configMsg := <-configurationChan
 			log.Infof("Configuration receveived from provider %s: %#v", configMsg.providerName, configMsg.configuration)
+			lastConfigs[configMsg.providerName] = &configMsg
+			if time.Now().After(lastReceivedConfiguration.Add(time.Duration(globalConfiguration.ProvidersThrottleDuration))) {
+				log.Infof("Last %s config received more than %s, OK", configMsg.providerName, globalConfiguration.ProvidersThrottleDuration)
+				// last config received more than n s ago
+				configurationChanValidated <- configMsg
+			} else {
+				log.Infof("Last %s config received less than %s, waiting...", configMsg.providerName, globalConfiguration.ProvidersThrottleDuration)
+				go func() {
+					<-time.After(globalConfiguration.ProvidersThrottleDuration)
+					if time.Now().After(lastReceivedConfiguration.Add(time.Duration(globalConfiguration.ProvidersThrottleDuration))) {
+						log.Infof("Waited for %s config, OK", configMsg.providerName)
+						configurationChanValidated <- *lastConfigs[configMsg.providerName]
+					}
+				}()
+			}
+			lastReceivedConfiguration = time.Now()
+		}
+	}()
+	go func() {
+		for {
+			configMsg := <-configurationChanValidated
 			if configMsg.configuration == nil {
 				log.Info("Skipping empty configuration")
 			} else if reflect.DeepEqual(currentConfigurations[configMsg.providerName], configMsg.configuration) {
@@ -120,7 +144,7 @@ func main() {
 					newsrv := prepareServer(configurationRouter, globalConfiguration, oldServer, loggerMiddleware, metrics)
 					go startServer(newsrv, globalConfiguration)
 					srv = newsrv
-					time.Sleep(2 * time.Second)
+					time.Sleep(1 * time.Second)
 					if oldServer != nil {
 						log.Info("Stopping old server")
 						oldServer.Close()
