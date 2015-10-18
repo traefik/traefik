@@ -1,0 +1,11 @@
+# Reverse proxy port
+#
+# Optional
+# Default: ":80"
+#
+# port = ":80"
+#
+# LogLevel
+logLevel = "DEBUG"
+
+[file]
