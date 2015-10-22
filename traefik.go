@@ -43,13 +43,6 @@ var (
 	})
 )
 
-type configMessage struct {
-	providerName  string
-	configuration *Configuration
-}
-
-type configs map[string]*Configuration
-
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	kingpin.Version(Version + " built on the " + BuildDate)
