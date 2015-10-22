@@ -162,7 +162,7 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 			return nil
 		}
 	} else {
-		buf, err := Asset("providerTemplates/docker.tmpl")
+		buf, err := Asset("templates/docker.tmpl")
 		if err != nil {
 			log.Error("Error reading file", err)
 		}

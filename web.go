@@ -9,12 +9,19 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
+	"github.com/unrolled/render"
 )
 
 type WebProvider struct {
 	Address           string
 	CertFile, KeyFile string
 }
+
+var (
+	templatesRenderer = render.New(render.Options{
+		Directory: "nowhere",
+	})
+)
 
 func (provider *WebProvider) Provide(configurationChan chan<- configMessage) error {
 	systemRouter := mux.NewRouter()

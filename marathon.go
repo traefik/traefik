@@ -167,7 +167,7 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 			return nil
 		}
 	} else {
-		buf, err := Asset("providerTemplates/marathon.tmpl")
+		buf, err := Asset("templates/marathon.tmpl")
 		if err != nil {
 			log.Error("Error reading file", err)
 		}

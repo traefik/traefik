@@ -166,7 +166,7 @@ func (provider *KvProvider) loadConfig() *Configuration {
 			return nil
 		}
 	} else {
-		buf, err := Asset("providerTemplates/kv.tmpl")
+		buf, err := Asset("templates/kv.tmpl")
 		if err != nil {
 			log.Error("Error reading file", err)
 		}
