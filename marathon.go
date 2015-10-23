@@ -6,6 +6,7 @@ import (
 	"strings"
 	"text/template"
 
+	"errors"
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
@@ -62,41 +63,39 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 			}
 			return ""
 		},
-		"getHost": func(application marathon.Application) string {
-			for key, value := range application.Labels {
-				if key == "traefik.host" {
-					return value
-				}
+		"getWeight": func(task marathon.Task, applications []marathon.Application) string {
+			application := getApplication(task, applications)
+			if application == nil {
+				log.Errorf("Unable to get marathon application from task %s", task.AppID)
+				return "0"
 			}
-			return strings.Replace(application.ID, "/", "", 1)
-		},
-		"getWeight": func(application marathon.Application) string {
-			for key, value := range application.Labels {
-				if key == "traefik.weight" {
-					return value
-				}
+			if label, err := provider.getLabel(*application, "traefik.weight"); err == nil {
+				return label
 			}
 			return "0"
 		},
 		"getDomain": func(application marathon.Application) string {
-			for key, value := range application.Labels {
-				if key == "traefik.domain" {
-					return value
-				}
+			if label, err := provider.getLabel(application, "traefik.domain"); err == nil {
+				return label
 			}
 			return provider.Domain
-		},
-		"getPrefixes": func(application marathon.Application) ([]string, error) {
-			for key, value := range application.Labels {
-				if key == "traefik.prefixes" {
-					return strings.Split(value, ","), nil
-				}
-			}
-			return []string{}, nil
 		},
 		"replace": func(s1 string, s2 string, s3 string) string {
 			return strings.Replace(s3, s1, s2, -1)
 		},
+		"getProtocole": func(task marathon.Task, applications []marathon.Application) string {
+			application := getApplication(task, applications)
+			if application == nil {
+				log.Errorf("Unable to get marathon application from task %s", task.AppID)
+				return "http"
+			}
+			if label, err := provider.getLabel(*application, "traefik.protocole"); err == nil {
+				return label
+			}
+			return "http"
+		},
+		"getFrontendValue": provider.GetFrontendValue,
+		"getFrontendRule":  provider.GetFrontendRule,
 	}
 	configuration := new(Configuration)
 
@@ -201,4 +200,31 @@ func getApplication(task marathon.Task, apps []marathon.Application) *marathon.A
 		}
 	}
 	return nil
+}
+
+func (provider *MarathonProvider) getLabel(application marathon.Application, label string) (string, error) {
+	for key, value := range application.Labels {
+		if key == label {
+			return value, nil
+		}
+	}
+	return "", errors.New("Label not found:" + label)
+}
+
+func (provider *MarathonProvider) getEscapedName(name string) string {
+	return strings.Replace(name, "/", "", -1)
+}
+
+func (provider *MarathonProvider) GetFrontendValue(application marathon.Application) string {
+	if label, err := provider.getLabel(application, "traefik.frontend.value"); err == nil {
+		return label
+	}
+	return provider.getEscapedName(application.ID) + "." + provider.Domain
+}
+
+func (provider *MarathonProvider) GetFrontendRule(application marathon.Application) string {
+	if label, err := provider.getLabel(application, "traefik.frontend.rule"); err == nil {
+		return label
+	}
+	return "Host"
 }

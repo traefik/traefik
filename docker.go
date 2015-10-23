@@ -73,18 +73,14 @@ func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) 
 func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *Configuration {
 	var DockerFuncMap = template.FuncMap{
 		"getBackend": func(container docker.Container) string {
-			for key, value := range container.Config.Labels {
-				if key == "traefik.backend" {
-					return value
-				}
+			if label, err := provider.getLabel(container, "traefik.backend"); err == nil {
+				return label
 			}
-			return getHost(container)
+			return provider.getEscapedName(container.Name)
 		},
 		"getPort": func(container docker.Container) string {
-			for key, value := range container.Config.Labels {
-				if key == "traefik.port" {
-					return value
-				}
+			if label, err := provider.getLabel(container, "traefik.port"); err == nil {
+				return label
 			}
 			for key := range container.NetworkSettings.Ports {
 				return key.Port()
@@ -92,30 +88,33 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 			return ""
 		},
 		"getWeight": func(container docker.Container) string {
-			for key, value := range container.Config.Labels {
-				if key == "traefik.weight" {
-					return value
-				}
+			if label, err := provider.getLabel(container, "traefik.weight"); err == nil {
+				return label
 			}
 			return "0"
 		},
 		"getDomain": func(container docker.Container) string {
-			for key, value := range container.Config.Labels {
-				if key == "traefik.domain" {
-					return value
-				}
+			if label, err := provider.getLabel(container, "traefik.domain"); err == nil {
+				return label
 			}
 			return provider.Domain
 		},
+		"getProtocole": func(container docker.Container) string {
+			if label, err := provider.getLabel(container, "traefik.protocole"); err == nil {
+				return label
+			}
+			return "http"
+		},
+		"getFrontendValue": provider.GetFrontendValue,
+		"getFrontendRule":  provider.GetFrontendRule,
 		"replace": func(s1 string, s2 string, s3 string) string {
 			return strings.Replace(s3, s1, s2, -1)
 		},
-		"getHost": getHost,
 	}
 	configuration := new(Configuration)
 	containerList, _ := dockerClient.ListContainers(docker.ListContainersOptions{})
 	containersInspected := []docker.Container{}
-	hosts := map[string][]docker.Container{}
+	frontends := map[string][]docker.Container{}
 
 	// get inspect containers
 	for _, container := range containerList {
@@ -138,20 +137,28 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 			log.Debugf("Filtering disabled container %s", container.Name)
 			return false
 		}
+		_, errRule := provider.getLabel(container, "traefik.frontend.rule")
+		_, errValue := provider.getLabel(container, "traefik.frontend.value")
+
+		if errRule != nil && errValue == nil || errRule == nil && errValue != nil {
+			log.Debugf("Filtering bad labeled container %s", container.Name)
+			return false
+		}
+
 		return true
 	}, containersInspected).([]docker.Container)
 
 	for _, container := range filteredContainers {
-		hosts[getHost(container)] = append(hosts[getHost(container)], container)
+		frontends[provider.getFrontendName(container)] = append(frontends[provider.getFrontendName(container)], container)
 	}
 
 	templateObjects := struct {
 		Containers []docker.Container
-		Hosts      map[string][]docker.Container
+		Frontends  map[string][]docker.Container
 		Domain     string
 	}{
 		filteredContainers,
-		hosts,
+		frontends,
 		provider.Domain,
 	}
 	tmpl := template.New(provider.Filename).Funcs(DockerFuncMap)
@@ -181,17 +188,40 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 	}
 
 	if _, err := toml.Decode(buffer.String(), configuration); err != nil {
-		log.Error("Error creating docker configuration", err)
+		log.Error("Error creating docker configuration ", err)
 		return nil
 	}
 	return configuration
 }
 
-func getHost(container docker.Container) string {
+func (provider *DockerProvider) getFrontendName(container docker.Container) string {
+	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
+	return strings.Replace(provider.GetFrontendRule(container)+"-"+provider.GetFrontendValue(container), ".", "-", -1)
+}
+
+func (provider *DockerProvider) getEscapedName(name string) string {
+	return strings.Replace(name, "/", "", -1)
+}
+
+func (provider *DockerProvider) getLabel(container docker.Container, label string) (string, error) {
 	for key, value := range container.Config.Labels {
-		if key == "traefik.host" {
-			return value
+		if key == label {
+			return value, nil
 		}
 	}
-	return strings.Replace(strings.Replace(container.Name, "/", "", -1), ".", "-", -1)
+	return "", errors.New("Label not found:" + label)
+}
+
+func (provider *DockerProvider) GetFrontendValue(container docker.Container) string {
+	if label, err := provider.getLabel(container, "traefik.frontend.value"); err == nil {
+		return label
+	}
+	return provider.getEscapedName(container.Name) + "." + provider.Domain
+}
+
+func (provider *DockerProvider) GetFrontendRule(container docker.Container) string {
+	if label, err := provider.getLabel(container, "traefik.frontend.rule"); err == nil {
+		return label
+	}
+	return "Host"
 }

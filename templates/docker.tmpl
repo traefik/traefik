@@ -1,14 +1,13 @@
 [backends]{{range .Containers}}
     [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/" "" | replace "." "-"}}]
-    url = "http://{{.NetworkSettings.IPAddress}}:{{getPort .}}"
+    url = "{{getProtocole .}}://{{.NetworkSettings.IPAddress}}:{{getPort .}}"
     weight = {{getWeight .}}
 {{end}}
 
-[frontends]{{range $host, $containers := .Hosts}}
-  [frontends.frontend-{{$host}}]
-  {{$container := index $containers 0}}
+[frontends]{{range $frontend, $containers := .Frontends}}
+  [frontends."frontend-{{$frontend}}"]{{$container := index $containers 0}}
   backend = "backend-{{getBackend $container}}"
-    [frontends.frontend-{{$host}}.routes.route-host-{{$host}}]
-    rule = "Host"
-    value = "{{$host}}.{{getDomain $container}}"
+    [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
+    rule = "{{getFrontendRule $container}}"
+    value = "{{getFrontendValue $container}}"
 {{end}}
