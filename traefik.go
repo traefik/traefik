@@ -1,8 +1,8 @@
 package main
 
 import (
+	"crypto/tls"
 	fmtlog "log"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -141,7 +141,10 @@ func main() {
 					currentConfigurations = newConfigurations
 					configurationRouter = newConfigurationRouter
 					oldServer := srv
-					newsrv := prepareServer(configurationRouter, globalConfiguration, oldServer, loggerMiddleware, metrics)
+					newsrv, err := prepareServer(configurationRouter, globalConfiguration, oldServer, loggerMiddleware, metrics)
+					if err != nil {
+						log.Fatal("Error preparing server: ", err)
+					}
 					go startServer(newsrv, globalConfiguration)
 					srv = newsrv
 					time.Sleep(1 * time.Second)
@@ -208,11 +211,35 @@ func main() {
 
 	//negroni.Use(middlewares.NewCircuitBreaker(oxyLogger))
 	//negroni.Use(middlewares.NewRoutes(configurationRouter))
-	srv = prepareServer(configurationRouter, globalConfiguration, nil, loggerMiddleware, metrics)
+
+	var er error
+	srv, er = prepareServer(configurationRouter, globalConfiguration, nil, loggerMiddleware, metrics)
+	if er != nil {
+		log.Fatal("Error preparing server: ", er)
+	}
 	go startServer(srv, globalConfiguration)
 
 	<-stopChan
 	log.Info("Shutting down")
+}
+
+func createTLSConfig(certFile string, keyFile string) (*tls.Config, error) {
+	config := &tls.Config{}
+	if config.NextProtos == nil {
+		config.NextProtos = []string{"http/1.1"}
+	}
+
+	var err error
+	config.Certificates = make([]tls.Certificate, 1)
+	if len(certFile) > 0 && len(keyFile) > 0 {
+		config.Certificates[0], err = tls.LoadX509KeyPair(certFile, keyFile)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, nil
+	}
+	return config, nil
 }
 
 func startServer(srv *manners.GracefulServer, globalConfiguration *GlobalConfiguration) {
@@ -220,24 +247,18 @@ func startServer(srv *manners.GracefulServer, globalConfiguration *GlobalConfigu
 	if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
 		err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
 		if err != nil {
-			netOpError, ok := err.(*net.OpError)
-			if ok && netOpError.Err.Error() != "use of closed network connection" {
-				log.Fatal("Error creating server: ", err)
-			}
+			log.Fatal("Error creating server: ", err)
 		}
 	} else {
 		err := srv.ListenAndServe()
 		if err != nil {
-			netOpError, ok := err.(*net.OpError)
-			if ok && netOpError.Err.Error() != "use of closed network connection" {
-				log.Fatal("Error creating server: ", err)
-			}
+			log.Fatal("Error creating server: ", err)
 		}
 	}
 	log.Info("Server stopped")
 }
 
-func prepareServer(router *mux.Router, globalConfiguration *GlobalConfiguration, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) *manners.GracefulServer {
+func prepareServer(router *mux.Router, globalConfiguration *GlobalConfiguration, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
 	log.Info("Preparing server")
 	// middlewares
 	var negroni = negroni.New()
@@ -245,23 +266,29 @@ func prepareServer(router *mux.Router, globalConfiguration *GlobalConfiguration,
 		negroni.Use(middleware)
 	}
 	negroni.UseHandler(router)
+	tlsConfig, err := createTLSConfig(globalConfiguration.CertFile, globalConfiguration.KeyFile)
+	if err != nil {
+		log.Fatalf("Error creating TLS config %s", err)
+		return nil, err
+	}
 
 	if oldServer == nil {
 		return manners.NewWithServer(
 			&http.Server{
-				Addr:    globalConfiguration.Port,
-				Handler: negroni,
-			})
+				Addr:      globalConfiguration.Port,
+				Handler:   negroni,
+				TLSConfig: tlsConfig,
+			}), nil
 	} else {
 		server, err := oldServer.HijackListener(&http.Server{
 			Addr:    globalConfiguration.Port,
 			Handler: negroni,
-		}, nil)
+		}, tlsConfig)
 		if err != nil {
 			log.Fatalf("Error hijacking server %s", err)
-			return nil
+			return nil, err
 		} else {
-			return server
+			return server, nil
 		}
 	}
 }
