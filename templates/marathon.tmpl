@@ -1,7 +1,7 @@
 {{$apps := .Applications}}
 [backends]{{range .Tasks}}
     [backends.backend{{.AppID | replace "/" "-"}}.servers.server-{{.ID | replace "." "-"}}]
-    url = "{{getProtocole . $apps}}://{{.Host}}:{{getPort .}}"
+    url = "{{getProtocol . $apps}}://{{.Host}}:{{getPort .}}"
     weight = {{getWeight . $apps}}
 {{end}}
 

@@ -88,6 +88,7 @@ func (provider *KvProvider) provide(configurationChan chan<- configMessage) erro
 		[]string{provider.Endpoint},
 		&store.Config{
 			ConnectionTimeout: 30 * time.Second,
+			Bucket:            "traefik",
 		},
 	)
 	if err != nil {

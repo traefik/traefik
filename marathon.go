@@ -83,13 +83,13 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 		"replace": func(s1 string, s2 string, s3 string) string {
 			return strings.Replace(s3, s1, s2, -1)
 		},
-		"getProtocole": func(task marathon.Task, applications []marathon.Application) string {
+		"getProtocol": func(task marathon.Task, applications []marathon.Application) string {
 			application := getApplication(task, applications)
 			if application == nil {
 				log.Errorf("Unable to get marathon application from task %s", task.AppID)
 				return "http"
 			}
-			if label, err := provider.getLabel(*application, "traefik.protocole"); err == nil {
+			if label, err := provider.getLabel(*application, "traefik.protocol"); err == nil {
 				return label
 			}
 			return "http"

@@ -99,8 +99,8 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 			}
 			return provider.Domain
 		},
-		"getProtocole": func(container docker.Container) string {
-			if label, err := provider.getLabel(container, "traefik.protocole"); err == nil {
+		"getProtocol": func(container docker.Container) string {
+			if label, err := provider.getLabel(container, "traefik.protocol"); err == nil {
 				return label
 			}
 			return "http"

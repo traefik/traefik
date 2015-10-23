@@ -407,6 +407,7 @@ Labels can be used on containers to override default behaviour:
 
 - `traefik.backend=foo`: assign the container to `foo` backend
 - `traefik.port=80`: register this port. Useful when the container exposes multiples ports.
+- `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
 - `traefik.enable=false`: disable this container in Træfɪk
 - `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
@@ -466,7 +467,9 @@ domain = "marathon.localhost"
 
 Labels can be used on containers to override default behaviour:
 
+- `traefik.backend=foo`: assign the application to `foo` backend
 - `traefik.port=80`: register this port. Useful when the application exposes multiples ports.
+- `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the application
 - `traefik.enable=false`: disable this application in Træfɪk
 - `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
