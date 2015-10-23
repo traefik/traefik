@@ -25,7 +25,7 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 
 Basically, Træfɪk is a http router, which sends traffic from frontends to http backends, following rules you have configured.
 
-### Frontends
+### <a id="frontends"></a> Frontends
 
 Frontends can be defined using the following rules:
 
@@ -409,8 +409,10 @@ Labels can be used on containers to override default behaviour:
 - `traefik.port=80`: register this port. Useful when the container exposes multiples ports.
 - `traefik.weight=10`: assign this weight to the container
 - `traefik.enable=false`: disable this container in Træfɪk
-- `traefik.host=bar`: override the default routing from `{containerName}.{domain}` to `bar.{domain}`
+- `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
+- `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{containerName}.{domain}`) See [frontends](#frontends).
 * `traefik.domain=traefik.localhost`: override the default domain
+
 
 ## <a id="marathon"></a> Marathon backend
 
@@ -464,12 +466,11 @@ domain = "marathon.localhost"
 
 Labels can be used on containers to override default behaviour:
 
-- `traefik.backend=foo`: assign the application to `foo` backend
 - `traefik.port=80`: register this port. Useful when the application exposes multiples ports.
 - `traefik.weight=10`: assign this weight to the application
 - `traefik.enable=false`: disable this application in Træfɪk
-- `traefik.host=bar`: override the default routing from `{appName}.{domain}` to `bar.{domain}`
-- `traefik.prefixes=pf1,pf2`: use `PathPrefix(es)` instead of hostname for routing, use `filename="templates/marathon-prefix.tmpl"` with this option
+- `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
+- `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{appName}.{domain}`) See [frontends](#frontends).
 * `traefik.domain=traefik.localhost`: override the default domain
 
 ## <a id="consul"></a> Consul backend
