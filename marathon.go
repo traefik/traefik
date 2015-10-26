@@ -64,12 +64,12 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 			return ""
 		},
 		"getWeight": func(task marathon.Task, applications []marathon.Application) string {
-			application := getApplication(task, applications)
-			if application == nil {
+			application, errApp := getApplication(task, applications)
+			if errApp != nil {
 				log.Errorf("Unable to get marathon application from task %s", task.AppID)
 				return "0"
 			}
-			if label, err := provider.getLabel(*application, "traefik.weight"); err == nil {
+			if label, err := provider.getLabel(application, "traefik.weight"); err == nil {
 				return label
 			}
 			return "0"
@@ -84,12 +84,12 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 			return strings.Replace(s3, s1, s2, -1)
 		},
 		"getProtocol": func(task marathon.Task, applications []marathon.Application) string {
-			application := getApplication(task, applications)
-			if application == nil {
+			application, errApp := getApplication(task, applications)
+			if errApp != nil {
 				log.Errorf("Unable to get marathon application from task %s", task.AppID)
 				return "http"
 			}
-			if label, err := provider.getLabel(*application, "traefik.protocol"); err == nil {
+			if label, err := provider.getLabel(application, "traefik.protocol"); err == nil {
 				return label
 			}
 			return "http"
@@ -117,8 +117,8 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 			log.Debug("Filtering marathon task without port", task.AppID)
 			return false
 		}
-		application := getApplication(task, applications.Apps)
-		if application == nil {
+		application, errApp := getApplication(task, applications.Apps)
+		if errApp != nil {
 			log.Errorf("Unable to get marathon application from task %s", task.AppID)
 			return false
 		}
@@ -193,13 +193,13 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 	return configuration
 }
 
-func getApplication(task marathon.Task, apps []marathon.Application) *marathon.Application {
+func getApplication(task marathon.Task, apps []marathon.Application) (marathon.Application, error) {
 	for _, application := range apps {
 		if application.ID == task.AppID {
-			return &application
+			return application, nil
 		}
 	}
-	return nil
+	return marathon.Application{}, errors.New("Application not found: " + task.AppID)
 }
 
 func (provider *MarathonProvider) getLabel(application marathon.Application, label string) (string, error) {

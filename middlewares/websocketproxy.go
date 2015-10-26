@@ -133,7 +133,7 @@ func (w *WebsocketProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	connBackend, resp, err := dialer.Dial(backendURL.String(), nil)
 	if err != nil {
 		log.Errorf("Websocketproxy: couldn't dial to remote backend url %s, %s, %+v", backendURL.String(), err, resp)
-		http.NotFound(rw, req)
+		http.Error(rw, "Remote backend unreachable", http.StatusBadGateway)
 		return
 	}
 	defer connBackend.Close()

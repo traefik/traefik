@@ -8,6 +8,7 @@ import (
 	"text/template"
 	"time"
 
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
@@ -137,10 +138,8 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 			log.Debugf("Filtering disabled container %s", container.Name)
 			return false
 		}
-		_, errRule := provider.getLabel(container, "traefik.frontend.rule")
-		_, errValue := provider.getLabel(container, "traefik.frontend.value")
 
-		if errRule != nil && errValue == nil || errRule == nil && errValue != nil {
+		if _, err := provider.getLabels(container, []string{"traefik.frontend.rule", "traefik.frontend.value"}); err != nil {
 			log.Debugf("Filtering bad labeled container %s", container.Name)
 			return false
 		}
@@ -196,7 +195,8 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 
 func (provider *DockerProvider) getFrontendName(container docker.Container) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
-	return strings.Replace(provider.GetFrontendRule(container)+"-"+provider.GetFrontendValue(container), ".", "-", -1)
+	frontendName := fmt.Sprintf("%s-%s", provider.GetFrontendRule(container), provider.GetFrontendValue(container))
+	return strings.Replace(frontendName, ".", "-", -1)
 }
 
 func (provider *DockerProvider) getEscapedName(name string) string {
@@ -210,6 +210,18 @@ func (provider *DockerProvider) getLabel(container docker.Container, label strin
 		}
 	}
 	return "", errors.New("Label not found:" + label)
+}
+
+func (provider *DockerProvider) getLabels(container docker.Container, labels []string) (map[string]string, error) {
+	foundLabels := map[string]string{}
+	for _, label := range labels {
+		if foundLabel, err := provider.getLabel(container, label); err != nil {
+			return nil, errors.New("Label not found: " + label)
+		} else {
+			foundLabels[label] = foundLabel
+		}
+	}
+	return foundLabels, nil
 }
 
 func (provider *DockerProvider) GetFrontendValue(container docker.Container) string {
