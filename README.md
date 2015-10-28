@@ -1,9 +1,9 @@
 ![Træfɪk](http://traefik.github.io/traefik.logo.svg  "Træfɪk")
 ___
 
-[![Circle CI](https://img.shields.io/circleci/project/EmileVauge/traefik.svg)](https://circleci.com/gh/EmileVauge/traefik)
+[![Circle CI](https://circleci.com/gh/emilevauge/traefik.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/emilevauge/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/EmileVauge/traefik/blob/master/LICENSE.md)
-[![Join the chat at https://gitter.im/EmileVauge/traefik](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/EmileVauge/traefik?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
