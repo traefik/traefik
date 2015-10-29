@@ -6,6 +6,7 @@ machine:
   environment:
     REPO: $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
     DOCKER_HOST: tcp://172.17.42.1:2375
+    MAKE_DOCKER_HOST: $DOCKER_HOST
     VERSION: v1.0.alpha.$CIRCLE_BUILD_NUM
 
 dependencies:
@@ -19,7 +20,7 @@ dependencies:
 test:
   override:
     - make test-unit
-    - make MAKE_DOCKER_HOST=$DOCKER_HOST test-integration
+    - make test-integration
   post:
     - make crossbinary
     - make image
