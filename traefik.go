@@ -23,7 +23,6 @@ import (
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
 	"github.com/thoas/stats"
-	"github.com/unrolled/render"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"runtime"
 )
@@ -36,19 +35,7 @@ var (
 	currentConfigurations = make(configs)
 	metrics               = stats.New()
 	oxyLogger             = &OxyLogger{}
-	templatesRenderer     = render.New(render.Options{
-		Directory:  "templates",
-		Asset:      Asset,
-		AssetNames: AssetNames,
-	})
 )
-
-type configMessage struct {
-	providerName  string
-	configuration *Configuration
-}
-
-type configs map[string]*Configuration
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())

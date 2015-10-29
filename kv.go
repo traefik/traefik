@@ -88,6 +88,7 @@ func (provider *KvProvider) provide(configurationChan chan<- configMessage) erro
 		[]string{provider.Endpoint},
 		&store.Config{
 			ConnectionTimeout: 30 * time.Second,
+			Bucket:            "traefik",
 		},
 	)
 	if err != nil {
@@ -166,7 +167,7 @@ func (provider *KvProvider) loadConfig() *Configuration {
 			return nil
 		}
 	} else {
-		buf, err := Asset("providerTemplates/kv.tmpl")
+		buf, err := Asset("templates/kv.tmpl")
 		if err != nil {
 			log.Error("Error reading file", err)
 		}

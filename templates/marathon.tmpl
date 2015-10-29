@@ -1,0 +1,14 @@
+{{$apps := .Applications}}
+[backends]{{range .Tasks}}
+    [backends.backend{{.AppID | replace "/" "-"}}.servers.server-{{.ID | replace "." "-"}}]
+    url = "{{getProtocol . $apps}}://{{.Host}}:{{getPort .}}"
+    weight = {{getWeight . $apps}}
+{{end}}
+
+[frontends]{{range .Applications}}
+  [frontends.frontend{{.ID | replace "/" "-"}}]
+  backend = "backend{{.ID | replace "/" "-"}}"
+    [frontends.frontend-{{.ID | replace "/" ""}}.routes.route-host-{{.ID | replace "/" ""}}]
+    rule = "{{getFrontendRule .}}"
+    value = "{{getFrontendValue .}}"
+{{end}}

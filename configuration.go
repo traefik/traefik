@@ -103,3 +103,10 @@ func NewLoadBalancerMethod(loadBalancer *LoadBalancer) (LoadBalancerMethod, erro
 }
 
 var ErrInvalidLoadBalancerMethod = errors.New("Invalid method, using default")
+
+type configMessage struct {
+	providerName  string
+	configuration *Configuration
+}
+
+type configs map[string]*Configuration
