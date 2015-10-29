@@ -101,6 +101,9 @@ func (w *WebsocketProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	for _, cookie := range req.Header[http.CanonicalHeaderKey("Cookie")] {
 		requestHeader.Add("Cookie", cookie)
 	}
+	for _, auth := range req.Header[http.CanonicalHeaderKey("Authorization")] {
+		requestHeader.Add("Authorization", auth)
+	}
 
 	// Pass X-Forwarded-For headers too, code below is a part of
 	// httputil.ReverseProxy. See http://en.wikipedia.org/wiki/X-Forwarded-For
@@ -124,13 +127,16 @@ func (w *WebsocketProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		requestHeader.Set("X-Forwarded-Proto", "https")
 	}
 
+	//frontend Origin != backend Origin
+	requestHeader.Del("Origin")
+
 	// Connect to the backend URL, also pass the headers we get from the requst
 	// together with the Forwarded headers we prepared above.
 	// TODO: support multiplexing on the same backend connection instead of
 	// opening a new TCP connection time for each request. This should be
 	// optional:
 	// http://tools.ietf.org/html/draft-ietf-hybi-websocket-multiplexing-01
-	connBackend, resp, err := dialer.Dial(backendURL.String(), nil)
+	connBackend, resp, err := dialer.Dial(backendURL.String(), requestHeader)
 	if err != nil {
 		log.Errorf("Websocketproxy: couldn't dial to remote backend url %s, %s, %+v", backendURL.String(), err, resp)
 		http.Error(rw, "Remote backend unreachable", http.StatusBadGateway)
