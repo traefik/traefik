@@ -356,6 +356,7 @@
 #     value = "test.localhost"
 #   [frontends.frontend2]
 #   backend = "backend1"
+#   passHostHeader = true
 #     [frontends.frontend2.routes.test_2]
 #     rule = "Path"
 #     value = "/test"

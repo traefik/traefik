@@ -38,6 +38,7 @@ Frontends can be defined using the following rules:
 
 
  A frontend is a set of rules that forwards the incoming http traffic to a backend.
+ You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
 
 ### HTTP Backends
 
@@ -163,6 +164,7 @@ logLevel = "DEBUG"
     value = "test.localhost"
   [frontends.frontend2]
   backend = "backend1"
+  passHostHeader = true
     [frontends.frontend2.routes.test_2]
     rule = "Path"
     value = "/test"
@@ -210,6 +212,7 @@ filename = "rules.toml"
     value = "test.localhost"
   [frontends.frontend2]
   backend = "backend1"
+  passHostHeader = true
     [frontends.frontend2.routes.test_2]
     rule = "Path"
     value = "/test"
@@ -412,6 +415,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.enable=false`: disable this container in Træfɪk
 - `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
 - `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{containerName}.{domain}`) See [frontends](#frontends).
+- `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 * `traefik.domain=traefik.localhost`: override the default domain
 
 
@@ -474,6 +478,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.enable=false`: disable this application in Træfɪk
 - `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
 - `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{appName}.{domain}`) See [frontends](#frontends).
+- `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 * `traefik.domain=traefik.localhost`: override the default domain
 
 ## <a id="consul"></a> Consul backend
@@ -551,6 +556,7 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 | Key                                                | Value      |
 |----------------------------------------------------|------------|
 | `/traefik/frontends/frontend2/backend`             | `backend1` |
+| `/traefik/frontends/frontend2/passHostHeader`      | `true`     |
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
 | `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
 
@@ -630,6 +636,7 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 | Key                                                | Value      |
 |----------------------------------------------------|------------|
 | `/traefik/frontends/frontend2/backend`             | `backend1` |
+| `/traefik/frontends/frontend2/passHostHeader`      | `true`     |
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
 | `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
 
@@ -708,6 +715,7 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 | Key                                                | Value      |
 |----------------------------------------------------|------------|
 | `/traefik/frontends/frontend2/backend`             | `backend1` |
+| `/traefik/frontends/frontend2/passHostHeader`      | `true`     |
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
 | `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
 

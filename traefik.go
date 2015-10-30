@@ -287,7 +287,7 @@ func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration
 	for _, configuration := range configurations {
 		for frontendName, frontend := range configuration.Frontends {
 			log.Debugf("Creating frontend %s", frontendName)
-			fwd, _ := forward.New(forward.Logger(oxyLogger))
+			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
 			newRoute := router.NewRoute().Name(frontendName)
 			for routeName, route := range frontend.Routes {
 				log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
