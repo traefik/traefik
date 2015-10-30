@@ -5,6 +5,7 @@ set -e
 DEFAULT_BUNDLES=(
 	validate-gofmt
 	validate-govet
+	generate
 	binary
 
 	test-unit
