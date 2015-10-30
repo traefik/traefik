@@ -20,6 +20,9 @@ print-%: ; @echo $*=$($*)
 
 default: binary
 
+all: build
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh
+
 binary: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
 
