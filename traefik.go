@@ -28,8 +28,6 @@ import (
 )
 
 var (
-	Version               = ""
-	BuildDate             = ""
 	globalConfigFile      = kingpin.Arg("conf", "Main configration file.").Default("traefik.toml").String()
 	version               = kingpin.Flag("version", "Get Version.").Short('v').Bool()
 	currentConfigurations = make(configs)
