@@ -1,6 +1,3 @@
-/*
-Copyright
-*/
 package middlewares
 
 import (
@@ -16,7 +13,7 @@ type Logger struct {
 	file *os.File
 }
 
-// NewLogger returns a new Logger instance
+// NewLogger returns a new Logger instance.
 func NewLogger(file string) *Logger {
 	if len(file) > 0 {
 		fi, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -36,6 +33,7 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 	}
 }
 
+// Close closes the logger (i.e. the file).
 func (l *Logger) Close() {
 	l.file.Close()
 }
