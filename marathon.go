@@ -114,7 +114,7 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 	//filter tasks
 	filteredTasks := fun.Filter(func(task marathon.Task) bool {
 		if len(task.Ports) == 0 {
-			log.Debug("Filtering marathon task without port", task.AppID)
+			log.Debug("Filtering marathon task without port %s", task.AppID)
 			return false
 		}
 		application, errApp := getApplication(task, applications.Apps)
@@ -124,12 +124,27 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 		}
 		_, err := strconv.Atoi(application.Labels["traefik.port"])
 		if len(application.Ports) > 1 && err != nil {
-			log.Debug("Filtering marathon task with more than 1 port and no traefik.port label", task.AppID)
+			log.Debugf("Filtering marathon task %s with more than 1 port and no traefik.port label", task.AppID)
 			return false
 		}
 		if application.Labels["traefik.enable"] == "false" {
-			log.Debug("Filtering disabled marathon task", task.AppID)
+			log.Debugf("Filtering disabled marathon task %s", task.AppID)
 			return false
+		}
+		//filter healthchecks
+		if application.HasHealthChecks() {
+			if task.HasHealthCheckResults() {
+				for _, healthcheck := range task.HealthCheckResult {
+					// found one bad healthcheck, return false
+					if !healthcheck.Alive {
+						log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
+						return false
+					}
+				}
+			} else {
+				log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
+				return false
+			}
 		}
 		return true
 	}, tasks.Tasks).([]marathon.Task)
