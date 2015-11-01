@@ -85,6 +85,7 @@ You need either [Docker](https://github.com/docker/docker) and `make`, or `go` a
 #### Setting up your `go` environment
 - You need `go` v1.5
 - You need to set `export GO15VENDOREXPERIMENT=1` environment variable
+- You need `go-bindata` to be able to use `go generate` command (needed to build) : `go get github.com/jteeuwen/go-bindata/...`.
 - If you clone Træfɪk into something like `~/go/src/github.com/traefik`, your `GOPATH` variable will have to be set to `~/go`: export `GOPATH=~/go`.
 
 #### Using `Docker` and `Makefile`
