@@ -1,15 +1,17 @@
-package main
+package provider
 
 import (
 	"bytes"
+	"errors"
 	"strconv"
 	"strings"
 	"text/template"
 
-	"errors"
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/emilevauge/traefik/autogen"
+	"github.com/emilevauge/traefik/types"
 	"github.com/gambol99/go-marathon"
 )
 
@@ -22,7 +24,7 @@ type MarathonProvider struct {
 	NetworkInterface string
 }
 
-func (provider *MarathonProvider) Provide(configurationChan chan<- configMessage) error {
+func (provider *MarathonProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
 	config.EventsInterface = provider.NetworkInterface
@@ -43,7 +45,7 @@ func (provider *MarathonProvider) Provide(configurationChan chan<- configMessage
 					log.Debug("Marathon event receveived", event)
 					configuration := provider.loadMarathonConfig()
 					if configuration != nil {
-						configurationChan <- configMessage{"marathon", configuration}
+						configurationChan <- types.ConfigMessage{"marathon", configuration}
 					}
 				}
 			}()
@@ -51,11 +53,11 @@ func (provider *MarathonProvider) Provide(configurationChan chan<- configMessage
 	}
 
 	configuration := provider.loadMarathonConfig()
-	configurationChan <- configMessage{"marathon", configuration}
+	configurationChan <- types.ConfigMessage{"marathon", configuration}
 	return nil
 }
 
-func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
+func (provider *MarathonProvider) loadMarathonConfig() *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
 		"getPort": func(task marathon.Task) string {
 			for _, port := range task.Ports {
@@ -103,7 +105,7 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 		"getFrontendValue": provider.GetFrontendValue,
 		"getFrontendRule":  provider.GetFrontendRule,
 	}
-	configuration := new(Configuration)
+	configuration := new(types.Configuration)
 
 	applications, err := provider.marathonClient.Applications(nil)
 	if err != nil {
@@ -187,7 +189,7 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 			return nil
 		}
 	} else {
-		buf, err := Asset("templates/marathon.tmpl")
+		buf, err := autogen.Asset("templates/marathon.tmpl")
 		if err != nil {
 			log.Error("Error reading file", err)
 		}

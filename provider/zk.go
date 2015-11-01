@@ -1,4 +1,6 @@
-package main
+package provider
+
+import "github.com/emilevauge/traefik/types"
 
 type ZookepperProvider struct {
 	Watch      bool
@@ -8,7 +10,7 @@ type ZookepperProvider struct {
 	KvProvider *KvProvider
 }
 
-func (provider *ZookepperProvider) Provide(configurationChan chan<- configMessage) error {
+func (provider *ZookepperProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
 	provider.KvProvider = NewZkProvider(provider)
 	return provider.KvProvider.provide(configurationChan)
 }

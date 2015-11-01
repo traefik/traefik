@@ -1,18 +1,20 @@
-package main
+package provider
 
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
-	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
+	"github.com/emilevauge/traefik/autogen"
+	"github.com/emilevauge/traefik/types"
 	"github.com/fsouza/go-dockerclient"
 )
 
@@ -23,7 +25,7 @@ type DockerProvider struct {
 	Domain   string
 }
 
-func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) error {
+func (provider *DockerProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
 	if dockerClient, err := docker.NewClient(provider.Endpoint); err != nil {
 		log.Errorf("Failed to create a client for docker, error: %s", err)
 		return err
@@ -50,7 +52,7 @@ func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) 
 							log.Debugf("Docker event receveived %+v", event)
 							configuration := provider.loadDockerConfig(dockerClient)
 							if configuration != nil {
-								configurationChan <- configMessage{"docker", configuration}
+								configurationChan <- types.ConfigMessage{"docker", configuration}
 							}
 						}
 					}
@@ -66,12 +68,12 @@ func (provider *DockerProvider) Provide(configurationChan chan<- configMessage) 
 		}
 
 		configuration := provider.loadDockerConfig(dockerClient)
-		configurationChan <- configMessage{"docker", configuration}
+		configurationChan <- types.ConfigMessage{"docker", configuration}
 	}
 	return nil
 }
 
-func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *Configuration {
+func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
 		"getBackend": func(container docker.Container) string {
 			if label, err := provider.getLabel(container, "traefik.backend"); err == nil {
@@ -118,7 +120,7 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 			return strings.Replace(s3, s1, s2, -1)
 		},
 	}
-	configuration := new(Configuration)
+	configuration := new(types.Configuration)
 	containerList, _ := dockerClient.ListContainers(docker.ListContainersOptions{})
 	containersInspected := []docker.Container{}
 	frontends := map[string][]docker.Container{}
@@ -174,7 +176,7 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 			return nil
 		}
 	} else {
-		buf, err := Asset("templates/docker.tmpl")
+		buf, err := autogen.Asset("templates/docker.tmpl")
 		if err != nil {
 			log.Error("Error reading file", err)
 		}

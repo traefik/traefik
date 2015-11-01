@@ -1,4 +1,6 @@
-package main
+package provider
+
+import "github.com/emilevauge/traefik/types"
 
 type EtcdProvider struct {
 	Watch      bool
@@ -8,7 +10,7 @@ type EtcdProvider struct {
 	KvProvider *KvProvider
 }
 
-func (provider *EtcdProvider) Provide(configurationChan chan<- configMessage) error {
+func (provider *EtcdProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
 	provider.KvProvider = NewEtcdProvider(provider)
 	return provider.KvProvider.provide(configurationChan)
 }

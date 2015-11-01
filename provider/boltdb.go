@@ -1,4 +1,6 @@
-package main
+package provider
+
+import "github.com/emilevauge/traefik/types"
 
 type BoltDbProvider struct {
 	Watch      bool
@@ -8,7 +10,7 @@ type BoltDbProvider struct {
 	KvProvider *KvProvider
 }
 
-func (provider *BoltDbProvider) Provide(configurationChan chan<- configMessage) error {
+func (provider *BoltDbProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
 	provider.KvProvider = NewBoltDbProvider(provider)
 	return provider.KvProvider.provide(configurationChan)
 }

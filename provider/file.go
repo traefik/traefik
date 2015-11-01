@@ -1,4 +1,4 @@
-package main
+package provider
 
 import (
 	"os"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
+	"github.com/emilevauge/traefik/types"
 	"gopkg.in/fsnotify.v1"
 )
 
@@ -15,7 +16,7 @@ type FileProvider struct {
 	Filename string
 }
 
-func (provider *FileProvider) Provide(configurationChan chan<- configMessage) error {
+func (provider *FileProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Error("Error creating file watcher", err)
@@ -40,7 +41,7 @@ func (provider *FileProvider) Provide(configurationChan chan<- configMessage) er
 						log.Debug("File event:", event)
 						configuration := provider.LoadFileConfig(file.Name())
 						if configuration != nil {
-							configurationChan <- configMessage{"file", configuration}
+							configurationChan <- types.ConfigMessage{"file", configuration}
 						}
 					}
 				case error := <-watcher.Errors:
@@ -56,12 +57,12 @@ func (provider *FileProvider) Provide(configurationChan chan<- configMessage) er
 	}
 
 	configuration := provider.LoadFileConfig(file.Name())
-	configurationChan <- configMessage{"file", configuration}
+	configurationChan <- types.ConfigMessage{"file", configuration}
 	return nil
 }
 
-func (provider *FileProvider) LoadFileConfig(filename string) *Configuration {
-	configuration := new(Configuration)
+func (provider *FileProvider) LoadFileConfig(filename string) *types.Configuration {
+	configuration := new(types.Configuration)
 	if _, err := toml.DecodeFile(filename, configuration); err != nil {
 		log.Error("Error reading file:", err)
 		return nil

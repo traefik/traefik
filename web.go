@@ -8,6 +8,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/elazarl/go-bindata-assetfs"
+	"github.com/emilevauge/traefik/autogen"
+	"github.com/emilevauge/traefik/types"
 	"github.com/gorilla/mux"
 	"github.com/unrolled/render"
 )
@@ -23,7 +25,7 @@ var (
 	})
 )
 
-func (provider *WebProvider) Provide(configurationChan chan<- configMessage) error {
+func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
 	systemRouter := mux.NewRouter()
 
 	// health route
@@ -41,11 +43,11 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) err
 			return
 		}
 
-		configuration := new(Configuration)
+		configuration := new(types.Configuration)
 		body, _ := ioutil.ReadAll(request.Body)
 		err := json.Unmarshal(body, configuration)
 		if err == nil {
-			configurationChan <- configMessage{"web", configuration}
+			configurationChan <- types.ConfigMessage{"web", configuration}
 			getConfigHandler(response, request)
 		} else {
 			log.Errorf("Error parsing configuration %+v", err)
@@ -65,7 +67,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- configMessage) err
 	systemRouter.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		http.Redirect(response, request, "/dashboard/", 302)
 	})
-	systemRouter.Methods("GET").PathPrefix("/dashboard/").Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, Prefix: "static"})))
+	systemRouter.Methods("GET").PathPrefix("/dashboard/").Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetDir: autogen.AssetDir, Prefix: "static"})))
 
 	go func() {
 		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
