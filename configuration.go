@@ -66,8 +66,9 @@ type Route struct {
 
 // Frontend configuration
 type Frontend struct {
-	Backend string           `json:"backend,omitempty"`
-	Routes  map[string]Route `json:"routes,omitempty"`
+	PassHostHeader bool             `json:"passHostHeader,omitempty"`
+	Backend        string           `json:"backend,omitempty"`
+	Routes         map[string]Route `json:"routes,omitempty"`
 }
 
 // Configuration of a provider

@@ -7,6 +7,7 @@
 [frontends]{{range $frontend, $containers := .Frontends}}
   [frontends."frontend-{{$frontend}}"]{{$container := index $containers 0}}
   backend = "backend-{{getBackend $container}}"
+  passHostHeader = {{getPassHostHeader $container}}
     [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
     rule = "{{getFrontendRule $container}}"
     value = "{{getFrontendValue $container}}"

@@ -106,6 +106,12 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *C
 			}
 			return "http"
 		},
+		"getPassHostHeader": func(container docker.Container) string {
+			if passHostHeader, err := provider.getLabel(container, "traefik.frontend.passHostHeader"); err == nil {
+				return passHostHeader
+			}
+			return "false"
+		},
 		"getFrontendValue": provider.GetFrontendValue,
 		"getFrontendRule":  provider.GetFrontendRule,
 		"replace": func(s1 string, s2 string, s3 string) string {

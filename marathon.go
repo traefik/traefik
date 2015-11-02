@@ -94,6 +94,12 @@ func (provider *MarathonProvider) loadMarathonConfig() *Configuration {
 			}
 			return "http"
 		},
+		"getPassHostHeader": func(application marathon.Application) string {
+			if passHostHeader, err := provider.getLabel(application, "traefik.frontend.passHostHeader"); err == nil {
+				return passHostHeader
+			}
+			return "false"
+		},
 		"getFrontendValue": provider.GetFrontendValue,
 		"getFrontendRule":  provider.GetFrontendRule,
 	}

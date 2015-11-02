@@ -8,6 +8,7 @@
 [frontends]{{range .Applications}}
   [frontends.frontend{{.ID | replace "/" "-"}}]
   backend = "backend{{.ID | replace "/" "-"}}"
+  passHostHeader = {{getPassHostHeader .}}
     [frontends.frontend-{{.ID | replace "/" ""}}.routes.route-host-{{.ID | replace "/" ""}}]
     rule = "{{getFrontendRule .}}"
     value = "{{getFrontendValue .}}"
