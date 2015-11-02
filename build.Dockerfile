@@ -3,6 +3,7 @@ FROM golang:1.5
 RUN go get github.com/Masterminds/glide
 RUN go get github.com/mitchellh/gox
 RUN go get github.com/tcnksm/ghr
+RUN go get github.com/jteeuwen/go-bindata/...
 
 # Which docker version to test on
 ENV DOCKER_VERSION 1.6.2
