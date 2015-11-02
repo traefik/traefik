@@ -1,27 +1,29 @@
 /*
 Copyright
 */
-package main
+package provider
 
 import (
 	"bytes"
+	"errors"
+	"strings"
+	"text/template"
+	"time"
+
+	"github.com/BurntSushi/toml"
+	"github.com/BurntSushi/ty/fun"
+	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libkv"
+	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/boltdb"
 	"github.com/docker/libkv/store/consul"
 	"github.com/docker/libkv/store/etcd"
 	"github.com/docker/libkv/store/zookeeper"
-	"strings"
-	"text/template"
-
-	"errors"
-	"github.com/BurntSushi/toml"
-	"github.com/BurntSushi/ty/fun"
-	log "github.com/Sirupsen/logrus"
-	"github.com/docker/libkv/store"
-	"time"
+	"github.com/emilevauge/traefik/autogen"
+	"github.com/emilevauge/traefik/types"
 )
 
-type KvProvider struct {
+type Kv struct {
 	Watch     bool
 	Endpoint  string
 	Prefix    string
@@ -30,8 +32,8 @@ type KvProvider struct {
 	kvclient  store.Store
 }
 
-func NewConsulProvider(provider *ConsulProvider) *KvProvider {
-	kvProvider := new(KvProvider)
+func NewConsulProvider(provider *Consul) *Kv {
+	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
 	kvProvider.Endpoint = provider.Endpoint
 	kvProvider.Prefix = provider.Prefix
@@ -40,8 +42,8 @@ func NewConsulProvider(provider *ConsulProvider) *KvProvider {
 	return kvProvider
 }
 
-func NewEtcdProvider(provider *EtcdProvider) *KvProvider {
-	kvProvider := new(KvProvider)
+func NewEtcdProvider(provider *Etcd) *Kv {
+	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
 	kvProvider.Endpoint = provider.Endpoint
 	kvProvider.Prefix = provider.Prefix
@@ -50,8 +52,8 @@ func NewEtcdProvider(provider *EtcdProvider) *KvProvider {
 	return kvProvider
 }
 
-func NewZkProvider(provider *ZookepperProvider) *KvProvider {
-	kvProvider := new(KvProvider)
+func NewZkProvider(provider *Zookepper) *Kv {
+	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
 	kvProvider.Endpoint = provider.Endpoint
 	kvProvider.Prefix = provider.Prefix
@@ -60,8 +62,8 @@ func NewZkProvider(provider *ZookepperProvider) *KvProvider {
 	return kvProvider
 }
 
-func NewBoltDbProvider(provider *BoltDbProvider) *KvProvider {
-	kvProvider := new(KvProvider)
+func NewBoltDbProvider(provider *BoltDb) *Kv {
+	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
 	kvProvider.Endpoint = provider.Endpoint
 	kvProvider.Prefix = provider.Prefix
@@ -70,7 +72,7 @@ func NewBoltDbProvider(provider *BoltDbProvider) *KvProvider {
 	return kvProvider
 }
 
-func (provider *KvProvider) provide(configurationChan chan<- configMessage) error {
+func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error {
 	switch provider.StoreType {
 	case store.CONSUL:
 		consul.Register()
@@ -109,19 +111,19 @@ func (provider *KvProvider) provide(configurationChan chan<- configMessage) erro
 				<-chanKeys
 				configuration := provider.loadConfig()
 				if configuration != nil {
-					configurationChan <- configMessage{string(provider.StoreType), configuration}
+					configurationChan <- types.ConfigMessage{string(provider.StoreType), configuration}
 				}
 				defer close(stopCh)
 			}
 		}()
 	}
 	configuration := provider.loadConfig()
-	configurationChan <- configMessage{string(provider.StoreType), configuration}
+	configurationChan <- types.ConfigMessage{string(provider.StoreType), configuration}
 	return nil
 }
 
-func (provider *KvProvider) loadConfig() *Configuration {
-	configuration := new(Configuration)
+func (provider *Kv) loadConfig() *types.Configuration {
+	configuration := new(types.Configuration)
 	templateObjects := struct {
 		Prefix string
 	}{
@@ -167,7 +169,7 @@ func (provider *KvProvider) loadConfig() *Configuration {
 			return nil
 		}
 	} else {
-		buf, err := Asset("templates/kv.tmpl")
+		buf, err := autogen.Asset("templates/kv.tmpl")
 		if err != nil {
 			log.Error("Error reading file", err)
 		}

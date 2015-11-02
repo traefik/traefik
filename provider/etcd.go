@@ -1,14 +1,16 @@
-package main
+package provider
 
-type EtcdProvider struct {
+import "github.com/emilevauge/traefik/types"
+
+type Etcd struct {
 	Watch      bool
 	Endpoint   string
 	Prefix     string
 	Filename   string
-	KvProvider *KvProvider
+	KvProvider *Kv
 }
 
-func (provider *EtcdProvider) Provide(configurationChan chan<- configMessage) error {
+func (provider *Etcd) Provide(configurationChan chan<- types.ConfigMessage) error {
 	provider.KvProvider = NewEtcdProvider(provider)
 	return provider.KvProvider.provide(configurationChan)
 }

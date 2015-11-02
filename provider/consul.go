@@ -1,14 +1,16 @@
-package main
+package provider
 
-type ConsulProvider struct {
+import "github.com/emilevauge/traefik/types"
+
+type Consul struct {
 	Watch      bool
 	Endpoint   string
 	Prefix     string
 	Filename   string
-	KvProvider *KvProvider
+	KvProvider *Kv
 }
 
-func (provider *ConsulProvider) Provide(configurationChan chan<- configMessage) error {
+func (provider *Consul) Provide(configurationChan chan<- types.ConfigMessage) error {
 	provider.KvProvider = NewConsulProvider(provider)
 	return provider.KvProvider.provide(configurationChan)
 }

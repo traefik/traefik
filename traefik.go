@@ -2,21 +2,24 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	fmtlog "log"
 	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"reflect"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
 
-	"errors"
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/emilevauge/traefik/middlewares"
+	"github.com/emilevauge/traefik/provider"
+	"github.com/emilevauge/traefik/types"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/manners"
 	"github.com/mailgun/oxy/cbreaker"
@@ -24,7 +27,6 @@ import (
 	"github.com/mailgun/oxy/roundrobin"
 	"github.com/thoas/stats"
 	"gopkg.in/alecthomas/kingpin.v2"
-	"runtime"
 )
 
 var (
@@ -42,15 +44,15 @@ func main() {
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
 	var srv *manners.GracefulServer
 	var configurationRouter *mux.Router
-	var configurationChan = make(chan configMessage, 10)
+	var configurationChan = make(chan types.ConfigMessage, 10)
 	defer close(configurationChan)
-	var configurationChanValidated = make(chan configMessage, 10)
+	var configurationChanValidated = make(chan types.ConfigMessage, 10)
 	defer close(configurationChanValidated)
 	var sigs = make(chan os.Signal, 1)
 	defer close(sigs)
 	var stopChan = make(chan bool)
 	defer close(stopChan)
-	var providers = []Provider{}
+	var providers = []provider.Provider{}
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
 	// load global configuration
@@ -84,22 +86,22 @@ func main() {
 	// listen new configurations from providers
 	go func() {
 		lastReceivedConfiguration := time.Unix(0, 0)
-		lastConfigs := make(map[string]*configMessage)
+		lastConfigs := make(map[string]*types.ConfigMessage)
 		for {
 			configMsg := <-configurationChan
-			log.Infof("Configuration receveived from provider %s: %#v", configMsg.providerName, configMsg.configuration)
-			lastConfigs[configMsg.providerName] = &configMsg
+			log.Infof("Configuration receveived from provider %s: %#v", configMsg.ProviderName, configMsg.Configuration)
+			lastConfigs[configMsg.ProviderName] = &configMsg
 			if time.Now().After(lastReceivedConfiguration.Add(time.Duration(globalConfiguration.ProvidersThrottleDuration))) {
-				log.Infof("Last %s config received more than %s, OK", configMsg.providerName, globalConfiguration.ProvidersThrottleDuration)
+				log.Infof("Last %s config received more than %s, OK", configMsg.ProviderName, globalConfiguration.ProvidersThrottleDuration)
 				// last config received more than n s ago
 				configurationChanValidated <- configMsg
 			} else {
-				log.Infof("Last %s config received less than %s, waiting...", configMsg.providerName, globalConfiguration.ProvidersThrottleDuration)
+				log.Infof("Last %s config received less than %s, waiting...", configMsg.ProviderName, globalConfiguration.ProvidersThrottleDuration)
 				go func() {
 					<-time.After(globalConfiguration.ProvidersThrottleDuration)
 					if time.Now().After(lastReceivedConfiguration.Add(time.Duration(globalConfiguration.ProvidersThrottleDuration))) {
-						log.Infof("Waited for %s config, OK", configMsg.providerName)
-						configurationChanValidated <- *lastConfigs[configMsg.providerName]
+						log.Infof("Waited for %s config, OK", configMsg.ProviderName)
+						configurationChanValidated <- *lastConfigs[configMsg.ProviderName]
 					}
 				}()
 			}
@@ -109,9 +111,9 @@ func main() {
 	go func() {
 		for {
 			configMsg := <-configurationChanValidated
-			if configMsg.configuration == nil {
-				log.Info("Skipping empty configuration")
-			} else if reflect.DeepEqual(currentConfigurations[configMsg.providerName], configMsg.configuration) {
+			if configMsg.Configuration == nil {
+				log.Info("Skipping empty Configuration")
+			} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 				log.Info("Skipping same configuration")
 			} else {
 				// Copy configurations to new map so we don't change current if LoadConfig fails
@@ -119,7 +121,7 @@ func main() {
 				for k, v := range currentConfigurations {
 					newConfigurations[k] = v
 				}
-				newConfigurations[configMsg.providerName] = configMsg.configuration
+				newConfigurations[configMsg.ProviderName] = configMsg.Configuration
 
 				newConfigurationRouter, err := LoadConfig(newConfigurations, globalConfiguration)
 				if err == nil {
@@ -299,12 +301,12 @@ func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration
 				if configuration.Backends[frontend.Backend] == nil {
 					return nil, errors.New("Backend not found: " + frontend.Backend)
 				}
-				lbMethod, err := NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
+				lbMethod, err := types.NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
 				if err != nil {
-					configuration.Backends[frontend.Backend].LoadBalancer = &LoadBalancer{Method: "wrr"}
+					configuration.Backends[frontend.Backend].LoadBalancer = &types.LoadBalancer{Method: "wrr"}
 				}
 				switch lbMethod {
-				case drr:
+				case types.Drr:
 					log.Infof("Creating load-balancer drr")
 					rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
 					lb = rebalancer
@@ -316,7 +318,7 @@ func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration
 						log.Infof("Creating server %s %s", serverName, url.String())
 						rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight))
 					}
-				case wrr:
+				case types.Wrr:
 					log.Infof("Creating load-balancer wrr")
 					lb = middlewares.NewWebsocketUpgrader(rr)
 					for serverName, server := range configuration.Backends[frontend.Backend].Servers {
