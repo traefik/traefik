@@ -23,7 +23,7 @@ import (
 	"github.com/emilevauge/traefik/types"
 )
 
-type KvProvider struct {
+type Kv struct {
 	Watch     bool
 	Endpoint  string
 	Prefix    string
@@ -32,8 +32,8 @@ type KvProvider struct {
 	kvclient  store.Store
 }
 
-func NewConsulProvider(provider *ConsulProvider) *KvProvider {
-	kvProvider := new(KvProvider)
+func NewConsulProvider(provider *Consul) *Kv {
+	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
 	kvProvider.Endpoint = provider.Endpoint
 	kvProvider.Prefix = provider.Prefix
@@ -42,8 +42,8 @@ func NewConsulProvider(provider *ConsulProvider) *KvProvider {
 	return kvProvider
 }
 
-func NewEtcdProvider(provider *EtcdProvider) *KvProvider {
-	kvProvider := new(KvProvider)
+func NewEtcdProvider(provider *Etcd) *Kv {
+	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
 	kvProvider.Endpoint = provider.Endpoint
 	kvProvider.Prefix = provider.Prefix
@@ -52,8 +52,8 @@ func NewEtcdProvider(provider *EtcdProvider) *KvProvider {
 	return kvProvider
 }
 
-func NewZkProvider(provider *ZookepperProvider) *KvProvider {
-	kvProvider := new(KvProvider)
+func NewZkProvider(provider *Zookepper) *Kv {
+	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
 	kvProvider.Endpoint = provider.Endpoint
 	kvProvider.Prefix = provider.Prefix
@@ -62,8 +62,8 @@ func NewZkProvider(provider *ZookepperProvider) *KvProvider {
 	return kvProvider
 }
 
-func NewBoltDbProvider(provider *BoltDbProvider) *KvProvider {
-	kvProvider := new(KvProvider)
+func NewBoltDbProvider(provider *BoltDb) *Kv {
+	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
 	kvProvider.Endpoint = provider.Endpoint
 	kvProvider.Prefix = provider.Prefix
@@ -72,7 +72,7 @@ func NewBoltDbProvider(provider *BoltDbProvider) *KvProvider {
 	return kvProvider
 }
 
-func (provider *KvProvider) provide(configurationChan chan<- types.ConfigMessage) error {
+func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error {
 	switch provider.StoreType {
 	case store.CONSUL:
 		consul.Register()
@@ -122,7 +122,7 @@ func (provider *KvProvider) provide(configurationChan chan<- types.ConfigMessage
 	return nil
 }
 
-func (provider *KvProvider) loadConfig() *types.Configuration {
+func (provider *Kv) loadConfig() *types.Configuration {
 	configuration := new(types.Configuration)
 	templateObjects := struct {
 		Prefix string

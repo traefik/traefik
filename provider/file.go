@@ -11,12 +11,12 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
-type FileProvider struct {
+type File struct {
 	Watch    bool
 	Filename string
 }
 
-func (provider *FileProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
+func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Error("Error creating file watcher", err)
@@ -61,7 +61,7 @@ func (provider *FileProvider) Provide(configurationChan chan<- types.ConfigMessa
 	return nil
 }
 
-func (provider *FileProvider) LoadFileConfig(filename string) *types.Configuration {
+func (provider *File) LoadFileConfig(filename string) *types.Configuration {
 	configuration := new(types.Configuration)
 	if _, err := toml.DecodeFile(filename, configuration); err != nil {
 		log.Error("Error reading file:", err)

@@ -18,14 +18,14 @@ import (
 	"github.com/fsouza/go-dockerclient"
 )
 
-type DockerProvider struct {
+type Docker struct {
 	Watch    bool
 	Endpoint string
 	Filename string
 	Domain   string
 }
 
-func (provider *DockerProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
+func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) error {
 	if dockerClient, err := docker.NewClient(provider.Endpoint); err != nil {
 		log.Errorf("Failed to create a client for docker, error: %s", err)
 		return err
@@ -73,7 +73,7 @@ func (provider *DockerProvider) Provide(configurationChan chan<- types.ConfigMes
 	return nil
 }
 
-func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *types.Configuration {
+func (provider *Docker) loadDockerConfig(dockerClient *docker.Client) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
 		"getBackend": func(container docker.Container) string {
 			if label, err := provider.getLabel(container, "traefik.backend"); err == nil {
@@ -201,17 +201,17 @@ func (provider *DockerProvider) loadDockerConfig(dockerClient *docker.Client) *t
 	return configuration
 }
 
-func (provider *DockerProvider) getFrontendName(container docker.Container) string {
+func (provider *Docker) getFrontendName(container docker.Container) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 	frontendName := fmt.Sprintf("%s-%s", provider.GetFrontendRule(container), provider.GetFrontendValue(container))
 	return strings.Replace(frontendName, ".", "-", -1)
 }
 
-func (provider *DockerProvider) getEscapedName(name string) string {
+func (provider *Docker) getEscapedName(name string) string {
 	return strings.Replace(name, "/", "", -1)
 }
 
-func (provider *DockerProvider) getLabel(container docker.Container, label string) (string, error) {
+func (provider *Docker) getLabel(container docker.Container, label string) (string, error) {
 	for key, value := range container.Config.Labels {
 		if key == label {
 			return value, nil
@@ -220,7 +220,7 @@ func (provider *DockerProvider) getLabel(container docker.Container, label strin
 	return "", errors.New("Label not found:" + label)
 }
 
-func (provider *DockerProvider) getLabels(container docker.Container, labels []string) (map[string]string, error) {
+func (provider *Docker) getLabels(container docker.Container, labels []string) (map[string]string, error) {
 	foundLabels := map[string]string{}
 	for _, label := range labels {
 		if foundLabel, err := provider.getLabel(container, label); err != nil {
@@ -232,14 +232,14 @@ func (provider *DockerProvider) getLabels(container docker.Container, labels []s
 	return foundLabels, nil
 }
 
-func (provider *DockerProvider) GetFrontendValue(container docker.Container) string {
+func (provider *Docker) GetFrontendValue(container docker.Container) string {
 	if label, err := provider.getLabel(container, "traefik.frontend.value"); err == nil {
 		return label
 	}
 	return provider.getEscapedName(container.Name) + "." + provider.Domain
 }
 
-func (provider *DockerProvider) GetFrontendRule(container docker.Container) string {
+func (provider *Docker) GetFrontendRule(container docker.Container) string {
 	if label, err := provider.getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
 	}

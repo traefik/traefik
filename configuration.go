@@ -15,14 +15,14 @@ type GlobalConfiguration struct {
 	CertFile, KeyFile         string
 	LogLevel                  string
 	ProvidersThrottleDuration time.Duration
-	Docker                    *provider.DockerProvider
-	File                      *provider.FileProvider
+	Docker                    *provider.Docker
+	File                      *provider.File
 	Web                       *WebProvider
-	Marathon                  *provider.MarathonProvider
-	Consul                    *provider.ConsulProvider
-	Etcd                      *provider.EtcdProvider
-	Zookeeper                 *provider.ZookepperProvider
-	Boltdb                    *provider.BoltDbProvider
+	Marathon                  *provider.Marathon
+	Consul                    *provider.Consul
+	Etcd                      *provider.Etcd
+	Zookeeper                 *provider.Zookepper
+	Boltdb                    *provider.BoltDb
 }
 
 func NewGlobalConfiguration() *GlobalConfiguration {
