@@ -11,11 +11,14 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
+// File holds configurations of the File provider.
 type File struct {
 	Watch    bool
 	Filename string
 }
 
+// Provide allows the provider to provide configurations to traefik
+// using the given configuration channel.
 func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -39,7 +42,7 @@ func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) erro
 				case event := <-watcher.Events:
 					if strings.Contains(event.Name, file.Name()) {
 						log.Debug("File event:", event)
-						configuration := provider.LoadFileConfig(file.Name())
+						configuration := provider.loadFileConfig(file.Name())
 						if configuration != nil {
 							configurationChan <- types.ConfigMessage{"file", configuration}
 						}
@@ -56,12 +59,12 @@ func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) erro
 		}
 	}
 
-	configuration := provider.LoadFileConfig(file.Name())
+	configuration := provider.loadFileConfig(file.Name())
 	configurationChan <- types.ConfigMessage{"file", configuration}
 	return nil
 }
 
-func (provider *File) LoadFileConfig(filename string) *types.Configuration {
+func (provider *File) loadFileConfig(filename string) *types.Configuration {
 	configuration := new(types.Configuration)
 	if _, err := toml.DecodeFile(filename, configuration); err != nil {
 		log.Error("Error reading file:", err)

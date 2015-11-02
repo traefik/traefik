@@ -1,20 +1,20 @@
-/*
-Copyright
-*/
 package middlewares
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/mailgun/oxy/roundrobin"
 	"net/http"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/mailgun/oxy/roundrobin"
 )
 
+// WebsocketUpgrader holds Websocket configuration.
 type WebsocketUpgrader struct {
 	rr *roundrobin.RoundRobin
 }
 
+// NewWebsocketUpgrader returns a new WebsocketUpgrader.
 func NewWebsocketUpgrader(rr *roundrobin.RoundRobin) *WebsocketUpgrader {
 	wu := WebsocketUpgrader{
 		rr: rr,

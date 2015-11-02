@@ -1,6 +1,4 @@
-/*
-Copyright
-*/
+// Package provider holds the different provider implementation.
 package provider
 
 import (
@@ -23,6 +21,7 @@ import (
 	"github.com/emilevauge/traefik/types"
 )
 
+// Kv holds common configurations of key-value providers.
 type Kv struct {
 	Watch     bool
 	Endpoint  string
@@ -32,6 +31,7 @@ type Kv struct {
 	kvclient  store.Store
 }
 
+// NewConsulProvider returns a Consul provider.
 func NewConsulProvider(provider *Consul) *Kv {
 	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
@@ -42,6 +42,7 @@ func NewConsulProvider(provider *Consul) *Kv {
 	return kvProvider
 }
 
+// NewEtcdProvider returns a Etcd provider.
 func NewEtcdProvider(provider *Etcd) *Kv {
 	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
@@ -52,6 +53,7 @@ func NewEtcdProvider(provider *Etcd) *Kv {
 	return kvProvider
 }
 
+// NewZkProvider returns a Zookepper provider.
 func NewZkProvider(provider *Zookepper) *Kv {
 	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch
@@ -62,6 +64,7 @@ func NewZkProvider(provider *Zookepper) *Kv {
 	return kvProvider
 }
 
+// NewBoltDbProvider returns a BoldDb provider.
 func NewBoltDbProvider(provider *BoltDb) *Kv {
 	kvProvider := new(Kv)
 	kvProvider.Watch = provider.Watch

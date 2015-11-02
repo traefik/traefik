@@ -15,15 +15,18 @@ import (
 	"github.com/gambol99/go-marathon"
 )
 
+// Marathon holds configuration of the Marathon provider.
 type Marathon struct {
 	Watch            bool
 	Endpoint         string
-	marathonClient   marathon.Marathon
 	Domain           string
 	Filename         string
 	NetworkInterface string
+	marathonClient   marathon.Marathon
 }
 
+// Provide allows the provider to provide configurations to traefik
+// using the given configuration channel.
 func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) error {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
@@ -238,6 +241,8 @@ func (provider *Marathon) getEscapedName(name string) string {
 	return strings.Replace(name, "/", "", -1)
 }
 
+// GetFrontendValue returns the frontend value for the specified application, using
+// it's label. It returns a default one if the label is not present.
 func (provider *Marathon) GetFrontendValue(application marathon.Application) string {
 	if label, err := provider.getLabel(application, "traefik.frontend.value"); err == nil {
 		return label
@@ -245,6 +250,8 @@ func (provider *Marathon) GetFrontendValue(application marathon.Application) str
 	return provider.getEscapedName(application.ID) + "." + provider.Domain
 }
 
+// GetFrontendRule returns the frontend rule for the specified application, using
+// it's label. It returns a default one (Host) if the label is not present.
 func (provider *Marathon) GetFrontendRule(application marathon.Application) string {
 	if label, err := provider.getLabel(application, "traefik.frontend.rule"); err == nil {
 		return label

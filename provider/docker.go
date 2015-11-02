@@ -18,6 +18,7 @@ import (
 	"github.com/fsouza/go-dockerclient"
 )
 
+// Docker holds configurations of the Docker provider.
 type Docker struct {
 	Watch    bool
 	Endpoint string
@@ -25,51 +26,54 @@ type Docker struct {
 	Domain   string
 }
 
+// Provide allows the provider to provide configurations to traefik
+// using the given configuration channel.
 func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) error {
-	if dockerClient, err := docker.NewClient(provider.Endpoint); err != nil {
+
+	dockerClient, err := docker.NewClient(provider.Endpoint)
+	if err != nil {
 		log.Errorf("Failed to create a client for docker, error: %s", err)
 		return err
-	} else {
-		err := dockerClient.Ping()
-		if err != nil {
-			log.Errorf("Docker connection error %+v", err)
-			return err
-		}
-		log.Debug("Docker connection established")
-		if provider.Watch {
-			dockerEvents := make(chan *docker.APIEvents)
-			dockerClient.AddEventListener(dockerEvents)
-			log.Debug("Docker listening")
-			go func() {
-				operation := func() error {
-					for {
-						event := <-dockerEvents
-						if event == nil {
-							return errors.New("Docker event nil")
-							//							log.Fatalf("Docker connection error")
-						}
-						if event.Status == "start" || event.Status == "die" {
-							log.Debugf("Docker event receveived %+v", event)
-							configuration := provider.loadDockerConfig(dockerClient)
-							if configuration != nil {
-								configurationChan <- types.ConfigMessage{"docker", configuration}
-							}
+	}
+	err = dockerClient.Ping()
+	if err != nil {
+		log.Errorf("Docker connection error %+v", err)
+		return err
+	}
+	log.Debug("Docker connection established")
+	if provider.Watch {
+		dockerEvents := make(chan *docker.APIEvents)
+		dockerClient.AddEventListener(dockerEvents)
+		log.Debug("Docker listening")
+		go func() {
+			operation := func() error {
+				for {
+					event := <-dockerEvents
+					if event == nil {
+						return errors.New("Docker event nil")
+						//							log.Fatalf("Docker connection error")
+					}
+					if event.Status == "start" || event.Status == "die" {
+						log.Debugf("Docker event receveived %+v", event)
+						configuration := provider.loadDockerConfig(dockerClient)
+						if configuration != nil {
+							configurationChan <- types.ConfigMessage{"docker", configuration}
 						}
 					}
 				}
-				notify := func(err error, time time.Duration) {
-					log.Errorf("Docker connection error %+v, retrying in %s", err, time)
-				}
-				err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
-				if err != nil {
-					log.Fatalf("Cannot connect to docker server %+v", err)
-				}
-			}()
-		}
-
-		configuration := provider.loadDockerConfig(dockerClient)
-		configurationChan <- types.ConfigMessage{"docker", configuration}
+			}
+			notify := func(err error, time time.Duration) {
+				log.Errorf("Docker connection error %+v, retrying in %s", err, time)
+			}
+			err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+			if err != nil {
+				log.Fatalf("Cannot connect to docker server %+v", err)
+			}
+		}()
 	}
+
+	configuration := provider.loadDockerConfig(dockerClient)
+	configurationChan <- types.ConfigMessage{"docker", configuration}
 	return nil
 }
 
@@ -223,15 +227,17 @@ func (provider *Docker) getLabel(container docker.Container, label string) (stri
 func (provider *Docker) getLabels(container docker.Container, labels []string) (map[string]string, error) {
 	foundLabels := map[string]string{}
 	for _, label := range labels {
-		if foundLabel, err := provider.getLabel(container, label); err != nil {
+		foundLabel, err := provider.getLabel(container, label)
+		if err != nil {
 			return nil, errors.New("Label not found: " + label)
-		} else {
-			foundLabels[label] = foundLabel
 		}
+		foundLabels[label] = foundLabel
 	}
 	return foundLabels, nil
 }
 
+// GetFrontendValue returns the frontend value for the specified container, using
+// it's label. It returns a default one if the label is not present.
 func (provider *Docker) GetFrontendValue(container docker.Container) string {
 	if label, err := provider.getLabel(container, "traefik.frontend.value"); err == nil {
 		return label
@@ -239,6 +245,8 @@ func (provider *Docker) GetFrontendValue(container docker.Container) string {
 	return provider.getEscapedName(container.Name) + "." + provider.Domain
 }
 
+// GetFrontendRule returns the frontend rule for the specified container, using
+// it's label. It returns a default one (Host) if the label is not present.
 func (provider *Docker) GetFrontendRule(container docker.Container) string {
 	if label, err := provider.getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
