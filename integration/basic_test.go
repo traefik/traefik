@@ -10,6 +10,9 @@ import (
 	check "gopkg.in/check.v1"
 )
 
+// SimpleSuite
+type SimpleSuite struct{ BaseSuite }
+
 func (s *SimpleSuite) TestNoOrInexistentConfigShouldFail(c *check.C) {
 	cmd := exec.Command(traefikBinary)
 	output, err := cmd.CombinedOutput()
@@ -37,6 +40,7 @@ func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
 	cmd := exec.Command(traefikBinary, "fixtures/simple_default.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
 
 	time.Sleep(500 * time.Millisecond)
 	// TODO validate : run on 80
@@ -45,7 +49,18 @@ func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
 	// Expected a 404 as we did not comfigure anything
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 404)
+}
 
-	killErr := cmd.Process.Kill()
-	c.Assert(killErr, checker.IsNil)
+func (s *SimpleSuite) TestWithWebConfig(c *check.C) {
+	cmd := exec.Command(traefikBinary, "fixtures/simple_web.toml")
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	time.Sleep(500 * time.Millisecond)
+
+	resp, err := http.Get("http://127.0.0.1:8080/api")
+	// Expected a 200
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, 200)
 }

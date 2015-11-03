@@ -32,9 +32,6 @@ func init() {
 
 var traefikBinary = "../dist/traefik"
 
-// SimpleSuite
-type SimpleSuite struct{ BaseSuite }
-
 // File test suites
 type FileSuite struct{ BaseSuite }
 
