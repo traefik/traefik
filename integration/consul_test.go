@@ -13,6 +13,7 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	cmd := exec.Command(traefikBinary, "fixtures/consul/simple.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
 
 	time.Sleep(500 * time.Millisecond)
 	// TODO validate : run on 80
@@ -21,7 +22,4 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	// Expected a 404 as we did not comfigure anything
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 404)
-
-	killErr := cmd.Process.Kill()
-	c.Assert(killErr, checker.IsNil)
 }

@@ -5,5 +5,5 @@ log
 *.iml
 traefik
 traefik.toml
-
+*.test
 vendor/
