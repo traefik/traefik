@@ -3,7 +3,8 @@
 TRAEFIK_ENVS := \
 	-e OS_ARCH_ARG \
 	-e OS_PLATFORM_ARG \
-	-e TESTFLAGS
+	-e TESTFLAGS \
+	-e CIRCLECI
 
 BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/emilevauge/traefik/$(BIND_DIR)"

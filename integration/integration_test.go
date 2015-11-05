@@ -41,17 +41,6 @@ func (s *FileSuite) SetUpSuite(c *check.C) {
 	s.composeProject.Up()
 }
 
-// Docker test suites
-type DockerSuite struct{ BaseSuite }
-
-func (s *DockerSuite) SetUpSuite(c *check.C) {
-	// Make sure we can speak to docker
-}
-
-func (s *DockerSuite) TearDownSuite(c *check.C) {
-	// Clean the mess
-}
-
 // Consul test suites (using libcompose)
 type ConsulSuite struct{ BaseSuite }
 

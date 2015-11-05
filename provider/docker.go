@@ -151,7 +151,8 @@ func (provider *Docker) loadDockerConfig(dockerClient *docker.Client) *types.Con
 			return false
 		}
 
-		if _, err := provider.getLabels(container, []string{"traefik.frontend.rule", "traefik.frontend.value"}); err != nil {
+		labels, err := provider.getLabels(container, []string{"traefik.frontend.rule", "traefik.frontend.value"})
+		if len(labels) != 0 && err != nil {
 			log.Debugf("Filtering bad labeled container %s", container.Name)
 			return false
 		}
@@ -225,15 +226,19 @@ func (provider *Docker) getLabel(container docker.Container, label string) (stri
 }
 
 func (provider *Docker) getLabels(container docker.Container, labels []string) (map[string]string, error) {
+	var globalErr error
 	foundLabels := map[string]string{}
 	for _, label := range labels {
 		foundLabel, err := provider.getLabel(container, label)
+		// Error out only if one of them is defined.
 		if err != nil {
-			return nil, errors.New("Label not found: " + label)
+			globalErr = errors.New("Label not found: " + label)
+			continue
 		}
 		foundLabels[label] = foundLabel
+
 	}
-	return foundLabels, nil
+	return foundLabels, globalErr
 }
 
 // GetFrontendValue returns the frontend value for the specified container, using
