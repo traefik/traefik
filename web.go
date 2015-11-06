@@ -14,6 +14,8 @@ import (
 	"github.com/unrolled/render"
 )
 
+// WebProvider is a provider.Provider implementation that provides the UI.
+// FIXME to be handled another way.
 type WebProvider struct {
 	Address           string
 	CertFile, KeyFile string
@@ -25,6 +27,8 @@ var (
 	})
 )
 
+// Provide allows the provider to provide configurations to traefik
+// using the given configuration channel.
 func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
 	systemRouter := mux.NewRouter()
 

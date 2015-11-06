@@ -40,13 +40,16 @@ test-integration: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-integration
 
 validate: build
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt validate-govet
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt validate-govet validate-golint
 
 validate-gofmt: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt
 
 validate-govet: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-govet
+
+validate-golint: build
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-golint
 
 build: dist
 	docker build -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
