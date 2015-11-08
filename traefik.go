@@ -14,7 +14,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/emilevauge/traefik/middlewares"
@@ -266,20 +265,20 @@ func prepareServer(router *mux.Router, globalConfiguration *GlobalConfiguration,
 				Handler:   negroni,
 				TLSConfig: tlsConfig,
 			}), nil
-	} else {
-		server, err := oldServer.HijackListener(&http.Server{
-			Addr:    globalConfiguration.Port,
-			Handler: negroni,
-		}, tlsConfig)
-		if err != nil {
-			log.Fatalf("Error hijacking server %s", err)
-			return nil, err
-		} else {
-			return server, nil
-		}
 	}
+	server, err := oldServer.HijackListener(&http.Server{
+		Addr:    globalConfiguration.Port,
+		Handler: negroni,
+	}, tlsConfig)
+	if err != nil {
+		log.Fatalf("Error hijacking server %s", err)
+		return nil, err
+	}
+	return server, nil
 }
 
+// LoadConfig returns a new gorrilla.mux Route from the specified global configuration and the dynamic
+// provider configurations.
 func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration) (*mux.Router, error) {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
@@ -346,25 +345,19 @@ func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration
 			newRoute.Handler(backends[frontend.Backend])
 			err := newRoute.GetError()
 			if err != nil {
-				log.Error("Error building route: %s", err)
+				log.Errorf("Error building route: %s", err)
 			}
 		}
 	}
 	return router, nil
 }
 
+// Invoke calls the specified method with the specified arguments on the specified interface.
+// It uses the go(lang) reflect package.
 func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
 	inputs := make([]reflect.Value, len(args))
 	for i := range args {
 		inputs[i] = reflect.ValueOf(args[i])
 	}
 	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
-}
-
-func LoadFileConfig(file string) *GlobalConfiguration {
-	configuration := NewGlobalConfiguration()
-	if _, err := toml.DecodeFile(file, configuration); err != nil {
-		fmtlog.Fatalf("Error reading file: %s", err)
-	}
-	return configuration
 }
