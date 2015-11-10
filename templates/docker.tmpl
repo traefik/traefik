@@ -1,14 +1,16 @@
-[backends]{{range .Containers}}
-    [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/" "" | replace "." "-"}}]
-    url = "{{getProtocol .}}://{{.NetworkSettings.IPAddress}}:{{getPort .}}"
-    weight = {{getWeight .}}
+[backends]{{range $frontend, $containers := .Frontends}}
+  [backends.{{makeParsedUrl $frontend}}]{{range $containers}}
+    [backends.{{makeParsedUrl $frontend | replace "/" "" | replace "." "-"}}.servers.{{.Name | replace "/" "" | replace "." "-"}}]
+      url = "{{getProtocol .}}://{{.NetworkSettings.IPAddress}}:{{getPort .}}"
+      weight = {{getWeight .}}
+    {{end}}
 {{end}}
 
 [frontends]{{range $frontend, $containers := .Frontends}}
-  [frontends."frontend-{{$frontend}}"]{{$container := index $containers 0}}
-  backend = "backend-{{getBackend $container}}"
+  [frontends.{{makeParsedUrl $frontend}}]{{$container := index $containers 0}}
+  backend = "{{makeParsedUrl $frontend}}"
   passHostHeader = {{getPassHostHeader $container}}
-    [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
-    rule = "{{getFrontendRule $container}}"
-    value = "{{getFrontendValue $container}}"
+    [frontends.{{makeParsedUrl $frontend | replace "/" "" | replace "." "-"}}.routes.{{makeParsedUrl $frontend | replace "/" "" | replace "." "-"}}]
+      rule = "{{getFrontendRule $container}}"
+      value = "{{getFrontendValue $container}}"
 {{end}}
