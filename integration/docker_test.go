@@ -249,3 +249,90 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 404)
 }
+
+func (s *DockerSuite) TestDockerContainersHotReload(c *check.C) {
+	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	defer os.Remove(file)
+	// Start a container with some labels
+	s.startContainerWithLabels(c, "emilevauge/whoami", map[string]string{
+		"traefik.frontend.rule":  "Host",
+		"traefik.frontend.value": "my.super.host",
+	})
+
+	var stopChan = make(chan bool)
+	defer close(stopChan)
+	// Start traefik
+	cmd := exec.Command(traefikBinary, file)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+
+	//	stdout, _ := cmd.StdoutPipe()
+	//	go func() {
+	//		// read command's stdout line by line
+	//		in := bufio.NewScanner(stdout)
+	//
+	//		for in.Scan() {
+	//			fmt.Println(in.Text()) // write each line to your log, or anything you need
+	//		}
+	//		fmt.Println("Wainting cmd to exit...")
+	//	}()
+	//	stderr, _ := cmd.StderrPipe()
+	//	go func() {
+	//		// read command's stderr line by line
+	//		in := bufio.NewScanner(stderr)
+	//
+	//		for in.Scan() {
+	//			fmt.Println(in.Text()) // write each line to your log, or anything you need
+	//		}
+	//		fmt.Println("Wainting cmd to exit...")
+	//	}()
+	defer cmd.Process.Kill()
+
+	// FIXME Need to wait than 500 milliseconds more (for whoami or traefik to boot up ?)
+	time.Sleep(1500 * time.Millisecond)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", "http://127.0.0.1/api", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = fmt.Sprintf("my.super.host")
+	resp, err := client.Do(req)
+
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, 200)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	c.Assert(err, checker.IsNil)
+
+	var result map[string]interface{}
+
+	c.Assert(json.Unmarshal(body, &result), checker.IsNil)
+	hostname1 := result["hostname"]
+	c.Assert(hostname1, checker.Not(checker.IsNil))
+
+	// start another container
+	s.startContainerWithLabels(c, "emilevauge/whoami", map[string]string{
+		"traefik.frontend.rule":  "Host",
+		"traefik.frontend.value": "toto",
+	})
+
+	// FIXME Need to wait than 500 milliseconds more (for whoami or traefik to boot up ?)
+	time.Sleep(2500 * time.Millisecond)
+
+	req2, err := http.NewRequest("GET", "http://127.0.0.1/api", nil)
+	c.Assert(err, checker.IsNil)
+	req2.Host = fmt.Sprintf("toto")
+	resp, err = client.Do(req2)
+
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, 200)
+
+	body, err = ioutil.ReadAll(resp.Body)
+	c.Assert(err, checker.IsNil)
+
+	c.Assert(json.Unmarshal(body, &result), checker.IsNil)
+	hostname2 := result["hostname"]
+	c.Assert(hostname2, checker.Not(checker.IsNil))
+
+	c.Assert(hostname1, checker.Not(checker.Equals), hostname2)
+}
