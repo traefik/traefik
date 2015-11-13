@@ -209,6 +209,9 @@ func (provider *Docker) loadDockerConfig(dockerClient *docker.Client) *types.Con
 func (provider *Docker) getFrontendName(container docker.Container) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 	frontendName := fmt.Sprintf("%s-%s", provider.GetFrontendRule(container), provider.GetFrontendValue(container))
+	frontendName = strings.Replace(frontendName, "[", "", -1)
+	frontendName = strings.Replace(frontendName, "]", "", -1)
+
 	return strings.Replace(frontendName, ".", "-", -1)
 }
 
