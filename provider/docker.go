@@ -27,7 +27,7 @@ type Docker struct {
 	TLS      *DockerTLS
 }
 
-// TLS specific configurations
+// DockerTLS holds TLS specific configurations
 type DockerTLS struct {
 	CA   string
 	Cert string
