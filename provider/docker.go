@@ -24,10 +24,13 @@ type Docker struct {
 	Endpoint string
 	Filename string
 	Domain   string
-	TLS      bool
-	CA       string
-	Cert     string
-	Key      string
+	TLS      *DockerTLS
+}
+
+type DockerTLS struct {
+	CA   string
+	Cert string
+	Key  string
 }
 
 // Provide allows the provider to provide configurations to traefik
@@ -37,8 +40,9 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) er
 	var dockerClient *docker.Client
 	var err error
 
-	if provider.TLS {
-		dockerClient, err = docker.NewTLSClient(provider.Endpoint, provider.Cert, provider.Key, provider.CA)
+	if provider.TLS != nil {
+		dockerClient, err = docker.NewTLSClient(provider.Endpoint,
+			provider.TLS.Cert, provider.TLS.Key, provider.TLS.CA)
 	} else {
 		dockerClient, err = docker.NewClient(provider.Endpoint)
 	}
