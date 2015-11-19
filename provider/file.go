@@ -13,8 +13,7 @@ import (
 
 // File holds configurations of the File provider.
 type File struct {
-	Watch    bool
-	Filename string
+	baseProvider
 }
 
 // Provide allows the provider to provide configurations to traefik
@@ -44,7 +43,10 @@ func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) erro
 						log.Debug("File event:", event)
 						configuration := provider.loadFileConfig(file.Name())
 						if configuration != nil {
-							configurationChan <- types.ConfigMessage{"file", configuration}
+							configurationChan <- types.ConfigMessage{
+								ProviderName:  "file",
+								Configuration: configuration,
+							}
 						}
 					}
 				case error := <-watcher.Errors:
@@ -60,7 +62,10 @@ func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) erro
 	}
 
 	configuration := provider.loadFileConfig(file.Name())
-	configurationChan <- types.ConfigMessage{"file", configuration}
+	configurationChan <- types.ConfigMessage{
+		ProviderName:  "file",
+		Configuration: configuration,
+	}
 	return nil
 }
 
