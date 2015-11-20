@@ -138,6 +138,14 @@
 #
 # filename = "docker.tmpl"
 
+# Enable docker TLS connection
+#
+#  [docker.tls]
+#  ca = "/etc/ssl/ca.crt"
+#  cert = "/etc/ssl/docker.crt"
+#  key = "/etc/ssl/docker.key"
+#  insecureskipverify = true
+
 
 ################################################################
 # Mesos/Marathon configuration backend

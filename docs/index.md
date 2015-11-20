@@ -404,6 +404,14 @@ watch = true
 # Optional
 #
 # filename = "docker.tmpl"
+
+# Enable docker TLS connection
+#
+#  [docker.tls]
+#  ca = "/etc/ssl/ca.crt"
+#  cert = "/etc/ssl/docker.crt"
+#  key = "/etc/ssl/docker.key"
+#  insecureskipverify = true
 ```
 
 Labels can be used on containers to override default behaviour:
