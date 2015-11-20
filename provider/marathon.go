@@ -1,28 +1,29 @@
 package provider
 
 import (
-	"bytes"
 	"errors"
+	"net/url"
 	"strconv"
-	"strings"
 	"text/template"
 
-	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
-	"github.com/emilevauge/traefik/autogen"
 	"github.com/emilevauge/traefik/types"
 	"github.com/gambol99/go-marathon"
 )
 
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
-	Watch            bool
+	baseProvider
 	Endpoint         string
 	Domain           string
-	Filename         string
 	NetworkInterface string
-	marathonClient   marathon.Marathon
+	marathonClient   lightMarathonClient
+}
+
+type lightMarathonClient interface {
+	Applications(url.Values) (*marathon.Applications, error)
+	AllTasks() (*marathon.Tasks, error)
 }
 
 // Provide allows the provider to provide configurations to traefik
@@ -48,7 +49,10 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 					log.Debug("Marathon event receveived", event)
 					configuration := provider.loadMarathonConfig()
 					if configuration != nil {
-						configurationChan <- types.ConfigMessage{"marathon", configuration}
+						configurationChan <- types.ConfigMessage{
+							ProviderName:  "marathon",
+							Configuration: configuration,
+						}
 					}
 				}
 			}()
@@ -56,59 +60,24 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 	}
 
 	configuration := provider.loadMarathonConfig()
-	configurationChan <- types.ConfigMessage{"marathon", configuration}
+	configurationChan <- types.ConfigMessage{
+		ProviderName:  "marathon",
+		Configuration: configuration,
+	}
 	return nil
 }
 
 func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
-		"getPort": func(task marathon.Task) string {
-			for _, port := range task.Ports {
-				return strconv.Itoa(port)
-			}
-			return ""
-		},
-		"getWeight": func(task marathon.Task, applications []marathon.Application) string {
-			application, errApp := getApplication(task, applications)
-			if errApp != nil {
-				log.Errorf("Unable to get marathon application from task %s", task.AppID)
-				return "0"
-			}
-			if label, err := provider.getLabel(application, "traefik.weight"); err == nil {
-				return label
-			}
-			return "0"
-		},
-		"getDomain": func(application marathon.Application) string {
-			if label, err := provider.getLabel(application, "traefik.domain"); err == nil {
-				return label
-			}
-			return provider.Domain
-		},
-		"replace": func(s1 string, s2 string, s3 string) string {
-			return strings.Replace(s3, s1, s2, -1)
-		},
-		"getProtocol": func(task marathon.Task, applications []marathon.Application) string {
-			application, errApp := getApplication(task, applications)
-			if errApp != nil {
-				log.Errorf("Unable to get marathon application from task %s", task.AppID)
-				return "http"
-			}
-			if label, err := provider.getLabel(application, "traefik.protocol"); err == nil {
-				return label
-			}
-			return "http"
-		},
-		"getPassHostHeader": func(application marathon.Application) string {
-			if passHostHeader, err := provider.getLabel(application, "traefik.frontend.passHostHeader"); err == nil {
-				return passHostHeader
-			}
-			return "false"
-		},
-		"getFrontendValue": provider.GetFrontendValue,
-		"getFrontendRule":  provider.GetFrontendRule,
+		"getPort":           provider.getPort,
+		"getWeight":         provider.getWeight,
+		"getDomain":         provider.getDomain,
+		"getProtocol":       provider.getProtocol,
+		"getPassHostHeader": provider.getPassHostHeader,
+		"getFrontendValue":  provider.getFrontendValue,
+		"getFrontendRule":   provider.getFrontendRule,
+		"replace":           replace,
 	}
-	configuration := new(types.Configuration)
 
 	applications, err := provider.marathonClient.Applications(nil)
 	if err != nil {
@@ -124,54 +93,12 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 
 	//filter tasks
 	filteredTasks := fun.Filter(func(task marathon.Task) bool {
-		if len(task.Ports) == 0 {
-			log.Debug("Filtering marathon task without port %s", task.AppID)
-			return false
-		}
-		application, errApp := getApplication(task, applications.Apps)
-		if errApp != nil {
-			log.Errorf("Unable to get marathon application from task %s", task.AppID)
-			return false
-		}
-		_, err := strconv.Atoi(application.Labels["traefik.port"])
-		if len(application.Ports) > 1 && err != nil {
-			log.Debugf("Filtering marathon task %s with more than 1 port and no traefik.port label", task.AppID)
-			return false
-		}
-		if application.Labels["traefik.enable"] == "false" {
-			log.Debugf("Filtering disabled marathon task %s", task.AppID)
-			return false
-		}
-		//filter healthchecks
-		if application.HasHealthChecks() {
-			if task.HasHealthCheckResults() {
-				for _, healthcheck := range task.HealthCheckResult {
-					// found one bad healthcheck, return false
-					if !healthcheck.Alive {
-						log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
-						return false
-					}
-				}
-			} else {
-				log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
-				return false
-			}
-		}
-		return true
+		return taskFilter(task, applications)
 	}, tasks.Tasks).([]marathon.Task)
 
 	//filter apps
 	filteredApps := fun.Filter(func(app marathon.Application) bool {
-		//get ports from app tasks
-		if !fun.Exists(func(task marathon.Task) bool {
-			if task.AppID == app.ID {
-				return true
-			}
-			return false
-		}, filteredTasks) {
-			return false
-		}
-		return true
+		return applicationFilter(app, filteredTasks)
 	}, applications.Apps).([]marathon.Application)
 
 	templateObjects := struct {
@@ -184,39 +111,54 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		provider.Domain,
 	}
 
-	tmpl := template.New(provider.Filename).Funcs(MarathonFuncMap)
-	if len(provider.Filename) > 0 {
-		_, err := tmpl.ParseFiles(provider.Filename)
-		if err != nil {
-			log.Error("Error reading file", err)
-			return nil
-		}
-	} else {
-		buf, err := autogen.Asset("templates/marathon.tmpl")
-		if err != nil {
-			log.Error("Error reading file", err)
-		}
-		_, err = tmpl.Parse(string(buf))
-		if err != nil {
-			log.Error("Error reading file", err)
-			return nil
-		}
-	}
-
-	var buffer bytes.Buffer
-
-	err = tmpl.Execute(&buffer, templateObjects)
+	configuration, err := provider.getConfiguration("templates/marathon.tmpl", MarathonFuncMap, templateObjects)
 	if err != nil {
-		log.Error("Error with marathon template:", err)
-		return nil
+		log.Error(err)
 	}
-
-	if _, err := toml.Decode(buffer.String(), configuration); err != nil {
-		log.Error("Error creating marathon configuration:", err)
-		return nil
-	}
-
 	return configuration
+}
+
+func taskFilter(task marathon.Task, applications *marathon.Applications) bool {
+	if len(task.Ports) == 0 {
+		log.Debug("Filtering marathon task without port %s", task.AppID)
+		return false
+	}
+	application, errApp := getApplication(task, applications.Apps)
+	if errApp != nil {
+		log.Errorf("Unable to get marathon application from task %s", task.AppID)
+		return false
+	}
+	_, err := strconv.Atoi(application.Labels["traefik.port"])
+	if len(application.Ports) > 1 && err != nil {
+		log.Debugf("Filtering marathon task %s with more than 1 port and no traefik.port label", task.AppID)
+		return false
+	}
+	if application.Labels["traefik.enable"] == "false" {
+		log.Debugf("Filtering disabled marathon task %s", task.AppID)
+		return false
+	}
+	//filter healthchecks
+	if application.HasHealthChecks() {
+		if task.HasHealthCheckResults() {
+			for _, healthcheck := range task.HealthCheckResult {
+				// found one bad healthcheck, return false
+				if !healthcheck.Alive {
+					log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
+					return false
+				}
+			}
+		} else {
+			log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
+			return false
+		}
+	}
+	return true
+}
+
+func applicationFilter(app marathon.Application, filteredTasks []marathon.Task) bool {
+	return fun.Exists(func(task marathon.Task) bool {
+		return task.AppID == app.ID
+	}, filteredTasks)
 }
 
 func getApplication(task marathon.Task, apps []marathon.Application) (marathon.Application, error) {
@@ -237,22 +179,63 @@ func (provider *Marathon) getLabel(application marathon.Application, label strin
 	return "", errors.New("Label not found:" + label)
 }
 
-func (provider *Marathon) getEscapedName(name string) string {
-	return strings.Replace(name, "/", "", -1)
+func (provider *Marathon) getPort(task marathon.Task) string {
+	for _, port := range task.Ports {
+		return strconv.Itoa(port)
+	}
+	return ""
 }
 
-// GetFrontendValue returns the frontend value for the specified application, using
+func (provider *Marathon) getWeight(task marathon.Task, applications []marathon.Application) string {
+	application, errApp := getApplication(task, applications)
+	if errApp != nil {
+		log.Errorf("Unable to get marathon application from task %s", task.AppID)
+		return "0"
+	}
+	if label, err := provider.getLabel(application, "traefik.weight"); err == nil {
+		return label
+	}
+	return "0"
+}
+
+func (provider *Marathon) getDomain(application marathon.Application) string {
+	if label, err := provider.getLabel(application, "traefik.domain"); err == nil {
+		return label
+	}
+	return provider.Domain
+}
+
+func (provider *Marathon) getProtocol(task marathon.Task, applications []marathon.Application) string {
+	application, errApp := getApplication(task, applications)
+	if errApp != nil {
+		log.Errorf("Unable to get marathon application from task %s", task.AppID)
+		return "http"
+	}
+	if label, err := provider.getLabel(application, "traefik.protocol"); err == nil {
+		return label
+	}
+	return "http"
+}
+
+func (provider *Marathon) getPassHostHeader(application marathon.Application) string {
+	if passHostHeader, err := provider.getLabel(application, "traefik.frontend.passHostHeader"); err == nil {
+		return passHostHeader
+	}
+	return "false"
+}
+
+// getFrontendValue returns the frontend value for the specified application, using
 // it's label. It returns a default one if the label is not present.
-func (provider *Marathon) GetFrontendValue(application marathon.Application) string {
+func (provider *Marathon) getFrontendValue(application marathon.Application) string {
 	if label, err := provider.getLabel(application, "traefik.frontend.value"); err == nil {
 		return label
 	}
-	return provider.getEscapedName(application.ID) + "." + provider.Domain
+	return getEscapedName(application.ID) + "." + provider.Domain
 }
 
-// GetFrontendRule returns the frontend rule for the specified application, using
+// getFrontendRule returns the frontend rule for the specified application, using
 // it's label. It returns a default one (Host) if the label is not present.
-func (provider *Marathon) GetFrontendRule(application marathon.Application) string {
+func (provider *Marathon) getFrontendRule(application marathon.Application) string {
 	if label, err := provider.getLabel(application, "traefik.frontend.rule"); err == nil {
 		return label
 	}

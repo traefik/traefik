@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
@@ -9,20 +8,17 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
-	"github.com/emilevauge/traefik/autogen"
 	"github.com/emilevauge/traefik/types"
 	"github.com/fsouza/go-dockerclient"
 )
 
 // Docker holds configurations of the Docker provider.
 type Docker struct {
-	Watch    bool
+	baseProvider
 	Endpoint string
-	Filename string
 	Domain   string
 	TLS      *DockerTLS
 }
@@ -75,9 +71,12 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) er
 					}
 					if event.Status == "start" || event.Status == "die" {
 						log.Debugf("Docker event receveived %+v", event)
-						configuration := provider.loadDockerConfig(dockerClient)
+						configuration := provider.loadDockerConfig(listContainers(dockerClient))
 						if configuration != nil {
-							configurationChan <- types.ConfigMessage{"docker", configuration}
+							configurationChan <- types.ConfigMessage{
+								ProviderName:  "docker",
+								Configuration: configuration,
+							}
 						}
 					}
 				}
@@ -92,94 +91,31 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) er
 		}()
 	}
 
-	configuration := provider.loadDockerConfig(dockerClient)
-	configurationChan <- types.ConfigMessage{"docker", configuration}
+	configuration := provider.loadDockerConfig(listContainers(dockerClient))
+	configurationChan <- types.ConfigMessage{
+		ProviderName:  "docker",
+		Configuration: configuration,
+	}
 	return nil
 }
 
-func (provider *Docker) loadDockerConfig(dockerClient *docker.Client) *types.Configuration {
+func (provider *Docker) loadDockerConfig(containersInspected []docker.Container) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
-		"getBackend": func(container docker.Container) string {
-			if label, err := provider.getLabel(container, "traefik.backend"); err == nil {
-				return label
-			}
-			return provider.getEscapedName(container.Name)
-		},
-		"getPort": func(container docker.Container) string {
-			if label, err := provider.getLabel(container, "traefik.port"); err == nil {
-				return label
-			}
-			for key := range container.NetworkSettings.Ports {
-				return key.Port()
-			}
-			return ""
-		},
-		"getWeight": func(container docker.Container) string {
-			if label, err := provider.getLabel(container, "traefik.weight"); err == nil {
-				return label
-			}
-			return "0"
-		},
-		"getDomain": func(container docker.Container) string {
-			if label, err := provider.getLabel(container, "traefik.domain"); err == nil {
-				return label
-			}
-			return provider.Domain
-		},
-		"getProtocol": func(container docker.Container) string {
-			if label, err := provider.getLabel(container, "traefik.protocol"); err == nil {
-				return label
-			}
-			return "http"
-		},
-		"getPassHostHeader": func(container docker.Container) string {
-			if passHostHeader, err := provider.getLabel(container, "traefik.frontend.passHostHeader"); err == nil {
-				return passHostHeader
-			}
-			return "false"
-		},
-		"getFrontendValue": provider.GetFrontendValue,
-		"getFrontendRule":  provider.GetFrontendRule,
-		"replace": func(s1 string, s2 string, s3 string) string {
-			return strings.Replace(s3, s1, s2, -1)
-		},
-	}
-	configuration := new(types.Configuration)
-	containerList, _ := dockerClient.ListContainers(docker.ListContainersOptions{})
-	containersInspected := []docker.Container{}
-	frontends := map[string][]docker.Container{}
-
-	// get inspect containers
-	for _, container := range containerList {
-		containerInspected, _ := dockerClient.InspectContainer(container.ID)
-		containersInspected = append(containersInspected, *containerInspected)
+		"getBackend":        provider.getBackend,
+		"getPort":           provider.getPort,
+		"getWeight":         provider.getWeight,
+		"getDomain":         provider.getDomain,
+		"getProtocol":       provider.getProtocol,
+		"getPassHostHeader": provider.getPassHostHeader,
+		"getFrontendValue":  provider.getFrontendValue,
+		"getFrontendRule":   provider.getFrontendRule,
+		"replace":           replace,
 	}
 
 	// filter containers
-	filteredContainers := fun.Filter(func(container docker.Container) bool {
-		if len(container.NetworkSettings.Ports) == 0 {
-			log.Debugf("Filtering container without port %s", container.Name)
-			return false
-		}
-		_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
-		if len(container.NetworkSettings.Ports) > 1 && err != nil {
-			log.Debugf("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
-			return false
-		}
-		if container.Config.Labels["traefik.enable"] == "false" {
-			log.Debugf("Filtering disabled container %s", container.Name)
-			return false
-		}
+	filteredContainers := fun.Filter(containerFilter, containersInspected).([]docker.Container)
 
-		labels, err := provider.getLabels(container, []string{"traefik.frontend.rule", "traefik.frontend.value"})
-		if len(labels) != 0 && err != nil {
-			log.Debugf("Filtering bad labeled container %s", container.Name)
-			return false
-		}
-
-		return true
-	}, containersInspected).([]docker.Container)
-
+	frontends := map[string][]docker.Container{}
 	for _, container := range filteredContainers {
 		frontends[provider.getFrontendName(container)] = append(frontends[provider.getFrontendName(container)], container)
 	}
@@ -193,53 +129,112 @@ func (provider *Docker) loadDockerConfig(dockerClient *docker.Client) *types.Con
 		frontends,
 		provider.Domain,
 	}
-	tmpl := template.New(provider.Filename).Funcs(DockerFuncMap)
-	if len(provider.Filename) > 0 {
-		_, err := tmpl.ParseFiles(provider.Filename)
-		if err != nil {
-			log.Error("Error reading file", err)
-			return nil
-		}
-	} else {
-		buf, err := autogen.Asset("templates/docker.tmpl")
-		if err != nil {
-			log.Error("Error reading file", err)
-		}
-		_, err = tmpl.Parse(string(buf))
-		if err != nil {
-			log.Error("Error reading file", err)
-			return nil
-		}
-	}
 
-	var buffer bytes.Buffer
-	err := tmpl.Execute(&buffer, templateObjects)
+	configuration, err := provider.getConfiguration("templates/docker.tmpl", DockerFuncMap, templateObjects)
 	if err != nil {
-		log.Error("Error with docker template", err)
-		return nil
-	}
-
-	if _, err := toml.Decode(buffer.String(), configuration); err != nil {
-		log.Error("Error creating docker configuration ", err)
-		return nil
+		log.Error(err)
 	}
 	return configuration
 }
 
+func containerFilter(container docker.Container) bool {
+	if len(container.NetworkSettings.Ports) == 0 {
+		log.Debugf("Filtering container without port %s", container.Name)
+		return false
+	}
+	_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
+	if len(container.NetworkSettings.Ports) > 1 && err != nil {
+		log.Debugf("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
+		return false
+	}
+
+	if container.Config.Labels["traefik.enable"] == "false" {
+		log.Debugf("Filtering disabled container %s", container.Name)
+		return false
+	}
+
+	labels, err := getLabels(container, []string{"traefik.frontend.rule", "traefik.frontend.value"})
+	if len(labels) != 0 && err != nil {
+		log.Debugf("Filtering bad labeled container %s", container.Name)
+		return false
+	}
+
+	return true
+}
+
 func (provider *Docker) getFrontendName(container docker.Container) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
-	frontendName := fmt.Sprintf("%s-%s", provider.GetFrontendRule(container), provider.GetFrontendValue(container))
+	frontendName := fmt.Sprintf("%s-%s", provider.getFrontendRule(container), provider.getFrontendValue(container))
 	frontendName = strings.Replace(frontendName, "[", "", -1)
 	frontendName = strings.Replace(frontendName, "]", "", -1)
 
 	return strings.Replace(frontendName, ".", "-", -1)
 }
 
-func (provider *Docker) getEscapedName(name string) string {
-	return strings.Replace(name, "/", "", -1)
+// GetFrontendValue returns the frontend value for the specified container, using
+// it's label. It returns a default one if the label is not present.
+func (provider *Docker) getFrontendValue(container docker.Container) string {
+	if label, err := getLabel(container, "traefik.frontend.value"); err == nil {
+		return label
+	}
+	return getEscapedName(container.Name) + "." + provider.Domain
 }
 
-func (provider *Docker) getLabel(container docker.Container, label string) (string, error) {
+// GetFrontendRule returns the frontend rule for the specified container, using
+// it's label. It returns a default one (Host) if the label is not present.
+func (provider *Docker) getFrontendRule(container docker.Container) string {
+	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
+		return label
+	}
+	return "Host"
+}
+
+func (provider *Docker) getBackend(container docker.Container) string {
+	if label, err := getLabel(container, "traefik.backend"); err == nil {
+		return label
+	}
+	return getEscapedName(container.Name)
+}
+
+func (provider *Docker) getPort(container docker.Container) string {
+	if label, err := getLabel(container, "traefik.port"); err == nil {
+		return label
+	}
+	for key := range container.NetworkSettings.Ports {
+		return key.Port()
+	}
+	return ""
+}
+
+func (provider *Docker) getWeight(container docker.Container) string {
+	if label, err := getLabel(container, "traefik.weight"); err == nil {
+		return label
+	}
+	return "0"
+}
+
+func (provider *Docker) getDomain(container docker.Container) string {
+	if label, err := getLabel(container, "traefik.domain"); err == nil {
+		return label
+	}
+	return provider.Domain
+}
+
+func (provider *Docker) getProtocol(container docker.Container) string {
+	if label, err := getLabel(container, "traefik.protocol"); err == nil {
+		return label
+	}
+	return "http"
+}
+
+func (provider *Docker) getPassHostHeader(container docker.Container) string {
+	if passHostHeader, err := getLabel(container, "traefik.frontend.passHostHeader"); err == nil {
+		return passHostHeader
+	}
+	return "false"
+}
+
+func getLabel(container docker.Container, label string) (string, error) {
 	for key, value := range container.Config.Labels {
 		if key == label {
 			return value, nil
@@ -248,11 +243,11 @@ func (provider *Docker) getLabel(container docker.Container, label string) (stri
 	return "", errors.New("Label not found:" + label)
 }
 
-func (provider *Docker) getLabels(container docker.Container, labels []string) (map[string]string, error) {
+func getLabels(container docker.Container, labels []string) (map[string]string, error) {
 	var globalErr error
 	foundLabels := map[string]string{}
 	for _, label := range labels {
-		foundLabel, err := provider.getLabel(container, label)
+		foundLabel, err := getLabel(container, label)
 		// Error out only if one of them is defined.
 		if err != nil {
 			globalErr = errors.New("Label not found: " + label)
@@ -264,20 +259,14 @@ func (provider *Docker) getLabels(container docker.Container, labels []string) (
 	return foundLabels, globalErr
 }
 
-// GetFrontendValue returns the frontend value for the specified container, using
-// it's label. It returns a default one if the label is not present.
-func (provider *Docker) GetFrontendValue(container docker.Container) string {
-	if label, err := provider.getLabel(container, "traefik.frontend.value"); err == nil {
-		return label
-	}
-	return provider.getEscapedName(container.Name) + "." + provider.Domain
-}
+func listContainers(dockerClient *docker.Client) []docker.Container {
+	containerList, _ := dockerClient.ListContainers(docker.ListContainersOptions{})
+	containersInspected := []docker.Container{}
 
-// GetFrontendRule returns the frontend rule for the specified container, using
-// it's label. It returns a default one (Host) if the label is not present.
-func (provider *Docker) GetFrontendRule(container docker.Container) string {
-	if label, err := provider.getLabel(container, "traefik.frontend.rule"); err == nil {
-		return label
+	// get inspect containers
+	for _, container := range containerList {
+		containerInspected, _ := dockerClient.InspectContainer(container.ID)
+		containersInspected = append(containersInspected, *containerInspected)
 	}
-	return "Host"
+	return containersInspected
 }

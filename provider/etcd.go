@@ -1,19 +1,20 @@
 package provider
 
-import "github.com/emilevauge/traefik/types"
+import (
+	"github.com/docker/libkv/store"
+	"github.com/docker/libkv/store/etcd"
+	"github.com/emilevauge/traefik/types"
+)
 
 // Etcd holds configurations of the Etcd provider.
 type Etcd struct {
-	Watch      bool
-	Endpoint   string
-	Prefix     string
-	Filename   string
-	KvProvider *Kv
+	Kv
 }
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Etcd) Provide(configurationChan chan<- types.ConfigMessage) error {
-	provider.KvProvider = NewEtcdProvider(provider)
-	return provider.KvProvider.provide(configurationChan)
+	provider.StoreType = store.ETCD
+	etcd.Register()
+	return provider.provide(configurationChan)
 }
