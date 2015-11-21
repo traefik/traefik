@@ -102,10 +102,12 @@ For example:
 #
 # logLevel = "ERROR"
 
-# SSL certificate and key used
+# SSL certificates and keys
+# You may add several certificate/key pairs to terminate HTTPS for multiple domain names using TLS SNI
 #
 # Optional
 #
+# [[certificates]]
 # CertFile = "traefik.crt"
 # KeyFile = "traefik.key"
 
