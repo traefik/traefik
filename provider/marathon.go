@@ -23,7 +23,7 @@ type Marathon struct {
 
 type lightMarathonClient interface {
 	Applications(url.Values) (*marathon.Applications, error)
-	AllTasks() (*marathon.Tasks, error)
+	AllTasks(v url.Values) (*marathon.Tasks, error)
 }
 
 // Provide allows the provider to provide configurations to traefik
@@ -85,7 +85,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		return nil
 	}
 
-	tasks, err := provider.marathonClient.AllTasks()
+	tasks, err := provider.marathonClient.AllTasks((url.Values{"status": []string{"running"}}))
 	if err != nil {
 		log.Errorf("Failed to create a client for marathon, error: %s", err)
 		return nil

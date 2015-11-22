@@ -43,7 +43,7 @@ import:
   - package: github.com/alecthomas/units
     ref:     6b4e7dc5e3143b85ea77909c72caf89416fc2915
   - package: github.com/gambol99/go-marathon
-    ref:     0ba31bcb0d7633ba1888d744c42990eb15281cf1
+    ref:     8ce3f764250b2de3f2c627d12ca7dd21bd5e7f93
   - package: github.com/mailgun/predicate
     ref:     cb0bff91a7ab7cf7571e661ff883fc997bc554a3
   - package: github.com/thoas/stats
@@ -142,3 +142,8 @@ import:
   - package: github.com/codahale/hdrhistogram
     ref:     954f16e8b9ef0e5d5189456aa4c1202758e04f17
   - package: github.com/gorilla/websocket
+  - package: github.com/donovanhide/eventsource
+    ref:     d8a3071799b98cacd30b6da92f536050ccfe6da4
+  - package: github.com/golang/glog
+    ref:     fca8c8854093a154ff1eb580aae10276ad6b1b5f
+
