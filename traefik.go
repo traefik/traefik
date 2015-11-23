@@ -290,7 +290,10 @@ func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration
 			newRoute := router.NewRoute().Name(frontendName)
 			for routeName, route := range frontend.Routes {
 				log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
-				newRouteReflect := Invoke(newRoute, route.Rule, route.Value)
+				newRouteReflect, err := invoke(newRoute, route.Rule, route.Value)
+				if err != nil {
+					return nil, err
+				}
 				newRoute = newRouteReflect[0].Interface().(*mux.Route)
 			}
 			if backends[frontend.Backend] == nil {
@@ -354,10 +357,14 @@ func LoadConfig(configurations configs, globalConfiguration *GlobalConfiguration
 
 // Invoke calls the specified method with the specified arguments on the specified interface.
 // It uses the go(lang) reflect package.
-func Invoke(any interface{}, name string, args ...interface{}) []reflect.Value {
+func invoke(any interface{}, name string, args ...interface{}) ([]reflect.Value, error) {
 	inputs := make([]reflect.Value, len(args))
 	for i := range args {
 		inputs[i] = reflect.ValueOf(args[i])
 	}
-	return reflect.ValueOf(any).MethodByName(name).Call(inputs)
+	method := reflect.ValueOf(any).MethodByName(name)
+	if method.IsValid() {
+		return method.Call(inputs), nil
+	}
+	return nil, errors.New("Method not found: " + name)
 }
