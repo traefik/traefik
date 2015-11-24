@@ -26,6 +26,7 @@ import (
 	"github.com/mailgun/oxy/roundrobin"
 	"github.com/thoas/stats"
 	"gopkg.in/alecthomas/kingpin.v2"
+	"sync"
 )
 
 var (
@@ -53,6 +54,7 @@ func main() {
 	defer close(stopChan)
 	var providers = []provider.Provider{}
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	var serverLock sync.Mutex
 
 	// load global configuration
 	globalConfiguration := LoadFileConfig(*globalConfigFile)
@@ -124,6 +126,7 @@ func main() {
 
 				newConfigurationRouter, err := LoadConfig(newConfigurations, globalConfiguration)
 				if err == nil {
+					serverLock.Lock()
 					currentConfigurations = newConfigurations
 					configurationRouter = newConfigurationRouter
 					oldServer := srv
@@ -138,6 +141,7 @@ func main() {
 						log.Info("Stopping old server")
 						oldServer.Close()
 					}
+					serverLock.Unlock()
 				} else {
 					log.Error("Error loading new configuration, aborted ", err)
 				}
@@ -199,11 +203,13 @@ func main() {
 	//negroni.Use(middlewares.NewRoutes(configurationRouter))
 
 	var er error
+	serverLock.Lock()
 	srv, er = prepareServer(configurationRouter, globalConfiguration, nil, loggerMiddleware, metrics)
 	if er != nil {
 		log.Fatal("Error preparing server: ", er)
 	}
 	go startServer(srv, globalConfiguration)
+	serverLock.Unlock()
 
 	<-stopChan
 	log.Info("Shutting down")
