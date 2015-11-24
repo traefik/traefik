@@ -55,6 +55,7 @@ func main() {
 	var providers = []provider.Provider{}
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	var serverLock sync.Mutex
+	var serverStarted = make(chan bool, 1)
 
 	// load global configuration
 	globalConfiguration := LoadFileConfig(*globalConfigFile)
@@ -134,7 +135,8 @@ func main() {
 					if err != nil {
 						log.Fatal("Error preparing server: ", err)
 					}
-					go startServer(newsrv, globalConfiguration)
+					go startServer(newsrv, globalConfiguration, serverStarted)
+					<-serverStarted
 					srv = newsrv
 					time.Sleep(1 * time.Second)
 					if oldServer != nil {
@@ -208,7 +210,8 @@ func main() {
 	if er != nil {
 		log.Fatal("Error preparing server: ", er)
 	}
-	go startServer(srv, globalConfiguration)
+	go startServer(srv, globalConfiguration, serverStarted)
+	<-serverStarted
 	serverLock.Unlock()
 
 	<-stopChan
@@ -234,8 +237,9 @@ func createTLSConfig(certFile string, keyFile string) (*tls.Config, error) {
 	return config, nil
 }
 
-func startServer(srv *manners.GracefulServer, globalConfiguration *GlobalConfiguration) {
+func startServer(srv *manners.GracefulServer, globalConfiguration *GlobalConfiguration, started chan<- bool) {
 	log.Info("Starting server")
+	started <- true
 	if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
 		err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
 		if err != nil {
