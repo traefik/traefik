@@ -24,9 +24,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142136"
-     inkscape:cx="147.38047"
-     inkscape:cy="160.30058"
+     inkscape:zoom="0.7071068"
+     inkscape:cx="473.63323"
+     inkscape:cy="365.90369"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -49,7 +49,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -84,28 +84,9 @@
        inkscape:export-xdpi="116.0584"
        inkscape:export-ydpi="116.0584"
        inkscape:connector-curvature="0" />
-    <g
-       style="fill:#4d4d4d;fill-opacity:1"
-       inkscape:export-ydpi="116.0584"
-       inkscape:export-xdpi="116.0584"
-       transform="matrix(-0.42030825,0,0,-0.44486069,-35.549047,675.7345)"
-       id="g4187-3-8"
-       inkscape:export-filename="D:\Images\Graphism\Logo\Traefik_logo_800x533.png">
-      <path
-         style="fill:#4d4d4d;fill-opacity:1;stroke:none"
-         d="m -371.27411,670.58698 46.61711,-10 51.32198,0 c 1.67887,0 3.03045,1.35158 3.03045,3.03045 l 0,59.65337 c 0,1.67888 -1.35158,3.03046 -3.03045,3.03046 l -51.30784,0 -46.63125,-10 c -1.64155,-0.35203 -3.03046,-1.35158 -3.03046,-3.03046 l 0,-39.65337 c 0,-1.67887 1.38894,-2.67832 3.03046,-3.03045 z"
-         id="rect3327-2-9"
-         inkscape:connector-curvature="0"
-         sodipodi:nodetypes="scsssscssss" />
-      <path
-         style="fill:#4d4d4d;fill-opacity:1;stroke:none"
-         d="m -267.02871,665.06758 0,57.84375 42.4375,0 0,-10.03125 -17.125,0 0,-2.78125 17.125,0 0,-3.0625 -17.125,0 0,-2.78125 17.125,0 0,-3.0625 -17.125,0 0,-2.75 17.125,0 0,-3.0625 -17.125,0 0,-2.78125 17.125,0 0,-3.0625 -17.125,0 0,-2.75 17.125,0 0,-3.0625 -17.125,0 0,-2.78125 17.125,0 0,-3.0625 -17.125,0 0,-2.78125 17.125,0 0,-10.03125 -42.4375,0 z"
-         id="rect3333-2-2"
-         inkscape:connector-curvature="0" />
-    </g>
     <path
        style="color:#000000;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       d="m 104.53726,360.84214 39.30446,0 -0.77872,12.36399 -37.82474,4.4e-4 z"
+       d="m 118.53726,360.84214 25.30446,0 -0.77872,12.36399 -23.82474,4.4e-4 z"
        id="rect3816-1-7-7-22-1-3"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccccc"
@@ -180,5 +161,13 @@
        inkscape:export-xdpi="116.0584"
        inkscape:export-ydpi="116.0584"
        inkscape:export-filename="D:\Images\Graphism\Logo\Traefik_logo_800x533.png" />
+    <path
+       inkscape:export-ydpi="114.55681"
+       inkscape:export-xdpi="114.55681"
+       inkscape:export-filename="C:\Users\pkeersbulik\Desktop\path32913-1-9.png"
+       inkscape:connector-curvature="0"
+       id="path3002-7-5-4-0"
+       d="m 102.80952,346.91469 c -10.273996,0.52021 -18.437496,9.03344 -18.437496,19.4375 0,10.73966 8.69785,19.4375 19.437496,19.4375 10.73967,0 19.46875,-8.69784 19.46875,-19.4375 0,-10.73967 -8.72908,-19.4375 -19.46875,-19.4375 -0.33561,0 -0.66858,-0.0168 -1,0 z m 1,12.4375 c 3.86295,0 7,3.13705 7,7 0,3.86294 -3.13705,7 -7,7 -3.862946,0 -6.968746,-3.13706 -6.968746,-7 0,-3.86295 3.1058,-7 6.968746,-7 z"
+       style="color:#000000;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
   </g>
 </svg>
