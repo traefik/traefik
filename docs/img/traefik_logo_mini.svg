@@ -25,9 +25,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35"
-     inkscape:cx="359.62272"
-     inkscape:cy="-338.10782"
+     inkscape:zoom="3.959798"
+     inkscape:cx="324.88994"
+     inkscape:cy="67.725753"
      inkscape:current-layer="layer1"
      showgrid="false"
      units="mm"
@@ -48,7 +48,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -68,7 +68,7 @@
        inkscape:export-ydpi="13.5928" />
     <path
        style="color:#000000;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
-       d="m 351.46906,79.375051 0,18.5625 0,50.468739 22.5313,0 0,-50.468739 0,-18.5625 -22.5313,0 z"
+       d="m 352.30335,79.375051 0,18.5625 0,50.468739 22.5313,0 0,-50.468739 0,-18.5625 -22.5313,0 z"
        id="rect3816-1-7-7-22-1-2"
        inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_64_horiz.png"
        inkscape:export-xdpi="13.5928"
@@ -119,7 +119,7 @@
        style="font-size:72.26069641px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#4d4d4d;fill-opacity:1;stroke:none;font-family:Roboto;-inkscape-font-specification:Roboto"
        inkscape:connector-curvature="0"
        id="path32853-6-8-2"
-       d="m 348.22486,61.461561 c -2e-4,-1.54012 0.2996,-2.95199 0.8991,-4.2356 0.5995,-1.28343 1.4544,-2.3958 2.5644,-3.33715 1.1102,-0.94116 2.4199,-1.66848 3.9297,-2.18199 1.5099,-0.51329 3.1973,-0.77001 5.0625,-0.7701 1.8647,9e-5 3.5523,0.25681 5.0619,0.7701 1.5099,0.51351 2.8198,1.24083 3.9298,2.18199 1.1104,0.94135 1.965,2.05372 2.5646,3.33715 0.5994,1.28361 0.8991,2.69548 0.8991,4.2356 0,1.54031 -0.2997,2.95218 -0.8991,4.23562 -0.5996,1.28359 -1.4542,2.39597 -2.5646,3.33715 -1.11,0.9413 -2.4199,1.66863 -3.9298,2.18198 -1.5096,0.51349 -3.1972,0.77017 -5.0619,0.77009 -1.8652,8e-5 -3.5526,-0.2566 -5.0625,-0.77009 -1.5098,-0.51335 -2.8195,-1.24068 -3.9297,-2.18198 -1.11,-0.94118 -1.9649,-2.05356 -2.5644,-3.33715 -0.5995,-1.28344 -0.8993,-2.69531 -0.8991,-4.23562 z"
+       d="m 351.11345,61.461561 c -2e-4,-1.54012 0.2996,-2.95199 0.8991,-4.2356 0.5995,-1.28343 1.4544,-2.3958 2.5644,-3.33715 1.1102,-0.94116 2.4199,-1.66848 3.9297,-2.18199 1.5099,-0.51329 3.1973,-0.77001 5.0625,-0.7701 1.8647,9e-5 3.5523,0.25681 5.0619,0.7701 1.5099,0.51351 2.8198,1.24083 3.9298,2.18199 1.1104,0.94135 1.965,2.05372 2.5646,3.33715 0.5994,1.28361 0.8991,2.69548 0.8991,4.2356 0,1.54031 -0.2997,2.95218 -0.8991,4.23562 -0.5996,1.28359 -1.4542,2.39597 -2.5646,3.33715 -1.11,0.9413 -2.4199,1.66863 -3.9298,2.18198 -1.5096,0.51349 -3.1972,0.77017 -5.0619,0.77009 -1.8652,8e-5 -3.5526,-0.2566 -5.0625,-0.77009 -1.5098,-0.51335 -2.8195,-1.24068 -3.9297,-2.18198 -1.11,-0.94118 -1.9649,-2.05356 -2.5644,-3.33715 -0.5995,-1.28344 -0.8993,-2.69531 -0.8991,-4.23562 z"
        inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_64_horiz.png"
        inkscape:export-xdpi="13.5928"
        inkscape:export-ydpi="13.5928" />
