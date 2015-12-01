@@ -209,35 +209,43 @@ func main() {
 		log.Fatal("Error preparing server: ", er)
 	}
 	go startServer(srv, globalConfiguration)
+	//TODO change that!
+	time.Sleep(100 * time.Millisecond)
 	serverLock.Unlock()
 
 	<-stopChan
 	log.Info("Shutting down")
 }
 
-func createTLSConfig(certFile string, keyFile string) (*tls.Config, error) {
+// creates a TLS config that allows terminating HTTPS for multiple domains using SNI
+func createTLSConfig(certs []Certificate) (*tls.Config, error) {
+	if len(certs) == 0 {
+		return nil, nil
+	}
+
 	config := &tls.Config{}
 	if config.NextProtos == nil {
 		config.NextProtos = []string{"http/1.1"}
 	}
 
 	var err error
-	config.Certificates = make([]tls.Certificate, 1)
-	if len(certFile) > 0 && len(keyFile) > 0 {
-		config.Certificates[0], err = tls.LoadX509KeyPair(certFile, keyFile)
+	config.Certificates = make([]tls.Certificate, len(certs))
+	for i, v := range certs {
+		config.Certificates[i], err = tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		return nil, nil
 	}
+	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
+	// in each certificate and populates the config.NameToCertificate map.
+	config.BuildNameToCertificate()
 	return config, nil
 }
 
 func startServer(srv *manners.GracefulServer, globalConfiguration *GlobalConfiguration) {
 	log.Info("Starting server")
-	if len(globalConfiguration.CertFile) > 0 && len(globalConfiguration.KeyFile) > 0 {
-		err := srv.ListenAndServeTLS(globalConfiguration.CertFile, globalConfiguration.KeyFile)
+	if srv.TLSConfig != nil {
+		err := srv.ListenAndServeTLSWithConfig(srv.TLSConfig)
 		if err != nil {
 			log.Fatal("Error creating server: ", err)
 		}
@@ -258,7 +266,7 @@ func prepareServer(router *mux.Router, globalConfiguration *GlobalConfiguration,
 		negroni.Use(middleware)
 	}
 	negroni.UseHandler(router)
-	tlsConfig, err := createTLSConfig(globalConfiguration.CertFile, globalConfiguration.KeyFile)
+	tlsConfig, err := createTLSConfig(globalConfiguration.Certificates)
 	if err != nil {
 		log.Fatalf("Error creating TLS config %s", err)
 		return nil, err
@@ -273,8 +281,9 @@ func prepareServer(router *mux.Router, globalConfiguration *GlobalConfiguration,
 			}), nil
 	}
 	server, err := oldServer.HijackListener(&http.Server{
-		Addr:    globalConfiguration.Port,
-		Handler: negroni,
+		Addr:      globalConfiguration.Port,
+		Handler:   negroni,
+		TLSConfig: tlsConfig,
 	}, tlsConfig)
 	if err != nil {
 		log.Fatalf("Error hijacking server %s", err)

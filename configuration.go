@@ -16,7 +16,7 @@ type GlobalConfiguration struct {
 	GraceTimeOut              int64
 	AccessLogsFile            string
 	TraefikLogsFile           string
-	CertFile, KeyFile         string
+	Certificates              []Certificate
 	LogLevel                  string
 	ProvidersThrottleDuration time.Duration
 	Docker                    *provider.Docker
@@ -27,6 +27,12 @@ type GlobalConfiguration struct {
 	Etcd                      *provider.Etcd
 	Zookeeper                 *provider.Zookepper
 	Boltdb                    *provider.BoltDb
+}
+
+// Certificate holds a SSL cert/key pair
+type Certificate struct {
+	CertFile string
+	KeyFile  string
 }
 
 // NewGlobalConfiguration returns a GlobalConfiguration with default values.
