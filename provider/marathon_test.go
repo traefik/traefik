@@ -24,7 +24,7 @@ func (c *fakeClient) Applications(url.Values) (*marathon.Applications, error) {
 	return c.applications, nil
 }
 
-func (c *fakeClient) AllTasks() (*marathon.Tasks, error) {
+func (c *fakeClient) AllTasks(v url.Values) (*marathon.Tasks, error) {
 	if c.tasksError {
 		return nil, errors.New("error")
 	}
