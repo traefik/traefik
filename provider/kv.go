@@ -11,7 +11,6 @@ import (
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 	"github.com/emilevauge/traefik/types"
-	"strconv"
 )
 
 // Kv holds common configurations of key-value providers.
@@ -74,10 +73,9 @@ func (provider *Kv) loadConfig() *types.Configuration {
 		provider.Prefix,
 	}
 	var KvFuncMap = template.FuncMap{
-		"List":    provider.list,
-		"Get":     provider.get,
-		"GetBool": provider.getBool,
-		"Last":    provider.last,
+		"List": provider.list,
+		"Get":  provider.get,
+		"Last": provider.last,
 	}
 
 	configuration, err := provider.getConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -112,16 +110,6 @@ func (provider *Kv) get(keys ...string) string {
 		return ""
 	}
 	return string(keyPair.Value)
-}
-
-func (provider *Kv) getBool(keys ...string) bool {
-	value := provider.get(keys...)
-	b, err := strconv.ParseBool(string(value))
-	if err != nil {
-		log.Error("Error getting key: ", strings.Join(keys, ""), err)
-		return false
-	}
-	return b
 }
 
 func (provider *Kv) last(key string) string {
