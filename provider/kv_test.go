@@ -194,61 +194,6 @@ func TestKvGet(t *testing.T) {
 	}
 }
 
-func TestKvGetBool(t *testing.T) {
-	cases := []struct {
-		provider *Kv
-		keys     []string
-		expected bool
-	}{
-		{
-			provider: &Kv{
-				kvclient: &Mock{
-					KVPairs: []*store.KVPair{
-						{
-							Key:   "foo",
-							Value: []byte("true"),
-						},
-					},
-				},
-			},
-			keys:     []string{"foo"},
-			expected: true,
-		},
-		{
-			provider: &Kv{
-				kvclient: &Mock{
-					KVPairs: []*store.KVPair{
-						{
-							Key:   "foo",
-							Value: []byte("false"),
-						},
-					},
-				},
-			},
-			keys:     []string{"foo"},
-			expected: false,
-		},
-	}
-
-	for _, c := range cases {
-		actual := c.provider.getBool(c.keys...)
-		if actual != c.expected {
-			t.Fatalf("expected %v, got %v for %v and %v", c.expected, actual, c.keys, c.provider)
-		}
-	}
-
-	// Error case
-	provider := &Kv{
-		kvclient: &Mock{
-			Error: true,
-		},
-	}
-	actual := provider.get("anything")
-	if actual != "" {
-		t.Fatalf("Should have return nil, got %v", actual)
-	}
-}
-
 func TestKvLast(t *testing.T) {
 	cases := []struct {
 		key      string

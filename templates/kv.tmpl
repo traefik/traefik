@@ -28,7 +28,7 @@
     {{$frontend := Last .}}
     [frontends.{{$frontend}}]
     backend = "{{Get . "/backend"}}"
-    passHostHeader = "{{GetBool . "/passHostHeader"}}"
+    passHostHeader = {{Get . "/passHostHeader"}}
     {{$routes := List . "/routes/"}}
         {{range $routes}}
         [frontends.{{$frontend}}.routes.{{Last .}}]
