@@ -203,6 +203,97 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
+				AppID: "specify-port-number",
+				Ports: []int{80, 443},
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "specify-port-number",
+						Ports: []int{80, 443},
+						Labels: map[string]string{
+							"traefik.port": "80",
+						},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			task: marathon.Task{
+				AppID: "specify-unknown-port-number",
+				Ports: []int{80, 443},
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "specify-unknown-port-number",
+						Ports: []int{80, 443},
+						Labels: map[string]string{
+							"traefik.port": "8080",
+						},
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			task: marathon.Task{
+				AppID: "specify-port-index",
+				Ports: []int{80, 443},
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "specify-port-index",
+						Ports: []int{80, 443},
+						Labels: map[string]string{
+							"traefik.portIndex": "0",
+						},
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			task: marathon.Task{
+				AppID: "specify-out-of-range-port-index",
+				Ports: []int{80, 443},
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "specify-out-of-range-port-index",
+						Ports: []int{80, 443},
+						Labels: map[string]string{
+							"traefik.portIndex": "2",
+						},
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			task: marathon.Task{
+				AppID: "specify-both-port-index-and-number",
+				Ports: []int{80, 443},
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "specify-both-port-index-and-number",
+						Ports: []int{80, 443},
+						Labels: map[string]string{
+							"traefik.port":      "443",
+							"traefik.portIndex": "1",
+						},
+					},
+				},
+			},
+			expected: false,
+		},
+		{
+			task: marathon.Task{
 				AppID: "foo",
 				Ports: []int{80},
 			},
@@ -370,29 +461,84 @@ func TestMarathonGetPort(t *testing.T) {
 	provider := &Marathon{}
 
 	cases := []struct {
-		task     marathon.Task
-		expected string
+		applications []marathon.Application
+		task         marathon.Task
+		expected     string
 	}{
 		{
-			task:     marathon.Task{},
+			applications: []marathon.Application{},
+			task:         marathon.Task{},
+			expected:     "",
+		},
+		{
+			applications: []marathon.Application{
+				{
+					ID: "test1",
+				},
+			},
+			task: marathon.Task{
+				AppID: "test2",
+			},
 			expected: "",
 		},
 		{
+			applications: []marathon.Application{
+				{
+					ID: "test1",
+				},
+			},
 			task: marathon.Task{
+				AppID: "test1",
 				Ports: []int{80},
 			},
 			expected: "80",
 		},
 		{
+			applications: []marathon.Application{
+				{
+					ID: "test1",
+				},
+			},
 			task: marathon.Task{
+				AppID: "test1",
 				Ports: []int{80, 443},
 			},
 			expected: "80",
 		},
+		{
+			applications: []marathon.Application{
+				{
+					ID: "specify-port-number",
+					Labels: map[string]string{
+						"traefik.port": "443",
+					},
+				},
+			},
+			task: marathon.Task{
+				AppID: "specify-port-number",
+				Ports: []int{80, 443},
+			},
+			expected: "443",
+		},
+		{
+			applications: []marathon.Application{
+				{
+					ID: "specify-port-index",
+					Labels: map[string]string{
+						"traefik.portIndex": "1",
+					},
+				},
+			},
+			task: marathon.Task{
+				AppID: "specify-port-index",
+				Ports: []int{80, 443},
+			},
+			expected: "443",
+		},
 	}
 
 	for _, c := range cases {
-		actual := provider.getPort(c.task)
+		actual := provider.getPort(c.task, c.applications)
 		if actual != c.expected {
 			t.Fatalf("expected %q, got %q", c.expected, actual)
 		}

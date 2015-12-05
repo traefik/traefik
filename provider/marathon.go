@@ -123,20 +123,55 @@ func taskFilter(task marathon.Task, applications *marathon.Applications) bool {
 		log.Debug("Filtering marathon task without port %s", task.AppID)
 		return false
 	}
-	application, errApp := getApplication(task, applications.Apps)
-	if errApp != nil {
+	application, err := getApplication(task, applications.Apps)
+	if err != nil {
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
-		return false
-	}
-	_, err := strconv.Atoi(application.Labels["traefik.port"])
-	if len(application.Ports) > 1 && err != nil {
-		log.Debugf("Filtering marathon task %s with more than 1 port and no traefik.port label", task.AppID)
 		return false
 	}
 	if application.Labels["traefik.enable"] == "false" {
 		log.Debugf("Filtering disabled marathon task %s", task.AppID)
 		return false
 	}
+
+	//filter indeterminable task port
+	portIndexLabel := application.Labels["traefik.portIndex"]
+	portValueLabel := application.Labels["traefik.port"]
+	if portIndexLabel != "" && portValueLabel != "" {
+		log.Debugf("Filtering marathon task %s specifying both traefik.portIndex and traefik.port labels", task.AppID)
+		return false
+	}
+	if portIndexLabel == "" && portValueLabel == "" && len(application.Ports) > 1 {
+		log.Debugf("Filtering marathon task %s with more than 1 port and no traefik.portIndex or traefik.port label", task.AppID)
+		return false
+	}
+	if portIndexLabel != "" {
+		index, err := strconv.Atoi(application.Labels["traefik.portIndex"])
+		if err != nil || index < 0 || index > len(application.Ports)-1 {
+			log.Debugf("Filtering marathon task %s with unexpected value for traefik.portIndex label", task.AppID)
+			return false
+		}
+	}
+	if portValueLabel != "" {
+		port, err := strconv.Atoi(application.Labels["traefik.port"])
+		if err != nil {
+			log.Debugf("Filtering marathon task %s with unexpected value for traefik.port label", task.AppID)
+			return false
+		}
+
+		var foundPort bool
+		for _, exposedPort := range task.Ports {
+			if port == exposedPort {
+				foundPort = true
+				break
+			}
+		}
+
+		if !foundPort {
+			log.Debugf("Filtering marathon task %s without a matching port for traefik.port label", task.AppID)
+			return false
+		}
+	}
+
 	//filter healthchecks
 	if application.HasHealthChecks() {
 		if task.HasHealthCheckResults() {
@@ -179,7 +214,22 @@ func (provider *Marathon) getLabel(application marathon.Application, label strin
 	return "", errors.New("Label not found:" + label)
 }
 
-func (provider *Marathon) getPort(task marathon.Task) string {
+func (provider *Marathon) getPort(task marathon.Task, applications []marathon.Application) string {
+	application, err := getApplication(task, applications)
+	if err != nil {
+		log.Errorf("Unable to get marathon application from task %s", task.AppID)
+		return ""
+	}
+
+	if portIndexLabel, err := provider.getLabel(application, "traefik.portIndex"); err == nil {
+		if index, err := strconv.Atoi(portIndexLabel); err == nil {
+			return strconv.Itoa(task.Ports[index])
+		}
+	}
+	if portValueLabel, err := provider.getLabel(application, "traefik.port"); err == nil {
+		return portValueLabel
+	}
+
 	for _, port := range task.Ports {
 		return strconv.Itoa(port)
 	}
