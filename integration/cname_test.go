@@ -1,37 +1,37 @@
 package main
 
 import (
+	"github.com/miekg/dns"
 	"net"
 	"net/http"
 	"os/exec"
 	"sync"
 	"time"
-    "github.com/miekg/dns"
 
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
 )
 
 func (s *CNameSuite) TestSimpleConfiguration(c *check.C) {
-    // Start traefik with a specific resolve.conf configuration
+	// Start traefik with a specific resolve.conf configuration
 	cmd := exec.Command(traefikBinary, "fixtures/cname/cname.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-    //
-    name := "notthere.localhost"
-    url := "http://" + name + ":80"
+	//
+	name := "notthere.localhost"
+	url := "http://" + name + ":80"
 
-    dns.HandleFunc(name, CnameServer)
-    defer dns.HandleRemove(name)
+	dns.HandleFunc(name, CnameServer)
+	defer dns.HandleRemove(name)
 
-    // Run our own DNS server to serve the cname record we want
-    server, _, err := runLocalUDPServer("127.0.0.1:0")
-    if err != nil {
-        c.Fatalf("unable to run test server: %v", err)
-    }
-    defer server.Shutdown()
+	// Run our own DNS server to serve the cname record we want
+	server, _, err := runLocalUDPServer("127.0.0.1:0")
+	if err != nil {
+		c.Fatalf("unable to run test server: %v", err)
+	}
+	defer server.Shutdown()
 
 	time.Sleep(1000 * time.Millisecond)
 	resp, err := http.Get(url)
@@ -41,14 +41,13 @@ func (s *CNameSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, 404)
 }
 
-
 func CnameServer(w dns.ResponseWriter, req *dns.Msg) {
-  m := new(dns.Msg)
-  m.SetReply(req)
+	m := new(dns.Msg)
+	m.SetReply(req)
 
-  m.Extra = make([]dns.RR, 1)
-  m.Extra[0] = &dns.CNAME{Hdr: dns.RR_Header{Name: m.Question[0].Name, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: 0}, Target: "test.localhost"}
-  w.WriteMsg(m)
+	m.Extra = make([]dns.RR, 1)
+	m.Extra[0] = &dns.CNAME{Hdr: dns.RR_Header{Name: m.Question[0].Name, Rrtype: dns.TypeCNAME, Class: dns.ClassINET, Ttl: 0}, Target: "test.localhost"}
+	w.WriteMsg(m)
 
 }
 

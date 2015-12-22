@@ -47,11 +47,10 @@ func (s *FileSuite) SetUpSuite(c *check.C) {
 type CNameSuite struct{ BaseSuite }
 
 func (s *CNameSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "cname")
+	s.createComposeProject(c, "file")
 
 	s.composeProject.Up()
 }
-
 
 // Consul test suites (using libcompose)
 type ConsulSuite struct{ BaseSuite }
