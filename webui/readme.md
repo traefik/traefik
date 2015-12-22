@@ -9,22 +9,51 @@ Træfɪk Web UI provide 2 types of informations:
 - Health of the web server.
 
 
-## Build
+## How to build (only for frontends developer)
 
-Install [Node](https://nodejs.org).
+- prerequisite: [Node](https://nodejs.org)
 
-Do `npm install` and `bower install`.
+- Go to the directory `webui`
 
-Run in web developer mode : `gulp serve`
+- To install dependencies, execute the following commands:
+  - `npm install`
+  - `bower install`
 
-Build Web UI : `gulp build`
+- Build static Web UI, execute the following command:
+  - `gulp build`
+
+- Static contents are build in the directory `static`
+
+**Don't change manually the files in the directory `static`**
+
+- The build allow to:
+  - optimize all JavaScript
+  - optimize all CSS
+  - add vendor prefixes to CSS (cross-bowser support)
+  - add a hash in the file names to prevent browser cache problems
+  - all images will be optimized at build
+
+
+## How to edit (only for frontends developer)
+
+**Don't change manually the files in the directory `static`**
+
+- Go to the directory `webui`
+- Edit files in `webui/src`
+
+- Run in development mode :
+  - `gulp serve`
+
+- Træfɪk API connections are defined in:
+  - `webui/src/app/core/health.resource.js`
+  - `webui/src/app/core/providers.resource.js`
+
+- The pages contents are in the directory `webui/src/app/sections`.
 
 
 ## Libraries
 
 - [Node](https://nodejs.org)
-- [NPM](https://npmjs.com)
-  - [NPM - Documentation](https://docs.npmjs.com/)
 - [Generator Gulp-Angular](https://github.com/Swiip/generator-gulp-angular)
 - [AngularJS](https://docs.angularjs.org/api)
 - [UI Router](https://github.com/angular-ui/ui-router)
