@@ -20,7 +20,7 @@ func (s *CNameSuite) TestSimpleConfiguration(c *check.C) {
 	defer cmd.Process.Kill()
 
 	//
-	name := "notthere.localhost"
+	name := "localhost"
 	url := "http://" + name + ":80"
 
 	dns.HandleFunc(name, CnameServer)

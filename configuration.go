@@ -16,7 +16,6 @@ type GlobalConfiguration struct {
 	GraceTimeOut              int64
 	AccessLogsFile            string
 	TraefikLogsFile           string
-	ResolveConf               string
 	Certificates              []Certificate
 	LogLevel                  string
 	ResolvConf                string
@@ -39,15 +38,15 @@ type Certificate struct {
 
 // NewGlobalConfiguration returns a GlobalConfiguration with default values.
 func NewGlobalConfiguration() *GlobalConfiguration {
-	globalConfiguration := new(GlobalConfiguration)
+	globalConfiguration := GlobalConfiguration{}
 	// default values
 	globalConfiguration.Port = ":80"
 	globalConfiguration.GraceTimeOut = 10
-	globalConfiguration.ResolveConf = "/etc/resolv.conf"
+	globalConfiguration.ResolvConf = "/etc/resolv.conf"
 	globalConfiguration.LogLevel = "ERROR"
 	globalConfiguration.ProvidersThrottleDuration = time.Duration(2 * time.Second)
 
-	return globalConfiguration
+	return &globalConfiguration
 }
 
 // LoadFileConfig returns a GlobalConfiguration from reading the specified file (a toml file).

@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"encoding/json"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"net"
 	"net/http"
 	"time"
