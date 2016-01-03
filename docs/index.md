@@ -243,6 +243,11 @@ address = ":8080"
 #
 # CertFile = "traefik.crt"
 # KeyFile = "traefik.key"
+#
+# Set REST API to read-only mode
+#
+# Optional
+# ReadOnly = false
 ```
 
 - `/`: provides a simple HTML frontend of Træfik
