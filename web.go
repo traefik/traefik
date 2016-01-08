@@ -19,6 +19,7 @@ import (
 type WebProvider struct {
 	Address           string
 	CertFile, KeyFile string
+	ReadOnly          bool
 }
 
 var (
@@ -40,6 +41,11 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter.Methods("GET").Path("/api/providers").HandlerFunc(getConfigHandler)
 	systemRouter.Methods("GET").Path("/api/providers/{provider}").HandlerFunc(getProviderHandler)
 	systemRouter.Methods("PUT").Path("/api/providers/{provider}").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		if provider.ReadOnly {
+			response.WriteHeader(http.StatusForbidden)
+			fmt.Fprintf(response, "REST API is in read-only mode")
+			return
+		}
 		vars := mux.Vars(request)
 		if vars["provider"] != "web" {
 			response.WriteHeader(http.StatusBadRequest)
