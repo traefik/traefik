@@ -10,14 +10,7 @@
       "network": "BRIDGE",
       "portMappings": [
         { "containerPort": 80, "hostPort": 0, "protocol": "tcp" }
-      ],
-      "parameters": [{
-        "key": "log-driver",
-        "value": "gelf"
-      }, {
-        "key": "log-opt",
-        "value": "gelf-address=udp://172.17.42.1:12201"
-      }]
+      ]
     }
   },
   "healthChecks": [
@@ -33,7 +26,7 @@
   "labels": {
       "traefik.weight": "1",
       "traefik.protocole": "https",
-      "traefik.frontend.rule": "Path",
-      "traefik.frontend.value": "/test"
+      "traefik.frontend.rule": "Host",
+      "traefik.frontend.value": "whoami.docker.localhost"
   }
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/fsouza/go-dockerclient"
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
+	"strings"
 )
 
 var (
@@ -23,8 +24,8 @@ var (
 	// Images to have or pull before the build in order to make it work
 	// FIXME handle this offline but loading them before build
 	RequiredImages = map[string]string{
-		"swarm": "1.0.0",
-		"nginx": "1",
+		"emilevauge/whoami": "latest",
+		"nginx":             "1",
 	}
 )
 
@@ -68,7 +69,13 @@ func (s *DockerSuite) startContainerWithConfig(c *check.C, config docker.CreateC
 	err = s.client.StartContainer(container.ID, &docker.HostConfig{})
 	c.Assert(err, checker.IsNil, check.Commentf("Error starting container %v", container))
 
-	return container.Name
+	return container.ID
+}
+
+func (s *DockerSuite) getContainer(c *check.C, containerID string) *docker.Container {
+	container, err := s.client.InspectContainer(containerID)
+	c.Assert(err, checker.IsNil)
+	return container
 }
 
 func (s *DockerSuite) SetUpSuite(c *check.C) {
@@ -156,7 +163,7 @@ func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
 func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
 	defer os.Remove(file)
-	name := s.startContainer(c, "swarm:1.0.0", "manage", "token://blablabla")
+	containerID := s.startContainer(c, "emilevauge/whoami")
 
 	// Start traefik
 	cmd := exec.Command(traefikBinary, file)
@@ -168,9 +175,10 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	time.Sleep(1500 * time.Millisecond)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1/version", nil)
+	req, err := http.NewRequest("GET", "http://127.0.0.1/api", nil)
 	c.Assert(err, checker.IsNil)
-	req.Host = fmt.Sprintf("%s.docker.localhost", name)
+	containerName := strings.Replace(s.getContainer(c, containerID).Name, "/", "", -1)
+	req.Host = fmt.Sprintf("%s.docker.localhost", containerName)
 	resp, err := client.Do(req)
 
 	c.Assert(err, checker.IsNil)
@@ -179,10 +187,10 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	body, err := ioutil.ReadAll(resp.Body)
 	c.Assert(err, checker.IsNil)
 
-	var version map[string]interface{}
+	var result map[string]interface{}
 
-	c.Assert(json.Unmarshal(body, &version), checker.IsNil)
-	c.Assert(version["Version"], checker.Equals, "swarm/1.0.0")
+	c.Assert(json.Unmarshal(body, &result), checker.IsNil)
+	c.Assert(result["hostname"], checker.Not(checker.IsNil))
 }
 
 func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
@@ -193,7 +201,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 		"traefik.frontend.rule":  "Host",
 		"traefik.frontend.value": "my.super.host",
 	}
-	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
+	s.startContainerWithLabels(c, "emilevauge/whoami", labels)
 
 	// Start traefik
 	cmd := exec.Command(traefikBinary, file)
@@ -201,11 +209,11 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// FIXME Need to wait than 500 milliseconds more (for whoami or traefik to boot up ?)
 	time.Sleep(1500 * time.Millisecond)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1/version", nil)
+	req, err := http.NewRequest("GET", "http://127.0.0.1/api", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = fmt.Sprintf("my.super.host")
 	resp, err := client.Do(req)
@@ -216,10 +224,10 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	body, err := ioutil.ReadAll(resp.Body)
 	c.Assert(err, checker.IsNil)
 
-	var version map[string]interface{}
+	var result map[string]interface{}
 
-	c.Assert(json.Unmarshal(body, &version), checker.IsNil)
-	c.Assert(version["Version"], checker.Equals, "swarm/1.0.0")
+	c.Assert(json.Unmarshal(body, &result), checker.IsNil)
+	c.Assert(result["hostname"], checker.Not(checker.IsNil))
 }
 
 func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
@@ -229,7 +237,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	labels := map[string]string{
 		"traefik.frontend.value": "my.super.host",
 	}
-	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
+	s.startContainerWithLabels(c, "emilevauge/whoami", labels)
 
 	// Start traefik
 	cmd := exec.Command(traefikBinary, file)
@@ -237,15 +245,120 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	// FIXME Need to wait than 500 milliseconds more (for whoami or traefik to boot up ?)
 	time.Sleep(1500 * time.Millisecond)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1/version", nil)
+	req, err := http.NewRequest("GET", "http://127.0.0.1/api", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = fmt.Sprintf("my.super.host")
 	resp, err := client.Do(req)
 
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 404)
+}
+
+func (s *DockerSuite) TestDockerContainersHotReload(c *check.C) {
+	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	defer os.Remove(file)
+	// Start a container with some labels
+	s.startContainerWithLabels(c, "emilevauge/whoami", map[string]string{
+		"traefik.frontend.rule":  "Host",
+		"traefik.frontend.value": "my.super.host",
+	})
+
+	// Start traefik
+	cmd := exec.Command(traefikBinary, file)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// start another container
+	s.startContainerWithLabels(c, "emilevauge/whoami", map[string]string{
+		"traefik.frontend.rule":  "Host",
+		"traefik.frontend.value": "foo",
+	})
+
+	// FIXME Need to wait than 500 milliseconds more (for whoami or traefik to boot up ?)
+	time.Sleep(5500 * time.Millisecond)
+
+	result := getJSONResult(c, "http://127.0.0.1/api", "foo")
+	hostname := result["hostname"]
+	c.Assert(hostname, checker.Not(checker.IsNil))
+}
+
+func (s *DockerSuite) TestDockerContainersWrrLoadBalancing(c *check.C) {
+	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	defer os.Remove(file)
+	// Start a container with some labels
+	container1 := s.startContainerWithLabels(c, "emilevauge/whoami", map[string]string{
+		"traefik.frontend.rule":  "Host",
+		"traefik.frontend.value": "foo",
+		"traefik.backend":        "bar",
+		"traefik.weight":         "1",
+	})
+
+	// start another container
+	container2 := s.startContainerWithLabels(c, "emilevauge/whoami", map[string]string{
+		"traefik.frontend.rule":  "Host",
+		"traefik.frontend.value": "foo",
+		"traefik.backend":        "bar",
+		"traefik.weight":         "2",
+	})
+
+	// Start traefik
+	cmd := exec.Command(traefikBinary, file)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// FIXME Need to wait than 500 milliseconds more (for whoami or traefik to boot up ?)
+	time.Sleep(1500 * time.Millisecond)
+
+	var hostnames [3]string
+
+	result := getJSONResult(c, "http://127.0.0.1/api", "foo")
+	hostnames[0] = result["hostname"].(string)
+	c.Assert(hostnames[0], checker.Not(checker.IsNil))
+
+	result = getJSONResult(c, "http://127.0.0.1/api", "foo")
+	hostnames[1] = result["hostname"].(string)
+	c.Assert(hostnames[1], checker.Not(checker.IsNil))
+
+	result = getJSONResult(c, "http://127.0.0.1/api", "foo")
+	hostnames[2] = result["hostname"].(string)
+	c.Assert(hostnames[2], checker.Not(checker.IsNil))
+
+	container1Number := 0
+	container2Number := 0
+	for _, hostname := range hostnames {
+		// check that hostname is either container1 or container2
+		if strings.Contains(container1, hostname) {
+			container1Number++
+		} else if strings.Contains(container2, hostname) {
+			container2Number++
+		} else {
+			c.FailNow()
+		}
+	}
+	c.Assert(container1Number, checker.Equals, 1)
+	c.Assert(container2Number, checker.Equals, 2)
+}
+
+func getJSONResult(c *check.C, url string, domain string) map[string]interface{} {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", "http://127.0.0.1/api", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = fmt.Sprintf(domain)
+	resp, err := client.Do(req)
+
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, 200)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	c.Assert(err, checker.IsNil)
+
+	var result map[string]interface{}
+	c.Assert(json.Unmarshal(body, &result), checker.IsNil)
+	return result
 }

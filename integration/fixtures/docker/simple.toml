@@ -9,8 +9,7 @@
 logLevel = "DEBUG"
 
 [docker]
-
 # It's dynamagic !
 endpoint = "{{.DockerHost}}"
-
 domain = "docker.localhost"
+watch = true
