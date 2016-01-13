@@ -139,14 +139,14 @@ func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
 	defer os.Remove(file)
 
-	cmd := exec.Command(traefikBinary, file)
+	cmd := exec.Command(traefikBinary, "--configFile="+file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
 	time.Sleep(500 * time.Millisecond)
 	// TODO validate : run on 80
-	resp, err := http.Get("http://127.0.0.1/")
+	resp, err := http.Get("http://127.0.0.1:8000/")
 
 	c.Assert(err, checker.IsNil)
 	// Expected a 404 as we did not comfigure anything
@@ -159,7 +159,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	name := s.startContainer(c, "swarm:1.0.0", "manage", "token://blablabla")
 
 	// Start traefik
-	cmd := exec.Command(traefikBinary, file)
+	cmd := exec.Command(traefikBinary, "--configFile="+file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -168,7 +168,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	time.Sleep(1500 * time.Millisecond)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1/version", nil)
+	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = fmt.Sprintf("%s.docker.localhost", name)
 	resp, err := client.Do(req)
@@ -196,7 +196,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
 	// Start traefik
-	cmd := exec.Command(traefikBinary, file)
+	cmd := exec.Command(traefikBinary, "--configFile="+file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -205,7 +205,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	time.Sleep(1500 * time.Millisecond)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1/version", nil)
+	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = fmt.Sprintf("my.super.host")
 	resp, err := client.Do(req)
@@ -232,7 +232,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
 	// Start traefik
-	cmd := exec.Command(traefikBinary, file)
+	cmd := exec.Command(traefikBinary, "--configFile="+file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -241,7 +241,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	time.Sleep(1500 * time.Millisecond)
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1/version", nil)
+	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = fmt.Sprintf("my.super.host")
 	resp, err := client.Do(req)

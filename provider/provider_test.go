@@ -9,7 +9,7 @@ import (
 )
 
 type myProvider struct {
-	baseProvider
+	BaseProvider
 }
 
 func (p *myProvider) Foo() string {
@@ -49,7 +49,7 @@ func TestConfigurationErrors(t *testing.T) {
 	}{
 		{
 			provider: &myProvider{
-				baseProvider{
+				BaseProvider{
 					Filename: "/non/existent/template.tmpl",
 				},
 			},
@@ -62,7 +62,7 @@ func TestConfigurationErrors(t *testing.T) {
 		},
 		{
 			provider: &myProvider{
-				baseProvider{
+				BaseProvider{
 					Filename: templateErrorFile.Name(),
 				},
 			},
@@ -70,7 +70,7 @@ func TestConfigurationErrors(t *testing.T) {
 		},
 		{
 			provider: &myProvider{
-				baseProvider{
+				BaseProvider{
 					Filename: templateInvalidTOMLFile.Name(),
 				},
 			},
@@ -125,7 +125,7 @@ func TestGetConfiguration(t *testing.T) {
 	}
 
 	provider := &myProvider{
-		baseProvider{
+		BaseProvider{
 			Filename: templateFile.Name(),
 		},
 	}

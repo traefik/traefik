@@ -18,12 +18,13 @@ type Provider interface {
 	Provide(configurationChan chan<- types.ConfigMessage) error
 }
 
-type baseProvider struct {
+// BaseProvider should be inherited by providers
+type BaseProvider struct {
 	Watch    bool
 	Filename string
 }
 
-func (p *baseProvider) getConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
+func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
 	var (
 		buf []byte
 		err error

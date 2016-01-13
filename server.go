@@ -16,6 +16,7 @@ import (
 	"github.com/mailgun/oxy/cbreaker"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
+	"github.com/spf13/viper"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,6 +26,8 @@ import (
 	"syscall"
 	"time"
 )
+
+var oxyLogger = &OxyLogger{}
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
@@ -89,11 +92,11 @@ func (server *Server) Stop() {
 
 // Close destroys the server
 func (server *Server) Close() {
-	defer close(server.configurationChan)
-	defer close(server.configurationChanValidated)
-	defer close(server.sigs)
-	defer close(server.stopChan)
-	defer server.loggerMiddleware.Close()
+	close(server.configurationChan)
+	close(server.configurationChanValidated)
+	close(server.sigs)
+	close(server.stopChan)
+	server.loggerMiddleware.Close()
 }
 
 func (server *Server) listenProviders() {
@@ -101,18 +104,18 @@ func (server *Server) listenProviders() {
 	lastConfigs := make(map[string]*types.ConfigMessage)
 	for {
 		configMsg := <-server.configurationChan
-		log.Infof("Configuration receveived from provider %s: %#v", configMsg.ProviderName, configMsg.Configuration)
+		log.Debugf("Configuration receveived from provider %s: %#v", configMsg.ProviderName, configMsg.Configuration)
 		lastConfigs[configMsg.ProviderName] = &configMsg
 		if time.Now().After(lastReceivedConfiguration.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
-			log.Infof("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+			log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
 			// last config received more than n s ago
 			server.configurationChanValidated <- configMsg
 		} else {
-			log.Infof("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+			log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
 			go func() {
 				<-time.After(server.globalConfiguration.ProvidersThrottleDuration)
 				if time.Now().After(lastReceivedConfiguration.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
-					log.Infof("Waited for %s config, OK", configMsg.ProviderName)
+					log.Debugf("Waited for %s config, OK", configMsg.ProviderName)
 					server.configurationChanValidated <- *lastConfigs[configMsg.ProviderName]
 				}
 			}()
@@ -172,7 +175,7 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.File != nil {
 		if len(server.globalConfiguration.File.Filename) == 0 {
 			// no filename, setting to global config file
-			server.globalConfiguration.File.Filename = *globalConfigFile
+			server.globalConfiguration.File.Filename = viper.GetString("configFile")
 		}
 		server.providers = append(server.providers, server.globalConfiguration.File)
 	}
@@ -298,11 +301,11 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	backends := map[string]http.Handler{}
 	for _, configuration := range configurations {
 		for frontendName, frontend := range configuration.Frontends {
-			log.Debugf("Creating frontend %s", frontendName)
+			log.Infof("Creating frontend %s", frontendName)
 			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
 			newRoute := router.NewRoute().Name(frontendName)
 			for routeName, route := range frontend.Routes {
-				log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
+				log.Infof("Creating route %s %s:%s", routeName, route.Rule, route.Value)
 				newRouteReflect, err := invoke(newRoute, route.Rule, route.Value)
 				if err != nil {
 					return nil, err
@@ -310,7 +313,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				newRoute = newRouteReflect[0].Interface().(*mux.Route)
 			}
 			if backends[frontend.Backend] == nil {
-				log.Debugf("Creating backend %s", frontend.Backend)
+				log.Infof("Creating backend %s", frontend.Backend)
 				var lb http.Handler
 				rr, _ := roundrobin.New(fwd)
 				if configuration.Backends[frontend.Backend] == nil {
@@ -341,7 +344,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						if err != nil {
 							return nil, err
 						}
-						log.Infof("Creating server %s %s", serverName, url.String())
+						log.Infof("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
 						rr.UpsertServer(url, roundrobin.Weight(server.Weight))
 					}
 				}

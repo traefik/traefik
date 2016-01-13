@@ -78,6 +78,11 @@
 #
 # CertFile = "traefik.crt"
 # KeyFile = "traefik.key"
+#
+# Set REST API to read-only mode
+#
+# Optional
+# ReadOnly = false
 
 
 ################################################################

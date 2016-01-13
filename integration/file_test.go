@@ -10,13 +10,13 @@ import (
 )
 
 func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
-	cmd := exec.Command(traefikBinary, "fixtures/file/simple.toml")
+	cmd := exec.Command(traefikBinary, "--configFile=fixtures/file/simple.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
 	time.Sleep(1000 * time.Millisecond)
-	resp, err := http.Get("http://127.0.0.1/")
+	resp, err := http.Get("http://127.0.0.1:8000/")
 
 	// Expected a 404 as we did not configure anything
 	c.Assert(err, checker.IsNil)
@@ -25,13 +25,13 @@ func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
 
 // #56 regression test, make sure it does not fail
 func (s *FileSuite) TestSimpleConfigurationNoPanic(c *check.C) {
-	cmd := exec.Command(traefikBinary, "fixtures/file/56-simple-panic.toml")
+	cmd := exec.Command(traefikBinary, "--configFile=fixtures/file/56-simple-panic.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
 	time.Sleep(1000 * time.Millisecond)
-	resp, err := http.Get("http://127.0.0.1/")
+	resp, err := http.Get("http://127.0.0.1:8000/")
 
 	// Expected a 404 as we did not configure anything
 	c.Assert(err, checker.IsNil)

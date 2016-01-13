@@ -11,8 +11,11 @@ import (
 	"github.com/emilevauge/traefik/autogen"
 	"github.com/emilevauge/traefik/types"
 	"github.com/gorilla/mux"
+	"github.com/thoas/stats"
 	"github.com/unrolled/render"
 )
+
+var metrics = stats.New()
 
 // WebProvider is a provider.Provider implementation that provides the UI.
 // FIXME to be handled another way.
