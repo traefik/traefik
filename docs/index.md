@@ -487,7 +487,8 @@ domain = "marathon.localhost"
 Labels can be used on containers to override default behaviour:
 
 - `traefik.backend=foo`: assign the application to `foo` backend
-- `traefik.port=80`: register this port. Useful when the application exposes multiples ports.
+- `traefik.portIndex=1`: register port by index in the application's ports array. Useful when the application exposes multiple ports.
+- `traefik.port=80`: register the explicit application port value. Cannot be used alongside `traefik.portIndex`.
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the application
 - `traefik.enable=false`: disable this application in Træfɪk
