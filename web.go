@@ -20,6 +20,7 @@ type WebProvider struct {
 	Address           string
 	CertFile, KeyFile string
 	ReadOnly          bool
+	server            *Server
 }
 
 var (
@@ -34,12 +35,12 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter := mux.NewRouter()
 
 	// health route
-	systemRouter.Methods("GET").Path("/health").HandlerFunc(getHealthHandler)
+	systemRouter.Methods("GET").Path("/health").HandlerFunc(provider.getHealthHandler)
 
 	// API routes
-	systemRouter.Methods("GET").Path("/api").HandlerFunc(getConfigHandler)
-	systemRouter.Methods("GET").Path("/api/providers").HandlerFunc(getConfigHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}").HandlerFunc(getProviderHandler)
+	systemRouter.Methods("GET").Path("/api").HandlerFunc(provider.getConfigHandler)
+	systemRouter.Methods("GET").Path("/api/providers").HandlerFunc(provider.getConfigHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}").HandlerFunc(provider.getProviderHandler)
 	systemRouter.Methods("PUT").Path("/api/providers/{provider}").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if provider.ReadOnly {
 			response.WriteHeader(http.StatusForbidden)
@@ -58,20 +59,20 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		err := json.Unmarshal(body, configuration)
 		if err == nil {
 			configurationChan <- types.ConfigMessage{"web", configuration}
-			getConfigHandler(response, request)
+			provider.getConfigHandler(response, request)
 		} else {
 			log.Errorf("Error parsing configuration %+v", err)
 			http.Error(response, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 		}
 	})
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends").HandlerFunc(getBackendsHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}").HandlerFunc(getBackendHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers").HandlerFunc(getServersHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers/{server}").HandlerFunc(getServerHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends").HandlerFunc(getFrontendsHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}").HandlerFunc(getFrontendHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes").HandlerFunc(getRoutesHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes/{route}").HandlerFunc(getRouteHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends").HandlerFunc(provider.getBackendsHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}").HandlerFunc(provider.getBackendHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers").HandlerFunc(provider.getServersHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers/{server}").HandlerFunc(provider.getServerHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends").HandlerFunc(provider.getFrontendsHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}").HandlerFunc(provider.getFrontendHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes").HandlerFunc(provider.getRoutesHandler)
+	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes/{route}").HandlerFunc(provider.getRouteHandler)
 
 	// Expose dashboard
 	systemRouter.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
@@ -95,39 +96,39 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	return nil
 }
 
-func getHealthHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, request *http.Request) {
 	templatesRenderer.JSON(response, http.StatusOK, metrics.Data())
 }
 
-func getConfigHandler(response http.ResponseWriter, request *http.Request) {
-	templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
+func (provider *WebProvider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
+	templatesRenderer.JSON(response, http.StatusOK, provider.server.currentConfigurations)
 }
 
-func getProviderHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getProviderHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	if provider, ok := currentConfigurations[providerID]; ok {
+	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
 		templatesRenderer.JSON(response, http.StatusOK, provider)
 	} else {
 		http.NotFound(response, request)
 	}
 }
 
-func getBackendsHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getBackendsHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	if provider, ok := currentConfigurations[providerID]; ok {
+	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
 		templatesRenderer.JSON(response, http.StatusOK, provider.Backends)
 	} else {
 		http.NotFound(response, request)
 	}
 }
 
-func getBackendHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getBackendHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	backendID := vars["backend"]
-	if provider, ok := currentConfigurations[providerID]; ok {
+	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, backend)
 			return
@@ -136,11 +137,11 @@ func getBackendHandler(response http.ResponseWriter, request *http.Request) {
 	http.NotFound(response, request)
 }
 
-func getServersHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getServersHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	backendID := vars["backend"]
-	if provider, ok := currentConfigurations[providerID]; ok {
+	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, backend.Servers)
 			return
@@ -149,12 +150,12 @@ func getServersHandler(response http.ResponseWriter, request *http.Request) {
 	http.NotFound(response, request)
 }
 
-func getServerHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getServerHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	backendID := vars["backend"]
 	serverID := vars["server"]
-	if provider, ok := currentConfigurations[providerID]; ok {
+	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			if server, ok := backend.Servers[serverID]; ok {
 				templatesRenderer.JSON(response, http.StatusOK, server)
@@ -165,21 +166,21 @@ func getServerHandler(response http.ResponseWriter, request *http.Request) {
 	http.NotFound(response, request)
 }
 
-func getFrontendsHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getFrontendsHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	if provider, ok := currentConfigurations[providerID]; ok {
+	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
 		templatesRenderer.JSON(response, http.StatusOK, provider.Frontends)
 	} else {
 		http.NotFound(response, request)
 	}
 }
 
-func getFrontendHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getFrontendHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
-	if provider, ok := currentConfigurations[providerID]; ok {
+	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, frontend)
 			return
@@ -188,11 +189,11 @@ func getFrontendHandler(response http.ResponseWriter, request *http.Request) {
 	http.NotFound(response, request)
 }
 
-func getRoutesHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getRoutesHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
-	if provider, ok := currentConfigurations[providerID]; ok {
+	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, frontend.Routes)
 			return
@@ -201,12 +202,12 @@ func getRoutesHandler(response http.ResponseWriter, request *http.Request) {
 	http.NotFound(response, request)
 }
 
-func getRouteHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *WebProvider) getRouteHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
 	routeID := vars["route"]
-	if provider, ok := currentConfigurations[providerID]; ok {
+	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			if route, ok := frontend.Routes[routeID]; ok {
 				templatesRenderer.JSON(response, http.StatusOK, route)

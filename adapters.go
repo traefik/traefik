@@ -35,7 +35,7 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // LoadDefaultConfig returns a default gorrilla.mux router from the specified configuration.
-func LoadDefaultConfig(globalConfiguration *GlobalConfiguration) *mux.Router {
+func LoadDefaultConfig(globalConfiguration GlobalConfiguration) *mux.Router {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	return router
