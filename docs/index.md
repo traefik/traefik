@@ -516,7 +516,7 @@ Træfɪk can be configured to use Consul as a backend configuration:
 #
 # Required
 #
-endpoint = "http://127.0.0.1:8500"
+endpoint = "127.0.0.1:8500"
 
 # Enable watch Consul changes
 #
