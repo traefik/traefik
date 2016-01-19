@@ -142,6 +142,8 @@
 
 # Enable docker TLS connection
 #
+# Optional
+#
 #  [docker.tls]
 #  ca = "/etc/ssl/ca.crt"
 #  cert = "/etc/ssl/docker.crt"
@@ -191,6 +193,14 @@
 # Optional
 #
 # filename = "marathon.tmpl"
+
+# Enable Marathon basic authentication
+#
+# Optional
+#
+#  [marathon.basic]
+#  httpBasicAuthUser = "foo"
+#  httpBasicPassword = "bar"
 
 
 ################################################################

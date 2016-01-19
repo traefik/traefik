@@ -18,7 +18,14 @@ type Marathon struct {
 	Endpoint         string
 	Domain           string
 	NetworkInterface string
+	Basic            *MarathonBasic
 	marathonClient   lightMarathonClient
+}
+
+// MarathonBasic holds basic authentication specific configurations
+type MarathonBasic struct {
+	HTTPBasicAuthUser string
+	HTTPBasicPassword string
 }
 
 type lightMarathonClient interface {
@@ -32,6 +39,10 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
 	config.EventsInterface = provider.NetworkInterface
+	if provider.Basic != nil {
+		config.HTTPBasicAuthUser = provider.Basic.HTTPBasicAuthUser
+		config.HTTPBasicPassword = provider.Basic.HTTPBasicPassword
+	}
 	client, err := marathon.NewClient(config)
 	if err != nil {
 		log.Errorf("Failed to create a client for marathon, error: %s", err)
