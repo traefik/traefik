@@ -83,6 +83,7 @@ Refer to the [benchmarks section](docs/index.md#benchmarks) in the documentation
 You need either [Docker](https://github.com/docker/docker) and `make`, or `go` and `glide` in order to build traefik.
 
 #### Setting up your `go` environment
+
 - You need `go` v1.5
 - You need to set `export GO15VENDOREXPERIMENT=1` environment variable
 - You need `go-bindata` to be able to use `go generate` command (needed to build) : `go get github.com/jteeuwen/go-bindata/...`.
@@ -90,8 +91,7 @@ You need either [Docker](https://github.com/docker/docker) and `make`, or `go` a
 
 #### Using `Docker` and `Makefile`
 
-You need to run the `binary` target. This will create binaries for
-linux platform in the `dist` folder.
+You need to run the `binary` target. This will create binaries for Linux platform in the `dist` folder.
 
 ```bash
 $ make binary

@@ -8,6 +8,14 @@ Træfɪk Web UI provide 2 types of informations:
 - Providers with their backends and frontends information.
 - Health of the web server.
 
+## How to build (for backends developer)
+
+Use the make file :
+
+```shell
+make build           # Generate Docker image
+make generate-webui  # Generate static contents in `traefik/static/` folder.
+```
 
 ## How to build (only for frontends developer)
 

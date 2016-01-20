@@ -24,10 +24,10 @@ default: binary
 all: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh
 
-binary: build
+binary: build generate-webui
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
 
-crossbinary: build
+crossbinary: build generate-webui
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate crossbinary
 
 test: build
@@ -52,6 +52,7 @@ validate-golint: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-golint
 
 build: dist
+	docker build -t traefik-webui -f webui/Dockerfile webui
 	docker build -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
 build-no-cache: dist
@@ -70,3 +71,6 @@ run-dev:
 	go generate
 	go build
 	./traefik
+
+generate-webui:
+	docker run --rm -v "$$PWD/static":'/src/static' traefik-webui gulp build
