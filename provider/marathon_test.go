@@ -800,3 +800,29 @@ func TestMarathonGetFrontendRule(t *testing.T) {
 		}
 	}
 }
+
+func TestMarathonGetBackend(t *testing.T) {
+	provider := &Marathon{}
+
+	applications := []struct {
+		application marathon.Application
+		expected    string
+	}{
+		{
+			application: marathon.Application{
+				ID: "foo",
+				Labels: map[string]string{
+					"traefik.backend": "bar",
+				},
+			},
+			expected: "bar",
+		},
+	}
+
+	for _, a := range applications {
+		actual := provider.getBackend(a.application)
+		if actual != a.expected {
+			t.Fatalf("expected %q, got %q", a.expected, actual)
+		}
+	}
+}
