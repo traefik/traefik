@@ -1,0 +1,9 @@
+{
+  "globals": {
+    "browser": false,
+    "element": false,
+    "by": false,
+    "$": false,
+    "$$": false
+  }
+}

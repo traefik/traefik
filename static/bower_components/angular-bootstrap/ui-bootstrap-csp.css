@@ -1,6 +1,0 @@
-/* Include this file in your html if you are using the CSP mode. */
-
-.ng-animate.item:not(.left):not(.right) {
-  -webkit-transition: 0s ease-in-out left;
-  transition: 0s ease-in-out left
-}

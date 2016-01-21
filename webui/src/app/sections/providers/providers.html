@@ -1,0 +1,20 @@
+<div>
+  <tabset>
+    <tab data-ng-repeat="(providerId, provider) in providersCtrl.providers" heading="{{providerId}}">
+
+      <div class="row tabset-row__providers">
+        <div class="col-md-6">
+          <div data-ng-repeat="(frontendId, frontend) in provider.frontends">
+            <frontend-monitor data-provider-id="providerId" data-frontend-id="frontendId" data-frontend="frontend"></frontend-monitor>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div data-ng-repeat="(backendId, backend) in provider.backends">
+            <backend-monitor data-provider-id="providerId" data-backend-id="backendId" data-backend="backend"></backend-monitor>
+          </div>
+        </div>
+      </div>
+
+    </tab>
+  </tabset>
+</div>

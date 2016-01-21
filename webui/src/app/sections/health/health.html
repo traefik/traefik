@@ -1,0 +1,43 @@
+<div>
+  <h1 class="text-danger">
+    <span class="glyphicon glyphicon-heart" aria-hidden="true"></span> Health
+  </h1>
+
+  <div class="row">
+
+    <div class="col-md-6">
+      <div>
+        <nvd3 options="healthCtrl.graph.averageResponseTime.options" data="healthCtrl.graph.averageResponseTime.data" api="healthCtrl.graph.averageResponseTime.api"></nvd3>
+      </div>
+      <ul class="list-group">
+        <li class="list-group-item">
+          <span>Total response time :</span><span class="badge">{{healthCtrl.health.total_response_time}}</span>
+        </li>
+      </ul>
+      <ul class="list-group">
+        <li class="list-group-item">
+          <span>PID :</span><span class="badge">{{healthCtrl.health.pid}}</span>
+        </li>
+        <li class="list-group-item">
+          <span>Uptime :</span><span class="badge">{{healthCtrl.health.uptime}}</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="col-md-6">
+      <div>
+        <nvd3 options="healthCtrl.graph.totalStatusCodeCount.options" data="healthCtrl.graph.totalStatusCodeCount.data" api="healthCtrl.graph.totalStatusCodeCount.api"></nvd3>
+      </div>
+      <ul class="list-group">
+        <li class="list-group-item">
+          <span>Total count :</span><span class="badge">{{healthCtrl.health.total_count}}</span>
+        </li>
+        <li class="list-group-item">
+          <span>Count :</span><span class="badge">{{healthCtrl.health.count}}</span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>

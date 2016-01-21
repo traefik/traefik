@@ -1,0 +1,23 @@
+<div class="panel panel-warning">
+  <div class="panel-heading">
+    <strong><span class="glyphicon glyphicon-globe" aria-hidden="true"></span> {{frontendCtrl.frontendId}}</strong>
+  </div>
+  <div class="panel-body">
+    <table class="panel-table__routes table table-striped table-hover">
+      <tr>
+        <td><em>Route</em></td>
+        <td><em>Rule</em></td>
+        <td><em>Value</em></td>
+      </tr>
+      <tr data-ng-repeat="(routeId, route) in frontendCtrl.frontend.routes">
+        <td>{{routeId}}</td>
+        <td>{{route.rule}}</td>
+        <td><code>{{route.value}}</code></td>
+      </tr>
+    </table>
+  </div>
+  <div data-bg-show="frontendCtrl.frontend.backend" class="panel-footer">
+    <span class="label label-warning" role="button" data-toggle="collapse" href="#{{frontendCtrl.frontend.backend}}" aria-expanded="false">{{frontendCtrl.frontend.backend}}</span>
+    <span data-ng-show="frontendCtrl.frontend.passHostHeader" class="label label-warning">Pass Host Header</span>
+  </div>
+</div>
