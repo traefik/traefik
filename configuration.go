@@ -94,11 +94,11 @@ func LoadConfiguration() *GlobalConfiguration {
 	} else {
 		viper.SetConfigName("traefik") // name of config file (without extension)
 	}
-	viper.AddConfigPath("/etc/traefik/")  // path to look for the config file in
-	viper.AddConfigPath("$HOME/.traefik") // call multiple times to add many search paths
-	viper.AddConfigPath(".")              // optionally look for config in the working directory
-	err := viper.ReadInConfig()           // Find and read the config file
-	if err != nil {                       // Handle errors reading the config file
+	viper.AddConfigPath("/etc/traefik/")   // path to look for the config file in
+	viper.AddConfigPath("$HOME/.traefik/") // call multiple times to add many search paths
+	viper.AddConfigPath(".")               // optionally look for config in the working directory
+	err := viper.ReadInConfig()            // Find and read the config file
+	if err != nil {                        // Handle errors reading the config file
 		fmtlog.Fatalf("Error reading file: %s", err)
 	}
 	if len(arguments.Certificates) > 0 {
