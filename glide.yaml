@@ -148,10 +148,17 @@ import:
     ref: fca8c8854093a154ff1eb580aae10276ad6b1b5f
   - package: github.com/spf13/cast
     ref: ee7b3e0353166ab1f3a605294ac8cd2b77953778
+  - package: github.com/mitchellh/mapstructure
+  - package: github.com/spf13/jwalterweatherman
+  - package: github.com/spf13/pflag
+  - package: github.com/wendal/errors
+  - package: github.com/hashicorp/hcl
+  - package: github.com/kr/pretty
+  - package: github.com/magiconair/properties
+  - package: github.com/kr/text
   - package: github.com/spf13/viper
     ref: a212099cbe6fbe8d07476bfda8d2d39b6ff8f325
   - package: github.com/spf13/cobra
     subpackages:
     - /cobra
-  
 

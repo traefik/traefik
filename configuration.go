@@ -1,16 +1,16 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	fmtlog "log"
+	"strings"
 	"time"
 
-	"fmt"
 	"github.com/emilevauge/traefik/provider"
 	"github.com/emilevauge/traefik/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-	"github.com/wendal/errors"
-	"strings"
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
@@ -97,8 +97,7 @@ func LoadConfiguration() *GlobalConfiguration {
 	viper.AddConfigPath("/etc/traefik/")   // path to look for the config file in
 	viper.AddConfigPath("$HOME/.traefik/") // call multiple times to add many search paths
 	viper.AddConfigPath(".")               // optionally look for config in the working directory
-	err := viper.ReadInConfig()            // Find and read the config file
-	if err != nil {                        // Handle errors reading the config file
+	if err := viper.ReadInConfig(); err != nil {
 		fmtlog.Fatalf("Error reading file: %s", err)
 	}
 	if len(arguments.Certificates) > 0 {
@@ -131,8 +130,7 @@ func LoadConfiguration() *GlobalConfiguration {
 	if arguments.boltdb {
 		viper.Set("boltdb", arguments.Boltdb)
 	}
-	err = unmarshal(&configuration)
-	if err != nil {
+	if err := unmarshal(&configuration); err != nil {
 		fmtlog.Fatalf("Error reading file: %s", err)
 	}
 
