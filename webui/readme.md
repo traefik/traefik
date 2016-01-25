@@ -28,7 +28,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
   - `bower install`
 
 - Build static Web UI, execute the following command:
-  - `gulp build`
+  - `gulp`
 
 - Static contents are build in the directory `static`
 

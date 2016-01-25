@@ -10,6 +10,7 @@ COPY .bowerrc $WEBUI_DIR/
 COPY bower.json $WEBUI_DIR/
 
 WORKDIR $WEBUI_DIR
+RUN npm set progress=false
 RUN npm install
 RUN bower install --allow-root
 
