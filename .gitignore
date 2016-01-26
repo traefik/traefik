@@ -7,3 +7,4 @@ traefik
 traefik.toml
 *.test
 vendor/
+static/
