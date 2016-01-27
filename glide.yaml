@@ -136,7 +136,7 @@ import:
   - package: gopkg.in/fsnotify.v1
     ref:     96c060f6a6b7e0d6f75fddd10efeaca3e5d1bcb0
   - package: github.com/mailgun/manners
-    ref:     37136f736785d7c6aa3b9a27b4b2dd1028ca6d79
+    ref:     fada45142db3f93097ca917da107aa3fad0ffcb5
   - package: github.com/gorilla/context
     ref:     215affda49addc4c8ef7e2534915df2c8c35c6cd
   - package: github.com/codahale/hdrhistogram
