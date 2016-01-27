@@ -23,6 +23,6 @@ RUN ln -s /usr/local/bin/docker-${DOCKER_VERSION} /usr/local/bin/docker
 WORKDIR /go/src/github.com/emilevauge/traefik
 
 COPY glide.yaml glide.yaml
-RUN glide up
+RUN glide up --quick
 
 COPY . /go/src/github.com/emilevauge/traefik
