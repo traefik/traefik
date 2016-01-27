@@ -429,7 +429,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.weight=10`: assign this weight to the container
 - `traefik.enable=false`: disable this container in Træfɪk
 - `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
-- `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{containerName}.{domain}`) See [frontends](#frontends).
+- `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{containerName}.{domain}`) See [frontends](#frontends). Must be associated with label traefik.frontend.rule.
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 * `traefik.domain=traefik.localhost`: override the default domain
 
@@ -493,7 +493,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.weight=10`: assign this weight to the application
 - `traefik.enable=false`: disable this application in Træfɪk
 - `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
-- `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{appName}.{domain}`) See [frontends](#frontends).
+- `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{appName}.{domain}`) See [frontends](#frontends). Must be associated with label traefik.frontend.rule.
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 * `traefik.domain=traefik.localhost`: override the default domain
 
@@ -846,8 +846,8 @@ Percentage of the requests served within a certain time (ms)
 - Træfɪk:
 
 ```sh
-$ docker run -d -l traefik.backend=test1 -l traefik.host=test1 emilevauge/whoami
-$ docker run -d -l traefik.backend=test1 -l traefik.host=test1 emilevauge/whoami
+docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test1.docker.localhost emilevauge/whoami
+docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test1.docker.localhost emilevauge/whoami
 docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml -v /var/run/docker.sock:/var/run/docker.sock emilevauge/traefik
 $ ab -n 20000 -c 20  -r http://test1.docker.localhost/
 This is ApacheBench, Version 2.3 <$Revision: 1528965 $>
