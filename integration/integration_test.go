@@ -29,6 +29,7 @@ func init() {
 	check.Suite(&DockerSuite{})
 	check.Suite(&ConsulSuite{})
 	check.Suite(&MarathonSuite{})
+	check.Suite(&CNameSuite{})
 }
 
 var traefikBinary = "../dist/traefik"
@@ -37,6 +38,15 @@ var traefikBinary = "../dist/traefik"
 type FileSuite struct{ BaseSuite }
 
 func (s *FileSuite) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "file")
+
+	s.composeProject.Up()
+}
+
+// CName test suites
+type CNameSuite struct{ BaseSuite }
+
+func (s *CNameSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "file")
 
 	s.composeProject.Up()

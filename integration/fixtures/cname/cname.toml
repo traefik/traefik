@@ -1,0 +1,32 @@
+# Reverse proxy nameserver config
+#
+# Optional
+# ResolveConf: "/etc/resolv.conf"
+#
+resolvConf= "fixtures/cname/resolv.conf"
+
+#
+# LogLevel
+logLevel = "DEBUG"
+
+[file]
+
+# rules
+[backends]
+  [backends.backend1]
+    [backends.backend2.LoadBalancer]
+      method = "drr"
+    [backends.backend2.servers.server1]
+    url = "http://172.17.0.4:80"
+    weight = 1
+    [backends.backend2.servers.server2]
+    url = "http://172.17.0.5:80"
+    weight = 2
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host"
+    value = "test.localhost"
+

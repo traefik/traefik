@@ -18,6 +18,7 @@ type GlobalConfiguration struct {
 	TraefikLogsFile           string
 	Certificates              []Certificate
 	LogLevel                  string
+	ResolvConf                string
 	ProvidersThrottleDuration time.Duration
 	Docker                    *provider.Docker
 	File                      *provider.File
@@ -37,14 +38,15 @@ type Certificate struct {
 
 // NewGlobalConfiguration returns a GlobalConfiguration with default values.
 func NewGlobalConfiguration() *GlobalConfiguration {
-	globalConfiguration := new(GlobalConfiguration)
+	globalConfiguration := GlobalConfiguration{}
 	// default values
 	globalConfiguration.Port = ":80"
 	globalConfiguration.GraceTimeOut = 10
+	globalConfiguration.ResolvConf = "/etc/resolv.conf"
 	globalConfiguration.LogLevel = "ERROR"
 	globalConfiguration.ProvidersThrottleDuration = time.Duration(2 * time.Second)
 
-	return globalConfiguration
+	return &globalConfiguration
 }
 
 // LoadFileConfig returns a GlobalConfiguration from reading the specified file (a toml file).

@@ -1,5 +1,9 @@
 package: main
 import:
+  - package: github.com/stvp/go-udp-testing
+    ref: abcd331ec306600e2c71d73841152e78cce727f5
+  - package: github.com/karlseguin/ccache
+    ref:     74754c77cc65b05221301d2d4365fa1812b54926
   - package: github.com/coreos/go-etcd
     ref:     cc90c7b091275e606ad0ca7102a23fb2072f3f5e
     subpackages:

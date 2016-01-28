@@ -204,7 +204,7 @@ func main() {
 
 	var er error
 	serverLock.Lock()
-	srv, er = prepareServer(configurationRouter, globalConfiguration, nil, loggerMiddleware, metrics)
+	srv, er = prepareServer(configurationRouter, globalConfiguration, nil, loggerMiddleware, middlewares.NewRoutes(configurationRouter, globalConfiguration.ResolvConf), metrics)
 	if er != nil {
 		log.Fatal("Error preparing server: ", er)
 	}
