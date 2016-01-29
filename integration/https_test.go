@@ -19,7 +19,7 @@ type HTTPSSuite struct{ BaseSuite }
 // "snitest.com", which happens to match the CN of 'snitest.com.crt'. The test
 // verifies that traefik presents the correct certificate.
 func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
-	cmd := exec.Command(traefikBinary, "fixtures/https/https_sni.toml")
+	cmd := exec.Command(traefikBinary, "--configFile=fixtures/https/https_sni.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -30,7 +30,7 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 		InsecureSkipVerify: true,
 		ServerName:         "snitest.com",
 	}
-	conn, err := tls.Dial("tcp", "127.0.0.1:443", tlsConfig)
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
 
 	defer conn.Close()
@@ -46,7 +46,7 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik routes the requests to the expected backends.
 func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
-	cmd := exec.Command(traefikBinary, "fixtures/https/https_sni.toml")
+	cmd := exec.Command(traefikBinary, "--configFile=fixtures/https/https_sni.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -72,7 +72,7 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 	}
 
 	client := &http.Client{Transport: tr1}
-	req, _ := http.NewRequest("GET", "https://127.0.0.1/", nil)
+	req, _ := http.NewRequest("GET", "https://127.0.0.1:4443/", nil)
 	req.Host = "snitest.com"
 	req.Header.Set("Host", "snitest.com")
 	req.Header.Set("Accept", "*/*")
@@ -82,7 +82,7 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, 204)
 
 	client = &http.Client{Transport: tr2}
-	req, _ = http.NewRequest("GET", "https://127.0.0.1/", nil)
+	req, _ = http.NewRequest("GET", "https://127.0.0.1:4443/", nil)
 	req.Host = "snitest.org"
 	req.Header.Set("Host", "snitest.org")
 	req.Header.Set("Accept", "*/*")

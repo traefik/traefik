@@ -17,10 +17,10 @@ import (
 
 // Docker holds configurations of the Docker provider.
 type Docker struct {
-	baseProvider
-	Endpoint string
-	Domain   string
-	TLS      *DockerTLS
+	BaseProvider `mapstructure:",squash"`
+	Endpoint     string
+	Domain       string
+	TLS          *DockerTLS
 }
 
 // DockerTLS holds TLS specific configurations

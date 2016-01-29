@@ -1,3 +1,4 @@
+port = ":8000"
 logLevel = "DEBUG"
 
 [web]

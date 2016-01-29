@@ -8,13 +8,13 @@ import (
 
 // Consul holds configurations of the Consul provider.
 type Consul struct {
-	Kv
+	Kv `mapstructure:",squash"`
 }
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Consul) Provide(configurationChan chan<- types.ConfigMessage) error {
-	provider.StoreType = store.CONSUL
+	provider.storeType = store.CONSUL
 	consul.Register()
 	return provider.provide(configurationChan)
 }

@@ -14,7 +14,7 @@ import (
 
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
-	baseProvider
+	BaseProvider     `mapstructure:",squash"`
 	Endpoint         string
 	Domain           string
 	NetworkInterface string

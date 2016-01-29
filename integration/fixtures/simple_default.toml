@@ -3,7 +3,7 @@
 # Optional
 # Default: ":80"
 #
-# port = ":80"
+port = ":8000"
 #
 # LogLevel
 logLevel = "DEBUG"

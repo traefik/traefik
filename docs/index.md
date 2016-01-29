@@ -5,6 +5,7 @@ ___
 # <a id="top"></a> Documentation
 
 - [Basics](#basics)
+- [Launch configuration](#launch)
 - [Global configuration](#global)
 - [File backend](#file)
 - [API backend](#api)
@@ -38,7 +39,8 @@ Frontends can be defined using the following rules:
 
 
  A frontend is a set of rules that forwards the incoming http traffic to a backend.
- You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
+ You can optionally enable `passHostHeader` to
+- []forward client `Host` header to the backend.
 
 ### HTTP Backends
 
@@ -58,6 +60,101 @@ For example:
 - `NetworkErrorRatio() > 0.5`
 - `LatencyAtQuantileMS(50.0) > 50`
 - `ResponseCodeRatio(500, 600, 0, 600) > 0.5`
+
+
+## <a id="launch"></a> Launch configuration
+
+Træfɪk can be configured using a TOML file configuration, arguments, or both.
+By default, Træfɪk will try to find a `traefik.toml` in the following places:
+- `/etc/traefik/`
+- `$HOME/.traefik/`
+- `.` the working directory
+
+You can override this by setting a `configFile` argument:
+
+```bash
+$ traefik --configFile=foo/bar/myconfigfile.toml
+```
+
+Træfɪk uses the following precedence order. Each item takes precedence over the item below it:
+
+- arguments
+- configuration file
+- default
+
+It means that arguments overrides configuration file.
+Each argument is described in the help section:
+```bash
+$ traefik --help
+traefik is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
+Complete documentation is available at http://traefik.io
+
+Usage:
+  traefik [flags]
+  traefik [command]
+
+Available Commands:
+  version     Print version
+  help        Help about any command
+
+Flags:
+      --accessLogsFile="log/access.log": Access logs file
+      --boltdb=false: Enable Boltdb backend
+      --boltdb.endpoint="127.0.0.1:4001": Boltdb server endpoint
+      --boltdb.filename="": Override default configuration template. For advanced users :)
+      --boltdb.prefix="/traefik": Prefix used for KV store
+      --boltdb.watch=true: Watch provider
+      --certificates=: SSL certificates and keys. You may add several certificate/key pairs to terminate HTTPS for multiple domain names using TLS SNI
+  -c, --configFile="": Configuration file to use (TOML, JSON, YAML, HCL).
+      --consul=false: Enable Consul backend
+      --consul.endpoint="127.0.0.1:8500": Consul server endpoint
+      --consul.filename="": Override default configuration template. For advanced users :)
+      --consul.prefix="/traefik": Prefix used for KV store
+      --consul.watch=true: Watch provider
+      --docker=false: Enable Docker backend
+      --docker.domain="": Default domain used
+      --docker.endpoint="unix:///var/run/docker.sock": Docker server endpoint. Can be a tcp or a unix socket endpoint
+      --docker.filename="": Override default configuration template. For advanced users :)
+      --docker.tls=false: Enable Docker TLS support
+      --docker.tls.ca="": TLS CA
+      --docker.tls.cert="": TLS cert
+      --docker.tls.insecureSkipVerify=false: TLS insecure skip verify
+      --docker.tls.key="": TLS key
+      --docker.watch=true: Watch provider
+      --etcd=false: Enable Etcd backend
+      --etcd.endpoint="127.0.0.1:4001": Etcd server endpoint
+      --etcd.filename="": Override default configuration template. For advanced users :)
+      --etcd.prefix="/traefik": Prefix used for KV store
+      --etcd.watch=true: Watch provider
+      --file=false: Enable File backend
+      --file.filename="": Override default configuration template. For advanced users :)
+      --file.watch=true: Watch provider
+  -g, --graceTimeOut="10": Timeout in seconds. Duration to give active requests a chance to finish during hot-reloads
+  -h, --help=false: help for traefik
+  -l, --logLevel="ERROR": Log level
+      --marathon=false: Enable Marathon backend
+      --marathon.domain="": Default domain used
+      --marathon.endpoint="http://127.0.0.1:8080": Marathon server endpoint. You can also specify multiple endpoint for Marathon
+      --marathon.filename="": Override default configuration template. For advanced users :)
+      --marathon.networkInterface="eth0": Network interface used to call Marathon web services. Needed in case of multiple network interfaces
+      --marathon.watch=true: Watch provider
+  -p, --port=":80": Reverse proxy port
+      --providersThrottleDuration=2s: Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time.
+      --traefikLogsFile="log/traefik.log": Traefik logs file
+      --web=false: Enable Web backend
+      --web.address=":8080": Web administration port
+      --web.cerFile="": SSL certificate
+      --web.keyFile="": SSL certificate
+      --web.readOnly=false: Enable read only API
+      --zookeeper=false: Enable Zookeeper backend
+      --zookeeper.endpoint="127.0.0.1:2181": Zookeeper server endpoint
+      --zookeeper.filename="": Override default configuration template. For advanced users :)
+      --zookeeper.prefix="/traefik": Prefix used for KV store
+      --zookeeper.watch=true: Watch provider
+
+
+Use "traefik help [command]" for more information about a command.
+```
 
 ## <a id="global"></a> Global configuration
 

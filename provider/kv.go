@@ -15,16 +15,16 @@ import (
 
 // Kv holds common configurations of key-value providers.
 type Kv struct {
-	baseProvider
-	Endpoint  string
-	Prefix    string
-	StoreType store.Backend
-	kvclient  store.Store
+	BaseProvider `mapstructure:",squash"`
+	Endpoint     string
+	Prefix       string
+	storeType    store.Backend
+	kvclient     store.Store
 }
 
 func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error {
 	kv, err := libkv.NewStore(
-		provider.StoreType,
+		provider.storeType,
 		[]string{provider.Endpoint},
 		&store.Config{
 			ConnectionTimeout: 30 * time.Second,
@@ -50,7 +50,7 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error 
 				configuration := provider.loadConfig()
 				if configuration != nil {
 					configurationChan <- types.ConfigMessage{
-						ProviderName:  string(provider.StoreType),
+						ProviderName:  string(provider.storeType),
 						Configuration: configuration,
 					}
 				}
@@ -60,7 +60,7 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error 
 	}
 	configuration := provider.loadConfig()
 	configurationChan <- types.ConfigMessage{
-		ProviderName:  string(provider.StoreType),
+		ProviderName:  string(provider.storeType),
 		Configuration: configuration,
 	}
 	return nil

@@ -14,7 +14,7 @@ type Zookepper struct {
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Zookepper) Provide(configurationChan chan<- types.ConfigMessage) error {
-	provider.StoreType = store.ZK
+	provider.storeType = store.ZK
 	zookeeper.Register()
 	return provider.provide(configurationChan)
 }
