@@ -24,10 +24,10 @@ default: binary
 all: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh
 
-binary: build generate-webui
+binary: build-webui generate-webui build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
 
-crossbinary: build generate-webui
+crossbinary: build-webui generate-webui build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate crossbinary
 
 test: build
@@ -52,8 +52,10 @@ validate-golint: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-golint
 
 build: dist
-	docker build -t traefik-webui -f webui/Dockerfile webui
 	docker build -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+
+build-webui:
+	docker build -t traefik-webui -f webui/Dockerfile webui
 
 build-no-cache: dist
 	docker build --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
@@ -73,4 +75,6 @@ run-dev:
 	./traefik
 
 generate-webui:
-	docker run --rm -v "$$PWD/static":'/src/static' traefik-webui gulp build
+	mkdir -p static
+	docker run --rm -v "$$PWD/static":'/src/static' traefik-webui gulp
+	echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
