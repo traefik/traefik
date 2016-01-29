@@ -6,6 +6,9 @@ TRAEFIK_ENVS := \
 	-e TESTFLAGS \
 	-e CIRCLECI
 
+
+SRCS = $(shell git ls-files '*.go' | grep -v '^external/')
+
 BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/emilevauge/traefik/$(BIND_DIR)"
 
@@ -78,3 +81,9 @@ generate-webui:
 	mkdir -p static
 	docker run --rm -v "$$PWD/static":'/src/static' traefik-webui gulp
 	echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
+
+lint:
+	$(foreach file,$(SRCS),golint $(file) || exit;)
+
+fmt:
+	gofmt -s -l -w $(SRCS)
