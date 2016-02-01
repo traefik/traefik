@@ -1,12 +1,9 @@
-# Reverse proxy port
-#
-# Optional
-# Default: ":80"
-#
-# port = ":80"
-port = ":8000"
-#
-# LogLevel
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
 logLevel = "DEBUG"
 
 [docker]

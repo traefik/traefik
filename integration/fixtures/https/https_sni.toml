@@ -1,13 +1,17 @@
-port = ":4443"
 logLevel = "DEBUG"
 
-[[certificates]]
-CertFile = "fixtures/https/snitest.com.cert"
-KeyFile = "fixtures/https/snitest.com.key"
+defaultEntryPoints = ["https"]
 
-[[certificates]]
-CertFile = "fixtures/https/snitest.org.cert"
-KeyFile = "fixtures/https/snitest.org.key"
+[entryPoints]
+  [entryPoints.https]
+  address = ":4443"
+    [entryPoints.https.tls]
+     [[entryPoints.https.tls.certificates]]
+     CertFile = "fixtures/https/snitest.com.cert"
+     KeyFile = "fixtures/https/snitest.com.key"
+     [[entryPoints.https.tls.certificates]]
+     CertFile = "fixtures/https/snitest.org.cert"
+     KeyFile = "fixtures/https/snitest.org.key"
 
 [file]
 

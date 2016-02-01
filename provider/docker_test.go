@@ -682,7 +682,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 			},
 			expectedFrontends: map[string]*types.Frontend{
 				`"frontend-Host-test-docker-localhost"`: {
-					Backend: "backend-test",
+					Backend:     "backend-test",
+					EntryPoints: []string{},
 					Routes: map[string]types.Route{
 						`"route-frontend-Host-test-docker-localhost"`: {
 							Rule:  "Host",
@@ -709,7 +710,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					Name: "test1",
 					Config: &docker.Config{
 						Labels: map[string]string{
-							"traefik.backend": "foobar",
+							"traefik.backend":              "foobar",
+							"traefik.frontend.entryPoints": "http,https",
 						},
 					},
 					NetworkSettings: &docker.NetworkSettings{
@@ -736,7 +738,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 			},
 			expectedFrontends: map[string]*types.Frontend{
 				`"frontend-Host-test1-docker-localhost"`: {
-					Backend: "backend-foobar",
+					Backend:     "backend-foobar",
+					EntryPoints: []string{"http", "https"},
 					Routes: map[string]types.Route{
 						`"route-frontend-Host-test1-docker-localhost"`: {
 							Rule:  "Host",
@@ -745,7 +748,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					},
 				},
 				`"frontend-Host-test2-docker-localhost"`: {
-					Backend: "backend-foobar",
+					Backend:     "backend-foobar",
+					EntryPoints: []string{},
 					Routes: map[string]types.Route{
 						`"route-frontend-Host-test2-docker-localhost"`: {
 							Rule:  "Host",
