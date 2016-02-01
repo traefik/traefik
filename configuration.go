@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	fmtlog "log"
+	"regexp"
 	"strings"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/emilevauge/traefik/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-	"regexp"
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).

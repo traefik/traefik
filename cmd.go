@@ -4,12 +4,12 @@ Copyright
 package main
 
 import (
+	"encoding/json"
 	fmtlog "log"
 	"os"
 	"strings"
 	"time"
 
-	"encoding/json"
 	log "github.com/Sirupsen/logrus"
 	"github.com/emilevauge/traefik/middlewares"
 	"github.com/emilevauge/traefik/provider"

@@ -73,9 +73,10 @@ func (provider *Kv) loadConfig() *types.Configuration {
 		provider.Prefix,
 	}
 	var KvFuncMap = template.FuncMap{
-		"List": provider.list,
-		"Get":  provider.get,
-		"Last": provider.last,
+		"List":     provider.list,
+		"Get":      provider.get,
+		"SplitGet": provider.splitGet,
+		"Last":     provider.last,
 	}
 
 	configuration, err := provider.getConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -89,7 +90,7 @@ func (provider *Kv) list(keys ...string) []string {
 	joinedKeys := strings.Join(keys, "")
 	keysPairs, err := provider.kvclient.List(joinedKeys)
 	if err != nil {
-		log.Error("Error getting keys: ", joinedKeys, err)
+		log.Errorf("Error getting keys %s %s ", joinedKeys, err)
 		return nil
 	}
 	directoryKeys := make(map[string]string)
@@ -100,16 +101,30 @@ func (provider *Kv) list(keys ...string) []string {
 	return fun.Values(directoryKeys).([]string)
 }
 
-func (provider *Kv) get(keys ...string) string {
+func (provider *Kv) get(defaultValue string, keys ...string) string {
 	joinedKeys := strings.Join(keys, "")
 	keyPair, err := provider.kvclient.Get(joinedKeys)
 	if err != nil {
-		log.Error("Error getting key: ", joinedKeys, err)
-		return ""
+		log.Warnf("Error getting key %s %s, setting default %s", joinedKeys, err, defaultValue)
+		return defaultValue
 	} else if keyPair == nil {
-		return ""
+		log.Warnf("Error getting key %s, setting default %s", joinedKeys, defaultValue)
+		return defaultValue
 	}
 	return string(keyPair.Value)
+}
+
+func (provider *Kv) splitGet(keys ...string) []string {
+	joinedKeys := strings.Join(keys, "")
+	keyPair, err := provider.kvclient.Get(joinedKeys)
+	if err != nil {
+		log.Warnf("Error getting key %s %s, setting default empty", joinedKeys, err)
+		return []string{}
+	} else if keyPair == nil {
+		log.Warnf("Error getting key %s, setting default %empty", joinedKeys)
+		return []string{}
+	}
+	return strings.Split(string(keyPair.Value), ",")
 }
 
 func (provider *Kv) last(key string) string {

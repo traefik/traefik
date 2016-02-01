@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os/exec"
 	"time"
 
-	"fmt"
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
 )
