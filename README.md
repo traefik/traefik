@@ -1,8 +1,8 @@
 ![Træfɪk](http://traefik.github.io/traefik.logo.svg  "Træfɪk")
 ___
 
-[![Circle CI](https://circleci.com/gh/emilevauge/traefik.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/emilevauge/traefik)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/EmileVauge/traefik/blob/master/LICENSE.md)
+[![Circle CI](https://circleci.com/gh/emilevauge/traefik/tree/master.png?circle-token)](https://circleci.com/gh/emilevauge/traefik)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/EmileVauge/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 
 
@@ -22,7 +22,7 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 - Circuit breakers on backends
 - Round Robin, rebalancer load-balancers
 - Rest Metrics
-- Tiny docker image included
+- Tiny docker image included [![Image Layers](https://badge.imagelayers.io/emilevauge/traefik:latest.svg)](https://imagelayers.io/?images=emilevauge/traefik:latest 'Image Layers')
 - SSL backends support
 - SSL frontend support
 - Clean AngularJS Web UI
@@ -75,6 +75,20 @@ You can find the complete documentation [here](docs/index.md).
 ## Benchmarks
 
 Refer to the [benchmarks section](docs/index.md#benchmarks) in the documentation.
+
+## Træfɪk here and there
+
+These projects use Træfɪk internally. If your company uses Træfɪk, we would be glad to get your feedback :) Contact us on [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
+
+- Project [Mantl](http://http://mantl.io/) from Cisco
+
+![Web UI Providers](docs/img/mantl-logo.png)
+> Mantl is a modern platform for rapidly deploying globally distributed services. A container orchestrator, docker, a network stack, something to pool your logs, something to monitor health, a sprinkle of service discovery and some automation.
+
+- Project [Apollo](http://capgemini.github.io/devops/apollo/) from Cap Gemini
+
+![Web UI Providers](docs/img/apollo-logo.png)
+> Apollo is an open source project to aid with building and deploying IAAS and PAAS services. It is particularly geared towards managing containerized applications across multiple hosts, and big data type workloads. Apollo leverages other open source components to provide basic mechanisms for deployment, maintenance, and scaling of infrastructure and applications.
 
 ## Contributing
 

@@ -39,8 +39,7 @@ Frontends can be defined using the following rules:
 
 
  A frontend is a set of rules that forwards the incoming http traffic to a backend.
- You can optionally enable `passHostHeader` to
-- []forward client `Host` header to the backend.
+ You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
 
 ### HTTP Backends
 
@@ -103,13 +102,13 @@ Flags:
       --boltdb.filename string               Override default configuration template. For advanced users :)
       --boltdb.prefix string                 Prefix used for KV store (default "/traefik")
       --boltdb.watch                         Watch provider (default true)
-      --certificates value                   SSL certificates and keys pair, ie 'tests/traefik.crt,tests/traefik.key'. You may add several certificate/key pairs to terminate HTTPS for multiple domain names using TLS SNI
   -c, --configFile string                    Configuration file to use (TOML, JSON, YAML, HCL).
       --consul                               Enable Consul backend
       --consul.endpoint string               Consul server endpoint (default "127.0.0.1:8500")
       --consul.filename string               Override default configuration template. For advanced users :)
       --consul.prefix string                 Prefix used for KV store (default "/traefik")
       --consul.watch                         Watch provider (default true)
+      --defaultEntryPoints value             Entrypoints to be used by frontends that do not specify any entrypoint (default &main.DefaultEntryPoints(nil))
       --docker                               Enable Docker backend
       --docker.domain string                 Default domain used
       --docker.endpoint string               Docker server endpoint. Can be a tcp or a unix socket endpoint (default "unix:///var/run/docker.sock")
@@ -120,6 +119,7 @@ Flags:
       --docker.tls.insecureSkipVerify        TLS insecure skip verify
       --docker.tls.key string                TLS key
       --docker.watch                         Watch provider (default true)
+      --entryPoints value                    Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'
       --etcd                                 Enable Etcd backend
       --etcd.endpoint string                 Etcd server endpoint (default "127.0.0.1:4001")
       --etcd.filename string                 Override default configuration template. For advanced users :)
@@ -162,12 +162,45 @@ Use "traefik [command] --help" for more information about a command.
 # Global configuration
 ################################################################
 
-# Reverse proxy port
+# Entrypoints definition
 #
 # Optional
-# Default: ":80"
+# Default:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
 #
-# port = ":80"
+# To redirect an http entrypoint to an https entrypoint (with SNI support):
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#     [entryPoints.http.redirect]
+#       entryPoint = "https"
+#   [entryPoints.https]
+#   address = ":443"
+#     [entryPoints.https.tls]
+#       [[entryPoints.https.tls.certificates]]
+#       CertFile = "integration/fixtures/https/snitest.com.cert"
+#       KeyFile = "integration/fixtures/https/snitest.com.key"
+#       [[entryPoints.https.tls.certificates]]
+#       CertFile = "integration/fixtures/https/snitest.org.cert"
+#       KeyFile = "integration/fixtures/https/snitest.org.key"
+#
+# To redirect an entrypoint rewriting the URL:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#     [entryPoints.http.redirect]
+#       regex = "^http://localhost/(.*)"
+#       replacement = "http://mydomain/$1"
+
+# Entrypoints to be used by frontends that do not specify any entrypoint.
+# Each frontend can specify its own entrypoints.
+#
+# Optional
+# Default: ["http"]
+#
+# defaultEntryPoints = ["http", "https"]
 
 # Timeout in seconds.
 # Duration to give active requests a chance to finish during hot-reloads
@@ -197,15 +230,6 @@ Use "traefik [command] --help" for more information about a command.
 #
 # logLevel = "ERROR"
 
-# SSL certificates and keys
-# You may add several certificate/key pairs to terminate HTTPS for multiple domain names using TLS SNI
-#
-# Optional
-#
-# [[certificates]]
-# CertFile = "traefik.crt"
-# KeyFile = "traefik.key"
-
 # Backends throttle duration: minimum duration between 2 events from providers
 # before applying a new configuration. It avoids unnecessary reloads if multiples events
 # are sent in a short amount of time.
@@ -234,7 +258,21 @@ Like any other reverse proxy, Træfɪk can be configured with a file. You have t
 
 ```toml
 # traefik.toml
-port = ":80"
+defaultEntryPoints = ["http", "https"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+      entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.com.cert"
+      KeyFile = "integration/fixtures/https/snitest.com.key"
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.org.cert"
+      KeyFile = "integration/fixtures/https/snitest.org.key"
 graceTimeOut = 10
 logLevel = "DEBUG"
 
@@ -270,7 +308,13 @@ logLevel = "DEBUG"
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
-    [frontends.frontend2.routes.test_2]
+  entrypoints = ["https"] # overrides defaultEntryPoints
+    [frontends.frontend2.routes.test_1]
+    rule = "Host"
+    value = "{subdomain:[a-z]+}.localhost"
+  [frontends.frontend3]
+  entrypoints = ["http", "https"] # overrides defaultEntryPoints
+  backend = "backend2"
     rule = "Path"
     value = "/test"
 ```
@@ -279,7 +323,20 @@ logLevel = "DEBUG"
 
 ```toml
 # traefik.toml
-port = ":80"
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+      entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.com.cert"
+      KeyFile = "integration/fixtures/https/snitest.com.key"
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.org.cert"
+      KeyFile = "integration/fixtures/https/snitest.org.key"
 graceTimeOut = 10
 logLevel = "DEBUG"
 
@@ -318,10 +375,15 @@ filename = "rules.toml"
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
-    [frontends.frontend2.routes.test_2]
+  entrypoints = ["https"] # overrides defaultEntryPoints
+    [frontends.frontend2.routes.test_1]
+    rule = "Host"
+    value = "{subdomain:[a-z]+}.localhost"
+  [frontends.frontend3]
+  entrypoints = ["http", "https"] # overrides defaultEntryPoints
+  backend = "backend2"
     rule = "Path"
     value = "/test"
-
 ```
 
 If you want Træfɪk to watch file changes automatically, just add:
@@ -534,6 +596,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
 - `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{containerName}.{domain}`) See [frontends](#frontends). Must be associated with label traefik.frontend.rule.
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
+- `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 * `traefik.domain=traefik.localhost`: override the default domain
 
 
@@ -598,6 +661,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
 - `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{appName}.{domain}`) See [frontends](#frontends). Must be associated with label traefik.frontend.rule.
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
+- `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 * `traefik.domain=traefik.localhost`: override the default domain
 
 ## <a id="consul"></a> Consul backend
@@ -676,6 +740,7 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 |----------------------------------------------------|------------|
 | `/traefik/frontends/frontend2/backend`             | `backend1` |
 | `/traefik/frontends/frontend2/passHostHeader`      | `true`     |
+| `/traefik/frontends/frontend2/entrypoints`         |`http,https`|
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
 | `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
 
@@ -756,6 +821,7 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 |----------------------------------------------------|------------|
 | `/traefik/frontends/frontend2/backend`             | `backend1` |
 | `/traefik/frontends/frontend2/passHostHeader`      | `true`     |
+| `/traefik/frontends/frontend2/entrypoints`         |`http,https`|
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
 | `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
 
@@ -835,6 +901,7 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 |----------------------------------------------------|------------|
 | `/traefik/frontends/frontend2/backend`             | `backend1` |
 | `/traefik/frontends/frontend2/passHostHeader`      | `true`     |
+| `/traefik/frontends/frontend2/entrypoints`         |`http,https`|
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
 | `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
 
