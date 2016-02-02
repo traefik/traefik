@@ -30,6 +30,7 @@ type GlobalConfiguration struct {
 	Web                       *WebProvider
 	Marathon                  *provider.Marathon
 	Consul                    *provider.Consul
+	ConsulCatalog             *provider.ConsulCatalog
 	Etcd                      *provider.Etcd
 	Zookeeper                 *provider.Zookepper
 	Boltdb                    *provider.BoltDb
@@ -223,6 +224,9 @@ func LoadConfiguration() *GlobalConfiguration {
 	}
 	if arguments.consul {
 		viper.Set("consul", arguments.Consul)
+	}
+	if arguments.consulCatalog {
+		viper.Set("consulCatalog", arguments.ConsulCatalog)
 	}
 	if arguments.zookeeper {
 		viper.Set("zookeeper", arguments.Zookeeper)

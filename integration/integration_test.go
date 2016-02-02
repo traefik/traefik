@@ -28,6 +28,7 @@ func init() {
 	check.Suite(&FileSuite{})
 	check.Suite(&DockerSuite{})
 	check.Suite(&ConsulSuite{})
+	check.Suite(&ConsulCatalogSuite{})
 	check.Suite(&MarathonSuite{})
 }
 
