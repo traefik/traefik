@@ -63,6 +63,7 @@ func replace(s1 string, s2 string, s3 string) string {
 	return strings.Replace(s3, s1, s2, -1)
 }
 
+// Escape beginning slash "/", convert all others to dash "-"
 func getEscapedName(name string) string {
-	return strings.Replace(name, "/", "", -1)
+	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
 }
