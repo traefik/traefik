@@ -80,6 +80,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 
 func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
+		"getBackend":        provider.getBackend,
 		"getPort":           provider.getPort,
 		"getWeight":         provider.getWeight,
 		"getDomain":         provider.getDomain,
@@ -301,4 +302,11 @@ func (provider *Marathon) getFrontendRule(application marathon.Application) stri
 		return label
 	}
 	return "Host"
+}
+
+func (provider *Marathon) getBackend(application marathon.Application) string {
+	if label, err := provider.getLabel(application, "traefik.backend"); err == nil {
+		return label
+	}
+	return replace("/", "-", application.ID)
 }
