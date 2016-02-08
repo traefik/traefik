@@ -7,7 +7,7 @@ ___
 
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
-It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
+It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
 
 
 ## Features
@@ -43,7 +43,7 @@ You can access to a simple HTML frontend of Træfik.
 
 ## Plumbing
 
-- [Oxy](https://github.com/mailgun/oxy/): an awsome proxy library made by Mailgun guys
+- [Oxy](https://github.com/vulcand/oxy): an awsome proxy library made by Mailgun guys
 - [Gorilla mux](https://github.com/gorilla/mux): famous request router
 - [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
 - [Manners](https://github.com/mailgun/manners): graceful shutdown of http.Handler servers
