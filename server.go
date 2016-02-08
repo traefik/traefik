@@ -236,6 +236,9 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.Boltdb != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Boltdb)
 	}
+	if server.globalConfiguration.Kubernetes != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Kubernetes)
+	}
 }
 
 func (server *Server) startProviders() {

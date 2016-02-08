@@ -19,14 +19,14 @@ func (s *SimpleSuite) TestNoOrInexistentConfigShouldFail(c *check.C) {
 	output, err := cmd.CombinedOutput()
 
 	c.Assert(err, checker.NotNil)
-	c.Assert(string(output), checker.Contains, "Error reading file: open : no such file or directory")
+	c.Assert(string(output), checker.Contains, "No configuration file found")
 
 	nonExistentFile := "non/existent/file.toml"
 	cmd = exec.Command(traefikBinary, "--configFile="+nonExistentFile)
 	output, err = cmd.CombinedOutput()
 
 	c.Assert(err, checker.NotNil)
-	c.Assert(string(output), checker.Contains, fmt.Sprintf("Error reading file: open %s: no such file or directory", nonExistentFile))
+	c.Assert(string(output), checker.Contains, fmt.Sprintf("Error reading configuration file: open %s: no such file or directory", nonExistentFile))
 }
 
 func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
@@ -34,7 +34,7 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	output, err := cmd.CombinedOutput()
 
 	c.Assert(err, checker.NotNil)
-	c.Assert(string(output), checker.Contains, "Error reading file: While parsing config: Near line 1")
+	c.Assert(string(output), checker.Contains, "While parsing config: Near line 0 (last key parsed ''): Bare keys cannot contain '{'")
 }
 
 func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {

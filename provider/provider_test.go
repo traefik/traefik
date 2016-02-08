@@ -74,7 +74,7 @@ func TestConfigurationErrors(t *testing.T) {
 					Filename: templateInvalidTOMLFile.Name(),
 				},
 			},
-			expectedError: "Near line 1, key 'Hello': Near line 1: Expected key separator '=', but got '<' instead",
+			expectedError: "Near line 1 (last key parsed 'Hello'): Expected key separator '=', but got '<' instead",
 			funcMap: template.FuncMap{
 				"Foo": func() string {
 					return "bar"
