@@ -55,6 +55,14 @@
 #
 # ProvidersThrottleDuration = "5s"
 
+# If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
+# If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
+#
+# Optional
+# Default: http.DefaultMaxIdleConnsPerHost
+#
+# MaxIdleConnsPerHost = 200
+
 
 ################################################################
 # Web configuration backend

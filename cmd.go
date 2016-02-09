@@ -14,6 +14,7 @@ import (
 	"github.com/emilevauge/traefik/provider"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"net/http"
 )
 
 var traefikCmd = &cobra.Command{
@@ -80,6 +81,7 @@ func init() {
 	traefikCmd.PersistentFlags().Var(&arguments.Certificates, "certificates", "SSL certificates and keys pair, ie 'tests/traefik.crt,tests/traefik.key'. You may add several certificate/key pairs to terminate HTTPS for multiple domain names using TLS SNI")
 	traefikCmd.PersistentFlags().StringP("logLevel", "l", "ERROR", "Log level")
 	traefikCmd.PersistentFlags().DurationVar(&arguments.ProvidersThrottleDuration, "providersThrottleDuration", time.Duration(2*time.Second), "Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time.")
+	traefikCmd.PersistentFlags().Int("maxIdleConnsPerHost", 0, "If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.web, "web", false, "Enable Web backend")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Web.Address, "web.address", ":8080", "Web administration port")
@@ -140,6 +142,7 @@ func init() {
 	viper.BindPFlag("logLevel", traefikCmd.PersistentFlags().Lookup("logLevel"))
 	// TODO: wait for this issue to be corrected: https://github.com/spf13/viper/issues/105
 	viper.BindPFlag("providersThrottleDuration", traefikCmd.PersistentFlags().Lookup("providersThrottleDuration"))
+	viper.BindPFlag("maxIdleConnsPerHost", traefikCmd.PersistentFlags().Lookup("maxIdleConnsPerHost"))
 	viper.SetDefault("certificates", &Certificates{})
 	viper.SetDefault("providersThrottleDuration", time.Duration(2*time.Second))
 }
@@ -150,6 +153,7 @@ func run() {
 	// load global configuration
 	globalConfiguration := LoadConfiguration()
 
+	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = globalConfiguration.MaxIdleConnsPerHost
 	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile)
 	defer loggerMiddleware.Close()
 

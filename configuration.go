@@ -23,6 +23,7 @@ type GlobalConfiguration struct {
 	Certificates              Certificates
 	LogLevel                  string
 	ProvidersThrottleDuration time.Duration
+	MaxIdleConnsPerHost       int
 	Docker                    *provider.Docker
 	File                      *provider.File
 	Web                       *WebProvider
