@@ -625,11 +625,11 @@ Træfɪk can be configured to use Marathon as a backend configuration:
 #
 endpoint = "http://127.0.0.1:8080"
 
-# Network interface used to call Marathon web services
+# Network interface used to call Marathon web services. Needed in case of multiple network interfaces.
 # Optional
 # Default: "eth0"
 #
-# networkInterface = "eth0"
+networkInterface = "eth0"
 
 # Enable watch Marathon changes
 #
@@ -649,6 +649,21 @@ domain = "marathon.localhost"
 # Optional
 #
 # filename = "marathon.tmpl"
+
+# Enable Marathon basic authentication
+#
+# Optional
+#
+#  [marathon.basic]
+#  httpBasicAuthUser = "foo"
+#  httpBasicPassword = "bar"
+
+# TLS client configuration. https://golang.org/pkg/crypto/tls/#Config
+#
+# Optional
+#
+# [marathon.TLS]
+# InsecureSkipVerify = true
 ```
 
 Labels can be used on containers to override default behaviour:
