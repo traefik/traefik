@@ -95,65 +95,63 @@ Usage:
 
 Available Commands:
   version     Print version
-  help        Help about any command
 
 Flags:
-      --accessLogsFile="log/access.log": Access logs file
-      --boltdb=false: Enable Boltdb backend
-      --boltdb.endpoint="127.0.0.1:4001": Boltdb server endpoint
-      --boltdb.filename="": Override default configuration template. For advanced users :)
-      --boltdb.prefix="/traefik": Prefix used for KV store
-      --boltdb.watch=true: Watch provider
-      --certificates=: SSL certificates and keys. You may add several certificate/key pairs to terminate HTTPS for multiple domain names using TLS SNI
-  -c, --configFile="": Configuration file to use (TOML, JSON, YAML, HCL).
-      --consul=false: Enable Consul backend
-      --consul.endpoint="127.0.0.1:8500": Consul server endpoint
-      --consul.filename="": Override default configuration template. For advanced users :)
-      --consul.prefix="/traefik": Prefix used for KV store
-      --consul.watch=true: Watch provider
-      --docker=false: Enable Docker backend
-      --docker.domain="": Default domain used
-      --docker.endpoint="unix:///var/run/docker.sock": Docker server endpoint. Can be a tcp or a unix socket endpoint
-      --docker.filename="": Override default configuration template. For advanced users :)
-      --docker.tls=false: Enable Docker TLS support
-      --docker.tls.ca="": TLS CA
-      --docker.tls.cert="": TLS cert
-      --docker.tls.insecureSkipVerify=false: TLS insecure skip verify
-      --docker.tls.key="": TLS key
-      --docker.watch=true: Watch provider
-      --etcd=false: Enable Etcd backend
-      --etcd.endpoint="127.0.0.1:4001": Etcd server endpoint
-      --etcd.filename="": Override default configuration template. For advanced users :)
-      --etcd.prefix="/traefik": Prefix used for KV store
-      --etcd.watch=true: Watch provider
-      --file=false: Enable File backend
-      --file.filename="": Override default configuration template. For advanced users :)
-      --file.watch=true: Watch provider
-  -g, --graceTimeOut="10": Timeout in seconds. Duration to give active requests a chance to finish during hot-reloads
-  -h, --help=false: help for traefik
-  -l, --logLevel="ERROR": Log level
-      --marathon=false: Enable Marathon backend
-      --marathon.domain="": Default domain used
-      --marathon.endpoint="http://127.0.0.1:8080": Marathon server endpoint. You can also specify multiple endpoint for Marathon
-      --marathon.filename="": Override default configuration template. For advanced users :)
-      --marathon.networkInterface="eth0": Network interface used to call Marathon web services. Needed in case of multiple network interfaces
-      --marathon.watch=true: Watch provider
-  -p, --port=":80": Reverse proxy port
-      --providersThrottleDuration=2s: Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time.
-      --traefikLogsFile="log/traefik.log": Traefik logs file
-      --web=false: Enable Web backend
-      --web.address=":8080": Web administration port
-      --web.cerFile="": SSL certificate
-      --web.keyFile="": SSL certificate
-      --web.readOnly=false: Enable read only API
-      --zookeeper=false: Enable Zookeeper backend
-      --zookeeper.endpoint="127.0.0.1:2181": Zookeeper server endpoint
-      --zookeeper.filename="": Override default configuration template. For advanced users :)
-      --zookeeper.prefix="/traefik": Prefix used for KV store
-      --zookeeper.watch=true: Watch provider
+      --accessLogsFile string                Access logs file (default "log/access.log")
+      --boltdb                               Enable Boltdb backend
+      --boltdb.endpoint string               Boltdb server endpoint (default "127.0.0.1:4001")
+      --boltdb.filename string               Override default configuration template. For advanced users :)
+      --boltdb.prefix string                 Prefix used for KV store (default "/traefik")
+      --boltdb.watch                         Watch provider (default true)
+      --certificates value                   SSL certificates and keys pair, ie 'tests/traefik.crt,tests/traefik.key'. You may add several certificate/key pairs to terminate HTTPS for multiple domain names using TLS SNI
+  -c, --configFile string                    Configuration file to use (TOML, JSON, YAML, HCL).
+      --consul                               Enable Consul backend
+      --consul.endpoint string               Consul server endpoint (default "127.0.0.1:8500")
+      --consul.filename string               Override default configuration template. For advanced users :)
+      --consul.prefix string                 Prefix used for KV store (default "/traefik")
+      --consul.watch                         Watch provider (default true)
+      --docker                               Enable Docker backend
+      --docker.domain string                 Default domain used
+      --docker.endpoint string               Docker server endpoint. Can be a tcp or a unix socket endpoint (default "unix:///var/run/docker.sock")
+      --docker.filename string               Override default configuration template. For advanced users :)
+      --docker.tls                           Enable Docker TLS support
+      --docker.tls.ca string                 TLS CA
+      --docker.tls.cert string               TLS cert
+      --docker.tls.insecureSkipVerify        TLS insecure skip verify
+      --docker.tls.key string                TLS key
+      --docker.watch                         Watch provider (default true)
+      --etcd                                 Enable Etcd backend
+      --etcd.endpoint string                 Etcd server endpoint (default "127.0.0.1:4001")
+      --etcd.filename string                 Override default configuration template. For advanced users :)
+      --etcd.prefix string                   Prefix used for KV store (default "/traefik")
+      --etcd.watch                           Watch provider (default true)
+      --file                                 Enable File backend
+      --file.filename string                 Override default configuration template. For advanced users :)
+      --file.watch                           Watch provider (default true)
+  -g, --graceTimeOut string                  Timeout in seconds. Duration to give active requests a chance to finish during hot-reloads (default "10")
+  -l, --logLevel string                      Log level (default "ERROR")
+      --marathon                             Enable Marathon backend
+      --marathon.domain string               Default domain used
+      --marathon.endpoint string             Marathon server endpoint. You can also specify multiple endpoint for Marathon (default "http://127.0.0.1:8080")
+      --marathon.filename string             Override default configuration template. For advanced users :)
+      --marathon.networkInterface string     Network interface used to call Marathon web services. Needed in case of multiple network interfaces (default "eth0")
+      --marathon.watch                       Watch provider (default true)
+      --maxIdleConnsPerHost int              If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used
+  -p, --port string                          Reverse proxy port (default ":80")
+      --providersThrottleDuration duration   Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (default 2s)
+      --traefikLogsFile string               Traefik logs file (default "log/traefik.log")
+      --web                                  Enable Web backend
+      --web.address string                   Web administration port (default ":8080")
+      --web.cerFile string                   SSL certificate
+      --web.keyFile string                   SSL certificate
+      --web.readOnly                         Enable read only API
+      --zookeeper                            Enable Zookeeper backend
+      --zookeeper.endpoint string            Zookeeper server endpoint (default "127.0.0.1:2181")
+      --zookeeper.filename string            Override default configuration template. For advanced users :)
+      --zookeeper.prefix string              Prefix used for KV store (default "/traefik")
+      --zookeeper.watch                      Watch provider (default true)
 
-
-Use "traefik help [command]" for more information about a command.
+Use "traefik [command] --help" for more information about a command.
 ```
 
 ## <a id="global"></a> Global configuration
@@ -216,6 +214,14 @@ Use "traefik help [command]" for more information about a command.
 # Default: "2s"
 #
 # ProvidersThrottleDuration = "5s"
+
+# If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
+# If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
+#
+# Optional
+# Default: http.DefaultMaxIdleConnsPerHost
+#
+# MaxIdleConnsPerHost = 200
 
 ```
 
