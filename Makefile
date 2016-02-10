@@ -24,7 +24,7 @@ print-%: ; @echo $*=$($*)
 
 default: binary
 
-all: build
+all: build-webui build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh
 
 binary: build-webui generate-webui build
