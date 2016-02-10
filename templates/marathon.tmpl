@@ -9,6 +9,9 @@
   [frontends.frontend{{.ID | replace "/" "-"}}]
   backend = "backend{{getBackend .}}"
   passHostHeader = {{getPassHostHeader .}}
+  entryPoints = [{{range getEntryPoints .}}
+    "{{.}}",
+  {{end}}]
     [frontends.frontend{{.ID | replace "/" "-"}}.routes.route-host{{.ID | replace "/" "-"}}]
     rule = "{{getFrontendRule .}}"
     value = "{{getFrontendValue .}}"

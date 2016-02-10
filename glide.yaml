@@ -145,7 +145,7 @@ import:
   - package: github.com/donovanhide/eventsource
     ref:     d8a3071799b98cacd30b6da92f536050ccfe6da4
   - package: github.com/golang/glog
-    ref: fca8c8854093a154ff1eb580aae10276ad6b1b5f
+    ref:     fca8c8854093a154ff1eb580aae10276ad6b1b5f
   - package: github.com/spf13/cast
     ref: ee7b3e0353166ab1f3a605294ac8cd2b77953778
   - package: github.com/mitchellh/mapstructure
@@ -161,4 +161,5 @@ import:
   - package: github.com/spf13/cobra
     subpackages:
     - /cobra
+  - package: github.com/vulcand/vulcand/plugin/rewrite
 

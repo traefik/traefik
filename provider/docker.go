@@ -107,6 +107,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []docker.Container)
 		"getDomain":         provider.getDomain,
 		"getProtocol":       provider.getProtocol,
 		"getPassHostHeader": provider.getPassHostHeader,
+		"getEntryPoints":    provider.getEntryPoints,
 		"getFrontendValue":  provider.getFrontendValue,
 		"getFrontendRule":   provider.getFrontendRule,
 		"replace":           replace,
@@ -232,6 +233,13 @@ func (provider *Docker) getPassHostHeader(container docker.Container) string {
 		return passHostHeader
 	}
 	return "false"
+}
+
+func (provider *Docker) getEntryPoints(container docker.Container) []string {
+	if entryPoints, err := getLabel(container, "traefik.frontend.entryPoints"); err == nil {
+		return strings.Split(entryPoints, ",")
+	}
+	return []string{}
 }
 
 func getLabel(container docker.Container, label string) (string, error) {

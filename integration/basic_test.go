@@ -46,9 +46,10 @@ func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
 	// TODO validate : run on 80
 	resp, err := http.Get("http://127.0.0.1:8000/")
 
-	// Expected a 404 as we did not configure anything
-	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
+	// Expected no response as we did not configure anything
+	c.Assert(resp, checker.IsNil)
+	c.Assert(err, checker.NotNil)
+	c.Assert(err.Error(), checker.Contains, fmt.Sprintf("getsockopt: connection refused"))
 }
 
 func (s *SimpleSuite) TestWithWebConfig(c *check.C) {

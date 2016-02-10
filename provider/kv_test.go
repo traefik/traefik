@@ -176,7 +176,7 @@ func TestKvGet(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual := c.provider.get(c.keys...)
+		actual := c.provider.get("", c.keys...)
 		if actual != c.expected {
 			t.Fatalf("expected %v, got %v for %v and %v", c.expected, actual, c.keys, c.provider)
 		}
@@ -188,7 +188,7 @@ func TestKvGet(t *testing.T) {
 			Error: true,
 		},
 	}
-	actual := provider.get("anything")
+	actual := provider.get("", "anything")
 	if actual != "" {
 		t.Fatalf("Should have return nil, got %v", actual)
 	}

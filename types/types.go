@@ -36,6 +36,7 @@ type Route struct {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
+	EntryPoints    []string         `json:"entryPoints,omitempty"`
 	Backend        string           `json:"backend,omitempty"`
 	Routes         map[string]Route `json:"routes,omitempty"`
 	PassHostHeader bool             `json:"passHostHeader,omitempty"`

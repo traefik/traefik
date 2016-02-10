@@ -1,9 +1,5 @@
-# Reverse proxy port
-#
-# Optional
-# Default: ":80"
-#
-port = ":8000"
-#
-# LogLevel
-logLevel = "DEBUG"
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"

@@ -4,6 +4,7 @@ Copyright
 package main
 
 import (
+	"encoding/json"
 	fmtlog "log"
 	"os"
 	"strings"
@@ -49,6 +50,7 @@ var arguments = struct {
 	boltdb    bool
 }{
 	GlobalConfiguration{
+		EntryPoints: make(EntryPoints),
 		Docker: &provider.Docker{
 			TLS: &provider.DockerTLS{},
 		},
@@ -78,7 +80,8 @@ func init() {
 	traefikCmd.PersistentFlags().StringP("graceTimeOut", "g", "10", "Timeout in seconds. Duration to give active requests a chance to finish during hot-reloads")
 	traefikCmd.PersistentFlags().String("accessLogsFile", "log/access.log", "Access logs file")
 	traefikCmd.PersistentFlags().String("traefikLogsFile", "log/traefik.log", "Traefik logs file")
-	traefikCmd.PersistentFlags().Var(&arguments.Certificates, "certificates", "SSL certificates and keys pair, ie 'tests/traefik.crt,tests/traefik.key'. You may add several certificate/key pairs to terminate HTTPS for multiple domain names using TLS SNI")
+	traefikCmd.PersistentFlags().Var(&arguments.EntryPoints, "entryPoints", "Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'")
+	traefikCmd.PersistentFlags().Var(&arguments.DefaultEntryPoints, "defaultEntryPoints", "Entrypoints to be used by frontends that do not specify any entrypoint")
 	traefikCmd.PersistentFlags().StringP("logLevel", "l", "ERROR", "Log level")
 	traefikCmd.PersistentFlags().DurationVar(&arguments.ProvidersThrottleDuration, "providersThrottleDuration", time.Duration(2*time.Second), "Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time.")
 	traefikCmd.PersistentFlags().Int("maxIdleConnsPerHost", 0, "If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used")
@@ -138,13 +141,13 @@ func init() {
 	viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))
 	viper.BindPFlag("port", traefikCmd.PersistentFlags().Lookup("port"))
 	viper.BindPFlag("graceTimeOut", traefikCmd.PersistentFlags().Lookup("graceTimeOut"))
-	//	viper.BindPFlag("certificates", TraefikCmd.PersistentFlags().Lookup("certificates"))
+	//viper.BindPFlag("defaultEntryPoints", traefikCmd.PersistentFlags().Lookup("defaultEntryPoints"))
 	viper.BindPFlag("logLevel", traefikCmd.PersistentFlags().Lookup("logLevel"))
 	// TODO: wait for this issue to be corrected: https://github.com/spf13/viper/issues/105
 	viper.BindPFlag("providersThrottleDuration", traefikCmd.PersistentFlags().Lookup("providersThrottleDuration"))
 	viper.BindPFlag("maxIdleConnsPerHost", traefikCmd.PersistentFlags().Lookup("maxIdleConnsPerHost"))
-	viper.SetDefault("certificates", &Certificates{})
 	viper.SetDefault("providersThrottleDuration", time.Duration(2*time.Second))
+	viper.SetDefault("logLevel", "ERROR")
 }
 
 func run() {
@@ -176,7 +179,8 @@ func run() {
 	} else {
 		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
-	log.Debugf("Global configuration loaded %+v", globalConfiguration)
+	jsonConf, _ := json.Marshal(globalConfiguration)
+	log.Debugf("Global configuration loaded %s", string(jsonConf))
 	server := NewServer(*globalConfiguration)
 	server.Start()
 	defer server.Close()

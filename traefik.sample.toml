@@ -2,12 +2,45 @@
 # Global configuration
 ################################################################
 
-# Reverse proxy port
+# Entrypoints definition
 #
 # Optional
-# Default: ":80"
+# Default:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
 #
-# port = ":80"
+# To redirect an http entrypoint to an https entrypoint (with SNI support):
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#     [entryPoints.http.redirect]
+#       entryPoint = "https"
+#   [entryPoints.https]
+#   address = ":443"
+#     [entryPoints.https.tls]
+#       [[entryPoints.https.tls.certificates]]
+#       CertFile = "integration/fixtures/https/snitest.com.cert"
+#       KeyFile = "integration/fixtures/https/snitest.com.key"
+#       [[entryPoints.https.tls.certificates]]
+#       CertFile = "integration/fixtures/https/snitest.org.cert"
+#       KeyFile = "integration/fixtures/https/snitest.org.key"
+#
+# To redirect an entrypoint rewriting the URL:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#     [entryPoints.http.redirect]
+#       regex = "^http://localhost/(.*)"
+#       replacement = "http://mydomain/$1"
+
+# Entrypoints to be used by frontends that do not specify any entrypoint.
+# Each frontend can specify its own entrypoints.
+#
+# Optional
+# Default: ["http"]
+#
+# defaultEntryPoints = ["http", "https"]
 
 # Timeout in seconds.
 # Duration to give active requests a chance to finish during hot-reloads
@@ -36,15 +69,6 @@
 # Default: "ERROR"
 #
 # logLevel = "ERROR"
-
-# SSL certificates and keys
-# You may add several certificate/key pairs to terminate HTTPS for multiple domain names using TLS SNI
-#
-# Optional
-#
-# [[certificates]]
-# CertFile = "traefik.crt"
-# KeyFile = "traefik.key"
 
 # Backends throttle duration: minimum duration between 2 events from providers
 # before applying a new configuration. It avoids unnecessary reloads if multiples events
@@ -390,6 +414,12 @@
 #   [frontends.frontend2]
 #   backend = "backend1"
 #   passHostHeader = true
-#     [frontends.frontend2.routes.test_2]
+#   entrypoints = ["https"] # overrides defaultEntryPoints
+#     [frontends.frontend2.routes.test_1]
+#     rule = "Host"
+#     value = "{subdomain:[a-z]+}.localhost"
+#   [frontends.frontend3]
+#   entrypoints = ["http", "https"] # overrides defaultEntryPoints
+#   backend = "backend2"
 #     rule = "Path"
 #     value = "/test"

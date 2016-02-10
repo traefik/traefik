@@ -5,13 +5,13 @@
 {{$backend := .}}
 {{$servers := List $backend "/servers/" }}
 
-{{$circuitBreaker := Get . "/circuitbreaker/" "expression"}}
+{{$circuitBreaker := Get "" . "/circuitbreaker/" "expression"}}
 {{with $circuitBreaker}}
 [backends.{{Last $backend}}.circuitBreaker]
     expression = "{{$circuitBreaker}}"
 {{end}}
 
-{{$loadBalancer := Get . "/loadbalancer/" "method"}}
+{{$loadBalancer := Get "" . "/loadbalancer/" "method"}}
 {{with $loadBalancer}}
 [backends.{{Last $backend}}.loadBalancer]
     method = "{{$loadBalancer}}"
@@ -19,20 +19,24 @@
 
 {{range $servers}}
 [backends.{{Last $backend}}.servers.{{Last .}}]
-    url = "{{Get . "/url"}}"
-    weight = {{Get . "/weight"}}
+    url = "{{Get "" . "/url"}}"
+    weight = {{Get ""  . "/weight"}}
 {{end}}
 {{end}}
 
 [frontends]{{range $frontends}}
     {{$frontend := Last .}}
+    {{$entryPoints := SplitGet . "/entrypoints"}}
     [frontends.{{$frontend}}]
-    backend = "{{Get . "/backend"}}"
-    passHostHeader = {{Get . "/passHostHeader"}}
+    backend = "{{Get "" . "/backend"}}"
+    passHostHeader = {{Get "false" . "/passHostHeader"}}
+    entryPoints = [{{range $entryPoints}}
+      "{{.}}",
+    {{end}}]
     {{$routes := List . "/routes/"}}
         {{range $routes}}
         [frontends.{{$frontend}}.routes.{{Last .}}]
-        rule = "{{Get . "/rule"}}"
-        value = "{{Get . "/value"}}"
+        rule = "{{Get "" . "/rule"}}"
+        value = "{{Get "" . "/value"}}"
         {{end}}
 {{end}}

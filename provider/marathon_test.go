@@ -84,7 +84,8 @@ func TestMarathonLoadConfig(t *testing.T) {
 			},
 			expectedFrontends: map[string]*types.Frontend{
 				`frontend-test`: {
-					Backend: "backend-test",
+					Backend:     "backend-test",
+					EntryPoints: []string{},
 					Routes: map[string]types.Route{
 						`route-host-test`: {
 							Rule:  "Host",
@@ -731,6 +732,36 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 		actual := provider.getPassHostHeader(a.application)
 		if actual != a.expected {
 			t.Fatalf("expected %q, got %q", a.expected, actual)
+		}
+	}
+}
+
+func TestMarathonGetEntryPoints(t *testing.T) {
+	provider := &Marathon{}
+
+	applications := []struct {
+		application marathon.Application
+		expected    []string
+	}{
+		{
+			application: marathon.Application{},
+			expected:    []string{},
+		},
+		{
+			application: marathon.Application{
+				Labels: map[string]string{
+					"traefik.frontend.entryPoints": "http,https",
+				},
+			},
+			expected: []string{"http", "https"},
+		},
+	}
+
+	for _, a := range applications {
+		actual := provider.getEntryPoints(a.application)
+
+		if !reflect.DeepEqual(actual, a.expected) {
+			t.Fatalf("expected %#v, got %#v", a.expected, actual)
 		}
 	}
 }

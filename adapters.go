@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/gorilla/mux"
 )
 
 // OxyLogger implements oxy Logger interface with logrus.
@@ -32,11 +31,4 @@ func (oxylogger *OxyLogger) Errorf(format string, args ...interface{}) {
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 	//templatesRenderer.HTML(w, http.StatusNotFound, "notFound", nil)
-}
-
-// LoadDefaultConfig returns a default gorrilla.mux router from the specified configuration.
-func LoadDefaultConfig(globalConfiguration GlobalConfiguration) *mux.Router {
-	router := mux.NewRouter()
-	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	return router
 }
