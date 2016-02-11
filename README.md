@@ -80,7 +80,7 @@ Refer to the [benchmarks section](docs/index.md#benchmarks) in the documentation
 
 These projects use Træfɪk internally. If your company uses Træfɪk, we would be glad to get your feedback :) Contact us on [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 
-- Project [Mantl](http://http://mantl.io/) from Cisco
+- Project [Mantl](https://mantl.io/) from Cisco
 
 ![Web UI Providers](docs/img/mantl-logo.png)
 > Mantl is a modern platform for rapidly deploying globally distributed services. A container orchestrator, docker, a network stack, something to pool your logs, something to monitor health, a sprinkle of service discovery and some automation.
