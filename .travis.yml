@@ -1,0 +1,11 @@
+sudo: required
+
+services:
+  - docker
+
+script:
+  - make all
+  - make crossbinary
+  - make image
+
+# install: Use deployment
