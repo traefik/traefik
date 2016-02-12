@@ -1,13 +1,13 @@
 {{$apps := .Applications}}
 [backends]{{range .Tasks}}
-    [backends.backend{{with index $apps 0 }}{{getBackend .}}{{end}}.servers.server-{{.ID | replace "." "-"}}]
+    [backends.backend{{getBackend . $apps}}.servers.server-{{.ID | replace "." "-"}}]
     url = "{{getProtocol . $apps}}://{{.Host}}:{{getPort . $apps}}"
     weight = {{getWeight . $apps}}
 {{end}}
 
 [frontends]{{range .Applications}}
   [frontends.frontend{{.ID | replace "/" "-"}}]
-  backend = "backend{{getBackend .}}"
+  backend = "backend{{getFrontendBackend .}}"
   passHostHeader = {{getPassHostHeader .}}
   entryPoints = [{{range getEntryPoints .}}
     "{{.}}",
