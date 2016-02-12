@@ -81,16 +81,17 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 
 func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
-		"getBackend":        provider.getBackend,
-		"getPort":           provider.getPort,
-		"getWeight":         provider.getWeight,
-		"getDomain":         provider.getDomain,
-		"getProtocol":       provider.getProtocol,
-		"getPassHostHeader": provider.getPassHostHeader,
-		"getEntryPoints":    provider.getEntryPoints,
-		"getFrontendValue":  provider.getFrontendValue,
-		"getFrontendRule":   provider.getFrontendRule,
-		"replace":           replace,
+		"getBackend":         provider.getBackend,
+		"getPort":            provider.getPort,
+		"getWeight":          provider.getWeight,
+		"getDomain":          provider.getDomain,
+		"getProtocol":        provider.getProtocol,
+		"getPassHostHeader":  provider.getPassHostHeader,
+		"getEntryPoints":     provider.getEntryPoints,
+		"getFrontendValue":   provider.getFrontendValue,
+		"getFrontendRule":    provider.getFrontendRule,
+		"getFrontendBackend": provider.getFrontendBackend,
+		"replace":            replace,
 	}
 
 	applications, err := provider.marathonClient.Applications(nil)
@@ -313,7 +314,16 @@ func (provider *Marathon) getFrontendRule(application marathon.Application) stri
 	return "Host"
 }
 
-func (provider *Marathon) getBackend(application marathon.Application) string {
+func (provider *Marathon) getBackend(task marathon.Task, applications []marathon.Application) string {
+	application, errApp := getApplication(task, applications)
+	if errApp != nil {
+		log.Errorf("Unable to get marathon application from task %s", task.AppID)
+		return ""
+	}
+	return provider.getFrontendBackend(application)
+}
+
+func (provider *Marathon) getFrontendBackend(application marathon.Application) string {
 	if label, err := provider.getLabel(application, "traefik.backend"); err == nil {
 		return label
 	}

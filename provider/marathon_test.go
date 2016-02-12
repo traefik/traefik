@@ -851,7 +851,7 @@ func TestMarathonGetBackend(t *testing.T) {
 	}
 
 	for _, a := range applications {
-		actual := provider.getBackend(a.application)
+		actual := provider.getFrontendBackend(a.application)
 		if actual != a.expected {
 			t.Fatalf("expected %q, got %q", a.expected, actual)
 		}

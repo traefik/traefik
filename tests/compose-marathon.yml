@@ -31,6 +31,7 @@ slave:
     - /usr/bin/docker:/usr/bin/docker:ro
     - /usr/lib/x86_64-linux-gnu/libapparmor.so.1:/usr/lib/x86_64-linux-gnu/libapparmor.so.1:ro
     - /var/run/docker.sock:/var/run/docker.sock
+    - /lib/x86_64-linux-gnu/libsystemd-journal.so.0:/lib/x86_64-linux-gnu/libsystemd-journal.so.0
 
 marathon:
   image: mesosphere/marathon:v0.13.0
