@@ -87,6 +87,9 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	c.Assert(err, checker.IsNil)
 	s.composeProject = composeProject
 
+	err = composeProject.Create()
+	c.Assert(err, checker.IsNil)
+
 	s.started = make(chan bool)
 	s.stopped = make(chan bool)
 	s.deleted = make(chan bool)
@@ -96,7 +99,8 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 
 	composeProject.AddListener(s.listenChan)
 
-	composeProject.Start()
+	err = composeProject.Start()
+	c.Assert(err, checker.IsNil)
 
 	// Wait for compose to start
 	<-s.started
