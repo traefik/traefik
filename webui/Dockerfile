@@ -11,8 +11,8 @@ COPY bower.json $WEBUI_DIR/
 
 WORKDIR $WEBUI_DIR
 RUN npm set progress=false
-RUN npm install
-RUN bower install --allow-root
+RUN npm install --quiet
+RUN bower install --allow-root --quiet
 
 COPY . $WEBUI_DIR/
 

@@ -24,13 +24,13 @@ print-%: ; @echo $*=$($*)
 
 default: binary
 
-all: build-webui build
+all: generate-webui build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh
 
-binary: build-webui generate-webui build
+binary: generate-webui build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
 
-crossbinary: build-webui generate-webui build
+crossbinary: generate-webui build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate crossbinary
 
 test: build
@@ -77,10 +77,12 @@ run-dev:
 	go build
 	./traefik
 
-generate-webui:
-	mkdir -p static
-	docker run --rm -v "$$PWD/static":'/src/static' traefik-webui gulp
-	echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md
+generate-webui: build-webui
+	if [ ! -d "static" ]; then \
+		mkdir -p static; \
+		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui gulp; \
+		echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md; \
+	fi
 
 lint:
 	$(foreach file,$(SRCS),golint $(file) || exit;)
