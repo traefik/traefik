@@ -983,7 +983,7 @@ Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` co
 | `/traefik_configurations/2/backends/backend1/servers/server2/url`       | `http://172.17.0.4:80`      |
 | `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                        |
 
-Note that TRAEFIK *will not watch for key changes in the `/traefik_configurations` prefix*. It will only watch for changes in the `/traefik` prefix. Further, if the `/traefik/alias` key is set, all other sibling keys with the `/traefik` prefix are ignored.
+Note that Træfɪk *will not watch for key changes in the `/traefik_configurations` prefix*. It will only watch for changes in the `/traefik` prefix. Further, if the `/traefik/alias` key is set, all other sibling keys with the `/traefik` prefix are ignored.
 
 
 ## <a id="benchmarks"></a> Benchmarks
