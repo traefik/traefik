@@ -80,7 +80,9 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	composeProject, err := docker.NewProject(&docker.Context{
 		Context: project.Context{
-			ComposeFile: fmt.Sprintf("resources/compose/%s.yml", name),
+			ComposeFiles: []string{
+				fmt.Sprintf("resources/compose/%s.yml", name),
+			},
 			ProjectName: fmt.Sprintf("integration-test-%s", name),
 		},
 	})

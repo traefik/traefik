@@ -3,7 +3,7 @@ zk:
   net: host
   environment:
     ZK_CONFIG: tickTime=2000,initLimit=10,syncLimit=5,maxClientCnxns=128,forceSync=no,clientPort=2181
-    ZK_ID: 1
+    ZK_ID: " 1"
 
 master:
   image: mesosphere/mesos-master:0.23.0-1.0.ubuntu1404
@@ -12,7 +12,7 @@ master:
     MESOS_ZK: zk://127.0.0.1:2181/mesos
     MESOS_HOSTNAME: 127.0.0.1
     MESOS_IP: 127.0.0.1
-    MESOS_QUORUM: 1
+    MESOS_QUORUM: " 1"
     MESOS_CLUSTER: docker-compose
     MESOS_WORK_DIR: /var/lib/mesos
 
