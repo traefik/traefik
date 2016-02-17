@@ -15,6 +15,7 @@ ___
 - [Etcd backend](#etcd)
 - [Zookeeper backend](#zk)
 - [Boltdb backend](#boltdb)
+- [Atomic configuration changes](#atomicconfig)
 - [Benchmarks](#benchmarks)
 
 
@@ -945,6 +946,44 @@ Træfɪk can be configured to use BoltDB as a backend configuration:
 #
 # filename = "boltdb.tmpl"
 ```
+
+## <a id="atomicconfig"></a> Atomic configuration changes
+
+The [Etcd](https://github.com/coreos/etcd/issues/860) and [Consul](https://github.com/hashicorp/consul/issues/886) backends do not support updating multiple keys atomically. As a result, it may be possible for Træfɪk to read an intermediate configuration state despite judicious use of the `--providersThrottleDuration` flag. To solve this problem, Træfɪk supports a special key called `/traefik/alias`. If set, Træfɪk use the value as an alternative key prefix.
+
+Given the key structure below, Træfɪk will use the `http://172.17.0.2:80` as its only backend (frontend keys have been omitted for brevity).
+
+| Key                                                                     | Value                       |
+|-------------------------------------------------------------------------|-----------------------------|
+| `/traefik/alias`                                                        | `/traefik_configurations/1` |
+| `/traefik_configurations/1/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
+| `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
+
+When an atomic configuration change is required, you may write a new configuration at an alternative prefix. Here, although the `/traefik_configurations/2/...` keys have been set, the old configuration is still active because the `/traefik/alias` key still points to `/traefik_configurations/1`:
+
+| Key                                                                     | Value                       |
+|-------------------------------------------------------------------------|-----------------------------|
+| `/traefik/alias`                                                        | `/traefik_configurations/1` |
+| `/traefik_configurations/1/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
+| `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
+| `/traefik_configurations/2/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
+| `/traefik_configurations/2/backends/backend1/servers/server1/weight`    | `5`                        |
+| `/traefik_configurations/2/backends/backend1/servers/server2/url`       | `http://172.17.0.3:80`      |
+| `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                        |
+
+Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` configuration becomes active atomically. Here, we have a 50% balance between the `http://172.17.0.3:80` and the `http://172.17.0.4:80` hosts while no traffic is sent to the `172.17.0.2:80` host:
+
+| Key                                                                     | Value                       |
+|-------------------------------------------------------------------------|-----------------------------|
+| `/traefik/alias`                                                        | `/traefik_configurations/2` |
+| `/traefik_configurations/1/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
+| `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
+| `/traefik_configurations/2/backends/backend1/servers/server1/url`       | `http://172.17.0.3:80`      |
+| `/traefik_configurations/2/backends/backend1/servers/server1/weight`    | `5`                        |
+| `/traefik_configurations/2/backends/backend1/servers/server2/url`       | `http://172.17.0.4:80`      |
+| `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                        |
+
+Note that Træfɪk *will not watch for key changes in the `/traefik_configurations` prefix*. It will only watch for changes in the `/traefik` prefix. Further, if the `/traefik/alias` key is set, all other sibling keys with the `/traefik` prefix are ignored.
 
 
 ## <a id="benchmarks"></a> Benchmarks

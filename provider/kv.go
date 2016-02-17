@@ -70,7 +70,8 @@ func (provider *Kv) loadConfig() *types.Configuration {
 	templateObjects := struct {
 		Prefix string
 	}{
-		provider.Prefix,
+		// Allow `/traefik/alias` to superesede `provider.Prefix`
+		strings.TrimSuffix(provider.get(provider.Prefix, provider.Prefix+"/alias"), "/"),
 	}
 	var KvFuncMap = template.FuncMap{
 		"List":     provider.list,
