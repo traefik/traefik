@@ -27,6 +27,7 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 - SSL frontend support
 - Clean AngularJS Web UI
 - Websocket support
+- HTTP/2 support
 
 ## Demo
 
