@@ -239,6 +239,13 @@
 #  httpBasicAuthUser = "foo"
 #  httpBasicPassword = "bar"
 
+# TLS client configuration. https://golang.org/pkg/crypto/tls/#Config
+#
+# Optional
+#
+# [marathon.TLS]
+# InsecureSkipVerify = true
+
 
 ################################################################
 # Consul KV configuration backend

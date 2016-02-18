@@ -7,10 +7,12 @@ import (
 	"strings"
 	"text/template"
 
+	"crypto/tls"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/emilevauge/traefik/types"
 	"github.com/gambol99/go-marathon"
+	"net/http"
 )
 
 // Marathon holds configuration of the Marathon provider.
@@ -20,7 +22,8 @@ type Marathon struct {
 	Domain           string
 	NetworkInterface string
 	Basic            *MarathonBasic
-	marathonClient   lightMarathonClient
+	TLS              *tls.Config
+	marathonClient   marathon.Marathon
 }
 
 // MarathonBasic holds basic authentication specific configurations
@@ -43,6 +46,11 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 	if provider.Basic != nil {
 		config.HTTPBasicAuthUser = provider.Basic.HTTPBasicAuthUser
 		config.HTTPBasicPassword = provider.Basic.HTTPBasicPassword
+	}
+	config.HTTPClient = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: provider.TLS,
+		},
 	}
 	client, err := marathon.NewClient(config)
 	if err != nil {
@@ -100,7 +108,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		return nil
 	}
 
-	tasks, err := provider.marathonClient.AllTasks((url.Values{"status": []string{"running"}}))
+	tasks, err := provider.marathonClient.AllTasks(&marathon.AllTasksOpts{Status: "running"})
 	if err != nil {
 		log.Errorf("Failed to create a client for marathon, error: %s", err)
 		return nil
@@ -190,7 +198,7 @@ func taskFilter(task marathon.Task, applications *marathon.Applications) bool {
 	//filter healthchecks
 	if application.HasHealthChecks() {
 		if task.HasHealthCheckResults() {
-			for _, healthcheck := range task.HealthCheckResult {
+			for _, healthcheck := range task.HealthCheckResults {
 				// found one bad healthcheck, return false
 				if !healthcheck.Alive {
 					log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
