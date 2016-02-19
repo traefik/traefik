@@ -51,9 +51,9 @@ type combinedLoggingHandler struct {
 
 func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	t := time.Now()
-	logger := makeLogger(w)
+	logger := &responseLogger{w: w}
 	h.handler.ServeHTTP(logger, req)
-	
+
 	username := "-"
 	url := *req.URL
 	if url.User != nil {
@@ -61,7 +61,7 @@ func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 			username = name
 		}
 	}
-	
+
 	host, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
 		host = req.RemoteAddr
@@ -76,23 +76,11 @@ func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	referer := req.Referer()
 	agent := req.UserAgent()
 	frontendHost := req.Host
-	backendHost := req.RemoteAddr  // FIXME TODO  this is not quite correct
+	backendHost := req.RemoteAddr // FIXME TODO  this is not quite correct
 	elapsed := time.Now().UTC().Sub(t.UTC())
-	
+
 	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" "%s" "%s" %s %s`,
-	    host, username, ts, method, uri, proto, status, len, referer, agent, frontendHost, backendHost, elapsed, "\n")
-}
-
-func makeLogger(w http.ResponseWriter) loggingResponseWriter {
-	var logger loggingResponseWriter = &responseLogger{w: w}
-	return logger
-}
-
-type loggingResponseWriter interface {
-	http.ResponseWriter
-	http.Flusher
-	Status() int
-	Size() int
+		host, username, ts, method, uri, proto, status, len, referer, agent, frontendHost, backendHost, elapsed, "\n")
 }
 
 // responseLogger is wrapper of http.ResponseWriter that keeps track of its HTTP status
