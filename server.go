@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/emilevauge/traefik/middlewares"
@@ -23,6 +24,7 @@ import (
 	"os/signal"
 	"reflect"
 	"regexp"
+	"sort"
 	"sync"
 	"syscall"
 	"time"
@@ -312,7 +314,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 	backends := map[string]http.Handler{}
 	for _, configuration := range configurations {
-		for frontendName, frontend := range configuration.Frontends {
+		frontendNames := sortedFrontendNamesForConfig(configuration)
+		for _, frontendName := range frontendNames {
+			frontend := configuration.Frontends[frontendName]
+
 			log.Debugf("Creating frontend %s", frontendName)
 			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
 			// default endpoints if not defined in frontends
@@ -436,4 +441,16 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	return router
+}
+
+func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
+	keys := []string{}
+
+	for key := range configuration.Frontends {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	return keys
 }
