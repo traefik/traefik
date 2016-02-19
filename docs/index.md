@@ -109,6 +109,11 @@ Flags:
       --consul.endpoint string               Consul server endpoint (default "127.0.0.1:8500")
       --consul.filename string               Override default configuration template. For advanced users :)
       --consul.prefix string                 Prefix used for KV store (default "/traefik")
+      --consul.tls                           Enable Consul TLS support
+      --consul.tls.ca string                 TLS CA
+      --consul.tls.cert string               TLS cert
+      --consul.tls.insecureSkipVerify        TLS insecure skip verify
+      --consul.tls.key string                TLS key
       --consul.watch                         Watch provider (default true)
       --consulCatalog                        Enable Consul catalog backend
       --consulCatalog.domain string          Default domain used
@@ -129,6 +134,11 @@ Flags:
       --etcd.endpoint string                 Etcd server endpoint (default "127.0.0.1:4001")
       --etcd.filename string                 Override default configuration template. For advanced users :)
       --etcd.prefix string                   Prefix used for KV store (default "/traefik")
+      --etcd.tls                             Enable Etcd TLS support
+      --etcd.tls.ca string                   TLS CA
+      --etcd.tls.cert string                 TLS cert
+      --etcd.tls.insecureSkipVerify          TLS insecure skip verify
+      --etcd.tls.key string                  TLS key
       --etcd.watch                           Watch provider (default true)
       --file                                 Enable File backend
       --file.filename string                 Override default configuration template. For advanced users :)
@@ -142,7 +152,6 @@ Flags:
       --marathon.networkInterface string     Network interface used to call Marathon web services. Needed in case of multiple network interfaces (default "eth0")
       --marathon.watch                       Watch provider (default true)
       --maxIdleConnsPerHost int              If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used
-  -p, --port string                          Reverse proxy port (default ":80")
       --providersThrottleDuration duration   Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (default 2s)
       --traefikLogsFile string               Traefik logs file (default "log/traefik.log")
       --web                                  Enable Web backend
@@ -722,6 +731,16 @@ prefix = "traefik"
 # Optional
 #
 # filename = "consul.tmpl"
+
+# Enable consul TLS connection
+#
+# Optional
+#
+# [consul.tls]
+# ca = "/etc/ssl/ca.crt"
+# cert = "/etc/ssl/consul.crt"
+# key = "/etc/ssl/consul.key"
+# insecureskipverify = true
 ```
 
 The Keys-Values structure should look (using `prefix = "/traefik"`):
@@ -803,6 +822,16 @@ Træfɪk can be configured to use Etcd as a backend configuration:
 # Optional
 #
 # filename = "etcd.tmpl"
+
+# Enable etcd TLS connection
+#
+# Optional
+#
+# [etcd.tls]
+# ca = "/etc/ssl/ca.crt"
+# cert = "/etc/ssl/etcd.crt"
+# key = "/etc/ssl/etcd.key"
+# insecureskipverify = true
 ```
 
 The Keys-Values structure should look (using `prefix = "/traefik"`):

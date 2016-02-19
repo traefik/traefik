@@ -281,6 +281,16 @@
 #
 # filename = "consul.tmpl"
 
+# Enable consul TLS connection
+#
+# Optional
+#
+# [consul.tls]
+# ca = "/etc/ssl/ca.crt"
+# cert = "/etc/ssl/consul.crt"
+# key = "/etc/ssl/consul.key"
+# insecureskipverify = true
+
 
 ################################################################
 # Etcd configuration backend
@@ -315,6 +325,16 @@
 # Optional
 #
 # filename = "etcd.tmpl"
+
+# Enable etcd TLS connection
+#
+# Optional
+#
+# [etcd.tls]
+# ca = "/etc/ssl/ca.crt"
+# cert = "/etc/ssl/etcd.crt"
+# key = "/etc/ssl/etcd.key"
+# insecureskipverify = true
 
 
 ################################################################
