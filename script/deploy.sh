@@ -1,6 +1,13 @@
 #!/bin/sh
 set -e
 
+if ([ "$TRAVIS_BRANCH" = "master" ] || [ ! -z "$TRAVIS_TAG" ]) && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+  echo "Deploying"
+else
+  echo "Skipping deploy"
+  exit 0
+fi
+
 curl -LO https://github.com/tcnksm/ghr/releases/download/pre-release/linux_amd64.zip
 unzip -q linux_amd64.zip
 sudo mv grh /usr/bin/ghr

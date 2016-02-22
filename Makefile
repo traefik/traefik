@@ -88,3 +88,6 @@ lint:
 
 fmt:
 	gofmt -s -l -w $(SRCS)
+
+deploy:
+	./script/deploy.sh
