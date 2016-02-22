@@ -1,7 +1,7 @@
 ![Træfɪk](http://traefik.github.io/traefik.logo.svg  "Træfɪk")
 ___
 
-[![Circle CI](https://circleci.com/gh/emilevauge/traefik/tree/master.png?circle-token)](https://circleci.com/gh/emilevauge/traefik)
+[![Build Status](https://travis-ci.org/emilevauge/traefik.svg?branch=master)](https://travis-ci.org/emilevauge/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/EmileVauge/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 

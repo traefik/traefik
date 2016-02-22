@@ -1,0 +1,30 @@
+env:
+  REPO: $TRAVIS_REPO_SLUG
+  VERSION: v1.0.alpha.$TRAVIS_COMMIT
+
+sudo: required
+
+services:
+  - docker
+
+install:
+  - sudo service docker stop
+  - sudo curl https://get.docker.com/builds/Linux/x86_64/docker-1.10.1 -o /usr/bin/docker
+  - sudo chmod +x /usr/bin/docker
+  - sudo service docker start
+
+before_script:
+  - make validate
+  - make binary
+
+script:
+  - make test-unit
+  - make test-integration
+  - make crossbinary
+  - make image
+
+deploy:
+  provider: script
+  script: script/deploy.sh
+  on:
+    branch: master

@@ -4,8 +4,7 @@ TRAEFIK_ENVS := \
 	-e OS_ARCH_ARG \
 	-e OS_PLATFORM_ARG \
 	-e TESTFLAGS \
-	-e CIRCLECI
-
+	-e VERSION
 
 SRCS = $(shell git ls-files '*.go' | grep -v '^external/')
 
@@ -18,7 +17,7 @@ REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"emilevauge/traefik")
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -v "/var/run/docker.sock:/var/run/docker.sock")
 
-DOCKER_RUN_TRAEFIK := docker run $(if $(CIRCLECI),,--rm) $(INTEGRATION_OPTS) -it $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
+DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) -it $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
 
 print-%: ; @echo $*=$($*)
 
