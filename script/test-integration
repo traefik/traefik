@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 export SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export DEST=.
@@ -6,5 +7,4 @@ export DEST=.
 TESTFLAGS="$TESTFLAGS -test.timeout=30m -check.v"
 
 cd integration
-go test $TESTFLAGS
-
+CGO_ENABLED=0 go test $TESTFLAGS

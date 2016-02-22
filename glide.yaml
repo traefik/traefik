@@ -43,7 +43,7 @@ import:
   - package: github.com/alecthomas/units
     ref:     6b4e7dc5e3143b85ea77909c72caf89416fc2915
   - package: github.com/gambol99/go-marathon
-    ref:     8ce3f764250b2de3f2c627d12ca7dd21bd5e7f93
+    ref:     ade11d1dc2884ee1f387078fc28509559b6235d1
   - package: github.com/mailgun/predicate
     ref:     cb0bff91a7ab7cf7571e661ff883fc997bc554a3
   - package: github.com/thoas/stats
@@ -161,5 +161,7 @@ import:
   - package: github.com/spf13/cobra
     subpackages:
     - /cobra
+  - package: github.com/google/go-querystring/query
   - package: github.com/vulcand/vulcand/plugin/rewrite
+  - package: github.com/stretchr/testify/mock
 

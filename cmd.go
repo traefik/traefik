@@ -76,7 +76,6 @@ var arguments = struct {
 func init() {
 	traefikCmd.AddCommand(versionCmd)
 	traefikCmd.PersistentFlags().StringP("configFile", "c", "", "Configuration file to use (TOML, JSON, YAML, HCL).")
-	traefikCmd.PersistentFlags().StringP("port", "p", ":80", "Reverse proxy port")
 	traefikCmd.PersistentFlags().StringP("graceTimeOut", "g", "10", "Timeout in seconds. Duration to give active requests a chance to finish during hot-reloads")
 	traefikCmd.PersistentFlags().String("accessLogsFile", "log/access.log", "Access logs file")
 	traefikCmd.PersistentFlags().String("traefikLogsFile", "log/traefik.log", "Traefik logs file")
@@ -139,7 +138,6 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Boltdb.Prefix, "boltdb.prefix", "/traefik", "Prefix used for KV store")
 
 	viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))
-	viper.BindPFlag("port", traefikCmd.PersistentFlags().Lookup("port"))
 	viper.BindPFlag("graceTimeOut", traefikCmd.PersistentFlags().Lookup("graceTimeOut"))
 	//viper.BindPFlag("defaultEntryPoints", traefikCmd.PersistentFlags().Lookup("defaultEntryPoints"))
 	viper.BindPFlag("logLevel", traefikCmd.PersistentFlags().Lookup("logLevel"))
