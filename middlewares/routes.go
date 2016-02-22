@@ -1,10 +1,11 @@
 package middlewares
 
 import (
-	"encoding/json"
-	"log"
+	//	"encoding/json"
+	//	"log"
 	"net/http"
 
+	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 )
 
@@ -19,10 +20,12 @@ func NewRoutes(router *mux.Router) *Routes {
 }
 
 func (router *Routes) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	next(rw, r)
 	routeMatch := mux.RouteMatch{}
 	if router.router.Match(r, &routeMatch) {
-		json, _ := json.Marshal(routeMatch.Handler)
-		log.Println("Request match route ", json)
+		//		json, _ := json.Marshal(routeMatch.Handler)
+		//		log.Println("Request match route ", json)
+		frontendName := routeMatch.Route.GetName()
+		context.Set(r, "frontendName", frontendName)
 	}
-	next(rw, r)
 }
