@@ -7,6 +7,16 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/url"
+	"os"
+	"os/signal"
+	"reflect"
+	"regexp"
+	"sync"
+	"syscall"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/emilevauge/traefik/middlewares"
@@ -17,15 +27,6 @@ import (
 	"github.com/mailgun/oxy/cbreaker"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
-	"net/http"
-	"net/url"
-	"os"
-	"os/signal"
-	"reflect"
-	"regexp"
-	"sync"
-	"syscall"
-	"time"
 )
 
 var oxyLogger = &OxyLogger{}
@@ -143,7 +144,8 @@ func (server *Server) listenConfigurations() {
 					server.currentConfigurations = newConfigurations
 					currentServerEntryPoint.httpRouter = newServerEntryPoint.httpRouter
 					oldServer := currentServerEntryPoint.httpServer
-					newsrv, err := server.prepareServer(currentServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], oldServer, server.loggerMiddleware, metrics)
+					routersMiddleware := middlewares.NewRoutes(currentServerEntryPoint.httpRouter)
+					newsrv, err := server.prepareServer(currentServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], oldServer, server.loggerMiddleware, routersMiddleware, metrics)
 					if err != nil {
 						log.Fatal("Error preparing server: ", err)
 					}

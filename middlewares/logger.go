@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gorilla/context"
 )
 
 // Logger is a middleware handler that logs the request as it goes in and the response as it goes out.
@@ -51,6 +53,7 @@ type combinedLoggingHandler struct {
 
 func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	t := time.Now()
+	context.Set(req, "frontendName", "Unknown frontend")
 	logger := &responseLogger{w: w}
 	h.handler.ServeHTTP(logger, req)
 
@@ -75,12 +78,14 @@ func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	len := logger.Size()
 	referer := req.Referer()
 	agent := req.UserAgent()
-	frontendHost := req.Host
+	frontendName := context.Get(req, "frontendName")
 	backendHost := req.RemoteAddr // FIXME TODO  this is not quite correct
 	elapsed := time.Now().UTC().Sub(t.UTC())
 
 	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" "%s" "%s" %s %s`,
-		host, username, ts, method, uri, proto, status, len, referer, agent, frontendHost, backendHost, elapsed, "\n")
+		host, username, ts, method, uri, proto, status, len, referer, agent, frontendName, backendHost, elapsed, "\n")
+
+	context.Clear(req)
 }
 
 // responseLogger is wrapper of http.ResponseWriter that keeps track of its HTTP status
