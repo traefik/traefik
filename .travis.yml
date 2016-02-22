@@ -24,6 +24,7 @@ script:
   - make image
 
 deploy:
+  skip_cleanup: true
   provider: script
   script: script/deploy.sh
   on:
