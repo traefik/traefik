@@ -23,9 +23,10 @@ script:
   - make crossbinary
   - make image
 
-deploy:
-  skip_cleanup: true
-  provider: script
-  script: script/deploy.sh
-  on:
-    branch: master
+after_success:
+  if ([ "$TRAVIS_BRANCH" == "master" ] || [ ! -z "$TRAVIS_TAG" ]) &&
+      [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+    script/deploy.sh
+  else
+    echo "Skipping deploy"
+  fi
