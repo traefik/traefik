@@ -328,7 +328,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				}
 				newRoute := serverEntryPoints[entryPointName].httpRouter.NewRoute().Name(frontendName)
 				for routeName, route := range frontend.Routes {
-					log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
+					log.Debugf("Creating route %s %s: %s", routeName, route.Rule, route.Value)
 					newRouteReflect, err := invoke(newRoute, route.Rule, route.Value)
 					if err != nil {
 						return nil, err
