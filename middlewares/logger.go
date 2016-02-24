@@ -54,6 +54,7 @@ type combinedLoggingHandler struct {
 func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	t := time.Now()
 	context.Set(req, "frontendName", "Unknown frontend")
+	context.Set(req, "backendHost", "Unknown backend")
 	logger := &responseLogger{w: w}
 	h.handler.ServeHTTP(logger, req)
 
@@ -79,10 +80,11 @@ func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	referer := req.Referer()
 	agent := req.UserAgent()
 	frontendName := context.Get(req, "frontendName")
-	backendHost := req.RemoteAddr // FIXME TODO  this is not quite correct
+	//	backendHost := context.Get(req, "backendHost")  // not working yet
+	backendHost := "Unknown backend"
 	elapsed := time.Now().UTC().Sub(t.UTC())
 
-	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" "%s" "%s" %s %s`,
+	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" "%s" "%s" %s%s`,
 		host, username, ts, method, uri, proto, status, len, referer, agent, frontendName, backendHost, elapsed, "\n")
 
 	context.Clear(req)
