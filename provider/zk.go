@@ -1,9 +1,9 @@
 package provider
 
 import (
+	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/zookeeper"
-	"github.com/emilevauge/traefik/types"
 )
 
 // Zookepper holds configurations of the Zookepper provider.

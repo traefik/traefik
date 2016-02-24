@@ -10,9 +10,9 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
-	"github.com/emilevauge/traefik/middlewares"
-	"github.com/emilevauge/traefik/provider"
-	"github.com/emilevauge/traefik/types"
+	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/manners"
 	"github.com/mailgun/oxy/cbreaker"

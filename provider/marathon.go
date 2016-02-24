@@ -10,7 +10,7 @@ import (
 	"crypto/tls"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
-	"github.com/emilevauge/traefik/types"
+	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 	"net/http"
 )

@@ -11,8 +11,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/emilevauge/traefik/middlewares"
-	"github.com/emilevauge/traefik/provider"
+	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/provider"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"net/http"

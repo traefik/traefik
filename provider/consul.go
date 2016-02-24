@@ -1,9 +1,9 @@
 package provider
 
 import (
+	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/consul"
-	"github.com/emilevauge/traefik/types"
 )
 
 // Consul holds configurations of the Consul provider.

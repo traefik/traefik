@@ -14,13 +14,7 @@ sudo mv ghr /usr/bin/ghr
 sudo chmod +x /usr/bin/ghr
 
 # github release and tag
-ghr -t $GITHUB_TOKEN -u emilevauge -r traefik --prerelease ${VERSION} dist/
-
-# create docker image emilevauge/traefik
-docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-docker push ${REPO,,}:latest
-docker tag ${REPO,,}:latest ${REPO,,}:${VERSION}
-docker push ${REPO,,}:${VERSION}
+ghr -t $GITHUB_TOKEN -u containous -r traefik --prerelease ${VERSION} dist/
 
 # update traefik-library-image repo (official Docker image)
 git config --global user.email "emile@vauge.com"
@@ -34,6 +28,13 @@ git add -A
 echo $VERSION | git commit --file -
 echo $VERSION | git tag -a $VERSION --file -
 git push --follow-tags -u origin master
+
+# create docker image emilevauge/traefik (compatibility)
+docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+docker push ${REPO,,}:latest
+docker tag ${REPO,,}:latest ${REPO,,}:${VERSION}
+docker push ${REPO,,}:${VERSION}
+
 cd ..
 rm -Rf traefik-library-image/
 

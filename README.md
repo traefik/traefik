@@ -1,8 +1,8 @@
 ![Træfɪk](http://traefik.github.io/traefik.logo.svg  "Træfɪk")
 ___
 
-[![Build Status](https://travis-ci.org/emilevauge/traefik.svg?branch=master)](https://travis-ci.org/emilevauge/traefik)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/EmileVauge/traefik/blob/master/LICENSE.md)
+[![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
 
@@ -24,7 +24,7 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 - Circuit breakers on backends
 - Round Robin, rebalancer load-balancers
 - Rest Metrics
-- Tiny docker image included [![Image Layers](https://badge.imagelayers.io/emilevauge/traefik:latest.svg)](https://imagelayers.io/?images=emilevauge/traefik:latest 'Image Layers')
+- Tiny docker image included [![Image Layers](https://badge.imagelayers.io/containous/traefik:latest.svg)](https://imagelayers.io/?images=containous/traefik:latest)
 - SSL backends support
 - SSL frontend support
 - Clean AngularJS Web UI
@@ -53,7 +53,7 @@ You can access to a simple HTML frontend of Træfik.
 
 ## Quick start
 
-- The simple way: grab the latest binary from the [releases](https://github.com/emilevauge/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/EmileVauge/traefik/master/traefik.sample.toml):
+- The simple way: grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
 ```shell
 ./traefik -c traefik.toml
@@ -62,13 +62,13 @@ You can access to a simple HTML frontend of Træfik.
 - Use the tiny Docker image:
 
 ```shell
-docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml emilevauge/traefik
+docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml containous/traefik
 ```
 
 - From sources:
 
 ```shell
-git clone https://github.com/emilevauge/traefik
+git clone https://github.com/containous/traefik
 ```
 
 ## Documentation
@@ -106,3 +106,4 @@ software products.
 [![Asteris](docs/img/asteris.logo.png)](https://aster.is)
 
 Founded in 2014, Asteris creates next-generation infrastructure software for the modern datacenter. Asteris writes software that makes it easy for companies to implement continuous delivery and realtime data pipelines. We support the HashiCorp stack, along with Kubernetes, Apache Mesos, Spark and Kafka. We're core committers on mantl.io, consul-cli and mesos-consul.
+.

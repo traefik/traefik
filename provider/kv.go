@@ -8,9 +8,9 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/types"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
-	"github.com/emilevauge/traefik/types"
 )
 
 // Kv holds common configurations of key-value providers.
