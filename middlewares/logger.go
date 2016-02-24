@@ -33,7 +33,7 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 	if l.file == nil {
 		next(rw, r)
 	} else {
-		CombinedLoggingHandler(l.file, next).ServeHTTP(rw, r)
+		myCombinedLoggingHandler(l.file, next).ServeHTTP(rw, r)
 	}
 }
 
@@ -42,7 +42,7 @@ func (l *Logger) Close() {
 	l.file.Close()
 }
 
-func CombinedLoggingHandler(out io.Writer, h http.Handler) http.Handler {
+func myCombinedLoggingHandler(out io.Writer, h http.Handler) http.Handler {
 	return combinedLoggingHandler{out, h}
 }
 
