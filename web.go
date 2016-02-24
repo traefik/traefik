@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/types"
 	"github.com/elazarl/go-bindata-assetfs"
-	"github.com/emilevauge/traefik/autogen"
-	"github.com/emilevauge/traefik/types"
 	"github.com/gorilla/mux"
 	"github.com/thoas/stats"
 	"github.com/unrolled/render"

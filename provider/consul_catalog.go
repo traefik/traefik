@@ -8,7 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
-	"github.com/emilevauge/traefik/types"
+	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 )
 
