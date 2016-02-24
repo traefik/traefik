@@ -124,7 +124,7 @@ import:
   - package: gopkg.in/alecthomas/kingpin.v2
     ref:     639879d6110b1b0409410c7b737ef0bb18325038
   - package: github.com/docker/libcompose
-    ref:     79ef5d150f053a5b12f16b02d8844ed7cf33611a
+    ref:     d3089811c119a211469a9cc93caea684d937e5d3
     subpackages:
       - docker
       - logger

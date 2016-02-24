@@ -12,6 +12,7 @@ ___
 - [Docker backend](#docker)
 - [Mesos/Marathon backend](#marathon)
 - [Consul backend](#consul)
+- [Consul catalog backend](#consulcatalog)
 - [Etcd backend](#etcd)
 - [Zookeeper backend](#zk)
 - [Boltdb backend](#boltdb)
@@ -109,6 +110,9 @@ Flags:
       --consul.filename string               Override default configuration template. For advanced users :)
       --consul.prefix string                 Prefix used for KV store (default "/traefik")
       --consul.watch                         Watch provider (default true)
+      --consulCatalog                        Enable Consul catalog backend
+      --consulCatalog.domain string          Default domain used
+      --consulCatalog.endpoint string        Consul server endpoint (default "127.0.0.1:8500")
       --defaultEntryPoints value             Entrypoints to be used by frontends that do not specify any entrypoint (default &main.DefaultEntryPoints(nil))
       --docker                               Enable Docker backend
       --docker.domain string                 Default domain used
@@ -841,6 +845,37 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
 | `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
 
+
+## <a id="consulcatalog"></a> Consul catalog backend
+
+Træfɪk can be configured to use service discovery catalog of Consul as a backend configuration:
+
+```toml
+################################################################
+# Consul Catalog configuration backend
+################################################################
+
+# Enable Consul Catalog configuration backend
+#
+# Optional
+#
+[consulCatalog]
+
+# Consul server endpoint
+#
+# Required
+#
+endpoint = "127.0.0.1:8500"
+
+# Default domain used.
+#
+# Optional
+#
+domain = "consul.localhost"
+```
+
+This backend will create routes matching on hostname based on the service name
+used in consul.
 
 ## <a id="zk"></a> Zookeeper backend
 

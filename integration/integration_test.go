@@ -28,6 +28,7 @@ func init() {
 	check.Suite(&FileSuite{})
 	check.Suite(&DockerSuite{})
 	check.Suite(&ConsulSuite{})
+	check.Suite(&ConsulCatalogSuite{})
 	check.Suite(&MarathonSuite{})
 }
 
@@ -80,7 +81,9 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	composeProject, err := docker.NewProject(&docker.Context{
 		Context: project.Context{
-			ComposeFile: fmt.Sprintf("resources/compose/%s.yml", name),
+			ComposeFiles: []string{
+				fmt.Sprintf("resources/compose/%s.yml", name),
+			},
 			ProjectName: fmt.Sprintf("integration-test-%s", name),
 		},
 	})

@@ -184,6 +184,9 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.Consul != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Consul)
 	}
+	if server.globalConfiguration.ConsulCatalog != nil {
+		server.providers = append(server.providers, server.globalConfiguration.ConsulCatalog)
+	}
 	if server.globalConfiguration.Etcd != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Etcd)
 	}

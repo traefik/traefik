@@ -39,29 +39,32 @@ var versionCmd = &cobra.Command{
 
 var arguments = struct {
 	GlobalConfiguration
-	web       bool
-	file      bool
-	docker    bool
-	dockerTLS bool
-	marathon  bool
-	consul    bool
-	zookeeper bool
-	etcd      bool
-	boltdb    bool
+	web           bool
+	file          bool
+	docker        bool
+	dockerTLS     bool
+	marathon      bool
+	consul        bool
+	consulCatalog bool
+	zookeeper     bool
+	etcd          bool
+	boltdb        bool
 }{
 	GlobalConfiguration{
 		EntryPoints: make(EntryPoints),
 		Docker: &provider.Docker{
 			TLS: &provider.DockerTLS{},
 		},
-		File:      &provider.File{},
-		Web:       &WebProvider{},
-		Marathon:  &provider.Marathon{},
-		Consul:    &provider.Consul{},
-		Zookeeper: &provider.Zookepper{},
-		Etcd:      &provider.Etcd{},
-		Boltdb:    &provider.BoltDb{},
+		File:          &provider.File{},
+		Web:           &WebProvider{},
+		Marathon:      &provider.Marathon{},
+		Consul:        &provider.Consul{},
+		ConsulCatalog: &provider.ConsulCatalog{},
+		Zookeeper:     &provider.Zookepper{},
+		Etcd:          &provider.Etcd{},
+		Boltdb:        &provider.BoltDb{},
 	},
+	false,
 	false,
 	false,
 	false,
@@ -118,6 +121,10 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Filename, "consul.filename", "", "Override default configuration template. For advanced users :)")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Endpoint, "consul.endpoint", "127.0.0.1:8500", "Consul server endpoint")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Prefix, "consul.prefix", "/traefik", "Prefix used for KV store")
+
+	traefikCmd.PersistentFlags().BoolVar(&arguments.consulCatalog, "consulCatalog", false, "Enable Consul catalog backend")
+	traefikCmd.PersistentFlags().StringVar(&arguments.ConsulCatalog.Domain, "consulCatalog.domain", "", "Default domain used")
+	traefikCmd.PersistentFlags().StringVar(&arguments.ConsulCatalog.Endpoint, "consulCatalog.endpoint", "127.0.0.1:8500", "Consul server endpoint")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.zookeeper, "zookeeper", false, "Enable Zookeeper backend")
 	traefikCmd.PersistentFlags().BoolVar(&arguments.Zookeeper.Watch, "zookeeper.watch", true, "Watch provider")
