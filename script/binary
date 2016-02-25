@@ -17,4 +17,4 @@ if [ -z "$DATE" ]; then
 fi
 
 # Build binaries
-CGO_ENABLED=0 go build -ldflags "-X main.Version=$VERSION -X main.BuildDate=$DATE" -a -installsuffix nocgo -o dist/traefik .
+CGO_ENABLED=0 GOGC=off go build -v -ldflags "-X main.Version=$VERSION -X main.BuildDate=$DATE" -a -installsuffix nocgo -o dist/traefik .

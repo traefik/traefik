@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
+	"sync"
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
@@ -22,6 +23,7 @@ type GlobalConfiguration struct {
 	TraefikLogsFile           string
 	LogLevel                  string
 	EntryPoints               EntryPoints
+	ACME                      *ACME
 	DefaultEntryPoints        DefaultEntryPoints
 	ProvidersThrottleDuration time.Duration
 	MaxIdleConnsPerHost       int
@@ -140,6 +142,23 @@ type TLS struct {
 	Certificates Certificates
 }
 
+// ACME allows to connect to lets encrypt and retrieve certs
+type ACME struct {
+	Email       string
+	Domains     []Domain
+	StorageFile string
+	OnDemand    bool
+	CAServer    string
+	EntryPoint  string
+	storageLock sync.Mutex
+}
+
+// Domain holds a domain name with SANs
+type Domain struct {
+	Main string
+	SANs []string
+}
+
 // Certificates defines traefik certificates type
 type Certificates []Certificate
 
@@ -244,6 +263,7 @@ func LoadConfiguration() *GlobalConfiguration {
 		viper.Set("boltdb", arguments.Boltdb)
 	}
 	if err := unmarshal(&configuration); err != nil {
+
 		fmtlog.Fatalf("Error reading file: %s", err)
 	}
 

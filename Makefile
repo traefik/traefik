@@ -84,7 +84,7 @@ generate-webui: build-webui
 	fi
 
 lint:
-	$(foreach file,$(SRCS),golint $(file) || exit;)
+	script/validate-golint
 
 fmt:
 	gofmt -s -l -w $(SRCS)

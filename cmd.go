@@ -175,6 +175,7 @@ func init() {
 	viper.BindPFlag("maxIdleConnsPerHost", traefikCmd.PersistentFlags().Lookup("maxIdleConnsPerHost"))
 	viper.SetDefault("providersThrottleDuration", time.Duration(2*time.Second))
 	viper.SetDefault("logLevel", "ERROR")
+	viper.SetDefault("MaxIdleConnsPerHost", 200)
 }
 
 func run() {

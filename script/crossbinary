@@ -32,5 +32,5 @@ fi
 rm -f dist/traefik_*
 
 # Build binaries
-gox -ldflags "-X main.Version=$VERSION -X main.BuildDate=$DATE" "${OS_PLATFORM_ARG[@]}" "${OS_ARCH_ARG[@]}" \
+GOGC=off gox -ldflags "-X main.Version=$VERSION -X main.BuildDate=$DATE" "${OS_PLATFORM_ARG[@]}" "${OS_ARCH_ARG[@]}" \
     -output="dist/traefik_{{.OS}}-{{.Arch}}"

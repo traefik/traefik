@@ -1,0 +1,11 @@
+-   repo: git://github.com/pre-commit/pre-commit-hooks
+    sha: 97b88d9610bcc03982ddac33caba98bb2b751f5f
+    hooks:
+    -   id: detect-private-key
+    
+-   repo: git://github.com/containous/pre-commit-hooks
+    sha: HEAD
+    hooks:
+    -   id: goFmt
+    -   id: goLint
+    

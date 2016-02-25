@@ -1,5 +1,5 @@
-hash: 2a18c9cab231b5e108c666641c2436da3d9a1a0d9d1c586948af94271a47b317
-updated: 2016-03-15T23:01:22.853471291+01:00
+hash: 6f5b6e92b805fed0bb6a5bfe411b5ca501bc04accebeb739cec039e6499271e2
+updated: 2016-03-16T13:22:21.850972237+01:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -165,14 +165,12 @@ imports:
   version: 44874009257d4d47ba9806f1b7f72a32a015e4d8
 - name: github.com/mailgun/manners
   version: fada45142db3f93097ca917da107aa3fad0ffcb5
-- name: github.com/mailgun/oxy
-  version: 8aaf36279137ac04ace3792a4f86098631b27d5a
-  subpackages:
-  - cbreaker
 - name: github.com/mailgun/predicate
   version: cb0bff91a7ab7cf7571e661ff883fc997bc554a3
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
+- name: github.com/miekg/dns
+  version: b9171237b0642de1d8e8004f16869970e065f46b
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/opencontainers/runc
@@ -203,6 +201,11 @@ imports:
   version: 7f60f83a2c81bc3c3c0d5297f61ddfa68da9d3b7
 - name: github.com/spf13/viper
   version: a212099cbe6fbe8d07476bfda8d2d39b6ff8f325
+- name: github.com/square/go-jose
+  version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
+  subpackages:
+  - cipher
+  - json
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
@@ -233,10 +236,19 @@ imports:
   - router
 - name: github.com/wendal/errors
   version: f66c77a7882b399795a8987ebf87ef64a427417e
+- name: github.com/xenolf/lego
+  version: 118d9d5ec92bc243ea054742a03afae813ac1314
+  subpackages:
+  - acme
+- name: golang.org/x/crypto
+  version: 6025851c7c2bf210daf74d22300c699b16541847
+  subpackages:
+  - ocsp
 - name: golang.org/x/net
   version: d9558e5c97f85372afee28cf2b6059d7d3818919
   subpackages:
   - context
+  - publicsuffix
 - name: golang.org/x/sys
   version: eb2c74142fd19a79b3f237334c7384d5167b1b46
   subpackages:

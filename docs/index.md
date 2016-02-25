@@ -177,46 +177,6 @@ Use "traefik [command] --help" for more information about a command.
 # Global configuration
 ################################################################
 
-# Entrypoints definition
-#
-# Optional
-# Default:
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#
-# To redirect an http entrypoint to an https entrypoint (with SNI support):
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#     [entryPoints.http.redirect]
-#       entryPoint = "https"
-#   [entryPoints.https]
-#   address = ":443"
-#     [entryPoints.https.tls]
-#       [[entryPoints.https.tls.certificates]]
-#       CertFile = "integration/fixtures/https/snitest.com.cert"
-#       KeyFile = "integration/fixtures/https/snitest.com.key"
-#       [[entryPoints.https.tls.certificates]]
-#       CertFile = "integration/fixtures/https/snitest.org.cert"
-#       KeyFile = "integration/fixtures/https/snitest.org.key"
-#
-# To redirect an entrypoint rewriting the URL:
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#     [entryPoints.http.redirect]
-#       regex = "^http://localhost/(.*)"
-#       replacement = "http://mydomain/$1"
-
-# Entrypoints to be used by frontends that do not specify any entrypoint.
-# Each frontend can specify its own entrypoints.
-#
-# Optional
-# Default: ["http"]
-#
-# defaultEntryPoints = ["http", "https"]
-
 # Timeout in seconds.
 # Duration to give active requests a chance to finish during hot-reloads
 #
@@ -262,6 +222,45 @@ Use "traefik [command] --help" for more information about a command.
 #
 # MaxIdleConnsPerHost = 200
 
+# Entrypoints to be used by frontends that do not specify any entrypoint.
+# Each frontend can specify its own entrypoints.
+#
+# Optional
+# Default: ["http"]
+#
+# defaultEntryPoints = ["http", "https"]
+
+# Entrypoints definition
+#
+# Optional
+# Default:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#
+# To redirect an http entrypoint to an https entrypoint (with SNI support):
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#     [entryPoints.http.redirect]
+#       entryPoint = "https"
+#   [entryPoints.https]
+#   address = ":443"
+#     [entryPoints.https.tls]
+#       [[entryPoints.https.tls.certificates]]
+#       CertFile = "integration/fixtures/https/snitest.com.cert"
+#       KeyFile = "integration/fixtures/https/snitest.com.key"
+#       [[entryPoints.https.tls.certificates]]
+#       CertFile = "integration/fixtures/https/snitest.org.cert"
+#       KeyFile = "integration/fixtures/https/snitest.org.key"
+#
+# To redirect an entrypoint rewriting the URL:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#     [entryPoints.http.redirect]
+#       regex = "^http://localhost/(.*)"
+#       replacement = "http://mydomain/$1"
 ```
 
 
