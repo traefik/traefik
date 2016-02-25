@@ -45,9 +45,11 @@ var arguments = struct {
 	dockerTLS     bool
 	marathon      bool
 	consul        bool
+	consulTLS     bool
 	consulCatalog bool
 	zookeeper     bool
 	etcd          bool
+	etcdTLS       bool
 	boltdb        bool
 }{
 	GlobalConfiguration{
@@ -55,15 +57,25 @@ var arguments = struct {
 		Docker: &provider.Docker{
 			TLS: &provider.DockerTLS{},
 		},
-		File:          &provider.File{},
-		Web:           &WebProvider{},
-		Marathon:      &provider.Marathon{},
-		Consul:        &provider.Consul{},
+		File:     &provider.File{},
+		Web:      &WebProvider{},
+		Marathon: &provider.Marathon{},
+		Consul: &provider.Consul{
+			Kv: provider.Kv{
+				TLS: &provider.KvTLS{},
+			},
+		},
 		ConsulCatalog: &provider.ConsulCatalog{},
 		Zookeeper:     &provider.Zookepper{},
-		Etcd:          &provider.Etcd{},
-		Boltdb:        &provider.BoltDb{},
+		Etcd: &provider.Etcd{
+			Kv: provider.Kv{
+				TLS: &provider.KvTLS{},
+			},
+		},
+		Boltdb: &provider.BoltDb{},
 	},
+	false,
+	false,
 	false,
 	false,
 	false,
@@ -121,6 +133,11 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Filename, "consul.filename", "", "Override default configuration template. For advanced users :)")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Endpoint, "consul.endpoint", "127.0.0.1:8500", "Consul server endpoint")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Prefix, "consul.prefix", "/traefik", "Prefix used for KV store")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.consulTLS, "consul.tls", false, "Enable Consul TLS support")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.TLS.CA, "consul.tls.ca", "", "TLS CA")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.TLS.Cert, "consul.tls.cert", "", "TLS cert")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.TLS.Key, "consul.tls.key", "", "TLS key")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.Consul.TLS.InsecureSkipVerify, "consul.tls.insecureSkipVerify", false, "TLS insecure skip verify")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.consulCatalog, "consulCatalog", false, "Enable Consul catalog backend")
 	traefikCmd.PersistentFlags().StringVar(&arguments.ConsulCatalog.Domain, "consulCatalog.domain", "", "Default domain used")
@@ -137,6 +154,11 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.Filename, "etcd.filename", "", "Override default configuration template. For advanced users :)")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.Endpoint, "etcd.endpoint", "127.0.0.1:4001", "Etcd server endpoint")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.Prefix, "etcd.prefix", "/traefik", "Prefix used for KV store")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.etcdTLS, "etcd.tls", false, "Enable Etcd TLS support")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.TLS.CA, "etcd.tls.ca", "", "TLS CA")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.TLS.Cert, "etcd.tls.cert", "", "TLS cert")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.TLS.Key, "etcd.tls.key", "", "TLS key")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.Etcd.TLS.InsecureSkipVerify, "etcd.tls.insecureSkipVerify", false, "TLS insecure skip verify")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.boltdb, "boltdb", false, "Enable Boltdb backend")
 	traefikCmd.PersistentFlags().BoolVar(&arguments.Boltdb.Watch, "boltdb.watch", true, "Watch provider")
