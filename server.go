@@ -7,6 +7,16 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/url"
+	"os"
+	"os/signal"
+	"reflect"
+	"regexp"
+	"sort"
+	"sync"
+	"syscall"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
@@ -18,16 +28,6 @@ import (
 	"github.com/mailgun/oxy/cbreaker"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
-	"net/http"
-	"net/url"
-	"os"
-	"os/signal"
-	"reflect"
-	"regexp"
-	"sort"
-	"sync"
-	"syscall"
-	"time"
 )
 
 var oxyLogger = &OxyLogger{}
@@ -335,11 +335,11 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				newRoute := serverEntryPoints[entryPointName].httpRouter.NewRoute().Name(frontendName)
 				for routeName, route := range frontend.Routes {
 					log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
-					newRouteReflect, err := invoke(newRoute, route.Rule, route.Value)
+					route, err := getRoute(newRoute, route.Rule, route.Value)
 					if err != nil {
 						return nil, err
 					}
-					newRoute = newRouteReflect[0].Interface().(*mux.Route)
+					newRoute = route
 				}
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
 				if entryPoint.Redirect != nil {
@@ -399,7 +399,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					} else {
 						log.Debugf("Reusing backend %s", frontend.Backend)
 					}
-					newRoute.Handler(backends[frontend.Backend])
+					server.wireFrontendBackend(frontend.Routes, newRoute, backends[frontend.Backend])
 				}
 				err := newRoute.GetError()
 				if err != nil {
@@ -409,6 +409,32 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 		}
 	}
 	return serverEntryPoints, nil
+}
+
+func (server *Server) wireFrontendBackend(routes map[string]types.Route, newRoute *mux.Route, handler http.Handler) {
+	// strip prefix
+	var strip bool
+	for _, route := range routes {
+		switch route.Rule {
+		case "PathStrip":
+			newRoute.Handler(&middlewares.StripPrefix{
+				Prefix:  route.Value,
+				Handler: handler,
+			})
+			strip = true
+			break
+		case "PathPrefixStrip":
+			newRoute.Handler(&middlewares.StripPrefix{
+				Prefix:  route.Value,
+				Handler: handler,
+			})
+			strip = true
+			break
+		}
+	}
+	if !strip {
+		newRoute.Handler(handler)
+	}
 }
 
 func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *EntryPoint) (http.Handler, error) {
@@ -443,7 +469,26 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	router.StrictSlash(true)
 	return router
+}
+
+func getRoute(any interface{}, rule string, value ...interface{}) (*mux.Route, error) {
+	switch rule {
+	case "PathStrip":
+		rule = "Path"
+	case "PathPrefixStrip":
+		rule = "PathPrefix"
+	}
+	inputs := make([]reflect.Value, len(value))
+	for i := range value {
+		inputs[i] = reflect.ValueOf(value[i])
+	}
+	method := reflect.ValueOf(any).MethodByName(rule)
+	if method.IsValid() {
+		return method.Call(inputs)[0].Interface().(*mux.Route), nil
+	}
+	return nil, errors.New("Method not found: " + rule)
 }
 
 func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
