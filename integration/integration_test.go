@@ -29,6 +29,7 @@ func init() {
 	check.Suite(&DockerSuite{})
 	check.Suite(&ConsulSuite{})
 	check.Suite(&ConsulCatalogSuite{})
+	check.Suite(&EtcdSuite{})
 	check.Suite(&MarathonSuite{})
 }
 
@@ -48,6 +49,13 @@ type ConsulSuite struct{ BaseSuite }
 
 func (s *ConsulSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "consul")
+}
+
+// Etcd test suites (using libcompose)
+type EtcdSuite struct{ BaseSuite }
+
+func (s *EtcdSuite) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "etcd")
 }
 
 // Marathon test suites (using libcompose)

@@ -1,0 +1,10 @@
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+logLevel = "DEBUG"
+
+[etcd]
+  endpoint = "127.0.0.1:4003,127.0.0.1:4002,127.0.0.1:4001"

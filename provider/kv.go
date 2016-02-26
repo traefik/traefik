@@ -69,7 +69,7 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error 
 
 	kv, err := libkv.NewStore(
 		provider.storeType,
-		[]string{provider.Endpoint},
+		strings.Split(provider.Endpoint, ","),
 		storeConfig,
 	)
 	if err != nil {

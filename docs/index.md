@@ -106,7 +106,7 @@ Flags:
       --boltdb.watch                         Watch provider (default true)
   -c, --configFile string                    Configuration file to use (TOML, JSON, YAML, HCL).
       --consul                               Enable Consul backend
-      --consul.endpoint string               Consul server endpoint (default "127.0.0.1:8500")
+      --consul.endpoint string               Comma sepparated Consul server endpoints (default "127.0.0.1:8500")
       --consul.filename string               Override default configuration template. For advanced users :)
       --consul.prefix string                 Prefix used for KV store (default "/traefik")
       --consul.tls                           Enable Consul TLS support
@@ -131,7 +131,7 @@ Flags:
       --docker.watch                         Watch provider (default true)
       --entryPoints value                    Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'
       --etcd                                 Enable Etcd backend
-      --etcd.endpoint string                 Etcd server endpoint (default "127.0.0.1:4001")
+      --etcd.endpoint string                 Comma sepparated Etcd server endpoints (default "127.0.0.1:4001")
       --etcd.filename string                 Override default configuration template. For advanced users :)
       --etcd.prefix string                   Prefix used for KV store (default "/traefik")
       --etcd.tls                             Enable Etcd TLS support
@@ -160,7 +160,7 @@ Flags:
       --web.keyFile string                   SSL certificate
       --web.readOnly                         Enable read only API
       --zookeeper                            Enable Zookeeper backend
-      --zookeeper.endpoint string            Zookeeper server endpoint (default "127.0.0.1:2181")
+      --zookeeper.endpoint string            Comma sepparated Zookeeper server endpoints (default "127.0.0.1:2181")
       --zookeeper.filename string            Override default configuration template. For advanced users :)
       --zookeeper.prefix string              Prefix used for KV store (default "/traefik")
       --zookeeper.watch                      Watch provider (default true)
