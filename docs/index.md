@@ -37,7 +37,9 @@ Frontends can be defined using the following rules:
 - `Host`: Host adds a matcher for the URL host. It accepts a template with zero or more URL variables enclosed by `{}`. Variables can define an optional regexp pattern to be matched: `www.traefik.io`, `{subdomain:[a-z]+}.traefik.io`
 - `Methods`: Methods adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched, e.g.: `GET`, `POST`, `PUT`
 - `Path`: Path adds a matcher for the URL path. It accepts a template with zero or more URL variables enclosed by `{}`. The template must start with a `/`. For exemple `/products/` `/articles/{category}/{id:[0-9]+}`
+- `PathStrip`: Same as `Path` but strip the given prefix from the request URL's Path.
 - `PathPrefix`: PathPrefix adds a matcher for the URL path prefix. This matches if the given template is a prefix of the full URL path.
+- `PathPrefixStrip`: Same as `PathPrefix` but strip the given prefix from the request URL's Path.
 
 
  A frontend is a set of rules that forwards the incoming http traffic to a backend.
