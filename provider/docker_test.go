@@ -676,7 +676,11 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						Ports: map[docker.Port][]docker.PortBinding{
 							"80/tcp": {},
 						},
-						IPAddress: "127.0.0.1",
+						Networks: map[string]docker.ContainerNetwork{
+							"bridgde": {
+								IPAddress: "127.0.0.1",
+							},
+						},
 					},
 				},
 			},
@@ -718,7 +722,11 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						Ports: map[docker.Port][]docker.PortBinding{
 							"80/tcp": {},
 						},
-						IPAddress: "127.0.0.1",
+						Networks: map[string]docker.ContainerNetwork{
+							"bridgde": {
+								IPAddress: "127.0.0.1",
+							},
+						},
 					},
 				},
 				{
@@ -732,7 +740,11 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						Ports: map[docker.Port][]docker.PortBinding{
 							"80/tcp": {},
 						},
-						IPAddress: "127.0.0.1",
+						Networks: map[string]docker.ContainerNetwork{
+							"bridgde": {
+								IPAddress: "127.0.0.1",
+							},
+						},
 					},
 				},
 			},
