@@ -1,5 +1,7 @@
-![Træfɪk](http://traefik.github.io/traefik.logo.svg  "Træfɪk")
-___
+
+<p align="center">
+<img src="http://traefik.github.io/traefik.logo.svg" alt="Træfɪk" title="Træfɪk" />
+</p>
 
 [![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/containous/traefik/blob/master/LICENSE.md)
