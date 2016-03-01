@@ -21,10 +21,11 @@ type GlobalConfiguration struct {
 	AccessLogsFile            string
 	TraefikLogsFile           string
 	LogLevel                  string
-	EntryPoints               EntryPoints
-	DefaultEntryPoints        DefaultEntryPoints
 	ProvidersThrottleDuration time.Duration
 	MaxIdleConnsPerHost       int
+	Retry                     *Retry
+	EntryPoints               EntryPoints
+	DefaultEntryPoints        DefaultEntryPoints
 	Docker                    *provider.Docker
 	File                      *provider.File
 	Web                       *WebProvider
@@ -34,6 +35,12 @@ type GlobalConfiguration struct {
 	Etcd                      *provider.Etcd
 	Zookeeper                 *provider.Zookepper
 	Boltdb                    *provider.BoltDb
+}
+
+// Retry contains request retry config
+type Retry struct {
+	Attempts int
+	MaxMem   int64
 }
 
 // DefaultEntryPoints holds default entry points
