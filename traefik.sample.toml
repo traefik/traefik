@@ -206,12 +206,6 @@
 #
 # endpoint = "http://127.0.0.1:8080"
 
-# Network interface used to call Marathon web services. Needed in case of multiple network interfaces.
-# Optional
-# Default: "eth0"
-#
-# networkInterface = "eth0"
-
 # Enable watch Marathon changes
 #
 # Optional
