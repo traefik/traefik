@@ -57,7 +57,7 @@ import:
   - package: github.com/flynn/go-shlex
     ref:     3f9db97f856818214da2e1057f8ad84803971cff
   - package: github.com/fsouza/go-dockerclient
-    ref:     0239034d42f665efa17fd77c39f891c2f9f32922
+    ref:     a49c8269a6899cae30da1f8a4b82e0ce945f9967
   - package: github.com/boltdb/bolt
     ref:     51f99c862475898df9773747d3accd05a7ca33c1
   - package: gopkg.in/mgo.v2
