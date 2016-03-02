@@ -151,7 +151,6 @@ Flags:
       --marathon.domain string               Default domain used
       --marathon.endpoint string             Marathon server endpoint. You can also specify multiple endpoint for Marathon (default "http://127.0.0.1:8080")
       --marathon.filename string             Override default configuration template. For advanced users :)
-      --marathon.networkInterface string     Network interface used to call Marathon web services. Needed in case of multiple network interfaces (default "eth0")
       --marathon.watch                       Watch provider (default true)
       --maxIdleConnsPerHost int              If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used
       --providersThrottleDuration duration   Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (default 2s)
@@ -639,12 +638,6 @@ Træfɪk can be configured to use Marathon as a backend configuration:
 # Required
 #
 endpoint = "http://127.0.0.1:8080"
-
-# Network interface used to call Marathon web services. Needed in case of multiple network interfaces.
-# Optional
-# Default: "eth0"
-#
-networkInterface = "eth0"
 
 # Enable watch Marathon changes
 #

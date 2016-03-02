@@ -17,13 +17,12 @@ import (
 
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
-	BaseProvider     `mapstructure:",squash"`
-	Endpoint         string
-	Domain           string
-	NetworkInterface string
-	Basic            *MarathonBasic
-	TLS              *tls.Config
-	marathonClient   marathon.Marathon
+	BaseProvider   `mapstructure:",squash"`
+	Endpoint       string
+	Domain         string
+	Basic          *MarathonBasic
+	TLS            *tls.Config
+	marathonClient marathon.Marathon
 }
 
 // MarathonBasic holds basic authentication specific configurations
@@ -42,7 +41,7 @@ type lightMarathonClient interface {
 func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) error {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
-	config.EventsInterface = provider.NetworkInterface
+	config.EventsTransport = marathon.EventsTransportSSE
 	if provider.Basic != nil {
 		config.HTTPBasicAuthUser = provider.Basic.HTTPBasicAuthUser
 		config.HTTPBasicPassword = provider.Basic.HTTPBasicPassword
@@ -61,7 +60,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 	update := make(marathon.EventsChannel, 5)
 	if provider.Watch {
 		if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
-			log.Errorf("Failed to register for subscriptions, %s", err)
+			log.Errorf("Failed to register for events, %s", err)
 		} else {
 			go func() {
 				for {
