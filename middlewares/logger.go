@@ -52,9 +52,11 @@ type combinedLoggingHandler struct {
 }
 
 func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	t := time.Now()
-	context.Set(req, "frontendName", "Unknown frontend")
-	context.Set(req, "backendHost", "Unknown backend")
+	defer context.Clear(req)
+
+	t_start := time.Now()
+	context.Set(req, "frontend", "Unknown frontend")
+	context.Set(req, "oxy_backend", "Unknown backend")
 	logger := &responseLogger{w: w}
 	h.handler.ServeHTTP(logger, req)
 
@@ -71,7 +73,7 @@ func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 		host = req.RemoteAddr
 	}
 
-	ts := t.Format("02/Jan/2006:15:04:05 -0700")
+	ts := t_start.Format("02/Jan/2006:15:04:05 -0700")
 	method := req.Method
 	uri := url.RequestURI()
 	proto := req.Proto
@@ -79,15 +81,13 @@ func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	len := logger.Size()
 	referer := req.Referer()
 	agent := req.UserAgent()
-	frontendName := context.Get(req, "frontendName")
-	//	backendHost := context.Get(req, "backendHost")  // not working yet
-	backendHost := "Unknown backend"
-	elapsed := time.Now().UTC().Sub(t.UTC())
+	frontend := context.Get(req, "frontend")
+	backend := context.Get(req, "oxy_backend")
+	elapsed := time.Now().UTC().Sub(t_start.UTC())
 
 	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" "%s" "%s" %s%s`,
-		host, username, ts, method, uri, proto, status, len, referer, agent, frontendName, backendHost, elapsed, "\n")
+		host, username, ts, method, uri, proto, status, len, referer, agent, frontend, backend, elapsed, "\n")
 
-	context.Clear(req)
 }
 
 // responseLogger is wrapper of http.ResponseWriter that keeps track of its HTTP status

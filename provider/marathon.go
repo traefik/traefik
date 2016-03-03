@@ -1,18 +1,20 @@
 package provider
 
 import (
+	"crypto/tls"
 	"errors"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"text/template"
 
-	"crypto/tls"
+	"net/http"
+
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/emilevauge/traefik/types"
 	"github.com/gambol99/go-marathon"
-	"net/http"
 )
 
 // Marathon holds configuration of the Marathon provider.

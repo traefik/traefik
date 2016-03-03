@@ -26,6 +26,6 @@ func (router *Routes) ServeHTTP(rw http.ResponseWriter, r *http.Request, next ht
 		//		json, _ := json.Marshal(routeMatch.Handler)
 		//		log.Println("Request match route ", json)
 		frontendName := routeMatch.Route.GetName()
-		context.Set(r, "frontendName", frontendName)
+		context.Set(r, "frontend", frontendName)
 	}
 }
