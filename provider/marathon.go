@@ -1,13 +1,14 @@
 package provider
 
 import (
+	"crypto/tls"
 	"errors"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"text/template"
 
-	"crypto/tls"
 	"net/http"
 
 	"github.com/BurntSushi/ty/fun"
