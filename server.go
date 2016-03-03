@@ -443,7 +443,7 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 	if len(entryPoint.Redirect.EntryPoint) > 0 {
 		regex = "^(?:https?:\\/\\/)?([\\da-z\\.-]+)(?::\\d+)(.*)$"
 		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint] == nil {
-			return nil, errors.New("Unkown entrypoint " + entryPoint.Redirect.EntryPoint)
+			return nil, errors.New("Unknown entrypoint " + entryPoint.Redirect.EntryPoint)
 		}
 		protocol := "http"
 		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].TLS != nil {
