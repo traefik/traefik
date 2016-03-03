@@ -12,7 +12,7 @@ import (
 
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
-	"github.com/emilevauge/traefik/integration/utils"
+	"github.com/CiscoCloud/traefik/integration/utils"
 
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"

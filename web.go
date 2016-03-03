@@ -8,8 +8,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/elazarl/go-bindata-assetfs"
-	"github.com/emilevauge/traefik/autogen"
-	"github.com/emilevauge/traefik/types"
+	"github.com/CiscoCloud/traefik/autogen"
+	"github.com/CiscoCloud/traefik/types"
 	"github.com/gorilla/mux"
 	"github.com/thoas/stats"
 	"github.com/unrolled/render"

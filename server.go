@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -18,11 +17,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/CiscoCloud/traefik/middlewares"
+	"github.com/CiscoCloud/traefik/provider"
+	"github.com/CiscoCloud/traefik/types"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
-	"github.com/emilevauge/traefik/middlewares"
-	"github.com/emilevauge/traefik/provider"
-	"github.com/emilevauge/traefik/types"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/manners"
 	"github.com/mailgun/oxy/cbreaker"
@@ -125,8 +124,6 @@ func (server *Server) listenProviders() {
 func (server *Server) listenConfigurations() {
 	for {
 		configMsg := <-server.configurationValidatedChan
-		fmt.Printf("debug... configMsg: %#+v\n", configMsg)
-		fmt.Printf("debug... configuration: %#+v\n", configMsg.Configuration)
 		if configMsg.Configuration == nil {
 			log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
 		} else if reflect.DeepEqual(server.currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
