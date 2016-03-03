@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -101,7 +102,7 @@ func (server *Server) listenProviders() {
 	for {
 		configMsg := <-server.configurationChan
 		jsonConf, _ := json.Marshal(configMsg.Configuration)
-		log.Debugf("Configuration receveived from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+		log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
 		lastConfigs[configMsg.ProviderName] = &configMsg
 		if time.Now().After(lastReceivedConfiguration.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
 			log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
@@ -124,10 +125,12 @@ func (server *Server) listenProviders() {
 func (server *Server) listenConfigurations() {
 	for {
 		configMsg := <-server.configurationValidatedChan
+		fmt.Printf("debug... configMsg: %#+v\n", configMsg)
+		fmt.Printf("debug... configuration: %#+v\n", configMsg.Configuration)
 		if configMsg.Configuration == nil {
-			log.Info("Skipping empty Configuration")
+			log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
 		} else if reflect.DeepEqual(server.currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-			log.Info("Skipping same configuration")
+			log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 		} else {
 			// Copy configurations to new map so we don't change current if LoadConfig fails
 			newConfigurations := make(configs)
@@ -350,6 +353,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						log.Debugf("Creating backend %s", frontend.Backend)
 						var lb http.Handler
 						rr, _ := roundrobin.New(fwd)
+						rr.KeepContext = true
 						if configuration.Backends[frontend.Backend] == nil {
 							return nil, errors.New("Undefined backend: " + frontend.Backend)
 						}
@@ -361,6 +365,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						case types.Drr:
 							log.Debugf("Creating load-balancer drr")
 							rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
+							rebalancer.KeepContext = true
 							lb = rebalancer
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
@@ -437,5 +442,6 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	router.KeepContext = true
 	return router
 }
