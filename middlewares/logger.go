@@ -1,8 +1,10 @@
 package middlewares
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -53,6 +55,9 @@ type combinedLoggingHandler struct {
 
 func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer context.Clear(req)
+	var url2backend map[string]string
+	b, _ := ioutil.ReadFile("url2backend.json")
+	json.Unmarshal(b, &url2backend)
 
 	t_start := time.Now()
 	context.Set(req, "frontend", "Unknown frontend")
@@ -82,7 +87,7 @@ func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	referer := req.Referer()
 	agent := req.UserAgent()
 	frontend := context.Get(req, "frontend")
-	backend := context.Get(req, "oxy_backend")
+	backend := url2backend[fmt.Sprintf("%s", context.Get(req, "oxy_backend"))]
 	elapsed := time.Now().UTC().Sub(t_start.UTC())
 
 	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" "%s" "%s" %s%s`,

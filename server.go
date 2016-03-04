@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -43,6 +44,7 @@ type Server struct {
 	currentConfigurations      configs
 	globalConfiguration        GlobalConfiguration
 	loggerMiddleware           *middlewares.Logger
+	url2backend                map[string]string
 }
 
 type serverEntryPoint struct {
@@ -64,6 +66,7 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server.currentConfigurations = make(configs)
 	server.globalConfiguration = globalConfiguration
 	server.loggerMiddleware = middlewares.NewLogger(globalConfiguration.AccessLogsFile)
+	server.url2backend = make(map[string]string)
 
 	return server
 }
@@ -135,13 +138,13 @@ func (server *Server) listenConfigurations() {
 				newConfigurations[k] = v
 			}
 			newConfigurations[configMsg.ProviderName] = configMsg.Configuration
-
 			newServerEntryPoints, err := server.loadConfig(newConfigurations, server.globalConfiguration)
 			if err == nil {
 				server.serverLock.Lock()
 				for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 					currentServerEntryPoint := server.serverEntryPoints[newServerEntryPointName]
 					server.currentConfigurations = newConfigurations
+					server.mapURL2backend()
 					currentServerEntryPoint.httpRouter = newServerEntryPoint.httpRouter
 					oldServer := currentServerEntryPoint.httpServer
 					routersMiddleware := middlewares.NewRoutes(currentServerEntryPoint.httpRouter)
@@ -441,4 +444,17 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	router.KeepContext = true
 	return router
+}
+
+func (server *Server) mapURL2backend() {
+	for _, v := range server.currentConfigurations {
+		for k2, v2 := range v.Backends {
+			for _, v3 := range v2.Servers {
+				server.url2backend[v3.URL] = k2
+			}
+		}
+	}
+	// hack until I can figure out how to pass this to middleware
+	b, _ := json.Marshal(server.url2backend)
+	ioutil.WriteFile("url2backend.json", b, 0644)
 }
