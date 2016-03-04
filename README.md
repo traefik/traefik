@@ -16,13 +16,14 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 
 ## Features
 
+- It's fast
 - No dependency hell, single binary made with go
 - Simple json Rest API
 - Simple TOML file configuration
 - Multiple backends supported: Docker, Mesos/Marathon, Consul, Etcd, and more to come
 - Watchers for backends, can listen change in backends to apply a new configuration automatically
 - Hot-reloading of configuration. No need to restart the process
-- Graceful shutdown http connections during hot-reloads
+- Graceful shutdown http connections
 - Circuit breakers on backends
 - Round Robin, rebalancer load-balancers
 - Rest Metrics
