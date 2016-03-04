@@ -48,7 +48,7 @@ type Server struct {
 
 type serverEntryPoint struct {
 	httpServer *manners.GracefulServer
-	httpRouter *mux.Router
+	httpRouter *middlewares.HandlerSwitcher
 }
 
 // NewServer returns an initialized Server.
@@ -82,7 +82,7 @@ func (server *Server) Start() {
 // Stop stops the server
 func (server *Server) Stop() {
 	for _, serverEntryPoint := range server.serverEntryPoints {
-		serverEntryPoint.httpServer.Close()
+		serverEntryPoint.httpServer.BlockingClose()
 	}
 	server.stopChan <- true
 }
@@ -142,22 +142,23 @@ func (server *Server) listenConfigurations() {
 				server.serverLock.Lock()
 				for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 					currentServerEntryPoint := server.serverEntryPoints[newServerEntryPointName]
-					server.currentConfigurations = newConfigurations
-					currentServerEntryPoint.httpRouter = newServerEntryPoint.httpRouter
-					oldServer := currentServerEntryPoint.httpServer
-					newsrv, err := server.prepareServer(currentServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], oldServer, server.loggerMiddleware, metrics)
-					if err != nil {
-						log.Fatal("Error preparing server: ", err)
-					}
-					go server.startServer(newsrv, server.globalConfiguration)
-					currentServerEntryPoint.httpServer = newsrv
-					server.serverEntryPoints[newServerEntryPointName] = currentServerEntryPoint
-					time.Sleep(1 * time.Second)
-					if oldServer != nil {
-						log.Info("Stopping old server")
-						oldServer.Close()
+					if currentServerEntryPoint.httpServer == nil {
+						newsrv, err := server.prepareServer(newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics)
+						if err != nil {
+							log.Fatal("Error preparing server: ", err)
+						}
+						go server.startServer(newsrv, server.globalConfiguration)
+						currentServerEntryPoint.httpServer = newsrv
+						currentServerEntryPoint.httpRouter = newServerEntryPoint.httpRouter
+						server.serverEntryPoints[newServerEntryPointName] = currentServerEntryPoint
+						log.Infof("Created new Handler: %p", newServerEntryPoint.httpRouter.GetHandler())
+					} else {
+						handlerSwitcher := currentServerEntryPoint.httpRouter
+						handlerSwitcher.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
+						log.Infof("Created new Handler: %p", newServerEntryPoint.httpRouter.GetHandler())
 					}
 				}
+				server.currentConfigurations = newConfigurations
 				server.serverLock.Unlock()
 			} else {
 				log.Error("Error loading new configuration, aborted ", err)
@@ -264,7 +265,7 @@ func (server *Server) startServer(srv *manners.GracefulServer, globalConfigurati
 	log.Info("Server stopped")
 }
 
-func (server *Server) prepareServer(router *mux.Router, entryPoint *EntryPoint, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
+func (server *Server) prepareServer(router http.Handler, entryPoint *EntryPoint, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
 	log.Info("Preparing server")
 	// middlewares
 	var negroni = negroni.New()
@@ -303,7 +304,7 @@ func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) 
 	for entryPointName := range globalConfiguration.EntryPoints {
 		router := server.buildDefaultHTTPRouter()
 		serverEntryPoints[entryPointName] = serverEntryPoint{
-			httpRouter: router,
+			httpRouter: middlewares.NewHandlerSwitcher(router),
 		}
 	}
 	return serverEntryPoints
@@ -332,7 +333,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				if _, ok := serverEntryPoints[entryPointName]; !ok {
 					return nil, errors.New("Undefined entrypoint: " + entryPointName)
 				}
-				newRoute := serverEntryPoints[entryPointName].httpRouter.NewRoute().Name(frontendName)
+				newRoute := serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)
 				for routeName, route := range frontend.Routes {
 					log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
 					route, err := getRoute(newRoute, route.Rule, route.Value)
