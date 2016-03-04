@@ -2,8 +2,10 @@ package provider
 
 import (
 	"errors"
+	"github.com/containous/traefik/types"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/docker/libkv/store"
 	"reflect"
@@ -231,10 +233,58 @@ func TestKvLast(t *testing.T) {
 	}
 }
 
+type KvMock struct {
+	Kv
+}
+
+func (provider *KvMock) loadConfig() *types.Configuration {
+	return nil
+}
+
+func TestKvWatchTree(t *testing.T) {
+	returnedChans := make(chan chan []*store.KVPair)
+	provider := &KvMock{
+		Kv{
+			kvclient: &Mock{
+				WatchTreeMethod: func() <-chan []*store.KVPair {
+					c := make(chan []*store.KVPair, 10)
+					returnedChans <- c
+					return c
+				},
+			},
+		},
+	}
+
+	configChan := make(chan types.ConfigMessage)
+	go provider.watchKv(configChan, "prefix")
+
+	select {
+	case c1 := <-returnedChans:
+		c1 <- []*store.KVPair{}
+		<-configChan
+		close(c1) // WatchTree chans can close due to error
+	case <-time.After(1 * time.Second):
+	}
+
+	select {
+	case c2 := <-returnedChans:
+		c2 <- []*store.KVPair{}
+		<-configChan
+	case <-time.After(1 * time.Second):
+	}
+
+	select {
+	case _ = <-configChan:
+		t.Fatalf("configChan should be empty")
+	default:
+	}
+}
+
 // Extremely limited mock store so we can test initialization
 type Mock struct {
-	Error   bool
-	KVPairs []*store.KVPair
+	Error           bool
+	KVPairs         []*store.KVPair
+	WatchTreeMethod func() <-chan []*store.KVPair
 }
 
 func (s *Mock) Put(key string, value []byte, opts *store.WriteOptions) error {
@@ -269,7 +319,7 @@ func (s *Mock) Watch(key string, stopCh <-chan struct{}) (<-chan *store.KVPair, 
 
 // WatchTree mock
 func (s *Mock) WatchTree(prefix string, stopCh <-chan struct{}) (<-chan []*store.KVPair, error) {
-	return nil, errors.New("WatchTree not supported")
+	return s.WatchTreeMethod(), nil
 }
 
 // NewLock mock
