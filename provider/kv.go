@@ -10,7 +10,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
-	"github.com/emilevauge/traefik/types"
+	"github.com/CiscoCloud/traefik/types"
 )
 
 // Kv holds common configurations of key-value providers.

@@ -3,7 +3,7 @@ package provider
 import (
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/consul"
-	"github.com/emilevauge/traefik/types"
+	"github.com/CiscoCloud/traefik/types"
 )
 
 // Consul holds configurations of the Consul provider.

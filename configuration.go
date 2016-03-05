@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emilevauge/traefik/provider"
-	"github.com/emilevauge/traefik/types"
+	"github.com/CiscoCloud/traefik/provider"
+	"github.com/CiscoCloud/traefik/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )

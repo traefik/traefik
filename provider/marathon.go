@@ -9,11 +9,9 @@ import (
 	"strings"
 	"text/template"
 
-	"net/http"
-
 	"github.com/BurntSushi/ty/fun"
+	"github.com/CiscoCloud/traefik/types"
 	log "github.com/Sirupsen/logrus"
-	"github.com/emilevauge/traefik/types"
 	"github.com/gambol99/go-marathon"
 )
 

@@ -3,7 +3,7 @@ package provider
 import (
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/boltdb"
-	"github.com/emilevauge/traefik/types"
+	"github.com/CiscoCloud/traefik/types"
 )
 
 // BoltDb holds configurations of the BoltDb provider.

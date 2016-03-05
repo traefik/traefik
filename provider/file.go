@@ -7,7 +7,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
-	"github.com/emilevauge/traefik/types"
+	"github.com/CiscoCloud/traefik/types"
 	"gopkg.in/fsnotify.v1"
 )
 
