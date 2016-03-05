@@ -264,6 +264,7 @@ func TestKvWatchTree(t *testing.T) {
 		<-configChan
 		close(c1) // WatchTree chans can close due to error
 	case <-time.After(1 * time.Second):
+		t.Fatalf("Failed to create a new WatchTree chan")
 	}
 
 	select {
@@ -271,6 +272,7 @@ func TestKvWatchTree(t *testing.T) {
 		c2 <- []*store.KVPair{}
 		<-configChan
 	case <-time.After(1 * time.Second):
+		t.Fatalf("Failed to create a new WatchTree chan")
 	}
 
 	select {
