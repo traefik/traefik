@@ -87,7 +87,7 @@ func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Reque
 	referer := req.Referer()
 	agent := req.UserAgent()
 	frontend := context.Get(req, "frontend")
-	backend := url2backend[fmt.Sprintf("%s", context.Get(req, "oxy_backend"))]
+	backend := url2backend[context.Get(req, "oxy_backend").(string)]
 	elapsed := time.Now().UTC().Sub(t_start.UTC())
 
 	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" "%s" "%s" %s%s`,
