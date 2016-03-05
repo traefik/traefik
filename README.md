@@ -16,7 +16,7 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 
 ## Features
 
-- It's fast
+- [It's fast](docs/index.md#benchmarks)
 - No dependency hell, single binary made with go
 - Simple json Rest API
 - Simple TOML file configuration

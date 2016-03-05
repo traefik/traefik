@@ -1062,128 +1062,71 @@ Note that Træfɪk *will not watch for key changes in the `/traefik_configuratio
 
 ## <a id="benchmarks"></a> Benchmarks
 
-Here are some early Benchmarks between Nginx and Træfɪk acting as simple load balancers between two servers.
+Here are some early Benchmarks between Nginx, HA-Proxy and Træfɪk acting as simple load balancers between two servers.
 
 - Nginx:
 
 ```sh
-$ docker run -d -e VIRTUAL_HOST=test1.localhost emilevauge/whoami
-$ docker run -d -e VIRTUAL_HOST=test1.localhost emilevauge/whoami
+$ docker run -d -e VIRTUAL_HOST=test.nginx.localhost emilevauge/whoami
+$ docker run -d -e VIRTUAL_HOST=test.nginx.localhost emilevauge/whoami
 $ docker run --log-driver=none -d -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro jwilder/nginx-proxy
-$ ab -n 20000 -c 20  -r http://test1.localhost/
-This is ApacheBench, Version 2.3 <$Revision: 1528965 $>
-Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
-Licensed to The Apache Software Foundation, http://www.apache.org/
+$ wrk -t12 -c400 -d60s -H "Host: test.nginx.localhost" --latency http://127.0.0.1:80
+Running 1m test @ http://127.0.0.1:80
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   162.61ms  203.34ms   1.72s    91.07%
+    Req/Sec   277.57    107.67   790.00     67.53%
+  Latency Distribution
+     50%  128.19ms
+     75%  218.22ms
+     90%  342.12ms
+     99%    1.08s 
+  197991 requests in 1.00m, 82.32MB read
+  Socket errors: connect 0, read 0, write 0, timeout 18
+Requests/sec:   3296.04
+Transfer/sec:      1.37MB
+```
 
-Benchmarking test1.localhost (be patient)
-Completed 2000 requests
-Completed 4000 requests
-Completed 6000 requests
-Completed 8000 requests
-Completed 10000 requests
-Completed 12000 requests
-Completed 14000 requests
-Completed 16000 requests
-Completed 18000 requests
-Completed 20000 requests
-Finished 20000 requests
+- HA-Proxy:
 
-
-Server Software:        nginx/1.9.2
-Server Hostname:        test1.localhost
-Server Port:            80
-
-Document Path:          /
-Document Length:        287 bytes
-
-Concurrency Level:      20
-Time taken for tests:   5.874 seconds
-Complete requests:      20000
-Failed requests:        0
-Total transferred:      8900000 bytes
-HTML transferred:       5740000 bytes
-Requests per second:    3404.97 [#/sec] (mean)
-Time per request:       5.874 [ms] (mean)
-Time per request:       0.294 [ms] (mean, across all concurrent requests)
-Transfer rate:          1479.70 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   0.1      0       2
-Processing:     0    6   2.4      6      35
-Waiting:        0    5   2.3      5      33
-Total:          0    6   2.4      6      36
-
-Percentage of the requests served within a certain time (ms)
-  50%      6
-  66%      6
-  75%      7
-  80%      7
-  90%      9
-  95%     10
-  98%     12
-  99%     13
- 100%     36 (longest request)
+```
+$ docker run -d --name web1 -e VIRTUAL_HOST=test.haproxy.localhost emilevauge/whoami
+$ docker run -d --name web2 -e VIRTUAL_HOST=test.haproxy.localhost emilevauge/whoami
+$ docker run -d -p 80:80 --link web1:web1 --link web2:web2 dockercloud/haproxy
+$ wrk -t12 -c400 -d60s -H "Host: test.haproxy.localhost" --latency http://127.0.0.1:80
+Running 1m test @ http://127.0.0.1:80
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   158.08ms  187.88ms   1.75s    89.61%
+    Req/Sec   281.33    120.47     0.98k    65.88%
+  Latency Distribution
+     50%  121.77ms
+     75%  227.10ms
+     90%  351.98ms
+     99%    1.01s 
+  200462 requests in 1.00m, 59.65MB read
+Requests/sec:   3337.66
+Transfer/sec:      0.99MB
 ```
 
 - Træfɪk:
 
 ```sh
-docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test1.docker.localhost emilevauge/whoami
-docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test1.docker.localhost emilevauge/whoami
-docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml -v /var/run/docker.sock:/var/run/docker.sock containous/traefik
-$ ab -n 20000 -c 20  -r http://test1.docker.localhost/
-This is ApacheBench, Version 2.3 <$Revision: 1528965 $>
-Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
-Licensed to The Apache Software Foundation, http://www.apache.org/
-
-Benchmarking test1.docker.localhost (be patient)
-Completed 2000 requests
-Completed 4000 requests
-Completed 6000 requests
-Completed 8000 requests
-Completed 10000 requests
-Completed 12000 requests
-Completed 14000 requests
-Completed 16000 requests
-Completed 18000 requests
-Completed 20000 requests
-Finished 20000 requests
-
-
-Server Software:        .
-Server Hostname:        test1.docker.localhost
-Server Port:            80
-
-Document Path:          /
-Document Length:        312 bytes
-
-Concurrency Level:      20
-Time taken for tests:   6.545 seconds
-Complete requests:      20000
-Failed requests:        0
-Total transferred:      8600000 bytes
-HTML transferred:       6240000 bytes
-Requests per second:    3055.60 [#/sec] (mean)
-Time per request:       6.545 [ms] (mean)
-Time per request:       0.327 [ms] (mean, across all concurrent requests)
-Transfer rate:          1283.11 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   0.2      0       7
-Processing:     1    6   2.2      6      22
-Waiting:        1    6   2.1      6      21
-Total:          1    7   2.2      6      22
-
-Percentage of the requests served within a certain time (ms)
-  50%      6
-  66%      7
-  75%      8
-  80%      8
-  90%      9
-  95%     10
-  98%     11
-  99%     13
- 100%     22 (longest request)
+$ docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test.traefik.localhost emilevauge/whoami
+$ docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test.traefik.docker.localhost emilevauge/whoami
+$ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml -v /var/run/docker.sock:/var/run/docker.sock containous/traefik
+$ wrk -t12 -c400 -d60s -H "Host: test.traefik.docker.localhost" --latency http://127.0.0.1:80
+Running 1m test @ http://127.0.0.1:80
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   132.93ms  121.89ms   1.20s    66.62%
+    Req/Sec   280.95    104.88   740.00     68.26%
+  Latency Distribution
+     50%  128.71ms
+     75%  214.15ms
+     90%  281.45ms
+     99%  498.44ms
+  200734 requests in 1.00m, 80.02MB read
+Requests/sec:   3340.13
+Transfer/sec:      1.33MB
 ```
