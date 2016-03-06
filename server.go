@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -447,14 +446,15 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 }
 
 func (server *Server) mapURL2backend() {
+	url2backend := make(map[string]string)
+
 	for _, v := range server.currentConfigurations {
 		for k2, v2 := range v.Backends {
 			for _, v3 := range v2.Servers {
-				server.url2backend[v3.URL] = k2
+				url2backend[v3.URL] = k2
 			}
 		}
 	}
-	// hack until I can figure out how to pass this to middleware
-	b, _ := json.Marshal(server.url2backend)
-	ioutil.WriteFile("url2backend.json", b, 0644)
+
+	middlewares.SetURLmap(url2backend)
 }

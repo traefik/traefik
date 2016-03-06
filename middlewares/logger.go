@@ -1,18 +1,19 @@
 package middlewares
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/CiscoCloud/traefik/types"
 	"github.com/gorilla/context"
 )
+
+var url2backend types.URL2Backend
 
 // Logger is a middleware handler that logs the request as it goes in and the response as it goes out.
 type Logger struct {
@@ -55,9 +56,6 @@ type combinedLoggingHandler struct {
 
 func (h combinedLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer context.Clear(req)
-	var url2backend map[string]string
-	b, _ := ioutil.ReadFile("url2backend.json")
-	json.Unmarshal(b, &url2backend)
 
 	t_start := time.Now()
 	context.Set(req, "frontend", "Unknown frontend")
@@ -134,4 +132,8 @@ func (l *responseLogger) Flush() {
 	if ok {
 		f.Flush()
 	}
+}
+
+func SetURLmap(urlmap types.URL2Backend) {
+	url2backend = urlmap
 }
