@@ -1113,9 +1113,9 @@ Transfer/sec:      0.99MB
 
 ```sh
 $ docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test.traefik.localhost emilevauge/whoami
-$ docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test.traefik.docker.localhost emilevauge/whoami
+$ docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test.traefik.localhost emilevauge/whoami
 $ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml -v /var/run/docker.sock:/var/run/docker.sock containous/traefik
-$ wrk -t12 -c400 -d60s -H "Host: test.traefik.docker.localhost" --latency http://127.0.0.1:80
+$ wrk -t12 -c400 -d60s -H "Host: test.traefik.localhost" --latency http://127.0.0.1:80
 Running 1m test @ http://127.0.0.1:80
   12 threads and 400 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
