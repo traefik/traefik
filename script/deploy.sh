@@ -31,6 +31,7 @@ git push --follow-tags -u origin master
 
 # create docker image emilevauge/traefik (compatibility)
 docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+docker tag containous/traefik emilevauge/traefik:latest
 docker push emilevauge/traefik:latest
 docker tag emilevauge/traefik:latest emilevauge/traefik:${VERSION}
 docker push emilevauge/traefik:${VERSION}
