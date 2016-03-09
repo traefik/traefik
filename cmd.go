@@ -124,6 +124,7 @@ func init() {
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.consulCatalog, "consulCatalog", false, "Enable Consul catalog backend")
 	traefikCmd.PersistentFlags().StringVar(&arguments.ConsulCatalog.Domain, "consulCatalog.domain", "", "Default domain used")
+	traefikCmd.PersistentFlags().StringVar(&arguments.ConsulCatalog.Prefix, "consulCatalog.prefix", "/traefik", "K/V prefix for service and node additional rules.")
 	traefikCmd.PersistentFlags().StringVar(&arguments.ConsulCatalog.Endpoint, "consulCatalog.endpoint", "127.0.0.1:8500", "Consul server endpoint")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.zookeeper, "zookeeper", false, "Enable Zookeeper backend")

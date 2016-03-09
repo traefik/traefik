@@ -1,7 +1,28 @@
-[backends]{{range .Nodes}}
+[backends]
+{{range .Nodes}}
     [backends.backend-{{getBackend .}}.servers.server-{{.Node.Node | replace "." "-"}}-{{.Service.Port}}]
-    url = "http://{{.Node.Address}}:{{.Service.Port}}"
+    	url = "http://{{.Node.Address}}:{{.Service.Port}}"
+        {{$weight := GetKV "" .Service.Service .Node.Node "weight"}}
+        {{with $weight}}
+            weight = "{{$weight}}"
+        {{end}}
 {{end}}
+
+{{range .Services}}
+    {{$service := .}}
+    {{$circuitBreaker := GetKV "" . "" "circuitbreaker"}}
+    {{with $circuitBreaker}}
+    [backends.backend-{{$service}}.circuitbreaker]
+        expression = "{{$circuitBreaker}}"
+    {{end}}
+
+    {{$loadBalancer := GetKV "" . "" "loadbalancer"}}
+    {{with $loadBalancer}}
+    [backends.backend-{{$service}}.loadbalancer]
+    	method = "{{$loadBalancer}}"
+    {{end}}
+{{end}}
+
 
 [frontends]{{range .Services}}
   [frontends.frontend-{{.}}]
