@@ -28,6 +28,8 @@ import (
 	"github.com/mailgun/oxy/cbreaker"
 	"github.com/mailgun/oxy/forward"
 	"github.com/mailgun/oxy/roundrobin"
+	"github.com/mailgun/oxy/stream"
+	"strconv"
 )
 
 var oxyLogger = &OxyLogger{}
@@ -387,6 +389,28 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								}
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
 								rr.UpsertServer(url, roundrobin.Weight(server.Weight))
+							}
+						}
+						// retry ?
+						if globalConfiguration.Retry != nil {
+							retries := len(configuration.Backends[frontend.Backend].Servers) - 1
+							if globalConfiguration.Retry.Attempts > 0 {
+								retries = globalConfiguration.Retry.Attempts
+							}
+							maxMem := int64(2 * 1024 * 1024)
+							if globalConfiguration.Retry.MaxMem > 0 {
+								maxMem = globalConfiguration.Retry.MaxMem
+							}
+							lb, err = stream.New(lb,
+								stream.Logger(oxyLogger),
+								stream.Retry("IsNetworkError() && Attempts() < "+strconv.Itoa(retries)),
+								stream.MemRequestBodyBytes(maxMem),
+								stream.MaxRequestBodyBytes(maxMem),
+								stream.MemResponseBodyBytes(maxMem),
+								stream.MaxResponseBodyBytes(maxMem))
+							log.Debugf("Creating retries max attempts %d", retries)
+							if err != nil {
+								return nil, err
 							}
 						}
 						var negroni = negroni.New()
