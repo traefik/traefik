@@ -2,5 +2,5 @@
 Description=Traefik
 
 [Service]
-ExecStart=/usr/bin/traefik /etc/traefik.toml
+ExecStart=/usr/bin/traefik --configFile=/etc/traefik.toml
 Restart=on-failure
