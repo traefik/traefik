@@ -1,6 +1,10 @@
+branches:
+  except:
+    - /^v\d\.\d\.\d.*$/
+    
 env:
   REPO: $TRAVIS_REPO_SLUG
-  VERSION: v1.0.alpha.$TRAVIS_COMMIT
+  VERSION: v1.0.0-beta.$TRAVIS_BUILD_NUMBER
 
 sudo: required
 

@@ -1,9 +1,9 @@
 package provider
 
 import (
+	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/etcd"
-	"github.com/CiscoCloud/traefik/types"
 )
 
 // Etcd holds configurations of the Etcd provider.

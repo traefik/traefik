@@ -13,15 +13,16 @@ import (
 	"os/signal"
 	"reflect"
 	"regexp"
+	"sort"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/CiscoCloud/traefik/middlewares"
-	"github.com/CiscoCloud/traefik/provider"
-	"github.com/CiscoCloud/traefik/types"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
+	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/manners"
 	"github.com/mailgun/oxy/cbreaker"
@@ -43,12 +44,11 @@ type Server struct {
 	currentConfigurations      configs
 	globalConfiguration        GlobalConfiguration
 	loggerMiddleware           *middlewares.Logger
-	url2backend                map[string]string
 }
 
 type serverEntryPoint struct {
 	httpServer *manners.GracefulServer
-	httpRouter *mux.Router
+	httpRouter *middlewares.HandlerSwitcher
 }
 
 // NewServer returns an initialized Server.
@@ -65,7 +65,6 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server.currentConfigurations = make(configs)
 	server.globalConfiguration = globalConfiguration
 	server.loggerMiddleware = middlewares.NewLogger(globalConfiguration.AccessLogsFile)
-	server.url2backend = make(map[string]string)
 
 	return server
 }
@@ -83,7 +82,7 @@ func (server *Server) Start() {
 // Stop stops the server
 func (server *Server) Stop() {
 	for _, serverEntryPoint := range server.serverEntryPoints {
-		serverEntryPoint.httpServer.Close()
+		serverEntryPoint.httpServer.BlockingClose()
 	}
 	server.stopChan <- true
 }
@@ -103,7 +102,7 @@ func (server *Server) listenProviders() {
 	for {
 		configMsg := <-server.configurationChan
 		jsonConf, _ := json.Marshal(configMsg.Configuration)
-		log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+		log.Debugf("Configuration receveived from provider %s: %s", configMsg.ProviderName, string(jsonConf))
 		lastConfigs[configMsg.ProviderName] = &configMsg
 		if time.Now().After(lastReceivedConfiguration.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
 			log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
@@ -127,9 +126,9 @@ func (server *Server) listenConfigurations() {
 	for {
 		configMsg := <-server.configurationValidatedChan
 		if configMsg.Configuration == nil {
-			log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
+			log.Info("Skipping empty Configuration")
 		} else if reflect.DeepEqual(server.currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-			log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
+			log.Info("Skipping same configuration")
 		} else {
 			// Copy configurations to new map so we don't change current if LoadConfig fails
 			newConfigurations := make(configs)
@@ -137,29 +136,29 @@ func (server *Server) listenConfigurations() {
 				newConfigurations[k] = v
 			}
 			newConfigurations[configMsg.ProviderName] = configMsg.Configuration
+
 			newServerEntryPoints, err := server.loadConfig(newConfigurations, server.globalConfiguration)
 			if err == nil {
 				server.serverLock.Lock()
 				for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 					currentServerEntryPoint := server.serverEntryPoints[newServerEntryPointName]
-					server.currentConfigurations = newConfigurations
-					server.mapURL2backend()
-					currentServerEntryPoint.httpRouter = newServerEntryPoint.httpRouter
-					oldServer := currentServerEntryPoint.httpServer
-					routersMiddleware := middlewares.NewRoutes(currentServerEntryPoint.httpRouter)
-					newsrv, err := server.prepareServer(currentServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], oldServer, server.loggerMiddleware, routersMiddleware, metrics)
-					if err != nil {
-						log.Fatal("Error preparing server: ", err)
-					}
-					go server.startServer(newsrv, server.globalConfiguration)
-					currentServerEntryPoint.httpServer = newsrv
-					server.serverEntryPoints[newServerEntryPointName] = currentServerEntryPoint
-					time.Sleep(1 * time.Second)
-					if oldServer != nil {
-						log.Info("Stopping old server")
-						oldServer.Close()
+					if currentServerEntryPoint.httpServer == nil {
+						newsrv, err := server.prepareServer(newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics)
+						if err != nil {
+							log.Fatal("Error preparing server: ", err)
+						}
+						go server.startServer(newsrv, server.globalConfiguration)
+						currentServerEntryPoint.httpServer = newsrv
+						currentServerEntryPoint.httpRouter = newServerEntryPoint.httpRouter
+						server.serverEntryPoints[newServerEntryPointName] = currentServerEntryPoint
+						log.Infof("Created new Handler: %p", newServerEntryPoint.httpRouter.GetHandler())
+					} else {
+						handlerSwitcher := currentServerEntryPoint.httpRouter
+						handlerSwitcher.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
+						log.Infof("Created new Handler: %p", newServerEntryPoint.httpRouter.GetHandler())
 					}
 				}
+				server.currentConfigurations = newConfigurations
 				server.serverLock.Unlock()
 			} else {
 				log.Error("Error loading new configuration, aborted ", err)
@@ -185,6 +184,9 @@ func (server *Server) configureProviders() {
 	}
 	if server.globalConfiguration.Consul != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Consul)
+	}
+	if server.globalConfiguration.ConsulCatalog != nil {
+		server.providers = append(server.providers, server.globalConfiguration.ConsulCatalog)
 	}
 	if server.globalConfiguration.Etcd != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Etcd)
@@ -263,7 +265,7 @@ func (server *Server) startServer(srv *manners.GracefulServer, globalConfigurati
 	log.Info("Server stopped")
 }
 
-func (server *Server) prepareServer(router *mux.Router, entryPoint *EntryPoint, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
+func (server *Server) prepareServer(router http.Handler, entryPoint *EntryPoint, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
 	log.Info("Preparing server")
 	// middlewares
 	var negroni = negroni.New()
@@ -302,7 +304,7 @@ func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) 
 	for entryPointName := range globalConfiguration.EntryPoints {
 		router := server.buildDefaultHTTPRouter()
 		serverEntryPoints[entryPointName] = serverEntryPoint{
-			httpRouter: router,
+			httpRouter: middlewares.NewHandlerSwitcher(router),
 		}
 	}
 	return serverEntryPoints
@@ -316,7 +318,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 	backends := map[string]http.Handler{}
 	for _, configuration := range configurations {
-		for frontendName, frontend := range configuration.Frontends {
+		frontendNames := sortedFrontendNamesForConfig(configuration)
+		for _, frontendName := range frontendNames {
+			frontend := configuration.Frontends[frontendName]
+
 			log.Debugf("Creating frontend %s", frontendName)
 			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
 			// default endpoints if not defined in frontends
@@ -328,14 +333,14 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				if _, ok := serverEntryPoints[entryPointName]; !ok {
 					return nil, errors.New("Undefined entrypoint: " + entryPointName)
 				}
-				newRoute := serverEntryPoints[entryPointName].httpRouter.NewRoute().Name(frontendName)
+				newRoute := serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)
 				for routeName, route := range frontend.Routes {
-					log.Debugf("Creating route %s %s: %s", routeName, route.Rule, route.Value)
-					newRouteReflect, err := invoke(newRoute, route.Rule, route.Value)
+					log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
+					route, err := getRoute(newRoute, route.Rule, route.Value)
 					if err != nil {
 						return nil, err
 					}
-					newRoute = newRouteReflect[0].Interface().(*mux.Route)
+					newRoute = route
 				}
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
 				if entryPoint.Redirect != nil {
@@ -352,7 +357,6 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						log.Debugf("Creating backend %s", frontend.Backend)
 						var lb http.Handler
 						rr, _ := roundrobin.New(fwd)
-						rr.KeepContext = true
 						if configuration.Backends[frontend.Backend] == nil {
 							return nil, errors.New("Undefined backend: " + frontend.Backend)
 						}
@@ -364,7 +368,6 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						case types.Drr:
 							log.Debugf("Creating load-balancer drr")
 							rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
-							rebalancer.KeepContext = true
 							lb = rebalancer
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
@@ -397,7 +400,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					} else {
 						log.Debugf("Reusing backend %s", frontend.Backend)
 					}
-					newRoute.Handler(backends[frontend.Backend])
+					server.wireFrontendBackend(frontend.Routes, newRoute, backends[frontend.Backend])
 				}
 				err := newRoute.GetError()
 				if err != nil {
@@ -409,13 +412,39 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	return serverEntryPoints, nil
 }
 
+func (server *Server) wireFrontendBackend(routes map[string]types.Route, newRoute *mux.Route, handler http.Handler) {
+	// strip prefix
+	var strip bool
+	for _, route := range routes {
+		switch route.Rule {
+		case "PathStrip":
+			newRoute.Handler(&middlewares.StripPrefix{
+				Prefix:  route.Value,
+				Handler: handler,
+			})
+			strip = true
+			break
+		case "PathPrefixStrip":
+			newRoute.Handler(&middlewares.StripPrefix{
+				Prefix:  route.Value,
+				Handler: handler,
+			})
+			strip = true
+			break
+		}
+	}
+	if !strip {
+		newRoute.Handler(handler)
+	}
+}
+
 func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *EntryPoint) (http.Handler, error) {
 	regex := entryPoint.Redirect.Regex
 	replacement := entryPoint.Redirect.Replacement
 	if len(entryPoint.Redirect.EntryPoint) > 0 {
-		regex = "^(?:https?:\\/\\/)?([\\da-z\\.-]+)(?::\\d+)(.*)$"
+		regex = "^(?:https?:\\/\\/)?([\\da-z\\.-]+)(?::\\d+)?(.*)$"
 		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint] == nil {
-			return nil, errors.New("Unkown entrypoint " + entryPoint.Redirect.EntryPoint)
+			return nil, errors.New("Unknown entrypoint " + entryPoint.Redirect.EntryPoint)
 		}
 		protocol := "http"
 		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].TLS != nil {
@@ -441,20 +470,36 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	router.KeepContext = true
+	router.StrictSlash(true)
 	return router
 }
 
-func (server *Server) mapURL2backend() {
-	url2backend := make(map[string]string)
+func getRoute(any interface{}, rule string, value ...interface{}) (*mux.Route, error) {
+	switch rule {
+	case "PathStrip":
+		rule = "Path"
+	case "PathPrefixStrip":
+		rule = "PathPrefix"
+	}
+	inputs := make([]reflect.Value, len(value))
+	for i := range value {
+		inputs[i] = reflect.ValueOf(value[i])
+	}
+	method := reflect.ValueOf(any).MethodByName(rule)
+	if method.IsValid() {
+		return method.Call(inputs)[0].Interface().(*mux.Route), nil
+	}
+	return nil, errors.New("Method not found: " + rule)
+}
 
-	for _, v := range server.currentConfigurations {
-		for k2, v2 := range v.Backends {
-			for _, v3 := range v2.Servers {
-				url2backend[v3.URL] = k2
-			}
-		}
+func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
+	keys := []string{}
+
+	for key := range configuration.Frontends {
+		keys = append(keys, key)
 	}
 
-	middlewares.SetURLmap(url2backend)
+	sort.Strings(keys)
+
+	return keys
 }

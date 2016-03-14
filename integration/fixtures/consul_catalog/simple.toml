@@ -1,0 +1,9 @@
+defaultEntryPoints = ["http"]
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+[consulCatalog]
+domain = "consul.localhost"

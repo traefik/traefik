@@ -5,9 +5,6 @@ import (
 	"strings"
 )
 
-// Map a url to backend name
-type URL2Backend map[string]string
-
 // Backend holds backend configuration.
 type Backend struct {
 	Servers        map[string]Server `json:"servers,omitempty"`

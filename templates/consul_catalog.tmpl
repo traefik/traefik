@@ -1,0 +1,13 @@
+[backends]{{range .Nodes}}
+    [backends.backend-{{getBackend .}}.servers.server-{{.Node.Node | replace "." "-"}}-{{.Service.Port}}]
+    url = "http://{{.Node.Address}}:{{.Service.Port}}"
+{{end}}
+
+[frontends]{{range .Services}}
+  [frontends.frontend-{{.}}]
+  backend = "backend-{{.}}"
+  passHostHeader = false
+    [frontends.frontend-{{.}}.routes.route-host-{{.}}]
+    rule = "Host"
+    value = "{{getFrontendValue .}}"
+{{end}}

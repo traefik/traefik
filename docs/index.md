@@ -12,6 +12,7 @@ ___
 - [Docker backend](#docker)
 - [Mesos/Marathon backend](#marathon)
 - [Consul backend](#consul)
+- [Consul catalog backend](#consulcatalog)
 - [Etcd backend](#etcd)
 - [Zookeeper backend](#zk)
 - [Boltdb backend](#boltdb)
@@ -36,7 +37,9 @@ Frontends can be defined using the following rules:
 - `Host`: Host adds a matcher for the URL host. It accepts a template with zero or more URL variables enclosed by `{}`. Variables can define an optional regexp pattern to be matched: `www.traefik.io`, `{subdomain:[a-z]+}.traefik.io`
 - `Methods`: Methods adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched, e.g.: `GET`, `POST`, `PUT`
 - `Path`: Path adds a matcher for the URL path. It accepts a template with zero or more URL variables enclosed by `{}`. The template must start with a `/`. For exemple `/products/` `/articles/{category}/{id:[0-9]+}`
+- `PathStrip`: Same as `Path` but strip the given prefix from the request URL's Path.
 - `PathPrefix`: PathPrefix adds a matcher for the URL path prefix. This matches if the given template is a prefix of the full URL path.
+- `PathPrefixStrip`: Same as `PathPrefix` but strip the given prefix from the request URL's Path.
 
 
  A frontend is a set of rules that forwards the incoming http traffic to a backend.
@@ -105,10 +108,18 @@ Flags:
       --boltdb.watch                         Watch provider (default true)
   -c, --configFile string                    Configuration file to use (TOML, JSON, YAML, HCL).
       --consul                               Enable Consul backend
-      --consul.endpoint string               Consul server endpoint (default "127.0.0.1:8500")
+      --consul.endpoint string               Comma sepparated Consul server endpoints (default "127.0.0.1:8500")
       --consul.filename string               Override default configuration template. For advanced users :)
       --consul.prefix string                 Prefix used for KV store (default "/traefik")
+      --consul.tls                           Enable Consul TLS support
+      --consul.tls.ca string                 TLS CA
+      --consul.tls.cert string               TLS cert
+      --consul.tls.insecureSkipVerify        TLS insecure skip verify
+      --consul.tls.key string                TLS key
       --consul.watch                         Watch provider (default true)
+      --consulCatalog                        Enable Consul catalog backend
+      --consulCatalog.domain string          Default domain used
+      --consulCatalog.endpoint string        Consul server endpoint (default "127.0.0.1:8500")
       --defaultEntryPoints value             Entrypoints to be used by frontends that do not specify any entrypoint (default &main.DefaultEntryPoints(nil))
       --docker                               Enable Docker backend
       --docker.domain string                 Default domain used
@@ -122,9 +133,14 @@ Flags:
       --docker.watch                         Watch provider (default true)
       --entryPoints value                    Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'
       --etcd                                 Enable Etcd backend
-      --etcd.endpoint string                 Etcd server endpoint (default "127.0.0.1:4001")
+      --etcd.endpoint string                 Comma sepparated Etcd server endpoints (default "127.0.0.1:4001")
       --etcd.filename string                 Override default configuration template. For advanced users :)
       --etcd.prefix string                   Prefix used for KV store (default "/traefik")
+      --etcd.tls                             Enable Etcd TLS support
+      --etcd.tls.ca string                   TLS CA
+      --etcd.tls.cert string                 TLS cert
+      --etcd.tls.insecureSkipVerify          TLS insecure skip verify
+      --etcd.tls.key string                  TLS key
       --etcd.watch                           Watch provider (default true)
       --file                                 Enable File backend
       --file.filename string                 Override default configuration template. For advanced users :)
@@ -135,10 +151,8 @@ Flags:
       --marathon.domain string               Default domain used
       --marathon.endpoint string             Marathon server endpoint. You can also specify multiple endpoint for Marathon (default "http://127.0.0.1:8080")
       --marathon.filename string             Override default configuration template. For advanced users :)
-      --marathon.networkInterface string     Network interface used to call Marathon web services. Needed in case of multiple network interfaces (default "eth0")
       --marathon.watch                       Watch provider (default true)
       --maxIdleConnsPerHost int              If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used
-  -p, --port string                          Reverse proxy port (default ":80")
       --providersThrottleDuration duration   Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time. (default 2s)
       --traefikLogsFile string               Traefik logs file (default "log/traefik.log")
       --web                                  Enable Web backend
@@ -147,7 +161,7 @@ Flags:
       --web.keyFile string                   SSL certificate
       --web.readOnly                         Enable read only API
       --zookeeper                            Enable Zookeeper backend
-      --zookeeper.endpoint string            Zookeeper server endpoint (default "127.0.0.1:2181")
+      --zookeeper.endpoint string            Comma sepparated Zookeeper server endpoints (default "127.0.0.1:2181")
       --zookeeper.filename string            Override default configuration template. For advanced users :)
       --zookeeper.prefix string              Prefix used for KV store (default "/traefik")
       --zookeeper.watch                      Watch provider (default true)
@@ -625,12 +639,6 @@ Træfɪk can be configured to use Marathon as a backend configuration:
 #
 endpoint = "http://127.0.0.1:8080"
 
-# Network interface used to call Marathon web services. Needed in case of multiple network interfaces.
-# Optional
-# Default: "eth0"
-#
-networkInterface = "eth0"
-
 # Enable watch Marathon changes
 #
 # Optional
@@ -718,6 +726,16 @@ prefix = "traefik"
 # Optional
 #
 # filename = "consul.tmpl"
+
+# Enable consul TLS connection
+#
+# Optional
+#
+# [consul.tls]
+# ca = "/etc/ssl/ca.crt"
+# cert = "/etc/ssl/consul.crt"
+# key = "/etc/ssl/consul.key"
+# insecureskipverify = true
 ```
 
 The Keys-Values structure should look (using `prefix = "/traefik"`):
@@ -799,6 +817,16 @@ Træfɪk can be configured to use Etcd as a backend configuration:
 # Optional
 #
 # filename = "etcd.tmpl"
+
+# Enable etcd TLS connection
+#
+# Optional
+#
+# [etcd.tls]
+# ca = "/etc/ssl/ca.crt"
+# cert = "/etc/ssl/etcd.crt"
+# key = "/etc/ssl/etcd.key"
+# insecureskipverify = true
 ```
 
 The Keys-Values structure should look (using `prefix = "/traefik"`):
@@ -841,6 +869,37 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
 | `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
 
+
+## <a id="consulcatalog"></a> Consul catalog backend
+
+Træfɪk can be configured to use service discovery catalog of Consul as a backend configuration:
+
+```toml
+################################################################
+# Consul Catalog configuration backend
+################################################################
+
+# Enable Consul Catalog configuration backend
+#
+# Optional
+#
+[consulCatalog]
+
+# Consul server endpoint
+#
+# Required
+#
+endpoint = "127.0.0.1:8500"
+
+# Default domain used.
+#
+# Optional
+#
+domain = "consul.localhost"
+```
+
+This backend will create routes matching on hostname based on the service name
+used in consul.
 
 ## <a id="zk"></a> Zookeeper backend
 
@@ -1003,128 +1062,71 @@ Note that Træfɪk *will not watch for key changes in the `/traefik_configuratio
 
 ## <a id="benchmarks"></a> Benchmarks
 
-Here are some early Benchmarks between Nginx and Træfɪk acting as simple load balancers between two servers.
+Here are some early Benchmarks between Nginx, HA-Proxy and Træfɪk acting as simple load balancers between two servers.
 
 - Nginx:
 
 ```sh
-$ docker run -d -e VIRTUAL_HOST=test1.localhost emilevauge/whoami
-$ docker run -d -e VIRTUAL_HOST=test1.localhost emilevauge/whoami
+$ docker run -d -e VIRTUAL_HOST=test.nginx.localhost emilevauge/whoami
+$ docker run -d -e VIRTUAL_HOST=test.nginx.localhost emilevauge/whoami
 $ docker run --log-driver=none -d -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro jwilder/nginx-proxy
-$ ab -n 20000 -c 20  -r http://test1.localhost/
-This is ApacheBench, Version 2.3 <$Revision: 1528965 $>
-Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
-Licensed to The Apache Software Foundation, http://www.apache.org/
+$ wrk -t12 -c400 -d60s -H "Host: test.nginx.localhost" --latency http://127.0.0.1:80
+Running 1m test @ http://127.0.0.1:80
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   162.61ms  203.34ms   1.72s    91.07%
+    Req/Sec   277.57    107.67   790.00     67.53%
+  Latency Distribution
+     50%  128.19ms
+     75%  218.22ms
+     90%  342.12ms
+     99%    1.08s 
+  197991 requests in 1.00m, 82.32MB read
+  Socket errors: connect 0, read 0, write 0, timeout 18
+Requests/sec:   3296.04
+Transfer/sec:      1.37MB
+```
 
-Benchmarking test1.localhost (be patient)
-Completed 2000 requests
-Completed 4000 requests
-Completed 6000 requests
-Completed 8000 requests
-Completed 10000 requests
-Completed 12000 requests
-Completed 14000 requests
-Completed 16000 requests
-Completed 18000 requests
-Completed 20000 requests
-Finished 20000 requests
+- HA-Proxy:
 
-
-Server Software:        nginx/1.9.2
-Server Hostname:        test1.localhost
-Server Port:            80
-
-Document Path:          /
-Document Length:        287 bytes
-
-Concurrency Level:      20
-Time taken for tests:   5.874 seconds
-Complete requests:      20000
-Failed requests:        0
-Total transferred:      8900000 bytes
-HTML transferred:       5740000 bytes
-Requests per second:    3404.97 [#/sec] (mean)
-Time per request:       5.874 [ms] (mean)
-Time per request:       0.294 [ms] (mean, across all concurrent requests)
-Transfer rate:          1479.70 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   0.1      0       2
-Processing:     0    6   2.4      6      35
-Waiting:        0    5   2.3      5      33
-Total:          0    6   2.4      6      36
-
-Percentage of the requests served within a certain time (ms)
-  50%      6
-  66%      6
-  75%      7
-  80%      7
-  90%      9
-  95%     10
-  98%     12
-  99%     13
- 100%     36 (longest request)
+```
+$ docker run -d --name web1 -e VIRTUAL_HOST=test.haproxy.localhost emilevauge/whoami
+$ docker run -d --name web2 -e VIRTUAL_HOST=test.haproxy.localhost emilevauge/whoami
+$ docker run -d -p 80:80 --link web1:web1 --link web2:web2 dockercloud/haproxy
+$ wrk -t12 -c400 -d60s -H "Host: test.haproxy.localhost" --latency http://127.0.0.1:80
+Running 1m test @ http://127.0.0.1:80
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   158.08ms  187.88ms   1.75s    89.61%
+    Req/Sec   281.33    120.47     0.98k    65.88%
+  Latency Distribution
+     50%  121.77ms
+     75%  227.10ms
+     90%  351.98ms
+     99%    1.01s 
+  200462 requests in 1.00m, 59.65MB read
+Requests/sec:   3337.66
+Transfer/sec:      0.99MB
 ```
 
 - Træfɪk:
 
 ```sh
-docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test1.docker.localhost emilevauge/whoami
-docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test1.docker.localhost emilevauge/whoami
-docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml -v /var/run/docker.sock:/var/run/docker.sock emilevauge/traefik
-$ ab -n 20000 -c 20  -r http://test1.docker.localhost/
-This is ApacheBench, Version 2.3 <$Revision: 1528965 $>
-Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
-Licensed to The Apache Software Foundation, http://www.apache.org/
-
-Benchmarking test1.docker.localhost (be patient)
-Completed 2000 requests
-Completed 4000 requests
-Completed 6000 requests
-Completed 8000 requests
-Completed 10000 requests
-Completed 12000 requests
-Completed 14000 requests
-Completed 16000 requests
-Completed 18000 requests
-Completed 20000 requests
-Finished 20000 requests
-
-
-Server Software:        .
-Server Hostname:        test1.docker.localhost
-Server Port:            80
-
-Document Path:          /
-Document Length:        312 bytes
-
-Concurrency Level:      20
-Time taken for tests:   6.545 seconds
-Complete requests:      20000
-Failed requests:        0
-Total transferred:      8600000 bytes
-HTML transferred:       6240000 bytes
-Requests per second:    3055.60 [#/sec] (mean)
-Time per request:       6.545 [ms] (mean)
-Time per request:       0.327 [ms] (mean, across all concurrent requests)
-Transfer rate:          1283.11 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    0   0.2      0       7
-Processing:     1    6   2.2      6      22
-Waiting:        1    6   2.1      6      21
-Total:          1    7   2.2      6      22
-
-Percentage of the requests served within a certain time (ms)
-  50%      6
-  66%      7
-  75%      8
-  80%      8
-  90%      9
-  95%     10
-  98%     11
-  99%     13
- 100%     22 (longest request)
+$ docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test.traefik.localhost emilevauge/whoami
+$ docker run -d -l traefik.backend=test1 -l traefik.frontend.rule=Host -l traefik.frontend.value=test.traefik.localhost emilevauge/whoami
+$ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/traefik.toml -v /var/run/docker.sock:/var/run/docker.sock containous/traefik
+$ wrk -t12 -c400 -d60s -H "Host: test.traefik.localhost" --latency http://127.0.0.1:80
+Running 1m test @ http://127.0.0.1:80
+  12 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   132.93ms  121.89ms   1.20s    66.62%
+    Req/Sec   280.95    104.88   740.00     68.26%
+  Latency Distribution
+     50%  128.71ms
+     75%  214.15ms
+     90%  281.45ms
+     99%  498.44ms
+  200734 requests in 1.00m, 80.02MB read
+Requests/sec:   3340.13
+Transfer/sec:      1.33MB
 ```

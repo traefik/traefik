@@ -2,15 +2,19 @@
 package provider
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/types"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
-	"github.com/CiscoCloud/traefik/types"
 )
 
 // Kv holds common configurations of key-value providers.
@@ -18,18 +22,76 @@ type Kv struct {
 	BaseProvider `mapstructure:",squash"`
 	Endpoint     string
 	Prefix       string
+	TLS          *KvTLS
 	storeType    store.Backend
 	kvclient     store.Store
 }
 
+// KvTLS holds TLS specific configurations
+type KvTLS struct {
+	CA                 string
+	Cert               string
+	Key                string
+	InsecureSkipVerify bool
+}
+
+func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix string) {
+	for {
+		chanKeys, err := provider.kvclient.WatchTree(provider.Prefix, make(chan struct{}) /* stop chan */)
+		if err != nil {
+			log.Errorf("Failed to WatchTree %s", err)
+			continue
+		}
+
+		for range chanKeys {
+			configuration := provider.loadConfig()
+			if configuration != nil {
+				configurationChan <- types.ConfigMessage{
+					ProviderName:  string(provider.storeType),
+					Configuration: configuration,
+				}
+			}
+		}
+		log.Warnf("Intermittent failure to WatchTree KV. Retrying.")
+	}
+}
+
 func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error {
+	storeConfig := &store.Config{
+		ConnectionTimeout: 30 * time.Second,
+		Bucket:            "traefik",
+	}
+
+	if provider.TLS != nil {
+		caPool := x509.NewCertPool()
+
+		if provider.TLS.CA != "" {
+			ca, err := ioutil.ReadFile(provider.TLS.CA)
+
+			if err != nil {
+				return fmt.Errorf("Failed to read CA. %s", err)
+			}
+
+			caPool.AppendCertsFromPEM(ca)
+		}
+
+		cert, err := tls.LoadX509KeyPair(provider.TLS.Cert, provider.TLS.Key)
+
+		if err != nil {
+			return fmt.Errorf("Failed to load keypair. %s", err)
+		}
+
+		storeConfig.TLS = &tls.Config{
+			Certificates:       []tls.Certificate{cert},
+			RootCAs:            caPool,
+			InsecureSkipVerify: provider.TLS.InsecureSkipVerify,
+		}
+	}
+
 	kv, err := libkv.NewStore(
 		provider.storeType,
-		[]string{provider.Endpoint},
-		&store.Config{
-			ConnectionTimeout: 30 * time.Second,
-			Bucket:            "traefik",
-		},
+		strings.Split(provider.Endpoint, ","),
+		storeConfig,
 	)
 	if err != nil {
 		return err
@@ -39,24 +101,7 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error 
 	}
 	provider.kvclient = kv
 	if provider.Watch {
-		stopCh := make(chan struct{})
-		chanKeys, err := kv.WatchTree(provider.Prefix, stopCh)
-		if err != nil {
-			return err
-		}
-		go func() {
-			for {
-				<-chanKeys
-				configuration := provider.loadConfig()
-				if configuration != nil {
-					configurationChan <- types.ConfigMessage{
-						ProviderName:  string(provider.storeType),
-						Configuration: configuration,
-					}
-				}
-				defer close(stopCh)
-			}
-		}()
+		go provider.watchKv(configurationChan, provider.Prefix)
 	}
 	configuration := provider.loadConfig()
 	configurationChan <- types.ConfigMessage{

@@ -23,7 +23,7 @@ Step 0 : FROM golang:1.5
  ---> 8c6473912976
 Step 1 : RUN go get github.com/Masterminds/glide
 [...]
-docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/emile/dev/go/src/github.com/emilevauge/traefik/"dist":/go/src/github.com/emilevauge/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
+docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/emile/dev/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 
@@ -66,13 +66,13 @@ integration test using the `test-integration` target.
 $ make test-unit
 docker build -t "traefik-dev:your-feature-branch" -f build.Dockerfile .
 # […]
-docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/vincent/src/github/vdemeester/traefik/dist:/go/src/github.com/emilevauge/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate test-unit
+docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/vincent/src/github/vdemeester/traefik/dist:/go/src/github.com/containous/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate test-unit
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 
 ---> Making bundle: test-unit (in .)
 + go test -cover -coverprofile=cover.out .
-ok      github.com/emilevauge/traefik   0.005s  coverage: 4.1% of statements
+ok      github.com/containous/traefik   0.005s  coverage: 4.1% of statements
 
 Test success
 ```

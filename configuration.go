@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/CiscoCloud/traefik/provider"
-	"github.com/CiscoCloud/traefik/types"
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
@@ -30,6 +30,7 @@ type GlobalConfiguration struct {
 	Web                       *WebProvider
 	Marathon                  *provider.Marathon
 	Consul                    *provider.Consul
+	ConsulCatalog             *provider.ConsulCatalog
 	Etcd                      *provider.Etcd
 	Zookeeper                 *provider.Zookepper
 	Boltdb                    *provider.BoltDb
@@ -221,11 +222,20 @@ func LoadConfiguration() *GlobalConfiguration {
 	if arguments.marathon {
 		viper.Set("marathon", arguments.Marathon)
 	}
+	if !arguments.consulTLS {
+		arguments.Consul.TLS = nil
+	}
 	if arguments.consul {
 		viper.Set("consul", arguments.Consul)
 	}
+	if arguments.consulCatalog {
+		viper.Set("consulCatalog", arguments.ConsulCatalog)
+	}
 	if arguments.zookeeper {
 		viper.Set("zookeeper", arguments.Zookeeper)
+	}
+	if !arguments.etcdTLS {
+		arguments.Etcd.TLS = nil
 	}
 	if arguments.etcd {
 		viper.Set("etcd", arguments.Etcd)

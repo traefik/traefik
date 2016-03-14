@@ -10,9 +10,9 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/containous/traefik/integration/utils"
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
-	"github.com/CiscoCloud/traefik/integration/utils"
 
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
@@ -28,6 +28,8 @@ func init() {
 	check.Suite(&FileSuite{})
 	check.Suite(&DockerSuite{})
 	check.Suite(&ConsulSuite{})
+	check.Suite(&ConsulCatalogSuite{})
+	check.Suite(&EtcdSuite{})
 	check.Suite(&MarathonSuite{})
 }
 
@@ -47,6 +49,13 @@ type ConsulSuite struct{ BaseSuite }
 
 func (s *ConsulSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "consul")
+}
+
+// Etcd test suites (using libcompose)
+type EtcdSuite struct{ BaseSuite }
+
+func (s *EtcdSuite) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "etcd")
 }
 
 // Marathon test suites (using libcompose)
@@ -80,7 +89,9 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	composeProject, err := docker.NewProject(&docker.Context{
 		Context: project.Context{
-			ComposeFile: fmt.Sprintf("resources/compose/%s.yml", name),
+			ComposeFiles: []string{
+				fmt.Sprintf("resources/compose/%s.yml", name),
+			},
 			ProjectName: fmt.Sprintf("integration-test-%s", name),
 		},
 	})
