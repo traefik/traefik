@@ -4,10 +4,12 @@ import (
 	"net/http"
 )
 
+// SaveBackend holds the next handler
 type SaveBackend struct {
 	next http.Handler
 }
 
+// NewSaveBackend creates a SaveBackend
 func NewSaveBackend(next http.Handler) *SaveBackend {
 	return &SaveBackend{next}
 }

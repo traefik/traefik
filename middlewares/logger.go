@@ -18,9 +18,9 @@ const (
 )
 
 var (
-	url2Backend  map[string]string                           // Mapping of URLs to backend name
-	reqidCounter uint64                                      // Request ID
-	reqid2Names  map[string][]string = map[string][]string{} // Map of reqid to frontend and backend names
+	url2Backend  map[string]string       // Mapping of URLs to backend name
+	reqidCounter uint64                  // Request ID
+	reqid2Names  = map[string][]string{} // Map of reqid to frontend and backend names
 )
 
 // Logger is a middleware handler that logs the request as it goes in and the response as it goes out.
@@ -84,7 +84,7 @@ func (l *Logger) Close() {
 
 // Logging handler to log frontend name, backend name, and elapsed time
 func (h frontendBackendLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	t_start := time.Now()
+	startTime := time.Now()
 	logger := &responseLogger{w: w}
 	h.handler.ServeHTTP(logger, req)
 
@@ -101,7 +101,7 @@ func (h frontendBackendLoggingHandler) ServeHTTP(w http.ResponseWriter, req *htt
 		host = req.RemoteAddr
 	}
 
-	ts := t_start.Format("02/Jan/2006:15:04:05 -0700")
+	ts := startTime.Format("02/Jan/2006:15:04:05 -0700")
 	method := req.Method
 	uri := url.RequestURI()
 	proto := req.Proto
@@ -111,7 +111,7 @@ func (h frontendBackendLoggingHandler) ServeHTTP(w http.ResponseWriter, req *htt
 	agent := req.UserAgent()
 	frontend := reqid2Names[h.reqid][loggerFrontend]
 	backend := url2Backend[reqid2Names[h.reqid][loggerBackend]]
-	elapsed := time.Now().UTC().Sub(t_start.UTC())
+	elapsed := time.Now().UTC().Sub(startTime.UTC())
 
 	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %s%s`,
 		host, username, ts, method, uri, proto, status, len, referer, agent, h.reqid, frontend, backend, elapsed, "\n")
@@ -159,6 +159,7 @@ func (l *responseLogger) Flush() {
 	}
 }
 
+// SetURLmap sets or updates the URL-to-backend name map
 func SetURLmap(urlmap map[string]string) {
 	url2Backend = urlmap
 }
