@@ -1,6 +1,6 @@
-![Træfɪk](http://traefik.github.io/traefik.logo.svg "Træfɪk")
-___
-
+<p align="center">
+<img src="http://traefik.github.io/traefik.logo.svg" alt="Træfɪk" title="Træfɪk" />
+</p>
 
 # <a id="top"></a> Documentation
 
@@ -54,15 +54,20 @@ Various methods of load-balancing is supported:
 - `drr`: Dynamic Round Robin: increases weights on servers that perform better than others. It also rolls back to original weights if the servers have changed.
 
 A circuit breaker can also be applied to a backend, preventing high loads on failing servers.
+Initial state is Standby. CB observes the statistics and does not modify the request.
+In case if condition matches, CB enters Tripped state, where it responds with predefines code or redirects to another frontend.
+Once Tripped timer expires, CB enters Recovering state and resets all stats.
+In case if the condition does not match and recovery timer expries, CB enters Standby state.
+
 It can be configured using:
 
 - Methods: `LatencyAtQuantileMS`, `NetworkErrorRatio`, `ResponseCodeRatio`
 - Operators:  `AND`, `OR`, `EQ`, `NEQ`, `LT`, `LE`, `GT`, `GE`
 
 For example:
-- `NetworkErrorRatio() > 0.5`
-- `LatencyAtQuantileMS(50.0) > 50`
-- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`
+- `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window for a frontend
+- `LatencyAtQuantileMS(50.0) > 50`:  watch latency at quantile in milliseconds.
+- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in range [500-600) to  [0-600)
 
 
 ## <a id="launch"></a> Launch configuration
@@ -230,6 +235,65 @@ Use "traefik [command] --help" for more information about a command.
 #
 # defaultEntryPoints = ["http", "https"]
 
+# Enable ACME (Let's Encrypt): automatic SSL
+#
+# Optional
+#
+# [acme]
+
+# Email address used for registration
+#
+# Required
+#
+# email = "test@traefik.io"
+
+# File used for certificates storage.
+# WARNING, if you use Traefik in Docker, don't forget to mount this file as a volume.
+#
+# Required
+#
+# storageFile = "acme.json"
+
+# Entrypoint to proxy acme challenge to.
+# WARNING, must point to an entrypoint on port 80 
+#
+# Required
+#
+# entryPoint = "http"
+
+# Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
+# WARNING, TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.
+# WARNING, Take note that Let's Encrypt have rate limiting: https://community.letsencrypt.org/t/quick-start-guide/1631
+#
+# Optional
+#
+# onDemand = true
+
+# CA server to use
+# Uncomment the line to run on the staging let's encrypt server
+# Leave comment to go to prod
+#
+# Optional
+#
+# caServer = "https://acme-staging.api.letsencrypt.org/directory"
+
+# Domains list
+# You can provide SANs (alternative domains) to each main domain
+# WARNING, Take note that Let's Encrypt have rate limiting: https://community.letsencrypt.org/t/quick-start-guide/1631
+# Each domain & SANs will lead to a certificate request.
+#
+# [[acme.domains]]
+#   main = "local1.com"
+#   sans = ["test1.local1.com", "test2.local1.com"]
+# [[acme.domains]]
+#   main = "local2.com"
+#   sans = ["test1.local2.com", "test2x.local2.com"]
+# [[acme.domains]]
+#   main = "local3.com"
+# [[acme.domains]]
+#   main = "local4.com"
+
+
 # Entrypoints definition
 #
 # Optional
@@ -261,6 +325,105 @@ Use "traefik [command] --help" for more information about a command.
 #     [entryPoints.http.redirect]
 #       regex = "^http://localhost/(.*)"
 #       replacement = "http://mydomain/$1"
+```
+
+### Samples
+
+#### HTTP only
+
+```
+defaultEntryPoints = ["http"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+```
+
+### HTTP + HTTPS (with SNI)
+
+```
+defaultEntryPoints = ["http", "https"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.com.cert"
+      KeyFile = "integration/fixtures/https/snitest.com.key"
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.org.cert"
+      KeyFile = "integration/fixtures/https/snitest.org.key"
+```
+
+### HTTP redirect on HTTPS
+
+```
+defaultEntryPoints = ["http", "https"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      certFile = "tests/traefik.crt"
+      keyFile = "tests/traefik.key"
+```
+
+### Let's Encrypt support
+
+```
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+[acme]
+email = "test@traefik.io"
+storageFile = "acme.json"
+onDemand = true
+caServer = "http://172.18.0.1:4000/directory"
+entryPoint = "http"
+
+[[acme.domains]]
+  main = "local1.com"
+  sans = ["test1.local1.com", "test2.local1.com"]
+[[acme.domains]]
+  main = "local2.com"
+  sans = ["test1.local2.com", "test2x.local2.com"]
+[[acme.domains]]
+  main = "local3.com"
+[[acme.domains]]
+  main = "local4.com"
+```
+
+### Override entrypoints in frontends
+
+```
+[frontends]
+  [frontends.frontend1]
+  backend = "backend2"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host"
+    value = "test.localhost"
+  [frontends.frontend2]
+  backend = "backend1"
+  passHostHeader = true
+  entrypoints = ["https"] # overrides defaultEntryPoints
+    [frontends.frontend2.routes.test_1]
+    rule = "Host"
+    value = "{subdomain:[a-z]+}.localhost"
+  [frontends.frontend3]
+  entrypoints = ["http", "https"] # overrides defaultEntryPoints
+  backend = "backend2"
+    rule = "Path"
+    value = "/test"
 ```
 
 

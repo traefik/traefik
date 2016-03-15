@@ -4,7 +4,7 @@
 </p>
 
 [![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/containous/traefik/blob/master/LICENSE.md)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
 
@@ -18,8 +18,7 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 
 - [It's fast](docs/index.md#benchmarks)
 - No dependency hell, single binary made with go
-- Simple json Rest API
-- Simple TOML file configuration
+- Rest API
 - Multiple backends supported: Docker, Mesos/Marathon, Consul, Etcd, and more to come
 - Watchers for backends, can listen change in backends to apply a new configuration automatically
 - Hot-reloading of configuration. No need to restart the process
@@ -29,10 +28,11 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 - Rest Metrics
 - Tiny docker image included [![Image Layers](https://badge.imagelayers.io/containous/traefik:latest.svg)](https://imagelayers.io/?images=containous/traefik:latest)
 - SSL backends support
-- SSL frontend support
+- SSL frontend support (with SNI)
 - Clean AngularJS Web UI
 - Websocket support
 - HTTP/2 support
+- [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS)
 
 ## Demo
 
@@ -53,6 +53,7 @@ You can access to a simple HTML frontend of Træfik.
 - [Gorilla mux](https://github.com/gorilla/mux): famous request router
 - [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
 - [Manners](https://github.com/mailgun/manners): graceful shutdown of http.Handler servers
+- [Lego](https://github.com/xenolf/lego): the best [Let's Encrypt](https://letsencrypt.org) library in go
 
 ## Quick start
 

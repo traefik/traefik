@@ -55,6 +55,63 @@
 #
 # defaultEntryPoints = ["http", "https"]
 
+# Enable ACME (Let's Encrypt): automatic SSL
+#
+# Optional
+#
+# [acme]
+
+# Email address used for registration
+#
+# Required
+#
+# email = "test@traefik.io"
+
+# File used for certificates storage.
+# WARNING, if you use Traefik in Docker, don't forget to mount this file as a volume.
+#
+# Required
+#
+# storageFile = "acme.json"
+
+# Entrypoint to proxy acme challenge to.
+# WARNING, must point to an entrypoint on port 80 
+#
+# Required
+#
+# entryPoint = "http"
+
+# Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
+# WARNING, TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.
+# WARNING, Take note that Let's Encrypt have rate limiting: https://community.letsencrypt.org/t/quick-start-guide/1631
+#
+# Optional
+#
+# onDemand = true
+
+# CA server to use
+# Uncomment the line to run on the staging let's encrypt server
+# Leave comment to go to prod
+#
+# Optional
+#
+# caServer = "https://acme-staging.api.letsencrypt.org/directory"
+
+# Domains list
+# You can provide SANs (alternative domains) to each main domain
+#
+# [[acme.domains]]
+#   main = "local1.com"
+#   sans = ["test1.local1.com", "test2.local1.com"]
+# [[acme.domains]]
+#   main = "local2.com"
+#   sans = ["test1.local2.com", "test2x.local2.com"]
+# [[acme.domains]]
+#   main = "local3.com"
+# [[acme.domains]]
+#   main = "local4.com"
+
+
 # Entrypoints definition
 #
 # Optional
