@@ -13,8 +13,8 @@
 # and can then inspect log/access.log to see frontend, backend, and timing
 
 # Kill traefik and any running example processes
-sudo pkill -ef traefik
-pkill -ef exampleHandler
+sudo pkill -f traefik
+pkill -f exampleHandler
 [ ! -d log ] && mkdir log
 
 # Start new example processes

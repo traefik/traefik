@@ -2,18 +2,25 @@ package middlewares
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
+)
 
-	"github.com/gorilla/context"
+const (
+	loggerReqidHeader = "X-Traefik-Reqid"
+	loggerFrontend    = 0
+	loggerBackend     = 1
 )
 
 var (
-	url2Backend map[string]string // Mapping of URLs to backend name
+	url2Backend  map[string]string                           // Mapping of URLs to backend name
+	reqidCounter uint64                                      // Request ID
+	reqid2Names  map[string][]string = map[string][]string{} // Map of reqid to frontend and backend names
 )
 
 // Logger is a middleware handler that logs the request as it goes in and the response as it goes out.
@@ -23,6 +30,7 @@ type Logger struct {
 
 // Logging handler to log frontend name, backend name, and elapsed time
 type frontendBackendLoggingHandler struct {
+	reqid   string
 	writer  io.Writer
 	handler http.Handler
 }
@@ -43,7 +51,29 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 	if l.file == nil {
 		next(rw, r)
 	} else {
-		frontendBackendLoggingHandler{l.file, next}.ServeHTTP(rw, r)
+		reqidCounter++
+		reqid := strconv.FormatUint(reqidCounter, 10)
+		log.Debugf("Starting request %s", reqid)
+		reqid2Names[reqid] = []string{"Unknown frontend", "Unknown backend"}
+		defer deleteRequest(reqid)
+		r.Header[loggerReqidHeader] = []string{reqid}
+		frontendBackendLoggingHandler{reqid, l.file, next}.ServeHTTP(rw, r)
+	}
+}
+
+// Delete a request from the map
+func deleteRequest(reqid string) {
+	log.Debugf("Ending request %s", reqid)
+	delete(reqid2Names, reqid)
+}
+
+// Save a frontend or backend name for the logger
+func saveNameForLogger(r *http.Request, nameType int, name string) {
+	if reqidHdr := r.Header[loggerReqidHeader]; len(reqidHdr) == 1 {
+		reqid := reqidHdr[0]
+		if len(reqid2Names[reqid]) > 0 {
+			reqid2Names[reqid][nameType] = name
+		}
 	}
 }
 
@@ -54,11 +84,7 @@ func (l *Logger) Close() {
 
 // Logging handler to log frontend name, backend name, and elapsed time
 func (h frontendBackendLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	defer context.Clear(req)
-
 	t_start := time.Now()
-	context.Set(req, "frontend", "Unknown frontend")
-	context.Set(req, "oxy_backend", "Unknown backend")
 	logger := &responseLogger{w: w}
 	h.handler.ServeHTTP(logger, req)
 
@@ -83,12 +109,12 @@ func (h frontendBackendLoggingHandler) ServeHTTP(w http.ResponseWriter, req *htt
 	len := logger.Size()
 	referer := req.Referer()
 	agent := req.UserAgent()
-	frontend := context.Get(req, "frontend")
-	backend := url2Backend[context.Get(req, "oxy_backend").(string)]
+	frontend := reqid2Names[h.reqid][loggerFrontend]
+	backend := url2Backend[reqid2Names[h.reqid][loggerBackend]]
 	elapsed := time.Now().UTC().Sub(t_start.UTC())
 
-	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" "%s" "%s" %s%s`,
-		host, username, ts, method, uri, proto, status, len, referer, agent, frontend, backend, elapsed, "\n")
+	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %s%s`,
+		host, username, ts, method, uri, proto, status, len, referer, agent, h.reqid, frontend, backend, elapsed, "\n")
 
 }
 

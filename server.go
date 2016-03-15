@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -143,7 +144,6 @@ func (server *Server) listenConfigurations() {
 				server.serverLock.Lock()
 				for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 					currentServerEntryPoint := server.serverEntryPoints[newServerEntryPointName]
-					server.mapURL2Backend()
 					if currentServerEntryPoint.httpServer == nil {
 						routersMiddleware := middlewares.NewRoutes(newServerEntryPoint.httpRouter.GetHandler())
 						newsrv, err := server.prepareServer(newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, routersMiddleware, metrics)
@@ -163,6 +163,7 @@ func (server *Server) listenConfigurations() {
 				}
 				server.currentConfigurations = newConfigurations
 				server.serverLock.Unlock()
+				server.mapURL2Backend()
 			} else {
 				log.Error("Error loading new configuration, aborted ", err)
 			}
@@ -327,6 +328,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 			log.Debugf("Creating frontend %s", frontendName)
 			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+			saveBackend := middlewares.NewSaveBackend(fwd)
 			// default endpoints if not defined in frontends
 			if len(frontend.EntryPoints) == 0 {
 				frontend.EntryPoints = globalConfiguration.DefaultEntryPoints
@@ -359,8 +361,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					if backends[frontend.Backend] == nil {
 						log.Debugf("Creating backend %s", frontend.Backend)
 						var lb http.Handler
-						rr, _ := roundrobin.New(fwd)
-						rr.KeepContext = true
+						rr, _ := roundrobin.New(saveBackend)
 						if configuration.Backends[frontend.Backend] == nil {
 							return nil, errors.New("Undefined backend: " + frontend.Backend)
 						}
@@ -372,7 +373,6 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						case types.Drr:
 							log.Debugf("Creating load-balancer drr")
 							rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
-							rr.KeepContext = true
 							lb = rebalancer
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
@@ -475,7 +475,6 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
-	router.KeepContext = true
 	router.StrictSlash(true)
 	return router
 }
@@ -512,11 +511,14 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 
 func (server *Server) mapURL2Backend() {
 	url2Backend := make(map[string]string)
-
-	for _, v := range server.currentConfigurations {
-		for k2, v2 := range v.Backends {
-			for _, v3 := range v2.Servers {
-				url2Backend[v3.URL] = k2
+	for _, config := range server.currentConfigurations {
+		for backendName, backend := range config.Backends {
+			for serverName, server := range backend.Servers {
+				if len(backend.Servers) == 1 {
+					url2Backend[server.URL] = fmt.Sprintf("%s", backendName)
+				} else {
+					url2Backend[server.URL] = fmt.Sprintf("%s.%s", backendName, serverName)
+				}
 			}
 		}
 	}

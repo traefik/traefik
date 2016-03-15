@@ -3,7 +3,6 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/gorilla/context"
 	"github.com/gorilla/mux"
 )
 
@@ -22,6 +21,6 @@ func (router *Routes) ServeHTTP(rw http.ResponseWriter, r *http.Request, next ht
 	routeMatch := mux.RouteMatch{}
 	if router.router.Match(r, &routeMatch) {
 		frontendName := routeMatch.Route.GetName()
-		context.Set(r, "frontend", frontendName)
+		saveNameForLogger(r, loggerFrontend, frontendName)
 	}
 }
