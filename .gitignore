@@ -8,4 +8,3 @@ traefik.toml
 *.test
 vendor/
 static/
-glide.lock
