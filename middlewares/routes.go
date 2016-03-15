@@ -28,4 +28,3 @@ func (router *Routes) ServeHTTP(rw http.ResponseWriter, r *http.Request, next ht
 		saveNameForLogger(r, loggerFrontend, frontendName)
 	}
 }
-
