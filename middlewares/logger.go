@@ -55,16 +55,17 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 		reqid := strconv.FormatUint(reqidCounter, 10)
 		log.Debugf("Starting request %s", reqid)
 		reqid2Names[reqid] = []string{"Unknown frontend", "Unknown backend"}
-		defer deleteRequest(reqid)
 		r.Header[loggerReqidHeader] = []string{reqid}
+		defer deleteReqid(r, reqid)
 		frontendBackendLoggingHandler{reqid, l.file, next}.ServeHTTP(rw, r)
 	}
 }
 
-// Delete a request from the map
-func deleteRequest(reqid string) {
+// Delete a reqid from the map and the request's headers
+func deleteReqid(r *http.Request, reqid string) {
 	log.Debugf("Ending request %s", reqid)
 	delete(reqid2Names, reqid)
+	delete(r.Header, loggerReqidHeader)
 }
 
 // Save a frontend or backend name for the logger
