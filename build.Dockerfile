@@ -24,6 +24,7 @@ RUN ln -s /usr/local/bin/docker-${DOCKER_VERSION} /usr/local/bin/docker
 WORKDIR /go/src/github.com/containous/traefik
 
 COPY glide.yaml glide.yaml
-RUN glide up --quick
+COPY glide.lock glide.lock
+RUN glide install
 
 COPY . /go/src/github.com/containous/traefik

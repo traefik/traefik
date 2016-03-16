@@ -20,14 +20,14 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
+	"github.com/containous/oxy/cbreaker"
+	"github.com/containous/oxy/forward"
+	"github.com/containous/oxy/roundrobin"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/manners"
-	"github.com/mailgun/oxy/cbreaker"
-	"github.com/mailgun/oxy/forward"
-	"github.com/mailgun/oxy/roundrobin"
 )
 
 var oxyLogger = &OxyLogger{}
@@ -379,7 +379,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							}
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
-							lb = middlewares.NewWebsocketUpgrader(rr)
+							lb = rr
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
 								if err != nil {
