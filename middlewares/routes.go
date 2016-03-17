@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -25,6 +26,6 @@ func (router *Routes) ServeHTTP(rw http.ResponseWriter, r *http.Request, next ht
 		json, _ := json.Marshal(routeMatch.Handler)
 		log.Println("Request match route ", json)
 		frontendName := routeMatch.Route.GetName()
-		saveNameForLogger(r, loggerFrontend, frontendName)
+		saveNameForLogger(r, loggerFrontend, strings.TrimPrefix(frontendName, "frontend-"))
 	}
 }
