@@ -15,6 +15,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -515,9 +516,9 @@ func (server *Server) mapURL2Backend() {
 		for backendName, backend := range config.Backends {
 			for serverName, server := range backend.Servers {
 				if len(backend.Servers) == 1 {
-					url2Backend[server.URL] = fmt.Sprintf("%s", backendName)
+					url2Backend[server.URL] = fmt.Sprintf("%s", strings.TrimPrefix(backendName, "backend-"))
 				} else {
-					url2Backend[server.URL] = fmt.Sprintf("%s.%s", backendName, serverName)
+					url2Backend[server.URL] = fmt.Sprintf("%s.%s", strings.TrimPrefix(backendName, "backend-"), serverName)
 				}
 			}
 		}

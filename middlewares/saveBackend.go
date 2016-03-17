@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"net/http"
-	"strings"
 )
 
 // SaveBackend holds the next handler
@@ -16,7 +15,6 @@ func NewSaveBackend(next http.Handler) *SaveBackend {
 }
 
 func (saveBackend *SaveBackend) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	backendName := (*r.URL).String()
-	saveNameForLogger(r, loggerBackend, strings.TrimPrefix(backendName, "backend-"))
+	saveNameForLogger(r, loggerBackend, (*r.URL).String())
 	saveBackend.next.ServeHTTP(rw, r)
 }
