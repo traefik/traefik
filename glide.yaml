@@ -8,8 +8,8 @@ import:
     ref:     9038e48c3b982f8e82281ea486f078a73731ac4e
   - package: github.com/mailgun/log
     ref:     44874009257d4d47ba9806f1b7f72a32a015e4d8
-  - package: github.com/mailgun/oxy
-    ref:     547c334d658398c05b346c0b79d8f47ba2e1473b
+  - package: github.com/containous/oxy
+    ref:     0b5b371bce661385d35439204298fa6fb5db5463
     subpackages:
       - cbreaker
       - forward
