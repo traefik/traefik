@@ -53,7 +53,7 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 	} else {
 		reqidCounter++
 		reqid := strconv.FormatUint(reqidCounter, 10)
-		log.Debugf("Starting request %s", reqid)
+		log.Debugf("Starting request %s: %s %s %s %s %s", reqid, r.Method, r.URL.RequestURI(), r.Proto, r.Referer(), r.UserAgent())
 		reqid2Names[reqid] = []string{"Unknown frontend", "Unknown backend"}
 		r.Header[loggerReqidHeader] = []string{reqid}
 		defer deleteReqid(r, reqid)
