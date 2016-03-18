@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -18,7 +19,7 @@ const (
 )
 
 var (
-	url2Backend  map[string]string       // Mapping of URLs to backend name
+	mutex        sync.RWMutex
 	reqidCounter uint64                  // Request ID
 	reqid2Names  = map[string][]string{} // Map of reqid to frontend and backend names
 )
@@ -51,10 +52,12 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 	if l.file == nil {
 		next(rw, r)
 	} else {
+		mutex.Lock()
 		reqidCounter++
 		reqid := strconv.FormatUint(reqidCounter, 10)
+		reqid2Names[reqid] = []string{"", ""}
+		mutex.Unlock()
 		log.Debugf("Starting request %s: %s %s %s %s %s", reqid, r.Method, r.URL.RequestURI(), r.Proto, r.Referer(), r.UserAgent())
-		reqid2Names[reqid] = []string{"Unknown frontend", "Unknown backend"}
 		r.Header[loggerReqidHeader] = []string{reqid}
 		defer deleteReqid(r, reqid)
 		frontendBackendLoggingHandler{reqid, l.file, next}.ServeHTTP(rw, r)
@@ -64,7 +67,9 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 // Delete a reqid from the map and the request's headers
 func deleteReqid(r *http.Request, reqid string) {
 	log.Debugf("Ending request %s", reqid)
+	mutex.Lock()
 	delete(reqid2Names, reqid)
+	mutex.Unlock()
 	delete(r.Header, loggerReqidHeader)
 }
 
@@ -72,9 +77,9 @@ func deleteReqid(r *http.Request, reqid string) {
 func saveNameForLogger(r *http.Request, nameType int, name string) {
 	if reqidHdr := r.Header[loggerReqidHeader]; len(reqidHdr) == 1 {
 		reqid := reqidHdr[0]
-		if len(reqid2Names[reqid]) > 0 {
-			reqid2Names[reqid][nameType] = name
-		}
+		mutex.Lock()
+		reqid2Names[reqid][nameType] = name
+		mutex.Unlock()
 	}
 }
 
@@ -107,15 +112,20 @@ func (h frontendBackendLoggingHandler) ServeHTTP(w http.ResponseWriter, req *htt
 	uri := url.RequestURI()
 	proto := req.Proto
 	status := logger.Status()
-	len := logger.Size()
+	size := logger.Size()
 	referer := req.Referer()
 	agent := req.UserAgent()
-	frontend := reqid2Names[h.reqid][loggerFrontend]
-	backend := url2Backend[reqid2Names[h.reqid][loggerBackend]]
+	mutex.RLock()
+	frontend, backend := "", ""
+	if len(reqid2Names[h.reqid]) > 1 {
+		frontend = reqid2Names[h.reqid][loggerFrontend]
+		backend = reqid2Names[h.reqid][loggerBackend]
+	}
+	mutex.RUnlock()
 	elapsed := time.Now().UTC().Sub(startTime.UTC())
 
 	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %s%s`,
-		host, username, ts, method, uri, proto, status, len, referer, agent, h.reqid, frontend, backend, elapsed, "\n")
+		host, username, ts, method, uri, proto, status, size, referer, agent, h.reqid, frontend, backend, elapsed, "\n")
 
 }
 
@@ -158,9 +168,4 @@ func (l *responseLogger) Flush() {
 	if ok {
 		f.Flush()
 	}
-}
-
-// SetURLmap sets or updates the URL-to-backend name map
-func SetURLmap(urlmap map[string]string) {
-	url2Backend = urlmap
 }

@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,7 +14,6 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -164,7 +162,6 @@ func (server *Server) listenConfigurations() {
 				}
 				server.currentConfigurations = newConfigurations
 				server.serverLock.Unlock()
-				server.mapURL2Backend()
 			} else {
 				log.Error("Error loading new configuration, aborted ", err)
 			}
@@ -508,21 +505,4 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	sort.Strings(keys)
 
 	return keys
-}
-
-func (server *Server) mapURL2Backend() {
-	url2Backend := make(map[string]string)
-	for _, config := range server.currentConfigurations {
-		for backendName, backend := range config.Backends {
-			for serverName, server := range backend.Servers {
-				if len(backend.Servers) == 1 {
-					url2Backend[server.URL] = fmt.Sprintf("%s", strings.TrimPrefix(backendName, "backend-"))
-				} else {
-					url2Backend[server.URL] = fmt.Sprintf("%s.%s", strings.TrimPrefix(backendName, "backend-"), serverName)
-				}
-			}
-		}
-	}
-
-	middlewares.SetURLmap(url2Backend)
 }
