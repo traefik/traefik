@@ -126,6 +126,7 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Marathon.Filename, "marathon.filename", "", "Override default configuration template. For advanced users :)")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Marathon.Endpoint, "marathon.endpoint", "http://127.0.0.1:8080", "Marathon server endpoint. You can also specify multiple endpoint for Marathon")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Marathon.Domain, "marathon.domain", "", "Default domain used")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.Marathon.ExposedByDefault, "marathon.exposedByDefault", true, "Expose Marathon apps by default")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.consul, "consul", false, "Enable Consul backend")
 	traefikCmd.PersistentFlags().BoolVar(&arguments.Consul.Watch, "consul.watch", true, "Watch provider")
