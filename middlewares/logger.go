@@ -1,16 +1,39 @@
 package middlewares
 
 import (
-	"log"
+	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"io"
+	"net"
 	"net/http"
 	"os"
+	"strconv"
+	"sync"
+	"time"
+)
 
-	"github.com/gorilla/handlers"
+const (
+	loggerReqidHeader = "X-Traefik-Reqid"
+	loggerFrontend    = 0
+	loggerBackend     = 1
+)
+
+var (
+	mutex        sync.RWMutex
+	reqidCounter uint64                  // Request ID
+	reqid2Names  = map[string][]string{} // Map of reqid to frontend and backend names
 )
 
 // Logger is a middleware handler that logs the request as it goes in and the response as it goes out.
 type Logger struct {
 	file *os.File
+}
+
+// Logging handler to log frontend name, backend name, and elapsed time
+type frontendBackendLoggingHandler struct {
+	reqid   string
+	writer  io.Writer
+	handler http.Handler
 }
 
 // NewLogger returns a new Logger instance.
@@ -29,11 +52,120 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 	if l.file == nil {
 		next(rw, r)
 	} else {
-		handlers.CombinedLoggingHandler(l.file, next).ServeHTTP(rw, r)
+		mutex.Lock()
+		reqidCounter++
+		reqid := strconv.FormatUint(reqidCounter, 10)
+		reqid2Names[reqid] = []string{"", ""}
+		mutex.Unlock()
+		log.Debugf("Starting request %s: %s %s %s %s %s", reqid, r.Method, r.URL.RequestURI(), r.Proto, r.Referer(), r.UserAgent())
+		r.Header[loggerReqidHeader] = []string{reqid}
+		defer deleteReqid(r, reqid)
+		frontendBackendLoggingHandler{reqid, l.file, next}.ServeHTTP(rw, r)
+	}
+}
+
+// Delete a reqid from the map and the request's headers
+func deleteReqid(r *http.Request, reqid string) {
+	log.Debugf("Ending request %s", reqid)
+	mutex.Lock()
+	delete(reqid2Names, reqid)
+	mutex.Unlock()
+	delete(r.Header, loggerReqidHeader)
+}
+
+// Save a frontend or backend name for the logger
+func saveNameForLogger(r *http.Request, nameType int, name string) {
+	if reqidHdr := r.Header[loggerReqidHeader]; len(reqidHdr) == 1 {
+		reqid := reqidHdr[0]
+		mutex.Lock()
+		reqid2Names[reqid][nameType] = name
+		mutex.Unlock()
 	}
 }
 
 // Close closes the logger (i.e. the file).
 func (l *Logger) Close() {
 	l.file.Close()
+}
+
+// Logging handler to log frontend name, backend name, and elapsed time
+func (h frontendBackendLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	startTime := time.Now()
+	logger := &responseLogger{w: w}
+	h.handler.ServeHTTP(logger, req)
+
+	username := "-"
+	url := *req.URL
+	if url.User != nil {
+		if name := url.User.Username(); name != "" {
+			username = name
+		}
+	}
+
+	host, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		host = req.RemoteAddr
+	}
+
+	ts := startTime.Format("02/Jan/2006:15:04:05 -0700")
+	method := req.Method
+	uri := url.RequestURI()
+	proto := req.Proto
+	status := logger.Status()
+	size := logger.Size()
+	referer := req.Referer()
+	agent := req.UserAgent()
+	mutex.RLock()
+	frontend, backend := "", ""
+	if len(reqid2Names[h.reqid]) > 1 {
+		frontend = reqid2Names[h.reqid][loggerFrontend]
+		backend = reqid2Names[h.reqid][loggerBackend]
+	}
+	mutex.RUnlock()
+	elapsed := time.Now().UTC().Sub(startTime.UTC())
+
+	fmt.Fprintf(h.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %s%s`,
+		host, username, ts, method, uri, proto, status, size, referer, agent, h.reqid, frontend, backend, elapsed, "\n")
+
+}
+
+// responseLogger is wrapper of http.ResponseWriter that keeps track of its HTTP status
+// code and body size
+type responseLogger struct {
+	w      http.ResponseWriter
+	status int
+	size   int
+}
+
+func (l *responseLogger) Header() http.Header {
+	return l.w.Header()
+}
+
+func (l *responseLogger) Write(b []byte) (int, error) {
+	if l.status == 0 {
+		l.status = http.StatusOK
+	}
+	size, err := l.w.Write(b)
+	l.size += size
+	return size, err
+}
+
+func (l *responseLogger) WriteHeader(s int) {
+	l.w.WriteHeader(s)
+	l.status = s
+}
+
+func (l *responseLogger) Status() int {
+	return l.status
+}
+
+func (l *responseLogger) Size() int {
+	return l.size
+}
+
+func (l *responseLogger) Flush() {
+	f, ok := l.w.(http.Flusher)
+	if ok {
+		f.Flush()
+	}
 }

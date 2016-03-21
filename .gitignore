@@ -8,3 +8,6 @@ traefik.toml
 *.test
 vendor/
 static/
+glide.lock
+example/exampleHandler
+example/exampleHandler.exe
