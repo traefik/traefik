@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
-	"sync"
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
@@ -23,7 +23,7 @@ type GlobalConfiguration struct {
 	TraefikLogsFile           string
 	LogLevel                  string
 	EntryPoints               EntryPoints
-	ACME                      *ACME
+	ACME                      *acme.ACME
 	DefaultEntryPoints        DefaultEntryPoints
 	ProvidersThrottleDuration time.Duration
 	MaxIdleConnsPerHost       int
@@ -140,23 +140,6 @@ type Redirect struct {
 // TLS configures TLS for an entry point
 type TLS struct {
 	Certificates Certificates
-}
-
-// ACME allows to connect to lets encrypt and retrieve certs
-type ACME struct {
-	Email       string
-	Domains     []Domain
-	StorageFile string
-	OnDemand    bool
-	CAServer    string
-	EntryPoint  string
-	storageLock sync.Mutex
-}
-
-// Domain holds a domain name with SANs
-type Domain struct {
-	Main string
-	SANs []string
 }
 
 // Certificates defines traefik certificates type

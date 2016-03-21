@@ -75,11 +75,11 @@
 # storageFile = "acme.json"
 
 # Entrypoint to proxy acme challenge to.
-# WARNING, must point to an entrypoint on port 80 
+# WARNING, must point to an entrypoint on port 443 
 #
 # Required
 #
-# entryPoint = "http"
+# entryPoint = "https"
 
 # Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
 # WARNING, TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.

@@ -102,7 +102,7 @@ func (server *Server) Close() {
 func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
-		newsrv, err := server.prepareServer(newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics)
+		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics)
 		if err != nil {
 			log.Fatal("Error preparing server: ", err)
 		}
@@ -224,28 +224,41 @@ func (server *Server) listenSignals() {
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI
-func (server *Server) createTLSConfig(tlsOption *TLS, router *middlewares.HandlerSwitcher) (*tls.Config, error) {
+func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, router *middlewares.HandlerSwitcher) (*tls.Config, error) {
 	if tlsOption == nil {
-		return nil, nil
-	}
-	if server.globalConfiguration.ACME != nil {
-		if acmeEntrypoint, ok := server.serverEntryPoints[server.globalConfiguration.ACME.EntryPoint]; ok {
-			return server.globalConfiguration.ACME.createACMEConfig(router, acmeEntrypoint.httpRouter)
-		}
-		return nil, errors.New("Unknown entrypoint " + server.globalConfiguration.ACME.EntryPoint + "for ACME configuration")
-	}
-	if len(tlsOption.Certificates) == 0 {
 		return nil, nil
 	}
 
 	config := &tls.Config{}
-	var err error
-	config.Certificates = make([]tls.Certificate, len(tlsOption.Certificates))
-	for i, v := range tlsOption.Certificates {
-		config.Certificates[i], err = tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
+	config.Certificates = []tls.Certificate{}
+	for _, v := range tlsOption.Certificates {
+		cert, err := tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
 		if err != nil {
 			return nil, err
 		}
+		config.Certificates = append(config.Certificates, cert)
+	}
+
+	if server.globalConfiguration.ACME != nil {
+		if _, ok := server.serverEntryPoints[server.globalConfiguration.ACME.EntryPoint]; ok {
+			if entryPointName == server.globalConfiguration.ACME.EntryPoint {
+				checkOnDemandDomain := func(domain string) bool {
+					if router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, &mux.RouteMatch{}) {
+						return true
+					}
+					return false
+				}
+				err := server.globalConfiguration.ACME.CreateACMEConfig(config, checkOnDemandDomain)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			return nil, errors.New("Unknown entrypoint " + server.globalConfiguration.ACME.EntryPoint + " for ACME configuration")
+		}
+	}
+	if len(config.Certificates) == 0 {
+		return nil, errors.New("No certificates found for TLS entrypoint " + entryPointName)
 	}
 	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
 	// in each certificate and populates the config.NameToCertificate map.
@@ -267,15 +280,15 @@ func (server *Server) startServer(srv *manners.GracefulServer, globalConfigurati
 	log.Info("Server stopped")
 }
 
-func (server *Server) prepareServer(router *middlewares.HandlerSwitcher, entryPoint *EntryPoint, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
-	log.Infof("Preparing server %+v", entryPoint)
+func (server *Server) prepareServer(entryPointName string, router *middlewares.HandlerSwitcher, entryPoint *EntryPoint, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
+	log.Infof("Preparing server %s %+v", entryPointName, entryPoint)
 	// middlewares
 	var negroni = negroni.New()
 	for _, middleware := range middlewares {
 		negroni.Use(middleware)
 	}
 	negroni.UseHandler(router)
-	tlsConfig, err := server.createTLSConfig(entryPoint.TLS, router)
+	tlsConfig, err := server.createTLSConfig(entryPointName, entryPoint.TLS, router)
 	if err != nil {
 		log.Fatalf("Error creating TLS config %s", err)
 		return nil, err

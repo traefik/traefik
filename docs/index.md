@@ -255,11 +255,11 @@ Use "traefik [command] --help" for more information about a command.
 # storageFile = "acme.json"
 
 # Entrypoint to proxy acme challenge to.
-# WARNING, must point to an entrypoint on port 80 
+# WARNING, must point to an entrypoint on port 443 
 #
 # Required
 #
-# entryPoint = "http"
+# entryPoint = "https"
 
 # Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
 # WARNING, TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.
@@ -377,19 +377,19 @@ defaultEntryPoints = ["http", "https"]
 
 ```
 [entryPoints]
-  [entryPoints.http]
-  address = ":80"
-    [entryPoints.http.redirect]
-    entryPoint = "https"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
+      # certs used as default certs
+      [[entryPoints.https.tls.certificates]]
+      certFile = "tests/traefik.crt"
+      keyFile = "tests/traefik.key"
 [acme]
 email = "test@traefik.io"
 storageFile = "acme.json"
 onDemand = true
 caServer = "http://172.18.0.1:4000/directory"
-entryPoint = "http"
+entryPoint = "https"
 
 [[acme.domains]]
   main = "local1.com"
