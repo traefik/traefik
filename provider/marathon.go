@@ -17,12 +17,13 @@ import (
 
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
-	BaseProvider   `mapstructure:",squash"`
-	Endpoint       string
-	Domain         string
-	Basic          *MarathonBasic
-	TLS            *tls.Config
-	marathonClient marathon.Marathon
+	BaseProvider     `mapstructure:",squash"`
+	Endpoint         string
+	Domain           string
+	ExposedByDefault bool
+	Basic            *MarathonBasic
+	TLS              *tls.Config
+	marathonClient   marathon.Marathon
 }
 
 // MarathonBasic holds basic authentication specific configurations
@@ -115,7 +116,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 
 	//filter tasks
 	filteredTasks := fun.Filter(func(task marathon.Task) bool {
-		return taskFilter(task, applications)
+		return taskFilter(task, applications, provider.ExposedByDefault)
 	}, tasks.Tasks).([]marathon.Task)
 
 	//filter apps
@@ -140,7 +141,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 	return configuration
 }
 
-func taskFilter(task marathon.Task, applications *marathon.Applications) bool {
+func taskFilter(task marathon.Task, applications *marathon.Applications, exposedByDefaultFlag bool) bool {
 	if len(task.Ports) == 0 {
 		log.Debug("Filtering marathon task without port %s", task.AppID)
 		return false
@@ -150,7 +151,8 @@ func taskFilter(task marathon.Task, applications *marathon.Applications) bool {
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
 		return false
 	}
-	if application.Labels["traefik.enable"] == "false" {
+
+	if !isApplicationEnabled(application, exposedByDefaultFlag) {
 		log.Debugf("Filtering disabled marathon task %s", task.AppID)
 		return false
 	}
@@ -225,6 +227,10 @@ func getApplication(task marathon.Task, apps []marathon.Application) (marathon.A
 		}
 	}
 	return marathon.Application{}, errors.New("Application not found: " + task.AppID)
+}
+
+func isApplicationEnabled(application marathon.Application, exposedByDefault bool) bool {
+	return exposedByDefault && application.Labels["traefik.enable"] != "false" || application.Labels["traefik.enable"] == "true"
 }
 
 func (provider *Marathon) getLabel(application marathon.Application, label string) (string, error) {
