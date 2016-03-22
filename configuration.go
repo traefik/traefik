@@ -94,7 +94,9 @@ func (ep *EntryPoints) Set(value string) error {
 	var tls *TLS
 	if len(result["TLS"]) > 0 {
 		certs := Certificates{}
-		certs.Set(result["TLS"])
+		if err := certs.Set(result["TLS"]); err != nil {
+			return err
+		}
 		tls = &TLS{
 			Certificates: certs,
 		}

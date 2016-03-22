@@ -248,7 +248,7 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 					}
 					return false
 				}
-				err := server.globalConfiguration.ACME.CreateACMEConfig(config, checkOnDemandDomain)
+				err := server.globalConfiguration.ACME.CreateConfig(config, checkOnDemandDomain)
 				if err != nil {
 					return nil, err
 				}
@@ -343,6 +343,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			if len(frontend.EntryPoints) == 0 {
 				frontend.EntryPoints = globalConfiguration.DefaultEntryPoints
 			}
+			if len(frontend.EntryPoints) == 0 {
+				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s. Skipping it", frontendName, globalConfiguration.DefaultEntryPoints)
+				continue
+			}
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
 				if _, ok := serverEntryPoints[entryPointName]; !ok {
@@ -390,7 +394,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									return nil, err
 								}
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight))
+								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+									return nil, err
+								}
 							}
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
@@ -401,7 +407,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									return nil, err
 								}
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								rr.UpsertServer(url, roundrobin.Weight(server.Weight))
+								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+									return nil, err
+								}
 							}
 						}
 						var negroni = negroni.New()
