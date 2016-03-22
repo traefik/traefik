@@ -1,0 +1,43 @@
+a {
+    color: #37ABC8;
+    text-decoration: none;
+}
+
+a:hover, a:focus {
+    color: #25606F;
+    text-decoration: underline;
+}
+
+h1, h2, h3, H4 {
+    color: #37ABC8;
+}
+
+.navbar-default {
+    background-color: #37ABC8;
+    border-color: #25606F;
+}
+
+.navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:hover, .navbar-default .navbar-nav>.active>a:focus {
+    color: #fff;
+    background-color: #25606F;
+}
+
+.navbar-default .navbar-nav>li>a:hover, .navbar-default .navbar-nav>li>a:focus {
+    color: #fff;
+    background-color: #25606F;
+}
+
+.navbar-default .navbar-toggle {
+    border-color: #25606F;
+}
+
+.navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:focus .navbar-toggle {
+    background-color: #25606F;
+}
+.navbar-default .navbar-collapse, .navbar-default .navbar-form {
+    border-color: #25606F;
+}
+
+blockquote p {
+    font-size: 14px;
+}

@@ -1,18 +1,42 @@
 
 <p align="center">
-<img src="http://traefik.github.io/traefik.logo.svg" alt="Træfɪk" title="Træfɪk" />
+<img src="docs/img/traefik.logo.png" alt="Træfɪk" title="Træfɪk" />
 </p>
 
 [![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
-[![Go Report Card](http://goreportcard.com/badge/kubernetes/helm)](http://goreportcard.com/report/containous/traefik)
+[![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
+[![Go Report Card](https://goreportcard.com/badge/kubernetes/helm)](http://goreportcard.com/report/containous/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
 
 
-
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
-It supports several backends ([Docker :whale:](https://www.docker.com/), [Swarm :whale: :whale:](https://docs.docker.com/swarm), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
+It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
+
+## Overview
+
+Imagine that you have deployed a bunch of microservices on your infrastructure. You probably used a service registry (like etcd or consul) and/or an orchestrator (swarm, Mesos/Marathon) to manage all these services.
+If you want your users to access some of your microservices from the Internet, you will have to use a reverse proxy and configure it using virtual hosts or prefix paths:
+
+- domain `api.domain.com` will point the microservice `api` in your private network
+- path `domain.com/web` will point the microservice `web` in your private network
+- domain `backoffice.domain.com` will point the microservices `backoffice` in your private network, load-balancing between your multiple instances
+
+But a microservices architecture is dynamic... Services are added, removed, killed or upgraded often, eventually several times a day.
+
+Traditional reverse-proxies are not natively dynamic. You can't change their configuration and hot-reload easily.
+
+Here enters Træfɪk.
+
+![Architecture](docs/img/architecture.png)
+
+Træfɪk can listen to your service registry/orchestrator API, and knows each time a microservice is added, removed, killed or upgraded, and can generate its configuration automatically.
+Routes to your services will be created instantly.
+
+Run it and forget it!
+  
+  
 
 
 ## Features
@@ -79,7 +103,7 @@ git clone https://github.com/containous/traefik
 
 ## Documentation
 
-You can find the complete documentation [here](docs/index.md).
+You can find the complete documentation [here](https://docs.traefik.io).
 
 ## Contributing
 
