@@ -26,6 +26,10 @@ find_dirs() {
 
 TESTFLAGS="-cover -coverprofile=cover.out ${TESTFLAGS}"
 
+if [ -n "$VERBOSE" ]; then
+    TESTFLAGS="${TESTFLAGS} -v"
+fi
+
 if [ -z "$TESTDIRS" ]; then
     TESTDIRS=$(find_dirs '*_test.go')
 fi
