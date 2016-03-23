@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
 	"github.com/mitchellh/mapstructure"
@@ -22,6 +23,7 @@ type GlobalConfiguration struct {
 	TraefikLogsFile           string
 	LogLevel                  string
 	EntryPoints               EntryPoints
+	ACME                      *acme.ACME
 	DefaultEntryPoints        DefaultEntryPoints
 	ProvidersThrottleDuration time.Duration
 	MaxIdleConnsPerHost       int
@@ -92,7 +94,9 @@ func (ep *EntryPoints) Set(value string) error {
 	var tls *TLS
 	if len(result["TLS"]) > 0 {
 		certs := Certificates{}
-		certs.Set(result["TLS"])
+		if err := certs.Set(result["TLS"]); err != nil {
+			return err
+		}
 		tls = &TLS{
 			Certificates: certs,
 		}
@@ -244,6 +248,7 @@ func LoadConfiguration() *GlobalConfiguration {
 		viper.Set("boltdb", arguments.Boltdb)
 	}
 	if err := unmarshal(&configuration); err != nil {
+
 		fmtlog.Fatalf("Error reading file: %s", err)
 	}
 

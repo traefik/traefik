@@ -37,14 +37,14 @@ traefik*
 
 The idea behind `glide` is the following :
 
-- when checkout(ing) a project, **run `glide up --quick`** to install
+- when checkout(ing) a project, **run `glide install`** to install
   (`go get …`) the dependencies in the `GOPATH`.
 - if you need another dependency, import and use it in
   the source, and **run `glide get github.com/Masterminds/cookoo`** to save it in
   `vendor` and add it to your `glide.yaml`.
 
 ```bash
-$ glide up --quick
+$ glide install
 # generate
 $ go generate
 # Simple go build

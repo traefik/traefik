@@ -166,15 +166,15 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Boltdb.Endpoint, "boltdb.endpoint", "127.0.0.1:4001", "Boltdb server endpoint")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Boltdb.Prefix, "boltdb.prefix", "/traefik", "Prefix used for KV store")
 
-	viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))
-	viper.BindPFlag("graceTimeOut", traefikCmd.PersistentFlags().Lookup("graceTimeOut"))
-	//viper.BindPFlag("defaultEntryPoints", traefikCmd.PersistentFlags().Lookup("defaultEntryPoints"))
-	viper.BindPFlag("logLevel", traefikCmd.PersistentFlags().Lookup("logLevel"))
+	_ = viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))
+	_ = viper.BindPFlag("graceTimeOut", traefikCmd.PersistentFlags().Lookup("graceTimeOut"))
+	_ = viper.BindPFlag("logLevel", traefikCmd.PersistentFlags().Lookup("logLevel"))
 	// TODO: wait for this issue to be corrected: https://github.com/spf13/viper/issues/105
-	viper.BindPFlag("providersThrottleDuration", traefikCmd.PersistentFlags().Lookup("providersThrottleDuration"))
-	viper.BindPFlag("maxIdleConnsPerHost", traefikCmd.PersistentFlags().Lookup("maxIdleConnsPerHost"))
+	_ = viper.BindPFlag("providersThrottleDuration", traefikCmd.PersistentFlags().Lookup("providersThrottleDuration"))
+	_ = viper.BindPFlag("maxIdleConnsPerHost", traefikCmd.PersistentFlags().Lookup("maxIdleConnsPerHost"))
 	viper.SetDefault("providersThrottleDuration", time.Duration(2*time.Second))
 	viper.SetDefault("logLevel", "ERROR")
+	viper.SetDefault("MaxIdleConnsPerHost", 200)
 }
 
 func run() {
@@ -196,7 +196,11 @@ func run() {
 
 	if len(globalConfiguration.TraefikLogsFile) > 0 {
 		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		defer fi.Close()
+		defer func() {
+			if err := fi.Close(); err != nil {
+				log.Error("Error closinf file", err)
+			}
+		}()
 		if err != nil {
 			log.Fatal("Error opening file", err)
 		} else {

@@ -34,7 +34,7 @@ var oxyLogger = &OxyLogger{}
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
-	serverEntryPoints          map[string]serverEntryPoint
+	serverEntryPoints          serverEntryPoints
 	configurationChan          chan types.ConfigMessage
 	configurationValidatedChan chan types.ConfigMessage
 	signals                    chan os.Signal
@@ -46,6 +46,8 @@ type Server struct {
 	loggerMiddleware           *middlewares.Logger
 }
 
+type serverEntryPoints map[string]*serverEntryPoint
+
 type serverEntryPoint struct {
 	httpServer *manners.GracefulServer
 	httpRouter *middlewares.HandlerSwitcher
@@ -55,7 +57,7 @@ type serverEntryPoint struct {
 func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server := new(Server)
 
-	server.serverEntryPoints = make(map[string]serverEntryPoint)
+	server.serverEntryPoints = make(map[string]*serverEntryPoint)
 	server.configurationChan = make(chan types.ConfigMessage, 10)
 	server.configurationValidatedChan = make(chan types.ConfigMessage, 10)
 	server.signals = make(chan os.Signal, 1)
@@ -71,6 +73,7 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 
 // Start starts the server and blocks until server is shutted down.
 func (server *Server) Start() {
+	server.startHTTPServers()
 	go server.listenProviders()
 	go server.listenConfigurations()
 	server.configureProviders()
@@ -94,6 +97,19 @@ func (server *Server) Close() {
 	close(server.signals)
 	close(server.stopChan)
 	server.loggerMiddleware.Close()
+}
+
+func (server *Server) startHTTPServers() {
+	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
+	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
+		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics)
+		if err != nil {
+			log.Fatal("Error preparing server: ", err)
+		}
+		serverEntryPoint := server.serverEntryPoints[newServerEntryPointName]
+		serverEntryPoint.httpServer = newsrv
+		go server.startServer(serverEntryPoint.httpServer, server.globalConfiguration)
+	}
 }
 
 func (server *Server) listenProviders() {
@@ -141,22 +157,8 @@ func (server *Server) listenConfigurations() {
 			if err == nil {
 				server.serverLock.Lock()
 				for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
-					currentServerEntryPoint := server.serverEntryPoints[newServerEntryPointName]
-					if currentServerEntryPoint.httpServer == nil {
-						newsrv, err := server.prepareServer(newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics)
-						if err != nil {
-							log.Fatal("Error preparing server: ", err)
-						}
-						go server.startServer(newsrv, server.globalConfiguration)
-						currentServerEntryPoint.httpServer = newsrv
-						currentServerEntryPoint.httpRouter = newServerEntryPoint.httpRouter
-						server.serverEntryPoints[newServerEntryPointName] = currentServerEntryPoint
-						log.Infof("Created new Handler: %p", newServerEntryPoint.httpRouter.GetHandler())
-					} else {
-						handlerSwitcher := currentServerEntryPoint.httpRouter
-						handlerSwitcher.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
-						log.Infof("Created new Handler: %p", newServerEntryPoint.httpRouter.GetHandler())
-					}
+					server.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
+					log.Infof("Server configurartion reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 				}
 				server.currentConfigurations = newConfigurations
 				server.serverLock.Unlock()
@@ -222,26 +224,41 @@ func (server *Server) listenSignals() {
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI
-func (server *Server) createTLSConfig(tlsOption *TLS) (*tls.Config, error) {
+func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, router *middlewares.HandlerSwitcher) (*tls.Config, error) {
 	if tlsOption == nil {
-		return nil, nil
-	}
-	if len(tlsOption.Certificates) == 0 {
 		return nil, nil
 	}
 
 	config := &tls.Config{}
-	if config.NextProtos == nil {
-		config.NextProtos = []string{"http/1.1"}
-	}
-
-	var err error
-	config.Certificates = make([]tls.Certificate, len(tlsOption.Certificates))
-	for i, v := range tlsOption.Certificates {
-		config.Certificates[i], err = tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
+	config.Certificates = []tls.Certificate{}
+	for _, v := range tlsOption.Certificates {
+		cert, err := tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
 		if err != nil {
 			return nil, err
 		}
+		config.Certificates = append(config.Certificates, cert)
+	}
+
+	if server.globalConfiguration.ACME != nil {
+		if _, ok := server.serverEntryPoints[server.globalConfiguration.ACME.EntryPoint]; ok {
+			if entryPointName == server.globalConfiguration.ACME.EntryPoint {
+				checkOnDemandDomain := func(domain string) bool {
+					if router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, &mux.RouteMatch{}) {
+						return true
+					}
+					return false
+				}
+				err := server.globalConfiguration.ACME.CreateConfig(config, checkOnDemandDomain)
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			return nil, errors.New("Unknown entrypoint " + server.globalConfiguration.ACME.EntryPoint + " for ACME configuration")
+		}
+	}
+	if len(config.Certificates) == 0 {
+		return nil, errors.New("No certificates found for TLS entrypoint " + entryPointName)
 	}
 	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
 	// in each certificate and populates the config.NameToCertificate map.
@@ -250,30 +267,28 @@ func (server *Server) createTLSConfig(tlsOption *TLS) (*tls.Config, error) {
 }
 
 func (server *Server) startServer(srv *manners.GracefulServer, globalConfiguration GlobalConfiguration) {
-	log.Info("Starting server on ", srv.Addr)
+	log.Infof("Starting server on %s", srv.Addr)
 	if srv.TLSConfig != nil {
-		err := srv.ListenAndServeTLSWithConfig(srv.TLSConfig)
-		if err != nil {
+		if err := srv.ListenAndServeTLSWithConfig(srv.TLSConfig); err != nil {
 			log.Fatal("Error creating server: ", err)
 		}
 	} else {
-		err := srv.ListenAndServe()
-		if err != nil {
+		if err := srv.ListenAndServe(); err != nil {
 			log.Fatal("Error creating server: ", err)
 		}
 	}
 	log.Info("Server stopped")
 }
 
-func (server *Server) prepareServer(router http.Handler, entryPoint *EntryPoint, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
-	log.Info("Preparing server")
+func (server *Server) prepareServer(entryPointName string, router *middlewares.HandlerSwitcher, entryPoint *EntryPoint, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
+	log.Infof("Preparing server %s %+v", entryPointName, entryPoint)
 	// middlewares
 	var negroni = negroni.New()
 	for _, middleware := range middlewares {
 		negroni.Use(middleware)
 	}
 	negroni.UseHandler(router)
-	tlsConfig, err := server.createTLSConfig(entryPoint.TLS)
+	tlsConfig, err := server.createTLSConfig(entryPointName, entryPoint.TLS, router)
 	if err != nil {
 		log.Fatalf("Error creating TLS config %s", err)
 		return nil, err
@@ -299,11 +314,11 @@ func (server *Server) prepareServer(router http.Handler, entryPoint *EntryPoint,
 	return gracefulServer, nil
 }
 
-func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) map[string]serverEntryPoint {
-	serverEntryPoints := make(map[string]serverEntryPoint)
+func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) map[string]*serverEntryPoint {
+	serverEntryPoints := make(map[string]*serverEntryPoint)
 	for entryPointName := range globalConfiguration.EntryPoints {
 		router := server.buildDefaultHTTPRouter()
-		serverEntryPoints[entryPointName] = serverEntryPoint{
+		serverEntryPoints[entryPointName] = &serverEntryPoint{
 			httpRouter: middlewares.NewHandlerSwitcher(router),
 		}
 	}
@@ -312,7 +327,7 @@ func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) 
 
 // LoadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
-func (server *Server) loadConfig(configurations configs, globalConfiguration GlobalConfiguration) (map[string]serverEntryPoint, error) {
+func (server *Server) loadConfig(configurations configs, globalConfiguration GlobalConfiguration) (map[string]*serverEntryPoint, error) {
 	serverEntryPoints := server.buildEntryPoints(globalConfiguration)
 	redirectHandlers := make(map[string]http.Handler)
 
@@ -327,6 +342,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			// default endpoints if not defined in frontends
 			if len(frontend.EntryPoints) == 0 {
 				frontend.EntryPoints = globalConfiguration.DefaultEntryPoints
+			}
+			if len(frontend.EntryPoints) == 0 {
+				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s. Skipping it", frontendName, globalConfiguration.DefaultEntryPoints)
+				continue
 			}
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
@@ -375,7 +394,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									return nil, err
 								}
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight))
+								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+									return nil, err
+								}
 							}
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
@@ -386,7 +407,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									return nil, err
 								}
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								rr.UpsertServer(url, roundrobin.Weight(server.Weight))
+								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+									return nil, err
+								}
 							}
 						}
 						var negroni = negroni.New()

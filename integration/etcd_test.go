@@ -5,7 +5,6 @@ import (
 	"os/exec"
 	"time"
 
-	"fmt"
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
 )
@@ -20,8 +19,7 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 	// TODO validate : run on 80
 	resp, err := http.Get("http://127.0.0.1:8000/")
 
-	// Expected no response as we did not configure anything
-	c.Assert(resp, checker.IsNil)
-	c.Assert(err, checker.NotNil)
-	c.Assert(err.Error(), checker.Contains, fmt.Sprintf("getsockopt: connection refused"))
+	// Expected a 404 as we did not configure anything
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, 404)
 }

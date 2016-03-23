@@ -41,8 +41,8 @@ test-unit: build
 test-integration: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-integration
 
-validate: build
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt validate-govet validate-golint
+validate: build 
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-gofmt validate-govet validate-golint 
 
 validate-gofmt: build
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt
@@ -84,7 +84,7 @@ generate-webui: build-webui
 	fi
 
 lint:
-	$(foreach file,$(SRCS),golint $(file) || exit;)
+	script/validate-golint
 
 fmt:
 	gofmt -s -l -w $(SRCS)

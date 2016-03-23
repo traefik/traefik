@@ -164,4 +164,4 @@ import:
   - package: github.com/google/go-querystring/query
   - package: github.com/vulcand/vulcand/plugin/rewrite
   - package: github.com/stretchr/testify/mock
-
+  - package: github.com/xenolf/lego

@@ -34,35 +34,39 @@ type DockerTLS struct {
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) error {
+	go func() {
+		operation := func() error {
+			var dockerClient *docker.Client
+			var err error
 
-	var dockerClient *docker.Client
-	var err error
-
-	if provider.TLS != nil {
-		dockerClient, err = docker.NewTLSClient(provider.Endpoint,
-			provider.TLS.Cert, provider.TLS.Key, provider.TLS.CA)
-		if err == nil {
-			dockerClient.TLSConfig.InsecureSkipVerify = provider.TLS.InsecureSkipVerify
-		}
-	} else {
-		dockerClient, err = docker.NewClient(provider.Endpoint)
-	}
-	if err != nil {
-		log.Errorf("Failed to create a client for docker, error: %s", err)
-		return err
-	}
-	err = dockerClient.Ping()
-	if err != nil {
-		log.Errorf("Docker connection error %+v", err)
-		return err
-	}
-	log.Debug("Docker connection established")
-	if provider.Watch {
-		dockerEvents := make(chan *docker.APIEvents)
-		dockerClient.AddEventListener(dockerEvents)
-		log.Debug("Docker listening")
-		go func() {
-			operation := func() error {
+			if provider.TLS != nil {
+				dockerClient, err = docker.NewTLSClient(provider.Endpoint,
+					provider.TLS.Cert, provider.TLS.Key, provider.TLS.CA)
+				if err == nil {
+					dockerClient.TLSConfig.InsecureSkipVerify = provider.TLS.InsecureSkipVerify
+				}
+			} else {
+				dockerClient, err = docker.NewClient(provider.Endpoint)
+			}
+			if err != nil {
+				log.Errorf("Failed to create a client for docker, error: %s", err)
+				return err
+			}
+			err = dockerClient.Ping()
+			if err != nil {
+				log.Errorf("Docker connection error %+v", err)
+				return err
+			}
+			log.Debug("Docker connection established")
+			configuration := provider.loadDockerConfig(listContainers(dockerClient))
+			configurationChan <- types.ConfigMessage{
+				ProviderName:  "docker",
+				Configuration: configuration,
+			}
+			if provider.Watch {
+				dockerEvents := make(chan *docker.APIEvents)
+				dockerClient.AddEventListener(dockerEvents)
+				log.Debug("Docker listening")
 				for {
 					event := <-dockerEvents
 					if event == nil {
@@ -81,21 +85,17 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) er
 					}
 				}
 			}
-			notify := func(err error, time time.Duration) {
-				log.Errorf("Docker connection error %+v, retrying in %s", err, time)
-			}
-			err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
-			if err != nil {
-				log.Fatalf("Cannot connect to docker server %+v", err)
-			}
-		}()
-	}
+			return nil
+		}
+		notify := func(err error, time time.Duration) {
+			log.Errorf("Docker connection error %+v, retrying in %s", err, time)
+		}
+		err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+		if err != nil {
+			log.Fatalf("Cannot connect to docker server %+v", err)
+		}
+	}()
 
-	configuration := provider.loadDockerConfig(listContainers(dockerClient))
-	configurationChan <- types.ConfigMessage{
-		ProviderName:  "docker",
-		Configuration: configuration,
-	}
 	return nil
 }
 
