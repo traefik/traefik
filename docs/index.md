@@ -92,6 +92,7 @@ Træfɪk uses the following precedence order. Each item takes precedence over th
 
 It means that arguments overrides configuration file.
 Each argument is described in the help section:
+
 ```bash
 $ traefik --help
 traefik is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
@@ -155,6 +156,7 @@ Flags:
       --marathon                             Enable Marathon backend
       --marathon.domain string               Default domain used
       --marathon.endpoint string             Marathon server endpoint. You can also specify multiple endpoint for Marathon (default "http://127.0.0.1:8080")
+      --marathon.exposedByDefault            Expose Marathon apps by default (default true)
       --marathon.filename string             Override default configuration template. For advanced users :)
       --marathon.watch                       Watch provider (default true)
       --maxIdleConnsPerHost int              If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used
@@ -819,6 +821,13 @@ domain = "marathon.localhost"
 # Optional
 #
 # filename = "marathon.tmpl"
+
+# Expose Marathon apps by default in traefik
+#
+# Optional
+# Default: false
+#
+# ExposedByDefault = true
 
 # Enable Marathon basic authentication
 #
