@@ -281,6 +281,13 @@
 #
 # filename = "marathon.tmpl"
 
+# Expose Marathon apps by default in traefik
+#
+# Optional
+# Default: false
+#
+# ExposedByDefault = true
+
 # Enable Marathon basic authentication
 #
 # Optional
