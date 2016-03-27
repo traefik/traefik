@@ -89,7 +89,7 @@ func (provider *ConsulCatalog) getBackend(node *api.ServiceEntry) string {
 }
 
 func (provider *ConsulCatalog) getFrontendValue(service string) string {
-	return service + "." + provider.Domain
+	return "Host:" + service + "." + provider.Domain
 }
 
 func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Configuration {

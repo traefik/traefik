@@ -96,7 +96,6 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		"getProtocol":        provider.getProtocol,
 		"getPassHostHeader":  provider.getPassHostHeader,
 		"getEntryPoints":     provider.getEntryPoints,
-		"getFrontendValue":   provider.getFrontendValue,
 		"getFrontendRule":    provider.getFrontendRule,
 		"getFrontendBackend": provider.getFrontendBackend,
 		"replace":            replace,
@@ -309,22 +308,13 @@ func (provider *Marathon) getEntryPoints(application marathon.Application) []str
 	return []string{}
 }
 
-// getFrontendValue returns the frontend value for the specified application, using
-// it's label. It returns a default one if the label is not present.
-func (provider *Marathon) getFrontendValue(application marathon.Application) string {
-	if label, err := provider.getLabel(application, "traefik.frontend.value"); err == nil {
-		return label
-	}
-	return getEscapedName(application.ID) + "." + provider.Domain
-}
-
 // getFrontendRule returns the frontend rule for the specified application, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (provider *Marathon) getFrontendRule(application marathon.Application) string {
 	if label, err := provider.getLabel(application, "traefik.frontend.rule"); err == nil {
 		return label
 	}
-	return "Host"
+	return "Host:" + getEscapedName(application.ID) + "." + provider.Domain
 }
 
 func (provider *Marathon) getBackend(task marathon.Task, applications []marathon.Application) string {

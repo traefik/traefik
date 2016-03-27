@@ -55,6 +55,11 @@ type serverEntryPoint struct {
 	httpRouter *middlewares.HandlerSwitcher
 }
 
+type serverRoute struct {
+	route       *mux.Route
+	stripPrefix string
+}
+
 // NewServer returns an initialized Server.
 func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server := new(Server)
@@ -354,23 +359,22 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				if _, ok := serverEntryPoints[entryPointName]; !ok {
 					return nil, errors.New("Undefined entrypoint: " + entryPointName)
 				}
-				newRoute := serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)
+				newServerRoute := &serverRoute{route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
 				for routeName, route := range frontend.Routes {
-					log.Debugf("Creating route %s %s:%s", routeName, route.Rule, route.Value)
-					route, err := getRoute(newRoute, route.Rule, route.Value)
+					log.Debugf("Creating route %s %s", routeName, route.Rule)
+					err := getRoute(newServerRoute, route)
 					if err != nil {
 						return nil, err
 					}
-					newRoute = route
 				}
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
 				if entryPoint.Redirect != nil {
 					if redirectHandlers[entryPointName] != nil {
-						newRoute.Handler(redirectHandlers[entryPointName])
+						newServerRoute.route.Handler(redirectHandlers[entryPointName])
 					} else if handler, err := server.loadEntryPointConfig(entryPointName, entryPoint); err != nil {
 						return nil, err
 					} else {
-						newRoute.Handler(handler)
+						newServerRoute.route.Handler(handler)
 						redirectHandlers[entryPointName] = handler
 					}
 				} else {
@@ -448,9 +452,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					} else {
 						log.Debugf("Reusing backend %s", frontend.Backend)
 					}
-					server.wireFrontendBackend(frontend.Routes, newRoute, backends[frontend.Backend])
+					server.wireFrontendBackend(newServerRoute, backends[frontend.Backend])
 				}
-				err := newRoute.GetError()
+				err := newServerRoute.route.GetError()
 				if err != nil {
 					log.Errorf("Error building route: %s", err)
 				}
@@ -460,29 +464,15 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	return serverEntryPoints, nil
 }
 
-func (server *Server) wireFrontendBackend(routes map[string]types.Route, newRoute *mux.Route, handler http.Handler) {
+func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Handler) {
 	// strip prefix
-	var strip bool
-	for _, route := range routes {
-		switch route.Rule {
-		case "PathStrip":
-			newRoute.Handler(&middlewares.StripPrefix{
-				Prefix:  route.Value,
-				Handler: handler,
-			})
-			strip = true
-			break
-		case "PathPrefixStrip":
-			newRoute.Handler(&middlewares.StripPrefix{
-				Prefix:  route.Value,
-				Handler: handler,
-			})
-			strip = true
-			break
-		}
-	}
-	if !strip {
-		newRoute.Handler(handler)
+	if len(serverRoute.stripPrefix) > 0 {
+		serverRoute.route.Handler(&middlewares.StripPrefix{
+			Prefix:  serverRoute.stripPrefix,
+			Handler: handler,
+		})
+	} else {
+		serverRoute.route.Handler(handler)
 	}
 }
 
@@ -522,32 +512,21 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	return router
 }
 
-func getRoute(any interface{}, rule string, value ...interface{}) (*mux.Route, error) {
-	switch rule {
-	case "PathStrip":
-		rule = "Path"
-	case "PathPrefixStrip":
-		rule = "PathPrefix"
+func getRoute(serverRoute *serverRoute, route types.Route) error {
+	rules := Rules{route: serverRoute}
+	newRoute, err := rules.Parse(route.Rule)
+	if err != nil {
+		return err
 	}
-	inputs := make([]reflect.Value, len(value))
-	for i := range value {
-		inputs[i] = reflect.ValueOf(value[i])
-	}
-	method := reflect.ValueOf(any).MethodByName(rule)
-	if method.IsValid() {
-		return method.Call(inputs)[0].Interface().(*mux.Route), nil
-	}
-	return nil, errors.New("Method not found: " + rule)
+	serverRoute.route = newRoute
+	return nil
 }
 
 func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	keys := []string{}
-
 	for key := range configuration.Frontends {
 		keys = append(keys, key)
 	}
-
 	sort.Strings(keys)
-
 	return keys
 }

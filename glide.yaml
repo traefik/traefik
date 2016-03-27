@@ -44,7 +44,7 @@ import:
     ref:     6b4e7dc5e3143b85ea77909c72caf89416fc2915
   - package: github.com/gambol99/go-marathon
     ref:     ade11d1dc2884ee1f387078fc28509559b6235d1
-  - package: github.com/mailgun/predicate
+  - package: github.com/vulcand/predicate
     ref:     cb0bff91a7ab7cf7571e661ff883fc997bc554a3
   - package: github.com/thoas/stats
     ref:     54ed61c2b47e263ae2f01b86837b0c4bd1da28e8

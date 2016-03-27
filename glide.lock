@@ -1,5 +1,5 @@
-hash: 21d4e8dc80c87101568a719ecf01d1af9a1b58f03c5c9dc864a8cb1005ddc160
-updated: 2016-03-29T21:50:20.577439177+02:00
+hash: a8cca3f2e5bde6b96d0c195402b14606877bc8630cd7f2f06e65e0884c6a008b
+updated: 2016-03-29T23:24:08.772606184+02:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -264,7 +264,7 @@ imports:
   subpackages:
   - bson
 - name: gopkg.in/square/go-jose.v1
-  version: 7d9df93c5ee8a09ed250b3b2360972fa29b4bb3c
+  version: 40d457b439244b546f023d056628e5184136899b
   subpackages:
   - cipher
   - json

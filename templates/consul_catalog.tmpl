@@ -8,6 +8,5 @@
   backend = "backend-{{.}}"
   passHostHeader = false
     [frontends.frontend-{{.}}.routes.route-host-{{.}}]
-    rule = "Host"
-    value = "{{getFrontendValue .}}"
+    rule = "{{getFrontendValue .}}"
 {{end}}

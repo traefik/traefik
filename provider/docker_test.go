@@ -30,18 +30,18 @@ func TestDockerGetFrontendName(t *testing.T) {
 				Name: "bar",
 				Config: &docker.Config{
 					Labels: map[string]string{
-						"traefik.frontend.rule": "Header",
+						"traefik.frontend.rule": "Headers:User-Agent,bat/0.1.0",
 					},
 				},
 			},
-			expected: "Header-bar-docker-localhost",
+			expected: "Headers-User-Agent-bat-0-1-0",
 		},
 		{
 			container: docker.Container{
 				Name: "test",
 				Config: &docker.Config{
 					Labels: map[string]string{
-						"traefik.frontend.value": "foo.bar",
+						"traefik.frontend.rule": "Host:foo.bar",
 					},
 				},
 			},
@@ -52,24 +52,22 @@ func TestDockerGetFrontendName(t *testing.T) {
 				Name: "test",
 				Config: &docker.Config{
 					Labels: map[string]string{
-						"traefik.frontend.value": "foo.bar",
-						"traefik.frontend.rule":  "Header",
+						"traefik.frontend.rule": "Path:/test",
 					},
 				},
 			},
-			expected: "Header-foo-bar",
+			expected: "Path-test",
 		},
 		{
 			container: docker.Container{
 				Name: "test",
 				Config: &docker.Config{
 					Labels: map[string]string{
-						"traefik.frontend.value": "[foo.bar]",
-						"traefik.frontend.rule":  "Header",
+						"traefik.frontend.rule": "PathPrefix:/test2",
 					},
 				},
 			},
-			expected: "Header-foo-bar",
+			expected: "PathPrefix-test2",
 		},
 	}
 
@@ -81,7 +79,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 	}
 }
 
-func TestDockerGetFrontendValue(t *testing.T) {
+func TestDockerGetFrontendRule(t *testing.T) {
 	provider := &Docker{
 		Domain: "docker.localhost",
 	}
@@ -95,60 +93,36 @@ func TestDockerGetFrontendValue(t *testing.T) {
 				Name:   "foo",
 				Config: &docker.Config{},
 			},
-			expected: "foo.docker.localhost",
+			expected: "Host:foo.docker.localhost",
 		},
 		{
 			container: docker.Container{
 				Name:   "bar",
 				Config: &docker.Config{},
 			},
-			expected: "bar.docker.localhost",
+			expected: "Host:bar.docker.localhost",
 		},
 		{
 			container: docker.Container{
 				Name: "test",
 				Config: &docker.Config{
 					Labels: map[string]string{
-						"traefik.frontend.value": "foo.bar",
+						"traefik.frontend.rule": "Host:foo.bar",
 					},
 				},
 			},
-			expected: "foo.bar",
-		},
-	}
-
-	for _, e := range containers {
-		actual := provider.getFrontendValue(e.container)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
-	}
-}
-
-func TestDockerGetFrontendRule(t *testing.T) {
-	provider := &Docker{}
-
-	containers := []struct {
-		container docker.Container
-		expected  string
-	}{
-		{
-			container: docker.Container{
-				Name:   "foo",
-				Config: &docker.Config{},
-			},
-			expected: "Host",
+			expected: "Host:foo.bar",
 		},
 		{
 			container: docker.Container{
 				Name: "test",
 				Config: &docker.Config{
 					Labels: map[string]string{
-						"traefik.frontend.rule": "foo",
+						"traefik.frontend.rule": "Path:/test",
 					},
 				},
 			},
-			expected: "foo",
+			expected: "Path:/test",
 		},
 	}
 
@@ -281,7 +255,7 @@ func TestDockerGetWeight(t *testing.T) {
 				Name:   "foo",
 				Config: &docker.Config{},
 			},
-			expected: "0",
+			expected: "1",
 		},
 		{
 			container: docker.Container{
@@ -535,7 +509,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			container: docker.Container{
 				Config: &docker.Config{
 					Labels: map[string]string{
-						"traefik.frontend.rule": "Host",
+						"traefik.frontend.rule": "Host:foo.bar",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -544,22 +518,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
-		},
-		{
-			container: docker.Container{
-				Config: &docker.Config{
-					Labels: map[string]string{
-						"traefik.frontend.value": "foo.bar",
-					},
-				},
-				NetworkSettings: &docker.NetworkSettings{
-					Ports: map[docker.Port][]docker.PortBinding{
-						"80/tcp": {},
-					},
-				},
-			},
-			expected: false,
+			expected: true,
 		},
 		{
 			container: docker.Container{
@@ -634,8 +593,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			container: docker.Container{
 				Config: &docker.Config{
 					Labels: map[string]string{
-						"traefik.frontend.rule":  "Host",
-						"traefik.frontend.value": "foo.bar",
+						"traefik.frontend.rule": "Host:foo.bar",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -651,7 +609,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 	for _, e := range containers {
 		actual := containerFilter(e.container)
 		if actual != e.expected {
-			t.Fatalf("expected %v, got %v", e.expected, actual)
+			t.Fatalf("expected %v for %+v, got %+v", e.expected, e, actual)
 		}
 	}
 }
@@ -690,8 +648,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					EntryPoints: []string{},
 					Routes: map[string]types.Route{
 						`"route-frontend-Host-test-docker-localhost"`: {
-							Rule:  "Host",
-							Value: "test.docker.localhost",
+							Rule: "Host:test.docker.localhost",
 						},
 					},
 				},
@@ -700,7 +657,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				"backend-test": {
 					Servers: map[string]types.Server{
 						"server-test": {
-							URL: "http://127.0.0.1:80",
+							URL:    "http://127.0.0.1:80",
+							Weight: 1,
 						},
 					},
 					CircuitBreaker: nil,
@@ -741,7 +699,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 							"80/tcp": {},
 						},
 						Networks: map[string]docker.ContainerNetwork{
-							"bridgde": {
+							"bridge": {
 								IPAddress: "127.0.0.1",
 							},
 						},
@@ -754,8 +712,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					EntryPoints: []string{"http", "https"},
 					Routes: map[string]types.Route{
 						`"route-frontend-Host-test1-docker-localhost"`: {
-							Rule:  "Host",
-							Value: "test1.docker.localhost",
+							Rule: "Host:test1.docker.localhost",
 						},
 					},
 				},
@@ -764,8 +721,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					EntryPoints: []string{},
 					Routes: map[string]types.Route{
 						`"route-frontend-Host-test2-docker-localhost"`: {
-							Rule:  "Host",
-							Value: "test2.docker.localhost",
+							Rule: "Host:test2.docker.localhost",
 						},
 					},
 				},
@@ -774,10 +730,12 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				"backend-foobar": {
 					Servers: map[string]types.Server{
 						"server-test1": {
-							URL: "http://127.0.0.1:80",
+							URL:    "http://127.0.0.1:80",
+							Weight: 1,
 						},
 						"server-test2": {
-							URL: "http://127.0.0.1:80",
+							URL:    "http://127.0.0.1:80",
+							Weight: 1,
 						},
 					},
 					CircuitBreaker: nil,

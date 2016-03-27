@@ -30,8 +30,7 @@ type Server struct {
 
 // Route holds route configuration.
 type Route struct {
-	Rule  string `json:"rule,omitempty"`
-	Value string `json:"value,omitempty"`
+	Rule string `json:"rule,omitempty"`
 }
 
 // Frontend holds frontend configuration.

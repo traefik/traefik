@@ -2,7 +2,6 @@ package provider
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"text/template"
@@ -108,7 +107,6 @@ func (provider *Docker) loadDockerConfig(containersInspected []docker.Container)
 		"getProtocol":       provider.getProtocol,
 		"getPassHostHeader": provider.getPassHostHeader,
 		"getEntryPoints":    provider.getEntryPoints,
-		"getFrontendValue":  provider.getFrontendValue,
 		"getFrontendRule":   provider.getFrontendRule,
 		"replace":           replace,
 	}
@@ -154,31 +152,18 @@ func containerFilter(container docker.Container) bool {
 		return false
 	}
 
-	labels, err := getLabels(container, []string{"traefik.frontend.rule", "traefik.frontend.value"})
-	if len(labels) != 0 && err != nil {
-		log.Debugf("Filtering bad labeled container %s", container.Name)
-		return false
-	}
+	// labels, err := getLabels(container, []string{"traefik.frontend.rule"})
+	// if len(labels) != 0 && err != nil {
+	// 	log.Debugf("Filtering bad labeled container %s", container.Name)
+	// 	return false
+	// }
 
 	return true
 }
 
 func (provider *Docker) getFrontendName(container docker.Container) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
-	frontendName := fmt.Sprintf("%s-%s", provider.getFrontendRule(container), provider.getFrontendValue(container))
-	frontendName = strings.Replace(frontendName, "[", "", -1)
-	frontendName = strings.Replace(frontendName, "]", "", -1)
-
-	return strings.Replace(frontendName, ".", "-", -1)
-}
-
-// GetFrontendValue returns the frontend value for the specified container, using
-// it's label. It returns a default one if the label is not present.
-func (provider *Docker) getFrontendValue(container docker.Container) string {
-	if label, err := getLabel(container, "traefik.frontend.value"); err == nil {
-		return label
-	}
-	return getEscapedName(container.Name) + "." + provider.Domain
+	return normalize(provider.getFrontendRule(container))
 }
 
 // GetFrontendRule returns the frontend rule for the specified container, using
@@ -187,14 +172,14 @@ func (provider *Docker) getFrontendRule(container docker.Container) string {
 	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
 	}
-	return "Host"
+	return "Host:" + getEscapedName(container.Name) + "." + provider.Domain
 }
 
 func (provider *Docker) getBackend(container docker.Container) string {
 	if label, err := getLabel(container, "traefik.backend"); err == nil {
 		return label
 	}
-	return getEscapedName(container.Name)
+	return normalize(container.Name)
 }
 
 func (provider *Docker) getPort(container docker.Container) string {
@@ -211,7 +196,7 @@ func (provider *Docker) getWeight(container docker.Container) string {
 	if label, err := getLabel(container, "traefik.weight"); err == nil {
 		return label
 	}
-	return "0"
+	return "1"
 }
 
 func (provider *Docker) getDomain(container docker.Container) string {
