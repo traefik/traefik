@@ -11,8 +11,7 @@ import (
 	"text/template"
 
 	"github.com/containous/traefik/integration/utils"
-	"github.com/docker/libcompose/docker"
-	"github.com/docker/libcompose/project"
+	"github.com/vdemeester/libkermit/compose"
 
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
@@ -36,71 +35,23 @@ func init() {
 var traefikBinary = "../dist/traefik"
 
 type BaseSuite struct {
-	composeProject *project.Project
-	listenChan     chan project.Event
-	started        chan bool
-	stopped        chan bool
-	deleted        chan bool
+	composeProject *compose.Project
 }
 
 func (s *BaseSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil {
-		s.composeProject.Down()
-		<-s.stopped
-		defer close(s.stopped)
-
-		s.composeProject.Delete()
-		<-s.deleted
-		defer close(s.deleted)
+		err := s.composeProject.Stop()
+		c.Assert(err, checker.IsNil)
 	}
 }
 
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
-	composeProject, err := docker.NewProject(&docker.Context{
-		Context: project.Context{
-			ComposeFiles: []string{
-				fmt.Sprintf("resources/compose/%s.yml", name),
-			},
-			ProjectName: fmt.Sprintf("integration-test-%s", name),
-		},
-	})
+	projectName := fmt.Sprintf("integration-test-%s", name)
+	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
+	composeProject, err := compose.CreateProject(projectName, composeFile)
 	c.Assert(err, checker.IsNil)
 	s.composeProject = composeProject
-
-	err = composeProject.Create()
-	c.Assert(err, checker.IsNil)
-
-	s.started = make(chan bool)
-	s.stopped = make(chan bool)
-	s.deleted = make(chan bool)
-
-	s.listenChan = make(chan project.Event)
-	go s.startListening(c)
-
-	composeProject.AddListener(s.listenChan)
-
-	err = composeProject.Start()
-	c.Assert(err, checker.IsNil)
-
-	// Wait for compose to start
-	<-s.started
-	defer close(s.started)
-}
-
-func (s *BaseSuite) startListening(c *check.C) {
-	for event := range s.listenChan {
-		// FIXME Add a timeout on event ?
-		if event.EventType == project.EventProjectStartDone {
-			s.started <- true
-		}
-		if event.EventType == project.EventProjectDownDone {
-			s.stopped <- true
-		}
-		if event.EventType == project.EventProjectDeleteDone {
-			s.deleted <- true
-		}
-	}
 }
 
 func (s *BaseSuite) traefikCmd(c *check.C, args ...string) (*exec.Cmd, string) {

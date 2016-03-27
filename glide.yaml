@@ -124,7 +124,7 @@ import:
   - package: gopkg.in/alecthomas/kingpin.v2
     ref:     639879d6110b1b0409410c7b737ef0bb18325038
   - package: github.com/docker/libcompose
-    ref:     d3089811c119a211469a9cc93caea684d937e5d3
+    ref:     e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
     subpackages:
       - docker
       - logger
@@ -165,3 +165,5 @@ import:
   - package: github.com/vulcand/vulcand/plugin/rewrite
   - package: github.com/stretchr/testify/mock
   - package: github.com/xenolf/lego
+  - package: github.com/vdemeester/libkermit
+    ref: 01a5399bdbd3312916c9fa4848108fbc81fe88d8

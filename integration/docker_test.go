@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
-	"github.com/docker/docker/opts"
 	"github.com/docker/docker/pkg/namesgenerator"
-	"github.com/fsouza/go-dockerclient"
+	"github.com/vdemeester/libkermit/docker"
+
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
 )
@@ -31,108 +32,50 @@ var (
 // Docker test suites
 type DockerSuite struct {
 	BaseSuite
-	client *docker.Client
+	project *docker.Project
 }
 
 func (s *DockerSuite) startContainer(c *check.C, image string, args ...string) string {
-	return s.startContainerWithConfig(c, docker.CreateContainerOptions{
-		Config: &docker.Config{
-			Image: image,
-			Cmd:   args,
-		},
+	return s.startContainerWithConfig(c, image, docker.ContainerConfig{
+		Cmd: args,
 	})
 }
 
 func (s *DockerSuite) startContainerWithLabels(c *check.C, image string, labels map[string]string, args ...string) string {
-	return s.startContainerWithConfig(c, docker.CreateContainerOptions{
-		Config: &docker.Config{
-			Image:  image,
-			Cmd:    args,
-			Labels: labels,
-		},
+	return s.startContainerWithConfig(c, image, docker.ContainerConfig{
+		Cmd:    args,
+		Labels: labels,
 	})
 }
 
-func (s *DockerSuite) startContainerWithConfig(c *check.C, config docker.CreateContainerOptions) string {
+func (s *DockerSuite) startContainerWithConfig(c *check.C, image string, config docker.ContainerConfig) string {
 	if config.Name == "" {
 		config.Name = namesgenerator.GetRandomName(10)
 	}
-	if config.Config.Labels == nil {
-		config.Config.Labels = map[string]string{}
-	}
-	config.Config.Labels[TestLabel] = "true"
 
-	container, err := s.client.CreateContainer(config)
-	c.Assert(err, checker.IsNil, check.Commentf("Error creating a container using config %v", config))
+	container, err := s.project.StartWithConfig(image, config)
+	c.Assert(err, checker.IsNil, check.Commentf("Error starting a container using config %v", config))
 
-	err = s.client.StartContainer(container.ID, &docker.HostConfig{})
-	c.Assert(err, checker.IsNil, check.Commentf("Error starting container %v", container))
-
-	return container.Name
+	// FIXME(vdemeester) this is ugly (it's because of the / in front of the name in docker..)
+	return strings.SplitAfter(container.Name, "/")[1]
 }
 
 func (s *DockerSuite) SetUpSuite(c *check.C) {
-	dockerHost := os.Getenv("DOCKER_HOST")
-	if dockerHost == "" {
-		// FIXME Handle windows -- see if dockerClient already handle that or not
-		dockerHost = fmt.Sprintf("unix://%s", opts.DefaultUnixSocket)
-	}
-	// Make sure we can speak to docker
-	dockerClient, err := docker.NewClient(dockerHost)
-	c.Assert(err, checker.IsNil, check.Commentf("Error connecting to docker daemon"))
-
-	s.client = dockerClient
-	c.Assert(s.client.Ping(), checker.IsNil)
+	project, err := docker.NewProjectFromEnv()
+	c.Assert(err, checker.IsNil, check.Commentf("Error while creating docker project"))
+	s.project = project
 
 	// Pull required images
 	for repository, tag := range RequiredImages {
 		image := fmt.Sprintf("%s:%s", repository, tag)
-		_, err := s.client.InspectImage(image)
-		if err != nil {
-			if err != docker.ErrNoSuchImage {
-				c.Fatalf("Error while inspect image %s", image)
-			}
-			err = s.client.PullImage(docker.PullImageOptions{
-				Repository: repository,
-				Tag:        tag,
-			}, docker.AuthConfiguration{})
-			c.Assert(err, checker.IsNil, check.Commentf("Error while pulling image %s", image))
-		}
-	}
-}
-
-func (s *DockerSuite) cleanContainers(c *check.C) {
-	// Clean the mess, a.k.a. the running containers with the right label
-	containerList, err := s.client.ListContainers(docker.ListContainersOptions{
-		Filters: map[string][]string{
-			"label": {fmt.Sprintf("%s=true", TestLabel)},
-		},
-	})
-	c.Assert(err, checker.IsNil, check.Commentf("Error listing containers started by traefik"))
-
-	for _, container := range containerList {
-		err = s.client.KillContainer(docker.KillContainerOptions{
-			ID: container.ID,
-		})
-		c.Assert(err, checker.IsNil, check.Commentf("Error killing container %v", container))
-		if os.Getenv("CIRCLECI") == "" {
-			// On circleci, we won't delete them — it errors out for now >_<
-			err = s.client.RemoveContainer(docker.RemoveContainerOptions{
-				ID:            container.ID,
-				RemoveVolumes: true,
-			})
-			c.Assert(err, checker.IsNil, check.Commentf("Error removing container %v", container))
-		}
+		s.project.Pull(image)
+		c.Assert(err, checker.IsNil, check.Commentf("Error while pulling image %s", image))
 	}
 }
 
 func (s *DockerSuite) TearDownTest(c *check.C) {
-	s.cleanContainers(c)
-}
-
-func (s *DockerSuite) TearDownSuite(c *check.C) {
-	// Call cleanContainers, just in case (?)
-	// s.cleanContainers(c)
+	err := s.project.Clean(os.Getenv("CIRCLECI") != "")
+	c.Assert(err, checker.IsNil, check.Commentf("Error while cleaning containers"))
 }
 
 func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {

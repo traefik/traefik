@@ -1,16 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"os/exec"
 	"time"
 
-	"github.com/docker/docker/opts"
-	"github.com/fsouza/go-dockerclient"
 	"github.com/hashicorp/consul/api"
+	docker "github.com/vdemeester/libkermit/docker"
+
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
 )
@@ -20,29 +18,19 @@ type ConsulCatalogSuite struct {
 	BaseSuite
 	consulIP     string
 	consulClient *api.Client
-	dockerClient *docker.Client
-}
-
-func (s *ConsulCatalogSuite) GetContainer(name string) (*docker.Container, error) {
-	return s.dockerClient.InspectContainer(name)
+	project      *docker.Project
 }
 
 func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
-	dockerHost := os.Getenv("DOCKER_HOST")
-	if dockerHost == "" {
-		// FIXME Handle windows -- see if dockerClient already handle that or not
-		dockerHost = fmt.Sprintf("unix://%s", opts.DefaultUnixSocket)
-	}
-	// Make sure we can speak to docker
-	dockerClient, err := docker.NewClient(dockerHost)
-	c.Assert(err, checker.IsNil, check.Commentf("Error connecting to docker daemon"))
-	s.dockerClient = dockerClient
+	project, err := docker.NewProjectFromEnv()
+	c.Assert(err, checker.IsNil, check.Commentf("Error while creating docker project"))
+	s.project = project
 
 	s.createComposeProject(c, "consul_catalog")
-	err = s.composeProject.Up()
+	err = s.composeProject.Start()
 	c.Assert(err, checker.IsNil, check.Commentf("Error starting project"))
 
-	consul, err := s.GetContainer("integration-test-consul_catalog_consul_1")
+	consul, err := s.project.Inspect("integration-test-consul_catalog_consul_1")
 	c.Assert(err, checker.IsNil, check.Commentf("Error finding consul container"))
 
 	s.consulIP = consul.NetworkSettings.IPAddress
@@ -110,7 +98,7 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	nginx, err := s.GetContainer("integration-test-consul_catalog_nginx_1")
+	nginx, err := s.project.Inspect("integration-test-consul_catalog_nginx_1")
 	c.Assert(err, checker.IsNil, check.Commentf("Error finding nginx container"))
 
 	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80)
