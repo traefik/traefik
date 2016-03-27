@@ -9,6 +9,13 @@ import (
 	check "gopkg.in/check.v1"
 )
 
+// Etcd test suites (using libcompose)
+type EtcdSuite struct{ BaseSuite }
+
+func (s *EtcdSuite) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "etcd")
+}
+
 func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/etcd/simple.toml")
 	err := cmd.Start()

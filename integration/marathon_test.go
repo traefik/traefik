@@ -9,6 +9,13 @@ import (
 	check "gopkg.in/check.v1"
 )
 
+// Marathon test suites (using libcompose)
+type MarathonSuite struct{ BaseSuite }
+
+func (s *MarathonSuite) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "marathon")
+}
+
 func (s *MarathonSuite) TestSimpleConfiguration(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/marathon/simple.toml")
 	err := cmd.Start()

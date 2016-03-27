@@ -35,36 +35,6 @@ func init() {
 
 var traefikBinary = "../dist/traefik"
 
-// File test suites
-type FileSuite struct{ BaseSuite }
-
-func (s *FileSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "file")
-
-	s.composeProject.Up()
-}
-
-// Consul test suites (using libcompose)
-type ConsulSuite struct{ BaseSuite }
-
-func (s *ConsulSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "consul")
-}
-
-// Etcd test suites (using libcompose)
-type EtcdSuite struct{ BaseSuite }
-
-func (s *EtcdSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "etcd")
-}
-
-// Marathon test suites (using libcompose)
-type MarathonSuite struct{ BaseSuite }
-
-func (s *MarathonSuite) SetUpSuite(c *check.C) {
-	s.createComposeProject(c, "marathon")
-}
-
 type BaseSuite struct {
 	composeProject *project.Project
 	listenChan     chan project.Event

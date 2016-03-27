@@ -9,6 +9,13 @@ import (
 	check "gopkg.in/check.v1"
 )
 
+// Consul test suites (using libcompose)
+type ConsulSuite struct{ BaseSuite }
+
+func (s *ConsulSuite) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "consul")
+}
+
 func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/consul/simple.toml")
 	err := cmd.Start()
