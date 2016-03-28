@@ -9,6 +9,15 @@ import (
 	check "gopkg.in/check.v1"
 )
 
+// File test suites
+type FileSuite struct{ BaseSuite }
+
+func (s *FileSuite) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "file")
+
+	s.composeProject.Start()
+}
+
 func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/file/simple.toml")
 	err := cmd.Start()

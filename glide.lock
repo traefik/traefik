@@ -1,5 +1,5 @@
-hash: 6f5b6e92b805fed0bb6a5bfe411b5ca501bc04accebeb739cec039e6499271e2
-updated: 2016-03-16T13:22:21.850972237+01:00
+hash: 7734b691c46b399a06cdcaa5d7feb77ea32e350cd4ff04dcbc73c06ef22468e6
+updated: 2016-03-27T19:57:17.213688266+02:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -79,7 +79,7 @@ imports:
   - utils
   - volume
 - name: github.com/docker/libcompose
-  version: d3089811c119a211469a9cc93caea684d937e5d3
+  version: e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
   subpackages:
   - docker
   - logger
@@ -114,10 +114,10 @@ imports:
   - external/github.com/Sirupsen/logrus
   - external/github.com/docker/docker/pkg/idtools
   - external/github.com/docker/docker/pkg/ioutils
+  - external/github.com/docker/docker/pkg/longpath
   - external/github.com/docker/docker/pkg/pools
   - external/github.com/docker/docker/pkg/promise
   - external/github.com/docker/docker/pkg/system
-  - external/github.com/docker/docker/pkg/longpath
   - external/github.com/opencontainers/runc/libcontainer/user
   - external/golang.org/x/sys/unix
   - external/golang.org/x/net/context
@@ -217,6 +217,8 @@ imports:
   version: 54ed61c2b47e263ae2f01b86837b0c4bd1da28e8
 - name: github.com/unrolled/render
   version: 26b4e3aac686940fe29521545afad9966ddfc80c
+- name: github.com/vdemeester/libkermit
+  version: 01a5399bdbd3312916c9fa4848108fbc81fe88d8
 - name: github.com/vdemeester/shakers
   version: 8fe734f75f3a70b651cbfbf8a55a009da09e8dc5
 - name: github.com/vulcand/oxy
