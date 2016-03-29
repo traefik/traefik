@@ -1,5 +1,5 @@
-hash: 7734b691c46b399a06cdcaa5d7feb77ea32e350cd4ff04dcbc73c06ef22468e6
-updated: 2016-03-27T19:57:17.213688266+02:00
+hash: 21d4e8dc80c87101568a719ecf01d1af9a1b58f03c5c9dc864a8cb1005ddc160
+updated: 2016-03-29T21:50:20.577439177+02:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -29,6 +29,7 @@ imports:
   - memmetrics
   - roundrobin
   - utils
+  - stream
 - name: github.com/coreos/go-etcd
   version: cc90c7b091275e606ad0ca7102a23fb2072f3f5e
   subpackages:
@@ -114,10 +115,10 @@ imports:
   - external/github.com/Sirupsen/logrus
   - external/github.com/docker/docker/pkg/idtools
   - external/github.com/docker/docker/pkg/ioutils
-  - external/github.com/docker/docker/pkg/longpath
   - external/github.com/docker/docker/pkg/pools
   - external/github.com/docker/docker/pkg/promise
   - external/github.com/docker/docker/pkg/system
+  - external/github.com/docker/docker/pkg/longpath
   - external/github.com/opencontainers/runc/libcontainer/user
   - external/golang.org/x/sys/unix
   - external/golang.org/x/net/context
@@ -143,7 +144,7 @@ imports:
   subpackages:
   - api
 - name: github.com/hashicorp/hcl
-  version: 567a5d1c4878a4ac8c198c730fd15f978b0529c7
+  version: 2604f3bda7e8960c1be1063709e7d7f0765048d0
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -156,21 +157,23 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/kr/pretty
-  version: e6ac2fc51e89a3249e82157fa0bb7a18ef9dd5bb
+  version: add1dbc86daf0f983cd4a48ceb39deb95c729b67
 - name: github.com/kr/text
   version: bb797dc4fb8320488f47bf11de07a733d7233e1f
 - name: github.com/magiconair/properties
-  version: 497d0afefddf378f9ffb3c89db6a326985908519
+  version: c265cfa48dda6474e208715ca93e987829f572f8
 - name: github.com/mailgun/log
   version: 44874009257d4d47ba9806f1b7f72a32a015e4d8
 - name: github.com/mailgun/manners
   version: fada45142db3f93097ca917da107aa3fad0ffcb5
+- name: github.com/mailgun/multibuf
+  version: 565402cd71fbd9c12aa7e295324ea357e970a61e
 - name: github.com/mailgun/predicate
   version: cb0bff91a7ab7cf7571e661ff883fc997bc554a3
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
 - name: github.com/miekg/dns
-  version: b9171237b0642de1d8e8004f16869970e065f46b
+  version: 7e024ce8ce18b21b475ac6baf8fa3c42536bf2fa
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/opencontainers/runc
@@ -192,7 +195,7 @@ imports:
 - name: github.com/spf13/cast
   version: ee7b3e0353166ab1f3a605294ac8cd2b77953778
 - name: github.com/spf13/cobra
-  version: 1bacefc9a216c93293e670067bd159a64b4d72c3
+  version: c678ff029ee250b65714e518f4f5c5cb934955de
   subpackages:
   - cobra
 - name: github.com/spf13/jwalterweatherman
@@ -201,11 +204,6 @@ imports:
   version: 7f60f83a2c81bc3c3c0d5297f61ddfa68da9d3b7
 - name: github.com/spf13/viper
   version: a212099cbe6fbe8d07476bfda8d2d39b6ff8f325
-- name: github.com/square/go-jose
-  version: 70a7e670bd0d4bb35902d31f3a75a6689843abed
-  subpackages:
-  - cipher
-  - json
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
@@ -239,11 +237,11 @@ imports:
 - name: github.com/wendal/errors
   version: f66c77a7882b399795a8987ebf87ef64a427417e
 - name: github.com/xenolf/lego
-  version: 118d9d5ec92bc243ea054742a03afae813ac1314
+  version: ca19a90028e242e878585941c2a27c8f3b3efc25
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: 6025851c7c2bf210daf74d22300c699b16541847
+  version: 9e7f5dc375abeb9619ea3c5c58502c428f457aa2
   subpackages:
   - ocsp
 - name: golang.org/x/net
@@ -265,6 +263,11 @@ imports:
   version: 22287bab4379e1fbf6002fb4eb769888f3fb224c
   subpackages:
   - bson
+- name: gopkg.in/square/go-jose.v1
+  version: 7d9df93c5ee8a09ed250b3b2360972fa29b4bb3c
+  subpackages:
+  - cipher
+  - json
 - name: gopkg.in/yaml.v2
   version: 7ad95dd0798a40da1ccdff6dff35fd177b5edf40
 devImports: []
