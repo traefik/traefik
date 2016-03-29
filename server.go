@@ -118,7 +118,7 @@ func (server *Server) listenProviders() {
 	for {
 		configMsg := <-server.configurationChan
 		jsonConf, _ := json.Marshal(configMsg.Configuration)
-		log.Debugf("Configuration receveived from provider %s: %s", configMsg.ProviderName, string(jsonConf))
+		log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
 		lastConfigs[configMsg.ProviderName] = &configMsg
 		if time.Now().After(lastReceivedConfiguration.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
 			log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
@@ -158,7 +158,7 @@ func (server *Server) listenConfigurations() {
 				server.serverLock.Lock()
 				for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 					server.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
-					log.Infof("Server configurartion reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
+					log.Infof("Server configuration reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 				}
 				server.currentConfigurations = newConfigurations
 				server.serverLock.Unlock()
