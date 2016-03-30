@@ -327,6 +327,26 @@ Use "traefik [command] --help" for more information about a command.
 #     [entryPoints.http.redirect]
 #       regex = "^http://localhost/(.*)"
 #       replacement = "http://mydomain/$1"
+
+# Enable retry sending request if network error
+#
+# Optional
+#
+# [retry]
+
+# Number of attempts
+#
+# Optional
+# Default: (number servers in backend) -1
+#
+# attempts = 3
+
+# Sets the maximum request body to be stored in memory in Mo
+#
+# Optional
+# Default: 2
+#
+# maxMem = 3
 ```
 
 ### Samples

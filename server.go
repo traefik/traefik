@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/containous/oxy/cbreaker"
 	"github.com/containous/oxy/forward"
 	"github.com/containous/oxy/roundrobin"
+	"github.com/containous/oxy/stream"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
@@ -412,6 +414,29 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								}
 							}
 						}
+						// retry ?
+						if globalConfiguration.Retry != nil {
+							retries := len(configuration.Backends[frontend.Backend].Servers) - 1
+							if globalConfiguration.Retry.Attempts > 0 {
+								retries = globalConfiguration.Retry.Attempts
+							}
+							maxMem := int64(2 * 1024 * 1024)
+							if globalConfiguration.Retry.MaxMem > 0 {
+								maxMem = globalConfiguration.Retry.MaxMem
+							}
+							lb, err = stream.New(lb,
+								stream.Logger(oxyLogger),
+								stream.Retry("IsNetworkError() && Attempts() < "+strconv.Itoa(retries)),
+								stream.MemRequestBodyBytes(maxMem),
+								stream.MaxRequestBodyBytes(maxMem),
+								stream.MemResponseBodyBytes(maxMem),
+								stream.MaxResponseBodyBytes(maxMem))
+							log.Debugf("Creating retries max attempts %d", retries)
+							if err != nil {
+								return nil, err
+							}
+						}
+
 						var negroni = negroni.New()
 						if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
 							log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)

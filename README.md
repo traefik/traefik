@@ -11,7 +11,7 @@
 
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
-It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
+It supports several backends ([Docker :whale:](https://www.docker.com/), [Swarm :whale: :whale:](https://docs.docker.com/swarm), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
 
 
 ## Features
@@ -32,6 +32,7 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 - Clean AngularJS Web UI
 - Websocket support
 - HTTP/2 support
+- Retry request if network error
 - [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS)
 
 ## Demo

@@ -27,6 +27,7 @@ type GlobalConfiguration struct {
 	DefaultEntryPoints        DefaultEntryPoints
 	ProvidersThrottleDuration time.Duration
 	MaxIdleConnsPerHost       int
+	Retry                     *Retry
 	Docker                    *provider.Docker
 	File                      *provider.File
 	Web                       *WebProvider
@@ -180,6 +181,12 @@ func (certs *Certificates) Type() string {
 type Certificate struct {
 	CertFile string
 	KeyFile  string
+}
+
+// Retry contains request retry config
+type Retry struct {
+	Attempts int
+	MaxMem   int64
 }
 
 // NewGlobalConfiguration returns a GlobalConfiguration with default values.

@@ -167,3 +167,4 @@ import:
   - package: github.com/xenolf/lego
   - package: github.com/vdemeester/libkermit
     ref: 01a5399bdbd3312916c9fa4848108fbc81fe88d8
+  - package: github.com/mailgun/multibuf
