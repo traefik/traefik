@@ -361,11 +361,11 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				}
 				newServerRoute := &serverRoute{route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
 				for routeName, route := range frontend.Routes {
-					log.Debugf("Creating route %s %s", routeName, route.Rule)
-					err := getRoute(newServerRoute, route)
+					err := getRoute(newServerRoute, &route)
 					if err != nil {
 						return nil, err
 					}
+					log.Debugf("Creating route %s %s", routeName, route.Rule)
 				}
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
 				if entryPoint.Redirect != nil {
@@ -512,7 +512,15 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	return router
 }
 
-func getRoute(serverRoute *serverRoute, route types.Route) error {
+func getRoute(serverRoute *serverRoute, route *types.Route) error {
+	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
+	// TODO: backwards compatibility with DEPRECATED rule.Value
+	if len(route.Value) > 0 {
+		route.Rule += ":" + route.Value
+		log.Warnf("Value %s is DEPRECATED, please refer to the new frontend notation: https://github.com/containous/traefik/blob/master/docs/index.md#-frontends", route.Value)
+	}
+	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
+
 	rules := Rules{route: serverRoute}
 	newRoute, err := rules.Parse(route.Rule)
 	if err != nil {

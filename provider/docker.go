@@ -152,12 +152,6 @@ func containerFilter(container docker.Container) bool {
 		return false
 	}
 
-	// labels, err := getLabels(container, []string{"traefik.frontend.rule"})
-	// if len(labels) != 0 && err != nil {
-	// 	log.Debugf("Filtering bad labeled container %s", container.Name)
-	// 	return false
-	// }
-
 	return true
 }
 
@@ -169,6 +163,15 @@ func (provider *Docker) getFrontendName(container docker.Container) string {
 // GetFrontendRule returns the frontend rule for the specified container, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (provider *Docker) getFrontendRule(container docker.Container) string {
+	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
+	// TODO: backwards compatibility with DEPRECATED rule.Value
+	if value, ok := container.Config.Labels["traefik.frontend.value"]; ok {
+		log.Warnf("Label traefik.frontend.value=%s is DEPRECATED, please refer to the rule label: https://github.com/containous/traefik/blob/master/docs/index.md#docker", value)
+		rule, _ := container.Config.Labels["traefik.frontend.rule"]
+		return rule + ":" + value
+	}
+	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
+
 	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
 	}
