@@ -13,5 +13,4 @@
   {{end}}]
     [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
     rule = "{{getFrontendRule $container}}"
-    value = "{{getFrontendValue $container}}"
 {{end}}

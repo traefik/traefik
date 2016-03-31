@@ -2,25 +2,25 @@
 <img src="http://traefik.github.io/traefik.logo.svg" alt="Træfɪk" title="Træfɪk" />
 </p>
 
-# <a id="top"></a> Documentation
+# Documentation
 
 - [Basics](#basics)
-- [Launch configuration](#launch)
-- [Global configuration](#global)
-- [File backend](#file)
-- [API backend](#api)
-- [Docker backend](#docker)
-- [Mesos/Marathon backend](#marathon)
-- [Consul backend](#consul)
-- [Consul catalog backend](#consulcatalog)
-- [Etcd backend](#etcd)
-- [Zookeeper backend](#zk)
-- [Boltdb backend](#boltdb)
-- [Atomic configuration changes](#atomicconfig)
+- [Launch configuration](#launch-configuration)
+- [Global configuration](#global-configuration)
+- [File backend](#file-backend)
+- [API backend](#api-backend)
+- [Docker backend](#docker-backend)
+- [Mesos/Marathon backend](#marathon-backend)
+- [Consul backend](#consul-backend)
+- [Consul catalog backend](#consul-catalog-backend)
+- [Etcd backend](#etcd-backend)
+- [Zookeeper backend](#zookeeper-backend)
+- [Boltdb backend](#boltdb-backend)
+- [Atomic configuration changes](#atomic-configuration-changes)
 - [Benchmarks](#benchmarks)
 
 
-## <a id="basics"></a> Basics
+## Basics
 
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
@@ -28,12 +28,12 @@ It supports several backends ([Docker :whale:](https://www.docker.com/), [Mesos/
 
 Basically, Træfɪk is a http router, which sends traffic from frontends to http backends, following rules you have configured.
 
-### <a id="frontends"></a> Frontends
+### Frontends
 
 Frontends can be defined using the following rules:
 
-- `Headers`: Headers adds a matcher for request header values. It accepts a sequence of key/value pairs to be matched. For example: `application/json`
-- `HeadersRegexp`: Regular expressions can be used with headers as well. It accepts a sequence of key/value pairs, where the value has regex support. For example: `application/(text|json)`
+- `Headers`: Headers adds a matcher for request header values. It accepts a sequence of key/value pairs to be matched. For example: `Content-Type, application/json`
+- `HeadersRegexp`: Regular expressions can be used with headers as well. It accepts a sequence of key/value pairs, where the value has regex support. For example: `Content-Type, application/(text|json)`
 - `Host`: Host adds a matcher for the URL host. It accepts a template with zero or more URL variables enclosed by `{}`. Variables can define an optional regexp pattern to be matched: `www.traefik.io`, `{subdomain:[a-z]+}.traefik.io`
 - `Methods`: Methods adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched, e.g.: `GET`, `POST`, `PUT`
 - `Path`: Path adds a matcher for the URL path. It accepts a template with zero or more URL variables enclosed by `{}`. The template must start with a `/`. For exemple `/products/` `/articles/{category}/{id:[0-9]+}`
@@ -70,7 +70,7 @@ For example:
 - `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in range [500-600) to  [0-600)
 
 
-## <a id="launch"></a> Launch configuration
+## Launch configuration
 
 Træfɪk can be configured using a TOML file configuration, arguments, or both.
 By default, Træfɪk will try to find a `traefik.toml` in the following places:
@@ -176,7 +176,7 @@ Flags:
 Use "traefik [command] --help" for more information about a command.
 ```
 
-## <a id="global"></a> Global configuration
+## Global configuration
 
 ```toml
 # traefik.toml
@@ -432,24 +432,21 @@ entryPoint = "https"
   [frontends.frontend1]
   backend = "backend2"
     [frontends.frontend1.routes.test_1]
-    rule = "Host"
-    value = "test.localhost"
+    rule = "Host:test.localhost"
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
-    rule = "Host"
-    value = "{subdomain:[a-z]+}.localhost"
+    rule = "Host:{subdomain:[a-z]+}.localhost"
   [frontends.frontend3]
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
-    rule = "Path"
-    value = "/test"
+    rule = "Path:/test"
 ```
 
 
-## <a id="file"></a> File backend
+## File backend
 
 Like any other reverse proxy, Træfɪk can be configured with a file. You have two choices:
 
@@ -502,20 +499,17 @@ logLevel = "DEBUG"
   [frontends.frontend1]
   backend = "backend2"
     [frontends.frontend1.routes.test_1]
-    rule = "Host"
-    value = "test.localhost"
+    rule = "Host:test.localhost"
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
-    rule = "Host"
-    value = "{subdomain:[a-z]+}.localhost"
+    rule = "Host:{subdomain:[a-z]+}.localhost"
   [frontends.frontend3]
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
-    rule = "Path"
-    value = "/test"
+    rule = "Path:/test"
 ```
 
 - or put your rules in a separate file, for example `rules.tml`:
@@ -569,20 +563,17 @@ filename = "rules.toml"
   [frontends.frontend1]
   backend = "backend2"
     [frontends.frontend1.routes.test_1]
-    rule = "Host"
-    value = "test.localhost"
+    rule = "Host:test.localhost"
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
-    rule = "Host"
-    value = "{subdomain:[a-z]+}.localhost"
+    rule = "Host:{subdomain:[a-z]+}.localhost"
   [frontends.frontend3]
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
-    rule = "Path"
-    value = "/test"
+    rule = "Path:/test"
 ```
 
 If you want Træfɪk to watch file changes automatically, just add:
@@ -592,7 +583,7 @@ If you want Træfɪk to watch file changes automatically, just add:
 watch = true
 ```
 
-## <a id="api"></a> API backend
+## API backend
 
 Træfik can be configured using a restful api.
 To enable it:
@@ -669,8 +660,7 @@ $ curl -s "http://localhost:8080/api" | jq .
       "frontend2": {
         "routes": {
           "test_2": {
-            "value": "/test",
-            "rule": "Path"
+            "rule": "Path:/test"
           }
         },
         "backend": "backend1"
@@ -678,8 +668,7 @@ $ curl -s "http://localhost:8080/api" | jq .
       "frontend1": {
         "routes": {
           "test_1": {
-            "value": "test.localhost",
-            "rule": "Host"
+            "rule": "Host:test.localhost"
           }
         },
         "backend": "backend2"
@@ -736,7 +725,7 @@ $ curl -s "http://localhost:8080/api" | jq .
 - `/api/providers/{provider}/frontends/{frontend}/routes/{route}`: `GET` a route in a frontend
 
 
-## <a id="docker"></a> Docker backend
+## Docker backend
 
 Træfɪk can be configured to use Docker as a backend configuration:
 
@@ -792,14 +781,13 @@ Labels can be used on containers to override default behaviour:
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
 - `traefik.enable=false`: disable this container in Træfɪk
-- `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
-- `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{containerName}.{domain}`) See [frontends](#frontends). Must be associated with label traefik.frontend.rule.
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`). See [frontends](#frontends).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 * `traefik.domain=traefik.localhost`: override the default domain
 
 
-## <a id="marathon"></a> Marathon backend
+## Marathon backend
 
 Træfɪk can be configured to use Marathon as a backend configuration:
 
@@ -873,13 +861,12 @@ Labels can be used on containers to override default behaviour:
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the application
 - `traefik.enable=false`: disable this application in Træfɪk
-- `traefik.frontend.rule=Host`: override the default frontend rule (Default: Host). See [frontends](#frontends).
-- `traefik.frontend.value=test.example.com`: override the default frontend value (Default: `{appName}.{domain}`) See [frontends](#frontends). Must be associated with label traefik.frontend.rule.
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`). See [frontends](#frontends).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 * `traefik.domain=traefik.localhost`: override the default domain
 
-## <a id="consul"></a> Consul backend
+## Consul backend
 
 Træfɪk can be configured to use Consul as a backend configuration:
 
@@ -929,48 +916,41 @@ prefix = "traefik"
 # insecureskipverify = true
 ```
 
-The Keys-Values structure should look (using `prefix = "/traefik"`):
+Please refer to the [Key Value storage structure](#key-value-storage-structure) section to get documentation en traefik KV structure.
 
-- backend 1
+## Consul catalog backend
 
-| Key                                                    | Value                       |
-|--------------------------------------------------------|-----------------------------|
-| `/traefik/backends/backend1/circuitbreaker/expression` | `NetworkErrorRatio() > 0.5` |
-| `/traefik/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
-| `/traefik/backends/backend1/servers/server1/weight`    | `10`                        |
-| `/traefik/backends/backend1/servers/server2/url`       | `http://172.17.0.3:80`      |
-| `/traefik/backends/backend1/servers/server2/weight`    | `1`                         |
+Træfɪk can be configured to use service discovery catalog of Consul as a backend configuration:
 
-- backend 2
+```toml
+################################################################
+# Consul Catalog configuration backend
+################################################################
 
-| Key                                                 | Value                  |
-|-----------------------------------------------------|------------------------|
-| `/traefik/backends/backend2/loadbalancer/method`    | `drr`                  |
-| `/traefik/backends/backend2/servers/server1/url`    | `http://172.17.0.4:80` |
-| `/traefik/backends/backend2/servers/server1/weight` | `1`                    |
-| `/traefik/backends/backend2/servers/server2/url`    | `http://172.17.0.5:80` |
-| `/traefik/backends/backend2/servers/server2/weight` | `2`                    |
+# Enable Consul Catalog configuration backend
+#
+# Optional
+#
+[consulCatalog]
 
-- frontend 1
+# Consul server endpoint
+#
+# Required
+#
+endpoint = "127.0.0.1:8500"
 
-| Key                                                | Value            |
-|----------------------------------------------------|------------------|
-| `/traefik/frontends/frontend1/backend`             | `backend2`       |
-| `/traefik/frontends/frontend1/routes/test_1/rule`  | `Host`           |
-| `/traefik/frontends/frontend1/routes/test_1/value` | `test.localhost` |
+# Default domain used.
+#
+# Optional
+#
+domain = "consul.localhost"
+```
 
-- frontend 2
-
-| Key                                                | Value      |
-|----------------------------------------------------|------------|
-| `/traefik/frontends/frontend2/backend`             | `backend1` |
-| `/traefik/frontends/frontend2/passHostHeader`      | `true`     |
-| `/traefik/frontends/frontend2/entrypoints`         |`http,https`|
-| `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
-| `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
+This backend will create routes matching on hostname based on the service name
+used in consul.
 
 
-## <a id="etcd"></a> Etcd backend
+## Etcd backend
 
 Træfɪk can be configured to use Etcd as a backend configuration:
 
@@ -1020,79 +1000,10 @@ Træfɪk can be configured to use Etcd as a backend configuration:
 # insecureskipverify = true
 ```
 
-The Keys-Values structure should look (using `prefix = "/traefik"`):
-
-- backend 1
-
-| Key                                                    | Value                       |
-|--------------------------------------------------------|-----------------------------|
-| `/traefik/backends/backend1/circuitbreaker/expression` | `NetworkErrorRatio() > 0.5` |
-| `/traefik/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
-| `/traefik/backends/backend1/servers/server1/weight`    | `10`                        |
-| `/traefik/backends/backend1/servers/server2/url`       | `http://172.17.0.3:80`      |
-| `/traefik/backends/backend1/servers/server2/weight`    | `1`                         |
-
-- backend 2
-
-| Key                                                 | Value                  |
-|-----------------------------------------------------|------------------------|
-| `/traefik/backends/backend2/loadbalancer/method`    | `drr`                  |
-| `/traefik/backends/backend2/servers/server1/url`    | `http://172.17.0.4:80` |
-| `/traefik/backends/backend2/servers/server1/weight` | `1`                    |
-| `/traefik/backends/backend2/servers/server2/url`    | `http://172.17.0.5:80` |
-| `/traefik/backends/backend2/servers/server2/weight` | `2`                    |
-
-- frontend 1
-
-| Key                                                | Value            |
-|----------------------------------------------------|------------------|
-| `/traefik/frontends/frontend1/backend`             | `backend2`       |
-| `/traefik/frontends/frontend1/routes/test_1/rule`  | `Host`           |
-| `/traefik/frontends/frontend1/routes/test_1/value` | `test.localhost` |
-
-- frontend 2
-
-| Key                                                | Value      |
-|----------------------------------------------------|------------|
-| `/traefik/frontends/frontend2/backend`             | `backend1` |
-| `/traefik/frontends/frontend2/passHostHeader`      | `true`     |
-| `/traefik/frontends/frontend2/entrypoints`         |`http,https`|
-| `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
-| `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
+Please refer to the [Key Value storage structure](#key-value-storage-structure) section to get documentation en traefik KV structure.
 
 
-## <a id="consulcatalog"></a> Consul catalog backend
-
-Træfɪk can be configured to use service discovery catalog of Consul as a backend configuration:
-
-```toml
-################################################################
-# Consul Catalog configuration backend
-################################################################
-
-# Enable Consul Catalog configuration backend
-#
-# Optional
-#
-[consulCatalog]
-
-# Consul server endpoint
-#
-# Required
-#
-endpoint = "127.0.0.1:8500"
-
-# Default domain used.
-#
-# Optional
-#
-domain = "consul.localhost"
-```
-
-This backend will create routes matching on hostname based on the service name
-used in consul.
-
-## <a id="zk"></a> Zookeeper backend
+## Zookeeper backend
 
 Træfɪk can be configured to use Zookeeper as a backend configuration:
 
@@ -1131,48 +1042,10 @@ Træfɪk can be configured to use Zookeeper as a backend configuration:
 #
 # filename = "zookeeper.tmpl"
 ```
-The Keys-Values structure should look (using `prefix = "/traefik"`):
 
-- backend 1
+Please refer to the [Key Value storage structure](#key-value-storage-structure) section to get documentation en traefik KV structure.
 
-| Key                                                    | Value                       |
-|--------------------------------------------------------|-----------------------------|
-| `/traefik/backends/backend1/circuitbreaker/expression` | `NetworkErrorRatio() > 0.5` |
-| `/traefik/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
-| `/traefik/backends/backend1/servers/server1/weight`    | `10`                        |
-| `/traefik/backends/backend1/servers/server2/url`       | `http://172.17.0.3:80`      |
-| `/traefik/backends/backend1/servers/server2/weight`    | `1`                         |
-
-- backend 2
-
-| Key                                                 | Value                  |
-|-----------------------------------------------------|------------------------|
-| `/traefik/backends/backend2/loadbalancer/method`    | `drr`                  |
-| `/traefik/backends/backend2/servers/server1/url`    | `http://172.17.0.4:80` |
-| `/traefik/backends/backend2/servers/server1/weight` | `1`                    |
-| `/traefik/backends/backend2/servers/server2/url`    | `http://172.17.0.5:80` |
-| `/traefik/backends/backend2/servers/server2/weight` | `2`                    |
-
-- frontend 1
-
-| Key                                               | Value            |
-|---------------------------------------------------|------------------|
-| `/traefik/frontends/frontend1/backend             | `backend2`       |
-| `/traefik/frontends/frontend1/routes/test_1/rule  | `Host`           |
-| `/traefik/frontends/frontend1/routes/test_1/value | `test.localhost` |
-
-- frontend 2
-
-| Key                                                | Value      |
-|----------------------------------------------------|------------|
-| `/traefik/frontends/frontend2/backend`             | `backend1` |
-| `/traefik/frontends/frontend2/passHostHeader`      | `true`     |
-| `/traefik/frontends/frontend2/entrypoints`         |`http,https`|
-| `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path`     |
-| `/traefik/frontends/frontend2/routes/test_2/value` | `/test`    |
-
-
-## <a id="boltdb"></a> BoltDB backend
+## BoltDB backend
 
 Træfɪk can be configured to use BoltDB as a backend configuration:
 
@@ -1212,7 +1085,49 @@ Træfɪk can be configured to use BoltDB as a backend configuration:
 # filename = "boltdb.tmpl"
 ```
 
-## <a id="atomicconfig"></a> Atomic configuration changes
+Please refer to the [Key Value storage structure](#key-value-storage-structure) section to get documentation en traefik KV structure.
+
+## Key-value storage structure
+
+The Keys-Values structure should look (using `prefix = "/traefik"`):
+
+- backend 1
+
+| Key                                                    | Value                       |
+|--------------------------------------------------------|-----------------------------|
+| `/traefik/backends/backend1/circuitbreaker/expression` | `NetworkErrorRatio() > 0.5` |
+| `/traefik/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
+| `/traefik/backends/backend1/servers/server1/weight`    | `10`                        |
+| `/traefik/backends/backend1/servers/server2/url`       | `http://172.17.0.3:80`      |
+| `/traefik/backends/backend1/servers/server2/weight`    | `1`                         |
+
+- backend 2
+
+| Key                                                 | Value                  |
+|-----------------------------------------------------|------------------------|
+| `/traefik/backends/backend2/loadbalancer/method`    | `drr`                  |
+| `/traefik/backends/backend2/servers/server1/url`    | `http://172.17.0.4:80` |
+| `/traefik/backends/backend2/servers/server1/weight` | `1`                    |
+| `/traefik/backends/backend2/servers/server2/url`    | `http://172.17.0.5:80` |
+| `/traefik/backends/backend2/servers/server2/weight` | `2`                    |
+
+- frontend 1
+
+| Key                                               | Value                 |
+|---------------------------------------------------|-----------------------|
+| `/traefik/frontends/frontend1/backend`            | `backend2`            |
+| `/traefik/frontends/frontend1/routes/test_1/rule` | `Host:test.localhost` |
+
+- frontend 2
+
+| Key                                                | Value        |
+|----------------------------------------------------|--------------|
+| `/traefik/frontends/frontend2/backend`             | `backend1`   |
+| `/traefik/frontends/frontend2/passHostHeader`      | `true`       |
+| `/traefik/frontends/frontend2/entrypoints`         | `http,https` |
+| `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path:/test` |
+
+## Atomic configuration changes
 
 The [Etcd](https://github.com/coreos/etcd/issues/860) and [Consul](https://github.com/hashicorp/consul/issues/886) backends do not support updating multiple keys atomically. As a result, it may be possible for Træfɪk to read an intermediate configuration state despite judicious use of the `--providersThrottleDuration` flag. To solve this problem, Træfɪk supports a special key called `/traefik/alias`. If set, Træfɪk use the value as an alternative key prefix.
 
@@ -1251,7 +1166,7 @@ Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` co
 Note that Træfɪk *will not watch for key changes in the `/traefik_configurations` prefix*. It will only watch for changes in the `/traefik` prefix. Further, if the `/traefik/alias` key is set, all other sibling keys with the `/traefik` prefix are ignored.
 
 
-## <a id="benchmarks"></a> Benchmarks
+## Benchmarks
 
 Here are some early Benchmarks between Nginx, HA-Proxy and Træfɪk acting as simple load balancers between two servers.
 

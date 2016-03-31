@@ -86,8 +86,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 					EntryPoints: []string{},
 					Routes: map[string]types.Route{
 						`route-host-test`: {
-							Rule:  "Host",
-							Value: "test.docker.localhost",
+							Rule: "Host:test.docker.localhost",
 						},
 					},
 				},
@@ -831,7 +830,7 @@ func TestMarathonGetEntryPoints(t *testing.T) {
 	}
 }
 
-func TestMarathonGetFrontendValue(t *testing.T) {
+func TestMarathonGetFrontendRule(t *testing.T) {
 	provider := &Marathon{
 		Domain: "docker.localhost",
 	}
@@ -842,50 +841,21 @@ func TestMarathonGetFrontendValue(t *testing.T) {
 	}{
 		{
 			application: marathon.Application{},
-			expected:    ".docker.localhost",
+			expected:    "Host:.docker.localhost",
 		},
 		{
 			application: marathon.Application{
 				ID: "test",
 			},
-			expected: "test.docker.localhost",
+			expected: "Host:test.docker.localhost",
 		},
 		{
 			application: marathon.Application{
 				Labels: map[string]string{
-					"traefik.frontend.value": "foo.bar",
+					"traefik.frontend.rule": "Host:foo.bar",
 				},
 			},
-			expected: "foo.bar",
-		},
-	}
-
-	for _, a := range applications {
-		actual := provider.getFrontendValue(a.application)
-		if actual != a.expected {
-			t.Fatalf("expected %q, got %q", a.expected, actual)
-		}
-	}
-}
-
-func TestMarathonGetFrontendRule(t *testing.T) {
-	provider := &Marathon{}
-
-	applications := []struct {
-		application marathon.Application
-		expected    string
-	}{
-		{
-			application: marathon.Application{},
-			expected:    "Host",
-		},
-		{
-			application: marathon.Application{
-				Labels: map[string]string{
-					"traefik.frontend.rule": "Header",
-				},
-			},
-			expected: "Header",
+			expected: "Host:foo.bar",
 		},
 	}
 

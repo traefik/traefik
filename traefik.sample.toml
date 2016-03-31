@@ -513,17 +513,14 @@
 #   [frontends.frontend1]
 #   backend = "backend2"
 #     [frontends.frontend1.routes.test_1]
-#     rule = "Host"
-#     value = "test.localhost"
+#     rule = "Host:test.localhost"
 #   [frontends.frontend2]
 #   backend = "backend1"
 #   passHostHeader = true
 #   entrypoints = ["https"] # overrides defaultEntryPoints
 #     [frontends.frontend2.routes.test_1]
-#     rule = "Host"
-#     value = "{subdomain:[a-z]+}.localhost"
+#     rule = "Host:{subdomain:[a-z]+}.localhost"
 #   [frontends.frontend3]
 #   entrypoints = ["http", "https"] # overrides defaultEntryPoints
 #   backend = "backend2"
-#     rule = "Path"
-#     value = "/test"
+#     rule = "Path:/test"

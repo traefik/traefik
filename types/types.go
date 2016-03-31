@@ -30,8 +30,11 @@ type Server struct {
 
 // Route holds route configuration.
 type Route struct {
-	Rule  string `json:"rule,omitempty"`
+	Rule string `json:"rule,omitempty"`
+	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
+	// TODO: backwards compatibility with DEPRECATED rule.Value
 	Value string `json:"value,omitempty"`
+	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
 }
 
 // Frontend holds frontend configuration.

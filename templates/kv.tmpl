@@ -37,6 +37,5 @@
         {{range $routes}}
         [frontends.{{$frontend}}.routes.{{Last .}}]
         rule = "{{Get "" . "/rule"}}"
-        value = "{{Get "" . "/value"}}"
         {{end}}
 {{end}}

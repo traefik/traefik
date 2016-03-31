@@ -133,8 +133,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	defer os.Remove(file)
 	// Start a container with some labels
 	labels := map[string]string{
-		"traefik.frontend.rule":  "Host",
-		"traefik.frontend.value": "my.super.host",
+		"traefik.frontend.rule": "Host:my.super.host",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 

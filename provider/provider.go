@@ -9,6 +9,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/types"
+	"unicode"
 )
 
 // Provider defines methods of a provider.
@@ -66,4 +67,12 @@ func replace(s1 string, s2 string, s3 string) string {
 // Escape beginning slash "/", convert all others to dash "-"
 func getEscapedName(name string) string {
 	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
+}
+
+func normalize(name string) string {
+	fargs := func(c rune) bool {
+		return !unicode.IsLetter(c) && !unicode.IsNumber(c)
+	}
+	// get function
+	return strings.Join(strings.FieldsFunc(name, fargs), "-")
 }

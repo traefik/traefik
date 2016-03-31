@@ -14,5 +14,4 @@
   {{end}}]
     [frontends.frontend{{.ID | replace "/" "-"}}.routes.route-host{{.ID | replace "/" "-"}}]
     rule = "{{getFrontendRule .}}"
-    value = "{{getFrontendValue .}}"
 {{end}}

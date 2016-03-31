@@ -20,3 +20,8 @@ func (s *StripPrefix) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	}
 }
+
+// SetHandler sets handler
+func (s *StripPrefix) SetHandler(Handler http.Handler) {
+	s.Handler = Handler
+}
