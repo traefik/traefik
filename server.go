@@ -517,7 +517,7 @@ func getRoute(serverRoute *serverRoute, route *types.Route) error {
 	// TODO: backwards compatibility with DEPRECATED rule.Value
 	if len(route.Value) > 0 {
 		route.Rule += ":" + route.Value
-		log.Warnf("Value %s is DEPRECATED, please refer to the new frontend notation: https://github.com/containous/traefik/blob/master/docs/index.md#-frontends", route.Value)
+		log.Warnf("Value %s is DEPRECATED (will be removed in v1.0.0), please refer to the new frontend notation: https://github.com/containous/traefik/blob/master/docs/index.md#-frontends", route.Value)
 	}
 	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
 
