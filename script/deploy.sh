@@ -32,7 +32,7 @@ docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
 docker tag containous/traefik emilevauge/traefik:latest
 docker push emilevauge/traefik:latest
 docker tag emilevauge/traefik:latest emilevauge/traefik:${VERSION}
-docker push -q emilevauge/traefik:${VERSION}
+docker push emilevauge/traefik:${VERSION}
 
 cd ..
 rm -Rf traefik-library-image/

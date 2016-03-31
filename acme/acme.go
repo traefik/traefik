@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/safe"
 	"github.com/xenolf/lego/acme"
 	"io/ioutil"
 	fmtlog "log"
@@ -242,7 +243,9 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 		return err
 	}
 
-	go a.retrieveCertificates(client, account)
+	safe.Go(func() {
+		a.retrieveCertificates(client, account)
+	})
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		if challengeCert, ok := wrapperChallengeProvider.getCertificate(clientHello.ServerName); ok {
@@ -261,7 +264,7 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 	}
 
 	ticker := time.NewTicker(24 * time.Hour)
-	go func() {
+	safe.Go(func() {
 		for {
 			select {
 			case <-ticker.C:
@@ -272,7 +275,7 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 			}
 		}
 
-	}()
+	})
 	return nil
 }
 
