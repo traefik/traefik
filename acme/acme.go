@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/safe"
 	"github.com/xenolf/lego/acme"
 	"io/ioutil"
 	fmtlog "log"
@@ -142,6 +143,22 @@ type DomainsCertificate struct {
 	tlsCert     *tls.Certificate
 }
 
+func (dc *DomainsCertificate) needRenew() bool {
+	for _, c := range dc.tlsCert.Certificate {
+		crt, err := x509.ParseCertificate(c)
+		if err != nil {
+			// If there's an error, we assume the cert is broken, and needs update
+			return true
+		}
+		// <= 7 days left, renew certificate
+		if crt.NotAfter.Before(time.Now().Add(time.Duration(24 * 7 * time.Hour))) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // ACME allows to connect to lets encrypt and retrieve certs
 type ACME struct {
 	Email       string
@@ -226,7 +243,9 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 		return err
 	}
 
-	go a.retrieveCertificates(client, account)
+	safe.Go(func() {
+		a.retrieveCertificates(client, account)
+	})
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 		if challengeCert, ok := wrapperChallengeProvider.getCertificate(clientHello.ServerName); ok {
@@ -245,7 +264,7 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 	}
 
 	ticker := time.NewTicker(24 * time.Hour)
-	go func() {
+	safe.Go(func() {
 		for {
 			select {
 			case <-ticker.C:
@@ -256,7 +275,7 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 			}
 		}
 
-	}()
+	})
 	return nil
 }
 
@@ -289,8 +308,7 @@ func (a *ACME) retrieveCertificates(client *acme.Client, account *Account) {
 
 func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
 	for _, certificateResource := range account.DomainsCertificate.Certs {
-		// <= 7 days left, renew certificate
-		if certificateResource.tlsCert.Leaf.NotAfter.Before(time.Now().Add(time.Duration(24 * 7 * time.Hour))) {
+		if certificateResource.needRenew() {
 			log.Debugf("Renewing certificate %+v", certificateResource.Domains)
 			renewedCert, err := client.RenewCertificate(acme.CertificateResource{
 				Domain:        certificateResource.Certificate.Domain,

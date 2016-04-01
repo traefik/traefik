@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 	"net/http"
@@ -63,7 +64,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 		if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
 			log.Errorf("Failed to register for events, %s", err)
 		} else {
-			go func() {
+			safe.Go(func() {
 				for {
 					event := <-update
 					log.Debug("Marathon event receveived", event)
@@ -75,7 +76,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 						}
 					}
 				}
-			}()
+			})
 		}
 	}
 

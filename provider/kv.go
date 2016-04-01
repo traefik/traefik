@@ -12,6 +12,7 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
@@ -101,7 +102,9 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error 
 	}
 	provider.kvclient = kv
 	if provider.Watch {
-		go provider.watchKv(configurationChan, provider.Prefix)
+		safe.Go(func() {
+			provider.watchKv(configurationChan, provider.Prefix)
+		})
 	}
 	configuration := provider.loadConfig()
 	configurationChan <- types.ConfigMessage{
