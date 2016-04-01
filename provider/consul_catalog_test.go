@@ -6,6 +6,7 @@ import (
 
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
+	"fmt"
 )
 
 func TestConsulCatalogGetFrontendRule(t *testing.T) {
@@ -49,7 +50,10 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		{
 			nodes: []catalogUpdate{
 				{
-					Service: "test",
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{},
+					},
 				},
 			},
 			expectedFrontends: map[string]*types.Frontend{},
@@ -58,12 +62,23 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		{
 			nodes: []catalogUpdate{
 				{
-					Service: "test",
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"traefik.loadbalancer=drr",
+							"traefik.circuitbreaker=NetworkErrorRatio() > 0.5",
+							"random.foo=bar",
+						},
+					},
 					Nodes: []*api.ServiceEntry{
 						{
 							Service: &api.AgentService{
 								Service: "test",
 								Port:    80,
+								Tags: []string{
+									"traefik.weight=42",
+									"random.foo=bar",
+								},
 							},
 							Node: &api.Node{
 								Node:    "localhost",
@@ -88,10 +103,15 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-localhost-80": {
 							URL: "http://127.0.0.1:80",
+							Weight: 42,
 						},
 					},
-					CircuitBreaker: nil,
-					LoadBalancer:   nil,
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer:   &types.LoadBalancer{
+						Method: "drr",
+					},
 				},
 			},
 		},
@@ -99,6 +119,11 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 
 	for _, c := range cases {
 		actualConfig := provider.buildConfig(c.nodes)
+		if len(actualConfig.Backends) > 0 {
+			fmt.Println(actualConfig.Backends["backend-test"].LoadBalancer.Method)
+			fmt.Println(actualConfig.Backends["backend-test"].CircuitBreaker.Expression)
+			fmt.Println(actualConfig.Backends["backend-test"].Servers["server-localhost-80"].Weight)
+		}
 		if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
 			t.Fatalf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
 		}

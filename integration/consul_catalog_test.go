@@ -46,7 +46,7 @@ func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 	time.Sleep(2000 * time.Millisecond)
 }
 
-func (s *ConsulCatalogSuite) registerService(name string, address string, port int) error {
+func (s *ConsulCatalogSuite) registerService(name string, address string, port int, tags []string) error {
 	catalog := s.consulClient.Catalog()
 	_, err := catalog.Register(
 		&api.CatalogRegistration{
@@ -57,6 +57,7 @@ func (s *ConsulCatalogSuite) registerService(name string, address string, port i
 				Service: name,
 				Address: address,
 				Port:    port,
+				Tags:	 tags,
 			},
 		},
 		&api.WriteOptions{},
@@ -94,6 +95,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 
 func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--consulCatalog", "--consulCatalog.endpoint="+s.consulIP+":8500", "--consulCatalog.domain=consul.localhost", "--configFile=fixtures/consul_catalog/simple.toml")
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -101,11 +103,12 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 	nginx, err := s.project.Inspect("integration-test-consul_catalog_nginx_1")
 	c.Assert(err, checker.IsNil, check.Commentf("Error finding nginx container"))
 
-	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80)
+	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
 	time.Sleep(5000 * time.Millisecond)
+
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)

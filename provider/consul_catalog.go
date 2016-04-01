@@ -15,7 +15,8 @@ import (
 
 const (
 	// DefaultWatchWaitTime is the duration to wait when polling consul
-	DefaultWatchWaitTime = 15 * time.Second
+	DefaultWatchWaitTime   = 15 * time.Second
+	ConsulCatalogTagPrefix = "traefik."
 )
 
 // ConsulCatalog holds configurations of the Consul catalog provider.
@@ -26,8 +27,13 @@ type ConsulCatalog struct {
 	client       *api.Client
 }
 
+type serviceUpdate struct {
+	ServiceName string
+	Attributes  []string
+}
+
 type catalogUpdate struct {
-	Service string
+	Service *serviceUpdate
 	Nodes   []*api.ServiceEntry
 }
 
@@ -80,8 +86,11 @@ func (provider *ConsulCatalog) healthyNodes(service string) (catalogUpdate, erro
 	}
 
 	return catalogUpdate{
-		Service: service,
-		Nodes:   data,
+		Service: &serviceUpdate{
+			ServiceName: service,
+			Attributes:  data[0].Service.Tags,
+		},
+		Nodes: data,
 	}, nil
 }
 
@@ -93,27 +102,54 @@ func (provider *ConsulCatalog) getFrontendValue(service string) string {
 	return "Host:" + service + "." + provider.Domain
 }
 
+func (provider *ConsulCatalog) tagListToMap(ServiceTags []string) map[string]string {
+	// to avoid KeyError exceptions
+	out := map[string]string{}
+
+	for _, tag := range ServiceTags {
+		if strings.Index(tag, ConsulCatalogTagPrefix) == 0 {
+			kv := strings.Split(tag[len(ConsulCatalogTagPrefix):], "=")
+			if len(kv) >= 2 {
+				kv[1] = strings.Join(kv[1:], "=")
+				out[kv[0]] = kv[1]
+			}
+		}
+	}
+
+	return out
+}
+
+func (provider *ConsulCatalog) getAttribute(name string, tags []string) string {
+	attributes := provider.tagListToMap(tags)
+	val, ok := attributes[name]
+	if ok {
+		return val
+	}
+	return ""
+}
+
 func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Configuration {
 	var FuncMap = template.FuncMap{
 		"getBackend":       provider.getBackend,
 		"getFrontendValue": provider.getFrontendValue,
+		"getAttribute":     provider.getAttribute,
 		"replace":          replace,
 	}
 
 	allNodes := []*api.ServiceEntry{}
-	serviceNames := []string{}
+	services := []*serviceUpdate{}
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
-			serviceNames = append(serviceNames, info.Service)
+			services = append(services, info.Service)
 			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
 
 	templateObjects := struct {
-		Services []string
+		Services []*serviceUpdate
 		Nodes    []*api.ServiceEntry
 	}{
-		Services: serviceNames,
+		Services: services,
 		Nodes:    allNodes,
 	}
 

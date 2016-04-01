@@ -1,12 +1,33 @@
-[backends]{{range .Nodes}}
+[backends]
+{{range .Nodes}}
     [backends.backend-{{getBackend .}}.servers.server-{{.Node.Node | replace "." "-"}}-{{.Service.Port}}]
-    url = "http://{{.Node.Address}}:{{.Service.Port}}"
+    	url = "http://{{.Node.Address}}:{{.Service.Port}}"
+        {{$weight := getAttribute "weight" .Service.Tags}}
+        {{with $weight}}
+            weight = {{$weight}}
+        {{end}}
 {{end}}
 
+{{range .Services}}
+    {{$service := .ServiceName}}
+    {{$circuitBreaker := getAttribute "circuitbreaker" .Attributes}}
+    {{with $circuitBreaker}}
+    [backends.backend-{{$service}}.circuitbreaker]
+        expression = "{{$circuitBreaker}}"
+    {{end}}
+
+    {{$loadBalancer := getAttribute "loadbalancer" .Attributes}}
+    {{with $loadBalancer}}
+    [backends.backend-{{$service}}.loadbalancer]
+    	method = "{{$loadBalancer}}"
+    {{end}}
+{{end}}
+
+
 [frontends]{{range .Services}}
-  [frontends.frontend-{{.}}]
-  backend = "backend-{{.}}"
+  [frontends.frontend-{{.ServiceName}}]
+  backend = "backend-{{.ServiceName}}"
   passHostHeader = false
-    [frontends.frontend-{{.}}.routes.route-host-{{.}}]
-    rule = "{{getFrontendValue .}}"
+    [frontends.frontend-{{.ServiceName}}.routes.route-host-{{.ServiceName}}]
+    rule = "{{getFrontendValue .ServiceName}}"
 {{end}}

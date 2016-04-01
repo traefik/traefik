@@ -1002,6 +1002,15 @@ Træfɪk can be configured to use Etcd as a backend configuration:
 
 Please refer to the [Key Value storage structure](#key-value-storage-structure) section to get documentation en traefik KV structure.
 
+You can create additional rules for a particular service or node, using catalog tags:
+
+- Service-level rules
+    - traefik.circuitbreaker=NetworkErrorRatio() > 0.5
+    - traefik.loadbalancer=drr
+
+- Node-level rules
+    - traefik.weight=42
+
 
 ## Zookeeper backend
 
