@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emilevauge/traefik/provider"
-	"github.com/emilevauge/traefik/types"
+	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
 )
@@ -22,9 +23,11 @@ type GlobalConfiguration struct {
 	TraefikLogsFile           string
 	LogLevel                  string
 	EntryPoints               EntryPoints
+	ACME                      *acme.ACME
 	DefaultEntryPoints        DefaultEntryPoints
 	ProvidersThrottleDuration time.Duration
 	MaxIdleConnsPerHost       int
+	Retry                     *Retry
 	Docker                    *provider.Docker
 	File                      *provider.File
 	Web                       *WebProvider
@@ -92,7 +95,9 @@ func (ep *EntryPoints) Set(value string) error {
 	var tls *TLS
 	if len(result["TLS"]) > 0 {
 		certs := Certificates{}
-		certs.Set(result["TLS"])
+		if err := certs.Set(result["TLS"]); err != nil {
+			return err
+		}
 		tls = &TLS{
 			Certificates: certs,
 		}
@@ -178,6 +183,12 @@ type Certificate struct {
 	KeyFile  string
 }
 
+// Retry contains request retry config
+type Retry struct {
+	Attempts int
+	MaxMem   int64
+}
+
 // NewGlobalConfiguration returns a GlobalConfiguration with default values.
 func NewGlobalConfiguration() *GlobalConfiguration {
 	return new(GlobalConfiguration)
@@ -222,6 +233,9 @@ func LoadConfiguration() *GlobalConfiguration {
 	if arguments.marathon {
 		viper.Set("marathon", arguments.Marathon)
 	}
+	if !arguments.consulTLS {
+		arguments.Consul.TLS = nil
+	}
 	if arguments.consul {
 		viper.Set("consul", arguments.Consul)
 	}
@@ -231,6 +245,9 @@ func LoadConfiguration() *GlobalConfiguration {
 	if arguments.zookeeper {
 		viper.Set("zookeeper", arguments.Zookeeper)
 	}
+	if !arguments.etcdTLS {
+		arguments.Etcd.TLS = nil
+	}
 	if arguments.etcd {
 		viper.Set("etcd", arguments.Etcd)
 	}
@@ -238,6 +255,7 @@ func LoadConfiguration() *GlobalConfiguration {
 		viper.Set("boltdb", arguments.Boltdb)
 	}
 	if err := unmarshal(&configuration); err != nil {
+
 		fmtlog.Fatalf("Error reading file: %s", err)
 	}
 

@@ -4,7 +4,11 @@ set -e
 export SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export DEST=.
 
-TESTFLAGS="$TESTFLAGS -test.timeout=30m -check.v"
+TESTFLAGS="${TESTFLAGS} -test.timeout=30m -check.v"
+
+if [ -n "$VERBOSE" ]; then
+    TESTFLAGS="${TESTFLAGS} -v"
+fi
 
 cd integration
 CGO_ENABLED=0 go test $TESTFLAGS

@@ -10,7 +10,7 @@ import (
 	"crypto/tls"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
-	"github.com/emilevauge/traefik/types"
+	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 	"net/http"
 )
@@ -20,7 +20,7 @@ type Marathon struct {
 	BaseProvider     `mapstructure:",squash"`
 	Endpoint         string
 	Domain           string
-	NetworkInterface string
+	ExposedByDefault bool
 	Basic            *MarathonBasic
 	TLS              *tls.Config
 	marathonClient   marathon.Marathon
@@ -42,7 +42,7 @@ type lightMarathonClient interface {
 func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) error {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
-	config.EventsInterface = provider.NetworkInterface
+	config.EventsTransport = marathon.EventsTransportSSE
 	if provider.Basic != nil {
 		config.HTTPBasicAuthUser = provider.Basic.HTTPBasicAuthUser
 		config.HTTPBasicPassword = provider.Basic.HTTPBasicPassword
@@ -61,7 +61,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 	update := make(marathon.EventsChannel, 5)
 	if provider.Watch {
 		if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
-			log.Errorf("Failed to register for subscriptions, %s", err)
+			log.Errorf("Failed to register for events, %s", err)
 		} else {
 			go func() {
 				for {
@@ -96,7 +96,6 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		"getProtocol":        provider.getProtocol,
 		"getPassHostHeader":  provider.getPassHostHeader,
 		"getEntryPoints":     provider.getEntryPoints,
-		"getFrontendValue":   provider.getFrontendValue,
 		"getFrontendRule":    provider.getFrontendRule,
 		"getFrontendBackend": provider.getFrontendBackend,
 		"replace":            replace,
@@ -116,7 +115,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 
 	//filter tasks
 	filteredTasks := fun.Filter(func(task marathon.Task) bool {
-		return taskFilter(task, applications)
+		return taskFilter(task, applications, provider.ExposedByDefault)
 	}, tasks.Tasks).([]marathon.Task)
 
 	//filter apps
@@ -141,7 +140,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 	return configuration
 }
 
-func taskFilter(task marathon.Task, applications *marathon.Applications) bool {
+func taskFilter(task marathon.Task, applications *marathon.Applications, exposedByDefaultFlag bool) bool {
 	if len(task.Ports) == 0 {
 		log.Debug("Filtering marathon task without port %s", task.AppID)
 		return false
@@ -151,7 +150,8 @@ func taskFilter(task marathon.Task, applications *marathon.Applications) bool {
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
 		return false
 	}
-	if application.Labels["traefik.enable"] == "false" {
+
+	if !isApplicationEnabled(application, exposedByDefaultFlag) {
 		log.Debugf("Filtering disabled marathon task %s", task.AppID)
 		return false
 	}
@@ -226,6 +226,10 @@ func getApplication(task marathon.Task, apps []marathon.Application) (marathon.A
 		}
 	}
 	return marathon.Application{}, errors.New("Application not found: " + task.AppID)
+}
+
+func isApplicationEnabled(application marathon.Application, exposedByDefault bool) bool {
+	return exposedByDefault && application.Labels["traefik.enable"] != "false" || application.Labels["traefik.enable"] == "true"
 }
 
 func (provider *Marathon) getLabel(application marathon.Application, label string) (string, error) {
@@ -304,22 +308,21 @@ func (provider *Marathon) getEntryPoints(application marathon.Application) []str
 	return []string{}
 }
 
-// getFrontendValue returns the frontend value for the specified application, using
-// it's label. It returns a default one if the label is not present.
-func (provider *Marathon) getFrontendValue(application marathon.Application) string {
-	if label, err := provider.getLabel(application, "traefik.frontend.value"); err == nil {
-		return label
-	}
-	return getEscapedName(application.ID) + "." + provider.Domain
-}
-
 // getFrontendRule returns the frontend rule for the specified application, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (provider *Marathon) getFrontendRule(application marathon.Application) string {
+	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
+	// TODO: backwards compatibility with DEPRECATED rule.Value
+	if value, err := provider.getLabel(application, "traefik.frontend.value"); err == nil {
+		log.Warnf("Label traefik.frontend.value=%s is DEPRECATED, please refer to the rule label: https://github.com/containous/traefik/blob/master/docs/index.md#marathon", value)
+		rule, _ := provider.getLabel(application, "traefik.frontend.rule")
+		return rule + ":" + value
+	}
+	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
 	if label, err := provider.getLabel(application, "traefik.frontend.rule"); err == nil {
 		return label
 	}
-	return "Host"
+	return "Host:" + getEscapedName(application.ID) + "." + provider.Domain
 }
 
 func (provider *Marathon) getBackend(task marathon.Task, applications []marathon.Application) string {

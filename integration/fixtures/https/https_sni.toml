@@ -27,10 +27,8 @@ defaultEntryPoints = ["https"]
   [frontends.frontend1]
   backend = "backend1"
     [frontends.frontend1.routes.test_1]
-    rule = "Host"
-    value = "snitest.com"
+    rule = "Host:snitest.com"
   [frontends.frontend2]
   backend = "backend2"
     [frontends.frontend2.routes.test_2]
-    rule = "Host"
-    value = "snitest.org"
+    rule = "Host:snitest.org"

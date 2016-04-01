@@ -25,6 +25,7 @@
   ],
   "labels": {
       "traefik.weight": "1",
-      "traefik.protocole": "http"
+      "traefik.protocole": "http",
+      "traefik.frontend.rule" : "Headers:Host,test.localhost"
   }
 }

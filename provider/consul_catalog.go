@@ -8,7 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
-	"github.com/emilevauge/traefik/types"
+	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -98,7 +98,7 @@ func (provider *ConsulCatalog) getBackend(node *api.ServiceEntry) string {
 }
 
 func (provider *ConsulCatalog) getFrontendValue(service string) string {
-	return service + "." + provider.Domain
+	return "Host:" + service + "." + provider.Domain
 }
 
 func (provider *ConsulCatalog) tagListToMap(ServiceTags []string) map[string]string {

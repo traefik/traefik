@@ -29,6 +29,5 @@
   backend = "backend-{{.ServiceName}}"
   passHostHeader = false
     [frontends.frontend-{{.ServiceName}}.routes.route-host-{{.ServiceName}}]
-    rule = "Host"
-    value = "{{getFrontendValue .ServiceName}}"
+    rule = "{{getFrontendValue .ServiceName}}"
 {{end}}

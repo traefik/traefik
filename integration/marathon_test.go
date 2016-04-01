@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"os/exec"
 	"time"
@@ -9,6 +8,13 @@ import (
 	checker "github.com/vdemeester/shakers"
 	check "gopkg.in/check.v1"
 )
+
+// Marathon test suites (using libcompose)
+type MarathonSuite struct{ BaseSuite }
+
+func (s *MarathonSuite) SetUpSuite(c *check.C) {
+	s.createComposeProject(c, "marathon")
+}
 
 func (s *MarathonSuite) TestSimpleConfiguration(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/marathon/simple.toml")
@@ -20,8 +26,7 @@ func (s *MarathonSuite) TestSimpleConfiguration(c *check.C) {
 	// TODO validate : run on 80
 	resp, err := http.Get("http://127.0.0.1:8000/")
 
-	// Expected no response as we did not configure anything
-	c.Assert(resp, checker.IsNil)
-	c.Assert(err, checker.NotNil)
-	c.Assert(err.Error(), checker.Contains, fmt.Sprintf("getsockopt: connection refused"))
+	// Expected a 404 as we did not configure anything
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, 404)
 }

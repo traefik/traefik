@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"errors"
-	"github.com/emilevauge/traefik/mocks"
-	"github.com/emilevauge/traefik/types"
+	"github.com/containous/traefik/mocks"
+	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/mock"
 )
@@ -86,8 +86,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 					EntryPoints: []string{},
 					Routes: map[string]types.Route{
 						`route-host-test`: {
-							Rule:  "Host",
-							Value: "test.docker.localhost",
+							Rule: "Host:test.docker.localhost",
 						},
 					},
 				},
@@ -110,8 +109,9 @@ func TestMarathonLoadConfig(t *testing.T) {
 	for _, c := range cases {
 		fakeClient := newFakeClient(c.applicationsError, c.applications, c.tasksError, c.tasks)
 		provider := &Marathon{
-			Domain:         "docker.localhost",
-			marathonClient: fakeClient,
+			Domain:           "docker.localhost",
+			ExposedByDefault: true,
+			marathonClient:   fakeClient,
 		}
 		actualConfig := provider.loadMarathonConfig()
 		if c.expectedNil {
@@ -132,22 +132,25 @@ func TestMarathonLoadConfig(t *testing.T) {
 
 func TestMarathonTaskFilter(t *testing.T) {
 	cases := []struct {
-		task         marathon.Task
-		applications *marathon.Applications
-		expected     bool
+		task             marathon.Task
+		applications     *marathon.Applications
+		expected         bool
+		exposedByDefault bool
 	}{
 		{
-			task:         marathon.Task{},
-			applications: &marathon.Applications{},
-			expected:     false,
+			task:             marathon.Task{},
+			applications:     &marathon.Applications{},
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
 				AppID: "test",
 				Ports: []int{80},
 			},
-			applications: &marathon.Applications{},
-			expected:     false,
+			applications:     &marathon.Applications{},
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -161,7 +164,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -176,7 +180,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -194,7 +199,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -212,7 +218,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			expected:         true,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -230,7 +237,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -248,7 +256,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			expected:         true,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -266,7 +275,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -285,7 +295,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -303,7 +314,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -326,7 +338,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -352,7 +365,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			expected:         false,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -367,7 +381,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			expected:         true,
+			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
@@ -390,12 +405,67 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			expected:         true,
+			exposedByDefault: true,
+		},
+		{
+			task: marathon.Task{
+				AppID: "disable-default-expose",
+				Ports: []int{80},
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "disable-default-expose",
+						Ports: []int{80},
+					},
+				},
+			},
+			expected:         false,
+			exposedByDefault: false,
+		},
+		{
+			task: marathon.Task{
+				AppID: "disable-default-expose-disable-in-label",
+				Ports: []int{80},
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "disable-default-expose-disable-in-label",
+						Ports: []int{80},
+						Labels: map[string]string{
+							"traefik.enable": "false",
+						},
+					},
+				},
+			},
+			expected:         false,
+			exposedByDefault: false,
+		},
+		{
+			task: marathon.Task{
+				AppID: "disable-default-expose-enable-in-label",
+				Ports: []int{80},
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "disable-default-expose-enable-in-label",
+						Ports: []int{80},
+						Labels: map[string]string{
+							"traefik.enable": "true",
+						},
+					},
+				},
+			},
+			expected:         true,
+			exposedByDefault: false,
 		},
 	}
 
 	for _, c := range cases {
-		actual := taskFilter(c.task, c.applications)
+		actual := taskFilter(c.task, c.applications, c.exposedByDefault)
 		if actual != c.expected {
 			t.Fatalf("expected %v, got %v", c.expected, actual)
 		}
@@ -760,7 +830,7 @@ func TestMarathonGetEntryPoints(t *testing.T) {
 	}
 }
 
-func TestMarathonGetFrontendValue(t *testing.T) {
+func TestMarathonGetFrontendRule(t *testing.T) {
 	provider := &Marathon{
 		Domain: "docker.localhost",
 	}
@@ -771,50 +841,21 @@ func TestMarathonGetFrontendValue(t *testing.T) {
 	}{
 		{
 			application: marathon.Application{},
-			expected:    ".docker.localhost",
+			expected:    "Host:.docker.localhost",
 		},
 		{
 			application: marathon.Application{
 				ID: "test",
 			},
-			expected: "test.docker.localhost",
+			expected: "Host:test.docker.localhost",
 		},
 		{
 			application: marathon.Application{
 				Labels: map[string]string{
-					"traefik.frontend.value": "foo.bar",
+					"traefik.frontend.rule": "Host:foo.bar",
 				},
 			},
-			expected: "foo.bar",
-		},
-	}
-
-	for _, a := range applications {
-		actual := provider.getFrontendValue(a.application)
-		if actual != a.expected {
-			t.Fatalf("expected %q, got %q", a.expected, actual)
-		}
-	}
-}
-
-func TestMarathonGetFrontendRule(t *testing.T) {
-	provider := &Marathon{}
-
-	applications := []struct {
-		application marathon.Application
-		expected    string
-	}{
-		{
-			application: marathon.Application{},
-			expected:    "Host",
-		},
-		{
-			application: marathon.Application{
-				Labels: map[string]string{
-					"traefik.frontend.rule": "Header",
-				},
-			},
-			expected: "Header",
+			expected: "Host:foo.bar",
 		},
 	}
 

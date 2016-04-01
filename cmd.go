@@ -11,8 +11,8 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/emilevauge/traefik/middlewares"
-	"github.com/emilevauge/traefik/provider"
+	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/provider"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"net/http"
@@ -45,9 +45,11 @@ var arguments = struct {
 	dockerTLS     bool
 	marathon      bool
 	consul        bool
+	consulTLS     bool
 	consulCatalog bool
 	zookeeper     bool
 	etcd          bool
+	etcdTLS       bool
 	boltdb        bool
 }{
 	GlobalConfiguration{
@@ -55,15 +57,25 @@ var arguments = struct {
 		Docker: &provider.Docker{
 			TLS: &provider.DockerTLS{},
 		},
-		File:          &provider.File{},
-		Web:           &WebProvider{},
-		Marathon:      &provider.Marathon{},
-		Consul:        &provider.Consul{},
+		File:     &provider.File{},
+		Web:      &WebProvider{},
+		Marathon: &provider.Marathon{},
+		Consul: &provider.Consul{
+			Kv: provider.Kv{
+				TLS: &provider.KvTLS{},
+			},
+		},
 		ConsulCatalog: &provider.ConsulCatalog{},
 		Zookeeper:     &provider.Zookepper{},
-		Etcd:          &provider.Etcd{},
-		Boltdb:        &provider.BoltDb{},
+		Etcd: &provider.Etcd{
+			Kv: provider.Kv{
+				TLS: &provider.KvTLS{},
+			},
+		},
+		Boltdb: &provider.BoltDb{},
 	},
+	false,
+	false,
 	false,
 	false,
 	false,
@@ -114,13 +126,18 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Marathon.Filename, "marathon.filename", "", "Override default configuration template. For advanced users :)")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Marathon.Endpoint, "marathon.endpoint", "http://127.0.0.1:8080", "Marathon server endpoint. You can also specify multiple endpoint for Marathon")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Marathon.Domain, "marathon.domain", "", "Default domain used")
-	traefikCmd.PersistentFlags().StringVar(&arguments.Marathon.NetworkInterface, "marathon.networkInterface", "eth0", "Network interface used to call Marathon web services. Needed in case of multiple network interfaces")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.Marathon.ExposedByDefault, "marathon.exposedByDefault", true, "Expose Marathon apps by default")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.consul, "consul", false, "Enable Consul backend")
 	traefikCmd.PersistentFlags().BoolVar(&arguments.Consul.Watch, "consul.watch", true, "Watch provider")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Filename, "consul.filename", "", "Override default configuration template. For advanced users :)")
-	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Endpoint, "consul.endpoint", "127.0.0.1:8500", "Consul server endpoint")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Endpoint, "consul.endpoint", "127.0.0.1:8500", "Comma sepparated Consul server endpoints")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.Prefix, "consul.prefix", "/traefik", "Prefix used for KV store")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.consulTLS, "consul.tls", false, "Enable Consul TLS support")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.TLS.CA, "consul.tls.ca", "", "TLS CA")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.TLS.Cert, "consul.tls.cert", "", "TLS cert")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Consul.TLS.Key, "consul.tls.key", "", "TLS key")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.Consul.TLS.InsecureSkipVerify, "consul.tls.insecureSkipVerify", false, "TLS insecure skip verify")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.consulCatalog, "consulCatalog", false, "Enable Consul catalog backend")
 	traefikCmd.PersistentFlags().StringVar(&arguments.ConsulCatalog.Domain, "consulCatalog.domain", "", "Default domain used")
@@ -129,14 +146,19 @@ func init() {
 	traefikCmd.PersistentFlags().BoolVar(&arguments.zookeeper, "zookeeper", false, "Enable Zookeeper backend")
 	traefikCmd.PersistentFlags().BoolVar(&arguments.Zookeeper.Watch, "zookeeper.watch", true, "Watch provider")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Zookeeper.Filename, "zookeeper.filename", "", "Override default configuration template. For advanced users :)")
-	traefikCmd.PersistentFlags().StringVar(&arguments.Zookeeper.Endpoint, "zookeeper.endpoint", "127.0.0.1:2181", "Zookeeper server endpoint")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Zookeeper.Endpoint, "zookeeper.endpoint", "127.0.0.1:2181", "Comma sepparated Zookeeper server endpoints")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Zookeeper.Prefix, "zookeeper.prefix", "/traefik", "Prefix used for KV store")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.etcd, "etcd", false, "Enable Etcd backend")
 	traefikCmd.PersistentFlags().BoolVar(&arguments.Etcd.Watch, "etcd.watch", true, "Watch provider")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.Filename, "etcd.filename", "", "Override default configuration template. For advanced users :)")
-	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.Endpoint, "etcd.endpoint", "127.0.0.1:4001", "Etcd server endpoint")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.Endpoint, "etcd.endpoint", "127.0.0.1:4001", "Comma sepparated Etcd server endpoints")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.Prefix, "etcd.prefix", "/traefik", "Prefix used for KV store")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.etcdTLS, "etcd.tls", false, "Enable Etcd TLS support")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.TLS.CA, "etcd.tls.ca", "", "TLS CA")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.TLS.Cert, "etcd.tls.cert", "", "TLS cert")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Etcd.TLS.Key, "etcd.tls.key", "", "TLS key")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.Etcd.TLS.InsecureSkipVerify, "etcd.tls.insecureSkipVerify", false, "TLS insecure skip verify")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.boltdb, "boltdb", false, "Enable Boltdb backend")
 	traefikCmd.PersistentFlags().BoolVar(&arguments.Boltdb.Watch, "boltdb.watch", true, "Watch provider")
@@ -144,15 +166,15 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Boltdb.Endpoint, "boltdb.endpoint", "127.0.0.1:4001", "Boltdb server endpoint")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Boltdb.Prefix, "boltdb.prefix", "/traefik", "Prefix used for KV store")
 
-	viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))
-	viper.BindPFlag("graceTimeOut", traefikCmd.PersistentFlags().Lookup("graceTimeOut"))
-	//viper.BindPFlag("defaultEntryPoints", traefikCmd.PersistentFlags().Lookup("defaultEntryPoints"))
-	viper.BindPFlag("logLevel", traefikCmd.PersistentFlags().Lookup("logLevel"))
+	_ = viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))
+	_ = viper.BindPFlag("graceTimeOut", traefikCmd.PersistentFlags().Lookup("graceTimeOut"))
+	_ = viper.BindPFlag("logLevel", traefikCmd.PersistentFlags().Lookup("logLevel"))
 	// TODO: wait for this issue to be corrected: https://github.com/spf13/viper/issues/105
-	viper.BindPFlag("providersThrottleDuration", traefikCmd.PersistentFlags().Lookup("providersThrottleDuration"))
-	viper.BindPFlag("maxIdleConnsPerHost", traefikCmd.PersistentFlags().Lookup("maxIdleConnsPerHost"))
+	_ = viper.BindPFlag("providersThrottleDuration", traefikCmd.PersistentFlags().Lookup("providersThrottleDuration"))
+	_ = viper.BindPFlag("maxIdleConnsPerHost", traefikCmd.PersistentFlags().Lookup("maxIdleConnsPerHost"))
 	viper.SetDefault("providersThrottleDuration", time.Duration(2*time.Second))
 	viper.SetDefault("logLevel", "ERROR")
+	viper.SetDefault("MaxIdleConnsPerHost", 200)
 }
 
 func run() {
@@ -174,7 +196,11 @@ func run() {
 
 	if len(globalConfiguration.TraefikLogsFile) > 0 {
 		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		defer fi.Close()
+		defer func() {
+			if err := fi.Close(); err != nil {
+				log.Error("Error closinf file", err)
+			}
+		}()
 		if err != nil {
 			log.Fatal("Error opening file", err)
 		} else {

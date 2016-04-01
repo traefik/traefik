@@ -4,12 +4,12 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/emilevauge/traefik/types"
+	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 	"fmt"
 )
 
-func TestConsulCatalogGetFrontendValue(t *testing.T) {
+func TestConsulCatalogGetFrontendRule(t *testing.T) {
 	provider := &ConsulCatalog{
 		Domain: "localhost",
 	}
@@ -20,7 +20,7 @@ func TestConsulCatalogGetFrontendValue(t *testing.T) {
 	}{
 		{
 			service:  "foo",
-			expected: "foo.localhost",
+			expected: "Host:foo.localhost",
 		},
 	}
 
@@ -93,8 +93,7 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 					Backend: "backend-test",
 					Routes: map[string]types.Route{
 						"route-host-test": {
-							Rule:  "Host",
-							Value: "test.localhost",
+							Rule: "Host:test.localhost",
 						},
 					},
 				},

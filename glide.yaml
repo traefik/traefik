@@ -8,8 +8,8 @@ import:
     ref:     9038e48c3b982f8e82281ea486f078a73731ac4e
   - package: github.com/mailgun/log
     ref:     44874009257d4d47ba9806f1b7f72a32a015e4d8
-  - package: github.com/mailgun/oxy
-    ref:     547c334d658398c05b346c0b79d8f47ba2e1473b
+  - package: github.com/containous/oxy
+    ref:     0b5b371bce661385d35439204298fa6fb5db5463
     subpackages:
       - cbreaker
       - forward
@@ -44,7 +44,7 @@ import:
     ref:     6b4e7dc5e3143b85ea77909c72caf89416fc2915
   - package: github.com/gambol99/go-marathon
     ref:     ade11d1dc2884ee1f387078fc28509559b6235d1
-  - package: github.com/mailgun/predicate
+  - package: github.com/vulcand/predicate
     ref:     cb0bff91a7ab7cf7571e661ff883fc997bc554a3
   - package: github.com/thoas/stats
     ref:     54ed61c2b47e263ae2f01b86837b0c4bd1da28e8
@@ -57,7 +57,7 @@ import:
   - package: github.com/flynn/go-shlex
     ref:     3f9db97f856818214da2e1057f8ad84803971cff
   - package: github.com/fsouza/go-dockerclient
-    ref:     0239034d42f665efa17fd77c39f891c2f9f32922
+    ref:     a49c8269a6899cae30da1f8a4b82e0ce945f9967
   - package: github.com/boltdb/bolt
     ref:     51f99c862475898df9773747d3accd05a7ca33c1
   - package: gopkg.in/mgo.v2
@@ -124,7 +124,7 @@ import:
   - package: gopkg.in/alecthomas/kingpin.v2
     ref:     639879d6110b1b0409410c7b737ef0bb18325038
   - package: github.com/docker/libcompose
-    ref:     d3089811c119a211469a9cc93caea684d937e5d3
+    ref:     e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
     subpackages:
       - docker
       - logger
@@ -164,4 +164,7 @@ import:
   - package: github.com/google/go-querystring/query
   - package: github.com/vulcand/vulcand/plugin/rewrite
   - package: github.com/stretchr/testify/mock
-
+  - package: github.com/xenolf/lego
+  - package: github.com/vdemeester/libkermit
+    ref: 01a5399bdbd3312916c9fa4848108fbc81fe88d8
+  - package: github.com/mailgun/multibuf
