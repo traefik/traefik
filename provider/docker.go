@@ -10,6 +10,7 @@ import (
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/fsouza/go-dockerclient"
 )
@@ -33,7 +34,7 @@ type DockerTLS struct {
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) error {
-	go func() {
+	safe.Go(func() {
 		operation := func() error {
 			var dockerClient *docker.Client
 			var err error
@@ -93,7 +94,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) er
 		if err != nil {
 			log.Fatalf("Cannot connect to docker server %+v", err)
 		}
-	}()
+	})
 
 	return nil
 }

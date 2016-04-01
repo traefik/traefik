@@ -8,6 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 )
@@ -35,7 +36,7 @@ func (provider *ConsulCatalog) watchServices(stopCh <-chan struct{}) <-chan map[
 
 	catalog := provider.client.Catalog()
 
-	go func() {
+	safe.Go(func() {
 		defer close(watchCh)
 
 		opts := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
@@ -64,7 +65,7 @@ func (provider *ConsulCatalog) watchServices(stopCh <-chan struct{}) <-chan map[
 				watchCh <- data
 			}
 		}
-	}()
+	})
 
 	return watchCh
 }
@@ -182,7 +183,7 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 	}
 	provider.client = client
 
-	go func() {
+	safe.Go(func() {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Consul connection error %+v, retrying in %s", err, time)
 		}
@@ -193,7 +194,7 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 		if err != nil {
 			log.Fatalf("Cannot connect to consul server %+v", err)
 		}
-	}()
+	})
 
 	return err
 }

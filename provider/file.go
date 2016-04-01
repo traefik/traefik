@@ -7,6 +7,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"gopkg.in/fsnotify.v1"
 )
@@ -34,7 +35,7 @@ func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) erro
 
 	if provider.Watch {
 		// Process events
-		go func() {
+		safe.Go(func() {
 			defer watcher.Close()
 			for {
 				select {
@@ -53,7 +54,7 @@ func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) erro
 					log.Error("Watcher event error", error)
 				}
 			}
-		}()
+		})
 		err = watcher.Add(filepath.Dir(file.Name()))
 		if err != nil {
 			log.Error("Error adding file watcher", err)

@@ -27,6 +27,7 @@ import (
 	"github.com/containous/oxy/stream"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/gorilla/mux"
 	"github.com/mailgun/manners"
@@ -81,8 +82,12 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 // Start starts the server and blocks until server is shutted down.
 func (server *Server) Start() {
 	server.startHTTPServers()
-	go server.listenProviders()
-	go server.listenConfigurations()
+	safe.Go(func() {
+		server.listenProviders()
+	})
+	safe.Go(func() {
+		server.listenConfigurations()
+	})
 	server.configureProviders()
 	server.startProviders()
 	go server.listenSignals()
@@ -133,13 +138,13 @@ func (server *Server) listenProviders() {
 			server.configurationValidatedChan <- configMsg
 		} else {
 			log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
-			go func() {
+			safe.Go(func() {
 				<-time.After(server.globalConfiguration.ProvidersThrottleDuration)
 				if time.Now().After(lastReceivedConfiguration.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
 					log.Debugf("Waited for %s config, OK", configMsg.ProviderName)
 					server.configurationValidatedChan <- *lastConfigs[configMsg.ProviderName]
 				}
-			}()
+			})
 		}
 		lastReceivedConfiguration = time.Now()
 	}
@@ -214,12 +219,12 @@ func (server *Server) startProviders() {
 		jsonConf, _ := json.Marshal(provider)
 		log.Infof("Starting provider %v %s", reflect.TypeOf(provider), jsonConf)
 		currentProvider := provider
-		go func() {
+		safe.Go(func() {
 			err := currentProvider.Provide(server.configurationChan)
 			if err != nil {
 				log.Errorf("Error starting provider %s", err)
 			}
-		}()
+		})
 	}
 }
 

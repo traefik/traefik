@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/traefik/safe"
 	"github.com/docker/libkv/store"
 	"reflect"
 	"sort"
@@ -256,7 +257,9 @@ func TestKvWatchTree(t *testing.T) {
 	}
 
 	configChan := make(chan types.ConfigMessage)
-	go provider.watchKv(configChan, "prefix")
+	safe.Go(func() {
+		provider.watchKv(configChan, "prefix")
+	})
 
 	select {
 	case c1 := <-returnedChans:
