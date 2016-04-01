@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/emilevauge/traefik/mocks"
 	"github.com/emilevauge/traefik/types"
 	"github.com/hashicorp/consul/api"
+	"fmt"
 )
 
 func TestConsulCatalogGetFrontendValue(t *testing.T) {
@@ -35,7 +35,6 @@ func TestConsulCatalogGetFrontendValue(t *testing.T) {
 func TestConsulCatalogBuildConfig(t *testing.T) {
 	provider := &ConsulCatalog{
 		Domain: "localhost",
-		kv:     &mocks.MockConsulKV{},
 	}
 
 	cases := []struct {
@@ -51,7 +50,10 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		{
 			nodes: []catalogUpdate{
 				{
-					Service: "test",
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{},
+					},
 				},
 			},
 			expectedFrontends: map[string]*types.Frontend{},
@@ -60,12 +62,23 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		{
 			nodes: []catalogUpdate{
 				{
-					Service: "test",
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"traefik.loadbalancer=drr",
+							"traefik.circuitbreaker=NetworkErrorRatio() > 0.5",
+							"random.foo=bar",
+						},
+					},
 					Nodes: []*api.ServiceEntry{
 						{
 							Service: &api.AgentService{
 								Service: "test",
 								Port:    80,
+								Tags: []string{
+									"traefik.weight=42",
+									"random.foo=bar",
+								},
 							},
 							Node: &api.Node{
 								Node:    "localhost",
@@ -91,10 +104,15 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-localhost-80": {
 							URL: "http://127.0.0.1:80",
+							Weight: 42,
 						},
 					},
-					CircuitBreaker: nil,
-					LoadBalancer:   nil,
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer:   &types.LoadBalancer{
+						Method: "drr",
+					},
 				},
 			},
 		},
@@ -102,112 +120,16 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 
 	for _, c := range cases {
 		actualConfig := provider.buildConfig(c.nodes)
+		if len(actualConfig.Backends) > 0 {
+			fmt.Println(actualConfig.Backends["backend-test"].LoadBalancer.Method)
+			fmt.Println(actualConfig.Backends["backend-test"].CircuitBreaker.Expression)
+			fmt.Println(actualConfig.Backends["backend-test"].Servers["server-localhost-80"].Weight)
+		}
 		if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
 			t.Fatalf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
 		}
 		if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
 			t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
-		}
-	}
-}
-
-func TestKvGetProperties(t *testing.T) {
-	var p *ConsulCatalog = &ConsulCatalog{
-		Domain: "localhost",
-		kv:     &mocks.MockConsulKV{},
-	}
-
-	actual := p.getKV("defaultValue", "foo", "bar", "anything")
-	if actual != "defaultValue" {
-		t.Fatalf("expected \"defaultValue\", got %v", actual)
-	}
-	actual = p.getKV("", "foo", "bar", "anything")
-	if actual != "" {
-		t.Fatalf("expected \"\" (empty string), got %v", actual)
-	}
-
-	cases := []struct {
-		provider     *ConsulCatalog
-		defaultValue string
-		service_name string
-		property     string
-		expected     string
-	}{
-		{
-			provider: &ConsulCatalog{
-				Prefix: "/traefik",
-				kv:     &mocks.MockConsulKV{},
-			},
-			defaultValue: "42",
-			service_name: "foo",
-			property:     "weight",
-			expected:     "42",
-		},
-		{
-			provider: &ConsulCatalog{
-				Prefix: "/traefik",
-				kv: &mocks.MockConsulKV{
-					KVPairs: []*api.KVPair{
-						{
-							Key:   "traefik/foo/weight",
-							Value: []byte("bar"),
-						},
-					},
-				},
-			},
-			defaultValue: "",
-			service_name: "bar",
-			property:     "weight",
-			expected:     "",
-		},
-		{
-			provider: &ConsulCatalog{
-				Prefix: "/traefik",
-				kv: &mocks.MockConsulKV{
-					KVPairs: []*api.KVPair{
-						{
-							Key:   "traefik/foo/weight",
-							Value: []byte("bar"),
-						},
-					},
-				},
-			},
-			defaultValue: "",
-			service_name: "foo",
-			property:     "weight",
-			expected:     "bar",
-		},
-		{
-			provider: &ConsulCatalog{
-				Prefix: "/traefik",
-				kv: &mocks.MockConsulKV{
-					KVPairs: []*api.KVPair{
-						{
-							Key:   "traefik/foo/baz/1",
-							Value: []byte("bar1"),
-						},
-						{
-							Key:   "traefik/foo/baz/2",
-							Value: []byte("bar2"),
-						},
-						{
-							Key:   "traefik/foo/baz/biz/1",
-							Value: []byte("bar3"),
-						},
-					},
-				},
-			},
-			defaultValue: "",
-			service_name: "foo/baz",
-			property:     "2",
-			expected:     "bar2",
-		},
-	}
-
-	for _, c := range cases {
-		actual := c.provider.getKV(c.defaultValue, c.service_name, "", c.property)
-		if actual != c.expected {
-			t.Fatalf("expected %v, got '%v' with default value == '%v', service name == '%v' and property == '%v'", c.expected, actual, c.defaultValue, c.service_name, c.property)
 		}
 	}
 }

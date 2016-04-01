@@ -872,31 +872,19 @@ endpoint = "127.0.0.1:8500"
 # Optional
 #
 domain = "consul.localhost"
-
-# Prefix used for KV store.
-#
-# Optional
-#
-prefix = "/traefik"
 ```
 
 This backend will create routes matching on hostname based on the service name
 used in consul.
 
-You can create additional rules for a particular service or node, using the Consul K/V store:
+You can create additional rules for a particular service or node, using catalog tags:
 
 - Service-level rules
-
-| Key                                                    | Value                       |
-|--------------------------------------------------------|-----------------------------|
-| `/traefik/<service_name>/circuitbreaker`               | `NetworkErrorRatio() > 0.5` |
-| `/traefik/<service_name>/loadbalancer`                 | `drr`                       |
+    - traefik.circuitbreaker=NetworkErrorRatio() > 0.5
+    - traefik.loadbalancer=drr
 
 - Node-level rules
-
-| Key                                                    | Value                       |
-|--------------------------------------------------------|-----------------------------|
-| `/traefik/<service_name>/<node_name>/weight`           | `42`                        |
+    - traefik.weight=42
 
 ## <a id="zk"></a> Zookeeper backend
 
