@@ -154,7 +154,7 @@ import:
   - package: github.com/stretchr/testify/mock
   - package: github.com/xenolf/lego
   - package: github.com/vdemeester/libkermit
-    ref: 9012902ed333111cf804fd5a28114d8a64002951
+    ref: 7e4e689a6fa9281e0fb9b7b9c297e22d5342a5ec
   - package: github.com/docker/libcompose
     version: e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
   - package: github.com/docker/distribution

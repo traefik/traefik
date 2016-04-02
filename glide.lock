@@ -1,5 +1,5 @@
-hash: 7ae4c083b2f2754acc858a7e2cd453343966dc62eef01fbd51adf8c718959a0c
-updated: 2016-04-02T12:38:43.346296635+02:00
+hash: 2e15595ec349ec462fa2b0a52e26e3f3dcbd17fed66dad9a1e1c2e2c0385fe49
+updated: 2016-04-02T15:25:37.354420171+02:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -224,7 +224,7 @@ imports:
 - name: github.com/unrolled/render
   version: 26b4e3aac686940fe29521545afad9966ddfc80c
 - name: github.com/vdemeester/libkermit
-  version: 9012902ed333111cf804fd5a28114d8a64002951
+  version: 7e4e689a6fa9281e0fb9b7b9c297e22d5342a5ec
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
