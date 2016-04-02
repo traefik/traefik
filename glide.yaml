@@ -4,8 +4,6 @@ import:
     ref:     cc90c7b091275e606ad0ca7102a23fb2072f3f5e
     subpackages:
       - etcd
-  - package: github.com/docker/distribution
-    ref:     9038e48c3b982f8e82281ea486f078a73731ac4e
   - package: github.com/mailgun/log
     ref:     44874009257d4d47ba9806f1b7f72a32a015e4d8
   - package: github.com/containous/oxy
@@ -26,7 +24,7 @@ import:
       - zk
   - package: github.com/docker/libtrust
     ref:     9cbd2a1374f46905c68a4eb3694a130610adc62a
-  - package: gopkg.in/check.v1
+  - package: github.com/go-check/check
     ref:     11d3bc7aa68e238947792f30573146a3231fc0f1
   - package: golang.org/x/net
     ref:     d9558e5c97f85372afee28cf2b6059d7d3818919
@@ -39,7 +37,7 @@ import:
   - package: github.com/alecthomas/template
     ref:     b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
   - package: github.com/vdemeester/shakers
-    ref:     8fe734f75f3a70b651cbfbf8a55a009da09e8dc5
+    ref:     24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
   - package: github.com/alecthomas/units
     ref:     6b4e7dc5e3143b85ea77909c72caf89416fc2915
   - package: github.com/gambol99/go-marathon
@@ -48,8 +46,6 @@ import:
     ref:     cb0bff91a7ab7cf7571e661ff883fc997bc554a3
   - package: github.com/thoas/stats
     ref:     54ed61c2b47e263ae2f01b86837b0c4bd1da28e8
-  - package: github.com/samalba/dockerclient
-    ref:     cfb489c624b635251a93e74e1e90eb0959c5367f
   - package: github.com/Sirupsen/logrus
     ref:     418b41d23a1bf978c06faea5313ba194650ac088
   - package: github.com/unrolled/render
@@ -123,14 +119,6 @@ import:
     ref:     bd2bdf7f18f849530ef7a1c29a4290217cab32a1
   - package: gopkg.in/alecthomas/kingpin.v2
     ref:     639879d6110b1b0409410c7b737ef0bb18325038
-  - package: github.com/docker/libcompose
-    ref:     e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
-    subpackages:
-      - docker
-      - logger
-      - lookup
-      - project
-      - utils
   - package: github.com/cenkalti/backoff
     ref:     4dc77674aceaabba2c7e3da25d4c823edfb73f99
   - package: gopkg.in/fsnotify.v1
@@ -166,5 +154,22 @@ import:
   - package: github.com/stretchr/testify/mock
   - package: github.com/xenolf/lego
   - package: github.com/vdemeester/libkermit
-    ref: 01a5399bdbd3312916c9fa4848108fbc81fe88d8
+    ref: 9012902ed333111cf804fd5a28114d8a64002951
+  - package: github.com/docker/libcompose
+    version: e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
+  - package: github.com/docker/distribution
+    version: ff6f38ccb69afa96214c7ee955359465d1fc767a
+    subpackages:
+    - reference
+  - package: github.com/docker/engine-api
+    subpackages:
+    - client
+    - types
+    - types/container
+    - types/filters
+    - types/strslice
+  - package: github.com/docker/go-connections
+    subpackages:
+    - nat
+  - package: github.com/docker/go-units
   - package: github.com/mailgun/multibuf

@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"fmt"
+	"github.com/go-check/check"
+
 	checker "github.com/vdemeester/shakers"
-	check "gopkg.in/check.v1"
 )
 
 // SimpleSuite
