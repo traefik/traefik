@@ -5,8 +5,9 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/go-check/check"
+
 	checker "github.com/vdemeester/shakers"
-	check "gopkg.in/check.v1"
 )
 
 // File test suites
@@ -15,7 +16,7 @@ type FileSuite struct{ BaseSuite }
 func (s *FileSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "file")
 
-	s.composeProject.Start()
+	s.composeProject.Start(c)
 }
 
 func (s *FileSuite) TestSimpleConfiguration(c *check.C) {

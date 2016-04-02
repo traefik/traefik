@@ -6,11 +6,11 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
-	docker "github.com/vdemeester/libkermit/docker"
 
+	docker "github.com/vdemeester/libkermit/docker/check"
 	checker "github.com/vdemeester/shakers"
-	check "gopkg.in/check.v1"
 )
 
 // Consul catalog test suites
@@ -22,16 +22,12 @@ type ConsulCatalogSuite struct {
 }
 
 func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
-	project, err := docker.NewProjectFromEnv()
-	c.Assert(err, checker.IsNil, check.Commentf("Error while creating docker project"))
-	s.project = project
+	s.project = docker.NewProjectFromEnv(c)
 
 	s.createComposeProject(c, "consul_catalog")
-	err = s.composeProject.Start()
-	c.Assert(err, checker.IsNil, check.Commentf("Error starting project"))
+	s.composeProject.Start(c)
 
-	consul, err := s.project.Inspect("integration-test-consul_catalog_consul_1")
-	c.Assert(err, checker.IsNil, check.Commentf("Error finding consul container"))
+	consul := s.project.Inspect(c, "integration-test-consul_catalog_consul_1")
 
 	s.consulIP = consul.NetworkSettings.IPAddress
 	config := api.DefaultConfig()
@@ -98,8 +94,7 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	nginx, err := s.project.Inspect("integration-test-consul_catalog_nginx_1")
-	c.Assert(err, checker.IsNil, check.Commentf("Error finding nginx container"))
+	nginx := s.project.Inspect(c, "integration-test-consul_catalog_nginx_1")
 
 	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80)
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))

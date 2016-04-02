@@ -11,10 +11,10 @@ import (
 	"text/template"
 
 	"github.com/containous/traefik/integration/utils"
-	"github.com/vdemeester/libkermit/compose"
+	"github.com/go-check/check"
 
+	compose "github.com/vdemeester/libkermit/compose/check"
 	checker "github.com/vdemeester/shakers"
-	check "gopkg.in/check.v1"
 )
 
 func Test(t *testing.T) {
@@ -41,17 +41,14 @@ type BaseSuite struct {
 func (s *BaseSuite) TearDownSuite(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil {
-		err := s.composeProject.Stop()
-		c.Assert(err, checker.IsNil)
+		s.composeProject.Stop(c)
 	}
 }
 
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	projectName := fmt.Sprintf("integration-test-%s", name)
 	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
-	composeProject, err := compose.CreateProject(projectName, composeFile)
-	c.Assert(err, checker.IsNil)
-	s.composeProject = composeProject
+	s.composeProject = compose.CreateProject(c, projectName, composeFile)
 }
 
 func (s *BaseSuite) traefikCmd(c *check.C, args ...string) (*exec.Cmd, string) {

@@ -11,10 +11,11 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-	"github.com/vdemeester/libkermit/docker"
+	"github.com/go-check/check"
 
+	d "github.com/vdemeester/libkermit/docker"
+	docker "github.com/vdemeester/libkermit/docker/check"
 	checker "github.com/vdemeester/shakers"
-	check "gopkg.in/check.v1"
 )
 
 var (
@@ -36,46 +37,42 @@ type DockerSuite struct {
 }
 
 func (s *DockerSuite) startContainer(c *check.C, image string, args ...string) string {
-	return s.startContainerWithConfig(c, image, docker.ContainerConfig{
+	return s.startContainerWithConfig(c, image, d.ContainerConfig{
 		Cmd: args,
 	})
 }
 
 func (s *DockerSuite) startContainerWithLabels(c *check.C, image string, labels map[string]string, args ...string) string {
-	return s.startContainerWithConfig(c, image, docker.ContainerConfig{
+	return s.startContainerWithConfig(c, image, d.ContainerConfig{
 		Cmd:    args,
 		Labels: labels,
 	})
 }
 
-func (s *DockerSuite) startContainerWithConfig(c *check.C, image string, config docker.ContainerConfig) string {
+func (s *DockerSuite) startContainerWithConfig(c *check.C, image string, config d.ContainerConfig) string {
 	if config.Name == "" {
 		config.Name = namesgenerator.GetRandomName(10)
 	}
 
-	container, err := s.project.StartWithConfig(image, config)
-	c.Assert(err, checker.IsNil, check.Commentf("Error starting a container using config %v", config))
+	container := s.project.StartWithConfig(c, image, config)
 
 	// FIXME(vdemeester) this is ugly (it's because of the / in front of the name in docker..)
 	return strings.SplitAfter(container.Name, "/")[1]
 }
 
 func (s *DockerSuite) SetUpSuite(c *check.C) {
-	project, err := docker.NewProjectFromEnv()
-	c.Assert(err, checker.IsNil, check.Commentf("Error while creating docker project"))
+	project := docker.NewProjectFromEnv(c)
 	s.project = project
 
 	// Pull required images
 	for repository, tag := range RequiredImages {
 		image := fmt.Sprintf("%s:%s", repository, tag)
-		s.project.Pull(image)
-		c.Assert(err, checker.IsNil, check.Commentf("Error while pulling image %s", image))
+		s.project.Pull(c, image)
 	}
 }
 
 func (s *DockerSuite) TearDownTest(c *check.C) {
-	err := s.project.Clean(os.Getenv("CIRCLECI") != "")
-	c.Assert(err, checker.IsNil, check.Commentf("Error while cleaning containers"))
+	s.project.Clean(c, os.Getenv("CIRCLECI") != "")
 }
 
 func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
