@@ -9,7 +9,6 @@ import (
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
 
-	docker "github.com/vdemeester/libkermit/docker/check"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -18,16 +17,14 @@ type ConsulCatalogSuite struct {
 	BaseSuite
 	consulIP     string
 	consulClient *api.Client
-	project      *docker.Project
 }
 
 func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
-	s.project = docker.NewProjectFromEnv(c)
 
 	s.createComposeProject(c, "consul_catalog")
 	s.composeProject.Start(c)
 
-	consul := s.project.Inspect(c, "integration-test-consul_catalog_consul_1")
+	consul := s.composeProject.Container(c, "consul")
 
 	s.consulIP = consul.NetworkSettings.IPAddress
 	config := api.DefaultConfig()
@@ -94,7 +91,7 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	nginx := s.project.Inspect(c, "integration-test-consul_catalog_nginx_1")
+	nginx := s.composeProject.Container(c, "nginx")
 
 	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80)
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
