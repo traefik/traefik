@@ -16,16 +16,19 @@ sudo chmod +x /usr/bin/ghr
 # github release and tag
 ghr -t $GITHUB_TOKEN -u containous -r traefik --prerelease ${VERSION} dist/
 
+# update docs.traefik.io
+mkdocs gh-deploy --clean
+
 # update traefik-library-image repo (official Docker image)
 git config --global user.email "emile@vauge.com"
 git config --global user.name "Emile Vauge"
-git clone https://github.com/containous/traefik-library-image.git
+git clone git@github.com:containous/traefik-library-image.git
 cd traefik-library-image
 ./update.sh $VERSION
 git add -A
 echo $VERSION | git commit --file -
 echo $VERSION | git tag -a $VERSION --file -
-git push -q --follow-tags https://emilevauge:${GITHUB_TOKEN}@github.com/containous/traefik-library-image.git
+git push -q --follow-tags -u origin master
 
 # create docker image emilevauge/traefik (compatibility)
 docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS

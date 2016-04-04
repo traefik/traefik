@@ -1,31 +1,39 @@
 branches:
   except:
-    - /^v\d\.\d\.\d.*$/
-    
+  - /^v\d\.\d\.\d.*$/
+  
 env:
   REPO: $TRAVIS_REPO_SLUG
   VERSION: v1.0.0-beta.$TRAVIS_BUILD_NUMBER
-
+  
 sudo: required
 
 services:
-  - docker
+- docker
+
+before_install:
+- openssl aes-256-cbc -K $encrypted_27087ae1f4db_key -iv $encrypted_27087ae1f4db_iv -in .travis/traefik.id_rsa.enc -out ~/.ssh/traefik.id_rsa -d
+- eval "$(ssh-agent -s)"
+- chmod 600 ~/.ssh/traefik.id_rsa
+- ssh-add ~/.ssh/traefik.id_rsa
 
 install:
-  - sudo service docker stop
-  - sudo curl https://get.docker.com/builds/Linux/x86_64/docker-1.10.1 -o /usr/bin/docker
-  - sudo chmod +x /usr/bin/docker
-  - sudo service docker start
+- sudo service docker stop
+- sudo curl https://get.docker.com/builds/Linux/x86_64/docker-1.10.1 -o /usr/bin/docker
+- sudo chmod +x /usr/bin/docker
+- sudo service docker start
+- pip install --user mkdocs
+- pip install --user pymdown-extensions
 
 before_script:
-  - make validate
-  - make binary
+- make validate
+- make binary
 
 script:
-  - make test-unit
-  - make test-integration
-  - make crossbinary
-  - make image
+- make test-unit
+- make test-integration
+- make crossbinary
+- make image
 
 after_success:
- - make deploy
+- make deploy
