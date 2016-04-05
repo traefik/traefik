@@ -1,0 +1,49 @@
+site_name: Traefik
+site_description: Traefik Documentation
+site_author: containo.us
+site_url: https://docs.traefik.io
+
+repo_name: 'GitHub'
+repo_url: 'https://github.com/containous/traefik'
+
+# Documentation and theme
+docs_dir: 'docs'
+theme: united
+# theme: readthedocs
+# theme: 'material'
+# theme: bootstrap
+
+site_favicon: 'img/traefik.icon.png'
+
+# Copyright
+copyright: Copyright (c) 2016 Containous SAS
+
+# Options
+extra:
+#   version: 0.2.2
+  logo: img/traefik.logo.png
+  # author:
+  #   twitter: traefikproxy
+  palette:
+    primary: 'blue'
+    accent: 'light blue'
+  i18n:
+    prev: 'Previous'
+    next: 'Next'  
+  
+markdown_extensions:
+#   - codehilite(css_class=code)
+  - admonition
+#   - toc:
+#       permalink: '##'
+  # - fenced_code
+      
+extra_css:
+    - css/traefik.css
+      
+# Page tree
+pages:
+  - Getting Started: index.md
+  - Basics: basics.md
+  - traefik.toml: toml.md
+  - Benchmarks: benchmarks.md

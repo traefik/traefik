@@ -1,0 +1,21 @@
+traefik:
+  image: containous/traefik
+  command: --web --docker --docker.domain=docker.localhost --logLevel=DEBUG
+  ports:
+    - "80:80"
+    - "8080:8080"
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /dev/null:/traefik.toml
+
+whoami1:
+  image: emilevauge/whoami
+  labels:
+    - "traefik.backend=whoami"
+    - "traefik.frontend.rule=Host:whoami.docker.localhost"
+
+whoami2:
+  image: emilevauge/whoami
+  labels:
+    - "traefik.backend=whoami"
+    - "traefik.frontend.rule=Host:whoami.docker.localhost"

@@ -10,3 +10,4 @@ traefik.toml
 vendor/
 static/
 .vscode/
+site/
