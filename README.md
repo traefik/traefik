@@ -41,7 +41,7 @@ Run it and forget it!
 
 ## Features
 
-- [It's fast](docs/index.md#benchmarks)
+- [It's fast](http://docs.traefik.io/benchmarks)
 - No dependency hell, single binary made with go
 - Rest API
 - Multiple backends supported: Docker, Mesos/Marathon, Consul, Etcd, and more to come
