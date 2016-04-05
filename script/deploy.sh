@@ -8,7 +8,7 @@ else
   exit 0
 fi
 
-# load ssl key
+# load ssh key
 echo "Loading key..."
 openssl aes-256-cbc -K $encrypted_27087ae1f4db_key -iv $encrypted_27087ae1f4db_iv -in .travis/traefik.id_rsa.enc -out ~/.ssh/traefik.id_rsa -d
 eval "$(ssh-agent -s)"
@@ -17,7 +17,7 @@ ssh-add ~/.ssh/traefik.id_rsa
 
 # download github release
 echo "Downloading ghr..."
-curl -LO https://github.com/tcnksm/ghr/releases/download/pre-release/linux_amd64.zip
+curl -LOs https://github.com/tcnksm/ghr/releases/download/pre-release/linux_amd64.zip
 unzip -q linux_amd64.zip
 sudo mv ghr /usr/bin/ghr
 sudo chmod +x /usr/bin/ghr
