@@ -11,12 +11,6 @@ sudo: required
 services:
 - docker
 
-before_install:
-- openssl aes-256-cbc -K $encrypted_27087ae1f4db_key -iv $encrypted_27087ae1f4db_iv -in .travis/traefik.id_rsa.enc -out ~/.ssh/traefik.id_rsa -d
-- eval "$(ssh-agent -s)"
-- chmod 600 ~/.ssh/traefik.id_rsa
-- ssh-add ~/.ssh/traefik.id_rsa
-
 install:
 - sudo service docker stop
 - sudo curl https://get.docker.com/builds/Linux/x86_64/docker-1.10.1 -o /usr/bin/docker
