@@ -8,6 +8,9 @@ else
   exit 0
 fi
 
+git config --global user.email "emile@vauge.com"
+git config --global user.name "Emile Vauge"
+
 # load ssh key
 echo "Loading key..."
 openssl aes-256-cbc -d -k "$pass" -in .travis/traefik.id_rsa.enc -out ~/.ssh/traefik.id_rsa
@@ -28,19 +31,30 @@ ghr -t $GITHUB_TOKEN -u containous -r traefik --prerelease ${VERSION} dist/
 
 # update docs.traefik.io
 echo "Generating and updating documentation..."
-mkdocs gh-deploy --clean
+# mkdir site
+# cd site
+# git init
+# git remote add origin git@github.com:containous/traefik.git
+# git fetch origin
+# git checkout gh-pages
+# cd ..
+# mkdocs build --clean
+# cd site
+# git add .
+# echo $VERSION | git commit --file -
+# git push -q -f origin gh-pages > /dev/null 2>&1
+git remote add ssh git@github.com:containous/traefik.git
+mkdocs gh-deploy -c -r ssh
 
 # update traefik-library-image repo (official Docker image)
 echo "Updating traefik-library-imag repo..."
-git config --global user.email "emile@vauge.com"
-git config --global user.name "Emile Vauge"
 git clone git@github.com:containous/traefik-library-image.git
 cd traefik-library-image
 ./update.sh $VERSION
 git add -A
 echo $VERSION | git commit --file -
 echo $VERSION | git tag -a $VERSION --file -
-git push -q --follow-tags -u origin master
+git push -q --follow-tags -u origin master > /dev/null 2>&1
 
 # create docker image emilevauge/traefik (compatibility)
 echo "Updating docker emilevauge/traefik image..."
