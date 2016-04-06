@@ -425,7 +425,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 						// retry ?
 						if globalConfiguration.Retry != nil {
-							retries := len(configuration.Backends[frontend.Backend].Servers) - 1
+							retries := len(configuration.Backends[frontend.Backend].Servers)
 							if globalConfiguration.Retry.Attempts > 0 {
 								retries = globalConfiguration.Retry.Attempts
 							}
