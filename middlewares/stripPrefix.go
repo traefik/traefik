@@ -17,6 +17,7 @@ func (s *StripPrefix) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			r.URL.Path = p
 			r.RequestURI = r.URL.RequestURI()
 			s.Handler.ServeHTTP(w, r)
+			return
 		}
 	}
 	http.NotFound(w, r)
