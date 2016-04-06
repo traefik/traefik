@@ -63,7 +63,7 @@ Frontends can be defined using the following rules:
 - `HeadersRegexp: Content-Type, application/(text|json)`: Regular expressions can be used with headers as well. It accepts a sequence of key/value pairs, where the value has regex support.
 - `Host: traefik.io, www.traefik.io`: Match request host with given host list.
 - `HostRegexp: traefik.io, {subdomain:[a-z]+}.traefik.io`: Adds a matcher for the URL hosts. It accepts templates with zero or more URL variables enclosed by `{}`. Variables can define an optional regexp pattern to be matched.
-- `Method: GET, POST, PUT`: Methods adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched.
+- `Method: GET, POST, PUT`: Method adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched.
 - `Path: /products/, /articles/{category}/{id:[0-9]+}`: Path adds a matcher for the URL paths. It accepts templates with zero or more URL variables enclosed by `{}`.
 - `PathStrip`: Same as `Path` but strip the given prefix from the request URL's Path.
 - `PathPrefix`: PathPrefix adds a matcher for the URL path prefixes. This matches if the given template is a prefix of the full URL path.
