@@ -7,18 +7,19 @@ import (
 
 // StripPrefix is a middleware used to strip prefix from an URL request
 type StripPrefix struct {
-	Handler http.Handler
-	Prefix  string
+	Handler  http.Handler
+	Prefixes []string
 }
 
 func (s *StripPrefix) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if p := strings.TrimPrefix(r.URL.Path, s.Prefix); len(p) < len(r.URL.Path) {
-		r.URL.Path = p
-		r.RequestURI = r.URL.RequestURI()
-		s.Handler.ServeHTTP(w, r)
-	} else {
-		http.NotFound(w, r)
+	for _, prefix := range s.Prefixes {
+		if p := strings.TrimPrefix(r.URL.Path, strings.TrimSpace(prefix)); len(p) < len(r.URL.Path) {
+			r.URL.Path = p
+			r.RequestURI = r.URL.RequestURI()
+			s.Handler.ServeHTTP(w, r)
+		}
 	}
+	http.NotFound(w, r)
 }
 
 // SetHandler sets handler

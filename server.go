@@ -57,8 +57,8 @@ type serverEntryPoint struct {
 }
 
 type serverRoute struct {
-	route       *mux.Route
-	stripPrefix string
+	route         *mux.Route
+	stripPrefixes []string
 }
 
 // NewServer returns an initialized Server.
@@ -471,10 +471,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Handler) {
 	// strip prefix
-	if len(serverRoute.stripPrefix) > 0 {
+	if len(serverRoute.stripPrefixes) > 0 {
 		serverRoute.route.Handler(&middlewares.StripPrefix{
-			Prefix:  serverRoute.stripPrefix,
-			Handler: handler,
+			Prefixes: serverRoute.stripPrefixes,
+			Handler:  handler,
 		})
 	} else {
 		serverRoute.route.Handler(handler)

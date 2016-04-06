@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"github.com/gorilla/mux"
+	"net/http"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -12,26 +14,65 @@ type Rules struct {
 	route *serverRoute
 }
 
-func (r *Rules) host(host string) *mux.Route {
-	return r.route.route.Host(host)
+func (r *Rules) host(hosts ...string) *mux.Route {
+	return r.route.route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
+		for _, host := range hosts {
+			if strings.EqualFold(req.Host, strings.TrimSpace(host)) {
+				return true
+			}
+		}
+		return false
+	})
 }
 
-func (r *Rules) path(path string) *mux.Route {
-	return r.route.route.Path(path)
+func (r *Rules) hostRegexp(hosts ...string) *mux.Route {
+	router := r.route.route.Subrouter()
+	for _, host := range hosts {
+		router.Host(strings.TrimSpace(host))
+	}
+	return r.route.route
 }
 
-func (r *Rules) pathPrefix(path string) *mux.Route {
-	return r.route.route.PathPrefix(path)
+func (r *Rules) path(paths ...string) *mux.Route {
+	router := r.route.route.Subrouter()
+	for _, path := range paths {
+		router.Path(strings.TrimSpace(path))
+	}
+	return r.route.route
 }
 
-func (r *Rules) pathStrip(path string) *mux.Route {
-	r.route.stripPrefix = path
-	return r.route.route.Path(path)
+func (r *Rules) pathPrefix(paths ...string) *mux.Route {
+	router := r.route.route.Subrouter()
+	for _, path := range paths {
+		router.PathPrefix(strings.TrimSpace(path))
+	}
+	return r.route.route
 }
 
-func (r *Rules) pathPrefixStrip(path string) *mux.Route {
-	r.route.stripPrefix = path
-	return r.route.route.PathPrefix(path)
+type bySize []string
+
+func (a bySize) Len() int           { return len(a) }
+func (a bySize) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a bySize) Less(i, j int) bool { return len(a[i]) > len(a[j]) }
+
+func (r *Rules) pathStrip(paths ...string) *mux.Route {
+	sort.Sort(bySize(paths))
+	r.route.stripPrefixes = paths
+	router := r.route.route.Subrouter()
+	for _, path := range paths {
+		router.Path(strings.TrimSpace(path))
+	}
+	return r.route.route
+}
+
+func (r *Rules) pathPrefixStrip(paths ...string) *mux.Route {
+	sort.Sort(bySize(paths))
+	r.route.stripPrefixes = paths
+	router := r.route.route.Subrouter()
+	for _, path := range paths {
+		router.PathPrefix(strings.TrimSpace(path))
+	}
+	return r.route.route
 }
 
 func (r *Rules) methods(methods ...string) *mux.Route {
@@ -50,32 +91,33 @@ func (r *Rules) headersRegexp(headers ...string) *mux.Route {
 func (r *Rules) Parse(expression string) (*mux.Route, error) {
 	functions := map[string]interface{}{
 		"Host":            r.host,
+		"HostRegexp":      r.hostRegexp,
 		"Path":            r.path,
 		"PathStrip":       r.pathStrip,
 		"PathPrefix":      r.pathPrefix,
 		"PathPrefixStrip": r.pathPrefixStrip,
-		"Methods":         r.methods,
+		"Method":          r.methods,
 		"Headers":         r.headers,
 		"HeadersRegexp":   r.headersRegexp,
 	}
 	f := func(c rune) bool {
-		return c == ':' || c == '='
+		return c == ':'
 	}
 	// get function
 	parsedFunctions := strings.FieldsFunc(expression, f)
-	if len(parsedFunctions) != 2 {
+	if len(parsedFunctions) == 0 {
 		return nil, errors.New("Error parsing rule: " + expression)
 	}
 	parsedFunction, ok := functions[parsedFunctions[0]]
 	if !ok {
 		return nil, errors.New("Error parsing rule: " + expression + ". Unknow function: " + parsedFunctions[0])
 	}
-
+	parsedFunctions = append(parsedFunctions[:0], parsedFunctions[1:]...)
 	fargs := func(c rune) bool {
 		return c == ',' || c == ';'
 	}
 	// get function
-	parsedArgs := strings.FieldsFunc(parsedFunctions[1], fargs)
+	parsedArgs := strings.FieldsFunc(strings.Join(parsedFunctions, ":"), fargs)
 	if len(parsedArgs) == 0 {
 		return nil, errors.New("Error parsing args from rule: " + expression)
 	}
@@ -86,7 +128,11 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 	}
 	method := reflect.ValueOf(parsedFunction)
 	if method.IsValid() {
-		return method.Call(inputs)[0].Interface().(*mux.Route), nil
+		resultRoute := method.Call(inputs)[0].Interface().(*mux.Route)
+		if resultRoute.GetError() != nil {
+			return nil, resultRoute.GetError()
+		}
+		return resultRoute, nil
 	}
 	return nil, errors.New("Method not found: " + parsedFunctions[0])
 }
