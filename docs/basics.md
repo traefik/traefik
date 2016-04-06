@@ -59,13 +59,14 @@ Here is an example of entrypoints definition:
 A frontend is a set of rules that forwards the incoming traffic from an entrypoint to a backend.
 Frontends can be defined using the following rules:
 
-- `Headers`: Headers adds a matcher for request header values. It accepts a sequence of key/value pairs to be matched. For example: `Content-Type, application/json`
-- `HeadersRegexp`: Regular expressions can be used with headers as well. It accepts a sequence of key/value pairs, where the value has regex support. For example: `Content-Type, application/(text|json)`
-- `Host`: Host adds a matcher for the URL host. It accepts a template with zero or more URL variables enclosed by `{}`. Variables can define an optional regexp pattern to be matched: `www.traefik.io`, `{subdomain:[a-z]+}.traefik.io`
-- `Methods`: Methods adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched, e.g.: `GET`, `POST`, `PUT`
-- `Path`: Path adds a matcher for the URL path. It accepts a template with zero or more URL variables enclosed by `{}`. The template must start with a `/`. For exemple `/products/` `/articles/{category}/{id:[0-9]+}`
+- `Headers: Content-Type, application/json`: Headers adds a matcher for request header values. It accepts a sequence of key/value pairs to be matched.
+- `HeadersRegexp: Content-Type, application/(text|json)`: Regular expressions can be used with headers as well. It accepts a sequence of key/value pairs, where the value has regex support.
+- `Host: traefik.io, www.traefik.io`: Match request host with given host list.
+- `HostRegexp: traefik.io, {subdomain:[a-z]+}.traefik.io`: Adds a matcher for the URL hosts. It accepts templates with zero or more URL variables enclosed by `{}`. Variables can define an optional regexp pattern to be matched.
+- `Method: GET, POST, PUT`: Methods adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched.
+- `Path: /products/, /articles/{category}/{id:[0-9]+}`: Path adds a matcher for the URL paths. It accepts templates with zero or more URL variables enclosed by `{}`.
 - `PathStrip`: Same as `Path` but strip the given prefix from the request URL's Path.
-- `PathPrefix`: PathPrefix adds a matcher for the URL path prefix. This matches if the given template is a prefix of the full URL path.
+- `PathPrefix`: PathPrefix adds a matcher for the URL path prefixes. This matches if the given template is a prefix of the full URL path.
 - `PathPrefixStrip`: Same as `PathPrefix` but strip the given prefix from the request URL's Path.
 
 You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
@@ -77,21 +78,21 @@ Here is an example of frontends definition:
   [frontends.frontend1]
   backend = "backend2"
     [frontends.frontend1.routes.test_1]
-    rule = "Host:test.localhost"
+    rule = "Host: test.localhost, test2.localhost"
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
-    rule = "Host:{subdomain:[a-z]+}.localhost"
+    rule = "Host: localhost, {subdomain:[a-z]+}.localhost"
   [frontends.frontend3]
   backend = "backend2"
     rule = "Path:/test"
 ```
 
 - Three frontends are defined: `frontend1`, `frontend2` and `frontend3`
-- `frontend1` will forward the traffic to the `backend2` if the rule `Host:test.localhost` is matched
-- `frontend2` will forward the traffic to the `backend1` if the rule `Host:{subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
+- `frontend1` will forward the traffic to the `backend2` if the rule `Host: test.localhost, test2.localhost` is matched
+- `frontend2` will forward the traffic to the `backend1` if the rule `Host: localhost, {subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
 - `frontend3` will forward the traffic to the `backend2` if the rule `Path:/test` is matched
 
 ## Backends

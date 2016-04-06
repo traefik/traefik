@@ -10,7 +10,7 @@ fi
 
 # load ssh key
 echo "Loading key..."
-openssl aes-256-cbc -K $encrypted_27087ae1f4db_key -iv $encrypted_27087ae1f4db_iv -in .travis/traefik.id_rsa.enc -out ~/.ssh/traefik.id_rsa -d
+openssl aes-256-cbc -d -k "$pass" -in .travis/traefik.id_rsa.enc -out ~/.ssh/traefik.id_rsa
 eval "$(ssh-agent -s)"
 chmod 600 ~/.ssh/traefik.id_rsa
 ssh-add ~/.ssh/traefik.id_rsa
