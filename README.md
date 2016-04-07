@@ -6,6 +6,7 @@
 [![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
 [![Go Report Card](https://goreportcard.com/badge/kubernetes/helm)](http://goreportcard.com/report/containous/traefik)
+[![Image Layer](https://badge.imagelayers.io/traefik:latest.svg)](https://imagelayers.io/?images=traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
@@ -51,7 +52,7 @@ Run it and forget it!
 - Circuit breakers on backends
 - Round Robin, rebalancer load-balancers
 - Rest Metrics
-- Tiny docker image included [![Image Layers](https://badge.imagelayers.io/containous/traefik:latest.svg)](https://imagelayers.io/?images=containous/traefik:latest)
+- [Tiny](https://imagelayers.io/?images=traefik) [official](https://hub.docker.com/r/_/traefik/) docker image included
 - SSL backends support
 - SSL frontend support (with SNI)
 - Clean AngularJS Web UI
@@ -92,7 +93,7 @@ You can access to a simple HTML frontend of Træfik.
 - Use the tiny Docker image:
 
 ```shell
-docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml containous/traefik
+docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik
 ```
 
 - From sources:

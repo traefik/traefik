@@ -57,7 +57,7 @@ You can grab the latest binary from the [releases](https://github.com/containous
 Using the tiny Docker image:
 
 ```shell
-docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml containous/traefik
+docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.toml traefik
 ```
 
 ## Test it
@@ -66,7 +66,7 @@ You can test Træfɪk easily using [Docker compose](https://docs.docker.com/comp
 
 ```yaml
 traefik:
-  image: containous/traefik
+  image: traefik
   command: --web --docker --docker.domain=docker.localhost --logLevel=DEBUG
   ports:
     - "80:80"
