@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"github.com/gorilla/mux"
+	"net"
 	"net/http"
 	"reflect"
 	"sort"
@@ -12,12 +13,17 @@ import (
 // Rules holds rule parsing and configuration
 type Rules struct {
 	route *serverRoute
+	err   error
 }
 
 func (r *Rules) host(hosts ...string) *mux.Route {
 	return r.route.route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
+		reqHost, _, err := net.SplitHostPort(req.Host)
+		if err != nil {
+			reqHost = req.Host
+		}
 		for _, host := range hosts {
-			if strings.EqualFold(req.Host, strings.TrimSpace(host)) {
+			if reqHost == strings.TrimSpace(host) {
 				return true
 			}
 		}
@@ -129,6 +135,9 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 	method := reflect.ValueOf(parsedFunction)
 	if method.IsValid() {
 		resultRoute := method.Call(inputs)[0].Interface().(*mux.Route)
+		if r.err != nil {
+			return nil, r.err
+		}
 		if resultRoute.GetError() != nil {
 			return nil, resultRoute.GetError()
 		}

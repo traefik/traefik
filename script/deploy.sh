@@ -31,20 +31,22 @@ ghr -t $GITHUB_TOKEN -u containous -r traefik --prerelease ${VERSION} dist/
 
 # update docs.traefik.io
 echo "Generating and updating documentation..."
-# mkdir site
-# cd site
-# git init
-# git remote add origin git@github.com:containous/traefik.git
-# git fetch origin
-# git checkout gh-pages
-# cd ..
-# mkdocs build --clean
-# cd site
-# git add .
-# echo $VERSION | git commit --file -
-# git push -q -f origin gh-pages > /dev/null 2>&1
-git remote add ssh git@github.com:containous/traefik.git
-mkdocs gh-deploy -c -r ssh
+# DOESN'T WORK :'(
+# git remote add ssh git@github.com:containous/traefik.git
+# mkdocs gh-deploy -m $VERSION -c -r ssh
+
+mkdir site
+cd site
+git init
+git remote add origin git@github.com:containous/traefik.git
+git fetch origin
+git checkout gh-pages
+cd ..
+mkdocs build --clean
+cd site
+git add .
+echo $VERSION | git commit --file -
+git push -q -f origin gh-pages > /dev/null 2>&1
 
 # update traefik-library-image repo (official Docker image)
 echo "Updating traefik-library-imag repo..."
