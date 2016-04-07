@@ -24,3 +24,11 @@
 .tabset-row__providers {
   margin-top: 3rem;
 }
+
+table {
+  table-layout: fixed; 
+}
+
+td, th {
+    word-wrap: break-word;
+}
