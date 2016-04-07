@@ -2,3 +2,4 @@ dist/
 vendor/
 !dist/traefik
 site/
+**/*.test
