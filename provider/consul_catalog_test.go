@@ -63,6 +63,7 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 						{
 							Service: &api.AgentService{
 								Service: "test",
+								Address: "127.0.0.1",
 								Port:    80,
 							},
 							Node: &api.Node{
@@ -86,7 +87,7 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"server-localhost-80": {
+						"test--127-0-0-1--80": {
 							URL: "http://127.0.0.1:80",
 						},
 					},

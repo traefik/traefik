@@ -1,6 +1,6 @@
 [backends]{{range .Nodes}}
-    [backends.backend-{{getBackend .}}.servers.server-{{.Node.Node | replace "." "-"}}-{{.Service.Port}}]
-    url = "http://{{.Node.Address}}:{{.Service.Port}}"
+    [backends.backend-{{getBackend .}}.servers.{{.Service.Service | replace "." "-"}}--{{.Service.Address | replace "." "-"}}--{{.Service.Port}}]
+    url = "http://{{.Service.Address}}:{{.Service.Port}}"
 {{end}}
 
 [frontends]{{range .Services}}
