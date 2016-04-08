@@ -1,5 +1,5 @@
-hash: 2e15595ec349ec462fa2b0a52e26e3f3dcbd17fed66dad9a1e1c2e2c0385fe49
-updated: 2016-04-02T15:25:37.354420171+02:00
+hash: 79b6eb2a613b5e2ce5c57150eec41ac04def3f232a3613fd8b5a88b5e1041b38
+updated: 2016-04-02T15:42:37.505896092+02:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -89,10 +89,18 @@ imports:
   - types/container
   - types/filters
   - types/strslice
+  - client/transport
+  - client/transport/cancellable
+  - types/network
+  - types/registry
+  - types/time
+  - types/blkiodev
 - name: github.com/docker/go-connections
   version: f549a9393d05688dff0992ef3efd8bbe6c628aeb
   subpackages:
   - nat
+  - sockets
+  - tlsconfig
 - name: github.com/docker/go-units
   version: 5d2041e26a699eaca682e2ea41c8f891e1060444
 - name: github.com/docker/libcompose
@@ -113,26 +121,6 @@ imports:
   version: d5cac425555ca5cf00694df246e04f05e6a55150
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
-- name: github.com/fsouza/go-dockerclient
-  version: a49c8269a6899cae30da1f8a4b82e0ce945f9967
-  subpackages:
-  - external/github.com/docker/docker/opts
-  - external/github.com/docker/docker/pkg/archive
-  - external/github.com/docker/docker/pkg/fileutils
-  - external/github.com/docker/docker/pkg/homedir
-  - external/github.com/docker/docker/pkg/stdcopy
-  - external/github.com/hashicorp/go-cleanhttp
-  - external/github.com/Sirupsen/logrus
-  - external/github.com/docker/docker/pkg/idtools
-  - external/github.com/docker/docker/pkg/ioutils
-  - external/github.com/docker/docker/pkg/longpath
-  - external/github.com/docker/docker/pkg/pools
-  - external/github.com/docker/docker/pkg/promise
-  - external/github.com/docker/docker/pkg/system
-  - external/github.com/opencontainers/runc/libcontainer/user
-  - external/golang.org/x/sys/unix
-  - external/golang.org/x/net/context
-  - external/github.com/docker/go-units
 - name: github.com/gambol99/go-marathon
   version: ade11d1dc2884ee1f387078fc28509559b6235d1
 - name: github.com/go-check/check
@@ -182,6 +170,8 @@ imports:
   version: 565402cd71fbd9c12aa7e295324ea357e970a61e
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
+- name: github.com/Microsoft/go-winio
+  version: 9e2895e5f6c3f16473b91d37fae6e89990a4520c
 - name: github.com/miekg/dns
   version: 7e024ce8ce18b21b475ac6baf8fa3c42536bf2fa
 - name: github.com/mitchellh/mapstructure
@@ -223,6 +213,8 @@ imports:
   version: 54ed61c2b47e263ae2f01b86837b0c4bd1da28e8
 - name: github.com/unrolled/render
   version: 26b4e3aac686940fe29521545afad9966ddfc80c
+- name: github.com/vdemeester/docker-events
+  version: bd72e1848b08db4b5ed1a2e9277621b9f5e5d1f3
 - name: github.com/vdemeester/libkermit
   version: 7e4e689a6fa9281e0fb9b7b9c297e22d5342a5ec
 - name: github.com/vdemeester/shakers
@@ -257,6 +249,7 @@ imports:
   subpackages:
   - context
   - publicsuffix
+  - proxy
 - name: golang.org/x/sys
   version: eb2c74142fd19a79b3f237334c7384d5167b1b46
   subpackages:

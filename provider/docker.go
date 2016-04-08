@@ -2,18 +2,30 @@ package provider
 
 import (
 	"errors"
+	"net/http"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
+
+	"golang.org/x/net/context"
 
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/fsouza/go-dockerclient"
+	"github.com/docker/engine-api/client"
+	dockertypes "github.com/docker/engine-api/types"
+	eventtypes "github.com/docker/engine-api/types/events"
+	"github.com/docker/engine-api/types/filters"
+	"github.com/docker/go-connections/sockets"
+	"github.com/docker/go-connections/tlsconfig"
+	"github.com/vdemeester/docker-events"
 )
+
+// DockerAPIVersion is a constant holding the version of the Docker API traefik will use
+const DockerAPIVersion string = "1.21"
 
 // Docker holds configurations of the Docker provider.
 type Docker struct {
@@ -31,58 +43,93 @@ type DockerTLS struct {
 	InsecureSkipVerify bool
 }
 
+func (provider *Docker) createClient() (client.APIClient, error) {
+	var httpClient *http.Client
+	httpHeaders := map[string]string{
+		// FIXME(vdemeester) use version here O:)
+		"User-Agent": "Traefik",
+	}
+	if provider.TLS != nil {
+		tlsOptions := tlsconfig.Options{
+			CAFile:             provider.TLS.CA,
+			CertFile:           provider.TLS.Cert,
+			KeyFile:            provider.TLS.Key,
+			InsecureSkipVerify: provider.TLS.InsecureSkipVerify,
+		}
+		config, err := tlsconfig.Client(tlsOptions)
+		if err != nil {
+			return nil, err
+		}
+		tr := &http.Transport{
+			TLSClientConfig: config,
+		}
+		proto, addr, _, err := client.ParseHost(provider.Endpoint)
+		if err != nil {
+			return nil, err
+		}
+
+		sockets.ConfigureTransport(tr, proto, addr)
+
+		httpClient = &http.Client{
+			Transport: tr,
+		}
+	}
+	return client.NewClient(provider.Endpoint, DockerAPIVersion, httpClient, httpHeaders)
+}
+
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) error {
 	safe.Go(func() {
 		operation := func() error {
-			var dockerClient *docker.Client
 			var err error
 
-			if provider.TLS != nil {
-				dockerClient, err = docker.NewTLSClient(provider.Endpoint,
-					provider.TLS.Cert, provider.TLS.Key, provider.TLS.CA)
-				if err == nil {
-					dockerClient.TLSConfig.InsecureSkipVerify = provider.TLS.InsecureSkipVerify
-				}
-			} else {
-				dockerClient, err = docker.NewClient(provider.Endpoint)
-			}
+			dockerClient, err := provider.createClient()
 			if err != nil {
 				log.Errorf("Failed to create a client for docker, error: %s", err)
 				return err
 			}
-			err = dockerClient.Ping()
+			version, err := dockerClient.ServerVersion(context.Background())
+			log.Debugf("Docker connection established with docker %s (API %s)", version.Version, version.APIVersion)
+			containers, err := listContainers(dockerClient)
 			if err != nil {
-				log.Errorf("Docker connection error %+v", err)
+				log.Errorf("Failed to list containers for docker, error %s", err)
 				return err
 			}
-			log.Debug("Docker connection established")
-			configuration := provider.loadDockerConfig(listContainers(dockerClient))
+			configuration := provider.loadDockerConfig(containers)
 			configurationChan <- types.ConfigMessage{
 				ProviderName:  "docker",
 				Configuration: configuration,
 			}
 			if provider.Watch {
-				dockerEvents := make(chan *docker.APIEvents)
-				dockerClient.AddEventListener(dockerEvents)
-				log.Debug("Docker listening")
-				for {
-					event := <-dockerEvents
-					if event == nil {
-						return errors.New("Docker event nil")
-						//							log.Fatalf("Docker connection error")
+				ctx, cancel := context.WithCancel(context.Background())
+				f := filters.NewArgs()
+				f.Add("type", "container")
+				options := dockertypes.EventsOptions{
+					Filters: f,
+				}
+				eventHandler := events.NewHandler(events.ByAction)
+				startStopHandle := func(m eventtypes.Message) {
+					log.Debugf("Docker event received %+v", m)
+					containers, err := listContainers(dockerClient)
+					if err != nil {
+						log.Errorf("Failed to list containers for docker, error %s", err)
+						// Call cancel to get out of the monitor
+						cancel()
 					}
-					if event.Status == "start" || event.Status == "die" {
-						log.Debugf("Docker event receveived %+v", event)
-						configuration := provider.loadDockerConfig(listContainers(dockerClient))
-						if configuration != nil {
-							configurationChan <- types.ConfigMessage{
-								ProviderName:  "docker",
-								Configuration: configuration,
-							}
+					configuration := provider.loadDockerConfig(containers)
+					if configuration != nil {
+						configurationChan <- types.ConfigMessage{
+							ProviderName:  "docker",
+							Configuration: configuration,
 						}
 					}
+				}
+				eventHandler.Handle("start", startStopHandle)
+				eventHandler.Handle("die", startStopHandle)
+				errChan := events.MonitorWithHandler(ctx, dockerClient, options, eventHandler)
+				if err := <-errChan; err != nil {
+					return err
 				}
 			}
 			return nil
@@ -99,7 +146,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage) er
 	return nil
 }
 
-func (provider *Docker) loadDockerConfig(containersInspected []docker.Container) *types.Configuration {
+func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.ContainerJSON) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
 		"getBackend":        provider.getBackend,
 		"getPort":           provider.getPort,
@@ -113,16 +160,16 @@ func (provider *Docker) loadDockerConfig(containersInspected []docker.Container)
 	}
 
 	// filter containers
-	filteredContainers := fun.Filter(containerFilter, containersInspected).([]docker.Container)
+	filteredContainers := fun.Filter(containerFilter, containersInspected).([]dockertypes.ContainerJSON)
 
-	frontends := map[string][]docker.Container{}
+	frontends := map[string][]dockertypes.ContainerJSON{}
 	for _, container := range filteredContainers {
 		frontends[provider.getFrontendName(container)] = append(frontends[provider.getFrontendName(container)], container)
 	}
 
 	templateObjects := struct {
-		Containers []docker.Container
-		Frontends  map[string][]docker.Container
+		Containers []dockertypes.ContainerJSON
+		Frontends  map[string][]dockertypes.ContainerJSON
 		Domain     string
 	}{
 		filteredContainers,
@@ -137,7 +184,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []docker.Container)
 	return configuration
 }
 
-func containerFilter(container docker.Container) bool {
+func containerFilter(container dockertypes.ContainerJSON) bool {
 	if len(container.NetworkSettings.Ports) == 0 {
 		log.Debugf("Filtering container without port %s", container.Name)
 		return false
@@ -156,14 +203,14 @@ func containerFilter(container docker.Container) bool {
 	return true
 }
 
-func (provider *Docker) getFrontendName(container docker.Container) string {
+func (provider *Docker) getFrontendName(container dockertypes.ContainerJSON) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 	return normalize(provider.getFrontendRule(container))
 }
 
 // GetFrontendRule returns the frontend rule for the specified container, using
 // it's label. It returns a default one (Host) if the label is not present.
-func (provider *Docker) getFrontendRule(container docker.Container) string {
+func (provider *Docker) getFrontendRule(container dockertypes.ContainerJSON) string {
 	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
 	// TODO: backwards compatibility with DEPRECATED rule.Value
 	if value, ok := container.Config.Labels["traefik.frontend.value"]; ok {
@@ -179,14 +226,14 @@ func (provider *Docker) getFrontendRule(container docker.Container) string {
 	return "Host:" + getEscapedName(container.Name) + "." + provider.Domain
 }
 
-func (provider *Docker) getBackend(container docker.Container) string {
+func (provider *Docker) getBackend(container dockertypes.ContainerJSON) string {
 	if label, err := getLabel(container, "traefik.backend"); err == nil {
 		return label
 	}
 	return normalize(container.Name)
 }
 
-func (provider *Docker) getPort(container docker.Container) string {
+func (provider *Docker) getPort(container dockertypes.ContainerJSON) string {
 	if label, err := getLabel(container, "traefik.port"); err == nil {
 		return label
 	}
@@ -196,42 +243,42 @@ func (provider *Docker) getPort(container docker.Container) string {
 	return ""
 }
 
-func (provider *Docker) getWeight(container docker.Container) string {
+func (provider *Docker) getWeight(container dockertypes.ContainerJSON) string {
 	if label, err := getLabel(container, "traefik.weight"); err == nil {
 		return label
 	}
 	return "1"
 }
 
-func (provider *Docker) getDomain(container docker.Container) string {
+func (provider *Docker) getDomain(container dockertypes.ContainerJSON) string {
 	if label, err := getLabel(container, "traefik.domain"); err == nil {
 		return label
 	}
 	return provider.Domain
 }
 
-func (provider *Docker) getProtocol(container docker.Container) string {
+func (provider *Docker) getProtocol(container dockertypes.ContainerJSON) string {
 	if label, err := getLabel(container, "traefik.protocol"); err == nil {
 		return label
 	}
 	return "http"
 }
 
-func (provider *Docker) getPassHostHeader(container docker.Container) string {
+func (provider *Docker) getPassHostHeader(container dockertypes.ContainerJSON) string {
 	if passHostHeader, err := getLabel(container, "traefik.frontend.passHostHeader"); err == nil {
 		return passHostHeader
 	}
 	return "false"
 }
 
-func (provider *Docker) getEntryPoints(container docker.Container) []string {
+func (provider *Docker) getEntryPoints(container dockertypes.ContainerJSON) []string {
 	if entryPoints, err := getLabel(container, "traefik.frontend.entryPoints"); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
 }
 
-func getLabel(container docker.Container, label string) (string, error) {
+func getLabel(container dockertypes.ContainerJSON, label string) (string, error) {
 	for key, value := range container.Config.Labels {
 		if key == label {
 			return value, nil
@@ -240,7 +287,7 @@ func getLabel(container docker.Container, label string) (string, error) {
 	return "", errors.New("Label not found:" + label)
 }
 
-func getLabels(container docker.Container, labels []string) (map[string]string, error) {
+func getLabels(container dockertypes.ContainerJSON, labels []string) (map[string]string, error) {
 	var globalErr error
 	foundLabels := map[string]string{}
 	for _, label := range labels {
@@ -256,14 +303,20 @@ func getLabels(container docker.Container, labels []string) (map[string]string, 
 	return foundLabels, globalErr
 }
 
-func listContainers(dockerClient *docker.Client) []docker.Container {
-	containerList, _ := dockerClient.ListContainers(docker.ListContainersOptions{})
-	containersInspected := []docker.Container{}
+func listContainers(dockerClient client.APIClient) ([]dockertypes.ContainerJSON, error) {
+	containerList, err := dockerClient.ContainerList(context.Background(), dockertypes.ContainerListOptions{})
+	if err != nil {
+		return []dockertypes.ContainerJSON{}, err
+	}
+	containersInspected := []dockertypes.ContainerJSON{}
 
 	// get inspect containers
 	for _, container := range containerList {
-		containerInspected, _ := dockerClient.InspectContainer(container.ID)
-		containersInspected = append(containersInspected, *containerInspected)
+		containerInspected, err := dockerClient.ContainerInspect(context.Background(), container.ID)
+		if err != nil {
+			log.Warnf("Failed to inpsect container %s, error: %s", container.ID, err)
+		}
+		containersInspected = append(containersInspected, containerInspected)
 	}
-	return containersInspected
+	return containersInspected, nil
 }
