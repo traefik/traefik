@@ -1,12 +1,40 @@
-[backends]{{range .Nodes}}
+[backends]
+{{range .Nodes}}
+  {{if ne (getAttribute "enable" .Service.Tags "true") "false"}}
     [backends.backend-{{getBackend .}}.servers.{{.Service.Service | replace "." "-"}}--{{.Service.Address | replace "." "-"}}--{{.Service.Port}}]
-    url = "http://{{.Service.Address}}:{{.Service.Port}}"
+      url = "{{getAttribute "protocol" .Service.Tags "http"}}://{{.Service.Address}}:{{.Service.Port}}"
+      {{$weight := getAttribute "backend.weight" .Service.Tags ""}}
+      {{with $weight}}
+        weight = {{$weight}}
+      {{end}}
+    {{end}}
+{{end}}
+
+{{range .Services}}
+  {{$service := .ServiceName}}
+  {{$circuitBreaker := getAttribute "backend.circuitbreaker" .Attributes ""}}
+  {{with $circuitBreaker}}
+  [backends.backend-{{$service}}.circuitbreaker]
+    expression = "{{$circuitBreaker}}"
+  {{end}}
+
+  {{$loadBalancer := getAttribute "backend.loadbalancer" .Attributes ""}}
+  {{with $loadBalancer}}
+  [backends.backend-{{$service}}.loadbalancer]
+    method = "{{$loadBalancer}}"
+  {{end}}
 {{end}}
 
 [frontends]{{range .Services}}
-  [frontends.frontend-{{.}}]
-  backend = "backend-{{.}}"
-  passHostHeader = false
-    [frontends.frontend-{{.}}.routes.route-host-{{.}}]
-    rule = "{{getFrontendValue .}}"
+  [frontends.frontend-{{.ServiceName}}]
+  backend = "backend-{{.ServiceName}}"
+  passHostHeader = {{getAttribute "frontend.passHostHeader" .Attributes "false"}}
+  {{$entryPoints := getAttribute "frontend.entrypoints" .Attributes ""}}
+  {{with $entryPoints}}
+    entrypoints = [{{range getEntryPoints $entryPoints}}
+      "{{.}}",
+    {{end}}]
+  {{end}}
+  [frontends.frontend-{{.ServiceName}}.routes.route-host-{{.ServiceName}}]
+    rule = "{{getFrontendRule .}}"
 {{end}}

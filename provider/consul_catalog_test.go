@@ -14,17 +14,68 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 	}
 
 	services := []struct {
-		service  string
+		service  serviceUpdate
 		expected string
 	}{
 		{
-			service:  "foo",
+			service: serviceUpdate{
+				ServiceName: "foo",
+				Attributes:  []string{},
+			},
 			expected: "Host:foo.localhost",
+		},
+		{
+			service: serviceUpdate{
+				ServiceName: "foo",
+				Attributes: []string{
+					"traefik.frontend.rule=Host:*.example.com",
+				},
+			},
+			expected: "Host:*.example.com",
 		},
 	}
 
 	for _, e := range services {
-		actual := provider.getFrontendValue(e.service)
+		actual := provider.getFrontendRule(e.service)
+		if actual != e.expected {
+			t.Fatalf("expected %q, got %q", e.expected, actual)
+		}
+	}
+}
+
+func TestConsulCatalogGetAttribute(t *testing.T) {
+	provider := &ConsulCatalog{
+		Domain: "localhost",
+	}
+
+	services := []struct {
+		tags         []string
+		key          string
+		defaultValue string
+		expected     string
+	}{
+		{
+			tags: []string{
+				"foo.bar=ramdom",
+				"traefik.backend.weight=42",
+			},
+			key:          "backend.weight",
+			defaultValue: "",
+			expected:     "42",
+		},
+		{
+			tags: []string{
+				"foo.bar=ramdom",
+				"traefik.backend.wei=42",
+			},
+			key:          "backend.weight",
+			defaultValue: "",
+			expected:     "",
+		},
+	}
+
+	for _, e := range services {
+		actual := provider.getAttribute(e.key, e.tags, e.defaultValue)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
 		}
@@ -49,7 +100,10 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		{
 			nodes: []catalogUpdate{
 				{
-					Service: "test",
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes:  []string{},
+					},
 				},
 			},
 			expectedFrontends: map[string]*types.Frontend{},
@@ -58,13 +112,26 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		{
 			nodes: []catalogUpdate{
 				{
-					Service: "test",
+					Service: &serviceUpdate{
+						ServiceName: "test",
+						Attributes: []string{
+							"traefik.backend.loadbalancer=drr",
+							"traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5",
+							"random.foo=bar",
+						},
+					},
 					Nodes: []*api.ServiceEntry{
 						{
 							Service: &api.AgentService{
 								Service: "test",
 								Address: "127.0.0.1",
 								Port:    80,
+								Tags: []string{
+									"traefik.backend.weight=42",
+									"random.foo=bar",
+									"traefik.backend.passHostHeader=true",
+									"traefik.protocol=https",
+								},
 							},
 							Node: &api.Node{
 								Node:    "localhost",
@@ -88,11 +155,16 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 				"backend-test": {
 					Servers: map[string]types.Server{
 						"test--127-0-0-1--80": {
-							URL: "http://127.0.0.1:80",
+							URL:    "https://127.0.0.1:80",
+							Weight: 42,
 						},
 					},
-					CircuitBreaker: nil,
-					LoadBalancer:   nil,
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+					},
 				},
 			},
 		},

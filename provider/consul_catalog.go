@@ -16,6 +16,8 @@ import (
 const (
 	// DefaultWatchWaitTime is the duration to wait when polling consul
 	DefaultWatchWaitTime = 15 * time.Second
+	// DefaultConsulCatalogTagPrefix is a prefix for additional service/node configurations
+	DefaultConsulCatalogTagPrefix = "traefik"
 )
 
 // ConsulCatalog holds configurations of the Consul catalog provider.
@@ -24,10 +26,16 @@ type ConsulCatalog struct {
 	Endpoint     string
 	Domain       string
 	client       *api.Client
+	Prefix       string
+}
+
+type serviceUpdate struct {
+	ServiceName string
+	Attributes  []string
 }
 
 type catalogUpdate struct {
-	Service string
+	Service *serviceUpdate
 	Nodes   []*api.ServiceEntry
 }
 
@@ -79,41 +87,76 @@ func (provider *ConsulCatalog) healthyNodes(service string) (catalogUpdate, erro
 		return catalogUpdate{}, err
 	}
 
+	set := map[string]bool{}
+	tags := []string{}
+	for _, node := range data {
+		for _, tag := range node.Service.Tags {
+			if _, ok := set[tag]; ok == false {
+				set[tag] = true
+				tags = append(tags, tag)
+			}
+		}
+	}
+
 	return catalogUpdate{
-		Service: service,
-		Nodes:   data,
+		Service: &serviceUpdate{
+			ServiceName: service,
+			Attributes:  tags,
+		},
+		Nodes: data,
 	}, nil
+}
+
+func (provider *ConsulCatalog) getEntryPoints(list string) []string {
+	return strings.Split(list, ",")
 }
 
 func (provider *ConsulCatalog) getBackend(node *api.ServiceEntry) string {
 	return strings.ToLower(node.Service.Service)
 }
 
-func (provider *ConsulCatalog) getFrontendValue(service string) string {
-	return "Host:" + service + "." + provider.Domain
+func (provider *ConsulCatalog) getFrontendRule(service serviceUpdate) string {
+	customFrontendRule := provider.getAttribute("frontend.rule", service.Attributes, "")
+	if customFrontendRule != "" {
+		return customFrontendRule
+	}
+	return "Host:" + service.ServiceName + "." + provider.Domain
+}
+
+func (provider *ConsulCatalog) getAttribute(name string, tags []string, defaultValue string) string {
+	for _, tag := range tags {
+		if strings.Index(tag, DefaultConsulCatalogTagPrefix+".") == 0 {
+			if kv := strings.SplitN(tag[len(DefaultConsulCatalogTagPrefix+"."):], "=", 2); len(kv) == 2 && kv[0] == name {
+				return kv[1]
+			}
+		}
+	}
+	return defaultValue
 }
 
 func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Configuration {
 	var FuncMap = template.FuncMap{
-		"getBackend":       provider.getBackend,
-		"getFrontendValue": provider.getFrontendValue,
-		"replace":          replace,
+		"getBackend":      provider.getBackend,
+		"getFrontendRule": provider.getFrontendRule,
+		"getAttribute":    provider.getAttribute,
+		"getEntryPoints":  provider.getEntryPoints,
+		"replace":         replace,
 	}
 
 	allNodes := []*api.ServiceEntry{}
-	serviceNames := []string{}
+	services := []*serviceUpdate{}
 	for _, info := range catalog {
 		if len(info.Nodes) > 0 {
-			serviceNames = append(serviceNames, info.Service)
+			services = append(services, info.Service)
 			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
 
 	templateObjects := struct {
-		Services []string
+		Services []*serviceUpdate
 		Nodes    []*api.ServiceEntry
 	}{
-		Services: serviceNames,
+		Services: services,
 		Nodes:    allNodes,
 	}
 
