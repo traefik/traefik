@@ -24,35 +24,26 @@ print-%: ; @echo $*=$($*)
 
 default: binary
 
-all: generate-webui build
+all: generate-webui build ## validate all checks, build linux binary, run all tests\ncross non-linux binaries
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh
 
-binary: generate-webui build
+binary: generate-webui build ## build the linux binary
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
 
-crossbinary: generate-webui build
+crossbinary: generate-webui build ## cross build the non-linux binaries
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate crossbinary
 
-test: build
+test: build ## run the unit and integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit binary test-integration
 
-test-unit: build
+test-unit: build ## run the unit tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit
 
-test-integration: build
+test-integration: build ## run the integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-integration
 
-validate: build 
+validate: build  ## validate gofmt, golint and go vet
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-gofmt validate-govet validate-golint 
-
-validate-gofmt: build
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt
-
-validate-govet: build
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-govet
-
-validate-golint: build
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-golint
 
 build: dist
 	docker build -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
@@ -63,10 +54,10 @@ build-webui:
 build-no-cache: dist
 	docker build --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
-shell: build
+shell: build ## start a shell inside the build env
 	$(DOCKER_RUN_TRAEFIK) /bin/bash
 
-image: build
+image: build ## build a docker traefik image 
 	docker build -t $(TRAEFIK_IMAGE) .
 
 dist:
@@ -92,3 +83,6 @@ fmt:
 
 deploy:
 	./script/deploy.sh
+
+help: ## this help
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
