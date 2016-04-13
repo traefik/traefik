@@ -83,7 +83,7 @@ imports:
   - utils
   - volume
 - name: github.com/docker/engine-api
-  version: 87b3df23dcba0ce02bfe0474e29a08a97f7814e6
+  version: 8924d6900370b4c7e7984be5adc61f50a80d7537
   subpackages:
   - client
   - types

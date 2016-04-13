@@ -518,7 +518,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
 - `traefik.enable=false`: disable this container in Træfɪk
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`). See [frontends](#frontends).
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 * `traefik.domain=traefik.localhost`: override the default domain
@@ -598,7 +598,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the application
 - `traefik.enable=false`: disable this application in Træfɪk
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`). See [frontends](#frontends).
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 * `traefik.domain=traefik.localhost`: override the default domain
@@ -693,12 +693,13 @@ This backend will create routes matching on hostname based on the service name
 used in consul.
 
 Additional settings can be defined using Consul Catalog tags:
+
 - ```traefik.enable=false```: disable this container in Træfɪk
 - ```traefik.protocol=https```: override the default `http` protocol
 - ```traefik.backend.weight=10```: assign this weight to the container
 - ```traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5```
 - ```traefik.backend.loadbalancer=drr```: override the default load balancing mode
-- ```traefik.frontend.rule=Host:test.traefik.io```: override the default frontend rule (Default: `Host:{containerName}.{domain}`). See [frontends](#frontends).
+- ```traefik.frontend.rule=Host:test.traefik.io```: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - ```traefik.frontend.passHostHeader=true```: forward client `Host` header to the backend.
 - ```traefik.frontend.entryPoints=http,https```: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 
