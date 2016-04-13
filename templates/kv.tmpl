@@ -17,6 +17,16 @@
     method = "{{$loadBalancer}}"
 {{end}}
 
+{{$maxConnAmt := Get "" . "/maxconn/" "amount"}}
+{{$maxConnExtractorFunc := Get "" . "/maxconn/" "extractorfunc"}}
+{{with $maxConnAmt}}
+{{with $maxConnExtractorFunc}}
+[backends.{{Last $backend}}.maxConn]
+    amount = {{$maxConnAmt}}
+    extractorFunc = "{{$maxConnExtractorFunc}}"
+{{end}}
+{{end}}
+
 {{range $servers}}
 [backends.{{Last $backend}}.servers.{{Last .}}]
     url = "{{Get "" . "/url"}}"

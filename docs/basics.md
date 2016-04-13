@@ -70,7 +70,7 @@ Frontends can be defined using the following rules:
 - `PathPrefixStrip`: Same as `PathPrefix` but strip the given prefix from the request URL's Path.
 
 You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
- 
+
 Here is an example of frontends definition:
 
 ```toml
@@ -107,7 +107,7 @@ A circuit breaker can also be applied to a backend, preventing high loads on fai
 Initial state is Standby. CB observes the statistics and does not modify the request.
 In case if condition matches, CB enters Tripped state, where it responds with predefines code or redirects to another frontend.
 Once Tripped timer expires, CB enters Recovering state and resets all stats.
-In case if the condition does not match and recovery timer expries, CB enters Standby state.
+In case if the condition does not match and recovery timer expires, CB enters Standby state.
 
 It can be configured using:
 
@@ -119,6 +119,26 @@ For example:
 - `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window for a frontend
 - `LatencyAtQuantileMS(50.0) > 50`:  watch latency at quantile in milliseconds.
 - `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in range [500-600) to  [0-600)
+
+To proactively prevent backends from being overwhelmed with high load, a maximum connection limit can
+also be applied to each backend.
+
+Maximum connections can be configured by specifying an integer value for `maxconn.amount` and
+`maxconn.extractorfunc` which is a strategy used to determine how to categorize requests in order to
+evaluate the maximum connections.
+
+For example:
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.maxconn]
+       amount = 10
+       extractorfunc = "request.host"
+```
+
+- `backend1` will return `HTTP code 429 Too Many Requests` if there are already 10 requests in progress for the same Host header.
+- Another possible value for `extractorfunc` is `client.ip` which will categorize requests based on client source ip.
+- Lastly `extractorfunc` can take the value of `request.header.ANY_HEADER` which will categorize requests based on `ANY_HEADER` that you provide.
 
 ## Servers
 

@@ -168,3 +168,41 @@ func TestReplace(t *testing.T) {
 		}
 	}
 }
+
+func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
+	templateFile, err := ioutil.TempFile("", "provider-configuration")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(templateFile.Name())
+	data := []byte(`[backends]
+  [backends.backend1]
+    [backends.backend1.maxconn]
+      amount = 10
+      extractorFunc = "request.host"`)
+	err = ioutil.WriteFile(templateFile.Name(), data, 0700)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider := &myProvider{
+		BaseProvider{
+			Filename: templateFile.Name(),
+		},
+	}
+	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
+	if err != nil {
+		t.Fatalf("Shouldn't have error out, got %v", err)
+	}
+	if configuration == nil {
+		t.Fatalf("Configuration should not be nil, but was")
+	}
+
+	if configuration.Backends["backend1"].MaxConn.Amount != 10 {
+		t.Fatalf("Configuration did not parse MaxConn.Amount properly")
+	}
+
+	if configuration.Backends["backend1"].MaxConn.ExtractorFunc != "request.host" {
+		t.Fatalf("Configuration did not parse MaxConn.ExtractorFunc properly")
+	}
+}

@@ -22,9 +22,11 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/containous/oxy/cbreaker"
+	"github.com/containous/oxy/connlimit"
 	"github.com/containous/oxy/forward"
 	"github.com/containous/oxy/roundrobin"
 	"github.com/containous/oxy/stream"
+	"github.com/containous/oxy/utils"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
@@ -421,6 +423,18 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
 									return nil, err
 								}
+							}
+						}
+						maxConns := configuration.Backends[frontend.Backend].MaxConn
+						if maxConns != nil && maxConns.Amount != 0 {
+							extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
+							if err != nil {
+								return nil, err
+							}
+							log.Debugf("Creating loadd-balancer connlimit")
+							lb, err = connlimit.New(lb, extractFunc, maxConns.Amount, connlimit.Logger(oxyLogger))
+							if err != nil {
+								return nil, err
 							}
 						}
 						// retry ?

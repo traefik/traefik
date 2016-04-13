@@ -138,7 +138,7 @@
 # storageFile = "acme.json"
 
 # Entrypoint to proxy acme challenge to.
-# WARNING, must point to an entrypoint on port 443 
+# WARNING, must point to an entrypoint on port 443
 #
 # Required
 #
@@ -218,6 +218,9 @@ defaultEntryPoints = ["http", "https"]
     url = "http://172.17.0.3:80"
     weight = 1
   [backends.backend2]
+    [backends.backend1.maxconn]
+      amount = 10
+      extractorfunc = "request.host"
     [backends.backend2.LoadBalancer]
       method = "drr"
     [backends.backend2.servers.server1]
@@ -281,6 +284,9 @@ filename = "rules.toml"
     url = "http://172.17.0.3:80"
     weight = 1
   [backends.backend2]
+    [backends.backend1.maxconn]
+      amount = 10
+      extractorfunc = "request.host"
     [backends.backend2.LoadBalancer]
       method = "drr"
     [backends.backend2.servers.server1]
@@ -851,6 +857,8 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 
 | Key                                                 | Value                  |
 |-----------------------------------------------------|------------------------|
+| `/traefik/backends/backend2/maxconn/amount`         | `10`                   |
+| `/traefik/backends/backend2/maxconn/extractorfunc`  | `request.host`         |
 | `/traefik/backends/backend2/loadbalancer/method`    | `drr`                  |
 | `/traefik/backends/backend2/servers/server1/url`    | `http://172.17.0.4:80` |
 | `/traefik/backends/backend2/servers/server1/weight` | `1`                    |
