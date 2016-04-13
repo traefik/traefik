@@ -23,9 +23,9 @@ func (oxylogger *OxyLogger) Warningf(format string, args ...interface{}) {
 	log.Warningf(format, args...)
 }
 
-// Errorf logs specified string as Error level in logrus.
+// Errorf logs specified string as Warningf level in logrus.
 func (oxylogger *OxyLogger) Errorf(format string, args ...interface{}) {
-	log.Errorf(format, args...)
+	log.Warningf(format, args...)
 }
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
