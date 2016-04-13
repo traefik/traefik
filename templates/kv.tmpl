@@ -27,7 +27,7 @@
 [frontends]{{range $frontends}}
     {{$frontend := Last .}}
     {{$entryPoints := SplitGet . "/entrypoints"}}
-    [frontends.{{$frontend}}]
+    [frontends."{{$frontend}}"]
     backend = "{{Get "" . "/backend"}}"
     passHostHeader = {{Get "false" . "/passHostHeader"}}
     entryPoints = [{{range $entryPoints}}
@@ -35,7 +35,7 @@
     {{end}}]
     {{$routes := List . "/routes/"}}
         {{range $routes}}
-        [frontends.{{$frontend}}.routes.{{Last .}}]
+        [frontends."{{$frontend}}".routes."{{Last .}}"]
         rule = "{{Get "" . "/rule"}}"
         {{end}}
 {{end}}
