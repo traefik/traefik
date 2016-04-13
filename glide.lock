@@ -22,7 +22,7 @@ imports:
 - name: github.com/codegangsta/negroni
   version: c7477ad8e330bef55bf1ebe300cf8aa67c492d1b
 - name: github.com/containous/oxy
-  version: 0b5b371bce661385d35439204298fa6fb5db5463
+  version: 021f82bd8260ba15f5862a9fe62018437720dff5
   subpackages:
   - cbreaker
   - forward
