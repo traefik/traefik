@@ -10,6 +10,13 @@ type Backend struct {
 	Servers        map[string]Server `json:"servers,omitempty"`
 	CircuitBreaker *CircuitBreaker   `json:"circuitBreaker,omitempty"`
 	LoadBalancer   *LoadBalancer     `json:"loadBalancer,omitempty"`
+	MaxConn        *MaxConn          `json:"maxConn,omitempty"`
+}
+
+// MaxConn holds maximum connection configuraiton
+type MaxConn struct {
+	Amount        int64  `json:"amount,omitempty"`
+	ExtractorFunc string `json:"extractorFunc,omitempty"`
 }
 
 // LoadBalancer holds load balancing configuration.
