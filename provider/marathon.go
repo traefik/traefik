@@ -40,7 +40,7 @@ type lightMarathonClient interface {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) error {
+func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	config := marathon.NewDefaultConfig()
 	config.URL = provider.Endpoint
 	config.EventsTransport = marathon.EventsTransportSSE
@@ -64,15 +64,19 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) 
 		if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
 			log.Errorf("Failed to register for events, %s", err)
 		} else {
-			safe.Go(func() {
+			pool.Go(func(stop chan bool) {
 				for {
-					event := <-update
-					log.Debug("Marathon event receveived", event)
-					configuration := provider.loadMarathonConfig()
-					if configuration != nil {
-						configurationChan <- types.ConfigMessage{
-							ProviderName:  "marathon",
-							Configuration: configuration,
+					select {
+					case <-stop:
+						return
+					case event := <-update:
+						log.Debug("Marathon event receveived", event)
+						configuration := provider.loadMarathonConfig()
+						if configuration != nil {
+							configurationChan <- types.ConfigMessage{
+								ProviderName:  "marathon",
+								Configuration: configuration,
+							}
 						}
 					}
 				}

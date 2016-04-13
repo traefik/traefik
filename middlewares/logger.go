@@ -35,5 +35,7 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 
 // Close closes the logger (i.e. the file).
 func (l *Logger) Close() {
-	l.file.Close()
+	if l.file != nil {
+		l.file.Close()
+	}
 }

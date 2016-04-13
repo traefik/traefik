@@ -1,28 +1,30 @@
 package safe
 
 import (
-	"log"
-	"runtime/debug"
+	"sync"
 )
 
-// Go starts a recoverable goroutine
-func Go(goroutine func()) {
-	GoWithRecover(goroutine, defaultRecoverGoroutine)
+// Safe contains a thread-safe value
+type Safe struct {
+	value interface{}
+	lock  sync.RWMutex
 }
 
-// GoWithRecover starts a recoverable goroutine using given customRecover() function
-func GoWithRecover(goroutine func(), customRecover func(err interface{})) {
-	go func() {
-		defer func() {
-			if err := recover(); err != nil {
-				customRecover(err)
-			}
-		}()
-		goroutine()
-	}()
+// New create a new Safe instance given a value
+func New(value interface{}) *Safe {
+	return &Safe{value: value, lock: sync.RWMutex{}}
 }
 
-func defaultRecoverGoroutine(err interface{}) {
-	log.Println(err)
-	debug.PrintStack()
+// Get returns the value
+func (s *Safe) Get() interface{} {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.value
+}
+
+// Set sets a new value
+func (s *Safe) Set(value interface{}) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.value = value
 }

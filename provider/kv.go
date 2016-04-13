@@ -36,15 +36,17 @@ type KvTLS struct {
 	InsecureSkipVerify bool
 }
 
-func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix string) {
+func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix string, stop chan bool) {
 	for {
-		chanKeys, err := provider.kvclient.WatchTree(provider.Prefix, make(chan struct{}) /* stop chan */)
+		events, err := provider.kvclient.WatchTree(provider.Prefix, make(chan struct{}) /* stop chan */)
 		if err != nil {
 			log.Errorf("Failed to WatchTree %s", err)
 			continue
 		}
-
-		for range chanKeys {
+		select {
+		case <-stop:
+			return
+		case <-events:
 			configuration := provider.loadConfig()
 			if configuration != nil {
 				configurationChan <- types.ConfigMessage{
@@ -53,11 +55,10 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 				}
 			}
 		}
-		log.Warnf("Intermittent failure to WatchTree KV. Retrying.")
 	}
 }
 
-func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error {
+func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	storeConfig := &store.Config{
 		ConnectionTimeout: 30 * time.Second,
 		Bucket:            "traefik",
@@ -102,8 +103,8 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage) error 
 	}
 	provider.kvclient = kv
 	if provider.Watch {
-		safe.Go(func() {
-			provider.watchKv(configurationChan, provider.Prefix)
+		pool.Go(func(stop chan bool) {
+			provider.watchKv(configurationChan, provider.Prefix, stop)
 		})
 	}
 	configuration := provider.loadConfig()

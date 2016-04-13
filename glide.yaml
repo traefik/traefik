@@ -174,3 +174,4 @@ import:
     - tlsconfig
   - package: github.com/docker/go-units
   - package: github.com/mailgun/multibuf
+  - package: github.com/streamrail/concurrent-map
