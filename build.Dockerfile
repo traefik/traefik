@@ -1,4 +1,4 @@
-FROM golang:1.6.0-alpine
+FROM golang:1.6.1-alpine
 
 RUN apk update && apk add git bash gcc musl-dev \
 && go get github.com/Masterminds/glide \
