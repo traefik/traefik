@@ -39,7 +39,7 @@ func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 	time.Sleep(2000 * time.Millisecond)
 }
 
-func (s *ConsulCatalogSuite) registerService(name string, address string, port int) error {
+func (s *ConsulCatalogSuite) registerService(name string, address string, port int, tags []string) error {
 	catalog := s.consulClient.Catalog()
 	_, err := catalog.Register(
 		&api.CatalogRegistration{
@@ -50,6 +50,7 @@ func (s *ConsulCatalogSuite) registerService(name string, address string, port i
 				Service: name,
 				Address: address,
 				Port:    port,
+				Tags:    tags,
 			},
 		},
 		&api.WriteOptions{},
@@ -93,7 +94,7 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 
 	nginx := s.composeProject.Container(c, "nginx")
 
-	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80)
+	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
