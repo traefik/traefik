@@ -50,8 +50,8 @@ func TestLogger(t *testing.T) {
 
 	r := &http.Request{
 		Header: map[string][]string{
-			"User-Agent": []string{testUserAgent},
-			"Referer":    []string{testReferer},
+			"User-Agent": {testUserAgent},
+			"Referer":    {testReferer},
 		},
 		Proto:      testProto,
 		Host:       testHostname,
@@ -104,13 +104,13 @@ func LogWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	saveBackendNameForLogger(r, testBackendName)
 }
 
-func (this *logtestResponseWriter) Header() http.Header {
+func (lrw *logtestResponseWriter) Header() http.Header {
 	return map[string][]string{}
 }
 
-func (this *logtestResponseWriter) Write(b []byte) (int, error) {
+func (lrw *logtestResponseWriter) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func (this *logtestResponseWriter) WriteHeader(s int) {
+func (lrw *logtestResponseWriter) WriteHeader(s int) {
 }

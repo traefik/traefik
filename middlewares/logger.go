@@ -1,7 +1,7 @@
 package middlewares
 
 /*
-Middleware logger writes each request and its response to the access log.
+Middleware Logger writes each request and its response to the access log.
 It gets some information from the logInfoResponseWriter set up by previous middleware.
 */
 
@@ -23,6 +23,7 @@ const (
 	loggerReqidHeader = "X-Traefik-Reqid"
 )
 
+// Logger holds the File defining the access log
 type Logger struct {
 	file *os.File
 }
@@ -68,15 +69,15 @@ func SetBackend2FrontendMap(newMap *map[string]string) {
 	backend2FrontendMap = *newMap
 }
 
-func (this *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if this.file == nil {
+func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	if l.file == nil {
 		next(rw, r)
 	} else {
 		reqid := strconv.FormatUint(atomic.AddUint64(&reqidCounter, 1), 10)
 		log.Debugf("Starting request %s: %s %s %s %s %s", reqid, r.Method, r.URL.RequestURI(), r.Proto, r.Referer(), r.UserAgent())
 		r.Header[loggerReqidHeader] = []string{reqid}
 		defer deleteReqid(r, reqid)
-		frontendBackendLoggingHandler{reqid, this.file, next}.ServeHTTP(rw, r)
+		frontendBackendLoggingHandler{reqid, l.file, next}.ServeHTTP(rw, r)
 	}
 }
 
@@ -89,7 +90,7 @@ func deleteReqid(r *http.Request, reqid string) {
 	delete(r.Header, loggerReqidHeader)
 }
 
-// Save the backend name for the logger
+// Save the backend name for the Logger
 func saveBackendNameForLogger(r *http.Request, backendName string) {
 	if reqidHdr := r.Header[loggerReqidHeader]; len(reqidHdr) == 1 {
 		reqid := reqidHdr[0]
@@ -102,19 +103,19 @@ func saveBackendNameForLogger(r *http.Request, backendName string) {
 	}
 }
 
-// Close closes the logger (i.e. the file).
-func (this *Logger) Close() {
-	this.file.Close()
+// Close closes the Logger (i.e. the file).
+func (l *Logger) Close() {
+	l.file.Close()
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time
-func (this frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (fblh frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	startTime := time.Now()
 	infoRw := &logInfoResponseWriter{rw: rw}
 	mutex.Lock()
-	infoRwMap[this.reqid] = infoRw
+	infoRwMap[fblh.reqid] = infoRw
 	mutex.Unlock()
-	this.handlerFunc(infoRw, req)
+	fblh.handlerFunc(infoRw, req)
 
 	username := "-"
 	url := *req.URL
@@ -145,56 +146,56 @@ func (this frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req 
 	size := infoRw.GetSize()
 
 	elapsed := time.Now().UTC().Sub(startTime.UTC())
-	fmt.Fprintf(this.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %s%s`,
-		host, username, ts, method, uri, proto, status, size, referer, agent, this.reqid, frontend, backend, elapsed, "\n")
+	fmt.Fprintf(fblh.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %s%s`,
+		host, username, ts, method, uri, proto, status, size, referer, agent, fblh.reqid, frontend, backend, elapsed, "\n")
 
 }
 
-func (this *logInfoResponseWriter) Header() http.Header {
-	return this.rw.Header()
+func (lirw *logInfoResponseWriter) Header() http.Header {
+	return lirw.rw.Header()
 }
 
-func (this *logInfoResponseWriter) Write(b []byte) (int, error) {
-	if this.status == 0 {
-		this.status = http.StatusOK
+func (lirw *logInfoResponseWriter) Write(b []byte) (int, error) {
+	if lirw.status == 0 {
+		lirw.status = http.StatusOK
 	}
-	size, err := this.rw.Write(b)
-	this.size += size
+	size, err := lirw.rw.Write(b)
+	lirw.size += size
 	return size, err
 }
 
-func (this *logInfoResponseWriter) WriteHeader(s int) {
-	this.rw.WriteHeader(s)
-	this.status = s
+func (lirw *logInfoResponseWriter) WriteHeader(s int) {
+	lirw.rw.WriteHeader(s)
+	lirw.status = s
 }
 
-func (this *logInfoResponseWriter) Flush() {
-	f, ok := this.rw.(http.Flusher)
+func (lirw *logInfoResponseWriter) Flush() {
+	f, ok := lirw.rw.(http.Flusher)
 	if ok {
 		f.Flush()
 	}
 }
 
-func (this *logInfoResponseWriter) GetStatus() int {
-	return this.status
+func (lirw *logInfoResponseWriter) GetStatus() int {
+	return lirw.status
 }
 
-func (this *logInfoResponseWriter) GetSize() int {
-	return this.size
+func (lirw *logInfoResponseWriter) GetSize() int {
+	return lirw.size
 }
 
-func (this *logInfoResponseWriter) GetBackend() string {
-	return this.backend
+func (lirw *logInfoResponseWriter) GetBackend() string {
+	return lirw.backend
 }
 
-func (this *logInfoResponseWriter) GetFrontend() string {
-	return this.frontend
+func (lirw *logInfoResponseWriter) GetFrontend() string {
+	return lirw.frontend
 }
 
-func (this *logInfoResponseWriter) SetBackend(backend string) {
-	this.backend = backend
+func (lirw *logInfoResponseWriter) SetBackend(backend string) {
+	lirw.backend = backend
 }
 
-func (this *logInfoResponseWriter) SetFrontend(frontend string) {
-	this.frontend = frontend
+func (lirw *logInfoResponseWriter) SetFrontend(frontend string) {
+	lirw.frontend = frontend
 }

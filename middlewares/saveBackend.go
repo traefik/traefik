@@ -18,7 +18,7 @@ func NewSaveBackend(next http.Handler) *SaveBackend {
 	return &SaveBackend{next}
 }
 
-func (this *SaveBackend) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (sb *SaveBackend) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	saveBackendNameForLogger(r, (*r.URL).String())
-	this.next.ServeHTTP(rw, r)
+	sb.next.ServeHTTP(rw, r)
 }
