@@ -146,17 +146,24 @@ import:
     ref: a212099cbe6fbe8d07476bfda8d2d39b6ff8f325
   - package: github.com/spf13/cobra
     subpackages:
-    - /cobra
+    - cobra
   - package: github.com/google/go-querystring/query
-  - package: github.com/vulcand/vulcand/plugin/rewrite
-  - package: github.com/stretchr/testify/mock
+    subpackages:
+    - query
+  - package: github.com/vulcand/vulcand
+    subpackages:
+    - plugin/rewrite
+  - package: github.com/stretchr/testify
+    subpackages:
+    - mock
+    - assert
   - package: github.com/xenolf/lego
   - package: github.com/vdemeester/libkermit
     ref: 7e4e689a6fa9281e0fb9b7b9c297e22d5342a5ec
   - package: github.com/docker/libcompose
-    version: e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
+    ref:     e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
   - package: github.com/docker/distribution
-    version: ff6f38ccb69afa96214c7ee955359465d1fc767a
+    ref:     ff6f38ccb69afa96214c7ee955359465d1fc767a
     subpackages:
     - reference
   - package: github.com/docker/engine-api
@@ -174,3 +181,4 @@ import:
     - tlsconfig
   - package: github.com/docker/go-units
   - package: github.com/mailgun/multibuf
+  - package: github.com/mattn/go-shellwords
