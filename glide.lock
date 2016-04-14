@@ -1,5 +1,5 @@
-hash: 79b6eb2a613b5e2ce5c57150eec41ac04def3f232a3613fd8b5a88b5e1041b38
-updated: 2016-04-02T15:42:37.505896092+02:00
+hash: a541b553f1898a2eae523eb9c452deca120759d4e4f0741960dee9a02d4455d3
+updated: 2016-04-14T22:36:04.146603741Z
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -29,6 +29,7 @@ imports:
   - memmetrics
   - roundrobin
   - utils
+  - connlimit
   - stream
 - name: github.com/coreos/go-etcd
   version: cc90c7b091275e606ad0ca7102a23fb2072f3f5e
@@ -42,6 +43,7 @@ imports:
   version: ff6f38ccb69afa96214c7ee955359465d1fc767a
   subpackages:
   - reference
+  - digest
 - name: github.com/docker/docker
   version: f39987afe8d611407887b3094c03d6ba6a766a67
   subpackages:
@@ -82,18 +84,21 @@ imports:
   - utils
   - volume
 - name: github.com/docker/engine-api
-  version: 8924d6900370b4c7e7984be5adc61f50a80d7537
+  version: 9b12a765bbcbfbb9ab937fde4f6082bca48e97db
   subpackages:
   - client
   - types
   - types/container
   - types/filters
   - types/strslice
+  - types/events
   - client/transport
   - client/transport/cancellable
   - types/network
+  - types/reference
   - types/registry
   - types/time
+  - types/versions
   - types/blkiodev
 - name: github.com/docker/go-connections
   version: f549a9393d05688dff0992ef3efd8bbe6c628aeb
@@ -128,8 +133,9 @@ imports:
 - name: github.com/golang/glog
   version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
 - name: github.com/google/go-querystring
-  version: 6bb77fe6f42b85397288d4f6f67ac72f8f400ee7
+  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
+  - query
   - query
 - name: github.com/gorilla/context
   version: 215affda49addc4c8ef7e2534915df2c8c35c6cd
@@ -144,7 +150,7 @@ imports:
   subpackages:
   - api
 - name: github.com/hashicorp/hcl
-  version: 2604f3bda7e8960c1be1063709e7d7f0765048d0
+  version: 27a57f2605e04995c111273c263d51cee60d9bc4
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -170,10 +176,12 @@ imports:
   version: 565402cd71fbd9c12aa7e295324ea357e970a61e
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
+- name: github.com/mattn/go-shellwords
+  version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
 - name: github.com/Microsoft/go-winio
-  version: 9e2895e5f6c3f16473b91d37fae6e89990a4520c
+  version: 862b6557927a5c5c81e411c12aa6de7e566cbb7a
 - name: github.com/miekg/dns
-  version: 7e024ce8ce18b21b475ac6baf8fa3c42536bf2fa
+  version: 89d9c5e74bc17cc9edb5d44d4f2f93a7ac77e365
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/opencontainers/runc
@@ -193,19 +201,19 @@ imports:
 - name: github.com/spf13/cast
   version: ee7b3e0353166ab1f3a605294ac8cd2b77953778
 - name: github.com/spf13/cobra
-  version: 2ccf9e982a3e3eb21eba9c9ad8e546529fd74c71
+  version: 4c05eb1145f16d0e6bb4a3e1b6d769f4713cb41f
   subpackages:
   - cobra
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: 7f60f83a2c81bc3c3c0d5297f61ddfa68da9d3b7
+  version: 8f6a28b0916586e7f22fe931ae2fcfc380b1c0e6
 - name: github.com/spf13/viper
   version: a212099cbe6fbe8d07476bfda8d2d39b6ff8f325
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
-  version: 6fe211e493929a8aac0469b93f28b1d0688a9a3a
+  version: bcd9e3389dd03b0b668d11f4d462a6af6c2dfd60
   subpackages:
   - mock
   - assert
@@ -214,13 +222,13 @@ imports:
 - name: github.com/unrolled/render
   version: 26b4e3aac686940fe29521545afad9966ddfc80c
 - name: github.com/vdemeester/docker-events
-  version: bd72e1848b08db4b5ed1a2e9277621b9f5e5d1f3
+  version: 6ea3f28df37f29a47498bc8b32b36ad8491dbd37
 - name: github.com/vdemeester/libkermit
   version: 7e4e689a6fa9281e0fb9b7b9c297e22d5342a5ec
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
-  version: 8aaf36279137ac04ace3792a4f86098631b27d5a
+  version: 11677428db34c4a05354d66d028174d0e3c6e905
   subpackages:
   - memmetrics
   - utils
@@ -237,11 +245,11 @@ imports:
 - name: github.com/wendal/errors
   version: f66c77a7882b399795a8987ebf87ef64a427417e
 - name: github.com/xenolf/lego
-  version: ca19a90028e242e878585941c2a27c8f3b3efc25
+  version: cbca761215ab827032602934cd0d936ecb38e42e
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: 9e7f5dc375abeb9619ea3c5c58502c428f457aa2
+  version: 1777f3ba8c1fed80fcaec3317e3aaa4f627764d2
   subpackages:
   - ocsp
 - name: golang.org/x/net
