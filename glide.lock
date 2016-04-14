@@ -1,5 +1,5 @@
-hash: a541b553f1898a2eae523eb9c452deca120759d4e4f0741960dee9a02d4455d3
-updated: 2016-04-14T22:36:04.146603741Z
+hash: 82dd3945bdec2fd7639fc1c5201db75a5674d02b71d3f87c6e19252da18d6ff9
+updated: 2016-04-14T23:27:39.172718045Z
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -135,7 +135,6 @@ imports:
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
-  - query
   - query
 - name: github.com/gorilla/context
   version: 215affda49addc4c8ef7e2534915df2c8c35c6cd
