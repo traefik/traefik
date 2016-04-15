@@ -189,7 +189,7 @@ func (provider *ConsulCatalog) getNodes(index map[string][]string) ([]catalogUpd
 	return nodes, nil
 }
 
-func (provider *ConsulCatalog) watch(configurationChan chan<- types.ConfigMessage) error {
+func (provider *ConsulCatalog) watch(configurationChan chan<- types.ConfigMessage, stop chan bool) error {
 	stopCh := make(chan struct{})
 	serviceCatalog := provider.watchServices(stopCh)
 
@@ -197,6 +197,8 @@ func (provider *ConsulCatalog) watch(configurationChan chan<- types.ConfigMessag
 
 	for {
 		select {
+		case <-stop:
+			return nil
 		case index, ok := <-serviceCatalog:
 			if !ok {
 				return errors.New("Consul service list nil")
@@ -217,7 +219,7 @@ func (provider *ConsulCatalog) watch(configurationChan chan<- types.ConfigMessag
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage) error {
+func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	config := api.DefaultConfig()
 	config.Address = provider.Endpoint
 	client, err := api.NewClient(config)
@@ -226,12 +228,12 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 	}
 	provider.client = client
 
-	safe.Go(func() {
+	pool.Go(func(stop chan bool) {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Consul connection error %+v, retrying in %s", err, time)
 		}
 		worker := func() error {
-			return provider.watch(configurationChan)
+			return provider.watch(configurationChan, stop)
 		}
 		err := backoff.RetryNotify(worker, backoff.NewExponentialBackOff(), notify)
 		if err != nil {

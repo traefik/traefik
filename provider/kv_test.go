@@ -258,7 +258,7 @@ func TestKvWatchTree(t *testing.T) {
 
 	configChan := make(chan types.ConfigMessage)
 	safe.Go(func() {
-		provider.watchKv(configChan, "prefix")
+		provider.watchKv(configChan, "prefix", make(chan bool, 1))
 	})
 
 	select {

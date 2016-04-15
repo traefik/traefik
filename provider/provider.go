@@ -8,6 +8,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"unicode"
 )
@@ -16,7 +17,7 @@ import (
 type Provider interface {
 	// Provide allows the provider to provide configurations to traefik
 	// using the given configuration channel.
-	Provide(configurationChan chan<- types.ConfigMessage) error
+	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error
 }
 
 // BaseProvider should be inherited by providers

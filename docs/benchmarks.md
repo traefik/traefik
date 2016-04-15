@@ -207,6 +207,7 @@ Traefik is obviously slower than Nginx, but not so much: Traefik can serve 28392
 Not bad for young project :) !
 
 Some areas of possible improvements:
+
 - Use [GO_REUSEPORT](https://github.com/kavu/go_reuseport) listener
 - Run a separate server instance per CPU core with `GOMAXPROCS=1` (it appears during benchmarks that there is a lot more context switches with traefik than with nginx)
 
