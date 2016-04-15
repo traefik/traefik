@@ -46,4 +46,7 @@ pages:
   - Getting Started: index.md
   - Basics: basics.md
   - traefik.toml: toml.md
+  - User Guide:
+      - 'Configuration examples': 'user-guide/examples.md'
+      - 'Swarm cluster': 'user-guide/swarm.md'
   - Benchmarks: benchmarks.md
