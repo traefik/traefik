@@ -26,6 +26,6 @@
   "labels": {
       "traefik.weight": "1",
       "traefik.protocole": "http",
-      "traefik.frontend.rule" : "Headers:Host,test.localhost"
+      "traefik.frontend.rule" : "Host:test.marathon.localhost"
   }
 }

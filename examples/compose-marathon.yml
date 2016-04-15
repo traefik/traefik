@@ -6,7 +6,7 @@ zk:
     ZK_ID: 1
 
 master:
-  image: mesosphere/mesos-master:0.26.0-0.2.145.ubuntu1404
+  image: mesosphere/mesos-master:0.28.1-2.0.20.ubuntu1404
   net: host
   environment:
     MESOS_ZK: zk://127.0.0.1:2181/mesos
@@ -17,7 +17,7 @@ master:
     MESOS_WORK_DIR: /var/lib/mesos
 
 slave:
-  image: mesosphere/mesos-slave:0.26.0-0.2.145.ubuntu1404
+  image: mesosphere/mesos-slave:0.28.1-2.0.20.ubuntu1404
   net: host
   pid: host
   privileged: true
@@ -34,10 +34,19 @@ slave:
     - /lib/x86_64-linux-gnu/libsystemd-journal.so.0:/lib/x86_64-linux-gnu/libsystemd-journal.so.0
 
 marathon:
-  image: mesosphere/marathon:v0.13.0
+  image: mesosphere/marathon:v1.1.1
   net: host
   environment:
     MARATHON_MASTER: zk://127.0.0.1:2181/mesos
     MARATHON_ZK: zk://127.0.0.1:2181/marathon
     MARATHON_HOSTNAME: 127.0.0.1
   command: --event_subscriber http_callback
+
+traefik:
+  image: traefik
+  command: -c /dev/null --web --logLevel=DEBUG --marathon --marathon.domain marathon.localhost --marathon.endpoint http://172.17.0.1:8080 --marathon.watch
+  ports:
+    - "8000:80"
+    - "8081:8080"
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
