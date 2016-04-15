@@ -82,6 +82,88 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 	}
 }
 
+func TestConsulCatalogGetBackendAddress(t *testing.T) {
+	provider := &ConsulCatalog{
+		Domain: "localhost",
+	}
+
+	services := []struct {
+		node     *api.ServiceEntry
+		expected string
+	}{
+		{
+			node: &api.ServiceEntry{
+				Node: &api.Node{
+					Address: "10.1.0.1",
+				},
+				Service: &api.AgentService{
+					Address: "10.2.0.1",
+				},
+			},
+			expected: "10.2.0.1",
+		},
+		{
+			node: &api.ServiceEntry{
+				Node: &api.Node{
+					Address: "10.1.0.1",
+				},
+				Service: &api.AgentService{
+					Address: "",
+				},
+			},
+			expected: "10.1.0.1",
+		},
+	}
+
+	for _, e := range services {
+		actual := provider.getBackendAddress(e.node)
+		if actual != e.expected {
+			t.Fatalf("expected %q, got %q", e.expected, actual)
+		}
+	}
+}
+
+func TestConsulCatalogGetBackendName(t *testing.T) {
+	provider := &ConsulCatalog{
+		Domain: "localhost",
+	}
+
+	services := []struct {
+		node     *api.ServiceEntry
+		expected string
+	}{
+		{
+			node: &api.ServiceEntry{
+				Service: &api.AgentService{
+					Service: "api",
+					Address: "10.0.0.1",
+					Port:    80,
+					Tags:    []string{},
+				},
+			},
+			expected: "api--10-0-0-1--80--0",
+		},
+		{
+			node: &api.ServiceEntry{
+				Service: &api.AgentService{
+					Service: "api",
+					Address: "10.0.0.1",
+					Port:    80,
+					Tags:    []string{"traefik.weight=42", "traefik.enable=true"},
+				},
+			},
+			expected: "api--10-0-0-1--80--traefik-weight-42--traefik-enable-true--1",
+		},
+	}
+
+	for i, e := range services {
+		actual := provider.getBackendName(e.node, i)
+		if actual != e.expected {
+			t.Fatalf("expected %q, got %q", e.expected, actual)
+		}
+	}
+}
+
 func TestConsulCatalogBuildConfig(t *testing.T) {
 	provider := &ConsulCatalog{
 		Domain: "localhost",
@@ -154,7 +236,7 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test--127-0-0-1--80": {
+						"test--127-0-0-1--80--traefik-backend-weight-42--random-foo-bar--traefik-backend-passHostHeader-true--traefik-protocol-https--0": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
