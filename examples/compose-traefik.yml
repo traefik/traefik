@@ -1,12 +1,11 @@
 traefik:
   image: traefik
-  command: --web --docker --docker.domain=docker.localhost --logLevel=DEBUG
+  command: -c /dev/null --web --docker --docker.domain=docker.localhost --logLevel=DEBUG
   ports:
     - "80:80"
     - "8080:8080"
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
-    - /dev/null:/traefik.toml
 
 whoami1:
   image: emilevauge/whoami
