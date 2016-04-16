@@ -130,6 +130,15 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 				eventHandler.Handle("die", startStopHandle)
 
 				errChan := events.MonitorWithHandler(ctx, dockerClient, options, eventHandler)
+				pool.Go(func(stop chan bool) {
+					for {
+						select {
+						case <-stop:
+							cancel()
+							return
+						}
+					}
+				})
 				if err := <-errChan; err != nil {
 					return err
 				}
