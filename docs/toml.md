@@ -122,6 +122,12 @@ entryPoints]
 ## ACME (Let's Encrypt) configuration
 
 ```toml
+# Sample entrypoint configuration when using ACME
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
 # Enable ACME (Let's Encrypt): automatic SSL
 #
 # Optional
@@ -166,6 +172,7 @@ entryPoint = "https"
 
 # Domains list
 # You can provide SANs (alternative domains) to each main domain
+# All domains must have A/AAAA records pointing to Traefik
 # WARNING, Take note that Let's Encrypt have rate limiting: https://community.letsencrypt.org/t/quick-start-guide/1631
 # Each domain & SANs will lead to a certificate request.
 #
