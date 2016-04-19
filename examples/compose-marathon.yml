@@ -43,7 +43,7 @@ marathon:
   command: --event_subscriber http_callback
 
 traefik:
-  image: traefik
+  image: containous/traefik
   command: -c /dev/null --web --logLevel=DEBUG --marathon --marathon.domain marathon.localhost --marathon.endpoint http://172.17.0.1:8080 --marathon.watch
   ports:
     - "8000:80"

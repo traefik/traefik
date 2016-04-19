@@ -69,6 +69,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 				return err
 			}
 			pool.Go(func(stop chan bool) {
+				defer close(update)
 				for {
 					select {
 					case <-stop:
@@ -85,6 +86,11 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 					}
 				}
 			})
+		}
+		configuration := provider.loadMarathonConfig()
+		configurationChan <- types.ConfigMessage{
+			ProviderName:  "marathon",
+			Configuration: configuration,
 		}
 		return nil
 	}
