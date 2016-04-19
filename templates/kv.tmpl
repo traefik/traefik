@@ -1,19 +1,19 @@
 {{$frontends := List .Prefix "/frontends/" }}
 {{$backends :=  List .Prefix "/backends/"}}
 
-{{range $backends}}
+[backends]{{range $backends}}
 {{$backend := .}}
 {{$servers := List $backend "/servers/" }}
 
 {{$circuitBreaker := Get "" . "/circuitbreaker/" "expression"}}
 {{with $circuitBreaker}}
-[backends.{{Last $backend}}.circuitBreaker]
+[backends."{{Last $backend}}".circuitBreaker]
     expression = "{{$circuitBreaker}}"
 {{end}}
 
 {{$loadBalancer := Get "" . "/loadbalancer/" "method"}}
 {{with $loadBalancer}}
-[backends.{{Last $backend}}.loadBalancer]
+[backends."{{Last $backend}}".loadBalancer]
     method = "{{$loadBalancer}}"
 {{end}}
 
@@ -21,14 +21,14 @@
 {{$maxConnExtractorFunc := Get "" . "/maxconn/" "extractorfunc"}}
 {{with $maxConnAmt}}
 {{with $maxConnExtractorFunc}}
-[backends.{{Last $backend}}.maxConn]
+[backends."{{Last $backend}}".maxConn]
     amount = {{$maxConnAmt}}
     extractorFunc = "{{$maxConnExtractorFunc}}"
 {{end}}
 {{end}}
 
 {{range $servers}}
-[backends.{{Last $backend}}.servers.{{Last .}}]
+[backends."{{Last $backend}}".servers."{{Last .}}"]
     url = "{{Get "" . "/url"}}"
     weight = {{Get ""  . "/weight"}}
 {{end}}
