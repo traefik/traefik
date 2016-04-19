@@ -125,8 +125,8 @@ func (provider *ConsulCatalog) getFrontendRule(service serviceUpdate) string {
 
 func (provider *ConsulCatalog) getAttribute(name string, tags []string, defaultValue string) string {
 	for _, tag := range tags {
-		if strings.Index(tag, DefaultConsulCatalogTagPrefix+".") == 0 {
-			if kv := strings.SplitN(tag[len(DefaultConsulCatalogTagPrefix+"."):], "=", 2); len(kv) == 2 && kv[0] == name {
+		if strings.Index(strings.ToLower(tag), DefaultConsulCatalogTagPrefix+".") == 0 {
+			if kv := strings.SplitN(tag[len(DefaultConsulCatalogTagPrefix+"."):], "=", 2); len(kv) == 2 && strings.ToLower(kv[0]) == strings.ToLower(name) {
 				return kv[1]
 			}
 		}
