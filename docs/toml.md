@@ -90,7 +90,7 @@
 #       regex = "^http://localhost/(.*)"
 #       replacement = "http://mydomain/$1"
 
-entryPoints]
+[entryPoints]
   [entryPoints.http]
   address = ":80"
 ```
