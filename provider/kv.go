@@ -10,8 +10,10 @@ import (
 	"text/template"
 	"time"
 
+	"errors"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/docker/libkv"
@@ -37,24 +39,37 @@ type KvTLS struct {
 }
 
 func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix string, stop chan bool) {
-	for {
+	operation := func() error {
 		events, err := provider.kvclient.WatchTree(provider.Prefix, make(chan struct{}) /* stop chan */)
 		if err != nil {
 			log.Errorf("Failed to WatchTree %s", err)
-			continue
+			return err
 		}
-		select {
-		case <-stop:
-			return
-		case <-events:
-			configuration := provider.loadConfig()
-			if configuration != nil {
-				configurationChan <- types.ConfigMessage{
-					ProviderName:  string(provider.storeType),
-					Configuration: configuration,
+		for {
+			select {
+			case <-stop:
+				return nil
+			case _, ok := <-events:
+				if !ok {
+					return errors.New("watchtree channel closed")
+				}
+				configuration := provider.loadConfig()
+				if configuration != nil {
+					configurationChan <- types.ConfigMessage{
+						ProviderName:  string(provider.storeType),
+						Configuration: configuration,
+					}
 				}
 			}
 		}
+	}
+
+	notify := func(err error, time time.Duration) {
+		log.Errorf("KV connection error %+v, retrying in %s", err, time)
+	}
+	err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+	if err != nil {
+		log.Fatalf("Cannot connect to KV server %+v", err)
 	}
 }
 
@@ -90,27 +105,37 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *
 		}
 	}
 
-	kv, err := libkv.NewStore(
-		provider.storeType,
-		strings.Split(provider.Endpoint, ","),
-		storeConfig,
-	)
+	operation := func() error {
+		kv, err := libkv.NewStore(
+			provider.storeType,
+			strings.Split(provider.Endpoint, ","),
+			storeConfig,
+		)
+		if err != nil {
+			return err
+		}
+		if _, err := kv.List(""); err != nil {
+			return err
+		}
+		provider.kvclient = kv
+		if provider.Watch {
+			pool.Go(func(stop chan bool) {
+				provider.watchKv(configurationChan, provider.Prefix, stop)
+			})
+		}
+		configuration := provider.loadConfig()
+		configurationChan <- types.ConfigMessage{
+			ProviderName:  string(provider.storeType),
+			Configuration: configuration,
+		}
+		return nil
+	}
+	notify := func(err error, time time.Duration) {
+		log.Errorf("KV connection error %+v, retrying in %s", err, time)
+	}
+	err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
 	if err != nil {
-		return err
-	}
-	if _, err := kv.List(""); err != nil {
-		return err
-	}
-	provider.kvclient = kv
-	if provider.Watch {
-		pool.Go(func(stop chan bool) {
-			provider.watchKv(configurationChan, provider.Prefix, stop)
-		})
-	}
-	configuration := provider.loadConfig()
-	configurationChan <- types.ConfigMessage{
-		ProviderName:  string(provider.storeType),
-		Configuration: configuration,
+		log.Fatalf("Cannot connect to KV server %+v", err)
 	}
 	return nil
 }
