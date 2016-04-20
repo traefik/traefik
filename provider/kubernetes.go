@@ -23,7 +23,7 @@ type Kubernetes struct {
 	Endpoint     string
 }
 
-func (provider *Kubernetes) createClient() (*k8s.Client, error) {
+func (provider *Kubernetes) createClient() (k8s.Client, error) {
 	var token string
 	tokenBytes, err := ioutil.ReadFile(serviceAccountToken)
 	if err == nil {
@@ -103,7 +103,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 	return nil
 }
 
-func (provider *Kubernetes) loadIngresses(k8sClient *k8s.Client) (*types.Configuration, error) {
+func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configuration, error) {
 	ingresses, err := k8sClient.GetIngresses(func(ingress k8s.Ingress) bool {
 		return true
 	})
@@ -136,7 +136,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient *k8s.Client) (*types.Configu
 				}
 				if len(pa.Path) > 0 {
 					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-						Rule: pa.Path,
+						Rule: "PathStrip:" + pa.Path,
 					}
 				}
 				services, err := k8sClient.GetServices(func(service k8s.Service) bool {
@@ -151,12 +151,12 @@ func (provider *Kubernetes) loadIngresses(k8sClient *k8s.Client) (*types.Configu
 					for _, port := range service.Spec.Ports {
 						if port.Port == pa.Backend.ServicePort.IntValue() {
 							protocol = port.Name
+							templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
+								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + pa.Backend.ServicePort.String(),
+								Weight: 1,
+							}
 							break
 						}
-					}
-					templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
-						URL:    protocol + "://" + service.Spec.ClusterIP + ":" + pa.Backend.ServicePort.String(),
-						Weight: 1,
 					}
 				}
 			}

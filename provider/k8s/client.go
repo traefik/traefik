@@ -21,7 +21,13 @@ const (
 )
 
 // Client is a client for the Kubernetes master.
-type Client struct {
+type Client interface {
+	GetIngresses(predicate func(Ingress) bool) ([]Ingress, error)
+	WatchIngresses(predicate func(Ingress) bool, stopCh <-chan bool) (chan interface{}, chan error, error)
+	GetServices(predicate func(Service) bool) ([]Service, error)
+}
+
+type clientImpl struct {
 	endpointURL string
 	tls         *tls.Config
 	token       string
@@ -32,12 +38,12 @@ type Client struct {
 // The provided host is an url (scheme://hostname[:port]) of a
 // Kubernetes master without any path.
 // The provided client is an authorized http.Client used to perform requests to the Kubernetes API master.
-func NewClient(baseURL string, caCert []byte, token string) (*Client, error) {
+func NewClient(baseURL string, caCert []byte, token string) (Client, error) {
 	validURL, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse URL %q: %v", baseURL, err)
 	}
-	return &Client{
+	return &clientImpl{
 		endpointURL: strings.TrimSuffix(validURL.String(), "/"),
 		token:       token,
 		caCert:      caCert,
@@ -45,7 +51,7 @@ func NewClient(baseURL string, caCert []byte, token string) (*Client, error) {
 }
 
 // GetIngresses returns all services in the cluster
-func (c *Client) GetIngresses(predicate func(Ingress) bool) ([]Ingress, error) {
+func (c *clientImpl) GetIngresses(predicate func(Ingress) bool) ([]Ingress, error) {
 	getURL := c.endpointURL + extentionsEndpoint + defaultIngress
 	request := gorequest.New().Get(getURL)
 	if len(c.token) > 0 {
@@ -76,7 +82,7 @@ func (c *Client) GetIngresses(predicate func(Ingress) bool) ([]Ingress, error) {
 }
 
 // WatchIngresses returns all services in the cluster
-func (c *Client) WatchIngresses(predicate func(Ingress) bool, stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c *clientImpl) WatchIngresses(predicate func(Ingress) bool, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	watchCh := make(chan interface{})
 	errCh := make(chan error)
 
@@ -130,7 +136,7 @@ func (c *Client) WatchIngresses(predicate func(Ingress) bool, stopCh <-chan bool
 }
 
 // GetServices returns all services in the cluster
-func (c *Client) GetServices(predicate func(Service) bool) ([]Service, error) {
+func (c *clientImpl) GetServices(predicate func(Service) bool) ([]Service, error) {
 	getURL := c.endpointURL + APIEndpoint + defaultService
 
 	// Make request to Kubernetes API

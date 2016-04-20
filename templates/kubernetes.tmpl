@@ -11,6 +11,6 @@
   backend = "{{$frontend.Backend}}"
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
-    rule = "PathStrip:{{$route.Rule}}"
+    rule = "{{$route.Rule}}"
     {{end}}
 {{end}}

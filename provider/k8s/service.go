@@ -249,6 +249,19 @@ type IntOrString struct {
 	StrVal string
 }
 
+// FromInt creates an IntOrString object with an int32 value. It is
+// your responsibility not to call this method with a value greater
+// than int32.
+// TODO: convert to (val int32)
+func FromInt(val int) IntOrString {
+	return IntOrString{Type: Int, IntVal: int32(val)}
+}
+
+// FromString creates an IntOrString object with a string value.
+func FromString(val string) IntOrString {
+	return IntOrString{Type: String, StrVal: val}
+}
+
 // String returns the string value, or the Itoa of the int value.
 func (intstr *IntOrString) String() string {
 	if intstr.Type == String {

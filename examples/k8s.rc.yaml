@@ -19,13 +19,6 @@ spec:
       - image: containous/traefik:k8s
         name: traefik-ingress-lb
         imagePullPolicy: Always
-        # livenessProbe:
-        #   httpGet:
-        #     path: /healthz
-        #     port: 10249
-        #     scheme: HTTP
-        #   initialDelaySeconds: 30
-        #   timeoutSeconds: 5
         ports:
         - containerPort: 80
           hostPort: 80
