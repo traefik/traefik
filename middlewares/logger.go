@@ -38,7 +38,7 @@ type frontendBackendLoggingHandler struct {
 var (
 	reqidCounter        uint64       // Request ID
 	infoRwMap           = cmap.New() // Map of reqid to response writer
-	backend2FrontendMap map[string]string
+	backend2FrontendMap *map[string]string
 )
 
 // logInfoResponseWriter is a wrapper of type http.ResponseWriter
@@ -65,7 +65,7 @@ func NewLogger(file string) *Logger {
 
 // SetBackend2FrontendMap is called by server.go to set up frontend translation
 func SetBackend2FrontendMap(newMap *map[string]string) {
-	backend2FrontendMap = *newMap
+	backend2FrontendMap = newMap
 }
 
 func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
@@ -93,7 +93,7 @@ func saveBackendNameForLogger(r *http.Request, backendName string) {
 		reqid := reqidHdr[0]
 		if infoRw, ok := infoRwMap.Get(reqid); ok {
 			infoRw.(*logInfoResponseWriter).SetBackend(backendName)
-			infoRw.(*logInfoResponseWriter).SetFrontend(backend2FrontendMap[backendName])
+			infoRw.(*logInfoResponseWriter).SetFrontend((*backend2FrontendMap)[backendName])
 		}
 	}
 }

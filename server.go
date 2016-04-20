@@ -35,10 +35,7 @@ import (
 	"github.com/streamrail/concurrent-map"
 )
 
-var (
-	oxyLogger           = &OxyLogger{}
-	backend2FrontendMap map[string]string
-)
+var oxyLogger = &OxyLogger{}
 
 // Server is the reverse-proxy/load-balancer engine
 type Server struct {
