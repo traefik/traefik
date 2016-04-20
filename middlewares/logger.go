@@ -15,7 +15,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -92,9 +91,9 @@ func deleteReqid(r *http.Request, reqid string) {
 func saveBackendNameForLogger(r *http.Request, backendName string) {
 	if reqidHdr := r.Header[loggerReqidHeader]; len(reqidHdr) == 1 {
 		reqid := reqidHdr[0]
-		if infoRw, ok := infoRwMap.get(reqid); ok {
-			infoRw.SetBackend(backendName)
-			infoRw.SetFrontend(backend2FrontendMap[backendName])
+		if infoRw, ok := infoRwMap.Get(reqid); ok {
+			infoRw.(*logInfoResponseWriter).SetBackend(backendName)
+			infoRw.(*logInfoResponseWriter).SetFrontend(backend2FrontendMap[backendName])
 		}
 	}
 }

@@ -184,7 +184,7 @@ func (server *Server) listenConfigurations(stop chan bool) {
 			currentConfigurations := server.currentConfigurations.Get().(configs)
 			if configMsg.Configuration == nil {
 				log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
-			} else if reflect.DeepEqual(server.currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
+			} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 				log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 			} else {
 				// Copy configurations to new map so we don't change current if LoadConfig fails
