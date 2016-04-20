@@ -1,5 +1,5 @@
-hash: fffa87220825895f7e3a6ceed3b13ecbf6bc934ab072fc9be3d00e3eef411ecb
-updated: 2016-04-13T14:05:41.300658168+02:00
+hash: 284404132ac4c657a3b5447c1e3fbac8e0573cf32838c85ecfca1d422120ae73
+updated: 2016-04-20T01:35:47.509571682Z
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -29,6 +29,7 @@ imports:
   - memmetrics
   - roundrobin
   - utils
+  - connlimit
   - stream
 - name: github.com/coreos/go-etcd
   version: cc90c7b091275e606ad0ca7102a23fb2072f3f5e
@@ -42,7 +43,6 @@ imports:
   version: ff6f38ccb69afa96214c7ee955359465d1fc767a
   subpackages:
   - reference
-  - digest
 - name: github.com/docker/docker
   version: f39987afe8d611407887b3094c03d6ba6a766a67
   subpackages:
@@ -94,10 +94,8 @@ imports:
   - client/transport
   - client/transport/cancellable
   - types/network
-  - types/reference
   - types/registry
   - types/time
-  - types/versions
   - types/blkiodev
 - name: github.com/docker/go-connections
   version: f549a9393d05688dff0992ef3efd8bbe6c628aeb
@@ -174,6 +172,8 @@ imports:
   version: 565402cd71fbd9c12aa7e295324ea357e970a61e
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
+- name: github.com/mattn/go-shellwords
+  version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
 - name: github.com/Microsoft/go-winio
   version: 862b6557927a5c5c81e411c12aa6de7e566cbb7a
 - name: github.com/miekg/dns
