@@ -323,6 +323,26 @@
 # [marathon.TLS]
 # InsecureSkipVerify = true
 
+################################################################
+# Kubernetes Ingress configuration backend
+################################################################
+# Enable Kubernetes Ingress configuration backend
+#
+# Optional
+#
+# [kubernetes]
+
+# Kubernetes server endpoint
+#
+# When deployed as a replication controller in Kubernetes,
+# Traefik will use env variable KUBERNETES_SERVICE_HOST
+# and KUBERNETES_SERVICE_PORT_HTTPS as endpoint
+# Secure token will be found in /var/run/secrets/kubernetes.io/serviceaccount/token
+# and SSL CA cert in /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+# 
+# Optional
+#
+# endpoint = "http://localhost:8080"
 
 ################################################################
 # Consul KV configuration backend
