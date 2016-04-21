@@ -258,7 +258,7 @@ defaultEntryPoints = ["http", "https"]
     rule = "Path:/test"
 ```
 
-- or put your rules in a separate file, for example `rules.tml`:
+- or put your rules in a separate file, for example `rules.toml`:
 
 ```toml
 # traefik.toml
