@@ -146,9 +146,14 @@ func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Confi
 	allNodes := []*api.ServiceEntry{}
 	services := []*serviceUpdate{}
 	for _, info := range catalog {
-		if len(info.Nodes) > 0 {
-			services = append(services, info.Service)
-			allNodes = append(allNodes, info.Nodes...)
+		for _, node := range info.Nodes {
+			isEnabled := provider.getAttribute("enable", node.Service.Tags, "true")
+			if isEnabled != "false" && len(info.Nodes) > 0 {
+				services = append(services, info.Service)
+				allNodes = append(allNodes, info.Nodes...)
+				break
+			}
+
 		}
 	}
 
