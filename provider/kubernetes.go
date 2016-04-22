@@ -136,10 +136,10 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 				}
 				if len(pa.Path) > 0 {
 					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-						Rule: "PathStrip:" + pa.Path,
+						Rule: "PathPrefixStrip:" + pa.Path,
 					}
 				}
-				services, err := k8sClient.GetServices(func(service k8s.Service) bool {
+				services, err := k8sClient.GetServices(i.Namespace, func(service k8s.Service) bool {
 					return service.Name == pa.Backend.ServiceName
 				})
 				if err != nil {

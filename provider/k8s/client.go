@@ -15,7 +15,6 @@ import (
 const (
 	// APIEndpoint defines the base path for kubernetes API resources.
 	APIEndpoint        = "/api/v1"
-	defaultService     = "/namespaces/default/services"
 	extentionsEndpoint = "/apis/extensions/v1beta1"
 	defaultIngress     = "/ingresses"
 )
@@ -24,7 +23,7 @@ const (
 type Client interface {
 	GetIngresses(predicate func(Ingress) bool) ([]Ingress, error)
 	WatchIngresses(predicate func(Ingress) bool, stopCh <-chan bool) (chan interface{}, chan error, error)
-	GetServices(predicate func(Service) bool) ([]Service, error)
+	GetServices(namespace string, predicate func(Service) bool) ([]Service, error)
 }
 
 type clientImpl struct {
@@ -136,8 +135,8 @@ func (c *clientImpl) WatchIngresses(predicate func(Ingress) bool, stopCh <-chan 
 }
 
 // GetServices returns all services in the cluster
-func (c *clientImpl) GetServices(predicate func(Service) bool) ([]Service, error) {
-	getURL := c.endpointURL + APIEndpoint + defaultService
+func (c *clientImpl) GetServices(namespace string, predicate func(Service) bool) ([]Service, error) {
+	getURL := c.endpointURL + APIEndpoint + "/namespaces/" + namespace + "/services"
 
 	// Make request to Kubernetes API
 	request := gorequest.New().Get(getURL)
