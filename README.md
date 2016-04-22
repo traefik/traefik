@@ -76,7 +76,7 @@ You can access to a simple HTML frontend of Træfik.
 
 ## Plumbing
 
-- [Oxy](https://github.com/vulcand/oxy): an awsome proxy library made by Mailgun guys
+- [Oxy](https://github.com/vulcand/oxy): an awesome proxy library made by Mailgun guys
 - [Gorilla mux](https://github.com/gorilla/mux): famous request router
 - [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
 - [Manners](https://github.com/mailgun/manners): graceful shutdown of http.Handler servers

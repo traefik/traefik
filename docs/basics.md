@@ -19,7 +19,7 @@ Let's zoom on Træfɪk and have an overview of its internal architecture:
 ![Architecture](img/internal.png)
 
 - Incoming requests end on [entrypoints](#entrypoints), as the name suggests, they are the network entry points into Træfɪk (listening port, SSL, traffic redirection...).
-- Traffic is then forwared to a matching [frontend](#frontends). A frontend defines routes from [entrypoints](#entrypoints) to [backends](#backends).
+- Traffic is then forwarded to a matching [frontend](#frontends). A frontend defines routes from [entrypoints](#entrypoints) to [backends](#backends).
 Routes are created using requests fields (`Host`, `Path`, `Headers`...) and can match or not a request.
 - The [frontend](#frontends) will then send the request to a [backend](#backends). A backend can be composed by one or more [servers](#servers), and by a load-balancing strategy.
 - Finally, the [server](#servers) will forward the request to the corresponding microservice in the private network.
@@ -142,7 +142,7 @@ For example:
 
 ## Servers
 
-Servers are simply defined using a `URL`. You can also apply a custom `weight` to each server (this will be used by load-balacning).
+Servers are simply defined using a `URL`. You can also apply a custom `weight` to each server (this will be used by load-balancing).
 
 Here is an example of backends and servers definition:
 
