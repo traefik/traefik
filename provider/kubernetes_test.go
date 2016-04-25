@@ -179,6 +179,9 @@ func (c clientMock) GetIngresses(predicate func(k8s.Ingress) bool) ([]k8s.Ingres
 func (c clientMock) WatchIngresses(predicate func(k8s.Ingress) bool, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	return c.watchChan, make(chan error), nil
 }
-func (c clientMock) GetServices(namespace string, predicate func(k8s.Service) bool) ([]k8s.Service, error) {
+func (c clientMock) GetServices(predicate func(k8s.Service) bool) ([]k8s.Service, error) {
 	return c.services, nil
+}
+func (c clientMock) WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error) {
+	return c.watchChan, make(chan error), nil
 }

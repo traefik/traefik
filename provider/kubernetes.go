@@ -6,8 +6,10 @@ import (
 	"github.com/containous/traefik/provider/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"io"
 	"io/ioutil"
 	"os"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -30,13 +32,13 @@ func (provider *Kubernetes) createClient() (k8s.Client, error) {
 		token = string(tokenBytes)
 		log.Debugf("Kubernetes token: %s", token)
 	} else {
-		log.Debugf("Kubernetes load token error: %s", err)
+		log.Errorf("Kubernetes load token error: %s", err)
 	}
 	caCert, err := ioutil.ReadFile(serviceAccountCACert)
 	if err == nil {
 		log.Debugf("Kubernetes CA cert: %s", serviceAccountCACert)
 	} else {
-		log.Debugf("Kubernetes load token error: %s", err)
+		log.Errorf("Kubernetes load token error: %s", err)
 	}
 	kubernetesHost := os.Getenv("KUBERNETES_SERVICE_HOST")
 	kubernetesPort := os.Getenv("KUBERNETES_SERVICE_PORT_HTTPS")
@@ -54,38 +56,45 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 	if err != nil {
 		return err
 	}
+	backOff := backoff.NewExponentialBackOff()
 
 	pool.Go(func(stop chan bool) {
 		stopWatch := make(chan bool)
+		defer close(stopWatch)
 		operation := func() error {
 			select {
 			case <-stop:
 				return nil
 			default:
 			}
-			ingressesChan, errChan, err := k8sClient.WatchIngresses(func(ingress k8s.Ingress) bool {
-				return true
-			}, stopWatch)
-			if err != nil {
-				log.Errorf("Error retrieving ingresses: %v", err)
-				return err
-			}
 			for {
-				select {
-				case <-stop:
-					stopWatch <- true
-					return nil
-				case err := <-errChan:
+				eventsChan, errEventsChan, err := k8sClient.WatchAll(stopWatch)
+				if err != nil {
+					log.Errorf("Error watching kubernetes events: %v", err)
 					return err
-				case event := <-ingressesChan:
-					log.Debugf("Received event from kubenetes %+v", event)
-					templateObjects, err := provider.loadIngresses(k8sClient)
-					if err != nil {
+				}
+			Watch:
+				for {
+					select {
+					case <-stop:
+						stopWatch <- true
+						return nil
+					case err := <-errEventsChan:
+						if strings.Contains(err.Error(), io.EOF.Error()) {
+							// edge case, kubernetes long-polling disconnection
+							break Watch
+						}
 						return err
-					}
-					configurationChan <- types.ConfigMessage{
-						ProviderName:  "kubernetes",
-						Configuration: provider.loadConfig(*templateObjects),
+					case event := <-eventsChan:
+						log.Debugf("Received event from kubenetes %+v", event)
+						templateObjects, err := provider.loadIngresses(k8sClient)
+						if err != nil {
+							return err
+						}
+						configurationChan <- types.ConfigMessage{
+							ProviderName:  "kubernetes",
+							Configuration: provider.loadConfig(*templateObjects),
+						}
 					}
 				}
 			}
@@ -94,11 +103,20 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Kubernetes connection error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+		err := backoff.RetryNotify(operation, backOff, notify)
 		if err != nil {
 			log.Fatalf("Cannot connect to Kubernetes server %+v", err)
 		}
 	})
+
+	templateObjects, err := provider.loadIngresses(k8sClient)
+	if err != nil {
+		return err
+	}
+	configurationChan <- types.ConfigMessage{
+		ProviderName:  "kubernetes",
+		Configuration: provider.loadConfig(*templateObjects),
+	}
 
 	return nil
 }
@@ -139,12 +157,17 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						Rule: "PathPrefixStrip:" + pa.Path,
 					}
 				}
-				services, err := k8sClient.GetServices(i.Namespace, func(service k8s.Service) bool {
+				services, err := k8sClient.GetServices(func(service k8s.Service) bool {
 					return service.Name == pa.Backend.ServiceName
 				})
 				if err != nil {
 					log.Errorf("Error retrieving services: %v", err)
 					continue
+				}
+				if len(services) == 0 {
+					// no backends found, delete frontend...
+					delete(templateObjects.Frontends, r.Host+pa.Path)
+					log.Errorf("Error retrieving services %s", pa.Backend.ServiceName)
 				}
 				for _, service := range services {
 					var protocol string
