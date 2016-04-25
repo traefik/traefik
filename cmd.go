@@ -51,6 +51,7 @@ var arguments = struct {
 	etcd          bool
 	etcdTLS       bool
 	boltdb        bool
+	kubernetes    bool
 }{
 	GlobalConfiguration{
 		EntryPoints: make(EntryPoints),
@@ -72,8 +73,10 @@ var arguments = struct {
 				TLS: &provider.KvTLS{},
 			},
 		},
-		Boltdb: &provider.BoltDb{},
+		Boltdb:     &provider.BoltDb{},
+		Kubernetes: &provider.Kubernetes{},
 	},
+	false,
 	false,
 	false,
 	false,
@@ -166,6 +169,9 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Boltdb.Filename, "boltdb.filename", "", "Override default configuration template. For advanced users :)")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Boltdb.Endpoint, "boltdb.endpoint", "127.0.0.1:4001", "Boltdb server endpoint")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Boltdb.Prefix, "boltdb.prefix", "/traefik", "Prefix used for KV store")
+
+	traefikCmd.PersistentFlags().BoolVar(&arguments.kubernetes, "kubernetes", false, "Enable Kubernetes backend")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Kubernetes.Endpoint, "kubernetes.endpoint", "127.0.0.1:8080", "Kubernetes server endpoint")
 
 	_ = viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))
 	_ = viper.BindPFlag("graceTimeOut", traefikCmd.PersistentFlags().Lookup("graceTimeOut"))

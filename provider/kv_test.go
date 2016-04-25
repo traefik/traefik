@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/containous/traefik/safe"
 	"github.com/docker/libkv/store"
 	"reflect"
 	"sort"
@@ -81,7 +80,7 @@ func TestKvList(t *testing.T) {
 				},
 			},
 			keys:     []string{"foo", "/baz/"},
-			expected: []string{"foo/baz/biz", "foo/baz/1", "foo/baz/2"},
+			expected: []string{"foo/baz/1", "foo/baz/2"},
 		},
 	}
 
@@ -257,9 +256,9 @@ func TestKvWatchTree(t *testing.T) {
 	}
 
 	configChan := make(chan types.ConfigMessage)
-	safe.Go(func() {
+	go func() {
 		provider.watchKv(configChan, "prefix", make(chan bool, 1))
-	})
+	}()
 
 	select {
 	case c1 := <-returnedChans:
@@ -339,7 +338,7 @@ func (s *Mock) List(prefix string) ([]*store.KVPair, error) {
 	}
 	kv := []*store.KVPair{}
 	for _, kvPair := range s.KVPairs {
-		if strings.HasPrefix(kvPair.Key, prefix) {
+		if strings.HasPrefix(kvPair.Key, prefix) && !strings.ContainsAny(strings.TrimPrefix(kvPair.Key, prefix), "/") {
 			kv = append(kv, kvPair)
 		}
 	}
@@ -364,4 +363,87 @@ func (s *Mock) AtomicDelete(key string, previous *store.KVPair) (bool, error) {
 // Close mock
 func (s *Mock) Close() {
 	return
+}
+
+func TestKVLoadConfig(t *testing.T) {
+	provider := &Kv{
+		Prefix: "traefik",
+		kvclient: &Mock{
+			KVPairs: []*store.KVPair{
+				{
+					Key:   "traefik/frontends/frontend.with.dot",
+					Value: []byte(""),
+				},
+				{
+					Key:   "traefik/frontends/frontend.with.dot/backend",
+					Value: []byte("backend.with.dot.too"),
+				},
+				{
+					Key:   "traefik/frontends/frontend.with.dot/routes",
+					Value: []byte(""),
+				},
+				{
+					Key:   "traefik/frontends/frontend.with.dot/routes/route.with.dot",
+					Value: []byte(""),
+				},
+				{
+					Key:   "traefik/frontends/frontend.with.dot/routes/route.with.dot/rule",
+					Value: []byte("Host:test.localhost"),
+				},
+				{
+					Key:   "traefik/backends/backend.with.dot.too",
+					Value: []byte(""),
+				},
+				{
+					Key:   "traefik/backends/backend.with.dot.too/servers",
+					Value: []byte(""),
+				},
+				{
+					Key:   "traefik/backends/backend.with.dot.too/servers/server.with.dot",
+					Value: []byte(""),
+				},
+				{
+					Key:   "traefik/backends/backend.with.dot.too/servers/server.with.dot/url",
+					Value: []byte("http://172.17.0.2:80"),
+				},
+				{
+					Key:   "traefik/backends/backend.with.dot.too/servers/server.with.dot/weight",
+					Value: []byte("1"),
+				},
+			},
+		},
+	}
+	actual := provider.loadConfig()
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"backend.with.dot.too": {
+				Servers: map[string]types.Server{
+					"server.with.dot": {
+						URL:    "http://172.17.0.2:80",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer:   nil,
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"frontend.with.dot": {
+				Backend:        "backend.with.dot.too",
+				PassHostHeader: false,
+				EntryPoints:    []string{},
+				Routes: map[string]types.Route{
+					"route.with.dot": {
+						Rule: "Host:test.localhost",
+					},
+				},
+			},
+		},
+	}
+	if !reflect.DeepEqual(actual.Backends, expected.Backends) {
+		t.Fatalf("expected %+v, got %+v", expected.Backends, actual.Backends)
+	}
+	if !reflect.DeepEqual(actual.Frontends, expected.Frontends) {
+		t.Fatalf("expected %+v, got %+v", expected.Frontends, actual.Frontends)
+	}
 }

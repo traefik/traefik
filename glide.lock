@@ -1,5 +1,5 @@
-hash: fffa87220825895f7e3a6ceed3b13ecbf6bc934ab072fc9be3d00e3eef411ecb
-updated: 2016-04-13T14:05:41.300658168+02:00
+hash: 6fe539ee86a9dc90a67b60f42b027c72359bed0ca22e7a94355ad80f37a32d68
+updated: 2016-04-18T21:31:13.195184921+02:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -8,7 +8,7 @@ imports:
 - name: github.com/boltdb/bolt
   version: 51f99c862475898df9773747d3accd05a7ca33c1
 - name: github.com/BurntSushi/toml
-  version: bd2bdf7f18f849530ef7a1c29a4290217cab32a1
+  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 - name: github.com/BurntSushi/ty
   version: 6add9cd6ad42d389d6ead1dde60b4ad71e46fd74
   subpackages:
@@ -29,6 +29,7 @@ imports:
   - memmetrics
   - roundrobin
   - utils
+  - connlimit
   - stream
 - name: github.com/coreos/go-etcd
   version: cc90c7b091275e606ad0ca7102a23fb2072f3f5e
@@ -42,7 +43,6 @@ imports:
   version: ff6f38ccb69afa96214c7ee955359465d1fc767a
   subpackages:
   - reference
-  - digest
 - name: github.com/docker/docker
   version: f39987afe8d611407887b3094c03d6ba6a766a67
   subpackages:
@@ -94,13 +94,11 @@ imports:
   - client/transport
   - client/transport/cancellable
   - types/network
-  - types/reference
   - types/registry
   - types/time
-  - types/versions
   - types/blkiodev
 - name: github.com/docker/go-connections
-  version: f549a9393d05688dff0992ef3efd8bbe6c628aeb
+  version: 5b7154ba2efe13ff86ae8830a9e7cb120b080d6e
   subpackages:
   - nat
   - sockets
@@ -148,7 +146,7 @@ imports:
   subpackages:
   - api
 - name: github.com/hashicorp/hcl
-  version: 2604f3bda7e8960c1be1063709e7d7f0765048d0
+  version: 27a57f2605e04995c111273c263d51cee60d9bc4
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -177,13 +175,17 @@ imports:
 - name: github.com/Microsoft/go-winio
   version: 862b6557927a5c5c81e411c12aa6de7e566cbb7a
 - name: github.com/miekg/dns
-  version: dd83d5cbcfd986f334b2747feeb907e281318fdf
+  version: a5cc44dc6b2eee8eddfd6581e1c6bb753ff0d176
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
+- name: github.com/moul/http2curl
+  version: 1812aee76a1ce98d604a44200c6a23c689b17a89
 - name: github.com/opencontainers/runc
   version: 4ab132458fc3e9dbeea624153e0331952dc4c8d5
   subpackages:
   - libcontainer/user
+- name: github.com/parnurzeal/gorequest
+  version: 91b42fce877cc6af96c45818665a4c615cc5f4ee
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -203,7 +205,7 @@ imports:
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: 1f296710f879815ad9e6d39d947c828c3e4b4c3d
+  version: 8f6a28b0916586e7f22fe931ae2fcfc380b1c0e6
 - name: github.com/spf13/viper
   version: a212099cbe6fbe8d07476bfda8d2d39b6ff8f325
 - name: github.com/streamrail/concurrent-map
@@ -220,7 +222,7 @@ imports:
 - name: github.com/unrolled/render
   version: 26b4e3aac686940fe29521545afad9966ddfc80c
 - name: github.com/vdemeester/docker-events
-  version: 6ea3f28df37f29a47498bc8b32b36ad8491dbd37
+  version: 1ecaca5890ef1ffd266fcbfdbe43073ef105704b
 - name: github.com/vdemeester/libkermit
   version: 7e4e689a6fa9281e0fb9b7b9c297e22d5342a5ec
 - name: github.com/vdemeester/shakers
@@ -243,11 +245,11 @@ imports:
 - name: github.com/wendal/errors
   version: f66c77a7882b399795a8987ebf87ef64a427417e
 - name: github.com/xenolf/lego
-  version: 23e88185c255e95a106835d80e76e5a3a66d7c54
+  version: 684400fe76a813e78d87803a62bc04d977c501d2
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: d68c3ecb62c850b645dc072a8d78006286bf81ca
+  version: 1777f3ba8c1fed80fcaec3317e3aaa4f627764d2
   subpackages:
   - ocsp
 - name: golang.org/x/net

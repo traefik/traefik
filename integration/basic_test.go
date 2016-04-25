@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/go-check/check"
 
+	"bytes"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -16,25 +17,45 @@ type SimpleSuite struct{ BaseSuite }
 
 func (s *SimpleSuite) TestNoOrInexistentConfigShouldFail(c *check.C) {
 	cmd := exec.Command(traefikBinary)
-	output, err := cmd.CombinedOutput()
 
-	c.Assert(err, checker.NotNil)
-	c.Assert(string(output), checker.Contains, "Error reading file: open : no such file or directory")
+	var b bytes.Buffer
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+
+	cmd.Start()
+	time.Sleep(500 * time.Millisecond)
+	output := b.Bytes()
+
+	c.Assert(string(output), checker.Contains, "No configuration file found")
+	cmd.Process.Kill()
 
 	nonExistentFile := "non/existent/file.toml"
 	cmd = exec.Command(traefikBinary, "--configFile="+nonExistentFile)
-	output, err = cmd.CombinedOutput()
 
-	c.Assert(err, checker.NotNil)
-	c.Assert(string(output), checker.Contains, fmt.Sprintf("Error reading file: open %s: no such file or directory", nonExistentFile))
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+
+	cmd.Start()
+	time.Sleep(500 * time.Millisecond)
+	output = b.Bytes()
+
+	c.Assert(string(output), checker.Contains, fmt.Sprintf("Error reading configuration file: open %s: no such file or directory", nonExistentFile))
+	cmd.Process.Kill()
 }
 
 func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/invalid_configuration.toml")
-	output, err := cmd.CombinedOutput()
 
-	c.Assert(err, checker.NotNil)
-	c.Assert(string(output), checker.Contains, "Error reading file: While parsing config: Near line 1")
+	var b bytes.Buffer
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+
+	cmd.Start()
+	time.Sleep(500 * time.Millisecond)
+	defer cmd.Process.Kill()
+	output := b.Bytes()
+
+	c.Assert(string(output), checker.Contains, "While parsing config: Near line 0 (last key parsed ''): Bare keys cannot contain '{'")
 }
 
 func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
