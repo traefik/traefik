@@ -1,9 +1,9 @@
 package: main
 import:
-- package: github.com/coreos/go-etcd
-  version: cc90c7b091275e606ad0ca7102a23fb2072f3f5e
+- package: github.com/coreos/etcd
+  version: 26e52d2bce9e3e11b77b68cc84bf91aebb1ef637
   subpackages:
-  - etcd
+  - client
 - package: github.com/mailgun/log
   version: 44874009257d4d47ba9806f1b7f72a32a015e4d8
 - package: github.com/containous/oxy
