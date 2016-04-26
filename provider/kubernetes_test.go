@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"encoding/json"
 	"github.com/containous/traefik/provider/k8s"
 	"github.com/containous/traefik/types"
 	"reflect"
@@ -35,7 +36,7 @@ func TestLoadIngresses(t *testing.T) {
 								{
 									Backend: k8s.IngressBackend{
 										ServiceName: "service3",
-										ServicePort: k8s.FromInt(803),
+										ServicePort: k8s.FromInt(443),
 									},
 								},
 								{
@@ -76,7 +77,6 @@ func TestLoadIngresses(t *testing.T) {
 				ClusterIP: "10.0.0.2",
 				Ports: []k8s.ServicePort{
 					{
-						Name: "http",
 						Port: 802,
 					},
 				},
@@ -92,7 +92,7 @@ func TestLoadIngresses(t *testing.T) {
 				Ports: []k8s.ServicePort{
 					{
 						Name: "http",
-						Port: 803,
+						Port: 443,
 					},
 				},
 			},
@@ -129,7 +129,7 @@ func TestLoadIngresses(t *testing.T) {
 						Weight: 1,
 					},
 					"3": {
-						URL:    "http://10.0.0.3:803",
+						URL:    "https://10.0.0.3:443",
 						Weight: 1,
 					},
 				},
@@ -159,11 +159,11 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 	}
-	if !reflect.DeepEqual(actual.Backends, expected.Backends) {
-		t.Fatalf("expected %+v, got %+v", expected.Backends, actual.Backends)
-	}
-	if !reflect.DeepEqual(actual.Frontends, expected.Frontends) {
-		t.Fatalf("expected %+v, got %+v", expected.Frontends, actual.Frontends)
+	actualJSON, _ := json.Marshal(actual)
+	expectedJSON, _ := json.Marshal(expected)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
 	}
 }
 

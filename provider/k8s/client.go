@@ -235,15 +235,6 @@ func (c *clientImpl) watch(url string, stopCh <-chan bool) (chan interface{}, ch
 	url = url + "?watch&resourceVersion=" + resourceVersion
 	// Make request to Kubernetes API
 	request := c.request(url)
-	// request.Transport.Dial = func(network, addr string) (net.Conn, error) {
-	// 	conn, err := net.Dial(network, addr)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	// No timeout for long-polling request
-	// 	conn.SetDeadline(time.Now())
-	// 	return conn, nil
-	// }
 	req, err := request.MakeRequest()
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to make watch request: GET %q : %v", url, err)
