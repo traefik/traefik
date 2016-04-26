@@ -33,7 +33,7 @@ import:
 - package: github.com/gorilla/handlers
   version: 40694b40f4a928c062f56849989d3e9cd0570e5f
 - package: github.com/docker/libkv
-  version: 3732f7ff1b56057c3158f10bceb1e79133025373
+  version: 7283ef27ed32fe267388510a91709b307bb9942c
 - package: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
 - package: github.com/vdemeester/shakers

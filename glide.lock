@@ -108,7 +108,7 @@ imports:
 - name: github.com/docker/libcompose
   version: e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
 - name: github.com/docker/libkv
-  version: 3732f7ff1b56057c3158f10bceb1e79133025373
+  version: 7283ef27ed32fe267388510a91709b307bb9942c
   subpackages:
   - store
   - store/boltdb
