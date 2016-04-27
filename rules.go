@@ -116,7 +116,7 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 	}
 	parsedFunction, ok := functions[parsedFunctions[0]]
 	if !ok {
-		return nil, errors.New("Error parsing rule: " + expression + ". Unknow function: " + parsedFunctions[0])
+		return nil, errors.New("Error parsing rule: " + expression + ". Unknown function: " + parsedFunctions[0])
 	}
 	parsedFunctions = append(parsedFunctions[:0], parsedFunctions[1:]...)
 	fargs := func(c rune) bool {
