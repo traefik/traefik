@@ -7,11 +7,9 @@ import (
 	"fmt"
 	"github.com/containous/traefik/safe"
 	"github.com/parnurzeal/gorequest"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 const (
@@ -57,7 +55,7 @@ func (c *clientImpl) GetIngresses(predicate func(Ingress) bool) ([]Ingress, erro
 
 	body, err := c.do(c.request(getURL))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: GET %q : %v", getURL, err)
+		return nil, fmt.Errorf("failed to create ingresses request: GET %q : %v", getURL, err)
 	}
 
 	var ingressList IngressList
@@ -85,7 +83,7 @@ func (c *clientImpl) GetServices(predicate func(Service) bool) ([]Service, error
 
 	body, err := c.do(c.request(getURL))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: GET %q : %v", getURL, err)
+		return nil, fmt.Errorf("failed to create services request: GET %q : %v", getURL, err)
 	}
 
 	var serviceList ServiceList
@@ -133,22 +131,22 @@ func (c *clientImpl) WatchAll(stopCh <-chan bool) (chan interface{}, chan error,
 	stopIngresses := make(chan bool)
 	chanIngresses, chanIngressesErr, err := c.WatchIngresses(stopIngresses)
 	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create watch %v", err)
+		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
 	stopServices := make(chan bool)
 	chanServices, chanServicesErr, err := c.WatchServices(stopServices)
 	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create watch %v", err)
+		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
 	stopPods := make(chan bool)
 	chanPods, chanPodsErr, err := c.WatchPods(stopPods)
 	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create watch %v", err)
+		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
 	stopReplicationControllers := make(chan bool)
 	chanReplicationControllers, chanReplicationControllersErr, err := c.WatchReplicationControllers(stopReplicationControllers)
 	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create watch %v", err)
+		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
 	go func() {
 		defer close(watchCh)
@@ -225,34 +223,26 @@ func (c *clientImpl) watch(url string, stopCh <-chan bool) (chan interface{}, ch
 	// get version
 	body, err := c.do(c.request(url))
 	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create request: GET %q : %v", url, err)
+		return watchCh, errCh, fmt.Errorf("failed to do version request: GET %q : %v", url, err)
 	}
 
 	var generic GenericObject
 	if err := json.Unmarshal(body, &generic); err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create request: GET %q : %v", url, err)
+		return watchCh, errCh, fmt.Errorf("failed to decode version %v", err)
 	}
 	resourceVersion := generic.ResourceVersion
 
 	url = url + "?watch&resourceVersion=" + resourceVersion
 	// Make request to Kubernetes API
 	request := c.request(url)
-	request.Transport.Dial = func(network, addr string) (net.Conn, error) {
-		conn, err := net.Dial(network, addr)
-		if err != nil {
-			return nil, err
-		}
-		// No timeout for long-polling request
-		conn.SetDeadline(time.Now())
-		return conn, nil
-	}
-	req, err := request.TLSClientConfig(c.tls).MakeRequest()
+	req, err := request.MakeRequest()
 	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create request: GET %q : %v", url, err)
+		return watchCh, errCh, fmt.Errorf("failed to make watch request: GET %q : %v", url, err)
 	}
+	request.Client.Transport = request.Transport
 	res, err := request.Client.Do(req)
 	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to make request: GET %q: %v", url, err)
+		return watchCh, errCh, fmt.Errorf("failed to do watch request: GET %q: %v", url, err)
 	}
 
 	shouldStop := safe.New(false)

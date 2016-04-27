@@ -170,10 +170,12 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					log.Errorf("Error retrieving services %s", pa.Backend.ServiceName)
 				}
 				for _, service := range services {
-					var protocol string
+					protocol := "http"
 					for _, port := range service.Spec.Ports {
 						if port.Port == pa.Backend.ServicePort.IntValue() {
-							protocol = port.Name
+							if port.Port == 443 {
+								protocol = "https"
+							}
 							templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
 								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + pa.Backend.ServicePort.String(),
 								Weight: 1,

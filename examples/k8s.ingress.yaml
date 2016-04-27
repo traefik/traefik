@@ -12,7 +12,7 @@ spec:
     nodePort: 30283
     targetPort: 80
     protocol: TCP
-    name: http
+    name: https
   selector:
     app: whoami
 ---

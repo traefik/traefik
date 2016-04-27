@@ -13,7 +13,7 @@
 
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
-It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
+It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Kubernetes](http://kubernetes.io/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
 
 ## Overview
 
@@ -133,8 +133,11 @@ Europe. We provide consulting, development, training and support for the world�
 software products.
 
 
-
 [![Asteris](docs/img/asteris.logo.png)](https://aster.is)
 
 Founded in 2014, Asteris creates next-generation infrastructure software for the modern datacenter. Asteris writes software that makes it easy for companies to implement continuous delivery and realtime data pipelines. We support the HashiCorp stack, along with Kubernetes, Apache Mesos, Spark and Kafka. We're core committers on mantl.io, consul-cli and mesos-consul.
 .
+
+## Credits
+
+Thanks you [Peka](http://peka.byethost11.com/photoblog/) for your awesome work on the logo ![logo](docs/img/traefik.icon.png)
