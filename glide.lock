@@ -1,5 +1,5 @@
-hash: 301b972874166647c9a136a3b1a48fee9ce012b2dff1d1a7180be1c975074025
-updated: 2016-04-27T16:34:49.150609578Z
+hash: a9f41b9fe89ac3028da27ac9cbe31db9a79ae89082f42507d4d0c58290517ee2
+updated: 2016-04-27T17:14:45.61228359Z
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -192,6 +192,8 @@ imports:
   version: dd83d5cbcfd986f334b2747feeb907e281318fdf
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
+- name: github.com/moul/http2curl
+  version: 1812aee76a1ce98d604a44200c6a23c689b17a89
 - name: github.com/opencontainers/runc
   version: 4ab132458fc3e9dbeea624153e0331952dc4c8d5
   subpackages:
