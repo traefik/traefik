@@ -1,30 +1,16 @@
-etcd1:
-  image: quay.io/coreos/etcd:v2.2.0
-  net: "host"
-  command: >
-    --name etcd1
-    --listen-peer-urls http://localhost:7001
-    --listen-client-urls http://localhost:4001
-    --initial-advertise-peer-urls http://localhost:7001
-    --advertise-client-urls http://localhost:4001
-    --initial-cluster etcd1=http://localhost:7001,etcd2=http://localhost:7002,etcd3=http://localhost:7003
-etcd2:
-  image: quay.io/coreos/etcd:v2.2.0
-  net: "host"
-  command: >
-    --name etcd2
-    --listen-peer-urls http://localhost:7002
-    --listen-client-urls http://localhost:4002
-    --initial-advertise-peer-urls http://localhost:7002
-    --advertise-client-urls http://localhost:4002
-    --initial-cluster etcd1=http://localhost:7001,etcd2=http://localhost:7002,etcd3=http://localhost:7003
-etcd3:
-  image: quay.io/coreos/etcd:v2.2.0
-  net: "host"
-  command: >
-    --name etcd3
-    --listen-peer-urls http://localhost:7003
-    --listen-client-urls http://localhost:4003
-    --initial-advertise-peer-urls http://localhost:7003
-    --advertise-client-urls http://localhost:4003
-    --initial-cluster etcd1=http://localhost:7001,etcd2=http://localhost:7002,etcd3=http://localhost:7003
+etcd:
+  image: gcr.io/google_containers/etcd:2.2.1
+  net: host
+  command: ['/usr/local/bin/etcd', '--addr=127.0.0.1:4001', '--bind-addr=0.0.0.0:4001', '--data-dir=/var/etcd/data']
+  
+whoami1:
+  image: emilevauge/whoami
+  
+whoami2:
+  image: emilevauge/whoami
+  
+whoami3:
+  image: emilevauge/whoami
+  
+whoami4:
+  image: emilevauge/whoami
