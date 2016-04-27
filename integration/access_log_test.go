@@ -84,7 +84,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 		c.Assert(count, checker.Equals, 3)
 	}
 
-	// Verify no other Trarfik problems
+	// Verify no other Traefik problems
 	if traefikLog, err := ioutil.ReadFile("traefik.log"); err != nil {
 		c.Assert(err.Error(), checker.Equals, "")
 	} else if len(traefikLog) > 0 {

@@ -73,7 +73,6 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 		next(rw, r)
 	} else {
 		reqid := strconv.FormatUint(atomic.AddUint64(&reqidCounter, 1), 10)
-		log.Debugf("Starting request %s: %s %s %s %s %s", reqid, r.Method, r.URL.RequestURI(), r.Proto, r.Referer(), r.UserAgent())
 		r.Header[loggerReqidHeader] = []string{reqid}
 		defer deleteReqid(r, reqid)
 		frontendBackendLoggingHandler{reqid, l.file, next}.ServeHTTP(rw, r)
@@ -82,7 +81,6 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 
 // Delete a reqid from the map and the request's headers
 func deleteReqid(r *http.Request, reqid string) {
-	log.Debugf("Ending request %s", reqid)
 	infoRwMap.Remove(reqid)
 	delete(r.Header, loggerReqidHeader)
 }
