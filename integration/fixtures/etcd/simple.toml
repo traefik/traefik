@@ -8,6 +8,9 @@ logLevel = "DEBUG"
 
 
 [etcd]
-  endpoint = "127.0.0.1:4001"
+  endpoint = "{{.EtcdHost}}:4001"
   prefix = "/traefik"
   watch = true
+
+[web]
+  address = ":8081"

@@ -9,10 +9,14 @@ import (
 
 	checker "github.com/vdemeester/shakers"
 
+	"errors"
+	"fmt"
+	"github.com/containous/traefik/integration/utils"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/etcd"
 	"io/ioutil"
+	"os"
 	"strings"
 )
 
@@ -26,12 +30,11 @@ func (s *EtcdSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "etcd")
 	s.composeProject.Start(c)
 
-	time.Sleep(3000 * time.Millisecond)
-
 	etcd.Register()
+	url := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress + ":4001"
 	kv, err := libkv.NewStore(
 		store.ETCD,
-		[]string{"localhost:4001"},
+		[]string{url},
 		&store.Config{
 			ConnectionTimeout: 10 * time.Second,
 		},
@@ -39,16 +42,24 @@ func (s *EtcdSuite) SetUpSuite(c *check.C) {
 	if err != nil {
 		c.Fatal("Cannot create store etcd")
 	}
-
-	resp, err := http.Get("http://127.0.0.1:4001/v2/keys")
-
-	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 200)
 	s.kv = kv
+
+	// wait for etcd
+	err = utils.Try(60*time.Second, func() error {
+		_, err := kv.Exists("test")
+		if err != nil {
+			return fmt.Errorf("Etcd connection error to %s: %v", url, err)
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/etcd/simple.toml")
+	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
+	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
+	defer os.Remove(file)
+	cmd := exec.Command(traefikBinary, "--configFile="+file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -63,17 +74,13 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/etcd/simple.toml")
+	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
+	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
+	defer os.Remove(file)
+	cmd := exec.Command(traefikBinary, "--configFile="+file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	time.Sleep(1000 * time.Millisecond)
-	resp, err := http.Get("http://127.0.0.1:8000/")
-
-	// Expected a 404 as we did not configure anything
-	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
 
 	whoami1 := s.composeProject.Container(c, "whoami1")
 	whoami2 := s.composeProject.Container(c, "whoami2")
@@ -121,7 +128,28 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 		c.Assert(err, checker.IsNil)
 	}
 
-	time.Sleep(3000 * time.Millisecond)
+	// wait for etcd
+	err = utils.Try(60*time.Second, func() error {
+		_, err := s.kv.Exists("/traefik/frontends/frontend2/routes/test_2/rule")
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+
+	// wait for traefik
+	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, func(res *http.Response) error {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		if !strings.Contains(string(body), "Path:/test") {
+			return errors.New("Incorrect traefik config")
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
@@ -155,10 +183,12 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 
 	req, err = http.NewRequest("GET", "http://127.0.0.1:8000/test2", nil)
 	req.Host = "test2.localhost"
+	resp, err := client.Do(req)
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 404)
 
 	req, err = http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	resp, err = client.Do(req)
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 404)
 }

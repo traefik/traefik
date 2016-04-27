@@ -1,6 +1,6 @@
 consul:
   image: progrium/consul
-  command: -server -bootstrap -advertise 12.0.0.254 -log-level debug -ui-dir /ui
+  command: -server -bootstrap -log-level debug -ui-dir /ui
   ports:
     - "8400:8400"
     - "8500:8500"
@@ -10,4 +10,16 @@ consul:
     - "8301"
     - "8301/udp"
     - "8302"
-    - "8302/udp"
+    - "8302/udp"  
+    
+whoami1:
+  image: emilevauge/whoami
+  
+whoami2:
+  image: emilevauge/whoami
+  
+whoami3:
+  image: emilevauge/whoami
+  
+whoami4:
+  image: emilevauge/whoami

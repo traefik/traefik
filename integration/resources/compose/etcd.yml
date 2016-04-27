@@ -1,7 +1,5 @@
 etcd:
-  image: gcr.io/google_containers/etcd:2.2.1
-  net: host
-  command: ['/usr/local/bin/etcd', '--addr=127.0.0.1:4001', '--bind-addr=0.0.0.0:4001', '--data-dir=/var/etcd/data']
+  image: containous/docker-etcd
   
 whoami1:
   image: emilevauge/whoami
