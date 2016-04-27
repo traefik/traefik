@@ -170,7 +170,7 @@ func (provider *Kv) list(keys ...string) []string {
 	}
 	directoryKeys := make(map[string]string)
 	for _, key := range keysPairs {
-		directory := strings.Split(strings.TrimPrefix(key.Key, strings.TrimPrefix(joinedKeys, "/")), "/")[0]
+		directory := strings.Split(strings.TrimPrefix(key.Key, joinedKeys), "/")[0]
 		directoryKeys[directory] = joinedKeys + directory
 	}
 	return fun.Values(directoryKeys).([]string)
@@ -178,7 +178,7 @@ func (provider *Kv) list(keys ...string) []string {
 
 func (provider *Kv) get(defaultValue string, keys ...string) string {
 	joinedKeys := strings.Join(keys, "")
-	keyPair, err := provider.kvclient.Get(joinedKeys)
+	keyPair, err := provider.kvclient.Get(strings.TrimPrefix(joinedKeys, "/"))
 	if err != nil {
 		log.Warnf("Error getting key %s %s, setting default %s", joinedKeys, err, defaultValue)
 		return defaultValue
