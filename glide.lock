@@ -1,5 +1,5 @@
-hash: 6fe539ee86a9dc90a67b60f42b027c72359bed0ca22e7a94355ad80f37a32d68
-updated: 2016-04-18T21:31:13.195184921+02:00
+hash: e92948ce12f546d39a02c2e58668f7d12d7b1f3dd56eb046e01b527df756f734
+updated: 2016-04-26T23:18:15.861898862+02:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -31,10 +31,12 @@ imports:
   - utils
   - connlimit
   - stream
-- name: github.com/coreos/go-etcd
-  version: cc90c7b091275e606ad0ca7102a23fb2072f3f5e
+- name: github.com/coreos/etcd
+  version: 26e52d2bce9e3e11b77b68cc84bf91aebb1ef637
   subpackages:
-  - etcd
+  - client
+  - pkg/pathutil
+  - pkg/types
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -108,7 +110,7 @@ imports:
 - name: github.com/docker/libcompose
   version: e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
 - name: github.com/docker/libkv
-  version: 3732f7ff1b56057c3158f10bceb1e79133025373
+  version: 7283ef27ed32fe267388510a91709b307bb9942c
   subpackages:
   - store
   - store/boltdb
@@ -219,6 +221,10 @@ imports:
   - assert
 - name: github.com/thoas/stats
   version: 54ed61c2b47e263ae2f01b86837b0c4bd1da28e8
+- name: github.com/ugorji/go
+  version: ea9cd21fa0bc41ee4bdd50ac7ed8cbc7ea2ed960
+  subpackages:
+  - codec
 - name: github.com/unrolled/render
   version: 26b4e3aac686940fe29521545afad9966ddfc80c
 - name: github.com/vdemeester/docker-events

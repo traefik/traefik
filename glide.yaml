@@ -1,9 +1,9 @@
 package: main
 import:
-- package: github.com/coreos/go-etcd
-  version: cc90c7b091275e606ad0ca7102a23fb2072f3f5e
+- package: github.com/coreos/etcd
+  version: 26e52d2bce9e3e11b77b68cc84bf91aebb1ef637
   subpackages:
-  - etcd
+  - client
 - package: github.com/mailgun/log
   version: 44874009257d4d47ba9806f1b7f72a32a015e4d8
 - package: github.com/containous/oxy
@@ -33,7 +33,7 @@ import:
 - package: github.com/gorilla/handlers
   version: 40694b40f4a928c062f56849989d3e9cd0570e5f
 - package: github.com/docker/libkv
-  version: 3732f7ff1b56057c3158f10bceb1e79133025373
+  version: 7283ef27ed32fe267388510a91709b307bb9942c
 - package: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
 - package: github.com/vdemeester/shakers
