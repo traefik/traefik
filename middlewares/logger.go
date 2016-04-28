@@ -19,7 +19,7 @@ const (
 )
 
 /*
-Middleware Logger writes each request and its response to the access log.
+Logger writes each request and its response to the access log.
 It gets some information from the logInfoResponseWriter set up by previous middleware.
 */
 type Logger struct {

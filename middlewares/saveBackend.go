@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-// Middleware saveBackend sends the backend name to the logger.
+// SaveBackend sends the backend name to the logger.
 type SaveBackend struct {
 	next http.Handler
 }
