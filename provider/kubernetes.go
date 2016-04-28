@@ -23,6 +23,7 @@ const (
 type Kubernetes struct {
 	BaseProvider `mapstructure:",squash"`
 	Endpoint     string
+	Namespaces   []string
 }
 
 func (provider *Kubernetes) createClient() (k8s.Client, error) {
@@ -123,7 +124,15 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 
 func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configuration, error) {
 	ingresses, err := k8sClient.GetIngresses(func(ingress k8s.Ingress) bool {
-		return true
+		if len(provider.Namespaces) == 0 {
+			return true
+		}
+		for _, n := range provider.Namespaces {
+			if ingress.ObjectMeta.Namespace == n {
+				return true
+			}
+		}
+		return false
 	})
 	if err != nil {
 		log.Errorf("Error retrieving ingresses: %+v", err)

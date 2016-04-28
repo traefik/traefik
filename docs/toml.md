@@ -648,6 +648,7 @@ Træfɪk can be configured to use Kubernetes Ingress as a backend configuration:
 # Optional
 #
 # endpoint = "http://localhost:8080"
+# namespaces = ["default","production"]
 ```
 
 You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s.ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s.rc.yaml).
