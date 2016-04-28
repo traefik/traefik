@@ -1,10 +1,5 @@
 package middlewares
 
-/*
-Middleware Logger writes each request and its response to the access log.
-It gets some information from the logInfoResponseWriter set up by previous middleware.
-*/
-
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
@@ -23,7 +18,10 @@ const (
 	loggerReqidHeader = "X-Traefik-Reqid"
 )
 
-// Logger holds the File defining the access log
+/*
+Middleware Logger writes each request and its response to the access log.
+It gets some information from the logInfoResponseWriter set up by previous middleware.
+*/
 type Logger struct {
 	file *os.File
 }

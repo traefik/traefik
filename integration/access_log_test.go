@@ -37,9 +37,9 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	time.Sleep(500 * time.Millisecond)
 
 	// Verify Traefik started OK
-	if traefikLog, err := ioutil.ReadFile("traefik.log"); err != nil {
-		c.Assert(err.Error(), checker.Equals, "")
-	} else if len(traefikLog) > 0 {
+	traefikLog, err := ioutil.ReadFile("traefik.log")
+	c.Assert(err, checker.IsNil)
+	if len(traefikLog) > 0 {
 		fmt.Printf("%s\n", string(traefikLog))
 		c.Assert(len(traefikLog), checker.Equals, 0)
 	}
@@ -61,33 +61,29 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	if accessLog, err := ioutil.ReadFile("access.log"); err != nil {
-		c.Assert(err.Error(), checker.Equals, "")
-	} else {
-		lines := strings.Split(string(accessLog), "\n")
-		count := 0
-		for i, line := range lines {
-			if len(line) > 0 {
-				count++
-				if tokens, err := shellwords.Parse(line); err != nil {
-					c.Assert(err.Error(), checker.Equals, "")
-				} else {
-					c.Assert(len(tokens), checker.Equals, 13)
-					c.Assert(tokens[6], checker.Equals, "200")
-					c.Assert(tokens[9], checker.Equals, fmt.Sprintf("%d", i+1))
-					c.Assert(strings.HasPrefix(tokens[10], "frontend"), checker.True)
-					c.Assert(strings.HasPrefix(tokens[11], "http://127.0.0.1:808"), checker.True)
-					c.Assert(regexp.MustCompile("^\\d+\\.\\d+.*s$").MatchString(tokens[12]), checker.True)
-				}
-			}
+	accessLog, err := ioutil.ReadFile("access.log")
+	c.Assert(err, checker.IsNil)
+	lines := strings.Split(string(accessLog), "\n")
+	count := 0
+	for i, line := range lines {
+		if len(line) > 0 {
+			count++
+			tokens, err := shellwords.Parse(line)
+			c.Assert(err, checker.IsNil)
+			c.Assert(len(tokens), checker.Equals, 13)
+			c.Assert(tokens[6], checker.Equals, "200")
+			c.Assert(tokens[9], checker.Equals, fmt.Sprintf("%d", i+1))
+			c.Assert(strings.HasPrefix(tokens[10], "frontend"), checker.True)
+			c.Assert(strings.HasPrefix(tokens[11], "http://127.0.0.1:808"), checker.True)
+			c.Assert(regexp.MustCompile("^\\d+\\.\\d+.*s$").MatchString(tokens[12]), checker.True)
 		}
-		c.Assert(count, checker.Equals, 3)
 	}
+	c.Assert(count, checker.Equals, 3)
 
 	// Verify no other Traefik problems
-	if traefikLog, err := ioutil.ReadFile("traefik.log"); err != nil {
-		c.Assert(err.Error(), checker.Equals, "")
-	} else if len(traefikLog) > 0 {
+	traefikLog, err = ioutil.ReadFile("traefik.log")
+	c.Assert(err, checker.IsNil)
+	if len(traefikLog) > 0 {
 		fmt.Printf("%s\n", string(traefikLog))
 		c.Assert(len(traefikLog), checker.Equals, 0)
 	}

@@ -1,14 +1,10 @@
 package middlewares
 
-/*
-Middleware saveBackend sends the backend name to the logger.
-*/
-
 import (
 	"net/http"
 )
 
-// SaveBackend holds the next handler
+// Middleware saveBackend sends the backend name to the logger.
 type SaveBackend struct {
 	next http.Handler
 }
