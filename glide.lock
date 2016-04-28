@@ -1,5 +1,5 @@
-hash: e92948ce12f546d39a02c2e58668f7d12d7b1f3dd56eb046e01b527df756f734
-updated: 2016-04-26T23:18:15.861898862+02:00
+hash: a9f41b9fe89ac3028da27ac9cbe31db9a79ae89082f42507d4d0c58290517ee2
+updated: 2016-04-27T17:14:45.61228359Z
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -100,7 +100,7 @@ imports:
   - types/time
   - types/blkiodev
 - name: github.com/docker/go-connections
-  version: 5b7154ba2efe13ff86ae8830a9e7cb120b080d6e
+  version: f549a9393d05688dff0992ef3efd8bbe6c628aeb
   subpackages:
   - nat
   - sockets
@@ -121,6 +121,12 @@ imports:
   version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
 - name: github.com/donovanhide/eventsource
   version: d8a3071799b98cacd30b6da92f536050ccfe6da4
+- name: github.com/eapache/go-resiliency
+  version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
+  subpackages:
+  - breaker
+- name: github.com/eapache/queue
+  version: ded5959c0d4e360646dc9e9908cff48666781367
 - name: github.com/elazarl/go-bindata-assetfs
   version: d5cac425555ca5cf00694df246e04f05e6a55150
 - name: github.com/flynn/go-shlex
@@ -131,6 +137,8 @@ imports:
   version: 11d3bc7aa68e238947792f30573146a3231fc0f1
 - name: github.com/golang/glog
   version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
+- name: github.com/golang/snappy
+  version: ec642410cd033af63620b66a91ccbd3c69c2c59a
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
@@ -148,7 +156,7 @@ imports:
   subpackages:
   - api
 - name: github.com/hashicorp/hcl
-  version: 27a57f2605e04995c111273c263d51cee60d9bc4
+  version: 2604f3bda7e8960c1be1063709e7d7f0765048d0
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -160,6 +168,8 @@ imports:
   - json/token
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/klauspost/crc32
+  version: 19b0b332c9e4516a6370a0456e6182c3b5036720
 - name: github.com/kr/pretty
   version: add1dbc86daf0f983cd4a48ceb39deb95c729b67
 - name: github.com/kr/text
@@ -174,10 +184,12 @@ imports:
   version: 565402cd71fbd9c12aa7e295324ea357e970a61e
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
+- name: github.com/mattn/go-shellwords
+  version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
 - name: github.com/Microsoft/go-winio
   version: 862b6557927a5c5c81e411c12aa6de7e566cbb7a
 - name: github.com/miekg/dns
-  version: a5cc44dc6b2eee8eddfd6581e1c6bb753ff0d176
+  version: dd83d5cbcfd986f334b2747feeb907e281318fdf
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/moul/http2curl
@@ -196,6 +208,8 @@ imports:
   version: fa6674abf3f4580b946a01bf7a1ce4ba8766205b
   subpackages:
   - zk
+- name: github.com/Shopify/sarama
+  version: 92a286e4dde1688175cff3d2ec9b49a02838b447
 - name: github.com/Sirupsen/logrus
   version: 418b41d23a1bf978c06faea5313ba194650ac088
 - name: github.com/spf13/cast
@@ -207,7 +221,7 @@ imports:
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: 8f6a28b0916586e7f22fe931ae2fcfc380b1c0e6
+  version: 1f296710f879815ad9e6d39d947c828c3e4b4c3d
 - name: github.com/spf13/viper
   version: a212099cbe6fbe8d07476bfda8d2d39b6ff8f325
 - name: github.com/streamrail/concurrent-map
@@ -228,7 +242,7 @@ imports:
 - name: github.com/unrolled/render
   version: 26b4e3aac686940fe29521545afad9966ddfc80c
 - name: github.com/vdemeester/docker-events
-  version: 1ecaca5890ef1ffd266fcbfdbe43073ef105704b
+  version: 6ea3f28df37f29a47498bc8b32b36ad8491dbd37
 - name: github.com/vdemeester/libkermit
   version: 7e4e689a6fa9281e0fb9b7b9c297e22d5342a5ec
 - name: github.com/vdemeester/shakers
@@ -251,11 +265,11 @@ imports:
 - name: github.com/wendal/errors
   version: f66c77a7882b399795a8987ebf87ef64a427417e
 - name: github.com/xenolf/lego
-  version: 684400fe76a813e78d87803a62bc04d977c501d2
+  version: 23e88185c255e95a106835d80e76e5a3a66d7c54
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: 1777f3ba8c1fed80fcaec3317e3aaa4f627764d2
+  version: d68c3ecb62c850b645dc072a8d78006286bf81ca
   subpackages:
   - ocsp
 - name: golang.org/x/net
