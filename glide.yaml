@@ -183,3 +183,5 @@ import:
 - package: github.com/mailgun/multibuf
 - package: github.com/streamrail/concurrent-map
 - package: github.com/parnurzeal/gorequest
+- package: github.com/mattn/go-shellwords
+- package: github.com/moul/http2curl
