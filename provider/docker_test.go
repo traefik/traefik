@@ -743,11 +743,11 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				},
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				`"frontend-Host-test-docker-localhost"`: {
+				"frontend-Host-test-docker-localhost": {
 					Backend:     "backend-test",
 					EntryPoints: []string{},
 					Routes: map[string]types.Route{
-						`"route-frontend-Host-test-docker-localhost"`: {
+						"route-frontend-Host-test-docker-localhost": {
 							Rule: "Host:test.docker.localhost",
 						},
 					},
@@ -815,20 +815,20 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				},
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				`"frontend-Host-test1-docker-localhost"`: {
+				"frontend-Host-test1-docker-localhost": {
 					Backend:     "backend-foobar",
 					EntryPoints: []string{"http", "https"},
 					Routes: map[string]types.Route{
-						`"route-frontend-Host-test1-docker-localhost"`: {
+						"route-frontend-Host-test1-docker-localhost": {
 							Rule: "Host:test1.docker.localhost",
 						},
 					},
 				},
-				`"frontend-Host-test2-docker-localhost"`: {
+				"frontend-Host-test2-docker-localhost": {
 					Backend:     "backend-foobar",
 					EntryPoints: []string{},
 					Routes: map[string]types.Route{
-						`"route-frontend-Host-test2-docker-localhost"`: {
+						"route-frontend-Host-test2-docker-localhost": {
 							Rule: "Host:test2.docker.localhost",
 						},
 					},

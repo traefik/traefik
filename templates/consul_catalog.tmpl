@@ -1,9 +1,9 @@
 [backends]
-{{range .Nodes}}
-  {{if ne (getAttribute "enable" .Service.Tags "true") "false"}}
-    [backends.backend-{{getBackend .}}.servers.{{.Service.Service | replace "." "-"}}--{{.Service.Address | replace "." "-"}}--{{.Service.Port}}]
-      url = "{{getAttribute "protocol" .Service.Tags "http"}}://{{.Service.Address}}:{{.Service.Port}}"
-      {{$weight := getAttribute "backend.weight" .Service.Tags ""}}
+{{range $index, $node := .Nodes}}
+  {{if ne (getAttribute "enable" $node.Service.Tags "true") "false"}}
+    [backends.backend-{{getBackend $node}}.servers.{{getBackendName $node $index}}]
+      url = "{{getAttribute "protocol" $node.Service.Tags "http"}}://{{getBackendAddress $node}}:{{$node.Service.Port}}"
+      {{$weight := getAttribute "backend.weight" $node.Service.Tags ""}}
       {{with $weight}}
         weight = {{$weight}}
       {{end}}
@@ -25,7 +25,8 @@
   {{end}}
 {{end}}
 
-[frontends]{{range .Services}}
+[frontends]
+{{range .Services}}
   [frontends.frontend-{{.ServiceName}}]
   backend = "backend-{{.ServiceName}}"
   passHostHeader = {{getAttribute "frontend.passHostHeader" .Attributes "false"}}

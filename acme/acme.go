@@ -181,7 +181,7 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 	acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
 
 	if len(a.StorageFile) == 0 {
-		return errors.New("Empty StorageFile, please provide a filenmae for certs storage")
+		return errors.New("Empty StorageFile, please provide a filename for certs storage")
 	}
 
 	log.Debugf("Generating default certificate...")

@@ -180,9 +180,9 @@ func (server *Server) listenConfigurations(stop chan bool) {
 			}
 			currentConfigurations := server.currentConfigurations.Get().(configs)
 			if configMsg.Configuration == nil {
-				log.Info("Skipping empty Configuration")
+				log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
 			} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-				log.Info("Skipping same configuration")
+				log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 			} else {
 				// Copy configurations to new map so we don't change current if LoadConfig fails
 				newConfigurations := make(configs)
@@ -235,6 +235,9 @@ func (server *Server) configureProviders() {
 	}
 	if server.globalConfiguration.Boltdb != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Boltdb)
+	}
+	if server.globalConfiguration.Kubernetes != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Kubernetes)
 	}
 }
 
@@ -369,6 +372,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	redirectHandlers := make(map[string]http.Handler)
 
 	backends := map[string]http.Handler{}
+	backend2FrontendMap := map[string]string{}
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
 		for _, frontendName := range frontendNames {
@@ -376,6 +380,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 			log.Debugf("Creating frontend %s", frontendName)
 			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+			saveBackend := middlewares.NewSaveBackend(fwd)
 			// default endpoints if not defined in frontends
 			if len(frontend.EntryPoints) == 0 {
 				frontend.EntryPoints = globalConfiguration.DefaultEntryPoints
@@ -411,7 +416,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					if backends[frontend.Backend] == nil {
 						log.Debugf("Creating backend %s", frontend.Backend)
 						var lb http.Handler
-						rr, _ := roundrobin.New(fwd)
+						rr, _ := roundrobin.New(saveBackend)
 						if configuration.Backends[frontend.Backend] == nil {
 							return nil, errors.New("Undefined backend: " + frontend.Backend)
 						}
@@ -429,6 +434,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								if err != nil {
 									return nil, err
 								}
+								backend2FrontendMap[url.String()] = frontendName
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
 								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
 									return nil, err
@@ -442,6 +448,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								if err != nil {
 									return nil, err
 								}
+								backend2FrontendMap[url.String()] = frontendName
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
 								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
 									return nil, err
@@ -503,6 +510,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			}
 		}
 	}
+	middlewares.SetBackend2FrontendMap(&backend2FrontendMap)
 	return serverEntryPoints, nil
 }
 

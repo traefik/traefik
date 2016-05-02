@@ -1,0 +1,42 @@
+################################################################
+# Global configuration
+################################################################
+traefikLogsFile = "log/traefik.log"
+accessLogsFile = "log/access.log"
+logLevel = "DEBUG"
+
+################################################################
+# Web configuration backend
+################################################################
+[web]
+address = ":7888"
+
+################################################################
+# File configuration backend
+################################################################
+[file]
+
+################################################################
+# rules
+################################################################
+ [backends]
+   [backends.backend1]
+     [backends.backend1.servers.server1]
+       url = "http://127.0.0.1:8081"
+   [backends.backend2]
+     [backends.backend2.LoadBalancer]
+       method = "drr"
+     [backends.backend2.servers.server1]
+       url = "http://127.0.0.1:8082"
+     [backends.backend2.servers.server2]
+       url = "http://127.0.0.1:8083"
+  [frontends]
+   [frontends.frontend1]
+   backend = "backend1"
+     [frontends.frontend1.routes.test_1]
+     rule = "Path: /test1"
+   [frontends.frontend2]
+   backend = "backend2"
+   passHostHeader = true
+     [frontends.frontend2.routes.test_2]
+     rule = "Path: /test2"

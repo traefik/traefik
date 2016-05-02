@@ -13,7 +13,7 @@ type Backend struct {
 	MaxConn        *MaxConn          `json:"maxConn,omitempty"`
 }
 
-// MaxConn holds maximum connection configuraiton
+// MaxConn holds maximum connection configuration
 type MaxConn struct {
 	Amount        int64  `json:"amount,omitempty"`
 	ExtractorFunc string `json:"extractorFunc,omitempty"`

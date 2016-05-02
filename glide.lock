@@ -1,5 +1,5 @@
-hash: fffa87220825895f7e3a6ceed3b13ecbf6bc934ab072fc9be3d00e3eef411ecb
-updated: 2016-04-13T14:05:41.300658168+02:00
+hash: a9f41b9fe89ac3028da27ac9cbe31db9a79ae89082f42507d4d0c58290517ee2
+updated: 2016-04-27T17:14:45.61228359Z
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -8,7 +8,7 @@ imports:
 - name: github.com/boltdb/bolt
   version: 51f99c862475898df9773747d3accd05a7ca33c1
 - name: github.com/BurntSushi/toml
-  version: bd2bdf7f18f849530ef7a1c29a4290217cab32a1
+  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
 - name: github.com/BurntSushi/ty
   version: 6add9cd6ad42d389d6ead1dde60b4ad71e46fd74
   subpackages:
@@ -29,11 +29,14 @@ imports:
   - memmetrics
   - roundrobin
   - utils
+  - connlimit
   - stream
-- name: github.com/coreos/go-etcd
-  version: cc90c7b091275e606ad0ca7102a23fb2072f3f5e
+- name: github.com/coreos/etcd
+  version: 26e52d2bce9e3e11b77b68cc84bf91aebb1ef637
   subpackages:
-  - etcd
+  - client
+  - pkg/pathutil
+  - pkg/types
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -42,7 +45,6 @@ imports:
   version: ff6f38ccb69afa96214c7ee955359465d1fc767a
   subpackages:
   - reference
-  - digest
 - name: github.com/docker/docker
   version: f39987afe8d611407887b3094c03d6ba6a766a67
   subpackages:
@@ -94,10 +96,8 @@ imports:
   - client/transport
   - client/transport/cancellable
   - types/network
-  - types/reference
   - types/registry
   - types/time
-  - types/versions
   - types/blkiodev
 - name: github.com/docker/go-connections
   version: f549a9393d05688dff0992ef3efd8bbe6c628aeb
@@ -110,7 +110,7 @@ imports:
 - name: github.com/docker/libcompose
   version: e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
 - name: github.com/docker/libkv
-  version: 3732f7ff1b56057c3158f10bceb1e79133025373
+  version: 7283ef27ed32fe267388510a91709b307bb9942c
   subpackages:
   - store
   - store/boltdb
@@ -121,6 +121,12 @@ imports:
   version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
 - name: github.com/donovanhide/eventsource
   version: d8a3071799b98cacd30b6da92f536050ccfe6da4
+- name: github.com/eapache/go-resiliency
+  version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
+  subpackages:
+  - breaker
+- name: github.com/eapache/queue
+  version: ded5959c0d4e360646dc9e9908cff48666781367
 - name: github.com/elazarl/go-bindata-assetfs
   version: d5cac425555ca5cf00694df246e04f05e6a55150
 - name: github.com/flynn/go-shlex
@@ -131,6 +137,8 @@ imports:
   version: 11d3bc7aa68e238947792f30573146a3231fc0f1
 - name: github.com/golang/glog
   version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
+- name: github.com/golang/snappy
+  version: ec642410cd033af63620b66a91ccbd3c69c2c59a
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
@@ -160,6 +168,8 @@ imports:
   - json/token
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/klauspost/crc32
+  version: 19b0b332c9e4516a6370a0456e6182c3b5036720
 - name: github.com/kr/pretty
   version: add1dbc86daf0f983cd4a48ceb39deb95c729b67
 - name: github.com/kr/text
@@ -174,16 +184,22 @@ imports:
   version: 565402cd71fbd9c12aa7e295324ea357e970a61e
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
+- name: github.com/mattn/go-shellwords
+  version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
 - name: github.com/Microsoft/go-winio
   version: 862b6557927a5c5c81e411c12aa6de7e566cbb7a
 - name: github.com/miekg/dns
   version: dd83d5cbcfd986f334b2747feeb907e281318fdf
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
+- name: github.com/moul/http2curl
+  version: 1812aee76a1ce98d604a44200c6a23c689b17a89
 - name: github.com/opencontainers/runc
   version: 4ab132458fc3e9dbeea624153e0331952dc4c8d5
   subpackages:
   - libcontainer/user
+- name: github.com/parnurzeal/gorequest
+  version: 91b42fce877cc6af96c45818665a4c615cc5f4ee
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -192,6 +208,8 @@ imports:
   version: fa6674abf3f4580b946a01bf7a1ce4ba8766205b
   subpackages:
   - zk
+- name: github.com/Shopify/sarama
+  version: 92a286e4dde1688175cff3d2ec9b49a02838b447
 - name: github.com/Sirupsen/logrus
   version: 418b41d23a1bf978c06faea5313ba194650ac088
 - name: github.com/spf13/cast
@@ -217,6 +235,10 @@ imports:
   - assert
 - name: github.com/thoas/stats
   version: 54ed61c2b47e263ae2f01b86837b0c4bd1da28e8
+- name: github.com/ugorji/go
+  version: ea9cd21fa0bc41ee4bdd50ac7ed8cbc7ea2ed960
+  subpackages:
+  - codec
 - name: github.com/unrolled/render
   version: 26b4e3aac686940fe29521545afad9966ddfc80c
 - name: github.com/vdemeester/docker-events

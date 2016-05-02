@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -123,10 +124,30 @@ func (provider *ConsulCatalog) getFrontendRule(service serviceUpdate) string {
 	return "Host:" + service.ServiceName + "." + provider.Domain
 }
 
+func (provider *ConsulCatalog) getBackendAddress(node *api.ServiceEntry) string {
+	if node.Service.Address != "" {
+		return node.Service.Address
+	}
+	return node.Node.Address
+}
+
+func (provider *ConsulCatalog) getBackendName(node *api.ServiceEntry, index int) string {
+	serviceName := node.Service.Service + "--" + node.Service.Address + "--" + strconv.Itoa(node.Service.Port)
+	if len(node.Service.Tags) > 0 {
+		serviceName += "--" + strings.Join(node.Service.Tags, "--")
+	}
+	serviceName = strings.Replace(serviceName, ".", "-", -1)
+	serviceName = strings.Replace(serviceName, "=", "-", -1)
+
+	// unique int at the end
+	serviceName += "--" + strconv.Itoa(index)
+	return serviceName
+}
+
 func (provider *ConsulCatalog) getAttribute(name string, tags []string, defaultValue string) string {
 	for _, tag := range tags {
-		if strings.Index(tag, DefaultConsulCatalogTagPrefix+".") == 0 {
-			if kv := strings.SplitN(tag[len(DefaultConsulCatalogTagPrefix+"."):], "=", 2); len(kv) == 2 && kv[0] == name {
+		if strings.Index(strings.ToLower(tag), DefaultConsulCatalogTagPrefix+".") == 0 {
+			if kv := strings.SplitN(tag[len(DefaultConsulCatalogTagPrefix+"."):], "=", 2); len(kv) == 2 && strings.ToLower(kv[0]) == strings.ToLower(name) {
 				return kv[1]
 			}
 		}
@@ -136,19 +157,25 @@ func (provider *ConsulCatalog) getAttribute(name string, tags []string, defaultV
 
 func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Configuration {
 	var FuncMap = template.FuncMap{
-		"getBackend":      provider.getBackend,
-		"getFrontendRule": provider.getFrontendRule,
-		"getAttribute":    provider.getAttribute,
-		"getEntryPoints":  provider.getEntryPoints,
-		"replace":         replace,
+		"getBackend":        provider.getBackend,
+		"getFrontendRule":   provider.getFrontendRule,
+		"getBackendName":    provider.getBackendName,
+		"getBackendAddress": provider.getBackendAddress,
+		"getAttribute":      provider.getAttribute,
+		"getEntryPoints":    provider.getEntryPoints,
 	}
 
 	allNodes := []*api.ServiceEntry{}
 	services := []*serviceUpdate{}
 	for _, info := range catalog {
-		if len(info.Nodes) > 0 {
-			services = append(services, info.Service)
-			allNodes = append(allNodes, info.Nodes...)
+		for _, node := range info.Nodes {
+			isEnabled := provider.getAttribute("enable", node.Service.Tags, "true")
+			if isEnabled != "false" && len(info.Nodes) > 0 {
+				services = append(services, info.Service)
+				allNodes = append(allNodes, info.Nodes...)
+				break
+			}
+
 		}
 	}
 

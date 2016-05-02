@@ -1,0 +1,17 @@
+# etcd:
+#   image: gcr.io/google_containers/etcd:2.2.1
+#   net: host
+#   command: ['/usr/local/bin/etcd', '--addr=127.0.0.1:4001', '--bind-addr=0.0.0.0:4001', '--data-dir=/var/etcd/data']
+
+kubelet:
+  image: gcr.io/google_containers/hyperkube-amd64:v1.2.2
+  privileged: true
+  pid: host
+  net : host
+  volumes:
+    - /:/rootfs:ro
+    - /sys:/sys:ro
+    - /var/lib/docker/:/var/lib/docker:rw
+    - /var/lib/kubelet/:/var/lib/kubelet:rw
+    - /var/run:/var/run:rw
+  command: ['/hyperkube', 'kubelet', '--containerized', '--hostname-override=127.0.0.1', '--address=0.0.0.0', '--api-servers=http://localhost:8080', '--config=/etc/kubernetes/manifests', '--allow-privileged=true', '--v=2']
