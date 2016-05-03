@@ -406,7 +406,7 @@ func (a *ACME) saveAccount(Account *Account) error {
 
 func (a *ACME) getDomainsCertificates(client *acme.Client, domains []string) (*Certificate, error) {
 	log.Debugf("Loading ACME certificates %s...", domains)
-	bundle := false
+	bundle := true
 	certificate, failures := client.ObtainCertificate(domains, bundle, nil)
 	if len(failures) > 0 {
 		log.Error(failures)
