@@ -140,4 +140,4 @@ Founded in 2014, Asteris creates next-generation infrastructure software for the
 
 ## Credits
 
-Thanks you [Peka](http://peka.byethost11.com/photoblog/) for your awesome work on the logo ![logo](docs/img/traefik.icon.png)
+Kudos to [Peka](http://peka.byethost11.com/photoblog/) for his awesome work on the logo ![logo](docs/img/traefik.icon.png)

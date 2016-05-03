@@ -1,9 +1,16 @@
 defaultEntryPoints = ["http"]
 
+logLevel = "DEBUG"
+
 [entryPoints]
   [entryPoints.http]
   address = ":8000"
 
-logLevel = "DEBUG"
 
 [consul]
+  endpoint = "{{.ConsulHost}}:8500"
+  watch = true
+  prefix = "traefik"
+  
+[web]
+  address = ":8081"
