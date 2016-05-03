@@ -20,12 +20,15 @@ const (
 	serviceAccountCACert = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 )
 
+// Namespaces holds kubernetes namespaces
+type Namespaces []string
+
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
 	BaseProvider           `mapstructure:",squash"`
-	Endpoint               string
-	disablePassHostHeaders bool
-	Namespaces             []string
+	Endpoint               string     `description:"Kubernetes server endpoint"`
+	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
+	Namespaces             Namespaces `description:"Kubernetes namespaces"`
 }
 
 func (provider *Kubernetes) createClient() (k8s.Client, error) {
@@ -259,7 +262,7 @@ func equalPorts(servicePort k8s.ServicePort, ingressPort k8s.IntOrString) bool {
 }
 
 func (provider *Kubernetes) getPassHostHeader() bool {
-	if provider.disablePassHostHeaders {
+	if provider.DisablePassHostHeaders {
 		return false
 	}
 	return true

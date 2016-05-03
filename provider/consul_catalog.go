@@ -24,8 +24,8 @@ const (
 // ConsulCatalog holds configurations of the Consul catalog provider.
 type ConsulCatalog struct {
 	BaseProvider `mapstructure:",squash"`
-	Endpoint     string
-	Domain       string
+	Endpoint     string `description:"Consul server endpoint"`
+	Domain       string `description:"Default domain used"`
 	client       *api.Client
 	Prefix       string
 }

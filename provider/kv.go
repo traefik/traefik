@@ -22,20 +22,20 @@ import (
 
 // Kv holds common configurations of key-value providers.
 type Kv struct {
-	BaseProvider `mapstructure:",squash"`
-	Endpoint     string
-	Prefix       string
-	TLS          *KvTLS
+	BaseProvider `mapstructure:",squash" description:"go through"`
+	Endpoint     string `description:"Comma sepparated server endpoints"`
+	Prefix       string `description:"Prefix used for KV store"`
+	TLS          *KvTLS `description:"Enable TLS support"`
 	storeType    store.Backend
 	kvclient     store.Store
 }
 
 // KvTLS holds TLS specific configurations
 type KvTLS struct {
-	CA                 string
-	Cert               string
-	Key                string
-	InsecureSkipVerify bool
+	CA                 string `description:"TLS CA"`
+	Cert               string `description:"TLS cert"`
+	Key                string `description:"TLS key"`
+	InsecureSkipVerify bool   `description:"TLS insecure skip verify"`
 }
 
 func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix string, stop chan bool) error {

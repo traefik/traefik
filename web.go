@@ -23,10 +23,11 @@ var metrics = stats.New()
 // WebProvider is a provider.Provider implementation that provides the UI.
 // FIXME to be handled another way.
 type WebProvider struct {
-	Address           string
-	CertFile, KeyFile string
-	ReadOnly          bool
-	server            *Server
+	Address  string `description:"Web administration port"`
+	CertFile string `description:"SSL certificate"`
+	KeyFile  string `description:"SSL certificate"`
+	ReadOnly bool   `description:"Enable read only API"`
+	server   *Server
 }
 
 var (
