@@ -17,11 +17,9 @@ curl -i -H "Accept: application/json" -X PUT -d "2"                           ht
 # frontend 1
 curl -i -H "Accept: application/json" -X PUT -d "backend2"                    http://localhost:8500/v1/kv/traefik/frontends/frontend1/backend
 curl -i -H "Accept: application/json" -X PUT -d "http"                        http://localhost:8500/v1/kv/traefik/frontends/frontend1/entrypoints
-curl -i -H "Accept: application/json" -X PUT -d "Host"                        http://localhost:8500/v1/kv/traefik/frontends/frontend1/routes/test_1/rule
-curl -i -H "Accept: application/json" -X PUT -d "test.localhost"              http://localhost:8500/v1/kv/traefik/frontends/frontend1/routes/test_1/value
+curl -i -H "Accept: application/json" -X PUT -d "Host:test.localhost"         http://localhost:8500/v1/kv/traefik/frontends/frontend1/routes/test_1/rule
 
 # frontend 2
 curl -i -H "Accept: application/json" -X PUT -d "backend1"                    http://localhost:8500/v1/kv/traefik/frontends/frontend2/backend
-curl -i -H "Accept: application/json" -X PUT -d "http,https"                  http://localhost:8500/v1/kv/traefik/frontends/frontend2/entrypoints
-curl -i -H "Accept: application/json" -X PUT -d "Path"                        http://localhost:8500/v1/kv/traefik/frontends/frontend2/routes/test_2/rule
-curl -i -H "Accept: application/json" -X PUT -d "/test"                       http://localhost:8500/v1/kv/traefik/frontends/frontend2/routes/test_2/value
+curl -i -H "Accept: application/json" -X PUT -d "http"                  http://localhost:8500/v1/kv/traefik/frontends/frontend2/entrypoints
+curl -i -H "Accept: application/json" -X PUT -d "Path:/test"                  http://localhost:8500/v1/kv/traefik/frontends/frontend2/routes/test_2/rule

@@ -11,3 +11,5 @@ vendor/
 static/
 .vscode/
 site/
+*.log
+*.exe

@@ -1,0 +1,16 @@
+[backends]{{range $backendName, $backend := .Backends}}
+    {{range $serverName, $server := $backend.Servers}}
+    [backends."{{$backendName}}".servers."{{$serverName}}"]
+    url = "{{$server.URL}}"
+    weight = {{$server.Weight}}
+    {{end}}
+{{end}}
+
+[frontends]{{range $frontendName, $frontend := .Frontends}}
+  [frontends."{{$frontendName}}"]
+  backend = "{{$frontend.Backend}}"
+    {{range $routeName, $route := $frontend.Routes}}
+    [frontends."{{$frontendName}}".routes."{{$routeName}}"]
+    rule = "{{$route.Rule}}"
+    {{end}}
+{{end}}

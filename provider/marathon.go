@@ -10,10 +10,12 @@ import (
 	"crypto/tls"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 	"net/http"
+	"time"
 )
 
 // Marathon holds configuration of the Marathon provider.
@@ -40,50 +42,65 @@ type lightMarathonClient interface {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage) error {
-	config := marathon.NewDefaultConfig()
-	config.URL = provider.Endpoint
-	config.EventsTransport = marathon.EventsTransportSSE
-	if provider.Basic != nil {
-		config.HTTPBasicAuthUser = provider.Basic.HTTPBasicAuthUser
-		config.HTTPBasicPassword = provider.Basic.HTTPBasicPassword
-	}
-	config.HTTPClient = &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: provider.TLS,
-		},
-	}
-	client, err := marathon.NewClient(config)
-	if err != nil {
-		log.Errorf("Failed to create a client for marathon, error: %s", err)
-		return err
-	}
-	provider.marathonClient = client
-	update := make(marathon.EventsChannel, 5)
-	if provider.Watch {
-		if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
-			log.Errorf("Failed to register for events, %s", err)
-		} else {
-			safe.Go(func() {
+func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+	operation := func() error {
+		config := marathon.NewDefaultConfig()
+		config.URL = provider.Endpoint
+		config.EventsTransport = marathon.EventsTransportSSE
+		if provider.Basic != nil {
+			config.HTTPBasicAuthUser = provider.Basic.HTTPBasicAuthUser
+			config.HTTPBasicPassword = provider.Basic.HTTPBasicPassword
+		}
+		config.HTTPClient = &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: provider.TLS,
+			},
+		}
+		client, err := marathon.NewClient(config)
+		if err != nil {
+			log.Errorf("Failed to create a client for marathon, error: %s", err)
+			return err
+		}
+		provider.marathonClient = client
+		update := make(marathon.EventsChannel, 5)
+		if provider.Watch {
+			if err := client.AddEventsListener(update, marathon.EVENTS_APPLICATIONS); err != nil {
+				log.Errorf("Failed to register for events, %s", err)
+				return err
+			}
+			pool.Go(func(stop chan bool) {
+				defer close(update)
 				for {
-					event := <-update
-					log.Debug("Marathon event receveived", event)
-					configuration := provider.loadMarathonConfig()
-					if configuration != nil {
-						configurationChan <- types.ConfigMessage{
-							ProviderName:  "marathon",
-							Configuration: configuration,
+					select {
+					case <-stop:
+						return
+					case event := <-update:
+						log.Debug("Marathon event receveived", event)
+						configuration := provider.loadMarathonConfig()
+						if configuration != nil {
+							configurationChan <- types.ConfigMessage{
+								ProviderName:  "marathon",
+								Configuration: configuration,
+							}
 						}
 					}
 				}
 			})
 		}
+		configuration := provider.loadMarathonConfig()
+		configurationChan <- types.ConfigMessage{
+			ProviderName:  "marathon",
+			Configuration: configuration,
+		}
+		return nil
 	}
 
-	configuration := provider.loadMarathonConfig()
-	configurationChan <- types.ConfigMessage{
-		ProviderName:  "marathon",
-		Configuration: configuration,
+	notify := func(err error, time time.Duration) {
+		log.Errorf("Marathon connection error %+v, retrying in %s", err, time)
+	}
+	err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+	if err != nil {
+		log.Fatalf("Cannot connect to Marathon server %+v", err)
 	}
 	return nil
 }

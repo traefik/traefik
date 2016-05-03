@@ -89,6 +89,10 @@
 #     [entryPoints.http.redirect]
 #       regex = "^http://localhost/(.*)"
 #       replacement = "http://mydomain/$1"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
 ```
 
 ## Retry configuration
@@ -98,7 +102,7 @@
 #
 # Optional
 #
-# [retry]
+[retry]
 
 # Number of attempts
 #
@@ -118,31 +122,37 @@
 ## ACME (Let's Encrypt) configuration
 
 ```toml
+# Sample entrypoint configuration when using ACME
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
 # Enable ACME (Let's Encrypt): automatic SSL
 #
 # Optional
 #
-# [acme]
+[acme]
 
 # Email address used for registration
 #
 # Required
 #
-# email = "test@traefik.io"
+email = "test@traefik.io"
 
 # File used for certificates storage.
 # WARNING, if you use Traefik in Docker, don't forget to mount this file as a volume.
 #
 # Required
 #
-# storageFile = "acme.json"
+storageFile = "acme.json"
 
 # Entrypoint to proxy acme challenge to.
 # WARNING, must point to an entrypoint on port 443
 #
 # Required
 #
-# entryPoint = "https"
+entryPoint = "https"
 
 # Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
 # WARNING, TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.
@@ -162,6 +172,7 @@
 
 # Domains list
 # You can provide SANs (alternative domains) to each main domain
+# All domains must have A/AAAA records pointing to Traefik
 # WARNING, Take note that Let's Encrypt have rate limiting: https://community.letsencrypt.org/t/quick-start-guide/1631
 # Each domain & SANs will lead to a certificate request.
 #
@@ -175,6 +186,13 @@
 #   main = "local3.com"
 # [[acme.domains]]
 #   main = "local4.com"
+[[acme.domains]]
+   main = "local1.com"
+   sans = ["test1.local1.com", "test2.local1.com"]
+[[acme.domains]]
+   main = "local3.com"
+[[acme.domains]]
+   main = "local4.com"
 ```
 
 # Configuration backends
@@ -247,7 +265,7 @@ defaultEntryPoints = ["http", "https"]
     rule = "Path:/test"
 ```
 
-- or put your rules in a separate file, for example `rules.tml`:
+- or put your rules in a separate file, for example `rules.toml`:
 
 ```toml
 # traefik.toml
@@ -518,7 +536,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
 - `traefik.enable=false`: disable this container in Træfɪk
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`). See [frontends](#frontends).
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 * `traefik.domain=traefik.localhost`: override the default domain
@@ -598,10 +616,41 @@ Labels can be used on containers to override default behaviour:
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the application
 - `traefik.enable=false`: disable this application in Træfɪk
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`). See [frontends](#frontends).
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 * `traefik.domain=traefik.localhost`: override the default domain
+
+
+## Kubernetes Ingress backend
+
+
+Træfɪk can be configured to use Kubernetes Ingress as a backend configuration:
+
+```toml
+################################################################
+# Kubernetes Ingress configuration backend
+################################################################
+# Enable Kubernetes Ingress configuration backend
+#
+# Optional
+#
+[kubernetes]
+
+# Kubernetes server endpoint
+#
+# When deployed as a replication controller in Kubernetes,
+# Traefik will use env variable KUBERNETES_SERVICE_HOST
+# and KUBERNETES_SERVICE_PORT_HTTPS as endpoint
+# Secure token will be found in /var/run/secrets/kubernetes.io/serviceaccount/token
+# and SSL CA cert in /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+# 
+# Optional
+#
+# endpoint = "http://localhost:8080"
+```
+
+You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s.ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s.rc.yaml).
 
 ## Consul backend
 
@@ -693,12 +742,13 @@ This backend will create routes matching on hostname based on the service name
 used in consul.
 
 Additional settings can be defined using Consul Catalog tags:
+
 - ```traefik.enable=false```: disable this container in Træfɪk
 - ```traefik.protocol=https```: override the default `http` protocol
 - ```traefik.backend.weight=10```: assign this weight to the container
 - ```traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5```
 - ```traefik.backend.loadbalancer=drr```: override the default load balancing mode
-- ```traefik.frontend.rule=Host:test.traefik.io```: override the default frontend rule (Default: `Host:{containerName}.{domain}`). See [frontends](#frontends).
+- ```traefik.frontend.rule=Host:test.traefik.io```: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - ```traefik.frontend.passHostHeader=true```: forward client `Host` header to the backend.
 - ```traefik.frontend.entryPoints=http,https```: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 
@@ -715,25 +765,25 @@ Træfɪk can be configured to use Etcd as a backend configuration:
 #
 # Optional
 #
-# [etcd]
+[etcd]
 
 # Etcd server endpoint
 #
 # Required
 #
-# endpoint = "127.0.0.1:4001"
+endpoint = "127.0.0.1:4001"
 
 # Enable watch Etcd changes
 #
 # Optional
 #
-# watch = true
+watch = true
 
 # Prefix used for KV store.
 #
 # Optional
 #
-# prefix = "/traefik"
+prefix = "/traefik"
 
 # Override default configuration template. For advanced users :)
 #
@@ -768,25 +818,25 @@ Træfɪk can be configured to use Zookeeper as a backend configuration:
 #
 # Optional
 #
-# [zookeeper]
+[zookeeper]
 
 # Zookeeper server endpoint
 #
 # Required
 #
-# endpoint = "127.0.0.1:2181"
+endpoint = "127.0.0.1:2181"
 
 # Enable watch Zookeeper changes
 #
 # Optional
 #
-# watch = true
+watch = true
 
 # Prefix used for KV store.
 #
 # Optional
 #
-# prefix = "/traefik"
+prefix = "/traefik"
 
 # Override default configuration template. For advanced users :)
 #
@@ -810,25 +860,25 @@ Træfɪk can be configured to use BoltDB as a backend configuration:
 #
 # Optional
 #
-# [boltdb]
+[boltdb]
 
 # BoltDB file
 #
 # Required
 #
-# endpoint = "/my.db"
+endpoint = "/my.db"
 
 # Enable watch BoltDB changes
 #
 # Optional
 #
-# watch = true
+watch = true
 
 # Prefix used for KV store.
 #
 # Optional
 #
-# prefix = "/traefik"
+prefix = "/traefik"
 
 # Override default configuration template. For advanced users :)
 #
@@ -919,99 +969,3 @@ Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` co
 
 Note that Træfɪk *will not watch for key changes in the `/traefik_configurations` prefix*. It will only watch for changes in the `/traefik` prefix. Further, if the `/traefik/alias` key is set, all other sibling keys with the `/traefik` prefix are ignored.
 
-
-# Examples
-
-## HTTP only
-
-```
-defaultEntryPoints = ["http"]
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-```
-
-## HTTP + HTTPS (with SNI)
-
-```
-defaultEntryPoints = ["http", "https"]
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-  [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
-      [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
-```
-
-## HTTP redirect on HTTPS
-
-```
-defaultEntryPoints = ["http", "https"]
-[entryPoints]
-  [entryPoints.http]
-  address = ":80"
-    [entryPoints.http.redirect]
-    entryPoint = "https"
-  [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]
-      certFile = "tests/traefik.crt"
-      keyFile = "tests/traefik.key"
-```
-
-## Let's Encrypt support
-
-```
-[entryPoints]
-  [entryPoints.https]
-  address = ":443"
-    [entryPoints.https.tls]
-      # certs used as default certs
-      [[entryPoints.https.tls.certificates]]
-      certFile = "tests/traefik.crt"
-      keyFile = "tests/traefik.key"
-[acme]
-email = "test@traefik.io"
-storageFile = "acme.json"
-onDemand = true
-caServer = "http://172.18.0.1:4000/directory"
-entryPoint = "https"
-
-[[acme.domains]]
-  main = "local1.com"
-  sans = ["test1.local1.com", "test2.local1.com"]
-[[acme.domains]]
-  main = "local2.com"
-  sans = ["test1.local2.com", "test2x.local2.com"]
-[[acme.domains]]
-  main = "local3.com"
-[[acme.domains]]
-  main = "local4.com"
-```
-
-## Override entrypoints in frontends
-
-```
-[frontends]
-  [frontends.frontend1]
-  backend = "backend2"
-    [frontends.frontend1.routes.test_1]
-    rule = "Host:test.localhost"
-  [frontends.frontend2]
-  backend = "backend1"
-  passHostHeader = true
-  entrypoints = ["https"] # overrides defaultEntryPoints
-    [frontends.frontend2.routes.test_1]
-    rule = "Host:{subdomain:[a-z]+}.localhost"
-  [frontends.frontend3]
-  entrypoints = ["http", "https"] # overrides defaultEntryPoints
-  backend = "backend2"
-    rule = "Path:/test"
-```

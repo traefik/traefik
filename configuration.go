@@ -37,6 +37,7 @@ type GlobalConfiguration struct {
 	Etcd                      *provider.Etcd
 	Zookeeper                 *provider.Zookepper
 	Boltdb                    *provider.BoltDb
+	Kubernetes                *provider.Kubernetes
 }
 
 // DefaultEntryPoints holds default entry points
@@ -209,7 +210,11 @@ func LoadConfiguration() *GlobalConfiguration {
 	viper.AddConfigPath("$HOME/.traefik/") // call multiple times to add many search paths
 	viper.AddConfigPath(".")               // optionally look for config in the working directory
 	if err := viper.ReadInConfig(); err != nil {
-		fmtlog.Fatalf("Error reading file: %s", err)
+		if len(viper.ConfigFileUsed()) > 0 {
+			fmtlog.Printf("Error reading configuration file: %s", err)
+		} else {
+			fmtlog.Printf("No configuration file found")
+		}
 	}
 
 	if len(arguments.EntryPoints) > 0 {
@@ -253,6 +258,9 @@ func LoadConfiguration() *GlobalConfiguration {
 	}
 	if arguments.boltdb {
 		viper.Set("boltdb", arguments.Boltdb)
+	}
+	if arguments.kubernetes {
+		viper.Set("kubernetes", arguments.Kubernetes)
 	}
 	if err := unmarshal(&configuration); err != nil {
 

@@ -19,7 +19,7 @@ type File struct {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) error {
+func (provider *File) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Error("Error creating file watcher", err)
@@ -35,10 +35,12 @@ func (provider *File) Provide(configurationChan chan<- types.ConfigMessage) erro
 
 	if provider.Watch {
 		// Process events
-		safe.Go(func() {
+		pool.Go(func(stop chan bool) {
 			defer watcher.Close()
 			for {
 				select {
+				case <-stop:
+					return
 				case event := <-watcher.Events:
 					if strings.Contains(event.Name, file.Name()) {
 						log.Debug("File event:", event)

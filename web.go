@@ -8,6 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
@@ -34,7 +35,7 @@ var (
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage) error {
+func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
 	systemRouter := mux.NewRouter()
 
 	// health route
@@ -104,13 +105,15 @@ func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, requ
 }
 
 func (provider *WebProvider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
-	templatesRenderer.JSON(response, http.StatusOK, provider.server.currentConfigurations)
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
 }
 
 func (provider *WebProvider) getProviderHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	if provider, ok := currentConfigurations[providerID]; ok {
 		templatesRenderer.JSON(response, http.StatusOK, provider)
 	} else {
 		http.NotFound(response, request)
@@ -120,7 +123,8 @@ func (provider *WebProvider) getProviderHandler(response http.ResponseWriter, re
 func (provider *WebProvider) getBackendsHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	if provider, ok := currentConfigurations[providerID]; ok {
 		templatesRenderer.JSON(response, http.StatusOK, provider.Backends)
 	} else {
 		http.NotFound(response, request)
@@ -131,7 +135,8 @@ func (provider *WebProvider) getBackendHandler(response http.ResponseWriter, req
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	backendID := vars["backend"]
-	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	if provider, ok := currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, backend)
 			return
@@ -144,7 +149,8 @@ func (provider *WebProvider) getServersHandler(response http.ResponseWriter, req
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	backendID := vars["backend"]
-	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	if provider, ok := currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, backend.Servers)
 			return
@@ -158,7 +164,8 @@ func (provider *WebProvider) getServerHandler(response http.ResponseWriter, requ
 	providerID := vars["provider"]
 	backendID := vars["backend"]
 	serverID := vars["server"]
-	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	if provider, ok := currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			if server, ok := backend.Servers[serverID]; ok {
 				templatesRenderer.JSON(response, http.StatusOK, server)
@@ -172,7 +179,8 @@ func (provider *WebProvider) getServerHandler(response http.ResponseWriter, requ
 func (provider *WebProvider) getFrontendsHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	if provider, ok := currentConfigurations[providerID]; ok {
 		templatesRenderer.JSON(response, http.StatusOK, provider.Frontends)
 	} else {
 		http.NotFound(response, request)
@@ -183,7 +191,8 @@ func (provider *WebProvider) getFrontendHandler(response http.ResponseWriter, re
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
-	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	if provider, ok := currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, frontend)
 			return
@@ -196,7 +205,8 @@ func (provider *WebProvider) getRoutesHandler(response http.ResponseWriter, requ
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
-	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	if provider, ok := currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, frontend.Routes)
 			return
@@ -210,7 +220,8 @@ func (provider *WebProvider) getRouteHandler(response http.ResponseWriter, reque
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
 	routeID := vars["route"]
-	if provider, ok := provider.server.currentConfigurations[providerID]; ok {
+	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	if provider, ok := currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			if route, ok := frontend.Routes[routeID]; ok {
 				templatesRenderer.JSON(response, http.StatusOK, route)
