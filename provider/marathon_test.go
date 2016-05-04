@@ -82,8 +82,9 @@ func TestMarathonLoadConfig(t *testing.T) {
 			},
 			expectedFrontends: map[string]*types.Frontend{
 				`frontend-test`: {
-					Backend:     "backend-test",
-					EntryPoints: []string{},
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
 						`route-host-test`: {
 							Rule: "Host:test.docker.localhost",
@@ -780,15 +781,15 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 	}{
 		{
 			application: marathon.Application{},
-			expected:    "false",
+			expected:    "true",
 		},
 		{
 			application: marathon.Application{
 				Labels: map[string]string{
-					"traefik.frontend.passHostHeader": "true",
+					"traefik.frontend.passHostHeader": "false",
 				},
 			},
-			expected: "true",
+			expected: "false",
 		},
 	}
 

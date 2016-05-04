@@ -21,8 +21,9 @@ const (
 
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
-	BaseProvider `mapstructure:",squash"`
-	Endpoint     string
+	BaseProvider           `mapstructure:",squash"`
+	Endpoint               string
+	disablePassHostHeaders bool
 }
 
 func (provider *Kubernetes) createClient() (k8s.Client, error) {
@@ -143,8 +144,9 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 				}
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
-						Backend: r.Host + pa.Path,
-						Routes:  make(map[string]types.Route),
+						Backend:        r.Host + pa.Path,
+						PassHostHeader: provider.getPassHostHeader(),
+						Routes:         make(map[string]types.Route),
 					}
 				}
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
@@ -188,6 +190,13 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 		}
 	}
 	return &templateObjects, nil
+}
+
+func (provider *Kubernetes) getPassHostHeader() bool {
+	if provider.disablePassHostHeaders {
+		return false
+	}
+	return true
 }
 
 func (provider *Kubernetes) loadConfig(templateObjects types.Configuration) *types.Configuration {
