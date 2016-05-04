@@ -38,18 +38,44 @@ type KvTLS struct {
 	InsecureSkipVerify bool
 }
 
+// watchKv performs a watch on the given key prefix. Any time a change event happens on any keys matching
+// the prefix, a new configuration is loaded and sent to configurationChan. This method will either
+// return an error if the KV connection fails (after backoff/retry) or run perpetually until a stop message
+// is sent on the stop chan.
 func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix string, stop chan bool) error {
-	operation := func() error {
-		events, err := provider.kvclient.WatchTree(provider.Prefix, make(chan struct{}))
-		if err != nil {
-			return fmt.Errorf("Failed to KV WatchTree: %v", err)
+	var events <-chan []*store.KVPair
+
+	for {
+		select {
+		case <-stop:
+			return nil
+		default: // noop
 		}
-		for {
+
+		operation := func() error {
+			if events == nil {
+				var err error
+				events, err = provider.kvclient.WatchTree(provider.Prefix, make(chan struct{}))
+				if err != nil {
+					return err
+				}
+			}
+
+			// Reading from the events chan may block indefinitely if there are no events,
+			// however, the operation must return relatively quickly in order for backoff.RetryNotify
+			// to work as expected. Here, we add a timeout to protect operation from running too long.
+			timeout := make(chan bool, 1)
+			go func() {
+				time.Sleep(1 * time.Second)
+				timeout <- true
+			}()
+
 			select {
-			case <-stop:
+			case <-timeout:
 				return nil
 			case _, ok := <-events:
 				if !ok {
+					events = nil
 					return errors.New("watchtree channel closed")
 				}
 				configuration := provider.loadConfig()
@@ -60,17 +86,19 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 					}
 				}
 			}
+			return nil
+		}
+
+		notify := func(err error, time time.Duration) {
+			log.Errorf("KV watch connection error: %+v, retrying in %s", err, time)
+		}
+		b := backoff.NewExponentialBackOff()
+		b.MaxElapsedTime = 0 // Keep backing off forever
+		err := backoff.RetryNotify(operation, b, notify)
+		if err != nil {
+			return fmt.Errorf("Cannot connect to KV server: %v", err)
 		}
 	}
-
-	notify := func(err error, time time.Duration) {
-		log.Errorf("KV connection error: %+v, retrying in %s", err, time)
-	}
-	err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
-	if err != nil {
-		return fmt.Errorf("Cannot connect to KV server: %v", err)
-	}
-	return nil
 }
 
 func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
