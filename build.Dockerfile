@@ -1,8 +1,6 @@
-FROM golang:1.6.1-alpine
+FROM golang:1.6.2
 
-RUN apk update && apk add git bash gcc musl-dev \
-&& go get github.com/Masterminds/glide \
-&& go get github.com/mitchellh/gox \
+RUN go get github.com/Masterminds/glide \
 && go get github.com/jteeuwen/go-bindata/... \
 && go get github.com/golang/lint/golint \
 && go get github.com/kisielk/errcheck
