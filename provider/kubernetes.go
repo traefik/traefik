@@ -134,6 +134,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 		map[string]*types.Backend{},
 		map[string]*types.Frontend{},
 	}
+	PassHostHeader := provider.getPassHostHeader()
 	for _, i := range ingresses {
 		for _, r := range i.Spec.Rules {
 			for _, pa := range r.HTTP.Paths {
@@ -145,7 +146,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:        r.Host + pa.Path,
-						PassHostHeader: provider.getPassHostHeader(),
+						PassHostHeader: PassHostHeader,
 						Routes:         make(map[string]types.Route),
 					}
 				}
