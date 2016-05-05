@@ -76,3 +76,34 @@ ok      github.com/containous/traefik   0.005s  coverage: 4.1% of statements
 
 Test success
 ```
+
+### Documentation
+
+The [documentation site](http://docs.traefik.io/) is built with [mkdocs](http://mkdocs.org/)
+
+First make sure you have python and pip installed
+
+```
+$ python --version
+Python 2.7.2
+$ pip --version
+pip 1.5.2
+```
+
+Then install mkdocs with pip
+
+```
+$ pip install mkdocs
+```
+
+To test documentaion localy run `mkdocs serve` in the root directory, this should start a server localy to preview your changes.
+
+```
+$ mkdocs serve
+INFO    -  Building documentation... 
+WARNING -  Config value: 'theme'. Warning: The theme 'united' will be removed in an upcoming MkDocs release. See http://www.mkdocs.org/about/release-notes/ for more details 
+INFO    -  Cleaning site directory 
+[I 160505 22:31:24 server:281] Serving on http://127.0.0.1:8000
+[I 160505 22:31:24 handlers:59] Start watching changes
+[I 160505 22:31:24 handlers:61] Start detecting changes
+```
