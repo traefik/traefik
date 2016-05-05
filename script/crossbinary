@@ -9,13 +9,13 @@ fi
 if [ -z "$1" ]; then
     # Remove windows platform because of
     # https://github.com/mailgun/log/issues/10
-    OS_PLATFORM_ARG=(-os="darwin linux")
+    OS_PLATFORM_ARG=(linux)
 else
     OS_PLATFORM_ARG=($1)
 fi
 
 if [ -z "$2" ]; then
-    OS_ARCH_ARG=(-arch="386 amd64 arm")
+    OS_ARCH_ARG=(386 amd64 arm)
 else
     OS_ARCH_ARG=($2)
 fi
@@ -32,5 +32,9 @@ fi
 rm -f dist/traefik_*
 
 # Build binaries
-GOGC=off gox -ldflags "-X main.Version=$VERSION -X main.BuildDate=$DATE" "${OS_PLATFORM_ARG[@]}" "${OS_ARCH_ARG[@]}" \
-    -output="dist/traefik_{{.OS}}-{{.Arch}}"
+for OS in ${OS_PLATFORM_ARG[@]}; do
+  for ARCH in ${OS_ARCH_ARG[@]}; do
+    echo "Building binary for $OS/$ARCH..."
+    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X main.Version=$VERSION -X main.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" .
+  done
+done
