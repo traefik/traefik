@@ -29,10 +29,11 @@ const DockerAPIVersion string = "1.21"
 
 // Docker holds configurations of the Docker provider.
 type Docker struct {
-	BaseProvider `mapstructure:",squash"`
-	Endpoint     string
-	Domain       string
-	TLS          *DockerTLS
+	BaseProvider     `mapstructure:",squash"`
+	Endpoint         string
+	Domain           string
+	TLS              *DockerTLS
+	ExposedByDefault bool
 }
 
 // DockerTLS holds TLS specific configurations
@@ -171,7 +172,9 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 	}
 
 	// filter containers
-	filteredContainers := fun.Filter(containerFilter, containersInspected).([]dockertypes.ContainerJSON)
+	filteredContainers := fun.Filter(func(container dockertypes.ContainerJSON) bool {
+		return containerFilter(container, provider.ExposedByDefault)
+	}, containersInspected).([]dockertypes.ContainerJSON)
 
 	frontends := map[string][]dockertypes.ContainerJSON{}
 	for _, container := range filteredContainers {
@@ -195,7 +198,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 	return configuration
 }
 
-func containerFilter(container dockertypes.ContainerJSON) bool {
+func containerFilter(container dockertypes.ContainerJSON, exposedByDefaultFlag bool) bool {
 	if len(container.NetworkSettings.Ports) == 0 {
 		log.Debugf("Filtering container without port %s", container.Name)
 		return false
@@ -206,7 +209,7 @@ func containerFilter(container dockertypes.ContainerJSON) bool {
 		return false
 	}
 
-	if container.Config.Labels["traefik.enable"] == "false" {
+	if !isContainerEnabled(container, exposedByDefaultFlag) {
 		log.Debugf("Filtering disabled container %s", container.Name)
 		return false
 	}
@@ -287,6 +290,10 @@ func (provider *Docker) getEntryPoints(container dockertypes.ContainerJSON) []st
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
+}
+
+func isContainerEnabled(container dockertypes.ContainerJSON, exposedByDefault bool) bool {
+	return exposedByDefault && container.Config.Labels["traefik.enable"] != "false" || container.Config.Labels["traefik.enable"] == "true"
 }
 
 func getLabel(container dockertypes.ContainerJSON, label string) (string, error) {

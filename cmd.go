@@ -118,6 +118,7 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Docker.Filename, "docker.filename", "", "Override default configuration template. For advanced users :)")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Docker.Endpoint, "docker.endpoint", "unix:///var/run/docker.sock", "Docker server endpoint. Can be a tcp or a unix socket endpoint")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Docker.Domain, "docker.domain", "", "Default domain used")
+	traefikCmd.PersistentFlags().BoolVar(&arguments.Docker.ExposedByDefault, "docker.exposedByDefault", true, "Expose containers by default")
 	traefikCmd.PersistentFlags().BoolVar(&arguments.dockerTLS, "docker.tls", false, "Enable Docker TLS support")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Docker.TLS.CA, "docker.tls.ca", "", "TLS CA")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Docker.TLS.Cert, "docker.tls.cert", "", "TLS cert")
