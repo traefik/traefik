@@ -133,9 +133,11 @@ func (provider *ConsulCatalog) getBackendAddress(node *api.ServiceEntry) string 
 
 func (provider *ConsulCatalog) getBackendName(node *api.ServiceEntry, index int) string {
 	serviceName := node.Service.Service + "--" + node.Service.Address + "--" + strconv.Itoa(node.Service.Port)
-	if len(node.Service.Tags) > 0 {
-		serviceName += "--" + strings.Join(node.Service.Tags, "--")
+
+	for _, tag := range node.Service.Tags {
+		serviceName += "--" + normalize(tag)
 	}
+
 	serviceName = strings.Replace(serviceName, ".", "-", -1)
 	serviceName = strings.Replace(serviceName, "=", "-", -1)
 
