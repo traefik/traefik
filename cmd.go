@@ -172,6 +172,7 @@ func init() {
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.kubernetes, "kubernetes", false, "Enable Kubernetes backend")
 	traefikCmd.PersistentFlags().StringVar(&arguments.Kubernetes.Endpoint, "kubernetes.endpoint", "127.0.0.1:8080", "Kubernetes server endpoint")
+	traefikCmd.PersistentFlags().StringSliceVar(&arguments.Kubernetes.Namespaces, "kubernetes.namespaces", []string{}, "Kubernetes namespaces")
 
 	_ = viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))
 	_ = viper.BindPFlag("graceTimeOut", traefikCmd.PersistentFlags().Lookup("graceTimeOut"))

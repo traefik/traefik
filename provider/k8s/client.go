@@ -49,7 +49,7 @@ func NewClient(baseURL string, caCert []byte, token string) (Client, error) {
 	}, nil
 }
 
-// GetIngresses returns all services in the cluster
+// GetIngresses returns all ingresses in the cluster
 func (c *clientImpl) GetIngresses(predicate func(Ingress) bool) ([]Ingress, error) {
 	getURL := c.endpointURL + extentionsEndpoint + defaultIngress
 

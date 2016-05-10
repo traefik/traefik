@@ -343,6 +343,7 @@
 # Optional
 #
 # endpoint = "http://localhost:8080"
+# namespaces = ["default"]
 
 ################################################################
 # Consul KV configuration backend
