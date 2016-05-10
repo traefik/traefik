@@ -9,6 +9,7 @@
 [frontends]{{range $frontendName, $frontend := .Frontends}}
   [frontends."{{$frontendName}}"]
   backend = "{{$frontend.Backend}}"
+  passHostHeader = {{$frontend.PassHostHeader}}
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
     rule = "{{$route.Rule}}"

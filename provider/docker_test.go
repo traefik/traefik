@@ -401,7 +401,6 @@ func TestDockerGetProtocol(t *testing.T) {
 
 func TestDockerGetPassHostHeader(t *testing.T) {
 	provider := &Docker{}
-
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -413,7 +412,7 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 				},
 				Config: &container.Config{},
 			},
-			expected: "false",
+			expected: "true",
 		},
 		{
 			container: docker.ContainerJSON{
@@ -422,11 +421,11 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.frontend.passHostHeader": "true",
+						"traefik.frontend.passHostHeader": "false",
 					},
 				},
 			},
-			expected: "true",
+			expected: "false",
 		},
 	}
 
@@ -744,8 +743,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 			},
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-Host-test-docker-localhost": {
-					Backend:     "backend-test",
-					EntryPoints: []string{},
+					Backend:        "backend-test",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test-docker-localhost": {
 							Rule: "Host:test.docker.localhost",
@@ -816,8 +816,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 			},
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-Host-test1-docker-localhost": {
-					Backend:     "backend-foobar",
-					EntryPoints: []string{"http", "https"},
+					Backend:        "backend-foobar",
+					PassHostHeader: true,
+					EntryPoints:    []string{"http", "https"},
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test1-docker-localhost": {
 							Rule: "Host:test1.docker.localhost",
@@ -825,8 +826,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					},
 				},
 				"frontend-Host-test2-docker-localhost": {
-					Backend:     "backend-foobar",
-					EntryPoints: []string{},
+					Backend:        "backend-foobar",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test2-docker-localhost": {
 							Rule: "Host:test2.docker.localhost",

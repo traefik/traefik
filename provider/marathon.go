@@ -316,7 +316,7 @@ func (provider *Marathon) getPassHostHeader(application marathon.Application) st
 	if passHostHeader, err := provider.getLabel(application, "traefik.frontend.passHostHeader"); err == nil {
 		return passHostHeader
 	}
-	return "false"
+	return "true"
 }
 
 func (provider *Marathon) getEntryPoints(application marathon.Application) []string {

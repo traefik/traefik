@@ -236,7 +236,8 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 			},
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-test": {
-					Backend: "backend-test",
+					Backend:        "backend-test",
+					PassHostHeader: true,
 					Routes: map[string]types.Route{
 						"route-host-test": {
 							Rule: "Host:test.localhost",

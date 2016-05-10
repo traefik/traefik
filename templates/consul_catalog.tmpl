@@ -29,7 +29,7 @@
 {{range .Services}}
   [frontends.frontend-{{.ServiceName}}]
   backend = "backend-{{.ServiceName}}"
-  passHostHeader = {{getAttribute "frontend.passHostHeader" .Attributes "false"}}
+  passHostHeader = {{getAttribute "frontend.passHostHeader" .Attributes "true"}}
   {{$entryPoints := getAttribute "frontend.entrypoints" .Attributes ""}}
   {{with $entryPoints}}
     entrypoints = [{{range getEntryPoints $entryPoints}}

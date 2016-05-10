@@ -279,7 +279,7 @@ func (provider *Docker) getPassHostHeader(container dockertypes.ContainerJSON) s
 	if passHostHeader, err := getLabel(container, "traefik.frontend.passHostHeader"); err == nil {
 		return passHostHeader
 	}
-	return "false"
+	return "true"
 }
 
 func (provider *Docker) getEntryPoints(container dockertypes.ContainerJSON) []string {

@@ -430,7 +430,7 @@ func TestKVLoadConfig(t *testing.T) {
 		Frontends: map[string]*types.Frontend{
 			"frontend.with.dot": {
 				Backend:        "backend.with.dot.too",
-				PassHostHeader: false,
+				PassHostHeader: true,
 				EntryPoints:    []string{},
 				Routes: map[string]types.Route{
 					"route.with.dot": {

@@ -139,7 +139,8 @@ func TestLoadIngresses(t *testing.T) {
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
-				Backend: "foo/bar",
+				Backend:        "foo/bar",
+				PassHostHeader: true,
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefixStrip:/bar",
@@ -150,10 +151,98 @@ func TestLoadIngresses(t *testing.T) {
 				},
 			},
 			"bar": {
-				Backend: "bar",
+				Backend:        "bar",
+				PassHostHeader: true,
 				Routes: map[string]types.Route{
 					"bar": {
 						Rule: "Host:bar",
+					},
+				},
+			},
+		},
+	}
+	actualJSON, _ := json.Marshal(actual)
+	expectedJSON, _ := json.Marshal(expected)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+	}
+}
+
+func TestGetPassHostHeader(t *testing.T) {
+	ingresses := []k8s.Ingress{{
+		Spec: k8s.IngressSpec{
+			Rules: []k8s.IngressRule{
+				{
+					Host: "foo",
+					IngressRuleValue: k8s.IngressRuleValue{
+						HTTP: &k8s.HTTPIngressRuleValue{
+							Paths: []k8s.HTTPIngressPath{
+								{
+									Path: "/bar",
+									Backend: k8s.IngressBackend{
+										ServiceName: "service1",
+										ServicePort: k8s.FromInt(801),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+	services := []k8s.Service{
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Name: "service1",
+				UID:  "1",
+			},
+			Spec: k8s.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Ports: []k8s.ServicePort{
+					{
+						Name: "http",
+						Port: 801,
+					},
+				},
+			},
+		},
+	}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Kubernetes{disablePassHostHeaders: true}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo/bar": {
+				Servers: map[string]types.Server{
+					"1": {
+						URL:    "http://10.0.0.1:801",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer:   nil,
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo/bar": {
+				Backend: "foo/bar",
+				Routes: map[string]types.Route{
+					"/bar": {
+						Rule: "PathPrefixStrip:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
 					},
 				},
 			},
@@ -330,7 +419,8 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
-				Backend: "foo/bar",
+				Backend:        "foo/bar",
+				PassHostHeader: true,
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefixStrip:/bar",
@@ -341,7 +431,8 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 				},
 			},
 			"bar": {
-				Backend: "bar",
+				Backend:        "bar",
+				PassHostHeader: true,
 				Routes: map[string]types.Route{
 					"bar": {
 						Rule: "Host:bar",
@@ -556,7 +647,8 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
-				Backend: "foo/bar",
+				Backend:        "foo/bar",
+				PassHostHeader: true,
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefixStrip:/bar",
@@ -567,7 +659,8 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				},
 			},
 			"bar": {
-				Backend: "bar",
+				Backend:        "bar",
+				PassHostHeader: true,
 				Routes: map[string]types.Route{
 					"bar": {
 						Rule: "Host:bar",
@@ -575,7 +668,8 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				},
 			},
 			"awesome/quix": {
-				Backend: "awesome/quix",
+				Backend:        "awesome/quix",
+				PassHostHeader: true,
 				Routes: map[string]types.Route{
 					"/quix": {
 						Rule: "PathPrefixStrip:/quix",
