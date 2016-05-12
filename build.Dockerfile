@@ -6,10 +6,7 @@ RUN go get github.com/Masterminds/glide \
 && go get github.com/kisielk/errcheck
 
 # Which docker version to test on
-ENV DOCKER_VERSION 1.9.1
-
-# enable GO15VENDOREXPERIMENT
-ENV GO15VENDOREXPERIMENT 1
+ARG DOCKER_VERSION=1.10.1
 
 # Download docker
 RUN set -ex; \

@@ -11,4 +11,6 @@ if [ -n "$VERBOSE" ]; then
 fi
 
 cd integration
+echo "Testing against…"
+docker version
 CGO_ENABLED=0 go test $TESTFLAGS

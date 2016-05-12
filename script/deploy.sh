@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-if ([ "$TRAVIS_BRANCH" = "master" ] || [ ! -z "$TRAVIS_TAG" ]) && [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+if ([ "$TRAVIS_BRANCH" = "master" ] || [ ! -z "$TRAVIS_TAG" ]) && [ "$TRAVIS_PULL_REQUEST" = "false" ] && [ "$DOCKER_VERSION" = "1.10.1" ]; then
   echo "Deploying..."
 else
   echo "Skipping deploy"
