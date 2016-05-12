@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"bufio"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/streamrail/concurrent-map"
@@ -165,6 +166,10 @@ func (lirw *logInfoResponseWriter) Flush() {
 	if ok {
 		f.Flush()
 	}
+}
+
+func (lirw *logInfoResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return lirw.rw.(http.Hijacker).Hijack()
 }
 
 func (lirw *logInfoResponseWriter) GetStatus() int {
