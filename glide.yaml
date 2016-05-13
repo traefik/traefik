@@ -59,7 +59,7 @@ import:
   subpackages:
   - bson
 - package: github.com/docker/docker
-  version: f39987afe8d611407887b3094c03d6ba6a766a67
+  version: 9837ec4da53f15f9120d53a6e1517491ba8b0261
   subpackages:
   - autogen
   - api
@@ -104,7 +104,7 @@ import:
 - package: gopkg.in/yaml.v2
   version: 7ad95dd0798a40da1ccdff6dff35fd177b5edf
 - package: github.com/opencontainers/runc
-  version: 4ab132458fc3e9dbeea624153e0331952dc4c8d5
+  version: 2441732d6fcc0fb0a542671a4372e0c7bc99c19e
   subpackages:
   - libcontainer/user
 - package: github.com/gorilla/mux
@@ -157,16 +157,18 @@ import:
   subpackages:
   - mock
 - package: github.com/xenolf/lego
-- package: github.com/vdemeester/libkermit
-  version: 7e4e689a6fa9281e0fb9b7b9c297e22d5342a5ec
+- package: github.com/libkermit/docker-check
+  version: bb75a86b169c6c5d22c0ee98278124036f272d7b
+- package: github.com/libkermit/docker
+  version: 9f5a90f8eb3c49bf56e81621f98b3cd86fe4139f
 - package: github.com/docker/libcompose
-  version: e290a513ba909ca3afefd5cd611f3a3fe56f6a3a
+  version: 8ee7bcc364f7b8194581a3c6bd9fa019467c7873
 - package: github.com/docker/distribution
-  version: ff6f38ccb69afa96214c7ee955359465d1fc767a
+  version: 467fc068d88aa6610691b7f1a677271a3fac4aac
   subpackages:
   - reference
 - package: github.com/docker/engine-api
-  version: 8924d6900370b4c7e7984be5adc61f50a80d7537
+  version: fd7f99d354831e7e809386087e7ec3129fdb1520
   subpackages:
   - client
   - types

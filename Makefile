@@ -46,7 +46,7 @@ validate: build  ## validate gofmt, golint and go vet
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-gofmt validate-govet validate-golint 
 
 build: dist
-	docker build -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+	docker build --build-arg=DOCKER_VERSION=${DOCKER_VERSION} -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
 build-webui:
 	docker build -t traefik-webui -f webui/Dockerfile webui

@@ -13,8 +13,8 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/go-check/check"
 
-	d "github.com/vdemeester/libkermit/docker"
-	docker "github.com/vdemeester/libkermit/docker/check"
+	d "github.com/libkermit/docker"
+	docker "github.com/libkermit/docker-check"
 	checker "github.com/vdemeester/shakers"
 )
 
