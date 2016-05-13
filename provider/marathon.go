@@ -127,6 +127,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		"getEntryPoints":     provider.getEntryPoints,
 		"getFrontendRule":    provider.getFrontendRule,
 		"getFrontendBackend": provider.getFrontendBackend,
+		"getSticky":          provider.getSticky,
 		"replace":            replace,
 	}
 
@@ -321,6 +322,13 @@ func (provider *Marathon) getProtocol(task marathon.Task, applications []maratho
 		return label
 	}
 	return "http"
+}
+
+func (provider *Marathon) getSticky(application marathon.Application) string {
+	if sticky, err := provider.getLabel(application, "traefik.backend.sticky"); err == nil {
+		return sticky
+	}
+	return "false"
 }
 
 func (provider *Marathon) getPassHostHeader(application marathon.Application) string {

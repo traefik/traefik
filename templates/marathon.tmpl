@@ -4,7 +4,10 @@
     url = "{{getProtocol . $apps}}://{{.Host}}:{{getPort . $apps}}"
     weight = {{getWeight . $apps}}
 {{end}}
-
+{{range .Applications}}
+[backends.backend{{getFrontendBackend .}}.loadbalancer]
+sticky = {{getSticky .}}
+{{end}}
 [frontends]{{range .Applications}}
   [frontends.frontend{{.ID | replace "/" "-"}}]
   backend = "backend{{getFrontendBackend .}}"
