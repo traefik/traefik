@@ -420,10 +420,18 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						if configuration.Backends[frontend.Backend] == nil {
 							return nil, errors.New("Undefined backend: " + frontend.Backend)
 						}
+
 						lbMethod, err := types.NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
 						if err != nil {
-							configuration.Backends[frontend.Backend].LoadBalancer = &types.LoadBalancer{Method: "wrr"}
+							if configuration.Backends[frontend.Backend].LoadBalancer == nil {
+								configuration.Backends[frontend.Backend].LoadBalancer = &types.LoadBalancer{Method: "wrr"}
+							} else {
+								configuration.Backends[frontend.Backend].LoadBalancer.Method = "wrr"
+							}
 						}
+
+						stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
+
 						switch lbMethod {
 						case types.Drr:
 							log.Debugf("Creating load-balancer drr")
@@ -442,6 +450,12 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							}
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
+							if stickysession {
+								cookiename := "_TRAEFIK_SERVERNAME"
+								log.Debugf("... setting to sticky session with cookie named %v", cookiename)
+								sticky := roundrobin.NewStickySession(cookiename)
+								rr, _ = roundrobin.New(saveBackend, roundrobin.EnableStickySession(sticky))
+							}
 							lb = rr
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)

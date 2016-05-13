@@ -22,6 +22,7 @@ type MaxConn struct {
 // LoadBalancer holds load balancing configuration.
 type LoadBalancer struct {
 	Method string `json:"method,omitempty"`
+	Sticky bool   `json:"sticky,omitempty"`
 }
 
 // CircuitBreaker holds circuit breaker configuration.
