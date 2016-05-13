@@ -138,6 +138,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		"getMaxConnAmount":            provider.getMaxConnAmount,
 		"getLoadBalancerMethod":       provider.getLoadBalancerMethod,
 		"getCircuitBreakerExpression": provider.getCircuitBreakerExpression,
+		"getSticky":                   provider.getSticky,
 	}
 
 	applications, err := provider.marathonClient.Applications(nil)
@@ -345,6 +346,13 @@ func (provider *Marathon) getProtocol(task marathon.Task, applications []maratho
 		return label
 	}
 	return "http"
+}
+
+func (provider *Marathon) getSticky(application marathon.Application) string {
+	if sticky, err := provider.getLabel(application, "traefik.backend.sticky"); err == nil {
+		return sticky
+	}
+	return "false"
 }
 
 func (provider *Marathon) getPassHostHeader(application marathon.Application) string {
