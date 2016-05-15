@@ -169,6 +169,81 @@ func TestLoadIngresses(t *testing.T) {
 	}
 }
 
+func TestPathPrefixStrip(t *testing.T) {
+	ingresses := []k8s.Ingress{{
+		Spec: k8s.IngressSpec{
+			Rules: []k8s.IngressRule{
+				{
+					Host: "doo",
+					IngressRuleValue: k8s.IngressRuleValue{
+						HTTP: &k8s.HTTPIngressRuleValue{
+							Paths: []k8s.HTTPIngressPath{
+								{
+									Path: "/pa",
+									Backend: k8s.IngressBackend{
+										ServiceName: "service1",
+										ServicePort: k8s.FromInt(801),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+	ingresses[0].Annotations = map[string]string{"PathPrefixStrip": "true"}
+	services := []k8s.Service{
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Name: "service1",
+				UID:  "1",
+			},
+			Spec: k8s.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Ports: []k8s.ServicePort{
+					{
+						Name: "http",
+						Port: 801,
+					},
+				},
+			},
+		},
+	}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Kubernetes{disablePassHostHeaders: true}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := map[string]*types.Frontend{
+		"foo/bar": {
+			Backend: "foo/bar",
+			Routes: map[string]types.Route{
+				"/bar": {
+					Rule: "PathPrefixStrip:/bar",
+				},
+				"foo": {
+					Rule: "Host:foo",
+				},
+			},
+		},
+	}
+	actualJSON, _ := json.Marshal(actual.Frontends)
+	expectedJSON, _ := json.Marshal(expected)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+	}
+}
+
+
 func TestGetPassHostHeader(t *testing.T) {
 	ingresses := []k8s.Ingress{{
 		Spec: k8s.IngressSpec{
