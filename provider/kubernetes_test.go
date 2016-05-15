@@ -217,7 +217,8 @@ func TestPathPrefixStrip(t *testing.T) {
 		watchChan: watchChan,
 	}
 	provider := Kubernetes{disablePassHostHeaders: true}
-	actual, err := provider.loadIngresses(client)
+	actualConfig, err := provider.loadIngresses(client)
+	actual := actualConfig.Frontends
 	if err != nil {
 		t.Fatalf("error %+v", err)
 	}
@@ -235,7 +236,7 @@ func TestPathPrefixStrip(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual.Frontends)
+	actualJSON, _ := json.Marshal(actual)
 	expectedJSON, _ := json.Marshal(expected)
 
 	if !reflect.DeepEqual(actual, expected) {
