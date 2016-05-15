@@ -174,12 +174,12 @@ func TestPathPrefixStrip(t *testing.T) {
 		Spec: k8s.IngressSpec{
 			Rules: []k8s.IngressRule{
 				{
-					Host: "doo",
+					Host: "foo",
 					IngressRuleValue: k8s.IngressRuleValue{
 						HTTP: &k8s.HTTPIngressRuleValue{
 							Paths: []k8s.HTTPIngressPath{
 								{
-									Path: "/pa",
+									Path: "/bar",
 									Backend: k8s.IngressBackend{
 										ServiceName: "service1",
 										ServicePort: k8s.FromInt(801),
