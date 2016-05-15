@@ -243,7 +243,6 @@ func TestPathPrefixStrip(t *testing.T) {
 	}
 }
 
-
 func TestGetPassHostHeader(t *testing.T) {
 	ingresses := []k8s.Ingress{{
 		Spec: k8s.IngressSpec{
