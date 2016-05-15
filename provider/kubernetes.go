@@ -165,8 +165,14 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					}
 				}
 				if len(pa.Path) > 0 {
-					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-						Rule: "PathPrefix:" + pa.Path,
+					if _, ok := i.Annotations["PathPrefixStrip"]; ok {
+						templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
+							Rule: "PathPrefixStrip:" + pa.Path,
+						}
+					} else {
+						templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
+							Rule: "PathPrefix:" + pa.Path,
+						}
 					}
 				}
 				services, err := k8sClient.GetServices(func(service k8s.Service) bool {
