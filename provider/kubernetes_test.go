@@ -169,20 +169,25 @@ func TestLoadIngresses(t *testing.T) {
 	}
 }
 
-func TestPathPrefixStrip(t *testing.T) {
-	ingresses := []k8s.Ingress{{
-		Spec: k8s.IngressSpec{
-			Rules: []k8s.IngressRule{
-				{
-					Host: "foo",
-					IngressRuleValue: k8s.IngressRuleValue{
-						HTTP: &k8s.HTTPIngressRuleValue{
-							Paths: []k8s.HTTPIngressPath{
-								{
-									Path: "/bar",
-									Backend: k8s.IngressBackend{
-										ServiceName: "service1",
-										ServicePort: k8s.FromInt(801),
+func TestRuleType(t *testing.T) {
+	ingresses := []k8s.Ingress{
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Annotations: map[string]string{"traefik.frontend.rule.type": "PathPrefixStrip"}, //camel case
+			},
+			Spec: k8s.IngressSpec{
+				Rules: []k8s.IngressRule{
+					{
+						Host: "foo1",
+						IngressRuleValue: k8s.IngressRuleValue{
+							HTTP: &k8s.HTTPIngressRuleValue{
+								Paths: []k8s.HTTPIngressPath{
+									{
+										Path: "/bar1",
+										Backend: k8s.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: k8s.FromInt(801),
+										},
 									},
 								},
 							},
@@ -191,8 +196,107 @@ func TestPathPrefixStrip(t *testing.T) {
 				},
 			},
 		},
-	}}
-	ingresses[0].Annotations = map[string]string{"PathPrefixStrip": "true"}
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Annotations: map[string]string{"traefik.frontend.rule.type": "path"}, //lower case
+			},
+			Spec: k8s.IngressSpec{
+				Rules: []k8s.IngressRule{
+					{
+						Host: "foo1",
+						IngressRuleValue: k8s.IngressRuleValue{
+							HTTP: &k8s.HTTPIngressRuleValue{
+								Paths: []k8s.HTTPIngressPath{
+									{
+										Path: "/bar2",
+										Backend: k8s.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: k8s.FromInt(801),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Annotations: map[string]string{"traefik.frontend.rule.type": "PathPrefix"}, //path prefix
+			},
+			Spec: k8s.IngressSpec{
+				Rules: []k8s.IngressRule{
+					{
+						Host: "foo2",
+						IngressRuleValue: k8s.IngressRuleValue{
+							HTTP: &k8s.HTTPIngressRuleValue{
+								Paths: []k8s.HTTPIngressPath{
+									{
+										Path: "/bar1",
+										Backend: k8s.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: k8s.FromInt(801),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Annotations: map[string]string{"traefik.frontend.rule.type": "PathStrip"}, //path strip
+			},
+			Spec: k8s.IngressSpec{
+				Rules: []k8s.IngressRule{
+					{
+						Host: "foo2",
+						IngressRuleValue: k8s.IngressRuleValue{
+							HTTP: &k8s.HTTPIngressRuleValue{
+								Paths: []k8s.HTTPIngressPath{
+									{
+										Path: "/bar2",
+										Backend: k8s.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: k8s.FromInt(801),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Annotations: map[string]string{"traefik.frontend.rule.type": "PathXXStrip"}, //wrong rule
+			},
+			Spec: k8s.IngressSpec{
+				Rules: []k8s.IngressRule{
+					{
+						Host: "foo1",
+						IngressRuleValue: k8s.IngressRuleValue{
+							HTTP: &k8s.HTTPIngressRuleValue{
+								Paths: []k8s.HTTPIngressPath{
+									{
+										Path: "/bar3",
+										Backend: k8s.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: k8s.FromInt(801),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 	services := []k8s.Service{
 		{
 			ObjectMeta: k8s.ObjectMeta{
@@ -224,14 +328,58 @@ func TestPathPrefixStrip(t *testing.T) {
 	}
 
 	expected := map[string]*types.Frontend{
-		"foo/bar": {
-			Backend: "foo/bar",
+		"foo1/bar1": {
+			Backend: "foo1/bar1",
 			Routes: map[string]types.Route{
-				"/bar": {
-					Rule: "PathPrefixStrip:/bar",
+				"/bar1": {
+					Rule: "PathPrefixStrip:/bar1",
 				},
-				"foo": {
-					Rule: "Host:foo",
+				"foo1": {
+					Rule: "Host:foo1",
+				},
+			},
+		},
+		"foo1/bar2": {
+			Backend: "foo1/bar2",
+			Routes: map[string]types.Route{
+				"/bar2": {
+					Rule: "Path:/bar2",
+				},
+				"foo1": {
+					Rule: "Host:foo1",
+				},
+			},
+		},
+		"foo2/bar1": {
+			Backend: "foo2/bar1",
+			Routes: map[string]types.Route{
+				"/bar1": {
+					Rule: "PathPrefix:/bar1",
+				},
+				"foo2": {
+					Rule: "Host:foo2",
+				},
+			},
+		},
+		"foo2/bar2": {
+			Backend: "foo2/bar2",
+			Routes: map[string]types.Route{
+				"/bar2": {
+					Rule: "PathStrip:/bar2",
+				},
+				"foo2": {
+					Rule: "Host:foo2",
+				},
+			},
+		},
+		"foo1/bar3": {
+			Backend: "foo1/bar3",
+			Routes: map[string]types.Route{
+				"/bar3": {
+					Rule: "PathPrefix:/bar3",
+				},
+				"foo1": {
+					Rule: "Host:foo1",
 				},
 			},
 		},
