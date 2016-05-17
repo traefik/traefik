@@ -177,7 +177,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					case "pathprefix":
 						ruleType = "PathPrefix"
 					default:
-						log.Debugf("Unknown RuleType `%s`, falling back to `PathPrefix", ruleType)
+						log.Warnf("Unknown RuleType `%s`, falling back to `PathPrefix", ruleType)
 						ruleType = "PathPrefix"
 					}
 
