@@ -165,7 +165,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					}
 				}
 				if len(pa.Path) > 0 {
-					var ruleType string = i.Annotations["traefik.frontend.rule.type"]
+					ruleType := i.Annotations["traefik.frontend.rule.type"]
 
 					switch strings.ToLower(ruleType) {
 					case "pathprefixstrip":
