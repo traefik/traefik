@@ -165,8 +165,24 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					}
 				}
 				if len(pa.Path) > 0 {
+					ruleType := i.Annotations["traefik.frontend.rule.type"]
+
+					switch strings.ToLower(ruleType) {
+					case "pathprefixstrip":
+						ruleType = "PathPrefixStrip"
+					case "pathstrip":
+						ruleType = "PathStrip"
+					case "path":
+						ruleType = "Path"
+					case "pathprefix":
+						ruleType = "PathPrefix"
+					default:
+						log.Warnf("Unknown RuleType `%s`, falling back to `PathPrefix", ruleType)
+						ruleType = "PathPrefix"
+					}
+
 					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-						Rule: "PathPrefix:" + pa.Path,
+						Rule: ruleType + ":" + pa.Path,
 					}
 				}
 				services, err := k8sClient.GetServices(func(service k8s.Service) bool {

@@ -91,3 +91,21 @@ spec:
       - backend:
           serviceName: service3
           servicePort: 80
+
+---
+# Another Ingress with PathPrefixStrip
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: whoami-ingress-stripped
+  annotations:
+    traefik.frontend.rule.type: "PathPrefixStrip"
+spec:
+  rules:
+  - host: foo.localhost
+    http:
+      paths:
+      - path: /prefixWillBeStripped
+        backend:
+          serviceName: service1
+          servicePort: 80
