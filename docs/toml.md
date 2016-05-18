@@ -653,7 +653,7 @@ Træfɪk can be configured to use Kubernetes Ingress as a backend configuration:
 
 Annotations can be used on containers to override default behaviour for the whole Ingress resource:
 
-- `traefik.frontend.rule.type: PathPrefixStrip`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
+- `traefik.frontend.rule.type: PathPrefixStrip`: override the default frontend rule type (Default: `PathPrefix`).
 
 You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s.ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s.rc.yaml).
 
