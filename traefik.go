@@ -6,6 +6,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/provider"
 	fmtlog "log"
 	"net/http"
 	"os"
@@ -53,7 +54,7 @@ Complete documentation is available at https://traefik.io`,
 	//add custom parsers
 	f.AddParser(reflect.TypeOf(EntryPoints{}), &EntryPoints{})
 	f.AddParser(reflect.TypeOf(DefaultEntryPoints{}), &DefaultEntryPoints{})
-	//Wait for DefaultSliceStringParser
+	f.AddParser(reflect.TypeOf(provider.Namespaces{}), &provider.Namespaces{})
 	//add version command
 	f.AddCommand(versionCmd)
 

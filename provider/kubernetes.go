@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/provider/k8s"
@@ -22,6 +23,29 @@ const (
 
 // Namespaces holds kubernetes namespaces
 type Namespaces []string
+
+//Set adds strings elem into the the parser
+//it splits str on , and ;
+func (ns *Namespaces) Set(str string) error {
+	fargs := func(c rune) bool {
+		return c == ',' || c == ';'
+	}
+	// get function
+	slice := strings.FieldsFunc(str, fargs)
+	*ns = append(*ns, slice...)
+	return nil
+}
+
+//Get []string
+func (ns *Namespaces) Get() interface{} { return Namespaces(*ns) }
+
+//String return slice in a string
+func (ns *Namespaces) String() string { return fmt.Sprintf("%v", *ns) }
+
+//SetValue sets []string into the parser
+func (ns *Namespaces) SetValue(val interface{}) {
+	*ns = Namespaces(val.(Namespaces))
+}
 
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
