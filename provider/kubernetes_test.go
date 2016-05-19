@@ -21,7 +21,7 @@ func TestLoadIngresses(t *testing.T) {
 									Path: "/bar",
 									Backend: k8s.IngressBackend{
 										ServiceName: "service1",
-										ServicePort: k8s.FromInt(801),
+										ServicePort: k8s.FromString("http"),
 									},
 								},
 							},
