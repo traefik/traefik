@@ -19,6 +19,7 @@ import (
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
 	GraceTimeOut              int64
+	Debug                     bool
 	AccessLogsFile            string
 	TraefikLogsFile           string
 	LogLevel                  string
