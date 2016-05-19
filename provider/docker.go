@@ -198,6 +198,8 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 func containerFilter(container dockertypes.ContainerJSON) bool {
 	_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
 	if err != nil {
+		log.Debugf("Container lacks traefik.port label. Checking ports %s", container.Name)
+		
 		if len(container.NetworkSettings.Ports) == 0 {
 			log.Debugf("Filtering container without port %s", container.Name)
 			return false
