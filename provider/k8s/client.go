@@ -5,12 +5,10 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"github.com/parnurzeal/gorequest"
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/containous/traefik/safe"
-	"github.com/parnurzeal/gorequest"
 )
 
 const (
@@ -126,8 +124,8 @@ func (c *clientImpl) WatchReplicationControllers(stopCh <-chan bool) (chan inter
 
 // WatchAll returns events in the cluster
 func (c *clientImpl) WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error) {
-	watchCh := make(chan interface{})
-	errCh := make(chan error)
+	watchCh := make(chan interface{}, 10)
+	errCh := make(chan error, 10)
 
 	stopIngresses := make(chan bool)
 	chanIngresses, chanIngressesErr, err := c.WatchIngresses(stopIngresses)
@@ -164,7 +162,7 @@ func (c *clientImpl) WatchAll(stopCh <-chan bool) (chan interface{}, chan error,
 				stopServices <- true
 				stopPods <- true
 				stopReplicationControllers <- true
-				break
+				return
 			case err := <-chanIngressesErr:
 				errCh <- err
 			case err := <-chanServicesErr:
@@ -193,6 +191,7 @@ func (c *clientImpl) do(request *gorequest.SuperAgent) ([]byte, error) {
 	if errs != nil {
 		return nil, fmt.Errorf("failed to create request: GET %q : %v", request.Url, errs)
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("http error %d GET %q: %q", res.StatusCode, request.Url, string(body))
 	}
@@ -202,6 +201,7 @@ func (c *clientImpl) do(request *gorequest.SuperAgent) ([]byte, error) {
 func (c *clientImpl) request(url string) *gorequest.SuperAgent {
 	// Make request to Kubernetes API
 	request := gorequest.New().Get(url)
+	request.Transport.DisableKeepAlives = true
 
 	if strings.HasPrefix(url, "http://") {
 		return request
@@ -223,8 +223,8 @@ type GenericObject struct {
 }
 
 func (c *clientImpl) watch(url string, stopCh <-chan bool) (chan interface{}, chan error, error) {
-	watchCh := make(chan interface{})
-	errCh := make(chan error)
+	watchCh := make(chan interface{}, 10)
+	errCh := make(chan error, 10)
 
 	// get version
 	body, err := c.do(c.request(url))
@@ -246,34 +246,38 @@ func (c *clientImpl) watch(url string, stopCh <-chan bool) (chan interface{}, ch
 		return watchCh, errCh, fmt.Errorf("failed to make watch request: GET %q : %v", url, err)
 	}
 	request.Client.Transport = request.Transport
+
 	res, err := request.Client.Do(req)
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to do watch request: GET %q: %v", url, err)
 	}
 
-	shouldStop := safe.New(false)
-
 	go func() {
-		select {
-		case <-stopCh:
-			shouldStop.Set(true)
-			res.Body.Close()
-			return
-		}
-	}()
-
-	go func() {
+		finishCh := make(chan bool)
+		defer close(finishCh)
 		defer close(watchCh)
 		defer close(errCh)
-		for {
-			var eventList interface{}
-			if err := json.NewDecoder(res.Body).Decode(&eventList); err != nil {
-				if !shouldStop.Get().(bool) {
-					errCh <- fmt.Errorf("failed to decode watch event: %v", err)
+		go func() {
+			defer res.Body.Close()
+			for {
+				var eventList interface{}
+				if err := json.NewDecoder(res.Body).Decode(&eventList); err != nil {
+					if !strings.Contains(err.Error(), "net/http: request canceled") {
+						errCh <- fmt.Errorf("failed to decode watch event: GET %q : %v", url, err)
+					}
+					finishCh <- true
+					return
 				}
-				return
+				watchCh <- eventList
 			}
-			watchCh <- eventList
+		}()
+		select {
+		case <-stopCh:
+			go func() {
+				request.Transport.CancelRequest(req)
+			}()
+			<-finishCh
+			return
 		}
 	}()
 	return watchCh, errCh, nil

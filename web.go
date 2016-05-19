@@ -94,6 +94,11 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	})
 	systemRouter.Methods("GET").PathPrefix("/dashboard/").Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetDir: autogen.AssetDir, Prefix: "static"})))
 
+	// expvars
+	if provider.server.globalConfiguration.Debug {
+		systemRouter.Methods("GET").Path("/debug/vars").HandlerFunc(expvarHandler)
+	}
+
 	go func() {
 		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
 			err := http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, systemRouter)
@@ -107,11 +112,6 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 			}
 		}
 	}()
-
-	// expvars
-	if provider.server.globalConfiguration.Debug {
-		systemRouter.Methods("GET").Path("/debug/vars").HandlerFunc(expvarHandler)
-	}
 	return nil
 }
 
