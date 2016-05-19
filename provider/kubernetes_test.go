@@ -416,7 +416,7 @@ func TestRuleType(t *testing.T) {
 		services:  services,
 		watchChan: watchChan,
 	}
-	provider := Kubernetes{disablePassHostHeaders: true}
+	provider := Kubernetes{DisablePassHostHeaders: true}
 	actualConfig, err := provider.loadIngresses(client)
 	actual := actualConfig.Frontends
 	if err != nil {
@@ -538,7 +538,7 @@ func TestGetPassHostHeader(t *testing.T) {
 		services:  services,
 		watchChan: watchChan,
 	}
-	provider := Kubernetes{disablePassHostHeaders: true}
+	provider := Kubernetes{DisablePassHostHeaders: true}
 	actual, err := provider.loadIngresses(client)
 	if err != nil {
 		t.Fatalf("error %+v", err)
