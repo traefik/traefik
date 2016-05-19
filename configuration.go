@@ -292,8 +292,8 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 	return &TraefikConfiguration{
 		GlobalConfiguration: GlobalConfiguration{
 			GraceTimeOut:              10,
-			AccessLogsFile:            "log/access.log",
-			TraefikLogsFile:           "log/traefik.log",
+			AccessLogsFile:            "",
+			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*EntryPoint{"http": &EntryPoint{Address: ":80"}},
 			DefaultEntryPoints:        []string{"http"},
