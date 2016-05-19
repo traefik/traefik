@@ -186,7 +186,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					}
 				}
 				services, err := k8sClient.GetServices(func(service k8s.Service) bool {
-					return service.Name == pa.Backend.ServiceName
+					return service.ObjectMeta.Namespace == i.ObjectMeta.Namespace && service.Name == pa.Backend.ServiceName
 				})
 				if err != nil {
 					log.Errorf("Error retrieving services: %v", err)
