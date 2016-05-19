@@ -21,7 +21,7 @@ func TestLoadIngresses(t *testing.T) {
 									Path: "/bar",
 									Backend: k8s.IngressBackend{
 										ServiceName: "service1",
-										ServicePort: k8s.FromInt(801),
+										ServicePort: k8s.FromString("http"),
 									},
 								},
 							},
@@ -394,6 +394,9 @@ func TestRuleType(t *testing.T) {
 
 func TestGetPassHostHeader(t *testing.T) {
 	ingresses := []k8s.Ingress{{
+		ObjectMeta: k8s.ObjectMeta{
+			Namespace: "awesome",
+		},
 		Spec: k8s.IngressSpec{
 			Rules: []k8s.IngressRule{
 				{
@@ -418,8 +421,9 @@ func TestGetPassHostHeader(t *testing.T) {
 	services := []k8s.Service{
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service1",
-				UID:  "1",
+				Name:      "service1",
+				Namespace: "awesome",
+				UID:       "1",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.1",
@@ -464,6 +468,112 @@ func TestGetPassHostHeader(t *testing.T) {
 					"/bar": {
 						Rule: "PathPrefix:/bar",
 					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+		},
+	}
+	actualJSON, _ := json.Marshal(actual)
+	expectedJSON, _ := json.Marshal(expected)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+	}
+}
+
+func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
+	ingresses := []k8s.Ingress{
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Namespace: "awesome",
+			},
+			Spec: k8s.IngressSpec{
+				Rules: []k8s.IngressRule{
+					{
+						Host: "foo",
+						IngressRuleValue: k8s.IngressRuleValue{
+							HTTP: &k8s.HTTPIngressRuleValue{
+								Paths: []k8s.HTTPIngressPath{
+									{
+										Backend: k8s.IngressBackend{
+											ServiceName: "service",
+											ServicePort: k8s.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	services := []k8s.Service{
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Name:      "service",
+				UID:       "1",
+				Namespace: "awesome",
+			},
+			Spec: k8s.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Ports: []k8s.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Name:      "service",
+				UID:       "2",
+				Namespace: "not-awesome",
+			},
+			Spec: k8s.ServiceSpec{
+				ClusterIP: "10.0.0.2",
+				Ports: []k8s.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Kubernetes{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo": {
+				Servers: map[string]types.Server{
+					"1": {
+						URL:    "http://10.0.0.1:80",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer:   nil,
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo": {
+				Backend:        "foo",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
 					"foo": {
 						Rule: "Host:foo",
 					},
@@ -556,8 +666,9 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 	services := []k8s.Service{
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service1",
-				UID:  "1",
+				Namespace: "awesome",
+				Name:      "service1",
+				UID:       "1",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.1",
@@ -571,8 +682,25 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 		},
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service2",
-				UID:  "2",
+				Name:      "service1",
+				Namespace: "not-awesome",
+				UID:       "1",
+			},
+			Spec: k8s.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Ports: []k8s.ServicePort{
+					{
+						Name: "http",
+						Port: 801,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Name:      "service2",
+				Namespace: "awesome",
+				UID:       "2",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.2",
@@ -585,8 +713,9 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 		},
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service3",
-				UID:  "3",
+				Name:      "service3",
+				Namespace: "awesome",
+				UID:       "3",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.3",
@@ -774,8 +903,9 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 	services := []k8s.Service{
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service1",
-				UID:  "1",
+				Name:      "service1",
+				Namespace: "awesome",
+				UID:       "1",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.1",
@@ -789,8 +919,25 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 		},
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service2",
-				UID:  "2",
+				Namespace: "somewhat-awesome",
+				Name:      "service1",
+				UID:       "17",
+			},
+			Spec: k8s.ServiceSpec{
+				ClusterIP: "10.0.0.4",
+				Ports: []k8s.ServicePort{
+					{
+						Name: "http",
+						Port: 801,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Namespace: "awesome",
+				Name:      "service2",
+				UID:       "2",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.2",
@@ -803,8 +950,9 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 		},
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service3",
-				UID:  "3",
+				Namespace: "awesome",
+				Name:      "service3",
+				UID:       "3",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.3",
@@ -859,8 +1007,8 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			},
 			"awesome/quix": {
 				Servers: map[string]types.Server{
-					"1": {
-						URL:    "http://10.0.0.1:801",
+					"17": {
+						URL:    "http://10.0.0.4:801",
 						Weight: 1,
 					},
 				},
@@ -931,7 +1079,13 @@ func (c clientMock) WatchIngresses(predicate func(k8s.Ingress) bool, stopCh <-ch
 	return c.watchChan, make(chan error), nil
 }
 func (c clientMock) GetServices(predicate func(k8s.Service) bool) ([]k8s.Service, error) {
-	return c.services, nil
+	var services []k8s.Service
+	for _, service := range c.services {
+		if predicate(service) {
+			services = append(services, service)
+		}
+	}
+	return services, nil
 }
 func (c clientMock) WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error) {
 	return c.watchChan, make(chan error), nil
