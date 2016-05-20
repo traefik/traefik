@@ -7,6 +7,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
@@ -88,28 +89,22 @@ func (provider *ConsulCatalog) healthyNodes(service string) (catalogUpdate, erro
 		return catalogUpdate{}, err
 	}
 
-	set := map[string]bool{}
-	tags := []string{}
-	nodes := []*api.ServiceEntry{}
-	for _, node := range data {
+	nodes := fun.Filter(func(node *api.ServiceEntry) bool {
 		constraintTags := provider.getContraintTags(node.Service.Tags)
-		if ok, failingConstraint, err := provider.MatchConstraints(constraintTags); err != nil {
-			return catalogUpdate{}, err
-		} else if ok == true {
-			nodes = append(nodes, node)
-			// merge tags of every nodes in a single slice
-			// only if node match constraint
-			for _, tag := range node.Service.Tags {
-				if _, ok := set[tag]; ok == false {
-					set[tag] = true
-					tags = append(tags, tag)
-				}
-			}
-		} else if ok == false && failingConstraint != nil {
+		ok, failingConstraint := provider.MatchConstraints(constraintTags)
+		if ok == false && failingConstraint != nil {
 			log.Debugf("Service %v pruned by '%v' constraint", service, failingConstraint.String())
 		}
+		return ok
+	}, data).([]*api.ServiceEntry)
 
-	}
+	//Merge tags of nodes matching constraints, in a single slice.
+	tags := fun.Foldl(func(node *api.ServiceEntry, set []string) []string {
+		return fun.Keys(fun.Union(
+			fun.Set(set),
+			fun.Set(node.Service.Tags),
+		).(map[string]bool)).([]string)
+	}, []string{}, nodes).([]string)
 
 	return catalogUpdate{
 		Service: &serviceUpdate{

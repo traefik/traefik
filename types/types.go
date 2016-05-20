@@ -106,6 +106,7 @@ type Constraint struct {
 	Regex     string
 }
 
+// NewConstraint receive a string and return a *Constraint, after checking syntax and parsing the constraint expression
 func NewConstraint(exp string) (*Constraint, error) {
 	sep := ""
 	constraint := &Constraint{}
@@ -142,6 +143,7 @@ func (c *Constraint) String() string {
 	return c.Key + "!=" + c.Regex
 }
 
+// MatchConstraintWithAtLeastOneTag tests a constraint for one single service
 func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
 	for _, tag := range tags {
 		if glob.Glob(c.Regex, tag) {
@@ -165,41 +167,44 @@ func StringToConstraintHookFunc() mapstructure.DecodeHookFunc {
 			return data, nil
 		}
 
-		if constraint, err := NewConstraint(data.(string)); err != nil {
+		constraint, err := NewConstraint(data.(string))
+		if err != nil {
 			return data, err
-		} else {
-			return constraint, nil
 		}
+		return constraint, nil
 	}
 }
 
+// Constraints own a pointer on globalConfiguration.Constraints and supports a Set() method (not possible on a slice)
+// interface:
 type Constraints struct {
 	value   *[]*Constraint
 	changed bool
 }
 
-// Command line
+// Set receive a cli argument and add it to globalConfiguration
 func (cs *Constraints) Set(value string) error {
 	exps := strings.Split(value, ",")
 	if len(exps) == 0 {
 		return errors.New("Bad Constraint format: " + value)
 	}
 	for _, exp := range exps {
-		if constraint, err := NewConstraint(exp); err != nil {
+		constraint, err := NewConstraint(exp)
+		if err != nil {
 			return err
-		} else {
-			*cs.value = append(*cs.value, constraint)
 		}
+		*cs.value = append(*cs.value, constraint)
 	}
 	return nil
 }
 
-func (c *Constraints) Type() string {
+// Type exports the Constraints type as a string
+func (cs *Constraints) Type() string {
 	return "constraints"
 }
 
-func (c *Constraints) String() string {
-	return fmt.Sprintln("%v", *c.value)
+func (cs *Constraints) String() string {
+	return fmt.Sprintln("%v", *cs.value)
 }
 
 // NewConstraintSliceValue make an alias of []*Constraint to Constraints for the command line

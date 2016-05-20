@@ -29,22 +29,21 @@ type BaseProvider struct {
 
 // MatchConstraints must match with EVERY single contraint
 // returns first constraint that do not match or nil
-// returns errors for future use (regex)
-func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint, error) {
+func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint) {
 	// if there is no tags and no contraints, filtering is disabled
 	if len(tags) == 0 && len(p.Constraints) == 0 {
-		return true, nil, nil
+		return true, nil
 	}
 
 	for _, constraint := range p.Constraints {
-		if ok := constraint.MatchConstraintWithAtLeastOneTag(tags); xor(ok == true, constraint.MustMatch == true) {
-			return false, constraint, nil
+		// xor: if ok and constraint.MustMatch are equal, then no tag is currently matching with the constraint
+		if ok := constraint.MatchConstraintWithAtLeastOneTag(tags); ok != constraint.MustMatch {
+			return false, constraint
 		}
 	}
 
 	// If no constraint or every constraints matching
-	return true, nil, nil
->>>>>>> e844462... feat(constraints): Implementation of constraints (cmd + toml + matching functions), implementation proposal with consul
+	return true, nil
 }
 
 func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
@@ -97,9 +96,4 @@ func normalize(name string) string {
 	}
 	// get function
 	return strings.Join(strings.FieldsFunc(name, fargs), "-")
-}
-
-// golang does not support ^ operator
-func xor(cond1 bool, cond2 bool) bool {
-	return cond1 != cond2
 }
