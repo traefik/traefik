@@ -10,6 +10,9 @@ import (
 
 func TestLoadIngresses(t *testing.T) {
 	ingresses := []k8s.Ingress{{
+		ObjectMeta: k8s.ObjectMeta{
+			Namespace: "testing",
+		},
 		Spec: k8s.IngressSpec{
 			Rules: []k8s.IngressRule{
 				{
@@ -55,23 +58,25 @@ func TestLoadIngresses(t *testing.T) {
 	services := []k8s.Service{
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service1",
-				UID:  "1",
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.1",
 				Ports: []k8s.ServicePort{
 					{
 						Name: "http",
-						Port: 801,
+						Port: 80,
 					},
 				},
 			},
 		},
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service2",
-				UID:  "2",
+				Name:      "service2",
+				UID:       "2",
+				Namespace: "testing",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.2",
@@ -84,8 +89,9 @@ func TestLoadIngresses(t *testing.T) {
 		},
 		{
 			ObjectMeta: k8s.ObjectMeta{
-				Name: "service3",
-				UID:  "3",
+				Name:      "service3",
+				UID:       "3",
+				Namespace: "testing",
 			},
 			Spec: k8s.ServiceSpec{
 				ClusterIP: "10.0.0.3",
@@ -98,10 +104,46 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 	}
+	endpoints := []k8s.Endpoints{
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Subsets: []k8s.EndpointSubset{
+				{
+					Addresses: []k8s.EndpointAddress{
+						{
+							IP: "10.10.0.1",
+						},
+					},
+					Ports: []k8s.EndpointPort{
+						{
+							Port: 8080,
+						},
+					},
+				},
+				{
+					Addresses: []k8s.EndpointAddress{
+						{
+							IP: "10.21.0.1",
+						},
+					},
+					Ports: []k8s.EndpointPort{
+						{
+							Port: 8080,
+						},
+					},
+				},
+			},
+		},
+	}
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
+		endpoints: endpoints,
 		watchChan: watchChan,
 	}
 	provider := Kubernetes{}
@@ -114,8 +156,12 @@ func TestLoadIngresses(t *testing.T) {
 		Backends: map[string]*types.Backend{
 			"foo/bar": {
 				Servers: map[string]types.Server{
-					"1": {
-						URL:    "http://10.0.0.1:801",
+					"http://10.10.0.1:8080": {
+						URL:    "http://10.10.0.1:8080",
+						Weight: 1,
+					},
+					"http://10.21.0.1:8080": {
+						URL:    "http://10.21.0.1:8080",
 						Weight: 1,
 					},
 				},
@@ -1150,6 +1196,7 @@ func TestHostlessIngress(t *testing.T) {
 type clientMock struct {
 	ingresses []k8s.Ingress
 	services  []k8s.Service
+	endpoints []k8s.Endpoints
 	watchChan chan interface{}
 }
 
@@ -1174,6 +1221,16 @@ func (c clientMock) GetServices(predicate func(k8s.Service) bool) ([]k8s.Service
 	}
 	return services, nil
 }
+
+func (c clientMock) GetEndpoints(name, namespace string) (k8s.Endpoints, error) {
+	for _, endpoints := range c.endpoints {
+		if endpoints.Namespace == namespace && endpoints.Name == name {
+			return endpoints, nil
+		}
+	}
+	return k8s.Endpoints{}, nil
+}
+
 func (c clientMock) WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error) {
 	return c.watchChan, make(chan error), nil
 }
