@@ -86,7 +86,7 @@ imports:
   - utils
   - volume
 - name: github.com/docker/engine-api
-  version: fd7f99d354831e7e809386087e7ec3129fdb1520
+  version: 3d3d0b6c9d2651aac27f416a6da0224c1875b3eb
   subpackages:
   - client
   - types
@@ -168,7 +168,7 @@ imports:
 - name: github.com/kr/text
   version: 7cafcd837844e784b526369c9bce262804aebc60
 - name: github.com/libkermit/docker
-  version: 9f5a90f8eb3c49bf56e81621f98b3cd86fe4139f
+  version: 3b5eb2973efff7af33cfb65141deaf4ed25c6d02
 - name: github.com/libkermit/docker-check
   version: bb75a86b169c6c5d22c0ee98278124036f272d7b
 - name: github.com/magiconair/properties
