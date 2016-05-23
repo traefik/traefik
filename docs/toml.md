@@ -934,7 +934,7 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 | `/traefik/frontends/frontend2/backend`             | `backend1`   |
 | `/traefik/frontends/frontend2/passHostHeader`      | `true`       |
 | `/traefik/frontends/frontend2/entrypoints`         | `http,https` |
-| `/traefik/frontends/frontend2/routes/test_2/rule`  | `Path:/test` |
+| `/traefik/frontends/frontend2/routes/test_2/rule`  | `PathPrefix:/test` |
 
 ## Atomic configuration changes
 
