@@ -146,7 +146,7 @@ defaultEntryPoints = ["http"]
 
 ### whoami:
 ```
-wrk -t8 -c1000 -d60s -H "Host: test.traefik" --latency  http://IP-whoami:80/bench
+wrk -t20 -c1000 -d60s -H "Host: test.traefik" --latency  http://IP-whoami:80/bench
 Running 1m test @ http://IP-whoami:80/bench
   20 threads and 1000 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -184,7 +184,7 @@ Transfer/sec:      4.97MB
 
 ### traefik:
 ```
-wrk -t8 -c1000 -d60s -H "Host: test.traefik" --latency  http://IP-traefik:8000/bench
+wrk -t20 -c1000 -d60s -H "Host: test.traefik" --latency  http://IP-traefik:8000/bench
 Running 1m test @ http://IP-traefik:8000/bench
   20 threads and 1000 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev

@@ -1,5 +1,5 @@
-hash: da7239dce8bda69f6e10b2f2bfae57dd4fd95b817055dca1379a72af42939b97
-updated: 2016-05-12T11:48:22.158455011+02:00
+hash: 68bc4f87206f9a486e1455f1dfcad737369c359a803566271432fcb85de3a12c
+updated: 2016-05-23T13:57:35.191541555+02:00
 imports:
 - name: github.com/alecthomas/template
   version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
@@ -22,7 +22,7 @@ imports:
 - name: github.com/codegangsta/negroni
   version: c7477ad8e330bef55bf1ebe300cf8aa67c492d1b
 - name: github.com/containous/oxy
-  version: 021f82bd8260ba15f5862a9fe62018437720dff5
+  version: 183212964e13e7b8afe01a08b193d04300554a68
   subpackages:
   - cbreaker
   - forward
@@ -103,7 +103,7 @@ imports:
   - types/versions
   - types/blkiodev
 - name: github.com/docker/go-connections
-  version: 5b7154ba2efe13ff86ae8830a9e7cb120b080d6e
+  version: c7838b258fbfa3fe88eecfb2a0e08ea0dbd6a646
   subpackages:
   - nat
   - sockets
@@ -184,19 +184,19 @@ imports:
 - name: github.com/mattn/go-shellwords
   version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
 - name: github.com/Microsoft/go-winio
-  version: 3b8b3c98b207f95fe0cd6c7c311a9ac497ba7c0f
+  version: 4f1a71750d95a5a8a46c40a67ffbed8129c2f138
 - name: github.com/miekg/dns
   version: 48ab6605c66ac797e07f615101c3e9e10e932b66
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/moul/http2curl
-  version: 1812aee76a1ce98d604a44200c6a23c689b17a89
+  version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/opencontainers/runc
   version: 2441732d6fcc0fb0a542671a4372e0c7bc99c19e
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
-  version: a39a2f8d0463091df7344dbf586a9986e9f7184f
+  version: 2169dfca686cfcbefc983a98a25e9c22a2815be4
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -210,7 +210,7 @@ imports:
 - name: github.com/spf13/cast
   version: ee7b3e0353166ab1f3a605294ac8cd2b77953778
 - name: github.com/spf13/cobra
-  version: 0f866a6211e33cde2091d9290c08f6afd6c9ebbc
+  version: f368244301305f414206f889b1735a54cfc8bde8
   subpackages:
   - cobra
 - name: github.com/spf13/jwalterweatherman
@@ -237,7 +237,7 @@ imports:
 - name: github.com/unrolled/render
   version: 26b4e3aac686940fe29521545afad9966ddfc80c
 - name: github.com/vdemeester/docker-events
-  version: ce5347b72aafad4e3bebd966f15e4183839d5172
+  version: b308d2e8d639d928c882913bcb4f85b3a84c7a07
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
@@ -258,11 +258,11 @@ imports:
 - name: github.com/wendal/errors
   version: f66c77a7882b399795a8987ebf87ef64a427417e
 - name: github.com/xenolf/lego
-  version: 948483535f53c34d144419869ecbed86251a30f6
+  version: b119bc45fbd1cc71348003541aac9d3a7da63654
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: b76c864ef1dca1d8f271f917c290cddcce3d9e0d
+  version: 5bcd134fee4dd1475da17714aac19c0aa0142e2f
   subpackages:
   - ocsp
 - name: golang.org/x/net
@@ -275,6 +275,7 @@ imports:
   version: eb2c74142fd19a79b3f237334c7384d5167b1b46
   subpackages:
   - unix
+  - windows
 - name: gopkg.in/alecthomas/kingpin.v2
   version: 639879d6110b1b0409410c7b737ef0bb18325038
 - name: gopkg.in/fsnotify.v1
