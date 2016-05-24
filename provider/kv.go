@@ -22,12 +22,12 @@ import (
 
 // Kv holds common configurations of key-value providers.
 type Kv struct {
-	BaseProvider `mapstructure:",squash" description:"go through"`
-	Endpoint     string `description:"Comma sepparated server endpoints"`
-	Prefix       string `description:"Prefix used for KV store"`
-	TLS          *KvTLS `description:"Enable TLS support"`
-	storeType    store.Backend
-	kvclient     store.Store
+	BaseProvider
+	Endpoint  string `description:"Comma sepparated server endpoints"`
+	Prefix    string `description:"Prefix used for KV store"`
+	TLS       *KvTLS `description:"Enable TLS support"`
+	storeType store.Backend
+	kvclient  store.Store
 }
 
 // KvTLS holds TLS specific configurations

@@ -76,7 +76,7 @@ Complete documentation is available at https://traefik.io`,
 		traefikConfiguration.File.Filename = toml.ConfigFileUsed()
 	}
 	if len(traefikConfiguration.EntryPoints) == 0 {
-		traefikConfiguration.EntryPoints = map[string]*EntryPoint{"http": &EntryPoint{Address: ":80"}}
+		traefikConfiguration.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
 		traefikConfiguration.DefaultEntryPoints = []string{"http"}
 	}
 	if err := s.Run(); err != nil {

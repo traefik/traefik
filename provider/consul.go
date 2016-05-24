@@ -9,7 +9,7 @@ import (
 
 // Consul holds configurations of the Consul provider.
 type Consul struct {
-	Kv `mapstructure:",squash" description:"go through"`
+	Kv
 }
 
 // Provide allows the provider to provide configurations to traefik

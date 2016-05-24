@@ -49,7 +49,7 @@ func (ns *Namespaces) SetValue(val interface{}) {
 
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
-	BaseProvider           `mapstructure:",squash"`
+	BaseProvider
 	Endpoint               string     `description:"Kubernetes server endpoint"`
 	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces"`
