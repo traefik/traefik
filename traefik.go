@@ -121,6 +121,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
 	jsonConf, _ := json.Marshal(globalConfiguration)
+	log.Infof("Traefik version %s built on %s", Version, BuildDate)
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
 	server := NewServer(globalConfiguration)
 	server.Start()
