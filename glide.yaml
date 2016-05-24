@@ -187,3 +187,6 @@ import:
 - package: github.com/parnurzeal/gorequest
 - package: github.com/mattn/go-shellwords
 - package: github.com/moul/http2curl
+- package: github.com/containous/flaeg
+- package: github.com/containous/staert
+- package: github.com/ogier/pflag
