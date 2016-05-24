@@ -1,192 +1,76 @@
-package: main
+package: github.com/containous/traefik
 import:
-- package: github.com/coreos/etcd
-  version: 26e52d2bce9e3e11b77b68cc84bf91aebb1ef637
+- package: github.com/BurntSushi/toml
+- package: github.com/BurntSushi/ty
   subpackages:
-  - client
-- package: github.com/mailgun/log
-  version: 44874009257d4d47ba9806f1b7f72a32a015e4d8
+  - fun
+- package: github.com/Sirupsen/logrus
+- package: github.com/cenkalti/backoff
+- package: github.com/codegangsta/negroni
+- package: github.com/containous/flaeg
 - package: github.com/containous/oxy
-  version: 183212964e13e7b8afe01a08b193d04300554a68
   subpackages:
   - cbreaker
+  - connlimit
   - forward
-  - memmetrics
   - roundrobin
+  - stream
   - utils
-- package: github.com/hashicorp/consul
-  version: de080672fee9e6104572eeea89eccdca135bb918
-  subpackages:
-  - api
-- package: github.com/samuel/go-zookeeper
-  version: fa6674abf3f4580b946a01bf7a1ce4ba8766205b
-  subpackages:
-  - zk
-- package: github.com/docker/libtrust
-  version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
-- package: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
-- package: golang.org/x/net
-  version: d9558e5c97f85372afee28cf2b6059d7d3818919
-  subpackages:
-  - context
-- package: github.com/gorilla/handlers
-  version: 40694b40f4a928c062f56849989d3e9cd0570e5f
-- package: github.com/docker/libkv
-  version: 7283ef27ed32fe267388510a91709b307bb9942c
-- package: github.com/alecthomas/template
-  version: b867cc6ab45cece8143cfcc6fc9c77cf3f2c23c0
-- package: github.com/vdemeester/shakers
-  version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
-- package: github.com/alecthomas/units
-  version: 6b4e7dc5e3143b85ea77909c72caf89416fc2915
-- package: github.com/gambol99/go-marathon
-  version: ade11d1dc2884ee1f387078fc28509559b6235d1
-- package: github.com/vulcand/predicate
-  version: cb0bff91a7ab7cf7571e661ff883fc997bc554a3
-- package: github.com/thoas/stats
-  version: 54ed61c2b47e263ae2f01b86837b0c4bd1da28e8
-- package: github.com/Sirupsen/logrus
-  version: 418b41d23a1bf978c06faea5313ba194650ac088
-- package: github.com/unrolled/render
-  version: 26b4e3aac686940fe29521545afad9966ddfc80c
-- package: github.com/flynn/go-shlex
-  version: 3f9db97f856818214da2e1057f8ad84803971cff
-- package: github.com/boltdb/bolt
-  version: 51f99c862475898df9773747d3accd05a7ca33c1
-- package: gopkg.in/mgo.v2
-  version: 22287bab4379e1fbf6002fb4eb769888f3fb224c
-  subpackages:
-  - bson
-- package: github.com/docker/docker
-  version: 9837ec4da53f15f9120d53a6e1517491ba8b0261
-  subpackages:
-  - autogen
-  - api
-  - cliconfig
-  - daemon/network
-  - graph/tags
-  - image
-  - opts
-  - pkg/archive
-  - pkg/fileutils
-  - pkg/homedir
-  - pkg/httputils
-  - pkg/ioutils
-  - pkg/jsonmessage
-  - pkg/mflag
-  - pkg/nat
-  - pkg/parsers
-  - pkg/pools
-  - pkg/promise
-  - pkg/random
-  - pkg/stdcopy
-  - pkg/stringid
-  - pkg/symlink
-  - pkg/system
-  - pkg/tarsum
-  - pkg/term
-  - pkg/timeutils
-  - pkg/tlsconfig
-  - pkg/ulimit
-  - pkg/units
-  - pkg/urlutil
-  - pkg/useragent
-  - pkg/version
-  - registry
-  - runconfig
-  - utils
-  - volume
-- package: github.com/mailgun/timetools
-  version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
-- package: github.com/codegangsta/negroni
-  version: c7477ad8e330bef55bf1ebe300cf8aa67c492d1b
-- package: gopkg.in/yaml.v2
-  version: 7ad95dd0798a40da1ccdff6dff35fd177b5edf
-- package: github.com/opencontainers/runc
-  version: 2441732d6fcc0fb0a542671a4372e0c7bc99c19e
-  subpackages:
-  - libcontainer/user
-- package: github.com/gorilla/mux
-  version: f15e0c49460fd49eebe2bcc8486b05d1bef68d3a
-- package: github.com/BurntSushi/ty
-  version: 6add9cd6ad42d389d6ead1dde60b4ad71e46fd74
-- package: github.com/elazarl/go-bindata-assetfs
-  version: d5cac425555ca5cf00694df246e04f05e6a55150
-- package: github.com/BurntSushi/toml
-  version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
-- package: gopkg.in/alecthomas/kingpin.v2
-  version: 639879d6110b1b0409410c7b737ef0bb18325038
-- package: github.com/cenkalti/backoff
-  version: 4dc77674aceaabba2c7e3da25d4c823edfb73f99
-- package: gopkg.in/fsnotify.v1
-  version: 96c060f6a6b7e0d6f75fddd10efeaca3e5d1bcb0
-- package: github.com/mailgun/manners
-  version: fada45142db3f93097ca917da107aa3fad0ffcb5
-- package: github.com/gorilla/context
-  version: 215affda49addc4c8ef7e2534915df2c8c35c6cd
-- package: github.com/codahale/hdrhistogram
-  version: 954f16e8b9ef0e5d5189456aa4c1202758e04f17
-- package: github.com/gorilla/websocket
-- package: github.com/donovanhide/eventsource
-  version: d8a3071799b98cacd30b6da92f536050ccfe6da4
-- package: github.com/golang/glog
-  version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
-- package: github.com/spf13/cast
-  version: ee7b3e0353166ab1f3a605294ac8cd2b77953778
-- package: github.com/mitchellh/mapstructure
-- package: github.com/spf13/jwalterweatherman
-- package: github.com/spf13/pflag
-- package: github.com/wendal/errors
-- package: github.com/hashicorp/hcl
-- package: github.com/kr/pretty
-- package: github.com/magiconair/properties
-- package: github.com/kr/text
-- package: github.com/spf13/viper
-  version: a212099cbe6fbe8d07476bfda8d2d39b6ff8f325
-- package: github.com/spf13/cobra
-  subpackages:
-  - cobra
-- package: github.com/google/go-querystring
-  subpackages:
-  - query
-- package: github.com/vulcand/vulcand
-  subpackages:
-  - plugin/rewrite
-- package: github.com/stretchr/testify
-  subpackages:
-  - mock
-- package: github.com/xenolf/lego
-- package: github.com/libkermit/docker-check
-  version: bb75a86b169c6c5d22c0ee98278124036f272d7b
-- package: github.com/libkermit/docker
-  version: 3b5eb2973efff7af33cfb65141deaf4ed25c6d02
-- package: github.com/docker/libcompose
-  version: 8ee7bcc364f7b8194581a3c6bd9fa019467c7873
-- package: github.com/docker/distribution
-  version: 467fc068d88aa6610691b7f1a677271a3fac4aac
-  subpackages:
-  - reference
+- package: github.com/containous/staert
 - package: github.com/docker/engine-api
   version: 3d3d0b6c9d2651aac27f416a6da0224c1875b3eb
   subpackages:
   - client
   - types
-  - types/container
+  - types/events
   - types/filters
-  - types/strslice
-- package: github.com/vdemeester/docker-events
 - package: github.com/docker/go-connections
   subpackages:
-  - nat
   - sockets
   - tlsconfig
-- package: github.com/docker/go-units
-- package: github.com/mailgun/multibuf
-- package: github.com/streamrail/concurrent-map
+- package: github.com/docker/libkv
+  subpackages:
+  - store
+  - store/boltdb
+  - store/consul
+  - store/etcd
+  - store/zookeeper
+- package: github.com/elazarl/go-bindata-assetfs
+- package: github.com/gambol99/go-marathon
+  version: ade11d1dc2884ee1f387078fc28509559b6235d1
+- package: github.com/gorilla/mux
+- package: github.com/hashicorp/consul
+  subpackages:
+  - api
+- package: github.com/mailgun/manners
 - package: github.com/parnurzeal/gorequest
+- package: github.com/streamrail/concurrent-map
+- package: github.com/stretchr/testify
+  subpackages:
+  - mock
+- package: github.com/thoas/stats
+- package: github.com/unrolled/render
+- package: github.com/vdemeester/docker-events
+- package: github.com/vulcand/vulcand
+  subpackages:
+  - plugin/rewrite
+- package: github.com/xenolf/lego
+  subpackages:
+  - acme
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: gopkg.in/fsnotify.v1
+- package: github.com/libkermit/docker-check
+  version: bb75a86b169c6c5d22c0ee98278124036f272d7b
+- package: github.com/libkermit/docker
+  version: 3b5eb2973efff7af33cfb65141deaf4ed25c6d02
+- package: github.com/docker/docker
+  version: 9837ec4da53f15f9120d53a6e1517491ba8b0261
+  subpackages:
+  - namesgenerator
+- package: github.com/go-check/check
+- package: github.com/docker/libcompose
+  version: 8ee7bcc364f7b8194581a3c6bd9fa019467c7873
 - package: github.com/mattn/go-shellwords
-- package: github.com/moul/http2curl
-- package: github.com/containous/flaeg
-- package: github.com/containous/staert
-- package: github.com/ogier/pflag
+- package: github.com/vdemeester/shakers
