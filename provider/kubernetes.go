@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -165,12 +166,28 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					}
 				}
 				if len(pa.Path) > 0 {
+					ruleType := i.Annotations["traefik.frontend.rule.type"]
+
+					switch strings.ToLower(ruleType) {
+					case "pathprefixstrip":
+						ruleType = "PathPrefixStrip"
+					case "pathstrip":
+						ruleType = "PathStrip"
+					case "path":
+						ruleType = "Path"
+					case "pathprefix":
+						ruleType = "PathPrefix"
+					default:
+						log.Warnf("Unknown RuleType `%s`, falling back to `PathPrefix", ruleType)
+						ruleType = "PathPrefix"
+					}
+
 					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-						Rule: "PathPrefix:" + pa.Path,
+						Rule: ruleType + ":" + pa.Path,
 					}
 				}
 				services, err := k8sClient.GetServices(func(service k8s.Service) bool {
-					return service.Name == pa.Backend.ServiceName
+					return service.ObjectMeta.Namespace == i.ObjectMeta.Namespace && service.Name == pa.Backend.ServiceName
 				})
 				if err != nil {
 					log.Errorf("Error retrieving services: %v", err)
@@ -184,12 +201,12 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 				for _, service := range services {
 					protocol := "http"
 					for _, port := range service.Spec.Ports {
-						if port.Port == pa.Backend.ServicePort.IntValue() {
+						if equalPorts(port, pa.Backend.ServicePort) {
 							if port.Port == 443 {
 								protocol = "https"
 							}
 							templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
-								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + pa.Backend.ServicePort.String(),
+								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(port.Port),
 								Weight: 1,
 							}
 							break
@@ -200,6 +217,16 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 		}
 	}
 	return &templateObjects, nil
+}
+
+func equalPorts(servicePort k8s.ServicePort, ingressPort k8s.IntOrString) bool {
+	if servicePort.Port == ingressPort.IntValue() {
+		return true
+	}
+	if servicePort.Name != "" && servicePort.Name == ingressPort.String() {
+		return true
+	}
+	return false
 }
 
 func (provider *Kubernetes) getPassHostHeader() bool {
