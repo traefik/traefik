@@ -77,7 +77,7 @@ func (dep *DefaultEntryPoints) SetValue(val interface{}) {
 
 // Type is type of the struct
 func (dep *DefaultEntryPoints) Type() string {
-	return fmt.Sprint("defaultentrypoints²")
+	return fmt.Sprint("defaultentrypoints")
 }
 
 // EntryPoints holds entry points configuration of the reverse proxy (ip, port, TLS...)
@@ -295,8 +295,8 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			AccessLogsFile:            "",
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
-			EntryPoints:               map[string]*EntryPoint{"http": &EntryPoint{Address: ":80"}},
-			DefaultEntryPoints:        []string{"http"},
+			EntryPoints:               map[string]*EntryPoint{},
+			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: time.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
 		},

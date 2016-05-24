@@ -36,19 +36,16 @@ Complete documentation is available at https://traefik.io`,
 
 	//version Command init
 	versionCmd := &flaeg.Command{
-		Name:        "version",
-		Description: `Print version`,
+		Name:                  "version",
+		Description:           `Print version`,
+		Config:                struct{}{},
+		DefaultPointersConfig: struct{}{},
 		Run: func() error {
 			fmtlog.Println(Version + " built on the " + BuildDate)
 			return nil
 		},
 	}
 
-	//staert init
-	s := staert.NewStaert(traefikCmd)
-
-	//init toml source
-	toml := staert.NewTomlSource("traefik", []string{traefikConfiguration.ConfigFile, "/etc/traefik/", "$HOME/.traefik/", "."})
 	//init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
 	//add custom parsers
@@ -57,11 +54,31 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(provider.Namespaces{}), &provider.Namespaces{})
 	//add version command
 	f.AddCommand(versionCmd)
+	if _, err := f.Parse(traefikCmd); err != nil {
+		fmtlog.Println(err)
+		os.Exit(-1)
+	}
+
+	//staert init
+	s := staert.NewStaert(traefikCmd)
+	//init toml source
+	toml := staert.NewTomlSource("traefik", []string{traefikConfiguration.ConfigFile, "/etc/traefik/", "$HOME/.traefik/", "."})
 
 	//add sources to staert
-	s.AddSource(f)
 	s.AddSource(toml)
 	s.AddSource(f)
+	if _, err := s.GetConfig(); err != nil {
+		fmtlog.Println(err)
+	}
+	if traefikConfiguration.File != nil && len(traefikConfiguration.File.Filename) == 0 {
+		// no filename, setting to global config file
+		log.Debugf("ConfigFileUsed %s", toml.ConfigFileUsed())
+		traefikConfiguration.File.Filename = toml.ConfigFileUsed()
+	}
+	if len(traefikConfiguration.EntryPoints) == 0 {
+		traefikConfiguration.EntryPoints = map[string]*EntryPoint{"http": &EntryPoint{Address: ":80"}}
+		traefikConfiguration.DefaultEntryPoints = []string{"http"}
+	}
 	if err := s.Run(); err != nil {
 		fmtlog.Println(err)
 		os.Exit(-1)
