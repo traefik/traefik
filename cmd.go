@@ -94,7 +94,8 @@ var arguments = struct {
 
 func init() {
 	traefikCmd.AddCommand(versionCmd)
-	traefikCmd.PersistentFlags().StringP("configFile", "c", "", "Configuration file to use (TOML, JSON, YAML, HCL).")
+	traefikCmd.PersistentFlags().StringP("configFile", "c", "", "Configuration file to use (TOML).")
+	traefikCmd.PersistentFlags().BoolVarP(&arguments.Debug, "debug", "d", false, "Enable debug mode")
 	traefikCmd.PersistentFlags().StringP("graceTimeOut", "g", "10", "Timeout in seconds. Duration to give active requests a chance to finish during hot-reloads")
 	traefikCmd.PersistentFlags().String("accessLogsFile", "log/access.log", "Access logs file")
 	traefikCmd.PersistentFlags().String("traefikLogsFile", "log/traefik.log", "Traefik logs file")
@@ -178,6 +179,7 @@ func init() {
 	_ = viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))
 	_ = viper.BindPFlag("graceTimeOut", traefikCmd.PersistentFlags().Lookup("graceTimeOut"))
 	_ = viper.BindPFlag("logLevel", traefikCmd.PersistentFlags().Lookup("logLevel"))
+	_ = viper.BindPFlag("debug", traefikCmd.PersistentFlags().Lookup("debug"))
 	// TODO: wait for this issue to be corrected: https://github.com/spf13/viper/issues/105
 	_ = viper.BindPFlag("providersThrottleDuration", traefikCmd.PersistentFlags().Lookup("providersThrottleDuration"))
 	_ = viper.BindPFlag("maxIdleConnsPerHost", traefikCmd.PersistentFlags().Lookup("maxIdleConnsPerHost"))

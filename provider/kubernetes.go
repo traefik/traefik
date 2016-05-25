@@ -62,19 +62,20 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 	backOff := backoff.NewExponentialBackOff()
 
 	pool.Go(func(stop chan bool) {
-		stopWatch := make(chan bool)
-		defer close(stopWatch)
 		operation := func() error {
-			select {
-			case <-stop:
-				return nil
-			default:
-			}
 			for {
+				stopWatch := make(chan bool, 5)
+				defer close(stopWatch)
 				eventsChan, errEventsChan, err := k8sClient.WatchAll(stopWatch)
 				if err != nil {
 					log.Errorf("Error watching kubernetes events: %v", err)
-					return err
+					timer := time.NewTimer(1 * time.Second)
+					select {
+					case <-timer.C:
+						return err
+					case <-stop:
+						return nil
+					}
 				}
 			Watch:
 				for {
@@ -82,14 +83,15 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 					case <-stop:
 						stopWatch <- true
 						return nil
-					case err := <-errEventsChan:
-						if strings.Contains(err.Error(), io.EOF.Error()) {
+					case err, ok := <-errEventsChan:
+						stopWatch <- true
+						if ok && strings.Contains(err.Error(), io.EOF.Error()) {
 							// edge case, kubernetes long-polling disconnection
 							break Watch
 						}
 						return err
 					case event := <-eventsChan:
-						log.Debugf("Received event from kubenetes %+v", event)
+						log.Debugf("Received event from kubernetes %+v", event)
 						templateObjects, err := provider.loadIngresses(k8sClient)
 						if err != nil {
 							return err
@@ -190,13 +192,13 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					return service.ObjectMeta.Namespace == i.ObjectMeta.Namespace && service.Name == pa.Backend.ServiceName
 				})
 				if err != nil {
-					log.Errorf("Error retrieving services: %v", err)
+					log.Warnf("Error retrieving services: %v", err)
 					continue
 				}
 				if len(services) == 0 {
 					// no backends found, delete frontend...
 					delete(templateObjects.Frontends, r.Host+pa.Path)
-					log.Errorf("Error retrieving services %s", pa.Backend.ServiceName)
+					log.Warnf("Error retrieving services %s", pa.Backend.ServiceName)
 				}
 				for _, service := range services {
 					protocol := "http"
