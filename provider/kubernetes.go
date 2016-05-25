@@ -162,9 +162,11 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						Routes:         make(map[string]types.Route),
 					}
 				}
-				if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
-					templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host] = types.Route{
-						Rule: "Host:" + r.Host,
+				if len(r.Host) > 0 {
+					if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
+						templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host] = types.Route{
+							Rule: "Host:" + r.Host,
+						}
 					}
 				}
 				if len(pa.Path) > 0 {
