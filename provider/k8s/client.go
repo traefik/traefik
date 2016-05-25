@@ -16,12 +16,13 @@ const (
 	APIEndpoint        = "/api/v1"
 	extentionsEndpoint = "/apis/extensions/v1beta1"
 	defaultIngress     = "/ingresses"
+	namespaces         = "/namespaces/"
 )
 
 // Client is a client for the Kubernetes master.
 type Client interface {
 	GetIngresses(predicate func(Ingress) bool) ([]Ingress, error)
-	GetServices(predicate func(Service) bool) ([]Service, error)
+	GetService(name, namespace string) (Service, error)
 	GetEndpoints(name, namespace string) (Endpoints, error)
 	WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error)
 }
@@ -77,26 +78,20 @@ func (c *clientImpl) WatchIngresses(stopCh <-chan bool) (chan interface{}, chan 
 	return c.watch(getURL, stopCh)
 }
 
-// GetServices returns all services in the cluster
-func (c *clientImpl) GetServices(predicate func(Service) bool) ([]Service, error) {
-	getURL := c.endpointURL + APIEndpoint + "/services"
+// GetService returns the named service from the named namespace
+func (c *clientImpl) GetService(name, namespace string) (Service, error) {
+	getURL := c.endpointURL + APIEndpoint + namespaces + namespace + "/services/" + name
 
 	body, err := c.do(c.request(getURL))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create services request: GET %q : %v", getURL, err)
+		return Service{}, fmt.Errorf("failed to create services request: GET %q : %v", getURL, err)
 	}
 
-	var serviceList ServiceList
-	if err := json.Unmarshal(body, &serviceList); err != nil {
-		return nil, fmt.Errorf("failed to decode list of services resources: %v", err)
+	var service Service
+	if err := json.Unmarshal(body, &service); err != nil {
+		return Service{}, fmt.Errorf("failed to decode service resource: %v", err)
 	}
-	services := serviceList.Items[:0]
-	for _, service := range serviceList.Items {
-		if predicate(service) {
-			services = append(services, service)
-		}
-	}
-	return services, nil
+	return service, nil
 }
 
 // WatchServices returns all services in the cluster
@@ -108,7 +103,7 @@ func (c *clientImpl) WatchServices(stopCh <-chan bool) (chan interface{}, chan e
 // GetEndpoints returns the named Endpoints
 // Endpoints have the same name as the coresponding service
 func (c *clientImpl) GetEndpoints(name, namespace string) (Endpoints, error) {
-	getURL := c.endpointURL + APIEndpoint + "/namespaces/" + namespace + "/endpoints/" + name
+	getURL := c.endpointURL + APIEndpoint + namespaces + namespace + "/endpoints/" + name
 
 	body, err := c.do(c.request(getURL))
 	if err != nil {

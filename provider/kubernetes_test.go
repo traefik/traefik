@@ -1212,14 +1212,13 @@ func (c clientMock) GetIngresses(predicate func(k8s.Ingress) bool) ([]k8s.Ingres
 func (c clientMock) WatchIngresses(predicate func(k8s.Ingress) bool, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	return c.watchChan, make(chan error), nil
 }
-func (c clientMock) GetServices(predicate func(k8s.Service) bool) ([]k8s.Service, error) {
-	var services []k8s.Service
+func (c clientMock) GetService(name, namespace string) (k8s.Service, error) {
 	for _, service := range c.services {
-		if predicate(service) {
-			services = append(services, service)
+		if service.Namespace == namespace && service.Name == name {
+			return service, nil
 		}
 	}
-	return services, nil
+	return k8s.Service{}, nil
 }
 
 func (c clientMock) GetEndpoints(name, namespace string) (k8s.Endpoints, error) {
