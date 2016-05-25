@@ -20,17 +20,17 @@ type TraefikConfiguration struct {
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              int64       `short:"g" description:"Configuration file to use (TOML)."`
-	Debug                     bool
-	AccessLogsFile            string      `description:"Access logs file"`
-	TraefikLogsFile           string      `description:"Traefik logs file"`
-	LogLevel                  string      `short:"l" description:"Log level"`
-	EntryPoints               EntryPoints `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
-	ACME                      *acme.ACME
-	DefaultEntryPoints        DefaultEntryPoints `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
-	ProvidersThrottleDuration time.Duration      `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
-	MaxIdleConnsPerHost       int                `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
-	Retry                     *Retry
+	GraceTimeOut              int64                   `short:"g" description:"Configuration file to use (TOML)."`
+	Debug	                  bool
+	AccessLogsFile            string                  `description:"Access logs file"`
+	TraefikLogsFile           string                  `description:"Traefik logs file"`
+	LogLevel                  string                  `short:"l" description:"Log level"`
+	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
+	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
+	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
+	ProvidersThrottleDuration time.Duration           `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
+	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
+	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	Docker                    *provider.Docker        `description:"Enable Docker backend"`
 	File                      *provider.File          `description:"Enable File backend"`
 	Web                       *WebProvider            `description:"Enable Web backend"`
@@ -49,7 +49,7 @@ type DefaultEntryPoints []string
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
 func (dep *DefaultEntryPoints) String() string {
-	//TODO :
+	//TODO : The string returned should be formatted in such way that the func Set below could parse it.
 	return fmt.Sprintf("%#v", dep)
 }
 
@@ -86,8 +86,10 @@ type EntryPoints map[string]*EntryPoint
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
 func (ep *EntryPoints) String() string {
-	//TODO :
-	return ""
+	//TODO : The string returned should be formatted in such way that the func Set below could parse it.
+	//Like this --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https'
+	//But the Set func parses entrypoint one by one only
+	return fmt.Sprintf("%+v", *ep)
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
@@ -208,12 +210,12 @@ type Certificate struct {
 
 // Retry contains request retry config
 type Retry struct {
-	Attempts int
-	MaxMem   int64
+	Attempts int   `description:"Number of attempts"`
+	MaxMem   int64 `description:"Maximum request body to be stored in memory in Mo"`
 }
 
-// NewTraefikPointersConfiguration creates a TraefikConfiguration with pointers default values
-func NewTraefikPointersConfiguration() *TraefikConfiguration {
+// NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
+func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	//default Docker
 	var defaultDocker provider.Docker
 	defaultDocker.Watch = true
@@ -281,6 +283,7 @@ func NewTraefikPointersConfiguration() *TraefikConfiguration {
 		Zookeeper:     &defaultZookeeper,
 		Boltdb:        &defaultBoltDb,
 		Kubernetes:    &defaultKubernetes,
+		Retry:         &Retry{MaxMem: 2},
 	}
 	return &TraefikConfiguration{
 		GlobalConfiguration: defaultConfiguration,

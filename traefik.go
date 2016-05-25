@@ -5,6 +5,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
+	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	fmtlog "log"
@@ -20,7 +21,7 @@ func main() {
 
 	//traefik config inits
 	traefikConfiguration := NewTraefikConfiguration()
-	traefikPointersConfiguration := NewTraefikPointersConfiguration()
+	traefikPointersConfiguration := NewTraefikDefaultPointersConfiguration()
 	//traefik Command init
 	traefikCmd := &flaeg.Command{
 		Name: "traefik",
@@ -52,6 +53,8 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(EntryPoints{}), &EntryPoints{})
 	f.AddParser(reflect.TypeOf(DefaultEntryPoints{}), &DefaultEntryPoints{})
 	f.AddParser(reflect.TypeOf(provider.Namespaces{}), &provider.Namespaces{})
+	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
+
 	//add version command
 	f.AddCommand(versionCmd)
 	if _, err := f.Parse(traefikCmd); err != nil {
