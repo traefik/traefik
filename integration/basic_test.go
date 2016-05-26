@@ -5,7 +5,6 @@ import (
 	"os/exec"
 	"time"
 
-	"fmt"
 	"github.com/go-check/check"
 
 	"bytes"
@@ -14,34 +13,6 @@ import (
 
 // SimpleSuite
 type SimpleSuite struct{ BaseSuite }
-
-func (s *SimpleSuite) TestNoOrInexistentConfigShouldNotFail(c *check.C) {
-	cmd := exec.Command(traefikBinary)
-
-	var b bytes.Buffer
-	cmd.Stdout = &b
-	cmd.Stderr = &b
-
-	cmd.Start()
-	time.Sleep(500 * time.Millisecond)
-	output := b.Bytes()
-
-	c.Assert(string(output), checker.Not(checker.Contains), "No configuration file found")
-	cmd.Process.Kill()
-
-	nonExistentFile := "non/existent/file.toml"
-	cmd = exec.Command(traefikBinary, "--configFile="+nonExistentFile)
-
-	cmd.Stdout = &b
-	cmd.Stderr = &b
-
-	cmd.Start()
-	time.Sleep(500 * time.Millisecond)
-	output = b.Bytes()
-
-	c.Assert(string(output), checker.Not(checker.Contains), fmt.Sprintf("Error reading configuration file: open %s: no such file or directory", nonExistentFile))
-	cmd.Process.Kill()
-}
 
 func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/invalid_configuration.toml")
