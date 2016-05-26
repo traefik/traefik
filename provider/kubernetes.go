@@ -190,37 +190,62 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						Rule: ruleType + ":" + pa.Path,
 					}
 				}
-				services, err := k8sClient.GetServices(func(service k8s.Service) bool {
-					return service.ObjectMeta.Namespace == i.ObjectMeta.Namespace && service.Name == pa.Backend.ServiceName
-				})
+				service, err := k8sClient.GetService(pa.Backend.ServiceName, i.ObjectMeta.Namespace)
 				if err != nil {
 					log.Warnf("Error retrieving services: %v", err)
-					continue
-				}
-				if len(services) == 0 {
-					// no backends found, delete frontend...
 					delete(templateObjects.Frontends, r.Host+pa.Path)
 					log.Warnf("Error retrieving services %s", pa.Backend.ServiceName)
+					continue
 				}
-				for _, service := range services {
-					protocol := "http"
-					for _, port := range service.Spec.Ports {
-						if equalPorts(port, pa.Backend.ServicePort) {
-							if port.Port == 443 {
-								protocol = "https"
-							}
+				protocol := "http"
+				for _, port := range service.Spec.Ports {
+					if equalPorts(port, pa.Backend.ServicePort) {
+						if port.Port == 443 {
+							protocol = "https"
+						}
+						endpoints, err := k8sClient.GetEndpoints(service.ObjectMeta.Name, service.ObjectMeta.Namespace)
+						if err != nil {
+							log.Errorf("Error retrieving endpoints: %v", err)
+							continue
+						}
+						if len(endpoints.Subsets) == 0 {
+							log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 							templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
 								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(port.Port),
 								Weight: 1,
 							}
-							break
+						} else {
+							for _, subset := range endpoints.Subsets {
+								for _, address := range subset.Addresses {
+									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+									templateObjects.Backends[r.Host+pa.Path].Servers[url] = types.Server{
+										URL:    url,
+										Weight: 1,
+									}
+								}
+							}
 						}
+						break
 					}
 				}
 			}
 		}
 	}
 	return &templateObjects, nil
+}
+
+func endpointPortNumber(servicePort k8s.ServicePort, endpointPorts []k8s.EndpointPort) int {
+	if len(endpointPorts) > 0 {
+		//name is optional if there is only one port
+		port := endpointPorts[0]
+		for _, endpointPort := range endpointPorts {
+			if servicePort.Name == endpointPort.Name {
+				port = endpointPort
+			}
+		}
+		return int(port.Port)
+	}
+	return servicePort.Port
 }
 
 func equalPorts(servicePort k8s.ServicePort, ingressPort k8s.IntOrString) bool {
