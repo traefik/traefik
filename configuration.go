@@ -21,7 +21,7 @@ type TraefikConfiguration struct {
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
 	GraceTimeOut              int64                   `short:"g" description:"Configuration file to use (TOML)."`
-	Debug	                  bool
+	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	AccessLogsFile            string                  `description:"Access logs file"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
