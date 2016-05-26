@@ -24,7 +24,7 @@ func TestLoadIngresses(t *testing.T) {
 									Path: "/bar",
 									Backend: k8s.IngressBackend{
 										ServiceName: "service1",
-										ServicePort: k8s.FromString("http"),
+										ServicePort: k8s.FromInt(80),
 									},
 								},
 							},
@@ -39,7 +39,7 @@ func TestLoadIngresses(t *testing.T) {
 								{
 									Backend: k8s.IngressBackend{
 										ServiceName: "service3",
-										ServicePort: k8s.FromInt(443),
+										ServicePort: k8s.FromString("https"),
 									},
 								},
 								{
@@ -66,7 +66,6 @@ func TestLoadIngresses(t *testing.T) {
 				ClusterIP: "10.0.0.1",
 				Ports: []k8s.ServicePort{
 					{
-						Name: "http",
 						Port: 80,
 					},
 				},
@@ -98,6 +97,10 @@ func TestLoadIngresses(t *testing.T) {
 				Ports: []k8s.ServicePort{
 					{
 						Name: "http",
+						Port: 80,
+					},
+					{
+						Name: "https",
 						Port: 443,
 					},
 				},
@@ -133,6 +136,49 @@ func TestLoadIngresses(t *testing.T) {
 					Ports: []k8s.EndpointPort{
 						{
 							Port: 8080,
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: k8s.ObjectMeta{
+				Name:      "service3",
+				UID:       "3",
+				Namespace: "testing",
+			},
+			Subsets: []k8s.EndpointSubset{
+				{
+					Addresses: []k8s.EndpointAddress{
+						{
+							IP: "10.15.0.1",
+						},
+					},
+					Ports: []k8s.EndpointPort{
+						{
+							Name: "http",
+							Port: 8080,
+						},
+						{
+							Name: "https",
+							Port: 8443,
+						},
+					},
+				},
+				{
+					Addresses: []k8s.EndpointAddress{
+						{
+							IP: "10.15.0.2",
+						},
+					},
+					Ports: []k8s.EndpointPort{
+						{
+							Name: "http",
+							Port: 9080,
+						},
+						{
+							Name: "https",
+							Port: 9443,
 						},
 					},
 				},
@@ -174,8 +220,12 @@ func TestLoadIngresses(t *testing.T) {
 						URL:    "http://10.0.0.2:802",
 						Weight: 1,
 					},
-					"3": {
-						URL:    "https://10.0.0.3:443",
+					"https://10.15.0.1:8443": {
+						URL:    "https://10.15.0.1:8443",
+						Weight: 1,
+					},
+					"https://10.15.0.2:9443": {
+						URL:    "https://10.15.0.2:9443",
 						Weight: 1,
 					},
 				},
