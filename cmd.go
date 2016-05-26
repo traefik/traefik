@@ -10,12 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"net/http"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"net/http"
 )
 
 var traefikCmd = &cobra.Command{
@@ -171,7 +172,7 @@ func init() {
 	traefikCmd.PersistentFlags().StringVar(&arguments.Boltdb.Prefix, "boltdb.prefix", "/traefik", "Prefix used for KV store")
 
 	traefikCmd.PersistentFlags().BoolVar(&arguments.kubernetes, "kubernetes", false, "Enable Kubernetes backend")
-	traefikCmd.PersistentFlags().StringVar(&arguments.Kubernetes.Endpoint, "kubernetes.endpoint", "127.0.0.1:8080", "Kubernetes server endpoint")
+	traefikCmd.PersistentFlags().StringVar(&arguments.Kubernetes.Endpoint, "kubernetes.endpoint", "http://127.0.0.1:8080", "Kubernetes server endpoint")
 	traefikCmd.PersistentFlags().StringSliceVar(&arguments.Kubernetes.Namespaces, "kubernetes.namespaces", []string{}, "Kubernetes namespaces")
 
 	_ = viper.BindPFlag("configFile", traefikCmd.PersistentFlags().Lookup("configFile"))

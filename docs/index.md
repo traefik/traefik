@@ -38,9 +38,10 @@ Run it and forget it!
 
 ## Demo
 
-Here is a demo of Træfɪk using Docker backend, showing a load-balancing between two servers, hot reloading of configuration, and graceful shutdown.
+Here is a talk (in french) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
+You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Lets'Encrypt. 
 
-[![asciicast](https://asciinema.org/a/4tcyde7riou5vxulo6my3mtko.png)](https://asciinema.org/a/4tcyde7riou5vxulo6my3mtko)
+[![Traefik Devoxx France](https://img.youtube.com/vi/QvAz9mVx5TI/0.jpg)](https://www.youtube.com/watch?v=QvAz9mVx5TI)
 
 ## Get it
 

@@ -5,11 +5,12 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"github.com/containous/traefik/safe"
-	"github.com/parnurzeal/gorequest"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/containous/traefik/safe"
+	"github.com/parnurzeal/gorequest"
 )
 
 const (
@@ -201,6 +202,11 @@ func (c *clientImpl) do(request *gorequest.SuperAgent) ([]byte, error) {
 func (c *clientImpl) request(url string) *gorequest.SuperAgent {
 	// Make request to Kubernetes API
 	request := gorequest.New().Get(url)
+
+	if strings.HasPrefix(url, "http://") {
+		return request
+	}
+
 	if len(c.token) > 0 {
 		request.Header["Authorization"] = "Bearer " + c.token
 		pool := x509.NewCertPool()
