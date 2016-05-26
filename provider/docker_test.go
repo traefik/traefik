@@ -263,7 +263,7 @@ func TestDockerGetPort(t *testing.T) {
 				NetworkSettings: &docker.NetworkSettings{
 					NetworkSettingsBase: docker.NetworkSettingsBase{
 						Ports: nat.PortMap{
-							"80/tcp": {},
+							"80/tcp": {}, // TODO: Change so there is no exposed port
 						},
 					},
 				},
