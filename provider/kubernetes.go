@@ -62,19 +62,20 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 	backOff := backoff.NewExponentialBackOff()
 
 	pool.Go(func(stop chan bool) {
-		stopWatch := make(chan bool)
-		defer close(stopWatch)
 		operation := func() error {
-			select {
-			case <-stop:
-				return nil
-			default:
-			}
 			for {
+				stopWatch := make(chan bool, 5)
+				defer close(stopWatch)
 				eventsChan, errEventsChan, err := k8sClient.WatchAll(stopWatch)
 				if err != nil {
 					log.Errorf("Error watching kubernetes events: %v", err)
-					return err
+					timer := time.NewTimer(1 * time.Second)
+					select {
+					case <-timer.C:
+						return err
+					case <-stop:
+						return nil
+					}
 				}
 			Watch:
 				for {
@@ -82,14 +83,15 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 					case <-stop:
 						stopWatch <- true
 						return nil
-					case err := <-errEventsChan:
-						if strings.Contains(err.Error(), io.EOF.Error()) {
+					case err, ok := <-errEventsChan:
+						stopWatch <- true
+						if ok && strings.Contains(err.Error(), io.EOF.Error()) {
 							// edge case, kubernetes long-polling disconnection
 							break Watch
 						}
 						return err
 					case event := <-eventsChan:
-						log.Debugf("Received event from kubenetes %+v", event)
+						log.Debugf("Received event from kubernetes %+v", event)
 						templateObjects, err := provider.loadIngresses(k8sClient)
 						if err != nil {
 							return err
@@ -160,9 +162,11 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						Routes:         make(map[string]types.Route),
 					}
 				}
-				if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
-					templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host] = types.Route{
-						Rule: "Host:" + r.Host,
+				if len(r.Host) > 0 {
+					if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
+						templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host] = types.Route{
+							Rule: "Host:" + r.Host,
+						}
 					}
 				}
 				if len(pa.Path) > 0 {
@@ -186,37 +190,62 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						Rule: ruleType + ":" + pa.Path,
 					}
 				}
-				services, err := k8sClient.GetServices(func(service k8s.Service) bool {
-					return service.ObjectMeta.Namespace == i.ObjectMeta.Namespace && service.Name == pa.Backend.ServiceName
-				})
+				service, err := k8sClient.GetService(pa.Backend.ServiceName, i.ObjectMeta.Namespace)
 				if err != nil {
-					log.Errorf("Error retrieving services: %v", err)
+					log.Warnf("Error retrieving services: %v", err)
+					delete(templateObjects.Frontends, r.Host+pa.Path)
+					log.Warnf("Error retrieving services %s", pa.Backend.ServiceName)
 					continue
 				}
-				if len(services) == 0 {
-					// no backends found, delete frontend...
-					delete(templateObjects.Frontends, r.Host+pa.Path)
-					log.Errorf("Error retrieving services %s", pa.Backend.ServiceName)
-				}
-				for _, service := range services {
-					protocol := "http"
-					for _, port := range service.Spec.Ports {
-						if equalPorts(port, pa.Backend.ServicePort) {
-							if port.Port == 443 {
-								protocol = "https"
-							}
+				protocol := "http"
+				for _, port := range service.Spec.Ports {
+					if equalPorts(port, pa.Backend.ServicePort) {
+						if port.Port == 443 {
+							protocol = "https"
+						}
+						endpoints, err := k8sClient.GetEndpoints(service.ObjectMeta.Name, service.ObjectMeta.Namespace)
+						if err != nil {
+							log.Errorf("Error retrieving endpoints: %v", err)
+							continue
+						}
+						if len(endpoints.Subsets) == 0 {
+							log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 							templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
 								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(port.Port),
 								Weight: 1,
 							}
-							break
+						} else {
+							for _, subset := range endpoints.Subsets {
+								for _, address := range subset.Addresses {
+									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+									templateObjects.Backends[r.Host+pa.Path].Servers[url] = types.Server{
+										URL:    url,
+										Weight: 1,
+									}
+								}
+							}
 						}
+						break
 					}
 				}
 			}
 		}
 	}
 	return &templateObjects, nil
+}
+
+func endpointPortNumber(servicePort k8s.ServicePort, endpointPorts []k8s.EndpointPort) int {
+	if len(endpointPorts) > 0 {
+		//name is optional if there is only one port
+		port := endpointPorts[0]
+		for _, endpointPort := range endpointPorts {
+			if servicePort.Name == endpointPort.Name {
+				port = endpointPort
+			}
+		}
+		return int(port.Port)
+	}
+	return servicePort.Port
 }
 
 func equalPorts(servicePort k8s.ServicePort, ingressPort k8s.IntOrString) bool {

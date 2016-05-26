@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"expvar"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/autogen"
@@ -32,6 +34,14 @@ var (
 		Directory: "nowhere",
 	})
 )
+
+func init() {
+	expvar.Publish("Goroutines", expvar.Func(goroutines))
+}
+
+func goroutines() interface{} {
+	return runtime.NumGoroutine()
+}
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
@@ -83,6 +93,11 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		http.Redirect(response, request, "/dashboard/", 302)
 	})
 	systemRouter.Methods("GET").PathPrefix("/dashboard/").Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetDir: autogen.AssetDir, Prefix: "static"})))
+
+	// expvars
+	if provider.server.globalConfiguration.Debug {
+		systemRouter.Methods("GET").Path("/debug/vars").HandlerFunc(expvarHandler)
+	}
 
 	go func() {
 		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
@@ -230,4 +245,18 @@ func (provider *WebProvider) getRouteHandler(response http.ResponseWriter, reque
 		}
 	}
 	http.NotFound(response, request)
+}
+
+func expvarHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	fmt.Fprintf(w, "{\n")
+	first := true
+	expvar.Do(func(kv expvar.KeyValue) {
+		if !first {
+			fmt.Fprintf(w, ",\n")
+		}
+		first = false
+		fmt.Fprintf(w, "%q: %s", kv.Key, kv.Value)
+	})
+	fmt.Fprintf(w, "\n}\n")
 }

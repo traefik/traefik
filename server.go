@@ -68,8 +68,8 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server := new(Server)
 
 	server.serverEntryPoints = make(map[string]*serverEntryPoint)
-	server.configurationChan = make(chan types.ConfigMessage, 10)
-	server.configurationValidatedChan = make(chan types.ConfigMessage, 10)
+	server.configurationChan = make(chan types.ConfigMessage, 100)
+	server.configurationValidatedChan = make(chan types.ConfigMessage, 100)
 	server.signals = make(chan os.Signal, 1)
 	server.stopChan = make(chan bool, 1)
 	server.providers = []provider.Provider{}
