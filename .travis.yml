@@ -1,11 +1,9 @@
 branches:
-  except:
-  - /^v\d\.\d\.\d.*$/
 env:
   global:
     - secure: btt4r13t09gQlHb6gYrvGC2yGCMMHfnp1Mz1RQedc4Mpf/FfT8aE6xmK2a2i9CCvskjrP0t/BFaS4yxIURjnFRn+ugQIEa0pLspB9UJArW/vgOSpIWM9/OQ/fg8z5XuMxN6Md4DL1/iLypMNSageA1x0TRdt89+D1N1dALpg5XRCXLFbC84TLi0gjlFuib9ibPKzEhLT+anCRJ6iZMzeupDSoaCVbAtJMoDvXw4+4AcRZ1+k4MybBLyCib5boaEOt4pTT88mz4Kk0YaMwPVJyg9Qv36VqyUcPS09Yd95LuyVQ4+tZt8Y1ccbIzULsK+sLM3hLCzxlmlpN3dQBlZJiiRtQde0mgGAKyC0P0A1XjuDTywcsa5edB+fTk1Dsewz9xZ9V0NmMz8t+UNZnaSsAPga9i86jULbXUUwMVSzVRc+Xgx02liB/8qI1xYC9FM6ilStt7rn7mF0k3KbiWhcptgeXjO6Lah9FjEKd5w4MXsdUSTi/86rQaLo+kj+XdaTrXCTulKHyRyQEUj+8V1w0oVz7pcGjePHd7y5oU9ByifVQy6sytuFBfRZvugM5bKHo+i0pcWvixrZS42DrzwxZJsspANOvqSe5ifVbvOkfUppQdCBIwptxV5N1b49XPKU3W/w34QJ8xGmKp3TFA7WwVCztriFHjPgiRpB3EG99Bg=
     - REPO: $TRAVIS_REPO_SLUG
-    - VERSION: v1.0.0-beta.$TRAVIS_BUILD_NUMBER
+    - VERSION: $TRAVIS_TAG
   matrix:
     - DOCKER_VERSION=1.9.1
     - DOCKER_VERSION=1.10.1
