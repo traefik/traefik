@@ -1,5 +1,5 @@
-hash: 50e873651126f0af9204fd8cc11f10917ce56b76479310ada578f5487162e0c4
-updated: 2016-05-24T15:42:45.810673781+02:00
+hash: 660249b4d5cbcfd0cb0a2d9d39ce798ec8df7d3277c53ed4043fe2f61b29eeb9
+updated: 2016-05-27T09:59:17.855890752+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: dfb21201d9270c1082d5fb0f07f500311ff72f18
@@ -18,7 +18,7 @@ imports:
 - name: github.com/codegangsta/negroni
   version: ffbc66b612ee3eac2eba29aedce4c3a65e4dd0a1
 - name: github.com/containous/flaeg
-  version: e390ea90e4ee21ff73fb1630b8c50a843a6d7674
+  version: c425b9d758df1864ca838dbd433f1cf8f5097d51
 - name: github.com/containous/oxy
   version: 183212964e13e7b8afe01a08b193d04300554a68
   subpackages:
@@ -29,7 +29,7 @@ imports:
   - stream
   - utils
 - name: github.com/containous/staert
-  version: f0da5ea8404f0d3999d72ba8f8736d3aa4b8c8f1
+  version: ff272631ecfc9c22490b651fea0f08d364d46518
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:

@@ -70,7 +70,7 @@ Complete documentation is available at https://traefik.io`,
 	//add sources to staert
 	s.AddSource(toml)
 	s.AddSource(f)
-	if _, err := s.GetConfig(); err != nil {
+	if _, err := s.LoadConfig(); err != nil {
 		fmtlog.Println(err)
 	}
 	if traefikConfiguration.File != nil && len(traefikConfiguration.File.Filename) == 0 {
