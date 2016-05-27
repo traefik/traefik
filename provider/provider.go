@@ -22,8 +22,8 @@ type Provider interface {
 
 // BaseProvider should be inherited by providers
 type BaseProvider struct {
-	Watch    bool
-	Filename string
+	Watch    bool   `description:"Watch provider"`
+	Filename string `description:"Override default configuration template. For advanced users :)"`
 }
 
 func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {

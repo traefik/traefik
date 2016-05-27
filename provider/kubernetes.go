@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/provider/k8s"
@@ -20,12 +21,38 @@ const (
 	serviceAccountCACert = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 )
 
+// Namespaces holds kubernetes namespaces
+type Namespaces []string
+
+//Set adds strings elem into the the parser
+//it splits str on , and ;
+func (ns *Namespaces) Set(str string) error {
+	fargs := func(c rune) bool {
+		return c == ',' || c == ';'
+	}
+	// get function
+	slice := strings.FieldsFunc(str, fargs)
+	*ns = append(*ns, slice...)
+	return nil
+}
+
+//Get []string
+func (ns *Namespaces) Get() interface{} { return Namespaces(*ns) }
+
+//String return slice in a string
+func (ns *Namespaces) String() string { return fmt.Sprintf("%v", *ns) }
+
+//SetValue sets []string into the parser
+func (ns *Namespaces) SetValue(val interface{}) {
+	*ns = Namespaces(val.(Namespaces))
+}
+
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
-	BaseProvider           `mapstructure:",squash"`
-	Endpoint               string
-	disablePassHostHeaders bool
-	Namespaces             []string
+	BaseProvider
+	Endpoint               string     `description:"Kubernetes server endpoint"`
+	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
+	Namespaces             Namespaces `description:"Kubernetes namespaces"`
 }
 
 func (provider *Kubernetes) createClient() (k8s.Client, error) {
@@ -259,7 +286,7 @@ func equalPorts(servicePort k8s.ServicePort, ingressPort k8s.IntOrString) bool {
 }
 
 func (provider *Kubernetes) getPassHostHeader() bool {
-	if provider.disablePassHostHeaders {
+	if provider.DisablePassHostHeaders {
 		return false
 	}
 	return true
