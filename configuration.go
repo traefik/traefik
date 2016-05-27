@@ -49,8 +49,7 @@ type DefaultEntryPoints []string
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
 func (dep *DefaultEntryPoints) String() string {
-	//TODO : The string returned should be formatted in such way that the func Set below could parse it.
-	return fmt.Sprintf("%#v", dep)
+	return strings.Join(*dep, ",")
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
@@ -86,9 +85,6 @@ type EntryPoints map[string]*EntryPoint
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
 func (ep *EntryPoints) String() string {
-	//TODO : The string returned should be formatted in such way that the func Set below could parse it.
-	//Like this --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https'
-	//But the Set func parses entrypoint one by one only
 	return fmt.Sprintf("%+v", *ep)
 }
 
@@ -176,7 +172,6 @@ type Certificates []Certificate
 // The String method's output will be used in diagnostics.
 func (certs *Certificates) String() string {
 	if len(*certs) == 0 {
-		//TODO :
 		return ""
 	}
 	return (*certs)[0].CertFile + "," + (*certs)[0].KeyFile

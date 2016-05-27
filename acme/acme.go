@@ -163,7 +163,7 @@ func (dc *DomainsCertificate) needRenew() bool {
 // ACME allows to connect to lets encrypt and retrieve certs
 type ACME struct {
 	Email       string   `description:"Email address used for registration"`
-	Domains     []Domain `description:"SANs (alternative domains) to each main domain"`
+	Domains     []Domain `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
 	StorageFile string   `description:"File used for certificates storage."`
 	OnDemand    bool     `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."`
 	CAServer    string   `description:"CA server to use."`
@@ -181,12 +181,15 @@ func (ds *Domains) Set(str string) error {
 	}
 	// get function
 	slice := strings.FieldsFunc(str, fargs)
-	if len(slice) >= 2 {
+	if len(slice) < 1 {
 		return fmt.Errorf("Parse error ACME.Domain. Imposible to parse %s", str)
 	}
 	d := Domain{
 		Main: slice[0],
-		SANs: slice[1:],
+		SANs: []string{},
+	}
+	if len(slice) > 1 {
+		d.SANs = slice[1:]
 	}
 	*ds = append(*ds, d)
 	return nil
