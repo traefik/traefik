@@ -23,10 +23,11 @@ var metrics = stats.New()
 // WebProvider is a provider.Provider implementation that provides the UI.
 // FIXME to be handled another way.
 type WebProvider struct {
-	Address           string
-	CertFile, KeyFile string
-	ReadOnly          bool
-	server            *Server
+	Address  string `description:"Web administration port"`
+	CertFile string `description:"SSL certificate"`
+	KeyFile  string `description:"SSL certificate"`
+	ReadOnly bool   `description:"Enable read only API"`
+	server   *Server
 }
 
 var (
@@ -92,7 +93,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		http.Redirect(response, request, "/dashboard/", 302)
 	})
-	systemRouter.Methods("GET").PathPrefix("/dashboard/").Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetDir: autogen.AssetDir, Prefix: "static"})))
+	systemRouter.Methods("GET").PathPrefix("/dashboard/").Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
 
 	// expvars
 	if provider.server.globalConfiguration.Debug {
