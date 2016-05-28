@@ -260,10 +260,24 @@ func TestDockerGetPort(t *testing.T) {
 						"traefik.port": "8080",
 					},
 				},
+				NetworkSettings: &docker.NetworkSettings{},
+			},
+			expected: "8080",
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "test",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.port": "8080",
+					},
+				},
 				NetworkSettings: &docker.NetworkSettings{
 					NetworkSettingsBase: docker.NetworkSettingsBase{
 						Ports: nat.PortMap{
-							"80/tcp": {}, // TODO: Change so there is no exposed port
+							"80/tcp": {},
 						},
 					},
 				},
