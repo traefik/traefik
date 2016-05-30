@@ -90,13 +90,25 @@ func (provider *ConsulCatalog) healthyNodes(service string) (catalogUpdate, erro
 
 	set := map[string]bool{}
 	tags := []string{}
+	nodes := []*api.ServiceEntry{}
 	for _, node := range data {
-		for _, tag := range node.Service.Tags {
-			if _, ok := set[tag]; ok == false {
-				set[tag] = true
-				tags = append(tags, tag)
+		constraintTags := provider.getContraintTags(node.Service.Tags)
+		if ok, failingConstraint, err := provider.MatchConstraints(constraintTags); err != nil {
+			return catalogUpdate{}, err
+		} else if ok == true {
+			nodes = append(nodes, node)
+			// merge tags of every nodes in a single slice
+			// only if node match constraint
+			for _, tag := range node.Service.Tags {
+				if _, ok := set[tag]; ok == false {
+					set[tag] = true
+					tags = append(tags, tag)
+				}
 			}
+		} else if ok == false && failingConstraint != nil {
+			log.Debugf("Service %v pruned by '%v' constraint", service, failingConstraint.String())
 		}
+
 	}
 
 	return catalogUpdate{
@@ -104,7 +116,7 @@ func (provider *ConsulCatalog) healthyNodes(service string) (catalogUpdate, erro
 			ServiceName: service,
 			Attributes:  tags,
 		},
-		Nodes: data,
+		Nodes: nodes,
 	}, nil
 }
 
@@ -155,6 +167,19 @@ func (provider *ConsulCatalog) getAttribute(name string, tags []string, defaultV
 		}
 	}
 	return defaultValue
+}
+
+func (provider *ConsulCatalog) getContraintTags(tags []string) []string {
+	var list []string
+
+	for _, tag := range tags {
+		if strings.Index(strings.ToLower(tag), DefaultConsulCatalogTagPrefix+".tags=") == 0 {
+			splitedTags := strings.Split(tag[len(DefaultConsulCatalogTagPrefix+".tags="):], ",")
+			list = append(list, splitedTags...)
+		}
+	}
+
+	return list
 }
 
 func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Configuration {
@@ -212,7 +237,10 @@ func (provider *ConsulCatalog) getNodes(index map[string][]string) ([]catalogUpd
 			if err != nil {
 				return nil, err
 			}
-			nodes = append(nodes, healthy)
+			// healthy.Nodes can be empty if constraints do not match, without throwing error
+			if healthy.Service != nil && len(healthy.Nodes) > 0 {
+				nodes = append(nodes, healthy)
+			}
 		}
 	}
 	return nodes, nil
@@ -248,7 +276,7 @@ func (provider *ConsulCatalog) watch(configurationChan chan<- types.ConfigMessag
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []*types.Constraint) error {
 	config := api.DefaultConfig()
 	config.Address = provider.Endpoint
 	client, err := api.NewClient(config)
@@ -256,6 +284,7 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 		return err
 	}
 	provider.client = client
+	provider.Constraints = append(provider.Constraints, constraints...)
 
 	pool.Go(func(stop chan bool) {
 		notify := func(err error, time time.Duration) {

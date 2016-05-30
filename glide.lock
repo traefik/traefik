@@ -213,4 +213,7 @@ imports:
   subpackages:
   - cipher
   - json
-devImports: []
+- name: gopkg.in/yaml.v2
+  version: 7ad95dd0798a40da1ccdff6dff35fd177b5edf40
+- name: github.com/ryanuber/go-glob
+  version: 572520ed46dbddaed19ea3d9541bdd0494163693

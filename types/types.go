@@ -2,6 +2,10 @@ package types
 
 import (
 	"errors"
+	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/ryanuber/go-glob"
+	"reflect"
 	"strings"
 )
 
@@ -92,4 +96,120 @@ type Configuration struct {
 type ConfigMessage struct {
 	ProviderName  string
 	Configuration *Configuration
+}
+
+// Constraint hold a parsed constraint expresssion
+type Constraint struct {
+	Key string
+	// MustMatch is true if operator is "==" or false if operator is "!="
+	MustMatch bool
+	Regex     string
+}
+
+func NewConstraint(exp string) (*Constraint, error) {
+	sep := ""
+	constraint := &Constraint{}
+
+	if strings.Contains(exp, "==") {
+		sep = "=="
+		constraint.MustMatch = true
+	} else if strings.Contains(exp, "!=") {
+		sep = "!="
+		constraint.MustMatch = false
+	} else {
+		return nil, errors.New("Constraint expression missing valid operator: '==' or '!='")
+	}
+
+	kv := strings.SplitN(exp, sep, 2)
+	if len(kv) == 2 {
+		// At the moment, it only supports tags
+		if kv[0] != "tag" {
+			return nil, errors.New("Constraint must be tag-based. Syntax: tag==us-*")
+		}
+
+		constraint.Key = kv[0]
+		constraint.Regex = kv[1]
+		return constraint, nil
+	}
+
+	return nil, errors.New("Incorrect constraint expression: " + exp)
+}
+
+func (c *Constraint) String() string {
+	if c.MustMatch {
+		return c.Key + "==" + c.Regex
+	}
+	return c.Key + "!=" + c.Regex
+}
+
+func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
+	for _, tag := range tags {
+		if glob.Glob(c.Regex, tag) {
+			return true
+		}
+	}
+	return false
+}
+
+// StringToConstraintHookFunc returns a DecodeHookFunc that converts strings to Constraint.
+// This hook is triggered during the configuration file unmarshal-ing
+func StringToConstraintHookFunc() mapstructure.DecodeHookFunc {
+	return func(
+		f reflect.Type,
+		t reflect.Type,
+		data interface{}) (interface{}, error) {
+		if f.Kind() != reflect.String {
+			return data, nil
+		}
+		if t != reflect.TypeOf(&Constraint{}) {
+			return data, nil
+		}
+
+		if constraint, err := NewConstraint(data.(string)); err != nil {
+			return data, err
+		} else {
+			return constraint, nil
+		}
+	}
+}
+
+type Constraints struct {
+	value   *[]*Constraint
+	changed bool
+}
+
+// Command line
+func (cs *Constraints) Set(value string) error {
+	exps := strings.Split(value, ",")
+	if len(exps) == 0 {
+		return errors.New("Bad Constraint format: " + value)
+	}
+	for _, exp := range exps {
+		if constraint, err := NewConstraint(exp); err != nil {
+			return err
+		} else {
+			*cs.value = append(*cs.value, constraint)
+		}
+	}
+	return nil
+}
+
+func (c *Constraints) Type() string {
+	return "constraints"
+}
+
+func (c *Constraints) String() string {
+	return fmt.Sprintln("%v", *c.value)
+}
+
+// NewConstraintSliceValue make an alias of []*Constraint to Constraints for the command line
+// Viper does not supprt SliceVar value types
+// Constraints.Set called by viper will fill the []*Constraint slice
+func NewConstraintSliceValue(p *[]*Constraint) *Constraints {
+	cs := new(Constraints)
+	cs.value = p
+	if p == nil {
+		*cs.value = []*Constraint{}
+	}
+	return cs
 }
