@@ -196,11 +196,11 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 }
 
 func containerFilter(container dockertypes.ContainerJSON) bool {
-	if len(container.NetworkSettings.Ports) == 0 {
-		log.Debugf("Filtering container without port %s", container.Name)
+	_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
+	if len(container.NetworkSettings.Ports) == 0 && err != nil {
+		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
 		return false
 	}
-	_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
 	if len(container.NetworkSettings.Ports) > 1 && err != nil {
 		log.Debugf("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
 		return false
