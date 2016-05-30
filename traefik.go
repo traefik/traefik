@@ -73,15 +73,9 @@ Complete documentation is available at https://traefik.io`,
 	if _, err := s.LoadConfig(); err != nil {
 		fmtlog.Println(err)
 	}
-	if traefikConfiguration.File != nil && len(traefikConfiguration.File.Filename) == 0 {
-		// no filename, setting to global config file
-		log.Debugf("ConfigFileUsed %s", toml.ConfigFileUsed())
-		traefikConfiguration.File.Filename = toml.ConfigFileUsed()
-	}
-	if len(traefikConfiguration.EntryPoints) == 0 {
-		traefikConfiguration.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
-		traefikConfiguration.DefaultEntryPoints = []string{"http"}
-	}
+
+	traefikConfiguration.ConfigFile = toml.ConfigFileUsed()
+
 	if err := s.Run(); err != nil {
 		fmtlog.Println(err)
 		os.Exit(-1)
@@ -106,6 +100,23 @@ func run(traefikConfiguration *TraefikConfiguration) {
 		log.Fatal("Error getting level", err)
 	}
 	log.SetLevel(level)
+
+	if len(traefikConfiguration.ConfigFile) != 0 {
+		log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
+	}
+	if traefikConfiguration.File != nil && len(traefikConfiguration.File.Filename) == 0 {
+		// no filename, setting to global config file
+		if len(traefikConfiguration.ConfigFile) != 0 {
+			traefikConfiguration.File.Filename = traefikConfiguration.ConfigFile
+		} else {
+			log.Errorln("Error using file configuration backend, no filename defined")
+		}
+	}
+
+	if len(traefikConfiguration.EntryPoints) == 0 {
+		traefikConfiguration.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
+		traefikConfiguration.DefaultEntryPoints = []string{"http"}
+	}
 
 	if len(globalConfiguration.TraefikLogsFile) > 0 {
 		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)

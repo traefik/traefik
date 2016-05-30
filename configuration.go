@@ -14,7 +14,7 @@ import (
 // TraefikConfiguration holds GlobalConfiguration and other stuff
 type TraefikConfiguration struct {
 	GlobalConfiguration
-	ConfigFile string `short:"c" description:"Timeout in seconds. Duration to give active requests a chance to finish during hot-reloads"`
+	ConfigFile string `short:"c" description:"Configuration file to use (TOML)."`
 }
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
