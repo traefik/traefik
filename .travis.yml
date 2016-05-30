@@ -15,6 +15,7 @@ install:
 - sudo curl https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION} -o /usr/bin/docker
 - sudo chmod +x /usr/bin/docker
 - sudo service docker start
+- sleep 5
 - docker version
 - pip install --user mkdocs
 - pip install --user pymdown-extensions
