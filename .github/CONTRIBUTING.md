@@ -77,6 +77,23 @@ ok      github.com/containous/traefik   0.005s  coverage: 4.1% of statements
 Test success
 ```
 
+For development purpose, you can specifiy which tests to run by using:
+```
+# Run every tests in the MyTest suite
+TESTFLAGS="-check.f MyTestSuite" make test-integration
+
+# Run the test "MyTest" in the MyTest suite
+TESTFLAGS="-check.f MyTestSuite.MyTest" make test-integration
+
+# Run every tests starting with "My", in the MyTest suite
+TESTFLAGS="-check.f MyTestSuite.My" make test-integration
+
+# Run every tests ending with "Test", in the MyTest suite
+TESTFLAGS="-check.f MyTestSuite.*Test" make test-integration
+```
+
+More: https://labix.org/gocheck
+
 ### Documentation
 
 The [documentation site](http://docs.traefik.io/) is built with [mkdocs](http://mkdocs.org/)
