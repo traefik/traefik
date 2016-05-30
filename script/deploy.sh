@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-if [ -z "$TRAVIS_TAG" ] && [ "$DOCKER_VERSION" = "1.10.1" ]; then
+if [ -n "$TRAVIS_TAG" ] && [ "$DOCKER_VERSION" = "1.10.1" ]; then
   echo "Deploying..."
 else
   echo "Skipping deploy"
