@@ -101,9 +101,6 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	}
 	log.SetLevel(level)
 
-	if len(traefikConfiguration.ConfigFile) != 0 {
-		log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
-	}
 	if traefikConfiguration.File != nil && len(traefikConfiguration.File.Filename) == 0 {
 		// no filename, setting to global config file
 		if len(traefikConfiguration.ConfigFile) != 0 {
@@ -136,6 +133,9 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	}
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", Version, BuildDate)
+	if len(traefikConfiguration.ConfigFile) != 0 {
+		log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
+	}
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
 	server := NewServer(globalConfiguration)
 	server.Start()
