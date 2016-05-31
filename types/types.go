@@ -2,10 +2,7 @@ package types
 
 import (
 	"errors"
-	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"github.com/ryanuber/go-glob"
-	"reflect"
 	"strings"
 )
 
@@ -103,7 +100,8 @@ type Constraint struct {
 	Key string
 	// MustMatch is true if operator is "==" or false if operator is "!="
 	MustMatch bool
-	Regex     string
+	// TODO: support regex
+	Regex string
 }
 
 // NewConstraint receive a string and return a *Constraint, after checking syntax and parsing the constraint expression
@@ -151,70 +149,4 @@ func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
 		}
 	}
 	return false
-}
-
-// StringToConstraintHookFunc returns a DecodeHookFunc that converts strings to Constraint.
-// This hook is triggered during the configuration file unmarshal-ing
-func StringToConstraintHookFunc() mapstructure.DecodeHookFunc {
-	return func(
-		f reflect.Type,
-		t reflect.Type,
-		data interface{}) (interface{}, error) {
-		if f.Kind() != reflect.String {
-			return data, nil
-		}
-		if t != reflect.TypeOf(&Constraint{}) {
-			return data, nil
-		}
-
-		constraint, err := NewConstraint(data.(string))
-		if err != nil {
-			return data, err
-		}
-		return constraint, nil
-	}
-}
-
-// Constraints own a pointer on globalConfiguration.Constraints and supports a Set() method (not possible on a slice)
-// interface:
-type Constraints struct {
-	value   *[]*Constraint
-	changed bool
-}
-
-// Set receive a cli argument and add it to globalConfiguration
-func (cs *Constraints) Set(value string) error {
-	exps := strings.Split(value, ",")
-	if len(exps) == 0 {
-		return errors.New("Bad Constraint format: " + value)
-	}
-	for _, exp := range exps {
-		constraint, err := NewConstraint(exp)
-		if err != nil {
-			return err
-		}
-		*cs.value = append(*cs.value, constraint)
-	}
-	return nil
-}
-
-// Type exports the Constraints type as a string
-func (cs *Constraints) Type() string {
-	return "constraints"
-}
-
-func (cs *Constraints) String() string {
-	return fmt.Sprintln("%v", *cs.value)
-}
-
-// NewConstraintSliceValue make an alias of []*Constraint to Constraints for the command line
-// Viper does not supprt SliceVar value types
-// Constraints.Set called by viper will fill the []*Constraint slice
-func NewConstraintSliceValue(p *[]*Constraint) *Constraints {
-	cs := new(Constraints)
-	cs.value = p
-	if p == nil {
-		*cs.value = []*Constraint{}
-	}
-	return cs
 }

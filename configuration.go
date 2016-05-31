@@ -26,7 +26,7 @@ type GlobalConfiguration struct {
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
-	Constraints               []*types.Constraint	  `description:"Filter services by constraint, matching with service tags."`
+	Constraints               Constraints             `description:"Filter services by constraint, matching with service tags."`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
 	ProvidersThrottleDuration time.Duration           `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
@@ -146,6 +146,41 @@ func (ep *EntryPoints) Type() string {
 	return fmt.Sprint("entrypoints²")
 }
 
+// Constraints holds a Constraint parser
+type Constraints []types.Constraint
+
+//Set []*Constraint
+func (cs *Constraints) Set(str string) error {
+	exps := strings.Split(str, ",")
+	if len(exps) == 0 {
+		return errors.New("Bad Constraint format: " + str)
+	}
+	for _, exp := range exps {
+		constraint, err := types.NewConstraint(exp)
+		if err != nil {
+			return err
+		}
+		*cs = append(*cs, *constraint)
+	}
+	return nil
+}
+
+//Get []*Constraint
+func (cs *Constraints) Get() interface{} { return []types.Constraint(*cs) }
+
+//String returns []*Constraint in string
+func (cs *Constraints) String() string { return fmt.Sprintf("%+v", *cs) }
+
+//SetValue sets []*Constraint into the parser
+func (cs *Constraints) SetValue(val interface{}) {
+	*cs = Constraints(val.([]types.Constraint))
+}
+
+// Type exports the Constraints type as a string
+func (cs *Constraints) Type() string {
+	return fmt.Sprint("constraint²")
+}
+
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
 	Network  string
@@ -232,6 +267,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.Watch = true
 	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
 	defaultMarathon.ExposedByDefault = true
+	defaultMarathon.Constraints = []types.Constraint{}
 
 	// default Consul
 	var defaultConsul provider.Consul
@@ -239,10 +275,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultConsul.Endpoint = "127.0.0.1:8500"
 	defaultConsul.Prefix = "/traefik"
 	defaultConsul.TLS = &provider.KvTLS{}
+	defaultConsul.Constraints = []types.Constraint{}
 
 	// default ConsulCatalog
 	var defaultConsulCatalog provider.ConsulCatalog
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
+	defaultConsulCatalog.Constraints = []types.Constraint{}
 
 	// default Etcd
 	var defaultEtcd provider.Etcd
@@ -250,23 +288,27 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultEtcd.Endpoint = "127.0.0.1:400"
 	defaultEtcd.Prefix = "/traefik"
 	defaultEtcd.TLS = &provider.KvTLS{}
+	defaultEtcd.Constraints = []types.Constraint{}
 
 	//default Zookeeper
 	var defaultZookeeper provider.Zookepper
 	defaultZookeeper.Watch = true
 	defaultZookeeper.Endpoint = "127.0.0.1:2181"
 	defaultZookeeper.Prefix = "/traefik"
+	defaultZookeeper.Constraints = []types.Constraint{}
 
 	//default Boltdb
 	var defaultBoltDb provider.BoltDb
 	defaultBoltDb.Watch = true
 	defaultBoltDb.Endpoint = "127.0.0.1:4001"
 	defaultBoltDb.Prefix = "/traefik"
+	defaultBoltDb.Constraints = []types.Constraint{}
 
 	//default Kubernetes
 	var defaultKubernetes provider.Kubernetes
 	defaultKubernetes.Watch = true
 	defaultKubernetes.Endpoint = "127.0.0.1:8080"
+	defaultKubernetes.Constraints = []types.Constraint{}
 
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
@@ -295,7 +337,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*EntryPoint{},
-			Constraints:		   []*Constraint,
+			Constraints:               []types.Constraint{},
 			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: time.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,

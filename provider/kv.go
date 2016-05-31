@@ -73,7 +73,7 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 	return nil
 }
 
-func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []*types.Constraint) error {
+func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
 	storeConfig := &store.Config{
 		ConnectionTimeout: 30 * time.Second,
 		Bucket:            "traefik",

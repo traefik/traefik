@@ -211,13 +211,13 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 
 func TestMatchingConstraints(t *testing.T) {
 	cases := []struct {
-		constraints []*types.Constraint
+		constraints []types.Constraint
 		tags        []string
 		expected    bool
 	}{
 		// simple test: must match
 		{
-			constraints: []*types.Constraint{
+			constraints: []types.Constraint{
 				{
 					Key:       "tag",
 					MustMatch: true,
@@ -231,7 +231,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// simple test: must match but does not match
 		{
-			constraints: []*types.Constraint{
+			constraints: []types.Constraint{
 				{
 					Key:       "tag",
 					MustMatch: true,
@@ -245,7 +245,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// simple test: must not match
 		{
-			constraints: []*types.Constraint{
+			constraints: []types.Constraint{
 				{
 					Key:       "tag",
 					MustMatch: false,
@@ -259,7 +259,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// complex test: globbing
 		{
-			constraints: []*types.Constraint{
+			constraints: []types.Constraint{
 				{
 					Key:       "tag",
 					MustMatch: true,
@@ -273,7 +273,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// complex test: multiple constraints
 		{
-			constraints: []*types.Constraint{
+			constraints: []types.Constraint{
 				{
 					Key:       "tag",
 					MustMatch: true,

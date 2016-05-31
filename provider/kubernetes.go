@@ -81,7 +81,7 @@ func (provider *Kubernetes) createClient() (k8s.Client, error) {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []*types.Constraint) error {
+func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
 	k8sClient, err := provider.createClient()
 	if err != nil {
 		return err

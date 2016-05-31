@@ -17,14 +17,14 @@ import (
 type Provider interface {
 	// Provide allows the provider to provide configurations to traefik
 	// using the given configuration channel.
-	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []*types.Constraint) error
+	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error
 }
 
 // BaseProvider should be inherited by providers
 type BaseProvider struct {
-	Watch    bool   `description:"Watch provider"`
-	Filename string `description:"Override default configuration template. For advanced users :)"`
-	Constraints []*types.Constraint `description:"Filter services by constraint, matching with Traefik tags."`
+	Watch       bool               `description:"Watch provider"`
+	Filename    string             `description:"Override default configuration template. For advanced users :)"`
+	Constraints []types.Constraint `description:"Filter services by constraint, matching with Traefik tags."`
 }
 
 // MatchConstraints must match with EVERY single contraint
@@ -38,7 +38,7 @@ func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint)
 	for _, constraint := range p.Constraints {
 		// xor: if ok and constraint.MustMatch are equal, then no tag is currently matching with the constraint
 		if ok := constraint.MatchConstraintWithAtLeastOneTag(tags); ok != constraint.MustMatch {
-			return false, constraint
+			return false, &constraint
 		}
 	}
 

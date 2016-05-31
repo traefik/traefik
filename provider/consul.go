@@ -14,7 +14,7 @@ type Consul struct {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Consul) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []*types.Constraint) error {
+func (provider *Consul) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
 	provider.storeType = store.CONSUL
 	consul.Register()
 	return provider.provide(configurationChan, pool, constraints)
