@@ -3,6 +3,7 @@ package provider
 import (
 	"errors"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -341,7 +342,7 @@ func (provider *Marathon) getFrontendRule(application marathon.Application) stri
 	if label, err := provider.getLabel(application, "traefik.frontend.rule"); err == nil {
 		return label
 	}
-	return "Host:" + getEscapedName(application.ID) + "." + provider.Domain
+	return "Host:" + provider.getEscapedName(application.ID) + "." + provider.Domain
 }
 
 func (provider *Marathon) getBackend(task marathon.Task, applications []marathon.Application) string {
@@ -358,4 +359,11 @@ func (provider *Marathon) getFrontendBackend(application marathon.Application) s
 		return label
 	}
 	return replace("/", "-", application.ID)
+}
+
+func (provider *Marathon) getEscapedName(name string) string {
+	splitedName := strings.Split(strings.TrimPrefix(name, "/"), "/")
+	sort.Sort(sort.Reverse(sort.StringSlice(splitedName)))
+	reverseName := strings.Join(splitedName, ".")
+	return reverseName
 }
