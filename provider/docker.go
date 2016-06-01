@@ -160,6 +160,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.ContainerJSON) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
 		"getBackend":        provider.getBackend,
+		"getIPAddress":      provider.getIPAddress,
 		"getPort":           provider.getPort,
 		"getWeight":         provider.getWeight,
 		"getDomain":         provider.getDomain,
@@ -242,6 +243,22 @@ func (provider *Docker) getBackend(container dockertypes.ContainerJSON) string {
 		return label
 	}
 	return normalize(container.Name)
+}
+
+func (provider *Docker) getIPAddress(container dockertypes.ContainerJSON) string {
+	if label, err := getLabel(container, "traefik.docker.network"); err == nil && label != "" {
+		networks := container.NetworkSettings.Networks
+		if networks != nil {
+			network := networks[label]
+			if network != nil {
+				return network.IPAddress
+			}
+		}
+	}
+	for _, network := range container.NetworkSettings.Networks {
+		return network.IPAddress
+	}
+	return ""
 }
 
 func (provider *Docker) getPort(container dockertypes.ContainerJSON) string {

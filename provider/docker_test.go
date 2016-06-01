@@ -203,6 +203,82 @@ func TestDockerGetBackend(t *testing.T) {
 	}
 }
 
+func TestDockerGetIPAddress(t *testing.T) { // TODO
+	provider := &Docker{}
+
+	containers := []struct {
+		container docker.ContainerJSON
+		expected  string
+	}{
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "bar",
+				},
+				Config: &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{
+						"testnet": {
+							IPAddress: "10.11.12.13",
+						},
+					},
+				},
+			},
+			expected: "10.11.12.13",
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "bar",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.docker.network": "testnet",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{
+						"nottestnet": {
+							IPAddress: "10.11.12.13",
+						},
+					},
+				},
+			},
+			expected: "10.11.12.13",
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "bar",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.docker.network": "testnet2",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{
+						"testnet1": {
+							IPAddress: "10.11.12.13",
+						},
+						"testnet2": {
+							IPAddress: "10.11.12.14",
+						},
+					},
+				},
+			},
+			expected: "10.11.12.14",
+		},
+	}
+
+	for _, e := range containers {
+		actual := provider.getIPAddress(e.container)
+		if actual != e.expected {
+			t.Fatalf("expected %q, got %q", e.expected, actual)
+		}
+	}
+}
+
 func TestDockerGetPort(t *testing.T) {
 	provider := &Docker{}
 
