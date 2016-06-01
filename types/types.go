@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"github.com/ryanuber/go-glob"
 	"strings"
 )
 
@@ -92,4 +93,60 @@ type Configuration struct {
 type ConfigMessage struct {
 	ProviderName  string
 	Configuration *Configuration
+}
+
+// Constraint hold a parsed constraint expresssion
+type Constraint struct {
+	Key string
+	// MustMatch is true if operator is "==" or false if operator is "!="
+	MustMatch bool
+	// TODO: support regex
+	Regex string
+}
+
+// NewConstraint receive a string and return a *Constraint, after checking syntax and parsing the constraint expression
+func NewConstraint(exp string) (*Constraint, error) {
+	sep := ""
+	constraint := &Constraint{}
+
+	if strings.Contains(exp, "==") {
+		sep = "=="
+		constraint.MustMatch = true
+	} else if strings.Contains(exp, "!=") {
+		sep = "!="
+		constraint.MustMatch = false
+	} else {
+		return nil, errors.New("Constraint expression missing valid operator: '==' or '!='")
+	}
+
+	kv := strings.SplitN(exp, sep, 2)
+	if len(kv) == 2 {
+		// At the moment, it only supports tags
+		if kv[0] != "tag" {
+			return nil, errors.New("Constraint must be tag-based. Syntax: tag==us-*")
+		}
+
+		constraint.Key = kv[0]
+		constraint.Regex = kv[1]
+		return constraint, nil
+	}
+
+	return nil, errors.New("Incorrect constraint expression: " + exp)
+}
+
+func (c *Constraint) String() string {
+	if c.MustMatch {
+		return c.Key + "==" + c.Regex
+	}
+	return c.Key + "!=" + c.Regex
+}
+
+// MatchConstraintWithAtLeastOneTag tests a constraint for one single service
+func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
+	for _, tag := range tags {
+		if glob.Glob(c.Regex, tag) {
+			return true
+		}
+	}
+	return false
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
 	fmtlog "log"
 	"net/http"
 	"os"
@@ -52,6 +53,8 @@ Complete documentation is available at https://traefik.io`,
 	//add custom parsers
 	f.AddParser(reflect.TypeOf(EntryPoints{}), &EntryPoints{})
 	f.AddParser(reflect.TypeOf(DefaultEntryPoints{}), &DefaultEntryPoints{})
+	f.AddParser(reflect.TypeOf([]types.Constraint{}), &Constraints{})
+	f.AddParser(reflect.TypeOf(Constraints{}), &Constraints{})
 	f.AddParser(reflect.TypeOf(provider.Namespaces{}), &provider.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 

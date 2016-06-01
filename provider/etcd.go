@@ -14,8 +14,8 @@ type Etcd struct {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Etcd) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+func (provider *Etcd) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
 	provider.storeType = store.ETCD
 	etcd.Register()
-	return provider.provide(configurationChan, pool)
+	return provider.provide(configurationChan, pool, constraints)
 }

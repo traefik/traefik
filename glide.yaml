@@ -76,3 +76,4 @@ import:
   version: 8ee7bcc364f7b8194581a3c6bd9fa019467c7873
 - package: github.com/mattn/go-shellwords
 - package: github.com/vdemeester/shakers
+- package: github.com/ryanuber/go-glob

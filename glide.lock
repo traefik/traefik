@@ -213,4 +213,6 @@ imports:
   subpackages:
   - cipher
   - json
+- name: github.com/ryanuber/go-glob
+  version: 572520ed46dbddaed19ea3d9541bdd0494163693
 devImports: []
