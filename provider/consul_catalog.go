@@ -7,6 +7,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
@@ -88,23 +89,29 @@ func (provider *ConsulCatalog) healthyNodes(service string) (catalogUpdate, erro
 		return catalogUpdate{}, err
 	}
 
-	set := map[string]bool{}
-	tags := []string{}
-	for _, node := range data {
-		for _, tag := range node.Service.Tags {
-			if _, ok := set[tag]; ok == false {
-				set[tag] = true
-				tags = append(tags, tag)
-			}
+	nodes := fun.Filter(func(node *api.ServiceEntry) bool {
+		constraintTags := provider.getContraintTags(node.Service.Tags)
+		ok, failingConstraint := provider.MatchConstraints(constraintTags)
+		if ok == false && failingConstraint != nil {
+			log.Debugf("Service %v pruned by '%v' constraint", service, failingConstraint.String())
 		}
-	}
+		return ok
+	}, data).([]*api.ServiceEntry)
+
+	//Merge tags of nodes matching constraints, in a single slice.
+	tags := fun.Foldl(func(node *api.ServiceEntry, set []string) []string {
+		return fun.Keys(fun.Union(
+			fun.Set(set),
+			fun.Set(node.Service.Tags),
+		).(map[string]bool)).([]string)
+	}, []string{}, nodes).([]string)
 
 	return catalogUpdate{
 		Service: &serviceUpdate{
 			ServiceName: service,
 			Attributes:  tags,
 		},
-		Nodes: data,
+		Nodes: nodes,
 	}, nil
 }
 
@@ -155,6 +162,19 @@ func (provider *ConsulCatalog) getAttribute(name string, tags []string, defaultV
 		}
 	}
 	return defaultValue
+}
+
+func (provider *ConsulCatalog) getContraintTags(tags []string) []string {
+	var list []string
+
+	for _, tag := range tags {
+		if strings.Index(strings.ToLower(tag), DefaultConsulCatalogTagPrefix+".tags=") == 0 {
+			splitedTags := strings.Split(tag[len(DefaultConsulCatalogTagPrefix+".tags="):], ",")
+			list = append(list, splitedTags...)
+		}
+	}
+
+	return list
 }
 
 func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Configuration {
@@ -212,7 +232,10 @@ func (provider *ConsulCatalog) getNodes(index map[string][]string) ([]catalogUpd
 			if err != nil {
 				return nil, err
 			}
-			nodes = append(nodes, healthy)
+			// healthy.Nodes can be empty if constraints do not match, without throwing error
+			if healthy.Service != nil && len(healthy.Nodes) > 0 {
+				nodes = append(nodes, healthy)
+			}
 		}
 	}
 	return nodes, nil
@@ -248,7 +271,7 @@ func (provider *ConsulCatalog) watch(configurationChan chan<- types.ConfigMessag
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
 	config := api.DefaultConfig()
 	config.Address = provider.Endpoint
 	client, err := api.NewClient(config)
@@ -256,6 +279,7 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 		return err
 	}
 	provider.client = client
+	provider.Constraints = append(provider.Constraints, constraints...)
 
 	pool.Go(func(stop chan bool) {
 		notify := func(err error, time time.Duration) {

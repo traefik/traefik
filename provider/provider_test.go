@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+
+	"github.com/containous/traefik/types"
 )
 
 type myProvider struct {
@@ -204,5 +206,102 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 
 	if configuration.Backends["backend1"].MaxConn.ExtractorFunc != "request.host" {
 		t.Fatalf("Configuration did not parse MaxConn.ExtractorFunc properly")
+	}
+}
+
+func TestMatchingConstraints(t *testing.T) {
+	cases := []struct {
+		constraints []types.Constraint
+		tags        []string
+		expected    bool
+	}{
+		// simple test: must match
+		{
+			constraints: []types.Constraint{
+				{
+					Key:       "tag",
+					MustMatch: true,
+					Regex:     "us-east-1",
+				},
+			},
+			tags: []string{
+				"us-east-1",
+			},
+			expected: true,
+		},
+		// simple test: must match but does not match
+		{
+			constraints: []types.Constraint{
+				{
+					Key:       "tag",
+					MustMatch: true,
+					Regex:     "us-east-1",
+				},
+			},
+			tags: []string{
+				"us-east-2",
+			},
+			expected: false,
+		},
+		// simple test: must not match
+		{
+			constraints: []types.Constraint{
+				{
+					Key:       "tag",
+					MustMatch: false,
+					Regex:     "us-east-1",
+				},
+			},
+			tags: []string{
+				"us-east-1",
+			},
+			expected: false,
+		},
+		// complex test: globbing
+		{
+			constraints: []types.Constraint{
+				{
+					Key:       "tag",
+					MustMatch: true,
+					Regex:     "us-east-*",
+				},
+			},
+			tags: []string{
+				"us-east-1",
+			},
+			expected: true,
+		},
+		// complex test: multiple constraints
+		{
+			constraints: []types.Constraint{
+				{
+					Key:       "tag",
+					MustMatch: true,
+					Regex:     "us-east-*",
+				},
+				{
+					Key:       "tag",
+					MustMatch: false,
+					Regex:     "api",
+				},
+			},
+			tags: []string{
+				"api",
+				"us-east-1",
+			},
+			expected: false,
+		},
+	}
+
+	for i, c := range cases {
+		provider := myProvider{
+			BaseProvider{
+				Constraints: c.constraints,
+			},
+		}
+		actual, _ := provider.MatchConstraints(c.tags)
+		if actual != c.expected {
+			t.Fatalf("test #%v: expected %q, got %q, for %q", i, c.expected, actual, c.constraints)
+		}
 	}
 }
