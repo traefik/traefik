@@ -147,8 +147,8 @@ func (_m *Marathon) CreateApplication(application *marathon.Application) (*marat
 }
 
 // DeleteApplication provides a mock function with given fields: name
-func (_m *Marathon) DeleteApplication(name string) (*marathon.DeploymentID, error) {
-	ret := _m.Called(name)
+func (_m *Marathon) DeleteApplication(name string, force bool) (*marathon.DeploymentID, error) {
+	ret := _m.Called(name, force)
 
 	var r0 *marathon.DeploymentID
 	if rf, ok := ret.Get(0).(func(string) *marathon.DeploymentID); ok {
@@ -496,9 +496,55 @@ func (_m *Marathon) Groups() (*marathon.Groups, error) {
 	return r0, r1
 }
 
+// Groups provides a mock function with given fields:
+func (_m *Marathon) GroupsBy(opts *marathon.GetGroupOpts) (*marathon.Groups, error) {
+	ret := _m.Called(opts)
+
+	var r0 *marathon.Groups
+	if rf, ok := ret.Get(0).(func() *marathon.Groups); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*marathon.Groups)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Group provides a mock function with given fields: name
 func (_m *Marathon) Group(name string) (*marathon.Group, error) {
 	ret := _m.Called(name)
+
+	var r0 *marathon.Group
+	if rf, ok := ret.Get(0).(func(string) *marathon.Group); ok {
+		r0 = rf(name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*marathon.Group)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Group provides a mock function with given fields: name
+func (_m *Marathon) GroupBy(name string, opts *marathon.GetGroupOpts) (*marathon.Group, error) {
+	ret := _m.Called(name, opts)
 
 	var r0 *marathon.Group
 	if rf, ok := ret.Get(0).(func(string) *marathon.Group); ok {
@@ -534,8 +580,8 @@ func (_m *Marathon) CreateGroup(group *marathon.Group) error {
 }
 
 // DeleteGroup provides a mock function with given fields: name
-func (_m *Marathon) DeleteGroup(name string) (*marathon.DeploymentID, error) {
-	ret := _m.Called(name)
+func (_m *Marathon) DeleteGroup(name string, force bool) (*marathon.DeploymentID, error) {
+	ret := _m.Called(name, force)
 
 	var r0 *marathon.DeploymentID
 	if rf, ok := ret.Get(0).(func(string) *marathon.DeploymentID); ok {
@@ -557,8 +603,8 @@ func (_m *Marathon) DeleteGroup(name string) (*marathon.DeploymentID, error) {
 }
 
 // UpdateGroup provides a mock function with given fields: id, group
-func (_m *Marathon) UpdateGroup(id string, group *marathon.Group) (*marathon.DeploymentID, error) {
-	ret := _m.Called(id, group)
+func (_m *Marathon) UpdateGroup(id string, group *marathon.Group, force bool) (*marathon.DeploymentID, error) {
+	ret := _m.Called(id, group, force)
 
 	var r0 *marathon.DeploymentID
 	if rf, ok := ret.Get(0).(func(string, *marathon.Group) *marathon.DeploymentID); ok {
@@ -850,3 +896,32 @@ func (_m *Marathon) AbdicateLeader() (string, error) {
 
 	return r0, r1
 }
+
+// ApplicationBy provides a mock function with the given fields:
+func (_m *Marathon) ApplicationBy(name string, opts *marathon.GetAppOpts) (*marathon.Application, error) {
+    ret := _m.Called(name, opts)
+
+	var r0 *marathon.Application
+    if ret.Get(0) != nil {
+        r0 = ret.Get(0).(*marathon.Application)
+    }
+
+    r1 := ret.Error(1)
+
+	return r0, r1
+}
+/*
+// ApplicationByVersion provides a mock function with the given fields:
+func (_m *Marathon) ApplicationByVersion(name, version string) (*marathon.Application, error) {
+    ret := _m.Called(name, version)
+
+	var r0 *marathon.Application
+    if ret.Get(0) != nil {
+        r0 = ret.Get(0).(*marathon.Application)
+    }
+
+    r1 := ret.Error(1)
+
+	return r0, r1
+}
+*/

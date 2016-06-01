@@ -183,8 +183,13 @@ func taskFilter(task marathon.Task, applications *marathon.Applications, exposed
 	}
 
 	//filter indeterminable task port
-	portIndexLabel := (*application.Labels)["traefik.portIndex"]
-	portValueLabel := (*application.Labels)["traefik.port"]
+    // Defaulting the values to "" if there are no Labels defined.
+    portIndexLabel := ""
+    portValueLabel := ""
+    if application.Labels != nil {
+        portIndexLabel = (*application.Labels)["traefik.portIndex"]
+        portValueLabel = (*application.Labels)["traefik.port"]
+    }
 	if portIndexLabel != "" && portValueLabel != "" {
 		log.Debugf("Filtering marathon task %s specifying both traefik.portIndex and traefik.port labels", task.AppID)
 		return false
@@ -255,15 +260,21 @@ func getApplication(task marathon.Task, apps []marathon.Application) (marathon.A
 }
 
 func isApplicationEnabled(application marathon.Application, exposedByDefault bool) bool {
-	return exposedByDefault && (*application.Labels)["traefik.enable"] != "false" || (*application.Labels)["traefik.enable"] == "true"
+    enabled := ""
+    if application.Labels != nil {
+        enabled = (*application.Labels)["traefik.enable"]
+    }
+    return exposedByDefault && enabled != "false" || enabled == "true"
 }
 
 func (provider *Marathon) getLabel(application marathon.Application, label string) (string, error) {
-	for key, value := range *application.Labels {
-		if key == label {
-			return value, nil
-		}
-	}
+    if application.Labels != nil {
+        for key, value := range (*application.Labels) {
+            if key == label {
+                return value, nil
+            }
+        }
+    }
 	return "", errors.New("Label not found:" + label)
 }
 
