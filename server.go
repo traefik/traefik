@@ -279,6 +279,9 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 	}
 
 	config := &tls.Config{}
+	if tlsOption.RequireClientCert {
+		config.ClientAuth = tls.RequireAndVerifyClientCert
+	}
 	config.Certificates = []tls.Certificate{}
 	for _, v := range tlsOption.Certificates {
 		cert, err := tls.LoadX509KeyPair(v.CertFile, v.KeyFile)

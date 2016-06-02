@@ -163,7 +163,8 @@ type Redirect struct {
 
 // TLS configures TLS for an entry point
 type TLS struct {
-	Certificates Certificates
+	Certificates      Certificates
+	RequireClientCert bool
 }
 
 // Certificates defines traefik certificates type
