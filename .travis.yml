@@ -29,3 +29,4 @@ script:
 - make image
 after_success:
 - make deploy
+- make deploy-pr
