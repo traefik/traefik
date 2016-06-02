@@ -8,7 +8,7 @@ import:
 - package: github.com/cenkalti/backoff
 - package: github.com/codegangsta/negroni
 - package: github.com/containous/flaeg
-  version: a208db24c0e580be76efed167736fe3204c7c954
+  version: b98687da5c323650f4513fda6b6203fcbdec9313
 - package: github.com/containous/oxy
   subpackages:
   - cbreaker
@@ -18,7 +18,7 @@ import:
   - stream
   - utils
 - package: github.com/containous/staert
-  version: 9f815ef829b66de3519fea6c0b8d4708eb9472d4
+  version: e2aa88e235a02dd52aa1d5d9de75f9d9139d1602
 - package: github.com/docker/engine-api
   version: 3d3d0b6c9d2651aac27f416a6da0224c1875b3eb
   subpackages:

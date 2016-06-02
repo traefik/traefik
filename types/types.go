@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"fmt"
 	"github.com/ryanuber/go-glob"
 	"strings"
 )
@@ -149,4 +150,39 @@ func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
 		}
 	}
 	return false
+}
+
+//Set []*Constraint
+func (cs *Constraints) Set(str string) error {
+	exps := strings.Split(str, ",")
+	if len(exps) == 0 {
+		return errors.New("Bad Constraint format: " + str)
+	}
+	for _, exp := range exps {
+		constraint, err := NewConstraint(exp)
+		if err != nil {
+			return err
+		}
+		*cs = append(*cs, *constraint)
+	}
+	return nil
+}
+
+// Constraints holds a Constraint parser
+type Constraints []Constraint
+
+//Get []*Constraint
+func (cs *Constraints) Get() interface{} { return []Constraint(*cs) }
+
+//String returns []*Constraint in string
+func (cs *Constraints) String() string { return fmt.Sprintf("%+v", *cs) }
+
+//SetValue sets []*Constraint into the parser
+func (cs *Constraints) SetValue(val interface{}) {
+	*cs = Constraints(val.(Constraints))
+}
+
+// Type exports the Constraints type as a string
+func (cs *Constraints) Type() string {
+	return fmt.Sprint("constraint")
 }

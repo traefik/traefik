@@ -22,9 +22,9 @@ type Provider interface {
 
 // BaseProvider should be inherited by providers
 type BaseProvider struct {
-	Watch       bool               `description:"Watch provider"`
-	Filename    string             `description:"Override default configuration template. For advanced users :)"`
-	Constraints []types.Constraint `description:"Filter services by constraint, matching with Traefik tags."`
+	Watch       bool              `description:"Watch provider"`
+	Filename    string            `description:"Override default configuration template. For advanced users :)"`
+	Constraints types.Constraints `description:"Filter services by constraint, matching with Traefik tags."`
 }
 
 // MatchConstraints must match with EVERY single contraint

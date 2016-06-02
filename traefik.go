@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
@@ -15,7 +16,13 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"text/template"
 )
+
+var versionTemplate = `Version:      {{.Version}}
+Go version:   {{.GoVersion}}
+Built:        {{.BuildTime}}
+OS/Arch:      {{.Os}}/{{.Arch}}`
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -43,8 +50,31 @@ Complete documentation is available at https://traefik.io`,
 		Config:                struct{}{},
 		DefaultPointersConfig: struct{}{},
 		Run: func() error {
-			fmtlog.Println(Version + " built on the " + BuildDate)
+			tmpl, err := template.New("").Parse(versionTemplate)
+			if err != nil {
+				return err
+			}
+
+			v := struct {
+				Version   string
+				GoVersion string
+				BuildTime string
+				Os        string
+				Arch      string
+			}{
+				Version:   Version,
+				GoVersion: runtime.Version(),
+				BuildTime: BuildDate,
+				Os:        runtime.GOOS,
+				Arch:      runtime.GOARCH,
+			}
+
+			if err := tmpl.Execute(os.Stdout, v); err != nil {
+				return err
+			}
+			fmt.Printf("\n")
 			return nil
+
 		},
 	}
 
@@ -53,8 +83,7 @@ Complete documentation is available at https://traefik.io`,
 	//add custom parsers
 	f.AddParser(reflect.TypeOf(EntryPoints{}), &EntryPoints{})
 	f.AddParser(reflect.TypeOf(DefaultEntryPoints{}), &DefaultEntryPoints{})
-	f.AddParser(reflect.TypeOf([]types.Constraint{}), &Constraints{})
-	f.AddParser(reflect.TypeOf(Constraints{}), &Constraints{})
+	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(provider.Namespaces{}), &provider.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 
@@ -97,27 +126,30 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile)
 	defer loggerMiddleware.Close()
 
+	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
+		// no filename, setting to global config file
+		if len(traefikConfiguration.ConfigFile) != 0 {
+			globalConfiguration.File.Filename = traefikConfiguration.ConfigFile
+		} else {
+			log.Errorln("Error using file configuration backend, no filename defined")
+		}
+	}
+
+	if len(globalConfiguration.EntryPoints) == 0 {
+		globalConfiguration.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
+		globalConfiguration.DefaultEntryPoints = []string{"http"}
+	}
+
+	if globalConfiguration.Debug {
+		globalConfiguration.LogLevel = "DEBUG"
+	}
+
 	// logging
 	level, err := log.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
 	if err != nil {
 		log.Fatal("Error getting level", err)
 	}
 	log.SetLevel(level)
-
-	if traefikConfiguration.File != nil && len(traefikConfiguration.File.Filename) == 0 {
-		// no filename, setting to global config file
-		if len(traefikConfiguration.ConfigFile) != 0 {
-			traefikConfiguration.File.Filename = traefikConfiguration.ConfigFile
-		} else {
-			log.Errorln("Error using file configuration backend, no filename defined")
-		}
-	}
-
-	if len(traefikConfiguration.EntryPoints) == 0 {
-		traefikConfiguration.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
-		traefikConfiguration.DefaultEntryPoints = []string{"http"}
-	}
-
 	if len(globalConfiguration.TraefikLogsFile) > 0 {
 		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		defer func() {

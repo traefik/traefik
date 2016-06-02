@@ -26,7 +26,7 @@ type GlobalConfiguration struct {
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
-	Constraints               Constraints             `description:"Filter services by constraint, matching with service tags."`
+	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags."`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
 	ProvidersThrottleDuration time.Duration           `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
@@ -143,42 +143,7 @@ func (ep *EntryPoints) SetValue(val interface{}) {
 
 // Type is type of the struct
 func (ep *EntryPoints) Type() string {
-	return fmt.Sprint("entrypoints²")
-}
-
-// Constraints holds a Constraint parser
-type Constraints []types.Constraint
-
-//Set []*Constraint
-func (cs *Constraints) Set(str string) error {
-	exps := strings.Split(str, ",")
-	if len(exps) == 0 {
-		return errors.New("Bad Constraint format: " + str)
-	}
-	for _, exp := range exps {
-		constraint, err := types.NewConstraint(exp)
-		if err != nil {
-			return err
-		}
-		*cs = append(*cs, *constraint)
-	}
-	return nil
-}
-
-//Get []*Constraint
-func (cs *Constraints) Get() interface{} { return []types.Constraint(*cs) }
-
-//String returns []*Constraint in string
-func (cs *Constraints) String() string { return fmt.Sprintf("%+v", *cs) }
-
-//SetValue sets []*Constraint into the parser
-func (cs *Constraints) SetValue(val interface{}) {
-	*cs = Constraints(val.([]types.Constraint))
-}
-
-// Type exports the Constraints type as a string
-func (cs *Constraints) Type() string {
-	return fmt.Sprint("constraint²")
+	return fmt.Sprint("entrypoints")
 }
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
