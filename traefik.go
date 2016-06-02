@@ -97,27 +97,26 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile)
 	defer loggerMiddleware.Close()
 
+	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
+		// no filename, setting to global config file
+		if len(traefikConfiguration.ConfigFile) != 0 {
+			globalConfiguration.File.Filename = traefikConfiguration.ConfigFile
+		} else {
+			log.Errorln("Error using file configuration backend, no filename defined")
+		}
+	}
+
+	if len(globalConfiguration.EntryPoints) == 0 {
+		globalConfiguration.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
+		globalConfiguration.DefaultEntryPoints = []string{"http"}
+	}
+
 	// logging
 	level, err := log.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
 	if err != nil {
 		log.Fatal("Error getting level", err)
 	}
 	log.SetLevel(level)
-
-	if traefikConfiguration.File != nil && len(traefikConfiguration.File.Filename) == 0 {
-		// no filename, setting to global config file
-		if len(traefikConfiguration.ConfigFile) != 0 {
-			traefikConfiguration.File.Filename = traefikConfiguration.ConfigFile
-		} else {
-			log.Errorln("Error using file configuration backend, no filename defined")
-		}
-	}
-
-	if len(traefikConfiguration.EntryPoints) == 0 {
-		traefikConfiguration.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
-		traefikConfiguration.DefaultEntryPoints = []string{"http"}
-	}
-
 	if len(globalConfiguration.TraefikLogsFile) > 0 {
 		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		defer func() {
