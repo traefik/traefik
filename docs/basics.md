@@ -222,6 +222,17 @@ For example:
 - Another possible value for `extractorfunc` is `client.ip` which will categorize requests based on client source ip.
 - Lastly `extractorfunc` can take the value of `request.header.ANY_HEADER` which will categorize requests based on `ANY_HEADER` that you provide.
 
+Sticky sessions are supported with both load balancers. When sticky sessions are enabled, a cookie called `_TRAEFIK_BACKEND` is set on the initial
+request. On subsequent requests, the client will be directed to the backend stored in the cookie if it is still healthy. If not, a new backend
+will be assigned.
+
+For example:
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.loadbalancer]
+      sticky = true
+```
 ## Servers
 
 Servers are simply defined using a `URL`. You can also apply a custom `weight` to each server (this will be used by load-balancing).
