@@ -584,7 +584,8 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
-* `traefik.domain=traefik.localhost`: override the default domain
+- `traefik.domain=traefik.localhost`: override the default domain
+- `traefik.docker.network`: Set the docker network to use for connections to this container
 
 
 ## Marathon backend
@@ -689,7 +690,7 @@ Træfɪk can be configured to use Kubernetes Ingress as a backend configuration:
 # and KUBERNETES_SERVICE_PORT_HTTPS as endpoint
 # Secure token will be found in /var/run/secrets/kubernetes.io/serviceaccount/token
 # and SSL CA cert in /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-# 
+#
 # Optional
 #
 # endpoint = "http://localhost:8080"
@@ -1025,4 +1026,3 @@ Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` co
 | `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                        |
 
 Note that Træfɪk *will not watch for key changes in the `/traefik_configurations` prefix*. It will only watch for changes in the `/traefik` prefix. Further, if the `/traefik/alias` key is set, all other sibling keys with the `/traefik` prefix are ignored.
-
