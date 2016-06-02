@@ -57,3 +57,34 @@ func (s *SimpleSuite) TestWithWebConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 200)
 }
+
+func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
+	cmd := exec.Command(traefikBinary, "--debug")
+
+	var b bytes.Buffer
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+
+	cmd.Start()
+	time.Sleep(500 * time.Millisecond)
+	defer cmd.Process.Kill()
+	output := b.Bytes()
+
+	c.Assert(string(output), checker.Contains, "\\\"DefaultEntryPoints\\\":[\\\"http\\\"]")
+}
+
+func (s *SimpleSuite) TestPrintHelp(c *check.C) {
+	cmd := exec.Command(traefikBinary, "--help")
+
+	var b bytes.Buffer
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+
+	cmd.Start()
+	time.Sleep(500 * time.Millisecond)
+	defer cmd.Process.Kill()
+	output := b.Bytes()
+
+	c.Assert(string(output), checker.Not(checker.Contains), "panic:")
+	c.Assert(string(output), checker.Contains, "Usage:")
+}

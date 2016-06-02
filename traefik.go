@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
@@ -15,7 +16,13 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"text/template"
 )
+
+var versionTemplate = `Version:      {{.Version}}
+Go version:   {{.GoVersion}}
+Built:        {{.BuildTime}}
+OS/Arch:      {{.Os}}/{{.Arch}}`
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -43,8 +50,31 @@ Complete documentation is available at https://traefik.io`,
 		Config:                struct{}{},
 		DefaultPointersConfig: struct{}{},
 		Run: func() error {
-			fmtlog.Println(Version + " built on the " + BuildDate)
+			tmpl, err := template.New("").Parse(versionTemplate)
+			if err != nil {
+				return err
+			}
+
+			v := struct {
+				Version   string
+				GoVersion string
+				BuildTime string
+				Os        string
+				Arch      string
+			}{
+				Version:   Version,
+				GoVersion: runtime.Version(),
+				BuildTime: BuildDate,
+				Os:        runtime.GOOS,
+				Arch:      runtime.GOARCH,
+			}
+
+			if err := tmpl.Execute(os.Stdout, v); err != nil {
+				return err
+			}
+			fmt.Printf("\n")
 			return nil
+
 		},
 	}
 
@@ -53,8 +83,7 @@ Complete documentation is available at https://traefik.io`,
 	//add custom parsers
 	f.AddParser(reflect.TypeOf(EntryPoints{}), &EntryPoints{})
 	f.AddParser(reflect.TypeOf(DefaultEntryPoints{}), &DefaultEntryPoints{})
-	f.AddParser(reflect.TypeOf([]types.Constraint{}), &Constraints{})
-	f.AddParser(reflect.TypeOf(Constraints{}), &Constraints{})
+	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(provider.Namespaces{}), &provider.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 
@@ -109,6 +138,10 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	if len(globalConfiguration.EntryPoints) == 0 {
 		globalConfiguration.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
 		globalConfiguration.DefaultEntryPoints = []string{"http"}
+	}
+
+	if globalConfiguration.Debug {
+		globalConfiguration.LogLevel = "DEBUG"
 	}
 
 	// logging
