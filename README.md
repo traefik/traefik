@@ -89,7 +89,7 @@ You can access to a simple HTML frontend of Træfik.
 - The simple way: grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
 ```shell
-./traefik -c traefik.toml
+./traefik --configFile=traefik.toml
 ```
 
 - Use the tiny Docker image:

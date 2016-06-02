@@ -2,7 +2,7 @@ package main
 
 var (
 	// Version holds the current version of traefik.
-	Version = ""
+	Version = "dev"
 	// BuildDate holds the build date of traefik.
-	BuildDate = ""
+	BuildDate = "I don't remember exactly"
 )

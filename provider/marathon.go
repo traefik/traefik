@@ -20,10 +20,10 @@ import (
 
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
-	BaseProvider     `mapstructure:",squash"`
-	Endpoint         string
-	Domain           string
-	ExposedByDefault bool
+	BaseProvider     `mapstructure:",squash" description:"go through"`
+	Endpoint         string `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
+	Domain           string `description:"Default domain used"`
+	ExposedByDefault bool   `description:"Expose Marathon apps by default"`
 	Basic            *MarathonBasic
 	TLS              *tls.Config
 	marathonClient   marathon.Marathon
@@ -36,13 +36,14 @@ type MarathonBasic struct {
 }
 
 type lightMarathonClient interface {
-	Applications(url.Values) (*marathon.Applications, error)
 	AllTasks(v url.Values) (*marathon.Tasks, error)
+	Applications(url.Values) (*marathon.Applications, error)
 }
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+	provider.Constraints = append(provider.Constraints, constraints...)
 	operation := func() error {
 		config := marathon.NewDefaultConfig()
 		config.URL = provider.Endpoint

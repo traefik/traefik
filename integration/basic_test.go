@@ -5,7 +5,6 @@ import (
 	"os/exec"
 	"time"
 
-	"fmt"
 	"github.com/go-check/check"
 
 	"bytes"
@@ -14,34 +13,6 @@ import (
 
 // SimpleSuite
 type SimpleSuite struct{ BaseSuite }
-
-func (s *SimpleSuite) TestNoOrInexistentConfigShouldFail(c *check.C) {
-	cmd := exec.Command(traefikBinary)
-
-	var b bytes.Buffer
-	cmd.Stdout = &b
-	cmd.Stderr = &b
-
-	cmd.Start()
-	time.Sleep(500 * time.Millisecond)
-	output := b.Bytes()
-
-	c.Assert(string(output), checker.Contains, "No configuration file found")
-	cmd.Process.Kill()
-
-	nonExistentFile := "non/existent/file.toml"
-	cmd = exec.Command(traefikBinary, "--configFile="+nonExistentFile)
-
-	cmd.Stdout = &b
-	cmd.Stderr = &b
-
-	cmd.Start()
-	time.Sleep(500 * time.Millisecond)
-	output = b.Bytes()
-
-	c.Assert(string(output), checker.Contains, fmt.Sprintf("Error reading configuration file: open %s: no such file or directory", nonExistentFile))
-	cmd.Process.Kill()
-}
 
 func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/invalid_configuration.toml")
@@ -55,7 +26,7 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	defer cmd.Process.Kill()
 	output := b.Bytes()
 
-	c.Assert(string(output), checker.Contains, "While parsing config: Near line 0 (last key parsed ''): Bare keys cannot contain '{'")
+	c.Assert(string(output), checker.Contains, "Near line 0 (last key parsed ''): Bare keys cannot contain '{'")
 }
 
 func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
@@ -85,4 +56,35 @@ func (s *SimpleSuite) TestWithWebConfig(c *check.C) {
 	// Expected a 200
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 200)
+}
+
+func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
+	cmd := exec.Command(traefikBinary, "--debug")
+
+	var b bytes.Buffer
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+
+	cmd.Start()
+	time.Sleep(500 * time.Millisecond)
+	defer cmd.Process.Kill()
+	output := b.Bytes()
+
+	c.Assert(string(output), checker.Contains, "\\\"DefaultEntryPoints\\\":[\\\"http\\\"]")
+}
+
+func (s *SimpleSuite) TestPrintHelp(c *check.C) {
+	cmd := exec.Command(traefikBinary, "--help")
+
+	var b bytes.Buffer
+	cmd.Stdout = &b
+	cmd.Stderr = &b
+
+	cmd.Start()
+	time.Sleep(500 * time.Millisecond)
+	defer cmd.Process.Kill()
+	output := b.Bytes()
+
+	c.Assert(string(output), checker.Not(checker.Contains), "panic:")
+	c.Assert(string(output), checker.Contains, "Usage:")
 }
