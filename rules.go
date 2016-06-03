@@ -2,7 +2,7 @@ package main
 
 import (
 	"errors"
-	"github.com/gorilla/mux"
+	"github.com/containous/mux"
 	"net"
 	"net/http"
 	"reflect"

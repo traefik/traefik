@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/containous/mux"
 )
 
 // Routes holds the gorilla mux routes (for the API & co).

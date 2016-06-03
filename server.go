@@ -20,6 +20,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
+	"github.com/containous/mux"
 	"github.com/containous/oxy/cbreaker"
 	"github.com/containous/oxy/connlimit"
 	"github.com/containous/oxy/forward"
@@ -30,7 +31,6 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/gorilla/mux"
 	"github.com/mailgun/manners"
 	"github.com/streamrail/concurrent-map"
 )
@@ -501,6 +501,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					} else {
 						log.Debugf("Reusing backend %s", frontend.Backend)
 					}
+					if frontend.Priority > 0 {
+						newServerRoute.route.Priority(frontend.Priority)
+					}
 					server.wireFrontendBackend(newServerRoute, backends[frontend.Backend])
 				}
 				err := newServerRoute.route.GetError()
@@ -511,6 +514,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 		}
 	}
 	middlewares.SetBackend2FrontendMap(&backend2FrontendMap)
+	//sort routes
+	for _, serverEntryPoint := range serverEntryPoints {
+		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
+	}
 	return serverEntryPoints, nil
 }
 
@@ -576,6 +583,7 @@ func getRoute(serverRoute *serverRoute, route *types.Route) error {
 	if err != nil {
 		return err
 	}
+	newRoute.Priority(serverRoute.route.GetPriority() + len(route.Rule))
 	serverRoute.route = newRoute
 	return nil
 }
