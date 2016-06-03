@@ -636,7 +636,16 @@ domain = "marathon.localhost"
 # Optional
 # Default: false
 #
-# ExposedByDefault = true
+# exposedByDefault = true
+
+# Convert Marathon groups to subdomains
+# Default behavior: /foo/bar/myapp => foo-bar-myapp.{defaultDomain}
+# with groupsAsSubDomains enabled: /foo/bar/myapp => myapp.bar.foo.{defaultDomain}
+#
+# Optional
+# Default: false
+#
+# groupsAsSubDomains = true
 
 # Enable Marathon basic authentication
 #

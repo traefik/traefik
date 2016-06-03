@@ -1,0 +1,40 @@
+{
+    "id": "/foo",
+    "groups": [
+        {
+            "id": "/foo/bar",
+            "apps": [
+                {
+                    "id": "whoami",
+                    "cpus": 0.1,
+                    "mem": 64.0,
+                    "instances": 3,
+                    "container": {
+                        "type": "DOCKER",
+                        "docker": {
+                            "image": "emilevauge/whoami",
+                            "network": "BRIDGE",
+                            "portMappings": [
+                                {
+                                    "containerPort": 80,
+                                    "hostPort": 0,
+                                    "protocol": "tcp"
+                                }
+                            ]
+                        }
+                    },
+                    "healthChecks": [
+                        {
+                            "protocol": "HTTP",
+                            "portIndex": 0,
+                            "path": "/",
+                            "gracePeriodSeconds": 5,
+                            "intervalSeconds": 20,
+                            "maxConsecutiveFailures": 3
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
