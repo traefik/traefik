@@ -54,6 +54,7 @@ type Frontend struct {
 	PassHostHeader bool             `json:"passHostHeader,omitempty"`
 	Priority       int              `json:"priority"`
 	ForwardCerts   bool             `json:"forwardCerts,omitempty"`
+	InsecureCert   bool             `json:"insecureCert,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.

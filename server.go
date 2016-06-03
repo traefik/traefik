@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -394,9 +395,26 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			log.Debugf("Creating frontend %s", frontendName)
 			var fwd *forward.Forwarder
 			if frontend.ForwardCerts {
-				fwd, _ = forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader), forward.ForwardSslCerts())
+				var rt http.RoundTripper = nil
+				if frontend.InsecureCert {
+					rt = &http.Transport{
+						Proxy: http.ProxyFromEnvironment,
+						Dial: (&net.Dialer{
+							Timeout:   30 * time.Second,
+							KeepAlive: 30 * time.Second,
+						}).Dial,
+						TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+						TLSHandshakeTimeout:   10 * time.Second,
+						ExpectContinueTimeout: 1 * time.Second,
+					}
+				}
+				fwd, _ = forward.New(forward.Logger(oxyLogger),
+					forward.PassHostHeader(frontend.PassHostHeader),
+					forward.ForwardSslCerts(),
+					forward.RoundTripper(rt))
 			} else {
-				fwd, _ = forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+				fwd, _ = forward.New(forward.Logger(oxyLogger),
+					forward.PassHostHeader(frontend.PassHostHeader))
 			}
 			saveBackend := middlewares.NewSaveBackend(fwd)
 			if len(frontend.EntryPoints) == 0 {
