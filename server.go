@@ -392,7 +392,12 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			frontend := configuration.Frontends[frontendName]
 
 			log.Debugf("Creating frontend %s", frontendName)
-			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+			var fwd *forward.Forwarder
+			if frontend.ForwardCerts {
+				fwd, _ = forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader), forward.ForwardSslCerts())
+			} else {
+				fwd, _ = forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+			}
 			saveBackend := middlewares.NewSaveBackend(fwd)
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
