@@ -10,6 +10,8 @@
   backend = "backend{{getFrontendBackend .}}"
   passHostHeader = {{getPassHostHeader .}}
   priority = {{getPriority .}}
+  forwardCerts = {{getForwardCerts .}}
+  insecureCert = {{getInsecureCert .}}
   entryPoints = [{{range getEntryPoints .}}
     "{{.}}",
   {{end}}]

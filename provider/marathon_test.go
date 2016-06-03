@@ -823,6 +823,64 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 	}
 }
 
+func TestMarathonGetForwardCerts(t *testing.T) {
+	provider := &Marathon{}
+
+	applications := []struct {
+		application marathon.Application
+		expected    string
+	}{
+		{
+			application: marathon.Application{},
+			expected:    "false",
+		},
+		{
+			application: marathon.Application{
+				Labels: &map[string]string{
+					"traefik.frontend.forwardCerts": "true",
+				},
+			},
+			expected: "true",
+		},
+	}
+
+	for _, a := range applications {
+		actual := provider.getForwardCerts(a.application)
+		if actual != a.expected {
+			t.Fatalf("expected %q, got %q", a.expected, actual)
+		}
+	}
+}
+
+func TestMarathonGetInsecureCert(t *testing.T) {
+	provider := &Marathon{}
+
+	applications := []struct {
+		application marathon.Application
+		expected    string
+	}{
+		{
+			application: marathon.Application{},
+			expected:    "false",
+		},
+		{
+			application: marathon.Application{
+				Labels: &map[string]string{
+					"traefik.frontend.insecureCert": "true",
+				},
+			},
+			expected: "true",
+		},
+	}
+
+	for _, a := range applications {
+		actual := provider.getInsecureCert(a.application)
+		if actual != a.expected {
+			t.Fatalf("expected %q, got %q", a.expected, actual)
+		}
+	}
+}
+
 func TestMarathonGetEntryPoints(t *testing.T) {
 	provider := &Marathon{}
 
