@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"github.com/containous/traefik/safe"
 	"github.com/parnurzeal/gorequest"
 	"net/http"
 	"net/url"
@@ -17,12 +16,14 @@ const (
 	APIEndpoint        = "/api/v1"
 	extentionsEndpoint = "/apis/extensions/v1beta1"
 	defaultIngress     = "/ingresses"
+	namespaces         = "/namespaces/"
 )
 
 // Client is a client for the Kubernetes master.
 type Client interface {
 	GetIngresses(predicate func(Ingress) bool) ([]Ingress, error)
-	GetServices(predicate func(Service) bool) ([]Service, error)
+	GetService(name, namespace string) (Service, error)
+	GetEndpoints(name, namespace string) (Endpoints, error)
 	WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error)
 }
 
@@ -77,26 +78,20 @@ func (c *clientImpl) WatchIngresses(stopCh <-chan bool) (chan interface{}, chan 
 	return c.watch(getURL, stopCh)
 }
 
-// GetServices returns all services in the cluster
-func (c *clientImpl) GetServices(predicate func(Service) bool) ([]Service, error) {
-	getURL := c.endpointURL + APIEndpoint + "/services"
+// GetService returns the named service from the named namespace
+func (c *clientImpl) GetService(name, namespace string) (Service, error) {
+	getURL := c.endpointURL + APIEndpoint + namespaces + namespace + "/services/" + name
 
 	body, err := c.do(c.request(getURL))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create services request: GET %q : %v", getURL, err)
+		return Service{}, fmt.Errorf("failed to create services request: GET %q : %v", getURL, err)
 	}
 
-	var serviceList ServiceList
-	if err := json.Unmarshal(body, &serviceList); err != nil {
-		return nil, fmt.Errorf("failed to decode list of services resources: %v", err)
+	var service Service
+	if err := json.Unmarshal(body, &service); err != nil {
+		return Service{}, fmt.Errorf("failed to decode service resource: %v", err)
 	}
-	services := serviceList.Items[:0]
-	for _, service := range serviceList.Items {
-		if predicate(service) {
-			services = append(services, service)
-		}
-	}
-	return services, nil
+	return service, nil
 }
 
 // WatchServices returns all services in the cluster
@@ -105,28 +100,33 @@ func (c *clientImpl) WatchServices(stopCh <-chan bool) (chan interface{}, chan e
 	return c.watch(getURL, stopCh)
 }
 
-// WatchEvents returns events in the cluster
-func (c *clientImpl) WatchEvents(stopCh <-chan bool) (chan interface{}, chan error, error) {
-	getURL := c.endpointURL + APIEndpoint + "/events"
-	return c.watch(getURL, stopCh)
+// GetEndpoints returns the named Endpoints
+// Endpoints have the same name as the coresponding service
+func (c *clientImpl) GetEndpoints(name, namespace string) (Endpoints, error) {
+	getURL := c.endpointURL + APIEndpoint + namespaces + namespace + "/endpoints/" + name
+
+	body, err := c.do(c.request(getURL))
+	if err != nil {
+		return Endpoints{}, fmt.Errorf("failed to create endpoints request: GET %q : %v", getURL, err)
+	}
+
+	var endpoints Endpoints
+	if err := json.Unmarshal(body, &endpoints); err != nil {
+		return Endpoints{}, fmt.Errorf("failed to decode endpoints resources: %v", err)
+	}
+	return endpoints, nil
 }
 
-// WatchPods returns pods in the cluster
-func (c *clientImpl) WatchPods(stopCh <-chan bool) (chan interface{}, chan error, error) {
-	getURL := c.endpointURL + APIEndpoint + "/pods"
-	return c.watch(getURL, stopCh)
-}
-
-// WatchReplicationControllers returns ReplicationControllers in the cluster
-func (c *clientImpl) WatchReplicationControllers(stopCh <-chan bool) (chan interface{}, chan error, error) {
-	getURL := c.endpointURL + APIEndpoint + "/replicationcontrollers"
+// WatchEndpoints returns endpoints in the cluster
+func (c *clientImpl) WatchEndpoints(stopCh <-chan bool) (chan interface{}, chan error, error) {
+	getURL := c.endpointURL + APIEndpoint + "/endpoints"
 	return c.watch(getURL, stopCh)
 }
 
 // WatchAll returns events in the cluster
 func (c *clientImpl) WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error) {
-	watchCh := make(chan interface{})
-	errCh := make(chan error)
+	watchCh := make(chan interface{}, 10)
+	errCh := make(chan error, 10)
 
 	stopIngresses := make(chan bool)
 	chanIngresses, chanIngressesErr, err := c.WatchIngresses(stopIngresses)
@@ -138,13 +138,8 @@ func (c *clientImpl) WatchAll(stopCh <-chan bool) (chan interface{}, chan error,
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
-	stopPods := make(chan bool)
-	chanPods, chanPodsErr, err := c.WatchPods(stopPods)
-	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
-	}
-	stopReplicationControllers := make(chan bool)
-	chanReplicationControllers, chanReplicationControllersErr, err := c.WatchReplicationControllers(stopReplicationControllers)
+	stopEndpoints := make(chan bool)
+	chanEndpoints, chanEndpointsErr, err := c.WatchEndpoints(stopEndpoints)
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
@@ -153,32 +148,26 @@ func (c *clientImpl) WatchAll(stopCh <-chan bool) (chan interface{}, chan error,
 		defer close(errCh)
 		defer close(stopIngresses)
 		defer close(stopServices)
-		defer close(stopPods)
-		defer close(stopReplicationControllers)
+		defer close(stopEndpoints)
 
 		for {
 			select {
 			case <-stopCh:
 				stopIngresses <- true
 				stopServices <- true
-				stopPods <- true
-				stopReplicationControllers <- true
-				break
+				stopEndpoints <- true
+				return
 			case err := <-chanIngressesErr:
 				errCh <- err
 			case err := <-chanServicesErr:
 				errCh <- err
-			case err := <-chanPodsErr:
-				errCh <- err
-			case err := <-chanReplicationControllersErr:
+			case err := <-chanEndpointsErr:
 				errCh <- err
 			case event := <-chanIngresses:
 				watchCh <- event
 			case event := <-chanServices:
 				watchCh <- event
-			case event := <-chanPods:
-				watchCh <- event
-			case event := <-chanReplicationControllers:
+			case event := <-chanEndpoints:
 				watchCh <- event
 			}
 		}
@@ -192,6 +181,7 @@ func (c *clientImpl) do(request *gorequest.SuperAgent) ([]byte, error) {
 	if errs != nil {
 		return nil, fmt.Errorf("failed to create request: GET %q : %v", request.Url, errs)
 	}
+	defer res.Body.Close()
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("http error %d GET %q: %q", res.StatusCode, request.Url, string(body))
 	}
@@ -201,6 +191,12 @@ func (c *clientImpl) do(request *gorequest.SuperAgent) ([]byte, error) {
 func (c *clientImpl) request(url string) *gorequest.SuperAgent {
 	// Make request to Kubernetes API
 	request := gorequest.New().Get(url)
+	request.Transport.DisableKeepAlives = true
+
+	if strings.HasPrefix(url, "http://") {
+		return request
+	}
+
 	if len(c.token) > 0 {
 		request.Header["Authorization"] = "Bearer " + c.token
 		pool := x509.NewCertPool()
@@ -217,8 +213,8 @@ type GenericObject struct {
 }
 
 func (c *clientImpl) watch(url string, stopCh <-chan bool) (chan interface{}, chan error, error) {
-	watchCh := make(chan interface{})
-	errCh := make(chan error)
+	watchCh := make(chan interface{}, 10)
+	errCh := make(chan error, 10)
 
 	// get version
 	body, err := c.do(c.request(url))
@@ -240,34 +236,38 @@ func (c *clientImpl) watch(url string, stopCh <-chan bool) (chan interface{}, ch
 		return watchCh, errCh, fmt.Errorf("failed to make watch request: GET %q : %v", url, err)
 	}
 	request.Client.Transport = request.Transport
+
 	res, err := request.Client.Do(req)
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to do watch request: GET %q: %v", url, err)
 	}
 
-	shouldStop := safe.New(false)
-
 	go func() {
-		select {
-		case <-stopCh:
-			shouldStop.Set(true)
-			res.Body.Close()
-			return
-		}
-	}()
-
-	go func() {
+		finishCh := make(chan bool)
+		defer close(finishCh)
 		defer close(watchCh)
 		defer close(errCh)
-		for {
-			var eventList interface{}
-			if err := json.NewDecoder(res.Body).Decode(&eventList); err != nil {
-				if !shouldStop.Get().(bool) {
-					errCh <- fmt.Errorf("failed to decode watch event: %v", err)
+		go func() {
+			defer res.Body.Close()
+			for {
+				var eventList interface{}
+				if err := json.NewDecoder(res.Body).Decode(&eventList); err != nil {
+					if !strings.Contains(err.Error(), "net/http: request canceled") {
+						errCh <- fmt.Errorf("failed to decode watch event: GET %q : %v", url, err)
+					}
+					finishCh <- true
+					return
 				}
-				return
+				watchCh <- eventList
 			}
-			watchCh <- eventList
+		}()
+		select {
+		case <-stopCh:
+			go func() {
+				request.Transport.CancelRequest(req)
+			}()
+			<-finishCh
+			return
 		}
 	}()
 	return watchCh, errCh, nil

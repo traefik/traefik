@@ -14,12 +14,12 @@ import (
 
 // File holds configurations of the File provider.
 type File struct {
-	BaseProvider `mapstructure:",squash"`
+	BaseProvider
 }
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *File) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+func (provider *File) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ []types.Constraint) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Error("Error creating file watcher", err)

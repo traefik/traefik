@@ -16,7 +16,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 60
       containers:
-      - image: containous/traefik
+      - image: traefik
         name: traefik-ingress-lb
         imagePullPolicy: Always
         ports:

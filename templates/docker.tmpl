@@ -1,6 +1,6 @@
 [backends]{{range .Containers}}
     [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/" "" | replace "." "-"}}]
-    url = "{{getProtocol .}}://{{range $i := .NetworkSettings.Networks}}{{if $i}}{{.IPAddress}}{{end}}{{end}}:{{getPort .}}"
+    url = "{{getProtocol .}}://{{getIPAddress .}}:{{getPort .}}"
     weight = {{getWeight .}}
 {{end}}
 

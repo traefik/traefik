@@ -3,41 +3,45 @@ package main
 import (
 	"errors"
 	"fmt"
-	fmtlog "log"
-	"regexp"
-	"strings"
-	"time"
-
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
-	"github.com/mitchellh/mapstructure"
-	"github.com/spf13/viper"
+	"regexp"
+	"strings"
+	"time"
 )
+
+// TraefikConfiguration holds GlobalConfiguration and other stuff
+type TraefikConfiguration struct {
+	GlobalConfiguration
+	ConfigFile string `short:"c" description:"Configuration file to use (TOML)."`
+}
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              int64
-	AccessLogsFile            string
-	TraefikLogsFile           string
-	LogLevel                  string
-	EntryPoints               EntryPoints
-	ACME                      *acme.ACME
-	DefaultEntryPoints        DefaultEntryPoints
-	ProvidersThrottleDuration time.Duration
-	MaxIdleConnsPerHost       int
-	Retry                     *Retry
-	Docker                    *provider.Docker
-	File                      *provider.File
-	Web                       *WebProvider
-	Marathon                  *provider.Marathon
-	Consul                    *provider.Consul
-	ConsulCatalog             *provider.ConsulCatalog
-	Etcd                      *provider.Etcd
-	Zookeeper                 *provider.Zookepper
-	Boltdb                    *provider.BoltDb
-	Kubernetes                *provider.Kubernetes
+	GraceTimeOut              int64                   `short:"g" description:"Configuration file to use (TOML)."`
+	Debug                     bool                    `short:"d" description:"Enable debug mode"`
+	AccessLogsFile            string                  `description:"Access logs file"`
+	TraefikLogsFile           string                  `description:"Traefik logs file"`
+	LogLevel                  string                  `short:"l" description:"Log level"`
+	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
+	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags."`
+	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
+	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
+	ProvidersThrottleDuration time.Duration           `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
+	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
+	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
+	Docker                    *provider.Docker        `description:"Enable Docker backend"`
+	File                      *provider.File          `description:"Enable File backend"`
+	Web                       *WebProvider            `description:"Enable Web backend"`
+	Marathon                  *provider.Marathon      `description:"Enable Marathon backend"`
+	Consul                    *provider.Consul        `description:"Enable Consul backend"`
+	ConsulCatalog             *provider.ConsulCatalog `description:"Enable Consul catalog backend"`
+	Etcd                      *provider.Etcd          `description:"Enable Etcd backend"`
+	Zookeeper                 *provider.Zookepper     `description:"Enable Zookeeper backend"`
+	Boltdb                    *provider.BoltDb        `description:"Enable Boltdb backend"`
+	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -46,7 +50,7 @@ type DefaultEntryPoints []string
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
 func (dep *DefaultEntryPoints) String() string {
-	return fmt.Sprintf("%#v", dep)
+	return strings.Join(*dep, ",")
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
@@ -63,9 +67,17 @@ func (dep *DefaultEntryPoints) Set(value string) error {
 	return nil
 }
 
+// Get return the EntryPoints map
+func (dep *DefaultEntryPoints) Get() interface{} { return DefaultEntryPoints(*dep) }
+
+// SetValue sets the EntryPoints map with val
+func (dep *DefaultEntryPoints) SetValue(val interface{}) {
+	*dep = DefaultEntryPoints(val.(DefaultEntryPoints))
+}
+
 // Type is type of the struct
 func (dep *DefaultEntryPoints) Type() string {
-	return fmt.Sprint("defaultentrypoints²")
+	return fmt.Sprint("defaultentrypoints")
 }
 
 // EntryPoints holds entry points configuration of the reverse proxy (ip, port, TLS...)
@@ -74,7 +86,7 @@ type EntryPoints map[string]*EntryPoint
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
 func (ep *EntryPoints) String() string {
-	return ""
+	return fmt.Sprintf("%+v", *ep)
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
@@ -121,9 +133,17 @@ func (ep *EntryPoints) Set(value string) error {
 	return nil
 }
 
+// Get return the EntryPoints map
+func (ep *EntryPoints) Get() interface{} { return EntryPoints(*ep) }
+
+// SetValue sets the EntryPoints map with val
+func (ep *EntryPoints) SetValue(val interface{}) {
+	*ep = EntryPoints(val.(EntryPoints))
+}
+
 // Type is type of the struct
 func (ep *EntryPoints) Type() string {
-	return fmt.Sprint("entrypoints²")
+	return fmt.Sprint("entrypoints")
 }
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
@@ -186,121 +206,109 @@ type Certificate struct {
 
 // Retry contains request retry config
 type Retry struct {
-	Attempts int
-	MaxMem   int64
+	Attempts int   `description:"Number of attempts"`
+	MaxMem   int64 `description:"Maximum request body to be stored in memory in Mo"`
 }
 
-// NewGlobalConfiguration returns a GlobalConfiguration with default values.
-func NewGlobalConfiguration() *GlobalConfiguration {
-	return new(GlobalConfiguration)
+// NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
+func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
+	//default Docker
+	var defaultDocker provider.Docker
+	defaultDocker.Watch = true
+	defaultDocker.Endpoint = "unix:///var/run/docker.sock"
+	defaultDocker.TLS = &provider.DockerTLS{}
+
+	// default File
+	var defaultFile provider.File
+	defaultFile.Watch = true
+	defaultFile.Filename = "" //needs equivalent to  viper.ConfigFileUsed()
+
+	// default Web
+	var defaultWeb WebProvider
+	defaultWeb.Address = ":8080"
+
+	// default Marathon
+	var defaultMarathon provider.Marathon
+	defaultMarathon.Watch = true
+	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
+	defaultMarathon.ExposedByDefault = true
+	defaultMarathon.Constraints = []types.Constraint{}
+
+	// default Consul
+	var defaultConsul provider.Consul
+	defaultConsul.Watch = true
+	defaultConsul.Endpoint = "127.0.0.1:8500"
+	defaultConsul.Prefix = "/traefik"
+	defaultConsul.TLS = &provider.KvTLS{}
+	defaultConsul.Constraints = []types.Constraint{}
+
+	// default ConsulCatalog
+	var defaultConsulCatalog provider.ConsulCatalog
+	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
+	defaultConsulCatalog.Constraints = []types.Constraint{}
+
+	// default Etcd
+	var defaultEtcd provider.Etcd
+	defaultEtcd.Watch = true
+	defaultEtcd.Endpoint = "127.0.0.1:400"
+	defaultEtcd.Prefix = "/traefik"
+	defaultEtcd.TLS = &provider.KvTLS{}
+	defaultEtcd.Constraints = []types.Constraint{}
+
+	//default Zookeeper
+	var defaultZookeeper provider.Zookepper
+	defaultZookeeper.Watch = true
+	defaultZookeeper.Endpoint = "127.0.0.1:2181"
+	defaultZookeeper.Prefix = "/traefik"
+	defaultZookeeper.Constraints = []types.Constraint{}
+
+	//default Boltdb
+	var defaultBoltDb provider.BoltDb
+	defaultBoltDb.Watch = true
+	defaultBoltDb.Endpoint = "127.0.0.1:4001"
+	defaultBoltDb.Prefix = "/traefik"
+	defaultBoltDb.Constraints = []types.Constraint{}
+
+	//default Kubernetes
+	var defaultKubernetes provider.Kubernetes
+	defaultKubernetes.Watch = true
+	defaultKubernetes.Endpoint = "127.0.0.1:8080"
+	defaultKubernetes.Constraints = []types.Constraint{}
+
+	defaultConfiguration := GlobalConfiguration{
+		Docker:        &defaultDocker,
+		File:          &defaultFile,
+		Web:           &defaultWeb,
+		Marathon:      &defaultMarathon,
+		Consul:        &defaultConsul,
+		ConsulCatalog: &defaultConsulCatalog,
+		Etcd:          &defaultEtcd,
+		Zookeeper:     &defaultZookeeper,
+		Boltdb:        &defaultBoltDb,
+		Kubernetes:    &defaultKubernetes,
+		Retry:         &Retry{MaxMem: 2},
+	}
+	return &TraefikConfiguration{
+		GlobalConfiguration: defaultConfiguration,
+	}
 }
 
-// LoadConfiguration returns a GlobalConfiguration.
-func LoadConfiguration() *GlobalConfiguration {
-	configuration := NewGlobalConfiguration()
-	viper.SetEnvPrefix("traefik")
-	viper.SetConfigType("toml")
-	viper.AutomaticEnv()
-	if len(viper.GetString("configFile")) > 0 {
-		viper.SetConfigFile(viper.GetString("configFile"))
-	} else {
-		viper.SetConfigName("traefik") // name of config file (without extension)
+// NewTraefikConfiguration creates a TraefikConfiguration with default values
+func NewTraefikConfiguration() *TraefikConfiguration {
+	return &TraefikConfiguration{
+		GlobalConfiguration: GlobalConfiguration{
+			GraceTimeOut:              10,
+			AccessLogsFile:            "",
+			TraefikLogsFile:           "",
+			LogLevel:                  "ERROR",
+			EntryPoints:               map[string]*EntryPoint{},
+			Constraints:               []types.Constraint{},
+			DefaultEntryPoints:        []string{},
+			ProvidersThrottleDuration: time.Duration(2 * time.Second),
+			MaxIdleConnsPerHost:       200,
+		},
+		ConfigFile: "",
 	}
-	viper.AddConfigPath("/etc/traefik/")   // path to look for the config file in
-	viper.AddConfigPath("$HOME/.traefik/") // call multiple times to add many search paths
-	viper.AddConfigPath(".")               // optionally look for config in the working directory
-	if err := viper.ReadInConfig(); err != nil {
-		if len(viper.ConfigFileUsed()) > 0 {
-			fmtlog.Printf("Error reading configuration file: %s", err)
-		} else {
-			fmtlog.Printf("No configuration file found")
-		}
-	}
-
-	if len(arguments.EntryPoints) > 0 {
-		viper.Set("entryPoints", arguments.EntryPoints)
-	}
-	if len(arguments.DefaultEntryPoints) > 0 {
-		viper.Set("defaultEntryPoints", arguments.DefaultEntryPoints)
-	}
-	if arguments.web {
-		viper.Set("web", arguments.Web)
-	}
-	if arguments.file {
-		viper.Set("file", arguments.File)
-	}
-	if !arguments.dockerTLS {
-		arguments.Docker.TLS = nil
-	}
-	if arguments.docker {
-		viper.Set("docker", arguments.Docker)
-	}
-	if arguments.marathon {
-		viper.Set("marathon", arguments.Marathon)
-	}
-	if !arguments.consulTLS {
-		arguments.Consul.TLS = nil
-	}
-	if arguments.consul {
-		viper.Set("consul", arguments.Consul)
-	}
-	if arguments.consulCatalog {
-		viper.Set("consulCatalog", arguments.ConsulCatalog)
-	}
-	if arguments.zookeeper {
-		viper.Set("zookeeper", arguments.Zookeeper)
-	}
-	if !arguments.etcdTLS {
-		arguments.Etcd.TLS = nil
-	}
-	if arguments.etcd {
-		viper.Set("etcd", arguments.Etcd)
-	}
-	if arguments.boltdb {
-		viper.Set("boltdb", arguments.Boltdb)
-	}
-	if arguments.kubernetes {
-		viper.Set("kubernetes", arguments.Kubernetes)
-	}
-	if err := unmarshal(&configuration); err != nil {
-
-		fmtlog.Fatalf("Error reading file: %s", err)
-	}
-
-	if len(configuration.EntryPoints) == 0 {
-		configuration.EntryPoints = make(map[string]*EntryPoint)
-		configuration.EntryPoints["http"] = &EntryPoint{
-			Address: ":80",
-		}
-		configuration.DefaultEntryPoints = []string{"http"}
-	}
-
-	if configuration.File != nil && len(configuration.File.Filename) == 0 {
-		// no filename, setting to global config file
-		configuration.File.Filename = viper.ConfigFileUsed()
-	}
-
-	return configuration
-}
-
-func unmarshal(rawVal interface{}) error {
-	config := &mapstructure.DecoderConfig{
-		DecodeHook:       mapstructure.StringToTimeDurationHookFunc(),
-		Metadata:         nil,
-		Result:           rawVal,
-		WeaklyTypedInput: true,
-	}
-
-	decoder, err := mapstructure.NewDecoder(config)
-	if err != nil {
-		return err
-	}
-
-	err = decoder.Decode(viper.AllSettings())
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 type configs map[string]*types.Configuration

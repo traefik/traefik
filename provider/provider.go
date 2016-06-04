@@ -5,25 +5,45 @@ import (
 	"io/ioutil"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"unicode"
 )
 
 // Provider defines methods of a provider.
 type Provider interface {
 	// Provide allows the provider to provide configurations to traefik
 	// using the given configuration channel.
-	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error
+	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error
 }
 
 // BaseProvider should be inherited by providers
 type BaseProvider struct {
-	Watch    bool
-	Filename string
+	Watch       bool              `description:"Watch provider"`
+	Filename    string            `description:"Override default configuration template. For advanced users :)"`
+	Constraints types.Constraints `description:"Filter services by constraint, matching with Traefik tags."`
+}
+
+// MatchConstraints must match with EVERY single contraint
+// returns first constraint that do not match or nil
+func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint) {
+	// if there is no tags and no contraints, filtering is disabled
+	if len(tags) == 0 && len(p.Constraints) == 0 {
+		return true, nil
+	}
+
+	for _, constraint := range p.Constraints {
+		// xor: if ok and constraint.MustMatch are equal, then no tag is currently matching with the constraint
+		if ok := constraint.MatchConstraintWithAtLeastOneTag(tags); ok != constraint.MustMatch {
+			return false, &constraint
+		}
+	}
+
+	// If no constraint or every constraints matching
+	return true, nil
 }
 
 func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
@@ -63,11 +83,6 @@ func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap temp
 
 func replace(s1 string, s2 string, s3 string) string {
 	return strings.Replace(s3, s1, s2, -1)
-}
-
-// Escape beginning slash "/", convert all others to dash "-"
-func getEscapedName(name string) string {
-	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
 }
 
 func normalize(name string) string {

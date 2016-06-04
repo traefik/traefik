@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"expvar"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/autogen"
@@ -21,10 +23,11 @@ var metrics = stats.New()
 // WebProvider is a provider.Provider implementation that provides the UI.
 // FIXME to be handled another way.
 type WebProvider struct {
-	Address           string
-	CertFile, KeyFile string
-	ReadOnly          bool
-	server            *Server
+	Address  string `description:"Web administration port"`
+	CertFile string `description:"SSL certificate"`
+	KeyFile  string `description:"SSL certificate"`
+	ReadOnly bool   `description:"Enable read only API"`
+	server   *Server
 }
 
 var (
@@ -33,9 +36,17 @@ var (
 	})
 )
 
+func init() {
+	expvar.Publish("Goroutines", expvar.Func(goroutines))
+}
+
+func goroutines() interface{} {
+	return runtime.NumGoroutine()
+}
+
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool) error {
+func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ []types.Constraint) error {
 	systemRouter := mux.NewRouter()
 
 	// health route
@@ -82,7 +93,12 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		http.Redirect(response, request, "/dashboard/", 302)
 	})
-	systemRouter.Methods("GET").PathPrefix("/dashboard/").Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetDir: autogen.AssetDir, Prefix: "static"})))
+	systemRouter.Methods("GET").PathPrefix("/dashboard/").Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
+
+	// expvars
+	if provider.server.globalConfiguration.Debug {
+		systemRouter.Methods("GET").Path("/debug/vars").HandlerFunc(expvarHandler)
+	}
 
 	go func() {
 		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
@@ -230,4 +246,18 @@ func (provider *WebProvider) getRouteHandler(response http.ResponseWriter, reque
 		}
 	}
 	http.NotFound(response, request)
+}
+
+func expvarHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	fmt.Fprintf(w, "{\n")
+	first := true
+	expvar.Do(func(kv expvar.KeyValue) {
+		if !first {
+			fmt.Fprintf(w, ",\n")
+		}
+		first = false
+		fmt.Fprintf(w, "%q: %s", kv.Key, kv.Value)
+	})
+	fmt.Fprintf(w, "\n}\n")
 }
