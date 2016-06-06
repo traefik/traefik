@@ -109,39 +109,53 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 	f := func(c rune) bool {
 		return c == ':'
 	}
-	// get function
-	parsedFunctions := strings.FieldsFunc(expression, f)
-	if len(parsedFunctions) == 0 {
-		return nil, errors.New("Error parsing rule: " + expression)
-	}
-	parsedFunction, ok := functions[parsedFunctions[0]]
-	if !ok {
-		return nil, errors.New("Error parsing rule: " + expression + ". Unknown function: " + parsedFunctions[0])
-	}
-	parsedFunctions = append(parsedFunctions[:0], parsedFunctions[1:]...)
-	fargs := func(c rune) bool {
-		return c == ',' || c == ';'
-	}
-	// get function
-	parsedArgs := strings.FieldsFunc(strings.Join(parsedFunctions, ":"), fargs)
-	if len(parsedArgs) == 0 {
-		return nil, errors.New("Error parsing args from rule: " + expression)
+
+	// Allow multiple rules separated by ;
+	splitRule := func(c rune) bool {
+		return c == ';'
 	}
 
-	inputs := make([]reflect.Value, len(parsedArgs))
-	for i := range parsedArgs {
-		inputs[i] = reflect.ValueOf(parsedArgs[i])
-	}
-	method := reflect.ValueOf(parsedFunction)
-	if method.IsValid() {
-		resultRoute := method.Call(inputs)[0].Interface().(*mux.Route)
-		if r.err != nil {
-			return nil, r.err
+	parsedRules := strings.FieldsFunc(expression, splitRule)
+
+	var resultRoute *mux.Route
+
+	for _, rule := range parsedRules {
+		// get function
+		parsedFunctions := strings.FieldsFunc(rule, f)
+		if len(parsedFunctions) == 0 {
+			return nil, errors.New("Error parsing rule: " + rule)
 		}
-		if resultRoute.GetError() != nil {
-			return nil, resultRoute.GetError()
+		parsedFunction, ok := functions[parsedFunctions[0]]
+		if !ok {
+			return nil, errors.New("Error parsing rule: " + rule + ". Unknown function: " + parsedFunctions[0])
 		}
-		return resultRoute, nil
+		parsedFunctions = append(parsedFunctions[:0], parsedFunctions[1:]...)
+		fargs := func(c rune) bool {
+			return c == ','
+		}
+		// get function
+		parsedArgs := strings.FieldsFunc(strings.Join(parsedFunctions, ":"), fargs)
+		if len(parsedArgs) == 0 {
+			return nil, errors.New("Error parsing args from rule: " + rule)
+		}
+
+		inputs := make([]reflect.Value, len(parsedArgs))
+		for i := range parsedArgs {
+			inputs[i] = reflect.ValueOf(parsedArgs[i])
+		}
+		method := reflect.ValueOf(parsedFunction)
+		if method.IsValid() {
+			resultRoute = method.Call(inputs)[0].Interface().(*mux.Route)
+			if r.err != nil {
+				return nil, r.err
+			}
+			if resultRoute.GetError() != nil {
+				return nil, resultRoute.GetError()
+			}
+
+		} else {
+			return nil, errors.New("Method not found: " + parsedFunctions[0])
+		}
 	}
-	return nil, errors.New("Method not found: " + parsedFunctions[0])
+	return resultRoute, nil
 }
