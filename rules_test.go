@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/containous/mux"
 	"net/http"
 	"testing"
 )
@@ -51,3 +51,83 @@ func TestParseTwoRules(t *testing.T) {
 		t.Fatal("Rule Host:foo.bar;Path:/foobar don't match")
 	}
 }
+
+
+func TestPriorites(t *testing.T) {
+	router := mux.NewRouter()
+	router.StrictSlash(true)
+	rules := &Rules{route: &serverRoute{route: router.NewRoute()}}
+	routeFoo, err := rules.Parse("PathPrefix:/foo")
+	if err != nil {
+		t.Fatal("Error while building route for PathPrefix:/foo")
+	}
+	fooHandler := &fakeHandler{name: "fooHandler"}
+	routeFoo.Handler(fooHandler)
+
+	if !router.Match(&http.Request{URL: &url.URL{
+		Path: "/foo",
+	}}, &mux.RouteMatch{}) {
+		t.Fatalf("Error matching route")
+	}
+
+	if router.Match(&http.Request{URL: &url.URL{
+		Path: "/fo",
+	}}, &mux.RouteMatch{}) {
+		t.Fatalf("Error matching route")
+	}
+
+	multipleRules := &Rules{route: &serverRoute{route: router.NewRoute()}}
+	routeFoobar, err := multipleRules.Parse("PathPrefix:/foobar")
+	if err != nil {
+		t.Fatal("Error while building route for PathPrefix:/foobar")
+	}
+	foobarHandler := &fakeHandler{name: "foobarHandler"}
+	routeFoobar.Handler(foobarHandler)
+	if !router.Match(&http.Request{URL: &url.URL{
+		Path: "/foo",
+	}}, &mux.RouteMatch{}) {
+		t.Fatalf("Error matching route")
+	}
+	fooMatcher := &mux.RouteMatch{}
+	if !router.Match(&http.Request{URL: &url.URL{
+		Path: "/foobar",
+	}}, fooMatcher) {
+		t.Fatalf("Error matching route")
+	}
+
+	if fooMatcher.Handler == foobarHandler {
+		t.Fatalf("Error matching priority")
+	}
+
+	if fooMatcher.Handler != fooHandler {
+		t.Fatalf("Error matching priority")
+	}
+
+	routeFoo.Priority(1)
+	routeFoobar.Priority(10)
+	router.SortRoutes()
+
+	foobarMatcher := &mux.RouteMatch{}
+	if !router.Match(&http.Request{URL: &url.URL{
+		Path: "/foobar",
+	}}, foobarMatcher) {
+		t.Fatalf("Error matching route")
+	}
+
+	if foobarMatcher.Handler != foobarHandler {
+		t.Fatalf("Error matching priority")
+	}
+
+	if foobarMatcher.Handler == fooHandler {
+		t.Fatalf("Error matching priority")
+	}
+}
+
+type fakeHandler struct {
+	name string
+}
+
+func (h *fakeHandler) ServeHTTP(http.ResponseWriter, *http.Request) {
+
+}
+
