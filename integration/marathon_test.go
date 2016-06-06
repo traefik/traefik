@@ -15,6 +15,19 @@ type MarathonSuite struct{ BaseSuite }
 
 func (s *MarathonSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "marathon")
+	s.composeProject.Start(c)
+	// wait for marathon
+	// err := utils.TryRequest("http://127.0.0.1:8080/ping", 60*time.Second, func(res *http.Response) error {
+	// 	body, err := ioutil.ReadAll(res.Body)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if !strings.Contains(string(body), "ping") {
+	// 		return errors.New("Incorrect marathon config")
+	// 	}
+	// 	return nil
+	// })
+	// c.Assert(err, checker.IsNil)
 }
 
 func (s *MarathonSuite) TestSimpleConfiguration(c *check.C) {
