@@ -84,6 +84,7 @@ Here is an example of frontends definition:
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
+  priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host: localhost, {subdomain:[a-z]+}.localhost"
@@ -96,6 +97,27 @@ Here is an example of frontends definition:
 - `frontend1` will forward the traffic to the `backend2` if the rule `Host: test.localhost, test2.localhost` is matched
 - `frontend2` will forward the traffic to the `backend1` if the rule `Host: localhost, {subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
 - `frontend3` will forward the traffic to the `backend2` if the rules `Host: test3.localhost` and `Path:/test` are matched
+
+By default, routes will be sorted using rules length (to avoid path overlap):
+`PathPrefix:/12345` will be matched before `PathPrefix:/1234` that will be matched before `PathPrefix:/1`.
+
+You can customize priority by frontend:
+
+```
+  [frontends]
+    [frontends.frontend1]
+    backend = "backend1"
+    priority = 10
+    passHostHeader = true
+      [frontends.frontend1.routes.test_1]
+      rule = "PathPrefix:/to"
+    [frontends.frontend2]
+    priority = 5
+    backend = "backend2"
+    passHostHeader = true
+      [frontends.frontend2.routes.test_1]
+      rule = "PathPrefix:/toto"
+```
 
 ## Backends
 

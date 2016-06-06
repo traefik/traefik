@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/containous/mux"
 	"net/http"
+	"net/url"
 	"testing"
 )
 
@@ -51,7 +52,6 @@ func TestParseTwoRules(t *testing.T) {
 		t.Fatal("Rule Host:foo.bar;Path:/foobar don't match")
 	}
 }
-
 
 func TestPriorites(t *testing.T) {
 	router := mux.NewRouter()
@@ -130,4 +130,3 @@ type fakeHandler struct {
 func (h *fakeHandler) ServeHTTP(http.ResponseWriter, *http.Request) {
 
 }
-
