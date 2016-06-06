@@ -177,11 +177,12 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 	}
 
 	// filter containers
-	filteredContainers := fun.Filter(containerFilter, containersInspected).([]dockertypes.ContainerJSON)
+	filteredContainers := fun.Filter(provider.ContainerFilter, containersInspected).([]dockertypes.ContainerJSON)
 
 	frontends := map[string][]dockertypes.ContainerJSON{}
 	for _, container := range filteredContainers {
-		frontends[provider.getFrontendName(container)] = append(frontends[provider.getFrontendName(container)], container)
+		frontendName := provider.getFrontendName(container)
+		frontends[frontendName] = append(frontends[frontendName], container)
 	}
 
 	templateObjects := struct {
@@ -201,7 +202,8 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 	return configuration
 }
 
-func containerFilter(container dockertypes.ContainerJSON) bool {
+// ContainerFilter checks if container have to be exposed
+func (provider *Docker) ContainerFilter(container dockertypes.ContainerJSON) bool {
 	_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
 	if len(container.NetworkSettings.Ports) == 0 && err != nil {
 		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
@@ -214,6 +216,15 @@ func containerFilter(container dockertypes.ContainerJSON) bool {
 
 	if container.Config.Labels["traefik.enable"] == "false" {
 		log.Debugf("Filtering disabled container %s", container.Name)
+		return false
+	}
+
+	constraintTags := strings.Split(container.Config.Labels["traefik.tags"], ",")
+	ok, failingConstraint := provider.MatchConstraints(constraintTags)
+	if ok == false {
+		if failingConstraint != nil {
+			log.Debugf("Container %v pruned by '%v' constraint", container.Name, failingConstraint.String())
+		}
 		return false
 	}
 
