@@ -1,8 +1,8 @@
 package middlewares
 
 import (
+	"github.com/containous/mux"
 	"github.com/containous/traefik/safe"
-	"github.com/gorilla/mux"
 	"net/http"
 )
 

@@ -116,6 +116,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		"getDomain":          provider.getDomain,
 		"getProtocol":        provider.getProtocol,
 		"getPassHostHeader":  provider.getPassHostHeader,
+		"getPriority":        provider.getPriority,
 		"getEntryPoints":     provider.getEntryPoints,
 		"getFrontendRule":    provider.getFrontendRule,
 		"getFrontendBackend": provider.getFrontendBackend,
@@ -320,6 +321,13 @@ func (provider *Marathon) getPassHostHeader(application marathon.Application) st
 		return passHostHeader
 	}
 	return "true"
+}
+
+func (provider *Marathon) getPriority(application marathon.Application) string {
+	if priority, err := provider.getLabel(application, "traefik.frontend.priority"); err == nil {
+		return priority
+	}
+	return "0"
 }
 
 func (provider *Marathon) getEntryPoints(application marathon.Application) []string {

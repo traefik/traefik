@@ -9,11 +9,11 @@ import (
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/elazarl/go-bindata-assetfs"
-	"github.com/gorilla/mux"
 	"github.com/thoas/stats"
 	"github.com/unrolled/render"
 )

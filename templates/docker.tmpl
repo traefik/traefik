@@ -8,6 +8,7 @@
   [frontends."frontend-{{$frontend}}"]{{$container := index $containers 0}}
   backend = "backend-{{getBackend $container}}"
   passHostHeader = {{getPassHostHeader $container}}
+  priority = {{getPriority $container}}
   entryPoints = [{{range getEntryPoints $container}}
     "{{.}}",
   {{end}}]

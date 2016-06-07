@@ -103,7 +103,7 @@ Complete documentation is available at https://traefik.io`,
 	s.AddSource(toml)
 	s.AddSource(f)
 	if _, err := s.LoadConfig(); err != nil {
-		fmtlog.Println(err)
+		fmtlog.Println(fmt.Errorf("Error reading TOML config file %s : %s", toml.ConfigFileUsed(), err))
 	}
 
 	traefikConfiguration.ConfigFile = toml.ConfigFileUsed()
