@@ -167,6 +167,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 		"getDomain":         provider.getDomain,
 		"getProtocol":       provider.getProtocol,
 		"getPassHostHeader": provider.getPassHostHeader,
+		"getPriority":       provider.getPriority,
 		"getEntryPoints":    provider.getEntryPoints,
 		"getFrontendRule":   provider.getFrontendRule,
 		"replace":           replace,
@@ -298,6 +299,13 @@ func (provider *Docker) getPassHostHeader(container dockertypes.ContainerJSON) s
 		return passHostHeader
 	}
 	return "true"
+}
+
+func (provider *Docker) getPriority(container dockertypes.ContainerJSON) string {
+	if priority, err := getLabel(container, "traefik.frontend.priority"); err == nil {
+		return priority
+	}
+	return "0"
 }
 
 func (provider *Docker) getEntryPoints(container dockertypes.ContainerJSON) []string {

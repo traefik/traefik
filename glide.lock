@@ -1,5 +1,5 @@
-hash: dc59755b72e71945a21135c5a37e4a5c11ae511ac7404d1440166ea0aed736c4
-updated: 2016-06-02T15:11:52.77657652+02:00
+hash: 5a6dbc30a69abd002736bd5113e0f783c448faee20a0791c724ec2c3c1cfb8bb
+updated: 2016-06-03T18:11:43.839017153+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: dfb21201d9270c1082d5fb0f07f500311ff72f18
@@ -16,9 +16,11 @@ imports:
 - name: github.com/codegangsta/cli
   version: bf4a526f48af7badd25d2cb02d587e1b01be3b50
 - name: github.com/codegangsta/negroni
-  version: fb7b7c045dfb05dc81a5c3688c568550b5bd6e36
+  version: feacfc52d357c844f524c794947493483ed881b3
 - name: github.com/containous/flaeg
   version: b98687da5c323650f4513fda6b6203fcbdec9313
+- name: github.com/containous/mux
+  version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/oxy
   version: 183212964e13e7b8afe01a08b193d04300554a68
   subpackages:
@@ -43,7 +45,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: bb330cd684eb4afab9cc4f2453d7c8918099d7ee
+  version: feddf6cd4e439577ab270d8e3ba63a5d7c5c0d55
   subpackages:
   - reference
   - digest
@@ -100,10 +102,8 @@ imports:
   - query
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
-- name: github.com/gorilla/mux
-  version: bd09be08ed4377796d312df0a45314e11b8f5dc1
 - name: github.com/hashicorp/consul
-  version: ebf7ea1d759184c02a5bb5263a7c52d29838ffc3
+  version: 802b29ab948dedb7f7b1b903f535bdf250388c50
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -136,7 +136,7 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 6c485e6902bb9dd77b8234042b8f00e20ef87a18
+  version: 3211c9f721237f55a16da9c111e3d7e8777e53b5
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest

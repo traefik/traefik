@@ -9,6 +9,7 @@
   [frontends.frontend{{.ID | replace "/" "-"}}]
   backend = "backend{{getFrontendBackend .}}"
   passHostHeader = {{getPassHostHeader .}}
+  priority = {{getPriority .}}
   entryPoints = [{{range getEntryPoints .}}
     "{{.}}",
   {{end}}]

@@ -100,11 +100,13 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	frontend1 := map[string]string{
 		"traefik/frontends/frontend1/backend":            "backend2",
 		"traefik/frontends/frontend1/entrypoints":        "http",
+		"traefik/frontends/frontend1/priority":           "1",
 		"traefik/frontends/frontend1/routes/test_1/rule": "Host:test.localhost",
 	}
 	frontend2 := map[string]string{
 		"traefik/frontends/frontend2/backend":            "backend1",
 		"traefik/frontends/frontend2/entrypoints":        "http",
+		"traefik/frontends/frontend2/priority":           "10",
 		"traefik/frontends/frontend2/routes/test_2/rule": "Path:/test",
 	}
 	for key, value := range backend1 {

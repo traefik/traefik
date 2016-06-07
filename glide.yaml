@@ -40,7 +40,7 @@ import:
 - package: github.com/elazarl/go-bindata-assetfs
 - package: github.com/gambol99/go-marathon
   version: ade11d1dc2884ee1f387078fc28509559b6235d1
-- package: github.com/gorilla/mux
+- package: github.com/containous/mux
 - package: github.com/hashicorp/consul
   subpackages:
   - api

@@ -301,6 +301,7 @@ defaultEntryPoints = ["http", "https"]
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
+  priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host:{subdomain:[a-z]+}.localhost"
@@ -367,6 +368,7 @@ filename = "rules.toml"
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
+  priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host:{subdomain:[a-z]+}.localhost"
@@ -583,6 +585,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.enable=false`: disable this container in Træfɪk
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
+- `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 - `traefik.domain=traefik.localhost`: override the default domain
 - `traefik.docker.network`: Set the docker network to use for connections to this container
@@ -673,6 +676,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.enable=false`: disable this application in Træfɪk
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
+- `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 - `traefik.domain=traefik.localhost`: override the default domain
 
@@ -810,14 +814,15 @@ used in consul.
 
 Additional settings can be defined using Consul Catalog tags:
 
-- ```traefik.enable=false```: disable this container in Træfɪk
-- ```traefik.protocol=https```: override the default `http` protocol
-- ```traefik.backend.weight=10```: assign this weight to the container
-- ```traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5```
-- ```traefik.backend.loadbalancer=drr```: override the default load balancing mode
-- ```traefik.frontend.rule=Host:test.traefik.io```: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
-- ```traefik.frontend.passHostHeader=true```: forward client `Host` header to the backend.
-- ```traefik.frontend.entryPoints=http,https```: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
+- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.protocol=https`: override the default `http` protocol
+- `traefik.backend.weight=10`: assign this weight to the container
+- `traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5`
+- `traefik.backend.loadbalancer=drr`: override the default load balancing mode
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
+- `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
+- `traefik.frontend.priority=10`: override default frontend priority
+- `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 
 ## Etcd backend
 
@@ -991,11 +996,12 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 
 - frontend 2
 
-| Key                                                | Value        |
-|----------------------------------------------------|--------------|
-| `/traefik/frontends/frontend2/backend`             | `backend1`   |
-| `/traefik/frontends/frontend2/passHostHeader`      | `true`       |
-| `/traefik/frontends/frontend2/entrypoints`         | `http,https` |
+| Key                                                | Value              |
+|----------------------------------------------------|--------------------|
+| `/traefik/frontends/frontend2/backend`             | `backend1`         |
+| `/traefik/frontends/frontend2/passHostHeader`      | `true`             |
+| `/traefik/frontends/frontend2/priority`            | `10`               |
+| `/traefik/frontends/frontend2/entrypoints`         | `http,https`       |
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `PathPrefix:/test` |
 
 ## Atomic configuration changes
