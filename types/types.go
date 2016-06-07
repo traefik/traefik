@@ -35,7 +35,7 @@ type CircuitBreaker struct {
 // Server holds server configuration.
 type Server struct {
 	URL    string `json:"url,omitempty"`
-	Weight int    `json:"weight,omitempty"`
+	Weight int    `json:"weight"`
 }
 
 // Route holds route configuration.
@@ -53,6 +53,7 @@ type Frontend struct {
 	Backend        string           `json:"backend,omitempty"`
 	Routes         map[string]Route `json:"routes,omitempty"`
 	PassHostHeader bool             `json:"passHostHeader,omitempty"`
+	Priority       int              `json:"priority"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.

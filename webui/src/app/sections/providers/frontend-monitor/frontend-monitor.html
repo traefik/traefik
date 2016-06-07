@@ -16,7 +16,8 @@
   </div>
   <div data-bg-show="frontendCtrl.frontend.backend" class="panel-footer">
     <span data-ng-repeat="entryPoint in frontendCtrl.frontend.entryPoints"><span class="label label-primary">{{entryPoint}}</span><span data-ng-hide="$last">&nbsp;</span></span>
-    <span class="label label-warning" role="button" data-toggle="collapse" href="#{{frontendCtrl.frontend.backend}}" aria-expanded="false">{{frontendCtrl.frontend.backend}}</span>
-    <span data-ng-show="frontendCtrl.frontend.passHostHeader" class="label label-warning">Pass Host Header</span>
+    <span class="label label-warning" role="button" data-toggle="collapse" href="#{{frontendCtrl.frontend.backend}}" aria-expanded="false">Backend:{{frontendCtrl.frontend.backend}}</span>
+    <span data-ng-show="frontendCtrl.frontend.passHostHeader" class="label label-warning">PassHostHeader</span>
+    <span data-ng-show="frontendCtrl.frontend.priority" class="label label-warning">Priority:{{frontendCtrl.frontend.priority}}</span>
   </div>
 </div>

@@ -167,6 +167,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 		"getDomain":         provider.getDomain,
 		"getProtocol":       provider.getProtocol,
 		"getPassHostHeader": provider.getPassHostHeader,
+		"getPriority":       provider.getPriority,
 		"getEntryPoints":    provider.getEntryPoints,
 		"getFrontendRule":   provider.getFrontendRule,
 		"replace":           replace,
@@ -236,7 +237,7 @@ func (provider *Docker) getFrontendRule(container dockertypes.ContainerJSON) str
 	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
 	}
-	return "Host:" + getEscapedName(container.Name) + "." + provider.Domain
+	return "Host:" + provider.getSubDomain(container.Name) + "." + provider.Domain
 }
 
 func (provider *Docker) getBackend(container dockertypes.ContainerJSON) string {
@@ -307,6 +308,13 @@ func (provider *Docker) getPassHostHeader(container dockertypes.ContainerJSON) s
 	return "true"
 }
 
+func (provider *Docker) getPriority(container dockertypes.ContainerJSON) string {
+	if priority, err := getLabel(container, "traefik.frontend.priority"); err == nil {
+		return priority
+	}
+	return "0"
+}
+
 func (provider *Docker) getEntryPoints(container dockertypes.ContainerJSON) []string {
 	if entryPoints, err := getLabel(container, "traefik.frontend.entryPoints"); err == nil {
 		return strings.Split(entryPoints, ",")
@@ -355,4 +363,9 @@ func listContainers(dockerClient client.APIClient) ([]dockertypes.ContainerJSON,
 		containersInspected = append(containersInspected, containerInspected)
 	}
 	return containersInspected, nil
+}
+
+// Escape beginning slash "/", convert all others to dash "-"
+func (provider *Docker) getSubDomain(name string) string {
+	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
 }
