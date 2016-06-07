@@ -1,4 +1,6 @@
 [backends]{{range .Containers}}
+    [backends.backend-{{getBackend .}}.loadbalancer]
+    sticky = {{getSticky . }}
     [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/" "" | replace "." "-"}}]
     url = "{{getProtocol .}}://{{getIPAddress .}}:{{getPort .}}"
     weight = {{getWeight .}}

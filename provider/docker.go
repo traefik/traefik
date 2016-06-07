@@ -280,6 +280,13 @@ func (provider *Docker) getWeight(container dockertypes.ContainerJSON) string {
 	return "1"
 }
 
+func (provider *Docker) getSticky(container dockertypes.ContainerJSON) string {
+	if label, err := getLabel(container, "traefik.stickysession"); err == nil {
+		return true
+	}
+	return false
+}
+
 func (provider *Docker) getDomain(container dockertypes.ContainerJSON) string {
 	if label, err := getLabel(container, "traefik.domain"); err == nil {
 		return label

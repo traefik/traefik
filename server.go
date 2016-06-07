@@ -420,14 +420,32 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						if configuration.Backends[frontend.Backend] == nil {
 							return nil, errors.New("Undefined backend: " + frontend.Backend)
 						}
+
 						lbMethod, err := types.NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
 						if err != nil {
-							configuration.Backends[frontend.Backend].LoadBalancer = &types.LoadBalancer{Method: "wrr"}
+							if configuration.Backends[frontend.Backend].LoadBalancer == nil {
+								configuration.Backends[frontend.Backend].LoadBalancer = &types.LoadBalancer{Method: "wrr"}
+							} else {
+								configuration.Backends[frontend.Backend].LoadBalancer.Method = "wrr"
+							}
 						}
+
+						stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
+						if stickysession {
+							sticky := roundrobin.NewStickySession(cookiename)
+							cookiename := "_TRAEFIK_SERVERNAME"
+
+						}
+
 						switch lbMethod {
 						case types.Drr:
 							log.Debugf("Creating load-balancer drr")
-							rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
+							if stickysession {
+								log.Debugf("... setting to sticky session with cookie named %v", cookiename)
+								rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
+							} else {
+								rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
+							}
 							lb = rebalancer
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
@@ -442,6 +460,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							}
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
+							if stickysession {
+								log.Debugf("... setting to sticky session with cookie named %v", cookiename)
+								rr, _ = roundrobin.New(saveBackend, roundrobin.EnableStickySession(sticky))
+							}
 							lb = rr
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
