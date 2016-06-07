@@ -69,6 +69,8 @@ Frontends can be defined using the following rules:
 - `PathPrefix`: PathPrefix adds a matcher for the URL path prefixes. This matches if the given template is a prefix of the full URL path.
 - `PathPrefixStrip`: Same as `PathPrefix` but strip the given prefix from the request URL's Path.
 
+You can use multiple rules by separating them by `;`
+
 You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
 
 Here is an example of frontends definition:
@@ -87,13 +89,13 @@ Here is an example of frontends definition:
     rule = "Host: localhost, {subdomain:[a-z]+}.localhost"
   [frontends.frontend3]
   backend = "backend2"
-    rule = "Path:/test"
+    rule = "Host: test3.localhost;Path:/test"
 ```
 
 - Three frontends are defined: `frontend1`, `frontend2` and `frontend3`
 - `frontend1` will forward the traffic to the `backend2` if the rule `Host: test.localhost, test2.localhost` is matched
 - `frontend2` will forward the traffic to the `backend1` if the rule `Host: localhost, {subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
-- `frontend3` will forward the traffic to the `backend2` if the rule `Path:/test` is matched
+- `frontend3` will forward the traffic to the `backend2` if the rules `Host: test3.localhost` and `Path:/test` are matched
 
 ## Backends
 
