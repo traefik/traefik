@@ -134,7 +134,13 @@
 email = "test@traefik.io"
 
 # File used for certificates storage.
-# WARNING, if you use Traefik in Docker, don't forget to mount this file as a volume.
+# WARNING, if you use Traefik in Docker, you have 2 options:
+#  - create a file on your host and mount it has a volume
+#      storageFile = "acme.json"
+#      $ docker run -v "/my/host/acme.json:acme.json" traefik
+#  - mount the folder containing the file has a volume
+#      storageFile = "/etc/traefik/acme/acme.json"
+#      $ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 #
 # Required
 #
