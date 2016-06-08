@@ -120,13 +120,9 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		"getDomain":          provider.getDomain,
 		"getProtocol":        provider.getProtocol,
 		"getPassHostHeader":  provider.getPassHostHeader,
-<<<<<<< HEAD
 		"getPriority":        provider.getPriority,
-||||||| merged common ancestors
-=======
 		"getForwardCerts":    provider.getForwardCerts,
 		"getInsecureCert":    provider.getInsecureCert,
->>>>>>> Added code to get the new options from Marathon labels.
 		"getEntryPoints":     provider.getEntryPoints,
 		"getFrontendRule":    provider.getFrontendRule,
 		"getFrontendBackend": provider.getFrontendBackend,

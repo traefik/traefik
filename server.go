@@ -32,6 +32,7 @@ import (
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
+	"golang.org/x/net/http2"
 )
 
 var oxyLogger = &OxyLogger{}
@@ -397,20 +398,34 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			if frontend.ForwardCerts {
 				var rt http.RoundTripper = nil
 				if frontend.InsecureCert {
-					rt = &http.Transport{
+					tlsConf := &tls.Config{
+						InsecureSkipVerify: true,
+					}
+					if globalConfiguration.ClientCertFile != "" && globalConfiguration.ClientCertKeyFile != "" {
+						cert, err := tls.LoadX509KeyPair(globalConfiguration.ClientCertFile, globalConfiguration.ClientCertKeyFile)
+						if err != nil {
+							panic(err)
+						}
+						tlsConf.Certificates = []tls.Certificate{cert}
+						tlsConf.BuildNameToCertificate()
+					} else if globalConfiguration.ClientCertFile != "" || globalConfiguration.ClientCertKeyFile != "" {
+						log.Warn("ClientCertFile or ClientCertKeyFile is unspecified, therefore no client cert will be used.")
+					}
+					t := &http.Transport{
 						Proxy: http.ProxyFromEnvironment,
 						Dial: (&net.Dialer{
 							Timeout:   30 * time.Second,
 							KeepAlive: 30 * time.Second,
 						}).Dial,
-						TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
-						TLSHandshakeTimeout:   10 * time.Second,
-						ExpectContinueTimeout: 1 * time.Second,
+						TLSClientConfig:     tlsConf,
+						TLSHandshakeTimeout: 10 * time.Second,
 					}
+					http2.ConfigureTransport(t)
+					rt = t
 				}
 				fwd, _ = forward.New(forward.Logger(oxyLogger),
 					forward.PassHostHeader(frontend.PassHostHeader),
-					forward.ForwardSslCerts(),
+					// forward.ForwardSslCerts(),
 					forward.RoundTripper(rt))
 			} else {
 				fwd, _ = forward.New(forward.Logger(oxyLogger),

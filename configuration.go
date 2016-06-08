@@ -25,6 +25,8 @@ type GlobalConfiguration struct {
 	AccessLogsFile            string                  `description:"Access logs file"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
+	ClientCertFile            string                  `description:"Client cert to be used for backend clients."`
+	ClientCertKeyFile         string                  `description:"Client cert key to be used for backend clients."`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
 	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags."`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
