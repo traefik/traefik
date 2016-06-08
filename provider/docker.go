@@ -288,7 +288,7 @@ func (provider *Docker) getWeight(container dockertypes.ContainerJSON) string {
 }
 
 func (provider *Docker) getSticky(container dockertypes.ContainerJSON) string {
-	if label, err := getLabel(container, "traefik.stickysession"); err == nil {
+	if _, err := getLabel(container, "traefik.stickysession"); err == nil {
 		return "true"
 	}
 	return "false"
