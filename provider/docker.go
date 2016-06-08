@@ -252,6 +252,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 		"hasMaxConnLabels":            provider.hasMaxConnLabels,
 		"getMaxConnAmount":            provider.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     provider.getMaxConnExtractorFunc,
+		"getSticky":                   provider.getSticky,
 		"replace":                     replace,
 	}
 
@@ -260,19 +261,26 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 		return provider.containerFilter(container)
 	}, containersInspected).([]dockerData)
 
+	// sticky backends
+	stickycontainers := map[string][]dockerData{}
+
 	frontends := map[string][]dockerData{}
 	for _, container := range filteredContainers {
 		frontendName := provider.getFrontendName(container)
 		frontends[frontendName] = append(frontends[frontendName], container)
+		frontends[frontendName] = append(frontends[frontendName], container)
+		stickycontainers[provider.getBackend(container)] = container
 	}
 
 	templateObjects := struct {
-		Containers []dockerData
-		Frontends  map[string][]dockerData
-		Domain     string
+		Containers       []dockerData
+		Frontends        map[string][]dockerData
+		StickyContainers map[string][]dockerData
+		Domain           string
 	}{
 		filteredContainers,
 		frontends,
+		stickycontainers,
 		provider.Domain,
 	}
 
@@ -441,9 +449,9 @@ func (provider *Docker) getWeight(container dockerData) string {
 
 func (provider *Docker) getSticky(container dockertypes.ContainerJSON) string {
 	if label, err := getLabel(container, "traefik.stickysession"); err == nil {
-		return true
+		return "true"
 	}
-	return false
+	return "false"
 }
 
 func (provider *Docker) getDomain(container dockerData) string {
