@@ -1,6 +1,10 @@
-hash: 5a6dbc30a69abd002736bd5113e0f783c448faee20a0791c724ec2c3c1cfb8bb
-updated: 2016-06-03T18:11:43.839017153+02:00
+hash: 4c9ef4cfd56fad88b0d8e777f3bb5b01a7baa6989d57b49a327cdfc2641d1153
+updated: 2016-06-11T18:27:39.653103846+02:00
 imports:
+- name: github.com/beorn7/perks
+  version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
+  subpackages:
+  - quantile
 - name: github.com/boltdb/bolt
   version: dfb21201d9270c1082d5fb0f07f500311ff72f18
 - name: github.com/BurntSushi/toml
@@ -96,6 +100,10 @@ imports:
   version: ade11d1dc2884ee1f387078fc28509559b6235d1
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
+- name: github.com/golang/protobuf
+  version: 9e6977f30c91c78396e719e164e57f9287fff42c
+  subpackages:
+  - proto
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
@@ -127,6 +135,10 @@ imports:
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
 - name: github.com/mattn/go-shellwords
   version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
+- name: github.com/matttproud/golang_protobuf_extensions
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
+  subpackages:
+  - pbutil
 - name: github.com/Microsoft/go-winio
   version: 4f1a71750d95a5a8a46c40a67ffbed8129c2f138
 - name: github.com/miekg/dns
@@ -145,6 +157,22 @@ imports:
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
+- name: github.com/prometheus/client_golang
+  version: 488edd04dc224ba64c401747cd0a4b5f05dfb234
+  subpackages:
+  - prometheus
+- name: github.com/prometheus/client_model
+  version: fa8ad6fec33561be4280a8f0514318c79d7f6cb6
+  subpackages:
+  - go
+- name: github.com/prometheus/common
+  version: a3a8fe85f2579bcfec713dbfacbdd0797a792f3a
+  subpackages:
+  - expfmt
+  - internal/bitbucket.org/ww/goautoneg
+  - model
+- name: github.com/prometheus/procfs
+  version: abf152e5f3e97f2fafac028d2cc06c1feb87ffa5
 - name: github.com/ryanuber/go-glob
   version: 572520ed46dbddaed19ea3d9541bdd0494163693
 - name: github.com/samuel/go-zookeeper

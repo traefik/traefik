@@ -11,14 +11,12 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/elazarl/go-bindata-assetfs"
-	"github.com/thoas/stats"
 	"github.com/unrolled/render"
 )
-
-var metrics = stats.New()
 
 // WebProvider is a provider.Provider implementation that provides the UI.
 // FIXME to be handled another way.
@@ -50,7 +48,9 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter := mux.NewRouter()
 
 	// health route
-	systemRouter.Methods("GET").Path("/health").HandlerFunc(provider.getHealthHandler)
+	systemRouter.Methods("GET").Path("/health").HandlerFunc(metrics.GetHealthHandler(templatesRenderer))
+	// prometheus metrics route
+	systemRouter.Methods("GET").Path("/metrics").Handler(metrics.GetPrometheusHandler())
 
 	// API routes
 	systemRouter.Methods("GET").Path("/api").HandlerFunc(provider.getConfigHandler)
@@ -114,10 +114,6 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		}
 	}()
 	return nil
-}
-
-func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, request *http.Request) {
-	templatesRenderer.JSON(response, http.StatusOK, metrics.Data())
 }
 
 func (provider *WebProvider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
