@@ -95,7 +95,7 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *
 		cert, err := tls.LoadX509KeyPair(provider.TLS.Cert, provider.TLS.Key)
 
 		if err != nil {
-			return fmt.Errorf("Failed to load keypair. %s", err)
+			return fmt.Errorf("Failed to load TLS keypair: %v", err)
 		}
 
 		storeConfig.TLS = &tls.Config{

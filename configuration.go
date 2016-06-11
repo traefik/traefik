@@ -216,7 +216,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultDocker provider.Docker
 	defaultDocker.Watch = true
 	defaultDocker.Endpoint = "unix:///var/run/docker.sock"
-	defaultDocker.TLS = &provider.DockerTLS{}
 
 	// default File
 	var defaultFile provider.File
@@ -238,8 +237,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultConsul provider.Consul
 	defaultConsul.Watch = true
 	defaultConsul.Endpoint = "127.0.0.1:8500"
-	defaultConsul.Prefix = "/traefik"
-	defaultConsul.TLS = &provider.KvTLS{}
+	defaultConsul.Prefix = "traefik"
 	defaultConsul.Constraints = []types.Constraint{}
 
 	// default ConsulCatalog
@@ -252,7 +250,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultEtcd.Watch = true
 	defaultEtcd.Endpoint = "127.0.0.1:400"
 	defaultEtcd.Prefix = "/traefik"
-	defaultEtcd.TLS = &provider.KvTLS{}
 	defaultEtcd.Constraints = []types.Constraint{}
 
 	//default Zookeeper
