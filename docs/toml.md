@@ -203,6 +203,7 @@ Træfɪk filters services according to service attributes/tags set in your confi
 
 Supported backends:
 
+- Docker
 - Consul Catalog
 
 Supported filters:
@@ -574,6 +575,14 @@ watch = true
 #  cert = "/etc/ssl/docker.crt"
 #  key = "/etc/ssl/docker.key"
 #  insecureskipverify = true
+
+# Constraint on Docker tags
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having the label "traefik.tags" set to "api,helloworld"
+# ex: $ docker run -d -P --label traefik.tags=api,helloworld emilevauge/whoami
 ```
 
 Labels can be used on containers to override default behaviour:

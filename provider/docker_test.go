@@ -621,6 +621,7 @@ func TestDockerGetLabels(t *testing.T) {
 }
 
 func TestDockerTraefikFilter(t *testing.T) {
+	provider := Docker{}
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  bool
@@ -792,7 +793,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 	}
 
 	for _, e := range containers {
-		actual := containerFilter(e.container)
+		actual := provider.ContainerFilter(e.container)
 		if actual != e.expected {
 			t.Fatalf("expected %v for %+v, got %+v", e.expected, e, actual)
 		}
