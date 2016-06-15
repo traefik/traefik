@@ -282,7 +282,7 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 
 	config := &tls.Config{}
 	if tlsOption.RequireClientCert {
-		config.ClientAuth = tls.RequireAndVerifyClientCert
+		config.ClientAuth = tls.VerifyClientCertIfGiven
 	}
 	config.Certificates = []tls.Certificate{}
 	for _, v := range tlsOption.Certificates {
