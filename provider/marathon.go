@@ -123,6 +123,8 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		"getPriority":        provider.getPriority,
 		"getForwardCerts":    provider.getForwardCerts,
 		"getInsecureCert":    provider.getInsecureCert,
+        "getAuthType":        provider.getAuthType,
+        "getAuthConfig":      provider.getAuthConfig,
 		"getEntryPoints":     provider.getEntryPoints,
 		"getFrontendRule":    provider.getFrontendRule,
 		"getFrontendBackend": provider.getFrontendBackend,
@@ -359,6 +361,20 @@ func (provider *Marathon) getInsecureCert(application marathon.Application) stri
 		return insecureCert
 	}
 	return "false"
+}
+
+func (provider *Marathon) getAuthType(application marathon.Application) string {
+	if authType, err := provider.getLabel(application, "traefik.frontend.authType"); err == nil {
+		return authType
+	}
+	return ""
+}
+
+func (provider *Marathon) getAuthConfig(application marathon.Application) string {
+	if authConfig, err := provider.getLabel(application, "traefik.frontend.authConfig"); err == nil {
+		return authConfig
+	}
+	return ""
 }
 
 func (provider *Marathon) getEntryPoints(application marathon.Application) []string {

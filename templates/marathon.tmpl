@@ -12,6 +12,8 @@
   priority = {{getPriority .}}
   forwardCerts = {{getForwardCerts .}}
   insecureCert = {{getInsecureCert .}}
+  authType = '{{getAuthType .}}'
+  authConfig = '{{getAuthConfig .}}'
   entryPoints = [{{range getEntryPoints .}}
     "{{.}}",
   {{end}}]
