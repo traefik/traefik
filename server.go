@@ -395,6 +395,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 			log.Debugf("Creating frontend %s", frontendName)
 			var fwd *forward.Forwarder
+            var err error
 			if frontend.ForwardCerts {
 				var rt http.RoundTripper = nil
 				if frontend.InsecureCert {
@@ -423,14 +424,20 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					http2.ConfigureTransport(t)
 					rt = t
 				}
-				fwd, _ = forward.New(forward.Logger(oxyLogger),
+				fwd, err = forward.New(forward.Logger(oxyLogger),
 					forward.PassHostHeader(frontend.PassHostHeader),
 					// forward.ForwardSslCerts(),
-					forward.RoundTripper(rt))
+					forward.RoundTripper(rt),
+                    forward.Authorization(frontend.AuthType, frontend.AuthConfig))
 			} else {
-				fwd, _ = forward.New(forward.Logger(oxyLogger),
-					forward.PassHostHeader(frontend.PassHostHeader))
+				fwd, err = forward.New(forward.Logger(oxyLogger),
+					forward.PassHostHeader(frontend.PassHostHeader),
+                    forward.Authorization(frontend.AuthType, frontend.AuthConfig))
 			}
+            if err != nil {
+                log.Errorf("Error creating the forwarder: %s\n", err)
+                continue
+            }
 			saveBackend := middlewares.NewSaveBackend(fwd)
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)

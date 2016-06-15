@@ -55,6 +55,8 @@ type Frontend struct {
 	Priority       int              `json:"priority"`
 	ForwardCerts   bool             `json:"forwardCerts,omitempty"`
 	InsecureCert   bool             `json:"insecureCert,omitempty"`
+    AuthType       string           `json:"authType,omitempty"`
+    AuthConfig     string           `json:"authConfig,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
