@@ -94,7 +94,7 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?")
+	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?")
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
 		return errors.New("Bad EntryPoints format: " + value)
@@ -119,6 +119,10 @@ func (ep *EntryPoints) Set(value string) error {
 		tls = &TLS{
 			Certificates: Certificates{},
 		}
+	}
+	if len(result["CA"]) > 0 {
+		files := strings.Split(result["CA"], ",")
+		tls.ClientCAFiles = files
 	}
 	var redirect *Redirect
 	if len(result["RedirectEntryPoint"]) > 0 || len(result["RedirectRegex"]) > 0 || len(result["RedirectReplacement"]) > 0 {
@@ -168,7 +172,8 @@ type Redirect struct {
 
 // TLS configures TLS for an entry point
 type TLS struct {
-	Certificates Certificates
+	Certificates  Certificates
+	ClientCAFiles []string
 }
 
 // Certificates defines traefik certificates type
