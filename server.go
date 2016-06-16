@@ -356,8 +356,11 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 
 func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) map[string]*serverEntryPoint {
 	serverEntryPoints := make(map[string]*serverEntryPoint)
-	for entryPointName := range globalConfiguration.EntryPoints {
+	for entryPointName, entryPoint := range globalConfiguration.EntryPoints {
 		router := server.buildDefaultHTTPRouter()
+        if entryPoint.SkipClean {
+            router.SkipClean
+        }
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
 			httpRouter: middlewares.NewHandlerSwitcher(router),
 		}
