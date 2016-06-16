@@ -426,7 +426,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				}
 				fwd, err = forward.New(forward.Logger(oxyLogger),
 					forward.PassHostHeader(frontend.PassHostHeader),
-					// forward.ForwardSslCerts(),
+					forward.ForwardSslCerts(),
 					forward.RoundTripper(rt),
                     forward.Authorization(frontend.AuthType, frontend.AuthConfig))
 			} else {
