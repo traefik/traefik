@@ -107,6 +107,15 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 			}
 			if provider.Watch {
 				ctx, cancel := context.WithCancel(ctx)
+				pool.Go(func(stop chan bool) {
+					for {
+						select {
+						case <-stop:
+							cancel()
+							return
+						}
+					}
+				})
 				f := filters.NewArgs()
 				f.Add("type", "container")
 				options := dockertypes.EventsOptions{
@@ -134,15 +143,6 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 				eventHandler.Handle("die", startStopHandle)
 
 				errChan := events.MonitorWithHandler(ctx, dockerClient, options, eventHandler)
-				pool.Go(func(stop chan bool) {
-					for {
-						select {
-						case <-stop:
-							cancel()
-							return
-						}
-					}
-				})
 				if err := <-errChan; err != nil {
 					return err
 				}
