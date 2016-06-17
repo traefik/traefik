@@ -27,6 +27,7 @@ import (
 	"github.com/containous/oxy/roundrobin"
 	"github.com/containous/oxy/stream"
 	"github.com/containous/oxy/utils"
+	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
@@ -118,7 +119,7 @@ func (server *Server) Close() {
 func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
-		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics)
+		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics.Metrics)
 		if err != nil {
 			log.Fatal("Error preparing server: ", err)
 		}

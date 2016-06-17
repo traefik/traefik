@@ -77,3 +77,4 @@ import:
 - package: github.com/mattn/go-shellwords
 - package: github.com/vdemeester/shakers
 - package: github.com/ryanuber/go-glob
+- package: github.com/prometheus/client_golang
