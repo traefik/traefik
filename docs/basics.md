@@ -50,8 +50,8 @@ Here is an example of entrypoints definition:
 ```
 
 - Two entrypoints are defined `http` and `https`.
-- `http` listens on port `80` et `https` on port `443`.
-- We enable SSL en `https` by giving a certificate and a key.
+- `http` listens on port `80` and `https` on port `443`.
+- We enable SSL on `https` by giving a certificate and a key.
 - We also redirect all the traffic from entrypoint `http` to `https`.
 
 ## Frontends
