@@ -110,13 +110,6 @@
 # Default: (number servers in backend) -1
 #
 # attempts = 3
-
-# Sets the maximum request body to be stored in memory in Mo
-#
-# Optional
-# Default: 2
-#
-# maxMem = 3
 ```
 
 ## ACME (Let's Encrypt) configuration

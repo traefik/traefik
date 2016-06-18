@@ -9,7 +9,10 @@ import:
 - package: github.com/codegangsta/negroni
 - package: github.com/containous/flaeg
   version: b98687da5c323650f4513fda6b6203fcbdec9313
-- package: github.com/containous/oxy
+- package: github.com/vulcand/oxy
+  vcs: git
+  repo: https://github.com/containous/oxy.git
+  version: 1ca0a134a818f7b8ea85de6e6554fe3312f144c2 
   subpackages:
   - cbreaker
   - connlimit
@@ -57,6 +60,7 @@ import:
   subpackages:
   - plugin/rewrite
 - package: github.com/xenolf/lego
+  version: 30a7a8e8821de3532192d1240a45e53c6204f603
   subpackages:
   - acme
 - package: golang.org/x/net

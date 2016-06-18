@@ -14,25 +14,23 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
-	"strconv"
 	"syscall"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
-	"github.com/containous/oxy/cbreaker"
-	"github.com/containous/oxy/connlimit"
-	"github.com/containous/oxy/forward"
-	"github.com/containous/oxy/roundrobin"
-	"github.com/containous/oxy/stream"
-	"github.com/containous/oxy/utils"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/mailgun/manners"
 	"github.com/streamrail/concurrent-map"
+	"github.com/vulcand/oxy/cbreaker"
+	"github.com/vulcand/oxy/connlimit"
+	"github.com/vulcand/oxy/forward"
+	"github.com/vulcand/oxy/roundrobin"
+	"github.com/vulcand/oxy/utils"
 )
 
 var oxyLogger = &OxyLogger{}
@@ -469,21 +467,8 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							if globalConfiguration.Retry.Attempts > 0 {
 								retries = globalConfiguration.Retry.Attempts
 							}
-							maxMem := int64(2 * 1024 * 1024)
-							if globalConfiguration.Retry.MaxMem > 0 {
-								maxMem = globalConfiguration.Retry.MaxMem
-							}
-							lb, err = stream.New(lb,
-								stream.Logger(oxyLogger),
-								stream.Retry("IsNetworkError() && Attempts() < "+strconv.Itoa(retries)),
-								stream.MemRequestBodyBytes(maxMem),
-								stream.MaxRequestBodyBytes(maxMem),
-								stream.MemResponseBodyBytes(maxMem),
-								stream.MaxResponseBodyBytes(maxMem))
+							lb = middlewares.NewRetry(retries, lb)
 							log.Debugf("Creating retries max attempts %d", retries)
-							if err != nil {
-								return nil, err
-							}
 						}
 
 						var negroni = negroni.New()
