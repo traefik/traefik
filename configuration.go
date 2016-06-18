@@ -206,8 +206,7 @@ type Certificate struct {
 
 // Retry contains request retry config
 type Retry struct {
-	Attempts int   `description:"Number of attempts"`
-	MaxMem   int64 `description:"Maximum request body to be stored in memory in Mo"`
+	Attempts int `description:"Number of attempts"`
 }
 
 // NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
@@ -269,7 +268,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	//default Kubernetes
 	var defaultKubernetes provider.Kubernetes
 	defaultKubernetes.Watch = true
-	defaultKubernetes.Endpoint = "127.0.0.1:8080"
+	defaultKubernetes.Endpoint = "http://127.0.0.1:8080"
 	defaultKubernetes.Constraints = []types.Constraint{}
 
 	defaultConfiguration := GlobalConfiguration{
@@ -283,7 +282,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Zookeeper:     &defaultZookeeper,
 		Boltdb:        &defaultBoltDb,
 		Kubernetes:    &defaultKubernetes,
-		Retry:         &Retry{MaxMem: 2},
+		Retry:         &Retry{},
 	}
 	return &TraefikConfiguration{
 		GlobalConfiguration: defaultConfiguration,
