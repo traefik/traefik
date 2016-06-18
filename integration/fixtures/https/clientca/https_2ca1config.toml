@@ -1,0 +1,35 @@
+logLevel = "DEBUG"
+
+defaultEntryPoints = ["https"]
+
+[entryPoints]
+  [entryPoints.https]
+  address = ":4443"
+    [entryPoints.https.tls]
+    ClientCAFiles = ["fixtures/https/clientca/ca1and2.crt"]
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "fixtures/https/snitest.com.cert"
+      KeyFile = "fixtures/https/snitest.com.key"
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "fixtures/https/snitest.org.cert"
+      KeyFile = "fixtures/https/snitest.org.key"
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    url = "http://127.0.0.1:9010"
+  [backends.backend2]
+    [backends.backend2.servers.server1]
+    url = "http://127.0.0.1:9020"
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host:snitest.com"
+  [frontends.frontend2]
+  backend = "backend2"
+    [frontends.frontend2.routes.test_2]
+    rule = "Host:snitest.org"
