@@ -666,6 +666,12 @@ domain = "marathon.localhost"
 #
 # [marathon.TLS]
 # InsecureSkipVerify = true
+
+# DCOSToken for DCOS environment, This will override the Authorization header
+#
+# Optional
+#
+# dcosToken = "xxxxxx"
 ```
 
 Labels can be used on containers to override default behaviour:

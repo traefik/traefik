@@ -318,12 +318,11 @@
 #  httpBasicAuthUser = "foo"
 #  httpBasicPassword = "bar"
 
-# TLS client configuration. https://golang.org/pkg/crypto/tls/#Config
+# DCOSToken for DCOS environment, This will override the Authorization header
 #
 # Optional
 #
-# [marathon.TLS]
-# InsecureSkipVerify = true
+# dcosToken = "xxxxxx"
 
 ################################################################
 # Kubernetes Ingress configuration backend
