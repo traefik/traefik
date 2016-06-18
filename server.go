@@ -369,6 +369,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	backend2FrontendMap := map[string]string{}
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
+	frontend:
 		for _, frontendName := range frontendNames {
 			frontend := configuration.Frontends[frontendName]
 
@@ -380,19 +381,24 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				frontend.EntryPoints = globalConfiguration.DefaultEntryPoints
 			}
 			if len(frontend.EntryPoints) == 0 {
-				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s. Skipping it", frontendName, globalConfiguration.DefaultEntryPoints)
-				continue
+				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
+				log.Errorf("Skipping frontend %s...", frontendName)
+				continue frontend
 			}
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
 				if _, ok := serverEntryPoints[entryPointName]; !ok {
-					return nil, errors.New("Undefined entrypoint: " + entryPointName)
+					log.Errorf("Undefined entrypoint '%s' for frontend %s", entryPointName, frontendName)
+					log.Errorf("Skipping frontend %s...", frontendName)
+					continue frontend
 				}
 				newServerRoute := &serverRoute{route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
 				for routeName, route := range frontend.Routes {
 					err := getRoute(newServerRoute, &route)
 					if err != nil {
-						return nil, err
+						log.Errorf("Error creating route for frontend %s: %v", frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
 					}
 					log.Debugf("Creating route %s %s", routeName, route.Rule)
 				}
@@ -401,7 +407,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					if redirectHandlers[entryPointName] != nil {
 						newServerRoute.route.Handler(redirectHandlers[entryPointName])
 					} else if handler, err := server.loadEntryPointConfig(entryPointName, entryPoint); err != nil {
-						return nil, err
+						log.Errorf("Error loading entrypoint configuration for frontend %s: %v", frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
 					} else {
 						newServerRoute.route.Handler(handler)
 						redirectHandlers[entryPointName] = handler
@@ -412,7 +420,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						var lb http.Handler
 						rr, _ := roundrobin.New(saveBackend)
 						if configuration.Backends[frontend.Backend] == nil {
-							return nil, errors.New("Undefined backend: " + frontend.Backend)
+							log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
 						}
 						lbMethod, err := types.NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
 						if err != nil {
@@ -426,12 +436,16 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
 								if err != nil {
-									return nil, err
+									log.Errorf("Error parsing server URL %s: %v", server.URL, err)
+									log.Errorf("Skipping frontend %s...", frontendName)
+									continue frontend
 								}
 								backend2FrontendMap[url.String()] = frontendName
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
 								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
-									return nil, err
+									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
+									log.Errorf("Skipping frontend %s...", frontendName)
+									continue frontend
 								}
 							}
 						case types.Wrr:
@@ -440,12 +454,16 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
 								if err != nil {
-									return nil, err
+									log.Errorf("Error parsing server URL %s: %v", server.URL, err)
+									log.Errorf("Skipping frontend %s...", frontendName)
+									continue frontend
 								}
 								backend2FrontendMap[url.String()] = frontendName
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
 								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
-									return nil, err
+									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
+									log.Errorf("Skipping frontend %s...", frontendName)
+									continue frontend
 								}
 							}
 						}
@@ -453,12 +471,16 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						if maxConns != nil && maxConns.Amount != 0 {
 							extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
 							if err != nil {
-								return nil, err
+								log.Errorf("Error creating connlimit: %v", err)
+								log.Errorf("Skipping frontend %s...", frontendName)
+								continue frontend
 							}
 							log.Debugf("Creating loadd-balancer connlimit")
 							lb, err = connlimit.New(lb, extractFunc, maxConns.Amount, connlimit.Logger(oxyLogger))
 							if err != nil {
-								return nil, err
+								log.Errorf("Error creating connlimit: %v", err)
+								log.Errorf("Skipping frontend %s...", frontendName)
+								continue frontend
 							}
 						}
 						// retry ?
