@@ -22,4 +22,7 @@ COPY glide.yaml glide.yaml
 COPY glide.lock glide.lock
 RUN glide install
 
+RUN apt-get update && apt-get install -y bzip2 && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN curl -sL http://upx.sourceforge.net/download/upx-3.91-amd64_linux.tar.bz2 | tar -jxv -C/usr/bin --strip-components=1
+
 COPY . /go/src/github.com/containous/traefik

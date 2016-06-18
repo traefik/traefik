@@ -23,3 +23,4 @@ fi
 
 # Build binaries
 CGO_ENABLED=0 GOGC=off go build $FLAGS -ldflags "-s -w -X main.Version=$VERSION -X main.BuildDate=$DATE" -a -installsuffix nocgo -o dist/traefik .
+upx dist/traefik
