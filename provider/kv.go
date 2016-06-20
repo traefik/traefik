@@ -153,11 +153,11 @@ func (provider *Kv) loadConfig() *types.Configuration {
 	}
 
 	var KvFuncMap = template.FuncMap{
-		"List":             provider.list,
-		"Get":              provider.get,
-		"SplitGet":         provider.splitGet,
-		"Last":             provider.last,
-		"CheckConstraints": provider.checkConstraints,
+		"List":        provider.list,
+		"ListServers": provider.listServers,
+		"Get":         provider.get,
+		"SplitGet":    provider.splitGet,
+		"Last":        provider.last,
 	}
 
 	configuration, err := provider.getConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -187,6 +187,13 @@ func (provider *Kv) list(keys ...string) []string {
 		directoryKeys[directory] = joinedKeys + directory
 	}
 	return fun.Values(directoryKeys).([]string)
+}
+
+func (provider *Kv) listServers(backend string) []string {
+	serverNames := provider.list(backend, "/servers/")
+	return fun.Filter(func(serverName string) bool {
+		return provider.checkConstraints(serverName, "/tags")
+	}, serverNames).([]string)
 }
 
 func (provider *Kv) get(defaultValue string, keys ...string) string {
@@ -220,7 +227,7 @@ func (provider *Kv) last(key string) string {
 	return splittedKey[len(splittedKey)-1]
 }
 
-func (provider *Kv) checkConstraints(keys ...string) string {
+func (provider *Kv) checkConstraints(keys ...string) bool {
 	joinedKeys := strings.Join(keys, "")
 	keyPair, err := provider.kvclient.Get(joinedKeys)
 
@@ -235,7 +242,7 @@ func (provider *Kv) checkConstraints(keys ...string) string {
 		if failingConstraint != nil {
 			log.Debugf("Constraint %v not matching with following tags: %v", failingConstraint.String(), value)
 		}
-		return "false"
+		return false
 	}
-	return "true"
+	return true
 }

@@ -3,7 +3,7 @@
 
 [backends]{{range $backends}}
 {{$backend := .}}
-{{$servers := List $backend "/servers/" }}
+{{$servers := ListServers $backend }}
 
 {{$circuitBreaker := Get "" . "/circuitbreaker/" "expression"}}
 {{with $circuitBreaker}}
@@ -28,11 +28,9 @@
 {{end}}
 
 {{range $servers}}
-{{if ne (CheckConstraints "" . "/tags") "false"}}
 [backends."{{Last $backend}}".servers."{{Last .}}"]
     url = "{{Get "" . "/url"}}"
     weight = {{Get ""  . "/weight"}}
-{{end}}
 {{end}}
 {{end}}
 
