@@ -83,6 +83,38 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 }
 
 func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+	provider.Constraints = append(provider.Constraints, constraints...)
+	storeConfig := &store.Config{
+		ConnectionTimeout: 30 * time.Second,
+		Bucket:            "traefik",
+	}
+
+	if provider.TLS != nil {
+		caPool := x509.NewCertPool()
+
+		if provider.TLS.CA != "" {
+			ca, err := ioutil.ReadFile(provider.TLS.CA)
+
+			if err != nil {
+				return fmt.Errorf("Failed to read CA. %s", err)
+			}
+
+			caPool.AppendCertsFromPEM(ca)
+		}
+
+		cert, err := tls.LoadX509KeyPair(provider.TLS.Cert, provider.TLS.Key)
+
+		if err != nil {
+			return fmt.Errorf("Failed to load TLS keypair: %v", err)
+		}
+
+		storeConfig.TLS = &tls.Config{
+			Certificates:       []tls.Certificate{cert},
+			RootCAs:            caPool,
+			InsecureSkipVerify: provider.TLS.InsecureSkipVerify,
+		}
+	}
+
 	operation := func() error {
 		if _, err := provider.kvclient.Exists("qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"); err != nil {
 			return fmt.Errorf("Failed to test KV store connection: %v", err)
@@ -119,17 +151,26 @@ func (provider *Kv) loadConfig() *types.Configuration {
 		// Allow `/traefik/alias` to superesede `provider.Prefix`
 		strings.TrimSuffix(provider.get(provider.Prefix, provider.Prefix+"/alias"), "/"),
 	}
+
 	var KvFuncMap = template.FuncMap{
-		"List":     provider.list,
-		"Get":      provider.get,
-		"SplitGet": provider.splitGet,
-		"Last":     provider.last,
+		"List":             provider.list,
+		"Get":              provider.get,
+		"SplitGet":         provider.splitGet,
+		"Last":             provider.last,
+		"CheckConstraints": provider.checkConstraints,
 	}
 
 	configuration, err := provider.getConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
 	if err != nil {
 		log.Error(err)
 	}
+
+	for key, frontend := range configuration.Frontends {
+		if _, ok := configuration.Backends[frontend.Backend]; ok == false {
+			delete(configuration.Frontends, key)
+		}
+	}
+
 	return configuration
 }
 
@@ -177,4 +218,24 @@ func (provider *Kv) splitGet(keys ...string) []string {
 func (provider *Kv) last(key string) string {
 	splittedKey := strings.Split(key, "/")
 	return splittedKey[len(splittedKey)-1]
+}
+
+func (provider *Kv) checkConstraints(keys ...string) string {
+	joinedKeys := strings.Join(keys, "")
+	keyPair, err := provider.kvclient.Get(joinedKeys)
+
+	value := ""
+	if err == nil && keyPair != nil && keyPair.Value != nil {
+		value = string(keyPair.Value)
+	}
+
+	constraintTags := strings.Split(value, ",")
+	ok, failingConstraint := provider.MatchConstraints(constraintTags)
+	if ok == false {
+		if failingConstraint != nil {
+			log.Debugf("Constraint %v not matching with following tags: %v", failingConstraint.String(), value)
+		}
+		return "false"
+	}
+	return "true"
 }
