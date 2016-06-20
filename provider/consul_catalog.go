@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -39,6 +40,35 @@ type serviceUpdate struct {
 type catalogUpdate struct {
 	Service *serviceUpdate
 	Nodes   []*api.ServiceEntry
+}
+
+type nodeSorter []*api.ServiceEntry
+
+func (a nodeSorter) Len() int {
+	return len(a)
+}
+
+func (a nodeSorter) Swap(i int, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a nodeSorter) Less(i int, j int) bool {
+	lentr := a[i]
+	rentr := a[j]
+
+	ls := strings.ToLower(lentr.Service.Service)
+	lr := strings.ToLower(rentr.Service.Service)
+
+	if ls != lr {
+		return ls < lr
+	}
+	if lentr.Service.Address != rentr.Service.Address {
+		return lentr.Service.Address < rentr.Service.Address
+	}
+	if lentr.Node.Address != rentr.Node.Address {
+		return lentr.Node.Address < rentr.Node.Address
+	}
+	return lentr.Service.Port < rentr.Service.Port
 }
 
 func (provider *ConsulCatalog) watchServices(stopCh <-chan struct{}) <-chan map[string][]string {
@@ -139,7 +169,7 @@ func (provider *ConsulCatalog) getBackendAddress(node *api.ServiceEntry) string 
 }
 
 func (provider *ConsulCatalog) getBackendName(node *api.ServiceEntry, index int) string {
-	serviceName := node.Service.Service + "--" + node.Service.Address + "--" + strconv.Itoa(node.Service.Port)
+	serviceName := strings.ToLower(node.Service.Service) + "--" + node.Service.Address + "--" + strconv.Itoa(node.Service.Port)
 
 	for _, tag := range node.Service.Tags {
 		serviceName += "--" + normalize(tag)
@@ -200,6 +230,8 @@ func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Confi
 
 		}
 	}
+	// Ensure a stable ordering of nodes so that identical configurations may be detected
+	sort.Sort(nodeSorter(allNodes))
 
 	templateObjects := struct {
 		Services []*serviceUpdate

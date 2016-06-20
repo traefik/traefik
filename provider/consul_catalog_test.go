@@ -2,6 +2,7 @@ package provider
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/containous/traefik/types"
@@ -271,6 +272,198 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		}
 		if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
 			t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
+		}
+	}
+}
+
+func TestConsulCatalogNodeSorter(t *testing.T) {
+	cases := []struct {
+		nodes    []*api.ServiceEntry
+		expected []*api.ServiceEntry
+	}{
+		{
+			nodes:    []*api.ServiceEntry{},
+			expected: []*api.ServiceEntry{},
+		},
+		{
+			nodes: []*api.ServiceEntry{
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "127.0.0.1",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.1",
+					},
+				},
+			},
+			expected: []*api.ServiceEntry{
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "127.0.0.1",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.1",
+					},
+				},
+			},
+		},
+		{
+			nodes: []*api.ServiceEntry{
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "127.0.0.2",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.2",
+					},
+				},
+				{
+					Service: &api.AgentService{
+						Service: "bar",
+						Address: "127.0.0.2",
+						Port:    81,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.2",
+					},
+				},
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "127.0.0.1",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.1",
+					},
+				},
+				{
+					Service: &api.AgentService{
+						Service: "bar",
+						Address: "127.0.0.2",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.2",
+					},
+				},
+			},
+			expected: []*api.ServiceEntry{
+				{
+					Service: &api.AgentService{
+						Service: "bar",
+						Address: "127.0.0.2",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.2",
+					},
+				},
+				{
+					Service: &api.AgentService{
+						Service: "bar",
+						Address: "127.0.0.2",
+						Port:    81,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.2",
+					},
+				},
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "127.0.0.1",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.1",
+					},
+				},
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "127.0.0.2",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.2",
+					},
+				},
+			},
+		},
+		{
+			nodes: []*api.ServiceEntry{
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.2",
+					},
+				},
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.1",
+					},
+				},
+			},
+			expected: []*api.ServiceEntry{
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.1",
+					},
+				},
+				{
+					Service: &api.AgentService{
+						Service: "foo",
+						Address: "",
+						Port:    80,
+					},
+					Node: &api.Node{
+						Node:    "localhost",
+						Address: "127.0.0.2",
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		sort.Sort(nodeSorter(c.nodes))
+		actual := c.nodes
+		if !reflect.DeepEqual(actual, c.expected) {
+			t.Fatalf("expected %q, got %q", c.expected, actual)
 		}
 	}
 }
