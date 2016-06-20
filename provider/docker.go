@@ -364,7 +364,7 @@ func listContainers(ctx context.Context, dockerClient client.APIClient) ([]docke
 	for _, container := range containerList {
 		containerInspected, err := dockerClient.ContainerInspect(ctx, container.ID)
 		if err != nil {
-			log.Warnf("Failed to inpsect container %s, error: %s", container.ID, err)
+			log.Warnf("Failed to inspect container %s, error: %s", container.ID, err)
 		} else {
 			containersInspected = append(containersInspected, containerInspected)
 		}
