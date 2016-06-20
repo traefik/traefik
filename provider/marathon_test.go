@@ -19,13 +19,17 @@ func newFakeClient(applicationsError bool, applications *marathon.Applications, 
 	// create an instance of our test object
 	fakeClient := new(fakeClient)
 	if applicationsError {
-		fakeClient.On("Applications", mock.AnythingOfType("url.Values")).Return(nil, errors.New("error"))
+		fakeClient.On("Applications", mock.Anything).Return(nil, errors.New("error"))
+	} else {
+		fakeClient.On("Applications", mock.Anything).Return(applications, nil)
 	}
-	fakeClient.On("Applications", mock.AnythingOfType("url.Values")).Return(applications, nil)
-	if tasksError {
-		fakeClient.On("AllTasks", mock.AnythingOfType("*marathon.AllTasksOpts")).Return(nil, errors.New("error"))
+	if !applicationsError {
+		if tasksError {
+			fakeClient.On("AllTasks", mock.Anything).Return(nil, errors.New("error"))
+		} else {
+			fakeClient.On("AllTasks", mock.Anything).Return(tasks, nil)
+		}
 	}
-	fakeClient.On("AllTasks", mock.AnythingOfType("*marathon.AllTasksOpts")).Return(tasks, nil)
 	return fakeClient
 }
 
@@ -65,8 +69,9 @@ func TestMarathonLoadConfig(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "/test",
-						Ports: []int{80},
+						ID:     "/test",
+						Ports:  []int{80},
+						Labels: &map[string]string{},
 					},
 				},
 			},
@@ -115,6 +120,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 			marathonClient:   fakeClient,
 		}
 		actualConfig := provider.loadMarathonConfig()
+		fakeClient.AssertExpectations(t)
 		if c.expectedNil {
 			if actualConfig != nil {
 				t.Fatalf("Should have been nil, got %v", actualConfig)
@@ -161,7 +167,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID: "foo",
+						ID:     "foo",
+						Labels: &map[string]string{},
 					},
 				},
 			},
@@ -176,8 +183,9 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "foo",
-						Ports: []int{80, 443},
+						ID:     "foo",
+						Ports:  []int{80, 443},
+						Labels: &map[string]string{},
 					},
 				},
 			},
@@ -194,7 +202,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					{
 						ID:    "foo",
 						Ports: []int{80},
-						Labels: map[string]string{
+						Labels: &map[string]string{
 							"traefik.enable": "false",
 						},
 					},
@@ -213,7 +221,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					{
 						ID:    "specify-port-number",
 						Ports: []int{80, 443},
-						Labels: map[string]string{
+						Labels: &map[string]string{
 							"traefik.port": "80",
 						},
 					},
@@ -232,7 +240,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					{
 						ID:    "specify-unknown-port-number",
 						Ports: []int{80, 443},
-						Labels: map[string]string{
+						Labels: &map[string]string{
 							"traefik.port": "8080",
 						},
 					},
@@ -251,7 +259,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					{
 						ID:    "specify-port-index",
 						Ports: []int{80, 443},
-						Labels: map[string]string{
+						Labels: &map[string]string{
 							"traefik.portIndex": "0",
 						},
 					},
@@ -270,7 +278,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					{
 						ID:    "specify-out-of-range-port-index",
 						Ports: []int{80, 443},
-						Labels: map[string]string{
+						Labels: &map[string]string{
 							"traefik.portIndex": "2",
 						},
 					},
@@ -289,7 +297,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					{
 						ID:    "specify-both-port-index-and-number",
 						Ports: []int{80, 443},
-						Labels: map[string]string{
+						Labels: &map[string]string{
 							"traefik.port":      "443",
 							"traefik.portIndex": "1",
 						},
@@ -307,10 +315,11 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "foo",
-						Ports: []int{80},
-						HealthChecks: []*marathon.HealthCheck{
-							marathon.NewDefaultHealthCheck(),
+						ID:     "foo",
+						Ports:  []int{80},
+						Labels: &map[string]string{},
+						HealthChecks: &[]marathon.HealthCheck{
+							*marathon.NewDefaultHealthCheck(),
 						},
 					},
 				},
@@ -331,10 +340,11 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "foo",
-						Ports: []int{80},
-						HealthChecks: []*marathon.HealthCheck{
-							marathon.NewDefaultHealthCheck(),
+						ID:     "foo",
+						Ports:  []int{80},
+						Labels: &map[string]string{},
+						HealthChecks: &[]marathon.HealthCheck{
+							*marathon.NewDefaultHealthCheck(),
 						},
 					},
 				},
@@ -358,10 +368,11 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "foo",
-						Ports: []int{80},
-						HealthChecks: []*marathon.HealthCheck{
-							marathon.NewDefaultHealthCheck(),
+						ID:     "foo",
+						Ports:  []int{80},
+						Labels: &map[string]string{},
+						HealthChecks: &[]marathon.HealthCheck{
+							*marathon.NewDefaultHealthCheck(),
 						},
 					},
 				},
@@ -377,8 +388,9 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "foo",
-						Ports: []int{80},
+						ID:     "foo",
+						Ports:  []int{80},
+						Labels: &map[string]string{},
 					},
 				},
 			},
@@ -398,10 +410,11 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "foo",
-						Ports: []int{80},
-						HealthChecks: []*marathon.HealthCheck{
-							marathon.NewDefaultHealthCheck(),
+						ID:     "foo",
+						Ports:  []int{80},
+						Labels: &map[string]string{},
+						HealthChecks: &[]marathon.HealthCheck{
+							*marathon.NewDefaultHealthCheck(),
 						},
 					},
 				},
@@ -417,8 +430,9 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "disable-default-expose",
-						Ports: []int{80},
+						ID:     "disable-default-expose",
+						Ports:  []int{80},
+						Labels: &map[string]string{},
 					},
 				},
 			},
@@ -435,7 +449,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					{
 						ID:    "disable-default-expose-disable-in-label",
 						Ports: []int{80},
-						Labels: map[string]string{
+						Labels: &map[string]string{
 							"traefik.enable": "false",
 						},
 					},
@@ -454,7 +468,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					{
 						ID:    "disable-default-expose-enable-in-label",
 						Ports: []int{80},
-						Labels: map[string]string{
+						Labels: &map[string]string{
 							"traefik.enable": "true",
 						},
 					},
@@ -486,14 +500,16 @@ func TestMarathonApplicationFilter(t *testing.T) {
 		},
 		{
 			application: marathon.Application{
-				ID: "test",
+				ID:     "test",
+				Labels: &map[string]string{},
 			},
 			filteredTasks: []marathon.Task{},
 			expected:      false,
 		},
 		{
 			application: marathon.Application{
-				ID: "foo",
+				ID:     "foo",
+				Labels: &map[string]string{},
 			},
 			filteredTasks: []marathon.Task{
 				{
@@ -504,7 +520,8 @@ func TestMarathonApplicationFilter(t *testing.T) {
 		},
 		{
 			application: marathon.Application{
-				ID: "foo",
+				ID:     "foo",
+				Labels: &map[string]string{},
 			},
 			filteredTasks: []marathon.Task{
 				{
@@ -539,7 +556,8 @@ func TestMarathonGetPort(t *testing.T) {
 		{
 			applications: []marathon.Application{
 				{
-					ID: "test1",
+					ID:     "test1",
+					Labels: &map[string]string{},
 				},
 			},
 			task: marathon.Task{
@@ -550,7 +568,8 @@ func TestMarathonGetPort(t *testing.T) {
 		{
 			applications: []marathon.Application{
 				{
-					ID: "test1",
+					ID:     "test1",
+					Labels: &map[string]string{},
 				},
 			},
 			task: marathon.Task{
@@ -562,7 +581,8 @@ func TestMarathonGetPort(t *testing.T) {
 		{
 			applications: []marathon.Application{
 				{
-					ID: "test1",
+					ID:     "test1",
+					Labels: &map[string]string{},
 				},
 			},
 			task: marathon.Task{
@@ -575,7 +595,7 @@ func TestMarathonGetPort(t *testing.T) {
 			applications: []marathon.Application{
 				{
 					ID: "specify-port-number",
-					Labels: map[string]string{
+					Labels: &map[string]string{
 						"traefik.port": "443",
 					},
 				},
@@ -590,7 +610,7 @@ func TestMarathonGetPort(t *testing.T) {
 			applications: []marathon.Application{
 				{
 					ID: "specify-port-index",
-					Labels: map[string]string{
+					Labels: &map[string]string{
 						"traefik.portIndex": "1",
 					},
 				},
@@ -628,7 +648,7 @@ func TestMarathonGetWeigh(t *testing.T) {
 			applications: []marathon.Application{
 				{
 					ID: "test1",
-					Labels: map[string]string{
+					Labels: &map[string]string{
 						"traefik.weight": "10",
 					},
 				},
@@ -642,7 +662,7 @@ func TestMarathonGetWeigh(t *testing.T) {
 			applications: []marathon.Application{
 				{
 					ID: "test",
-					Labels: map[string]string{
+					Labels: &map[string]string{
 						"traefik.test": "10",
 					},
 				},
@@ -656,7 +676,7 @@ func TestMarathonGetWeigh(t *testing.T) {
 			applications: []marathon.Application{
 				{
 					ID: "test",
-					Labels: map[string]string{
+					Labels: &map[string]string{
 						"traefik.weight": "10",
 					},
 				},
@@ -686,12 +706,13 @@ func TestMarathonGetDomain(t *testing.T) {
 		expected    string
 	}{
 		{
-			application: marathon.Application{},
-			expected:    "docker.localhost",
+			application: marathon.Application{
+				Labels: &map[string]string{}},
+			expected: "docker.localhost",
 		},
 		{
 			application: marathon.Application{
-				Labels: map[string]string{
+				Labels: &map[string]string{
 					"traefik.domain": "foo.bar",
 				},
 			},
@@ -724,7 +745,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 			applications: []marathon.Application{
 				{
 					ID: "test1",
-					Labels: map[string]string{
+					Labels: &map[string]string{
 						"traefik.protocol": "https",
 					},
 				},
@@ -738,7 +759,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 			applications: []marathon.Application{
 				{
 					ID: "test",
-					Labels: map[string]string{
+					Labels: &map[string]string{
 						"traefik.foo": "bar",
 					},
 				},
@@ -752,7 +773,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 			applications: []marathon.Application{
 				{
 					ID: "test",
-					Labels: map[string]string{
+					Labels: &map[string]string{
 						"traefik.protocol": "https",
 					},
 				},
@@ -780,12 +801,13 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 		expected    string
 	}{
 		{
-			application: marathon.Application{},
-			expected:    "true",
+			application: marathon.Application{
+				Labels: &map[string]string{}},
+			expected: "true",
 		},
 		{
 			application: marathon.Application{
-				Labels: map[string]string{
+				Labels: &map[string]string{
 					"traefik.frontend.passHostHeader": "false",
 				},
 			},
@@ -809,12 +831,13 @@ func TestMarathonGetEntryPoints(t *testing.T) {
 		expected    []string
 	}{
 		{
-			application: marathon.Application{},
-			expected:    []string{},
+			application: marathon.Application{
+				Labels: &map[string]string{}},
+			expected: []string{},
 		},
 		{
 			application: marathon.Application{
-				Labels: map[string]string{
+				Labels: &map[string]string{
 					"traefik.frontend.entryPoints": "http,https",
 				},
 			},
@@ -841,18 +864,20 @@ func TestMarathonGetFrontendRule(t *testing.T) {
 		expected    string
 	}{
 		{
-			application: marathon.Application{},
-			expected:    "Host:.docker.localhost",
+			application: marathon.Application{
+				Labels: &map[string]string{}},
+			expected: "Host:.docker.localhost",
 		},
 		{
 			application: marathon.Application{
-				ID: "test",
+				ID:     "test",
+				Labels: &map[string]string{},
 			},
 			expected: "Host:test.docker.localhost",
 		},
 		{
 			application: marathon.Application{
-				Labels: map[string]string{
+				Labels: &map[string]string{
 					"traefik.frontend.rule": "Host:foo.bar",
 				},
 			},
@@ -878,7 +903,7 @@ func TestMarathonGetBackend(t *testing.T) {
 		{
 			application: marathon.Application{
 				ID: "foo",
-				Labels: map[string]string{
+				Labels: &map[string]string{
 					"traefik.backend": "bar",
 				},
 			},

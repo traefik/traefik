@@ -1,5 +1,5 @@
-hash: 5a6dbc30a69abd002736bd5113e0f783c448faee20a0791c724ec2c3c1cfb8bb
-updated: 2016-06-03T18:11:43.839017153+02:00
+hash: cba5a5482db5b6b3857187d401d8e47f9b36f00e7acdf6aba0174707cc8c8b8a
+updated: 2016-06-20T23:18:44.178752884+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: 3f7947a25d970e1e5f512276c14d5dcf731ccd5e
@@ -21,15 +21,6 @@ imports:
   version: b98687da5c323650f4513fda6b6203fcbdec9313
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
-- name: github.com/containous/oxy
-  version: 183212964e13e7b8afe01a08b193d04300554a68
-  subpackages:
-  - cbreaker
-  - connlimit
-  - forward
-  - roundrobin
-  - stream
-  - utils
 - name: github.com/containous/staert
   version: e2aa88e235a02dd52aa1d5d9de75f9d9139d1602
 - name: github.com/coreos/etcd

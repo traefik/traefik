@@ -169,13 +169,13 @@ func (_m *Marathon) DeleteApplication(name string) (*marathon.DeploymentID, erro
 	return r0, r1
 }
 
-// UpdateApplication provides a mock function with given fields: application
-func (_m *Marathon) UpdateApplication(application *marathon.Application) (*marathon.DeploymentID, error) {
-	ret := _m.Called(application)
+// UpdateApplication provides a mock function with given fields: application, force
+func (_m *Marathon) UpdateApplication(application *marathon.Application, force bool) (*marathon.DeploymentID, error) {
+	ret := _m.Called(application, force)
 
 	var r0 *marathon.DeploymentID
-	if rf, ok := ret.Get(0).(func(*marathon.Application) *marathon.DeploymentID); ok {
-		r0 = rf(application)
+	if rf, ok := ret.Get(0).(func(*marathon.Application, bool) *marathon.DeploymentID); ok {
+		r0 = rf(application, force)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*marathon.DeploymentID)
@@ -183,8 +183,8 @@ func (_m *Marathon) UpdateApplication(application *marathon.Application) (*marat
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(*marathon.Application) error); ok {
-		r1 = rf(application)
+	if rf, ok := ret.Get(1).(func(*marathon.Application, bool) error); ok {
+		r1 = rf(application, force)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -300,6 +300,29 @@ func (_m *Marathon) Application(name string) (*marathon.Application, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ApplicationByVersion provides a mock function with given fields: name, version
+func (_m *Marathon) ApplicationByVersion(name string, version string) (*marathon.Application, error) {
+	ret := _m.Called(name, version)
+
+	var r0 *marathon.Application
+	if rf, ok := ret.Get(0).(func(string, string) *marathon.Application); ok {
+		r0 = rf(name, version)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*marathon.Application)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(name, version)
 	} else {
 		r1 = ret.Error(1)
 	}
