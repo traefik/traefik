@@ -85,11 +85,11 @@ func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain D
 
 	for _, domainsCertificate := range dc.Certs {
 		if reflect.DeepEqual(domain, domainsCertificate.Domains) {
-			domainsCertificate.Certificate = acmeCert
 			tlsCert, err := tls.X509KeyPair(acmeCert.Certificate, acmeCert.PrivateKey)
 			if err != nil {
 				return err
 			}
+			domainsCertificate.Certificate = acmeCert
 			domainsCertificate.tlsCert = &tlsCert
 			return nil
 		}
@@ -281,6 +281,9 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 
 	safe.Go(func() {
 		a.retrieveCertificates(client, account)
+		if err := a.renewCertificates(client, account); err != nil {
+			log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
+		}
 	})
 
 	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -304,7 +307,6 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 		for {
 			select {
 			case <-ticker.C:
-
 				if err := a.renewCertificates(client, account); err != nil {
 					log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
 				}
@@ -343,6 +345,7 @@ func (a *ACME) retrieveCertificates(client *acme.Client, account *Account) {
 }
 
 func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
+	log.Debugf("Testing certificate renew...")
 	for _, certificateResource := range account.DomainsCertificate.Certs {
 		if certificateResource.needRenew() {
 			log.Debugf("Renewing certificate %+v", certificateResource.Domains)
@@ -352,9 +355,10 @@ func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
 				CertStableURL: certificateResource.Certificate.CertStableURL,
 				PrivateKey:    certificateResource.Certificate.PrivateKey,
 				Certificate:   certificateResource.Certificate.Certificate,
-			}, false)
+			}, true)
 			if err != nil {
-				return err
+				log.Errorf("Error renewing certificate: %v", err)
+				continue
 			}
 			log.Debugf("Renewed certificate %+v", certificateResource.Domains)
 			renewedACMECert := &Certificate{
@@ -366,10 +370,12 @@ func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
 			}
 			err = account.DomainsCertificate.renewCertificates(renewedACMECert, certificateResource.Domains)
 			if err != nil {
-				return err
+				log.Errorf("Error renewing certificate: %v", err)
+				continue
 			}
 			if err = a.saveAccount(account); err != nil {
-				return err
+				log.Errorf("Error saving ACME account: %v", err)
+				continue
 			}
 		}
 	}
