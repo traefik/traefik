@@ -106,6 +106,11 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 		"Headers":         r.headers,
 		"HeadersRegexp":   r.headersRegexp,
 	}
+
+	if len(expression) == 0 {
+		return nil, errors.New("Empty rule")
+	}
+
 	f := func(c rune) bool {
 		return c == ':'
 	}
