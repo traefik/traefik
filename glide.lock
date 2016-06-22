@@ -1,5 +1,5 @@
-hash: cba5a5482db5b6b3857187d401d8e47f9b36f00e7acdf6aba0174707cc8c8b8a
-updated: 2016-06-20T23:18:44.178752884+02:00
+hash: 45fb23231bebf9ca56942d7a2454f7b398158ffa62a91e092c50e894efdd9df6
+updated: 2016-06-22T15:11:43.335984235+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: 3f7947a25d970e1e5f512276c14d5dcf731ccd5e
@@ -94,7 +94,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: af30e17dcd1a6869da033bd55ad949973c7c54e9
+  version: 09cfda47ed103910a8e1af76fa378a7e6acd5310
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -117,7 +117,7 @@ imports:
 - name: github.com/mattn/go-shellwords
   version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
 - name: github.com/Microsoft/go-winio
-  version: 4f1a71750d95a5a8a46c40a67ffbed8129c2f138
+  version: ce2922f643c8fd76b46cadc7f404a06282678b34
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/moul/http2curl
@@ -160,7 +160,7 @@ imports:
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
-  version: 1ca0a134a818f7b8ea85de6e6554fe3312f144c2
+  version: b57d6706e9ff606343c596940b60df7f90012d29
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -172,7 +172,7 @@ imports:
   - utils
   - memmetrics
 - name: github.com/vulcand/predicate
-  version: cb0bff91a7ab7cf7571e661ff883fc997bc554a3
+  version: 19b9dde14240d94c804ae5736ad0e1de10bf8fe6
 - name: github.com/vulcand/route
   version: cb89d787ddbb1c5849a7ac9f79004c1fd12a4a32
 - name: github.com/vulcand/vulcand

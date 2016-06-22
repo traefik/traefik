@@ -12,7 +12,7 @@ import:
 - package: github.com/vulcand/oxy
   vcs: git
   repo: https://github.com/containous/oxy.git
-  version: 1ca0a134a818f7b8ea85de6e6554fe3312f144c2 
+  version: b57d6706e9ff606343c596940b60df7f90012d29 
   subpackages:
   - cbreaker
   - connlimit
@@ -56,6 +56,7 @@ import:
 - package: github.com/thoas/stats
 - package: github.com/unrolled/render
 - package: github.com/vdemeester/docker-events
+- version: 20e6d2db238723e68197a9e3c6c34c99a9893a9c
 - package: github.com/vulcand/vulcand
   subpackages:
   - plugin/rewrite
