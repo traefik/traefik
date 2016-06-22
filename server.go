@@ -507,7 +507,13 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						var negroni = negroni.New()
 						if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
 							log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
-							negroni.Use(middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger)))
+							cbreaker, err := middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
+							if err != nil {
+								log.Errorf("Error creating circuit breaker: %v", err)
+								log.Errorf("Skipping frontend %s...", frontendName)
+								continue frontend
+							}
+							negroni.Use(cbreaker)
 						} else {
 							negroni.UseHandler(lb)
 						}
