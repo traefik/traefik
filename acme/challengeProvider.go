@@ -29,7 +29,7 @@ func (c *wrapperChallengeProvider) getCertificate(domain string) (cert *tls.Cert
 }
 
 func (c *wrapperChallengeProvider) Present(domain, token, keyAuth string) error {
-	cert, err := acme.TLSSNI01ChallengeCert(keyAuth)
+	cert, _, err := acme.TLSSNI01ChallengeCert(keyAuth)
 	if err != nil {
 		return err
 	}

@@ -42,7 +42,7 @@ import:
   - store/zookeeper
 - package: github.com/elazarl/go-bindata-assetfs
 - package: github.com/gambol99/go-marathon
-  version: ade11d1dc2884ee1f387078fc28509559b6235d1
+  version: a558128c87724cd7430060ef5aedf39f83937f55
 - package: github.com/containous/mux
 - package: github.com/hashicorp/consul
   subpackages:
@@ -60,7 +60,7 @@ import:
   subpackages:
   - plugin/rewrite
 - package: github.com/xenolf/lego
-  version: 30a7a8e8821de3532192d1240a45e53c6204f603
+  version: b2fad6198110326662e9e356a97199078a4a775c
   subpackages:
   - acme
 - package: golang.org/x/net

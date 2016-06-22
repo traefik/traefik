@@ -1,5 +1,5 @@
-hash: 7330fcb934bc52f47319f969bbf918e325bac2436518e3fad74de596f13bbda2
-updated: 2016-06-18T12:59:25.604052029+02:00
+hash: cba5a5482db5b6b3857187d401d8e47f9b36f00e7acdf6aba0174707cc8c8b8a
+updated: 2016-06-20T23:18:44.178752884+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: 3f7947a25d970e1e5f512276c14d5dcf731ccd5e
@@ -84,7 +84,7 @@ imports:
 - name: github.com/elazarl/go-bindata-assetfs
   version: 57eb5e1fc594ad4b0b1dbea7b286d299e0cb43c2
 - name: github.com/gambol99/go-marathon
-  version: ade11d1dc2884ee1f387078fc28509559b6235d1
+  version: a558128c87724cd7430060ef5aedf39f83937f55
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/google/go-querystring
@@ -183,7 +183,7 @@ imports:
   - conntracker
   - router
 - name: github.com/xenolf/lego
-  version: 30a7a8e8821de3532192d1240a45e53c6204f603
+  version: b2fad6198110326662e9e356a97199078a4a775c
   subpackages:
   - acme
 - name: golang.org/x/crypto
