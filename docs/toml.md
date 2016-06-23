@@ -203,6 +203,10 @@ Træfɪk filters services according to service attributes/tags set in your confi
 Supported backends:
 
 - Docker
+- Consul K/V
+- BoltDB
+- Zookeeper
+- Etcd
 - Consul Catalog
 
 Supported filters:
@@ -778,6 +782,13 @@ prefix = "traefik"
 # cert = "/etc/ssl/consul.crt"
 # key = "/etc/ssl/consul.key"
 # insecureskipverify = true
+
+# Constraint on ConsulKV tags
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having a key "/traefik/backends/backend1/servers/server1/tags" equal to "api,helloworld"
 ```
 
 Please refer to the [Key Value storage structure](#key-value-storage-structure) section to get documentation en traefik KV structure.
@@ -886,6 +897,13 @@ prefix = "/traefik"
 # cert = "/etc/ssl/etcd.crt"
 # key = "/etc/ssl/etcd.key"
 # insecureskipverify = true
+
+# Constraint on Etcd tags
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having a key "/traefik/backends/backend1/servers/server1/tags" equal to "api,helloworld"
 ```
 
 Please refer to the [Key Value storage structure](#key-value-storage-structure) section to get documentation en traefik KV structure.
@@ -929,6 +947,13 @@ prefix = "/traefik"
 # Optional
 #
 # filename = "zookeeper.tmpl"
+
+# Constraint on Zookeeper tags
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having a key "/traefik/backends/backend1/servers/server1/tags" equal to "api,helloworld"
 ```
 
 Please refer to the [Key Value storage structure](#key-value-storage-structure) section to get documentation en traefik KV structure.
@@ -971,6 +996,13 @@ prefix = "/traefik"
 # Optional
 #
 # filename = "boltdb.tmpl"
+
+# Constraint on BoltDB tags
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having a key "/traefik/backends/backend1/servers/server1/tags" equal to "api,helloworld"
 ```
 
 Please refer to the [Key Value storage structure](#key-value-storage-structure) section to get documentation en traefik KV structure.
@@ -986,8 +1018,10 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 | `/traefik/backends/backend1/circuitbreaker/expression` | `NetworkErrorRatio() > 0.5` |
 | `/traefik/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
 | `/traefik/backends/backend1/servers/server1/weight`    | `10`                        |
+| `/traefik/backends/backend1/servers/server1/tags`      | `api,helloworld`            |
 | `/traefik/backends/backend1/servers/server2/url`       | `http://172.17.0.3:80`      |
 | `/traefik/backends/backend1/servers/server2/weight`    | `1`                         |
+| `/traefik/backends/backend1/servers/server2/tags`      | `api,helloworld`            |
 
 - backend 2
 
@@ -998,8 +1032,10 @@ The Keys-Values structure should look (using `prefix = "/traefik"`):
 | `/traefik/backends/backend2/loadbalancer/method`    | `drr`                  |
 | `/traefik/backends/backend2/servers/server1/url`    | `http://172.17.0.4:80` |
 | `/traefik/backends/backend2/servers/server1/weight` | `1`                    |
+| `/traefik/backends/backend1/servers/server1/tags`   | `web`                  |
 | `/traefik/backends/backend2/servers/server2/url`    | `http://172.17.0.5:80` |
 | `/traefik/backends/backend2/servers/server2/weight` | `2`                    |
+| `/traefik/backends/backend1/servers/server2/tags`   | `web`                  |
 
 - frontend 1
 

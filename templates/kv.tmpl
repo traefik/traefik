@@ -3,7 +3,7 @@
 
 [backends]{{range $backends}}
 {{$backend := .}}
-{{$servers := List $backend "/servers/" }}
+{{$servers := ListServers $backend }}
 
 {{$circuitBreaker := Get "" . "/circuitbreaker/" "expression"}}
 {{with $circuitBreaker}}
