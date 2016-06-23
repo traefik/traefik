@@ -12,9 +12,12 @@ type CircuitBreaker struct {
 }
 
 // NewCircuitBreaker returns a new CircuitBreaker.
-func NewCircuitBreaker(next http.Handler, expression string, options ...cbreaker.CircuitBreakerOption) *CircuitBreaker {
-	circuitBreaker, _ := cbreaker.New(next, expression, options...)
-	return &CircuitBreaker{circuitBreaker}
+func NewCircuitBreaker(next http.Handler, expression string, options ...cbreaker.CircuitBreakerOption) (*CircuitBreaker, error) {
+	circuitBreaker, err := cbreaker.New(next, expression, options...)
+	if err != nil {
+		return nil, err
+	}
+	return &CircuitBreaker{circuitBreaker}, nil
 }
 
 func (cb *CircuitBreaker) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {

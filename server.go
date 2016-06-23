@@ -137,28 +137,48 @@ func (server *Server) listenProviders(stop chan bool) {
 			if !ok {
 				return
 			}
+			server.defaultConfigurationValues(configMsg.Configuration)
+			currentConfigurations := server.currentConfigurations.Get().(configs)
 			jsonConf, _ := json.Marshal(configMsg.Configuration)
 			log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
-			lastConfigs.Set(configMsg.ProviderName, &configMsg)
-			lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
-			if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
-				log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
-				// last config received more than n s ago
-				server.configurationValidatedChan <- configMsg
+			if configMsg.Configuration == nil || configMsg.Configuration.Backends == nil && configMsg.Configuration.Frontends == nil {
+				log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
+			} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
+				log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 			} else {
-				log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
-				safe.Go(func() {
-					<-time.After(server.globalConfiguration.ProvidersThrottleDuration)
-					lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
-					if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
-						log.Debugf("Waited for %s config, OK", configMsg.ProviderName)
-						if lastConfig, ok := lastConfigs.Get(configMsg.ProviderName); ok {
-							server.configurationValidatedChan <- *lastConfig.(*types.ConfigMessage)
+				lastConfigs.Set(configMsg.ProviderName, &configMsg)
+				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
+				if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
+					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+					// last config received more than n s ago
+					server.configurationValidatedChan <- configMsg
+				} else {
+					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+					safe.Go(func() {
+						<-time.After(server.globalConfiguration.ProvidersThrottleDuration)
+						lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
+						if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
+							log.Debugf("Waited for %s config, OK", configMsg.ProviderName)
+							if lastConfig, ok := lastConfigs.Get(configMsg.ProviderName); ok {
+								server.configurationValidatedChan <- *lastConfig.(*types.ConfigMessage)
+							}
 						}
-					}
-				})
+					})
+				}
+				lastReceivedConfiguration.Set(time.Now())
 			}
-			lastReceivedConfiguration.Set(time.Now())
+		}
+	}
+}
+
+func (server *Server) defaultConfigurationValues(configuration *types.Configuration) {
+	if configuration == nil || configuration.Frontends == nil {
+		return
+	}
+	for _, frontend := range configuration.Frontends {
+		// default endpoints if not defined in frontends
+		if len(frontend.EntryPoints) == 0 {
+			frontend.EntryPoints = server.globalConfiguration.DefaultEntryPoints
 		}
 	}
 }
@@ -173,28 +193,23 @@ func (server *Server) listenConfigurations(stop chan bool) {
 				return
 			}
 			currentConfigurations := server.currentConfigurations.Get().(configs)
-			if configMsg.Configuration == nil {
-				log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
-			} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
-				log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
-			} else {
-				// Copy configurations to new map so we don't change current if LoadConfig fails
-				newConfigurations := make(configs)
-				for k, v := range currentConfigurations {
-					newConfigurations[k] = v
-				}
-				newConfigurations[configMsg.ProviderName] = configMsg.Configuration
 
-				newServerEntryPoints, err := server.loadConfig(newConfigurations, server.globalConfiguration)
-				if err == nil {
-					for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
-						server.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
-						log.Infof("Server configuration reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
-					}
-					server.currentConfigurations.Set(newConfigurations)
-				} else {
-					log.Error("Error loading new configuration, aborted ", err)
+			// Copy configurations to new map so we don't change current if LoadConfig fails
+			newConfigurations := make(configs)
+			for k, v := range currentConfigurations {
+				newConfigurations[k] = v
+			}
+			newConfigurations[configMsg.ProviderName] = configMsg.Configuration
+
+			newServerEntryPoints, err := server.loadConfig(newConfigurations, server.globalConfiguration)
+			if err == nil {
+				for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
+					server.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
+					log.Infof("Server configuration reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 				}
+				server.currentConfigurations.Set(newConfigurations)
+			} else {
+				log.Error("Error loading new configuration, aborted ", err)
 			}
 		}
 	}
@@ -376,10 +391,6 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			log.Debugf("Creating frontend %s", frontendName)
 			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
 			saveBackend := middlewares.NewSaveBackend(fwd)
-			// default endpoints if not defined in frontends
-			if len(frontend.EntryPoints) == 0 {
-				frontend.EntryPoints = globalConfiguration.DefaultEntryPoints
-			}
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
 				log.Errorf("Skipping frontend %s...", frontendName)
@@ -496,7 +507,13 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						var negroni = negroni.New()
 						if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
 							log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
-							negroni.Use(middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger)))
+							cbreaker, err := middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
+							if err != nil {
+								log.Errorf("Error creating circuit breaker: %v", err)
+								log.Errorf("Skipping frontend %s...", frontendName)
+								continue frontend
+							}
+							negroni.Use(cbreaker)
 						} else {
 							negroni.UseHandler(lb)
 						}

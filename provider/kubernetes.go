@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
@@ -53,6 +54,7 @@ type Kubernetes struct {
 	Endpoint               string     `description:"Kubernetes server endpoint"`
 	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces"`
+	lastConfiguration      safe.Safe
 }
 
 func (provider *Kubernetes) createClient() (k8s.Client, error) {
@@ -124,9 +126,14 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 						if err != nil {
 							return err
 						}
-						configurationChan <- types.ConfigMessage{
-							ProviderName:  "kubernetes",
-							Configuration: provider.loadConfig(*templateObjects),
+						if reflect.DeepEqual(provider.lastConfiguration.Get(), templateObjects) {
+							log.Debugf("Skipping event from kubernetes %+v", event)
+						} else {
+							provider.lastConfiguration.Set(templateObjects)
+							configurationChan <- types.ConfigMessage{
+								ProviderName:  "kubernetes",
+								Configuration: provider.loadConfig(*templateObjects),
+							}
 						}
 					}
 				}
@@ -146,9 +153,14 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 	if err != nil {
 		return err
 	}
-	configurationChan <- types.ConfigMessage{
-		ProviderName:  "kubernetes",
-		Configuration: provider.loadConfig(*templateObjects),
+	if reflect.DeepEqual(provider.lastConfiguration.Get(), templateObjects) {
+		log.Debugf("Skipping configuration from kubernetes %+v", templateObjects)
+	} else {
+		provider.lastConfiguration.Set(templateObjects)
+		configurationChan <- types.ConfigMessage{
+			ProviderName:  "kubernetes",
+			Configuration: provider.loadConfig(*templateObjects),
+		}
 	}
 
 	return nil
