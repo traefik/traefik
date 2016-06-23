@@ -194,52 +194,6 @@ entryPoint = "https"
    main = "local4.com"
 ```
 
-## Constraints
-
-In a micro-service architecture, with a central service discovery, setting constraints limits Træfɪk scope to a smaller number of routes.
-
-Træfɪk filters services according to service attributes/tags set in your configuration backends.
-
-Supported backends:
-
-- Docker
-- Consul Catalog
-
-Supported filters:
-
-- ```tag```
-
-```
-# Constraints definition
-
-#
-# Optional
-#
-
-# Simple matching constraint
-# constraints = ["tag==api"]
-
-# Simple mismatching constraint
-# constraints = ["tag!=api"]
-
-# Globbing
-# constraints = ["tag==us-*"]
-
-# Backend-specific constraint
-# [consulCatalog]
-#   endpoint = 127.0.0.1:8500
-#   constraints = ["tag==api"]
-
-# Multiple constraints
-#   - "tag==" must match with at least one tag
-#   - "tag!=" must match with none of tags
-# constraints = ["tag!=us-*", "tag!=asia-*"]
-# [consulCatalog]
-#   endpoint = 127.0.0.1:8500
-#   constraints = ["tag==api", "tag!=v*-beta"]
-```
-
-
 # Configuration backends
 
 ## File backend
@@ -574,14 +528,6 @@ watch = true
 #  cert = "/etc/ssl/docker.crt"
 #  key = "/etc/ssl/docker.key"
 #  insecureskipverify = true
-
-# Constraint on Docker tags
-#
-# Optional
-#
-# constraints = ["tag==api", "tag==he*ld"]
-# Matching with containers having the label "traefik.tags" set to "api,helloworld"
-# ex: $ docker run -d -P --label traefik.tags=api,helloworld emilevauge/whoami
 ```
 
 Labels can be used on containers to override default behaviour:
@@ -814,13 +760,6 @@ domain = "consul.localhost"
 # Optional
 #
 prefix = "traefik"
-
-# Constraint on Consul catalog tags
-#
-# Optional
-#
-constraints = ["tag==api", "tag==he*ld"]
-# Matching with containers having this tag: "traefik.tags=api,helloworld"
 ```
 
 This backend will create routes matching on hostname based on the service name
