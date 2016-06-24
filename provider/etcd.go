@@ -9,7 +9,7 @@ import (
 
 // Etcd holds configurations of the Etcd provider.
 type Etcd struct {
-	Kv
+	Kv `mapstructure:",squash"`
 }
 
 // Provide allows the provider to provide configurations to traefik

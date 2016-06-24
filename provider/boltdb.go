@@ -9,7 +9,7 @@ import (
 
 // BoltDb holds configurations of the BoltDb provider.
 type BoltDb struct {
-	Kv
+	Kv `mapstructure:",squash"`
 }
 
 // Provide allows the provider to provide configurations to traefik

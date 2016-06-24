@@ -14,7 +14,7 @@ import (
 
 // File holds configurations of the File provider.
 type File struct {
-	BaseProvider
+	BaseProvider `mapstructure:",squash"`
 }
 
 // Provide allows the provider to provide configurations to traefik

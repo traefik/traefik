@@ -21,7 +21,7 @@ import:
   - stream
   - utils
 - package: github.com/containous/staert
-  version: e2aa88e235a02dd52aa1d5d9de75f9d9139d1602
+  version: 436a2f21e5e28c7c761130720befe05381db0765
 - package: github.com/docker/engine-api
   version: 3d3d0b6c9d2651aac27f416a6da0224c1875b3eb
   subpackages:

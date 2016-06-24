@@ -9,7 +9,7 @@ import (
 
 // Zookepper holds configurations of the Zookepper provider.
 type Zookepper struct {
-	Kv
+	Kv `mapstructure:",squash"`
 }
 
 // Provide allows the provider to provide configurations to traefik

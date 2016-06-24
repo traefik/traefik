@@ -29,7 +29,7 @@ const DockerAPIVersion string = "1.21"
 
 // Docker holds configurations of the Docker provider.
 type Docker struct {
-	BaseProvider
+	BaseProvider     `mapstructure:",squash"`
 	Endpoint         string     `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
 	Domain           string     `description:"Default domain used"`
 	TLS              *DockerTLS `description:"Enable Docker TLS support"`

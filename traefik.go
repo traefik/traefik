@@ -10,6 +10,11 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
+	"github.com/docker/libkv/store"
+	"github.com/docker/libkv/store/boltdb"
+	"github.com/docker/libkv/store/consul"
+	"github.com/docker/libkv/store/etcd"
+	"github.com/docker/libkv/store/zookeeper"
 	fmtlog "log"
 	"net/http"
 	"os"
@@ -110,6 +115,73 @@ Complete documentation is available at https://traefik.io`,
 	}
 
 	traefikConfiguration.ConfigFile = toml.ConfigFileUsed()
+
+	var kv *staert.KvSource
+	var err error
+	if traefikConfiguration.Consul != nil {
+		//init KvSource
+		consul.Register()
+		kv, err = staert.NewKvSource(
+			store.CONSUL,
+			strings.Split(traefikConfiguration.Consul.Endpoint, ","),
+			nil,
+			strings.TrimPrefix(traefikConfiguration.Consul.Prefix, "/"), // TrimPrefix should be done in https://github.com/docker/libkv/blob/master/store/consul/consul.go#L113 : IDK why it doen't work
+		)
+	} else if traefikConfiguration.Etcd != nil {
+		//init KvSource
+		etcd.Register()
+		kv, err = staert.NewKvSource(
+			store.ETCD,
+			strings.Split(traefikConfiguration.Etcd.Endpoint, ","),
+			nil,
+			traefikConfiguration.Etcd.Prefix,
+		)
+	} else if traefikConfiguration.Zookeeper != nil {
+		//init KvSource
+		zookeeper.Register()
+		kv, err = staert.NewKvSource(
+			store.ZK,
+			strings.Split(traefikConfiguration.Zookeeper.Endpoint, ","),
+			nil,
+			traefikConfiguration.Zookeeper.Prefix,
+		)
+	} else if traefikConfiguration.Boltdb != nil {
+		//init KvSource
+		boltdb.Register()
+		kv, err = staert.NewKvSource(
+			store.BOLTDB,
+			strings.Split(traefikConfiguration.Boltdb.Endpoint, ","),
+			nil,
+			traefikConfiguration.Boltdb.Prefix,
+		)
+	}
+	if err != nil {
+		fmtlog.Println(err)
+		os.Exit(-1)
+	}
+
+	// TO DELETE : Used once to fill the kv store
+	// if kv != nil {
+	// 	fmtlog.Println("Try to store global configuration in consul store")
+	// 	if err := kv.StoreConfig(traefikConfiguration); err != nil {
+	// 		fmtlog.Println(fmt.Errorf("Error : %s", err))
+	// 		os.Exit(-1)
+	// 	} else {
+	// 		fmtlog.Println("It seems okay :)")
+	// 		jsonConf, _ := json.Marshal(traefikConfiguration)
+	// 		fmtlog.Printf("Global configuration loaded %s", string(jsonConf))
+	// 		os.Exit(0)
+	// 	}
+	// }
+
+	//TODO : log warning if many KvStore or set priority
+	if kv != nil {
+		fmtlog.Println("KV Store found")
+		s.AddSource(kv)
+		if _, err := s.LoadConfig(); err != nil {
+			fmtlog.Println(fmt.Errorf("Error : %s", err))
+		}
+	}
 
 	if err := s.Run(); err != nil {
 		fmtlog.Println(err)
