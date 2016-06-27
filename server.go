@@ -290,14 +290,9 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 		return nil, nil
 	}
 
-	config := &tls.Config{}
-	config.Certificates = []tls.Certificate{}
-	for _, v := range tlsOption.Certificates {
-		cert, err := tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
-		if err != nil {
-			return nil, err
-		}
-		config.Certificates = append(config.Certificates, cert)
+	config, err := tlsOption.Certificates.CreateTLSConfig()
+	if err != nil {
+		return nil, err
 	}
 
 	if len(tlsOption.ClientCAFiles) > 0 {

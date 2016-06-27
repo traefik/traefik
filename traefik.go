@@ -176,7 +176,6 @@ Complete documentation is available at https://traefik.io`,
 
 	//TODO : log warning if many KvStore or set priority
 	if kv != nil {
-		fmtlog.Println("KV Store found")
 		s.AddSource(kv)
 		if _, err := s.LoadConfig(); err != nil {
 			fmtlog.Println(fmt.Errorf("Error : %s", err))

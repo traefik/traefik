@@ -8,6 +8,7 @@ import (
 
 	checker "github.com/vdemeester/shakers"
 
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"github.com/containous/traefik/integration/utils"
@@ -307,4 +308,127 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, 200)
+}
+
+//TODO : TestCertificatesContents
+func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) {
+	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
+	// start traefik
+	cmd := exec.Command(traefikBinary, "--configFile=fixtures/simple_web.toml", "--etcd", "--etcd.endpoint="+etcdHost+":4001")
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
+
+	whoami1 := s.composeProject.Container(c, "whoami1")
+	whoami2 := s.composeProject.Container(c, "whoami2")
+	whoami3 := s.composeProject.Container(c, "whoami3")
+	whoami4 := s.composeProject.Container(c, "whoami4")
+
+	//Copy the contents of the certificate files into ETCD
+	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
+	c.Assert(err, checker.IsNil)
+	snitestComKey, err := ioutil.ReadFile("fixtures/https/snitest.com.key")
+	c.Assert(err, checker.IsNil)
+	snitestOrgCert, err := ioutil.ReadFile("fixtures/https/snitest.org.cert")
+	c.Assert(err, checker.IsNil)
+	snitestOrgKey, err := ioutil.ReadFile("fixtures/https/snitest.org.key")
+	c.Assert(err, checker.IsNil)
+
+	globalConfig := map[string]string{
+		"/traefik/entrypoints/https/address":                     ":4443",
+		"/traefik/entrypoints/https/tls/certificates/0/certfile": string(snitestComCert),
+		"/traefik/entrypoints/https/tls/certificates/0/keyfile":  string(snitestComKey),
+		"/traefik/entrypoints/https/tls/certificates/1/certfile": string(snitestOrgCert),
+		"/traefik/entrypoints/https/tls/certificates/1/keyfile":  string(snitestOrgKey),
+		"/traefik/defaultentrypoints/0":                          "https",
+	}
+
+	backend1 := map[string]string{
+		"/traefik/backends/backend1/circuitbreaker/expression": "NetworkErrorRatio() > 0.5",
+		"/traefik/backends/backend1/servers/server1/url":       "http://" + whoami1.NetworkSettings.IPAddress + ":80",
+		"/traefik/backends/backend1/servers/server1/weight":    "10",
+		"/traefik/backends/backend1/servers/server2/url":       "http://" + whoami2.NetworkSettings.IPAddress + ":80",
+		"/traefik/backends/backend1/servers/server2/weight":    "1",
+	}
+	backend2 := map[string]string{
+		"/traefik/backends/backend2/loadbalancer/method":    "drr",
+		"/traefik/backends/backend2/servers/server1/url":    "http://" + whoami3.NetworkSettings.IPAddress + ":80",
+		"/traefik/backends/backend2/servers/server1/weight": "1",
+		"/traefik/backends/backend2/servers/server2/url":    "http://" + whoami4.NetworkSettings.IPAddress + ":80",
+		"/traefik/backends/backend2/servers/server2/weight": "2",
+	}
+	frontend1 := map[string]string{
+		"/traefik/frontends/frontend1/backend":            "backend2",
+		"/traefik/frontends/frontend1/entrypoints":        "http",
+		"/traefik/frontends/frontend1/priority":           "1",
+		"/traefik/frontends/frontend1/routes/test_1/rule": "Host:snitest.com",
+	}
+	frontend2 := map[string]string{
+		"/traefik/frontends/frontend2/backend":            "backend1",
+		"/traefik/frontends/frontend2/entrypoints":        "http",
+		"/traefik/frontends/frontend2/priority":           "10",
+		"/traefik/frontends/frontend2/routes/test_2/rule": "Host:snitest.org",
+	}
+	for key, value := range globalConfig {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+	for key, value := range backend1 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+	for key, value := range backend2 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+	for key, value := range frontend1 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+	for key, value := range frontend2 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+
+	// wait for etcd
+	err = utils.Try(60*time.Second, func() error {
+		_, err := s.kv.Exists("/traefik/frontends/frontend2/routes/test_2/rule")
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		if !strings.Contains(string(body), "Host:snitest.org") {
+			return errors.New("Incorrect traefik config")
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+
+	//check
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         "snitest.com",
+	}
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
+	defer conn.Close()
+	err = conn.Handshake()
+	c.Assert(err, checker.IsNil, check.Commentf("TLS handshake error"))
+
+	cs := conn.ConnectionState()
+	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
+	c.Assert(err, checker.IsNil, check.Commentf("certificate did not match SNI servername"))
 }

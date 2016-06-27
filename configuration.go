@@ -1,11 +1,13 @@
 package main
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -179,6 +181,43 @@ type TLS struct {
 // Certificates defines traefik certificates type
 type Certificates []Certificate
 
+//CreateTLSConfig creates a TLS config from Certificate structures
+func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
+	config := &tls.Config{}
+	config.Certificates = []tls.Certificate{}
+	certsSlice := []Certificate(*certs)
+	for _, v := range certsSlice {
+		isAPath := false
+		_, errCert := os.Stat(v.CertFile)
+		_, errKey := os.Stat(v.KeyFile)
+		if errCert == nil {
+			if errKey == nil {
+				isAPath = true
+			} else {
+				return nil, fmt.Errorf("Bad TLS Certificate KeyFile format. Expected a path.")
+			}
+		} else if errKey == nil {
+			return nil, fmt.Errorf("Bad TLS Certificate KeyFile format. Expected a path.")
+		}
+
+		cert := tls.Certificate{}
+		var err error
+		if isAPath {
+			cert, err = tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			cert, err = tls.X509KeyPair([]byte(v.CertFile), []byte(v.KeyFile))
+			if err != nil {
+				return nil, err
+			}
+		}
+		config.Certificates = append(config.Certificates, cert)
+	}
+	return config, nil
+}
+
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
 func (certs *Certificates) String() string {
@@ -209,6 +248,7 @@ func (certs *Certificates) Type() string {
 }
 
 // Certificate holds a SSL cert/key pair
+// May can contain either path or file contents
 type Certificate struct {
 	CertFile string
 	KeyFile  string

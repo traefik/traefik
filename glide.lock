@@ -1,5 +1,5 @@
-hash: 22c20a7d7419e9624267d7f0041cd8ad87afc876d2738fa559527c74f9917c3a
-updated: 2016-07-05T14:48:30.023831407+02:00
+hash: cf8f42aae193bd26b7670157094e6b11590443bc500f0a78243ee21bd3ed314e
+updated: 2016-06-23T17:46:42.381770076+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: 3f7947a25d970e1e5f512276c14d5dcf731ccd5e
@@ -36,7 +36,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: 4e17ab5d319ac5b70b2769442947567a83386fbc
+  version: edd7cb5249d0a45262b20bb58b838ecf4fb368bd
   subpackages:
   - reference
   - digest
@@ -142,7 +142,7 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 7221e387826c9918fa9fd6e7975baf4d30c8fa54
+  version: 5dc3f3576efb5262bf582217e93f86c93944374d
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -219,7 +219,7 @@ imports:
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: 0c565bf13221fb55497d7ae2bb95694db1fd1bff
+  version: f3241ce8505855877cc8a9717bd61a0f7c4ea83c
   subpackages:
   - ocsp
 - name: golang.org/x/net
