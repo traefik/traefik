@@ -310,7 +310,6 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(response.StatusCode, checker.Equals, 200)
 }
 
-//TODO : TestCertificatesContents
 func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 	// start traefik

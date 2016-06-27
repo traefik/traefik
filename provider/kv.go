@@ -2,10 +2,7 @@
 package provider
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"text/template"
 	"time"
@@ -23,19 +20,11 @@ import (
 // Kv holds common configurations of key-value providers.
 type Kv struct {
 	BaseProvider `mapstructure:",squash"`
-	Endpoint     string `description:"Comma sepparated server endpoints"`
-	Prefix       string `description:"Prefix used for KV store"`
-	TLS          *KvTLS `description:"Enable TLS support"`
+	Endpoint     string     `description:"Comma sepparated server endpoints"`
+	Prefix       string     `description:"Prefix used for KV store"`
+	TLS          *ClientTLS `description:"Enable TLS support"`
 	storeType    store.Backend
 	kvclient     store.Store
-}
-
-// KvTLS holds TLS specific configurations
-type KvTLS struct {
-	CA                 string `description:"TLS CA"`
-	Cert               string `description:"TLS cert"`
-	Key                string `description:"TLS key"`
-	InsecureSkipVerify bool   `description:"TLS insecure skip verify"`
 }
 
 func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix string, stop chan bool) error {
@@ -80,28 +69,10 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *
 	}
 
 	if provider.TLS != nil {
-		caPool := x509.NewCertPool()
-
-		if provider.TLS.CA != "" {
-			ca, err := ioutil.ReadFile(provider.TLS.CA)
-
-			if err != nil {
-				return fmt.Errorf("Failed to read CA. %s", err)
-			}
-
-			caPool.AppendCertsFromPEM(ca)
-		}
-
-		cert, err := tls.LoadX509KeyPair(provider.TLS.Cert, provider.TLS.Key)
-
+		var err error
+		storeConfig.TLS, err = provider.TLS.CreateTLSConfig()
 		if err != nil {
-			return fmt.Errorf("Failed to load TLS keypair: %v", err)
-		}
-
-		storeConfig.TLS = &tls.Config{
-			Certificates:       []tls.Certificate{cert},
-			RootCAs:            caPool,
-			InsecureSkipVerify: provider.TLS.InsecureSkipVerify,
+			return err
 		}
 	}
 
