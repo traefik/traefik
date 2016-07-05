@@ -270,12 +270,14 @@ func (provider *Docker) getIPAddress(container dockertypes.ContainerJSON) string
 			}
 		}
 	}
-	for networkName, network := range container.NetworkSettings.Networks {
-		// If net==host, quick n' dirty, we return 127.0.0.1
-		// This will work locally, but will fail with swarm.
-		if "host" == networkName {
-			return "127.0.0.1"
-		}
+
+	// If net==host, quick n' dirty, we return 127.0.0.1
+	// This will work locally, but will fail with swarm.
+	if container.HostConfig != nil && "host" == container.HostConfig.NetworkMode {
+		return "127.0.0.1"
+	}
+
+	for _, network := range container.NetworkSettings.Networks {
 		return network.IPAddress
 	}
 	return ""
