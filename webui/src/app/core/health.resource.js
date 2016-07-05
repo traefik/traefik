@@ -7,7 +7,7 @@
 
       /** @ngInject */
       function Health($resource) {
-        return $resource('/health');
+        return $resource('../health');
       }
 
 })();
