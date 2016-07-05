@@ -90,13 +90,52 @@ Here is an example of frontends definition:
     rule = "Host: localhost, {subdomain:[a-z]+}.localhost"
   [frontends.frontend3]
   backend = "backend2"
+    [frontends.frontend3.routes.test_1]
     rule = "Host: test3.localhost;Path:/test"
 ```
 
 - Three frontends are defined: `frontend1`, `frontend2` and `frontend3`
 - `frontend1` will forward the traffic to the `backend2` if the rule `Host: test.localhost, test2.localhost` is matched
 - `frontend2` will forward the traffic to the `backend1` if the rule `Host: localhost, {subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
-- `frontend3` will forward the traffic to the `backend2` if the rules `Host: test3.localhost` and `Path:/test` are matched
+- `frontend3` will forward the traffic to the `backend2` if the rules `Host: test3.localhost` **and** `Path:/test` are matched
+
+### Combining multiple rules
+
+As seen in the previous example, you can combine multiple rules.
+In TOML file, you can use multiple routes:
+
+```toml
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host: test3.localhost"
+    [frontends.frontend3.routes.test_2]
+    rule = "Host: Path:/test"
+```
+
+Here `frontend3` will forward the traffic to the `backend2` if the rules `Host: test3.localhost` **and** `Path:/test` are matched.
+You can also use the notation using a `;` separator:
+
+```toml
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host: test3.localhost;Path:/test"
+```
+
+Finally, you can create a rule to bind multiple domains or Path to a frontend, using the `,` separator:
+
+```toml
+ [frontends.frontend2]
+    [frontends.frontend2.routes.test_1]
+    rule = "Host: test1.localhost,Host: test2.localhost"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Path:/test1,/test2"
+```
+
+### Priorities
 
 By default, routes will be sorted using rules length (to avoid path overlap):
 `PathPrefix:/12345` will be matched before `PathPrefix:/1234` that will be matched before `PathPrefix:/1`.
