@@ -269,6 +269,30 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 			},
 			expected: "10.11.12.14",
 		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "bar",
+					HostConfig: &container.HostConfig{
+						NetworkMode: "host",
+					},
+				},
+				Config: &container.Config{
+					Labels: map[string]string{},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{
+						"testnet1": {
+							IPAddress: "10.11.12.13",
+						},
+						"testnet2": {
+							IPAddress: "10.11.12.14",
+						},
+					},
+				},
+			},
+			expected: "127.0.0.1",
+		},
 	}
 
 	for _, e := range containers {
