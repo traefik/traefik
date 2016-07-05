@@ -30,7 +30,7 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		recorder.responseWriter = rw
 		retry.next.ServeHTTP(recorder, r)
 		if !isNetworkError(recorder.Code) || attempts >= retry.attempts {
-			utils.CopyHeaders(recorder.Header(), rw.Header())
+			utils.CopyHeaders(rw.Header(), recorder.Header())
 			rw.WriteHeader(recorder.Code)
 			rw.Write(recorder.Body.Bytes())
 			break
@@ -50,9 +50,7 @@ type ResponseRecorder struct {
 	Code      int           // the HTTP response code from WriteHeader
 	HeaderMap http.Header   // the HTTP response headers
 	Body      *bytes.Buffer // if non-nil, the bytes.Buffer to append written data to
-	Flushed   bool
 
-	wroteHeader    bool
 	responseWriter http.ResponseWriter
 }
 
@@ -75,68 +73,17 @@ func (rw *ResponseRecorder) Header() http.Header {
 	return m
 }
 
-// writeHeader writes a header if it was not written yet and
-// detects Content-Type if needed.
-//
-// bytes or str are the beginning of the response body.
-// We pass both to avoid unnecessarily generate garbage
-// in rw.WriteString which was created for performance reasons.
-// Non-nil bytes win.
-func (rw *ResponseRecorder) writeHeader(b []byte, str string) {
-	if rw.wroteHeader {
-		return
-	}
-	if len(str) > 512 {
-		str = str[:512]
-	}
-
-	_, hasType := rw.HeaderMap["Content-Type"]
-	hasTE := rw.HeaderMap.Get("Transfer-Encoding") != ""
-	if !hasType && !hasTE {
-		if b == nil {
-			b = []byte(str)
-		}
-		if rw.HeaderMap == nil {
-			rw.HeaderMap = make(http.Header)
-		}
-		rw.HeaderMap.Set("Content-Type", http.DetectContentType(b))
-	}
-
-	rw.WriteHeader(200)
-}
-
 // Write always succeeds and writes to rw.Body, if not nil.
 func (rw *ResponseRecorder) Write(buf []byte) (int, error) {
-	rw.writeHeader(buf, "")
 	if rw.Body != nil {
-		rw.Body.Write(buf)
+		return rw.Body.Write(buf)
 	}
-	return len(buf), nil
-}
-
-// WriteString always succeeds and writes to rw.Body, if not nil.
-func (rw *ResponseRecorder) WriteString(str string) (int, error) {
-	rw.writeHeader(nil, str)
-	if rw.Body != nil {
-		rw.Body.WriteString(str)
-	}
-	return len(str), nil
+	return 0, nil
 }
 
 // WriteHeader sets rw.Code.
 func (rw *ResponseRecorder) WriteHeader(code int) {
-	if !rw.wroteHeader {
-		rw.Code = code
-		rw.wroteHeader = true
-	}
-}
-
-// Flush sets rw.Flushed to true.
-func (rw *ResponseRecorder) Flush() {
-	if !rw.wroteHeader {
-		rw.WriteHeader(200)
-	}
-	rw.Flushed = true
+	rw.Code = code
 }
 
 // Hijack hijacks the connection
