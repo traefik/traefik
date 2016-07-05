@@ -93,7 +93,7 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?")
+	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?")
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
 		return errors.New("Bad EntryPoints format: " + value)
@@ -113,6 +113,10 @@ func (ep *EntryPoints) Set(value string) error {
 		}
 		tls = &TLS{
 			Certificates: certs,
+		}
+	} else if len(result["TLSACME"]) > 0 {
+		tls = &TLS{
+			Certificates: Certificates{},
 		}
 	}
 	var redirect *Redirect
