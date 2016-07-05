@@ -1,5 +1,5 @@
-hash: 45fb23231bebf9ca56942d7a2454f7b398158ffa62a91e092c50e894efdd9df6
-updated: 2016-06-22T15:11:43.335984235+02:00
+hash: b9d7a2fa4fe03a52e8239223ded2db0372cda7de452ea36a7e10eb04bd791b91
+updated: 2016-07-04T18:12:56.78124934+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: 3f7947a25d970e1e5f512276c14d5dcf731ccd5e
@@ -36,7 +36,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: edd7cb5249d0a45262b20bb58b838ecf4fb368bd
+  version: 4e17ab5d319ac5b70b2769442947567a83386fbc
   subpackages:
   - reference
   - digest
@@ -72,7 +72,7 @@ imports:
 - name: github.com/docker/libcompose
   version: 8ee7bcc364f7b8194581a3c6bd9fa019467c7873
 - name: github.com/docker/libkv
-  version: 7283ef27ed32fe267388510a91709b307bb9942c
+  version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
   subpackages:
   - store
   - store/boltdb
@@ -94,7 +94,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: 09cfda47ed103910a8e1af76fa378a7e6acd5310
+  version: 6e061b2d580d80347b7c5c4dfc8730de7403a145
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -125,11 +125,11 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 5dc3f3576efb5262bf582217e93f86c93944374d
+  version: 7221e387826c9918fa9fd6e7975baf4d30c8fa54
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
-  version: f17fef20c518e688f4edb3eb2af148462ecab3ef
+  version: 6e8ad4ebdee4bec2934ed5afaaa1c7b877832a17
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -187,7 +187,7 @@ imports:
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: f3241ce8505855877cc8a9717bd61a0f7c4ea83c
+  version: 0c565bf13221fb55497d7ae2bb95694db1fd1bff
   subpackages:
   - ocsp
 - name: golang.org/x/net
@@ -202,7 +202,7 @@ imports:
   - unix
   - windows
 - name: gopkg.in/fsnotify.v1
-  version: 30411dbcefb7a1da7e84f75530ad3abe4011b4f8
+  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: gopkg.in/mgo.v2
   version: 29cc868a5ca65f401ff318143f9408d02f4799cc
   subpackages:

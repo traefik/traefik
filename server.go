@@ -181,6 +181,13 @@ func (server *Server) defaultConfigurationValues(configuration *types.Configurat
 			frontend.EntryPoints = server.globalConfiguration.DefaultEntryPoints
 		}
 	}
+	for backendName, backend := range configuration.Backends {
+		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
+		if err != nil {
+			log.Warnf("Error loading load balancer method '%+v' for backend %s: %v. Using default wrr.", backend.LoadBalancer, backendName, err)
+			backend.LoadBalancer = &types.LoadBalancer{Method: "wrr"}
+		}
+	}
 }
 
 func (server *Server) listenConfigurations(stop chan bool) {
@@ -389,7 +396,13 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			frontend := configuration.Frontends[frontendName]
 
 			log.Debugf("Creating frontend %s", frontendName)
-			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+
+			fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+			if err != nil {
+				log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
+				log.Errorf("Skipping frontend %s...", frontendName)
+				continue frontend
+			}
 			saveBackend := middlewares.NewSaveBackend(fwd)
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
@@ -437,7 +450,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 						lbMethod, err := types.NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
 						if err != nil {
-							configuration.Backends[frontend.Backend].LoadBalancer = &types.LoadBalancer{Method: "wrr"}
+							log.Errorf("Error loading load balancer method '%+v' for frontend %s: %v", configuration.Backends[frontend.Backend].LoadBalancer, frontendName, err)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
 						}
 						switch lbMethod {
 						case types.Drr:
