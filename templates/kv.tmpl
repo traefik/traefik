@@ -41,6 +41,10 @@
     backend = "{{Get "" . "/backend"}}"
     passHostHeader = {{Get "true" . "/passHostHeader"}}
     priority = {{Get "0" . "/priority"}}
+    forwardCerts = {{ Get "false" . "/forwardCerts"}}
+    insecureCert = {{ Get "false" . "/insecureCert"}}
+    authType = {{ Get "" . "/authType"}}
+    authConfig = {{ Get "" . "/authConfig"}}
     entryPoints = [{{range $entryPoints}}
       "{{.}}",
     {{end}}]
