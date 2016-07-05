@@ -6,20 +6,6 @@ if ! test -e autogen/gen.go; then
 	false
 fi
 
-if [ -z "$1" ]; then
-    # Remove windows platform because of
-    # https://github.com/mailgun/log/issues/10
-    OS_PLATFORM_ARG=(linux)
-else
-    OS_PLATFORM_ARG=($1)
-fi
-
-if [ -z "$2" ]; then
-    OS_ARCH_ARG=(386 amd64 arm)
-else
-    OS_ARCH_ARG=($2)
-fi
-
 if [ -z "$VERSION" ]; then
     VERSION=$(git rev-parse HEAD)
 fi
@@ -31,7 +17,20 @@ fi
 # Get rid of existing binaries
 rm -f dist/traefik_*
 
-# Build binaries
+# Build 386 amd64 binaries
+OS_PLATFORM_ARG=(linux darwin windows)
+OS_ARCH_ARG=(386 amd64)
+for OS in ${OS_PLATFORM_ARG[@]}; do
+  for ARCH in ${OS_ARCH_ARG[@]}; do
+    echo "Building binary for $OS/$ARCH..."
+    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X main.Version=$VERSION -X main.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" .
+  done
+done
+
+
+# Build arm binaries
+OS_PLATFORM_ARG=(linux)
+OS_ARCH_ARG=(arm arm64)
 for OS in ${OS_PLATFORM_ARG[@]}; do
   for ARCH in ${OS_ARCH_ARG[@]}; do
     echo "Building binary for $OS/$ARCH..."
