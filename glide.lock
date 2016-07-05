@@ -1,5 +1,5 @@
-hash: b9d7a2fa4fe03a52e8239223ded2db0372cda7de452ea36a7e10eb04bd791b91
-updated: 2016-07-04T18:12:56.78124934+02:00
+hash: 22c20a7d7419e9624267d7f0041cd8ad87afc876d2738fa559527c74f9917c3a
+updated: 2016-07-05T14:48:30.023831407+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: 3f7947a25d970e1e5f512276c14d5dcf731ccd5e
@@ -108,8 +108,6 @@ imports:
   version: 3b5eb2973efff7af33cfb65141deaf4ed25c6d02
 - name: github.com/libkermit/docker-check
   version: bb75a86b169c6c5d22c0ee98278124036f272d7b
-- name: github.com/mailgun/log
-  version: 2f35a4607f1abf71f97f77f99b0de8493ef6f4ef
 - name: github.com/mailgun/manners
   version: fada45142db3f93097ca917da107aa3fad0ffcb5
 - name: github.com/mailgun/timetools
@@ -160,7 +158,7 @@ imports:
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
-  version: b57d6706e9ff606343c596940b60df7f90012d29
+  version: 8d476862d38b9be356eaa83b5712cad561be08a1
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
