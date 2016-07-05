@@ -7,7 +7,7 @@
 
     /** @ngInject */
     function Providers($resource) {
-      return $resource('/api/providers');
+      return $resource('../api/providers');
     }
 
 })();
