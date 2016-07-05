@@ -5,7 +5,8 @@ TRAEFIK_ENVS := \
 	-e OS_PLATFORM_ARG \
 	-e TESTFLAGS \
 	-e VERBOSE \
-	-e VERSION
+	-e VERSION \
+	-e CODENAME
 
 SRCS = $(shell git ls-files '*.go' | grep -v '^external/')
 

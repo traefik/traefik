@@ -20,6 +20,7 @@ import (
 )
 
 var versionTemplate = `Version:      {{.Version}}
+Codename:     {{.Codename}}
 Go version:   {{.GoVersion}}
 Built:        {{.BuildTime}}
 OS/Arch:      {{.Os}}/{{.Arch}}`
@@ -57,12 +58,14 @@ Complete documentation is available at https://traefik.io`,
 
 			v := struct {
 				Version   string
+				Codename  string
 				GoVersion string
 				BuildTime string
 				Os        string
 				Arch      string
 			}{
 				Version:   Version,
+				Codename:  Codename,
 				GoVersion: runtime.Version(),
 				BuildTime: BuildDate,
 				Os:        runtime.GOOS,

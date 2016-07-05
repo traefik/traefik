@@ -17,9 +17,13 @@ if [ -z "$VERSION" ]; then
     VERSION=$(git rev-parse HEAD)
 fi
 
+if [ -z "$CODENAME" ]; then
+    CODENAME=cheddar
+fi
+
 if [ -z "$DATE" ]; then
     DATE=$(date -u '+%Y-%m-%d_%I:%M:%S%p')
 fi
 
 # Build binaries
-CGO_ENABLED=0 GOGC=off go build $FLAGS -ldflags "-s -w -X main.Version=$VERSION -X main.BuildDate=$DATE" -a -installsuffix nocgo -o dist/traefik .
+CGO_ENABLED=0 GOGC=off go build $FLAGS -ldflags "-s -w -X main.Version=$VERSION -X main.Codename=$CODENAME -X main.BuildDate=$DATE" -a -installsuffix nocgo -o dist/traefik .
