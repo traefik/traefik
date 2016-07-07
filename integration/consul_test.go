@@ -12,6 +12,7 @@ import (
 
 	"errors"
 	"github.com/containous/traefik/integration/utils"
+	"github.com/containous/traefik/provider"
 	checker "github.com/vdemeester/shakers"
 	"io/ioutil"
 	"os"
@@ -24,7 +25,7 @@ type ConsulSuite struct {
 	kv store.Store
 }
 
-func (s *ConsulSuite) SetUpTest(c *check.C) {
+func (s *ConsulSuite) setupConsul(c *check.C) {
 	s.createComposeProject(c, "consul")
 	s.composeProject.Start(c)
 
@@ -52,6 +53,45 @@ func (s *ConsulSuite) SetUpTest(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *ConsulSuite) setupConsulTLS(c *check.C) {
+	s.createComposeProject(c, "consul_tls")
+	s.composeProject.Start(c)
+
+	consul.Register()
+	clientTLS := &provider.ClientTLS{
+		CA:                 "resources/tls/ca.cert",
+		Cert:               "resources/tls/consul.cert",
+		Key:                "resources/tls/consul.key",
+		InsecureSkipVerify: true,
+	}
+	TLSConfig, err := clientTLS.CreateTLSConfig()
+	c.Assert(err, checker.IsNil)
+
+	kv, err := libkv.NewStore(
+		store.CONSUL,
+		[]string{s.composeProject.Container(c, "consul").NetworkSettings.IPAddress + ":8585"},
+		&store.Config{
+			ConnectionTimeout: 10 * time.Second,
+			TLS:               TLSConfig,
+		},
+	)
+
+	if err != nil {
+		c.Fatal("Cannot create store consul")
+	}
+	s.kv = kv
+
+	// wait for consul
+	err = utils.Try(60*time.Second, func() error {
+		_, err := kv.Exists("test")
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+}
+
 func (s *ConsulSuite) TearDownTest(c *check.C) {
 	// shutdown and delete compose project
 	if s.composeProject != nil {
@@ -62,6 +102,7 @@ func (s *ConsulSuite) TearDownTest(c *check.C) {
 func (s *ConsulSuite) TearDownSuite(c *check.C) {}
 
 func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
+	s.setupConsul(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
@@ -79,6 +120,7 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
+	s.setupConsul(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
@@ -201,6 +243,7 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 }
 
 func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
+	s.setupConsul(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 	err := s.kv.Put("traefik/entrypoints/http/address", []byte(":8001"), nil)
 	c.Assert(err, checker.IsNil)
@@ -304,4 +347,47 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, 200)
+}
+
+func (s *ConsulSuite) TestGlobalConfigurationWithClientTLS(c *check.C) {
+	s.setupConsulTLS(c)
+	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
+
+	err := s.kv.Put("traefik/web/address", []byte(":8081"), nil)
+	c.Assert(err, checker.IsNil)
+
+	// wait for consul
+	err = utils.Try(60*time.Second, func() error {
+		_, err := s.kv.Exists("traefik/web/address")
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+
+	// start traefik
+	cmd := exec.Command(traefikBinary, "--configFile=fixtures/simple_web.toml",
+		"--consul", "--consul.endpoint="+consulHost+":8585",
+		"--consul.tls.ca=resources/tls/ca.cert",
+		"--consul.tls.cert=resources/tls/consul.cert",
+		"--consul.tls.key=resources/tls/consul.key",
+		"--consul.tls.insecureskipverify")
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
+
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, func(res *http.Response) error {
+		_, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+
 }

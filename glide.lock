@@ -1,5 +1,5 @@
-hash: cf8f42aae193bd26b7670157094e6b11590443bc500f0a78243ee21bd3ed314e
-updated: 2016-06-23T17:46:42.381770076+02:00
+hash: 70ad4e576bc1fa845512cce6b4ade5c422ba4fb5bb0472b37e1d3a93f13809cd
+updated: 2016-07-07T17:33:16.358775373+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: 3f7947a25d970e1e5f512276c14d5dcf731ccd5e
@@ -36,7 +36,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: edd7cb5249d0a45262b20bb58b838ecf4fb368bd
+  version: 4e17ab5d319ac5b70b2769442947567a83386fbc
   subpackages:
   - reference
   - digest
@@ -100,7 +100,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: 6e061b2d580d80347b7c5c4dfc8730de7403a145
+  version: 64e3033d3c7f80af3f925f4665a9bc1af75d6153
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -134,7 +134,7 @@ imports:
 - name: github.com/Microsoft/go-winio
   version: ce2922f643c8fd76b46cadc7f404a06282678b34
 - name: github.com/miekg/dns
-  version: 48ab6605c66ac797e07f615101c3e9e10e932b66
+  version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/moul/http2curl
@@ -142,7 +142,7 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 5dc3f3576efb5262bf582217e93f86c93944374d
+  version: 9d7831e41d3ef428b67685eeb27f2b4a22a92391
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -219,7 +219,7 @@ imports:
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: f3241ce8505855877cc8a9717bd61a0f7c4ea83c
+  version: d81fdb778bf2c40a91b24519d60cdc5767318829
   subpackages:
   - ocsp
 - name: golang.org/x/net
