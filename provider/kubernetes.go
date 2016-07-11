@@ -20,6 +20,7 @@ import (
 const (
 	serviceAccountToken  = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	serviceAccountCACert = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+	defaultKubeEndpoint = "http://127.0.0.1:8080"
 )
 
 // Namespaces holds kubernetes namespaces
@@ -74,8 +75,14 @@ func (provider *Kubernetes) createClient() (k8s.Client, error) {
 	}
 	kubernetesHost := os.Getenv("KUBERNETES_SERVICE_HOST")
 	kubernetesPort := os.Getenv("KUBERNETES_SERVICE_PORT_HTTPS")
-	if len(kubernetesPort) > 0 && len(kubernetesHost) > 0 {
+	// Prioritize user provided kubernetes endpoint since kube container runtime will almost always have it
+	if provider.Endpoint == "" && len(kubernetesPort) > 0 && len(kubernetesHost) > 0 {
+		log.Debugf("Using environment provided kubernetes endpoint")
 		provider.Endpoint = "https://" + kubernetesHost + ":" + kubernetesPort
+	}
+	if provider.Endpoint == "" {
+		log.Debugf("Using default kubernetes api endpoint")
+		provider.Endpoint = defaultKubeEndpoint
 	}
 	log.Debugf("Kubernetes endpoint: %s", provider.Endpoint)
 	return k8s.NewClient(provider.Endpoint, caCert, token)
