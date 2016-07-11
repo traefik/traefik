@@ -8,7 +8,7 @@ logLevel = "DEBUG"
 
 
 [etcd]
-  endpoint = "{{.EtcdHost}}:4001"
+  endpoint = "{{.EtcdHost}}:2379"
   prefix = "/traefik"
   watch = true
 

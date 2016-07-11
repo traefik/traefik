@@ -251,7 +251,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default Etcd
 	var defaultEtcd provider.Etcd
 	defaultEtcd.Watch = true
-	defaultEtcd.Endpoint = "127.0.0.1:400"
+	defaultEtcd.Endpoint = "127.0.0.1:2379"
 	defaultEtcd.Prefix = "/traefik"
 	defaultEtcd.Constraints = []types.Constraint{}
 
