@@ -253,9 +253,30 @@ Here is an example of backends and servers definition:
 - `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
 - a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
 
-# Launch
+# Configuration
 
-Træfɪk can be configured using a TOML file configuration, arguments, or both.
+Træfɪk's configuration has two parts: 
+
+- The [static Træfɪk configuration](/basics#static-trfk-configuration) which is loaded only at the begining. 
+- The [dynamic Træfɪk configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
+
+
+## Static Træfɪk configuration
+
+The static configuration is the global configuration which setting up connections to configuration backends and entrypoints. 
+
+Træfɪk can be configured using many configuration sources with the following precedence order. 
+Each item takes precedence over the item below it:
+
+- [Key-value Store](/basics/#key-value-stores)
+- [Arguments](/basics/#arguments)
+- [Configuration file](/basics/#configuration-file)
+- Default
+
+It means that arguments overrides configuration file, and Key-value Store overrides arguments.
+
+### Configuration file
+
 By default, Træfɪk will try to find a `traefik.toml` in the following places:
 
 - `/etc/traefik/`
@@ -268,15 +289,35 @@ You can override this by setting a `configFile` argument:
 $ traefik --configFile=foo/bar/myconfigfile.toml
 ```
 
-Træfɪk uses the following precedence order. Each item takes precedence over the item below it:
+Please refer to the [global configuration](/toml/#global-configuration) section to get documentation on it.
 
-- arguments
-- configuration file
-- default
+### Arguments
 
-It means that arguments overrides configuration file.
 Each argument is described in the help section:
 
 ```bash
 $ traefik --help
 ```
+
+Note that all default values will be displayed as well.
+
+### Key-value stores
+
+Træfɪk supports several Key-value stores:
+
+- [Consul](https://consul.io)
+- [etcd](https://coreos.com/etcd/)
+- [ZooKeeper](https://zookeeper.apache.org/) 
+- [boltdb](https://github.com/boltdb/bolt)
+
+Please refer to the [User Guide Key-value store configuration](/user-guide/kv-config/) section to get documentation on it.
+
+## Dynamic Træfɪk configuration
+
+Træfɪk can hot-reload its configuration.
+
+The dynamic configuration concern route rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
+We only need to enable `watch` option to make Træfɪk watch configuration backend changes and generate its configuration automatically.
+Routes to services will be created and updated instantly at any changes.
+
+Please refer to the [configuration backends](/toml/#configuration-backends) section to get documentation on it.
