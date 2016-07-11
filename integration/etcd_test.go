@@ -30,7 +30,7 @@ func (s *EtcdSuite) SetUpSuite(c *check.C) {
 	s.composeProject.Start(c)
 
 	etcd.Register()
-	url := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress + ":4001"
+	url := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress + ":2379"
 	kv, err := libkv.NewStore(
 		store.ETCD,
 		[]string{url},
