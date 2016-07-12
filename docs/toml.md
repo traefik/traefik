@@ -665,6 +665,10 @@ Træfɪk can be configured to use Kubernetes Ingress as a backend configuration:
 #
 # endpoint = "http://localhost:8080"
 # namespaces = ["default","production"]
+#
+# See: http://kubernetes.io/docs/user-guide/labels/#list-and-watch-filtering
+# labelselector = "A and not B"
+#
 ```
 
 Annotations can be used on containers to override default behaviour for the whole Ingress resource:

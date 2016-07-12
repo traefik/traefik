@@ -20,7 +20,7 @@ import (
 const (
 	serviceAccountToken  = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 	serviceAccountCACert = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-	defaultKubeEndpoint = "http://127.0.0.1:8080"
+	defaultKubeEndpoint  = "http://127.0.0.1:8080"
 )
 
 // Namespaces holds kubernetes namespaces
@@ -55,6 +55,7 @@ type Kubernetes struct {
 	Endpoint               string     `description:"Kubernetes server endpoint"`
 	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces"`
+	LabelSelector          string     `description:"Kubernetes api label selector to use"`
 	lastConfiguration      safe.Safe
 }
 
@@ -103,7 +104,8 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 			for {
 				stopWatch := make(chan bool, 5)
 				defer close(stopWatch)
-				eventsChan, errEventsChan, err := k8sClient.WatchAll(stopWatch)
+				log.Debugf("Using lable selector: %s", provider.LabelSelector)
+				eventsChan, errEventsChan, err := k8sClient.WatchAll(provider.LabelSelector, stopWatch)
 				if err != nil {
 					log.Errorf("Error watching kubernetes events: %v", err)
 					timer := time.NewTimer(1 * time.Second)
@@ -174,7 +176,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 }
 
 func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configuration, error) {
-	ingresses, err := k8sClient.GetIngresses(func(ingress k8s.Ingress) bool {
+	ingresses, err := k8sClient.GetIngresses(provider.LabelSelector, func(ingress k8s.Ingress) bool {
 		if len(provider.Namespaces) == 0 {
 			return true
 		}

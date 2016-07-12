@@ -273,6 +273,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultKubernetes provider.Kubernetes
 	defaultKubernetes.Watch = true
 	defaultKubernetes.Endpoint = ""
+	defaultKubernetes.LabelSelector = ""
 	defaultKubernetes.Constraints = []types.Constraint{}
 
 	defaultConfiguration := GlobalConfiguration{
