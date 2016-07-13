@@ -344,14 +344,6 @@ func (provider *Marathon) getEntryPoints(application marathon.Application) []str
 // getFrontendRule returns the frontend rule for the specified application, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (provider *Marathon) getFrontendRule(application marathon.Application) string {
-	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
-	// TODO: backwards compatibility with DEPRECATED rule.Value
-	if value, err := provider.getLabel(application, "traefik.frontend.value"); err == nil {
-		log.Warnf("Label traefik.frontend.value=%s is DEPRECATED, please refer to the rule label: https://github.com/containous/traefik/blob/master/docs/index.md#marathon", value)
-		rule, _ := provider.getLabel(application, "traefik.frontend.rule")
-		return rule + ":" + value
-	}
-	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
 	if label, err := provider.getLabel(application, "traefik.frontend.rule"); err == nil {
 		return label
 	}
