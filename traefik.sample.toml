@@ -75,7 +75,7 @@
 # storageFile = "acme.json"
 
 # Entrypoint to proxy acme challenge to.
-# WARNING, must point to an entrypoint on port 443 
+# WARNING, must point to an entrypoint on port 443
 #
 # Required
 #
@@ -340,11 +340,14 @@
 # and KUBERNETES_SERVICE_PORT_HTTPS as endpoint
 # Secure token will be found in /var/run/secrets/kubernetes.io/serviceaccount/token
 # and SSL CA cert in /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-# 
+#
 # Optional
 #
 # endpoint = "http://localhost:8080"
 # namespaces = ["default"]
+#
+# See: http://kubernetes.io/docs/user-guide/labels/#list-and-watch-filtering
+# labelselector = "A and not B"
 
 ################################################################
 # Consul KV configuration backend

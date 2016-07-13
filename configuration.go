@@ -272,7 +272,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	//default Kubernetes
 	var defaultKubernetes provider.Kubernetes
 	defaultKubernetes.Watch = true
-	defaultKubernetes.Endpoint = "http://127.0.0.1:8080"
+	defaultKubernetes.Endpoint = ""
+	defaultKubernetes.LabelSelector = ""
 	defaultKubernetes.Constraints = []types.Constraint{}
 
 	defaultConfiguration := GlobalConfiguration{

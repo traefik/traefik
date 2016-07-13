@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	log "github.com/Sirupsen/logrus"
 	"github.com/parnurzeal/gorequest"
 	"net/http"
 	"net/url"
@@ -21,10 +22,10 @@ const (
 
 // Client is a client for the Kubernetes master.
 type Client interface {
-	GetIngresses(predicate func(Ingress) bool) ([]Ingress, error)
+	GetIngresses(labelSelector string, predicate func(Ingress) bool) ([]Ingress, error)
 	GetService(name, namespace string) (Service, error)
 	GetEndpoints(name, namespace string) (Endpoints, error)
-	WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error)
+	WatchAll(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error)
 }
 
 type clientImpl struct {
@@ -50,11 +51,26 @@ func NewClient(baseURL string, caCert []byte, token string) (Client, error) {
 	}, nil
 }
 
-// GetIngresses returns all ingresses in the cluster
-func (c *clientImpl) GetIngresses(predicate func(Ingress) bool) ([]Ingress, error) {
-	getURL := c.endpointURL + extentionsEndpoint + defaultIngress
+func makeQueryString(baseParams map[string]string, labelSelector string) (string, error) {
+	if labelSelector != "" {
+		baseParams["labelSelector"] = labelSelector
+	}
+	queryData, err := json.Marshal(baseParams)
+	if err != nil {
+		return "", err
+	}
+	return string(queryData), nil
+}
 
-	body, err := c.do(c.request(getURL))
+// GetIngresses returns all ingresses in the cluster
+func (c *clientImpl) GetIngresses(labelSelector string, predicate func(Ingress) bool) ([]Ingress, error) {
+	getURL := c.endpointURL + extentionsEndpoint + defaultIngress
+	queryParams := map[string]string{}
+	queryData, err := makeQueryString(queryParams, labelSelector)
+	if err != nil {
+		return nil, fmt.Errorf("Had problems constructing query string %s : %v", queryParams, err)
+	}
+	body, err := c.do(c.request(getURL, queryData))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ingresses request: GET %q : %v", getURL, err)
 	}
@@ -73,16 +89,16 @@ func (c *clientImpl) GetIngresses(predicate func(Ingress) bool) ([]Ingress, erro
 }
 
 // WatchIngresses returns all ingresses in the cluster
-func (c *clientImpl) WatchIngresses(stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c *clientImpl) WatchIngresses(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	getURL := c.endpointURL + extentionsEndpoint + defaultIngress
-	return c.watch(getURL, stopCh)
+	return c.watch(getURL, labelSelector, stopCh)
 }
 
 // GetService returns the named service from the named namespace
 func (c *clientImpl) GetService(name, namespace string) (Service, error) {
 	getURL := c.endpointURL + APIEndpoint + namespaces + namespace + "/services/" + name
 
-	body, err := c.do(c.request(getURL))
+	body, err := c.do(c.request(getURL, ""))
 	if err != nil {
 		return Service{}, fmt.Errorf("failed to create services request: GET %q : %v", getURL, err)
 	}
@@ -95,9 +111,9 @@ func (c *clientImpl) GetService(name, namespace string) (Service, error) {
 }
 
 // WatchServices returns all services in the cluster
-func (c *clientImpl) WatchServices(stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c *clientImpl) WatchServices(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	getURL := c.endpointURL + APIEndpoint + "/services"
-	return c.watch(getURL, stopCh)
+	return c.watch(getURL, labelSelector, stopCh)
 }
 
 // GetEndpoints returns the named Endpoints
@@ -105,7 +121,7 @@ func (c *clientImpl) WatchServices(stopCh <-chan bool) (chan interface{}, chan e
 func (c *clientImpl) GetEndpoints(name, namespace string) (Endpoints, error) {
 	getURL := c.endpointURL + APIEndpoint + namespaces + namespace + "/endpoints/" + name
 
-	body, err := c.do(c.request(getURL))
+	body, err := c.do(c.request(getURL, ""))
 	if err != nil {
 		return Endpoints{}, fmt.Errorf("failed to create endpoints request: GET %q : %v", getURL, err)
 	}
@@ -118,28 +134,28 @@ func (c *clientImpl) GetEndpoints(name, namespace string) (Endpoints, error) {
 }
 
 // WatchEndpoints returns endpoints in the cluster
-func (c *clientImpl) WatchEndpoints(stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c *clientImpl) WatchEndpoints(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	getURL := c.endpointURL + APIEndpoint + "/endpoints"
-	return c.watch(getURL, stopCh)
+	return c.watch(getURL, labelSelector, stopCh)
 }
 
 // WatchAll returns events in the cluster
-func (c *clientImpl) WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	watchCh := make(chan interface{}, 10)
 	errCh := make(chan error, 10)
 
 	stopIngresses := make(chan bool)
-	chanIngresses, chanIngressesErr, err := c.WatchIngresses(stopIngresses)
+	chanIngresses, chanIngressesErr, err := c.WatchIngresses(labelSelector, stopIngresses)
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
 	stopServices := make(chan bool)
-	chanServices, chanServicesErr, err := c.WatchServices(stopServices)
+	chanServices, chanServicesErr, err := c.WatchServices(labelSelector, stopServices)
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
 	stopEndpoints := make(chan bool)
-	chanEndpoints, chanEndpointsErr, err := c.WatchEndpoints(stopEndpoints)
+	chanEndpoints, chanEndpointsErr, err := c.WatchEndpoints(labelSelector, stopEndpoints)
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
@@ -188,22 +204,26 @@ func (c *clientImpl) do(request *gorequest.SuperAgent) ([]byte, error) {
 	return body, nil
 }
 
-func (c *clientImpl) request(url string) *gorequest.SuperAgent {
+func (c *clientImpl) request(reqURL string, queryContent interface{}) *gorequest.SuperAgent {
 	// Make request to Kubernetes API
-	request := gorequest.New().Get(url)
+	parsedURL, parseErr := url.Parse(reqURL)
+	if parseErr != nil {
+		log.Errorf("Had issues parsing url %s. Trying anyway.", reqURL)
+	}
+	request := gorequest.New().Get(reqURL)
 	request.Transport.DisableKeepAlives = true
 
-	if strings.HasPrefix(url, "http://") {
-		return request
-	}
-
-	if len(c.token) > 0 {
-		request.Header["Authorization"] = "Bearer " + c.token
+	if parsedURL.Scheme == "https" {
 		pool := x509.NewCertPool()
 		pool.AppendCertsFromPEM(c.caCert)
 		c.tls = &tls.Config{RootCAs: pool}
+		request.TLSClientConfig(c.tls)
 	}
-	return request.TLSClientConfig(c.tls)
+	if len(c.token) > 0 {
+		request.Header["Authorization"] = "Bearer " + c.token
+	}
+	request.Query(queryContent)
+	return request
 }
 
 // GenericObject generic object
@@ -212,12 +232,12 @@ type GenericObject struct {
 	ListMeta `json:"metadata,omitempty"`
 }
 
-func (c *clientImpl) watch(url string, stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c *clientImpl) watch(url string, labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	watchCh := make(chan interface{}, 10)
 	errCh := make(chan error, 10)
 
 	// get version
-	body, err := c.do(c.request(url))
+	body, err := c.do(c.request(url, ""))
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to do version request: GET %q : %v", url, err)
 	}
@@ -227,10 +247,12 @@ func (c *clientImpl) watch(url string, stopCh <-chan bool) (chan interface{}, ch
 		return watchCh, errCh, fmt.Errorf("failed to decode version %v", err)
 	}
 	resourceVersion := generic.ResourceVersion
-
-	url = url + "?watch&resourceVersion=" + resourceVersion
-	// Make request to Kubernetes API
-	request := c.request(url)
+	queryParams := map[string]string{"watch": "", "resourceVersion": resourceVersion}
+	queryData, err := makeQueryString(queryParams, labelSelector)
+	if err != nil {
+		return watchCh, errCh, fmt.Errorf("Unable to construct query args")
+	}
+	request := c.request(url, queryData)
 	req, err := request.MakeRequest()
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to make watch request: GET %q : %v", url, err)

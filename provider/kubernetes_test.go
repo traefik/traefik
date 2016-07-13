@@ -1250,7 +1250,7 @@ type clientMock struct {
 	watchChan chan interface{}
 }
 
-func (c clientMock) GetIngresses(predicate func(k8s.Ingress) bool) ([]k8s.Ingress, error) {
+func (c clientMock) GetIngresses(labelString string, predicate func(k8s.Ingress) bool) ([]k8s.Ingress, error) {
 	var ingresses []k8s.Ingress
 	for _, ingress := range c.ingresses {
 		if predicate(ingress) {
@@ -1259,7 +1259,7 @@ func (c clientMock) GetIngresses(predicate func(k8s.Ingress) bool) ([]k8s.Ingres
 	}
 	return ingresses, nil
 }
-func (c clientMock) WatchIngresses(predicate func(k8s.Ingress) bool, stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c clientMock) WatchIngresses(labelString string, predicate func(k8s.Ingress) bool, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	return c.watchChan, make(chan error), nil
 }
 func (c clientMock) GetService(name, namespace string) (k8s.Service, error) {
@@ -1280,6 +1280,6 @@ func (c clientMock) GetEndpoints(name, namespace string) (k8s.Endpoints, error) 
 	return k8s.Endpoints{}, nil
 }
 
-func (c clientMock) WatchAll(stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c clientMock) WatchAll(labelString string, stopCh <-chan bool) (chan interface{}, chan error, error) {
 	return c.watchChan, make(chan error), nil
 }
