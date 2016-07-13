@@ -793,7 +793,7 @@ Træfɪk can be configured to use Etcd as a backend configuration:
 #
 # Required
 #
-endpoint = "127.0.0.1:4001"
+endpoint = "127.0.0.1:2379"
 
 # Enable watch Etcd changes
 #
