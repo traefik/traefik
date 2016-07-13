@@ -184,7 +184,7 @@ func (server *Server) defaultConfigurationValues(configuration *types.Configurat
 	for backendName, backend := range configuration.Backends {
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
 		if err != nil {
-			log.Warnf("Error loading load balancer method '%+v' for backend %s: %v. Using default wrr.", backend.LoadBalancer, backendName, err)
+			log.Debugf("Error loading load balancer method '%+v' for backend %s: %v. Using default wrr.", backend.LoadBalancer, backendName, err)
 			backend.LoadBalancer = &types.LoadBalancer{Method: "wrr"}
 		}
 	}
