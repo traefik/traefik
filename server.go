@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"golang.org/x/net/context"
 	"net/http"
 	"net/url"
 	"os"
@@ -97,20 +98,37 @@ func (server *Server) Start() {
 
 // Stop stops the server
 func (server *Server) Stop() {
-	for _, serverEntryPoint := range server.serverEntryPoints {
-		serverEntryPoint.httpServer.BlockingClose()
+	for serverEntryPointName, serverEntryPoint := range server.serverEntryPoints {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut)*time.Second)
+		go func() {
+			log.Debugf("Waiting %d seconds before killing connections on entrypoint %s...", 30, serverEntryPointName)
+			serverEntryPoint.httpServer.BlockingClose()
+			cancel()
+		}()
+		<-ctx.Done()
 	}
 	server.stopChan <- true
 }
 
 // Close destroys the server
 func (server *Server) Close() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut)*time.Second)
+	go func(ctx context.Context) {
+		<-ctx.Done()
+		if ctx.Err() == context.Canceled {
+			return
+		} else if ctx.Err() == context.DeadlineExceeded {
+			log.Debugf("I love you all :'( ✝")
+			os.Exit(1)
+		}
+	}(ctx)
 	server.routinesPool.Stop()
 	close(server.configurationChan)
 	close(server.configurationValidatedChan)
 	close(server.signals)
 	close(server.stopChan)
 	server.loggerMiddleware.Close()
+	cancel()
 }
 
 func (server *Server) startHTTPServers() {
