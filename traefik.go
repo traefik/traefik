@@ -11,10 +11,6 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/boltdb"
-	"github.com/docker/libkv/store/consul"
-	"github.com/docker/libkv/store/etcd"
-	"github.com/docker/libkv/store/zookeeper"
 	fmtlog "log"
 	"net/http"
 	"os"
@@ -22,7 +18,6 @@ import (
 	"runtime"
 	"strings"
 	"text/template"
-	"time"
 )
 
 var versionTemplate = `Version:      {{.Version}}
@@ -117,63 +112,7 @@ Complete documentation is available at https://traefik.io`,
 
 	traefikConfiguration.ConfigFile = toml.ConfigFileUsed()
 
-	var kv *staert.KvSource
-	var err error
-	storeConfig := &store.Config{
-		ConnectionTimeout: 30 * time.Second,
-		Bucket:            "traefik",
-	}
-	if traefikConfiguration.Consul != nil {
-		//init KvSource
-		if traefikConfiguration.Consul.TLS != nil {
-			storeConfig.TLS, err = traefikConfiguration.Consul.TLS.CreateTLSConfig()
-			if err != nil {
-				fmtlog.Println(err)
-				os.Exit(-1)
-			}
-		}
-		consul.Register()
-		kv, err = staert.NewKvSource(
-			store.CONSUL,
-			strings.Split(traefikConfiguration.Consul.Endpoint, ","),
-			storeConfig,
-			strings.TrimPrefix(traefikConfiguration.Consul.Prefix, "/"),
-		)
-	} else if traefikConfiguration.Etcd != nil {
-		//init KvSource
-		if traefikConfiguration.Etcd.TLS != nil {
-			storeConfig.TLS, err = traefikConfiguration.Etcd.TLS.CreateTLSConfig()
-			if err != nil {
-				fmtlog.Println(err)
-				os.Exit(-1)
-			}
-		}
-		etcd.Register()
-		kv, err = staert.NewKvSource(
-			store.ETCD,
-			strings.Split(traefikConfiguration.Etcd.Endpoint, ","),
-			storeConfig,
-			traefikConfiguration.Etcd.Prefix,
-		)
-	} else if traefikConfiguration.Zookeeper != nil {
-		//init KvSource
-		zookeeper.Register()
-		kv, err = staert.NewKvSource(
-			store.ZK,
-			strings.Split(traefikConfiguration.Zookeeper.Endpoint, ","),
-			nil,
-			traefikConfiguration.Zookeeper.Prefix,
-		)
-	} else if traefikConfiguration.Boltdb != nil {
-		//init KvSource
-		boltdb.Register()
-		kv, err = staert.NewKvSource(
-			store.BOLTDB,
-			strings.Split(traefikConfiguration.Boltdb.Endpoint, ","),
-			nil,
-			traefikConfiguration.Boltdb.Prefix,
-		)
-	}
+	kv, err := CreateKvSource(traefikConfiguration)
 	if err != nil {
 		fmtlog.Println(err)
 		os.Exit(-1)
@@ -254,4 +193,40 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	server.Start()
 	defer server.Close()
 	log.Info("Shutting down")
+}
+
+// CreateKvSource creates KvSource
+// TLS support is enable for Consul and ects backends
+func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSource, error) {
+	var kv *staert.KvSource
+	var store store.Store
+	var err error
+
+	switch {
+	case traefikConfiguration.Consul != nil:
+		store, err = traefikConfiguration.Consul.CreateStore()
+		kv = &staert.KvSource{
+			Store:  store,
+			Prefix: traefikConfiguration.Consul.Prefix,
+		}
+	case traefikConfiguration.Etcd != nil:
+		store, err = traefikConfiguration.Etcd.CreateStore()
+		kv = &staert.KvSource{
+			Store:  store,
+			Prefix: traefikConfiguration.Etcd.Prefix,
+		}
+	case traefikConfiguration.Zookeeper != nil:
+		store, err = traefikConfiguration.Zookeeper.CreateStore()
+		kv = &staert.KvSource{
+			Store:  store,
+			Prefix: traefikConfiguration.Zookeeper.Prefix,
+		}
+	case traefikConfiguration.Boltdb != nil:
+		store, err = traefikConfiguration.Boltdb.CreateStore()
+		kv = &staert.KvSource{
+			Store:  store,
+			Prefix: traefikConfiguration.Boltdb.Prefix,
+		}
+	}
+	return kv, err
 }

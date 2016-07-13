@@ -314,9 +314,14 @@ Please refer to the [User Guide Key-value store configuration](/user-guide/kv-co
 
 ## Dynamic Træfɪk configuration
 
-Træfɪk can hot-reload its configuration.
+The dynamic configuration concerns : 
 
-The dynamic configuration concern route rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
+- [Frontends](/basics/#frontends)
+- [Backends](/basics/#backends) 
+- [Servers](/basics/#servers) 
+
+Træfɪk can hot-reload those rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
+
 We only need to enable `watch` option to make Træfɪk watch configuration backend changes and generate its configuration automatically.
 Routes to services will be created and updated instantly at any changes.
 

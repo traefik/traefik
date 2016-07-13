@@ -27,6 +27,26 @@ type Kv struct {
 	kvclient     store.Store
 }
 
+func (provider *Kv) createStore() (store.Store, error) {
+	storeConfig := &store.Config{
+		ConnectionTimeout: 30 * time.Second,
+		Bucket:            "traefik",
+	}
+
+	if provider.TLS != nil {
+		var err error
+		storeConfig.TLS, err = provider.TLS.CreateTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return libkv.NewStore(
+		provider.storeType,
+		strings.Split(provider.Endpoint, ","),
+		storeConfig,
+	)
+}
+
 func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix string, stop chan bool) error {
 	operation := func() error {
 		events, err := provider.kvclient.WatchTree(provider.Prefix, make(chan struct{}))
@@ -63,32 +83,10 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 }
 
 func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
-	storeConfig := &store.Config{
-		ConnectionTimeout: 30 * time.Second,
-		Bucket:            "traefik",
-	}
-
-	if provider.TLS != nil {
-		var err error
-		storeConfig.TLS, err = provider.TLS.CreateTLSConfig()
-		if err != nil {
-			return err
-		}
-	}
-
 	operation := func() error {
-		kv, err := libkv.NewStore(
-			provider.storeType,
-			strings.Split(provider.Endpoint, ","),
-			storeConfig,
-		)
-		if err != nil {
-			return fmt.Errorf("Failed to Connect to KV store: %v", err)
-		}
-		if _, err := kv.Exists("qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"); err != nil {
+		if _, err := provider.kvclient.Exists("qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"); err != nil {
 			return fmt.Errorf("Failed to test KV store connection: %v", err)
 		}
-		provider.kvclient = kv
 		if provider.Watch {
 			pool.Go(func(stop chan bool) {
 				err := provider.watchKv(configurationChan, provider.Prefix, stop)

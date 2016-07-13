@@ -10,7 +10,6 @@ import (
 
 	"golang.org/x/net/context"
 
-	"crypto/tls"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
@@ -46,12 +45,6 @@ func (provider *Docker) createClient() (client.APIClient, error) {
 		config, err := provider.TLS.CreateTLSConfig()
 		if err != nil {
 			return nil, err
-		}
-		// TO DELETE IF USELESS : default docker TLS Client config
-		config.MaxVersion = tls.VersionTLS12
-		config.CipherSuites = []uint16{
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 		}
 		tr := &http.Transport{
 			TLSClientConfig: config,

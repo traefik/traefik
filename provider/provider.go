@@ -110,7 +110,6 @@ type ClientTLS struct {
 func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 	var err error
 	caPool := x509.NewCertPool()
-	// TODO : error if CA=="" || Cert=="" || Key==""
 	if clientTLS.CA != "" {
 		var ca []byte
 		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {

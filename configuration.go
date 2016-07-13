@@ -179,6 +179,7 @@ type TLS struct {
 }
 
 // Certificates defines traefik certificates type
+// Certs and Keys could be either a file path, or the file content itself
 type Certificates []Certificate
 
 //CreateTLSConfig creates a TLS config from Certificate structures
@@ -248,7 +249,7 @@ func (certs *Certificates) Type() string {
 }
 
 // Certificate holds a SSL cert/key pair
-// May can contain either path or file contents
+// Certs and Key could be either a file path, or the file content itself
 type Certificate struct {
 	CertFile string
 	KeyFile  string
