@@ -218,6 +218,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	//default Docker
 	var defaultDocker provider.Docker
 	defaultDocker.Watch = true
+	defaultDocker.ExposedByDefault = true
 	defaultDocker.Endpoint = "unix:///var/run/docker.sock"
 
 	// default File

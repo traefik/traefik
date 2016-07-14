@@ -647,8 +647,9 @@ func TestDockerGetLabels(t *testing.T) {
 func TestDockerTraefikFilter(t *testing.T) {
 	provider := Docker{}
 	containers := []struct {
-		container docker.ContainerJSON
-		expected  bool
+		container        docker.ContainerJSON
+		exposedByDefault bool
+		expected         bool
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -658,7 +659,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 				Config:          &container.Config{},
 				NetworkSettings: &docker.NetworkSettings{},
 			},
-			expected: false,
+			exposedByDefault: true,
+			expected:         false,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -678,7 +680,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			exposedByDefault: true,
+			expected:         false,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -698,7 +701,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			exposedByDefault: true,
+			expected:         true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -715,7 +719,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: false,
+			exposedByDefault: true,
+			expected:         false,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -731,7 +736,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			exposedByDefault: true,
+			expected:         true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -752,7 +758,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			exposedByDefault: true,
+			expected:         true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -772,7 +779,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			exposedByDefault: true,
+			expected:         true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -792,7 +800,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			exposedByDefault: true,
+			expected:         true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -812,12 +821,51 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			expected: true,
+			exposedByDefault: true,
+			expected:         true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			exposedByDefault: false,
+			expected:         false,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.enable": "true",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			exposedByDefault: false,
+			expected:         true,
 		},
 	}
 
 	for _, e := range containers {
-		actual := provider.ContainerFilter(e.container)
+		actual := provider.containerFilter(e.container, e.exposedByDefault)
 		if actual != e.expected {
 			t.Fatalf("expected %v for %+v, got %+v", e.expected, e, actual)
 		}
@@ -971,7 +1019,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 	}
 
 	provider := &Docker{
-		Domain: "docker.localhost",
+		Domain:           "docker.localhost",
+		ExposedByDefault: true,
 	}
 
 	for _, c := range cases {

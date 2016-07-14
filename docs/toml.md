@@ -521,6 +521,13 @@ watch = true
 #
 # filename = "docker.tmpl"
 
+# Expose containers by default in traefik
+#
+# Optional
+# Default: true
+#
+exposedbydefault = true
+
 # Enable docker TLS connection
 #
 #  [docker.tls]

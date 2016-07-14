@@ -30,9 +30,10 @@ const DockerAPIVersion string = "1.21"
 // Docker holds configurations of the Docker provider.
 type Docker struct {
 	BaseProvider
-	Endpoint string     `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
-	Domain   string     `description:"Default domain used"`
-	TLS      *DockerTLS `description:"Enable Docker TLS support"`
+	Endpoint         string     `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
+	Domain           string     `description:"Default domain used"`
+	TLS              *DockerTLS `description:"Enable Docker TLS support"`
+	ExposedByDefault bool       `description:"Expose containers by default"`
 }
 
 // DockerTLS holds TLS specific configurations
@@ -177,7 +178,9 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 	}
 
 	// filter containers
-	filteredContainers := fun.Filter(provider.ContainerFilter, containersInspected).([]dockertypes.ContainerJSON)
+	filteredContainers := fun.Filter(func(container dockertypes.ContainerJSON) bool {
+		return provider.containerFilter(container, provider.ExposedByDefault)
+	}, containersInspected).([]dockertypes.ContainerJSON)
 
 	frontends := map[string][]dockertypes.ContainerJSON{}
 	for _, container := range filteredContainers {
@@ -202,8 +205,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 	return configuration
 }
 
-// ContainerFilter checks if container have to be exposed
-func (provider *Docker) ContainerFilter(container dockertypes.ContainerJSON) bool {
+func (provider *Docker) containerFilter(container dockertypes.ContainerJSON, exposedByDefaultFlag bool) bool {
 	_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
 	if len(container.NetworkSettings.Ports) == 0 && err != nil {
 		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
@@ -214,7 +216,7 @@ func (provider *Docker) ContainerFilter(container dockertypes.ContainerJSON) boo
 		return false
 	}
 
-	if container.Config.Labels["traefik.enable"] == "false" {
+	if !isContainerEnabled(container, exposedByDefaultFlag) {
 		log.Debugf("Filtering disabled container %s", container.Name)
 		return false
 	}
@@ -324,6 +326,10 @@ func (provider *Docker) getEntryPoints(container dockertypes.ContainerJSON) []st
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
+}
+
+func isContainerEnabled(container dockertypes.ContainerJSON, exposedByDefault bool) bool {
+	return exposedByDefault && container.Config.Labels["traefik.enable"] != "false" || container.Config.Labels["traefik.enable"] == "true"
 }
 
 func getLabel(container dockertypes.ContainerJSON, label string) (string, error) {
