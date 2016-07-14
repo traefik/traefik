@@ -108,6 +108,7 @@ func (server *Server) Close() {
 	server.routinesPool.Stop()
 	close(server.configurationChan)
 	close(server.configurationValidatedChan)
+	signal.Stop(server.signals)
 	close(server.signals)
 	close(server.stopChan)
 	server.loggerMiddleware.Close()
