@@ -152,7 +152,7 @@ type EntryPoint struct {
 	Address   string
 	TLS       *TLS
 	Redirect  *Redirect
-    SkipClean bool
+	SkipClean bool
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
