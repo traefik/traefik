@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cheeses
+  annotations:
+    traefik.frontend.rule.type: pathprefixstrip
+spec:
+  rules:
+  - host: cheeses.local
+    http:
+      paths:
+      - path: /stilton
+        backend:
+          serviceName: stilton
+          servicePort: http
+      - path: /cheddar
+        backend:
+          serviceName: cheddar
+          servicePort: http
+      - path: /wensleydale
+        backend:
+          serviceName: wensleydale
+          servicePort: http
