@@ -77,7 +77,7 @@ ok      github.com/containous/traefik   0.005s  coverage: 4.1% of statements
 Test success
 ```
 
-For development purpose, you can specifiy which tests to run by using:
+For development purposes, you can specify which tests to run by using:
 ```
 # Run every tests in the MyTest suite
 TESTFLAGS="-check.f MyTestSuite" make test-integration
@@ -113,7 +113,7 @@ Then install mkdocs with pip
 $ pip install mkdocs
 ```
 
-To test documentaion localy run `mkdocs serve` in the root directory, this should start a server localy to preview your changes.
+To test documentation locally run `mkdocs serve` in the root directory, this should start a server locally to preview your changes.
 
 ```
 $ mkdocs serve
