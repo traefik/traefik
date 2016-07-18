@@ -82,6 +82,19 @@ func TestDockerGetFrontendName(t *testing.T) {
 			},
 			expected: "PathPrefix-test2",
 		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "test",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.frontend": "foobar",
+					},
+				},
+			},
+			expected: "foobar",
+		},
 	}
 
 	for _, e := range containers {
