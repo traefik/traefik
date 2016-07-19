@@ -80,24 +80,24 @@ Here is an example of frontends definition:
   [frontends.frontend1]
   backend = "backend2"
     [frontends.frontend1.routes.test_1]
-    rule = "Host: test.localhost, test2.localhost"
+    rule = "Host:test.localhost,test2.localhost"
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
   priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
-    rule = "Host: localhost, {subdomain:[a-z]+}.localhost"
+    rule = "Host:localhost,{subdomain:[a-z]+}.localhost"
   [frontends.frontend3]
   backend = "backend2"
     [frontends.frontend3.routes.test_1]
-    rule = "Host: test3.localhost;Path:/test"
+    rule = "Host:test3.localhost;Path:/test"
 ```
 
 - Three frontends are defined: `frontend1`, `frontend2` and `frontend3`
-- `frontend1` will forward the traffic to the `backend2` if the rule `Host: test.localhost, test2.localhost` is matched
-- `frontend2` will forward the traffic to the `backend1` if the rule `Host: localhost, {subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
-- `frontend3` will forward the traffic to the `backend2` if the rules `Host: test3.localhost` **and** `Path:/test` are matched
+- `frontend1` will forward the traffic to the `backend2` if the rule `Host:test.localhost,test2.localhost` is matched
+- `frontend2` will forward the traffic to the `backend1` if the rule `Host:localhost,{subdomain:[a-z]+}.localhost` is matched (forwarding client `Host` header to the backend)
+- `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched
 
 ### Combining multiple rules
 
@@ -108,19 +108,19 @@ In TOML file, you can use multiple routes:
   [frontends.frontend3]
   backend = "backend2"
     [frontends.frontend3.routes.test_1]
-    rule = "Host: test3.localhost"
+    rule = "Host:test3.localhost"
     [frontends.frontend3.routes.test_2]
-    rule = "Host: Path:/test"
+    rule = "Host:Path:/test"
 ```
 
-Here `frontend3` will forward the traffic to the `backend2` if the rules `Host: test3.localhost` **and** `Path:/test` are matched.
-You can also use the notation using a `;` separator:
+Here `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched.
+You can also use the notation using a `;` separator, same result:
 
 ```toml
   [frontends.frontend3]
   backend = "backend2"
     [frontends.frontend3.routes.test_1]
-    rule = "Host: test3.localhost;Path:/test"
+    rule = "Host:test3.localhost;Path:/test"
 ```
 
 Finally, you can create a rule to bind multiple domains or Path to a frontend, using the `,` separator:
@@ -128,7 +128,7 @@ Finally, you can create a rule to bind multiple domains or Path to a frontend, u
 ```toml
  [frontends.frontend2]
     [frontends.frontend2.routes.test_1]
-    rule = "Host: test1.localhost,Host: test2.localhost"
+    rule = "Host:test1.localhost,test2.localhost"
   [frontends.frontend3]
   backend = "backend2"
     [frontends.frontend3.routes.test_1]
@@ -137,7 +137,7 @@ Finally, you can create a rule to bind multiple domains or Path to a frontend, u
 
 ### Priorities
 
-By default, routes will be sorted using rules length (to avoid path overlap):
+By default, routes will be sorted (in descending order) using rules length (to avoid path overlap):
 `PathPrefix:/12345` will be matched before `PathPrefix:/1234` that will be matched before `PathPrefix:/1`.
 
 You can customize priority by frontend:
@@ -157,6 +157,8 @@ You can customize priority by frontend:
       [frontends.frontend2.routes.test_1]
       rule = "PathPrefix:/toto"
 ```
+
+Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
 
 ## Backends
 

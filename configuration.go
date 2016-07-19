@@ -20,7 +20,7 @@ type TraefikConfiguration struct {
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              int64                   `short:"g" description:"Configuration file to use (TOML)."`
+	GraceTimeOut              int64                   `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	AccessLogsFile            string                  `description:"Access logs file"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
