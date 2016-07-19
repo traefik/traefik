@@ -46,7 +46,7 @@ Run it and forget it!
 - No dependency hell, single binary made with go
 - Rest API
 - Multiple backends supported: Docker, Mesos/Marathon, Consul, Etcd, and more to come
-- Watchers for backends, can listen change in backends to apply a new configuration automatically
+- Watchers for backends, can listen for changes in backends to apply a new configuration automatically
 - Hot-reloading of configuration. No need to restart the process
 - Graceful shutdown http connections
 - Circuit breakers on backends
@@ -64,8 +64,8 @@ Run it and forget it!
 ## Demo
 
 
-Here is a talk (in french) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
-You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Lets'Encrypt. 
+Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
+You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Let's Encrypt. 
 
 [![Traefik Devoxx France](http://img.youtube.com/vi/QvAz9mVx5TI/0.jpg)](http://www.youtube.com/watch?v=QvAz9mVx5TI)
 
@@ -115,7 +115,7 @@ Please refer to [this section](.github/CONTRIBUTING.md).
 ## Support
 
 You can join [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) to get basic support.
-If you prefer a commercial support, please contact [containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
+If you prefer commercial support, please contact [containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
 
 ## Træfɪk here and there
 
