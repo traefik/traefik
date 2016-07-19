@@ -1,10 +1,10 @@
-hash: 22c20a7d7419e9624267d7f0041cd8ad87afc876d2738fa559527c74f9917c3a
-updated: 2016-07-05T14:48:30.023831407+02:00
+hash: 234c57cf3696be155463b9a92cd8d104bb52c16c821b64dd24d8d88097d80dd8
+updated: 2016-07-18T17:58:15.732937572+02:00
 imports:
 - name: github.com/boltdb/bolt
-  version: 3f7947a25d970e1e5f512276c14d5dcf731ccd5e
+  version: acc803f0ced151102ed51bf824f8709ebd6602bc
 - name: github.com/BurntSushi/toml
-  version: f0aeabca5a127c4078abb8c8d64298b147264b55
+  version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/BurntSushi/ty
   version: 6add9cd6ad42d389d6ead1dde60b4ad71e46fd74
   subpackages:
@@ -12,11 +12,11 @@ imports:
 - name: github.com/cenkalti/backoff
   version: cdf48bbc1eb78d1349cbda326a4a037f7ba565c6
 - name: github.com/codahale/hdrhistogram
-  version: 9208b142303c12d8899bae836fd524ac9338b4fd
+  version: f8ad88b59a584afeee9d334eff879b104439117b
 - name: github.com/codegangsta/cli
-  version: bf4a526f48af7badd25d2cb02d587e1b01be3b50
+  version: 1efa31f08b9333f1bd4882d61f9d668a70cd902e
 - name: github.com/codegangsta/negroni
-  version: dcaac9107a7a6ba4cf5143afc145e2b70a1c12c2
+  version: dc6b9d037e8dab60cbfc09c61d6932537829be8b
 - name: github.com/containous/flaeg
   version: b98687da5c323650f4513fda6b6203fcbdec9313
 - name: github.com/containous/mux
@@ -24,10 +24,8 @@ imports:
 - name: github.com/containous/staert
   version: e2aa88e235a02dd52aa1d5d9de75f9d9139d1602
 - name: github.com/coreos/etcd
-  version: c400d05d0aa73e21e431c16145e558d624098018
+  version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
-  - Godeps/_workspace/src/github.com/ugorji/go/codec
-  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/pathutil
   - pkg/types
@@ -36,14 +34,67 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: 4e17ab5d319ac5b70b2769442947567a83386fbc
+  version: f8083b7ff32b224921c5f66c0f4df3e58dab49f5
   subpackages:
   - reference
   - digest
+  - registry/api/errcode
+  - registry/client/auth
+  - registry/client/transport
+  - registry/client
+  - context
+  - registry/api/v2
+  - registry/storage/cache
+  - registry/storage/cache/memory
+  - uuid
 - name: github.com/docker/docker
   version: 9837ec4da53f15f9120d53a6e1517491ba8b0261
   subpackages:
   - namesgenerator
+  - pkg/namesgenerator
+  - pkg/random
+  - cliconfig
+  - cliconfig/configfile
+  - pkg/jsonmessage
+  - pkg/promise
+  - pkg/stdcopy
+  - pkg/term
+  - reference
+  - registry
+  - runconfig/opts
+  - pkg/homedir
+  - pkg/jsonlog
+  - pkg/system
+  - pkg/term/windows
+  - image
+  - image/v1
+  - pkg/ioutils
+  - opts
+  - pkg/httputils
+  - pkg/mflag
+  - pkg/stringid
+  - pkg/tarsum
+  - pkg/mount
+  - pkg/signal
+  - pkg/urlutil
+  - builder
+  - builder/dockerignore
+  - pkg/archive
+  - pkg/fileutils
+  - pkg/progress
+  - pkg/streamformatter
+  - layer
+  - pkg/longpath
+  - api/types/backend
+  - pkg/chrootarchive
+  - pkg/gitutils
+  - pkg/symlink
+  - pkg/idtools
+  - pkg/pools
+  - daemon/graphdriver
+  - pkg/reexec
+  - pkg/plugins
+  - pkg/plugins/transport
 - name: github.com/docker/engine-api
   version: 3d3d0b6c9d2651aac27f416a6da0224c1875b3eb
   subpackages:
@@ -51,10 +102,10 @@ imports:
   - types
   - types/events
   - types/filters
-  - client/transport
-  - client/transport/cancellable
   - types/container
   - types/network
+  - client/transport
+  - client/transport/cancellable
   - types/reference
   - types/registry
   - types/time
@@ -71,6 +122,20 @@ imports:
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
 - name: github.com/docker/libcompose
   version: 8ee7bcc364f7b8194581a3c6bd9fa019467c7873
+  subpackages:
+  - docker
+  - project
+  - project/events
+  - project/options
+  - config
+  - docker/builder
+  - docker/client
+  - labels
+  - logger
+  - lookup
+  - utils
+  - yaml
+  - version
 - name: github.com/docker/libkv
   version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
   subpackages:
@@ -94,7 +159,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: 6e061b2d580d80347b7c5c4dfc8730de7403a145
+  version: 548fb6eb3f407147e20d923521296e0500f57ef0
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -106,8 +171,12 @@ imports:
   - serf
 - name: github.com/libkermit/docker
   version: 3b5eb2973efff7af33cfb65141deaf4ed25c6d02
+  subpackages:
+  - compose
 - name: github.com/libkermit/docker-check
   version: bb75a86b169c6c5d22c0ee98278124036f272d7b
+  subpackages:
+  - compose
 - name: github.com/mailgun/manners
   version: fada45142db3f93097ca917da107aa3fad0ffcb5
 - name: github.com/mailgun/timetools
@@ -123,7 +192,7 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 7221e387826c9918fa9fd6e7975baf4d30c8fa54
+  version: 1b49d9b4db3fe7ffbe53698a79124e7b4aa78180
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -139,7 +208,7 @@ imports:
   subpackages:
   - zk
 - name: github.com/Sirupsen/logrus
-  version: f3cfb454f4c209e6668c95216c4744b8fddb2356
+  version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/streamrail/concurrent-map
   version: 65a174a3a4188c0b7099acbc6cfa0c53628d3287
 - name: github.com/stretchr/objx
@@ -151,6 +220,10 @@ imports:
   - assert
 - name: github.com/thoas/stats
   version: 69e3c072eec2df2df41afe6214f62eb940e4cd80
+- name: github.com/ugorji/go
+  version: b94837a2404ab90efe9289e77a70694c355739cb
+  subpackages:
+  - codec
 - name: github.com/unrolled/render
   version: 198ad4d8b8a4612176b804ca10555b222a086b40
 - name: github.com/vdemeester/docker-events
@@ -158,7 +231,7 @@ imports:
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
-  version: 8d476862d38b9be356eaa83b5712cad561be08a1
+  version: ab7796d7036b425fbc945853cd1b7e7adf43b0d6
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -174,7 +247,7 @@ imports:
 - name: github.com/vulcand/route
   version: cb89d787ddbb1c5849a7ac9f79004c1fd12a4a32
 - name: github.com/vulcand/vulcand
-  version: 42492a3a85e294bdbdd1bcabb8c12769a81ea284
+  version: 28a4e5c0892167589737b95ceecbcef00295be50
   subpackages:
   - plugin/rewrite
   - plugin
@@ -185,17 +258,17 @@ imports:
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: 0c565bf13221fb55497d7ae2bb95694db1fd1bff
+  version: f28b56427a527c2e35c0bcac123f0a6a8a943cd3
   subpackages:
   - ocsp
 - name: golang.org/x/net
-  version: 6460565bec1e8891e29ff478184c71b9e443ac36
+  version: b400c2eff1badec7022a8c8f5bea058b6315eed7
   subpackages:
   - context
   - publicsuffix
   - proxy
 - name: golang.org/x/sys
-  version: eb2c74142fd19a79b3f237334c7384d5167b1b46
+  version: 62bee037599929a6e9146f29d10dd5208c43507d
   subpackages:
   - unix
   - windows
@@ -210,4 +283,26 @@ imports:
   subpackages:
   - cipher
   - json
-devImports: []
+testImports:
+- name: github.com/Azure/go-ansiterm
+  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
+  subpackages:
+  - winterm
+- name: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
+- name: github.com/flynn/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff
+- name: github.com/gorilla/mux
+  version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
+- name: github.com/vbatts/tar-split
+  version: 28bc4c32f9fa9725118a685c9ddd7ffdbdbfe2c8
+  subpackages:
+  - tar/asm
+  - tar/storage
+  - archive/tar
+- name: github.com/xeipuuv/gojsonpointer
+  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
+- name: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- name: github.com/xeipuuv/gojsonschema
+  version: 66a3de92def23708184148ae337750915875e7c1
