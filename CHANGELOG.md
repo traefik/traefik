@@ -1,5 +1,32 @@
 # Change Log
 
+## [v1.0.1](https://github.com/containous/traefik/tree/v1.0.1) (2016-07-19)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.0.0...v1.0.1)
+
+**Implemented enhancements:**
+
+- Error with -consulcatalog and missing load balance method on 1.0.0 [\#524](https://github.com/containous/traefik/issues/524)
+- Kubernetes provider: should allow the master url to be override [\#501](https://github.com/containous/traefik/issues/501)
+
+**Fixed bugs:**
+
+- Flag --etcd.endpoint default [\#508](https://github.com/containous/traefik/issues/508)
+- Conditional ACME on demand generation [\#505](https://github.com/containous/traefik/issues/505)
+- Important delay with streams \(Mozilla EventSource\) [\#503](https://github.com/containous/traefik/issues/503)
+
+**Closed issues:**
+
+- Can I use Traefik without a domain name? [\#539](https://github.com/containous/traefik/issues/539)
+- Priortities in 1.0.0 not behaving [\#506](https://github.com/containous/traefik/issues/506)
+- Route by path [\#500](https://github.com/containous/traefik/issues/500)
+
+**Merged pull requests:**
+
+- Update server.go [\#531](https://github.com/containous/traefik/pull/531) ([Jsewill](https://github.com/Jsewill))
+- Add sse support [\#527](https://github.com/containous/traefik/pull/527) ([emilevauge](https://github.com/emilevauge))
+- Fix acme checkOnDemandDomain [\#512](https://github.com/containous/traefik/pull/512) ([emilevauge](https://github.com/emilevauge))
+- Fix default etcd port [\#511](https://github.com/containous/traefik/pull/511) ([errm](https://github.com/errm))
+
 ## [v1.0.0](https://github.com/containous/traefik/tree/v1.0.0) (2016-07-05)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.0.0-rc3...v1.0.0)
 
