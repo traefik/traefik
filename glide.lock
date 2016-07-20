@@ -1,5 +1,5 @@
-hash: 745d05424943c3345ff5fca5b121c6af3930f62fc13195d87d9fcce6686620ea
-updated: 2016-07-22T15:14:53.608798979+02:00
+hash: 70ad4e576bc1fa845512cce6b4ade5c422ba4fb5bb0472b37e1d3a93f13809cd
+updated: 2016-07-07T17:33:16.358775373+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -36,7 +36,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: 2b72dd3927b2958160a2336f16145c0c421aa6a4
+  version: 4e17ab5d319ac5b70b2769442947567a83386fbc
   subpackages:
   - reference
   - digest
@@ -53,50 +53,6 @@ imports:
   version: 534753663161334baba06f13b8efa4cad22b5bc5
   subpackages:
   - namesgenerator
-  - pkg/namesgenerator
-  - pkg/random
-  - pkg/urlutil
-  - cliconfig
-  - cliconfig/configfile
-  - pkg/jsonmessage
-  - pkg/promise
-  - pkg/stdcopy
-  - pkg/term
-  - reference
-  - registry
-  - runconfig/opts
-  - pkg/homedir
-  - pkg/jsonlog
-  - pkg/system
-  - pkg/term/windows
-  - image
-  - image/v1
-  - pkg/ioutils
-  - opts
-  - pkg/httputils
-  - pkg/mflag
-  - pkg/stringid
-  - pkg/tarsum
-  - pkg/mount
-  - pkg/signal
-  - builder
-  - builder/dockerignore
-  - pkg/archive
-  - pkg/fileutils
-  - pkg/progress
-  - pkg/streamformatter
-  - layer
-  - pkg/longpath
-  - api/types/backend
-  - pkg/chrootarchive
-  - pkg/gitutils
-  - pkg/symlink
-  - pkg/idtools
-  - pkg/pools
-  - daemon/graphdriver
-  - pkg/reexec
-  - pkg/plugins
-  - pkg/plugins/transport
 - name: github.com/docker/engine-api
   version: 62043eb79d581a32ea849645277023c550732e52
   subpackages:
@@ -140,6 +96,20 @@ imports:
   - logger
   - lookup
   - version
+  subpackages:
+  - docker
+  - project
+  - project/events
+  - project/options
+  - config
+  - docker/builder
+  - docker/client
+  - labels
+  - logger
+  - lookup
+  - utils
+  - yaml
+  - version
 - name: github.com/docker/libkv
   version: aabc039ad04deb721e234f99cd1b4aa28ac71a40
   subpackages:
@@ -157,7 +127,7 @@ imports:
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
-  version: 6abcf94fd4c97dcb423fdafd42fe9f96ca7e421b
+  version: 8b3113fff1787050d4f5fcbf1173b857eec36566
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -169,7 +139,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: fce7d75609a04eeb9d4bf41c8dc592aac18fc97d
+  version: 64e3033d3c7f80af3f925f4665a9bc1af75d6153
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -186,7 +156,11 @@ imports:
   subpackages:
   - check
 - name: github.com/libkermit/docker
-  version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
+  version: 3b5eb2973efff7af33cfb65141deaf4ed25c6d02
+- name: github.com/libkermit/docker-check
+  version: bb75a86b169c6c5d22c0ee98278124036f272d7b
+  subpackages:
+  - compose
 - name: github.com/mailgun/manners
   version: fada45142db3f93097ca917da107aa3fad0ffcb5
 - name: github.com/mailgun/timetools
@@ -226,7 +200,7 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: fb221651e5120cd287a76c7c1b6c877520fbd034
+  version: 9d7831e41d3ef428b67685eeb27f2b4a22a92391
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -297,6 +271,8 @@ imports:
   version: 911fafb28f4ee7c7bd483539a6c96190bbbccc3f
   subpackages:
   - ocsp
+  - bcrypt
+  - blowfish
 - name: golang.org/x/net
   version: b400c2eff1badec7022a8c8f5bea058b6315eed7
   subpackages:
@@ -319,30 +295,4 @@ imports:
   subpackages:
   - cipher
   - json
-testImports:
-- name: github.com/Azure/go-ansiterm
-  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
-  subpackages:
-  - winterm
-- name: github.com/cloudfoundry-incubator/candiedyaml
-  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
-- name: github.com/flynn/go-shlex
-  version: 3f9db97f856818214da2e1057f8ad84803971cff
-- name: github.com/gorilla/mux
-  version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
-- name: github.com/libkermit/docker-check
-  version: bb75a86b169c6c5d22c0ee98278124036f272d7b
-- name: github.com/spf13/pflag
-  version: 5644820622454e71517561946e3d94b9f9db6842
-- name: github.com/vbatts/tar-split
-  version: 28bc4c32f9fa9725118a685c9ddd7ffdbdbfe2c8
-  subpackages:
-  - tar/asm
-  - tar/storage
-  - archive/tar
-- name: github.com/xeipuuv/gojsonpointer
-  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
-- name: github.com/xeipuuv/gojsonreference
-  version: e02fc20de94c78484cd5ffb007f8af96be030a45
-- name: github.com/xeipuuv/gojsonschema
-  version: 66a3de92def23708184148ae337750915875e7c1
+devImports: []

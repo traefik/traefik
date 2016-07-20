@@ -118,7 +118,15 @@ func (server *Server) Close() {
 func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
-		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics)
+		serverMiddlewares := []negroni.Handler{server.loggerMiddleware, metrics}
+		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
+			authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
+			if err != nil {
+				log.Fatal("Error starting server: ", err)
+			}
+			serverMiddlewares = append(serverMiddlewares, authMiddleware)
+		}
+		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, serverMiddlewares...)
 		if err != nil {
 			log.Fatal("Error preparing server: ", err)
 		}

@@ -163,6 +163,7 @@ type EntryPoint struct {
 	Address  string
 	TLS      *TLS
 	Redirect *Redirect
+	Auth     *types.Auth
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
