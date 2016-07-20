@@ -392,3 +392,38 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 }
+func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
+	s.setupConsul(c)
+	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
+
+	cmd := exec.Command(traefikBinary, "storeconfig", "--configFile=fixtures/simple_web.toml", "--consul.endpoint="+consulHost+":8500")
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+
+	// wait for traefik finish without error
+	cmd.Wait()
+
+	//CHECK
+	checkmap := map[string]string{
+		"/traefik/loglevel":                 "DEBUG",
+		"/traefik/defaultentrypoints/0":     "http",
+		"/traefik/entrypoints/http/address": ":8000",
+		"/traefik/web/address":              ":8080",
+		"/traefik/consul/endpoint":          (consulHost + ":8500"),
+	}
+
+	for key, value := range checkmap {
+		var p *store.KVPair
+		err = utils.Try(60*time.Second, func() error {
+			p, err = s.kv.Get(key)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		c.Assert(err, checker.IsNil)
+
+		c.Assert(string(p.Value), checker.Equals, value)
+
+	}
+}

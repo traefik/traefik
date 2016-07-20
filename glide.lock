@@ -1,6 +1,8 @@
-hash: d46d9eb54571fad41c44e85508bc5e71a94801f4dfa9227686683bdd8f724544
-updated: 2016-07-21T15:55:22.90786751+02:00
+hash: 745d05424943c3345ff5fca5b121c6af3930f62fc13195d87d9fcce6686620ea
+updated: 2016-07-22T15:14:53.608798979+02:00
 imports:
+- name: github.com/abbot/go-http-auth
+  version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
 - name: github.com/boltdb/bolt
   version: 5cc10bbbc5c141029940133bb33c9e969512a698
 - name: github.com/BurntSushi/toml
@@ -18,11 +20,11 @@ imports:
 - name: github.com/codegangsta/negroni
   version: dc6b9d037e8dab60cbfc09c61d6932537829be8b
 - name: github.com/containous/flaeg
-  version: b98687da5c323650f4513fda6b6203fcbdec9313
+  version: da9515902135a2c9071c7464a1ae660b8b24d994
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: 436a2f21e5e28c7c761130720befe05381db0765
+  version: 8a848df89b01313ad890142bcd613a932f629a41
 - name: github.com/coreos/etcd
   version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
@@ -34,7 +36,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: 857d0f15c0a4d8037175642e0ca3660829551cb5
+  version: 2b72dd3927b2958160a2336f16145c0c421aa6a4
   subpackages:
   - reference
   - digest
@@ -155,7 +157,7 @@ imports:
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
-  version: e57a569e1882958f6b188cb42231d6db87701f2a
+  version: 6abcf94fd4c97dcb423fdafd42fe9f96ca7e421b
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -224,7 +226,7 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: ff88baa42fa5b2a1568a3a14665142fb4bdb3a2a
+  version: fb221651e5120cd287a76c7c1b6c877520fbd034
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -329,7 +331,7 @@ testImports:
 - name: github.com/gorilla/mux
   version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
 - name: github.com/libkermit/docker-check
-  version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
+  version: bb75a86b169c6c5d22c0ee98278124036f272d7b
 - name: github.com/spf13/pflag
   version: 5644820622454e71517561946e3d94b9f9db6842
 - name: github.com/vbatts/tar-split
