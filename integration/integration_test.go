@@ -32,6 +32,7 @@ func init() {
 	check.Suite(&EtcdSuite{})
 	check.Suite(&MarathonSuite{})
 	check.Suite(&ConstraintSuite{})
+	check.Suite(&MesosSuite{})
 }
 
 var traefikBinary = "../dist/traefik"
