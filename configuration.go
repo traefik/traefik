@@ -42,6 +42,7 @@ type GlobalConfiguration struct {
 	Zookeeper                 *provider.Zookepper     `description:"Enable Zookeeper backend"`
 	Boltdb                    *provider.BoltDb        `description:"Enable Boltdb backend"`
 	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
+	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -277,6 +278,13 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultKubernetes.LabelSelector = ""
 	defaultKubernetes.Constraints = []types.Constraint{}
 
+	// default Mesos
+	var defaultMesos provider.Mesos
+	defaultMesos.Watch = true
+	defaultMesos.Endpoint = "http://127.0.0.1:5050"
+	defaultMesos.ExposedByDefault = true
+	defaultMesos.Constraints = []types.Constraint{}
+
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
 		File:          &defaultFile,
@@ -288,6 +296,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Zookeeper:     &defaultZookeeper,
 		Boltdb:        &defaultBoltDb,
 		Kubernetes:    &defaultKubernetes,
+		Mesos:         &defaultMesos,
 		Retry:         &Retry{},
 	}
 	return &TraefikConfiguration{

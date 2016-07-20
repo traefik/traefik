@@ -87,6 +87,12 @@ imports:
   version: a558128c87724cd7430060ef5aedf39f83937f55
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
+- name: github.com/gogo/protobuf
+  version: 8b3113fff1787050d4f5fcbf1173b857eec36566
+  subpackages:
+     - proto
+- name: github.com/golang/glog
+  version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
@@ -104,6 +110,8 @@ imports:
   subpackages:
   - coordinate
   - serf
+- name: github.com/jarcoal/httpmock
+  version: 145b10d659265440f062c31ea15326166bae56ee
 - name: github.com/libkermit/docker
   version: 3b5eb2973efff7af33cfb65141deaf4ed25c6d02
 - name: github.com/libkermit/docker-check
@@ -114,6 +122,15 @@ imports:
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
 - name: github.com/mattn/go-shellwords
   version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
+- name: github.com/mesos/mesos-go
+  version: 7064d8760d60f029f568b9295e6842612e89e347
+  subpackages:
+  - mesosproto
+  - mesos
+  - upid
+  - mesosutil
+  - detector
+  - detector/zoo
 - name: github.com/Microsoft/go-winio
   version: ce2922f643c8fd76b46cadc7f404a06282678b34
 - name: github.com/miekg/dns
@@ -134,6 +151,19 @@ imports:
   - difflib
 - name: github.com/ryanuber/go-glob
   version: 572520ed46dbddaed19ea3d9541bdd0494163693
+- name: github.com/mesosphere/mesos-dns
+  vcs: git
+  repo: https://github.com/saagie/mesos-dns.git
+  version: 618029acf9827913fdb9cc67fb6f44b681e60a37
+  subpackages:
+  - detect
+  - records
+  - records/state
+  - util
+  - logging
+  - errorutil
+  - models
+  - records/labels
 - name: github.com/samuel/go-zookeeper
   version: e64db453f3512cade908163702045e0f31137843
   subpackages:
@@ -151,6 +181,8 @@ imports:
   - assert
 - name: github.com/thoas/stats
   version: 69e3c072eec2df2df41afe6214f62eb940e4cd80
+- name: github.com/tv42/zbase32
+  version: 03389da7e0bf9844767f82690f4d68fc097a1306
 - name: github.com/unrolled/render
   version: 198ad4d8b8a4612176b804ca10555b222a086b40
 - name: github.com/vdemeester/docker-events

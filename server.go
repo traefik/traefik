@@ -255,6 +255,9 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.Kubernetes != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Kubernetes)
 	}
+	if server.globalConfiguration.Mesos != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Mesos)
+	}
 }
 
 func (server *Server) startProviders() {

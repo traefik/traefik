@@ -82,3 +82,16 @@ import:
 - package: github.com/mattn/go-shellwords
 - package: github.com/vdemeester/shakers
 - package: github.com/ryanuber/go-glob
+- package: github.com/mesos/mesos-go
+  subpackages:
+  - mesosproto
+  - mesos
+  - upid
+  - mesosutil
+  - detector
+- package: github.com/jarcoal/httpmock
+- package: github.com/mesosphere/mesos-dns
+  vcs: git
+  repo: https://github.com/containous/mesos-dns.git
+  version: b47dc4c19f215e98da687b15b4c64e70f629bea5
+- package: github.com/tv42/zbase32
