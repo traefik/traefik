@@ -50,4 +50,4 @@ pages:
       - 'Configuration examples': 'user-guide/examples.md'
       - 'Swarm cluster': 'user-guide/swarm.md'
       - 'Kubernetes': 'user-guide/kubernetes.md'
-  - Benchmarks: benchmarks.md
+      - 'Key-value store configuration': 'user-guide/kv-config.md'

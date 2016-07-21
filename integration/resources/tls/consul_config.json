@@ -1,0 +1,9 @@
+{
+    "ports": {
+        "https": 8585
+    },
+    "ca_file": "/configs/ca.cert",
+    "cert_file": "/configs/consul.cert",
+    "key_file": "/configs/consul.key",
+    "verify_outgoing": true
+}

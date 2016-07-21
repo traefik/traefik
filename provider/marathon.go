@@ -8,7 +8,6 @@ import (
 	"strings"
 	"text/template"
 
-	"crypto/tls"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
@@ -22,13 +21,13 @@ import (
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
 	BaseProvider
-	Endpoint           string `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
-	Domain             string `description:"Default domain used"`
-	ExposedByDefault   bool   `description:"Expose Marathon apps by default"`
-	GroupsAsSubDomains bool   `description:"Convert Marathon groups to subdomains"`
-	DCOSToken          string `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
+	Endpoint           string     `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
+	Domain             string     `description:"Default domain used"`
+	ExposedByDefault   bool       `description:"Expose Marathon apps by default"`
+	GroupsAsSubDomains bool       `description:"Convert Marathon groups to subdomains"`
+	DCOSToken          string     `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
+	TLS                *ClientTLS `description:"Enable Docker TLS support"`
 	Basic              *MarathonBasic
-	TLS                *tls.Config
 	marathonClient     marathon.Marathon
 }
 
@@ -58,9 +57,13 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 		if len(provider.DCOSToken) > 0 {
 			config.DCOSToken = provider.DCOSToken
 		}
+		TLSConfig, err := provider.TLS.CreateTLSConfig()
+		if err != nil {
+			return err
+		}
 		config.HTTPClient = &http.Client{
 			Transport: &http.Transport{
-				TLSClientConfig: provider.TLS,
+				TLSClientConfig: TLSConfig,
 			},
 		}
 		client, err := marathon.NewClient(config)

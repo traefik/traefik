@@ -1,5 +1,5 @@
-hash: 22c20a7d7419e9624267d7f0041cd8ad87afc876d2738fa559527c74f9917c3a
-updated: 2016-07-05T14:48:30.023831407+02:00
+hash: 70ad4e576bc1fa845512cce6b4ade5c422ba4fb5bb0472b37e1d3a93f13809cd
+updated: 2016-07-07T17:33:16.358775373+02:00
 imports:
 - name: github.com/boltdb/bolt
   version: 3f7947a25d970e1e5f512276c14d5dcf731ccd5e
@@ -22,13 +22,13 @@ imports:
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: e2aa88e235a02dd52aa1d5d9de75f9d9139d1602
+  version: 436a2f21e5e28c7c761130720befe05381db0765
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
+  - client
   - Godeps/_workspace/src/github.com/ugorji/go/codec
   - Godeps/_workspace/src/golang.org/x/net/context
-  - client
   - pkg/pathutil
   - pkg/types
 - name: github.com/davecgh/go-spew
@@ -100,7 +100,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: 6e061b2d580d80347b7c5c4dfc8730de7403a145
+  version: 64e3033d3c7f80af3f925f4665a9bc1af75d6153
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -135,12 +135,14 @@ imports:
   version: ce2922f643c8fd76b46cadc7f404a06282678b34
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
+- name: github.com/mitchellh/mapstructure
+  version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/moul/http2curl
   version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 7221e387826c9918fa9fd6e7975baf4d30c8fa54
+  version: 9d7831e41d3ef428b67685eeb27f2b4a22a92391
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -217,7 +219,7 @@ imports:
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: 0c565bf13221fb55497d7ae2bb95694db1fd1bff
+  version: d81fdb778bf2c40a91b24519d60cdc5767318829
   subpackages:
   - ocsp
 - name: golang.org/x/net

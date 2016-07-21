@@ -20,7 +20,6 @@ import (
 	eventtypes "github.com/docker/engine-api/types/events"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/go-connections/sockets"
-	"github.com/docker/go-connections/tlsconfig"
 	"github.com/vdemeester/docker-events"
 )
 
@@ -29,19 +28,11 @@ const DockerAPIVersion string = "1.21"
 
 // Docker holds configurations of the Docker provider.
 type Docker struct {
-	BaseProvider
+	BaseProvider     `mapstructure:",squash"`
 	Endpoint         string     `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
 	Domain           string     `description:"Default domain used"`
-	TLS              *DockerTLS `description:"Enable Docker TLS support"`
+	TLS              *ClientTLS `description:"Enable Docker TLS support"`
 	ExposedByDefault bool       `description:"Expose containers by default"`
-}
-
-// DockerTLS holds TLS specific configurations
-type DockerTLS struct {
-	CA                 string `description:"TLS CA"`
-	Cert               string `description:"TLS cert"`
-	Key                string `description:"TLS key"`
-	InsecureSkipVerify bool   `description:"TLS insecure skip verify"`
 }
 
 func (provider *Docker) createClient() (client.APIClient, error) {
@@ -51,13 +42,7 @@ func (provider *Docker) createClient() (client.APIClient, error) {
 		"User-Agent": "Traefik",
 	}
 	if provider.TLS != nil {
-		tlsOptions := tlsconfig.Options{
-			CAFile:             provider.TLS.CA,
-			CertFile:           provider.TLS.Cert,
-			KeyFile:            provider.TLS.Key,
-			InsecureSkipVerify: provider.TLS.InsecureSkipVerify,
-		}
-		config, err := tlsconfig.Client(tlsOptions)
+		config, err := provider.TLS.CreateTLSConfig()
 		if err != nil {
 			return nil, err
 		}
@@ -74,6 +59,7 @@ func (provider *Docker) createClient() (client.APIClient, error) {
 		httpClient = &http.Client{
 			Transport: tr,
 		}
+
 	}
 	return client.NewClient(provider.Endpoint, DockerAPIVersion, httpClient, httpHeaders)
 }

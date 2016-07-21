@@ -29,6 +29,7 @@ defaultEntryPoints = ["http", "https"]
       CertFile = "integration/fixtures/https/snitest.org.cert"
       KeyFile = "integration/fixtures/https/snitest.org.key"
 ```
+Note that we can either give path to certificate file or directly the file content itself ([like in this TOML example](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store)).
 
 ## HTTP redirect on HTTPS
 

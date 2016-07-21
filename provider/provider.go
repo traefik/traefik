@@ -7,10 +7,14 @@ import (
 	"text/template"
 	"unicode"
 
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"os"
 )
 
 // Provider defines methods of a provider.
@@ -91,4 +95,62 @@ func normalize(name string) string {
 	}
 	// get function
 	return strings.Join(strings.FieldsFunc(name, fargs), "-")
+}
+
+// ClientTLS holds TLS specific configurations as client
+// CA, Cert and Key can be either path or file contents
+type ClientTLS struct {
+	CA                 string `description:"TLS CA"`
+	Cert               string `description:"TLS cert"`
+	Key                string `description:"TLS key"`
+	InsecureSkipVerify bool   `description:"TLS insecure skip verify"`
+}
+
+// CreateTLSConfig creates a TLS config from ClientTLS structures
+func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
+	var err error
+	caPool := x509.NewCertPool()
+	if clientTLS.CA != "" {
+		var ca []byte
+		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
+			ca, err = ioutil.ReadFile(clientTLS.CA)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to read CA. %s", err)
+			}
+		} else {
+			ca = []byte(clientTLS.CA)
+		}
+		caPool.AppendCertsFromPEM(ca)
+	}
+
+	cert := tls.Certificate{}
+	_, errKeyIsFile := os.Stat(clientTLS.Key)
+
+	if _, errCertIsFile := os.Stat(clientTLS.Cert); errCertIsFile == nil {
+		if errKeyIsFile == nil {
+			cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
+			}
+		} else {
+			return nil, fmt.Errorf("tls cert is a file, but tls key is not")
+		}
+	} else {
+		if errKeyIsFile != nil {
+			cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
+			if err != nil {
+				return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
+
+			}
+		} else {
+			return nil, fmt.Errorf("tls key is a file, but tls cert is not")
+		}
+	}
+
+	TLSConfig := &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		RootCAs:            caPool,
+		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
+	}
+	return TLSConfig, nil
 }
