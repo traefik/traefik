@@ -13,7 +13,7 @@ import (
 	"github.com/containous/traefik/integration/utils"
 	"github.com/go-check/check"
 
-	"github.com/libkermit/docker-check/compose"
+	compose "github.com/libkermit/compose/check"
 	checker "github.com/vdemeester/shakers"
 )
 
