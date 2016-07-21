@@ -5,8 +5,10 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -296,6 +298,22 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 			return nil, err
 		}
 		config.Certificates = append(config.Certificates, cert)
+	}
+
+	if len(tlsOption.ClientCAFiles) > 0 {
+		pool := x509.NewCertPool()
+		for _, caFile := range tlsOption.ClientCAFiles {
+			data, err := ioutil.ReadFile(caFile)
+			if err != nil {
+				return nil, err
+			}
+			ok := pool.AppendCertsFromPEM(data)
+			if !ok {
+				return nil, errors.New("invalid certificate(s) in " + caFile)
+			}
+		}
+		config.ClientCAs = pool
+		config.ClientAuth = tls.RequireAndVerifyClientCert
 	}
 
 	if server.globalConfiguration.ACME != nil {

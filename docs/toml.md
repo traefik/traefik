@@ -89,6 +89,28 @@
 #     [entryPoints.http.redirect]
 #       regex = "^http://localhost/(.*)"
 #       replacement = "http://mydomain/$1"
+#
+# Only accept clients that present a certificate signed by a specified
+# Certificate Authority (CA)
+# ClientCAFiles can be configured with multiple CA:s in the same file or
+# use multiple files containing one or several CA:s. The CA:s has to be in PEM format.
+# All clients will be required to present a valid cert.
+# The requirement will apply to all server certs in the entrypoint
+# In the example below both snitest.com and snitest.org will require client certs
+#
+# [entryPoints]
+#   [entryPoints.https]
+#   address = ":443"
+#   [entryPoints.https.tls]
+#   ClientCAFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
+#     [[entryPoints.https.tls.certificates]]
+#     CertFile = "integration/fixtures/https/snitest.com.cert"
+#     KeyFile = "integration/fixtures/https/snitest.com.key"
+#     [[entryPoints.https.tls.certificates]]
+#     CertFile = "integration/fixtures/https/snitest.org.cert"
+#     KeyFile = "integration/fixtures/https/snitest.org.key"
+#
+
 
 [entryPoints]
   [entryPoints.http]
