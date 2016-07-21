@@ -1,5 +1,5 @@
-hash: 70ad4e576bc1fa845512cce6b4ade5c422ba4fb5bb0472b37e1d3a93f13809cd
-updated: 2016-07-07T17:33:16.358775373+02:00
+hash: 5cb432175705882247ac2cbf708c879fad8b287afe9e1e18f06dbce1e956acd2
+updated: 2016-07-28T18:20:42.864416381+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -36,7 +36,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: 4e17ab5d319ac5b70b2769442947567a83386fbc
+  version: 857d0f15c0a4d8037175642e0ca3660829551cb5
   subpackages:
   - reference
   - digest
@@ -53,6 +53,50 @@ imports:
   version: 534753663161334baba06f13b8efa4cad22b5bc5
   subpackages:
   - namesgenerator
+  - pkg/namesgenerator
+  - pkg/random
+  - pkg/urlutil
+  - cliconfig
+  - cliconfig/configfile
+  - pkg/jsonmessage
+  - pkg/promise
+  - pkg/stdcopy
+  - pkg/term
+  - reference
+  - registry
+  - runconfig/opts
+  - pkg/homedir
+  - pkg/jsonlog
+  - pkg/system
+  - pkg/term/windows
+  - image
+  - image/v1
+  - pkg/ioutils
+  - opts
+  - pkg/httputils
+  - pkg/mflag
+  - pkg/stringid
+  - pkg/tarsum
+  - pkg/mount
+  - pkg/signal
+  - builder
+  - builder/dockerignore
+  - pkg/archive
+  - pkg/fileutils
+  - pkg/progress
+  - pkg/streamformatter
+  - layer
+  - pkg/longpath
+  - api/types/backend
+  - pkg/chrootarchive
+  - pkg/gitutils
+  - pkg/symlink
+  - pkg/idtools
+  - pkg/pools
+  - daemon/graphdriver
+  - pkg/reexec
+  - pkg/plugins
+  - pkg/plugins/transport
 - name: github.com/docker/engine-api
   version: 62043eb79d581a32ea849645277023c550732e52
   subpackages:
@@ -96,22 +140,8 @@ imports:
   - logger
   - lookup
   - version
-  subpackages:
-  - docker
-  - project
-  - project/events
-  - project/options
-  - config
-  - docker/builder
-  - docker/client
-  - labels
-  - logger
-  - lookup
-  - utils
-  - yaml
-  - version
 - name: github.com/docker/libkv
-  version: aabc039ad04deb721e234f99cd1b4aa28ac71a40
+  version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
   subpackages:
   - store
   - store/boltdb
@@ -127,7 +157,7 @@ imports:
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
-  version: 8b3113fff1787050d4f5fcbf1173b857eec36566
+  version: e57a569e1882958f6b188cb42231d6db87701f2a
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -139,7 +169,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: 64e3033d3c7f80af3f925f4665a9bc1af75d6153
+  version: 8a8271fd81cdaa1bbc20e4ced86531b90c7eaf79
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -156,11 +186,7 @@ imports:
   subpackages:
   - check
 - name: github.com/libkermit/docker
-  version: 3b5eb2973efff7af33cfb65141deaf4ed25c6d02
-- name: github.com/libkermit/docker-check
-  version: bb75a86b169c6c5d22c0ee98278124036f272d7b
-  subpackages:
-  - compose
+  version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
 - name: github.com/mailgun/manners
   version: fada45142db3f93097ca917da107aa3fad0ffcb5
 - name: github.com/mailgun/timetools
@@ -194,13 +220,13 @@ imports:
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
-  version: 21a35fb16463dfb7c8eee579c65d995d95e64d1e
+  version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/moul/http2curl
   version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 9d7831e41d3ef428b67685eeb27f2b4a22a92391
+  version: bd1d3ac0480c5d3babac10dc32cff2886563219c
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -268,7 +294,7 @@ imports:
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: 911fafb28f4ee7c7bd483539a6c96190bbbccc3f
+  version: d81fdb778bf2c40a91b24519d60cdc5767318829
   subpackages:
   - ocsp
   - bcrypt
@@ -295,4 +321,30 @@ imports:
   subpackages:
   - cipher
   - json
-devImports: []
+testImports:
+- name: github.com/Azure/go-ansiterm
+  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
+  subpackages:
+  - winterm
+- name: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
+- name: github.com/flynn/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff
+- name: github.com/gorilla/mux
+  version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
+- name: github.com/libkermit/docker-check
+  version: bb75a86b169c6c5d22c0ee98278124036f272d7b
+- name: github.com/spf13/pflag
+  version: 5644820622454e71517561946e3d94b9f9db6842
+- name: github.com/vbatts/tar-split
+  version: 28bc4c32f9fa9725118a685c9ddd7ffdbdbfe2c8
+  subpackages:
+  - tar/asm
+  - tar/storage
+  - archive/tar
+- name: github.com/xeipuuv/gojsonpointer
+  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
+- name: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- name: github.com/xeipuuv/gojsonschema
+  version: 66a3de92def23708184148ae337750915875e7c1
