@@ -23,7 +23,7 @@ import:
 - package: github.com/containous/staert
   version: 436a2f21e5e28c7c761130720befe05381db0765
 - package: github.com/docker/engine-api
-  version: 3d3d0b6c9d2651aac27f416a6da0224c1875b3eb
+  version: 62043eb79d581a32ea849645277023c550732e52
   subpackages:
   - client
   - types
@@ -56,7 +56,7 @@ import:
 - package: github.com/thoas/stats
 - package: github.com/unrolled/render
 - package: github.com/vdemeester/docker-events
-  version: 20e6d2db238723e68197a9e3c6c34c99a9893a9c
+  version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - package: github.com/vulcand/vulcand
   subpackages:
   - plugin/rewrite
@@ -64,21 +64,23 @@ import:
   version: b2fad6198110326662e9e356a97199078a4a775c
   subpackages:
   - acme
+- package: github.com/miekg/dns
+  version: 5d001d020961ae1c184f9f8152fdc73810481677
 - package: golang.org/x/net
   subpackages:
   - context
 - package: gopkg.in/fsnotify.v1
-- package: github.com/libkermit/docker-check
-  version: bb75a86b169c6c5d22c0ee98278124036f272d7b
+- package: github.com/libkermit/compose
+  version: cadc5a3b83a15790174bd7fbc75ea2529785e772
 - package: github.com/libkermit/docker
-  version: 3b5eb2973efff7af33cfb65141deaf4ed25c6d02
+  version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
 - package: github.com/docker/docker
-  version: 9837ec4da53f15f9120d53a6e1517491ba8b0261
+  version: 534753663161334baba06f13b8efa4cad22b5bc5
   subpackages:
   - namesgenerator
 - package: github.com/go-check/check
 - package: github.com/docker/libcompose
-  version: 8ee7bcc364f7b8194581a3c6bd9fa019467c7873
+  version: d1876c1d68527a49c0aac22a0b161acc7296b740
 - package: github.com/mattn/go-shellwords
 - package: github.com/vdemeester/shakers
 - package: github.com/ryanuber/go-glob

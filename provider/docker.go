@@ -343,7 +343,7 @@ func getLabels(container dockertypes.ContainerJSON, labels []string) (map[string
 	return foundLabels, globalErr
 }
 
-func listContainers(ctx context.Context, dockerClient client.APIClient) ([]dockertypes.ContainerJSON, error) {
+func listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockertypes.ContainerJSON, error) {
 	containerList, err := dockerClient.ContainerList(ctx, dockertypes.ContainerListOptions{})
 	if err != nil {
 		return []dockertypes.ContainerJSON{}, err
