@@ -15,6 +15,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/version"
 	"github.com/docker/engine-api/client"
 	dockertypes "github.com/docker/engine-api/types"
 	eventtypes "github.com/docker/engine-api/types/events"
@@ -38,8 +39,7 @@ type Docker struct {
 func (provider *Docker) createClient() (client.APIClient, error) {
 	var httpClient *http.Client
 	httpHeaders := map[string]string{
-		// FIXME(vdemeester) use version here O:)
-		"User-Agent": "Traefik",
+		"User-Agent": "Traefik " + version.Version,
 	}
 	if provider.TLS != nil {
 		config, err := provider.TLS.CreateTLSConfig()

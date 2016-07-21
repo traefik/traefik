@@ -1,4 +1,4 @@
-package main
+package version
 
 var (
 	// Version holds the current version of traefik.

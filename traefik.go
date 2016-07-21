@@ -3,14 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/containous/flaeg"
-	"github.com/containous/staert"
-	"github.com/containous/traefik/acme"
-	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/types"
-	"github.com/docker/libkv/store"
 	fmtlog "log"
 	"net/http"
 	"os"
@@ -18,6 +10,16 @@ import (
 	"runtime"
 	"strings"
 	"text/template"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/containous/flaeg"
+	"github.com/containous/staert"
+	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/version"
+	"github.com/docker/libkv/store"
 )
 
 var versionTemplate = `Version:      {{.Version}}
@@ -65,10 +67,10 @@ Complete documentation is available at https://traefik.io`,
 				Os        string
 				Arch      string
 			}{
-				Version:   Version,
-				Codename:  Codename,
+				Version:   version.Version,
+				Codename:  version.Codename,
 				GoVersion: runtime.Version(),
-				BuildTime: BuildDate,
+				BuildTime: version.BuildDate,
 				Os:        runtime.GOOS,
 				Arch:      runtime.GOARCH,
 			}
@@ -184,7 +186,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
 	jsonConf, _ := json.Marshal(globalConfiguration)
-	log.Infof("Traefik version %s built on %s", Version, BuildDate)
+	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 	if len(traefikConfiguration.ConfigFile) != 0 {
 		log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
 	}
