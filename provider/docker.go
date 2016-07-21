@@ -219,6 +219,9 @@ func (provider *Docker) containerFilter(container dockertypes.ContainerJSON, exp
 }
 
 func (provider *Docker) getFrontendName(container dockertypes.ContainerJSON) string {
+	if label, err := getLabel(container, "traefik.frontend"); err == nil {
+		return label
+	}
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 	return normalize(provider.getFrontendRule(container))
 }
