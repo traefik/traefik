@@ -2,6 +2,7 @@ package provider
 
 import (
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 
@@ -19,7 +20,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 
 	containers := []struct {
 		container docker.ContainerJSON
-		expected  string
+		expected  []string
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -28,7 +29,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 				},
 				Config: &container.Config{},
 			},
-			expected: "Host-foo-docker-localhost",
+			expected: []string{"Host-foo-docker-localhost"},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -41,7 +42,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 					},
 				},
 			},
-			expected: "Headers-User-Agent-bat-0-1-0",
+			expected: []string{"Headers-User-Agent-bat-0-1-0"},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -54,7 +55,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 					},
 				},
 			},
-			expected: "Host-foo-bar",
+			expected: []string{"Host-foo-bar"},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -67,7 +68,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 					},
 				},
 			},
-			expected: "Path-test",
+			expected: []string{"Path-test"},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -80,14 +81,35 @@ func TestDockerGetFrontendName(t *testing.T) {
 					},
 				},
 			},
-			expected: "PathPrefix-test2",
+			expected: []string{"PathPrefix-test2"},
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "test",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.frontend.rule": "PathPrefix:/test2&&Host:foo.bar",
+					},
+				},
+			},
+			expected: []string{"Host-foo-bar", "PathPrefix-test2"},
 		},
 	}
 
 	for _, e := range containers {
 		actual := provider.getFrontendName(e.container)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+		keys := []string{}
+		for key := range actual {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		sort.Strings(e.expected)
+		for index, key := range keys {
+			if key != e.expected[index] {
+				t.Fatalf("expected %q, got %q", e.expected, actual)
+			}
 		}
 	}
 }
@@ -99,7 +121,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 
 	containers := []struct {
 		container docker.ContainerJSON
-		expected  string
+		expected  []string
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -108,7 +130,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 				},
 				Config: &container.Config{},
 			},
-			expected: "Host:foo.docker.localhost",
+			expected: []string{"Host:foo.docker.localhost"},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -117,7 +139,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 				},
 				Config: &container.Config{},
 			},
-			expected: "Host:bar.docker.localhost",
+			expected: []string{"Host:bar.docker.localhost"},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -130,7 +152,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 					},
 				},
 			},
-			expected: "Host:foo.bar",
+			expected: []string{"Host:foo.bar"},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -143,14 +165,31 @@ func TestDockerGetFrontendRule(t *testing.T) {
 					},
 				},
 			},
-			expected: "Path:/test",
+			expected: []string{"Path:/test"},
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "test",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.frontend.rule": "Path:/test&&Host:foo.bar",
+					},
+				},
+			},
+			expected: []string{"Path:/test", "Host:foo.bar"},
 		},
 	}
 
 	for _, e := range containers {
 		actual := provider.getFrontendRule(e.container)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+		sort.Strings(actual)
+		sort.Strings(e.expected)
+		for index, rule := range actual {
+			if rule != e.expected[index] {
+				t.Fatalf("expected %q, got %q", e.expected, actual)
+			}
 		}
 	}
 }
