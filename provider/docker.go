@@ -2,12 +2,12 @@ package provider
 
 import (
 	"errors"
+	"github.com/vdemeester/docker-events"
 	"net/http"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
-  "github.com/vdemeester/docker-events"
 
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
