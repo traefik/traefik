@@ -2,7 +2,6 @@ package provider
 
 import (
 	"errors"
-	"github.com/vdemeester/docker-events"
 	"net/http"
 	"strconv"
 	"strings"
@@ -19,6 +18,7 @@ import (
 	eventtypes "github.com/docker/engine-api/types/events"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/go-connections/sockets"
+	"github.com/vdemeester/docker-events"
 	"golang.org/x/net/context"
 )
 
