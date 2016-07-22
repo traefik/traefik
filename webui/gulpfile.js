@@ -1,29 +1,40 @@
-/**
- *  Welcome to your gulpfile!
- *  The gulp tasks are splitted in several files in the gulp directory
- *  because putting all here was really too long
- */
+const gulp = require('gulp');
+const HubRegistry = require('gulp-hub');
+const browserSync = require('browser-sync');
 
-'use strict';
+const conf = require('./conf/gulp.conf');
 
-var gulp = require('gulp');
-var wrench = require('wrench');
+// Load some files into the registry
+const hub = new HubRegistry([conf.path.tasks('*.js')]);
 
-/**
- *  This will load all js or coffee files in the gulp directory
- *  in order to load all gulp tasks
- */
-wrench.readdirSyncRecursive('./gulp').filter(function(file) {
-  return (/\.(js|coffee)$/i).test(file);
-}).map(function(file) {
-  require('./gulp/' + file);
-});
+// Tell gulp to use the tasks just loaded
+gulp.registry(hub);
 
+gulp.task('inject', gulp.series(gulp.parallel('styles', 'scripts'), 'inject'));
+gulp.task('build', gulp.series('partials', gulp.parallel('fonts', 'inject', 'other'), 'build'));
+gulp.task('test', gulp.series('scripts', 'karma:single-run'));
+gulp.task('test:auto', gulp.series('watch', 'karma:auto-run'));
+gulp.task('serve', gulp.series('inject', 'watch', 'browsersync'));
+gulp.task('serve:dist', gulp.series('default', 'browsersync:dist'));
+gulp.task('default', gulp.series('clean', 'build'));
+gulp.task('watch', watch);
 
-/**
- *  Default task clean temporaries directories and launch the
- *  main optimization build task
- */
-gulp.task('default', ['clean'], function () {
-  gulp.start('build');
-});
+function reloadBrowserSync(cb) {
+  browserSync.reload();
+  cb();
+}
+
+function watch(done) {
+  gulp.watch([
+    conf.path.src('index.html'),
+    'bower.json'
+  ], gulp.parallel('inject'));
+
+  gulp.watch(conf.path.src('app/**/*.html'), reloadBrowserSync);
+  gulp.watch([
+    conf.path.src('**/*.scss'),
+    conf.path.src('**/*.css')
+  ], gulp.series('styles'));
+  gulp.watch(conf.path.src('**/*.js'), gulp.series('inject'));
+  done();
+}
