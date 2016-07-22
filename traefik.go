@@ -84,6 +84,28 @@ Complete documentation is available at https://traefik.io`,
 		},
 	}
 
+	//storeconfig Command init
+	var kv *staert.KvSource
+	var err error
+
+	storeconfigCmd := &flaeg.Command{
+		Name:                  "storeconfig",
+		Description:           `Store the static traefik configuration into a Key-value stores. Traefik will not start.`,
+		Config:                traefikConfiguration,
+		DefaultPointersConfig: traefikPointersConfiguration,
+		Run: func() error {
+			if kv == nil {
+				return fmt.Errorf("Error using command storeconfig, no Key-value store defined")
+			}
+			jsonConf, _ := json.Marshal(traefikConfiguration.GlobalConfiguration)
+			fmtlog.Printf("Storing configuration: %s\n", jsonConf)
+			return kv.StoreConfig(traefikConfiguration.GlobalConfiguration)
+		},
+		Metadata: map[string]string{
+			"parseAllSources": "true",
+		},
+	}
+
 	//init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
 	//add custom parsers
@@ -93,8 +115,9 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(provider.Namespaces{}), &provider.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 
-	//add version command
+	//add commands
 	f.AddCommand(versionCmd)
+	f.AddCommand(storeconfigCmd)
 	if _, err := f.Parse(traefikCmd); err != nil {
 		fmtlog.Println(err)
 		os.Exit(-1)
@@ -110,20 +133,28 @@ Complete documentation is available at https://traefik.io`,
 	s.AddSource(f)
 	if _, err := s.LoadConfig(); err != nil {
 		fmtlog.Println(fmt.Errorf("Error reading TOML config file %s : %s", toml.ConfigFileUsed(), err))
+		os.Exit(-1)
 	}
 
 	traefikConfiguration.ConfigFile = toml.ConfigFileUsed()
 
-	kv, err := CreateKvSource(traefikConfiguration)
+	kv, err = CreateKvSource(traefikConfiguration)
 	if err != nil {
 		fmtlog.Println(err)
 		os.Exit(-1)
 	}
 
-	if kv != nil {
+	usedCmd, err := f.GetCommand()
+	if err != nil {
+		fmtlog.Println(err)
+		os.Exit(-1)
+	}
+	// IF a KV Store is enable and no sub-command called in args
+	if kv != nil && usedCmd == traefikCmd {
 		s.AddSource(kv)
 		if _, err := s.LoadConfig(); err != nil {
 			fmtlog.Println(err)
+			os.Exit(-1)
 		}
 	}
 
@@ -173,7 +204,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		defer func() {
 			if err := fi.Close(); err != nil {
-				log.Error("Error closinf file", err)
+				log.Error("Error closing file", err)
 			}
 		}()
 		if err != nil {

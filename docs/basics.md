@@ -293,7 +293,7 @@ Please refer to the [global configuration](/toml/#global-configuration) section 
 
 ### Arguments
 
-Each argument is described in the help section:
+Each argument (and command) is described in the help section:
 
 ```bash
 $ traefik --help
@@ -326,3 +326,26 @@ We only need to enable `watch` option to make Træfɪk watch configuration backe
 Routes to services will be created and updated instantly at any changes.
 
 Please refer to the [configuration backends](/toml/#configuration-backends) section to get documentation on it.
+
+# Commands
+
+Usage: `traefik [command] [--flag=flag_argument]`
+
+List of Træfɪk available commands with description :                                                             
+
+- `version` : Print version 
+- `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfɪk configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
+
+Each command may have related flags. 
+All those related flags will be displayed with :
+
+```bash
+$ traefik [command] --help
+```
+
+Note that each command is described at the begining of the help section:
+
+```bash
+$ traefik --help
+```
+

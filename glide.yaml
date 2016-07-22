@@ -8,7 +8,7 @@ import:
 - package: github.com/cenkalti/backoff
 - package: github.com/codegangsta/negroni
 - package: github.com/containous/flaeg
-  version: b98687da5c323650f4513fda6b6203fcbdec9313
+  version: da9515902135a2c9071c7464a1ae660b8b24d994
 - package: github.com/vulcand/oxy
   version: 8d476862d38b9be356eaa83b5712cad561be08a1
   repo: https://github.com/containous/oxy.git
@@ -21,7 +21,7 @@ import:
   - stream
   - utils
 - package: github.com/containous/staert
-  version: 436a2f21e5e28c7c761130720befe05381db0765
+  version: 8a848df89b01313ad890142bcd613a932f629a41
 - package: github.com/docker/engine-api
   version: 62043eb79d581a32ea849645277023c550732e52
   subpackages:
@@ -93,7 +93,10 @@ import:
   - detector
 - package: github.com/jarcoal/httpmock
 - package: github.com/mesosphere/mesos-dns
-  vcs: git
-  repo: https://github.com/containous/mesos-dns.git
   version: b47dc4c19f215e98da687b15b4c64e70f629bea5
+  repo: https://github.com/containous/mesos-dns.git
+  vcs: git
 - package: github.com/tv42/zbase32
+- package: github.com/abbot/go-http-auth
+- package: github.com/miekg/dns
+  version: 5d001d020961ae1c184f9f8152fdc73810481677

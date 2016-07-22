@@ -431,3 +431,38 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
 	c.Assert(err, checker.IsNil, check.Commentf("certificate did not match SNI servername"))
 }
+
+func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
+	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
+
+	cmd := exec.Command(traefikBinary, "storeconfig", "--configFile=fixtures/simple_web.toml", "--etcd.endpoint="+etcdHost+":4001")
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+
+	// wait for traefik finish without error
+	cmd.Wait()
+
+	//CHECK
+	checkmap := map[string]string{
+		"/traefik/loglevel":                 "DEBUG",
+		"/traefik/defaultentrypoints/0":     "http",
+		"/traefik/entrypoints/http/address": ":8000",
+		"/traefik/web/address":              ":8080",
+		"/traefik/etcd/endpoint":            (etcdHost + ":4001"),
+	}
+
+	for key, value := range checkmap {
+		var p *store.KVPair
+		err = utils.Try(60*time.Second, func() error {
+			p, err = s.kv.Get(key)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		c.Assert(err, checker.IsNil)
+
+		c.Assert(string(p.Value), checker.Equals, value)
+
+	}
+}
