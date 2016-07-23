@@ -1,7 +1,10 @@
-(function () {
-  'use strict';
+'use strict';
+var angular = require('angular');
+var backendMonitor = require('./backend-monitor.directive');
 
-  angular
-    .module('traefik.section.providers.backend-monitor', []);
+var traefikBackendMonitor = 'traefik.section.providers.backend-monitor';
+module.exports = traefikBackendMonitor;
 
-})();
+angular
+  .module(traefikBackendMonitor, [])
+  .directive('backendMonitor', backendMonitor);

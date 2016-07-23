@@ -1,13 +1,14 @@
-(function () {
-  'use strict';
+'use strict';
+var angular = require('angular');
 
-    angular
-      .module('traefik.core.health', ['ngResource'])
-      .factory('Health', Health);
+var traefikCoreHealth = 'traefik.core.health';
+module.exports = traefikCoreHealth;
 
-      /** @ngInject */
-      function Health($resource) {
-        return $resource('../health');
-      }
+angular
+  .module(traefikCoreHealth, ['ngResource'])
+  .factory('Health', Health);
 
-})();
+  /** @ngInject */
+  function Health($resource) {
+    return $resource('../health');
+  }
