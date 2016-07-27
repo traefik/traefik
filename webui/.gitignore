@@ -1,5 +1,6 @@
-node_modules/
-bower_components/
-coverage/
-.sass-cache/
 .tmp/
+coverage/
+dist/
+node_modules/
+.sass-cache/
+

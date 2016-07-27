@@ -19,13 +19,12 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
 ## How to build (only for frontends developer)
 
-- prerequisite: [Node](https://nodejs.org)
+- prerequisite: [Node 4+ and NPM 3+](https://nodejs.org)
 
 - Go to the directory `webui`
 
 - To install dependencies, execute the following commands:
   - `npm install`
-  - `bower install`
 
 - Build static Web UI, execute the following command:
   - `gulp`
@@ -40,6 +39,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
   - add vendor prefixes to CSS (cross-bowser support)
   - add a hash in the file names to prevent browser cache problems
   - all images will be optimized at build
+  - bundle JavaScript in one file
 
 
 ## How to edit (only for frontends developer)
@@ -62,7 +62,8 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 ## Libraries
 
 - [Node](https://nodejs.org)
-- [Generator Gulp-Angular](https://github.com/Swiip/generator-gulp-angular)
+- [Generator FountainJS](https://github.com/FountainJS/generator-fountain-webapp)
+- [Webpack](https://github.com/webpack/webpack)
 - [AngularJS](https://docs.angularjs.org/api)
 - [UI Router](https://github.com/angular-ui/ui-router)
   - [UI Router - Documentation](https://github.com/angular-ui/ui-router/wiki)
