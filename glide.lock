@@ -1,5 +1,5 @@
-hash: 5cb432175705882247ac2cbf708c879fad8b287afe9e1e18f06dbce1e956acd2
-updated: 2016-07-28T18:20:42.864416381+02:00
+hash: cc5b40d58d36a83c1bef13c0d269d7126c7d639ed5f7135160b9f3b9c624c7c9
+updated: 2016-07-28T19:30:16.497440179+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -267,7 +267,7 @@ imports:
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
-  version: 8d476862d38b9be356eaa83b5712cad561be08a1
+  version: ab7796d7036b425fbc945853cd1b7e7adf43b0d6
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
