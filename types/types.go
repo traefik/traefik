@@ -183,3 +183,22 @@ func (cs *Constraints) SetValue(val interface{}) {
 func (cs *Constraints) Type() string {
 	return fmt.Sprint("constraint")
 }
+
+// Auth holds authentication configuration (BASIC, DIGEST, users)
+type Auth struct {
+	Basic  *Basic
+	Digest *Digest
+}
+
+// Users authentication users
+type Users []string
+
+// Basic HTTP basic authentication
+type Basic struct {
+	Users
+}
+
+// Digest HTTP authentication
+type Digest struct {
+	Users
+}

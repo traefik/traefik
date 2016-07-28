@@ -27,7 +27,7 @@ sudo chmod +x /usr/bin/ghr
 
 # github release and tag
 echo "Github release..."
-ghr -t $GITHUB_TOKEN -u containous -r traefik --prerelease ${VERSION} dist/
+ghr -t $GITHUB_TOKEN -u containous -r traefik ${VERSION} dist/
 
 # update docs.traefik.io
 echo "Generating and updating documentation..."

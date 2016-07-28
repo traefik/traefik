@@ -64,8 +64,6 @@ import:
   version: b2fad6198110326662e9e356a97199078a4a775c
   subpackages:
   - acme
-- package: github.com/miekg/dns
-  version: 5d001d020961ae1c184f9f8152fdc73810481677
 - package: golang.org/x/net
   subpackages:
   - context

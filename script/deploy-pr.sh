@@ -21,5 +21,7 @@ echo "Updating docker containous/traefik image..."
 docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
 docker tag containous/traefik containous/traefik:pr-${PR}
 docker push containous/traefik:pr-${PR}
+docker tag containous/traefik containous/traefik:experimental
+docker push containous/traefik:experimental
 
 echo "Deployed"

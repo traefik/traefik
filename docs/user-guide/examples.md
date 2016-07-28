@@ -97,3 +97,21 @@ entryPoint = "https"
   backend = "backend2"
     rule = "Path:/test"
 ```
+
+## Enable Basic authentication in an entrypoint
+
+With two user/pass:
+
+- `test`:`test`
+- `test2`:`test2`
+
+Passwords are encoded in MD5: you can use htpasswd to generate those ones.
+
+```
+defaultEntryPoints = ["http"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth.basic]
+  users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+```
