@@ -8,7 +8,7 @@ import:
 - package: github.com/cenkalti/backoff
 - package: github.com/codegangsta/negroni
 - package: github.com/containous/flaeg
-  version: da9515902135a2c9071c7464a1ae660b8b24d994
+  version: f90a5e0dd64a1186a25434af077ac83acf710daf
 - package: github.com/vulcand/oxy
   version: ab7796d7036b425fbc945853cd1b7e7adf43b0d6
   repo: https://github.com/containous/oxy.git
@@ -21,7 +21,7 @@ import:
   - stream
   - utils
 - package: github.com/containous/staert
-  version: 8a848df89b01313ad890142bcd613a932f629a41
+  version: 21164fe201578bea96317a87752953ea5d9dc6d1
 - package: github.com/docker/engine-api
   version: 62043eb79d581a32ea849645277023c550732e52
   subpackages:

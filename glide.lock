@@ -1,5 +1,5 @@
-hash: cc5b40d58d36a83c1bef13c0d269d7126c7d639ed5f7135160b9f3b9c624c7c9
-updated: 2016-07-28T19:30:16.497440179+02:00
+hash: 6fc5cf26af9c4ea23c86d5fab1ea02769736cf878da1c94b4edf836419ffd78f
+updated: 2016-08-05T14:08:42.755921785+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -20,11 +20,11 @@ imports:
 - name: github.com/codegangsta/negroni
   version: dc6b9d037e8dab60cbfc09c61d6932537829be8b
 - name: github.com/containous/flaeg
-  version: da9515902135a2c9071c7464a1ae660b8b24d994
+  version: f90a5e0dd64a1186a25434af077ac83acf710daf
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: 8a848df89b01313ad890142bcd613a932f629a41
+  version: 21164fe201578bea96317a87752953ea5d9dc6d1
 - name: github.com/coreos/etcd
   version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
@@ -36,7 +36,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: 857d0f15c0a4d8037175642e0ca3660829551cb5
+  version: 87917f30529e6a7fca8eaff2932424915fb11225
   subpackages:
   - reference
   - digest
@@ -141,7 +141,7 @@ imports:
   - lookup
   - version
 - name: github.com/docker/libkv
-  version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
+  version: aabc039ad04deb721e234f99cd1b4aa28ac71a40
   subpackages:
   - store
   - store/boltdb
@@ -157,7 +157,7 @@ imports:
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
-  version: e57a569e1882958f6b188cb42231d6db87701f2a
+  version: e33835a643a970c11ac74f6333f5f6866387a101
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -169,7 +169,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: 8a8271fd81cdaa1bbc20e4ced86531b90c7eaf79
+  version: 9a353ddd6015378d169f2bee8b3aea44f3d3a03d
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -220,13 +220,13 @@ imports:
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
-  version: d2dd0262208475919e1a362f675cfc0e7c10e905
+  version: 21a35fb16463dfb7c8eee579c65d995d95e64d1e
 - name: github.com/moul/http2curl
   version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: bd1d3ac0480c5d3babac10dc32cff2886563219c
+  version: 1a81e9ab1f138c091fe5c86d0883f87716088527
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -253,7 +253,7 @@ imports:
   - mock
   - assert
 - name: github.com/thoas/stats
-  version: 79b768ff1780f4e5b0ed132e192bfeefe9f85a9c
+  version: 152b5d051953fdb6e45f14b6826962aadc032324
 - name: github.com/tv42/zbase32
   version: 03389da7e0bf9844767f82690f4d68fc097a1306
 - name: github.com/ugorji/go
@@ -337,7 +337,7 @@ testImports:
 - name: github.com/spf13/pflag
   version: 5644820622454e71517561946e3d94b9f9db6842
 - name: github.com/vbatts/tar-split
-  version: 28bc4c32f9fa9725118a685c9ddd7ffdbdbfe2c8
+  version: 6810cedb21b2c3d0b9bb8f9af12ff2dc7a2f14df
   subpackages:
   - tar/asm
   - tar/storage
@@ -347,4 +347,4 @@ testImports:
 - name: github.com/xeipuuv/gojsonreference
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
-  version: 66a3de92def23708184148ae337750915875e7c1
+  version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
