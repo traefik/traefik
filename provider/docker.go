@@ -8,8 +8,6 @@ import (
 	"text/template"
 	"time"
 
-	"golang.org/x/net/context"
-
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenkalti/backoff"
@@ -22,6 +20,7 @@ import (
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/go-connections/sockets"
 	"github.com/vdemeester/docker-events"
+	"golang.org/x/net/context"
 )
 
 // DockerAPIVersion is a constant holding the version of the Docker API traefik will use
@@ -168,15 +167,25 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 		return provider.containerFilter(container, provider.ExposedByDefault)
 	}, containersInspected).([]dockertypes.ContainerJSON)
 
-	frontends := map[string][]dockertypes.ContainerJSON{}
+	type Frontend struct {
+		Rule       string
+		Containers []dockertypes.ContainerJSON
+	}
+
+	frontends := map[string]Frontend{}
 	for _, container := range filteredContainers {
-		frontendName := provider.getFrontendName(container)
-		frontends[frontendName] = append(frontends[frontendName], container)
+		for frontendName, frontendRule := range provider.getFrontendName(container) {
+			frontend := frontends[frontendName]
+			frontends[frontendName] = Frontend{
+				Rule:       frontendRule,
+				Containers: append(frontend.Containers, container),
+			}
+		}
 	}
 
 	templateObjects := struct {
 		Containers []dockertypes.ContainerJSON
-		Frontends  map[string][]dockertypes.ContainerJSON
+		Frontends  map[string]Frontend
 		Domain     string
 	}{
 		filteredContainers,
@@ -218,18 +227,22 @@ func (provider *Docker) containerFilter(container dockertypes.ContainerJSON, exp
 	return true
 }
 
-func (provider *Docker) getFrontendName(container dockertypes.ContainerJSON) string {
+func (provider *Docker) getFrontendName(container dockertypes.ContainerJSON) map[string]string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
-	return normalize(provider.getFrontendRule(container))
+	frontendNames := make(map[string]string)
+	for _, rule := range provider.getFrontendRule(container) {
+		frontendNames[normalize(rule)] = rule
+	}
+	return frontendNames
 }
 
 // GetFrontendRule returns the frontend rule for the specified container, using
 // it's label. It returns a default one (Host) if the label is not present.
-func (provider *Docker) getFrontendRule(container dockertypes.ContainerJSON) string {
+func (provider *Docker) getFrontendRule(container dockertypes.ContainerJSON) []string {
 	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
-		return label
+		return strings.Split(label, "&&")
 	}
-	return "Host:" + provider.getSubDomain(container.Name) + "." + provider.Domain
+	return []string{"Host:" + provider.getSubDomain(container.Name) + "." + provider.Domain}
 }
 
 func (provider *Docker) getBackend(container dockertypes.ContainerJSON) string {

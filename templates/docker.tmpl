@@ -4,14 +4,14 @@
     weight = {{getWeight .}}
 {{end}}
 
-[frontends]{{range $frontend, $containers := .Frontends}}
-  [frontends."frontend-{{$frontend}}"]{{$container := index $containers 0}}
+[frontends]{{range $frontendName, $frontend := .Frontends}}
+  [frontends."frontend-{{$frontendName}}"]{{$container := index $frontend.Containers 0}}
   backend = "backend-{{getBackend $container}}"
   passHostHeader = {{getPassHostHeader $container}}
   priority = {{getPriority $container}}
   entryPoints = [{{range getEntryPoints $container}}
     "{{.}}",
   {{end}}]
-    [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
-    rule = "{{getFrontendRule $container}}"
+    [frontends."frontend-{{$frontendName}}".routes."route-frontend-{{$frontendName}}"]
+    rule = "{{$frontend.Rule}}"
 {{end}}
