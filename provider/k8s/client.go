@@ -111,9 +111,9 @@ func (c *clientImpl) GetService(name, namespace string) (Service, error) {
 }
 
 // WatchServices returns all services in the cluster
-func (c *clientImpl) WatchServices(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c *clientImpl) WatchServices(stopCh <-chan bool) (chan interface{}, chan error, error) {
 	getURL := c.endpointURL + APIEndpoint + "/services"
-	return c.watch(getURL, labelSelector, stopCh)
+	return c.watch(getURL, "", stopCh)
 }
 
 // GetEndpoints returns the named Endpoints
@@ -134,9 +134,9 @@ func (c *clientImpl) GetEndpoints(name, namespace string) (Endpoints, error) {
 }
 
 // WatchEndpoints returns endpoints in the cluster
-func (c *clientImpl) WatchEndpoints(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
+func (c *clientImpl) WatchEndpoints(stopCh <-chan bool) (chan interface{}, chan error, error) {
 	getURL := c.endpointURL + APIEndpoint + "/endpoints"
-	return c.watch(getURL, labelSelector, stopCh)
+	return c.watch(getURL, "", stopCh)
 }
 
 // WatchAll returns events in the cluster
@@ -150,12 +150,12 @@ func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan bool) (chan in
 		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
 	stopServices := make(chan bool)
-	chanServices, chanServicesErr, err := c.WatchServices(labelSelector, stopServices)
+	chanServices, chanServicesErr, err := c.WatchServices(stopServices)
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
 	stopEndpoints := make(chan bool)
-	chanEndpoints, chanEndpointsErr, err := c.WatchEndpoints(labelSelector, stopEndpoints)
+	chanEndpoints, chanEndpointsErr, err := c.WatchEndpoints(stopEndpoints)
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
