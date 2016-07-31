@@ -13,3 +13,4 @@ static/
 site/
 *.log
 *.exe
+.DS_Store
