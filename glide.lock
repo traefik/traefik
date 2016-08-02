@@ -1,8 +1,8 @@
-hash: 234c57cf3696be155463b9a92cd8d104bb52c16c821b64dd24d8d88097d80dd8
-updated: 2016-07-18T17:58:15.732937572+02:00
+hash: c7c28fa3f095cd3e31f8531dd5badeb196256965f003f5cbadd0f509960aa647
+updated: 2016-08-01T17:16:21.884990443+02:00
 imports:
 - name: github.com/boltdb/bolt
-  version: acc803f0ced151102ed51bf824f8709ebd6602bc
+  version: 5cc10bbbc5c141029940133bb33c9e969512a698
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/BurntSushi/ty
@@ -34,7 +34,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: f8083b7ff32b224921c5f66c0f4df3e58dab49f5
+  version: 857d0f15c0a4d8037175642e0ca3660829551cb5
   subpackages:
   - reference
   - digest
@@ -159,7 +159,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: 548fb6eb3f407147e20d923521296e0500f57ef0
+  version: 8a8271fd81cdaa1bbc20e4ced86531b90c7eaf79
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -192,11 +192,11 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 1b49d9b4db3fe7ffbe53698a79124e7b4aa78180
+  version: bd1d3ac0480c5d3babac10dc32cff2886563219c
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
-  version: 6e8ad4ebdee4bec2934ed5afaaa1c7b877832a17
+  version: 045012d33ef41ea146c1b675df9296d0dc1a212d
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -219,7 +219,7 @@ imports:
   - mock
   - assert
 - name: github.com/thoas/stats
-  version: 69e3c072eec2df2df41afe6214f62eb940e4cd80
+  version: 79b768ff1780f4e5b0ed132e192bfeefe9f85a9c
 - name: github.com/ugorji/go
   version: b94837a2404ab90efe9289e77a70694c355739cb
   subpackages:
@@ -231,7 +231,7 @@ imports:
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
-  version: ab7796d7036b425fbc945853cd1b7e7adf43b0d6
+  version: 4298f24d572dc554eb984f2ffdf6bdd54d4bd613
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -258,7 +258,7 @@ imports:
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: f28b56427a527c2e35c0bcac123f0a6a8a943cd3
+  version: d81fdb778bf2c40a91b24519d60cdc5767318829
   subpackages:
   - ocsp
 - name: golang.org/x/net
