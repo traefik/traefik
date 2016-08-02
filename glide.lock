@@ -1,5 +1,10 @@
+<<<<<<< b376da18295c88c96fad0c7ea0c612718a7e70cb
 hash: 7382685091734eeeef590d8d298600abfaa21c40c8714ef570b8006e4f8cc846
 updated: 2016-08-19T14:15:17.22440385+02:00
+=======
+hash: c7c28fa3f095cd3e31f8531dd5badeb196256965f003f5cbadd0f509960aa647
+updated: 2016-08-01T17:16:21.884990443+02:00
+>>>>>>> Bump oxy version, fix streaming
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -40,7 +45,11 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
+<<<<<<< b376da18295c88c96fad0c7ea0c612718a7e70cb
   version: 2b72dd3927b2958160a2336f16145c0c421aa6a4
+=======
+  version: 857d0f15c0a4d8037175642e0ca3660829551cb5
+>>>>>>> Bump oxy version, fix streaming
   subpackages:
   - reference
   - digest
@@ -175,7 +184,11 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
+<<<<<<< b376da18295c88c96fad0c7ea0c612718a7e70cb
   version: fce7d75609a04eeb9d4bf41c8dc592aac18fc97d
+=======
+  version: 8a8271fd81cdaa1bbc20e4ced86531b90c7eaf79
+>>>>>>> Bump oxy version, fix streaming
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -232,7 +245,11 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
+<<<<<<< b376da18295c88c96fad0c7ea0c612718a7e70cb
   version: fb221651e5120cd287a76c7c1b6c877520fbd034
+=======
+  version: bd1d3ac0480c5d3babac10dc32cff2886563219c
+>>>>>>> Bump oxy version, fix streaming
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -259,9 +276,13 @@ imports:
   - mock
   - assert
 - name: github.com/thoas/stats
+<<<<<<< b376da18295c88c96fad0c7ea0c612718a7e70cb
   version: 152b5d051953fdb6e45f14b6826962aadc032324
 - name: github.com/tv42/zbase32
   version: 03389da7e0bf9844767f82690f4d68fc097a1306
+=======
+  version: 79b768ff1780f4e5b0ed132e192bfeefe9f85a9c
+>>>>>>> Bump oxy version, fix streaming
 - name: github.com/ugorji/go
   version: b94837a2404ab90efe9289e77a70694c355739cb
   subpackages:
@@ -273,7 +294,7 @@ imports:
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
-  version: ab7796d7036b425fbc945853cd1b7e7adf43b0d6
+  version: 4298f24d572dc554eb984f2ffdf6bdd54d4bd613
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
