@@ -1,5 +1,21 @@
 # Change Log
 
+## [v1.0.2](https://github.com/containous/traefik/tree/v1.0.2) (2016-08-02)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.0.1...v1.0.2)
+
+**Fixed bugs:**
+
+- ACME: revoke certificate on agreement update [\#579](https://github.com/containous/traefik/issues/579)
+
+**Closed issues:**
+
+- Exclude some frontends in consul catalog [\#555](https://github.com/containous/traefik/issues/555)
+
+**Merged pull requests:**
+
+- Bump oxy version, fix streaming [\#584](https://github.com/containous/traefik/pull/584) ([emilevauge](https://github.com/emilevauge))
+- Fix ACME TOS [\#582](https://github.com/containous/traefik/pull/582) ([emilevauge](https://github.com/emilevauge))
+
 ## [v1.0.1](https://github.com/containous/traefik/tree/v1.0.1) (2016-07-19)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.0.0...v1.0.1)
 
