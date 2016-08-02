@@ -280,6 +280,20 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 	// Agreement. The user will need to agree to it.
 	err = a.client.AgreeToTOS()
 	if err != nil {
+		// Let's Encrypt Subscriber Agreement renew ?
+		reg, err := client.QueryRegistration()
+		if err != nil {
+			return err
+		}
+		account.Registration = reg
+		err = client.AgreeToTOS()
+		if err != nil {
+			log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
+		}
+	}
+	// save account
+	err = a.saveAccount(account)
+	if err != nil {
 		return err
 	}
 
