@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	fmtlog "log"
@@ -173,6 +174,9 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	globalConfiguration := traefikConfiguration.GlobalConfiguration
 
 	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = globalConfiguration.MaxIdleConnsPerHost
+	if globalConfiguration.InsecureSkipVerify {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
 	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile)
 	defer loggerMiddleware.Close()
 

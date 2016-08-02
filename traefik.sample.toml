@@ -47,6 +47,13 @@
 #
 # MaxIdleConnsPerHost = 200
 
+# If set to true invalid SSL certificates are accepted for backends.
+# Note: This disables detection of man-in-the-middle attacks so should only be used on secure backend networks.
+# Optional
+# Default: false
+#
+# InsecureSkipVerify = true
+
 # Entrypoints to be used by frontends that do not specify any entrypoint.
 # Each frontend can specify its own entrypoints.
 #
