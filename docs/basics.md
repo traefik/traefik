@@ -127,7 +127,7 @@ In TOML file, you can use multiple routes:
     [frontends.frontend3.routes.test_1]
     rule = "Host:test3.localhost"
     [frontends.frontend3.routes.test_2]
-    rule = "Host:Path:/test"
+    rule = "Path:/test"
 ```
 
 Here `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched.
