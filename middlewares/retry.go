@@ -9,6 +9,13 @@ import (
 	"net/http"
 )
 
+var (
+	_ http.ResponseWriter = &ResponseRecorder{}
+	_ http.Hijacker       = &ResponseRecorder{}
+	_ http.Flusher        = &ResponseRecorder{}
+	_ http.CloseNotifier  = &ResponseRecorder{}
+)
+
 // Retry is a middleware that retries requests
 type Retry struct {
 	attempts int
@@ -52,6 +59,7 @@ type ResponseRecorder struct {
 	Body      *bytes.Buffer // if non-nil, the bytes.Buffer to append written data to
 
 	responseWriter http.ResponseWriter
+	err            error
 }
 
 // NewRecorder returns an initialized ResponseRecorder.
@@ -75,10 +83,10 @@ func (rw *ResponseRecorder) Header() http.Header {
 
 // Write always succeeds and writes to rw.Body, if not nil.
 func (rw *ResponseRecorder) Write(buf []byte) (int, error) {
-	if rw.Body != nil {
-		return rw.Body.Write(buf)
+	if rw.err != nil {
+		return 0, rw.err
 	}
-	return 0, nil
+	return rw.Body.Write(buf)
 }
 
 // WriteHeader sets rw.Code.
@@ -89,4 +97,25 @@ func (rw *ResponseRecorder) WriteHeader(code int) {
 // Hijack hijacks the connection
 func (rw *ResponseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return rw.responseWriter.(http.Hijacker).Hijack()
+}
+
+// CloseNotify returns a channel that receives at most a
+// single value (true) when the client connection has gone
+// away.
+func (rw *ResponseRecorder) CloseNotify() <-chan bool {
+	return rw.responseWriter.(http.CloseNotifier).CloseNotify()
+}
+
+// Flush sends any buffered data to the client.
+func (rw *ResponseRecorder) Flush() {
+	_, err := rw.responseWriter.Write(rw.Body.Bytes())
+	if err != nil {
+		log.Errorf("Error writing response in ResponseRecorder: %s", err)
+		rw.err = err
+	}
+	rw.Body.Reset()
+	flusher, ok := rw.responseWriter.(http.Flusher)
+	if ok {
+		flusher.Flush()
+	}
 }
