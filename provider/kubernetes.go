@@ -209,6 +209,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						Backend:        r.Host + pa.Path,
 						PassHostHeader: PassHostHeader,
 						Routes:         make(map[string]types.Route),
+						Priority:       len(pa.Path),
 					}
 				}
 				if len(r.Host) > 0 {

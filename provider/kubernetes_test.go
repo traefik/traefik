@@ -237,6 +237,7 @@ func TestLoadIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
+				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -425,7 +426,8 @@ func TestRuleType(t *testing.T) {
 
 	expected := map[string]*types.Frontend{
 		"foo1/bar1": {
-			Backend: "foo1/bar1",
+			Backend:  "foo1/bar1",
+			Priority: len("/bar1"),
 			Routes: map[string]types.Route{
 				"/bar1": {
 					Rule: "PathPrefixStrip:/bar1",
@@ -436,7 +438,8 @@ func TestRuleType(t *testing.T) {
 			},
 		},
 		"foo1/bar2": {
-			Backend: "foo1/bar2",
+			Backend:  "foo1/bar2",
+			Priority: len("/bar2"),
 			Routes: map[string]types.Route{
 				"/bar2": {
 					Rule: "Path:/bar2",
@@ -447,7 +450,8 @@ func TestRuleType(t *testing.T) {
 			},
 		},
 		"foo2/bar1": {
-			Backend: "foo2/bar1",
+			Backend:  "foo2/bar1",
+			Priority: len("/bar1"),
 			Routes: map[string]types.Route{
 				"/bar1": {
 					Rule: "PathPrefix:/bar1",
@@ -458,7 +462,8 @@ func TestRuleType(t *testing.T) {
 			},
 		},
 		"foo2/bar2": {
-			Backend: "foo2/bar2",
+			Backend:  "foo2/bar2",
+			Priority: len("/bar2"),
 			Routes: map[string]types.Route{
 				"/bar2": {
 					Rule: "PathStrip:/bar2",
@@ -469,7 +474,8 @@ func TestRuleType(t *testing.T) {
 			},
 		},
 		"foo1/bar3": {
-			Backend: "foo1/bar3",
+			Backend:  "foo1/bar3",
+			Priority: len("/bar3"),
 			Routes: map[string]types.Route{
 				"/bar3": {
 					Rule: "PathPrefix:/bar3",
@@ -559,7 +565,8 @@ func TestGetPassHostHeader(t *testing.T) {
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
-				Backend: "foo/bar",
+				Backend:  "foo/bar",
+				Priority: len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -869,6 +876,7 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
+				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1116,6 +1124,7 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
+				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1137,6 +1146,7 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			"awesome/quix": {
 				Backend:        "awesome/quix",
 				PassHostHeader: true,
+				Priority:       len("/quix"),
 				Routes: map[string]types.Route{
 					"/quix": {
 						Rule: "PathPrefix:/quix",
@@ -1226,7 +1236,8 @@ func TestHostlessIngress(t *testing.T) {
 		},
 		Frontends: map[string]*types.Frontend{
 			"/bar": {
-				Backend: "/bar",
+				Backend:  "/bar",
+				Priority: len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
