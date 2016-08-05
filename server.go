@@ -244,8 +244,29 @@ func (server *Server) listenConfigurations(stop chan bool) {
 					log.Infof("Server configuration reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 				}
 				server.currentConfigurations.Set(newConfigurations)
+				server.postLoadConfig()
 			} else {
 				log.Error("Error loading new configuration, aborted ", err)
+			}
+		}
+	}
+}
+
+func (server *Server) postLoadConfig() {
+	if server.globalConfiguration.ACME != nil && server.globalConfiguration.ACME.OnHostRule {
+		currentConfigurations := server.currentConfigurations.Get().(configs)
+		for _, configuration := range currentConfigurations {
+			for _, frontend := range configuration.Frontends {
+				for _, route := range frontend.Routes {
+					rules := Rules{}
+					domains, err := rules.ParseDomains(route.Rule)
+					if err != nil {
+						log.Errorf("Error parsing domains: %v", err)
+					} else {
+						server.globalConfiguration.ACME.LoadCertificateForDomains(domains)
+					}
+				}
+
 			}
 		}
 	}

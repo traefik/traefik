@@ -4,11 +4,11 @@ import (
 	"github.com/containous/mux"
 	"net/http"
 	"net/url"
+	"reflect"
 	"testing"
 )
 
 func TestParseOneRule(t *testing.T) {
-
 	router := mux.NewRouter()
 	route := router.NewRoute()
 	serverRoute := &serverRoute{route: route}
@@ -31,7 +31,6 @@ func TestParseOneRule(t *testing.T) {
 }
 
 func TestParseTwoRules(t *testing.T) {
-
 	router := mux.NewRouter()
 	route := router.NewRoute()
 	serverRoute := &serverRoute{route: route}
@@ -50,6 +49,29 @@ func TestParseTwoRules(t *testing.T) {
 	if routeMatch == false {
 		t.Log(err)
 		t.Fatal("Rule Host:foo.bar;Path:/foobar don't match")
+	}
+}
+
+func TestParseDomains(t *testing.T) {
+	rules := &Rules{}
+	expressionsSlice := []string{
+		"Host:foo.bar,test.bar",
+		"Path:/test",
+		"Host:foo.bar;Path:/test",
+	}
+	domainsSlice := [][]string{
+		{"foo.bar", "test.bar"},
+		{},
+		{"foo.bar"},
+	}
+	for i, expression := range expressionsSlice {
+		domains, err := rules.ParseDomains(expression)
+		if err != nil {
+			t.Fatalf("Error while parsing domains: %v", err)
+		}
+		if !reflect.DeepEqual(domains, domainsSlice[i]) {
+			t.Fatalf("Error parsing domains: expected %+v, got %+v", domainsSlice[i], domains)
+		}
 	}
 }
 

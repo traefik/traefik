@@ -166,9 +166,12 @@ type ACME struct {
 	Domains     []Domain `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
 	StorageFile string   `description:"File used for certificates storage."`
 	OnDemand    bool     `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."`
+	OnHostRule  bool     `description:"Enable certificate generation on frontends Host rules."`
 	CAServer    string   `description:"CA server to use."`
 	EntryPoint  string   `description:"Entrypoint to proxy acme challenge to."`
 	storageLock sync.RWMutex
+	client      *acme.Client
+	account     *Account
 }
 
 //Domains parse []Domain
@@ -229,14 +232,14 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 		}
 		tlsConfig.Certificates = append(tlsConfig.Certificates, *cert)
 	}
-	var account *Account
 	var needRegister bool
+	var err error
 
 	// if certificates in storage, load them
 	if fileInfo, err := os.Stat(a.StorageFile); err == nil && fileInfo.Size() != 0 {
 		log.Infof("Loading ACME certificates...")
 		// load account
-		account, err = a.loadAccount(a)
+		a.account, err = a.loadAccount(a)
 		if err != nil {
 			return err
 		}
@@ -247,42 +250,42 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 		if err != nil {
 			return err
 		}
-		account = &Account{
+		a.account = &Account{
 			Email:      a.Email,
 			PrivateKey: x509.MarshalPKCS1PrivateKey(privateKey),
 		}
-		account.DomainsCertificate = DomainsCertificates{Certs: []*DomainsCertificate{}, lock: &sync.RWMutex{}}
+		a.account.DomainsCertificate = DomainsCertificates{Certs: []*DomainsCertificate{}, lock: &sync.RWMutex{}}
 		needRegister = true
 	}
 
-	client, err := a.buildACMEClient(account)
+	a.client, err = a.buildACMEClient()
 	if err != nil {
 		return err
 	}
-	client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
+	a.client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
 	wrapperChallengeProvider := newWrapperChallengeProvider()
-	client.SetChallengeProvider(acme.TLSSNI01, wrapperChallengeProvider)
+	a.client.SetChallengeProvider(acme.TLSSNI01, wrapperChallengeProvider)
 
 	if needRegister {
 		// New users will need to register; be sure to save it
-		reg, err := client.Register()
+		reg, err := a.client.Register()
 		if err != nil {
 			return err
 		}
-		account.Registration = reg
+		a.account.Registration = reg
 	}
 
 	// The client has a URL to the current Let's Encrypt Subscriber
 	// Agreement. The user will need to agree to it.
-	err = client.AgreeToTOS()
+	err = a.client.AgreeToTOS()
 	if err != nil {
 		return err
 	}
 
 	safe.Go(func() {
-		a.retrieveCertificates(client, account)
-		if err := a.renewCertificates(client, account); err != nil {
-			log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
+		a.retrieveCertificates(a.client)
+		if err := a.renewCertificates(a.client); err != nil {
+			log.Errorf("Error renewing ACME certificate %+v: %s", a.account, err.Error())
 		}
 	})
 
@@ -290,14 +293,14 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 		if challengeCert, ok := wrapperChallengeProvider.getCertificate(clientHello.ServerName); ok {
 			return challengeCert, nil
 		}
-		if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(clientHello.ServerName); ok {
+		if domainCert, ok := a.account.DomainsCertificate.getCertificateForDomain(clientHello.ServerName); ok {
 			return domainCert.tlsCert, nil
 		}
 		if a.OnDemand {
 			if CheckOnDemandDomain != nil && !CheckOnDemandDomain(clientHello.ServerName) {
 				return nil, nil
 			}
-			return a.loadCertificateOnDemand(client, account, clientHello)
+			return a.loadCertificateOnDemand(clientHello)
 		}
 		return nil, nil
 	}
@@ -307,8 +310,8 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 		for {
 			select {
 			case <-ticker.C:
-				if err := a.renewCertificates(client, account); err != nil {
-					log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
+				if err := a.renewCertificates(a.client); err != nil {
+					log.Errorf("Error renewing ACME certificate %+v: %s", a.account, err.Error())
 				}
 			}
 		}
@@ -317,11 +320,11 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 	return nil
 }
 
-func (a *ACME) retrieveCertificates(client *acme.Client, account *Account) {
+func (a *ACME) retrieveCertificates(client *acme.Client) {
 	log.Infof("Retrieving ACME certificates...")
 	for _, domain := range a.Domains {
 		// check if cert isn't already loaded
-		if _, exists := account.DomainsCertificate.exists(domain); !exists {
+		if _, exists := a.account.DomainsCertificate.exists(domain); !exists {
 			domains := []string{}
 			domains = append(domains, domain.Main)
 			domains = append(domains, domain.SANs...)
@@ -330,13 +333,13 @@ func (a *ACME) retrieveCertificates(client *acme.Client, account *Account) {
 				log.Errorf("Error getting ACME certificate for domain %s: %s", domains, err.Error())
 				continue
 			}
-			_, err = account.DomainsCertificate.addCertificateForDomains(certificateResource, domain)
+			_, err = a.account.DomainsCertificate.addCertificateForDomains(certificateResource, domain)
 			if err != nil {
 				log.Errorf("Error adding ACME certificate for domain %s: %s", domains, err.Error())
 				continue
 			}
-			if err = a.saveAccount(account); err != nil {
-				log.Errorf("Error Saving ACME account %+v: %s", account, err.Error())
+			if err = a.saveAccount(); err != nil {
+				log.Errorf("Error Saving ACME account %+v: %s", a.account, err.Error())
 				continue
 			}
 		}
@@ -344,9 +347,9 @@ func (a *ACME) retrieveCertificates(client *acme.Client, account *Account) {
 	log.Infof("Retrieved ACME certificates")
 }
 
-func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
+func (a *ACME) renewCertificates(client *acme.Client) error {
 	log.Debugf("Testing certificate renew...")
-	for _, certificateResource := range account.DomainsCertificate.Certs {
+	for _, certificateResource := range a.account.DomainsCertificate.Certs {
 		if certificateResource.needRenew() {
 			log.Debugf("Renewing certificate %+v", certificateResource.Domains)
 			renewedCert, err := client.RenewCertificate(acme.CertificateResource{
@@ -368,12 +371,12 @@ func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
 				PrivateKey:    renewedCert.PrivateKey,
 				Certificate:   renewedCert.Certificate,
 			}
-			err = account.DomainsCertificate.renewCertificates(renewedACMECert, certificateResource.Domains)
+			err = a.account.DomainsCertificate.renewCertificates(renewedACMECert, certificateResource.Domains)
 			if err != nil {
 				log.Errorf("Error renewing certificate: %v", err)
 				continue
 			}
-			if err = a.saveAccount(account); err != nil {
+			if err = a.saveAccount(); err != nil {
 				log.Errorf("Error saving ACME account: %v", err)
 				continue
 			}
@@ -382,12 +385,12 @@ func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
 	return nil
 }
 
-func (a *ACME) buildACMEClient(Account *Account) (*acme.Client, error) {
+func (a *ACME) buildACMEClient() (*acme.Client, error) {
 	caServer := "https://acme-v01.api.letsencrypt.org/directory"
 	if len(a.CAServer) > 0 {
 		caServer = a.CAServer
 	}
-	client, err := acme.NewClient(caServer, Account, acme.RSA4096)
+	client, err := acme.NewClient(caServer, a.account, acme.RSA4096)
 	if err != nil {
 		return nil, err
 	}
@@ -395,23 +398,58 @@ func (a *ACME) buildACMEClient(Account *Account) (*acme.Client, error) {
 	return client, nil
 }
 
-func (a *ACME) loadCertificateOnDemand(client *acme.Client, Account *Account, clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if certificateResource, ok := Account.DomainsCertificate.getCertificateForDomain(clientHello.ServerName); ok {
+func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	if certificateResource, ok := a.account.DomainsCertificate.getCertificateForDomain(clientHello.ServerName); ok {
 		return certificateResource.tlsCert, nil
 	}
-	Certificate, err := a.getDomainsCertificates(client, []string{clientHello.ServerName})
+	certificate, err := a.getDomainsCertificates(a.client, []string{clientHello.ServerName})
 	if err != nil {
 		return nil, err
 	}
 	log.Debugf("Got certificate on demand for domain %s", clientHello.ServerName)
-	cert, err := Account.DomainsCertificate.addCertificateForDomains(Certificate, Domain{Main: clientHello.ServerName})
+	cert, err := a.account.DomainsCertificate.addCertificateForDomains(certificate, Domain{Main: clientHello.ServerName})
 	if err != nil {
 		return nil, err
 	}
-	if err = a.saveAccount(Account); err != nil {
+	if err = a.saveAccount(); err != nil {
 		return nil, err
 	}
 	return cert.tlsCert, nil
+}
+
+// LoadCertificateForDomains loads certificates from ACME for given domains
+func (a *ACME) LoadCertificateForDomains(domains []string) {
+	safe.Go(func() {
+		var domain Domain
+		if len(domains) == 0 {
+			// no domain
+			return
+
+		} else if len(domains) > 1 {
+			domain = Domain{Main: domains[0], SANs: domains[1:]}
+		} else {
+			domain = Domain{Main: domains[0]}
+		}
+		if _, exists := a.account.DomainsCertificate.exists(domain); exists {
+			// domain already exists
+			return
+		}
+		certificate, err := a.getDomainsCertificates(a.client, domains)
+		if err != nil {
+			log.Errorf("Error getting ACME certificates %+v : %v", domains, err)
+			return
+		}
+		log.Debugf("Got certificate for domains %+v", domains)
+		_, err = a.account.DomainsCertificate.addCertificateForDomains(certificate, domain)
+		if err != nil {
+			log.Errorf("Error adding ACME certificates %+v : %v", domains, err)
+			return
+		}
+		if err = a.saveAccount(); err != nil {
+			log.Errorf("Error Saving ACME account %+v: %v", a.account, err)
+			return
+		}
+	})
 }
 
 func (a *ACME) loadAccount(acmeConfig *ACME) (*Account, error) {
@@ -435,11 +473,11 @@ func (a *ACME) loadAccount(acmeConfig *ACME) (*Account, error) {
 	return &Account, nil
 }
 
-func (a *ACME) saveAccount(Account *Account) error {
+func (a *ACME) saveAccount() error {
 	a.storageLock.Lock()
 	defer a.storageLock.Unlock()
 	// write account to file
-	data, err := json.MarshalIndent(Account, "", "  ")
+	data, err := json.MarshalIndent(a.account, "", "  ")
 	if err != nil {
 		return err
 	}
