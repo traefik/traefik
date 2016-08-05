@@ -119,7 +119,14 @@ Complete documentation is available at https://traefik.io`,
 	//add commands
 	f.AddCommand(versionCmd)
 	f.AddCommand(storeconfigCmd)
-	if _, err := f.Parse(traefikCmd); err != nil {
+
+	usedCmd, err := f.GetCommand()
+	if err != nil {
+		fmtlog.Println(err)
+		os.Exit(-1)
+	}
+
+	if _, err := f.Parse(usedCmd); err != nil {
 		fmtlog.Println(err)
 		os.Exit(-1)
 	}
@@ -145,11 +152,6 @@ Complete documentation is available at https://traefik.io`,
 		os.Exit(-1)
 	}
 
-	usedCmd, err := f.GetCommand()
-	if err != nil {
-		fmtlog.Println(err)
-		os.Exit(-1)
-	}
 	// IF a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
 		s.AddSource(kv)
