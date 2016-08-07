@@ -268,7 +268,11 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 							for _, subset := range endpoints.Subsets {
 								for _, address := range subset.Addresses {
 									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
-									templateObjects.Backends[r.Host+pa.Path].Servers[url] = types.Server{
+									name := url
+									if address.TargetRef != nil && address.TargetRef.Name != "" {
+										name = address.TargetRef.Name
+									}
+									templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
 										URL:    url,
 										Weight: 1,
 									}
