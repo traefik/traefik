@@ -62,6 +62,13 @@
 #
 # defaultEntryPoints = ["http", "https"]
 
+# Whether or not to use a custom HTTP response, instead of 404, if a backend service is unavailable.
+#
+# Optional
+# Default: false
+#
+# CustomBackendHttpError = false
+
 # Enable ACME (Let's Encrypt): automatic SSL
 #
 # Optional
