@@ -16,7 +16,6 @@ import (
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/thoas/stats"
 	"github.com/unrolled/render"
-	"github.com/stretchr/testify/http"
 )
 
 var metrics = stats.New()
