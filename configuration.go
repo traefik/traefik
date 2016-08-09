@@ -46,6 +46,7 @@ type GlobalConfiguration struct {
 	Boltdb                    *provider.BoltDb        `description:"Enable Boltdb backend"`
 	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
 	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
+	CustomBackendHttpError    bool                    `description:"Use custom HTTP response on backend service 404"`
 }
 
 // DefaultEntryPoints holds default entry points
