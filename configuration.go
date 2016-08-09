@@ -47,6 +47,8 @@ type GlobalConfiguration struct {
 	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
 	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
 	CustomBackendHttpError    bool                    `description:"Use custom HTTP response on backend service 404"`
+	CustomBackendErrorMessage string                  `description:"Custom error message to send in HTTP response if backend service returns a 404."`
+	CustomBackendErrorCode    int                     `description:"Custom HTTP status code to return if a backend service returns 404."`
 }
 
 // DefaultEntryPoints holds default entry points
