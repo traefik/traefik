@@ -368,6 +368,9 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: time.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
+			CustomBackendHttpError:    false,
+			CustomBackendErrorCode:    502,
+			CustomBackendErrorMessage: "Unable to GET Backend",
 		},
 		ConfigFile: "",
 	}

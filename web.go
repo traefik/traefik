@@ -16,6 +16,7 @@ import (
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/thoas/stats"
 	"github.com/unrolled/render"
+	"github.com/stretchr/testify/http"
 )
 
 var metrics = stats.New()
@@ -158,7 +159,14 @@ func (provider *WebProvider) getBackendHandler(response http.ResponseWriter, req
 			return
 		}
 	}
-	http.NotFound(response, request)
+	//http.NotFound(response, request)
+	if provider.server.globalConfiguration.CustomBackendHttpError {
+		response.WriteHeader(provider.server.globalConfiguration.CustomBackendErrorCode)
+		fmt.Fprintf(response, provider.server.globalConfiguration.CustomBackendErrorMessage)
+		return
+	} else {
+		http.NotFound(response, request)
+	}
 }
 
 func (provider *WebProvider) getServersHandler(response http.ResponseWriter, request *http.Request) {
