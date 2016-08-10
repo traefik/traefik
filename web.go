@@ -159,10 +159,9 @@ func (provider *WebProvider) getBackendHandler(response http.ResponseWriter, req
 		}
 	}
 	//http.NotFound(response, request)
-	if provider.server.globalConfiguration.CustomBackendHttpError {
+	if provider.server.globalConfiguration.CustomBackendHTTPError {
 		response.WriteHeader(provider.server.globalConfiguration.CustomBackendErrorCode)
 		fmt.Fprintf(response, provider.server.globalConfiguration.CustomBackendErrorMessage)
-		return
 	} else {
 		http.NotFound(response, request)
 	}

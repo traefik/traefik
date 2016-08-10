@@ -67,7 +67,7 @@
 # Optional
 # Default: false
 #
-# CustomBackendHttpError = false
+# CustomBackendHTTPError = false
 
 # Custom error message to use when a backend service is unavailable.
 #
