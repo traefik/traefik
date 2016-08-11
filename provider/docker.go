@@ -160,6 +160,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 		"getPriority":       provider.getPriority,
 		"getEntryPoints":    provider.getEntryPoints,
 		"getFrontendRule":   provider.getFrontendRule,
+		"getSticky":         provider.getSticky,
 		"replace":           replace,
 	}
 
@@ -168,19 +169,26 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 		return provider.containerFilter(container, provider.ExposedByDefault)
 	}, containersInspected).([]dockertypes.ContainerJSON)
 
+	// sticky backends
+	stickycontainers := map[string]dockertypes.ContainerJSON{}
+
 	frontends := map[string][]dockertypes.ContainerJSON{}
 	for _, container := range filteredContainers {
 		frontendName := provider.getFrontendName(container)
 		frontends[frontendName] = append(frontends[frontendName], container)
+		frontends[frontendName] = append(frontends[frontendName], container)
+		stickycontainers[provider.getBackend(container)] = container
 	}
 
 	templateObjects := struct {
-		Containers []dockertypes.ContainerJSON
-		Frontends  map[string][]dockertypes.ContainerJSON
-		Domain     string
+		Containers       []dockertypes.ContainerJSON
+		Frontends        map[string][]dockertypes.ContainerJSON
+		StickyContainers map[string]dockertypes.ContainerJSON
+		Domain           string
 	}{
 		filteredContainers,
 		frontends,
+		stickycontainers,
 		provider.Domain,
 	}
 
@@ -277,6 +285,13 @@ func (provider *Docker) getWeight(container dockertypes.ContainerJSON) string {
 		return label
 	}
 	return "1"
+}
+
+func (provider *Docker) getSticky(container dockertypes.ContainerJSON) string {
+	if _, err := getLabel(container, "traefik.stickysession"); err == nil {
+		return "true"
+	}
+	return "false"
 }
 
 func (provider *Docker) getDomain(container dockertypes.ContainerJSON) string {

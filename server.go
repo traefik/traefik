@@ -494,16 +494,31 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
+
 						lbMethod, err := types.NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
 						if err != nil {
 							log.Errorf("Error loading load balancer method '%+v' for frontend %s: %v", configuration.Backends[frontend.Backend].LoadBalancer, frontendName, err)
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
+
+						stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
+						var cookiename string
+						var sticky *roundrobin.StickySession
+
+						if stickysession {
+							sticky = roundrobin.NewStickySession(cookiename)
+							cookiename = "_TRAEFIK_BACKEND"
+						}
+
 						switch lbMethod {
 						case types.Drr:
 							log.Debugf("Creating load-balancer drr")
 							rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
+							if stickysession {
+								log.Debugf("... setting to sticky session with cookie named %v", cookiename)
+								rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
+							}
 							lb = rebalancer
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
@@ -522,6 +537,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							}
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
+							if stickysession {
+								log.Debugf("... setting to sticky session with cookie named %v", cookiename)
+								rr, _ = roundrobin.New(saveBackend, roundrobin.EnableStickySession(sticky))
+							}
 							lb = rr
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
