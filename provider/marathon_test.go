@@ -111,6 +111,200 @@ func TestMarathonLoadConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "/testLoadBalancerAndCircuitBreaker",
+						Ports: []int{80},
+						Labels: &map[string]string{
+							"traefik.backend.loadbalancer.method":       "drr",
+							"traefik.backend.circuitbreaker.expression": "NetworkErrorRatio() > 0.5",
+						},
+					},
+				},
+			},
+			tasks: &marathon.Tasks{
+				Tasks: []marathon.Task{
+					{
+						ID:    "testLoadBalancerAndCircuitBreaker",
+						AppID: "/testLoadBalancerAndCircuitBreaker",
+						Host:  "127.0.0.1",
+						Ports: []int{80},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				`frontend-testLoadBalancerAndCircuitBreaker`: {
+					Backend:        "backend-testLoadBalancerAndCircuitBreaker",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Routes: map[string]types.Route{
+						`route-host-testLoadBalancerAndCircuitBreaker`: {
+							Rule: "Host:testLoadBalancerAndCircuitBreaker.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-testLoadBalancerAndCircuitBreaker": {
+					Servers: map[string]types.Server{
+						"server-testLoadBalancerAndCircuitBreaker": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+					},
+				},
+			},
+		},
+		{
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "/testMaxConn",
+						Ports: []int{80},
+						Labels: &map[string]string{
+							"traefik.backend.maxconn.amount":        "1000",
+							"traefik.backend.maxconn.extractorfunc": "client.ip",
+						},
+					},
+				},
+			},
+			tasks: &marathon.Tasks{
+				Tasks: []marathon.Task{
+					{
+						ID:    "testMaxConn",
+						AppID: "/testMaxConn",
+						Host:  "127.0.0.1",
+						Ports: []int{80},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				`frontend-testMaxConn`: {
+					Backend:        "backend-testMaxConn",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Routes: map[string]types.Route{
+						`route-host-testMaxConn`: {
+							Rule: "Host:testMaxConn.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-testMaxConn": {
+					Servers: map[string]types.Server{
+						"server-testMaxConn": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        1000,
+						ExtractorFunc: "client.ip",
+					},
+				},
+			},
+		},
+		{
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "/testMaxConnOnlySpecifyAmount",
+						Ports: []int{80},
+						Labels: &map[string]string{
+							"traefik.backend.maxconn.amount": "1000",
+						},
+					},
+				},
+			},
+			tasks: &marathon.Tasks{
+				Tasks: []marathon.Task{
+					{
+						ID:    "testMaxConnOnlySpecifyAmount",
+						AppID: "/testMaxConnOnlySpecifyAmount",
+						Host:  "127.0.0.1",
+						Ports: []int{80},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				`frontend-testMaxConnOnlySpecifyAmount`: {
+					Backend:        "backend-testMaxConnOnlySpecifyAmount",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Routes: map[string]types.Route{
+						`route-host-testMaxConnOnlySpecifyAmount`: {
+							Rule: "Host:testMaxConnOnlySpecifyAmount.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-testMaxConnOnlySpecifyAmount": {
+					Servers: map[string]types.Server{
+						"server-testMaxConnOnlySpecifyAmount": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+					MaxConn: nil,
+				},
+			},
+		},
+		{
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "/testMaxConnOnlyExtractorFunc",
+						Ports: []int{80},
+						Labels: &map[string]string{
+							"traefik.backend.maxconn.extractorfunc": "client.ip",
+						},
+					},
+				},
+			},
+			tasks: &marathon.Tasks{
+				Tasks: []marathon.Task{
+					{
+						ID:    "testMaxConnOnlyExtractorFunc",
+						AppID: "/testMaxConnOnlyExtractorFunc",
+						Host:  "127.0.0.1",
+						Ports: []int{80},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				`frontend-testMaxConnOnlyExtractorFunc`: {
+					Backend:        "backend-testMaxConnOnlyExtractorFunc",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Routes: map[string]types.Route{
+						`route-host-testMaxConnOnlyExtractorFunc`: {
+							Rule: "Host:testMaxConnOnlyExtractorFunc.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-testMaxConnOnlyExtractorFunc": {
+					Servers: map[string]types.Server{
+						"server-testMaxConnOnlyExtractorFunc": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+					MaxConn: nil,
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {

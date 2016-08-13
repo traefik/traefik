@@ -8,14 +8,16 @@ import (
 	"strings"
 	"text/template"
 
+	"math"
+	"net/http"
+	"time"
+
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/emilevauge/backoff"
 	"github.com/gambol99/go-marathon"
-	"net/http"
-	"time"
 )
 
 // Marathon holds configuration of the Marathon provider.
@@ -117,17 +119,24 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 
 func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
-		"getBackend":         provider.getBackend,
-		"getPort":            provider.getPort,
-		"getWeight":          provider.getWeight,
-		"getDomain":          provider.getDomain,
-		"getProtocol":        provider.getProtocol,
-		"getPassHostHeader":  provider.getPassHostHeader,
-		"getPriority":        provider.getPriority,
-		"getEntryPoints":     provider.getEntryPoints,
-		"getFrontendRule":    provider.getFrontendRule,
-		"getFrontendBackend": provider.getFrontendBackend,
-		"replace":            replace,
+		"getBackend":                  provider.getBackend,
+		"getPort":                     provider.getPort,
+		"getWeight":                   provider.getWeight,
+		"getDomain":                   provider.getDomain,
+		"getProtocol":                 provider.getProtocol,
+		"getPassHostHeader":           provider.getPassHostHeader,
+		"getPriority":                 provider.getPriority,
+		"getEntryPoints":              provider.getEntryPoints,
+		"getFrontendRule":             provider.getFrontendRule,
+		"getFrontendBackend":          provider.getFrontendBackend,
+		"replace":                     replace,
+		"hasCircuitBreakerLabels":     provider.hasCircuitBreakerLabels,
+		"hasLoadBalancerLabels":       provider.hasLoadBalancerLabels,
+		"hasMaxConnLabels":            provider.hasMaxConnLabels,
+		"getMaxConnExtractorFunc":     provider.getMaxConnExtractorFunc,
+		"getMaxConnAmount":            provider.getMaxConnAmount,
+		"getLoadBalancerMethod":       provider.getLoadBalancerMethod,
+		"getCircuitBreakerExpression": provider.getCircuitBreakerExpression,
 	}
 
 	applications, err := provider.marathonClient.Applications(nil)
@@ -374,4 +383,61 @@ func (provider *Marathon) getSubDomain(name string) string {
 		return reverseName
 	}
 	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
+}
+
+func (provider *Marathon) hasCircuitBreakerLabels(application marathon.Application) bool {
+	if _, err := provider.getLabel(application, "traefik.backend.circuitbreaker.expression"); err != nil {
+		return false
+	}
+	return true
+}
+
+func (provider *Marathon) hasLoadBalancerLabels(application marathon.Application) bool {
+	if _, err := provider.getLabel(application, "traefik.backend.loadbalancer.method"); err != nil {
+		return false
+	}
+	return true
+}
+
+func (provider *Marathon) hasMaxConnLabels(application marathon.Application) bool {
+	if _, err := provider.getLabel(application, "traefik.backend.maxconn.amount"); err != nil {
+		return false
+	}
+	if _, err := provider.getLabel(application, "traefik.backend.maxconn.extractorfunc"); err != nil {
+		return false
+	}
+	return true
+}
+
+func (provider *Marathon) getMaxConnAmount(application marathon.Application) int64 {
+	if label, err := provider.getLabel(application, "traefik.backend.maxconn.amount"); err == nil {
+		i, errConv := strconv.ParseInt(label, 10, 64)
+		if errConv != nil {
+			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
+			return math.MaxInt64
+		}
+		return i
+	}
+	return math.MaxInt64
+}
+
+func (provider *Marathon) getMaxConnExtractorFunc(application marathon.Application) string {
+	if label, err := provider.getLabel(application, "traefik.backend.maxconn.extractorfunc"); err == nil {
+		return label
+	}
+	return "request.host"
+}
+
+func (provider *Marathon) getLoadBalancerMethod(application marathon.Application) string {
+	if label, err := provider.getLabel(application, "traefik.backend.loadbalancer.method"); err == nil {
+		return label
+	}
+	return "wrr"
+}
+
+func (provider *Marathon) getCircuitBreakerExpression(application marathon.Application) string {
+	if label, err := provider.getLabel(application, "traefik.backend.circuitbreaker.expression"); err == nil {
+		return label
+	}
+	return "NetworkErrorRatio() > 1"
 }
