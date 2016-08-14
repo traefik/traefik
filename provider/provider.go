@@ -11,6 +11,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	log "github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -109,6 +110,10 @@ type ClientTLS struct {
 // CreateTLSConfig creates a TLS config from ClientTLS structures
 func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 	var err error
+	if clientTLS == nil {
+		log.Warnf("clientTLS is nil")
+		return nil, nil
+	}
 	caPool := x509.NewCertPool()
 	if clientTLS.CA != "" {
 		var ca []byte

@@ -12,6 +12,7 @@ import (
 
 type myProvider struct {
 	BaseProvider
+	TLS *ClientTLS
 }
 
 func (p *myProvider) Foo() string {
@@ -54,6 +55,7 @@ func TestConfigurationErrors(t *testing.T) {
 				BaseProvider{
 					Filename: "/non/existent/template.tmpl",
 				},
+				nil,
 			},
 			expectedError: "open /non/existent/template.tmpl: no such file or directory",
 		},
@@ -67,6 +69,7 @@ func TestConfigurationErrors(t *testing.T) {
 				BaseProvider{
 					Filename: templateErrorFile.Name(),
 				},
+				nil,
 			},
 			expectedError: `function "Bar" not defined`,
 		},
@@ -75,6 +78,7 @@ func TestConfigurationErrors(t *testing.T) {
 				BaseProvider{
 					Filename: templateInvalidTOMLFile.Name(),
 				},
+				nil,
 			},
 			expectedError: "Near line 1 (last key parsed 'Hello'): Expected key separator '=', but got '<' instead",
 			funcMap: template.FuncMap{
@@ -130,6 +134,7 @@ func TestGetConfiguration(t *testing.T) {
 		BaseProvider{
 			Filename: templateFile.Name(),
 		},
+		nil,
 	}
 	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
@@ -191,6 +196,7 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 		BaseProvider{
 			Filename: templateFile.Name(),
 		},
+		nil,
 	}
 	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
@@ -206,6 +212,19 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 
 	if configuration.Backends["backend1"].MaxConn.ExtractorFunc != "request.host" {
 		t.Fatalf("Configuration did not parse MaxConn.ExtractorFunc properly")
+	}
+}
+
+func TestNilClientTLS(t *testing.T) {
+	provider := &myProvider{
+		BaseProvider{
+			Filename: "",
+		},
+		nil,
+	}
+	_, err := provider.TLS.CreateTLSConfig()
+	if err != nil {
+		t.Fatalf("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
 	}
 }
 
@@ -298,10 +317,11 @@ func TestMatchingConstraints(t *testing.T) {
 			BaseProvider{
 				Constraints: c.constraints,
 			},
+			nil,
 		}
 		actual, _ := provider.MatchConstraints(c.tags)
 		if actual != c.expected {
-			t.Fatalf("test #%v: expected %q, got %q, for %q", i, c.expected, actual, c.constraints)
+			t.Fatalf("test #%v: expected %t, got %t, for %#v", i, c.expected, actual, c.constraints)
 		}
 	}
 }
