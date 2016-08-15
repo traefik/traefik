@@ -1,5 +1,5 @@
-hash: 6fc5cf26af9c4ea23c86d5fab1ea02769736cf878da1c94b4edf836419ffd78f
-updated: 2016-08-05T14:08:42.755921785+02:00
+hash: 49c7bd0e32b2764248183bda52f168fe22d69e2db5e17c1dbeebbe71be9929b1
+updated: 2016-08-11T14:33:42.826534934+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -20,11 +20,11 @@ imports:
 - name: github.com/codegangsta/negroni
   version: dc6b9d037e8dab60cbfc09c61d6932537829be8b
 - name: github.com/containous/flaeg
-  version: f90a5e0dd64a1186a25434af077ac83acf710daf
+  version: a731c034dda967333efce5f8d276aeff11f8ff87
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: 21164fe201578bea96317a87752953ea5d9dc6d1
+  version: 044bdfee6c8f5e8fb71f70d5ba1cf4cb11a94e97
 - name: github.com/coreos/etcd
   version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
