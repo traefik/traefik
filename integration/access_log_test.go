@@ -75,7 +75,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 			c.Assert(tokens[9], checker.Equals, fmt.Sprintf("%d", i+1))
 			c.Assert(strings.HasPrefix(tokens[10], "frontend"), checker.True)
 			c.Assert(strings.HasPrefix(tokens[11], "http://127.0.0.1:808"), checker.True)
-			c.Assert(regexp.MustCompile("^\\d+\\.\\d+.*s$").MatchString(tokens[12]), checker.True)
+			c.Assert(regexp.MustCompile("^\\d+ms$").MatchString(tokens[12]), checker.True)
 		}
 	}
 	c.Assert(count, checker.Equals, 3)

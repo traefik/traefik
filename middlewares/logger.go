@@ -3,8 +3,6 @@ package middlewares
 import (
 	"bufio"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/streamrail/concurrent-map"
 	"io"
 	"net"
 	"net/http"
@@ -13,6 +11,9 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/streamrail/concurrent-map"
 )
 
 const (
@@ -138,8 +139,9 @@ func (fblh frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req 
 	size := infoRw.GetSize()
 
 	elapsed := time.Now().UTC().Sub(startTime.UTC())
-	fmt.Fprintf(fblh.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %s%s`,
-		host, username, ts, method, uri, proto, status, size, referer, agent, fblh.reqid, frontend, backend, elapsed, "\n")
+	elapsedMillis := elapsed.Nanoseconds() / 1000000
+	fmt.Fprintf(fblh.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %dms%s`,
+		host, username, ts, method, uri, proto, status, size, referer, agent, fblh.reqid, frontend, backend, elapsedMillis, "\n")
 
 }
 
