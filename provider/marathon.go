@@ -21,6 +21,8 @@ import (
 	"github.com/gambol99/go-marathon"
 )
 
+var _ Provider = (*Marathon)(nil)
+
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
 	BaseProvider

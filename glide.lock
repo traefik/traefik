@@ -1,5 +1,14 @@
+<<<<<<< a13549cc28273ba5c15a739fa4aaeb3e0f7216a4
 hash: c0ac205a859d78847e21d3cd63f427ffba985755c6ae84373e4a20364ba39b05
+<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
 updated: 2016-09-30T10:57:42.336729457+02:00
+=======
+updated: 2016-09-28T16:50:04.352639437+01:00
+=======
+hash: 809b3fa812ca88940fdc15530804a4bcd881708e4819fed5aa45c42c871ba5cf
+updated: 2016-09-20T14:50:04.029710103+02:00
+>>>>>>> Add KV datastore
+>>>>>>> Add KV datastore
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -36,7 +45,15 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
+<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: 87917f30529e6a7fca8eaff2932424915fb11225
+=======
+<<<<<<< a13549cc28273ba5c15a739fa4aaeb3e0f7216a4
+  version: 99cb7c0946d2f5a38015443e515dc916295064d7
+=======
+  version: 857d0f15c0a4d8037175642e0ca3660829551cb5
+>>>>>>> Add KV datastore
+>>>>>>> Add KV datastore
   subpackages:
   - context
   - digest
@@ -122,7 +139,13 @@ imports:
   - sockets
   - tlsconfig
 - name: github.com/docker/go-units
+<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+=======
+  version: f2145db703495b2e525c59662db69a7344b00bb8
+- name: github.com/docker/leadership
+  version: bfc7753dd48af19513b29deec23c364bf0f274eb
+>>>>>>> Add KV datastore
 - name: github.com/docker/libcompose
   version: d1876c1d68527a49c0aac22a0b161acc7296b740
   subpackages:
@@ -141,7 +164,11 @@ imports:
   - version
   - yaml
 - name: github.com/docker/libkv
+<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
+=======
+  version: aabc039ad04deb721e234f99cd1b4aa28ac71a40
+>>>>>>> Add KV datastore
   subpackages:
   - store
   - store/boltdb
@@ -157,7 +184,15 @@ imports:
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
+<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: e33835a643a970c11ac74f6333f5f6866387a101
+=======
+<<<<<<< a13549cc28273ba5c15a739fa4aaeb3e0f7216a4
+  version: 89f1976ff373a3e549675d2f212c10f98b6c6316
+=======
+  version: e57a569e1882958f6b188cb42231d6db87701f2a
+>>>>>>> Add KV datastore
+>>>>>>> Add KV datastore
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -220,7 +255,11 @@ imports:
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
+<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
+=======
+  version: 21a35fb16463dfb7c8eee579c65d995d95e64d1e
+>>>>>>> Add KV datastore
 - name: github.com/moul/http2curl
   version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/NYTimes/gziphandler
@@ -228,7 +267,15 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
+<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: 1a81e9ab1f138c091fe5c86d0883f87716088527
+=======
+<<<<<<< a13549cc28273ba5c15a739fa4aaeb3e0f7216a4
+  version: d9fec4c63b089ddfc267194ecb6cda58a13f072c
+=======
+  version: ff88baa42fa5b2a1568a3a14665142fb4bdb3a2a
+>>>>>>> Add KV datastore
+>>>>>>> Add KV datastore
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -243,6 +290,8 @@ imports:
   version: e64db453f3512cade908163702045e0f31137843
   subpackages:
   - zk
+- name: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/streamrail/concurrent-map

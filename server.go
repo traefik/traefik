@@ -375,7 +375,7 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 					}
 					return false
 				}
-				err := server.globalConfiguration.ACME.CreateConfig(config, checkOnDemandDomain)
+				err := server.globalConfiguration.ACME.CreateLocalConfig(config, checkOnDemandDomain)
 				if err != nil {
 					return nil, err
 				}

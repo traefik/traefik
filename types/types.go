@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
 	"strings"
 )
@@ -190,6 +191,18 @@ func (cs *Constraints) SetValue(val interface{}) {
 // Type exports the Constraints type as a string
 func (cs *Constraints) Type() string {
 	return fmt.Sprint("constraint")
+}
+
+// Store holds KV store cluster config
+type Store struct {
+	store.Store
+	Prefix string // like this "prefix" (without the /)
+}
+
+// Cluster holds cluster config
+type Cluster struct {
+	Node  string
+	Store Store
 }
 
 // Auth holds authentication configuration (BASIC, DIGEST, users)

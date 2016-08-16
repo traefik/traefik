@@ -8,18 +8,20 @@ import (
 	"github.com/xenolf/lego/acme"
 )
 
-type wrapperChallengeProvider struct {
+var _ acme.ChallengeProvider = (*inMemoryChallengeProvider)(nil)
+
+type inMemoryChallengeProvider struct {
 	challengeCerts map[string]*tls.Certificate
 	lock           sync.RWMutex
 }
 
-func newWrapperChallengeProvider() *wrapperChallengeProvider {
-	return &wrapperChallengeProvider{
+func newWrapperChallengeProvider() *inMemoryChallengeProvider {
+	return &inMemoryChallengeProvider{
 		challengeCerts: map[string]*tls.Certificate{},
 	}
 }
 
-func (c *wrapperChallengeProvider) getCertificate(domain string) (cert *tls.Certificate, exists bool) {
+func (c *inMemoryChallengeProvider) getCertificate(domain string) (cert *tls.Certificate, exists bool) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	if cert, ok := c.challengeCerts[domain]; ok {
@@ -28,7 +30,7 @@ func (c *wrapperChallengeProvider) getCertificate(domain string) (cert *tls.Cert
 	return nil, false
 }
 
-func (c *wrapperChallengeProvider) Present(domain, token, keyAuth string) error {
+func (c *inMemoryChallengeProvider) Present(domain, token, keyAuth string) error {
 	cert, _, err := acme.TLSSNI01ChallengeCert(keyAuth)
 	if err != nil {
 		return err
@@ -45,10 +47,9 @@ func (c *wrapperChallengeProvider) Present(domain, token, keyAuth string) error 
 	}
 
 	return nil
-
 }
 
-func (c *wrapperChallengeProvider) CleanUp(domain, token, keyAuth string) error {
+func (c *inMemoryChallengeProvider) CleanUp(domain, token, keyAuth string) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	delete(c.challengeCerts, domain)

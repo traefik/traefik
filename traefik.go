@@ -154,6 +154,10 @@ Complete documentation is available at https://traefik.io`,
 
 	// IF a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
+		if traefikConfiguration.Cluster == nil {
+			hostname, _ := os.Hostname()
+			traefikConfiguration.Cluster = &types.Cluster{Store: types.Store{Prefix: kv.Prefix, Store: kv.Store}, Node: hostname}
+		}
 		s.AddSource(kv)
 		if _, err := s.LoadConfig(); err != nil {
 			fmtlog.Println(err)
@@ -235,7 +239,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 }
 
 // CreateKvSource creates KvSource
-// TLS support is enable for Consul and ects backends
+// TLS support is enable for Consul and Etcd backends
 func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSource, error) {
 	var kv *staert.KvSource
 	var store store.Store

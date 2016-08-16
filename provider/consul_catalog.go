@@ -24,6 +24,8 @@ const (
 	DefaultConsulCatalogTagPrefix = "traefik"
 )
 
+var _ Provider = (*ConsulCatalog)(nil)
+
 // ConsulCatalog holds configurations of the Consul catalog provider.
 type ConsulCatalog struct {
 	BaseProvider `mapstructure:",squash"`

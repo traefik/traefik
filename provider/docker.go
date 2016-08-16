@@ -40,6 +40,8 @@ const (
 	SwarmDefaultWatchTime = 15 * time.Second
 )
 
+var _ Provider = (*Docker)(nil)
+
 // Docker holds configurations of the Docker provider.
 type Docker struct {
 	BaseProvider     `mapstructure:",squash"`

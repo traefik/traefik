@@ -99,3 +99,6 @@ import:
 - package: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - package: github.com/NYTimes/gziphandler
+- package: github.com/docker/leadership
+- package: github.com/satori/go.uuid
+  version: ^1.1.0

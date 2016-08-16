@@ -50,6 +50,8 @@ func (ns *Namespaces) SetValue(val interface{}) {
 	*ns = Namespaces(val.(Namespaces))
 }
 
+var _ Provider = (*Kubernetes)(nil)
+
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
 	BaseProvider           `mapstructure:",squash"`

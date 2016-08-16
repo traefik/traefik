@@ -12,6 +12,8 @@ import (
 	"gopkg.in/fsnotify.v1"
 )
 
+var _ Provider = (*File)(nil)
+
 // File holds configurations of the File provider.
 type File struct {
 	BaseProvider `mapstructure:",squash"`
