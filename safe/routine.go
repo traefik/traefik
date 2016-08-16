@@ -1,8 +1,8 @@
 package safe
 
 import (
+	"context"
 	"github.com/containous/traefik/log"
-	"golang.org/x/net/context"
 	"runtime/debug"
 	"sync"
 )

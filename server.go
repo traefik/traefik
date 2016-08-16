@@ -4,6 +4,7 @@ Copyright
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -18,8 +19,6 @@ import (
 	"sort"
 	"syscall"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"

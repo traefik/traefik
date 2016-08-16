@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/cenk/backoff"
@@ -9,7 +10,6 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
-	"golang.org/x/net/context"
 	"sync"
 	"time"
 )
