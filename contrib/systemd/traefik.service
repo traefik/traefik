@@ -4,3 +4,6 @@ Description=Traefik
 [Service]
 ExecStart=/usr/bin/traefik --configFile=/etc/traefik.toml
 Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
