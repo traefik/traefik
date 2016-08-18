@@ -96,6 +96,13 @@
 #
 # onDemand = true
 
+# Enable certificate generation on frontends Host rules. This will request a certificate from Let's Encrypt for each frontend with a Host rule.
+# For example, a rule Host:test1.traefik.io,test2.traefik.io will request a certificate with main domain test1.traefik.io and SAN test2.traefik.io.
+#
+# Optional
+#
+# OnHostRule = true
+
 # CA server to use
 # Uncomment the line to run on the staging let's encrypt server
 # Leave comment to go to prod

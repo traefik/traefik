@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/containous/mux"
 	"net"
 	"net/http"
@@ -93,8 +94,7 @@ func (r *Rules) headersRegexp(headers ...string) *mux.Route {
 	return r.route.route.HeadersRegexp(headers...)
 }
 
-// Parse parses rules expressions
-func (r *Rules) Parse(expression string) (*mux.Route, error) {
+func (r *Rules) parseRules(expression string, onRule func(functionName string, function interface{}, arguments []string) error) error {
 	functions := map[string]interface{}{
 		"Host":            r.host,
 		"HostRegexp":      r.hostRegexp,
@@ -108,7 +108,7 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 	}
 
 	if len(expression) == 0 {
-		return nil, errors.New("Empty rule")
+		return errors.New("Empty rule")
 	}
 
 	f := func(c rune) bool {
@@ -122,17 +122,16 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 
 	parsedRules := strings.FieldsFunc(expression, splitRule)
 
-	var resultRoute *mux.Route
-
 	for _, rule := range parsedRules {
 		// get function
 		parsedFunctions := strings.FieldsFunc(rule, f)
 		if len(parsedFunctions) == 0 {
-			return nil, errors.New("Error parsing rule: '" + rule + "'")
+			return errors.New("Error parsing rule: '" + rule + "'")
 		}
-		parsedFunction, ok := functions[strings.TrimSpace(parsedFunctions[0])]
+		functionName := strings.TrimSpace(parsedFunctions[0])
+		parsedFunction, ok := functions[functionName]
 		if !ok {
-			return nil, errors.New("Error parsing rule: '" + rule + "'. Unknown function: '" + parsedFunctions[0] + "'")
+			return errors.New("Error parsing rule: '" + rule + "'. Unknown function: '" + parsedFunctions[0] + "'")
 		}
 		parsedFunctions = append(parsedFunctions[:0], parsedFunctions[1:]...)
 		fargs := func(c rune) bool {
@@ -141,26 +140,62 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 		// get function
 		parsedArgs := strings.FieldsFunc(strings.Join(parsedFunctions, ":"), fargs)
 		if len(parsedArgs) == 0 {
-			return nil, errors.New("Error parsing args from rule: '" + rule + "'")
+			return errors.New("Error parsing args from rule: '" + rule + "'")
 		}
 
-		inputs := make([]reflect.Value, len(parsedArgs))
 		for i := range parsedArgs {
-			inputs[i] = reflect.ValueOf(strings.TrimSpace(parsedArgs[i]))
+			parsedArgs[i] = strings.TrimSpace(parsedArgs[i])
 		}
-		method := reflect.ValueOf(parsedFunction)
+
+		err := onRule(functionName, parsedFunction, parsedArgs)
+		if err != nil {
+			return fmt.Errorf("Parsing error on rule:", err)
+		}
+	}
+	return nil
+
+}
+
+// Parse parses rules expressions
+func (r *Rules) Parse(expression string) (*mux.Route, error) {
+	var resultRoute *mux.Route
+	err := r.parseRules(expression, func(functionName string, function interface{}, arguments []string) error {
+		inputs := make([]reflect.Value, len(arguments))
+		for i := range arguments {
+			inputs[i] = reflect.ValueOf(arguments[i])
+		}
+		method := reflect.ValueOf(function)
 		if method.IsValid() {
 			resultRoute = method.Call(inputs)[0].Interface().(*mux.Route)
 			if r.err != nil {
-				return nil, r.err
+				return r.err
 			}
 			if resultRoute.GetError() != nil {
-				return nil, resultRoute.GetError()
+				return resultRoute.GetError()
 			}
 
 		} else {
-			return nil, errors.New("Method not found: '" + parsedFunctions[0] + "'")
+			return errors.New("Method not found: '" + functionName + "'")
 		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing rule:", err)
 	}
 	return resultRoute, nil
+}
+
+// ParseDomains parses rules expressions and returns domains
+func (r *Rules) ParseDomains(expression string) ([]string, error) {
+	domains := []string{}
+	err := r.parseRules(expression, func(functionName string, function interface{}, arguments []string) error {
+		if functionName == "Host" {
+			domains = append(domains, arguments...)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing domains:", err)
+	}
+	return domains, nil
 }
