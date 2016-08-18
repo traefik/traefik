@@ -21,6 +21,7 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/docker/libkv/store"
+	"github.com/satori/go.uuid"
 )
 
 var versionTemplate = `Version:      {{.Version}}
@@ -155,8 +156,10 @@ Complete documentation is available at https://traefik.io`,
 	// IF a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
 		if traefikConfiguration.Cluster == nil {
-			hostname, _ := os.Hostname()
-			traefikConfiguration.Cluster = &types.Cluster{Store: types.Store{Prefix: kv.Prefix, Store: kv.Store}, Node: hostname}
+			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.NewV4().String()}
+		}
+		if traefikConfiguration.Cluster.Store == nil {
+			traefikConfiguration.Cluster.Store = &types.Store{Prefix: kv.Prefix, Store: kv.Store}
 		}
 		s.AddSource(kv)
 		if _, err := s.LoadConfig(); err != nil {

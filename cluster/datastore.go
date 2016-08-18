@@ -94,8 +94,8 @@ func (d *Datastore) watchChanges() error {
 
 // Begin creates a transaction with the KV store.
 func (d *Datastore) Begin() (*Transaction, error) {
-	value := uuid.NewV4().String()
-	remoteLock, err := d.kv.NewLock(d.lockKey, &store.LockOptions{TTL: 20 * time.Second, Value: []byte(value)})
+	id := uuid.NewV4().String()
+	remoteLock, err := d.kv.NewLock(d.lockKey, &store.LockOptions{TTL: 20 * time.Second, Value: []byte(id)})
 	if err != nil {
 		return nil, err
 	}
@@ -119,8 +119,8 @@ func (d *Datastore) Begin() (*Transaction, error) {
 	// we got the lock! Now make sure we are synced with KV store
 	operation := func() error {
 		meta := d.get()
-		if meta.Lock != value {
-			return fmt.Errorf("Object lock value: expected %s, got %s", value, meta.Lock)
+		if meta.Lock != id {
+			return fmt.Errorf("Object lock value: expected %s, got %s", id, meta.Lock)
 		}
 		return nil
 	}
