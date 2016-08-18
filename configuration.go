@@ -23,14 +23,14 @@ type TraefikConfiguration struct {
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              int64       `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
-	Debug                     bool        `short:"d" description:"Enable debug mode"`
-	AccessLogsFile            string      `description:"Access logs file"`
-	TraefikLogsFile           string      `description:"Traefik logs file"`
-	LogLevel                  string      `short:"l" description:"Log level"`
-	EntryPoints               EntryPoints `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
-	Cluster                   *types.Cluster
-	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags."`
+	GraceTimeOut              int64                   `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
+	Debug                     bool                    `short:"d" description:"Enable debug mode"`
+	AccessLogsFile            string                  `description:"Access logs file"`
+	TraefikLogsFile           string                  `description:"Traefik logs file"`
+	LogLevel                  string                  `short:"l" description:"Log level"`
+	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
+	Cluster                   *types.Cluster          `description:"Enable clustering"`
+	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags"`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
 	ProvidersThrottleDuration time.Duration           `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`

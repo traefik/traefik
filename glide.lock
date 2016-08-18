@@ -1,3 +1,4 @@
+<<<<<<< 2fbcca003e6454c848801c859d8563da94ea8aaf
 <<<<<<< a13549cc28273ba5c15a739fa4aaeb3e0f7216a4
 hash: c0ac205a859d78847e21d3cd63f427ffba985755c6ae84373e4a20364ba39b05
 <<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
@@ -8,7 +9,14 @@ updated: 2016-09-28T16:50:04.352639437+01:00
 hash: 809b3fa812ca88940fdc15530804a4bcd881708e4819fed5aa45c42c871ba5cf
 updated: 2016-09-20T14:50:04.029710103+02:00
 >>>>>>> Add KV datastore
+<<<<<<< bea5ad3f132bae27b6c1a83adf00154058b484b5
 >>>>>>> Add KV datastore
+=======
+=======
+hash: 49c7bd0e32b2764248183bda52f168fe22d69e2db5e17c1dbeebbe71be9929b1
+updated: 2016-08-11T14:33:42.826534934+02:00
+>>>>>>> Add ACME store
+>>>>>>> Add ACME store
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -33,7 +41,7 @@ imports:
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: 044bdfee6c8f5e8fb71f70d5ba1cf4cb11a94e97
+  version: 56058c7d4152831a641764d10ec91132adf061ea
 - name: github.com/coreos/etcd
   version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:

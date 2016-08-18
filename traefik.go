@@ -12,10 +12,11 @@ import (
 	"strings"
 	"text/template"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
@@ -208,7 +209,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	}
 
 	// logging
-	level, err := log.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
+	level, err := logrus.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
 	if err != nil {
 		log.Error("Error getting level", err)
 	}
@@ -224,10 +225,10 @@ func run(traefikConfiguration *TraefikConfiguration) {
 			log.Error("Error opening file", err)
 		} else {
 			log.SetOutput(fi)
-			log.SetFormatter(&log.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})
+			log.SetFormatter(&logrus.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})
 		}
 	} else {
-		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableSorting: true})
+		log.SetFormatter(&logrus.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)

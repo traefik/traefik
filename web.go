@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"runtime"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/log"
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"

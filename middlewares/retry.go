@@ -3,7 +3,7 @@ package middlewares
 import (
 	"bufio"
 	"bytes"
-	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/log"
 	"github.com/vulcand/oxy/utils"
 	"net"
 	"net/http"

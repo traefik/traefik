@@ -1,11 +1,11 @@
 package cluster
 
 import (
-	log "github.com/Sirupsen/logrus"
-	"github.com/cenkalti/backoff"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/docker/leadership"
+	"github.com/emilevauge/backoff"
 	"golang.org/x/net/context"
 	"time"
 )
@@ -15,6 +15,8 @@ type Leadership struct {
 	*safe.Pool
 	*types.Cluster
 	candidate *leadership.Candidate
+	leader    safe.Safe
+	listeners []LeaderListener
 }
 
 // NewLeadership creates a leadership
@@ -23,8 +25,12 @@ func NewLeadership(ctx context.Context, cluster *types.Cluster) *Leadership {
 		Pool:      safe.NewPool(ctx),
 		Cluster:   cluster,
 		candidate: leadership.NewCandidate(cluster.Store, cluster.Store.Prefix+"/leader", cluster.Node, 20*time.Second),
+		listeners: []LeaderListener{},
 	}
 }
+
+// LeaderListener is called when leadership has changed
+type LeaderListener func(elected bool) error
 
 // Participate tries to be a leader
 func (l *Leadership) Participate(pool *safe.Pool) {
@@ -46,10 +52,15 @@ func (l *Leadership) Participate(pool *safe.Pool) {
 	})
 }
 
+// AddListener adds a leadership listerner
+func (l *Leadership) AddListener(listener LeaderListener) {
+	l.listeners = append(l.listeners, listener)
+}
+
 // Resign resigns from being a leader
 func (l *Leadership) Resign() {
 	l.candidate.Resign()
-	log.Infof("Node %s resined", l.Cluster.Node)
+	log.Infof("Node %s resigned", l.Cluster.Node)
 }
 
 func (l *Leadership) run(candidate *leadership.Candidate, ctx context.Context) error {
@@ -70,9 +81,22 @@ func (l *Leadership) run(candidate *leadership.Candidate, ctx context.Context) e
 func (l *Leadership) onElection(elected bool) {
 	if elected {
 		log.Infof("Node %s elected leader ♚", l.Cluster.Node)
+		l.leader.Set(true)
 		l.Start()
 	} else {
 		log.Infof("Node %s elected slave ♝", l.Cluster.Node)
+		l.leader.Set(false)
 		l.Stop()
 	}
+	for _, listener := range l.listeners {
+		err := listener(elected)
+		if err != nil {
+			log.Errorf("Error calling Leadership listener: %s", err)
+		}
+	}
+}
+
+// IsLeader returns true if current node is leader
+func (l *Leadership) IsLeader() bool {
+	return l.leader.Get().(bool)
 }

@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/log"
 	"github.com/abbot/go-http-auth"
 	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/types"

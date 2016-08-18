@@ -8,7 +8,7 @@ import (
 
 	"fmt"
 	"github.com/BurntSushi/ty/fun"
-	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/log"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/safe"
