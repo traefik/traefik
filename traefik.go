@@ -203,7 +203,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	// logging
 	level, err := log.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
 	if err != nil {
-		log.Fatal("Error getting level", err)
+		log.Error("Error getting level", err)
 	}
 	log.SetLevel(level)
 	if len(globalConfiguration.TraefikLogsFile) > 0 {
@@ -214,7 +214,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 			}
 		}()
 		if err != nil {
-			log.Fatal("Error opening file", err)
+			log.Error("Error opening file", err)
 		} else {
 			log.SetOutput(fi)
 			log.SetFormatter(&log.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})

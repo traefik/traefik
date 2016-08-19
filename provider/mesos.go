@@ -12,6 +12,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/utils"
 	"github.com/mesos/mesos-go/detector"
 	_ "github.com/mesos/mesos-go/detector/zoo" // Registers the ZK detector
 	"github.com/mesosphere/mesos-dns/detect"
@@ -110,9 +111,9 @@ func (provider *Mesos) Provide(configurationChan chan<- types.ConfigMessage, poo
 	notify := func(err error, time time.Duration) {
 		log.Errorf("mesos connection error %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+	err := utils.RetryNotifyJob(operation, backoff.NewExponentialBackOff(), notify)
 	if err != nil {
-		log.Fatalf("Cannot connect to mesos server %+v", err)
+		log.Errorf("Cannot connect to mesos server %+v", err)
 	}
 	return nil
 }
@@ -393,9 +394,9 @@ func detectMasters(zk string, masters []string) <-chan []string {
 	if zk != "" {
 		log.Debugf("Starting master detector for ZK ", zk)
 		if md, err := detector.New(zk); err != nil {
-			log.Fatalf("failed to create master detector: %v", err)
+			log.Errorf("failed to create master detector: %v", err)
 		} else if err := md.Detect(detect.NewMasters(masters, changed)); err != nil {
-			log.Fatalf("failed to initialize master detector: %v", err)
+			log.Errorf("failed to initialize master detector: %v", err)
 		}
 	} else {
 		changed <- masters

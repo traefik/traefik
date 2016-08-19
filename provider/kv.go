@@ -13,6 +13,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/utils"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 )
@@ -75,7 +76,7 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 	notify := func(err error, time time.Duration) {
 		log.Errorf("KV connection error: %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+	err := utils.RetryNotifyJob(operation, backoff.NewExponentialBackOff(), notify)
 	if err != nil {
 		return fmt.Errorf("Cannot connect to KV server: %v", err)
 	}
@@ -105,7 +106,7 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *
 	notify := func(err error, time time.Duration) {
 		log.Errorf("KV connection error: %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+	err := utils.RetryNotifyJob(operation, backoff.NewExponentialBackOff(), notify)
 	if err != nil {
 		return fmt.Errorf("Cannot connect to KV server: %v", err)
 	}

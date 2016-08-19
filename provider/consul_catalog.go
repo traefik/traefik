@@ -13,6 +13,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/utils"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -320,9 +321,9 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 		worker := func() error {
 			return provider.watch(configurationChan, stop)
 		}
-		err := backoff.RetryNotify(worker, backoff.NewExponentialBackOff(), notify)
+		err := utils.RetryNotifyJob(worker, backoff.NewExponentialBackOff(), notify)
 		if err != nil {
-			log.Fatalf("Cannot connect to consul server %+v", err)
+			log.Errorf("Cannot connect to consul server %+v", err)
 		}
 	})
 

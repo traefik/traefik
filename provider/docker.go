@@ -15,6 +15,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/utils"
 	"github.com/containous/traefik/version"
 	"github.com/docker/engine-api/client"
 	dockertypes "github.com/docker/engine-api/types"
@@ -139,9 +140,9 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Docker connection error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+		err := utils.RetryNotifyJob(operation, backoff.NewExponentialBackOff(), notify)
 		if err != nil {
-			log.Fatalf("Cannot connect to docker server %+v", err)
+			log.Errorf("Cannot connect to docker server %+v", err)
 		}
 	})
 
