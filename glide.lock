@@ -1,5 +1,5 @@
-hash: 49c7bd0e32b2764248183bda52f168fe22d69e2db5e17c1dbeebbe71be9929b1
-updated: 2016-08-11T14:33:42.826534934+02:00
+hash: 7382685091734eeeef590d8d298600abfaa21c40c8714ef570b8006e4f8cc846
+updated: 2016-08-19T14:15:17.22440385+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -25,6 +25,10 @@ imports:
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
   version: 044bdfee6c8f5e8fb71f70d5ba1cf4cb11a94e97
+- name: github.com/containous/traefik
+  version: 95e8f0a31e2b5f996e7484c70df1d38fd81b77ce
+  subpackages:
+  - utils
 - name: github.com/coreos/etcd
   version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
@@ -36,7 +40,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: 87917f30529e6a7fca8eaff2932424915fb11225
+  version: 2b72dd3927b2958160a2336f16145c0c421aa6a4
   subpackages:
   - reference
   - digest
@@ -141,7 +145,7 @@ imports:
   - lookup
   - version
 - name: github.com/docker/libkv
-  version: aabc039ad04deb721e234f99cd1b4aa28ac71a40
+  version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
   subpackages:
   - store
   - store/boltdb
@@ -152,12 +156,14 @@ imports:
   version: fd1de70867126402be23c306e1ce32828455d85b
 - name: github.com/elazarl/go-bindata-assetfs
   version: 57eb5e1fc594ad4b0b1dbea7b286d299e0cb43c2
+- name: github.com/emilevauge/backoff
+  version: fa0423e7916ea96a4e9789a3710c8e7cb94ecc42
 - name: github.com/gambol99/go-marathon
   version: a558128c87724cd7430060ef5aedf39f83937f55
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
-  version: e33835a643a970c11ac74f6333f5f6866387a101
+  version: 6abcf94fd4c97dcb423fdafd42fe9f96ca7e421b
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -169,7 +175,7 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-  version: 9a353ddd6015378d169f2bee8b3aea44f3d3a03d
+  version: fce7d75609a04eeb9d4bf41c8dc592aac18fc97d
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
@@ -220,13 +226,13 @@ imports:
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
-  version: 21a35fb16463dfb7c8eee579c65d995d95e64d1e
+  version: d2dd0262208475919e1a362f675cfc0e7c10e905
 - name: github.com/moul/http2curl
   version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 1a81e9ab1f138c091fe5c86d0883f87716088527
+  version: fb221651e5120cd287a76c7c1b6c877520fbd034
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest

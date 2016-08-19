@@ -3,11 +3,10 @@ package provider
 import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/provider/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/utils"
+	"github.com/emilevauge/backoff"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -96,7 +95,6 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 	if err != nil {
 		return err
 	}
-	backOff := backoff.NewExponentialBackOff()
 	provider.Constraints = append(provider.Constraints, constraints...)
 
 	pool.Go(func(stop chan bool) {
@@ -147,7 +145,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Kubernetes connection error %+v, retrying in %s", err, time)
 		}
-		err := utils.RetryNotifyJob(operation, backOff, notify)
+		err := backoff.RetryNotify(operation, backoff.NewJobBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Cannot connect to Kubernetes server %+v", err)
 		}
