@@ -112,7 +112,7 @@ func (provider *Mesos) Provide(configurationChan chan<- types.ConfigMessage, poo
 	}
 	err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
 	if err != nil {
-		log.Fatalf("Cannot connect to mesos server %+v", err)
+		log.Errorf("Cannot connect to mesos server %+v", err)
 	}
 	return nil
 }
@@ -393,9 +393,9 @@ func detectMasters(zk string, masters []string) <-chan []string {
 	if zk != "" {
 		log.Debugf("Starting master detector for ZK ", zk)
 		if md, err := detector.New(zk); err != nil {
-			log.Fatalf("failed to create master detector: %v", err)
+			log.Errorf("failed to create master detector: %v", err)
 		} else if err := md.Detect(detect.NewMasters(masters, changed)); err != nil {
-			log.Fatalf("failed to initialize master detector: %v", err)
+			log.Errorf("failed to initialize master detector: %v", err)
 		}
 	} else {
 		changed <- masters

@@ -322,7 +322,7 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 		}
 		err := backoff.RetryNotify(worker, backoff.NewExponentialBackOff(), notify)
 		if err != nil {
-			log.Fatalf("Cannot connect to consul server %+v", err)
+			log.Errorf("Cannot connect to consul server %+v", err)
 		}
 	})
 

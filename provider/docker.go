@@ -141,7 +141,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 		}
 		err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
 		if err != nil {
-			log.Fatalf("Cannot connect to docker server %+v", err)
+			log.Errorf("Cannot connect to docker server %+v", err)
 		}
 	})
 

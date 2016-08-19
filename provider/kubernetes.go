@@ -154,7 +154,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 		}
 		err := backoff.RetryNotify(operation, backOff, notify)
 		if err != nil {
-			log.Fatalf("Cannot connect to Kubernetes server %+v", err)
+			log.Errorf("Cannot connect to Kubernetes server %+v", err)
 		}
 	})
 

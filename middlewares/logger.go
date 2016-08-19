@@ -56,7 +56,7 @@ func NewLogger(file string) *Logger {
 	if len(file) > 0 {
 		fi, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
-			log.Fatal("Error opening file", err)
+			log.Error("Error opening file", err)
 		}
 		return &Logger{fi}
 	}

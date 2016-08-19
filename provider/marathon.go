@@ -110,7 +110,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 	}
 	err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
 	if err != nil {
-		log.Fatalf("Cannot connect to Marathon server %+v", err)
+		log.Errorf("Cannot connect to Marathon server %+v", err)
 	}
 	return nil
 }
