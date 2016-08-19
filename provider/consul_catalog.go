@@ -10,10 +10,9 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
-	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/utils"
+	"github.com/emilevauge/backoff"
 	"github.com/hashicorp/consul/api"
 )
 
@@ -318,10 +317,10 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Consul connection error %+v, retrying in %s", err, time)
 		}
-		worker := func() error {
+		operation := func() error {
 			return provider.watch(configurationChan, stop)
 		}
-		err := utils.RetryNotifyJob(worker, backoff.NewExponentialBackOff(), notify)
+		err := backoff.RetryNotify(operation, backoff.NewJobBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Cannot connect to consul server %+v", err)
 		}

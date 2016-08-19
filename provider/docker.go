@@ -12,16 +12,15 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
-	"github.com/cenkalti/backoff"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/utils"
 	"github.com/containous/traefik/version"
 	"github.com/docker/engine-api/client"
 	dockertypes "github.com/docker/engine-api/types"
 	eventtypes "github.com/docker/engine-api/types/events"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/go-connections/sockets"
+	"github.com/emilevauge/backoff"
 	"github.com/vdemeester/docker-events"
 )
 
@@ -140,7 +139,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Docker connection error %+v, retrying in %s", err, time)
 		}
-		err := utils.RetryNotifyJob(operation, backoff.NewExponentialBackOff(), notify)
+		err := backoff.RetryNotify(operation, backoff.NewJobBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Cannot connect to docker server %+v", err)
 		}
