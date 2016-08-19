@@ -7,7 +7,7 @@ import (
 	"github.com/containous/traefik/provider/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"io"
+	"github.com/containous/traefik/utils"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -104,7 +104,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 			for {
 				stopWatch := make(chan bool, 5)
 				defer close(stopWatch)
-				log.Debugf("Using lable selector: %s", provider.LabelSelector)
+				log.Debugf("Using label selector: '%s'", provider.LabelSelector)
 				eventsChan, errEventsChan, err := k8sClient.WatchAll(provider.LabelSelector, stopWatch)
 				if err != nil {
 					log.Errorf("Error watching kubernetes events: %v", err)
@@ -116,18 +116,13 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 						return nil
 					}
 				}
-			Watch:
 				for {
 					select {
 					case <-stop:
 						stopWatch <- true
 						return nil
-					case err, ok := <-errEventsChan:
+					case err, _ := <-errEventsChan:
 						stopWatch <- true
-						if ok && strings.Contains(err.Error(), io.EOF.Error()) {
-							// edge case, kubernetes long-polling disconnection
-							break Watch
-						}
 						return err
 					case event := <-eventsChan:
 						log.Debugf("Received event from kubernetes %+v", event)
@@ -152,7 +147,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Kubernetes connection error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, backOff, notify)
+		err := utils.RetryNotifyJob(operation, backOff, notify)
 		if err != nil {
 			log.Errorf("Cannot connect to Kubernetes server %+v", err)
 		}
