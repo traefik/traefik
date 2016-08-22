@@ -180,10 +180,10 @@ email = "test@traefik.io"
 
 # File used for certificates storage.
 # WARNING, if you use Traefik in Docker, you have 2 options:
-#  - create a file on your host and mount it has a volume
+#  - create a file on your host and mount it as a volume
 #      storageFile = "acme.json"
 #      $ docker run -v "/my/host/acme.json:acme.json" traefik
-#  - mount the folder containing the file has a volume
+#  - mount the folder containing the file as a volume
 #      storageFile = "/etc/traefik/acme/acme.json"
 #      $ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 #
@@ -200,7 +200,7 @@ entryPoint = "https"
 
 # Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
 # WARNING, TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.
-# WARNING, Take note that Let's Encrypt have rate limiting: https://community.letsencrypt.org/t/quick-start-guide/1631
+# WARNING, Take note that Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 #
 # Optional
 #
@@ -224,7 +224,7 @@ entryPoint = "https"
 # Domains list
 # You can provide SANs (alternative domains) to each main domain
 # All domains must have A/AAAA records pointing to Traefik
-# WARNING, Take note that Let's Encrypt have rate limiting: https://community.letsencrypt.org/t/quick-start-guide/1631
+# WARNING, Take note that Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 # Each domain & SANs will lead to a certificate request.
 #
 # [[acme.domains]]
@@ -252,7 +252,7 @@ entryPoint = "https"
 
 Like any other reverse proxy, Træfɪk can be configured with a file. You have two choices:
 
-- simply add your configuration at the end of the global configuration file `traefik.toml` :
+- simply add your configuration at the end of the global configuration file `traefik.toml`:
 
 ```toml
 # traefik.toml
@@ -393,7 +393,7 @@ watch = true
 
 ## API backend
 
-Træfik can be configured using a restful api.
+Træfik can be configured using a RESTful api.
 To enable it:
 
 ```toml
@@ -602,6 +602,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 - `traefik.docker.network`: Set the docker network to use for connections to this container
 
+NB: when running inside a container, Træfɪk will need network access through `docker network connect <network> <traefik-container>`
 
 ## Marathon backend
 
