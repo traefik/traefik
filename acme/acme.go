@@ -9,9 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/containous/traefik/safe"
-	"github.com/xenolf/lego/acme"
 	"io/ioutil"
 	fmtlog "log"
 	"os"
@@ -19,6 +16,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/safe"
+	"github.com/xenolf/lego/acme"
 )
 
 // Account is used to store lets encrypt registration info
@@ -481,7 +482,7 @@ func (a *ACME) saveAccount() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(a.StorageFile, data, 0644)
+	return ioutil.WriteFile(a.StorageFile, data, 0600)
 }
 
 func (a *ACME) getDomainsCertificates(client *acme.Client, domains []string) (*Certificate, error) {
