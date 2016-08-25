@@ -52,6 +52,8 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	// health route
 	systemRouter.Methods("GET").Path("/health").HandlerFunc(provider.getHealthHandler)
 
+	// ping route
+	systemRouter.Methods("GET").Path("/ping").HandlerFunc(provider.getPingHandler)
 	// API routes
 	systemRouter.Methods("GET").Path("/api").HandlerFunc(provider.getConfigHandler)
 	systemRouter.Methods("GET").Path("/api/providers").HandlerFunc(provider.getConfigHandler)
@@ -118,6 +120,10 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 
 func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, request *http.Request) {
 	templatesRenderer.JSON(response, http.StatusOK, metrics.Data())
+}
+
+func (provider *WebProvider) getPingHandler(response http.ResponseWriter, request *http.Request) {
+	fmt.Fprintf(response, "OK")
 }
 
 func (provider *WebProvider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
