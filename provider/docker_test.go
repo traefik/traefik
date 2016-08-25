@@ -1016,6 +1016,69 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			containers: []docker.ContainerJSON{
+				{
+					ContainerJSONBase: &docker.ContainerJSONBase{
+						Name: "test1",
+					},
+					Config: &container.Config{
+						Labels: map[string]string{
+							"traefik.backend":                           "foobar",
+							"traefik.frontend.entryPoints":              "http,https",
+							"traefik.backend.maxconn.amount":            "1000",
+							"traefik.backend.maxconn.extractorfunc":     "somethingelse",
+							"traefik.backend.loadbalancer.method":       "drr",
+							"traefik.backend.circuitbreaker.expression": "NetworkErrorRatio() > 0.5",
+						},
+					},
+					NetworkSettings: &docker.NetworkSettings{
+						NetworkSettingsBase: docker.NetworkSettingsBase{
+							Ports: nat.PortMap{
+								"80/tcp": {},
+							},
+						},
+						Networks: map[string]*network.EndpointSettings{
+							"bridge": {
+								IPAddress: "127.0.0.1",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test1-docker-localhost": {
+					Backend:        "backend-foobar",
+					PassHostHeader: true,
+					EntryPoints:    []string{"http", "https"},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test1-docker-localhost": {
+							Rule: "Host:test1.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-foobar": {
+					Servers: map[string]types.Server{
+						"server-test1": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 1,
+						},
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        1000,
+						ExtractorFunc: "somethingelse",
+					},
+				},
+			},
+		},
 	}
 
 	provider := &Docker{
