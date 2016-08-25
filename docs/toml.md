@@ -861,6 +861,8 @@ Additional settings can be defined using Consul Catalog tags:
 - `traefik.backend.weight=10`: assign this weight to the container
 - `traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5`
 - `traefik.backend.loadbalancer=drr`: override the default load balancing mode
+- `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
+- `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
