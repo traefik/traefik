@@ -112,6 +112,10 @@ You can find the complete documentation [here](https://docs.traefik.io).
 
 Please refer to [this section](.github/CONTRIBUTING.md).
 
+## Code Of Conduct
+
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+
 ## Support
 
 You can join [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) to get basic support.
