@@ -48,6 +48,7 @@ type GlobalConfiguration struct {
 	Boltdb                    *provider.BoltDb        `description:"Enable Boltdb backend"`
 	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
 	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
+	Eureka                    *provider.Eureka        `description:"Enable Eureka backend"`
 }
 
 // DefaultEntryPoints holds default entry points

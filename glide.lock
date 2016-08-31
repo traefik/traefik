@@ -1,8 +1,14 @@
-hash: 5a4ccfe1c0ee6b0c67a40ceb07a8510d61646e1551599331b626ccf1341f4048
-updated: 2016-11-15T19:22:10.412299841Z
+hash: aae2fd761966717bcc30d8c03590cc28df8af49b36cc1d87689512cdfb44475e
+updated: 2016-11-16T21:37:51.673291661+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
+- name: github.com/ArthurHlt/go-eureka-client
+  version: ba361cd0f9f571b4e871421423d2f02f5689c3d2
+  subpackages:
+  - eureka
+- name: github.com/ArthurHlt/gominlog
+  version: 068c01ce147ad68fca25ef3fa29ae5395ae273ab
 - name: github.com/boltdb/bolt
   version: f4c032d907f61f08dba2d719c58f108a1abb8e81
 - name: github.com/BurntSushi/toml
@@ -14,9 +20,9 @@ imports:
 - name: github.com/cenk/backoff
   version: 8edc80b07f38c27352fb186d971c628a6c32552b
 - name: github.com/codahale/hdrhistogram
-  version: 9208b142303c12d8899bae836fd524ac9338b4fd
+  version: f8ad88b59a584afeee9d334eff879b104439117b
 - name: github.com/codegangsta/cli
-  version: bf4a526f48af7badd25d2cb02d587e1b01be3b50
+  version: 1efa31f08b9333f1bd4882d61f9d668a70cd902e
 - name: github.com/codegangsta/negroni
   version: 3f7ce7b928e14ff890b067e5bbbc80af73690a9c
 - name: github.com/containous/flaeg
@@ -26,13 +32,17 @@ imports:
 - name: github.com/containous/staert
   version: 92329254783dc01174f03302d51d7cf2c9ff84cf
 - name: github.com/coreos/etcd
-  version: c400d05d0aa73e21e431c16145e558d624098018
+  version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
-  - Godeps/_workspace/src/github.com/ugorji/go/codec
-  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/pathutil
   - pkg/types
+- name: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  subpackages:
+  - spew
+- name: github.com/daviddengcn/go-colortext
+  version: 3b18c8575a432453d41fdafb340099fff5bba2f7
 - name: github.com/docker/distribution
   version: 99cb7c0946d2f5a38015443e515dc916295064d7
   subpackages:
@@ -155,9 +165,9 @@ imports:
 - name: github.com/gambol99/go-marathon
   version: a558128c87724cd7430060ef5aedf39f83937f55
 - name: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
-  version: 43ab7f0ec7b6d072e0368bd537ffefe74ed30198
+  version: 99cb9b23110011cc45571c901ecae6f6f5e65cd3
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -167,7 +177,7 @@ imports:
   subpackages:
   - query
 - name: github.com/gorilla/context
-  version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/hashicorp/consul
   version: d8e2fb7dd594163e25a89bc52c1a4613f5c5bfb8
   subpackages:
@@ -175,7 +185,7 @@ imports:
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/hashicorp/serf
-  version: 598c54895cc5a7b1a24a398d635e8c0ea0959870
+  version: b03bf85930b2349eb04b97c8fac437495296e3e7
   subpackages:
   - coordinate
 - name: github.com/jarcoal/httpmock
@@ -227,11 +237,15 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: ba1568de399395774ad84c2ace65937814c542ed
+  version: 02f8fa7863dd3f82909a73e2061897828460d52f
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
   version: e30af16d4e485943aab0b0885ad6bdbb8c0d3dc7
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
 - name: github.com/ryanuber/go-glob
   version: 572520ed46dbddaed19ea3d9541bdd0494163693
 - name: github.com/samuel/go-zookeeper
@@ -247,7 +261,7 @@ imports:
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
-  version: b8dc1cecf15bdaf1988d9e87aa7cd98d899a06d6
+  version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
   subpackages:
   - assert
   - mock
@@ -255,6 +269,10 @@ imports:
   version: 152b5d051953fdb6e45f14b6826962aadc032324
 - name: github.com/tv42/zbase32
   version: 03389da7e0bf9844767f82690f4d68fc097a1306
+- name: github.com/ugorji/go
+  version: b94837a2404ab90efe9289e77a70694c355739cb
+  subpackages:
+  - codec
 - name: github.com/unrolled/render
   version: 526faf80cd4b305bb8134abea8d20d5ced74faa6
 - name: github.com/vdemeester/docker-events
@@ -278,7 +296,7 @@ imports:
 - name: github.com/vulcand/route
   version: cb89d787ddbb1c5849a7ac9f79004c1fd12a4a32
 - name: github.com/vulcand/vulcand
-  version: 42492a3a85e294bdbdd1bcabb8c12769a81ea284
+  version: bed092e10989250b48bdb6aa3b0557b207f05c80
   subpackages:
   - conntracker
   - plugin
@@ -289,26 +307,26 @@ imports:
   subpackages:
   - acme
 - name: golang.org/x/crypto
-  version: 4ed45ec682102c643324fae5dff8dab085b6c300
+  version: d81fdb778bf2c40a91b24519d60cdc5767318829
   subpackages:
   - bcrypt
   - blowfish
   - ocsp
 - name: golang.org/x/net
-  version: 6460565bec1e8891e29ff478184c71b9e443ac36
+  version: b400c2eff1badec7022a8c8f5bea058b6315eed7
   subpackages:
   - context
   - proxy
   - publicsuffix
 - name: golang.org/x/sys
-  version: eb2c74142fd19a79b3f237334c7384d5167b1b46
+  version: 62bee037599929a6e9146f29d10dd5208c43507d
   subpackages:
   - unix
   - windows
 - name: gopkg.in/fsnotify.v1
   version: 944cff21b3baf3ced9a880365682152ba577d348
 - name: gopkg.in/mgo.v2
-  version: 29cc868a5ca65f401ff318143f9408d02f4799cc
+  version: 22287bab4379e1fbf6002fb4eb769888f3fb224c
   subpackages:
   - bson
 - name: gopkg.in/square/go-jose.v1
@@ -326,7 +344,7 @@ testImports:
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/gorilla/mux
-  version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
+  version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
 - name: github.com/libkermit/docker-check
   version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
 - name: github.com/spf13/pflag
