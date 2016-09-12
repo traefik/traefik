@@ -2,11 +2,6 @@ package provider
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/containous/traefik/provider/k8s"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
-	"github.com/emilevauge/backoff"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -14,6 +9,12 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/provider/k8s"
+	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/types"
+	"github.com/emilevauge/backoff"
 )
 
 const (
@@ -224,8 +225,10 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						ruleType = "Path"
 					case "pathprefix":
 						ruleType = "PathPrefix"
+					case "":
+						ruleType = "PathPrefix"
 					default:
-						log.Warnf("Unknown RuleType `%s`, falling back to `PathPrefix", ruleType)
+						log.Warnf("Unknown RuleType %s for %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
 						ruleType = "PathPrefix"
 					}
 
