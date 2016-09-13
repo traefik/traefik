@@ -90,7 +90,7 @@
 
 # Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
 # WARNING, TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.
-# WARNING, Take note that Let's Encrypt have rate limiting: https://community.letsencrypt.org/t/quick-start-guide/1631
+# WARNING, Take note that Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 #
 # Optional
 #
@@ -113,6 +113,9 @@
 
 # Domains list
 # You can provide SANs (alternative domains) to each main domain
+# All domains must have A/AAAA records pointing to Traefik
+# WARNING, Take note that Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
+# Each domain & SANs will lead to a certificate request.
 #
 # [[acme.domains]]
 #   main = "local1.com"
