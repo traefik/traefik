@@ -26,6 +26,8 @@
 #
 # Optional
 # Default: "ERROR"
+# Accepted values, in order of severity: "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "PANIC"
+# Messages at and above the selected level will be logged.
 #
 # logLevel = "ERROR"
 
