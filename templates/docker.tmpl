@@ -1,4 +1,20 @@
 [backends]{{range .Containers}}
+    {{if hasCircuitBreakerLabel .}}
+    [backends.backend-{{getBackend .}}.circuitbreaker]
+      expression = "{{getCircuitBreakerExpression .}}"
+    {{end}}
+
+    {{if hasLoadBalancerLabel .}}
+    [backends.backend-{{getBackend .}}.loadbalancer]
+      method = "{{getLoadBalancerMethod .}}"
+    {{end}}
+
+    {{if hasMaxConnLabels .}}
+    [backends.backend-{{getBackend .}}.maxconn]
+      amount = {{getMaxConnAmount . }}
+      extractorfunc = "{{getMaxConnExtractorFunc . }}"
+    {{end}}
+
     [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/" "" | replace "." "-"}}]
     url = "{{getProtocol .}}://{{getIPAddress .}}:{{getPort .}}"
     weight = {{getWeight .}}

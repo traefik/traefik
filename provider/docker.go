@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -150,17 +151,24 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 
 func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.ContainerJSON) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
-		"getBackend":        provider.getBackend,
-		"getIPAddress":      provider.getIPAddress,
-		"getPort":           provider.getPort,
-		"getWeight":         provider.getWeight,
-		"getDomain":         provider.getDomain,
-		"getProtocol":       provider.getProtocol,
-		"getPassHostHeader": provider.getPassHostHeader,
-		"getPriority":       provider.getPriority,
-		"getEntryPoints":    provider.getEntryPoints,
-		"getFrontendRule":   provider.getFrontendRule,
-		"replace":           replace,
+		"getBackend":                  provider.getBackend,
+		"getIPAddress":                provider.getIPAddress,
+		"getPort":                     provider.getPort,
+		"getWeight":                   provider.getWeight,
+		"getDomain":                   provider.getDomain,
+		"getProtocol":                 provider.getProtocol,
+		"getPassHostHeader":           provider.getPassHostHeader,
+		"getPriority":                 provider.getPriority,
+		"getEntryPoints":              provider.getEntryPoints,
+		"getFrontendRule":             provider.getFrontendRule,
+		"hasCircuitBreakerLabel":      provider.hasCircuitBreakerLabel,
+		"getCircuitBreakerExpression": provider.getCircuitBreakerExpression,
+		"hasLoadBalancerLabel":        provider.hasLoadBalancerLabel,
+		"getLoadBalancerMethod":       provider.getLoadBalancerMethod,
+		"hasMaxConnLabels":            provider.hasMaxConnLabels,
+		"getMaxConnAmount":            provider.getMaxConnAmount,
+		"getMaxConnExtractorFunc":     provider.getMaxConnExtractorFunc,
+		"replace":                     replace,
 	}
 
 	// filter containers
@@ -189,6 +197,63 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 		log.Error(err)
 	}
 	return configuration
+}
+
+func (provider *Docker) hasCircuitBreakerLabel(container dockertypes.ContainerJSON) bool {
+	if _, err := getLabel(container, "traefik.backend.circuitbreaker.expression"); err != nil {
+		return false
+	}
+	return true
+}
+
+func (provider *Docker) hasLoadBalancerLabel(container dockertypes.ContainerJSON) bool {
+	if _, err := getLabel(container, "traefik.backend.loadbalancer.method"); err != nil {
+		return false
+	}
+	return true
+}
+
+func (provider *Docker) hasMaxConnLabels(container dockertypes.ContainerJSON) bool {
+	if _, err := getLabel(container, "traefik.backend.maxconn.amount"); err != nil {
+		return false
+	}
+	if _, err := getLabel(container, "traefik.backend.maxconn.extractorfunc"); err != nil {
+		return false
+	}
+	return true
+}
+
+func (provider *Docker) getCircuitBreakerExpression(container dockertypes.ContainerJSON) string {
+	if label, err := getLabel(container, "traefik.backend.circuitbreaker.expression"); err == nil {
+		return label
+	}
+	return "NetworkErrorRatio() > 1"
+}
+
+func (provider *Docker) getLoadBalancerMethod(container dockertypes.ContainerJSON) string {
+	if label, err := getLabel(container, "traefik.backend.loadbalancer.method"); err == nil {
+		return label
+	}
+	return "wrr"
+}
+
+func (provider *Docker) getMaxConnAmount(container dockertypes.ContainerJSON) int64 {
+	if label, err := getLabel(container, "traefik.backend.maxconn.amount"); err == nil {
+		i, errConv := strconv.ParseInt(label, 10, 64)
+		if errConv != nil {
+			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
+			return math.MaxInt64
+		}
+		return i
+	}
+	return math.MaxInt64
+}
+
+func (provider *Docker) getMaxConnExtractorFunc(container dockertypes.ContainerJSON) string {
+	if label, err := getLabel(container, "traefik.backend.maxconn.extractorfunc"); err == nil {
+		return label
+	}
+	return "request.host"
 }
 
 func (provider *Docker) containerFilter(container dockertypes.ContainerJSON, exposedByDefaultFlag bool) bool {
