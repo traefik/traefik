@@ -234,9 +234,6 @@ func taskFilter(task marathon.Task, applications *marathon.Applications, exposed
 					return false
 				}
 			}
-		} else {
-			log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
-			return false
 		}
 	}
 	return true

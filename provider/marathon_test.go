@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"errors"
+
 	"github.com/containous/traefik/mocks"
 	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
@@ -324,7 +325,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected:         false,
+			expected:         true,
 			exposedByDefault: true,
 		},
 		{
