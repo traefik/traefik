@@ -23,6 +23,13 @@
   [backends."backend-{{$service}}".loadbalancer]
     method = "{{$loadBalancer}}"
   {{end}}
+
+  {{if hasMaxconnAttributes .Attributes}}
+  [backends."backend-{{$service}}".maxconn]
+    amount = {{getAttribute "backend.maxconn.amount" .Attributes "" }}
+    extractorfunc = "{{getAttribute "backend.maxconn.extractorfunc" .Attributes "" }}"
+  {{end}}
+
 {{end}}
 
 [frontends]

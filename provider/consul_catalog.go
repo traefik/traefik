@@ -209,12 +209,13 @@ func (provider *ConsulCatalog) getContraintTags(tags []string) []string {
 
 func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Configuration {
 	var FuncMap = template.FuncMap{
-		"getBackend":        provider.getBackend,
-		"getFrontendRule":   provider.getFrontendRule,
-		"getBackendName":    provider.getBackendName,
-		"getBackendAddress": provider.getBackendAddress,
-		"getAttribute":      provider.getAttribute,
-		"getEntryPoints":    provider.getEntryPoints,
+		"getBackend":           provider.getBackend,
+		"getFrontendRule":      provider.getFrontendRule,
+		"getBackendName":       provider.getBackendName,
+		"getBackendAddress":    provider.getBackendAddress,
+		"getAttribute":         provider.getAttribute,
+		"getEntryPoints":       provider.getEntryPoints,
+		"hasMaxconnAttributes": provider.hasMaxconnAttributes,
 	}
 
 	allNodes := []*api.ServiceEntry{}
@@ -247,6 +248,15 @@ func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Confi
 	}
 
 	return configuration
+}
+
+func (provider *ConsulCatalog) hasMaxconnAttributes(attributes []string) bool {
+	amount := provider.getAttribute("backend.maxconn.amount", attributes, "")
+	extractorfunc := provider.getAttribute("backend.maxconn.extractorfunc", attributes, "")
+	if amount != "" && extractorfunc != "" {
+		return true
+	}
+	return false
 }
 
 func (provider *ConsulCatalog) getNodes(index map[string][]string) ([]catalogUpdate, error) {
