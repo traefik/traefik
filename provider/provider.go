@@ -10,12 +10,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"os"
+
 	"github.com/BurntSushi/toml"
 	log "github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"os"
 )
 
 // Provider defines methods of a provider.
@@ -80,7 +81,9 @@ func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap temp
 		return nil, err
 	}
 
-	if _, err := toml.Decode(buffer.String(), configuration); err != nil {
+	var renderedTemplate = buffer.String()
+	//	log.Debugf("Rendering results of %s:\n%s", defaultTemplateFile, renderedTemplate)
+	if _, err := toml.Decode(renderedTemplate, configuration); err != nil {
 		return nil, err
 	}
 	return configuration, nil

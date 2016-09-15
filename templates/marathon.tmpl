@@ -5,6 +5,22 @@
     weight = {{getWeight . $apps}}
 {{end}}
 
+{{range .Applications}}
+{{ if hasMaxConnLabels . }}
+      [backends.backend{{getFrontendBackend . }}.maxconn]
+        amount = {{getMaxConnAmount . }}
+        extractorfunc = "{{getMaxConnExtractorFunc . }}"
+{{end}}
+{{ if hasLoadBalancerLabels . }}
+      [backends.backend{{getFrontendBackend . }}.loadbalancer]
+        method = "{{getLoadBalancerMethod . }}"
+{{end}}
+{{ if hasCircuitBreakerLabels . }}
+      [backends.backend{{getFrontendBackend . }}.circuitbreaker]
+        expression = "{{getCircuitBreakerExpression . }}"
+{{end}}
+{{end}}
+
 [frontends]{{range .Applications}}
   [frontends.frontend{{.ID | replace "/" "-"}}]
   backend = "backend{{getFrontendBackend .}}"
