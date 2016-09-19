@@ -107,38 +107,25 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	}
 
 	go func() {
-
+		var err error
+		var negroni = negroni.New()
 		if provider.Auth != nil {
 			authMiddleware, err := middlewares.NewAuthenticator(provider.Auth)
 			if err != nil {
 				log.Fatal("Error creating Auth: ", err)
 			}
-			var negroni = negroni.New()
 			negroni.Use(authMiddleware)
-			negroni.UseHandler(systemRouter)
+		}
+		negroni.UseHandler(systemRouter)
 
-			if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
-				err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, negroni)
-			} else {
-				err = http.ListenAndServe(provider.Address, negroni)
-			}
-
-			if err != nil {
-				log.Fatal("Error creating server with Auth: ", err)
-			}
+		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
+			err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, negroni)
 		} else {
+			err = http.ListenAndServe(provider.Address, negroni)
+		}
 
-			var err error
-
-			if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
-				err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, systemRouter)
-			} else {
-				err = http.ListenAndServe(provider.Address, systemRouter)
-			}
-
-			if err != nil {
-				log.Fatal("Error creating server without Auth: ", err)
-			}
+		if err != nil {
+			log.Fatal("Error creating server: ", err)
 		}
 	}()
 	return nil
