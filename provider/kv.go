@@ -10,11 +10,12 @@ import (
 	"errors"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
-	"github.com/emilevauge/backoff"
 )
 
 // Kv holds common configurations of key-value providers.
@@ -75,7 +76,7 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 	notify := func(err error, time time.Duration) {
 		log.Errorf("KV connection error: %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, backoff.NewJobBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		return fmt.Errorf("Cannot connect to KV server: %v", err)
 	}
@@ -106,7 +107,7 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *
 	notify := func(err error, time time.Duration) {
 		log.Errorf("KV connection error: %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, backoff.NewJobBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		return fmt.Errorf("Cannot connect to KV server: %v", err)
 	}

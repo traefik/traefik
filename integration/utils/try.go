@@ -2,7 +2,7 @@ package utils
 
 import (
 	"errors"
-	"github.com/emilevauge/backoff"
+	"github.com/cenk/backoff"
 	"net/http"
 	"strconv"
 	"time"

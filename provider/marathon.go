@@ -14,9 +14,10 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/emilevauge/backoff"
 	"github.com/gambol99/go-marathon"
 )
 
@@ -110,7 +111,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 	notify := func(err error, time time.Duration) {
 		log.Errorf("Marathon connection error %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, backoff.NewJobBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		log.Errorf("Cannot connect to Marathon server %+v", err)
 	}
