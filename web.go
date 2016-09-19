@@ -9,8 +9,10 @@ import (
 	"runtime"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/elazarl/go-bindata-assetfs"
@@ -28,6 +30,7 @@ type WebProvider struct {
 	KeyFile  string `description:"SSL certificate"`
 	ReadOnly bool   `description:"Enable read only API"`
 	server   *Server
+	Auth     *types.Auth
 }
 
 var (
@@ -47,6 +50,7 @@ func goroutines() interface{} {
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ []types.Constraint) error {
+
 	systemRouter := mux.NewRouter()
 
 	// health route
@@ -103,15 +107,37 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	}
 
 	go func() {
-		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
-			err := http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, systemRouter)
+
+		if provider.Auth != nil {
+			authMiddleware, err := middlewares.NewAuthenticator(provider.Auth)
 			if err != nil {
-				log.Fatal("Error creating server: ", err)
+				log.Fatal("Error creating Auth: ", err)
+			}
+			var negroni = negroni.New()
+			negroni.Use(authMiddleware)
+			negroni.UseHandler(systemRouter)
+
+			if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
+				err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, negroni)
+			} else {
+				err = http.ListenAndServe(provider.Address, negroni)
+			}
+
+			if err != nil {
+				log.Fatal("Error creating server with Auth: ", err)
 			}
 		} else {
-			err := http.ListenAndServe(provider.Address, systemRouter)
+
+			var err error
+
+			if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
+				err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, systemRouter)
+			} else {
+				err = http.ListenAndServe(provider.Address, systemRouter)
+			}
+
 			if err != nil {
-				log.Fatal("Error creating server: ", err)
+				log.Fatal("Error creating server without Auth: ", err)
 			}
 		}
 	}()
@@ -238,6 +264,7 @@ func (provider *WebProvider) getRoutesHandler(response http.ResponseWriter, requ
 }
 
 func (provider *WebProvider) getRouteHandler(response http.ResponseWriter, request *http.Request) {
+
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
