@@ -2,16 +2,9 @@
 
 ### Building
 
-You need either [Docker](https://github.com/docker/docker) and `make`, or `go` and `glide` in order to build traefik.
+You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` and `glide` (Method 2) in order to build traefik.
 
-#### Setting up your `go` environment
-
-- You need `go` v1.5
-- You need to set `export GO15VENDOREXPERIMENT=1` environment variable
-- You need `go-bindata` to be able to use `go generate` command (needed to build) : `go get github.com/jteeuwen/go-bindata/...`.
-- If you clone Træfɪk into something like `~/go/src/github.com/traefik`, your `GOPATH` variable will have to be set to `~/go`: export `GOPATH=~/go`.
-
-#### Using `Docker` and `Makefile`
+#### Method 1: Using `Docker` and `Makefile`
 
 You need to run the `binary` target. This will create binaries for Linux platform in the `dist` folder.
 
@@ -33,31 +26,50 @@ $ ls dist/
 traefik*
 ```
 
-#### Using `glide`
+#### Method 2: Using `go` and `glide`
+
+###### Setting up your `go` environment
+
+- You need `go` v1.5+ (1.7 is acceptable)
+- You need to set `$ export GO15VENDOREXPERIMENT=1` environment variable if you are using go v1.5 (it is already enabled in 1.6+)
+- It is recommended you clone Træfɪk into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
+- This will allow your `GOPATH` and `PATH` variable to be set to `~/go` via:
+```
+$ export GOPATH=~/go
+$ export PATH=$PATH:$GOPATH/bin
+```
+
+This can be verified via `$ go env`
+- You will want to add those 2 export lines to your `.bashrc` or `.bash_profile`
+- You need `go-bindata` to be able to use `go generate` command (needed to build) : `$ go get github.com/jteeuwen/go-bindata/...` (Please note, the ellipses are required)
+
+###### Setting up your `glide` environment
+
+- Glide can be installed either via homebrew: `$ brew install glide` or via the official glide script: `$ curl https://glide.sh/get | sh`
 
 The idea behind `glide` is the following :
 
-- when checkout(ing) a project, **run `glide install`** to install
-  (`go get …`) the dependencies in the `GOPATH`.
+- when checkout(ing) a project, run `$ glide install` from the cloned directory to install
+  (`go get …`) the dependencies in your `GOPATH`.
 - if you need another dependency, import and use it in
-  the source, and **run `glide get github.com/Masterminds/cookoo`** to save it in
+  the source, and run `$ glide get github.com/Masterminds/cookoo` to save it in
   `vendor` and add it to your `glide.yaml`.
 
 ```bash
 $ glide install
-# generate
+# generate (Only required to integrate other components such as web dashboard)
 $ go generate
-# Simple go build
+# Standard go build
 $ go build
 # Using gox to build multiple platform
 $ gox "linux darwin" "386 amd64 arm" \
     -output="dist/traefik_{{.OS}}-{{.Arch}}"
 # run other commands like tests
-$ go test ./...
-ok      _/home/vincent/src/github/vdemeester/traefik    0.004s
 ```
 
 ### Tests
+
+##### Method 1: `Docker` and `make`
 
 You can run unit tests using the `test-unit` target and the
 integration test using the `test-integration` target.
@@ -94,6 +106,13 @@ TESTFLAGS="-check.f MyTestSuite.*Test" make test-integration
 
 More: https://labix.org/gocheck
 
+##### Method 2: `go` and `glide`
+
+- Tests can be run from the cloned directory, by `$ go test ./...` which should return `ok` similar to:
+```
+ok      _/home/vincent/src/github/vdemeester/traefik    0.004s
+```
+
 ### Documentation
 
 The [documentation site](http://docs.traefik.io/) is built with [mkdocs](http://mkdocs.org/)
@@ -117,9 +136,9 @@ To test documentation locally run `mkdocs serve` in the root directory, this sho
 
 ```
 $ mkdocs serve
-INFO    -  Building documentation... 
-WARNING -  Config value: 'theme'. Warning: The theme 'united' will be removed in an upcoming MkDocs release. See http://www.mkdocs.org/about/release-notes/ for more details 
-INFO    -  Cleaning site directory 
+INFO    -  Building documentation...
+WARNING -  Config value: 'theme'. Warning: The theme 'united' will be removed in an upcoming MkDocs release. See http://www.mkdocs.org/about/release-notes/ for more details
+INFO    -  Cleaning site directory
 [I 160505 22:31:24 server:281] Serving on http://127.0.0.1:8000
 [I 160505 22:31:24 handlers:59] Start watching changes
 [I 160505 22:31:24 handlers:61] Start detecting changes
