@@ -674,8 +674,9 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 	}
 
+	provider := &Marathon{}
 	for _, c := range cases {
-		actual := taskFilter(c.task, c.applications, c.exposedByDefault)
+		actual := provider.taskFilter(c.task, c.applications, c.exposedByDefault)
 		if actual != c.expected {
 			t.Fatalf("expected %v, got %v", c.expected, actual)
 		}
@@ -689,7 +690,9 @@ func TestMarathonApplicationFilter(t *testing.T) {
 		expected      bool
 	}{
 		{
-			application:   marathon.Application{},
+			application: marathon.Application{
+				Labels: &map[string]string{},
+			},
 			filteredTasks: []marathon.Task{},
 			expected:      false,
 		},
@@ -727,8 +730,9 @@ func TestMarathonApplicationFilter(t *testing.T) {
 		},
 	}
 
+	provider := &Marathon{}
 	for _, c := range cases {
-		actual := applicationFilter(c.application, c.filteredTasks)
+		actual := provider.applicationFilter(c.application, c.filteredTasks)
 		if actual != c.expected {
 			t.Fatalf("expected %v, got %v", c.expected, actual)
 		}
