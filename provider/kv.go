@@ -84,37 +84,6 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 
 func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
 	provider.Constraints = append(provider.Constraints, constraints...)
-	storeConfig := &store.Config{
-		ConnectionTimeout: 30 * time.Second,
-		Bucket:            "traefik",
-	}
-
-	if provider.TLS != nil {
-		caPool := x509.NewCertPool()
-
-		if provider.TLS.CA != "" {
-			ca, err := ioutil.ReadFile(provider.TLS.CA)
-
-			if err != nil {
-				return fmt.Errorf("Failed to read CA. %s", err)
-			}
-
-			caPool.AppendCertsFromPEM(ca)
-		}
-
-		cert, err := tls.LoadX509KeyPair(provider.TLS.Cert, provider.TLS.Key)
-
-		if err != nil {
-			return fmt.Errorf("Failed to load TLS keypair: %v", err)
-		}
-
-		storeConfig.TLS = &tls.Config{
-			Certificates:       []tls.Certificate{cert},
-			RootCAs:            caPool,
-			InsecureSkipVerify: provider.TLS.InsecureSkipVerify,
-		}
-	}
-
 	operation := func() error {
 		if _, err := provider.kvclient.Exists("qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"); err != nil {
 			return fmt.Errorf("Failed to test KV store connection: %v", err)
