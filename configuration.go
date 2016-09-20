@@ -177,8 +177,31 @@ type Redirect struct {
 
 // TLS configures TLS for an entry point
 type TLS struct {
+	MinVersion    string
+	CipherSuites  []string
 	Certificates  Certificates
 	ClientCAFiles []string
+}
+
+// Map of allowed TLS minimum versions
+var minVersion = map[string]uint16{
+	`VersionTLS10`: tls.VersionTLS10,
+	`VersionTLS11`: tls.VersionTLS11,
+	`VersionTLS12`: tls.VersionTLS12,
+}
+
+// Map of TLS CipherSuites from crypto/tls
+var cipherSuites = map[string]uint16{
+	`TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`: tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	`TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`: tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA`:    tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA`:    tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+	`TLS_RSA_WITH_AES_128_GCM_SHA256`:       tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+	`TLS_RSA_WITH_AES_256_GCM_SHA384`:       tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+	`TLS_RSA_WITH_AES_128_CBC_SHA`:          tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+	`TLS_RSA_WITH_AES_256_CBC_SHA`:          tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`:   tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+	`TLS_RSA_WITH_3DES_EDE_CBC_SHA`:         tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
 }
 
 // Certificates defines traefik certificates type

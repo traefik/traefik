@@ -183,6 +183,20 @@ Supported filters:
 #   address = ":80"
 #   [entryPoints.http.auth.basic]
 #   users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+#
+# To specify an https entrypoint with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls):
+# [entryPoints]
+#   [entryPoints.https]
+#   address = ":443"
+#     [entryPoints.https.tls]
+#     MinVersion = "VersionTLS12"
+#     CipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+#       [[entryPoints.https.tls.certificates]]
+#       CertFile = "integration/fixtures/https/snitest.com.cert"
+#       KeyFile = "integration/fixtures/https/snitest.com.key"
+#       [[entryPoints.https.tls.certificates]]
+#       CertFile = "integration/fixtures/https/snitest.org.cert"
+#       KeyFile = "integration/fixtures/https/snitest.org.key"
 
 [entryPoints]
   [entryPoints.http]
@@ -464,12 +478,12 @@ address = ":8080"
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
 # Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate those ones
-#   [web.auth.basic] 
+#   [web.auth.basic]
 #     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 # To enable digest auth on the webui
 # with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
 # You can use htdigest to generate those ones
-#   [web.auth.basic] 
+#   [web.auth.basic]
 #     users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 
 ```

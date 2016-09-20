@@ -387,6 +387,24 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
 	// in each certificate and populates the config.NameToCertificate map.
 	config.BuildNameToCertificate()
+	//Set the minimum TLS version if set in the config TOML
+	if minConst, exists := minVersion[server.globalConfiguration.EntryPoints[entryPointName].TLS.MinVersion]; exists {
+		config.PreferServerCipherSuites = true
+		config.MinVersion = minConst
+	}
+	//Set the list of CipherSuites if set in the config TOML
+	if server.globalConfiguration.EntryPoints[entryPointName].TLS.CipherSuites != nil {
+		//if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
+		config.CipherSuites = make([]uint16, 0)
+		for _, cipher := range server.globalConfiguration.EntryPoints[entryPointName].TLS.CipherSuites {
+			if cipherConst, exists := cipherSuites[cipher]; exists {
+				config.CipherSuites = append(config.CipherSuites, cipherConst)
+			} else {
+				//CipherSuite listed in the toml does not exist in our listed
+				return nil, errors.New("Invalid CipherSuite: " + cipher)
+			}
+		}
+	}
 	return config, nil
 }
 
