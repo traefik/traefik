@@ -35,6 +35,7 @@ type Docker struct {
 	Domain           string     `description:"Default domain used"`
 	TLS              *ClientTLS `description:"Enable Docker TLS support"`
 	ExposedByDefault bool       `description:"Expose containers by default"`
+	UseBindPortIP    bool       `description:"Use the ip address from the bound port, rather than from the inner network"`
 }
 
 func (provider *Docker) createClient() (client.APIClient, error) {
@@ -173,7 +174,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockertypes.Conta
 
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockertypes.ContainerJSON) bool {
-		return provider.containerFilter(container, provider.ExposedByDefault)
+		return provider.containerFilter(container)
 	}, containersInspected).([]dockertypes.ContainerJSON)
 
 	frontends := map[string][]dockertypes.ContainerJSON{}
@@ -256,7 +257,7 @@ func (provider *Docker) getMaxConnExtractorFunc(container dockertypes.ContainerJ
 	return "request.host"
 }
 
-func (provider *Docker) containerFilter(container dockertypes.ContainerJSON, exposedByDefaultFlag bool) bool {
+func (provider *Docker) containerFilter(container dockertypes.ContainerJSON) bool {
 	_, err := strconv.Atoi(container.Config.Labels["traefik.port"])
 	if len(container.NetworkSettings.Ports) == 0 && err != nil {
 		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
@@ -267,7 +268,7 @@ func (provider *Docker) containerFilter(container dockertypes.ContainerJSON, exp
 		return false
 	}
 
-	if !isContainerEnabled(container, exposedByDefaultFlag) {
+	if !isContainerEnabled(container, provider.ExposedByDefault) {
 		log.Debugf("Filtering disabled container %s", container.Name)
 		return false
 	}
@@ -319,6 +320,17 @@ func (provider *Docker) getIPAddress(container dockertypes.ContainerJSON) string
 	// This will work locally, but will fail with swarm.
 	if container.HostConfig != nil && "host" == container.HostConfig.NetworkMode {
 		return "127.0.0.1"
+	}
+
+	if provider.UseBindPortIP {
+		port := provider.getPort(container)
+		for netport, portBindings := range container.NetworkSettings.Ports {
+			if string(netport) == port+"/TCP" || string(netport) == port+"/UDP" {
+				for _, p := range portBindings {
+					return p.HostIP
+				}
+			}
+		}
 	}
 
 	for _, network := range container.NetworkSettings.Networks {

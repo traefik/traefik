@@ -614,6 +614,13 @@ watch = true
 #
 exposedbydefault = true
 
+# Use the IP address from the binded port instead of the inner network one. For specific use-case :)
+#
+# Optional
+# Default: false
+#
+usebindportip = true
+
 # Enable docker TLS connection
 #
 #  [docker.tls]

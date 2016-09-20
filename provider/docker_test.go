@@ -865,7 +865,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 	}
 
 	for _, e := range containers {
-		actual := provider.containerFilter(e.container, e.exposedByDefault)
+		provider.ExposedByDefault = e.exposedByDefault
+		actual := provider.containerFilter(e.container)
 		if actual != e.expected {
 			t.Fatalf("expected %v for %+v, got %+v", e.expected, e, actual)
 		}
