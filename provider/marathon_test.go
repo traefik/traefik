@@ -683,6 +683,105 @@ func TestMarathonTaskFilter(t *testing.T) {
 	}
 }
 
+func TestMarathonAppConstraints(t *testing.T) {
+	cases := []struct {
+		application   marathon.Application
+		filteredTasks []marathon.Task
+		expected      bool
+	}{
+		{
+			application: marathon.Application{
+				ID:     "foo1",
+				Labels: &map[string]string{},
+			},
+			filteredTasks: []marathon.Task{
+				{
+					AppID: "foo1",
+				},
+			},
+			expected: false,
+		},
+		{
+			application: marathon.Application{
+				ID: "foo",
+				Labels: &map[string]string{
+					"traefik.tags": "valid",
+				},
+			},
+			filteredTasks: []marathon.Task{
+				{
+					AppID: "foo",
+				},
+			},
+			expected: true,
+		},
+	}
+
+	provider := &Marathon{}
+	constraint, _ := types.NewConstraint("tag==valid")
+	provider.Constraints = []types.Constraint{*constraint}
+	for _, c := range cases {
+		actual := provider.applicationFilter(c.application, c.filteredTasks)
+		if actual != c.expected {
+			t.Fatalf("expected %v, got %v: %v", c.expected, actual, c.application)
+		}
+	}
+
+}
+func TestMarathonTaskConstraints(t *testing.T) {
+	cases := []struct {
+		applications []marathon.Application
+		filteredTask marathon.Task
+		expected     bool
+	}{
+		{
+			applications: []marathon.Application{
+				marathon.Application{
+					ID:     "bar1",
+					Labels: &map[string]string{},
+				}, marathon.Application{
+					ID: "foo1",
+					Labels: &map[string]string{
+						"traefik.tags": "other",
+					},
+				},
+			},
+			filteredTask: marathon.Task{
+				AppID: "foo1",
+				Ports: []int{80},
+			},
+			expected: false,
+		},
+		{
+			applications: []marathon.Application{
+				marathon.Application{
+					ID: "foo2",
+					Labels: &map[string]string{
+						"traefik.tags": "valid",
+					},
+				},
+			},
+			filteredTask: marathon.Task{
+				AppID: "foo2",
+				Ports: []int{80},
+			},
+			expected: true,
+		},
+	}
+
+	provider := &Marathon{}
+	constraint, _ := types.NewConstraint("tag==valid")
+	provider.Constraints = []types.Constraint{*constraint}
+	for _, c := range cases {
+		apps := new(marathon.Applications)
+		apps.Apps = c.applications
+		actual := provider.taskFilter(c.filteredTask, apps, true)
+		if actual != c.expected {
+			t.Fatalf("expected %v, got %v: %v", c.expected, actual, c.filteredTask)
+		}
+	}
+}
+
 func TestMarathonApplicationFilter(t *testing.T) {
 	cases := []struct {
 		application   marathon.Application
