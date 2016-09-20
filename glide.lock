@@ -1,5 +1,5 @@
-hash: 7382685091734eeeef590d8d298600abfaa21c40c8714ef570b8006e4f8cc846
-updated: 2016-08-19T14:15:17.22440385+02:00
+hash: b82175c1aafff6c4e98c8ac4baea3832895c9600beac445c10af4c004982ef05
+updated: 2016-09-20T16:03:26.379383173+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -11,8 +11,8 @@ imports:
   version: 6add9cd6ad42d389d6ead1dde60b4ad71e46fd74
   subpackages:
   - fun
-- name: github.com/cenkalti/backoff
-  version: cdf48bbc1eb78d1349cbda326a4a037f7ba565c6
+- name: github.com/cenk/backoff
+  version: 8edc80b07f38c27352fb186d971c628a6c32552b
 - name: github.com/codahale/hdrhistogram
   version: f8ad88b59a584afeee9d334eff879b104439117b
 - name: github.com/codegangsta/cli
@@ -36,7 +36,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-  version: 2b72dd3927b2958160a2336f16145c0c421aa6a4
+  version: b6e0cfbdaa1ddc3a17c95142c7bf6e42c5567370
   subpackages:
   - context
   - digest
@@ -141,7 +141,7 @@ imports:
   - version
   - yaml
 - name: github.com/docker/libkv
-  version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
+  version: 3fce6a0f26e07da3eac45796a8e255547a47a750
   subpackages:
   - store
   - store/boltdb
@@ -157,7 +157,7 @@ imports:
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
-  version: 6abcf94fd4c97dcb423fdafd42fe9f96ca7e421b
+  version: a11c89fbb0ad4acfa8abc4a4d5f7e27c477169b1
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -219,13 +219,13 @@ imports:
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
-  version: d2dd0262208475919e1a362f675cfc0e7c10e905
+  version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
 - name: github.com/moul/http2curl
   version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: fb221651e5120cd287a76c7c1b6c877520fbd034
+  version: 38e0df9ec67c05e73b656c02c9222f24c1683d73
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -252,7 +252,7 @@ imports:
   - assert
   - mock
 - name: github.com/thoas/stats
-  version: 79b768ff1780f4e5b0ed132e192bfeefe9f85a9c
+  version: 152b5d051953fdb6e45f14b6826962aadc032324
 - name: github.com/tv42/zbase32
   version: 501572607d0273fc75b3b261fa4904d63f6ffa0e
 - name: github.com/ugorji/go
