@@ -668,6 +668,7 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	router.StrictSlash(true)
+	router.SkipClean(true)
 	return router
 }
 
