@@ -736,10 +736,10 @@ func TestMarathonTaskConstraints(t *testing.T) {
 	}{
 		{
 			applications: []marathon.Application{
-				marathon.Application{
+				{
 					ID:     "bar1",
 					Labels: &map[string]string{},
-				}, marathon.Application{
+				}, {
 					ID: "foo1",
 					Labels: &map[string]string{
 						"traefik.tags": "other",
@@ -754,7 +754,7 @@ func TestMarathonTaskConstraints(t *testing.T) {
 		},
 		{
 			applications: []marathon.Application{
-				marathon.Application{
+				{
 					ID: "foo2",
 					Labels: &map[string]string{
 						"traefik.tags": "valid",
