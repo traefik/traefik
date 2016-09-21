@@ -64,6 +64,55 @@
 # defaultEntryPoints = ["http", "https"]
 ```
 
+### Constraints
+
+In a micro-service architecture, with a central service discovery, setting constraints limits Træfɪk scope to a smaller number of routes.
+
+Træfɪk filters services according to service attributes/tags set in your configuration backends.
+
+Supported backends:
+
+- Docker
+- Consul K/V
+- BoltDB
+- Zookeeper
+- Etcd
+- Consul Catalog
+
+Supported filters:
+
+- ```tag```
+
+```
+# Constraints definition
+
+#
+# Optional
+#
+
+# Simple matching constraint
+# constraints = ["tag==api"]
+
+# Simple mismatching constraint
+# constraints = ["tag!=api"]
+
+# Globbing
+# constraints = ["tag==us-*"]
+
+# Backend-specific constraint
+# [consulCatalog]
+#   endpoint = 127.0.0.1:8500
+#   constraints = ["tag==api"]
+
+# Multiple constraints
+#   - "tag==" must match with at least one tag
+#   - "tag!=" must match with none of tags
+# constraints = ["tag!=us-*", "tag!=asia-*"]
+# [consulCatalog]
+#   endpoint = 127.0.0.1:8500
+#   constraints = ["tag==api", "tag!=v*-beta"]
+```
+
 ## Entrypoints definition
 
 ```toml
@@ -834,6 +883,13 @@ prefix = "traefik"
 # cert = "/etc/ssl/consul.crt"
 # key = "/etc/ssl/consul.key"
 # insecureskipverify = true
+
+# Constraint on ConsulKV tags
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having a key "/traefik/backends/backend1/servers/server1/tags" equal to "api,helloworld"
 ```
 
 Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-value-storage-structure) section to get documentation on traefik KV structure.
@@ -937,6 +993,13 @@ prefix = "/traefik"
 # cert = "/etc/ssl/etcd.crt"
 # key = "/etc/ssl/etcd.key"
 # insecureskipverify = true
+
+# Constraint on Etcd tags
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having a key "/traefik/backends/backend1/servers/server1/tags" equal to "api,helloworld"
 ```
 
 Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-value-storage-structure) section to get documentation on traefik KV structure.
@@ -980,6 +1043,13 @@ prefix = "/traefik"
 # Optional
 #
 # filename = "zookeeper.tmpl"
+
+# Constraint on Zookeeper tags
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having a key "/traefik/backends/backend1/servers/server1/tags" equal to "api,helloworld"
 ```
 
 Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-value-storage-structure) section to get documentation on traefik KV structure.
@@ -1022,6 +1092,13 @@ prefix = "/traefik"
 # Optional
 #
 # filename = "boltdb.tmpl"
+
+# Constraint on BoltDB tags
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having a key "/traefik/backends/backend1/servers/server1/tags" equal to "api,helloworld"
 ```
 
 Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-value-storage-structure) section to get documentation on traefik KV structure.

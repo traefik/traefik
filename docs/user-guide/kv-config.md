@@ -225,6 +225,7 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 | `/traefik/backends/backend1/servers/server1/weight`    | `10`                        |
 | `/traefik/backends/backend1/servers/server2/url`       | `http://172.17.0.3:80`      |
 | `/traefik/backends/backend1/servers/server2/weight`    | `1`                         |
+| `/traefik/backends/backend1/servers/server2/tags`      | `api,helloworld`            |
 
 - backend 2
 
@@ -237,6 +238,7 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 | `/traefik/backends/backend2/servers/server1/weight` | `1`                    |
 | `/traefik/backends/backend2/servers/server2/url`    | `http://172.17.0.5:80` |
 | `/traefik/backends/backend2/servers/server2/weight` | `2`                    |
+| `/traefik/backends/backend2/servers/server2/tags`   | `web`                  |
 
 - frontend 1
 
