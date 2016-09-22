@@ -1,5 +1,17 @@
 # Change Log
 
+## [v1.0.3](https://github.com/containous/traefik/tree/v1.0.3) (2016-09-22)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.0.2...v1.0.3)
+
+**Fixed bugs:**
+
+- traefik hangs - stops handling requests [\#662](https://github.com/containous/traefik/issues/662)
+- Traefik crashing [\#458](https://github.com/containous/traefik/issues/458)
+
+**Merged pull requests:**
+
+- Fix health race [\#693](https://github.com/containous/traefik/pull/693) ([emilevauge](https://github.com/emilevauge))
+
 ## [v1.0.2](https://github.com/containous/traefik/tree/v1.0.2) (2016-08-02)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.0.1...v1.0.2)
 
