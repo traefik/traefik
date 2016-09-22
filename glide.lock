@@ -219,7 +219,7 @@ imports:
   - mock
   - assert
 - name: github.com/thoas/stats
-  version: 79b768ff1780f4e5b0ed132e192bfeefe9f85a9c
+  version: 152b5d051953fdb6e45f14b6826962aadc032324
 - name: github.com/ugorji/go
   version: b94837a2404ab90efe9289e77a70694c355739cb
   subpackages:
