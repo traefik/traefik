@@ -20,7 +20,14 @@ type Account struct {
 	Registration       *acme.RegistrationResource
 	PrivateKey         []byte
 	DomainsCertificate DomainsCertificates
-	ChallengeCerts     map[string][]byte
+	ChallengeCerts     map[string]*ChallengeCert
+}
+
+// ChallengeCert stores a challenge certificate
+type ChallengeCert struct {
+	Certificate []byte
+	PrivateKey  []byte
+	certificate *tls.Certificate
 }
 
 // Init inits acccount struct
@@ -29,9 +36,27 @@ func (a *Account) Init() error {
 	if err != nil {
 		return err
 	}
+
+	for _, cert := range a.ChallengeCerts {
+		if cert.certificate == nil {
+			certificate, err := tls.X509KeyPair(cert.Certificate, cert.PrivateKey)
+			if err != nil {
+				return err
+			}
+			cert.certificate = &certificate
+		}
+		if cert.certificate.Leaf == nil {
+			leaf, err := x509.ParseCertificate(cert.certificate.Certificate[0])
+			if err != nil {
+				return err
+			}
+			cert.certificate.Leaf = leaf
+		}
+	}
 	return nil
 }
 
+// NewAccount creates an account
 func NewAccount(email string) (*Account, error) {
 	// Create a user. New accounts need an email and private key to start
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
@@ -43,22 +68,22 @@ func NewAccount(email string) (*Account, error) {
 	return &Account{
 		Email:              email,
 		PrivateKey:         x509.MarshalPKCS1PrivateKey(privateKey),
-		DomainsCertificate: domainsCerts,
-		ChallengeCerts:     map[string][]byte{}}, nil
+		DomainsCertificate: DomainsCertificates{Certs: domainsCerts.Certs},
+		ChallengeCerts:     map[string]*ChallengeCert{}}, nil
 }
 
 // GetEmail returns email
-func (a Account) GetEmail() string {
+func (a *Account) GetEmail() string {
 	return a.Email
 }
 
 // GetRegistration returns lets encrypt registration resource
-func (a Account) GetRegistration() *acme.RegistrationResource {
+func (a *Account) GetRegistration() *acme.RegistrationResource {
 	return a.Registration
 }
 
 // GetPrivateKey returns private key
-func (a Account) GetPrivateKey() crypto.PrivateKey {
+func (a *Account) GetPrivateKey() crypto.PrivateKey {
 	if privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey); err == nil {
 		return privateKey
 	}
@@ -81,6 +106,7 @@ type DomainsCertificates struct {
 	lock  sync.RWMutex
 }
 
+// Init inits DomainsCertificates
 func (dc *DomainsCertificates) Init() error {
 	dc.lock.Lock()
 	defer dc.lock.Unlock()
@@ -167,7 +193,7 @@ func (dc *DomainsCertificate) needRenew() bool {
 			return true
 		}
 		// <= 7 days left, renew certificate
-		if crt.NotAfter.Before(time.Now().Add(time.Duration(24 * 7 * time.Hour))) {
+		if crt.NotAfter.Before(time.Now().Add(time.Duration(24 * 30 * time.Hour))) {
 			return true
 		}
 	}

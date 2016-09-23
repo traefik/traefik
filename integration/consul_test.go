@@ -446,12 +446,12 @@ func (s *ConsulSuite) TestDatastore(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	ctx := context.Background()
-	datastore1, err := cluster.NewDataStore(kvSource, ctx, &TestStruct{})
+	datastore1, err := cluster.NewDataStore(*kvSource, ctx, &TestStruct{}, nil)
 	c.Assert(err, checker.IsNil)
-	datastore2, err := cluster.NewDataStore(kvSource, ctx, &TestStruct{})
+	datastore2, err := cluster.NewDataStore(*kvSource, ctx, &TestStruct{}, nil)
 	c.Assert(err, checker.IsNil)
 
-	setter1, err := datastore1.Begin()
+	setter1, _, err := datastore1.Begin()
 	c.Assert(err, checker.IsNil)
 	err = setter1.Commit(&TestStruct{
 		String: "foo",
@@ -465,7 +465,7 @@ func (s *ConsulSuite) TestDatastore(c *check.C) {
 	test2 := datastore2.Get().(*TestStruct)
 	c.Assert(test2.String, checker.Equals, "foo")
 
-	setter2, err := datastore2.Begin()
+	setter2, _, err := datastore2.Begin()
 	c.Assert(err, checker.IsNil)
 	err = setter2.Commit(&TestStruct{
 		String: "bar",
@@ -483,7 +483,7 @@ func (s *ConsulSuite) TestDatastore(c *check.C) {
 	wg.Add(4)
 	go func() {
 		for i := 0; i < 100; i++ {
-			setter1, err := datastore1.Begin()
+			setter1, _, err := datastore1.Begin()
 			c.Assert(err, checker.IsNil)
 			err = setter1.Commit(&TestStruct{
 				String: "datastore1",
@@ -495,7 +495,7 @@ func (s *ConsulSuite) TestDatastore(c *check.C) {
 	}()
 	go func() {
 		for i := 0; i < 100; i++ {
-			setter2, err := datastore2.Begin()
+			setter2, _, err := datastore2.Begin()
 			c.Assert(err, checker.IsNil)
 			err = setter2.Commit(&TestStruct{
 				String: "datastore2",

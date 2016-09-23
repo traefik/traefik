@@ -16,9 +16,6 @@ import (
 
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/provider/k8s"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 )
 
 const (

@@ -1,11 +1,11 @@
 package cluster
 
 import (
+	"github.com/cenk/backoff"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/docker/leadership"
-	"github.com/emilevauge/backoff"
 	"golang.org/x/net/context"
 	"time"
 )

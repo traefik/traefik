@@ -13,8 +13,8 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 )

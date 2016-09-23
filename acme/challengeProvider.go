@@ -2,22 +2,16 @@ package acme
 
 import (
 	"crypto/tls"
+	"strings"
 	"sync"
 
-	"bytes"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/gob"
+	"fmt"
+	"github.com/cenk/backoff"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
 	"github.com/xenolf/lego/acme"
 	"time"
 )
-
-func init() {
-	gob.Register(rsa.PrivateKey{})
-	gob.Register(rsa.PublicKey{})
-}
 
 var _ acme.ChallengeProviderTimeout = (*challengeProvider)(nil)
 
@@ -34,34 +28,44 @@ func newMemoryChallengeProvider(store cluster.Store) *challengeProvider {
 
 func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate, exists bool) {
 	log.Debugf("Challenge GetCertificate %s", domain)
+	if !strings.HasSuffix(domain, ".acme.invalid") {
+		return nil, false
+	}
 	c.lock.RLock()
 	defer c.lock.RUnlock()
 	account := c.store.Get().(*Account)
 	if account.ChallengeCerts == nil {
 		return nil, false
 	}
-	if certBinary, ok := account.ChallengeCerts[domain]; ok {
-		cert := &tls.Certificate{}
-		var buffer bytes.Buffer
-		buffer.Write(certBinary)
-		dec := gob.NewDecoder(&buffer)
-		err := dec.Decode(cert)
-		if err != nil {
-			log.Errorf("Error unmarshaling challenge cert %s", err.Error())
-			return nil, false
+	account.Init()
+	var result *tls.Certificate
+	operation := func() error {
+		for _, cert := range account.ChallengeCerts {
+			for _, dns := range cert.certificate.Leaf.DNSNames {
+				if domain == dns {
+					result = cert.certificate
+					return nil
+				}
+			}
 		}
-		return cert, true
+		return fmt.Errorf("Cannot find challenge cert for domain %s", domain)
 	}
-	return nil, false
+	notify := func(err error, time time.Duration) {
+		log.Errorf("Error getting cert: %v, retrying in %s", err, time)
+	}
+	ebo := backoff.NewExponentialBackOff()
+	ebo.MaxElapsedTime = 60 * time.Second
+	err := backoff.RetryNotify(operation, ebo, notify)
+	if err != nil {
+		log.Errorf("Error getting cert: %v", err)
+		return nil, false
+	}
+	return result, true
 }
 
 func (c *challengeProvider) Present(domain, token, keyAuth string) error {
 	log.Debugf("Challenge Present %s", domain)
-	cert, _, err := acme.TLSSNI01ChallengeCert(keyAuth)
-	if err != nil {
-		return err
-	}
-	cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+	cert, _, err := TLSSNI01ChallengeCert(keyAuth)
 	if err != nil {
 		return err
 	}
@@ -74,18 +78,9 @@ func (c *challengeProvider) Present(domain, token, keyAuth string) error {
 	}
 	account := object.(*Account)
 	if account.ChallengeCerts == nil {
-		account.ChallengeCerts = map[string][]byte{}
+		account.ChallengeCerts = map[string]*ChallengeCert{}
 	}
-	for i := range cert.Leaf.DNSNames {
-		var buffer bytes.Buffer
-		enc := gob.NewEncoder(&buffer)
-		err := enc.Encode(cert)
-		if err != nil {
-			return err
-		}
-		account.ChallengeCerts[cert.Leaf.DNSNames[i]] = buffer.Bytes()
-		log.Debugf("Challenge Present cert: %s", cert.Leaf.DNSNames[i])
-	}
+	account.ChallengeCerts[domain] = &cert
 	return transaction.Commit(account)
 }
 

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/cenk/backoff"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
@@ -22,6 +23,7 @@ type ACME struct {
 	Email               string   `description:"Email address used for registration"`
 	Domains             []Domain `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
 	Storage             string   `description:"File or key used for certificates storage."`
+	StorageFile         string   // deprecated
 	OnDemand            bool     `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."`
 	OnHostRule          bool     `description:"Enable certificate generation on frontends Host rules."`
 	CAServer            string   `description:"CA server to use."`
@@ -82,6 +84,11 @@ func (a *ACME) init() error {
 		return err
 	}
 	a.defaultCertificate = cert
+	// TODO: to remove in the futurs
+	if len(a.StorageFile) > 0 && len(a.Storage) == 0 {
+		log.Warnf("ACME.StorageFile is deprecated, use ACME.Storage instead")
+		a.Storage = a.StorageFile
+	}
 	return nil
 }
 
@@ -160,7 +167,6 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 			if err != nil {
 				return err
 			}
-			log.Debugf("buildACMEClient...")
 			a.client, err = a.buildACMEClient(account)
 			if err != nil {
 				return err
@@ -179,7 +185,16 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 			log.Debugf("AgreeToTOS...")
 			err = a.client.AgreeToTOS()
 			if err != nil {
-				return err
+				// Let's Encrypt Subscriber Agreement renew ?
+				reg, err := a.client.QueryRegistration()
+				if err != nil {
+					return err
+				}
+				account.Registration = reg
+				err = a.client.AgreeToTOS()
+				if err != nil {
+					log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
+				}
 			}
 			err = transaction.Commit(account)
 			if err != nil {
@@ -302,7 +317,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		return challengeCert, nil
 	}
 	if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(clientHello.ServerName); ok {
-		log.Debugf("ACME got domaincert %s", clientHello.ServerName)
+		log.Debugf("ACME got domain cert %s", clientHello.ServerName)
 		return domainCert.tlsCert, nil
 	}
 	if a.OnDemand {
@@ -442,6 +457,22 @@ func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.C
 // LoadCertificateForDomains loads certificates from ACME for given domains
 func (a *ACME) LoadCertificateForDomains(domains []string) {
 	safe.Go(func() {
+		operation := func() error {
+			if a.client == nil {
+				return fmt.Errorf("ACME client still not built")
+			}
+			return nil
+		}
+		notify := func(err error, time time.Duration) {
+			log.Errorf("Error getting ACME client: %v, retrying in %s", err, time)
+		}
+		ebo := backoff.NewExponentialBackOff()
+		ebo.MaxElapsedTime = 30 * time.Second
+		err := backoff.RetryNotify(operation, ebo, notify)
+		if err != nil {
+			log.Errorf("Error getting ACME client: %v", err)
+			return
+		}
 		account := a.store.Get().(*Account)
 		var domain Domain
 		if len(domains) == 0 {

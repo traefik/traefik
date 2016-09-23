@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/containous/traefik/log"
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -79,7 +79,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		body, _ := ioutil.ReadAll(request.Body)
 		err := json.Unmarshal(body, configuration)
 		if err == nil {
-			configurationChan <- types.ConfigMessage{"web", configuration}
+			configurationChan <- types.ConfigMessage{ProviderName: "web", Configuration: configuration}
 			provider.getConfigHandler(response, request)
 		} else {
 			log.Errorf("Error parsing configuration %+v", err)

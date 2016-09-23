@@ -3,10 +3,11 @@ package cluster
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cenk/backoff"
 	"github.com/containous/staert"
+	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/docker/libkv/store"
-	"github.com/emilevauge/backoff"
 	"github.com/satori/go.uuid"
 	"golang.org/x/net/context"
 	"sync"
@@ -84,19 +85,11 @@ func (d *Datastore) watchChanges() error {
 						cancel()
 						return err
 					}
-					d.localLock.Lock()
-					err := d.kv.LoadConfig(d.meta)
+					err = d.reload()
 					if err != nil {
-						d.localLock.Unlock()
 						return err
 					}
-					err = d.meta.unmarshall()
-					if err != nil {
-						d.localLock.Unlock()
-						return err
-					}
-					d.localLock.Unlock()
-					// log.Debugf("Datastore object change received: %+v", d.object)
+					// log.Debugf("Datastore object change received: %+v", d.meta)
 					if d.listener != nil {
 						err := d.listener(d.meta.object)
 						if err != nil {
@@ -109,11 +102,28 @@ func (d *Datastore) watchChanges() error {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Error in watch datastore: %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, backoff.NewExponentialBackOff(), notify)
+		err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Error in watch datastore: %v", err)
 		}
 	}()
+	return nil
+}
+
+func (d *Datastore) reload() error {
+	log.Debugf("Datastore reload")
+	d.localLock.Lock()
+	err := d.kv.LoadConfig(d.meta)
+	if err != nil {
+		d.localLock.Unlock()
+		return err
+	}
+	err = d.meta.unmarshall()
+	if err != nil {
+		d.localLock.Unlock()
+		return err
+	}
+	d.localLock.Unlock()
 	return nil
 }
 
@@ -152,6 +162,10 @@ func (d *Datastore) Begin() (Transaction, Object, error) {
 	}
 	notify := func(err error, time time.Duration) {
 		log.Errorf("Datastore sync error: %v, retrying in %s", err, time)
+		err = d.reload()
+		if err != nil {
+			log.Errorf("Error reloading: %+v", err)
+		}
 	}
 	ebo := backoff.NewExponentialBackOff()
 	ebo.MaxElapsedTime = 60 * time.Second
@@ -228,7 +242,6 @@ func (s *datastoreTransaction) Commit(object Object) error {
 	}
 
 	s.dirty = true
-	// log.Debugf("Datastore object saved: %+v", s.object)
 	log.Debugf("Transaction commited %s", s.id)
 	return nil
 }

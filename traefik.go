@@ -129,7 +129,7 @@ Complete documentation is available at https://traefik.io`,
 	}
 
 	if _, err := f.Parse(usedCmd); err != nil {
-		fmtlog.Println(err)
+		fmtlog.Printf("Error parsing command: %s\n", err)
 		os.Exit(-1)
 	}
 
@@ -150,7 +150,7 @@ Complete documentation is available at https://traefik.io`,
 
 	kv, err = CreateKvSource(traefikConfiguration)
 	if err != nil {
-		fmtlog.Println(err)
+		fmtlog.Printf("Error creating kv store: %s\n", err)
 		os.Exit(-1)
 	}
 
@@ -164,13 +164,13 @@ Complete documentation is available at https://traefik.io`,
 		}
 		s.AddSource(kv)
 		if _, err := s.LoadConfig(); err != nil {
-			fmtlog.Println(err)
+			fmtlog.Printf("Error loading configuration: %s\n", err)
 			os.Exit(-1)
 		}
 	}
 
 	if err := s.Run(); err != nil {
-		fmtlog.Println(err)
+		fmtlog.Printf("Error running traefik: %s\n", err)
 		os.Exit(-1)
 	}
 

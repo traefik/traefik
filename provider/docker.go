@@ -13,9 +13,9 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/BurntSushi/ty/fun"
-	"github.com/containous/traefik/log"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"

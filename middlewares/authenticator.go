@@ -2,9 +2,9 @@ package middlewares
 
 import (
 	"fmt"
-	"github.com/containous/traefik/log"
 	"github.com/abbot/go-http-auth"
 	"github.com/codegangsta/negroni"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"net/http"
 	"strings"

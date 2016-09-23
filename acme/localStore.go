@@ -51,17 +51,6 @@ func (s *LocalStore) Load() (cluster.Object, error) {
 	return account, nil
 }
 
-// func (s *LocalStore) saveAccount(account *Account) error {
-// 	s.storageLock.Lock()
-// 	defer s.storageLock.Unlock()
-// 	// write account to file
-// 	data, err := json.MarshalIndent(account, "", "  ")
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return ioutil.WriteFile(s.file, data, 0644)
-// }
-
 // Begin creates a transaction with the KV store.
 func (s *LocalStore) Begin() (cluster.Transaction, cluster.Object, error) {
 	s.storageLock.Lock()
@@ -88,7 +77,7 @@ func (t *localTransaction) Commit(object cluster.Object) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(t.file, data, 0644)
+	err = ioutil.WriteFile(t.file, data, 0644)
 	if err != nil {
 		return err
 	}
