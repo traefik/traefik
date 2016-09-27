@@ -188,14 +188,13 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
 		return false
 	}
-	if label, err := provider.getLabel(application, "traefik.tags"); err == nil {
-		constraintTags := strings.Split(label, ",")
-		if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
-			if failingConstraint != nil {
-				log.Debugf("Application %v pruned by '%v' constraint", application.ID, failingConstraint.String())
-			}
-			return false
+	label, _ := provider.getLabel(application, "traefik.tags")
+	constraintTags := strings.Split(label, ",")
+	if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
+		if failingConstraint != nil {
+			log.Debugf("Application %v pruned by '%v' constraint", application.ID, failingConstraint.String())
 		}
+		return false
 	}
 
 	if !isApplicationEnabled(application, exposedByDefaultFlag) {
@@ -258,7 +257,8 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 }
 
 func (provider *Marathon) applicationFilter(app marathon.Application, filteredTasks []marathon.Task) bool {
-	constraintTags := strings.Split((*app.Labels)["traefik.tags"], ",")
+	label, _ := provider.getLabel(app, "traefik.tags")
+	constraintTags := strings.Split(label, ",")
 	if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Application %v pruned by '%v' constraint", app.ID, failingConstraint.String())
