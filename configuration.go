@@ -46,6 +46,9 @@ type GlobalConfiguration struct {
 	Boltdb                    *provider.BoltDb        `description:"Enable Boltdb backend"`
 	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
 	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
+	CustomBackendHTTPError    bool                    `description:"Use custom HTTP response on backend service 404"`
+	CustomBackendErrorMessage string                  `description:"Custom error message to send in HTTP response if backend service returns a 404."`
+	CustomBackendErrorCode    int                     `description:"Custom HTTP status code to return if a backend service returns 404."`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -365,6 +368,9 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: time.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
+			CustomBackendHTTPError:    false,
+			CustomBackendErrorCode:    502,
+			CustomBackendErrorMessage: "Unable to GET Backend",
 		},
 		ConfigFile: "",
 	}

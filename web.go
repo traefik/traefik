@@ -190,7 +190,13 @@ func (provider *WebProvider) getBackendHandler(response http.ResponseWriter, req
 			return
 		}
 	}
-	http.NotFound(response, request)
+	//http.NotFound(response, request)
+	if provider.server.globalConfiguration.CustomBackendHTTPError {
+		response.WriteHeader(provider.server.globalConfiguration.CustomBackendErrorCode)
+		fmt.Fprintf(response, provider.server.globalConfiguration.CustomBackendErrorMessage)
+	} else {
+		http.NotFound(response, request)
+	}
 }
 
 func (provider *WebProvider) getServersHandler(response http.ResponseWriter, request *http.Request) {

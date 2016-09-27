@@ -62,6 +62,27 @@
 #
 # defaultEntryPoints = ["http", "https"]
 
+# Whether or not to use a custom HTTP response, instead of 404, if a backend service is unavailable.
+#
+# Optional
+# Default: false
+#
+# CustomBackendHTTPError = false
+
+# Custom error message to use when a backend service is unavailable.
+#
+# Optional
+# Default: "Unable to GET Backend"
+#
+# CustomBackendErrorMessage: "Unable to GET Backend"
+
+# Custom HTTP response code to return if a backend service is unavailable
+#
+# Optional
+# Default: 502
+#
+# CustomBackendErrorCode: 502
+
 # Enable ACME (Let's Encrypt): automatic SSL
 #
 # Optional
