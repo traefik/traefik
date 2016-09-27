@@ -5,7 +5,7 @@ import:
   subpackages:
   - fun
 - package: github.com/Sirupsen/logrus
-- package: github.com/emilevauge/backoff
+- package: github.com/cenk/backoff
 - package: github.com/codegangsta/negroni
 - package: github.com/containous/flaeg
   version: a731c034dda967333efce5f8d276aeff11f8ff87

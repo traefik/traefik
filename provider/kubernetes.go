@@ -11,10 +11,11 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/provider/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/emilevauge/backoff"
 )
 
 const (
@@ -146,7 +147,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Kubernetes connection error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, backoff.NewJobBackOff(backoff.NewExponentialBackOff()), notify)
+		err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Cannot connect to Kubernetes server %+v", err)
 		}

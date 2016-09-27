@@ -9,9 +9,10 @@ import (
 	"fmt"
 	"github.com/BurntSushi/ty/fun"
 	log "github.com/Sirupsen/logrus"
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/emilevauge/backoff"
 	"github.com/mesos/mesos-go/detector"
 	_ "github.com/mesos/mesos-go/detector/zoo" // Registers the ZK detector
 	"github.com/mesosphere/mesos-dns/detect"
@@ -110,7 +111,7 @@ func (provider *Mesos) Provide(configurationChan chan<- types.ConfigMessage, poo
 	notify := func(err error, time time.Duration) {
 		log.Errorf("mesos connection error %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, backoff.NewJobBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		log.Errorf("Cannot connect to mesos server %+v", err)
 	}

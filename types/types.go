@@ -139,6 +139,13 @@ func (c *Constraint) String() string {
 	return c.Key + "!=" + c.Regex
 }
 
+// UnmarshalText define how unmarshal in TOML parsing
+func (c *Constraint) UnmarshalText(text []byte) error {
+	constraint, err := NewConstraint(string(text))
+	*c = *constraint
+	return err
+}
+
 // MatchConstraintWithAtLeastOneTag tests a constraint for one single service
 func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
 	for _, tag := range tags {

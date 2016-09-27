@@ -61,8 +61,9 @@ Run it and forget it!
 - Retry request if network error
 - [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS with renewal)
 
-## Demo
+## Quickstart
 
+You can have a quick look at Træfɪk in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
 
 Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
 You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Let's Encrypt. 
