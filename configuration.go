@@ -4,13 +4,14 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/containous/traefik/acme"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/types"
 	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
 )
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff
@@ -269,6 +270,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDocker.Watch = true
 	defaultDocker.ExposedByDefault = true
 	defaultDocker.Endpoint = "unix:///var/run/docker.sock"
+	defaultDocker.SwarmMode = false
 
 	// default File
 	var defaultFile provider.File

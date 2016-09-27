@@ -664,11 +664,19 @@ watch = true
 exposedbydefault = true
 
 # Use the IP address from the binded port instead of the inner network one. For specific use-case :)
+
 #
 # Optional
 # Default: false
 #
 usebindportip = true
+# Use Swarm Mode services as data provider
+#
+# Optional
+# Default: false
+#
+swarmmode = false
+
 
 # Enable docker TLS connection
 #

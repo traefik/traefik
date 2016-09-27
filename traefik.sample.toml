@@ -311,6 +311,66 @@
 #  insecureskipverify = true
 
 
+
+################################################################
+# Docker Swarmmode configuration backend
+################################################################
+
+# Enable Docker configuration backend
+#
+# Optional
+#
+# [docker]
+
+# Docker server endpoint. Can be a tcp or a unix socket endpoint.
+#
+# Required
+#
+# endpoint = "tcp://127.0.0.1:2375"
+
+# Default domain used.
+# Can be overridden by setting the "traefik.domain" label on a services.
+#
+# Required
+#
+# domain = "docker.localhost"
+
+# Enable watch docker changes
+#
+# Optional
+#
+# watch = true
+
+# Use Docker Swarm Mode as data provider
+#
+# Optional
+#
+# swarmmode = true
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "docker.tmpl"
+
+# Expose services by default in traefik
+#
+# Optional
+# Default: true
+#
+# exposedbydefault = true
+
+# Enable docker TLS connection
+#
+# Optional
+#
+#  [swarm.tls]
+#  ca = "/etc/ssl/ca.crt"
+#  cert = "/etc/ssl/docker.crt"
+#  key = "/etc/ssl/docker.key"
+#  insecureskipverify = true
+
+
 ################################################################
 # Mesos/Marathon configuration backend
 ################################################################
