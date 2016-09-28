@@ -683,7 +683,6 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 	log.Debugf("Creating entryPoint redirect %s -> %s : %s -> %s", entryPointName, entryPoint.Redirect.EntryPoint, regex, replacement)
 	negroni := negroni.New()
 	negroni.Use(rewrite)
-
 	return negroni, nil
 }
 
