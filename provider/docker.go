@@ -262,19 +262,27 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 	}, containersInspected).([]dockerData)
 
 	frontends := map[string][]dockerData{}
+	backends := map[string]dockerData{}
+	servers := map[string][]dockerData{}
 	for _, container := range filteredContainers {
 		frontendName := provider.getFrontendName(container)
 		frontends[frontendName] = append(frontends[frontendName], container)
-		frontends[frontendName] = append(frontends[frontendName], container)
+		backendName := provider.getBackend(container)
+		backends[backendName] = container
+		servers[backendName] = append(servers[backendName], container)
 	}
 
 	templateObjects := struct {
 		Containers []dockerData
 		Frontends  map[string][]dockerData
+		Backends   map[string]dockerData
+		Servers    map[string][]dockerData
 		Domain     string
 	}{
 		filteredContainers,
 		frontends,
+		backends,
+		servers,
 		provider.Domain,
 	}
 

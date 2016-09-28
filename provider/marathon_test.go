@@ -107,7 +107,6 @@ func TestMarathonLoadConfig(t *testing.T) {
 						},
 					},
 					CircuitBreaker: nil,
-					LoadBalancer:   &types.LoadBalancer{Sticky: false},
 				},
 			},
 		},

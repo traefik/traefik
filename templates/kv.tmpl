@@ -12,9 +12,11 @@
 {{end}}
 
 {{$loadBalancer := Get "" . "/loadbalancer/" "method"}}
+{{$sticky := Get "false" . "/loadbalancer/" "sticky"}}
 {{with $loadBalancer}}
 [backends."{{Last $backend}}".loadBalancer]
     method = "{{$loadBalancer}}"
+    sticky = {{$sticky}}
 {{end}}
 
 {{$maxConnAmt := Get "" . "/maxconn/" "amount"}}

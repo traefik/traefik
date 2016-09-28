@@ -546,12 +546,11 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 
 						stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
-						var cookiename string
+						cookiename := "_TRAEFIK_BACKEND"
 						var sticky *roundrobin.StickySession
 
 						if stickysession {
 							sticky = roundrobin.NewStickySession(cookiename)
-							cookiename = "_TRAEFIK_BACKEND"
 						}
 
 						switch lbMethod {
