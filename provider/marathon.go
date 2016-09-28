@@ -349,7 +349,7 @@ func (provider *Marathon) getProtocol(task marathon.Task, applications []maratho
 }
 
 func (provider *Marathon) getSticky(application marathon.Application) string {
-	if sticky, err := provider.getLabel(application, "traefik.backend.sticky"); err == nil {
+	if sticky, err := provider.getLabel(application, "traefik.backend.loadbalancer.sticky"); err == nil {
 		return sticky
 	}
 	return "false"
@@ -419,7 +419,9 @@ func (provider *Marathon) hasCircuitBreakerLabels(application marathon.Applicati
 }
 
 func (provider *Marathon) hasLoadBalancerLabels(application marathon.Application) bool {
-	if _, err := provider.getLabel(application, "traefik.backend.loadbalancer.method"); err != nil {
+	_, errMethod := provider.getLabel(application, "traefik.backend.loadbalancer.method")
+	_, errSticky := provider.getLabel(application, "traefik.backend.loadbalancer.sticky")
+	if errMethod != nil && errSticky != nil {
 		return false
 	}
 	return true

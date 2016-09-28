@@ -15,7 +15,11 @@
       amount = {{getMaxConnAmount . }}
       extractorfunc = "{{getMaxConnExtractorFunc . }}"
     {{end}}
-
+    
+    [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/" "" | replace "." "-"}}]
+    url = "{{getProtocol .}}://{{getIPAddress .}}:{{getPort .}}"
+    weight = {{getWeight .}}
+{{end}}
 
 [frontends]{{range $frontend, $containers := .Frontends}}
   [frontends."frontend-{{$frontend}}"]{{$container := index $containers 0}}

@@ -261,26 +261,20 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 		return provider.containerFilter(container)
 	}, containersInspected).([]dockerData)
 
-	// sticky backends
-	stickycontainers := map[string][]dockerData{}
-
 	frontends := map[string][]dockerData{}
 	for _, container := range filteredContainers {
 		frontendName := provider.getFrontendName(container)
 		frontends[frontendName] = append(frontends[frontendName], container)
 		frontends[frontendName] = append(frontends[frontendName], container)
-		stickycontainers[provider.getBackend(container)] = container
 	}
 
 	templateObjects := struct {
-		Containers       []dockerData
-		Frontends        map[string][]dockerData
-		StickyContainers map[string][]dockerData
-		Domain           string
+		Containers []dockerData
+		Frontends  map[string][]dockerData
+		Domain     string
 	}{
 		filteredContainers,
 		frontends,
-		stickycontainers,
 		provider.Domain,
 	}
 
@@ -299,7 +293,9 @@ func (provider *Docker) hasCircuitBreakerLabel(container dockerData) bool {
 }
 
 func (provider *Docker) hasLoadBalancerLabel(container dockerData) bool {
-	if _, err := getLabel(container, "traefik.backend.loadbalancer.method"); err != nil {
+	_, errMethod := getLabel(container, "traefik.backend.loadbalancer.method")
+	_, errSticky := getLabel(container, "traefik.backend.loadbalancer.sticky")
+	if errMethod != nil && errSticky != nil {
 		return false
 	}
 	return true
@@ -447,8 +443,8 @@ func (provider *Docker) getWeight(container dockerData) string {
 	return "1"
 }
 
-func (provider *Docker) getSticky(container dockertypes.ContainerJSON) string {
-	if _, err := getLabel(container, "traefik.stickysession"); err == nil {
+func (provider *Docker) getSticky(container dockerData) string {
+	if _, err := getLabel(container, "traefik.backend.loadbalancer.sticky"); err == nil {
 		return "true"
 	}
 	return "false"

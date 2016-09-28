@@ -1,3 +1,4 @@
+<<<<<<< df225d9170aa2efb251cb74f0a58b2952315fe2b
 <<<<<<< 3d7c44735a6fe792ad7fc9f074034a260e53bb0d
 hash: c0ac205a859d78847e21d3cd63f427ffba985755c6ae84373e4a20364ba39b05
 updated: 2016-09-28T16:50:04.352639437+01:00
@@ -10,15 +11,15 @@ hash: f7ade4acdfd43efe6a0c1a1444776dd02d556e40bf122a495ca2fc226c880d0b
 updated: 2016-08-10T11:55:40.961089942-04:00
 >>>>>>> 2848e10... glide up
 >>>>>>> glide up
+=======
+hash: b82175c1aafff6c4e98c8ac4baea3832895c9600beac445c10af4c004982ef05
+updated: 2016-09-28T13:05:02.84360542+02:00
+>>>>>>> Fix sticky sessions Docker/Marathon labels
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
 - name: github.com/boltdb/bolt
-<<<<<<< HEAD
-  version: fff57c100f4dea1905678da7e90d92429dff2904
-=======
   version: 94c8db596809690a3f7046fa83c7b0dda13a3222
->>>>>>> 2848e10... glide up
 - name: github.com/BurntSushi/toml
   version: 99064174e013895bbd9b025c31100bd1d9b590ca
 - name: github.com/BurntSushi/ty
@@ -32,34 +33,13 @@ imports:
 - name: github.com/codegangsta/cli
   version: 1efa31f08b9333f1bd4882d61f9d668a70cd902e
 - name: github.com/codegangsta/negroni
-<<<<<<< HEAD
-  version: 3f7ce7b928e14ff890b067e5bbbc80af73690a9c
-=======
   version: 6edff56736fa7bd546812f149e8cdaae61e5a38f
->>>>>>> 2848e10... glide up
 - name: github.com/containous/flaeg
   version: a731c034dda967333efce5f8d276aeff11f8ff87
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-<<<<<<< HEAD
   version: 044bdfee6c8f5e8fb71f70d5ba1cf4cb11a94e97
-=======
-  version: 21164fe201578bea96317a87752953ea5d9dc6d1
-- name: github.com/containous/traefik
-  version: 4cd08e88f6baf56f33163077c1e226691d56bfa9
-  subpackages:
-  - acme
-  - autogen
-  - middlewares
-  - provider
-  - safe
-  - types
-  - version
-  - provider/k8s
-  - integration/utils
-  - mocks
->>>>>>> 2848e10... glide up
 - name: github.com/coreos/etcd
   version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
@@ -67,10 +47,11 @@ imports:
   - pkg/pathutil
   - pkg/types
 - name: github.com/davecgh/go-spew
-  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
 - name: github.com/docker/distribution
+<<<<<<< df225d9170aa2efb251cb74f0a58b2952315fe2b
 <<<<<<< 3d7c44735a6fe792ad7fc9f074034a260e53bb0d
   version: 99cb7c0946d2f5a38015443e515dc916295064d7
 =======
@@ -80,6 +61,9 @@ imports:
   version: 9000745401d186602c2ae63ffca12ed4233a968b
 >>>>>>> 2848e10... glide up
 >>>>>>> glide up
+=======
+  version: 9000745401d186602c2ae63ffca12ed4233a968b
+>>>>>>> Fix sticky sessions Docker/Marathon labels
   subpackages:
   - context
   - digest
@@ -159,21 +143,13 @@ imports:
   - types/time
   - types/versions
 - name: github.com/docker/go-connections
-<<<<<<< HEAD
-  version: 988efe982fdecb46f01d53465878ff1f2ff411ce
-=======
   version: 0bad1a3951398f88ef4dd75fdb42af374430be89
->>>>>>> 2848e10... glide up
   subpackages:
   - nat
   - sockets
   - tlsconfig
 - name: github.com/docker/go-units
-<<<<<<< HEAD
-  version: f2145db703495b2e525c59662db69a7344b00bb8
-=======
   version: eb879ae3e2b84e2a142af415b679ddeda47ec71c
->>>>>>> 2848e10... glide up
 - name: github.com/docker/libcompose
   version: d1876c1d68527a49c0aac22a0b161acc7296b740
   subpackages:
@@ -192,7 +168,7 @@ imports:
   - version
   - yaml
 - name: github.com/docker/libkv
-  version: 3fce6a0f26e07da3eac45796a8e255547a47a750
+  version: aabc039ad04deb721e234f99cd1b4aa28ac71a40
   subpackages:
   - store
   - store/boltdb
@@ -202,16 +178,13 @@ imports:
 - name: github.com/donovanhide/eventsource
   version: fd1de70867126402be23c306e1ce32828455d85b
 - name: github.com/elazarl/go-bindata-assetfs
-<<<<<<< HEAD
-  version: 9a6736ed45b44bf3835afeebb3034b57ed329f3e
-=======
   version: e1a2a7ec64b07d04ac9ebb072404fe8b7b60de1b
->>>>>>> 2848e10... glide up
 - name: github.com/gambol99/go-marathon
   version: a558128c87724cd7430060ef5aedf39f83937f55
 - name: github.com/go-check/check
   version: 11d3bc7aa68e238947792f30573146a3231fc0f1
 - name: github.com/gogo/protobuf
+<<<<<<< df225d9170aa2efb251cb74f0a58b2952315fe2b
 <<<<<<< 3d7c44735a6fe792ad7fc9f074034a260e53bb0d
   version: 89f1976ff373a3e549675d2f212c10f98b6c6316
 =======
@@ -221,6 +194,9 @@ imports:
   version: a4cceea7a401a73fefafd1a21fedbd4694124a82
 >>>>>>> 2848e10... glide up
 >>>>>>> glide up
+=======
+  version: a4cceea7a401a73fefafd1a21fedbd4694124a82
+>>>>>>> Fix sticky sessions Docker/Marathon labels
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -230,8 +206,9 @@ imports:
   subpackages:
   - query
 - name: github.com/gorilla/context
-  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
+  version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
+<<<<<<< df225d9170aa2efb251cb74f0a58b2952315fe2b
 <<<<<<< 3d7c44735a6fe792ad7fc9f074034a260e53bb0d
   version: d5b7530ec593f1ec2a8f8a7c145bcadafa88b572
 =======
@@ -241,11 +218,15 @@ imports:
   version: d6aa033793a68b509d336b3bac6ebe36ac0ef818
 >>>>>>> 2848e10... glide up
 >>>>>>> glide up
+=======
+  version: d6aa033793a68b509d336b3bac6ebe36ac0ef818
+>>>>>>> Fix sticky sessions Docker/Marathon labels
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/hashicorp/serf
+<<<<<<< df225d9170aa2efb251cb74f0a58b2952315fe2b
 <<<<<<< 3d7c44735a6fe792ad7fc9f074034a260e53bb0d
   version: b7a120a5fc494f6dd5e858f42fd0fd4022d6320f
 =======
@@ -255,6 +236,9 @@ imports:
   version: a01569795d12afbdb3698739b614e057ee289fa0
 >>>>>>> 2848e10... glide up
 >>>>>>> glide up
+=======
+  version: a01569795d12afbdb3698739b614e057ee289fa0
+>>>>>>> Fix sticky sessions Docker/Marathon labels
   subpackages:
   - coordinate
 - name: github.com/jarcoal/httpmock
@@ -306,6 +290,7 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
+<<<<<<< df225d9170aa2efb251cb74f0a58b2952315fe2b
 <<<<<<< 3d7c44735a6fe792ad7fc9f074034a260e53bb0d
   version: d9fec4c63b089ddfc267194ecb6cda58a13f072c
 =======
@@ -317,12 +302,13 @@ imports:
 - name: github.com/parnurzeal/gorequest
   version: 29ced6f360a5ac3823a3675b4e29fbab336cc186
 =======
+=======
+>>>>>>> Fix sticky sessions Docker/Marathon labels
   version: 0f764571384a3ff16c6fed25ace5b7c83f0f0379
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
   version: e213a02fb0082d41e66996deeaab5ae96039d913
->>>>>>> 2848e10... glide up
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -330,17 +316,13 @@ imports:
 - name: github.com/ryanuber/go-glob
   version: 572520ed46dbddaed19ea3d9541bdd0494163693
 - name: github.com/samuel/go-zookeeper
-  version: 87e1bca4477a3cc767ca71be023ced183d74e538
+  version: e64db453f3512cade908163702045e0f31137843
   subpackages:
   - zk
 - name: github.com/Sirupsen/logrus
-  version: 3ec0642a7fb6488f65b06f9040adc67e3990296a
+  version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/streamrail/concurrent-map
-<<<<<<< HEAD
-  version: 8bf1e9bacbf65b10c81d0f4314cf2b1ebef728b5
-=======
   version: 430cc620f036386dacc40e603921cc607f37366b
->>>>>>> 2848e10... glide up
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
@@ -357,11 +339,7 @@ imports:
   subpackages:
   - codec
 - name: github.com/unrolled/render
-<<<<<<< HEAD
-  version: 3f4913244021dede105b62caecfb01f0c1eebeda
-=======
   version: 7bc415efc1b94ad17b0fc642cb50b3e2465027e7
->>>>>>> 2848e10... glide up
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vdemeester/shakers
@@ -383,7 +361,11 @@ imports:
 - name: github.com/vulcand/route
   version: cb89d787ddbb1c5849a7ac9f79004c1fd12a4a32
 - name: github.com/vulcand/vulcand
+<<<<<<< df225d9170aa2efb251cb74f0a58b2952315fe2b
   version: 643ca8acff8386e3b276f6feb8ba9b5893dbc4a2
+=======
+  version: 28a4e5c0892167589737b95ceecbcef00295be50
+>>>>>>> Fix sticky sessions Docker/Marathon labels
   subpackages:
   - conntracker
   - plugin
@@ -413,6 +395,7 @@ imports:
 - name: gopkg.in/fsnotify.v1
   version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: gopkg.in/mgo.v2
+<<<<<<< df225d9170aa2efb251cb74f0a58b2952315fe2b
   version: 22287bab4379e1fbf6002fb4eb769888f3fb224c
   subpackages:
   - bson
@@ -426,6 +409,13 @@ imports:
   version: a3927f83df1b1516f9e9dec71839c93e6bcf1db0
 >>>>>>> 2848e10... glide up
 >>>>>>> glide up
+=======
+  version: 29cc868a5ca65f401ff318143f9408d02f4799cc
+  subpackages:
+  - bson
+- name: gopkg.in/square/go-jose.v1
+  version: a3927f83df1b1516f9e9dec71839c93e6bcf1db0
+>>>>>>> Fix sticky sessions Docker/Marathon labels
   subpackages:
   - cipher
   - json
@@ -443,7 +433,11 @@ testImports:
 - name: github.com/libkermit/docker-check
   version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
 - name: github.com/spf13/pflag
+<<<<<<< df225d9170aa2efb251cb74f0a58b2952315fe2b
   version: 08b1a584251b5b62f458943640fc8ebd4d50aaa5
+=======
+  version: 5644820622454e71517561946e3d94b9f9db6842
+>>>>>>> Fix sticky sessions Docker/Marathon labels
 - name: github.com/vbatts/tar-split
   version: bd4c5d64c3e9297f410025a3b1bd0c58f659e721
   subpackages:
@@ -455,8 +449,4 @@ testImports:
 - name: github.com/xeipuuv/gojsonreference
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
-<<<<<<< HEAD
-  version: 00f9fafb54d2244d291b86ab63d12c38bd5c3886
-=======
   version: e4f482d0deea5bfc0522ab4582c5fdbd2edc98ad
->>>>>>> 2848e10... glide up

@@ -559,7 +559,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							log.Debugf("Creating load-balancer drr")
 							rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
 							if stickysession {
-								log.Debugf("... setting to sticky session with cookie named %v", cookiename)
+								log.Debugf("Sticky session with cookie %v", cookiename)
 								rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
 							}
 							lb = rebalancer
@@ -581,7 +581,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
 							if stickysession {
-								log.Debugf("... setting to sticky session with cookie named %v", cookiename)
+								log.Debugf("Sticky session with cookie %v", cookiename)
 								rr, _ = roundrobin.New(saveBackend, roundrobin.EnableStickySession(sticky))
 							}
 							lb = rr
