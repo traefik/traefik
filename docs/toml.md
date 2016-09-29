@@ -198,6 +198,12 @@ Supported filters:
 #       CertFile = "integration/fixtures/https/snitest.org.cert"
 #       KeyFile = "integration/fixtures/https/snitest.org.key"
 
+# To enable compression support using gzip format:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   compress = true
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"

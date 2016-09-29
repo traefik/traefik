@@ -146,6 +146,9 @@ func (server *Server) startHTTPServers() {
 			}
 			serverMiddlewares = append(serverMiddlewares, authMiddleware)
 		}
+		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
+			serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
+		}
 		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, serverMiddlewares...)
 		if err != nil {
 			log.Fatal("Error preparing server: ", err)

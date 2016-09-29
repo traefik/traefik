@@ -219,6 +219,12 @@
 #       CertFile = "integration/fixtures/https/snitest.org.cert"
 #       KeyFile = "integration/fixtures/https/snitest.org.key"
 
+# To enable compression support using gzip format:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   compress = true
+
 # Enable retry sending request if network error
 #
 # Optional
