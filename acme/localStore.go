@@ -21,8 +21,7 @@ type LocalStore struct {
 // NewLocalStore create a LocalStore
 func NewLocalStore(file string) *LocalStore {
 	return &LocalStore{
-		file:        file,
-		storageLock: sync.RWMutex{},
+		file: file,
 	}
 }
 

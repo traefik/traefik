@@ -104,31 +104,31 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	a.checkOnDemandDomain = checkOnDemandDomain
 	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
+	listener := func(object cluster.Object) error {
+		account := object.(*Account)
+		account.Init()
+		if !leadership.IsLeader() {
+			a.client, err = a.buildACMEClient(account)
+			if err != nil {
+				log.Errorf("Error building ACME client %+v: %s", object, err.Error())
+			}
+		}
+		return nil
+	}
 
 	datastore, err := cluster.NewDataStore(
 		staert.KvSource{
 			Store:  leadership.Store,
-			Prefix: leadership.Store.Prefix + "/acme/account",
+			Prefix: a.Storage,
 		},
 		leadership.Pool.Ctx(), &Account{},
-		func(object cluster.Object) error {
-			account := object.(*Account)
-			account.Init()
-			if !leadership.IsLeader() {
-				a.client, err = a.buildACMEClient(account)
-				if err != nil {
-					log.Errorf("Error building ACME client %+v: %s", object, err.Error())
-				}
-			}
-
-			return nil
-		})
+		listener)
 	if err != nil {
 		return err
 	}
 
 	a.store = datastore
-	a.challengeProvider = newMemoryChallengeProvider(a.store)
+	a.challengeProvider = &challengeProvider{store: a.store}
 
 	ticker := time.NewTicker(24 * time.Hour)
 	leadership.Pool.AddGoCtx(func(ctx context.Context) {
@@ -227,7 +227,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 
 	localStore := NewLocalStore(a.Storage)
 	a.store = localStore
-	a.challengeProvider = newMemoryChallengeProvider(a.store)
+	a.challengeProvider = &challengeProvider{store: a.store}
 
 	var needRegister bool
 	var account *Account

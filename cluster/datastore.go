@@ -21,7 +21,13 @@ type Metadata struct {
 	Lock   string
 }
 
-func (m *Metadata) marshall() error {
+// NewMetadata returns new Metadata
+func NewMetadata(object Object) *Metadata {
+	return &Metadata{object: object}
+}
+
+// Marshall marshalls object
+func (m *Metadata) Marshall() error {
 	var err error
 	m.Object, err = json.Marshal(m.object)
 	return err
@@ -227,7 +233,7 @@ func (s *datastoreTransaction) Commit(object Object) error {
 		return fmt.Errorf("Transaction already used. Please begin a new one.")
 	}
 	s.Datastore.meta.object = object
-	err := s.Datastore.meta.marshall()
+	err := s.Datastore.meta.Marshall()
 	if err != nil {
 		return err
 	}

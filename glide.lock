@@ -1,30 +1,5 @@
-<<<<<<< 9fb29a2d5ae0ade0aa8cb65df5c726a944e4a829
-<<<<<<< 2fbcca003e6454c848801c859d8563da94ea8aaf
-<<<<<<< a13549cc28273ba5c15a739fa4aaeb3e0f7216a4
-hash: c0ac205a859d78847e21d3cd63f427ffba985755c6ae84373e4a20364ba39b05
-<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
-updated: 2016-09-30T10:57:42.336729457+02:00
-=======
-updated: 2016-09-28T16:50:04.352639437+01:00
-=======
-hash: 809b3fa812ca88940fdc15530804a4bcd881708e4819fed5aa45c42c871ba5cf
-updated: 2016-09-20T14:50:04.029710103+02:00
->>>>>>> Add KV datastore
-<<<<<<< bea5ad3f132bae27b6c1a83adf00154058b484b5
->>>>>>> Add KV datastore
-=======
-=======
-hash: 49c7bd0e32b2764248183bda52f168fe22d69e2db5e17c1dbeebbe71be9929b1
-updated: 2016-08-11T14:33:42.826534934+02:00
->>>>>>> Add ACME store
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
->>>>>>> Add ACME store
-=======
-=======
-hash: af34f34bc4f9f3cc6c988caa4cc273a7f32f91b24c77bdf5cadd9bcb48883a53
-updated: 2016-09-28T11:40:41.311876377+02:00
->>>>>>> Challenge certs PEM encoding
->>>>>>> Challenge certs PEM encoding
+hash: 39ff28cc1d13d5915a870b14491ece1849c4eaf5a56cecd50a7676ecee6c6143
+updated: 2016-09-30T11:27:29.529525636+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -61,25 +36,7 @@ imports:
   subpackages:
   - spew
 - name: github.com/docker/distribution
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
-<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: 87917f30529e6a7fca8eaff2932424915fb11225
-=======
-=======
-<<<<<<< 9fb29a2d5ae0ade0aa8cb65df5c726a944e4a829
->>>>>>> Challenge certs PEM encoding
-<<<<<<< a13549cc28273ba5c15a739fa4aaeb3e0f7216a4
-  version: 99cb7c0946d2f5a38015443e515dc916295064d7
-=======
-  version: 857d0f15c0a4d8037175642e0ca3660829551cb5
->>>>>>> Add KV datastore
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
->>>>>>> Add KV datastore
-=======
-=======
-  version: 87917f30529e6a7fca8eaff2932424915fb11225
->>>>>>> Challenge certs PEM encoding
->>>>>>> Challenge certs PEM encoding
   subpackages:
   - context
   - digest
@@ -165,17 +122,9 @@ imports:
   - sockets
   - tlsconfig
 - name: github.com/docker/go-units
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
-<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
-=======
-  version: f2145db703495b2e525c59662db69a7344b00bb8
-=======
-  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
->>>>>>> Challenge certs PEM encoding
 - name: github.com/docker/leadership
   version: bfc7753dd48af19513b29deec23c364bf0f274eb
->>>>>>> Add KV datastore
 - name: github.com/docker/libcompose
   version: d1876c1d68527a49c0aac22a0b161acc7296b740
   subpackages:
@@ -194,15 +143,7 @@ imports:
   - version
   - yaml
 - name: github.com/docker/libkv
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
-<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
-=======
-  version: aabc039ad04deb721e234f99cd1b4aa28ac71a40
->>>>>>> Add KV datastore
-=======
-  version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
->>>>>>> Challenge certs PEM encoding
   subpackages:
   - store
   - store/boltdb
@@ -218,25 +159,7 @@ imports:
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
-<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: e33835a643a970c11ac74f6333f5f6866387a101
-=======
-=======
-<<<<<<< 9fb29a2d5ae0ade0aa8cb65df5c726a944e4a829
->>>>>>> Challenge certs PEM encoding
-<<<<<<< a13549cc28273ba5c15a739fa4aaeb3e0f7216a4
-  version: 89f1976ff373a3e549675d2f212c10f98b6c6316
-=======
-  version: e57a569e1882958f6b188cb42231d6db87701f2a
->>>>>>> Add KV datastore
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
->>>>>>> Add KV datastore
-=======
-=======
-  version: e33835a643a970c11ac74f6333f5f6866387a101
->>>>>>> Challenge certs PEM encoding
->>>>>>> Challenge certs PEM encoding
   subpackages:
   - proto
 - name: github.com/golang/glog
@@ -248,29 +171,13 @@ imports:
 - name: github.com/gorilla/context
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/hashicorp/consul
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
   version: fce7d75609a04eeb9d4bf41c8dc592aac18fc97d
-=======
-<<<<<<< 9fb29a2d5ae0ade0aa8cb65df5c726a944e4a829
-  version: d5b7530ec593f1ec2a8f8a7c145bcadafa88b572
-=======
-  version: fce7d75609a04eeb9d4bf41c8dc592aac18fc97d
->>>>>>> Challenge certs PEM encoding
->>>>>>> Challenge certs PEM encoding
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
   version: 875fb671b3ddc66f8e2f0acc33829c8cb989a38d
 - name: github.com/hashicorp/serf
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
   version: 6c4672d66fc6312ddde18399262943e21175d831
-=======
-<<<<<<< 9fb29a2d5ae0ade0aa8cb65df5c726a944e4a829
-  version: b7a120a5fc494f6dd5e858f42fd0fd4022d6320f
-=======
-  version: 6c4672d66fc6312ddde18399262943e21175d831
->>>>>>> Challenge certs PEM encoding
->>>>>>> Challenge certs PEM encoding
   subpackages:
   - coordinate
   - serf
@@ -315,15 +222,7 @@ imports:
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
-<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: d2dd0262208475919e1a362f675cfc0e7c10e905
-=======
-  version: 21a35fb16463dfb7c8eee579c65d995d95e64d1e
->>>>>>> Add KV datastore
-=======
-  version: d2dd0262208475919e1a362f675cfc0e7c10e905
->>>>>>> Challenge certs PEM encoding
 - name: github.com/moul/http2curl
   version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/NYTimes/gziphandler
@@ -331,25 +230,7 @@ imports:
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
-<<<<<<< 38b62d4ae311e2d5247065cbc2c09421a2bb81ab
   version: 1a81e9ab1f138c091fe5c86d0883f87716088527
-=======
-=======
-<<<<<<< 9fb29a2d5ae0ade0aa8cb65df5c726a944e4a829
->>>>>>> Challenge certs PEM encoding
-<<<<<<< a13549cc28273ba5c15a739fa4aaeb3e0f7216a4
-  version: d9fec4c63b089ddfc267194ecb6cda58a13f072c
-=======
-  version: ff88baa42fa5b2a1568a3a14665142fb4bdb3a2a
->>>>>>> Add KV datastore
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
->>>>>>> Add KV datastore
-=======
-=======
-  version: 1a81e9ab1f138c091fe5c86d0883f87716088527
->>>>>>> Challenge certs PEM encoding
->>>>>>> Challenge certs PEM encoding
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
@@ -408,15 +289,7 @@ imports:
 - name: github.com/vulcand/route
   version: cb89d787ddbb1c5849a7ac9f79004c1fd12a4a32
 - name: github.com/vulcand/vulcand
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
   version: 28a4e5c0892167589737b95ceecbcef00295be50
-=======
-<<<<<<< 9fb29a2d5ae0ade0aa8cb65df5c726a944e4a829
-  version: 643ca8acff8386e3b276f6feb8ba9b5893dbc4a2
-=======
-  version: 28a4e5c0892167589737b95ceecbcef00295be50
->>>>>>> Challenge certs PEM encoding
->>>>>>> Challenge certs PEM encoding
   subpackages:
   - conntracker
   - plugin
@@ -446,27 +319,11 @@ imports:
 - name: gopkg.in/fsnotify.v1
   version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: gopkg.in/mgo.v2
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
   version: 29cc868a5ca65f401ff318143f9408d02f4799cc
   subpackages:
   - bson
 - name: gopkg.in/square/go-jose.v1
   version: e3f973b66b91445ec816dd7411ad1b6495a5a2fc
-=======
-<<<<<<< 9fb29a2d5ae0ade0aa8cb65df5c726a944e4a829
-  version: 22287bab4379e1fbf6002fb4eb769888f3fb224c
-  subpackages:
-  - bson
-- name: gopkg.in/square/go-jose.v1
-  version: aa2e30fdd1fe9dd3394119af66451ae790d50e0d
-=======
-  version: 29cc868a5ca65f401ff318143f9408d02f4799cc
-  subpackages:
-  - bson
-- name: gopkg.in/square/go-jose.v1
-  version: e3f973b66b91445ec816dd7411ad1b6495a5a2fc
->>>>>>> Challenge certs PEM encoding
->>>>>>> Challenge certs PEM encoding
   subpackages:
   - cipher
   - json
@@ -484,15 +341,7 @@ testImports:
 - name: github.com/libkermit/docker-check
   version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
 - name: github.com/spf13/pflag
-<<<<<<< a42845502e9b6e3b9985c56ad99d28c1357287b2
   version: 5644820622454e71517561946e3d94b9f9db6842
-=======
-<<<<<<< 9fb29a2d5ae0ade0aa8cb65df5c726a944e4a829
-  version: 08b1a584251b5b62f458943640fc8ebd4d50aaa5
-=======
-  version: 5644820622454e71517561946e3d94b9f9db6842
->>>>>>> Challenge certs PEM encoding
->>>>>>> Challenge certs PEM encoding
 - name: github.com/vbatts/tar-split
   version: 6810cedb21b2c3d0b9bb8f9af12ff2dc7a2f14df
   subpackages:

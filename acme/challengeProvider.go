@@ -20,12 +20,6 @@ type challengeProvider struct {
 	lock  sync.RWMutex
 }
 
-func newMemoryChallengeProvider(store cluster.Store) *challengeProvider {
-	return &challengeProvider{
-		store: store,
-	}
-}
-
 func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate, exists bool) {
 	log.Debugf("Challenge GetCertificate %s", domain)
 	if !strings.HasSuffix(domain, ".acme.invalid") {
