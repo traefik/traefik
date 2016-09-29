@@ -302,6 +302,7 @@ Further, if the `/traefik/alias` key is set, all other configuration with `/trae
 
 # Store configuration in Key-value store
 
+Don't forget to [setup the connection between Træfɪk and Key-value store](/user-guide/kv-config/#launch-trfk).
 The static Træfɪk configuration in a key-value store can be automatically created and updated, using the [`storeconfig` subcommand](/basics/#commands).
 
 ```bash
@@ -309,6 +310,19 @@ $ traefik storeconfig [flags] ...
 ```
 This command is here only to automate the [process which upload the configuration into the Key-value store](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store).
 Træfɪk will not start but the [static configuration](/basics/#static-trfk-configuration) will be uploaded into the Key-value store.
+If you configured ACME (Let's Encrypt), your registration account and your certificates will also be uploaded.
 
-Don't forget to [setup the connection between Træfɪk and Key-value store](/user-guide/kv-config/#launch-trfk).
+To upload your ACME certificates to the KV store, get your traefik TOML file and add the new `storage` option in the `acme` section:
+
+```
+[acme]
+email = "test@traefik.io"
+storage = "traefik/acme/account" # the key where to store your certificates in the KV store
+storageFile = "acme.json" # your old certificates store
+```
+
+Call `traefik storeconfig` to upload your config in the KV store.
+Then remove the line `storageFile = "acme.json"` from your TOML config file.
+That's it!
+
 
