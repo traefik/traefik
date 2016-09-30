@@ -33,9 +33,9 @@ type Mesos struct {
 	Domain             string `description:"Default domain used"`
 	ExposedByDefault   bool   `description:"Expose Mesos apps by default"`
 	GroupsAsSubDomains bool   `description:"Convert Mesos groups to subdomains"`
-	ZkDetectionTimeout int    `description:"ZkDetectionTimeout"`
-	RefreshSeconds     int    `description:"RefreshSeconds"`
-	IPSources          string `description:"IPSources"` // e.g. "host", "docker", "mesos", "rkt"
+	ZkDetectionTimeout int    `description:"Zookeeper timeout (in seconds)"`
+	RefreshSeconds     int    `description:"Polling interval (in seconds)"`
+	IPSources          string `description:"IPSources (e.g. host, docker, mesos, rkt)"` // e.g. "host", "docker", "mesos", "rkt"
 	StateTimeoutSecond int    `description:"HTTP Timeout (in seconds)"`
 	Masters            []string
 }
