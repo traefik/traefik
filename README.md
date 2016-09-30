@@ -6,14 +6,14 @@
 [![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
 [![Go Report Card](https://goreportcard.com/badge/kubernetes/helm)](http://goreportcard.com/report/containous/traefik)
-[![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik "Get your own image badge on microbadger.com")
+[![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
 
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
-It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Mesos](https://github.com/apache/mesos), [Kubernetes](http://kubernetes.io/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
+It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Kubernetes](http://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Mesos](https://github.com/apache/mesos), [Kubernetes](http://kubernetes.io/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
 
 ## Overview
 
@@ -45,7 +45,7 @@ Run it and forget it!
 - [It's fast](http://docs.traefik.io/benchmarks)
 - No dependency hell, single binary made with go
 - Rest API
-- Multiple backends supported: Docker, Mesos/Marathon, Consul, Etcd, and more to come
+- Multiple backends supported: Docker, Swarm, Kubernetes, Marathon, Mesos, Consul, Etcd, and more to come
 - Watchers for backends, can listen for changes in backends to apply a new configuration automatically
 - Hot-reloading of configuration. No need to restart the process
 - Graceful shutdown http connections
@@ -60,6 +60,7 @@ Run it and forget it!
 - HTTP/2 support
 - Retry request if network error
 - [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS with renewal)
+- High Availability with cluster mode
 
 ## Quickstart
 

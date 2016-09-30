@@ -550,23 +550,29 @@
 # [mesos.TLS]
 # InsecureSkipVerify = true
 
-#
+# Zookeeper timeout (in seconds)
 #
 # Optional
 #
 # ZkDetectionTimeout = 30
 
-#
+# Polling interval (in seconds)
 #
 # Optional
 #
 # RefreshSeconds = 30
 
-#
+# IP sources (e.g. host, docker, mesos, rkt)
 #
 # Optional
 #
 # IPSources = "host"
+
+# HTTP Timeout (in seconds)
+#
+# Optional
+#
+# StateTimeoutSecond = "host"
 
 ################################################################
 # Kubernetes Ingress configuration backend

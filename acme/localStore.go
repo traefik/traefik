@@ -76,7 +76,7 @@ func (t *localTransaction) Commit(object cluster.Object) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(t.file, data, 0644)
+	err = ioutil.WriteFile(t.file, data, 0600)
 	if err != nil {
 		return err
 	}
