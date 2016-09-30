@@ -252,6 +252,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 		"hasMaxConnLabels":            provider.hasMaxConnLabels,
 		"getMaxConnAmount":            provider.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     provider.getMaxConnExtractorFunc,
+		"getSticky":                   provider.getSticky,
 		"replace":                     replace,
 	}
 
@@ -261,18 +262,27 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 	}, containersInspected).([]dockerData)
 
 	frontends := map[string][]dockerData{}
+	backends := map[string]dockerData{}
+	servers := map[string][]dockerData{}
 	for _, container := range filteredContainers {
 		frontendName := provider.getFrontendName(container)
 		frontends[frontendName] = append(frontends[frontendName], container)
+		backendName := provider.getBackend(container)
+		backends[backendName] = container
+		servers[backendName] = append(servers[backendName], container)
 	}
 
 	templateObjects := struct {
 		Containers []dockerData
 		Frontends  map[string][]dockerData
+		Backends   map[string]dockerData
+		Servers    map[string][]dockerData
 		Domain     string
 	}{
 		filteredContainers,
 		frontends,
+		backends,
+		servers,
 		provider.Domain,
 	}
 
@@ -291,7 +301,9 @@ func (provider *Docker) hasCircuitBreakerLabel(container dockerData) bool {
 }
 
 func (provider *Docker) hasLoadBalancerLabel(container dockerData) bool {
-	if _, err := getLabel(container, "traefik.backend.loadbalancer.method"); err != nil {
+	_, errMethod := getLabel(container, "traefik.backend.loadbalancer.method")
+	_, errSticky := getLabel(container, "traefik.backend.loadbalancer.sticky")
+	if errMethod != nil && errSticky != nil {
 		return false
 	}
 	return true
@@ -437,6 +449,13 @@ func (provider *Docker) getWeight(container dockerData) string {
 		return label
 	}
 	return "1"
+}
+
+func (provider *Docker) getSticky(container dockerData) string {
+	if _, err := getLabel(container, "traefik.backend.loadbalancer.sticky"); err == nil {
+		return "true"
+	}
+	return "false"
 }
 
 func (provider *Docker) getDomain(container dockerData) string {

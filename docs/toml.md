@@ -711,6 +711,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
 - `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
 - `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
+- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
 - `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5`: create a [circuit breaker](/basics/#backends) to be used against the backend
 - `traefik.port=80`: register this port. Useful when the container exposes multiples ports.
 - `traefik.protocol=https`: override the default `http` protocol
@@ -810,6 +811,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
 - `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
 - `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
+- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
 - `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5`: create a [circuit breaker](/basics/#backends) to be used against the backend
 - `traefik.portIndex=1`: register port by index in the application's ports array. Useful when the application exposes multiple ports.
 - `traefik.port=80`: register the explicit application port value. Cannot be used alongside `traefik.portIndex`.
