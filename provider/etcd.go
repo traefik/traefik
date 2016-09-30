@@ -8,6 +8,8 @@ import (
 	"github.com/docker/libkv/store/etcd"
 )
 
+var _ Provider = (*Etcd)(nil)
+
 // Etcd holds configurations of the Etcd provider.
 type Etcd struct {
 	Kv `mapstructure:",squash"`

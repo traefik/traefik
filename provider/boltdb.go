@@ -8,6 +8,8 @@ import (
 	"github.com/docker/libkv/store/boltdb"
 )
 
+var _ Provider = (*BoltDb)(nil)
+
 // BoltDb holds configurations of the BoltDb provider.
 type BoltDb struct {
 	Kv `mapstructure:",squash"`

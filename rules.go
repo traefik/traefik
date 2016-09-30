@@ -149,7 +149,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 
 		err := onRule(functionName, parsedFunction, parsedArgs)
 		if err != nil {
-			return fmt.Errorf("Parsing error on rule:", err)
+			return fmt.Errorf("Parsing error on rule: %v", err)
 		}
 	}
 	return nil
@@ -180,7 +180,7 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing rule:", err)
+		return nil, fmt.Errorf("Error parsing rule: %v", err)
 	}
 	return resultRoute, nil
 }
@@ -195,7 +195,7 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing domains:", err)
+		return nil, fmt.Errorf("Error parsing domains: %v", err)
 	}
 	return domains, nil
 }

@@ -6,11 +6,13 @@ import (
 	"strings"
 
 	"github.com/BurntSushi/toml"
-	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"gopkg.in/fsnotify.v1"
 )
+
+var _ Provider = (*File)(nil)
 
 // File holds configurations of the File provider.
 type File struct {

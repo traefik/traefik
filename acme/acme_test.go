@@ -63,7 +63,7 @@ func TestDomainsSetAppend(t *testing.T) {
 
 func TestCertificatesRenew(t *testing.T) {
 	domainsCertificates := DomainsCertificates{
-		lock: &sync.RWMutex{},
+		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{
 			{
 				Domains: Domain{

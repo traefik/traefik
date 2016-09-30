@@ -8,6 +8,8 @@ import (
 	"github.com/docker/libkv/store/consul"
 )
 
+var _ Provider = (*Consul)(nil)
+
 // Consul holds configurations of the Consul provider.
 type Consul struct {
 	Kv `mapstructure:",squash"`

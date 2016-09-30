@@ -13,9 +13,9 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/BurntSushi/ty/fun"
-	log "github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
@@ -39,6 +39,8 @@ const (
 	// SwarmDefaultWatchTime is the duration of the interval when polling docker
 	SwarmDefaultWatchTime = 15 * time.Second
 )
+
+var _ Provider = (*Docker)(nil)
 
 // Docker holds configurations of the Docker provider.
 type Docker struct {

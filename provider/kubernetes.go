@@ -2,6 +2,10 @@ package provider
 
 import (
 	"fmt"
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider/k8s"
+	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/types"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -10,12 +14,8 @@ import (
 	"text/template"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
-	"github.com/containous/traefik/provider/k8s"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
 )
 
 const (
@@ -49,6 +49,8 @@ func (ns *Namespaces) String() string { return fmt.Sprintf("%v", *ns) }
 func (ns *Namespaces) SetValue(val interface{}) {
 	*ns = Namespaces(val.(Namespaces))
 }
+
+var _ Provider = (*Kubernetes)(nil)
 
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {

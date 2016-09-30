@@ -247,7 +247,7 @@ Supported filters:
 #
 email = "test@traefik.io"
 
-# File used for certificates storage.
+# File or key used for certificates storage.
 # WARNING, if you use Traefik in Docker, you have 2 options:
 #  - create a file on your host and mount it as a volume
 #      storageFile = "acme.json"
@@ -258,7 +258,7 @@ email = "test@traefik.io"
 #
 # Required
 #
-storageFile = "acme.json"
+storage = "acme.json" # or "traefik/acme/account" if using KV store
 
 # Entrypoint to proxy acme challenge to.
 # WARNING, must point to an entrypoint on port 443

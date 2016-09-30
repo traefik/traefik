@@ -1,5 +1,5 @@
-hash: c0ac205a859d78847e21d3cd63f427ffba985755c6ae84373e4a20364ba39b05
-updated: 2016-09-30T10:57:42.336729457+02:00
+hash: 39ff28cc1d13d5915a870b14491ece1849c4eaf5a56cecd50a7676ecee6c6143
+updated: 2016-09-30T11:27:29.529525636+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -24,7 +24,7 @@ imports:
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: 044bdfee6c8f5e8fb71f70d5ba1cf4cb11a94e97
+  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
 - name: github.com/coreos/etcd
   version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
@@ -123,6 +123,8 @@ imports:
   - tlsconfig
 - name: github.com/docker/go-units
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+- name: github.com/docker/leadership
+  version: bfc7753dd48af19513b29deec23c364bf0f274eb
 - name: github.com/docker/libcompose
   version: d1876c1d68527a49c0aac22a0b161acc7296b740
   subpackages:
@@ -243,6 +245,8 @@ imports:
   version: e64db453f3512cade908163702045e0f31137843
   subpackages:
   - zk
+- name: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/Sirupsen/logrus
   version: a283a10442df8dc09befd873fab202bf8a253d6a
 - name: github.com/streamrail/concurrent-map

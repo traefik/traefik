@@ -2,55 +2,95 @@ package acme
 
 import (
 	"crypto/tls"
+	"strings"
 	"sync"
 
-	"crypto/x509"
+	"fmt"
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/log"
 	"github.com/xenolf/lego/acme"
+	"time"
 )
 
-type wrapperChallengeProvider struct {
-	challengeCerts map[string]*tls.Certificate
-	lock           sync.RWMutex
+var _ acme.ChallengeProviderTimeout = (*challengeProvider)(nil)
+
+type challengeProvider struct {
+	store cluster.Store
+	lock  sync.RWMutex
 }
 
-func newWrapperChallengeProvider() *wrapperChallengeProvider {
-	return &wrapperChallengeProvider{
-		challengeCerts: map[string]*tls.Certificate{},
+func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate, exists bool) {
+	log.Debugf("Challenge GetCertificate %s", domain)
+	if !strings.HasSuffix(domain, ".acme.invalid") {
+		return nil, false
 	}
-}
-
-func (c *wrapperChallengeProvider) getCertificate(domain string) (cert *tls.Certificate, exists bool) {
 	c.lock.RLock()
 	defer c.lock.RUnlock()
-	if cert, ok := c.challengeCerts[domain]; ok {
-		return cert, true
+	account := c.store.Get().(*Account)
+	if account.ChallengeCerts == nil {
+		return nil, false
 	}
-	return nil, false
+	account.Init()
+	var result *tls.Certificate
+	operation := func() error {
+		for _, cert := range account.ChallengeCerts {
+			for _, dns := range cert.certificate.Leaf.DNSNames {
+				if domain == dns {
+					result = cert.certificate
+					return nil
+				}
+			}
+		}
+		return fmt.Errorf("Cannot find challenge cert for domain %s", domain)
+	}
+	notify := func(err error, time time.Duration) {
+		log.Errorf("Error getting cert: %v, retrying in %s", err, time)
+	}
+	ebo := backoff.NewExponentialBackOff()
+	ebo.MaxElapsedTime = 60 * time.Second
+	err := backoff.RetryNotify(operation, ebo, notify)
+	if err != nil {
+		log.Errorf("Error getting cert: %v", err)
+		return nil, false
+	}
+	return result, true
 }
 
-func (c *wrapperChallengeProvider) Present(domain, token, keyAuth string) error {
-	cert, _, err := acme.TLSSNI01ChallengeCert(keyAuth)
-	if err != nil {
-		return err
-	}
-	cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
+func (c *challengeProvider) Present(domain, token, keyAuth string) error {
+	log.Debugf("Challenge Present %s", domain)
+	cert, _, err := TLSSNI01ChallengeCert(keyAuth)
 	if err != nil {
 		return err
 	}
 
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	for i := range cert.Leaf.DNSNames {
-		c.challengeCerts[cert.Leaf.DNSNames[i]] = &cert
+	transaction, object, err := c.store.Begin()
+	if err != nil {
+		return err
 	}
-
-	return nil
-
+	account := object.(*Account)
+	if account.ChallengeCerts == nil {
+		account.ChallengeCerts = map[string]*ChallengeCert{}
+	}
+	account.ChallengeCerts[domain] = &cert
+	return transaction.Commit(account)
 }
 
-func (c *wrapperChallengeProvider) CleanUp(domain, token, keyAuth string) error {
+func (c *challengeProvider) CleanUp(domain, token, keyAuth string) error {
+	log.Debugf("Challenge CleanUp %s", domain)
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	delete(c.challengeCerts, domain)
-	return nil
+	transaction, object, err := c.store.Begin()
+	if err != nil {
+		return err
+	}
+	account := object.(*Account)
+	delete(account.ChallengeCerts, domain)
+	return transaction.Commit(account)
+}
+
+func (c *challengeProvider) Timeout() (timeout, interval time.Duration) {
+	return 60 * time.Second, 5 * time.Second
 }

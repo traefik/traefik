@@ -6,7 +6,7 @@ package main
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/log"
 )
 
 // OxyLogger implements oxy Logger interface with logrus.

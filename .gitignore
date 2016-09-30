@@ -2,7 +2,6 @@
 gen.go
 .idea
 .intellij
-log
 *.iml
 traefik
 traefik.toml

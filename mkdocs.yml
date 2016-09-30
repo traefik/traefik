@@ -51,3 +51,4 @@ pages:
       - 'Swarm cluster': 'user-guide/swarm.md'
       - 'Kubernetes': 'user-guide/kubernetes.md'
       - 'Key-value store configuration': 'user-guide/kv-config.md'
+      - 'Clustering/HA': 'user-guide/cluster.md'

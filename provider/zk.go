@@ -8,6 +8,8 @@ import (
 	"github.com/docker/libkv/store/zookeeper"
 )
 
+var _ Provider = (*Zookepper)(nil)
+
 // Zookepper holds configurations of the Zookepper provider.
 type Zookepper struct {
 	Kv `mapstructure:",squash"`

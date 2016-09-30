@@ -1,7 +1,7 @@
 package provider
 
 import (
-	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"github.com/mesosphere/mesos-dns/records/state"
 	"reflect"

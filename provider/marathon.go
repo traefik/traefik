@@ -13,13 +13,15 @@ import (
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
-	log "github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 )
+
+var _ Provider = (*Marathon)(nil)
 
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {

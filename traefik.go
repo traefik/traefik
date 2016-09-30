@@ -12,15 +12,18 @@ import (
 	"strings"
 	"text/template"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/docker/libkv/store"
+	"github.com/satori/go.uuid"
 )
 
 var versionTemplate = `Version:      {{.Version}}
@@ -98,9 +101,37 @@ Complete documentation is available at https://traefik.io`,
 			if kv == nil {
 				return fmt.Errorf("Error using command storeconfig, no Key-value store defined")
 			}
-			jsonConf, _ := json.Marshal(traefikConfiguration.GlobalConfiguration)
+			jsonConf, err := json.Marshal(traefikConfiguration.GlobalConfiguration)
+			if err != nil {
+				return err
+			}
 			fmtlog.Printf("Storing configuration: %s\n", jsonConf)
-			return kv.StoreConfig(traefikConfiguration.GlobalConfiguration)
+			err = kv.StoreConfig(traefikConfiguration.GlobalConfiguration)
+			if err != nil {
+				return err
+			}
+			if traefikConfiguration.GlobalConfiguration.ACME != nil && len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
+				// convert ACME json file to KV store
+				store := acme.NewLocalStore(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
+				object, err := store.Load()
+				if err != nil {
+					return err
+				}
+				meta := cluster.NewMetadata(object)
+				err = meta.Marshall()
+				if err != nil {
+					return err
+				}
+				source := staert.KvSource{
+					Store:  kv,
+					Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
+				}
+				err = source.StoreConfig(meta)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
 		},
 		Metadata: map[string]string{
 			"parseAllSources": "true",
@@ -127,7 +158,7 @@ Complete documentation is available at https://traefik.io`,
 	}
 
 	if _, err := f.Parse(usedCmd); err != nil {
-		fmtlog.Println(err)
+		fmtlog.Printf("Error parsing command: %s\n", err)
 		os.Exit(-1)
 	}
 
@@ -148,21 +179,27 @@ Complete documentation is available at https://traefik.io`,
 
 	kv, err = CreateKvSource(traefikConfiguration)
 	if err != nil {
-		fmtlog.Println(err)
+		fmtlog.Printf("Error creating kv store: %s\n", err)
 		os.Exit(-1)
 	}
 
 	// IF a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
+		if traefikConfiguration.Cluster == nil {
+			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.NewV4().String()}
+		}
+		if traefikConfiguration.Cluster.Store == nil {
+			traefikConfiguration.Cluster.Store = &types.Store{Prefix: kv.Prefix, Store: kv.Store}
+		}
 		s.AddSource(kv)
 		if _, err := s.LoadConfig(); err != nil {
-			fmtlog.Println(err)
+			fmtlog.Printf("Error loading configuration: %s\n", err)
 			os.Exit(-1)
 		}
 	}
 
 	if err := s.Run(); err != nil {
-		fmtlog.Println(err)
+		fmtlog.Printf("Error running traefik: %s\n", err)
 		os.Exit(-1)
 	}
 
@@ -201,7 +238,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	}
 
 	// logging
-	level, err := log.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
+	level, err := logrus.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
 	if err != nil {
 		log.Error("Error getting level", err)
 	}
@@ -217,10 +254,10 @@ func run(traefikConfiguration *TraefikConfiguration) {
 			log.Error("Error opening file", err)
 		} else {
 			log.SetOutput(fi)
-			log.SetFormatter(&log.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})
+			log.SetFormatter(&logrus.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})
 		}
 	} else {
-		log.SetFormatter(&log.TextFormatter{FullTimestamp: true, DisableSorting: true})
+		log.SetFormatter(&logrus.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
@@ -235,7 +272,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 }
 
 // CreateKvSource creates KvSource
-// TLS support is enable for Consul and ects backends
+// TLS support is enable for Consul and Etcd backends
 func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSource, error) {
 	var kv *staert.KvSource
 	var store store.Store

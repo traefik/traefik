@@ -21,7 +21,7 @@ import:
   - stream
   - utils
 - package: github.com/containous/staert
-  version: 044bdfee6c8f5e8fb71f70d5ba1cf4cb11a94e97
+  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
 - package: github.com/docker/engine-api
   version: 62043eb79d581a32ea849645277023c550732e52
   subpackages:
@@ -99,3 +99,6 @@ import:
 - package: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - package: github.com/NYTimes/gziphandler
+- package: github.com/docker/leadership
+- package: github.com/satori/go.uuid
+  version: ^1.1.0
