@@ -10,6 +10,7 @@ var uiRouter = require('angular-ui-router');
 var uiBootstrap = require('angular-ui-bootstrap');
 var moment = require('moment');
 var traefikSection = require('./app/sections/sections');
+var traefikVersion = require('./app/version/version.module');
 require('./index.scss');
 require('animate.css/animate.css');
 require('nvd3/build/nv.d3.css');
@@ -28,7 +29,8 @@ angular
     ngResource,
     uiRouter,
     uiBootstrap,
-    traefikSection
+    traefikSection,
+    traefikVersion
   ])
   .run(runBlock)
   .constant('moment', moment)
