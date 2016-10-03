@@ -58,6 +58,7 @@ type dockerData struct {
 	Name            string
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
+	Health          string
 }
 
 // NetworkSettings holds the networks data to the Docker provider
@@ -214,6 +215,9 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 					}
 					eventHandler.Handle("start", startStopHandle)
 					eventHandler.Handle("die", startStopHandle)
+					eventHandler.Handle("health_status: healthy", startStopHandle)
+					eventHandler.Handle("health_status: unhealthy", startStopHandle)
+					eventHandler.Handle("health_status: starting", startStopHandle)
 
 					errChan := events.MonitorWithHandler(ctx, dockerClient, options, eventHandler)
 					if err := <-errChan; err != nil {
@@ -375,6 +379,11 @@ func (provider *Docker) containerFilter(container dockerData) bool {
 		if failingConstraint != nil {
 			log.Debugf("Container %v pruned by '%v' constraint", container.Name, failingConstraint.String())
 		}
+		return false
+	}
+
+	if container.Health != "" && container.Health != "healthy" {
+		log.Debugf("Filtering unhealthy or starting container %s", container.Name)
 		return false
 	}
 
@@ -576,6 +585,10 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 			}
 		}
 
+	}
+
+	if container.State != nil && container.State.Health != nil {
+		dockerData.Health = container.State.Health.Status
 	}
 
 	return dockerData

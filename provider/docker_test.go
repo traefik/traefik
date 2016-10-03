@@ -569,12 +569,18 @@ func TestDockerGetLabel(t *testing.T) {
 	}{
 		{
 			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "foo",
+				},
 				Config: &container.Config{},
 			},
 			expected: "Label not found:",
 		},
 		{
 			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "foo",
+				},
 				Config: &container.Config{
 					Labels: map[string]string{
 						"foo": "bar",
@@ -608,6 +614,9 @@ func TestDockerGetLabels(t *testing.T) {
 	}{
 		{
 			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "foo",
+				},
 				Config: &container.Config{},
 			},
 			expectedLabels: map[string]string{},
@@ -615,6 +624,9 @@ func TestDockerGetLabels(t *testing.T) {
 		},
 		{
 			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "foo",
+				},
 				Config: &container.Config{
 					Labels: map[string]string{
 						"foo": "fooz",
@@ -628,6 +640,9 @@ func TestDockerGetLabels(t *testing.T) {
 		},
 		{
 			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "foo",
+				},
 				Config: &container.Config{
 					Labels: map[string]string{
 						"foo": "fooz",
