@@ -836,6 +836,15 @@ domain = "marathon.localhost"
 # Optional
 #
 # dcosToken = "xxxxxx"
+
+# Override DialerTimeout
+# Amount of time in seconds to allow the Marathon provider to wait to open a TCP
+# connection to a Marathon master
+#
+# Optional
+# Default: 60
+# dialerTimeout = 5
+
 ```
 
 Labels can be used on containers to override default behaviour:

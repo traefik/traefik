@@ -325,6 +325,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
 	defaultMarathon.ExposedByDefault = true
 	defaultMarathon.Constraints = []types.Constraint{}
+	defaultMarathon.DialerTimeout = 60
 
 	// default Consul
 	var defaultConsul provider.Consul
