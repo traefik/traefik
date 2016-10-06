@@ -684,9 +684,10 @@ func TestMarathonTaskFilter(t *testing.T) {
 
 func TestMarathonAppConstraints(t *testing.T) {
 	cases := []struct {
-		application   marathon.Application
-		filteredTasks []marathon.Task
-		expected      bool
+		application             marathon.Application
+		filteredTasks           []marathon.Task
+		expected                bool
+		marathonLBCompatibility bool
 	}{
 		{
 			application: marathon.Application{
@@ -698,28 +699,48 @@ func TestMarathonAppConstraints(t *testing.T) {
 					AppID: "foo1",
 				},
 			},
-			expected: false,
+			marathonLBCompatibility: false,
+			expected:                false,
 		},
 		{
 			application: marathon.Application{
-				ID: "foo",
+				ID: "foo2",
 				Labels: &map[string]string{
 					"traefik.tags": "valid",
 				},
 			},
 			filteredTasks: []marathon.Task{
 				{
-					AppID: "foo",
+					AppID: "foo2",
 				},
 			},
-			expected: true,
+			marathonLBCompatibility: false,
+			expected:                true,
+		},
+		{
+			application: marathon.Application{
+				ID: "foo3",
+				Labels: &map[string]string{
+					"HAPROXY_GROUP": "valid",
+					"traefik.tags":  "notvalid",
+				},
+			},
+			filteredTasks: []marathon.Task{
+				{
+					AppID: "foo3",
+				},
+			},
+			marathonLBCompatibility: true,
+			expected:                true,
 		},
 	}
 
-	provider := &Marathon{}
-	constraint, _ := types.NewConstraint("tag==valid")
-	provider.Constraints = []types.Constraint{*constraint}
 	for _, c := range cases {
+		provider := &Marathon{
+			MarathonLBCompatibility: c.marathonLBCompatibility,
+		}
+		constraint, _ := types.NewConstraint("tag==valid")
+		provider.Constraints = []types.Constraint{*constraint}
 		actual := provider.applicationFilter(c.application, c.filteredTasks)
 		if actual != c.expected {
 			t.Fatalf("expected %v, got %v: %v", c.expected, actual, c.application)
@@ -729,9 +750,10 @@ func TestMarathonAppConstraints(t *testing.T) {
 }
 func TestMarathonTaskConstraints(t *testing.T) {
 	cases := []struct {
-		applications []marathon.Application
-		filteredTask marathon.Task
-		expected     bool
+		applications            []marathon.Application
+		filteredTask            marathon.Task
+		expected                bool
+		marathonLBCompatibility bool
 	}{
 		{
 			applications: []marathon.Application{
@@ -749,7 +771,8 @@ func TestMarathonTaskConstraints(t *testing.T) {
 				AppID: "foo1",
 				Ports: []int{80},
 			},
-			expected: false,
+			marathonLBCompatibility: false,
+			expected:                false,
 		},
 		{
 			applications: []marathon.Application{
@@ -764,14 +787,40 @@ func TestMarathonTaskConstraints(t *testing.T) {
 				AppID: "foo2",
 				Ports: []int{80},
 			},
-			expected: true,
+			marathonLBCompatibility: false,
+			expected:                true,
+		},
+		{
+			applications: []marathon.Application{
+				{
+					ID: "foo3",
+					Labels: &map[string]string{
+						"HAPROXY_GROUP": "valid",
+						"traefik.tags":  "notvalid",
+					},
+				}, {
+					ID: "foo4",
+					Labels: &map[string]string{
+						"HAPROXY_GROUP": "notvalid",
+						"traefik.tags":  "valid",
+					},
+				},
+			},
+			filteredTask: marathon.Task{
+				AppID: "foo3",
+				Ports: []int{80},
+			},
+			marathonLBCompatibility: true,
+			expected:                true,
 		},
 	}
 
-	provider := &Marathon{}
-	constraint, _ := types.NewConstraint("tag==valid")
-	provider.Constraints = []types.Constraint{*constraint}
 	for _, c := range cases {
+		provider := &Marathon{
+			MarathonLBCompatibility: c.marathonLBCompatibility,
+		}
+		constraint, _ := types.NewConstraint("tag==valid")
+		provider.Constraints = []types.Constraint{*constraint}
 		apps := new(marathon.Applications)
 		apps.Apps = c.applications
 		actual := provider.taskFilter(c.filteredTask, apps, true)
@@ -1152,37 +1201,53 @@ func TestMarathonGetEntryPoints(t *testing.T) {
 }
 
 func TestMarathonGetFrontendRule(t *testing.T) {
-	provider := &Marathon{
-		Domain: "docker.localhost",
-	}
-
 	applications := []struct {
-		application marathon.Application
-		expected    string
+		application             marathon.Application
+		expected                string
+		marathonLBCompatibility bool
 	}{
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{}},
-			expected: "Host:.docker.localhost",
+			marathonLBCompatibility: true,
+			expected:                "Host:.docker.localhost",
 		},
 		{
 			application: marathon.Application{
-				ID:     "test",
-				Labels: &map[string]string{},
+				ID: "test",
+				Labels: &map[string]string{
+					"HAPROXY_0_VHOST": "foo.bar",
+				},
 			},
-			expected: "Host:test.docker.localhost",
+			marathonLBCompatibility: false,
+			expected:                "Host:test.docker.localhost",
 		},
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{
 					"traefik.frontend.rule": "Host:foo.bar",
+					"HAPROXY_0_VHOST":       "notvalid",
 				},
 			},
-			expected: "Host:foo.bar",
+			marathonLBCompatibility: true,
+			expected:                "Host:foo.bar",
+		},
+		{
+			application: marathon.Application{
+				Labels: &map[string]string{
+					"HAPROXY_0_VHOST": "foo.bar",
+				},
+			},
+			marathonLBCompatibility: true,
+			expected:                "Host:foo.bar",
 		},
 	}
 
 	for _, a := range applications {
+		provider := &Marathon{
+			Domain:                  "docker.localhost",
+			MarathonLBCompatibility: a.marathonLBCompatibility,
+		}
 		actual := provider.getFrontendRule(a.application)
 		if actual != a.expected {
 			t.Fatalf("expected %q, got %q", a.expected, actual)
