@@ -66,6 +66,11 @@ Run it and forget it!
 
 You can have a quick look at Træfɪk in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
 
+Here is a talk given by [Ed Robinson](https://github.com/errm) at the [ContainerCamp UK](https://container.camp) conference.
+You will learn fundamental Træfɪk features and see some demos with Kubernetes.
+
+[![Traefik ContainerCamp UK](http://img.youtube.com/vi/aFtpIShV60I/0.jpg)](https://www.youtube.com/watch?v=aFtpIShV60I)
+
 Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
 You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Let's Encrypt. 
 
@@ -86,7 +91,7 @@ You can access to a simple HTML frontend of Træfik.
 - [Manners](https://github.com/mailgun/manners): graceful shutdown of http.Handler servers
 - [Lego](https://github.com/xenolf/lego): the best [Let's Encrypt](https://letsencrypt.org) library in go
 
-## Quick start
+## Test it
 
 - The simple way: grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
