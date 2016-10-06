@@ -49,6 +49,7 @@ pages:
   - User Guide:
       - 'Configuration examples': 'user-guide/examples.md'
       - 'Swarm cluster': 'user-guide/swarm.md'
+      - 'Swarm mode cluster': 'user-guide/swarm-mode.md'
       - 'Kubernetes': 'user-guide/kubernetes.md'
       - 'Key-value store configuration': 'user-guide/kv-config.md'
       - 'Clustering/HA': 'user-guide/cluster.md'

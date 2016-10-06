@@ -1,7 +1,7 @@
 # Swarm cluster
 
 This section explains how to create a multi-host [swarm](https://docs.docker.com/swarm) cluster using [docker-machine](https://docs.docker.com/machine/) and how to deploy Træfɪk on it.
-The cluster will be made of:
+The cluster consists of:
 
 - 2 servers
 - 1 swarm master
@@ -10,16 +10,16 @@ The cluster will be made of:
 
 ## Prerequisites
 
-1. You will need to install [docker-machine](https://docs.docker.com/machine/)
-2. You will need the latest [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+1. You need to install [docker-machine](https://docs.docker.com/machine/)
+2. You need the latest [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 
 ## Cluster provisioning
 
-We will first follow [this guide](https://docs.docker.com/engine/userguide/networking/get-started-overlay/) to create the cluster.
+We first follow [this guide](https://docs.docker.com/engine/userguide/networking/get-started-overlay/) to create the cluster.
 
 ### Create machine `mh-keystore`
 
-This machine will be the service registry of our cluster.
+This machine is the service registry of our cluster.
 
 ```sh
 docker-machine create -d virtualbox mh-keystore
@@ -37,7 +37,7 @@ docker run -d \
 
 ### Create machine `mhs-demo0`
 
-This machine will have a swarm master and a swarm agent on it.
+This machine is a swarm master and a swarm agent on it.
 
 ```sh
 docker-machine create -d virtualbox \
@@ -50,7 +50,7 @@ docker-machine create -d virtualbox \
 
 ### Create machine `mhs-demo1`
 
-This machine will have a swarm agent on it.
+This machine have a swarm agent on it.
 
 ```sh
 docker-machine create -d virtualbox \
