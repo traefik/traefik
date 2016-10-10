@@ -615,7 +615,8 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 		return []dockerData{}, err
 	}
 	for _, network := range networkList {
-		networkMap[network.ID] = &network
+		networkToAdd := network
+		networkMap[network.ID] = &networkToAdd
 	}
 
 	var dockerDataList []dockerData
