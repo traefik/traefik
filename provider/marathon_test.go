@@ -114,7 +114,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "/testLoadBalancerAndCircuitBreaker",
+						ID:    "/testLoadBalancerAndCircuitBreaker.dot",
 						Ports: []int{80},
 						Labels: &map[string]string{
 							"traefik.backend.loadbalancer.method":       "drr",
@@ -126,29 +126,29 @@ func TestMarathonLoadConfig(t *testing.T) {
 			tasks: &marathon.Tasks{
 				Tasks: []marathon.Task{
 					{
-						ID:    "testLoadBalancerAndCircuitBreaker",
-						AppID: "/testLoadBalancerAndCircuitBreaker",
+						ID:    "testLoadBalancerAndCircuitBreaker.dot",
+						AppID: "/testLoadBalancerAndCircuitBreaker.dot",
 						Host:  "127.0.0.1",
 						Ports: []int{80},
 					},
 				},
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				`frontend-testLoadBalancerAndCircuitBreaker`: {
-					Backend:        "backend-testLoadBalancerAndCircuitBreaker",
+				`frontend-testLoadBalancerAndCircuitBreaker.dot`: {
+					Backend:        "backend-testLoadBalancerAndCircuitBreaker.dot",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
-						`route-host-testLoadBalancerAndCircuitBreaker`: {
-							Rule: "Host:testLoadBalancerAndCircuitBreaker.docker.localhost",
+						`route-host-testLoadBalancerAndCircuitBreaker.dot`: {
+							Rule: "Host:testLoadBalancerAndCircuitBreaker.dot.docker.localhost",
 						},
 					},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-testLoadBalancerAndCircuitBreaker": {
+				"backend-testLoadBalancerAndCircuitBreaker.dot": {
 					Servers: map[string]types.Server{
-						"server-testLoadBalancerAndCircuitBreaker": {
+						"server-testLoadBalancerAndCircuitBreaker-dot": {
 							URL:    "http://127.0.0.1:80",
 							Weight: 0,
 						},

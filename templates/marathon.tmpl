@@ -1,35 +1,35 @@
 {{$apps := .Applications}}
 [backends]{{range .Tasks}}
-    [backends.backend{{getBackend . $apps}}.servers.server-{{.ID | replace "." "-"}}]
+    [backends."backend{{getBackend . $apps}}".servers."server-{{.ID | replace "." "-"}}"]
     url = "{{getProtocol . $apps}}://{{.Host}}:{{getPort . $apps}}"
     weight = {{getWeight . $apps}}
 {{end}}
 
 {{range .Applications}}
 {{ if hasMaxConnLabels . }}
-      [backends.backend{{getFrontendBackend . }}.maxconn]
+      [backends."backend{{getFrontendBackend . }}".maxconn]
         amount = {{getMaxConnAmount . }}
         extractorfunc = "{{getMaxConnExtractorFunc . }}"
 {{end}}
 {{ if hasLoadBalancerLabels . }}
-      [backends.backend{{getFrontendBackend . }}.loadbalancer]
+      [backends."backend{{getFrontendBackend . }}".loadbalancer]
         method = "{{getLoadBalancerMethod . }}"
         sticky = {{getSticky .}}
 {{end}}
 {{ if hasCircuitBreakerLabels . }}
-      [backends.backend{{getFrontendBackend . }}.circuitbreaker]
+      [backends."backend{{getFrontendBackend . }}".circuitbreaker]
         expression = "{{getCircuitBreakerExpression . }}"
 {{end}}
 {{end}}
 
 [frontends]{{range .Applications}}
-  [frontends.frontend{{.ID | replace "/" "-"}}]
+  [frontends."frontend{{.ID | replace "/" "-"}}"]
   backend = "backend{{getFrontendBackend .}}"
   passHostHeader = {{getPassHostHeader .}}
   priority = {{getPriority .}}
   entryPoints = [{{range getEntryPoints .}}
     "{{.}}",
   {{end}}]
-    [frontends.frontend{{.ID | replace "/" "-"}}.routes.route-host{{.ID | replace "/" "-"}}]
+    [frontends."frontend{{.ID | replace "/" "-"}}".routes."route-host{{.ID | replace "/" "-"}}"]
     rule = "{{getFrontendRule .}}"
 {{end}}
