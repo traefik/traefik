@@ -19,6 +19,7 @@ spec:
         version: v1.0.0
     spec:
       terminationGracePeriodSeconds: 60
+      hostNetwork: true
       containers:
       - image: traefik:v1.0.0
         name: traefik-ingress-lb
