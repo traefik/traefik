@@ -783,6 +783,13 @@ domain = "marathon.localhost"
 #
 # groupsAsSubDomains = true
 
+# Enable compatibility with marathon-lb labels
+#
+# Optional
+# Default: false
+#
+# marathonLBCompatibility = true
+
 # Enable Marathon basic authentication
 #
 # Optional
