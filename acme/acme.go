@@ -4,11 +4,13 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/types"
 	"github.com/xenolf/lego/acme"
 	"golang.org/x/net/context"
 	"io/ioutil"
@@ -311,22 +313,23 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 }
 
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	domain := types.CanonicalDomain(clientHello.ServerName)
 	account := a.store.Get().(*Account)
-	if challengeCert, ok := a.challengeProvider.getCertificate(clientHello.ServerName); ok {
-		log.Debugf("ACME got challenge %s", clientHello.ServerName)
+	if challengeCert, ok := a.challengeProvider.getCertificate(domain); ok {
+		log.Debugf("ACME got challenge %s", domain)
 		return challengeCert, nil
 	}
-	if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(clientHello.ServerName); ok {
-		log.Debugf("ACME got domain cert %s", clientHello.ServerName)
+	if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
+		log.Debugf("ACME got domain cert %s", domain)
 		return domainCert.tlsCert, nil
 	}
 	if a.OnDemand {
-		if a.checkOnDemandDomain != nil && !a.checkOnDemandDomain(clientHello.ServerName) {
+		if a.checkOnDemandDomain != nil && !a.checkOnDemandDomain(domain) {
 			return nil, nil
 		}
 		return a.loadCertificateOnDemand(clientHello)
 	}
-	log.Debugf("ACME got nothing %s", clientHello.ServerName)
+	log.Debugf("ACME got nothing %s", domain)
 	return nil, nil
 }
 
@@ -429,22 +432,23 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 }
 
 func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	domain := types.CanonicalDomain(clientHello.ServerName)
 	account := a.store.Get().(*Account)
-	if certificateResource, ok := account.DomainsCertificate.getCertificateForDomain(clientHello.ServerName); ok {
+	if certificateResource, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
 		return certificateResource.tlsCert, nil
 	}
-	certificate, err := a.getDomainsCertificates([]string{clientHello.ServerName})
+	certificate, err := a.getDomainsCertificates([]string{domain})
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Got certificate on demand for domain %s", clientHello.ServerName)
+	log.Debugf("Got certificate on demand for domain %s", domain)
 
 	transaction, object, err := a.store.Begin()
 	if err != nil {
 		return nil, err
 	}
 	account = object.(*Account)
-	cert, err := account.DomainsCertificate.addCertificateForDomains(certificate, Domain{Main: clientHello.ServerName})
+	cert, err := account.DomainsCertificate.addCertificateForDomains(certificate, Domain{Main: domain})
 	if err != nil {
 		return nil, err
 	}
@@ -456,6 +460,7 @@ func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.C
 
 // LoadCertificateForDomains loads certificates from ACME for given domains
 func (a *ACME) LoadCertificateForDomains(domains []string) {
+	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 	safe.Go(func() {
 		operation := func() error {
 			if a.client == nil {
@@ -514,6 +519,7 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 }
 
 func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
+	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 	log.Debugf("Loading ACME certificates %s...", domains)
 	bundle := true
 	certificate, failures := a.client.ObtainCertificate(domains, bundle, nil)
