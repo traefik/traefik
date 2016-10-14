@@ -127,12 +127,49 @@
 #
 # storage = "acme.json" # or "traefik/acme/account" if using KV store
 
-# Entrypoint to proxy acme challenge to.
+# Entrypoint to proxy acme challenge/apply certificates to.
 # WARNING, must point to an entrypoint on port 443
 #
 # Required
 #
 # entryPoint = "https"
+
+# Use a DNS based acme challenge rather than external HTTPS access, e.g. for a firewalled server
+# Select the provider that matches the DNS domain that will host the challenge TXT record,
+# and provide environment variables with access keys to enable setting it:
+#  - cloudflare: CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY
+#  - digitalocean: DO_AUTH_TOKEN
+#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_API_KEY
+#  - dnsmadeeasy: DNSMADEEASY_API_KEY, DNSMADEEASY_API_SECRET
+#  - exoscale: EXOSCALE_API_KEY, EXOSCALE_API_SECRET
+#  - gandi: GANDI_API_KEY
+#  - linode: LINODE_API_KEY
+#  - manual: none, but run traefik interactively & turn on acmeLogging to see instructions & press Enter
+#  - namecheap: NAMECHEAP_API_USER, NAMECHEAP_API_KEY
+#  - rfc2136: RFC2136_TSIG_KEY, RFC2136_TSIG_SECRET, RFC2136_TSIG_ALGORITHM, RFC2136_NAMESERVER
+#  - route53: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, or configured user/instance IAM profile
+#  - dyn: DYN_CUSTOMER_NAME, DYN_USER_NAME, DYN_PASSWORD
+#  - vultr: VULTR_API_KEY
+#  - ovh: OVH_ENDPOINT, OVH_APPLICATION_KEY, OVH_APPLICATION_SECRET, OVH_CONSUMER_KEY
+#  - pdns: PDNS_API_KEY, PDNS_API_URL
+#
+# Optional
+#
+# dnsProvider = "digitalocean"
+
+# By default, the dnsProvider will verify the TXT DNS challenge record before letting ACME verify
+# If delayDontCheckDNS is greater than zero, avoid this & instead just wait so many seconds.
+# Useful if internal networks block external DNS queries
+#
+# Optional
+#
+# delayDontCheckDNS = 0
+
+# If true, display debug log messages from the acme client library
+#
+# Optional
+#
+# acmeLogging = true
 
 # Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
 # WARNING, TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.

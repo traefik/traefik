@@ -29,6 +29,8 @@ import:
   - types
   - types/events
   - types/filters
+- package: github.com/docker/go-units
+  version: v0.3.1
 - package: github.com/docker/go-connections
   subpackages:
   - sockets
@@ -62,7 +64,7 @@ import:
   subpackages:
   - plugin/rewrite
 - package: github.com/xenolf/lego
-  version: b2fad6198110326662e9e356a97199078a4a775c
+  version: cbd5d04c891979c23c3924f198e07ce32b39d282
   subpackages:
   - acme
 - package: golang.org/x/net
