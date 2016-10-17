@@ -36,7 +36,7 @@ func TestParseTwoRules(t *testing.T) {
 	serverRoute := &serverRoute{route: route}
 	rules := &Rules{route: serverRoute}
 
-	expression := "Host:foo.bar;Path:/foobar"
+	expression := "Host: Foo.Bar ; Path:/FOObar"
 	routeResult, err := rules.Parse(expression)
 
 	if err != nil {
@@ -58,10 +58,12 @@ func TestParseDomains(t *testing.T) {
 		"Host:foo.bar,test.bar",
 		"Path:/test",
 		"Host:foo.bar;Path:/test",
+		"Host: Foo.Bar ;Path:/test",
 	}
 	domainsSlice := [][]string{
 		{"foo.bar", "test.bar"},
 		{},
+		{"foo.bar"},
 		{"foo.bar"},
 	}
 	for i, expression := range expressionsSlice {
