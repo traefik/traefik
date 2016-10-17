@@ -1,5 +1,38 @@
 # Change Log
 
+## [v1.1.0-rc2](https://github.com/containous/traefik/tree/v1.1.0-rc2) (2016-10-17)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.1.0-rc1...v1.1.0-rc2)
+
+**Implemented enhancements:**
+
+- Support healthcheck if present for docker [\#666](https://github.com/containous/traefik/issues/666)
+
+**Closed issues:**
+
+- Sensible configuration for consulCatalog [\#737](https://github.com/containous/traefik/issues/737)
+- Traefik ignoring container listening in more than one TCP port [\#734](https://github.com/containous/traefik/issues/734)
+- Error when using HA acme in kubernetes with etcd [\#725](https://github.com/containous/traefik/issues/725)
+- \[Docker swarm mode\] No round robin when using service [\#718](https://github.com/containous/traefik/issues/718)
+- Dose it support docker swarm mode  [\#712](https://github.com/containous/traefik/issues/712)
+- Kubernetes - Undefined backend  [\#710](https://github.com/containous/traefik/issues/710)
+- Constraints on Consul Catalogue not working as expected [\#703](https://github.com/containous/traefik/issues/703)
+- docker run syntax in swarm example has changed [\#528](https://github.com/containous/traefik/issues/528)
+- Secure WebSockets [\#467](https://github.com/containous/traefik/issues/467)
+
+**Merged pull requests:**
+
+- Fix case sensitive host [\#733](https://github.com/containous/traefik/pull/733) ([emilevauge](https://github.com/emilevauge))
+- Update Kubernetes examples [\#731](https://github.com/containous/traefik/pull/731) ([Starefossen](https://github.com/Starefossen))
+- fIx marathon template with dots in ID [\#728](https://github.com/containous/traefik/pull/728) ([emilevauge](https://github.com/emilevauge))
+- Fix networkMap construction in ListServices [\#724](https://github.com/containous/traefik/pull/724) ([vincentlepot](https://github.com/vincentlepot))
+- Add basic compatibility with marathon-lb [\#720](https://github.com/containous/traefik/pull/720) ([guilhem](https://github.com/guilhem))
+- Add Ed's video at ContainerCamp [\#717](https://github.com/containous/traefik/pull/717) ([emilevauge](https://github.com/emilevauge))
+- Add documentation for Træfik on docker swarm mode [\#715](https://github.com/containous/traefik/pull/715) ([vdemeester](https://github.com/vdemeester))
+- Remove duplicated link to Kubernetes.io in README.md [\#713](https://github.com/containous/traefik/pull/713) ([oscerd](https://github.com/oscerd))
+- Show current version in web UI [\#709](https://github.com/containous/traefik/pull/709) ([vhf](https://github.com/vhf))
+- Add support for docker healthcheck 👼 [\#708](https://github.com/containous/traefik/pull/708) ([vdemeester](https://github.com/vdemeester))
+- Fix syntax in Swarm example. Resolves \#528 [\#707](https://github.com/containous/traefik/pull/707) ([billglover](https://github.com/billglover))
+
 ## [v1.1.0-rc1](https://github.com/containous/traefik/tree/v1.1.0-rc1) (2016-09-30)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.0.0...v1.1.0-rc1)
 
