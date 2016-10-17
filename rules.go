@@ -3,7 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/mux"
+	"github.com/containous/traefik/types"
 	"net"
 	"net/http"
 	"reflect"
@@ -24,7 +26,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 			reqHost = req.Host
 		}
 		for _, host := range hosts {
-			if reqHost == strings.TrimSpace(host) {
+			if types.CanonicalDomain(reqHost) == types.CanonicalDomain(host) {
 				return true
 			}
 		}
@@ -35,7 +37,7 @@ func (r *Rules) host(hosts ...string) *mux.Route {
 func (r *Rules) hostRegexp(hosts ...string) *mux.Route {
 	router := r.route.route.Subrouter()
 	for _, host := range hosts {
-		router.Host(strings.TrimSpace(host))
+		router.Host(types.CanonicalDomain(host))
 	}
 	return r.route.route
 }
@@ -43,7 +45,7 @@ func (r *Rules) hostRegexp(hosts ...string) *mux.Route {
 func (r *Rules) path(paths ...string) *mux.Route {
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.Path(strings.TrimSpace(path))
+		router.Path(types.CanonicalDomain(path))
 	}
 	return r.route.route
 }
@@ -51,7 +53,7 @@ func (r *Rules) path(paths ...string) *mux.Route {
 func (r *Rules) pathPrefix(paths ...string) *mux.Route {
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(strings.TrimSpace(path))
+		router.PathPrefix(types.CanonicalDomain(path))
 	}
 	return r.route.route
 }
@@ -67,7 +69,7 @@ func (r *Rules) pathStrip(paths ...string) *mux.Route {
 	r.route.stripPrefixes = paths
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.Path(strings.TrimSpace(path))
+		router.Path(types.CanonicalDomain(path))
 	}
 	return r.route.route
 }
@@ -77,7 +79,7 @@ func (r *Rules) pathPrefixStrip(paths ...string) *mux.Route {
 	r.route.stripPrefixes = paths
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(strings.TrimSpace(path))
+		router.PathPrefix(types.CanonicalDomain(path))
 	}
 	return r.route.route
 }
@@ -153,7 +155,6 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		}
 	}
 	return nil
-
 }
 
 // Parse parses rules expressions
@@ -197,5 +198,5 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing domains: %v", err)
 	}
-	return domains, nil
+	return fun.Map(types.CanonicalDomain, domains).([]string), nil
 }
