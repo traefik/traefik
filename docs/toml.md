@@ -481,6 +481,10 @@ address = ":8080"
 # Optional
 # ReadOnly = false
 #
+# To enable more detailed statistics
+# [web.statistics]
+#   RecentErrors = 10
+#
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
 # Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate those ones
@@ -555,7 +559,26 @@ $ curl -s "http://localhost:8080/health" | jq .
   // average response time (formated time)
   "average_response_time": "864.8016ms",
   // average response time in seconds
-  "average_response_time_sec": 0.8648016000000001
+  "average_response_time_sec": 0.8648016000000001,
+
+  // request statistics [requires --web.statistics to be set]
+  // ten most recent requests with 4xx and 5xx status codes
+  "recent_errors": [
+    {
+      // status code
+      "status_code": 500,
+      // description of status code
+      "status": "Internal Server Error",
+      // request HTTP method
+      "method": "GET",
+      // request hostname
+      "host": "localhost",
+      // request path
+      "path": "/path",
+      // RFC 3339 formatted date/time
+      "time": "2016-10-21T16:59:15.418495872-07:00"
+    }
+  ]
 }
 ```
 
