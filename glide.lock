@@ -1,5 +1,5 @@
-hash: d69dce30073c11ad6ad5cf4e79b371f44383491b5a3a8b78fee8ff3615fc9347
-updated: 2016-12-05T15:06:50.606553498+01:00
+hash: 4a8b504820990005da59933347d806c55996b4e624f36c3f62299b59b53641d8
+updated: 2016-12-05T15:11:43.370225805+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -53,7 +53,6 @@ imports:
   version: 43e4800a6165b4e02bb2a36673c54b230d6f7b26
   subpackages:
   - daemon
-  - eureka
 - name: github.com/coreos/pkg
   version: 2c77715c4df99b5420ffcae14ead08f52104065d
   subpackages:

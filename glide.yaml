@@ -101,9 +101,11 @@ import:
 - package: github.com/gogo/protobuf
   version: 0.3
 - package: github.com/ArthurHlt/go-eureka-client
+  subpackages:
+  - eureka
+- package: github.com/mitchellh/mapstructure
+  version: f3009df150dadf309fdee4a54ed65c124afad715
 - package: github.com/coreos/go-systemd
   version: v12
   subpackages:
   - daemon
-  subpackages:
-  - eureka
