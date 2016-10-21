@@ -216,12 +216,12 @@ type Users []string
 
 // Basic HTTP basic authentication
 type Basic struct {
-	Users
+	Users `mapstructure:","`
 }
 
 // Digest HTTP authentication
 type Digest struct {
-	Users
+	Users `mapstructure:","`
 }
 
 // CanonicalDomain returns a lower case domain with trim space

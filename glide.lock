@@ -1,5 +1,5 @@
-hash: 61a63d2dd37e5a9bf32c83fa520f54458c3fe6b520f89b9615d8b26f5d3f317f
-updated: 2016-10-24T15:09:49.3944218+02:00
+hash: 45d9abd00276bba5aaeb92cd5f2464e404bba3cf90f37aa538d4866041626327
+updated: 2016-10-26T14:26:07.740582437+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -225,7 +225,7 @@ imports:
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
-  version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
+  version: f3009df150dadf309fdee4a54ed65c124afad715
 - name: github.com/moul/http2curl
   version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/NYTimes/gziphandler
