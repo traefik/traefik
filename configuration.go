@@ -28,7 +28,7 @@ type GlobalConfiguration struct {
 	AccessLogsFile            string                  `description:"Access logs file"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
-	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
+	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
 	Cluster                   *types.Cluster          `description:"Enable clustering"`
 	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags"`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
@@ -263,21 +263,28 @@ func (certs *Certificates) String() string {
 	if len(*certs) == 0 {
 		return ""
 	}
-	return (*certs)[0].CertFile + "," + (*certs)[0].KeyFile
+	var result []string
+	for _, certificate := range *certs {
+		result = append(result, certificate.CertFile+","+certificate.KeyFile)
+	}
+	return strings.Join(result, ";")
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (certs *Certificates) Set(value string) error {
-	files := strings.Split(value, ",")
-	if len(files) != 2 {
-		return errors.New("Bad certificates format: " + value)
+	certificates := strings.Split(value, ";")
+	for _, certificate := range certificates {
+		files := strings.Split(certificate, ",")
+		if len(files) != 2 {
+			return errors.New("Bad certificates format: " + value)
+		}
+		*certs = append(*certs, Certificate{
+			CertFile: files[0],
+			KeyFile:  files[1],
+		})
 	}
-	*certs = append(*certs, Certificate{
-		CertFile: files[0],
-		KeyFile:  files[1],
-	})
 	return nil
 }
 
