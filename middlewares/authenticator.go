@@ -2,12 +2,15 @@ package middlewares
 
 import (
 	"fmt"
-	"github.com/abbot/go-http-auth"
+	goauth "github.com/abbot/go-http-auth"
+
 	"github.com/codegangsta/negroni"
+	"github.com/containous/traefik/auth"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"net/http"
 	"strings"
+
 )
 
 // Authenticator is a middleware that provides HTTP basic and digest authentication
@@ -28,7 +31,7 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		if err != nil {
 			return nil, err
 		}
-		basicAuth := auth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
+		basicAuth := goauth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if username := basicAuth.CheckAuth(r); username == "" {
 				log.Debugf("Auth failed...")
@@ -42,13 +45,17 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		if err != nil {
 			return nil, err
 		}
-		digestAuth := auth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
+		digestAuth := goauth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if username, _ := digestAuth.CheckAuth(r); username == "" {
 				digestAuth.RequireAuth(w, r)
 			} else {
 				next.ServeHTTP(w, r)
 			}
+		})
+	} else if authConfig.Forward != nil {
+		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+			auth.Forward(authConfig.Forward, w, r, next)
 		})
 	}
 	return &authenticator, nil
