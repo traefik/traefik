@@ -1,0 +1,356 @@
+hash: 0d8147831066d6481092c5c70f02245416ef186b25a812f8e95eaa07b0d6a061
+updated: 2016-11-13T22:11:32.955292735-02:00
+imports:
+- name: github.com/abbot/go-http-auth
+  version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
+- name: github.com/boltdb/bolt
+  version: 5cc10bbbc5c141029940133bb33c9e969512a698
+- name: github.com/BurntSushi/toml
+  version: 99064174e013895bbd9b025c31100bd1d9b590ca
+- name: github.com/BurntSushi/ty
+  version: 6add9cd6ad42d389d6ead1dde60b4ad71e46fd74
+  subpackages:
+  - fun
+- name: github.com/cenk/backoff
+  version: 8edc80b07f38c27352fb186d971c628a6c32552b
+- name: github.com/codahale/hdrhistogram
+  version: f8ad88b59a584afeee9d334eff879b104439117b
+- name: github.com/codegangsta/cli
+  version: 1efa31f08b9333f1bd4882d61f9d668a70cd902e
+- name: github.com/codegangsta/negroni
+  version: dc6b9d037e8dab60cbfc09c61d6932537829be8b
+- name: github.com/containous/flaeg
+  version: a731c034dda967333efce5f8d276aeff11f8ff87
+- name: github.com/containous/mux
+  version: a819b77bba13f0c0cbe36e437bc2e948411b3996
+- name: github.com/containous/staert
+  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
+- name: github.com/coreos/etcd
+  version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
+  subpackages:
+  - client
+  - pkg/pathutil
+  - pkg/types
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  subpackages:
+  - spew
+- name: github.com/docker/distribution
+  version: 87917f30529e6a7fca8eaff2932424915fb11225
+  subpackages:
+  - context
+  - digest
+  - reference
+  - registry/api/errcode
+  - registry/api/v2
+  - registry/client
+  - registry/client/auth
+  - registry/client/transport
+  - registry/storage/cache
+  - registry/storage/cache/memory
+  - uuid
+- name: github.com/docker/docker
+  version: 534753663161334baba06f13b8efa4cad22b5bc5
+  subpackages:
+  - api/types/backend
+  - builder
+  - builder/dockerignore
+  - cliconfig
+  - cliconfig/configfile
+  - daemon/graphdriver
+  - image
+  - image/v1
+  - layer
+  - namesgenerator
+  - opts
+  - pkg/archive
+  - pkg/chrootarchive
+  - pkg/fileutils
+  - pkg/gitutils
+  - pkg/homedir
+  - pkg/httputils
+  - pkg/idtools
+  - pkg/ioutils
+  - pkg/jsonlog
+  - pkg/jsonmessage
+  - pkg/longpath
+  - pkg/mflag
+  - pkg/mount
+  - pkg/namesgenerator
+  - pkg/plugins
+  - pkg/plugins/transport
+  - pkg/pools
+  - pkg/progress
+  - pkg/promise
+  - pkg/random
+  - pkg/reexec
+  - pkg/signal
+  - pkg/stdcopy
+  - pkg/streamformatter
+  - pkg/stringid
+  - pkg/symlink
+  - pkg/system
+  - pkg/tarsum
+  - pkg/term
+  - pkg/term/windows
+  - pkg/urlutil
+  - reference
+  - registry
+  - runconfig/opts
+- name: github.com/docker/engine-api
+  version: 62043eb79d581a32ea849645277023c550732e52
+  subpackages:
+  - client
+  - client/transport
+  - client/transport/cancellable
+  - types
+  - types/blkiodev
+  - types/container
+  - types/events
+  - types/filters
+  - types/network
+  - types/reference
+  - types/registry
+  - types/strslice
+  - types/swarm
+  - types/time
+  - types/versions
+- name: github.com/docker/go-connections
+  version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
+  subpackages:
+  - nat
+  - sockets
+  - tlsconfig
+- name: github.com/docker/go-units
+  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+- name: github.com/docker/leadership
+  version: bfc7753dd48af19513b29deec23c364bf0f274eb
+- name: github.com/docker/libcompose
+  version: d1876c1d68527a49c0aac22a0b161acc7296b740
+  subpackages:
+  - config
+  - docker
+  - docker/builder
+  - docker/client
+  - docker/network
+  - labels
+  - logger
+  - lookup
+  - project
+  - project/events
+  - project/options
+  - utils
+  - version
+  - yaml
+- name: github.com/docker/libkv
+  version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
+  subpackages:
+  - store
+  - store/boltdb
+  - store/consul
+  - store/etcd
+  - store/zookeeper
+- name: github.com/donovanhide/eventsource
+  version: fd1de70867126402be23c306e1ce32828455d85b
+- name: github.com/elazarl/go-bindata-assetfs
+  version: 57eb5e1fc594ad4b0b1dbea7b286d299e0cb43c2
+- name: github.com/gambol99/go-marathon
+  version: 40baf7476c1cc627a75039ce6d99a7c06c2dbdbe
+- name: github.com/go-check/check
+  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+- name: github.com/gogo/protobuf
+  version: e33835a643a970c11ac74f6333f5f6866387a101
+  subpackages:
+  - proto
+- name: github.com/golang/glog
+  version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
+- name: github.com/google/go-querystring
+  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
+  subpackages:
+  - query
+- name: github.com/gorilla/context
+  version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
+- name: github.com/hashicorp/consul
+  version: fce7d75609a04eeb9d4bf41c8dc592aac18fc97d
+  subpackages:
+  - api
+- name: github.com/hashicorp/go-cleanhttp
+  version: 875fb671b3ddc66f8e2f0acc33829c8cb989a38d
+- name: github.com/hashicorp/serf
+  version: 6c4672d66fc6312ddde18399262943e21175d831
+  subpackages:
+  - coordinate
+  - serf
+- name: github.com/jarcoal/httpmock
+  version: 145b10d659265440f062c31ea15326166bae56ee
+- name: github.com/libkermit/compose
+  version: cadc5a3b83a15790174bd7fbc75ea2529785e772
+  subpackages:
+  - check
+- name: github.com/libkermit/docker
+  version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
+- name: github.com/mailgun/manners
+  version: a585afd9d65c0e05f6c003f921e71ebc05074f4f
+- name: github.com/mailgun/timetools
+  version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
+- name: github.com/mattn/go-shellwords
+  version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
+- name: github.com/mesos/mesos-go
+  version: 068d5470506e3780189fe607af40892814197c5e
+  subpackages:
+  - detector
+  - detector/zoo
+  - mesos
+  - mesosproto
+  - mesosutil
+  - upid
+- name: github.com/mesosphere/mesos-dns
+  version: b47dc4c19f215e98da687b15b4c64e70f629bea5
+  repo: https://github.com/containous/mesos-dns.git
+  vcs: git
+  subpackages:
+  - detect
+  - errorutil
+  - logging
+  - models
+  - records
+  - records/labels
+  - records/state
+  - util
+- name: github.com/Microsoft/go-winio
+  version: ce2922f643c8fd76b46cadc7f404a06282678b34
+- name: github.com/miekg/dns
+  version: 5d001d020961ae1c184f9f8152fdc73810481677
+- name: github.com/mitchellh/mapstructure
+  version: d2dd0262208475919e1a362f675cfc0e7c10e905
+- name: github.com/moul/http2curl
+  version: b1479103caacaa39319f75e7f57fc545287fca0d
+- name: github.com/NYTimes/gziphandler
+  version: f6438dbf4a82c56684964b03956aa727b0d7816b
+- name: github.com/ogier/pflag
+  version: 45c278ab3607870051a2ea9040bb85fcb8557481
+- name: github.com/opencontainers/runc
+  version: 1a81e9ab1f138c091fe5c86d0883f87716088527
+  subpackages:
+  - libcontainer/user
+- name: github.com/parnurzeal/gorequest
+  version: 045012d33ef41ea146c1b675df9296d0dc1a212d
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
+- name: github.com/ryanuber/go-glob
+  version: 572520ed46dbddaed19ea3d9541bdd0494163693
+- name: github.com/samuel/go-zookeeper
+  version: e64db453f3512cade908163702045e0f31137843
+  subpackages:
+  - zk
+- name: github.com/satori/go.uuid
+  version: 879c5887cd475cd7864858769793b2ceb0d44feb
+- name: github.com/Sirupsen/logrus
+  version: a283a10442df8dc09befd873fab202bf8a253d6a
+- name: github.com/streamrail/concurrent-map
+  version: 65a174a3a4188c0b7099acbc6cfa0c53628d3287
+- name: github.com/stretchr/objx
+  version: cbeaeb16a013161a98496fad62933b1d21786672
+- name: github.com/stretchr/testify
+  version: d77da356e56a7428ad25149ca77381849a6a5232
+  subpackages:
+  - assert
+  - mock
+- name: github.com/thoas/stats
+  version: 79b768ff1780f4e5b0ed132e192bfeefe9f85a9c
+- name: github.com/tv42/zbase32
+  version: 03389da7e0bf9844767f82690f4d68fc097a1306
+- name: github.com/ugorji/go
+  version: b94837a2404ab90efe9289e77a70694c355739cb
+  subpackages:
+  - codec
+- name: github.com/unrolled/render
+  version: 198ad4d8b8a4612176b804ca10555b222a086b40
+- name: github.com/vdemeester/docker-events
+  version: be74d4929ec1ad118df54349fda4b0cba60f849b
+- name: github.com/vdemeester/shakers
+  version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
+- name: github.com/vulcand/oxy
+  version: 4298f24d572dc554eb984f2ffdf6bdd54d4bd613
+  repo: https://github.com/containous/oxy.git
+  vcs: git
+  subpackages:
+  - cbreaker
+  - connlimit
+  - forward
+  - memmetrics
+  - roundrobin
+  - stream
+  - utils
+- name: github.com/vulcand/predicate
+  version: 19b9dde14240d94c804ae5736ad0e1de10bf8fe6
+- name: github.com/vulcand/route
+  version: cb89d787ddbb1c5849a7ac9f79004c1fd12a4a32
+- name: github.com/vulcand/vulcand
+  version: 28a4e5c0892167589737b95ceecbcef00295be50
+  subpackages:
+  - conntracker
+  - plugin
+  - plugin/rewrite
+  - router
+- name: github.com/xenolf/lego
+  version: b2fad6198110326662e9e356a97199078a4a775c
+  subpackages:
+  - acme
+- name: golang.org/x/crypto
+  version: d81fdb778bf2c40a91b24519d60cdc5767318829
+  subpackages:
+  - bcrypt
+  - blowfish
+  - ocsp
+- name: golang.org/x/net
+  version: b400c2eff1badec7022a8c8f5bea058b6315eed7
+  subpackages:
+  - context
+  - proxy
+  - publicsuffix
+- name: golang.org/x/sys
+  version: 62bee037599929a6e9146f29d10dd5208c43507d
+  subpackages:
+  - unix
+  - windows
+- name: gopkg.in/fsnotify.v1
+  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
+- name: gopkg.in/mgo.v2
+  version: 29cc868a5ca65f401ff318143f9408d02f4799cc
+  subpackages:
+  - bson
+- name: gopkg.in/square/go-jose.v1
+  version: e3f973b66b91445ec816dd7411ad1b6495a5a2fc
+  subpackages:
+  - cipher
+  - json
+testImports:
+- name: github.com/Azure/go-ansiterm
+  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
+  subpackages:
+  - winterm
+- name: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
+- name: github.com/flynn/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff
+- name: github.com/gorilla/mux
+  version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
+- name: github.com/libkermit/docker-check
+  version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
+- name: github.com/spf13/pflag
+  version: 5644820622454e71517561946e3d94b9f9db6842
+- name: github.com/vbatts/tar-split
+  version: 6810cedb21b2c3d0b9bb8f9af12ff2dc7a2f14df
+  subpackages:
+  - archive/tar
+  - tar/asm
+  - tar/storage
+- name: github.com/xeipuuv/gojsonpointer
+  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
+- name: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- name: github.com/xeipuuv/gojsonschema
+  version: 00f9fafb54d2244d291b86ab63d12c38bd5c3886
