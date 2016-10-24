@@ -43,18 +43,18 @@ func TestForwarder(t *testing.T) {
 	forward := types.Forward{}
 	forward.Address = ts.URL
 	forward.RequestParameters = map[string]*types.ForwardRequestParameter{
-		"email": &types.ForwardRequestParameter{
+		"email": {
 			Name: "email",
 			As:   "emailField",
 		},
 	}
 	forward.ResponseReplayFields = map[string]*types.ResponseReplayField{
-		"user": &types.ResponseReplayField{
+		"user": {
 			Path: "user.id",
 			As:   "X-User-Id",
 			In:   "header",
 		},
-		"name": &types.ResponseReplayField{
+		"name": {
 			Path: "user.name",
 			As:   "name",
 			In:   "parameter",
