@@ -123,6 +123,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
 		"getBackend":                  provider.getBackend,
+		"getBackendServer":            provider.getBackendServer,
 		"getPort":                     provider.getPort,
 		"getWeight":                   provider.getWeight,
 		"getDomain":                   provider.getDomain,
@@ -295,6 +296,36 @@ func (provider *Marathon) getLabel(application marathon.Application, label strin
 		}
 	}
 	return "", errors.New("Label not found:" + label)
+}
+
+func (provider *Marathon) getBackendServer(task marathon.Task, applications []marathon.Application) string {
+	application, err := getApplication(task, applications)
+	if err != nil {
+		log.Errorf("Unable to get marathon application from task %s", task.AppID)
+		return ""
+	}
+
+	if len(task.IPAddresses) == 0 {
+		return ""
+	} else if len(task.IPAddresses) == 1 {
+		return task.IPAddresses[0].IPAddress
+	} else {
+
+		ipAddressIdxStr, err := provider.getLabel(application, "traefik.ipAddressIdx")
+		if err != nil {
+			log.Errorf("Unable to get marathon IPAddress from task %s", task.AppID)
+			return ""
+		}
+
+		ipAddressIdx, err := strconv.Atoi(ipAddressIdxStr)
+		if err != nil {
+			log.Errorf("Invalid marathon IPAddress from task %s", task.AppID)
+			return ""
+		}
+
+		return task.IPAddresses[ipAddressIdx].IPAddress
+	}
+
 }
 
 func (provider *Marathon) getPort(task marathon.Task, applications []marathon.Application) string {
