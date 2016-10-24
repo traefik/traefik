@@ -16,11 +16,12 @@ spec:
       labels:
         k8s-app: traefik-ingress-lb
         name: traefik-ingress-lb
-        version: v1.0.0
+        version: v1.1.0
     spec:
       terminationGracePeriodSeconds: 60
+      hostNetwork: true
       containers:
-      - image: traefik:v1.0.0
+      - image: traefik:v1.1.0
         name: traefik-ingress-lb
         resources:
           limits:

@@ -15,6 +15,7 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/version"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/thoas/stats"
 	"github.com/unrolled/render"
@@ -60,6 +61,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter.Methods("GET").Path("/ping").HandlerFunc(provider.getPingHandler)
 	// API routes
 	systemRouter.Methods("GET").Path("/api").HandlerFunc(provider.getConfigHandler)
+	systemRouter.Methods("GET").Path("/api/version").HandlerFunc(provider.getVersionHandler)
 	systemRouter.Methods("GET").Path("/api/providers").HandlerFunc(provider.getConfigHandler)
 	systemRouter.Methods("GET").Path("/api/providers/{provider}").HandlerFunc(provider.getProviderHandler)
 	systemRouter.Methods("PUT").Path("/api/providers/{provider}").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
@@ -142,6 +144,17 @@ func (provider *WebProvider) getPingHandler(response http.ResponseWriter, reques
 func (provider *WebProvider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
 	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
 	templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
+}
+
+func (provider *WebProvider) getVersionHandler(response http.ResponseWriter, request *http.Request) {
+	v := struct {
+		Version  string
+		Codename string
+	}{
+		Version:  version.Version,
+		Codename: version.Codename,
+	}
+	templatesRenderer.JSON(response, http.StatusOK, v)
 }
 
 func (provider *WebProvider) getProviderHandler(response http.ResponseWriter, request *http.Request) {

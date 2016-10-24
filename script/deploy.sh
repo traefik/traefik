@@ -20,8 +20,8 @@ ssh-add ~/.ssh/traefik.id_rsa
 
 # download github release
 echo "Downloading ghr..."
-curl -LOs https://github.com/tcnksm/ghr/releases/download/pre-release/linux_amd64.zip
-unzip -q linux_amd64.zip
+curl -LOs https://github.com/tcnksm/ghr/releases/download/v0.5.0/ghr_v0.5.0_linux_amd64.zip
+unzip -q ghr_v0.5.0_linux_amd64.zip
 sudo mv ghr /usr/bin/ghr
 sudo chmod +x /usr/bin/ghr
 

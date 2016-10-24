@@ -26,14 +26,15 @@ var _ Provider = (*Marathon)(nil)
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
 	BaseProvider
-	Endpoint           string     `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
-	Domain             string     `description:"Default domain used"`
-	ExposedByDefault   bool       `description:"Expose Marathon apps by default"`
-	GroupsAsSubDomains bool       `description:"Convert Marathon groups to subdomains"`
-	DCOSToken          string     `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
-	TLS                *ClientTLS `description:"Enable Docker TLS support"`
-	Basic              *MarathonBasic
-	marathonClient     marathon.Marathon
+	Endpoint                string     `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
+	Domain                  string     `description:"Default domain used"`
+	ExposedByDefault        bool       `description:"Expose Marathon apps by default"`
+	GroupsAsSubDomains      bool       `description:"Convert Marathon groups to subdomains"`
+	DCOSToken               string     `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
+	MarathonLBCompatibility bool       `description:"Add compatibility with marathon-lb labels"`
+	TLS                     *ClientTLS `description:"Enable Docker TLS support"`
+	Basic                   *MarathonBasic
+	marathonClient          marathon.Marathon
 }
 
 // MarathonBasic holds basic authentication specific configurations
@@ -194,6 +195,11 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 	}
 	label, _ := provider.getLabel(application, "traefik.tags")
 	constraintTags := strings.Split(label, ",")
+	if provider.MarathonLBCompatibility {
+		if label, err := provider.getLabel(application, "HAPROXY_GROUP"); err == nil {
+			constraintTags = append(constraintTags, label)
+		}
+	}
 	if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Application %v pruned by '%v' constraint", application.ID, failingConstraint.String())
@@ -263,6 +269,11 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 func (provider *Marathon) applicationFilter(app marathon.Application, filteredTasks []marathon.Task) bool {
 	label, _ := provider.getLabel(app, "traefik.tags")
 	constraintTags := strings.Split(label, ",")
+	if provider.MarathonLBCompatibility {
+		if label, err := provider.getLabel(app, "HAPROXY_GROUP"); err == nil {
+			constraintTags = append(constraintTags, label)
+		}
+	}
 	if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Application %v pruned by '%v' constraint", app.ID, failingConstraint.String())
@@ -383,6 +394,11 @@ func (provider *Marathon) getEntryPoints(application marathon.Application) []str
 func (provider *Marathon) getFrontendRule(application marathon.Application) string {
 	if label, err := provider.getLabel(application, "traefik.frontend.rule"); err == nil {
 		return label
+	}
+	if provider.MarathonLBCompatibility {
+		if label, err := provider.getLabel(application, "HAPROXY_0_VHOST"); err == nil {
+			return "Host:" + label
+		}
 	}
 	return "Host:" + provider.getSubDomain(application.ID) + "." + provider.Domain
 }

@@ -783,6 +783,13 @@ domain = "marathon.localhost"
 #
 # groupsAsSubDomains = true
 
+# Enable compatibility with marathon-lb labels
+#
+# Optional
+# Default: false
+#
+# marathonLBCompatibility = true
+
 # Enable Marathon basic authentication
 #
 # Optional
@@ -944,7 +951,7 @@ Annotations can be used on containers to override default behaviour for the whol
 
 - `traefik.frontend.rule.type: PathPrefixStrip`: override the default frontend rule type (Default: `PathPrefix`).
 
-You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s.ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s.rc.yaml).
+You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml).
 
 ## Consul backend
 
