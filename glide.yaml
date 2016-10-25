@@ -101,5 +101,9 @@ import:
 - package: github.com/gogo/protobuf
   version: 0.3
 - package: github.com/ArthurHlt/go-eureka-client
+- package: github.com/coreos/go-systemd
+  version: v12
+  subpackages:
+  - daemon
   subpackages:
   - eureka
