@@ -81,8 +81,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "test",
 						AppID: "/test",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
@@ -128,8 +134,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "testLoadBalancerAndCircuitBreaker.dot",
 						AppID: "/testLoadBalancerAndCircuitBreaker.dot",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
@@ -180,8 +192,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "testMaxConn",
 						AppID: "/testMaxConn",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
@@ -229,8 +247,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "testMaxConnOnlySpecifyAmount",
 						AppID: "/testMaxConnOnlySpecifyAmount",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
@@ -275,8 +299,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "testMaxConnOnlyExtractorFunc",
 						AppID: "/testMaxConnOnlyExtractorFunc",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
