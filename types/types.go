@@ -223,3 +223,8 @@ type Basic struct {
 type Digest struct {
 	Users
 }
+
+// CanonicalDomain returns a lower case domain with trim space
+func CanonicalDomain(domain string) string {
+	return strings.ToLower(strings.TrimSpace(domain))
+}
