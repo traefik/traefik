@@ -268,17 +268,13 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	}
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
 	server := NewServer(globalConfiguration)
+	server.Start()
 	defer server.Close()
-	stopped := make(chan bool, 1)
-	go func() {
-		server.Start()
-		stopped <- true
-	}()
 	sent, err := daemon.SdNotify("READY=1")
 	if !sent && err != nil {
 		log.Error("Fail to notify", err)
 	}
-	<-stopped
+	server.Wait()
 	log.Info("Shutting down")
 }
 
