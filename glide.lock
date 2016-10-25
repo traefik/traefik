@@ -1,5 +1,5 @@
-hash: 39ff28cc1d13d5915a870b14491ece1849c4eaf5a56cecd50a7676ecee6c6143
-updated: 2016-10-06T14:06:39.455848971+02:00
+hash: 61a63d2dd37e5a9bf32c83fa520f54458c3fe6b520f89b9615d8b26f5d3f317f
+updated: 2016-10-24T15:09:49.3944218+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -31,6 +31,10 @@ imports:
   - client
   - pkg/pathutil
   - pkg/types
+- name: github.com/coreos/go-systemd
+  version: 43e4800a6165b4e02bb2a36673c54b230d6f7b26
+  subpackages:
+  - daemon
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
@@ -340,7 +344,7 @@ testImports:
 - name: github.com/libkermit/docker-check
   version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
 - name: github.com/spf13/pflag
-  version: 08b1a584251b5b62f458943640fc8ebd4d50aaa5
+  version: 5644820622454e71517561946e3d94b9f9db6842
 - name: github.com/vbatts/tar-split
   version: bd4c5d64c3e9297f410025a3b1bd0c58f659e721
   subpackages:

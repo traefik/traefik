@@ -91,7 +91,7 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	return server
 }
 
-// Start starts the server and blocks until server is shutted down.
+// Start starts the server.
 func (server *Server) Start() {
 	server.startHTTPServers()
 	server.startLeadership()
@@ -104,6 +104,10 @@ func (server *Server) Start() {
 	server.configureProviders()
 	server.startProviders()
 	go server.listenSignals()
+}
+
+// Wait blocks until server is shutted down.
+func (server *Server) Wait() {
 	<-server.stopChan
 }
 

@@ -24,6 +24,8 @@ import (
 	"github.com/containous/traefik/version"
 	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
+
+	"github.com/coreos/go-systemd/daemon"
 )
 
 var versionTemplate = `Version:      {{.Version}}
@@ -268,6 +270,11 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	server := NewServer(globalConfiguration)
 	server.Start()
 	defer server.Close()
+	sent, err := daemon.SdNotify("READY=1")
+	if !sent && err != nil {
+		log.Error("Fail to notify", err)
+	}
+	server.Wait()
 	log.Info("Shutting down")
 }
 
