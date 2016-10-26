@@ -1,5 +1,35 @@
 # Change Log
 
+## [v1.1.0-rc3](https://github.com/containous/traefik/tree/v1.1.0-rc3) (2016-10-26)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.1.0-rc2...v1.1.0-rc3)
+
+**Fixed bugs:**
+
+- Cannot provide multiple certificates using flag [\#757](https://github.com/containous/traefik/issues/757)
+- traefik \* Users: unsupported type: slice [\#743](https://github.com/containous/traefik/issues/743)
+- \[Docker swarm mode\] The traefik.docker.network seems to have no effect [\#719](https://github.com/containous/traefik/issues/719)
+- Case sensitive domain names breaks routing  [\#562](https://github.com/containous/traefik/issues/562)
+
+**Closed issues:**
+
+- dependencies installation error [\#755](https://github.com/containous/traefik/issues/755)
+- k8s provider w/ acme? [\#752](https://github.com/containous/traefik/issues/752)
+- Documented ProvidersThrottleDuration value is invalid [\#741](https://github.com/containous/traefik/issues/741)
+- Loadbalaning issues with traefik and Docker Swarm cluster [\#730](https://github.com/containous/traefik/issues/730)
+- issues with marathon app ids containing a dot [\#726](https://github.com/containous/traefik/issues/726)
+- How Routing traffic depending on path not domain in docker [\#706](https://github.com/containous/traefik/issues/706)
+- Traefik crashes when using Consul catalog [\#699](https://github.com/containous/traefik/issues/699)
+- File Watcher for rules does not work  [\#683](https://github.com/containous/traefik/issues/683)
+
+**Merged pull requests:**
+
+- Fix ResponseRecorder Flush [\#776](https://github.com/containous/traefik/pull/776) ([emilevauge](https://github.com/emilevauge))
+- Use sdnotify for systemd [\#768](https://github.com/containous/traefik/pull/768) ([guilhem](https://github.com/guilhem))
+- Fix providers throttle duration doc [\#760](https://github.com/containous/traefik/pull/760) ([emilevauge](https://github.com/emilevauge))
+- Fix mapstructure issue with anonymous slice [\#759](https://github.com/containous/traefik/pull/759) ([emilevauge](https://github.com/emilevauge))
+- Fix multiple certificates using flag [\#758](https://github.com/containous/traefik/pull/758) ([emilevauge](https://github.com/emilevauge))
+- Really fix deploy ghr... [\#748](https://github.com/containous/traefik/pull/748) ([emilevauge](https://github.com/emilevauge))
+
 ## [v1.1.0-rc2](https://github.com/containous/traefik/tree/v1.1.0-rc2) (2016-10-17)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.1.0-rc1...v1.1.0-rc2)
 
