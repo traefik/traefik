@@ -372,7 +372,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 		{
 			task: marathon.Task{
 				AppID: "multiple-ports",
-				Ports: []int{80},
+				Ports: []int{80, 443},
 			},
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
@@ -383,7 +383,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected:         false,
+			expected:         true,
 			exposedByDefault: true,
 		},
 		{
@@ -927,12 +927,12 @@ func TestMarathonGetPort(t *testing.T) {
 		{
 			applications: []marathon.Application{
 				{
-					ID:     "test1",
+					ID:     "multiple-ports-take-first",
 					Labels: &map[string]string{},
 				},
 			},
 			task: marathon.Task{
-				AppID: "test1",
+				AppID: "multiple-ports-take-first",
 				Ports: []int{80, 443},
 			},
 			expected: "80",
