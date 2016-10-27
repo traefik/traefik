@@ -155,7 +155,7 @@ imports:
 - name: github.com/elazarl/go-bindata-assetfs
   version: 9a6736ed45b44bf3835afeebb3034b57ed329f3e
 - name: github.com/gambol99/go-marathon
-  version: a558128c87724cd7430060ef5aedf39f83937f55
+  version: 6e3f9771c1f9f19b8034e8de6a7ca537c02be7de
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -418,6 +419,89 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
+				AppID: "ipAddressOnePort",
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID: "ipAddressOnePort",
+						IPAddressPerTask: &marathon.IPAddressPerTask{
+							Discovery: marathon.Discovery{
+								Ports: &[]marathon.Port{
+									{
+										Number: 8880,
+										Name:   "p1",
+									},
+								},
+							},
+						},
+						Labels: &map[string]string{},
+					},
+				},
+			},
+			expected:         true,
+			exposedByDefault: true,
+		},
+		{
+			task: marathon.Task{
+				AppID: "ipAddressInvalidTwoPorts",
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID: "ipAddressInvalidTwoPorts",
+						IPAddressPerTask: &marathon.IPAddressPerTask{
+							Discovery: marathon.Discovery{
+								Ports: &[]marathon.Port{
+									{
+										Number: 8898,
+										Name:   "p1",
+									}, {
+										Number: 9999,
+										Name:   "p1",
+									},
+								},
+							},
+						},
+						Labels: &map[string]string{},
+					},
+				},
+			},
+			expected:         false,
+			exposedByDefault: true,
+		},
+		{
+			task: marathon.Task{
+				AppID: "ipAddressValidTwoPorts",
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID: "ipAddressValidTwoPorts",
+						IPAddressPerTask: &marathon.IPAddressPerTask{
+							Discovery: marathon.Discovery{
+								Ports: &[]marathon.Port{
+									{
+										Number: 8898,
+										Name:   "p1",
+									}, {
+										Number: 9999,
+										Name:   "p2",
+									},
+								},
+							},
+						},
+						Labels: &map[string]string{
+							"traefik.portIndex": "0",
+						},
+					},
+				},
+			},
+			expected:         true,
+			exposedByDefault: true,
+		},
+		{
+			task: marathon.Task{
 				AppID: "foo",
 				Ports: []int{80},
 			},
@@ -704,10 +788,13 @@ func TestMarathonTaskFilter(t *testing.T) {
 	}
 
 	provider := &Marathon{}
-	for _, c := range cases {
+	for idx, c := range cases {
+		if idx == 4 {
+			fmt.Println("")
+		}
 		actual := provider.taskFilter(c.task, c.applications, c.exposedByDefault)
 		if actual != c.expected {
-			t.Fatalf("expected %v, got %v", c.expected, actual)
+			t.Fatalf("expected %v, got %v for %s", c.expected, actual, c.task.AppID)
 		}
 	}
 }
