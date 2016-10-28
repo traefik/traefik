@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -788,10 +787,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 	}
 
 	provider := &Marathon{}
-	for idx, c := range cases {
-		if idx == 4 {
-			fmt.Println("")
-		}
+	for _, c := range cases {
 		actual := provider.taskFilter(c.task, c.applications, c.exposedByDefault)
 		if actual != c.expected {
 			t.Fatalf("expected %v, got %v for %s", c.expected, actual, c.task.AppID)
