@@ -1,5 +1,6 @@
 'use strict';
-var d3 = require('d3');
+var d3 = require('d3'),
+    moment = require('moment');
 
 /** @ngInject */
 function HealthController($scope, $interval, $log, Health) {
@@ -161,6 +162,15 @@ function HealthController($scope, $interval, $log, Health) {
   }
 
   /**
+   * Format the timestamp as "x seconds ago", etc.
+   *
+   * @param {String} t Timestamp returned from the API
+   */
+  function formatTimestamp(t) {
+    return moment(t, "YYYY-MM-DDTHH:mm:ssZ").fromNow();
+  }
+
+  /**
    * Load all graph's datas
    *
    * @param {Object} health Health data from server
@@ -171,6 +181,13 @@ function HealthController($scope, $interval, $log, Health) {
 
     // Load datas and update Total Status Code Count graph render
     updateTotalStatusCodeCount(health.total_status_code_count);
+
+    // Format the timestamps
+    if (health.recent_errors) {
+      angular.forEach(health.recent_errors, function(i) {
+        i.time_formatted = formatTimestamp(i.time);
+      });
+    }
 
     // set data's view
     vm.health = health;

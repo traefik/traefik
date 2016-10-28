@@ -17,21 +17,25 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/elazarl/go-bindata-assetfs"
-	"github.com/thoas/stats"
+	thoas_stats "github.com/thoas/stats"
 	"github.com/unrolled/render"
 )
 
-var metrics = stats.New()
+var (
+	metrics       = thoas_stats.New()
+	statsRecorder *StatsRecorder
+)
 
 // WebProvider is a provider.Provider implementation that provides the UI.
 // FIXME to be handled another way.
 type WebProvider struct {
-	Address  string `description:"Web administration port"`
-	CertFile string `description:"SSL certificate"`
-	KeyFile  string `description:"SSL certificate"`
-	ReadOnly bool   `description:"Enable read only API"`
-	server   *Server
-	Auth     *types.Auth
+	Address    string            `description:"Web administration port"`
+	CertFile   string            `description:"SSL certificate"`
+	KeyFile    string            `description:"SSL certificate"`
+	ReadOnly   bool              `description:"Enable read only API"`
+	Statistics *types.Statistics `description:"Enable more detailed statistics"`
+	server     *Server
+	Auth       *types.Auth
 }
 
 var (
@@ -133,8 +137,19 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	return nil
 }
 
+// healthResponse combines data returned by thoas/stats with statistics (if
+// they are enabled).
+type healthResponse struct {
+	*thoas_stats.Data
+	*Stats
+}
+
 func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, request *http.Request) {
-	templatesRenderer.JSON(response, http.StatusOK, metrics.Data())
+	health := &healthResponse{Data: metrics.Data()}
+	if statsRecorder != nil {
+		health.Stats = statsRecorder.Data()
+	}
+	templatesRenderer.JSON(response, http.StatusOK, health)
 }
 
 func (provider *WebProvider) getPingHandler(response http.ResponseWriter, request *http.Request) {

@@ -315,6 +315,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default Web
 	var defaultWeb WebProvider
 	defaultWeb.Address = ":8080"
+	defaultWeb.Statistics = &types.Statistics{
+		RecentErrors: 10,
+	}
 
 	// default Marathon
 	var defaultMarathon provider.Marathon

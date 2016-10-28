@@ -40,4 +40,34 @@
 
   </div>
 
+  <div ng-if="healthCtrl.health.recent_errors">
+    <h3>Recent HTTP Errors</h3>
+    <table class="table table-striped table-bordered">
+      <tr>
+        <td>Status</td>
+        <td>Request</td>
+        <td>Time</td>
+      </tr>
+      <tr ng-repeat="entry in healthCtrl.health.recent_errors"
+          ng-class="{'text-danger': entry.status_code >= 500}">
+        <td>{{ entry.status_code }} &mdash; {{ entry.status }}</td>
+        <td>
+          <span class="badge">{{ entry.method }}</span>
+          &nbsp;
+          {{ entry.host }}{{ entry.path }}
+        </td>
+        <td>
+          <span title="{{ entry.time }}">
+            {{ entry.time_formatted }}
+          </span>
+        </td>
+      </tr>
+      <tr ng-if="healthCtrl.health.recent_errors.length == 0">
+        <td colspan="3">
+          <p class="text-muted text-center">No entries</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+
 </div>

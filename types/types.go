@@ -228,3 +228,8 @@ type Digest struct {
 func CanonicalDomain(domain string) string {
 	return strings.ToLower(strings.TrimSpace(domain))
 }
+
+// Statistics provides options for monitoring request and response stats
+type Statistics struct {
+	RecentErrors int `description:"Number of recent errors logged"`
+}
