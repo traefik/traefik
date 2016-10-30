@@ -104,7 +104,7 @@ Here is an example of frontends definition:
   priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
-    rule = "Host:localhost,{subdomain:[a-z]+}.localhost"
+    rule = "HostRegexp:localhost,{subdomain:[a-z]+}.localhost"
   [frontends.frontend3]
   backend = "backend2"
     [frontends.frontend3.routes.test_1]
