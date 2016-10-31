@@ -826,6 +826,9 @@ domain = "marathon.localhost"
 # Optional
 #
 # [marathon.TLS]
+# CA = "/etc/ssl/ca.crt"
+# Cert = "/etc/ssl/marathon.cert"
+# Key = "/etc/ssl/marathon.key"
 # InsecureSkipVerify = true
 
 # DCOSToken for DCOS environment, This will override the Authorization header
