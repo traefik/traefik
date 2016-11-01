@@ -13,6 +13,7 @@ import (
 	"strings"
 	"text/template"
 	"time"
+	"regexp"
 
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
@@ -193,8 +194,17 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 		map[string]*types.Frontend{},
 	}
 	PassHostHeader := provider.getPassHostHeader()
+	hostExpr, _ := regexp.Compile("(.*?)-([^-\\.]+)$")
 	for _, i := range ingresses {
 		for _, r := range i.Spec.Rules {
+			var entryPoints []string = nil
+			var hostName = r.Host
+			splitHost := hostExpr.FindStringSubmatch(r.Host)
+			if len(splitHost) == 3 {
+				hostName = splitHost[1]
+				entryPoints = []string{splitHost[2]}
+			}
+
 			for _, pa := range r.HTTP.Paths {
 				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
@@ -205,6 +215,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:        r.Host + pa.Path,
 						PassHostHeader: PassHostHeader,
+						EntryPoints:    entryPoints,
 						Routes:         make(map[string]types.Route),
 						Priority:       len(pa.Path),
 					}
@@ -212,7 +223,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 				if len(r.Host) > 0 {
 					if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
 						templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host] = types.Route{
-							Rule: "Host:" + r.Host,
+							Rule: "Host:" + hostName,
 						}
 					}
 				}

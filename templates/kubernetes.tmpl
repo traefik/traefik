@@ -10,6 +10,9 @@
   [frontends."{{$frontendName}}"]
   backend = "{{$frontend.Backend}}"
   priority = {{$frontend.Priority}}
+  entryPoints = [{{range $frontend.EntryPoints}}
+      "{{.}}",
+    {{end}}]
   passHostHeader = {{$frontend.PassHostHeader}}
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
