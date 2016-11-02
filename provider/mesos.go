@@ -212,10 +212,6 @@ func mesosTaskFilter(task state.Task, exposedByDefaultFlag bool) bool {
 		log.Debugf("Filtering mesos task %s specifying both traefik.portIndex and traefik.port labels", task.Name)
 		return false
 	}
-	if portIndexLabel == "" && portValueLabel == "" && len(task.DiscoveryInfo.Ports.DiscoveryPorts) > 1 {
-		log.Debugf("Filtering mesos task %s with more than 1 port and no traefik.portIndex or traefik.port label", task.Name)
-		return false
-	}
 	if portIndexLabel != "" {
 		index, err := strconv.Atoi(labels(task, "traefik.portIndex"))
 		if err != nil || index < 0 || index > len(task.DiscoveryInfo.Ports.DiscoveryPorts)-1 {
