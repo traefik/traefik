@@ -364,10 +364,6 @@ func (provider *Docker) containerFilter(container dockerData) bool {
 		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
 		return false
 	}
-	if len(container.NetworkSettings.Ports) > 1 && err != nil {
-		log.Debugf("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
-		return false
-	}
 
 	if !isContainerEnabled(container, provider.ExposedByDefault) {
 		log.Debugf("Filtering disabled container %s", container.Name)

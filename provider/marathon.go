@@ -219,10 +219,7 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 		log.Debugf("Filtering marathon task %s specifying both traefik.portIndex and traefik.port labels", task.AppID)
 		return false
 	}
-	if portIndexLabel == "" && portValueLabel == "" && len(application.Ports) > 1 {
-		log.Debugf("Filtering marathon task %s with more than 1 port and no traefik.portIndex or traefik.port label", task.AppID)
-		return false
-	}
+
 	if portIndexLabel != "" {
 		index, err := strconv.Atoi((*application.Labels)["traefik.portIndex"])
 		if err != nil || index < 0 || index > len(application.Ports)-1 {

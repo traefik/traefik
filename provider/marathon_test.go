@@ -371,30 +371,30 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
-				Ports: []int{80},
+				AppID: "multiple-ports",
+				Ports: []int{80, 443},
 			},
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:     "foo",
+						ID:     "multiple-ports",
 						Ports:  []int{80, 443},
 						Labels: &map[string]string{},
 					},
 				},
 			},
-			expected:         false,
+			expected:         true,
 			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
+				AppID: "disable",
 				Ports: []int{80},
 			},
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "foo",
+						ID:    "disable",
 						Ports: []int{80},
 						Labels: &map[string]string{
 							"traefik.enable": "false",
@@ -523,7 +523,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
+				AppID: "healthcheck-false",
 				Ports: []int{80},
 				HealthCheckResults: []*marathon.HealthCheckResult{
 					{
@@ -534,7 +534,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:     "foo",
+						ID:     "healthcheck-false",
 						Ports:  []int{80},
 						Labels: &map[string]string{},
 						HealthChecks: &[]marathon.HealthCheck{
@@ -576,13 +576,13 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
+				AppID: "single-port",
 				Ports: []int{80},
 			},
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:     "foo",
+						ID:     "single-port",
 						Ports:  []int{80},
 						Labels: &map[string]string{},
 					},
@@ -593,7 +593,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
+				AppID: "healthcheck-alive",
 				Ports: []int{80},
 				HealthCheckResults: []*marathon.HealthCheckResult{
 					{
@@ -604,7 +604,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:     "foo",
+						ID:     "healthcheck-alive",
 						Ports:  []int{80},
 						Labels: &map[string]string{},
 						HealthChecks: &[]marathon.HealthCheck{
@@ -677,7 +677,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 	for _, c := range cases {
 		actual := provider.taskFilter(c.task, c.applications, c.exposedByDefault)
 		if actual != c.expected {
-			t.Fatalf("expected %v, got %v", c.expected, actual)
+			t.Fatalf("App %s: expected %v, got %v", c.task.AppID, c.expected, actual)
 		}
 	}
 }
@@ -927,12 +927,12 @@ func TestMarathonGetPort(t *testing.T) {
 		{
 			applications: []marathon.Application{
 				{
-					ID:     "test1",
+					ID:     "multiple-ports-take-first",
 					Labels: &map[string]string{},
 				},
 			},
 			task: marathon.Task{
-				AppID: "test1",
+				AppID: "multiple-ports-take-first",
 				Ports: []int{80, 443},
 			},
 			expected: "80",
