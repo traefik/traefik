@@ -390,6 +390,27 @@ func TestDockerGetPort(t *testing.T) {
 			},
 			expected: "8080",
 		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "test-multi-ports",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.port": "8080",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"8080/tcp": {},
+							"80/tcp":   {},
+						},
+					},
+				},
+			},
+			expected: "8080",
+		},
 	}
 
 	for _, e := range containers {
@@ -735,7 +756,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 		{
 			container: docker.ContainerJSON{
 				ContainerJSONBase: &docker.ContainerJSONBase{
-					Name: "container",
+					Name: "container-multi-ports",
 				},
 				Config: &container.Config{},
 				NetworkSettings: &docker.NetworkSettings{
@@ -748,7 +769,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 			},
 			exposedByDefault: true,
-			expected:         false,
+			expected:         true,
 		},
 		{
 			container: docker.ContainerJSON{
