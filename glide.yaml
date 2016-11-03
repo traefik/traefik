@@ -108,3 +108,5 @@ import:
   version: v12
   subpackages:
   - daemon
+- package: github.com/google/go-github
+- package: github.com/hashicorp/go-version

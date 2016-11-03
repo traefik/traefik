@@ -52,7 +52,7 @@ Run it and forget it!
 - Circuit breakers on backends
 - Round Robin, rebalancer load-balancers
 - Rest Metrics
-- [Tiny](https://imagelayers.io/?images=traefik) [official](https://hub.docker.com/r/_/traefik/) docker image included
+- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image included
 - SSL backends support
 - SSL frontend support (with SNI)
 - Clean AngularJS Web UI

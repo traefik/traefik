@@ -25,6 +25,7 @@ type TraefikConfiguration struct {
 type GlobalConfiguration struct {
 	GraceTimeOut              int64                   `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
+	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
 	AccessLogsFile            string                  `description:"Access logs file"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
@@ -409,6 +410,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: time.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
+			CheckNewVersion:           true,
 		},
 		ConfigFile: "",
 	}

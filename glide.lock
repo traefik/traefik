@@ -1,5 +1,5 @@
-hash: 45d9abd00276bba5aaeb92cd5f2464e404bba3cf90f37aa538d4866041626327
-updated: 2016-10-26T14:26:07.740582437+02:00
+hash: d2bb370ffd3c0b528587581bc77d900c98921c02df581594bf19655968aa9849
+updated: 2016-10-27T15:54:07.397981259+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -168,6 +168,10 @@ imports:
   - proto
 - name: github.com/golang/glog
   version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
+- name: github.com/google/go-github
+  version: ed33550bbf49ddffcc36e1309d3f58ed0b6c2305
+  subpackages:
+  - github
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
@@ -180,6 +184,8 @@ imports:
   - api
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
+- name: github.com/hashicorp/go-version
+  version: deeb027c13a95d56c7585df3fe29207208c6706e
 - name: github.com/hashicorp/serf
   version: b03bf85930b2349eb04b97c8fac437495296e3e7
   subpackages:

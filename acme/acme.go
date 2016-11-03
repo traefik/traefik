@@ -136,12 +136,14 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	leadership.Pool.AddGoCtx(func(ctx context.Context) {
 		log.Infof("Starting ACME renew job...")
 		defer log.Infof("Stopped ACME renew job...")
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if err := a.renewCertificates(); err != nil {
-				log.Errorf("Error renewing ACME certificate: %s", err.Error())
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if err := a.renewCertificates(); err != nil {
+					log.Errorf("Error renewing ACME certificate: %s", err.Error())
+				}
 			}
 		}
 	})
