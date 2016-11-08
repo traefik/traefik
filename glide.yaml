@@ -108,7 +108,7 @@ import:
 - package: github.com/mitchellh/mapstructure
   version: f3009df150dadf309fdee4a54ed65c124afad715
 - package: github.com/coreos/go-systemd
-  version: v12
+  version: v14
   subpackages:
   - daemon
 - package: github.com/google/go-github
