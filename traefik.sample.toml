@@ -425,12 +425,12 @@
 #  key = "/etc/ssl/docker.key"
 #  insecureskipverify = true
 
-# Constraints	
-#		
-# Optional		
-#		
-# constraints = ["tag==api", "tag==he*ld"]		
-# Matching with containers having the label "traefik.tags" set to "api,helloworld"		
+# Constraints
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
+# Matching with containers having the label "traefik.tags" set to "api,helloworld"
 # ex: $ docker run -d -P --label traefik.tags=api,helloworld emilevauge/whoami
 
 
@@ -474,7 +474,7 @@
 # Expose Marathon apps by default in traefik
 #
 # Optional
-# Default: false
+# Default: true
 #
 # exposedByDefault = true
 
@@ -676,10 +676,10 @@
 # prefix = "traefik"
 
 # Constraints
-#		
-# Optional		
-#		
-# constraints = ["tag==api", "tag==he*ld"]		
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==he*ld"]
 # Matching with containers having this tag: "traefik.tags=api,helloworld"
 
 ################################################################

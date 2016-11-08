@@ -793,7 +793,7 @@ domain = "marathon.localhost"
 # Expose Marathon apps by default in traefik
 #
 # Optional
-# Default: false
+# Default: true
 #
 # exposedByDefault = true
 
