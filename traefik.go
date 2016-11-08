@@ -244,10 +244,30 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	server := NewServer(globalConfiguration)
 	server.Start()
 	defer server.Close()
-	sent, err := daemon.SdNotify("READY=1")
+	sent, err := daemon.SdNotify(true, "READY=1")
 	if !sent && err != nil {
 		log.Error("Fail to notify", err)
 	}
+	t, err := daemon.SdWatchdogEnabled(true)
+	if err != nil {
+		log.Error("Problem with watchdog", err)
+	} else if t != 0 {
+		// Send a ping each half time given
+		t = t / 2
+		go func(interval time.Duration) {
+			tick := time.Tick(interval)
+			for range tick {
+				if server.globalConfiguration.Web != nil {
+					if _, err := http.Head("http://" + server.globalConfiguration.Web.Address + "/ping"); err == nil {
+						daemon.SdNotify(true, "WATCHDOG=1")
+					}
+				} else {
+					daemon.SdNotify(true, "WATCHDOG=1")
+				}
+			}
+		}(t)
+	}
+	log.Info(t.String())
 	server.Wait()
 	log.Info("Shutting down")
 }
