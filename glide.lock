@@ -1,5 +1,5 @@
-hash: 4a8b504820990005da59933347d806c55996b4e624f36c3f62299b59b53641d8
-updated: 2016-12-05T15:11:43.370225805+01:00
+hash: bd845c6f162c8ba8555b98ebc3543068df6ca41532392d6864561b20a66bd3d4
+updated: 2016-12-05T15:16:37.248731195+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -196,6 +196,10 @@ imports:
   version: 5677a0e3d5e89854c9974e1256839ee23f8233ca
   subpackages:
   - proto
+- name: github.com/google/go-github
+  version: 55263f30529cb06f5b478efc333390b791cfe3b1
+  subpackages:
+  - github
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
@@ -210,6 +214,8 @@ imports:
   - api
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
+- name: github.com/hashicorp/go-version
+  version: e96d3840402619007766590ecea8dd7af1292276
 - name: github.com/hashicorp/serf
   version: b03bf85930b2349eb04b97c8fac437495296e3e7
   subpackages:
@@ -314,7 +320,7 @@ imports:
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
-  version: 4298f24d572dc554eb984f2ffdf6bdd54d4bd613
+  version: fcc76b52eb8568540a020b7a99e854d9d752b364
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
