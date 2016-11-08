@@ -1,5 +1,5 @@
-hash: d2bb370ffd3c0b528587581bc77d900c98921c02df581594bf19655968aa9849
-updated: 2016-10-27T15:54:07.397981259+02:00
+hash: d771fbae9fc9c496859ab384f3f70de11dbdbbb63af7bc4fa208ff6192b33635
+updated: 2016-11-08T09:30:22.184334518+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -169,7 +169,7 @@ imports:
 - name: github.com/golang/glog
   version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
 - name: github.com/google/go-github
-  version: ed33550bbf49ddffcc36e1309d3f58ed0b6c2305
+  version: 55263f30529cb06f5b478efc333390b791cfe3b1
   subpackages:
   - github
 - name: github.com/google/go-querystring
@@ -185,7 +185,7 @@ imports:
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/hashicorp/go-version
-  version: deeb027c13a95d56c7585df3fe29207208c6706e
+  version: e96d3840402619007766590ecea8dd7af1292276
 - name: github.com/hashicorp/serf
   version: b03bf85930b2349eb04b97c8fac437495296e3e7
   subpackages:
@@ -282,7 +282,7 @@ imports:
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
-  version: 4298f24d572dc554eb984f2ffdf6bdd54d4bd613
+  version: fcc76b52eb8568540a020b7a99e854d9d752b364
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
