@@ -329,54 +329,54 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.Watch = true
 	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
 	defaultMarathon.ExposedByDefault = true
-	defaultMarathon.Constraints = []types.Constraint{}
+	defaultMarathon.Constraints = types.Constraints{}
 
 	// default Consul
 	var defaultConsul provider.Consul
 	defaultConsul.Watch = true
 	defaultConsul.Endpoint = "127.0.0.1:8500"
 	defaultConsul.Prefix = "traefik"
-	defaultConsul.Constraints = []types.Constraint{}
+	defaultConsul.Constraints = types.Constraints{}
 
 	// default ConsulCatalog
 	var defaultConsulCatalog provider.ConsulCatalog
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
-	defaultConsulCatalog.Constraints = []types.Constraint{}
+	defaultConsulCatalog.Constraints = types.Constraints{}
 
 	// default Etcd
 	var defaultEtcd provider.Etcd
 	defaultEtcd.Watch = true
 	defaultEtcd.Endpoint = "127.0.0.1:2379"
 	defaultEtcd.Prefix = "/traefik"
-	defaultEtcd.Constraints = []types.Constraint{}
+	defaultEtcd.Constraints = types.Constraints{}
 
 	//default Zookeeper
 	var defaultZookeeper provider.Zookepper
 	defaultZookeeper.Watch = true
 	defaultZookeeper.Endpoint = "127.0.0.1:2181"
 	defaultZookeeper.Prefix = "/traefik"
-	defaultZookeeper.Constraints = []types.Constraint{}
+	defaultZookeeper.Constraints = types.Constraints{}
 
 	//default Boltdb
 	var defaultBoltDb provider.BoltDb
 	defaultBoltDb.Watch = true
 	defaultBoltDb.Endpoint = "127.0.0.1:4001"
 	defaultBoltDb.Prefix = "/traefik"
-	defaultBoltDb.Constraints = []types.Constraint{}
+	defaultBoltDb.Constraints = types.Constraints{}
 
 	//default Kubernetes
 	var defaultKubernetes provider.Kubernetes
 	defaultKubernetes.Watch = true
 	defaultKubernetes.Endpoint = ""
 	defaultKubernetes.LabelSelector = ""
-	defaultKubernetes.Constraints = []types.Constraint{}
+	defaultKubernetes.Constraints = types.Constraints{}
 
 	// default Mesos
 	var defaultMesos provider.Mesos
 	defaultMesos.Watch = true
 	defaultMesos.Endpoint = "http://127.0.0.1:5050"
 	defaultMesos.ExposedByDefault = true
-	defaultMesos.Constraints = []types.Constraint{}
+	defaultMesos.Constraints = types.Constraints{}
 
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
@@ -406,7 +406,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*EntryPoint{},
-			Constraints:               []types.Constraint{},
+			Constraints:               types.Constraints{},
 			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: time.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
