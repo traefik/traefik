@@ -383,6 +383,9 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 		return nil, err
 	}
 
+	// ensure http2 enabled
+	config.NextProtos = []string{"h2", "http/1.1"}
+
 	if len(tlsOption.ClientCAFiles) > 0 {
 		pool := x509.NewCertPool()
 		for _, caFile := range tlsOption.ClientCAFiles {
