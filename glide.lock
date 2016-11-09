@@ -1,5 +1,5 @@
-hash: d771fbae9fc9c496859ab384f3f70de11dbdbbb63af7bc4fa208ff6192b33635
-updated: 2016-11-08T09:30:22.184334518+01:00
+hash: 1bbeb842ee639ccc6e2edf8cc13fc2759cb96e3d839a1aec7b7f6af4fb89c8e1
+updated: 2016-11-09T19:24:00.762904389+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -24,7 +24,7 @@ imports:
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
+  version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - name: github.com/coreos/etcd
   version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
@@ -277,6 +277,8 @@ imports:
   - codec
 - name: github.com/unrolled/render
   version: 526faf80cd4b305bb8134abea8d20d5ced74faa6
+- name: github.com/urfave/negroni
+  version: e0e50f7dc431c043cb33f91b09c3419d48b7cff5
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vdemeester/shakers

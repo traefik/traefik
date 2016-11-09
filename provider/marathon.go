@@ -50,7 +50,7 @@ type lightMarathonClient interface {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	provider.Constraints = append(provider.Constraints, constraints...)
 	operation := func() error {
 		config := marathon.NewDefaultConfig()
