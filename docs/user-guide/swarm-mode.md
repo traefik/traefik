@@ -4,7 +4,7 @@ This section explains how to create a multi-host docker cluster with
 swarm mode using [docker-machine](https://docs.docker.com/machine) and
 how to deploy Træfɪk on it.
 
-The cluster constist of:
+The cluster consists of:
 
 - 3 servers
 - 1 manager
@@ -19,7 +19,7 @@ The cluster constist of:
 
 ## Cluster provisioning
 
-First, let's create all the nodes required. It's a shorter version of
+First, let's create all the required nodes. It's a shorter version of
 the [swarm tutorial](https://docs.docker.com/engine/swarm/swarm-tutorial/).
 
 ```sh
@@ -103,7 +103,7 @@ Let's explain this command:
   we bind mount the docker socket where Træfik is scheduled to be able
   to speak to the daemon.
 - `--network traefik-net`: we attach the Træfik service (and thus
-  the underlined container) to the `traefik-net` network.
+  the underlying container) to the `traefik-net` network.
 - `--docker`: enable docker backend, and `--docker.swarmmode` to
   enable the swarm mode on Træfik.
 - `--web`: activate the webUI on port 8080
