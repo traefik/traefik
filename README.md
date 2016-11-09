@@ -159,9 +159,10 @@ Founded in 2014, Asteris creates next-generation infrastructure software for the
 
 - Emile Vauge [@emilevauge](https://github.com/emilevauge)
 - Vincent Demeester [@vdemeester](https://github.com/vdemeester)
-- Samuel Berthe [@samber](https://github.com/samber)
 - Russell Clare [@Russell-IO](https://github.com/Russell-IO)
 - Ed Robinson [@errm](https://github.com/errm)
+- Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
+- Manuel Laufenberg [@SantoDE](https://github.com/SantoDE)
 
 ## Credits
 
