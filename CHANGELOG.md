@@ -1,5 +1,32 @@
 # Change Log
 
+## [v1.1.0-rc4](https://github.com/containous/traefik/tree/v1.1.0-rc4) (2016-11-09)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.1.0-rc3...v1.1.0-rc4)
+
+**Implemented enhancements:**
+
+- Feature Request: Enable Health checks to containers. [\#540](https://github.com/containous/traefik/issues/540)
+
+**Fixed bugs:**
+
+- Allow multiple certificates on a single entrypoint when trying to use TLS? [\#747](https://github.com/containous/traefik/issues/747)
+
+**Closed issues:**
+
+- LoadBalancing doesn't work in single node Swarm-mode [\#815](https://github.com/containous/traefik/issues/815)
+- cannot connect to docker daemon [\#813](https://github.com/containous/traefik/issues/813)
+- Let's encrypt configuration not working [\#805](https://github.com/containous/traefik/issues/805)
+- Question: Wildcard Host for Kubernetes Ingress [\#792](https://github.com/containous/traefik/issues/792)
+- Multiple subdomains for Marathon backend. [\#785](https://github.com/containous/traefik/issues/785)
+- traefik-1.1.0-rc1: build error [\#781](https://github.com/containous/traefik/issues/781)
+- Multiple routes support with Docker or Marathon labels [\#118](https://github.com/containous/traefik/issues/118)
+
+**Merged pull requests:**
+
+- Fix multiple issues [\#814](https://github.com/containous/traefik/pull/814) ([emilevauge](https://github.com/emilevauge))
+- Fix ACME renew & add version check [\#783](https://github.com/containous/traefik/pull/783) ([emilevauge](https://github.com/emilevauge))
+- Use first port by default [\#782](https://github.com/containous/traefik/pull/782) ([guilhem](https://github.com/guilhem))
+
 ## [v1.1.0-rc3](https://github.com/containous/traefik/tree/v1.1.0-rc3) (2016-10-26)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.1.0-rc2...v1.1.0-rc3)
 
