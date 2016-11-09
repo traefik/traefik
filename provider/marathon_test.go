@@ -740,7 +740,7 @@ func TestMarathonAppConstraints(t *testing.T) {
 			MarathonLBCompatibility: c.marathonLBCompatibility,
 		}
 		constraint, _ := types.NewConstraint("tag==valid")
-		provider.Constraints = []types.Constraint{*constraint}
+		provider.Constraints = types.Constraints{constraint}
 		actual := provider.applicationFilter(c.application, c.filteredTasks)
 		if actual != c.expected {
 			t.Fatalf("expected %v, got %v: %v", c.expected, actual, c.application)
@@ -820,7 +820,7 @@ func TestMarathonTaskConstraints(t *testing.T) {
 			MarathonLBCompatibility: c.marathonLBCompatibility,
 		}
 		constraint, _ := types.NewConstraint("tag==valid")
-		provider.Constraints = []types.Constraint{*constraint}
+		provider.Constraints = types.Constraints{constraint}
 		apps := new(marathon.Applications)
 		apps.Apps = c.applications
 		actual := provider.taskFilter(c.filteredTask, apps, true)
