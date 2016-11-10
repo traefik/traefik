@@ -37,11 +37,10 @@ spec:
       labels:
         k8s-app: traefik-ingress-lb
         name: traefik-ingress-lb
-        version: v1.0.0
     spec:
       terminationGracePeriodSeconds: 60
       containers:
-      - image: traefik:v1.0.0
+      - image: traefik
         name: traefik-ingress-lb
         resources:
           limits:
