@@ -20,6 +20,7 @@ install:
 - docker version
 - pip install --user mkdocs
 - pip install --user pymdown-extensions
+- pip install --user mkdocs-bootswatch
 before_script:
 - make validate
 - make binary

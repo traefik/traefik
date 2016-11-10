@@ -1,6 +1,6 @@
 # Change Log
 
-## [v1.1.0-rc4](https://github.com/containous/traefik/tree/v1.1.0-rc4) (2016-11-09)
+## [v1.1.0-rc4](https://github.com/containous/traefik/tree/v1.1.0-rc4) (2016-11-10)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.1.0-rc3...v1.1.0-rc4)
 
 **Implemented enhancements:**
@@ -9,6 +9,9 @@
 
 **Fixed bugs:**
 
+- Traefik stopped serving on upgrade to v1.1.0-rc3 [\#807](https://github.com/containous/traefik/issues/807)
+- Traefik cannot read constraints from KV [\#794](https://github.com/containous/traefik/issues/794)
+- HTTP2 - configuration [\#790](https://github.com/containous/traefik/issues/790)
 - Allow multiple certificates on a single entrypoint when trying to use TLS? [\#747](https://github.com/containous/traefik/issues/747)
 
 **Closed issues:**
@@ -23,6 +26,7 @@
 
 **Merged pull requests:**
 
+- Prepare release v1.1.0 rc4 [\#822](https://github.com/containous/traefik/pull/822) ([emilevauge](https://github.com/emilevauge))
 - Fix multiple issues [\#814](https://github.com/containous/traefik/pull/814) ([emilevauge](https://github.com/emilevauge))
 - Fix ACME renew & add version check [\#783](https://github.com/containous/traefik/pull/783) ([emilevauge](https://github.com/emilevauge))
 - Use first port by default [\#782](https://github.com/containous/traefik/pull/782) ([guilhem](https://github.com/guilhem))
