@@ -112,6 +112,8 @@ More: https://labix.org/gocheck
 ```
 ok      _/home/vincent/src/github/vdemeester/traefik    0.004s
 ```
+- Note that `$ go test ./...` will run all tests (including the ones in the vendor directory for the dependencies that glide have fetched). If you only want to run the tests for traefik use `$ go test $(glide novendor)` instead.
+
 
 ### Documentation
 
