@@ -21,7 +21,8 @@
     "angular-ui-bootstrap": "^2.0.0",
     "angular-ui-router": "^0.3.1",
     "bootstrap": "^3.3.6",
-    "moment": "^2.14.1"
+    "moment": "^2.14.1",
+    "nvd3": "^1.8.4"
   },
   "devDependencies": {
     "angular-mocks": "^1.4.2",
@@ -79,11 +80,6 @@
     "serve:dist": "gulp serve:dist",
     "test": "gulp test",
     "test:auto": "gulp test:auto"
-  },
-  "overrides": {
-    "angular-nvd3": {
-      "main": "dist/angular-nvd3.js"
-    }
   },
   "eslintConfig": {
     "globals": {
