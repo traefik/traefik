@@ -102,3 +102,5 @@ import:
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
+- package: k8s.io/client-go
+  version: ^v1.5.0

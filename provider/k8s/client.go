@@ -1,167 +1,206 @@
 package k8s
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"encoding/json"
-	"fmt"
-	"github.com/containous/traefik/log"
-	"github.com/parnurzeal/gorequest"
-	"net/http"
-	"net/url"
-	"strings"
-)
-
-const (
-	// APIEndpoint defines the base path for kubernetes API resources.
-	APIEndpoint        = "/api/v1"
-	extentionsEndpoint = "/apis/extensions/v1beta1"
-	defaultIngress     = "/ingresses"
-	namespaces         = "/namespaces/"
+	"k8s.io/client-go/1.5/kubernetes"
+	"k8s.io/client-go/1.5/pkg/api"
+	"k8s.io/client-go/1.5/pkg/api/v1"
+	"k8s.io/client-go/1.5/pkg/apis/extensions/v1beta1"
+	"k8s.io/client-go/1.5/pkg/fields"
+	"k8s.io/client-go/1.5/pkg/labels"
+	"k8s.io/client-go/1.5/pkg/runtime"
+	"k8s.io/client-go/1.5/pkg/watch"
+	"k8s.io/client-go/1.5/rest"
+	"k8s.io/client-go/1.5/tools/cache"
 )
 
 // Client is a client for the Kubernetes master.
 type Client interface {
-	GetIngresses(labelSelector string, predicate func(Ingress) bool) ([]Ingress, error)
-	GetService(name, namespace string) (Service, error)
-	GetEndpoints(name, namespace string) (Endpoints, error)
-	WatchAll(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error)
+	GetIngresses(namespaces Namespaces) []*v1beta1.Ingress
+	GetService(namespace, name string) (*v1.Service, bool, error)
+	GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error)
+	WatchAll(labelSelector string, stopCh <-chan bool) (chan interface{}, error)
 }
 
 type clientImpl struct {
-	endpointURL string
-	tls         *tls.Config
-	token       string
-	caCert      []byte
+	ingController *cache.Controller
+	svcController *cache.Controller
+	epController  *cache.Controller
+
+	ingStore cache.Store
+	svcStore cache.Store
+	epStore  cache.Store
+
+	clientset *kubernetes.Clientset
 }
 
-// NewClient returns a new Kubernetes client.
-// The provided host is an url (scheme://hostname[:port]) of a
-// Kubernetes master without any path.
-// The provided client is an authorized http.Client used to perform requests to the Kubernetes API master.
-func NewClient(baseURL string, caCert []byte, token string) (Client, error) {
-	validURL, err := url.Parse(baseURL)
+// NewInClusterClient returns a new Kubernetes client.
+// WatchAll starts the watch of the Kubernetes ressources and updates the stores.
+// The stores can be accessed via the Get* functions.
+func NewInClusterClient() (Client, error) {
+	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse URL %q: %v", baseURL, err)
+		return nil, err
 	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	return &clientImpl{
-		endpointURL: strings.TrimSuffix(validURL.String(), "/"),
-		token:       token,
-		caCert:      caCert,
+		clientset: clientset,
 	}, nil
 }
 
-func makeQueryString(baseParams map[string]string, labelSelector string) (string, error) {
-	if labelSelector != "" {
-		baseParams["labelSelector"] = labelSelector
-	}
-	queryData, err := json.Marshal(baseParams)
+// NewInClusterClientWithEndpoint is the same as NewInClusterClient but uses the provided endpoint URL
+func NewInClusterClientWithEndpoint(endpoint string) (Client, error) {
+	config, err := rest.InClusterConfig()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(queryData), nil
+
+	config.Host = endpoint
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &clientImpl{
+		clientset: clientset,
+	}, nil
 }
 
 // GetIngresses returns all ingresses in the cluster
-func (c *clientImpl) GetIngresses(labelSelector string, predicate func(Ingress) bool) ([]Ingress, error) {
-	getURL := c.endpointURL + extentionsEndpoint + defaultIngress
-	queryParams := map[string]string{}
-	queryData, err := makeQueryString(queryParams, labelSelector)
-	if err != nil {
-		return nil, fmt.Errorf("Had problems constructing query string %s : %v", queryParams, err)
-	}
-	body, err := c.do(c.request(getURL, queryData))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create ingresses request: GET %q : %v", getURL, err)
-	}
+func (c *clientImpl) GetIngresses(namespaces Namespaces) []*v1beta1.Ingress {
+	ingList := c.ingStore.List()
+	result := make([]*v1beta1.Ingress, 0, len(ingList))
 
-	var ingressList IngressList
-	if err := json.Unmarshal(body, &ingressList); err != nil {
-		return nil, fmt.Errorf("failed to decode list of ingress resources: %v", err)
-	}
-	ingresses := ingressList.Items[:0]
-	for _, ingress := range ingressList.Items {
-		if predicate(ingress) {
-			ingresses = append(ingresses, ingress)
+	for _, obj := range ingList {
+		ingress := obj.(*v1beta1.Ingress)
+		if HasNamespace(ingress, namespaces) {
+			result = append(result, ingress)
 		}
 	}
-	return ingresses, nil
+
+	return result
 }
 
-// WatchIngresses returns all ingresses in the cluster
-func (c *clientImpl) WatchIngresses(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
-	getURL := c.endpointURL + extentionsEndpoint + defaultIngress
-	return c.watch(getURL, labelSelector, stopCh)
+// WatchIngresses starts the watch of Kubernetes Ingresses resources and updates the corresponding store
+func (c *clientImpl) WatchIngresses(labelSelector labels.Selector, stopCh <-chan struct{}) chan interface{} {
+	watchCh := make(chan interface{}, 10)
+
+	source := NewListWatchFromClient(
+		c.clientset.ExtensionsClient,
+		"ingresses",
+		api.NamespaceAll,
+		fields.Everything(),
+		labelSelector)
+
+	c.ingStore, c.ingController = cache.NewInformer(
+		source,
+		&v1beta1.Ingress{},
+		0,
+		newResourceEventHandlerFuncs(watchCh))
+	go c.ingController.Run(stopCh)
+
+	return watchCh
+}
+
+func newResourceEventHandlerFuncs(events chan interface{}) cache.ResourceEventHandlerFuncs {
+
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc:    func(obj interface{}) { events <- obj },
+		UpdateFunc: func(old, new interface{}) { events <- new },
+		DeleteFunc: func(obj interface{}) { events <- obj },
+	}
+
 }
 
 // GetService returns the named service from the named namespace
-func (c *clientImpl) GetService(name, namespace string) (Service, error) {
-	getURL := c.endpointURL + APIEndpoint + namespaces + namespace + "/services/" + name
-
-	body, err := c.do(c.request(getURL, ""))
-	if err != nil {
-		return Service{}, fmt.Errorf("failed to create services request: GET %q : %v", getURL, err)
+func (c *clientImpl) GetService(namespace, name string) (*v1.Service, bool, error) {
+	var service *v1.Service
+	item, exists, err := c.svcStore.GetByKey(namespace + "/" + name)
+	if item != nil {
+		service = item.(*v1.Service)
 	}
 
-	var service Service
-	if err := json.Unmarshal(body, &service); err != nil {
-		return Service{}, fmt.Errorf("failed to decode service resource: %v", err)
-	}
-	return service, nil
+	return service, exists, err
 }
 
-// WatchServices returns all services in the cluster
-func (c *clientImpl) WatchServices(stopCh <-chan bool) (chan interface{}, chan error, error) {
-	getURL := c.endpointURL + APIEndpoint + "/services"
-	return c.watch(getURL, "", stopCh)
+// WatchServices starts the watch of Kubernetes Service resources and updates the corresponding store
+func (c *clientImpl) WatchServices(stopCh <-chan struct{}) chan interface{} {
+	watchCh := make(chan interface{}, 10)
+
+	source := cache.NewListWatchFromClient(
+		c.clientset.CoreClient,
+		"services",
+		api.NamespaceAll,
+		fields.Everything())
+
+	c.svcStore, c.svcController = cache.NewInformer(
+		source,
+		&v1.Service{},
+		0,
+		newResourceEventHandlerFuncs(watchCh))
+	go c.svcController.Run(stopCh)
+
+	return watchCh
 }
 
 // GetEndpoints returns the named Endpoints
 // Endpoints have the same name as the coresponding service
-func (c *clientImpl) GetEndpoints(name, namespace string) (Endpoints, error) {
-	getURL := c.endpointURL + APIEndpoint + namespaces + namespace + "/endpoints/" + name
+func (c *clientImpl) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
+	var endpoint *v1.Endpoints
+	item, exists, err := c.epStore.GetByKey(namespace + "/" + name)
 
-	body, err := c.do(c.request(getURL, ""))
-	if err != nil {
-		return Endpoints{}, fmt.Errorf("failed to create endpoints request: GET %q : %v", getURL, err)
+	if item != nil {
+		endpoint = item.(*v1.Endpoints)
 	}
 
-	var endpoints Endpoints
-	if err := json.Unmarshal(body, &endpoints); err != nil {
-		return Endpoints{}, fmt.Errorf("failed to decode endpoints resources: %v", err)
-	}
-	return endpoints, nil
+	return endpoint, exists, err
 }
 
-// WatchEndpoints returns endpoints in the cluster
-func (c *clientImpl) WatchEndpoints(stopCh <-chan bool) (chan interface{}, chan error, error) {
-	getURL := c.endpointURL + APIEndpoint + "/endpoints"
-	return c.watch(getURL, "", stopCh)
-}
-
-// WatchAll returns events in the cluster
-func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
+// WatchEndpoints starts the watch of Kubernetes Endpoints resources and updates the corresponding store
+func (c *clientImpl) WatchEndpoints(stopCh <-chan struct{}) chan interface{} {
 	watchCh := make(chan interface{}, 10)
-	errCh := make(chan error, 10)
 
-	stopIngresses := make(chan bool)
-	chanIngresses, chanIngressesErr, err := c.WatchIngresses(labelSelector, stopIngresses)
+	source := cache.NewListWatchFromClient(
+		c.clientset.CoreClient,
+		"endpoints",
+		api.NamespaceAll,
+		fields.Everything())
+
+	c.epStore, c.epController = cache.NewInformer(
+		source,
+		&v1.Endpoints{},
+		0,
+		newResourceEventHandlerFuncs(watchCh))
+	go c.epController.Run(stopCh)
+
+	return watchCh
+}
+
+// WatchAll returns events in the cluster and updates the stores via informer
+// Filters ingresses by labelSelector
+func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan bool) (chan interface{}, error) {
+	watchCh := make(chan interface{}, 10)
+
+	kubeLabelSelector, err := labels.Parse(labelSelector)
 	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
+		return nil, err
 	}
-	stopServices := make(chan bool)
-	chanServices, chanServicesErr, err := c.WatchServices(stopServices)
-	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
-	}
-	stopEndpoints := make(chan bool)
-	chanEndpoints, chanEndpointsErr, err := c.WatchEndpoints(stopEndpoints)
-	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
-	}
+
+	stopIngresses := make(chan struct{})
+	chanIngresses := c.WatchIngresses(kubeLabelSelector, stopIngresses)
+
+	stopServices := make(chan struct{})
+	chanServices := c.WatchServices(stopServices)
+
+	stopEndpoints := make(chan struct{})
+	chanEndpoints := c.WatchEndpoints(stopEndpoints)
+
 	go func() {
 		defer close(watchCh)
-		defer close(errCh)
 		defer close(stopIngresses)
 		defer close(stopServices)
 		defer close(stopEndpoints)
@@ -169,128 +208,63 @@ func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan bool) (chan in
 		for {
 			select {
 			case <-stopCh:
-				stopIngresses <- true
-				stopServices <- true
-				stopEndpoints <- true
 				return
-			case err := <-chanIngressesErr:
-				errCh <- err
-			case err := <-chanServicesErr:
-				errCh <- err
-			case err := <-chanEndpointsErr:
-				errCh <- err
 			case event := <-chanIngresses:
-				watchCh <- event
+				c.fireEvent(event, watchCh)
 			case event := <-chanServices:
-				watchCh <- event
+				c.fireEvent(event, watchCh)
 			case event := <-chanEndpoints:
-				watchCh <- event
+				c.fireEvent(event, watchCh)
 			}
 		}
 	}()
 
-	return watchCh, errCh, nil
+	return watchCh, nil
 }
 
-func (c *clientImpl) do(request *gorequest.SuperAgent) ([]byte, error) {
-	res, body, errs := request.EndBytes()
-	if errs != nil {
-		return nil, fmt.Errorf("failed to create request: GET %q : %v", request.Url, errs)
+// fireEvent checks if all controllers have synced before firing
+// Used after startup or a reconnect
+func (c *clientImpl) fireEvent(event interface{}, watchCh chan interface{}) {
+	if c.ingController.HasSynced() && c.svcController.HasSynced() && c.epController.HasSynced() {
+		watchCh <- event
 	}
-	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("http error %d GET %q: %q", res.StatusCode, request.Url, string(body))
-	}
-	return body, nil
 }
 
-func (c *clientImpl) request(reqURL string, queryContent interface{}) *gorequest.SuperAgent {
-	// Make request to Kubernetes API
-	parsedURL, parseErr := url.Parse(reqURL)
-	if parseErr != nil {
-		log.Errorf("Had issues parsing url %s. Trying anyway.", reqURL)
+// HasNamespace checks if the ingress is in one of the namespaces
+func HasNamespace(ingress *v1beta1.Ingress, namespaces Namespaces) bool {
+	if len(namespaces) == 0 {
+		return true
 	}
-	request := gorequest.New().Get(reqURL)
-	request.Transport.DisableKeepAlives = true
-
-	if parsedURL.Scheme == "https" {
-		pool := x509.NewCertPool()
-		pool.AppendCertsFromPEM(c.caCert)
-		c.tls = &tls.Config{RootCAs: pool}
-		request.TLSClientConfig(c.tls)
-	}
-	if len(c.token) > 0 {
-		request.Header["Authorization"] = "Bearer " + c.token
-	}
-	request.Query(queryContent)
-	return request
-}
-
-// GenericObject generic object
-type GenericObject struct {
-	TypeMeta `json:",inline"`
-	ListMeta `json:"metadata,omitempty"`
-}
-
-func (c *clientImpl) watch(url string, labelSelector string, stopCh <-chan bool) (chan interface{}, chan error, error) {
-	watchCh := make(chan interface{}, 10)
-	errCh := make(chan error, 10)
-
-	// get version
-	body, err := c.do(c.request(url, ""))
-	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to do version request: GET %q : %v", url, err)
-	}
-
-	var generic GenericObject
-	if err := json.Unmarshal(body, &generic); err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to decode version %v", err)
-	}
-	resourceVersion := generic.ResourceVersion
-	queryParams := map[string]string{"watch": "", "resourceVersion": resourceVersion}
-	queryData, err := makeQueryString(queryParams, labelSelector)
-	if err != nil {
-		return watchCh, errCh, fmt.Errorf("Unable to construct query args")
-	}
-	request := c.request(url, queryData)
-	req, err := request.MakeRequest()
-	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to make watch request: GET %q : %v", url, err)
-	}
-	request.Client.Transport = request.Transport
-
-	res, err := request.Client.Do(req)
-	if err != nil {
-		return watchCh, errCh, fmt.Errorf("failed to do watch request: GET %q: %v", url, err)
-	}
-
-	go func() {
-		finishCh := make(chan bool)
-		defer close(finishCh)
-		defer close(watchCh)
-		defer close(errCh)
-		go func() {
-			defer res.Body.Close()
-			for {
-				var eventList interface{}
-				if err := json.NewDecoder(res.Body).Decode(&eventList); err != nil {
-					if !strings.Contains(err.Error(), "net/http: request canceled") {
-						errCh <- fmt.Errorf("failed to decode watch event: GET %q : %v", url, err)
-					}
-					finishCh <- true
-					return
-				}
-				watchCh <- eventList
-			}
-		}()
-		select {
-		case <-stopCh:
-			go func() {
-				request.Transport.CancelRequest(req)
-			}()
-			<-finishCh
-			return
+	for _, n := range namespaces {
+		if ingress.ObjectMeta.Namespace == n {
+			return true
 		}
-	}()
-	return watchCh, errCh, nil
+	}
+	return false
+}
+
+// NewListWatchFromClient creates a new ListWatch from the specified client, resource, namespace, field selector and label selector.
+// Extends cache.NewListWatchFromClient to support labelSelector
+func NewListWatchFromClient(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector, labelSelector labels.Selector) *cache.ListWatch {
+	listFunc := func(options api.ListOptions) (runtime.Object, error) {
+		return c.Get().
+			Namespace(namespace).
+			Resource(resource).
+			VersionedParams(&options, api.ParameterCodec).
+			FieldsSelectorParam(fieldSelector).
+			LabelsSelectorParam(labelSelector).
+			Do().
+			Get()
+	}
+	watchFunc := func(options api.ListOptions) (watch.Interface, error) {
+		return c.Get().
+			Prefix("watch").
+			Namespace(namespace).
+			Resource(resource).
+			VersionedParams(&options, api.ParameterCodec).
+			FieldsSelectorParam(fieldSelector).
+			LabelsSelectorParam(labelSelector).
+			Watch()
+	}
+	return &cache.ListWatch{ListFunc: listFunc, WatchFunc: watchFunc}
 }
