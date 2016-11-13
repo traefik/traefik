@@ -21,7 +21,8 @@
     "angular-ui-bootstrap": "^2.0.0",
     "angular-ui-router": "^0.3.1",
     "bootstrap": "^3.3.6",
-    "moment": "^2.14.1"
+    "moment": "^2.14.1",
+    "nvd3": "^1.8.4"
   },
   "devDependencies": {
     "angular-mocks": "^1.4.2",
