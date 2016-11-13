@@ -1,6 +1,8 @@
 package k8s
 
 import (
+	"time"
+
 	"k8s.io/client-go/1.5/kubernetes"
 	"k8s.io/client-go/1.5/pkg/api"
 	"k8s.io/client-go/1.5/pkg/api/v1"
@@ -12,6 +14,8 @@ import (
 	"k8s.io/client-go/1.5/rest"
 	"k8s.io/client-go/1.5/tools/cache"
 )
+
+const resyncPeriod = time.Minute * 5
 
 // Client is a client for the Kubernetes master.
 type Client interface {
@@ -99,7 +103,7 @@ func (c *clientImpl) WatchIngresses(labelSelector labels.Selector, stopCh <-chan
 	c.ingStore, c.ingController = cache.NewInformer(
 		source,
 		&v1beta1.Ingress{},
-		0,
+		resyncPeriod,
 		newResourceEventHandlerFuncs(watchCh))
 	go c.ingController.Run(stopCh)
 
@@ -140,7 +144,7 @@ func (c *clientImpl) WatchServices(stopCh <-chan struct{}) chan interface{} {
 	c.svcStore, c.svcController = cache.NewInformer(
 		source,
 		&v1.Service{},
-		0,
+		resyncPeriod,
 		newResourceEventHandlerFuncs(watchCh))
 	go c.svcController.Run(stopCh)
 
@@ -173,7 +177,7 @@ func (c *clientImpl) WatchEndpoints(stopCh <-chan struct{}) chan interface{} {
 	c.epStore, c.epController = cache.NewInformer(
 		source,
 		&v1.Endpoints{},
-		0,
+		resyncPeriod,
 		newResourceEventHandlerFuncs(watchCh))
 	go c.epController.Run(stopCh)
 
