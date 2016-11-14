@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/1.5/tools/cache"
 )
 
-const resyncPeriod = time.Minute * 3
+const resyncPeriod = time.Minute * 5
 
 // Client is a client for the Kubernetes master.
 type Client interface {
