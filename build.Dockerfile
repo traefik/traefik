@@ -10,12 +10,9 @@ RUN go get github.com/Masterminds/glide \
 ARG DOCKER_VERSION=1.10.1
 
 # Download docker
-RUN set -ex; \
-    curl https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION} -o /usr/local/bin/docker-${DOCKER_VERSION}; \
-    chmod +x /usr/local/bin/docker-${DOCKER_VERSION}
-
-# Set the default Docker to be run
-RUN ln -s /usr/local/bin/docker-${DOCKER_VERSION} /usr/local/bin/docker
+RUN mkdir -p /usr/local/bin \
+    && curl -SL https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz \
+    | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
 WORKDIR /go/src/github.com/containous/traefik
 
