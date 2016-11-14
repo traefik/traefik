@@ -155,7 +155,7 @@ imports:
 - name: github.com/elazarl/go-bindata-assetfs
   version: 9a6736ed45b44bf3835afeebb3034b57ed329f3e
 - name: github.com/gambol99/go-marathon
-  version: a558128c87724cd7430060ef5aedf39f83937f55
+  version: 6e3f9771c1f9f19b8034e8de6a7ca537c02be7de
 - name: github.com/go-check/check
   version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
@@ -252,6 +252,10 @@ imports:
   version: 8bf1e9bacbf65b10c81d0f4314cf2b1ebef728b5
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
+- name: github.com/stretchr/stew
+  version: 80ef0842b48b329a6120607c817a85aff5a2ec71
+  subpackages:
+  - objects
 - name: github.com/stretchr/testify
   version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
   subpackages:
