@@ -1,5 +1,5 @@
-hash: bd845c6f162c8ba8555b98ebc3543068df6ca41532392d6864561b20a66bd3d4
-updated: 2016-12-05T15:16:37.248731195+01:00
+hash: 26bdc224454872acf1a9a58e0f4c33442a807087286043ed7d8d6640f1a2e8fc
+updated: 2016-12-05T15:22:09.911235155+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -32,7 +32,7 @@ imports:
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
+  version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
@@ -317,6 +317,8 @@ imports:
   - codec
 - name: github.com/unrolled/render
   version: 526faf80cd4b305bb8134abea8d20d5ced74faa6
+- name: github.com/urfave/negroni
+  version: e0e50f7dc431c043cb33f91b09c3419d48b7cff5
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy

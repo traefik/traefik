@@ -23,7 +23,7 @@ type Eureka struct {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Eureka) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ []types.Constraint) error {
+func (provider *Eureka) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
 
 	operation := func() error {
 		configuration, err := provider.buildConfiguration()
