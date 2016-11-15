@@ -510,6 +510,13 @@
 # dcosToken = "xxxxxx"
 
 
+# Set the TCP Keep Alive interval (in seconds) for the Marathon HTTP Client
+#
+# Optional
+# Default: 10
+#
+# keepAlive = 10
+
 ################################################################
 # Mesos configuration backend
 ################################################################

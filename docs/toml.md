@@ -845,6 +845,12 @@ domain = "marathon.localhost"
 # Default: 60
 # dialerTimeout = 5
 
+# Set the TCP Keep Alive interval (in seconds) for the Marathon HTTP Client
+#
+# Optional
+# Default: 10
+#
+# keepAlive = 10
 ```
 
 Labels can be used on containers to override default behaviour:

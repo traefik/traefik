@@ -326,6 +326,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.ExposedByDefault = true
 	defaultMarathon.Constraints = []types.Constraint{}
 	defaultMarathon.DialerTimeout = 60
+	defaultMarathon.KeepAlive = 10
 
 	// default Consul
 	var defaultConsul provider.Consul
