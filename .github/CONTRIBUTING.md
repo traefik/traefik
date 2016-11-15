@@ -12,7 +12,7 @@ You need to run the `binary` target. This will create binaries for Linux platfor
 $ make binary
 docker build -t "traefik-dev:no-more-godep-ever" -f build.Dockerfile .
 Sending build context to Docker daemon 295.3 MB
-Step 0 : FROM golang:1.5
+Step 0 : FROM golang:1.7
  ---> 8c6473912976
 Step 1 : RUN go get github.com/Masterminds/glide
 [...]
@@ -30,8 +30,7 @@ traefik*
 
 ###### Setting up your `go` environment
 
-- You need `go` v1.5+ (1.7 is acceptable)
-- You need to set `$ export GO15VENDOREXPERIMENT=1` environment variable if you are using go v1.5 (it is already enabled in 1.6+)
+- You need `go` v1.7+
 - It is recommended you clone Træfɪk into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
 - This will allow your `GOPATH` and `PATH` variable to be set to `~/go` via:
 ```
