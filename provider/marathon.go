@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"net"
 	"net/url"
 	"sort"
 	"strconv"
@@ -26,13 +27,14 @@ var _ Provider = (*Marathon)(nil)
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
 	BaseProvider
-	Endpoint                string     `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
-	Domain                  string     `description:"Default domain used"`
-	ExposedByDefault        bool       `description:"Expose Marathon apps by default"`
-	GroupsAsSubDomains      bool       `description:"Convert Marathon groups to subdomains"`
-	DCOSToken               string     `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
-	MarathonLBCompatibility bool       `description:"Add compatibility with marathon-lb labels"`
-	TLS                     *ClientTLS `description:"Enable Docker TLS support"`
+	Endpoint                string        `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
+	Domain                  string        `description:"Default domain used"`
+	ExposedByDefault        bool          `description:"Expose Marathon apps by default"`
+	GroupsAsSubDomains      bool          `description:"Convert Marathon groups to subdomains"`
+	DCOSToken               string        `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
+	MarathonLBCompatibility bool          `description:"Add compatibility with marathon-lb labels"`
+	TLS                     *ClientTLS    `description:"Enable Docker TLS support"`
+	DialerTimeout           time.Duration `description:"Set a non-default connection timeout for Marathon"`
 	Basic                   *MarathonBasic
 	marathonClient          marathon.Marathon
 }
@@ -70,6 +72,9 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 		config.HTTPClient = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: TLSConfig,
+				DialContext: (&net.Dialer{
+					Timeout: time.Second * provider.DialerTimeout,
+				}).DialContext,
 			},
 		}
 		client, err := marathon.NewClient(config)
