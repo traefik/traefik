@@ -133,7 +133,7 @@ func (server *Server) Close() {
 		}
 	}(ctx)
 	server.stopLeadership()
-	server.routinesPool.Stop()
+	server.routinesPool.Cleanup()
 	close(server.configurationChan)
 	close(server.configurationValidatedChan)
 	signal.Stop(server.signals)
