@@ -68,7 +68,7 @@ func (t *localTransaction) Commit(object cluster.Object) error {
 	t.LocalStore.account = object.(*Account)
 	defer t.storageLock.Unlock()
 	if t.dirty {
-		return fmt.Errorf("Transaction already used. Please begin a new one.")
+		return fmt.Errorf("transaction already used, please begin a new one")
 	}
 
 	// write account to file

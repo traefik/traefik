@@ -56,7 +56,7 @@ type Datastore struct {
 }
 
 // NewDataStore creates a Datastore
-func NewDataStore(kvSource staert.KvSource, ctx context.Context, object Object, listener Listener) (*Datastore, error) {
+func NewDataStore(ctx context.Context, kvSource staert.KvSource, object Object, listener Listener) (*Datastore, error) {
 	datastore := Datastore{
 		kv:        kvSource,
 		ctx:       ctx,
@@ -230,7 +230,7 @@ func (s *datastoreTransaction) Commit(object Object) error {
 	s.localLock.Lock()
 	defer s.localLock.Unlock()
 	if s.dirty {
-		return fmt.Errorf("Transaction already used. Please begin a new one.")
+		return fmt.Errorf("transaction already used, please begin a new one")
 	}
 	s.Datastore.meta.object = object
 	err := s.Datastore.meta.Marshall()
