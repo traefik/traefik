@@ -3,8 +3,10 @@
 source "$(dirname "$BASH_SOURCE")/.validate"
 
 IFS=$'\n'
-files=( $(validate_diff --diff-filter=ACMR --name-only -- '*.go' | grep -v '^vendor/\|autogen' || true) )
+src=( $(validate_diff --diff-filter=ACMR --name-only -- '*.go' | grep -v '^vendor/\|autogen' || true) )
+docs=( $(validate_diff --diff-filter=ACMR --name-only -- 'docs/*.md') )
 unset IFS
+files=("${src[@]}" "${docs[@]}")
 
 errors=()
 for f in "${files[@]}"; do
@@ -16,7 +18,7 @@ for f in "${files[@]}"; do
 done
 
 if [ ${#errors[@]} -eq 0 ]; then
-	echo 'Congratulations!  All Go source files have been checked for common mispellings.'
+	echo 'Congratulations!  All Go source files and docs have been checked for common mispellings.'
 else
 	{
 		echo "Errors from misspell:"
