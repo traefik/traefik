@@ -39,7 +39,7 @@ func (l *Leadership) Participate(pool *safe.Pool) {
 		defer log.Debugf("Node %s no more running for election", l.Cluster.Node)
 		backOff := backoff.NewExponentialBackOff()
 		operation := func() error {
-			return l.run(l.candidate, ctx)
+			return l.run(ctx, l.candidate)
 		}
 
 		notify := func(err error, time time.Duration) {
@@ -63,7 +63,7 @@ func (l *Leadership) Resign() {
 	log.Infof("Node %s resigned", l.Cluster.Node)
 }
 
-func (l *Leadership) run(candidate *leadership.Candidate, ctx context.Context) error {
+func (l *Leadership) run(ctx context.Context, candidate *leadership.Candidate) error {
 	electedCh, errCh := candidate.RunForElection()
 	for {
 		select {

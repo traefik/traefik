@@ -446,9 +446,9 @@ func (s *ConsulSuite) TestDatastore(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	ctx := context.Background()
-	datastore1, err := cluster.NewDataStore(*kvSource, ctx, &TestStruct{}, nil)
+	datastore1, err := cluster.NewDataStore(ctx, *kvSource, &TestStruct{}, nil)
 	c.Assert(err, checker.IsNil)
-	datastore2, err := cluster.NewDataStore(*kvSource, ctx, &TestStruct{}, nil)
+	datastore2, err := cluster.NewDataStore(ctx, *kvSource, &TestStruct{}, nil)
 	c.Assert(err, checker.IsNil)
 
 	setter1, _, err := datastore1.Begin()
