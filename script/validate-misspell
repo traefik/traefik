@@ -1,0 +1,31 @@
+#!/bin/bash
+
+source "$(dirname "$BASH_SOURCE")/.validate"
+
+IFS=$'\n'
+files=( $(validate_diff --diff-filter=ACMR --name-only -- '*.go' | grep -v '^vendor/\|autogen' || true) )
+unset IFS
+
+errors=()
+for f in "${files[@]}"; do
+	# we use source text here so we also check spelling of variable names
+	failedSpell=$(misspell -source=text "$f")
+	if [ "$failedSpell" ]; then
+		errors+=( "$failedSpell" )
+	fi
+done
+
+if [ ${#errors[@]} -eq 0 ]; then
+	echo 'Congratulations!  All Go source files have been checked for common mispellings.'
+else
+	{
+		echo "Errors from misspell:"
+		for err in "${errors[@]}"; do
+			echo "$err"
+		done
+		echo
+		echo 'Please fix the above errors. You can test via "misspell" and commit the result.'
+		echo
+	} >&2
+	false
+fi
