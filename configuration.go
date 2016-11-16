@@ -233,10 +233,10 @@ func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
 			if errKey == nil {
 				isAPath = true
 			} else {
-				return nil, fmt.Errorf("Bad TLS Certificate KeyFile format. Expected a path.")
+				return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
 			}
 		} else if errKey == nil {
-			return nil, fmt.Errorf("Bad TLS Certificate KeyFile format. Expected a path.")
+			return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
 		}
 
 		cert := tls.Certificate{}
