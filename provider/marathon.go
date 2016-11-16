@@ -26,14 +26,15 @@ var _ Provider = (*Marathon)(nil)
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
 	BaseProvider
-	Endpoint           string     `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
-	Domain             string     `description:"Default domain used"`
-	ExposedByDefault   bool       `description:"Expose Marathon apps by default"`
-	GroupsAsSubDomains bool       `description:"Convert Marathon groups to subdomains"`
-	DCOSToken          string     `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
-	TLS                *ClientTLS `description:"Enable Docker TLS support"`
-	Basic              *MarathonBasic
-	marathonClient     marathon.Marathon
+	Endpoint                string     `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
+	Domain                  string     `description:"Default domain used"`
+	ExposedByDefault        bool       `description:"Expose Marathon apps by default"`
+	GroupsAsSubDomains      bool       `description:"Convert Marathon groups to subdomains"`
+	DCOSToken               string     `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
+	MarathonLBCompatibility bool       `description:"Add compatibility with marathon-lb labels"`
+	TLS                     *ClientTLS `description:"Enable Docker TLS support"`
+	Basic                   *MarathonBasic
+	marathonClient          marathon.Marathon
 }
 
 // MarathonBasic holds basic authentication specific configurations
@@ -49,7 +50,7 @@ type lightMarathonClient interface {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	provider.Constraints = append(provider.Constraints, constraints...)
 	operation := func() error {
 		config := marathon.NewDefaultConfig()
@@ -194,6 +195,11 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 	}
 	label, _ := provider.getLabel(application, "traefik.tags")
 	constraintTags := strings.Split(label, ",")
+	if provider.MarathonLBCompatibility {
+		if label, err := provider.getLabel(application, "HAPROXY_GROUP"); err == nil {
+			constraintTags = append(constraintTags, label)
+		}
+	}
 	if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Application %v pruned by '%v' constraint", application.ID, failingConstraint.String())
@@ -213,10 +219,7 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 		log.Debugf("Filtering marathon task %s specifying both traefik.portIndex and traefik.port labels", task.AppID)
 		return false
 	}
-	if portIndexLabel == "" && portValueLabel == "" && len(application.Ports) > 1 {
-		log.Debugf("Filtering marathon task %s with more than 1 port and no traefik.portIndex or traefik.port label", task.AppID)
-		return false
-	}
+
 	if portIndexLabel != "" {
 		index, err := strconv.Atoi((*application.Labels)["traefik.portIndex"])
 		if err != nil || index < 0 || index > len(application.Ports)-1 {
@@ -263,6 +266,11 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 func (provider *Marathon) applicationFilter(app marathon.Application, filteredTasks []marathon.Task) bool {
 	label, _ := provider.getLabel(app, "traefik.tags")
 	constraintTags := strings.Split(label, ",")
+	if provider.MarathonLBCompatibility {
+		if label, err := provider.getLabel(app, "HAPROXY_GROUP"); err == nil {
+			constraintTags = append(constraintTags, label)
+		}
+	}
 	if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Application %v pruned by '%v' constraint", app.ID, failingConstraint.String())
@@ -383,6 +391,11 @@ func (provider *Marathon) getEntryPoints(application marathon.Application) []str
 func (provider *Marathon) getFrontendRule(application marathon.Application) string {
 	if label, err := provider.getLabel(application, "traefik.frontend.rule"); err == nil {
 		return label
+	}
+	if provider.MarathonLBCompatibility {
+		if label, err := provider.getLabel(application, "HAPROXY_0_VHOST"); err == nil {
+			return "Host:" + label
+		}
 	}
 	return "Host:" + provider.getSubDomain(application.ID) + "." + provider.Domain
 }

@@ -58,6 +58,7 @@ type dockerData struct {
 	Name            string
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
+	Health          string
 }
 
 // NetworkSettings holds the networks data to the Docker provider
@@ -113,7 +114,7 @@ func (provider *Docker) createClient() (client.APIClient, error) {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	provider.Constraints = append(provider.Constraints, constraints...)
 	// TODO register this routine in pool, and watch for stop channel
 	safe.Go(func() {
@@ -214,6 +215,9 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 					}
 					eventHandler.Handle("start", startStopHandle)
 					eventHandler.Handle("die", startStopHandle)
+					eventHandler.Handle("health_status: healthy", startStopHandle)
+					eventHandler.Handle("health_status: unhealthy", startStopHandle)
+					eventHandler.Handle("health_status: starting", startStopHandle)
 
 					errChan := events.MonitorWithHandler(ctx, dockerClient, options, eventHandler)
 					if err := <-errChan; err != nil {
@@ -360,10 +364,6 @@ func (provider *Docker) containerFilter(container dockerData) bool {
 		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
 		return false
 	}
-	if len(container.NetworkSettings.Ports) > 1 && err != nil {
-		log.Debugf("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
-		return false
-	}
 
 	if !isContainerEnabled(container, provider.ExposedByDefault) {
 		log.Debugf("Filtering disabled container %s", container.Name)
@@ -375,6 +375,11 @@ func (provider *Docker) containerFilter(container dockerData) bool {
 		if failingConstraint != nil {
 			log.Debugf("Container %v pruned by '%v' constraint", container.Name, failingConstraint.String())
 		}
+		return false
+	}
+
+	if container.Health != "" && container.Health != "healthy" {
+		log.Debugf("Filtering unhealthy or starting container %s", container.Name)
 		return false
 	}
 
@@ -578,6 +583,10 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 
 	}
 
+	if container.State != nil && container.State.Health != nil {
+		dockerData.Health = container.State.Health.Status
+	}
+
 	return dockerData
 }
 
@@ -602,7 +611,8 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 		return []dockerData{}, err
 	}
 	for _, network := range networkList {
-		networkMap[network.ID] = &network
+		networkToAdd := network
+		networkMap[network.ID] = &networkToAdd
 	}
 
 	var dockerDataList []dockerData

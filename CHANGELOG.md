@@ -1,5 +1,99 @@
 # Change Log
 
+## [v1.1.0-rc4](https://github.com/containous/traefik/tree/v1.1.0-rc4) (2016-11-10)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.1.0-rc3...v1.1.0-rc4)
+
+**Implemented enhancements:**
+
+- Feature Request: Enable Health checks to containers. [\#540](https://github.com/containous/traefik/issues/540)
+
+**Fixed bugs:**
+
+- Traefik stopped serving on upgrade to v1.1.0-rc3 [\#807](https://github.com/containous/traefik/issues/807)
+- Traefik cannot read constraints from KV [\#794](https://github.com/containous/traefik/issues/794)
+- HTTP2 - configuration [\#790](https://github.com/containous/traefik/issues/790)
+- Allow multiple certificates on a single entrypoint when trying to use TLS? [\#747](https://github.com/containous/traefik/issues/747)
+
+**Closed issues:**
+
+- LoadBalancing doesn't work in single node Swarm-mode [\#815](https://github.com/containous/traefik/issues/815)
+- cannot connect to docker daemon [\#813](https://github.com/containous/traefik/issues/813)
+- Let's encrypt configuration not working [\#805](https://github.com/containous/traefik/issues/805)
+- Question: Wildcard Host for Kubernetes Ingress [\#792](https://github.com/containous/traefik/issues/792)
+- Multiple subdomains for Marathon backend. [\#785](https://github.com/containous/traefik/issues/785)
+- traefik-1.1.0-rc1: build error [\#781](https://github.com/containous/traefik/issues/781)
+- Multiple routes support with Docker or Marathon labels [\#118](https://github.com/containous/traefik/issues/118)
+
+**Merged pull requests:**
+
+- Prepare release v1.1.0 rc4 [\#822](https://github.com/containous/traefik/pull/822) ([emilevauge](https://github.com/emilevauge))
+- Fix multiple issues [\#814](https://github.com/containous/traefik/pull/814) ([emilevauge](https://github.com/emilevauge))
+- Fix ACME renew & add version check [\#783](https://github.com/containous/traefik/pull/783) ([emilevauge](https://github.com/emilevauge))
+- Use first port by default [\#782](https://github.com/containous/traefik/pull/782) ([guilhem](https://github.com/guilhem))
+
+## [v1.1.0-rc3](https://github.com/containous/traefik/tree/v1.1.0-rc3) (2016-10-26)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.1.0-rc2...v1.1.0-rc3)
+
+**Fixed bugs:**
+
+- Cannot provide multiple certificates using flag [\#757](https://github.com/containous/traefik/issues/757)
+- traefik \* Users: unsupported type: slice [\#743](https://github.com/containous/traefik/issues/743)
+- \[Docker swarm mode\] The traefik.docker.network seems to have no effect [\#719](https://github.com/containous/traefik/issues/719)
+- Case sensitive domain names breaks routing  [\#562](https://github.com/containous/traefik/issues/562)
+
+**Closed issues:**
+
+- dependencies installation error [\#755](https://github.com/containous/traefik/issues/755)
+- k8s provider w/ acme? [\#752](https://github.com/containous/traefik/issues/752)
+- Documented ProvidersThrottleDuration value is invalid [\#741](https://github.com/containous/traefik/issues/741)
+- Loadbalaning issues with traefik and Docker Swarm cluster [\#730](https://github.com/containous/traefik/issues/730)
+- issues with marathon app ids containing a dot [\#726](https://github.com/containous/traefik/issues/726)
+- How Routing traffic depending on path not domain in docker [\#706](https://github.com/containous/traefik/issues/706)
+- Traefik crashes when using Consul catalog [\#699](https://github.com/containous/traefik/issues/699)
+- File Watcher for rules does not work  [\#683](https://github.com/containous/traefik/issues/683)
+
+**Merged pull requests:**
+
+- Fix ResponseRecorder Flush [\#776](https://github.com/containous/traefik/pull/776) ([emilevauge](https://github.com/emilevauge))
+- Use sdnotify for systemd [\#768](https://github.com/containous/traefik/pull/768) ([guilhem](https://github.com/guilhem))
+- Fix providers throttle duration doc [\#760](https://github.com/containous/traefik/pull/760) ([emilevauge](https://github.com/emilevauge))
+- Fix mapstructure issue with anonymous slice [\#759](https://github.com/containous/traefik/pull/759) ([emilevauge](https://github.com/emilevauge))
+- Fix multiple certificates using flag [\#758](https://github.com/containous/traefik/pull/758) ([emilevauge](https://github.com/emilevauge))
+- Really fix deploy ghr... [\#748](https://github.com/containous/traefik/pull/748) ([emilevauge](https://github.com/emilevauge))
+
+## [v1.1.0-rc2](https://github.com/containous/traefik/tree/v1.1.0-rc2) (2016-10-17)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.1.0-rc1...v1.1.0-rc2)
+
+**Implemented enhancements:**
+
+- Support healthcheck if present for docker [\#666](https://github.com/containous/traefik/issues/666)
+
+**Closed issues:**
+
+- Sensible configuration for consulCatalog [\#737](https://github.com/containous/traefik/issues/737)
+- Traefik ignoring container listening in more than one TCP port [\#734](https://github.com/containous/traefik/issues/734)
+- Error when using HA acme in kubernetes with etcd [\#725](https://github.com/containous/traefik/issues/725)
+- \[Docker swarm mode\] No round robin when using service [\#718](https://github.com/containous/traefik/issues/718)
+- Dose it support docker swarm mode  [\#712](https://github.com/containous/traefik/issues/712)
+- Kubernetes - Undefined backend  [\#710](https://github.com/containous/traefik/issues/710)
+- Constraints on Consul Catalogue not working as expected [\#703](https://github.com/containous/traefik/issues/703)
+- docker run syntax in swarm example has changed [\#528](https://github.com/containous/traefik/issues/528)
+- Secure WebSockets [\#467](https://github.com/containous/traefik/issues/467)
+
+**Merged pull requests:**
+
+- Fix case sensitive host [\#733](https://github.com/containous/traefik/pull/733) ([emilevauge](https://github.com/emilevauge))
+- Update Kubernetes examples [\#731](https://github.com/containous/traefik/pull/731) ([Starefossen](https://github.com/Starefossen))
+- fIx marathon template with dots in ID [\#728](https://github.com/containous/traefik/pull/728) ([emilevauge](https://github.com/emilevauge))
+- Fix networkMap construction in ListServices [\#724](https://github.com/containous/traefik/pull/724) ([vincentlepot](https://github.com/vincentlepot))
+- Add basic compatibility with marathon-lb [\#720](https://github.com/containous/traefik/pull/720) ([guilhem](https://github.com/guilhem))
+- Add Ed's video at ContainerCamp [\#717](https://github.com/containous/traefik/pull/717) ([emilevauge](https://github.com/emilevauge))
+- Add documentation for Træfik on docker swarm mode [\#715](https://github.com/containous/traefik/pull/715) ([vdemeester](https://github.com/vdemeester))
+- Remove duplicated link to Kubernetes.io in README.md [\#713](https://github.com/containous/traefik/pull/713) ([oscerd](https://github.com/oscerd))
+- Show current version in web UI [\#709](https://github.com/containous/traefik/pull/709) ([vhf](https://github.com/vhf))
+- Add support for docker healthcheck 👼 [\#708](https://github.com/containous/traefik/pull/708) ([vdemeester](https://github.com/vdemeester))
+- Fix syntax in Swarm example. Resolves \#528 [\#707](https://github.com/containous/traefik/pull/707) ([billglover](https://github.com/billglover))
+
 ## [v1.1.0-rc1](https://github.com/containous/traefik/tree/v1.1.0-rc1) (2016-09-30)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.0.0...v1.1.0-rc1)
 

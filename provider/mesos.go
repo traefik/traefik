@@ -42,7 +42,7 @@ type Mesos struct {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Mesos) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Mesos) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	operation := func() error {
 
 		// initialize logging
@@ -210,10 +210,6 @@ func mesosTaskFilter(task state.Task, exposedByDefaultFlag bool) bool {
 	portValueLabel := labels(task, "traefik.port")
 	if portIndexLabel != "" && portValueLabel != "" {
 		log.Debugf("Filtering mesos task %s specifying both traefik.portIndex and traefik.port labels", task.Name)
-		return false
-	}
-	if portIndexLabel == "" && portValueLabel == "" && len(task.DiscoveryInfo.Ports.DiscoveryPorts) > 1 {
-		log.Debugf("Filtering mesos task %s with more than 1 port and no traefik.portIndex or traefik.port label", task.Name)
 		return false
 	}
 	if portIndexLabel != "" {

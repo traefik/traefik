@@ -28,6 +28,11 @@
               </ul>
               <ul class="nav navbar-nav navbar-right">
                 <li>
+                  <a ng-controller="VersionController" href="https://github.com/containous/traefik/tree/{{version.Version}}" target="_blank">
+                    <small>{{version.Version}} / {{version.Codename}}</small>
+                  </a>
+                </li>
+                <li>
                   <a href="https://docs.traefik.io" target="_blank">Documentation</a>
                 </li>
                 <li>
