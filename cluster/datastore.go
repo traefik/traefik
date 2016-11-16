@@ -248,6 +248,6 @@ func (s *datastoreTransaction) Commit(object Object) error {
 	}
 
 	s.dirty = true
-	log.Debugf("Transaction commited %s", s.id)
+	log.Debugf("Transaction committed %s", s.id)
 	return nil
 }

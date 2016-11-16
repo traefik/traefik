@@ -270,7 +270,7 @@ Here is an example of backends and servers definition:
 
 Træfɪk's configuration has two parts: 
 
-- The [static Træfɪk configuration](/basics#static-trfk-configuration) which is loaded only at the begining. 
+- The [static Træfɪk configuration](/basics#static-trfk-configuration) which is loaded only at the beginning. 
 - The [dynamic Træfɪk configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
 
 
@@ -356,7 +356,7 @@ All those related flags will be displayed with :
 $ traefik [command] --help
 ```
 
-Note that each command is described at the begining of the help section:
+Note that each command is described at the beginning of the help section:
 
 ```bash
 $ traefik --help
