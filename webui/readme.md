@@ -19,12 +19,12 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
 ## How to build (only for frontends developer)
 
-- prerequisite: [Node 4+ and NPM 3+](https://nodejs.org)
+- prerequisite: [Node 4+](https://nodejs.org) [yarn](https://yarnpkg.com/)
 
 - Go to the directory `webui`
 
 - To install dependencies, execute the following commands:
-  - `npm install`
+  - `yarn install`
 
 - Build static Web UI, execute the following command:
   - `gulp`
@@ -62,6 +62,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 ## Libraries
 
 - [Node](https://nodejs.org)
+- [Yarn](https://yarnpkg.com/)
 - [Generator FountainJS](https://github.com/FountainJS/generator-fountain-webapp)
 - [Webpack](https://github.com/webpack/webpack)
 - [AngularJS](https://docs.angularjs.org/api)
