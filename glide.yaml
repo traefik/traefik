@@ -64,9 +64,6 @@ import:
   version: b2fad6198110326662e9e356a97199078a4a775c
   subpackages:
   - acme
-- package: golang.org/x/net
-  subpackages:
-  - context
 - package: gopkg.in/fsnotify.v1
 - package: github.com/libkermit/compose
   version: cadc5a3b83a15790174bd7fbc75ea2529785e772

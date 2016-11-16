@@ -5,12 +5,12 @@ import (
 	"os/exec"
 	"time"
 
+	"context"
 	"github.com/containous/staert"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/consul"
 	"github.com/go-check/check"
-	"golang.org/x/net/context"
 
 	"errors"
 	"github.com/containous/traefik/cluster"

@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"errors"
 	"math"
 	"net"
@@ -9,8 +10,6 @@ import (
 	"strings"
 	"text/template"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"

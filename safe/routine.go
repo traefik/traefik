@@ -1,8 +1,8 @@
 package safe
 
 import (
+	"context"
 	"github.com/containous/traefik/log"
-	"golang.org/x/net/context"
 	"runtime/debug"
 	"sync"
 )
@@ -21,18 +21,20 @@ type Pool struct {
 	waitGroup   sync.WaitGroup
 	lock        sync.Mutex
 	baseCtx     context.Context
+	baseCancel  context.CancelFunc
 	ctx         context.Context
 	cancel      context.CancelFunc
 }
 
 // NewPool creates a Pool
 func NewPool(parentCtx context.Context) *Pool {
-	baseCtx, _ := context.WithCancel(parentCtx)
+	baseCtx, baseCancel := context.WithCancel(parentCtx)
 	ctx, cancel := context.WithCancel(baseCtx)
 	return &Pool{
-		baseCtx: baseCtx,
-		ctx:     ctx,
-		cancel:  cancel,
+		baseCtx:    baseCtx,
+		baseCancel: baseCancel,
+		ctx:        ctx,
+		cancel:     cancel,
 	}
 }
 
@@ -88,6 +90,14 @@ func (p *Pool) Stop() {
 	for _, routine := range p.routines {
 		close(routine.stop)
 	}
+}
+
+// Cleanup releases resources used by the pool, and should be called when the pool will no longer be used
+func (p *Pool) Cleanup() {
+	p.Stop()
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	p.baseCancel()
 }
 
 // Start starts all stopped routines
