@@ -1,10 +1,4 @@
 #!/bin/bash
 set -e
 
-# Fix for http://stackoverflow.com/questions/37284423/glog-flag-redefined-error
-# go test github.com/containous/traefik/provider 
-#*/github.com/containous/traefik/provider/_test/provider.test flag redefined: log_dir
-#panic: */github.com/containous/traefik/provider/_test/provider.test flag redefined: log_dir
-rm -rf vendor/k8s.io/client-go/1.5/vendor/github.com/golang/glog/
-
 go generate

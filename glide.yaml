@@ -58,26 +58,23 @@ import:
 - package: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - package: github.com/vulcand/vulcand
+  version: 42492a3a85e294bdbdd1bcabb8c12769a81ea284
   subpackages:
   - plugin/rewrite
 - package: github.com/xenolf/lego
   version: b2fad6198110326662e9e356a97199078a4a775c
   subpackages:
   - acme
+- package: golang.org/x/net
+  version: release-branch.go1.7
+  subpackages:
+  - context
 - package: gopkg.in/fsnotify.v1
-- package: github.com/libkermit/compose
-  version: cadc5a3b83a15790174bd7fbc75ea2529785e772
-- package: github.com/libkermit/docker
-  version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
 - package: github.com/docker/docker
   version: 534753663161334baba06f13b8efa4cad22b5bc5
   subpackages:
   - namesgenerator
-- package: github.com/go-check/check
-- package: github.com/docker/libcompose
-  version: d1876c1d68527a49c0aac22a0b161acc7296b740
 - package: github.com/mattn/go-shellwords
-- package: github.com/vdemeester/shakers
 - package: github.com/ryanuber/go-glob
 - package: github.com/mesos/mesos-go
   subpackages:
@@ -99,8 +96,10 @@ import:
 - package: github.com/docker/leadership
 - package: github.com/satori/go.uuid
   version: ^1.1.0
+- package: k8s.io/client-go
+  version: ^v1.5.0
+- package: github.com/gogo/protobuf
+  version: 0.3
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
-- package: k8s.io/client-go
-  version: ^v1.5.0
