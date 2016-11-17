@@ -349,6 +349,9 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.Mesos != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Mesos)
 	}
+	if server.globalConfiguration.Eureka != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Eureka)
+	}
 }
 
 func (server *Server) startProviders() {
