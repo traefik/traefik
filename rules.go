@@ -45,7 +45,7 @@ func (r *Rules) hostRegexp(hosts ...string) *mux.Route {
 func (r *Rules) path(paths ...string) *mux.Route {
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.Path(types.CanonicalDomain(path))
+		router.Path(strings.TrimSpace(path))
 	}
 	return r.route.route
 }
@@ -53,7 +53,7 @@ func (r *Rules) path(paths ...string) *mux.Route {
 func (r *Rules) pathPrefix(paths ...string) *mux.Route {
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(types.CanonicalDomain(path))
+		router.PathPrefix(strings.TrimSpace(path))
 	}
 	return r.route.route
 }
@@ -69,7 +69,7 @@ func (r *Rules) pathStrip(paths ...string) *mux.Route {
 	r.route.stripPrefixes = paths
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.Path(types.CanonicalDomain(path))
+		router.Path(strings.TrimSpace(path))
 	}
 	return r.route.route
 }
@@ -79,7 +79,7 @@ func (r *Rules) pathPrefixStrip(paths ...string) *mux.Route {
 	r.route.stripPrefixes = paths
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(types.CanonicalDomain(path))
+		router.PathPrefix(strings.TrimSpace(path))
 	}
 	return r.route.route
 }
