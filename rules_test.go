@@ -40,15 +40,23 @@ func TestParseTwoRules(t *testing.T) {
 	routeResult, err := rules.Parse(expression)
 
 	if err != nil {
-		t.Fatal("Error while building route for Host:foo.bar;Path:/foobar")
+		t.Fatal("Error while building route for Host:foo.bar;Path:/FOObar")
 	}
 
 	request, err := http.NewRequest("GET", "http://foo.bar/foobar", nil)
 	routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
 
+	if routeMatch == true {
+		t.Log(err)
+		t.Fatal("Rule Host:foo.bar;Path:/FOObar don't match")
+	}
+
+	request, err = http.NewRequest("GET", "http://foo.bar/FOObar", nil)
+	routeMatch = routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
+
 	if routeMatch == false {
 		t.Log(err)
-		t.Fatal("Rule Host:foo.bar;Path:/foobar don't match")
+		t.Fatal("Rule Host:foo.bar;Path:/FOObar don't match")
 	}
 }
 
