@@ -119,11 +119,12 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	}
 
 	datastore, err := cluster.NewDataStore(
+		leadership.Pool.Ctx(),
 		staert.KvSource{
 			Store:  leadership.Store,
 			Prefix: a.Storage,
 		},
-		leadership.Pool.Ctx(), &Account{},
+		&Account{},
 		listener)
 	if err != nil {
 		return err

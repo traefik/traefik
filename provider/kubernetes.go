@@ -130,6 +130,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 						log.Debugf("Received event from kubernetes %+v", event)
 						templateObjects, err := provider.loadIngresses(k8sClient)
 						if err != nil {
+							stopWatch <- true
 							return err
 						}
 						if reflect.DeepEqual(provider.lastConfiguration.Get(), templateObjects) {
