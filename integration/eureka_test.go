@@ -38,10 +38,10 @@ func (s *EurekaSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	eurekaUrl := "http://" + eurekaHost + ":8761/eureka/apps"
+	eurekaURL := "http://" + eurekaHost + ":8761/eureka/apps"
 
 	// wait for eureka
-	err = utils.TryRequest(eurekaUrl, 60*time.Second, func(res *http.Response) error {
+	err = utils.TryRequest(eurekaURL, 60*time.Second, func(res *http.Response) error {
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,7 @@ func (s *EurekaSuite) TestSimpleConfiguration(c *check.C) {
 	}
 	// add in eureka
 	err = tmpl.Execute(buf, templateVars)
-	resp, err := http.Post(eurekaUrl+"/tests-integration-traefik", "application/json", strings.NewReader(buf.String()))
+	resp, err := http.Post(eurekaURL+"/tests-integration-traefik", "application/json", strings.NewReader(buf.String()))
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 204)
 
