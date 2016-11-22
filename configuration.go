@@ -48,6 +48,7 @@ type GlobalConfiguration struct {
 	Boltdb                    *provider.BoltDb        `description:"Enable Boltdb backend"`
 	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
 	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
+	Eureka                    *provider.Eureka        `description:"Enable Eureka backend"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -233,10 +234,10 @@ func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
 			if errKey == nil {
 				isAPath = true
 			} else {
-				return nil, fmt.Errorf("Bad TLS Certificate KeyFile format. Expected a path.")
+				return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
 			}
 		} else if errKey == nil {
-			return nil, fmt.Errorf("Bad TLS Certificate KeyFile format. Expected a path.")
+			return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
 		}
 
 		cert := tls.Certificate{}

@@ -1,8 +1,14 @@
-hash: 39ff28cc1d13d5915a870b14491ece1849c4eaf5a56cecd50a7676ecee6c6143
-updated: 2016-10-06T14:06:39.455848971+02:00
+hash: aae2fd761966717bcc30d8c03590cc28df8af49b36cc1d87689512cdfb44475e
+updated: 2016-11-16T21:37:51.673291661+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
+- name: github.com/ArthurHlt/go-eureka-client
+  version: ba361cd0f9f571b4e871421423d2f02f5689c3d2
+  subpackages:
+  - eureka
+- name: github.com/ArthurHlt/gominlog
+  version: 068c01ce147ad68fca25ef3fa29ae5395ae273ab
 - name: github.com/boltdb/bolt
   version: f4c032d907f61f08dba2d719c58f108a1abb8e81
 - name: github.com/BurntSushi/toml
@@ -35,6 +41,8 @@ imports:
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
+- name: github.com/daviddengcn/go-colortext
+  version: 3b18c8575a432453d41fdafb340099fff5bba2f7
 - name: github.com/docker/distribution
   version: 99cb7c0946d2f5a38015443e515dc916295064d7
   subpackages:
@@ -340,7 +348,7 @@ testImports:
 - name: github.com/libkermit/docker-check
   version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
 - name: github.com/spf13/pflag
-  version: 08b1a584251b5b62f458943640fc8ebd4d50aaa5
+  version: 5644820622454e71517561946e3d94b9f9db6842
 - name: github.com/vbatts/tar-split
   version: bd4c5d64c3e9297f410025a3b1bd0c58f659e721
   subpackages:

@@ -1,6 +1,7 @@
 package acme
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -12,7 +13,6 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/xenolf/lego/acme"
-	"golang.org/x/net/context"
 	"io/ioutil"
 	fmtlog "log"
 	"os"
@@ -119,11 +119,12 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	}
 
 	datastore, err := cluster.NewDataStore(
+		leadership.Pool.Ctx(),
 		staert.KvSource{
 			Store:  leadership.Store,
 			Prefix: a.Storage,
 		},
-		leadership.Pool.Ctx(), &Account{},
+		&Account{},
 		listener)
 	if err != nil {
 		return err

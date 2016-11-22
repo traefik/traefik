@@ -4,6 +4,7 @@ Copyright
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -18,8 +19,6 @@ import (
 	"sort"
 	"syscall"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
@@ -134,7 +133,7 @@ func (server *Server) Close() {
 		}
 	}(ctx)
 	server.stopLeadership()
-	server.routinesPool.Stop()
+	server.routinesPool.Cleanup()
 	close(server.configurationChan)
 	close(server.configurationValidatedChan)
 	signal.Stop(server.signals)
@@ -349,6 +348,9 @@ func (server *Server) configureProviders() {
 	}
 	if server.globalConfiguration.Mesos != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Mesos)
+	}
+	if server.globalConfiguration.Eureka != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Eureka)
 	}
 }
 
