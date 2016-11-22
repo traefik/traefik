@@ -418,9 +418,7 @@ func (provider *Marathon) getFrontendBackend(application marathon.Application) s
 func (provider *Marathon) getSubDomain(name string) string {
 	if provider.GroupsAsSubDomains {
 		splitedName := strings.Split(strings.TrimPrefix(name, "/"), "/")
-		for i, j := 0, len(splitedName)-1; i < j; i, j = i+1, j-1 {
-			splitedName[i], splitedName[j] = splitedName[j], splitedName[i]
-		}
+		reverseStringSlice(&splitedName)
 		reverseName := strings.Join(splitedName, ".")
 		return reverseName
 	}
