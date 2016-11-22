@@ -78,7 +78,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 							return err
 						}
 						if reflect.DeepEqual(provider.lastConfiguration.Get(), templateObjects) {
-							log.Debug("Skipping event")
+							log.Debugf("Skipping event from kubernetes %+v", event)
 						} else {
 							provider.lastConfiguration.Set(templateObjects)
 							configurationChan <- types.ConfigMessage{

@@ -187,27 +187,21 @@ func (c *clientImpl) WatchEndpoints(stopCh <-chan struct{}) chan interface{} {
 // WatchAll returns events in the cluster and updates the stores via informer
 // Filters ingresses by labelSelector
 func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan bool) (chan interface{}, error) {
-	watchCh := make(chan interface{}, 10)
+	watchCh := make(chan interface{}, 100)
+	stopWatchCh := make(chan struct{}, 1)
 
 	kubeLabelSelector, err := labels.Parse(labelSelector)
 	if err != nil {
 		return nil, err
 	}
 
-	stopIngresses := make(chan struct{})
-	chanIngresses := c.WatchIngresses(kubeLabelSelector, stopIngresses)
-
-	stopServices := make(chan struct{})
-	chanServices := c.WatchServices(stopServices)
-
-	stopEndpoints := make(chan struct{})
-	chanEndpoints := c.WatchEndpoints(stopEndpoints)
+	chanIngresses := c.WatchIngresses(kubeLabelSelector, stopWatchCh)
+	chanServices := c.WatchServices(stopWatchCh)
+	chanEndpoints := c.WatchEndpoints(stopWatchCh)
 
 	go func() {
+		defer close(stopWatchCh)
 		defer close(watchCh)
-		defer close(stopIngresses)
-		defer close(stopServices)
-		defer close(stopEndpoints)
 
 		for {
 			select {
