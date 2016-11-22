@@ -14,6 +14,8 @@ import (
 	"time"
 )
 
+var _ Provider = (*Eureka)(nil)
+
 // Eureka holds configuration of the Eureka provider.
 type Eureka struct {
 	BaseProvider `mapstructure:",squash"`
@@ -23,7 +25,7 @@ type Eureka struct {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Eureka) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ []types.Constraint) error {
+func (provider *Eureka) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 
 	operation := func() error {
 		configuration, err := provider.buildConfiguration()

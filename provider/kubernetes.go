@@ -94,7 +94,7 @@ func (provider *Kubernetes) createClient() (k8s.Client, error) {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	k8sClient, err := provider.createClient()
 	if err != nil {
 		return err
@@ -130,6 +130,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 						log.Debugf("Received event from kubernetes %+v", event)
 						templateObjects, err := provider.loadIngresses(k8sClient)
 						if err != nil {
+							stopWatch <- true
 							return err
 						}
 						if reflect.DeepEqual(provider.lastConfiguration.Get(), templateObjects) {

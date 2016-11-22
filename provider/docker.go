@@ -113,7 +113,7 @@ func (provider *Docker) createClient() (client.APIClient, error) {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	provider.Constraints = append(provider.Constraints, constraints...)
 	// TODO register this routine in pool, and watch for stop channel
 	safe.Go(func() {
@@ -361,10 +361,6 @@ func (provider *Docker) containerFilter(container dockerData) bool {
 	_, err := strconv.Atoi(container.Labels["traefik.port"])
 	if len(container.NetworkSettings.Ports) == 0 && err != nil {
 		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
-		return false
-	}
-	if len(container.NetworkSettings.Ports) > 1 && err != nil {
-		log.Debugf("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
 		return false
 	}
 
