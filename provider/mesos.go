@@ -7,6 +7,8 @@ import (
 	"text/template"
 
 	"fmt"
+	"time"
+
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
@@ -20,8 +22,6 @@ import (
 	"github.com/mesosphere/mesos-dns/records"
 	"github.com/mesosphere/mesos-dns/records/state"
 	"github.com/mesosphere/mesos-dns/util"
-	"sort"
-	"time"
 )
 
 var _ Provider = (*Mesos)(nil)
@@ -435,7 +435,9 @@ func Ignore(f ErrorFunction) {
 func (provider *Mesos) getSubDomain(name string) string {
 	if provider.GroupsAsSubDomains {
 		splitedName := strings.Split(strings.TrimPrefix(name, "/"), "/")
-		sort.Sort(sort.Reverse(sort.StringSlice(splitedName)))
+		for i, j := 0, len(splitedName)-1; i < j; i, j = i+1, j-1 {
+			splitedName[i], splitedName[j] = splitedName[j], splitedName[i]
+		}
 		reverseName := strings.Join(splitedName, ".")
 		return reverseName
 	}
