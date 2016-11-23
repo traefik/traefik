@@ -3,7 +3,7 @@
   {{if ne (getAttribute "enable" $node.Service.Tags "true") "false"}}
     [backends."backend-{{getBackend $node}}".servers."{{getBackendName $node $index}}"]
       url = "{{getAttribute "protocol" $node.Service.Tags "http"}}://{{getBackendAddress $node}}:{{$node.Service.Port}}"
-      {{$weight := getAttribute "backend.weight" $node.Service.Tags ""}}
+      {{$weight := getAttribute "backend.weight" $node.Service.Tags "0"}}
       {{with $weight}}
         weight = {{$weight}}
       {{end}}
