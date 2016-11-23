@@ -402,7 +402,7 @@ func (provider *Docker) getFrontendRule(container dockerData) string {
 
 func (provider *Docker) getBackend(container dockerData) string {
 	if label, err := getLabel(container, "traefik.backend"); err == nil {
-		return label
+		return normalize(label)
 	}
 	return normalize(container.Name)
 }
