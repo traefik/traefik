@@ -32,7 +32,7 @@
 {{range $servers}}
 [backends."{{Last $backend}}".servers."{{Last .}}"]
     url = "{{Get "" . "/url"}}"
-    weight = {{Get ""  . "/weight"}}
+    weight = {{Get "0"  . "/weight"}}
 {{end}}
 {{end}}
 
