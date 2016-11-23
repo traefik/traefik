@@ -204,11 +204,11 @@ func TestLoadIngresses(t *testing.T) {
 				Servers: map[string]types.Server{
 					"http://10.10.0.1:8080": {
 						URL:    "http://10.10.0.1:8080",
-						Weight: 1,
+						Weight: 0,
 					},
 					"http://10.21.0.1:8080": {
 						URL:    "http://10.21.0.1:8080",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
@@ -218,15 +218,15 @@ func TestLoadIngresses(t *testing.T) {
 				Servers: map[string]types.Server{
 					"2": {
 						URL:    "http://10.0.0.2:802",
-						Weight: 1,
+						Weight: 0,
 					},
 					"https://10.15.0.1:8443": {
 						URL:    "https://10.15.0.1:8443",
-						Weight: 1,
+						Weight: 0,
 					},
 					"https://10.15.0.2:9443": {
 						URL:    "https://10.15.0.2:9443",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
@@ -556,7 +556,7 @@ func TestGetPassHostHeader(t *testing.T) {
 				Servers: map[string]types.Server{
 					"1": {
 						URL:    "http://10.0.0.1:801",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
@@ -665,7 +665,7 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 				Servers: map[string]types.Server{
 					"1": {
 						URL:    "http://10.0.0.1:80",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
@@ -851,7 +851,7 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 				Servers: map[string]types.Server{
 					"1": {
 						URL:    "http://10.0.0.1:801",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
@@ -861,11 +861,11 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 				Servers: map[string]types.Server{
 					"2": {
 						URL:    "http://10.0.0.2:802",
-						Weight: 1,
+						Weight: 0,
 					},
 					"3": {
 						URL:    "https://10.0.0.3:443",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
@@ -1089,7 +1089,7 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				Servers: map[string]types.Server{
 					"1": {
 						URL:    "http://10.0.0.1:801",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
@@ -1099,11 +1099,11 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				Servers: map[string]types.Server{
 					"2": {
 						URL:    "http://10.0.0.2:802",
-						Weight: 1,
+						Weight: 0,
 					},
 					"3": {
 						URL:    "https://10.0.0.3:443",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
@@ -1113,7 +1113,7 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				Servers: map[string]types.Server{
 					"17": {
 						URL:    "http://10.0.0.4:801",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
@@ -1227,7 +1227,7 @@ func TestHostlessIngress(t *testing.T) {
 				Servers: map[string]types.Server{
 					"1": {
 						URL:    "http://10.0.0.1:801",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,

@@ -262,7 +262,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 							log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 							templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
 								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(port.Port),
-								Weight: 1,
+								Weight: 0,
 							}
 						} else {
 							for _, subset := range endpoints.Subsets {
@@ -274,7 +274,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 									}
 									templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
 										URL:    url,
-										Weight: 1,
+										Weight: 0,
 									}
 								}
 							}

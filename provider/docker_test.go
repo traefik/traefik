@@ -436,7 +436,7 @@ func TestDockerGetWeight(t *testing.T) {
 				},
 				Config: &container.Config{},
 			},
-			expected: "1",
+			expected: "0",
 		},
 		{
 			container: docker.ContainerJSON{
@@ -972,7 +972,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 1,
+							Weight: 0,
 						},
 					},
 					CircuitBreaker: nil,
@@ -1054,11 +1054,11 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test1": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 1,
+							Weight: 0,
 						},
 						"server-test2": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 1,
+							Weight: 0,
 						},
 					},
 					CircuitBreaker: nil,
@@ -1112,7 +1112,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test1": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 1,
+							Weight: 0,
 						},
 					},
 					CircuitBreaker: &types.CircuitBreaker{
@@ -1527,7 +1527,7 @@ func TestSwarmGetWeight(t *testing.T) {
 					},
 				},
 			},
-			expected: "1",
+			expected: "0",
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{
@@ -2055,7 +2055,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 1,
+							Weight: 0,
 						},
 					},
 					CircuitBreaker: nil,
@@ -2143,11 +2143,11 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test1": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 1,
+							Weight: 0,
 						},
 						"server-test2": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 1,
+							Weight: 0,
 						},
 					},
 					CircuitBreaker: nil,
