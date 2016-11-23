@@ -248,7 +248,7 @@ func (c *clientImpl) watch(url string, labelSelector string, stopCh <-chan bool)
 		return watchCh, errCh, fmt.Errorf("failed to decode version %v", err)
 	}
 	resourceVersion := generic.ResourceVersion
-	queryParams := map[string]string{"watch": "", "resourceVersion": resourceVersion}
+	queryParams := map[string]string{"watch": "true", "resourceVersion": resourceVersion}
 	queryData, err := makeQueryString(queryParams, labelSelector)
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("Unable to construct query args")
