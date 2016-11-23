@@ -408,7 +408,7 @@ func TestKVLoadConfig(t *testing.T) {
 				},
 				{
 					Key:   "traefik/backends/backend.with.dot.too/servers/server.with.dot/weight",
-					Value: []byte("1"),
+					Value: []byte("0"),
 				},
 			},
 		},
@@ -420,7 +420,7 @@ func TestKVLoadConfig(t *testing.T) {
 				Servers: map[string]types.Server{
 					"server.with.dot": {
 						URL:    "http://172.17.0.2:80",
-						Weight: 1,
+						Weight: 0,
 					},
 				},
 				CircuitBreaker: nil,
