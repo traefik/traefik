@@ -698,6 +698,7 @@ watch = true
 # filename = "docker.tmpl"
 
 # Expose containers by default in traefik
+# If set to false, each container will need to be enabled by setting `traefik.enabled=true`
 #
 # Optional
 # Default: true
