@@ -16,6 +16,7 @@ type Backend struct {
 	CircuitBreaker *CircuitBreaker   `json:"circuitBreaker,omitempty"`
 	LoadBalancer   *LoadBalancer     `json:"loadBalancer,omitempty"`
 	MaxConn        *MaxConn          `json:"maxConn,omitempty"`
+	HealthCheck    *HealthCheck      `json:"healthCheck,omitempty"`
 }
 
 // MaxConn holds maximum connection configuration
@@ -33,6 +34,11 @@ type LoadBalancer struct {
 // CircuitBreaker holds circuit breaker configuration.
 type CircuitBreaker struct {
 	Expression string `json:"expression,omitempty"`
+}
+
+// HealthCheck holds healthchk configuration
+type HealthCheck struct {
+	URL string `json:"url,omitempty"`
 }
 
 // Server holds server configuration.
