@@ -3,7 +3,6 @@ package provider
 import (
 	"errors"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -419,7 +418,7 @@ func (provider *Marathon) getFrontendBackend(application marathon.Application) s
 func (provider *Marathon) getSubDomain(name string) string {
 	if provider.GroupsAsSubDomains {
 		splitedName := strings.Split(strings.TrimPrefix(name, "/"), "/")
-		sort.Sort(sort.Reverse(sort.StringSlice(splitedName)))
+		reverseStringSlice(&splitedName)
 		reverseName := strings.Join(splitedName, ".")
 		return reverseName
 	}
