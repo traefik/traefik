@@ -511,7 +511,7 @@ address = ":8080"
 # To enable digest auth on the webui
 # with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
 # You can use htdigest to generate those ones
-#   [web.auth.basic]
+#   [web.auth.digest]
 #     users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 
 ```
