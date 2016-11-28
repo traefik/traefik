@@ -101,6 +101,12 @@ func normalize(name string) string {
 	return strings.Join(strings.FieldsFunc(name, fargs), "-")
 }
 
+func reverseStringSlice(slice *[]string) {
+	for i, j := 0, len(*slice)-1; i < j; i, j = i+1, j-1 {
+		(*slice)[i], (*slice)[j] = (*slice)[j], (*slice)[i]
+	}
+}
+
 // ClientTLS holds TLS specific configurations as client
 // CA, Cert and Key can be either path or file contents
 type ClientTLS struct {
