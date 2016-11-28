@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/safe"
 	"github.com/parnurzeal/gorequest"
 	"net/http"
 	"net/url"
@@ -160,7 +161,7 @@ func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan bool) (chan in
 	if err != nil {
 		return watchCh, errCh, fmt.Errorf("failed to create watch: %v", err)
 	}
-	go func() {
+	safe.Go(func() {
 		defer close(watchCh)
 		defer close(errCh)
 		defer close(stopIngresses)
@@ -188,7 +189,7 @@ func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan bool) (chan in
 				watchCh <- event
 			}
 		}
-	}()
+	})
 
 	return watchCh, errCh, nil
 }
@@ -268,11 +269,16 @@ func (c *clientImpl) watch(url string, labelSelector string, stopCh <-chan bool)
 		return watchCh, errCh, fmt.Errorf("failed to do watch request: GET %q: %v", url, err)
 	}
 
-	go func() {
+	safe.Go(func() {
+		EndCh := make(chan bool, 1)
 		defer close(watchCh)
 		defer close(errCh)
-		go func() {
+		defer close(EndCh)
+		safe.Go(func() {
 			defer res.Body.Close()
+			defer func() {
+				EndCh <- true
+			}()
 			for {
 				var eventList interface{}
 				if err := json.NewDecoder(res.Body).Decode(&eventList); err != nil {
@@ -283,11 +289,12 @@ func (c *clientImpl) watch(url string, labelSelector string, stopCh <-chan bool)
 				}
 				watchCh <- eventList
 			}
-		}()
+		})
 		<-stopCh
-		go func() {
+		safe.Go(func() {
 			cancel() // cancel watch request
-		}()
-	}()
+		})
+		<-EndCh
+	})
 	return watchCh, errCh, nil
 }
