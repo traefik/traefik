@@ -560,6 +560,10 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 		if container.ContainerJSONBase.HostConfig != nil {
 			dockerData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
 		}
+
+		if container.State != nil && container.State.Health != nil {
+			dockerData.Health = container.State.Health.Status
+		}
 	}
 
 	if container.Config != nil && container.Config.Labels != nil {
@@ -581,10 +585,6 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 			}
 		}
 
-	}
-
-	if container.State != nil && container.State.Health != nil {
-		dockerData.Health = container.State.Health.Status
 	}
 
 	return dockerData
