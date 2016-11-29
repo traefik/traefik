@@ -1,5 +1,49 @@
 # Change Log
 
+## [v1.1.1](https://github.com/containous/traefik/tree/v1.1.1) (2016-11-29)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.1.0...v1.1.1)
+
+**Implemented enhancements:**
+
+- Getting "Kubernetes connection error failed to decode watch event : unexpected EOF" every minute in Traefik log [\#732](https://github.com/containous/traefik/issues/732)
+
+**Fixed bugs:**
+
+- 1.1.0 kubernetes panic: send on closed channel [\#877](https://github.com/containous/traefik/issues/877)
+- digest auth example is incorrect [\#869](https://github.com/containous/traefik/issues/869)
+- Marathon & Mesos providers' GroupsAsSubDomains option broken [\#867](https://github.com/containous/traefik/issues/867)
+- 404 responses when a new Marathon leader is elected [\#653](https://github.com/containous/traefik/issues/653)
+
+**Closed issues:**
+
+- traefik:latest fails to auto-detect Docker containers [\#901](https://github.com/containous/traefik/issues/901)
+- Panic error on bare metal Kubernetes \(installed with Kubeadm\) [\#897](https://github.com/containous/traefik/issues/897)
+- api backend readOnly: what is the purpose of this setting [\#893](https://github.com/containous/traefik/issues/893)
+- file backend: using external file - doesn't work [\#892](https://github.com/containous/traefik/issues/892)
+- auth support for web backend [\#891](https://github.com/containous/traefik/issues/891)
+- Basic auth with docker labels [\#890](https://github.com/containous/traefik/issues/890)
+- file vs inline config [\#888](https://github.com/containous/traefik/issues/888)
+- combine Host and HostRegexp rules [\#882](https://github.com/containous/traefik/issues/882)
+- \[Question\] Traefik + Kubernetes + Let's Encrypt \(ssl not used\) [\#881](https://github.com/containous/traefik/issues/881)
+- Traefik security for dashboard [\#880](https://github.com/containous/traefik/issues/880)
+- Kubernetes Nginx Deployment Panic [\#879](https://github.com/containous/traefik/issues/879)
+- Kubernetes Example Address already in use [\#872](https://github.com/containous/traefik/issues/872)
+- ETCD Backend - frontend/backends missing [\#866](https://github.com/containous/traefik/issues/866)
+- \[Swarm mode\] Dashboard does not work on RC4 [\#864](https://github.com/containous/traefik/issues/864)
+- Docker v1.1.0 image does not exist [\#861](https://github.com/containous/traefik/issues/861)
+- ConsulService catalog do not support multiple rules [\#859](https://github.com/containous/traefik/issues/859)
+- Update official docker repo [\#858](https://github.com/containous/traefik/issues/858)
+- Still a memory leak with k8s - 1.1 RC4 [\#844](https://github.com/containous/traefik/issues/844)
+
+**Merged pull requests:**
+
+- Fix Swarm panic [\#908](https://github.com/containous/traefik/pull/908) ([emilevauge](https://github.com/emilevauge))
+- Fix k8s panic [\#900](https://github.com/containous/traefik/pull/900) ([emilevauge](https://github.com/emilevauge))
+- Fix missing value for k8s watch request parameter [\#874](https://github.com/containous/traefik/pull/874) ([codablock](https://github.com/codablock))
+- Fix GroupsAsSubDomains option for Mesos and Marathon [\#868](https://github.com/containous/traefik/pull/868) ([ryanleary](https://github.com/ryanleary))
+- Normalize backend even if is user-defined [\#865](https://github.com/containous/traefik/pull/865) ([WTFKr0](https://github.com/WTFKr0))
+- consul/kv.tmpl: weight default value should be a int [\#826](https://github.com/containous/traefik/pull/826) ([klausenbusk](https://github.com/klausenbusk))
+
 ## [v1.1.0](https://github.com/containous/traefik/tree/v1.1.0) (2016-11-17)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.0.0...v1.1.0)
 
