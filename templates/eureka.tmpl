@@ -11,5 +11,5 @@
     backend = "backend{{.Name}}"
     entryPoints = ["http"]
     [frontends.frontend{{.Name }}.routes.route-host{{.Name}}]
-      rule = "Host:http://{{ .Name | tolower }}"
+      rule = "Host:{{ .Name | tolower }}"
 {{end}}
