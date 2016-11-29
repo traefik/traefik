@@ -35,6 +35,7 @@ type Marathon struct {
 	MarathonLBCompatibility bool          `description:"Add compatibility with marathon-lb labels"`
 	TLS                     *ClientTLS    `description:"Enable Docker TLS support"`
 	DialerTimeout           time.Duration `description:"Set a non-default connection timeout for Marathon"`
+	KeepAlive               time.Duration `description:"Set a non-default TCP Keep Alive time in seconds"`
 	Basic                   *MarathonBasic
 	marathonClient          marathon.Marathon
 }
@@ -71,10 +72,11 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 		}
 		config.HTTPClient = &http.Client{
 			Transport: &http.Transport{
-				TLSClientConfig: TLSConfig,
 				DialContext: (&net.Dialer{
-					Timeout: time.Second * provider.DialerTimeout,
+					KeepAlive: provider.KeepAlive * time.Second,
+					Timeout:   time.Second * provider.DialerTimeout,
 				}).DialContext,
+				TLSClientConfig: TLSConfig,
 			},
 		}
 		client, err := marathon.NewClient(config)
