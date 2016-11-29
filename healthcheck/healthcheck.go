@@ -50,7 +50,7 @@ func NewBackendHealthCheck(URL string, lb loadBalancer) *BackendHealthCheck {
 	return &BackendHealthCheck{URL, nil, lb}
 }
 
-//SetBackends set backends configuration
+//SetBackendsConfiguration set backends configuration
 func (hc *HealthCheck) SetBackendsConfiguration(backends map[string]*BackendHealthCheck) {
 	hc.Backends = backends
 }
