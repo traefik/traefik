@@ -553,7 +553,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 	backends := map[string]http.Handler{}
 
-	backendsHealcheck := map[string]*healthcheck.BackendHealthCheck{}
+	backendsHealthcheck := map[string]*healthcheck.BackendHealthCheck{}
 
 	backend2FrontendMap := map[string]string{}
 	for _, configuration := range configurations {
@@ -655,7 +655,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									continue frontend
 								}
 								if configuration.Backends[frontend.Backend].HealthCheck != nil {
-									backendsHealcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, rebalancer)
+									backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, rebalancer)
 								}
 							}
 						case types.Wrr:
@@ -681,7 +681,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								}
 							}
 							if configuration.Backends[frontend.Backend].HealthCheck != nil {
-								backendsHealcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, rr)
+								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, rr)
 							}
 						}
 						maxConns := configuration.Backends[frontend.Backend].MaxConn
@@ -745,7 +745,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			}
 		}
 	}
-	healthcheck.GetHealthCheck().SetBackendsConfiguration(backendsHealcheck)
+	healthcheck.GetHealthCheck().SetBackendsConfiguration(backendsHealthcheck)
 	middlewares.SetBackend2FrontendMap(&backend2FrontendMap)
 	//sort routes
 	for _, serverEntryPoint := range serverEntryPoints {
