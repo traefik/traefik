@@ -95,7 +95,7 @@ func TestMesosTaskFilter(t *testing.T) {
 				setLabels("traefik.enable", "true"),
 				discovery(setDiscoveryPorts("TCP", 80, "WEB HTTP", "TCP", 443, "WEB HTTPS")),
 			),
-			expected:         false, // more than 1 discovery port but no traefik.port* label
+			expected:         true, // Default to first index
 			exposedByDefault: true,
 		},
 		{

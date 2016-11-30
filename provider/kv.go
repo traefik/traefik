@@ -83,7 +83,7 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 	return nil
 }
 
-func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	provider.Constraints = append(provider.Constraints, constraints...)
 	operation := func() error {
 		if _, err := provider.kvclient.Exists("qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"); err != nil {

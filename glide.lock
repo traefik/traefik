@@ -1,5 +1,5 @@
-hash: aae2fd761966717bcc30d8c03590cc28df8af49b36cc1d87689512cdfb44475e
-updated: 2016-11-16T21:37:51.673291661+01:00
+hash: f24add03b868aacbd46dd7a981e95265f43536f3f44f3cb43b3c829c7f27b717
+updated: 2016-11-22T11:54:13.335949429+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -30,13 +30,17 @@ imports:
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
+  version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - name: github.com/coreos/etcd
   version: 1c9e0a0e33051fed6c05c141e6fcbfe5c7f2a899
   subpackages:
   - client
   - pkg/pathutil
   - pkg/types
+- name: github.com/coreos/go-systemd
+  version: 43e4800a6165b4e02bb2a36673c54b230d6f7b26
+  subpackages:
+  - daemon
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
@@ -172,6 +176,10 @@ imports:
   - proto
 - name: github.com/golang/glog
   version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
+- name: github.com/google/go-github
+  version: d4f1b2d029be1730fd349ca929cc9c0da4a27007
+  subpackages:
+  - github
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
@@ -184,6 +192,8 @@ imports:
   - api
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
+- name: github.com/hashicorp/go-version
+  version: e96d3840402619007766590ecea8dd7af1292276
 - name: github.com/hashicorp/serf
   version: b03bf85930b2349eb04b97c8fac437495296e3e7
   subpackages:
@@ -229,7 +239,7 @@ imports:
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
-  version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
+  version: f3009df150dadf309fdee4a54ed65c124afad715
 - name: github.com/moul/http2curl
   version: b1479103caacaa39319f75e7f57fc545287fca0d
 - name: github.com/NYTimes/gziphandler
@@ -275,12 +285,14 @@ imports:
   - codec
 - name: github.com/unrolled/render
   version: 526faf80cd4b305bb8134abea8d20d5ced74faa6
+- name: github.com/urfave/negroni
+  version: e0e50f7dc431c043cb33f91b09c3419d48b7cff5
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/vulcand/oxy
-  version: 4298f24d572dc554eb984f2ffdf6bdd54d4bd613
+  version: fcc76b52eb8568540a020b7a99e854d9d752b364
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
