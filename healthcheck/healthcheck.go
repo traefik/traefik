@@ -86,7 +86,11 @@ func (hc *HealthCheck) execute() {
 }
 
 func testHealth(serverURL *url.URL, checkURL string) bool {
-	resp, err := http.Get(serverURL.String() + checkURL)
+	timeout := time.Duration(5 * time.Second)
+	client := http.Client{
+		Timeout: timeout,
+	}
+	resp, err := client.Get(serverURL.String() + checkURL)
 	if err != nil || resp.StatusCode != 200 {
 		return false
 	}
