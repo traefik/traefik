@@ -18,6 +18,8 @@ import (
 const resyncPeriod = time.Minute * 5
 
 // Client is a client for the Kubernetes master.
+// WatchAll starts the watch of the Kubernetes ressources and updates the stores.
+// The stores can then be accessed via the Get* functions.
 type Client interface {
 	GetIngresses(namespaces Namespaces) []*v1beta1.Ingress
 	GetService(namespace, name string) (*v1.Service, bool, error)
@@ -37,9 +39,7 @@ type clientImpl struct {
 	clientset *kubernetes.Clientset
 }
 
-// NewInClusterClient returns a new Kubernetes client.
-// WatchAll starts the watch of the Kubernetes ressources and updates the stores.
-// The stores can be accessed via the Get* functions.
+// NewInClusterClient returns a new Kubernetes client that expect to run inside the cluster
 func NewInClusterClient() (Client, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
