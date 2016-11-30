@@ -1,14 +1,8 @@
-hash: 249e33e53346f70c4f9ae533fd20c0816dd7e2a0760beca6ecfbae47743e2b8d
-updated: 2016-11-23T21:21:42.480410524-02:00
+hash: 39ff28cc1d13d5915a870b14491ece1849c4eaf5a56cecd50a7676ecee6c6143
+updated: 2016-09-30T11:27:29.529525636+02:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
-- name: github.com/ArthurHlt/go-eureka-client
-  version: ba361cd0f9f571b4e871421423d2f02f5689c3d2
-  subpackages:
-  - eureka
-- name: github.com/ArthurHlt/gominlog
-  version: 068c01ce147ad68fca25ef3fa29ae5395ae273ab
 - name: github.com/boltdb/bolt
   version: 5cc10bbbc5c141029940133bb33c9e969512a698
 - name: github.com/BurntSushi/toml
@@ -41,8 +35,6 @@ imports:
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
   - spew
-- name: github.com/daviddengcn/go-colortext
-  version: 3b18c8575a432453d41fdafb340099fff5bba2f7
 - name: github.com/docker/distribution
   version: 87917f30529e6a7fca8eaff2932424915fb11225
   subpackages:
@@ -165,7 +157,7 @@ imports:
 - name: github.com/gambol99/go-marathon
   version: a558128c87724cd7430060ef5aedf39f83937f55
 - name: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gogo/protobuf
   version: e33835a643a970c11ac74f6333f5f6866387a101
   subpackages:
@@ -198,7 +190,7 @@ imports:
 - name: github.com/libkermit/docker
   version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
 - name: github.com/mailgun/manners
-  version: a585afd9d65c0e05f6c003f921e71ebc05074f4f
+  version: fada45142db3f93097ca917da107aa3fad0ffcb5
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
 - name: github.com/mattn/go-shellwords
@@ -261,20 +253,11 @@ imports:
   version: 65a174a3a4188c0b7099acbc6cfa0c53628d3287
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
-- name: github.com/stretchr/signature
-  version: 168b2a1e1b562bf381d47471e31f5979a2a51cd5
-- name: github.com/stretchr/stew
-  version: 80ef0842b48b329a6120607c817a85aff5a2ec71
-  subpackages:
-  - objects
-  - strings
 - name: github.com/stretchr/testify
   version: d77da356e56a7428ad25149ca77381849a6a5232
   subpackages:
   - assert
   - mock
-- name: github.com/stretchr/tracer
-  version: 66d3696bba973e1697f7d68413b3f19c6d6e2a7c
 - name: github.com/thoas/stats
   version: 79b768ff1780f4e5b0ed132e192bfeefe9f85a9c
 - name: github.com/tv42/zbase32
