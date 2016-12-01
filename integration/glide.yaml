@@ -1,0 +1,33 @@
+package: github.com/containous/traefik/integration
+import:
+- package: github.com/cenk/backoff
+testImport:
+- package: github.com/containous/staert
+  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
+- package: github.com/docker/docker
+  version: 534753663161334baba06f13b8efa4cad22b5bc5
+  subpackages:
+  - pkg/namesgenerator
+- package: github.com/docker/libkv
+  subpackages:
+  - store
+  - store/consul
+  - store/etcd
+- package: github.com/go-check/check
+- package: github.com/hashicorp/consul
+  subpackages:
+  - api
+- package: github.com/libkermit/compose
+  version: cadc5a3b83a15790174bd7fbc75ea2529785e772
+  subpackages:
+  - check
+- package: github.com/libkermit/docker
+  version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
+- package: github.com/libkermit/docker-check
+- package: github.com/mattn/go-shellwords
+- package: github.com/vdemeester/shakers
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: github.com/spf13/pflag
+  version: 5644820622454e71517561946e3d94b9f9db6842

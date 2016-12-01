@@ -1,101 +1,49 @@
 package provider
 
 import (
-	"fmt"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider/k8s"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
-	"io/ioutil"
-	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
+	"k8s.io/client-go/1.5/pkg/api/v1"
+	"k8s.io/client-go/1.5/pkg/util/intstr"
+
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider/k8s"
+	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/types"
+
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 )
-
-const (
-	serviceAccountToken  = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-	serviceAccountCACert = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-	defaultKubeEndpoint  = "http://127.0.0.1:8080"
-)
-
-// Namespaces holds kubernetes namespaces
-type Namespaces []string
-
-//Set adds strings elem into the the parser
-//it splits str on , and ;
-func (ns *Namespaces) Set(str string) error {
-	fargs := func(c rune) bool {
-		return c == ',' || c == ';'
-	}
-	// get function
-	slice := strings.FieldsFunc(str, fargs)
-	*ns = append(*ns, slice...)
-	return nil
-}
-
-//Get []string
-func (ns *Namespaces) Get() interface{} { return Namespaces(*ns) }
-
-//String return slice in a string
-func (ns *Namespaces) String() string { return fmt.Sprintf("%v", *ns) }
-
-//SetValue sets []string into the parser
-func (ns *Namespaces) SetValue(val interface{}) {
-	*ns = Namespaces(val.(Namespaces))
-}
 
 var _ Provider = (*Kubernetes)(nil)
 
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
 	BaseProvider           `mapstructure:",squash"`
-	Endpoint               string     `description:"Kubernetes server endpoint"`
-	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
-	Namespaces             Namespaces `description:"Kubernetes namespaces"`
-	LabelSelector          string     `description:"Kubernetes api label selector to use"`
+	Endpoint               string         `description:"Kubernetes server endpoint"`
+	DisablePassHostHeaders bool           `description:"Kubernetes disable PassHost Headers"`
+	Namespaces             k8s.Namespaces `description:"Kubernetes namespaces"`
+	LabelSelector          string         `description:"Kubernetes api label selector to use"`
 	lastConfiguration      safe.Safe
 }
 
-func (provider *Kubernetes) createClient() (k8s.Client, error) {
-	var token string
-	tokenBytes, err := ioutil.ReadFile(serviceAccountToken)
-	if err == nil {
-		token = string(tokenBytes)
-		log.Debugf("Kubernetes token: %s", token)
-	} else {
-		log.Errorf("Kubernetes load token error: %s", err)
+func (provider *Kubernetes) newK8sClient() (k8s.Client, error) {
+	if provider.Endpoint != "" {
+		log.Infof("Creating in cluster Kubernetes client with endpoint %", provider.Endpoint)
+		return k8s.NewInClusterClientWithEndpoint(provider.Endpoint)
 	}
-	caCert, err := ioutil.ReadFile(serviceAccountCACert)
-	if err == nil {
-		log.Debugf("Kubernetes CA cert: %s", serviceAccountCACert)
-	} else {
-		log.Errorf("Kubernetes load token error: %s", err)
-	}
-	kubernetesHost := os.Getenv("KUBERNETES_SERVICE_HOST")
-	kubernetesPort := os.Getenv("KUBERNETES_SERVICE_PORT_HTTPS")
-	// Prioritize user provided kubernetes endpoint since kube container runtime will almost always have it
-	if provider.Endpoint == "" && len(kubernetesPort) > 0 && len(kubernetesHost) > 0 {
-		log.Debugf("Using environment provided kubernetes endpoint")
-		provider.Endpoint = "https://" + kubernetesHost + ":" + kubernetesPort
-	}
-	if provider.Endpoint == "" {
-		log.Debugf("Using default kubernetes api endpoint")
-		provider.Endpoint = defaultKubeEndpoint
-	}
-	log.Debugf("Kubernetes endpoint: %s", provider.Endpoint)
-	return k8s.NewClient(provider.Endpoint, caCert, token)
+	log.Info("Creating in cluster Kubernetes client")
+	return k8s.NewInClusterClient()
 }
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
-	k8sClient, err := provider.createClient()
+	k8sClient, err := provider.newK8sClient()
 	if err != nil {
 		return err
 	}
@@ -107,7 +55,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 				stopWatch := make(chan bool, 5)
 				defer close(stopWatch)
 				log.Debugf("Using label selector: '%s'", provider.LabelSelector)
-				eventsChan, errEventsChan, err := k8sClient.WatchAll(provider.LabelSelector, stopWatch)
+				eventsChan, err := k8sClient.WatchAll(provider.LabelSelector, stopWatch)
 				if err != nil {
 					log.Errorf("Error watching kubernetes events: %v", err)
 					timer := time.NewTimer(1 * time.Second)
@@ -123,9 +71,6 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 					case <-stop:
 						stopWatch <- true
 						return nil
-					case err, _ := <-errEventsChan:
-						stopWatch <- true
-						return err
 					case event := <-eventsChan:
 						log.Debugf("Received event from kubernetes %+v", event)
 						templateObjects, err := provider.loadIngresses(k8sClient)
@@ -155,39 +100,12 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 		}
 	})
 
-	templateObjects, err := provider.loadIngresses(k8sClient)
-	if err != nil {
-		return err
-	}
-	if reflect.DeepEqual(provider.lastConfiguration.Get(), templateObjects) {
-		log.Debugf("Skipping configuration from kubernetes %+v", templateObjects)
-	} else {
-		provider.lastConfiguration.Set(templateObjects)
-		configurationChan <- types.ConfigMessage{
-			ProviderName:  "kubernetes",
-			Configuration: provider.loadConfig(*templateObjects),
-		}
-	}
-
 	return nil
 }
 
 func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configuration, error) {
-	ingresses, err := k8sClient.GetIngresses(provider.LabelSelector, func(ingress k8s.Ingress) bool {
-		if len(provider.Namespaces) == 0 {
-			return true
-		}
-		for _, n := range provider.Namespaces {
-			if ingress.ObjectMeta.Namespace == n {
-				return true
-			}
-		}
-		return false
-	})
-	if err != nil {
-		log.Errorf("Error retrieving ingresses: %+v", err)
-		return nil, err
-	}
+	ingresses := k8sClient.GetIngresses(provider.Namespaces)
+
 	templateObjects := types.Configuration{
 		map[string]*types.Backend{},
 		map[string]*types.Frontend{},
@@ -239,28 +157,28 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						Rule: ruleType + ":" + pa.Path,
 					}
 				}
-				service, err := k8sClient.GetService(pa.Backend.ServiceName, i.ObjectMeta.Namespace)
-				if err != nil {
-					log.Warnf("Error retrieving services: %v", err)
+				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
+				if err != nil || !exists {
+					log.Warnf("Error retrieving service %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
 					delete(templateObjects.Frontends, r.Host+pa.Path)
-					log.Warnf("Error retrieving services %s", pa.Backend.ServiceName)
 					continue
 				}
+
 				protocol := "http"
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {
 						if port.Port == 443 {
 							protocol = "https"
 						}
-						endpoints, err := k8sClient.GetEndpoints(service.ObjectMeta.Name, service.ObjectMeta.Namespace)
-						if err != nil {
-							log.Errorf("Error retrieving endpoints: %v", err)
+						endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+						if err != nil || !exists {
+							log.Errorf("Error retrieving endpoints %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
 							continue
 						}
 						if len(endpoints.Subsets) == 0 {
 							log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 							templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
-								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(port.Port),
+								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
 								Weight: 1,
 							}
 						} else {
@@ -287,7 +205,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 	return &templateObjects, nil
 }
 
-func endpointPortNumber(servicePort k8s.ServicePort, endpointPorts []k8s.EndpointPort) int {
+func endpointPortNumber(servicePort v1.ServicePort, endpointPorts []v1.EndpointPort) int {
 	if len(endpointPorts) > 0 {
 		//name is optional if there is only one port
 		port := endpointPorts[0]
@@ -298,11 +216,11 @@ func endpointPortNumber(servicePort k8s.ServicePort, endpointPorts []k8s.Endpoin
 		}
 		return int(port.Port)
 	}
-	return servicePort.Port
+	return int(servicePort.Port)
 }
 
-func equalPorts(servicePort k8s.ServicePort, ingressPort k8s.IntOrString) bool {
-	if servicePort.Port == ingressPort.IntValue() {
+func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool {
+	if int(servicePort.Port) == ingressPort.IntValue() {
 		return true
 	}
 	if servicePort.Name != "" && servicePort.Name == ingressPort.String() {
