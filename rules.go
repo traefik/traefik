@@ -74,6 +74,13 @@ func (r *Rules) pathStrip(paths ...string) *mux.Route {
 	return r.route.route
 }
 
+func (r *Rules) addPrefix(paths ...string) *mux.Route {
+	for _, path := range paths {
+		r.route.addPrefix = path
+	}
+	return r.route.route
+}
+
 func (r *Rules) pathPrefixStrip(paths ...string) *mux.Route {
 	sort.Sort(bySize(paths))
 	r.route.stripPrefixes = paths
@@ -107,6 +114,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		"Method":          r.methods,
 		"Headers":         r.headers,
 		"HeadersRegexp":   r.headersRegexp,
+		"AddPrefix":       r.addPrefix,
 	}
 
 	if len(expression) == 0 {
