@@ -110,14 +110,22 @@ func (c *clientImpl) WatchIngresses(labelSelector labels.Selector, stopCh <-chan
 	return watchCh
 }
 
-func newResourceEventHandlerFuncs(events chan interface{}) cache.ResourceEventHandlerFuncs {
-
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj interface{}) { events <- obj },
-		UpdateFunc: func(old, new interface{}) { events <- new },
-		DeleteFunc: func(obj interface{}) { events <- obj },
+// eventHandlerFunc will pass the obj on to the events channel or drop it
+// This is so passing the events along won't block in the case of high volume
+// The events are only used for signalling anyway so dropping a few is ok
+func eventHandlerFunc(events chan interface{}, obj interface{}) {
+	select {
+	case events <- obj:
+	default:
 	}
+}
 
+func newResourceEventHandlerFuncs(events chan interface{}) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc:    func(obj interface{}) { eventHandlerFunc(events, obj) },
+		UpdateFunc: func(old, new interface{}) { eventHandlerFunc(events, new) },
+		DeleteFunc: func(obj interface{}) { eventHandlerFunc(events, obj) },
+	}
 }
 
 // GetService returns the named service from the named namespace
