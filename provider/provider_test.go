@@ -325,3 +325,58 @@ func TestMatchingConstraints(t *testing.T) {
 		}
 	}
 }
+
+func TestDefaultFuncMap(t *testing.T) {
+	templateFile, err := ioutil.TempFile("", "provider-configuration")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(templateFile.Name())
+	data := []byte(`
+  [backends]
+  [backends.{{ "backend-1" | replace  "-" "" }}]
+    [backends.{{ "BACKEND1" | tolower }}.circuitbreaker]
+      expression = "NetworkErrorRatio() > 0.5"
+    [backends.servers.server1]
+    url = "http://172.17.0.2:80"
+    weight = 10
+    [backends.backend1.servers.server2]
+    url = "http://172.17.0.3:80"
+    weight = 1
+
+[frontends]
+  [frontends.{{normalize "frontend/1"}}]
+  {{ $backend := "backend1/test/value" | split  "/" }}
+  {{ $backendid := index $backend 1 }}
+  {{ if "backend1" | contains "backend" }}
+  backend = "backend1"
+  {{end}}
+  passHostHeader = true
+    [frontends.frontend-1.routes.test_2]
+    rule = "Path"
+    value = "/test"`)
+	err = ioutil.WriteFile(templateFile.Name(), data, 0700)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider := &myProvider{
+		BaseProvider{
+			Filename: templateFile.Name(),
+		},
+		nil,
+	}
+	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
+	if err != nil {
+		t.Fatalf("Shouldn't have error out, got %v", err)
+	}
+	if configuration == nil {
+		t.Fatalf("Configuration should not be nil, but was")
+	}
+	if _, ok := configuration.Backends["backend1"]; !ok {
+		t.Fatalf("backend1 should exists, but it not")
+	}
+	if _, ok := configuration.Frontends["frontend-1"]; !ok {
+		t.Fatalf("Frontend frontend-1 should exists, but it not")
+	}
+}
