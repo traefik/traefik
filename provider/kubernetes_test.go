@@ -1277,10 +1277,6 @@ func (c clientMock) GetIngresses(namespaces k8s.Namespaces) []*v1beta1.Ingress {
 	return result
 }
 
-func (c clientMock) WatchIngresses(labelSelector string, stopCh <-chan struct{}) chan interface{} {
-	return c.watchChan
-}
-
 func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error) {
 	for _, service := range c.services {
 		if service.Namespace == namespace && service.Name == name {
@@ -1299,6 +1295,6 @@ func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, e
 	return &v1.Endpoints{}, true, nil
 }
 
-func (c clientMock) WatchAll(labelString string, stopCh <-chan bool) (chan interface{}, error) {
+func (c clientMock) WatchAll(labelString string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	return c.watchChan, nil
 }

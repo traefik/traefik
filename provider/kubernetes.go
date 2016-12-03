@@ -52,7 +52,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
 			for {
-				stopWatch := make(chan bool, 5)
+				stopWatch := make(chan struct{}, 1)
 				defer close(stopWatch)
 				log.Debugf("Using label selector: '%s'", provider.LabelSelector)
 				eventsChan, err := k8sClient.WatchAll(provider.LabelSelector, stopWatch)
@@ -69,7 +69,6 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 				for {
 					select {
 					case <-stop:
-						stopWatch <- true
 						return nil
 					case event := <-eventsChan:
 						log.Debugf("Received event from kubernetes %+v", event)
