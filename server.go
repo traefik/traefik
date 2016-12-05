@@ -90,7 +90,7 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	return server
 }
 
-// Start starts the server and blocks until server is shutted down.
+// Start starts the server.
 func (server *Server) Start() {
 	server.startHTTPServers()
 	server.startLeadership()
@@ -103,6 +103,10 @@ func (server *Server) Start() {
 	server.configureProviders()
 	server.startProviders()
 	go server.listenSignals()
+}
+
+// Wait blocks until server is shutted down.
+func (server *Server) Wait() {
 	<-server.stopChan
 }
 
@@ -213,11 +217,11 @@ func (server *Server) listenProviders(stop chan bool) {
 				lastConfigs.Set(configMsg.ProviderName, &configMsg)
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
 				if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
-					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					// last config received more than n s ago
 					server.configurationValidatedChan <- configMsg
 				} else {
-					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					safe.Go(func() {
 						<-time.After(server.globalConfiguration.ProvidersThrottleDuration)
 						lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
@@ -386,6 +390,9 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 	if err != nil {
 		return nil, err
 	}
+
+	// ensure http2 enabled
+	config.NextProtos = []string{"h2", "http/1.1"}
 
 	if len(tlsOption.ClientCAFiles) > 0 {
 		pool := x509.NewCertPool()

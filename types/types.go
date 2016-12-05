@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding"
 	"errors"
 	"fmt"
 	"github.com/docker/libkv/store"
@@ -141,11 +142,25 @@ func (c *Constraint) String() string {
 	return c.Key + "!=" + c.Regex
 }
 
+var _ encoding.TextUnmarshaler = (*Constraint)(nil)
+
 // UnmarshalText define how unmarshal in TOML parsing
 func (c *Constraint) UnmarshalText(text []byte) error {
 	constraint, err := NewConstraint(string(text))
-	*c = *constraint
-	return err
+	if err != nil {
+		return err
+	}
+	c.Key = constraint.Key
+	c.MustMatch = constraint.MustMatch
+	c.Regex = constraint.Regex
+	return nil
+}
+
+var _ encoding.TextMarshaler = (*Constraint)(nil)
+
+// MarshalText encodes the receiver into UTF-8-encoded text and returns the result.
+func (c *Constraint) MarshalText() (text []byte, err error) {
+	return []byte(c.String()), nil
 }
 
 // MatchConstraintWithAtLeastOneTag tests a constraint for one single service
@@ -169,16 +184,16 @@ func (cs *Constraints) Set(str string) error {
 		if err != nil {
 			return err
 		}
-		*cs = append(*cs, *constraint)
+		*cs = append(*cs, constraint)
 	}
 	return nil
 }
 
 // Constraints holds a Constraint parser
-type Constraints []Constraint
+type Constraints []*Constraint
 
 //Get []*Constraint
-func (cs *Constraints) Get() interface{} { return []Constraint(*cs) }
+func (cs *Constraints) Get() interface{} { return []*Constraint(*cs) }
 
 //String returns []*Constraint in string
 func (cs *Constraints) String() string { return fmt.Sprintf("%+v", *cs) }
@@ -216,12 +231,12 @@ type Users []string
 
 // Basic HTTP basic authentication
 type Basic struct {
-	Users
+	Users `mapstructure:","`
 }
 
 // Digest HTTP authentication
 type Digest struct {
-	Users
+	Users `mapstructure:","`
 }
 
 // CanonicalDomain returns a lower case domain with trim space

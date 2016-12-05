@@ -25,10 +25,11 @@ type TraefikConfiguration struct {
 type GlobalConfiguration struct {
 	GraceTimeOut              int64                   `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
+	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
 	AccessLogsFile            string                  `description:"Access logs file"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
-	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
+	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
 	Cluster                   *types.Cluster          `description:"Enable clustering"`
 	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags"`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
@@ -264,21 +265,28 @@ func (certs *Certificates) String() string {
 	if len(*certs) == 0 {
 		return ""
 	}
-	return (*certs)[0].CertFile + "," + (*certs)[0].KeyFile
+	var result []string
+	for _, certificate := range *certs {
+		result = append(result, certificate.CertFile+","+certificate.KeyFile)
+	}
+	return strings.Join(result, ";")
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (certs *Certificates) Set(value string) error {
-	files := strings.Split(value, ",")
-	if len(files) != 2 {
-		return errors.New("Bad certificates format: " + value)
+	certificates := strings.Split(value, ";")
+	for _, certificate := range certificates {
+		files := strings.Split(certificate, ",")
+		if len(files) != 2 {
+			return errors.New("Bad certificates format: " + value)
+		}
+		*certs = append(*certs, Certificate{
+			CertFile: files[0],
+			KeyFile:  files[1],
+		})
 	}
-	*certs = append(*certs, Certificate{
-		CertFile: files[0],
-		KeyFile:  files[1],
-	})
 	return nil
 }
 
@@ -325,7 +333,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.Watch = true
 	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
 	defaultMarathon.ExposedByDefault = true
-	defaultMarathon.Constraints = []types.Constraint{}
+	defaultMarathon.Constraints = types.Constraints{}
 	defaultMarathon.DialerTimeout = 60
 	defaultMarathon.KeepAlive = 10
 
@@ -334,47 +342,47 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultConsul.Watch = true
 	defaultConsul.Endpoint = "127.0.0.1:8500"
 	defaultConsul.Prefix = "traefik"
-	defaultConsul.Constraints = []types.Constraint{}
+	defaultConsul.Constraints = types.Constraints{}
 
 	// default ConsulCatalog
 	var defaultConsulCatalog provider.ConsulCatalog
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
-	defaultConsulCatalog.Constraints = []types.Constraint{}
+	defaultConsulCatalog.Constraints = types.Constraints{}
 
 	// default Etcd
 	var defaultEtcd provider.Etcd
 	defaultEtcd.Watch = true
 	defaultEtcd.Endpoint = "127.0.0.1:2379"
 	defaultEtcd.Prefix = "/traefik"
-	defaultEtcd.Constraints = []types.Constraint{}
+	defaultEtcd.Constraints = types.Constraints{}
 
 	//default Zookeeper
 	var defaultZookeeper provider.Zookepper
 	defaultZookeeper.Watch = true
 	defaultZookeeper.Endpoint = "127.0.0.1:2181"
 	defaultZookeeper.Prefix = "/traefik"
-	defaultZookeeper.Constraints = []types.Constraint{}
+	defaultZookeeper.Constraints = types.Constraints{}
 
 	//default Boltdb
 	var defaultBoltDb provider.BoltDb
 	defaultBoltDb.Watch = true
 	defaultBoltDb.Endpoint = "127.0.0.1:4001"
 	defaultBoltDb.Prefix = "/traefik"
-	defaultBoltDb.Constraints = []types.Constraint{}
+	defaultBoltDb.Constraints = types.Constraints{}
 
 	//default Kubernetes
 	var defaultKubernetes provider.Kubernetes
 	defaultKubernetes.Watch = true
 	defaultKubernetes.Endpoint = ""
 	defaultKubernetes.LabelSelector = ""
-	defaultKubernetes.Constraints = []types.Constraint{}
+	defaultKubernetes.Constraints = types.Constraints{}
 
 	// default Mesos
 	var defaultMesos provider.Mesos
 	defaultMesos.Watch = true
 	defaultMesos.Endpoint = "http://127.0.0.1:5050"
 	defaultMesos.ExposedByDefault = true
-	defaultMesos.Constraints = []types.Constraint{}
+	defaultMesos.Constraints = types.Constraints{}
 
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
@@ -404,10 +412,11 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*EntryPoint{},
-			Constraints:               []types.Constraint{},
+			Constraints:               types.Constraints{},
 			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: time.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
+			CheckNewVersion:           true,
 		},
 		ConfigFile: "",
 	}
