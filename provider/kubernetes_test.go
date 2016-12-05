@@ -2,29 +2,34 @@ package provider
 
 import (
 	"encoding/json"
-	"github.com/containous/traefik/provider/k8s"
-	"github.com/containous/traefik/types"
 	"reflect"
 	"testing"
+
+	"k8s.io/client-go/1.5/pkg/api/v1"
+	"k8s.io/client-go/1.5/pkg/apis/extensions/v1beta1"
+	"k8s.io/client-go/1.5/pkg/util/intstr"
+
+	"github.com/containous/traefik/provider/k8s"
+	"github.com/containous/traefik/types"
 )
 
 func TestLoadIngresses(t *testing.T) {
-	ingresses := []k8s.Ingress{{
-		ObjectMeta: k8s.ObjectMeta{
+	ingresses := []*v1beta1.Ingress{{
+		ObjectMeta: v1.ObjectMeta{
 			Namespace: "testing",
 		},
-		Spec: k8s.IngressSpec{
-			Rules: []k8s.IngressRule{
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
 				{
 					Host: "foo",
-					IngressRuleValue: k8s.IngressRuleValue{
-						HTTP: &k8s.HTTPIngressRuleValue{
-							Paths: []k8s.HTTPIngressPath{
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
 								{
 									Path: "/bar",
-									Backend: k8s.IngressBackend{
+									Backend: v1beta1.IngressBackend{
 										ServiceName: "service1",
-										ServicePort: k8s.FromInt(80),
+										ServicePort: intstr.FromInt(80),
 									},
 								},
 							},
@@ -33,19 +38,19 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				{
 					Host: "bar",
-					IngressRuleValue: k8s.IngressRuleValue{
-						HTTP: &k8s.HTTPIngressRuleValue{
-							Paths: []k8s.HTTPIngressPath{
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
 								{
-									Backend: k8s.IngressBackend{
+									Backend: v1beta1.IngressBackend{
 										ServiceName: "service3",
-										ServicePort: k8s.FromString("https"),
+										ServicePort: intstr.FromString("https"),
 									},
 								},
 								{
-									Backend: k8s.IngressBackend{
+									Backend: v1beta1.IngressBackend{
 										ServiceName: "service2",
-										ServicePort: k8s.FromInt(802),
+										ServicePort: intstr.FromInt(802),
 									},
 								},
 							},
@@ -55,16 +60,16 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 	}}
-	services := []k8s.Service{
+	services := []*v1.Service{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service1",
 				UID:       "1",
 				Namespace: "testing",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.1",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Port: 80,
 					},
@@ -72,14 +77,14 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service2",
 				UID:       "2",
 				Namespace: "testing",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.2",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Port: 802,
 					},
@@ -87,14 +92,14 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service3",
 				UID:       "3",
 				Namespace: "testing",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.3",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 80,
@@ -107,33 +112,33 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 	}
-	endpoints := []k8s.Endpoints{
+	endpoints := []*v1.Endpoints{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service1",
 				UID:       "1",
 				Namespace: "testing",
 			},
-			Subsets: []k8s.EndpointSubset{
+			Subsets: []v1.EndpointSubset{
 				{
-					Addresses: []k8s.EndpointAddress{
+					Addresses: []v1.EndpointAddress{
 						{
 							IP: "10.10.0.1",
 						},
 					},
-					Ports: []k8s.EndpointPort{
+					Ports: []v1.EndpointPort{
 						{
 							Port: 8080,
 						},
 					},
 				},
 				{
-					Addresses: []k8s.EndpointAddress{
+					Addresses: []v1.EndpointAddress{
 						{
 							IP: "10.21.0.1",
 						},
 					},
-					Ports: []k8s.EndpointPort{
+					Ports: []v1.EndpointPort{
 						{
 							Port: 8080,
 						},
@@ -142,19 +147,19 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service3",
 				UID:       "3",
 				Namespace: "testing",
 			},
-			Subsets: []k8s.EndpointSubset{
+			Subsets: []v1.EndpointSubset{
 				{
-					Addresses: []k8s.EndpointAddress{
+					Addresses: []v1.EndpointAddress{
 						{
 							IP: "10.15.0.1",
 						},
 					},
-					Ports: []k8s.EndpointPort{
+					Ports: []v1.EndpointPort{
 						{
 							Name: "http",
 							Port: 8080,
@@ -166,12 +171,12 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				{
-					Addresses: []k8s.EndpointAddress{
+					Addresses: []v1.EndpointAddress{
 						{
 							IP: "10.15.0.2",
 						},
 					},
-					Ports: []k8s.EndpointPort{
+					Ports: []v1.EndpointPort{
 						{
 							Name: "http",
 							Port: 9080,
@@ -267,23 +272,23 @@ func TestLoadIngresses(t *testing.T) {
 }
 
 func TestRuleType(t *testing.T) {
-	ingresses := []k8s.Ingress{
+	ingresses := []*v1beta1.Ingress{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Annotations: map[string]string{"traefik.frontend.rule.type": "PathPrefixStrip"}, //camel case
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "foo1",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/bar1",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -294,21 +299,21 @@ func TestRuleType(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Annotations: map[string]string{"traefik.frontend.rule.type": "path"}, //lower case
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "foo1",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/bar2",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -319,21 +324,21 @@ func TestRuleType(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Annotations: map[string]string{"traefik.frontend.rule.type": "PathPrefix"}, //path prefix
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "foo2",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/bar1",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -344,21 +349,21 @@ func TestRuleType(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Annotations: map[string]string{"traefik.frontend.rule.type": "PathStrip"}, //path strip
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "foo2",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/bar2",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -369,21 +374,21 @@ func TestRuleType(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Annotations: map[string]string{"traefik.frontend.rule.type": "PathXXStrip"}, //wrong rule
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "foo1",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/bar3",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -394,15 +399,15 @@ func TestRuleType(t *testing.T) {
 			},
 		},
 	}
-	services := []k8s.Service{
+	services := []*v1.Service{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name: "service1",
 				UID:  "1",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.1",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 801,
@@ -495,22 +500,22 @@ func TestRuleType(t *testing.T) {
 }
 
 func TestGetPassHostHeader(t *testing.T) {
-	ingresses := []k8s.Ingress{{
-		ObjectMeta: k8s.ObjectMeta{
+	ingresses := []*v1beta1.Ingress{{
+		ObjectMeta: v1.ObjectMeta{
 			Namespace: "awesome",
 		},
-		Spec: k8s.IngressSpec{
-			Rules: []k8s.IngressRule{
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
 				{
 					Host: "foo",
-					IngressRuleValue: k8s.IngressRuleValue{
-						HTTP: &k8s.HTTPIngressRuleValue{
-							Paths: []k8s.HTTPIngressPath{
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
 								{
 									Path: "/bar",
-									Backend: k8s.IngressBackend{
+									Backend: v1beta1.IngressBackend{
 										ServiceName: "service1",
-										ServicePort: k8s.FromInt(801),
+										ServicePort: intstr.FromInt(801),
 									},
 								},
 							},
@@ -520,16 +525,16 @@ func TestGetPassHostHeader(t *testing.T) {
 			},
 		},
 	}}
-	services := []k8s.Service{
+	services := []*v1.Service{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service1",
 				Namespace: "awesome",
 				UID:       "1",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.1",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 801,
@@ -587,22 +592,22 @@ func TestGetPassHostHeader(t *testing.T) {
 }
 
 func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
-	ingresses := []k8s.Ingress{
+	ingresses := []*v1beta1.Ingress{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "awesome",
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "foo",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service",
-											ServicePort: k8s.FromInt(80),
+											ServicePort: intstr.FromInt(80),
 										},
 									},
 								},
@@ -613,16 +618,16 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 			},
 		},
 	}
-	services := []k8s.Service{
+	services := []*v1.Service{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service",
 				UID:       "1",
 				Namespace: "awesome",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.1",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 80,
@@ -631,14 +636,14 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service",
 				UID:       "2",
 				Namespace: "not-awesome",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.2",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 80,
@@ -693,23 +698,23 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 }
 
 func TestLoadNamespacedIngresses(t *testing.T) {
-	ingresses := []k8s.Ingress{
+	ingresses := []*v1beta1.Ingress{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "awesome",
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "foo",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/bar",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -718,19 +723,19 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 					},
 					{
 						Host: "bar",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service3",
-											ServicePort: k8s.FromInt(443),
+											ServicePort: intstr.FromInt(443),
 										},
 									},
 									{
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service2",
-											ServicePort: k8s.FromInt(802),
+											ServicePort: intstr.FromInt(802),
 										},
 									},
 								},
@@ -741,21 +746,21 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "not-awesome",
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "baz",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/baz",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -766,16 +771,16 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			},
 		},
 	}
-	services := []k8s.Service{
+	services := []*v1.Service{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "awesome",
 				Name:      "service1",
 				UID:       "1",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.1",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 801,
@@ -784,14 +789,14 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service1",
 				Namespace: "not-awesome",
 				UID:       "1",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.1",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 801,
@@ -800,14 +805,14 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service2",
 				Namespace: "awesome",
 				UID:       "2",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.2",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Port: 802,
 					},
@@ -815,14 +820,14 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service3",
 				Namespace: "awesome",
 				UID:       "3",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.3",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 443,
@@ -906,23 +911,23 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 }
 
 func TestLoadMultipleNamespacedIngresses(t *testing.T) {
-	ingresses := []k8s.Ingress{
+	ingresses := []*v1beta1.Ingress{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "awesome",
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "foo",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/bar",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -931,19 +936,19 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 					{
 						Host: "bar",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service3",
-											ServicePort: k8s.FromInt(443),
+											ServicePort: intstr.FromInt(443),
 										},
 									},
 									{
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service2",
-											ServicePort: k8s.FromInt(802),
+											ServicePort: intstr.FromInt(802),
 										},
 									},
 								},
@@ -954,21 +959,21 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "somewhat-awesome",
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "awesome",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/quix",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -979,21 +984,21 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "not-awesome",
 			},
-			Spec: k8s.IngressSpec{
-				Rules: []k8s.IngressRule{
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
 					{
 						Host: "baz",
-						IngressRuleValue: k8s.IngressRuleValue{
-							HTTP: &k8s.HTTPIngressRuleValue{
-								Paths: []k8s.HTTPIngressPath{
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/baz",
-										Backend: k8s.IngressBackend{
+										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
-											ServicePort: k8s.FromInt(801),
+											ServicePort: intstr.FromInt(801),
 										},
 									},
 								},
@@ -1004,16 +1009,16 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			},
 		},
 	}
-	services := []k8s.Service{
+	services := []*v1.Service{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service1",
 				Namespace: "awesome",
 				UID:       "1",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.1",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 801,
@@ -1022,14 +1027,14 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "somewhat-awesome",
 				Name:      "service1",
 				UID:       "17",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.4",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 801,
@@ -1038,14 +1043,14 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "awesome",
 				Name:      "service2",
 				UID:       "2",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.2",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Port: 802,
 					},
@@ -1053,14 +1058,14 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			},
 		},
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Namespace: "awesome",
 				Name:      "service3",
 				UID:       "3",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.3",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 443,
@@ -1167,21 +1172,21 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 }
 
 func TestHostlessIngress(t *testing.T) {
-	ingresses := []k8s.Ingress{{
-		ObjectMeta: k8s.ObjectMeta{
+	ingresses := []*v1beta1.Ingress{{
+		ObjectMeta: v1.ObjectMeta{
 			Namespace: "awesome",
 		},
-		Spec: k8s.IngressSpec{
-			Rules: []k8s.IngressRule{
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
 				{
-					IngressRuleValue: k8s.IngressRuleValue{
-						HTTP: &k8s.HTTPIngressRuleValue{
-							Paths: []k8s.HTTPIngressPath{
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
 								{
 									Path: "/bar",
-									Backend: k8s.IngressBackend{
+									Backend: v1beta1.IngressBackend{
 										ServiceName: "service1",
-										ServicePort: k8s.FromInt(801),
+										ServicePort: intstr.FromInt(801),
 									},
 								},
 							},
@@ -1191,16 +1196,16 @@ func TestHostlessIngress(t *testing.T) {
 			},
 		},
 	}}
-	services := []k8s.Service{
+	services := []*v1.Service{
 		{
-			ObjectMeta: k8s.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				Name:      "service1",
 				Namespace: "awesome",
 				UID:       "1",
 			},
-			Spec: k8s.ServiceSpec{
+			Spec: v1.ServiceSpec{
 				ClusterIP: "10.0.0.1",
-				Ports: []k8s.ServicePort{
+				Ports: []v1.ServicePort{
 					{
 						Name: "http",
 						Port: 801,
@@ -1255,42 +1260,45 @@ func TestHostlessIngress(t *testing.T) {
 }
 
 type clientMock struct {
-	ingresses []k8s.Ingress
-	services  []k8s.Service
-	endpoints []k8s.Endpoints
+	ingresses []*v1beta1.Ingress
+	services  []*v1.Service
+	endpoints []*v1.Endpoints
 	watchChan chan interface{}
 }
 
-func (c clientMock) GetIngresses(labelString string, predicate func(k8s.Ingress) bool) ([]k8s.Ingress, error) {
-	var ingresses []k8s.Ingress
+func (c clientMock) GetIngresses(namespaces k8s.Namespaces) []*v1beta1.Ingress {
+	result := make([]*v1beta1.Ingress, 0, len(c.ingresses))
+
 	for _, ingress := range c.ingresses {
-		if predicate(ingress) {
-			ingresses = append(ingresses, ingress)
+		if k8s.HasNamespace(ingress, namespaces) {
+			result = append(result, ingress)
 		}
 	}
-	return ingresses, nil
+	return result
 }
-func (c clientMock) WatchIngresses(labelString string, predicate func(k8s.Ingress) bool, stopCh <-chan bool) (chan interface{}, chan error, error) {
-	return c.watchChan, make(chan error), nil
+
+func (c clientMock) WatchIngresses(labelSelector string, stopCh <-chan struct{}) chan interface{} {
+	return c.watchChan
 }
-func (c clientMock) GetService(name, namespace string) (k8s.Service, error) {
+
+func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error) {
 	for _, service := range c.services {
 		if service.Namespace == namespace && service.Name == name {
-			return service, nil
+			return service, true, nil
 		}
 	}
-	return k8s.Service{}, nil
+	return &v1.Service{}, true, nil
 }
 
-func (c clientMock) GetEndpoints(name, namespace string) (k8s.Endpoints, error) {
+func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
 	for _, endpoints := range c.endpoints {
 		if endpoints.Namespace == namespace && endpoints.Name == name {
-			return endpoints, nil
+			return endpoints, true, nil
 		}
 	}
-	return k8s.Endpoints{}, nil
+	return &v1.Endpoints{}, true, nil
 }
 
-func (c clientMock) WatchAll(labelString string, stopCh <-chan bool) (chan interface{}, chan error, error) {
-	return c.watchChan, make(chan error), nil
+func (c clientMock) WatchAll(labelString string, stopCh <-chan bool) (chan interface{}, error) {
+	return c.watchChan, nil
 }
