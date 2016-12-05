@@ -373,6 +373,32 @@ func TestRuleType(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Annotations: map[string]string{"traefik.frontend.rule.hostRegexpPrefix": "{subdomain:[a-z]+}."}, //subdomain hostRegexp prefix
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "foo3",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service3",
+											ServicePort: intstr.FromInt(801),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Annotations: map[string]string{"traefik.frontend.rule.type": "PathXXStrip"}, //wrong rule
@@ -487,6 +513,15 @@ func TestRuleType(t *testing.T) {
 				},
 				"foo1": {
 					Rule: "Host:foo1",
+				},
+			},
+		},
+		"foo3": {
+			Backend:  "foo3",
+			Priority: 0,
+			Routes: map[string]types.Route{
+				"foo3": {
+					Rule: "HostRegexp:{subdomain:[a-z]+}.foo3",
 				},
 			},
 		},
