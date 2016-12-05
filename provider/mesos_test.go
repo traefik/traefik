@@ -1,11 +1,12 @@
 package provider
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"github.com/mesosphere/mesos-dns/records/state"
-	"reflect"
-	"testing"
 )
 
 func TestMesosTaskFilter(t *testing.T) {
@@ -95,7 +96,7 @@ func TestMesosTaskFilter(t *testing.T) {
 				setLabels("traefik.enable", "true"),
 				discovery(setDiscoveryPorts("TCP", 80, "WEB HTTP", "TCP", 443, "WEB HTTPS")),
 			),
-			expected:         false, // more than 1 discovery port but no traefik.port* label
+			expected:         true, // Default to first index
 			exposedByDefault: true,
 		},
 		{
@@ -240,6 +241,36 @@ func TestMesosLoadConfig(t *testing.T) {
 			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
 				t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
 			}
+		}
+	}
+}
+
+func TestMesosGetSubDomain(t *testing.T) {
+	providerGroups := &Mesos{GroupsAsSubDomains: true}
+	providerNoGroups := &Mesos{GroupsAsSubDomains: false}
+
+	apps := []struct {
+		path     string
+		expected string
+		provider *Mesos
+	}{
+		{"/test", "test", providerNoGroups},
+		{"/test", "test", providerGroups},
+		{"/a/b/c/d", "d.c.b.a", providerGroups},
+		{"/b/a/d/c", "c.d.a.b", providerGroups},
+		{"/d/c/b/a", "a.b.c.d", providerGroups},
+		{"/c/d/a/b", "b.a.d.c", providerGroups},
+		{"/a/b/c/d", "a-b-c-d", providerNoGroups},
+		{"/b/a/d/c", "b-a-d-c", providerNoGroups},
+		{"/d/c/b/a", "d-c-b-a", providerNoGroups},
+		{"/c/d/a/b", "c-d-a-b", providerNoGroups},
+	}
+
+	for _, a := range apps {
+		actual := a.provider.getSubDomain(a.path)
+
+		if actual != a.expected {
+			t.Errorf("expected %q, got %q", a.expected, actual)
 		}
 	}
 }

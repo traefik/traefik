@@ -113,7 +113,7 @@ func (provider *Docker) createClient() (client.APIClient, error) {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	provider.Constraints = append(provider.Constraints, constraints...)
 	// TODO register this routine in pool, and watch for stop channel
 	safe.Go(func() {
@@ -363,10 +363,6 @@ func (provider *Docker) containerFilter(container dockerData) bool {
 		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
 		return false
 	}
-	if len(container.NetworkSettings.Ports) > 1 && err != nil {
-		log.Debugf("Filtering container with more than 1 port and no traefik.port label %s", container.Name)
-		return false
-	}
 
 	if !isContainerEnabled(container, provider.ExposedByDefault) {
 		log.Debugf("Filtering disabled container %s", container.Name)
@@ -405,7 +401,7 @@ func (provider *Docker) getFrontendRule(container dockerData) string {
 
 func (provider *Docker) getBackend(container dockerData) string {
 	if label, err := getLabel(container, "traefik.backend"); err == nil {
-		return label
+		return normalize(label)
 	}
 	return normalize(container.Name)
 }
@@ -458,7 +454,7 @@ func (provider *Docker) getWeight(container dockerData) string {
 	if label, err := getLabel(container, "traefik.weight"); err == nil {
 		return label
 	}
-	return "1"
+	return "0"
 }
 
 func (provider *Docker) getSticky(container dockerData) string {
@@ -563,6 +559,10 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 		if container.ContainerJSONBase.HostConfig != nil {
 			dockerData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
 		}
+
+		if container.State != nil && container.State.Health != nil {
+			dockerData.Health = container.State.Health.Status
+		}
 	}
 
 	if container.Config != nil && container.Config.Labels != nil {
@@ -584,10 +584,6 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 			}
 		}
 
-	}
-
-	if container.State != nil && container.State.Health != nil {
-		dockerData.Health = container.State.Health.Status
 	}
 
 	return dockerData

@@ -6,11 +6,11 @@ import:
   - fun
 - package: github.com/Sirupsen/logrus
 - package: github.com/cenk/backoff
-- package: github.com/codegangsta/negroni
+- package: github.com/urfave/negroni
 - package: github.com/containous/flaeg
   version: a731c034dda967333efce5f8d276aeff11f8ff87
 - package: github.com/vulcand/oxy
-  version: 4298f24d572dc554eb984f2ffdf6bdd54d4bd613
+  version: fcc76b52eb8568540a020b7a99e854d9d752b364
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -21,7 +21,7 @@ import:
   - stream
   - utils
 - package: github.com/containous/staert
-  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
+  version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - package: github.com/docker/engine-api
   version: 62043eb79d581a32ea849645277023c550732e52
   subpackages:
@@ -103,3 +103,11 @@ import:
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
+- package: github.com/mitchellh/mapstructure
+  version: f3009df150dadf309fdee4a54ed65c124afad715
+- package: github.com/coreos/go-systemd
+  version: v12
+  subpackages:
+  - daemon
+- package: github.com/google/go-github
+- package: github.com/hashicorp/go-version

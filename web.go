@@ -54,7 +54,7 @@ func goroutines() interface{} {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ []types.Constraint) error {
+func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
 
 	systemRouter := mux.NewRouter()
 

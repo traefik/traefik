@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/containous/flaeg"
@@ -20,8 +21,10 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider/k8s"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
+	"github.com/coreos/go-systemd/daemon"
 	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
 )
@@ -261,6 +264,20 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	}
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
+
+	if globalConfiguration.CheckNewVersion {
+		ticker := time.NewTicker(24 * time.Hour)
+		safe.Go(func() {
+			version.CheckNewVersion()
+			for {
+				select {
+				case <-ticker.C:
+					version.CheckNewVersion()
+				}
+			}
+		})
+	}
+
 	if len(traefikConfiguration.ConfigFile) != 0 {
 		log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
 	}
@@ -268,6 +285,11 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	server := NewServer(globalConfiguration)
 	server.Start()
 	defer server.Close()
+	sent, err := daemon.SdNotify("READY=1")
+	if !sent && err != nil {
+		log.Error("Fail to notify", err)
+	}
+	server.Wait()
 	log.Info("Shutting down")
 }
 

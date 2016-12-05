@@ -371,30 +371,30 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
-				Ports: []int{80},
+				AppID: "multiple-ports",
+				Ports: []int{80, 443},
 			},
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:     "foo",
+						ID:     "multiple-ports",
 						Ports:  []int{80, 443},
 						Labels: &map[string]string{},
 					},
 				},
 			},
-			expected:         false,
+			expected:         true,
 			exposedByDefault: true,
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
+				AppID: "disable",
 				Ports: []int{80},
 			},
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "foo",
+						ID:    "disable",
 						Ports: []int{80},
 						Labels: &map[string]string{
 							"traefik.enable": "false",
@@ -523,7 +523,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
+				AppID: "healthcheck-false",
 				Ports: []int{80},
 				HealthCheckResults: []*marathon.HealthCheckResult{
 					{
@@ -534,7 +534,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:     "foo",
+						ID:     "healthcheck-false",
 						Ports:  []int{80},
 						Labels: &map[string]string{},
 						HealthChecks: &[]marathon.HealthCheck{
@@ -576,13 +576,13 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
+				AppID: "single-port",
 				Ports: []int{80},
 			},
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:     "foo",
+						ID:     "single-port",
 						Ports:  []int{80},
 						Labels: &map[string]string{},
 					},
@@ -593,7 +593,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
-				AppID: "foo",
+				AppID: "healthcheck-alive",
 				Ports: []int{80},
 				HealthCheckResults: []*marathon.HealthCheckResult{
 					{
@@ -604,7 +604,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:     "foo",
+						ID:     "healthcheck-alive",
 						Ports:  []int{80},
 						Labels: &map[string]string{},
 						HealthChecks: &[]marathon.HealthCheck{
@@ -677,7 +677,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 	for _, c := range cases {
 		actual := provider.taskFilter(c.task, c.applications, c.exposedByDefault)
 		if actual != c.expected {
-			t.Fatalf("expected %v, got %v", c.expected, actual)
+			t.Fatalf("App %s: expected %v, got %v", c.task.AppID, c.expected, actual)
 		}
 	}
 }
@@ -740,7 +740,7 @@ func TestMarathonAppConstraints(t *testing.T) {
 			MarathonLBCompatibility: c.marathonLBCompatibility,
 		}
 		constraint, _ := types.NewConstraint("tag==valid")
-		provider.Constraints = []types.Constraint{*constraint}
+		provider.Constraints = types.Constraints{constraint}
 		actual := provider.applicationFilter(c.application, c.filteredTasks)
 		if actual != c.expected {
 			t.Fatalf("expected %v, got %v: %v", c.expected, actual, c.application)
@@ -820,7 +820,7 @@ func TestMarathonTaskConstraints(t *testing.T) {
 			MarathonLBCompatibility: c.marathonLBCompatibility,
 		}
 		constraint, _ := types.NewConstraint("tag==valid")
-		provider.Constraints = []types.Constraint{*constraint}
+		provider.Constraints = types.Constraints{constraint}
 		apps := new(marathon.Applications)
 		apps.Apps = c.applications
 		actual := provider.taskFilter(c.filteredTask, apps, true)
@@ -927,12 +927,12 @@ func TestMarathonGetPort(t *testing.T) {
 		{
 			applications: []marathon.Application{
 				{
-					ID:     "test1",
+					ID:     "multiple-ports-take-first",
 					Labels: &map[string]string{},
 				},
 			},
 			task: marathon.Task{
-				AppID: "test1",
+				AppID: "multiple-ports-take-first",
 				Ports: []int{80, 443},
 			},
 			expected: "80",
@@ -1277,6 +1277,36 @@ func TestMarathonGetBackend(t *testing.T) {
 		actual := provider.getFrontendBackend(a.application)
 		if actual != a.expected {
 			t.Fatalf("expected %q, got %q", a.expected, actual)
+		}
+	}
+}
+
+func TestMarathonGetSubDomain(t *testing.T) {
+	providerGroups := &Marathon{GroupsAsSubDomains: true}
+	providerNoGroups := &Marathon{GroupsAsSubDomains: false}
+
+	apps := []struct {
+		path     string
+		expected string
+		provider *Marathon
+	}{
+		{"/test", "test", providerNoGroups},
+		{"/test", "test", providerGroups},
+		{"/a/b/c/d", "d.c.b.a", providerGroups},
+		{"/b/a/d/c", "c.d.a.b", providerGroups},
+		{"/d/c/b/a", "a.b.c.d", providerGroups},
+		{"/c/d/a/b", "b.a.d.c", providerGroups},
+		{"/a/b/c/d", "a-b-c-d", providerNoGroups},
+		{"/b/a/d/c", "b-a-d-c", providerNoGroups},
+		{"/d/c/b/a", "d-c-b-a", providerNoGroups},
+		{"/c/d/a/b", "c-d-a-b", providerNoGroups},
+	}
+
+	for _, a := range apps {
+		actual := a.provider.getSubDomain(a.path)
+
+		if actual != a.expected {
+			t.Errorf("expected %q, got %q", a.expected, actual)
 		}
 	}
 }

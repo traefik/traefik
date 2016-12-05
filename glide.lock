@@ -1,5 +1,5 @@
-hash: 3ff2f92356bc5d286ce4d72835d5ace63c43cc591e561fd2d557e8dc8abd1672
-updated: 2016-11-17T17:17:58.806741449Z
+hash: 26bdc224454872acf1a9a58e0f4c33442a807087286043ed7d8d6640f1a2e8fc
+updated: 2016-12-05T21:21:43.691375582+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -10,7 +10,7 @@ imports:
 - name: github.com/ArthurHlt/gominlog
   version: 068c01ce147ad68fca25ef3fa29ae5395ae273ab
 - name: github.com/blang/semver
-  version: 60ec3488bfea7cca02b021d106d9911120d25fe9
+  version: 3a37c301dda64cbe17f16f661b4c976803c0e2d2
 - name: github.com/boltdb/bolt
   version: f4c032d907f61f08dba2d719c58f108a1abb8e81
 - name: github.com/BurntSushi/toml
@@ -21,8 +21,6 @@ imports:
   - fun
 - name: github.com/cenk/backoff
   version: 8edc80b07f38c27352fb186d971c628a6c32552b
-- name: github.com/cloudfoundry-incubator/candiedyaml
-  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/codahale/hdrhistogram
   version: 9208b142303c12d8899bae836fd524ac9338b4fd
 - name: github.com/codegangsta/cli
@@ -34,7 +32,7 @@ imports:
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
-  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
+  version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
@@ -44,13 +42,17 @@ imports:
   - pkg/pathutil
   - pkg/types
 - name: github.com/coreos/go-oidc
-  version: 16c5ecc505f1efa0fe4685826fd9962c4d137e87
+  version: dedb650fb29c39c2f21aa88c1e4cec66da8754d1
   subpackages:
   - http
   - jose
   - key
   - oauth2
   - oidc
+- name: github.com/coreos/go-systemd
+  version: 43e4800a6165b4e02bb2a36673c54b230d6f7b26
+  subpackages:
+  - daemon
 - name: github.com/coreos/pkg
   version: 2c77715c4df99b5420ffcae14ead08f52104065d
   subpackages:
@@ -174,13 +176,13 @@ imports:
 - name: github.com/gambol99/go-marathon
   version: a558128c87724cd7430060ef5aedf39f83937f55
 - name: github.com/ghodss/yaml
-  version: aa0c862057666179de291b67d9f093d12b5a8473
+  version: a54de18a07046d8c4b26e9327698a2ebb9285b36
 - name: github.com/go-openapi/jsonpointer
   version: 8d96a2dc61536b690bd36b2e9df0b3c0b62825b2
 - name: github.com/go-openapi/jsonreference
   version: 36d33bfe519efae5632669801b180bf1a245da3b
 - name: github.com/go-openapi/spec
-  version: d1c18b339aece4b16ead6d253b85b6ad7180ea54
+  version: f7ae86df5bc115a2744343016c789a89f065a4bd
 - name: github.com/go-openapi/swag
   version: 3b6d86cd965820f968760d5d419cb4add096bdd7
 - name: github.com/gogo/protobuf
@@ -194,22 +196,28 @@ imports:
   version: 5677a0e3d5e89854c9974e1256839ee23f8233ca
   subpackages:
   - proto
+- name: github.com/google/go-github
+  version: 55263f30529cb06f5b478efc333390b791cfe3b1
+  subpackages:
+  - github
 - name: github.com/google/go-querystring
   version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
   subpackages:
   - query
 - name: github.com/google/gofuzz
-  version: fd52762d25a41827db7ef64c43756fd4b9f7e382
+  version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/gorilla/context
-  version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/hashicorp/consul
   version: d8e2fb7dd594163e25a89bc52c1a4613f5c5bfb8
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
   version: ad28ea4487f05916463e2423a55166280e8254b5
+- name: github.com/hashicorp/go-version
+  version: e96d3840402619007766590ecea8dd7af1292276
 - name: github.com/hashicorp/serf
-  version: 598c54895cc5a7b1a24a398d635e8c0ea0959870
+  version: b03bf85930b2349eb04b97c8fac437495296e3e7
   subpackages:
   - coordinate
 - name: github.com/jarcoal/httpmock
@@ -257,19 +265,23 @@ imports:
 - name: github.com/miekg/dns
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
-  version: ca63d7c062ee3c9f34db231e352b60012b4fd0c1
+  version: f3009df150dadf309fdee4a54ed65c124afad715
 - name: github.com/NYTimes/gziphandler
   version: f6438dbf4a82c56684964b03956aa727b0d7816b
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: ba1568de399395774ad84c2ace65937814c542ed
+  version: 02f8fa7863dd3f82909a73e2061897828460d52f
   subpackages:
   - libcontainer/user
 - name: github.com/parnurzeal/gorequest
   version: e30af16d4e485943aab0b0885ad6bdbb8c0d3dc7
 - name: github.com/pborman/uuid
   version: 3d4f2ba23642d3cfd06bd4b54cf03d99d95c0f1b
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
 - name: github.com/PuerkitoBio/purell
   version: 0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4
 - name: github.com/PuerkitoBio/urlesc
@@ -291,7 +303,7 @@ imports:
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
-  version: b8dc1cecf15bdaf1988d9e87aa7cd98d899a06d6
+  version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
   subpackages:
   - assert
   - mock
@@ -305,10 +317,12 @@ imports:
   - codec
 - name: github.com/unrolled/render
   version: 526faf80cd4b305bb8134abea8d20d5ced74faa6
+- name: github.com/urfave/negroni
+  version: e0e50f7dc431c043cb33f91b09c3419d48b7cff5
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
-  version: 4298f24d572dc554eb984f2ffdf6bdd54d4bd613
+  version: fcc76b52eb8568540a020b7a99e854d9d752b364
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -363,7 +377,7 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: a263ba8db058568bb9beba166777d9c9dbe75d68
+  version: 5c6cf4f9a2357d38515014cea8c488ed22bdab90
   subpackages:
   - transform
   - unicode/norm
@@ -390,7 +404,7 @@ imports:
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/mgo.v2
-  version: 29cc868a5ca65f401ff318143f9408d02f4799cc
+  version: 22287bab4379e1fbf6002fb4eb769888f3fb224c
   subpackages:
   - bson
 - name: gopkg.in/square/go-jose.v1
@@ -398,6 +412,8 @@ imports:
   subpackages:
   - cipher
   - json
+- name: gopkg.in/yaml.v2
+  version: bef53efd0c76e49e6de55ead051f886bea7e9420
 - name: k8s.io/client-go
   version: 843f7c4f28b1f647f664f883697107d5c02c5acc
   subpackages:
@@ -509,6 +525,8 @@ testImports:
   version: fa152c58bc15761d0200cb75fe958b89a9d4888e
   subpackages:
   - winterm
+- name: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/docker/libcompose
   version: d1876c1d68527a49c0aac22a0b161acc7296b740
   subpackages:
@@ -529,7 +547,7 @@ testImports:
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gorilla/mux
   version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
 - name: github.com/libkermit/compose

@@ -61,7 +61,7 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 				"traefik.backend.weight=42",
 			},
 			key:          "backend.weight",
-			defaultValue: "",
+			defaultValue: "0",
 			expected:     "42",
 		},
 		{
@@ -70,8 +70,8 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 				"traefik.backend.wei=42",
 			},
 			key:          "backend.weight",
-			defaultValue: "",
-			expected:     "",
+			defaultValue: "0",
+			expected:     "0",
 		},
 	}
 

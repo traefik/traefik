@@ -7,6 +7,8 @@ import (
 	"text/template"
 
 	"fmt"
+	"time"
+
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
@@ -20,8 +22,6 @@ import (
 	"github.com/mesosphere/mesos-dns/records"
 	"github.com/mesosphere/mesos-dns/records/state"
 	"github.com/mesosphere/mesos-dns/util"
-	"sort"
-	"time"
 )
 
 var _ Provider = (*Mesos)(nil)
@@ -42,7 +42,7 @@ type Mesos struct {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Mesos) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Mesos) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	operation := func() error {
 
 		// initialize logging
@@ -210,10 +210,6 @@ func mesosTaskFilter(task state.Task, exposedByDefaultFlag bool) bool {
 	portValueLabel := labels(task, "traefik.port")
 	if portIndexLabel != "" && portValueLabel != "" {
 		log.Debugf("Filtering mesos task %s specifying both traefik.portIndex and traefik.port labels", task.Name)
-		return false
-	}
-	if portIndexLabel == "" && portValueLabel == "" && len(task.DiscoveryInfo.Ports.DiscoveryPorts) > 1 {
-		log.Debugf("Filtering mesos task %s with more than 1 port and no traefik.portIndex or traefik.port label", task.Name)
 		return false
 	}
 	if portIndexLabel != "" {
@@ -439,7 +435,7 @@ func Ignore(f ErrorFunction) {
 func (provider *Mesos) getSubDomain(name string) string {
 	if provider.GroupsAsSubDomains {
 		splitedName := strings.Split(strings.TrimPrefix(name, "/"), "/")
-		sort.Sort(sort.Reverse(sort.StringSlice(splitedName)))
+		reverseStringSlice(&splitedName)
 		reverseName := strings.Join(splitedName, ".")
 		return reverseName
 	}

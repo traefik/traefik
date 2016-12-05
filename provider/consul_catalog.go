@@ -317,7 +317,7 @@ func (provider *ConsulCatalog) watch(configurationChan chan<- types.ConfigMessag
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	config := api.DefaultConfig()
 	config.Address = provider.Endpoint
 	client, err := api.NewClient(config)
