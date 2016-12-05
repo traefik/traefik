@@ -102,6 +102,7 @@ import:
   version: ^0.5.1
 - package: github.com/gogo/protobuf
   version: 0.3
+- package: github.com/stretchr/stew/objects
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka

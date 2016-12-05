@@ -225,6 +225,7 @@ type Cluster struct {
 type Auth struct {
 	Basic       *Basic
 	Digest      *Digest
+	Forward     *Forward
 	HeaderField string
 }
 
@@ -239,6 +240,28 @@ type Basic struct {
 // Digest HTTP authentication
 type Digest struct {
 	Users `mapstructure:","`
+}
+
+// Forward authentication
+type Forward struct {
+	Address              string
+	RequestParameters    map[string]*ForwardRequestParameter
+	ResponseReplayFields map[string]*ResponseReplayField
+}
+
+// ForwardRequestParameter describe the parameter extracted from the request
+// and used with remote authentication address
+type ForwardRequestParameter struct {
+	Name string
+	As   string
+}
+
+// ResponseReplayField describe witch fields from the forwarded authentication
+// must be replayed in the actual request
+type ResponseReplayField struct {
+	Path string
+	As   string
+	In   string
 }
 
 // CanonicalDomain returns a lower case domain with trim space
