@@ -23,7 +23,7 @@ import (
 type Provider interface {
 	// Provide allows the provider to provide configurations to traefik
 	// using the given configuration channel.
-	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error
+	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error
 }
 
 // BaseProvider should be inherited by providers
@@ -44,7 +44,7 @@ func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint)
 	for _, constraint := range p.Constraints {
 		// xor: if ok and constraint.MustMatch are equal, then no tag is currently matching with the constraint
 		if ok := constraint.MatchConstraintWithAtLeastOneTag(tags); ok != constraint.MustMatch {
-			return false, &constraint
+			return false, constraint
 		}
 	}
 
@@ -99,6 +99,12 @@ func normalize(name string) string {
 	}
 	// get function
 	return strings.Join(strings.FieldsFunc(name, fargs), "-")
+}
+
+func reverseStringSlice(slice *[]string) {
+	for i, j := 0, len(*slice)-1; i < j; i, j = i+1, j-1 {
+		(*slice)[i], (*slice)[j] = (*slice)[j], (*slice)[i]
+	}
 }
 
 // ClientTLS holds TLS specific configurations as client

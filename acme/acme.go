@@ -137,12 +137,14 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	leadership.Pool.AddGoCtx(func(ctx context.Context) {
 		log.Infof("Starting ACME renew job...")
 		defer log.Infof("Stopped ACME renew job...")
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			if err := a.renewCertificates(); err != nil {
-				log.Errorf("Error renewing ACME certificate: %s", err.Error())
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if err := a.renewCertificates(); err != nil {
+					log.Errorf("Error renewing ACME certificate: %s", err.Error())
+				}
 			}
 		}
 	})
@@ -252,7 +254,6 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 		needRegister = true
 	}
 
-	log.Infof("buildACMEClient...")
 	a.client, err = a.buildACMEClient(account)
 	if err != nil {
 		return err
@@ -270,7 +271,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 
 	// The client has a URL to the current Let's Encrypt Subscriber
 	// Agreement. The user will need to agree to it.
-	log.Infof("AgreeToTOS...")
+	log.Debugf("AgreeToTOS...")
 	err = a.client.AgreeToTOS()
 	if err != nil {
 		// Let's Encrypt Subscriber Agreement renew ?
@@ -374,11 +375,6 @@ func (a *ACME) renewCertificates() error {
 	account := a.store.Get().(*Account)
 	for _, certificateResource := range account.DomainsCertificate.Certs {
 		if certificateResource.needRenew() {
-			transaction, object, err := a.store.Begin()
-			if err != nil {
-				return err
-			}
-			account = object.(*Account)
 			log.Debugf("Renewing certificate %+v", certificateResource.Domains)
 			renewedCert, err := a.client.RenewCertificate(acme.CertificateResource{
 				Domain:        certificateResource.Certificate.Domain,
@@ -399,6 +395,11 @@ func (a *ACME) renewCertificates() error {
 				PrivateKey:    renewedCert.PrivateKey,
 				Certificate:   renewedCert.Certificate,
 			}
+			transaction, object, err := a.store.Begin()
+			if err != nil {
+				return err
+			}
+			account = object.(*Account)
 			err = account.DomainsCertificate.renewCertificates(renewedACMECert, certificateResource.Domains)
 			if err != nil {
 				log.Errorf("Error renewing certificate: %v", err)
