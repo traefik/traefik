@@ -115,7 +115,8 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 			for _, pa := range r.HTTP.Paths {
 				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
-						Servers: make(map[string]types.Server),
+						Servers:      make(map[string]types.Server),
+						LoadBalancer: getLoadBalancer(i.Annotations),
 					}
 				}
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
@@ -226,6 +227,25 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 		return true
 	}
 	return false
+}
+
+func getLoadBalancer(annotations map[string]string) *types.LoadBalancer {
+	loadbalancer := types.LoadBalancer{
+		Sticky: false,
+		Method: "wrr",
+	}
+
+	if len(annotations) > 0 && annotations["traefik.backend.loadbalancer.sticky"] == "true" {
+		loadbalancer.Sticky = true
+		log.Info("Create sticky loadbalancer")
+	}
+
+	if len(annotations) > 0 && annotations["traefik.backend.loadbalancer.method"] == "drr" {
+		loadbalancer.Method = "drr"
+		log.Info("Create loadbalancer with drr method")
+	}
+
+	return &loadbalancer
 }
 
 func (provider *Kubernetes) getPassHostHeader() bool {

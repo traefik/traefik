@@ -217,7 +217,10 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -235,7 +238,10 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -565,7 +571,10 @@ func TestGetPassHostHeader(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -674,7 +683,10 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -860,7 +872,10 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -874,7 +889,10 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -1098,7 +1116,10 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -1112,7 +1133,10 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"awesome/quix": {
 				Servers: map[string]types.Server{
@@ -1122,7 +1146,10 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -1236,7 +1263,10 @@ func TestHostlessIngress(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
