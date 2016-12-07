@@ -13,11 +13,17 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/providers/dns"
 	"io/ioutil"
 	fmtlog "log"
 	"os"
 	"strings"
 	"time"
+)
+
+var (
+	// OSCPMustStaple enables OSCP stapling as from https://github.com/xenolf/lego/issues/270
+	OSCPMustStaple = false
 )
 
 // ACME allows to connect to lets encrypt and retrieve certs
@@ -30,6 +36,9 @@ type ACME struct {
 	OnHostRule          bool     `description:"Enable certificate generation on frontends Host rules."`
 	CAServer            string   `description:"CA server to use."`
 	EntryPoint          string   `description:"Entrypoint to proxy acme challenge to."`
+	DNSProvider         string   `description:"Use a DNS based challenge provider rather than HTTPS."`
+	DelayDontCheckDNS   int      `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	ACMELogging         bool     `description:"Enable debug logging of ACME actions."`
 	client              *acme.Client
 	defaultCertificate  *tls.Certificate
 	store               cluster.Store
@@ -79,7 +88,11 @@ type Domain struct {
 }
 
 func (a *ACME) init() error {
-	acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
+	if a.ACMELogging {
+		acme.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
+	} else {
+		acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
+	}
 	// no certificates in TLS config, so we add a default one
 	cert, err := generateDefaultCertificate()
 	if err != nil {
@@ -382,7 +395,7 @@ func (a *ACME) renewCertificates() error {
 				CertStableURL: certificateResource.Certificate.CertStableURL,
 				PrivateKey:    certificateResource.Certificate.PrivateKey,
 				Certificate:   certificateResource.Certificate.Certificate,
-			}, true)
+			}, true, OSCPMustStaple)
 			if err != nil {
 				log.Errorf("Error renewing certificate: %v", err)
 				continue
@@ -415,6 +428,20 @@ func (a *ACME) renewCertificates() error {
 	return nil
 }
 
+func dnsOverrideDelay(delay int) error {
+	var err error
+	if delay > 0 {
+		log.Debugf("Delaying %d seconds rather than validating DNS propagation", delay)
+		acme.PreCheckDNS = func(_, _ string) (bool, error) {
+			time.Sleep(time.Duration(delay) * time.Second)
+			return true, nil
+		}
+	} else if delay < 0 {
+		err = fmt.Errorf("Invalid negative DelayDontCheckDNS: %d", delay)
+	}
+	return err
+}
+
 func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	log.Debugf("Building ACME client...")
 	caServer := "https://acme-v01.api.letsencrypt.org/directory"
@@ -425,8 +452,28 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
-	err = client.SetChallengeProvider(acme.TLSSNI01, a.challengeProvider)
+
+	if len(a.DNSProvider) > 0 {
+		log.Debugf("Using DNS Challenge provider: %s", a.DNSProvider)
+
+		err = dnsOverrideDelay(a.DelayDontCheckDNS)
+		if err != nil {
+			return nil, err
+		}
+
+		var provider acme.ChallengeProvider
+		provider, err = dns.NewDNSChallengeProviderByName(a.DNSProvider)
+		if err != nil {
+			return nil, err
+		}
+
+		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSSNI01})
+		err = client.SetChallengeProvider(acme.DNS01, provider)
+	} else {
+		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
+		err = client.SetChallengeProvider(acme.TLSSNI01, a.challengeProvider)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -524,7 +571,7 @@ func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
 	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 	log.Debugf("Loading ACME certificates %s...", domains)
 	bundle := true
-	certificate, failures := a.client.ObtainCertificate(domains, bundle, nil)
+	certificate, failures := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
 	if len(failures) > 0 {
 		log.Error(failures)
 		return nil, fmt.Errorf("Cannot obtain certificates %s+v", failures)
