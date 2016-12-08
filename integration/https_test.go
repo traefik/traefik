@@ -30,6 +30,7 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         "snitest.com",
+		NextProtos:         []string{"h2", "http/1.1"},
 	}
 	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
@@ -41,6 +42,9 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 	cs := conn.ConnectionState()
 	err = cs.PeerCertificates[0].VerifyHostname("snitest.com")
 	c.Assert(err, checker.IsNil, check.Commentf("certificate did not match SNI servername"))
+
+	proto := conn.ConnectionState().NegotiatedProtocol
+	c.Assert(proto, checker.Equals, "h2")
 }
 
 // TestWithSNIConfigRoute involves a client sending HTTPS requests with

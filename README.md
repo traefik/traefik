@@ -52,7 +52,7 @@ Run it and forget it!
 - Circuit breakers on backends
 - Round Robin, rebalancer load-balancers
 - Rest Metrics
-- [Tiny](https://imagelayers.io/?images=traefik) [official](https://hub.docker.com/r/_/traefik/) docker image included
+- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image included
 - SSL backends support
 - SSL frontend support (with SNI)
 - Clean AngularJS Web UI
@@ -159,9 +159,10 @@ Founded in 2014, Asteris creates next-generation infrastructure software for the
 
 - Emile Vauge [@emilevauge](https://github.com/emilevauge)
 - Vincent Demeester [@vdemeester](https://github.com/vdemeester)
-- Samuel Berthe [@samber](https://github.com/samber)
 - Russell Clare [@Russell-IO](https://github.com/Russell-IO)
 - Ed Robinson [@errm](https://github.com/errm)
+- Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
+- Manuel Laufenberg [@SantoDE](https://github.com/SantoDE)
 
 ## Credits
 

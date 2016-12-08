@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net"
 	"net/url"
-	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -35,6 +34,7 @@ type Marathon struct {
 	MarathonLBCompatibility bool          `description:"Add compatibility with marathon-lb labels"`
 	TLS                     *ClientTLS    `description:"Enable Docker TLS support"`
 	DialerTimeout           time.Duration `description:"Set a non-default connection timeout for Marathon"`
+	KeepAlive               time.Duration `description:"Set a non-default TCP Keep Alive time in seconds"`
 	Basic                   *MarathonBasic
 	marathonClient          marathon.Marathon
 }
@@ -52,7 +52,7 @@ type lightMarathonClient interface {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	provider.Constraints = append(provider.Constraints, constraints...)
 	operation := func() error {
 		config := marathon.NewDefaultConfig()
@@ -71,10 +71,11 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 		}
 		config.HTTPClient = &http.Client{
 			Transport: &http.Transport{
-				TLSClientConfig: TLSConfig,
 				DialContext: (&net.Dialer{
-					Timeout: time.Second * provider.DialerTimeout,
+					KeepAlive: provider.KeepAlive * time.Second,
+					Timeout:   time.Second * provider.DialerTimeout,
 				}).DialContext,
+				TLSClientConfig: TLSConfig,
 			},
 		}
 		client, err := marathon.NewClient(config)
@@ -224,10 +225,7 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 		log.Debugf("Filtering marathon task %s specifying both traefik.portIndex and traefik.port labels", task.AppID)
 		return false
 	}
-	if portIndexLabel == "" && portValueLabel == "" && len(application.Ports) > 1 {
-		log.Debugf("Filtering marathon task %s with more than 1 port and no traefik.portIndex or traefik.port label", task.AppID)
-		return false
-	}
+
 	if portIndexLabel != "" {
 		index, err := strconv.Atoi((*application.Labels)["traefik.portIndex"])
 		if err != nil || index < 0 || index > len(application.Ports)-1 {
@@ -427,7 +425,7 @@ func (provider *Marathon) getFrontendBackend(application marathon.Application) s
 func (provider *Marathon) getSubDomain(name string) string {
 	if provider.GroupsAsSubDomains {
 		splitedName := strings.Split(strings.TrimPrefix(name, "/"), "/")
-		sort.Sort(sort.Reverse(sort.StringSlice(splitedName)))
+		reverseStringSlice(&splitedName)
 		reverseName := strings.Join(splitedName, ".")
 		return reverseName
 	}

@@ -9,6 +9,28 @@
 # Global configuration
 ################################################################
 
+# Timeout in seconds.
+# Duration to give active requests a chance to finish during hot-reloads
+#
+# Optional
+# Default: 10
+#
+# graceTimeOut = 10
+
+# Enable debug mode
+#
+# Optional
+# Default: false
+#
+# debug = true
+
+# Periodically check if a new version has been released
+#
+# Optional
+# Default: true
+#
+# checkNewVersion = false
+
 # Traefik logs file
 # If not defined, logs to stdout
 #
@@ -31,14 +53,14 @@
 #
 # logLevel = "ERROR"
 
-# Backends throttle duration: minimum duration between 2 events from providers
+# Backends throttle duration: minimum duration in seconds between 2 events from providers
 # before applying a new configuration. It avoids unnecessary reloads if multiples events
 # are sent in a short amount of time.
 #
 # Optional
-# Default: "2s"
+# Default: "2"
 #
-# ProvidersThrottleDuration = "5s"
+# ProvidersThrottleDuration = "5"
 
 # If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
 # If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
@@ -260,12 +282,49 @@ email = "test@traefik.io"
 #
 storage = "acme.json" # or "traefik/acme/account" if using KV store
 
-# Entrypoint to proxy acme challenge to.
+# Entrypoint to proxy acme challenge/apply certificates to.
 # WARNING, must point to an entrypoint on port 443
 #
 # Required
 #
 entryPoint = "https"
+
+# Use a DNS based acme challenge rather than external HTTPS access, e.g. for a firewalled server
+# Select the provider that matches the DNS domain that will host the challenge TXT record,
+# and provide environment variables with access keys to enable setting it:
+#  - cloudflare: CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY
+#  - digitalocean: DO_AUTH_TOKEN
+#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_API_KEY
+#  - dnsmadeeasy: DNSMADEEASY_API_KEY, DNSMADEEASY_API_SECRET
+#  - exoscale: EXOSCALE_API_KEY, EXOSCALE_API_SECRET
+#  - gandi: GANDI_API_KEY
+#  - linode: LINODE_API_KEY
+#  - manual: none, but run traefik interactively & turn on acmeLogging to see instructions & press Enter
+#  - namecheap: NAMECHEAP_API_USER, NAMECHEAP_API_KEY
+#  - rfc2136: RFC2136_TSIG_KEY, RFC2136_TSIG_SECRET, RFC2136_TSIG_ALGORITHM, RFC2136_NAMESERVER
+#  - route53: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, or configured user/instance IAM profile
+#  - dyn: DYN_CUSTOMER_NAME, DYN_USER_NAME, DYN_PASSWORD
+#  - vultr: VULTR_API_KEY
+#  - ovh: OVH_ENDPOINT, OVH_APPLICATION_KEY, OVH_APPLICATION_SECRET, OVH_CONSUMER_KEY
+#  - pdns: PDNS_API_KEY, PDNS_API_URL
+#
+# Optional
+#
+# dnsProvider = "digitalocean"
+
+# By default, the dnsProvider will verify the TXT DNS challenge record before letting ACME verify
+# If delayDontCheckDNS is greater than zero, avoid this & instead just wait so many seconds.
+# Useful if internal networks block external DNS queries
+#
+# Optional
+#
+# delayDontCheckDNS = 0
+
+# If true, display debug log messages from the acme client library
+#
+# Optional
+#
+# acmeLogging = true
 
 # Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
 # WARNING, TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.
@@ -493,7 +552,7 @@ address = ":8080"
 # To enable digest auth on the webui
 # with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
 # You can use htdigest to generate those ones
-#   [web.auth.basic]
+#   [web.auth.digest]
 #     users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 
 ```
@@ -698,6 +757,7 @@ watch = true
 # filename = "docker.tmpl"
 
 # Expose containers by default in traefik
+# If set to false, containers that don't have `traefik.enable=true` will be ignored 
 #
 # Optional
 # Default: true
@@ -845,6 +905,12 @@ domain = "marathon.localhost"
 # Default: 60
 # dialerTimeout = 5
 
+# Set the TCP Keep Alive interval (in seconds) for the Marathon HTTP Client
+#
+# Optional
+# Default: 10
+#
+# keepAlive = 10
 ```
 
 Labels can be used on containers to override default behaviour:
