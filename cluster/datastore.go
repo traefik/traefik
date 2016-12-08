@@ -176,7 +176,7 @@ func (d *Datastore) Begin() (Transaction, Object, error) {
 	}
 	ebo := backoff.NewExponentialBackOff()
 	ebo.MaxElapsedTime = 60 * time.Second
-	err = backoff.RetryNotify(operation, ebo, notify)
+	err = backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Datastore cannot sync: %v", err)
 	}

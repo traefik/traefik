@@ -196,6 +196,10 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 	PassHostHeader := provider.getPassHostHeader()
 	for _, i := range ingresses {
 		for _, r := range i.Spec.Rules {
+			if r.HTTP == nil {
+				log.Warnf("Error in ingress: HTTP is nil")
+				continue
+			}
 			for _, pa := range r.HTTP.Paths {
 				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
