@@ -764,7 +764,7 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 	regex := entryPoint.Redirect.Regex
 	replacement := entryPoint.Redirect.Replacement
 	if len(entryPoint.Redirect.EntryPoint) > 0 {
-		regex = "^(?:https?:\\/\\/)?([\\da-z\\.-]+)(?::\\d+)?(.*)$"
+		regex = "^(?:https?:\\/\\/)?([\\w\\._-]+)(?::\\d+)?(.*)$"
 		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint] == nil {
 			return nil, errors.New("Unknown entrypoint " + entryPoint.Redirect.EntryPoint)
 		}
