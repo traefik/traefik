@@ -113,7 +113,7 @@ func (provider *Mesos) Provide(configurationChan chan<- types.ConfigMessage, poo
 	notify := func(err error, time time.Duration) {
 		log.Errorf("mesos connection error %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		log.Errorf("Cannot connect to mesos server %+v", err)
 	}

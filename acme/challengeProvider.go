@@ -9,6 +9,7 @@ import (
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/safe"
 	"github.com/xenolf/lego/acme"
 	"time"
 )
@@ -49,7 +50,7 @@ func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate
 	}
 	ebo := backoff.NewExponentialBackOff()
 	ebo.MaxElapsedTime = 60 * time.Second
-	err := backoff.RetryNotify(operation, ebo, notify)
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 	if err != nil {
 		log.Errorf("Error getting cert: %v", err)
 		return nil, false

@@ -113,7 +113,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 	notify := func(err error, time time.Duration) {
 		log.Errorf("Marathon connection error %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		log.Errorf("Cannot connect to Marathon server %+v", err)
 	}
