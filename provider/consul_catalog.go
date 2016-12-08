@@ -334,7 +334,7 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 		operation := func() error {
 			return provider.watch(configurationChan, stop)
 		}
-		err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Cannot connect to consul server %+v", err)
 		}

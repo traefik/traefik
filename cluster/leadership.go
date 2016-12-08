@@ -47,7 +47,7 @@ func (l *Leadership) Participate(pool *safe.Pool) {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Leadership election error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, backOff, notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backOff, notify)
 		if err != nil {
 			log.Errorf("Cannot elect leadership %+v", err)
 		}
