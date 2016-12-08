@@ -34,7 +34,7 @@ Træfɪk can listen to your service registry/orchestrator API, and knows each ti
 Routes to your services will be created instantly.
 
 Run it and forget it!
-  
+
 
 ## Quickstart
 
@@ -70,39 +70,63 @@ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.to
 
 ## Test it
 
-You can test Træfɪk easily using [Docker compose](https://docs.docker.com/compose), with this `docker-compose.yml` file:
+You can test Træfɪk easily using [Docker compose](https://docs.docker.com/compose), with this `docker-compose.yml` file in a folder named `traefik`:
 
 ```yaml
-traefik:
-  image: traefik
-  command: --web --docker --docker.domain=docker.localhost --logLevel=DEBUG
-  ports:
-    - "80:80"
-    - "8080:8080"
-  volumes:
-    - /var/run/docker.sock:/var/run/docker.sock
-    - /dev/null:/traefik.toml
+version: '2'
 
-whoami1:
-  image: emilevauge/whoami
-  labels:
-    - "traefik.backend=whoami"
-    - "traefik.frontend.rule=Host:whoami.docker.localhost"
+services:
+  proxy:
+    image: traefik
+    command: --web --docker --docker.domain=docker.localhost --logLevel=DEBUG
+    networks:
+      - webgateway
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /dev/null:/traefik.toml
 
-whoami2:
-  image: emilevauge/whoami
-  labels:
-    - "traefik.backend=whoami"
-    - "traefik.frontend.rule=Host:whoami.docker.localhost"
+networks:
+  webgateway:
+    driver: bridge
 ```
 
-Then, start it:
-    
+Start it from within the `traefik` folder:
+
+    docker-compose up -d
+
+In a browser you may open `http://localhost:8080` to access Træfɪk's dashboard and observe the following magic.
+
+Now, create a folder named `test` and create a `docker-compose.yml` in it with this content:
+
+```yaml
+version: '2'
+
+services:
+  whoami:
+    image: emilevauge/whoami
+    networks:
+      - web
+    labels:
+      - "traefik.backend=whoami"
+      - "traefik.frontend.rule=Host:whoami.docker.localhost"
+
+networks:
+  web:
+    external:
+      name: traefik_webgateway
+```
+
+Then, start and scale it in the `test` folder:
+
 ```
 docker-compose up -d
+docker-compose scale whoami=2
 ```
 
-Finally, test load-balancing between the two servers `whoami1` and `whoami2`:
+Finally, test load-balancing between the two services `test_whoami_1` and `test_whoami_2`:
 
 ```bash
 $ curl -H Host:whoami.docker.localhost http://127.0.0.1
