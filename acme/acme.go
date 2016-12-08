@@ -533,7 +533,7 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 		}
 		ebo := backoff.NewExponentialBackOff()
 		ebo.MaxElapsedTime = 30 * time.Second
-		err := backoff.RetryNotify(operation, ebo, notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 		if err != nil {
 			log.Errorf("Error getting ACME client: %v", err)
 			return
