@@ -1,11 +1,12 @@
 package safe
 
 import (
+	"fmt"
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/log"
 	"context"
 	"runtime/debug"
 	"sync"
-
-	"github.com/containous/traefik/log"
 )
 
 type routine struct {
@@ -144,4 +145,18 @@ func GoWithRecover(goroutine func(), customRecover func(err interface{})) {
 func defaultRecoverGoroutine(err interface{}) {
 	log.Errorf("Error in Go routine: %s", err)
 	debug.PrintStack()
+}
+
+// OperationWithRecover wrap a backoff operation in a Recover
+func OperationWithRecover(operation backoff.Operation) backoff.Operation {
+	return func() (err error) {
+		defer func() {
+			if res := recover(); res != nil {
+				defaultRecoverGoroutine(err)
+				err = fmt.Errorf("Panic in operation: %s", err)
+			}
+		}()
+		err = operation()
+		return nil
+	}
 }

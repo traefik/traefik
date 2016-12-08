@@ -11,6 +11,7 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/safe"
 	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
 )
@@ -109,7 +110,7 @@ func (d *Datastore) watchChanges() error {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Error in watch datastore: %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Error in watch datastore: %v", err)
 		}
