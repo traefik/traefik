@@ -1,4 +1,5 @@
 eureka:
-  image: netflixoss/eureka:1.3.1
-  ports:
-    - "8761:8080"
+  image: springcloud/eureka
+
+whoami1:
+  image: emilevauge/whoami

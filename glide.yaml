@@ -6,11 +6,11 @@ import:
   - fun
 - package: github.com/Sirupsen/logrus
 - package: github.com/cenk/backoff
-- package: github.com/codegangsta/negroni
+- package: github.com/urfave/negroni
 - package: github.com/containous/flaeg
   version: a731c034dda967333efce5f8d276aeff11f8ff87
 - package: github.com/vulcand/oxy
-  version: 4298f24d572dc554eb984f2ffdf6bdd54d4bd613
+  version: fcc76b52eb8568540a020b7a99e854d9d752b364
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -21,7 +21,7 @@ import:
   - stream
   - utils
 - package: github.com/containous/staert
-  version: 92329254783dc01174f03302d51d7cf2c9ff84cf
+  version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - package: github.com/docker/engine-api
   version: 62043eb79d581a32ea849645277023c550732e52
   subpackages:
@@ -29,6 +29,8 @@ import:
   - types
   - types/events
   - types/filters
+- package: github.com/docker/go-units
+  version: v0.3.1
 - package: github.com/docker/go-connections
   subpackages:
   - sockets
@@ -58,26 +60,23 @@ import:
 - package: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - package: github.com/vulcand/vulcand
+  version: 42492a3a85e294bdbdd1bcabb8c12769a81ea284
   subpackages:
   - plugin/rewrite
 - package: github.com/xenolf/lego
-  version: b2fad6198110326662e9e356a97199078a4a775c
+  version: cbd5d04c891979c23c3924f198e07ce32b39d282
   subpackages:
   - acme
+- package: golang.org/x/net
+  version: release-branch.go1.7
+  subpackages:
+  - context
 - package: gopkg.in/fsnotify.v1
-- package: github.com/libkermit/compose
-  version: cadc5a3b83a15790174bd7fbc75ea2529785e772
-- package: github.com/libkermit/docker
-  version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
 - package: github.com/docker/docker
   version: 534753663161334baba06f13b8efa4cad22b5bc5
   subpackages:
   - namesgenerator
-- package: github.com/go-check/check
-- package: github.com/docker/libcompose
-  version: d1876c1d68527a49c0aac22a0b161acc7296b740
 - package: github.com/mattn/go-shellwords
-- package: github.com/vdemeester/shakers
 - package: github.com/ryanuber/go-glob
 - package: github.com/mesos/mesos-go
   subpackages:
@@ -99,6 +98,18 @@ import:
 - package: github.com/docker/leadership
 - package: github.com/satori/go.uuid
   version: ^1.1.0
+- package: k8s.io/client-go
+  version: ^v1.5.0
+- package: github.com/gogo/protobuf
+  version: 0.3
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
+- package: github.com/mitchellh/mapstructure
+  version: f3009df150dadf309fdee4a54ed65c124afad715
+- package: github.com/coreos/go-systemd
+  version: v12
+  subpackages:
+  - daemon
+- package: github.com/google/go-github
+- package: github.com/hashicorp/go-version
