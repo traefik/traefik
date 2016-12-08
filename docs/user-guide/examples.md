@@ -127,7 +127,7 @@ defaultEntryPoints = ["http"]
   [entryPoints.http]
   address = ":80"
   [entryPoints.http.auth]
-    headerValue = "X-WebAuth-User"
+    headerField = "X-WebAuth-User"
     [entryPoints.http.auth.basic]
     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 ```
