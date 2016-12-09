@@ -19,6 +19,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/eapache/channels"
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/providers/dns"
 )
@@ -46,6 +47,7 @@ type ACME struct {
 	store               cluster.Store
 	challengeProvider   *challengeProvider
 	checkOnDemandDomain func(domain string) bool
+	jobs                *channels.InfiniteChannel
 	TLSConfig           *tls.Config `description:"TLS config in case wildcard certs are used"`
 }
 
@@ -107,6 +109,7 @@ func (a *ACME) init() error {
 		log.Warnf("ACME.StorageFile is deprecated, use ACME.Storage instead")
 		a.Storage = a.StorageFile
 	}
+	a.jobs = channels.NewInfiniteChannel()
 	return nil
 }
 
@@ -159,9 +162,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				if err := a.renewCertificates(); err != nil {
-					log.Errorf("Error renewing ACME certificate: %s", err.Error())
-				}
+				a.renewCertificates()
 			}
 		}
 	})
@@ -222,12 +223,10 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 			if err != nil {
 				return err
 			}
-			safe.Go(func() {
-				a.retrieveCertificates()
-				if err := a.renewCertificates(); err != nil {
-					log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
-				}
-			})
+
+			a.retrieveCertificates()
+			a.renewCertificates()
+			a.runJobs()
 		}
 		return nil
 	})
@@ -312,19 +311,14 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 		return err
 	}
 
-	safe.Go(func() {
-		a.retrieveCertificates()
-		if err := a.renewCertificates(); err != nil {
-			log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
-		}
-	})
+	a.retrieveCertificates()
+	a.renewCertificates()
+	a.runJobs()
 
 	ticker := time.NewTicker(24 * time.Hour)
 	safe.Go(func() {
 		for range ticker.C {
-			if err := a.renewCertificates(); err != nil {
-				log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
-			}
+			a.renewCertificates()
 		}
 
 	})
@@ -361,83 +355,87 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 }
 
 func (a *ACME) retrieveCertificates() {
-	log.Infof("Retrieving ACME certificates...")
-	for _, domain := range a.Domains {
-		// check if cert isn't already loaded
-		account := a.store.Get().(*Account)
-		if _, exists := account.DomainsCertificate.exists(domain); !exists {
-			domains := []string{}
-			domains = append(domains, domain.Main)
-			domains = append(domains, domain.SANs...)
-			certificateResource, err := a.getDomainsCertificates(domains)
-			if err != nil {
-				log.Errorf("Error getting ACME certificate for domain %s: %s", domains, err.Error())
-				continue
-			}
-			transaction, object, err := a.store.Begin()
-			if err != nil {
-				log.Errorf("Error creating ACME store transaction from domain %s: %s", domain, err.Error())
-				continue
-			}
-			account = object.(*Account)
-			_, err = account.DomainsCertificate.addCertificateForDomains(certificateResource, domain)
-			if err != nil {
-				log.Errorf("Error adding ACME certificate for domain %s: %s", domains, err.Error())
-				continue
-			}
+	a.jobs.In() <- func() {
+		log.Infof("Retrieving ACME certificates...")
+		for _, domain := range a.Domains {
+			// check if cert isn't already loaded
+			account := a.store.Get().(*Account)
+			if _, exists := account.DomainsCertificate.exists(domain); !exists {
+				domains := []string{}
+				domains = append(domains, domain.Main)
+				domains = append(domains, domain.SANs...)
+				certificateResource, err := a.getDomainsCertificates(domains)
+				if err != nil {
+					log.Errorf("Error getting ACME certificate for domain %s: %s", domains, err.Error())
+					continue
+				}
+				transaction, object, err := a.store.Begin()
+				if err != nil {
+					log.Errorf("Error creating ACME store transaction from domain %s: %s", domain, err.Error())
+					continue
+				}
+				account = object.(*Account)
+				_, err = account.DomainsCertificate.addCertificateForDomains(certificateResource, domain)
+				if err != nil {
+					log.Errorf("Error adding ACME certificate for domain %s: %s", domains, err.Error())
+					continue
+				}
 
-			if err = transaction.Commit(account); err != nil {
-				log.Errorf("Error Saving ACME account %+v: %s", account, err.Error())
-				continue
+				if err = transaction.Commit(account); err != nil {
+					log.Errorf("Error Saving ACME account %+v: %s", account, err.Error())
+					continue
+				}
 			}
 		}
+		log.Infof("Retrieved ACME certificates")
 	}
-	log.Infof("Retrieved ACME certificates")
 }
 
-func (a *ACME) renewCertificates() error {
-	log.Debugf("Testing certificate renew...")
-	account := a.store.Get().(*Account)
-	for _, certificateResource := range account.DomainsCertificate.Certs {
-		if certificateResource.needRenew() {
-			log.Debugf("Renewing certificate %+v", certificateResource.Domains)
-			renewedCert, err := a.client.RenewCertificate(acme.CertificateResource{
-				Domain:        certificateResource.Certificate.Domain,
-				CertURL:       certificateResource.Certificate.CertURL,
-				CertStableURL: certificateResource.Certificate.CertStableURL,
-				PrivateKey:    certificateResource.Certificate.PrivateKey,
-				Certificate:   certificateResource.Certificate.Certificate,
-			}, true, OSCPMustStaple)
-			if err != nil {
-				log.Errorf("Error renewing certificate: %v", err)
-				continue
-			}
-			log.Debugf("Renewed certificate %+v", certificateResource.Domains)
-			renewedACMECert := &Certificate{
-				Domain:        renewedCert.Domain,
-				CertURL:       renewedCert.CertURL,
-				CertStableURL: renewedCert.CertStableURL,
-				PrivateKey:    renewedCert.PrivateKey,
-				Certificate:   renewedCert.Certificate,
-			}
-			transaction, object, err := a.store.Begin()
-			if err != nil {
-				return err
-			}
-			account = object.(*Account)
-			err = account.DomainsCertificate.renewCertificates(renewedACMECert, certificateResource.Domains)
-			if err != nil {
-				log.Errorf("Error renewing certificate: %v", err)
-				continue
-			}
+func (a *ACME) renewCertificates() {
+	a.jobs.In() <- func() {
+		log.Debugf("Testing certificate renew...")
+		account := a.store.Get().(*Account)
+		for _, certificateResource := range account.DomainsCertificate.Certs {
+			if certificateResource.needRenew() {
+				log.Debugf("Renewing certificate %+v", certificateResource.Domains)
+				renewedCert, err := a.client.RenewCertificate(acme.CertificateResource{
+					Domain:        certificateResource.Certificate.Domain,
+					CertURL:       certificateResource.Certificate.CertURL,
+					CertStableURL: certificateResource.Certificate.CertStableURL,
+					PrivateKey:    certificateResource.Certificate.PrivateKey,
+					Certificate:   certificateResource.Certificate.Certificate,
+				}, true, OSCPMustStaple)
+				if err != nil {
+					log.Errorf("Error renewing certificate: %v", err)
+					continue
+				}
+				log.Debugf("Renewed certificate %+v", certificateResource.Domains)
+				renewedACMECert := &Certificate{
+					Domain:        renewedCert.Domain,
+					CertURL:       renewedCert.CertURL,
+					CertStableURL: renewedCert.CertStableURL,
+					PrivateKey:    renewedCert.PrivateKey,
+					Certificate:   renewedCert.Certificate,
+				}
+				transaction, object, err := a.store.Begin()
+				if err != nil {
+					log.Errorf("Error renewing certificate: %v", err)
+					continue
+				}
+				account = object.(*Account)
+				err = account.DomainsCertificate.renewCertificates(renewedACMECert, certificateResource.Domains)
+				if err != nil {
+					log.Errorf("Error renewing certificate: %v", err)
+					continue
+				}
 
-			if err = transaction.Commit(account); err != nil {
-				log.Errorf("Error Saving ACME account %+v: %s", account, err.Error())
-				continue
+				if err = transaction.Commit(account); err != nil {
+					log.Errorf("Error Saving ACME account %+v: %s", account, err.Error())
+					continue
+				}
 			}
 		}
 	}
-	return nil
 }
 
 func dnsOverrideDelay(delay int) error {
@@ -521,8 +519,9 @@ func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.C
 
 // LoadCertificateForDomains loads certificates from ACME for given domains
 func (a *ACME) LoadCertificateForDomains(domains []string) {
-	domains = fun.Map(types.CanonicalDomain, domains).([]string)
-	safe.Go(func() {
+	a.jobs.In() <- func() {
+		log.Debugf("LoadCertificateForDomains %s...", domains)
+		domains = fun.Map(types.CanonicalDomain, domains).([]string)
 		operation := func() error {
 			if a.client == nil {
 				return fmt.Errorf("ACME client still not built")
@@ -576,7 +575,7 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 			log.Errorf("Error Saving ACME account %+v: %v", account, err)
 			return
 		}
-	})
+	}
 }
 
 func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
@@ -596,4 +595,13 @@ func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
 		PrivateKey:    certificate.PrivateKey,
 		Certificate:   certificate.Certificate,
 	}, nil
+}
+
+func (a *ACME) runJobs() {
+	safe.Go(func() {
+		for job := range a.jobs.Out() {
+			function := job.(func())
+			function()
+		}
+	})
 }
