@@ -118,3 +118,4 @@ import:
   version: v0.3.0
   subpackages:
   - metrics
+- package: github.com/eapache/channels

@@ -231,21 +231,21 @@ func (s *datastoreTransaction) Commit(object Object) error {
 	s.localLock.Lock()
 	defer s.localLock.Unlock()
 	if s.dirty {
-		return fmt.Errorf("transaction already used, please begin a new one")
+		return fmt.Errorf("Transaction already used, please begin a new one")
 	}
 	s.Datastore.meta.object = object
 	err := s.Datastore.meta.Marshall()
 	if err != nil {
-		return err
+		return fmt.Errorf("Marshall error: %s", err)
 	}
 	err = s.kv.StoreConfig(s.Datastore.meta)
 	if err != nil {
-		return err
+		return fmt.Errorf("StoreConfig error: %s", err)
 	}
 
 	err = s.remoteLock.Unlock()
 	if err != nil {
-		return err
+		return fmt.Errorf("Unlock error: %s", err)
 	}
 
 	s.dirty = true
