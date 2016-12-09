@@ -16,7 +16,7 @@ type Leadership struct {
 	*safe.Pool
 	*types.Cluster
 	candidate *leadership.Candidate
-	leader    safe.Safe
+	leader    *safe.Safe
 	listeners []LeaderListener
 }
 
@@ -27,6 +27,7 @@ func NewLeadership(ctx context.Context, cluster *types.Cluster) *Leadership {
 		Cluster:   cluster,
 		candidate: leadership.NewCandidate(cluster.Store, cluster.Store.Prefix+"/leader", cluster.Node, 20*time.Second),
 		listeners: []LeaderListener{},
+		leader:    safe.New(false),
 	}
 }
 
