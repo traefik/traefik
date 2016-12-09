@@ -1,5 +1,5 @@
-hash: 1bbeb842ee639ccc6e2edf8cc13fc2759cb96e3d839a1aec7b7f6af4fb89c8e1
-updated: 2016-11-09T19:24:00.762904389+01:00
+hash: fa6c0ac899b3c9296d83f1d4110186b339101b800b241e08cdcd2e3d49270562
+updated: 2016-12-09T13:43:16.816754682+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -156,6 +156,10 @@ imports:
   - store/zookeeper
 - name: github.com/donovanhide/eventsource
   version: fd1de70867126402be23c306e1ce32828455d85b
+- name: github.com/eapache/channels
+  version: 47238d5aae8c0fefd518ef2bee46290909cf8263
+- name: github.com/eapache/queue
+  version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/elazarl/go-bindata-assetfs
   version: 9a6736ed45b44bf3835afeebb3034b57ed329f3e
 - name: github.com/gambol99/go-marathon
