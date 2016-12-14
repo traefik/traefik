@@ -17,34 +17,44 @@ import (
 )
 
 func generateDefaultCertificate() (*tls.Certificate, error) {
-	rsaPrivKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, err
-	}
-	rsaPrivPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(rsaPrivKey)})
-
 	randomBytes := make([]byte, 100)
-	_, err = rand.Read(randomBytes)
+	_, err := rand.Read(randomBytes)
 	if err != nil {
 		return nil, err
 	}
 	zBytes := sha256.Sum256(randomBytes)
 	z := hex.EncodeToString(zBytes[:sha256.Size])
 	domain := fmt.Sprintf("%s.%s.traefik.default", z[:32], z[32:])
-	tempCertPEM, err := generatePemCert(rsaPrivKey, domain)
+
+	certPEM, keyPEM, err := generateKeyPair(domain, time.Time{})
 	if err != nil {
 		return nil, err
 	}
 
-	certificate, err := tls.X509KeyPair(tempCertPEM, rsaPrivPEM)
+	certificate, err := tls.X509KeyPair(certPEM, keyPEM)
 	if err != nil {
 		return nil, err
 	}
 
 	return &certificate, nil
 }
-func generatePemCert(privKey *rsa.PrivateKey, domain string) ([]byte, error) {
-	derBytes, err := generateDerCert(privKey, time.Time{}, domain)
+
+func generateKeyPair(domain string, expiration time.Time) ([]byte, []byte, error) {
+	rsaPrivKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, nil, err
+	}
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(rsaPrivKey)})
+
+	certPEM, err := generatePemCert(rsaPrivKey, domain, expiration)
+	if err != nil {
+		return nil, nil, err
+	}
+	return certPEM, keyPEM, nil
+}
+
+func generatePemCert(privKey *rsa.PrivateKey, domain string, expiration time.Time) ([]byte, error) {
+	derBytes, err := generateDerCert(privKey, expiration, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +103,7 @@ func TLSSNI01ChallengeCert(keyAuth string) (ChallengeCert, string, error) {
 	zBytes := sha256.Sum256([]byte(keyAuth))
 	z := hex.EncodeToString(zBytes[:sha256.Size])
 	domain := fmt.Sprintf("%s.%s.acme.invalid", z[:32], z[32:])
-	tempCertPEM, err := generatePemCert(rsaPrivKey, domain)
+	tempCertPEM, err := generatePemCert(rsaPrivKey, domain, time.Time{})
 	if err != nil {
 		return ChallengeCert{}, "", err
 	}
