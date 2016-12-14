@@ -58,7 +58,19 @@ func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap temp
 		err error
 	)
 	configuration := new(types.Configuration)
-	tmpl := template.New(p.Filename).Funcs(funcMap)
+	var defaultFuncMap = template.FuncMap{
+		"replace":   replace,
+		"tolower":   strings.ToLower,
+		"normalize": normalize,
+		"split":     split,
+		"contains":  contains,
+	}
+
+	for funcID, funcElement := range funcMap {
+		defaultFuncMap[funcID] = funcElement
+	}
+
+	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
 	if len(p.Filename) > 0 {
 		buf, err = ioutil.ReadFile(p.Filename)
 		if err != nil {
@@ -91,6 +103,14 @@ func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap temp
 
 func replace(s1 string, s2 string, s3 string) string {
 	return strings.Replace(s3, s1, s2, -1)
+}
+
+func contains(substr, s string) bool {
+	return strings.Contains(s, substr)
+}
+
+func split(sep, s string) []string {
+	return strings.Split(s, sep)
 }
 
 func normalize(name string) string {

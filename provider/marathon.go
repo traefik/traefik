@@ -139,7 +139,6 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		"getEntryPoints":              provider.getEntryPoints,
 		"getFrontendRule":             provider.getFrontendRule,
 		"getFrontendBackend":          provider.getFrontendBackend,
-		"replace":                     replace,
 		"hasCircuitBreakerLabels":     provider.hasCircuitBreakerLabels,
 		"hasLoadBalancerLabels":       provider.hasLoadBalancerLabels,
 		"hasMaxConnLabels":            provider.hasMaxConnLabels,
