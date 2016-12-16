@@ -84,8 +84,6 @@ func (provider *Eureka) Provide(configurationChan chan<- types.ConfigMessage, po
 // Build the configuration from Eureka server
 func (provider *Eureka) buildConfiguration() (*types.Configuration, error) {
 	var EurekaFuncMap = template.FuncMap{
-		"replace":       replace,
-		"tolower":       strings.ToLower,
 		"getPort":       provider.getPort,
 		"getProtocol":   provider.getProtocol,
 		"getWeight":     provider.getWeight,
