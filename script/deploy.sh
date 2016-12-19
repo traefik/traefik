@@ -27,6 +27,7 @@ sudo chmod +x /usr/bin/ghr
 
 # github release and tag
 echo "Github release..."
+tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .
 ghr -t $GITHUB_TOKEN -u containous -r traefik ${VERSION} dist/
 
 # update docs.traefik.io
