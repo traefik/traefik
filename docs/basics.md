@@ -87,7 +87,8 @@ Frontends can be defined using the following rules:
 - `PathPrefixStrip`: Same as `PathPrefix` but strip the given prefix from the request URL's Path.
 - `AddPrefix` : Add prefix from the request URL's Path.
 
-You can use multiple rules by separating them by `;`
+You can use multlple values for a rule by separating them with `,`.
+You can use multiple rules by separating them by `;`.
 
 You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
 
