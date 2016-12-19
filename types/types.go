@@ -222,8 +222,9 @@ type Cluster struct {
 
 // Auth holds authentication configuration (BASIC, DIGEST, users)
 type Auth struct {
-	Basic  *Basic
-	Digest *Digest
+	Basic       *Basic
+	Digest      *Digest
+	HeaderField string
 }
 
 // Users authentication users
