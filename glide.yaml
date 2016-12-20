@@ -113,3 +113,4 @@ import:
   - daemon
 - package: github.com/google/go-github
 - package: github.com/hashicorp/go-version
+- package: github.com/mvdan/xurls
