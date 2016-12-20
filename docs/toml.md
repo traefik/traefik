@@ -1241,7 +1241,7 @@ watch = true
 #
 # Optional
 #
-prefix = "/traefik"
+prefix = "traefik"
 
 # Override default configuration template. For advanced users :)
 #
