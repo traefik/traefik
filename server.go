@@ -169,9 +169,7 @@ func (server *Server) startHTTPServers() {
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
 		serverMiddlewares := []negroni.Handler{server.loggerMiddleware, metrics}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
-			statsRecorder = &StatsRecorder{
-				numRecentErrors: server.globalConfiguration.Web.Statistics.RecentErrors,
-			}
+			statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
 			serverMiddlewares = append(serverMiddlewares, statsRecorder)
 		}
 		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {

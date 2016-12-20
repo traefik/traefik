@@ -1,5 +1,5 @@
-hash: 5cd0ec09f964ff53852099686542ab2fd9855f8b0b1541afddd7f03e732f0fa9
-updated: 2016-12-07T00:59:08.1129085Z
+hash: 0801f9e0d663717d9cc81ee3440380d82d22a0af7dc00b078d812bd3e734c7f3
+updated: 2016-12-19T15:05:24.156719846+01:00
 imports:
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
@@ -73,6 +73,8 @@ imports:
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
+  - Godeps/_workspace/src/github.com/ugorji/go/codec
+  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/pathutil
   - pkg/types
@@ -89,8 +91,9 @@ imports:
   subpackages:
   - daemon
 - name: github.com/coreos/pkg
-  version: 447b7ec906e523386d9c53be15b55a8ae86ea944
+  version: 2c77715c4df99b5420ffcae14ead08f52104065d
   subpackages:
+  - capnslog
   - health
   - httputil
   - timeutil
@@ -222,9 +225,9 @@ imports:
 - name: github.com/gambol99/go-marathon
   version: a558128c87724cd7430060ef5aedf39f83937f55
 - name: github.com/ghodss/yaml
-  version: 04f313413ffd65ce25f2541bfd2b2ceec5c0908c
+  version: a54de18a07046d8c4b26e9327698a2ebb9285b36
 - name: github.com/go-ini/ini
-  version: 6e4869b434bd001f6983749881c7ead3545887d8
+  version: 2ba15ac2dc9cdf88c110ec2dc0ced7fa45f5678c
 - name: github.com/go-openapi/jsonpointer
   version: 8d96a2dc61536b690bd36b2e9df0b3c0b62825b2
 - name: github.com/go-openapi/jsonreference
@@ -241,11 +244,11 @@ imports:
 - name: github.com/golang/glog
   version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
 - name: github.com/golang/protobuf
-  version: 8d92cf5fc15a4382f8964b08e1f42a75c0591aa3
+  version: 5677a0e3d5e89854c9974e1256839ee23f8233ca
   subpackages:
   - proto
 - name: github.com/google/go-github
-  version: 171a9316fc826fdb616072bd967483452eb1e2cf
+  version: 55263f30529cb06f5b478efc333390b791cfe3b1
   subpackages:
   - github
 - name: github.com/google/go-querystring
@@ -255,7 +258,7 @@ imports:
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/gorilla/context
-  version: 215affda49addc4c8ef7e2534915df2c8c35c6cd
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/hashicorp/consul
   version: d8e2fb7dd594163e25a89bc52c1a4613f5c5bfb8
   subpackages:
@@ -269,7 +272,7 @@ imports:
   subpackages:
   - coordinate
 - name: github.com/JamesClonk/vultr
-  version: 856756262c464845b836a3246e00dfffac4c5342
+  version: a798a2e08fafd0594d113fc6123e5c147bd66213
   subpackages:
   - lib
 - name: github.com/jarcoal/httpmock
@@ -277,15 +280,15 @@ imports:
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jonboulle/clockwork
-  version: bcac9884e7502bb2b474c0339d889cb981a2f27f
+  version: 72f9bd7c4e0c2a40055ab3d0f09654f730cce982
 - name: github.com/juju/ratelimit
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/mailgun/manners
   version: a585afd9d65c0e05f6c003f921e71ebc05074f4f
 - name: github.com/mailgun/timetools
-  version: 7e6055773c5137efbeb3bd2410d705fe10ab6bfd
+  version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
 - name: github.com/mailru/easyjson
-  version: 304d3dc6fae850e62b7db2aee661d9d7b628cef0
+  version: 159cdb893c982e3d1bc6450322fedd514f9c9de3
   subpackages:
   - buffer
   - jlexer
@@ -320,6 +323,8 @@ imports:
   version: 5d001d020961ae1c184f9f8152fdc73810481677
 - name: github.com/mitchellh/mapstructure
   version: f3009df150dadf309fdee4a54ed65c124afad715
+- name: github.com/mvdan/xurls
+  version: de85a6f607af2e645cce05905efd9420e43b91f1
 - name: github.com/NYTimes/gziphandler
   version: f6438dbf4a82c56684964b03956aa727b0d7816b
 - name: github.com/ogier/pflag
@@ -329,13 +334,13 @@ imports:
   subpackages:
   - libcontainer/user
 - name: github.com/ovh/go-ovh
-  version: d2b2eae2511fa5fcd0bdef9f1790ea3979fa35d4
+  version: 99a1e00db4397517d87ab82c92b9d8cb60e5940b
   subpackages:
   - ovh
 - name: github.com/parnurzeal/gorequest
   version: e30af16d4e485943aab0b0885ad6bdbb8c0d3dc7
 - name: github.com/pborman/uuid
-  version: 5007efa264d92316c43112bc573e754bc889b7b1
+  version: 3d4f2ba23642d3cfd06bd4b54cf03d99d95c0f1b
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -357,7 +362,7 @@ imports:
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/Sirupsen/logrus
-  version: f7f79f729e0fbe2fcc061db48a9ba0263f588252
+  version: 3ec0642a7fb6488f65b06f9040adc67e3990296a
 - name: github.com/spf13/pflag
   version: 5644820622454e71517561946e3d94b9f9db6842
 - name: github.com/streamrail/concurrent-map
@@ -384,7 +389,7 @@ imports:
 - name: github.com/unrolled/render
   version: 526faf80cd4b305bb8134abea8d20d5ced74faa6
 - name: github.com/urfave/negroni
-  version: cd9734011043904139c24dbad9a71b21f1586f36
+  version: e0e50f7dc431c043cb33f91b09c3419d48b7cff5
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
@@ -400,7 +405,7 @@ imports:
   - stream
   - utils
 - name: github.com/vulcand/predicate
-  version: cb0bff91a7ab7cf7571e661ff883fc997bc554a3
+  version: 19b9dde14240d94c804ae5736ad0e1de10bf8fe6
 - name: github.com/vulcand/route
   version: cb89d787ddbb1c5849a7ac9f79004c1fd12a4a32
 - name: github.com/vulcand/vulcand
@@ -457,7 +462,7 @@ imports:
   - proxy
   - publicsuffix
 - name: golang.org/x/oauth2
-  version: 045497edb6234273d67dbc25da3f2ddbc4c4cacf
+  version: 3046bc76d6dfd7d3707f6640f85e42d9c4050f50
   subpackages:
   - google
   - internal
@@ -497,12 +502,10 @@ imports:
   - internal/urlfetch
   - urlfetch
 - name: google.golang.org/cloud
-  version: 975617b05ea8a58727e6c1a06b6161ff4185a9f2
+  version: f20d6dcccb44ed49de45ae3703312cb46e627db1
   subpackages:
   - compute/metadata
   - internal
-  - internal/opts
-  - storage
 - name: gopkg.in/fsnotify.v1
   version: 944cff21b3baf3ced9a880365682152ba577d348
 - name: gopkg.in/inf.v0
@@ -662,7 +665,7 @@ testImports:
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+  version: 4f90aeace3a26ad7021961c297b22c42160c7b25
 - name: github.com/gorilla/mux
   version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
 - name: github.com/libkermit/compose
