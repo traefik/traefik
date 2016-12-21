@@ -85,6 +85,7 @@ Frontends can be defined using the following rules:
 - `PathStrip`: Same as `Path` but strip the given prefix from the request URL's Path.
 - `PathPrefix`: PathPrefix adds a matcher for the URL path prefixes. This matches if the given template is a prefix of the full URL path.
 - `PathPrefixStrip`: Same as `PathPrefix` but strip the given prefix from the request URL's Path.
+- `AddPrefix` : Add prefix from the request URL's Path.
 
 You can use multiple rules by separating them by `;`
 
