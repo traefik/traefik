@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,6 +35,7 @@ func init() {
 	check.Suite(&ConstraintSuite{})
 	check.Suite(&MesosSuite{})
 	check.Suite(&EurekaSuite{})
+	check.Suite(&AcmeSuite{})
 }
 
 var traefikBinary = "../dist/traefik"
@@ -52,6 +54,18 @@ func (s *BaseSuite) TearDownSuite(c *check.C) {
 func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	projectName := fmt.Sprintf("integration-test-%s", name)
 	composeFile := fmt.Sprintf("resources/compose/%s.yml", name)
+
+	addrs, err := net.InterfaceAddrs()
+	c.Assert(err, checker.IsNil)
+	for _, addr := range addrs {
+		ip, _, err := net.ParseCIDR(addr.String())
+		c.Assert(err, checker.IsNil)
+		if !ip.IsLoopback() && ip.To4() != nil {
+			os.Setenv("DOCKER_HOST_IP", ip.String())
+			break
+		}
+	}
+
 	s.composeProject = compose.CreateProject(c, projectName, composeFile)
 }
 
