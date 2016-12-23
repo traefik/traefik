@@ -1,174 +1,49 @@
 package acme
 
 import (
-	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
+	"context"
 	"crypto/tls"
-	"crypto/x509"
-	"encoding/json"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
+	"github.com/BurntSushi/ty/fun"
+	"github.com/cenk/backoff"
+	"github.com/containous/staert"
+	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/types"
 	"github.com/xenolf/lego/acme"
+	"github.com/xenolf/lego/providers/dns"
 	"io/ioutil"
 	fmtlog "log"
 	"os"
-	"reflect"
 	"strings"
-	"sync"
 	"time"
 )
 
-// Account is used to store lets encrypt registration info
-type Account struct {
-	Email              string
-	Registration       *acme.RegistrationResource
-	PrivateKey         []byte
-	DomainsCertificate DomainsCertificates
-}
-
-// GetEmail returns email
-func (a Account) GetEmail() string {
-	return a.Email
-}
-
-// GetRegistration returns lets encrypt registration resource
-func (a Account) GetRegistration() *acme.RegistrationResource {
-	return a.Registration
-}
-
-// GetPrivateKey returns private key
-func (a Account) GetPrivateKey() crypto.PrivateKey {
-	if privateKey, err := x509.ParsePKCS1PrivateKey(a.PrivateKey); err == nil {
-		return privateKey
-	}
-	log.Errorf("Cannot unmarshall private key %+v", a.PrivateKey)
-	return nil
-}
-
-// Certificate is used to store certificate info
-type Certificate struct {
-	Domain        string
-	CertURL       string
-	CertStableURL string
-	PrivateKey    []byte
-	Certificate   []byte
-}
-
-// DomainsCertificates stores a certificate for multiple domains
-type DomainsCertificates struct {
-	Certs []*DomainsCertificate
-	lock  *sync.RWMutex
-}
-
-func (dc *DomainsCertificates) init() error {
-	if dc.lock == nil {
-		dc.lock = &sync.RWMutex{}
-	}
-	dc.lock.Lock()
-	defer dc.lock.Unlock()
-	for _, domainsCertificate := range dc.Certs {
-		tlsCert, err := tls.X509KeyPair(domainsCertificate.Certificate.Certificate, domainsCertificate.Certificate.PrivateKey)
-		if err != nil {
-			return err
-		}
-		domainsCertificate.tlsCert = &tlsCert
-	}
-	return nil
-}
-
-func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain Domain) error {
-	dc.lock.Lock()
-	defer dc.lock.Unlock()
-
-	for _, domainsCertificate := range dc.Certs {
-		if reflect.DeepEqual(domain, domainsCertificate.Domains) {
-			tlsCert, err := tls.X509KeyPair(acmeCert.Certificate, acmeCert.PrivateKey)
-			if err != nil {
-				return err
-			}
-			domainsCertificate.Certificate = acmeCert
-			domainsCertificate.tlsCert = &tlsCert
-			return nil
-		}
-	}
-	return errors.New("Certificate to renew not found for domain " + domain.Main)
-}
-
-func (dc *DomainsCertificates) addCertificateForDomains(acmeCert *Certificate, domain Domain) (*DomainsCertificate, error) {
-	dc.lock.Lock()
-	defer dc.lock.Unlock()
-
-	tlsCert, err := tls.X509KeyPair(acmeCert.Certificate, acmeCert.PrivateKey)
-	if err != nil {
-		return nil, err
-	}
-	cert := DomainsCertificate{Domains: domain, Certificate: acmeCert, tlsCert: &tlsCert}
-	dc.Certs = append(dc.Certs, &cert)
-	return &cert, nil
-}
-
-func (dc *DomainsCertificates) getCertificateForDomain(domainToFind string) (*DomainsCertificate, bool) {
-	dc.lock.RLock()
-	defer dc.lock.RUnlock()
-	for _, domainsCertificate := range dc.Certs {
-		domains := []string{}
-		domains = append(domains, domainsCertificate.Domains.Main)
-		domains = append(domains, domainsCertificate.Domains.SANs...)
-		for _, domain := range domains {
-			if domain == domainToFind {
-				return domainsCertificate, true
-			}
-		}
-	}
-	return nil, false
-}
-
-func (dc *DomainsCertificates) exists(domainToFind Domain) (*DomainsCertificate, bool) {
-	dc.lock.RLock()
-	defer dc.lock.RUnlock()
-	for _, domainsCertificate := range dc.Certs {
-		if reflect.DeepEqual(domainToFind, domainsCertificate.Domains) {
-			return domainsCertificate, true
-		}
-	}
-	return nil, false
-}
-
-// DomainsCertificate contains a certificate for multiple domains
-type DomainsCertificate struct {
-	Domains     Domain
-	Certificate *Certificate
-	tlsCert     *tls.Certificate
-}
-
-func (dc *DomainsCertificate) needRenew() bool {
-	for _, c := range dc.tlsCert.Certificate {
-		crt, err := x509.ParseCertificate(c)
-		if err != nil {
-			// If there's an error, we assume the cert is broken, and needs update
-			return true
-		}
-		// <= 7 days left, renew certificate
-		if crt.NotAfter.Before(time.Now().Add(time.Duration(24 * 7 * time.Hour))) {
-			return true
-		}
-	}
-
-	return false
-}
+var (
+	// OSCPMustStaple enables OSCP stapling as from https://github.com/xenolf/lego/issues/270
+	OSCPMustStaple = false
+)
 
 // ACME allows to connect to lets encrypt and retrieve certs
 type ACME struct {
-	Email       string   `description:"Email address used for registration"`
-	Domains     []Domain `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
-	StorageFile string   `description:"File used for certificates storage."`
-	OnDemand    bool     `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."`
-	CAServer    string   `description:"CA server to use."`
-	EntryPoint  string   `description:"Entrypoint to proxy acme challenge to."`
-	storageLock sync.RWMutex
+	Email               string   `description:"Email address used for registration"`
+	Domains             []Domain `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
+	Storage             string   `description:"File or key used for certificates storage."`
+	StorageFile         string   // deprecated
+	OnDemand            bool     `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."`
+	OnHostRule          bool     `description:"Enable certificate generation on frontends Host rules."`
+	CAServer            string   `description:"CA server to use."`
+	EntryPoint          string   `description:"Entrypoint to proxy acme challenge to."`
+	DNSProvider         string   `description:"Use a DNS based challenge provider rather than HTTPS."`
+	DelayDontCheckDNS   int      `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	ACMELogging         bool     `description:"Enable debug logging of ACME actions."`
+	client              *acme.Client
+	defaultCertificate  *tls.Certificate
+	store               cluster.Store
+	challengeProvider   *challengeProvider
+	checkOnDemandDomain func(domain string) bool
 }
 
 //Domains parse []Domain
@@ -212,60 +87,195 @@ type Domain struct {
 	SANs []string
 }
 
-// CreateConfig creates a tls.config from using ACME configuration
-func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(domain string) bool) error {
-	acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
-
-	if len(a.StorageFile) == 0 {
-		return errors.New("Empty StorageFile, please provide a filename for certs storage")
-	}
-
-	log.Debugf("Generating default certificate...")
-	if len(tlsConfig.Certificates) == 0 {
-		// no certificates in TLS config, so we add a default one
-		cert, err := generateDefaultCertificate()
-		if err != nil {
-			return err
-		}
-		tlsConfig.Certificates = append(tlsConfig.Certificates, *cert)
-	}
-	var account *Account
-	var needRegister bool
-
-	// if certificates in storage, load them
-	if fileInfo, err := os.Stat(a.StorageFile); err == nil && fileInfo.Size() != 0 {
-		log.Infof("Loading ACME certificates...")
-		// load account
-		account, err = a.loadAccount(a)
-		if err != nil {
-			return err
-		}
+func (a *ACME) init() error {
+	if a.ACMELogging {
+		acme.Logger = fmtlog.New(os.Stderr, "legolog: ", fmtlog.LstdFlags)
 	} else {
-		log.Infof("Generating ACME Account...")
-		// Create a user. New accounts need an email and private key to start
-		privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
-		if err != nil {
-			return err
-		}
-		account = &Account{
-			Email:      a.Email,
-			PrivateKey: x509.MarshalPKCS1PrivateKey(privateKey),
-		}
-		account.DomainsCertificate = DomainsCertificates{Certs: []*DomainsCertificate{}, lock: &sync.RWMutex{}}
-		needRegister = true
+		acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
-
-	client, err := a.buildACMEClient(account)
+	// no certificates in TLS config, so we add a default one
+	cert, err := generateDefaultCertificate()
 	if err != nil {
 		return err
 	}
-	client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
-	wrapperChallengeProvider := newWrapperChallengeProvider()
-	client.SetChallengeProvider(acme.TLSSNI01, wrapperChallengeProvider)
+	a.defaultCertificate = cert
+	// TODO: to remove in the futurs
+	if len(a.StorageFile) > 0 && len(a.Storage) == 0 {
+		log.Warnf("ACME.StorageFile is deprecated, use ACME.Storage instead")
+		a.Storage = a.StorageFile
+	}
+	return nil
+}
+
+// CreateClusterConfig creates a tls.config using ACME configuration in cluster mode
+func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tls.Config, checkOnDemandDomain func(domain string) bool) error {
+	err := a.init()
+	if err != nil {
+		return err
+	}
+	if len(a.Storage) == 0 {
+		return errors.New("Empty Store, please provide a key for certs storage")
+	}
+	a.checkOnDemandDomain = checkOnDemandDomain
+	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
+	tlsConfig.GetCertificate = a.getCertificate
+	listener := func(object cluster.Object) error {
+		account := object.(*Account)
+		account.Init()
+		if !leadership.IsLeader() {
+			a.client, err = a.buildACMEClient(account)
+			if err != nil {
+				log.Errorf("Error building ACME client %+v: %s", object, err.Error())
+			}
+		}
+		return nil
+	}
+
+	datastore, err := cluster.NewDataStore(
+		leadership.Pool.Ctx(),
+		staert.KvSource{
+			Store:  leadership.Store,
+			Prefix: a.Storage,
+		},
+		&Account{},
+		listener)
+	if err != nil {
+		return err
+	}
+
+	a.store = datastore
+	a.challengeProvider = &challengeProvider{store: a.store}
+
+	ticker := time.NewTicker(24 * time.Hour)
+	leadership.Pool.AddGoCtx(func(ctx context.Context) {
+		log.Infof("Starting ACME renew job...")
+		defer log.Infof("Stopped ACME renew job...")
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if err := a.renewCertificates(); err != nil {
+					log.Errorf("Error renewing ACME certificate: %s", err.Error())
+				}
+			}
+		}
+	})
+
+	leadership.AddListener(func(elected bool) error {
+		if elected {
+			object, err := a.store.Load()
+			if err != nil {
+				return err
+			}
+			transaction, object, err := a.store.Begin()
+			if err != nil {
+				return err
+			}
+			account := object.(*Account)
+			account.Init()
+			var needRegister bool
+			if account == nil || len(account.Email) == 0 {
+				account, err = NewAccount(a.Email)
+				if err != nil {
+					return err
+				}
+				needRegister = true
+			}
+			if err != nil {
+				return err
+			}
+			a.client, err = a.buildACMEClient(account)
+			if err != nil {
+				return err
+			}
+			if needRegister {
+				// New users will need to register; be sure to save it
+				log.Debugf("Register...")
+				reg, err := a.client.Register()
+				if err != nil {
+					return err
+				}
+				account.Registration = reg
+			}
+			// The client has a URL to the current Let's Encrypt Subscriber
+			// Agreement. The user will need to agree to it.
+			log.Debugf("AgreeToTOS...")
+			err = a.client.AgreeToTOS()
+			if err != nil {
+				// Let's Encrypt Subscriber Agreement renew ?
+				reg, err := a.client.QueryRegistration()
+				if err != nil {
+					return err
+				}
+				account.Registration = reg
+				err = a.client.AgreeToTOS()
+				if err != nil {
+					log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
+				}
+			}
+			err = transaction.Commit(account)
+			if err != nil {
+				return err
+			}
+			safe.Go(func() {
+				a.retrieveCertificates()
+				if err := a.renewCertificates(); err != nil {
+					log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
+				}
+			})
+		}
+		return nil
+	})
+	return nil
+}
+
+// CreateLocalConfig creates a tls.config using local ACME configuration
+func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func(domain string) bool) error {
+	err := a.init()
+	if err != nil {
+		return err
+	}
+	if len(a.Storage) == 0 {
+		return errors.New("Empty Store, please provide a filename for certs storage")
+	}
+	a.checkOnDemandDomain = checkOnDemandDomain
+	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
+	tlsConfig.GetCertificate = a.getCertificate
+
+	localStore := NewLocalStore(a.Storage)
+	a.store = localStore
+	a.challengeProvider = &challengeProvider{store: a.store}
+
+	var needRegister bool
+	var account *Account
+
+	if fileInfo, fileErr := os.Stat(a.Storage); fileErr == nil && fileInfo.Size() != 0 {
+		log.Infof("Loading ACME Account...")
+		// load account
+		object, err := localStore.Load()
+		if err != nil {
+			return err
+		}
+		account = object.(*Account)
+	} else {
+		log.Infof("Generating ACME Account...")
+		account, err = NewAccount(a.Email)
+		if err != nil {
+			return err
+		}
+		needRegister = true
+	}
+
+	a.client, err = a.buildACMEClient(account)
+	if err != nil {
+		return err
+	}
 
 	if needRegister {
 		// New users will need to register; be sure to save it
-		reg, err := client.Register()
+		log.Infof("Register...")
+		reg, err := a.client.Register()
 		if err != nil {
 			return err
 		}
@@ -274,42 +284,42 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 
 	// The client has a URL to the current Let's Encrypt Subscriber
 	// Agreement. The user will need to agree to it.
-	err = client.AgreeToTOS()
+	log.Debugf("AgreeToTOS...")
+	err = a.client.AgreeToTOS()
+	if err != nil {
+		// Let's Encrypt Subscriber Agreement renew ?
+		reg, err := a.client.QueryRegistration()
+		if err != nil {
+			return err
+		}
+		account.Registration = reg
+		err = a.client.AgreeToTOS()
+		if err != nil {
+			log.Errorf("Error sending ACME agreement to TOS: %+v: %s", account, err.Error())
+		}
+	}
+	// save account
+	transaction, _, err := a.store.Begin()
+	if err != nil {
+		return err
+	}
+	err = transaction.Commit(account)
 	if err != nil {
 		return err
 	}
 
 	safe.Go(func() {
-		a.retrieveCertificates(client, account)
-		if err := a.renewCertificates(client, account); err != nil {
+		a.retrieveCertificates()
+		if err := a.renewCertificates(); err != nil {
 			log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
 		}
 	})
 
-	tlsConfig.GetCertificate = func(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-		if challengeCert, ok := wrapperChallengeProvider.getCertificate(clientHello.ServerName); ok {
-			return challengeCert, nil
-		}
-		if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(clientHello.ServerName); ok {
-			return domainCert.tlsCert, nil
-		}
-		if a.OnDemand {
-			if CheckOnDemandDomain != nil && !CheckOnDemandDomain(clientHello.ServerName) {
-				return nil, nil
-			}
-			return a.loadCertificateOnDemand(client, account, clientHello)
-		}
-		return nil, nil
-	}
-
 	ticker := time.NewTicker(24 * time.Hour)
 	safe.Go(func() {
-		for {
-			select {
-			case <-ticker.C:
-				if err := a.renewCertificates(client, account); err != nil {
-					log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
-				}
+		for range ticker.C {
+			if err := a.renewCertificates(); err != nil {
+				log.Errorf("Error renewing ACME certificate %+v: %s", account, err.Error())
 			}
 		}
 
@@ -317,25 +327,54 @@ func (a *ACME) CreateConfig(tlsConfig *tls.Config, CheckOnDemandDomain func(doma
 	return nil
 }
 
-func (a *ACME) retrieveCertificates(client *acme.Client, account *Account) {
+func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	domain := types.CanonicalDomain(clientHello.ServerName)
+	account := a.store.Get().(*Account)
+	if challengeCert, ok := a.challengeProvider.getCertificate(domain); ok {
+		log.Debugf("ACME got challenge %s", domain)
+		return challengeCert, nil
+	}
+	if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
+		log.Debugf("ACME got domain cert %s", domain)
+		return domainCert.tlsCert, nil
+	}
+	if a.OnDemand {
+		if a.checkOnDemandDomain != nil && !a.checkOnDemandDomain(domain) {
+			return nil, nil
+		}
+		return a.loadCertificateOnDemand(clientHello)
+	}
+	log.Debugf("ACME got nothing %s", domain)
+	return nil, nil
+}
+
+func (a *ACME) retrieveCertificates() {
 	log.Infof("Retrieving ACME certificates...")
 	for _, domain := range a.Domains {
 		// check if cert isn't already loaded
+		account := a.store.Get().(*Account)
 		if _, exists := account.DomainsCertificate.exists(domain); !exists {
 			domains := []string{}
 			domains = append(domains, domain.Main)
 			domains = append(domains, domain.SANs...)
-			certificateResource, err := a.getDomainsCertificates(client, domains)
+			certificateResource, err := a.getDomainsCertificates(domains)
 			if err != nil {
 				log.Errorf("Error getting ACME certificate for domain %s: %s", domains, err.Error())
 				continue
 			}
+			transaction, object, err := a.store.Begin()
+			if err != nil {
+				log.Errorf("Error creating ACME store transaction from domain %s: %s", domain, err.Error())
+				continue
+			}
+			account = object.(*Account)
 			_, err = account.DomainsCertificate.addCertificateForDomains(certificateResource, domain)
 			if err != nil {
 				log.Errorf("Error adding ACME certificate for domain %s: %s", domains, err.Error())
 				continue
 			}
-			if err = a.saveAccount(account); err != nil {
+
+			if err = transaction.Commit(account); err != nil {
 				log.Errorf("Error Saving ACME account %+v: %s", account, err.Error())
 				continue
 			}
@@ -344,18 +383,19 @@ func (a *ACME) retrieveCertificates(client *acme.Client, account *Account) {
 	log.Infof("Retrieved ACME certificates")
 }
 
-func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
+func (a *ACME) renewCertificates() error {
 	log.Debugf("Testing certificate renew...")
+	account := a.store.Get().(*Account)
 	for _, certificateResource := range account.DomainsCertificate.Certs {
 		if certificateResource.needRenew() {
 			log.Debugf("Renewing certificate %+v", certificateResource.Domains)
-			renewedCert, err := client.RenewCertificate(acme.CertificateResource{
+			renewedCert, err := a.client.RenewCertificate(acme.CertificateResource{
 				Domain:        certificateResource.Certificate.Domain,
 				CertURL:       certificateResource.Certificate.CertURL,
 				CertStableURL: certificateResource.Certificate.CertStableURL,
 				PrivateKey:    certificateResource.Certificate.PrivateKey,
 				Certificate:   certificateResource.Certificate.Certificate,
-			}, true)
+			}, true, OSCPMustStaple)
 			if err != nil {
 				log.Errorf("Error renewing certificate: %v", err)
 				continue
@@ -368,13 +408,19 @@ func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
 				PrivateKey:    renewedCert.PrivateKey,
 				Certificate:   renewedCert.Certificate,
 			}
+			transaction, object, err := a.store.Begin()
+			if err != nil {
+				return err
+			}
+			account = object.(*Account)
 			err = account.DomainsCertificate.renewCertificates(renewedACMECert, certificateResource.Domains)
 			if err != nil {
 				log.Errorf("Error renewing certificate: %v", err)
 				continue
 			}
-			if err = a.saveAccount(account); err != nil {
-				log.Errorf("Error saving ACME account: %v", err)
+
+			if err = transaction.Commit(account); err != nil {
+				log.Errorf("Error Saving ACME account %+v: %s", account, err.Error())
 				continue
 			}
 		}
@@ -382,74 +428,150 @@ func (a *ACME) renewCertificates(client *acme.Client, account *Account) error {
 	return nil
 }
 
-func (a *ACME) buildACMEClient(Account *Account) (*acme.Client, error) {
+func dnsOverrideDelay(delay int) error {
+	var err error
+	if delay > 0 {
+		log.Debugf("Delaying %d seconds rather than validating DNS propagation", delay)
+		acme.PreCheckDNS = func(_, _ string) (bool, error) {
+			time.Sleep(time.Duration(delay) * time.Second)
+			return true, nil
+		}
+	} else if delay < 0 {
+		err = fmt.Errorf("Invalid negative DelayDontCheckDNS: %d", delay)
+	}
+	return err
+}
+
+func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
+	log.Debugf("Building ACME client...")
 	caServer := "https://acme-v01.api.letsencrypt.org/directory"
 	if len(a.CAServer) > 0 {
 		caServer = a.CAServer
 	}
-	client, err := acme.NewClient(caServer, Account, acme.RSA4096)
+	client, err := acme.NewClient(caServer, account, acme.RSA4096)
 	if err != nil {
 		return nil, err
 	}
 
+	if len(a.DNSProvider) > 0 {
+		log.Debugf("Using DNS Challenge provider: %s", a.DNSProvider)
+
+		err = dnsOverrideDelay(a.DelayDontCheckDNS)
+		if err != nil {
+			return nil, err
+		}
+
+		var provider acme.ChallengeProvider
+		provider, err = dns.NewDNSChallengeProviderByName(a.DNSProvider)
+		if err != nil {
+			return nil, err
+		}
+
+		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSSNI01})
+		err = client.SetChallengeProvider(acme.DNS01, provider)
+	} else {
+		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
+		err = client.SetChallengeProvider(acme.TLSSNI01, a.challengeProvider)
+	}
+
+	if err != nil {
+		return nil, err
+	}
 	return client, nil
 }
 
-func (a *ACME) loadCertificateOnDemand(client *acme.Client, Account *Account, clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	if certificateResource, ok := Account.DomainsCertificate.getCertificateForDomain(clientHello.ServerName); ok {
+func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	domain := types.CanonicalDomain(clientHello.ServerName)
+	account := a.store.Get().(*Account)
+	if certificateResource, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
 		return certificateResource.tlsCert, nil
 	}
-	Certificate, err := a.getDomainsCertificates(client, []string{clientHello.ServerName})
+	certificate, err := a.getDomainsCertificates([]string{domain})
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Got certificate on demand for domain %s", clientHello.ServerName)
-	cert, err := Account.DomainsCertificate.addCertificateForDomains(Certificate, Domain{Main: clientHello.ServerName})
+	log.Debugf("Got certificate on demand for domain %s", domain)
+
+	transaction, object, err := a.store.Begin()
 	if err != nil {
 		return nil, err
 	}
-	if err = a.saveAccount(Account); err != nil {
+	account = object.(*Account)
+	cert, err := account.DomainsCertificate.addCertificateForDomains(certificate, Domain{Main: domain})
+	if err != nil {
+		return nil, err
+	}
+	if err = transaction.Commit(account); err != nil {
 		return nil, err
 	}
 	return cert.tlsCert, nil
 }
 
-func (a *ACME) loadAccount(acmeConfig *ACME) (*Account, error) {
-	a.storageLock.RLock()
-	defer a.storageLock.RUnlock()
-	Account := Account{
-		DomainsCertificate: DomainsCertificates{},
-	}
-	file, err := ioutil.ReadFile(acmeConfig.StorageFile)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(file, &Account); err != nil {
-		return nil, err
-	}
-	err = Account.DomainsCertificate.init()
-	if err != nil {
-		return nil, err
-	}
-	log.Infof("Loaded ACME config from storage %s", acmeConfig.StorageFile)
-	return &Account, nil
+// LoadCertificateForDomains loads certificates from ACME for given domains
+func (a *ACME) LoadCertificateForDomains(domains []string) {
+	domains = fun.Map(types.CanonicalDomain, domains).([]string)
+	safe.Go(func() {
+		operation := func() error {
+			if a.client == nil {
+				return fmt.Errorf("ACME client still not built")
+			}
+			return nil
+		}
+		notify := func(err error, time time.Duration) {
+			log.Errorf("Error getting ACME client: %v, retrying in %s", err, time)
+		}
+		ebo := backoff.NewExponentialBackOff()
+		ebo.MaxElapsedTime = 30 * time.Second
+		err := backoff.RetryNotify(operation, ebo, notify)
+		if err != nil {
+			log.Errorf("Error getting ACME client: %v", err)
+			return
+		}
+		account := a.store.Get().(*Account)
+		var domain Domain
+		if len(domains) == 0 {
+			// no domain
+			return
+
+		} else if len(domains) > 1 {
+			domain = Domain{Main: domains[0], SANs: domains[1:]}
+		} else {
+			domain = Domain{Main: domains[0]}
+		}
+		if _, exists := account.DomainsCertificate.exists(domain); exists {
+			// domain already exists
+			return
+		}
+		certificate, err := a.getDomainsCertificates(domains)
+		if err != nil {
+			log.Errorf("Error getting ACME certificates %+v : %v", domains, err)
+			return
+		}
+		log.Debugf("Got certificate for domains %+v", domains)
+		transaction, object, err := a.store.Begin()
+
+		if err != nil {
+			log.Errorf("Error creating transaction %+v : %v", domains, err)
+			return
+		}
+		account = object.(*Account)
+		_, err = account.DomainsCertificate.addCertificateForDomains(certificate, domain)
+		if err != nil {
+			log.Errorf("Error adding ACME certificates %+v : %v", domains, err)
+			return
+		}
+		if err = transaction.Commit(account); err != nil {
+			log.Errorf("Error Saving ACME account %+v: %v", account, err)
+			return
+		}
+	})
 }
 
-func (a *ACME) saveAccount(Account *Account) error {
-	a.storageLock.Lock()
-	defer a.storageLock.Unlock()
-	// write account to file
-	data, err := json.MarshalIndent(Account, "", "  ")
-	if err != nil {
-		return err
-	}
-	return ioutil.WriteFile(a.StorageFile, data, 0644)
-}
-
-func (a *ACME) getDomainsCertificates(client *acme.Client, domains []string) (*Certificate, error) {
+func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
+	domains = fun.Map(types.CanonicalDomain, domains).([]string)
 	log.Debugf("Loading ACME certificates %s...", domains)
 	bundle := true
-	certificate, failures := client.ObtainCertificate(domains, bundle, nil)
+	certificate, failures := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
 	if len(failures) > 0 {
 		log.Error(failures)
 		return nil, fmt.Errorf("Cannot obtain certificates %s+v", failures)

@@ -1,7 +1,29 @@
-[backends]{{range .Containers}}
-    [backends.backend-{{getBackend .}}.servers.server-{{.Name | replace "/" "" | replace "." "-"}}]
-    url = "{{getProtocol .}}://{{getIPAddress .}}:{{getPort .}}"
-    weight = {{getWeight .}}
+{{$backendServers := .Servers}}
+[backends]{{range $backendName, $backend := .Backends}}
+    {{if hasCircuitBreakerLabel $backend}}
+    [backends.backend-{{$backendName}}.circuitbreaker]
+      expression = "{{getCircuitBreakerExpression $backend}}"
+    {{end}}
+
+    {{if hasLoadBalancerLabel $backend}}
+    [backends.backend-{{$backendName}}.loadbalancer]
+      method = "{{getLoadBalancerMethod $backend}}"
+      sticky = {{getSticky $backend}}
+    {{end}}
+
+    {{if hasMaxConnLabels $backend}}
+    [backends.backend-{{$backendName}}.maxconn]
+      amount = {{getMaxConnAmount $backend}}
+      extractorfunc = "{{getMaxConnExtractorFunc $backend}}"
+    {{end}}
+
+    {{$servers := index $backendServers $backendName}}
+    {{range $serverName, $server := $servers}}
+      [backends.backend-{{$backendName}}.servers.server-{{$server.Name | replace "/" "" | replace "." "-"}}]
+      url = "{{getProtocol $server}}://{{getIPAddress $server}}:{{getPort $server}}"
+      weight = {{getWeight $server}}
+    {{end}}
+
 {{end}}
 
 [frontends]{{range $frontend, $containers := .Frontends}}

@@ -4,9 +4,12 @@ Copyright
 package main
 
 import (
+	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,9 +20,10 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
+	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
@@ -46,7 +50,8 @@ type Server struct {
 	currentConfigurations      safe.Safe
 	globalConfiguration        GlobalConfiguration
 	loggerMiddleware           *middlewares.Logger
-	routinesPool               safe.Pool
+	routinesPool               *safe.Pool
+	leadership                 *cluster.Leadership
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -59,6 +64,7 @@ type serverEntryPoint struct {
 type serverRoute struct {
 	route         *mux.Route
 	stripPrefixes []string
+	addPrefix     string
 }
 
 // NewServer returns an initialized Server.
@@ -76,13 +82,19 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server.currentConfigurations.Set(currentConfigurations)
 	server.globalConfiguration = globalConfiguration
 	server.loggerMiddleware = middlewares.NewLogger(globalConfiguration.AccessLogsFile)
+	server.routinesPool = safe.NewPool(context.Background())
+	if globalConfiguration.Cluster != nil {
+		// leadership creation if cluster mode
+		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
+	}
 
 	return server
 }
 
-// Start starts the server and blocks until server is shutted down.
+// Start starts the server.
 func (server *Server) Start() {
 	server.startHTTPServers()
+	server.startLeadership()
 	server.routinesPool.Go(func(stop chan bool) {
 		server.listenProviders(stop)
 	})
@@ -92,31 +104,86 @@ func (server *Server) Start() {
 	server.configureProviders()
 	server.startProviders()
 	go server.listenSignals()
+}
+
+// Wait blocks until server is shutted down.
+func (server *Server) Wait() {
 	<-server.stopChan
 }
 
 // Stop stops the server
 func (server *Server) Stop() {
-	for _, serverEntryPoint := range server.serverEntryPoints {
-		serverEntryPoint.httpServer.BlockingClose()
+	for serverEntryPointName, serverEntryPoint := range server.serverEntryPoints {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut)*time.Second)
+		go func() {
+			log.Debugf("Waiting %d seconds before killing connections on entrypoint %s...", 30, serverEntryPointName)
+			serverEntryPoint.httpServer.BlockingClose()
+			cancel()
+		}()
+		<-ctx.Done()
 	}
 	server.stopChan <- true
 }
 
 // Close destroys the server
 func (server *Server) Close() {
-	server.routinesPool.Stop()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut)*time.Second)
+	go func(ctx context.Context) {
+		<-ctx.Done()
+		if ctx.Err() == context.Canceled {
+			return
+		} else if ctx.Err() == context.DeadlineExceeded {
+			log.Warnf("Timeout while stopping traefik, killing instance ✝")
+			os.Exit(1)
+		}
+	}(ctx)
+	server.stopLeadership()
+	server.routinesPool.Cleanup()
 	close(server.configurationChan)
 	close(server.configurationValidatedChan)
+	signal.Stop(server.signals)
 	close(server.signals)
 	close(server.stopChan)
 	server.loggerMiddleware.Close()
+	cancel()
+}
+
+func (server *Server) startLeadership() {
+	if server.leadership != nil {
+		server.leadership.Participate(server.routinesPool)
+		// server.leadership.AddGoCtx(func(ctx context.Context) {
+		// 	log.Debugf("Started test routine")
+		// 	<-ctx.Done()
+		// 	log.Debugf("Stopped test routine")
+		// })
+	}
+}
+
+func (server *Server) stopLeadership() {
+	if server.leadership != nil {
+		server.leadership.Stop()
+	}
 }
 
 func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
-		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, server.loggerMiddleware, metrics)
+		serverMiddlewares := []negroni.Handler{server.loggerMiddleware, metrics}
+		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
+			statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
+			serverMiddlewares = append(serverMiddlewares, statsRecorder)
+		}
+		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
+			authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
+			if err != nil {
+				log.Fatal("Error starting server: ", err)
+			}
+			serverMiddlewares = append(serverMiddlewares, authMiddleware)
+		}
+		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
+			serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
+		}
+		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, serverMiddlewares...)
 		if err != nil {
 			log.Fatal("Error preparing server: ", err)
 		}
@@ -149,11 +216,11 @@ func (server *Server) listenProviders(stop chan bool) {
 				lastConfigs.Set(configMsg.ProviderName, &configMsg)
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
 				if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
-					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					// last config received more than n s ago
 					server.configurationValidatedChan <- configMsg
 				} else {
-					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					safe.Go(func() {
 						<-time.After(server.globalConfiguration.ProvidersThrottleDuration)
 						lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
@@ -179,6 +246,13 @@ func (server *Server) defaultConfigurationValues(configuration *types.Configurat
 		// default endpoints if not defined in frontends
 		if len(frontend.EntryPoints) == 0 {
 			frontend.EntryPoints = server.globalConfiguration.DefaultEntryPoints
+		}
+	}
+	for backendName, backend := range configuration.Backends {
+		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
+		if err != nil {
+			log.Debugf("Load balancer method '%+v' for backend %s: %v. Using default wrr.", backend.LoadBalancer, backendName, err)
+			backend.LoadBalancer = &types.LoadBalancer{Method: "wrr"}
 		}
 	}
 }
@@ -208,8 +282,35 @@ func (server *Server) listenConfigurations(stop chan bool) {
 					log.Infof("Server configuration reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 				}
 				server.currentConfigurations.Set(newConfigurations)
+				server.postLoadConfig()
 			} else {
 				log.Error("Error loading new configuration, aborted ", err)
+			}
+		}
+	}
+}
+
+func (server *Server) postLoadConfig() {
+	if server.globalConfiguration.ACME == nil {
+		return
+	}
+	if server.leadership != nil && !server.leadership.IsLeader() {
+		return
+	}
+	if server.globalConfiguration.ACME.OnHostRule {
+		currentConfigurations := server.currentConfigurations.Get().(configs)
+		for _, configuration := range currentConfigurations {
+			for _, frontend := range configuration.Frontends {
+				for _, route := range frontend.Routes {
+					rules := Rules{}
+					domains, err := rules.ParseDomains(route.Rule)
+					if err != nil {
+						log.Errorf("Error parsing domains: %v", err)
+					} else {
+						server.globalConfiguration.ACME.LoadCertificateForDomains(domains)
+					}
+				}
+
 			}
 		}
 	}
@@ -248,6 +349,12 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.Kubernetes != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Kubernetes)
 	}
+	if server.globalConfiguration.Mesos != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Mesos)
+	}
+	if server.globalConfiguration.Eureka != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Eureka)
+	}
 }
 
 func (server *Server) startProviders() {
@@ -257,7 +364,7 @@ func (server *Server) startProviders() {
 		log.Infof("Starting provider %v %s", reflect.TypeOf(provider), jsonConf)
 		currentProvider := provider
 		safe.Go(func() {
-			err := currentProvider.Provide(server.configurationChan, &server.routinesPool, server.globalConfiguration.Constraints)
+			err := currentProvider.Provide(server.configurationChan, server.routinesPool, server.globalConfiguration.Constraints)
 			if err != nil {
 				log.Errorf("Error starting provider %s", err)
 			}
@@ -278,28 +385,52 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 		return nil, nil
 	}
 
-	config := &tls.Config{}
-	config.Certificates = []tls.Certificate{}
-	for _, v := range tlsOption.Certificates {
-		cert, err := tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
-		if err != nil {
-			return nil, err
+	config, err := tlsOption.Certificates.CreateTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	// ensure http2 enabled
+	config.NextProtos = []string{"h2", "http/1.1"}
+
+	if len(tlsOption.ClientCAFiles) > 0 {
+		pool := x509.NewCertPool()
+		for _, caFile := range tlsOption.ClientCAFiles {
+			data, err := ioutil.ReadFile(caFile)
+			if err != nil {
+				return nil, err
+			}
+			ok := pool.AppendCertsFromPEM(data)
+			if !ok {
+				return nil, errors.New("invalid certificate(s) in " + caFile)
+			}
 		}
-		config.Certificates = append(config.Certificates, cert)
+		config.ClientCAs = pool
+		config.ClientAuth = tls.RequireAndVerifyClientCert
 	}
 
 	if server.globalConfiguration.ACME != nil {
 		if _, ok := server.serverEntryPoints[server.globalConfiguration.ACME.EntryPoint]; ok {
 			if entryPointName == server.globalConfiguration.ACME.EntryPoint {
 				checkOnDemandDomain := func(domain string) bool {
-					if router.GetHandler().Match(&http.Request{URL: &url.URL{}, Host: domain}, &mux.RouteMatch{}) {
+					routeMatch := &mux.RouteMatch{}
+					router := router.GetHandler()
+					match := router.Match(&http.Request{URL: &url.URL{}, Host: domain}, routeMatch)
+					if match && routeMatch.Route != nil {
 						return true
 					}
 					return false
 				}
-				err := server.globalConfiguration.ACME.CreateConfig(config, checkOnDemandDomain)
-				if err != nil {
-					return nil, err
+				if server.leadership == nil {
+					err := server.globalConfiguration.ACME.CreateLocalConfig(config, checkOnDemandDomain)
+					if err != nil {
+						return nil, err
+					}
+				} else {
+					err := server.globalConfiguration.ACME.CreateClusterConfig(server.leadership, config, checkOnDemandDomain)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		} else {
@@ -312,6 +443,24 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
 	// in each certificate and populates the config.NameToCertificate map.
 	config.BuildNameToCertificate()
+	//Set the minimum TLS version if set in the config TOML
+	if minConst, exists := minVersion[server.globalConfiguration.EntryPoints[entryPointName].TLS.MinVersion]; exists {
+		config.PreferServerCipherSuites = true
+		config.MinVersion = minConst
+	}
+	//Set the list of CipherSuites if set in the config TOML
+	if server.globalConfiguration.EntryPoints[entryPointName].TLS.CipherSuites != nil {
+		//if our list of CipherSuites is defined in the entrypoint config, we can re-initilize the suites list as empty
+		config.CipherSuites = make([]uint16, 0)
+		for _, cipher := range server.globalConfiguration.EntryPoints[entryPointName].TLS.CipherSuites {
+			if cipherConst, exists := cipherSuites[cipher]; exists {
+				config.CipherSuites = append(config.CipherSuites, cipherConst)
+			} else {
+				//CipherSuite listed in the toml does not exist in our listed
+				return nil, errors.New("Invalid CipherSuite: " + cipher)
+			}
+		}
+	}
 	return config, nil
 }
 
@@ -339,7 +488,7 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 	negroni.UseHandler(router)
 	tlsConfig, err := server.createTLSConfig(entryPointName, entryPoint.TLS, router)
 	if err != nil {
-		log.Fatalf("Error creating TLS config %s", err)
+		log.Errorf("Error creating TLS config %s", err)
 		return nil, err
 	}
 
@@ -357,7 +506,7 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 		TLSConfig: tlsConfig,
 	}, tlsConfig)
 	if err != nil {
-		log.Fatalf("Error hijacking server %s", err)
+		log.Errorf("Error hijacking server %s", err)
 		return nil, err
 	}
 	return gracefulServer, nil
@@ -389,7 +538,13 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			frontend := configuration.Frontends[frontendName]
 
 			log.Debugf("Creating frontend %s", frontendName)
-			fwd, _ := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+
+			fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+			if err != nil {
+				log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
+				log.Errorf("Skipping frontend %s...", frontendName)
+				continue frontend
+			}
 			saveBackend := middlewares.NewSaveBackend(fwd)
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
@@ -435,14 +590,30 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
+
 						lbMethod, err := types.NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
 						if err != nil {
-							configuration.Backends[frontend.Backend].LoadBalancer = &types.LoadBalancer{Method: "wrr"}
+							log.Errorf("Error loading load balancer method '%+v' for frontend %s: %v", configuration.Backends[frontend.Backend].LoadBalancer, frontendName, err)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
 						}
+
+						stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
+						cookiename := "_TRAEFIK_BACKEND"
+						var sticky *roundrobin.StickySession
+
+						if stickysession {
+							sticky = roundrobin.NewStickySession(cookiename)
+						}
+
 						switch lbMethod {
 						case types.Drr:
 							log.Debugf("Creating load-balancer drr")
 							rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
+							if stickysession {
+								log.Debugf("Sticky session with cookie %v", cookiename)
+								rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
+							}
 							lb = rebalancer
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
@@ -461,6 +632,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							}
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
+							if stickysession {
+								log.Debugf("Sticky session with cookie %v", cookiename)
+								rr, _ = roundrobin.New(saveBackend, roundrobin.EnableStickySession(sticky))
+							}
 							lb = rr
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
 								url, err := url.Parse(server.URL)
@@ -542,15 +717,23 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 }
 
 func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Handler) {
+	// add prefix
+	if len(serverRoute.addPrefix) > 0 {
+		handler = &middlewares.AddPrefix{
+			Prefix:  serverRoute.addPrefix,
+			Handler: handler,
+		}
+	}
+
 	// strip prefix
 	if len(serverRoute.stripPrefixes) > 0 {
-		serverRoute.route.Handler(&middlewares.StripPrefix{
+		handler = &middlewares.StripPrefix{
 			Prefixes: serverRoute.stripPrefixes,
 			Handler:  handler,
-		})
-	} else {
-		serverRoute.route.Handler(handler)
+		}
 	}
+
+	serverRoute.route.Handler(handler)
 }
 
 func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *EntryPoint) (http.Handler, error) {
@@ -586,18 +769,11 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	router := mux.NewRouter()
 	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 	router.StrictSlash(true)
+	router.SkipClean(true)
 	return router
 }
 
 func getRoute(serverRoute *serverRoute, route *types.Route) error {
-	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
-	// TODO: backwards compatibility with DEPRECATED rule.Value
-	if len(route.Value) > 0 {
-		route.Rule += ":" + route.Value
-		log.Warnf("Value %s is DEPRECATED (will be removed in v1.0.0), please refer to the new frontend notation: https://github.com/containous/traefik/blob/master/docs/index.md#-frontends", route.Value)
-	}
-	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
-
 	rules := Rules{route: serverRoute}
 	newRoute, err := rules.Parse(route.Rule)
 	if err != nil {

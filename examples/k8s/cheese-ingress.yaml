@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cheese
+spec:
+  rules:
+  - host: stilton.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: stilton
+          servicePort: http
+  - host: cheddar.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: cheddar
+          servicePort: http
+  - host: wensleydale.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: wensleydale
+          servicePort: http

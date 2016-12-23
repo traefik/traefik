@@ -5,14 +5,15 @@ TRAEFIK_ENVS := \
 	-e OS_PLATFORM_ARG \
 	-e TESTFLAGS \
 	-e VERBOSE \
-	-e VERSION
+	-e VERSION \
+	-e CODENAME
 
 SRCS = $(shell git ls-files '*.go' | grep -v '^external/')
 
 BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"
 
-GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
 TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(GIT_BRANCH))
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"containous/traefik")
@@ -44,7 +45,7 @@ test-integration: build ## run the integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-integration
 
 validate: build  ## validate gofmt, golint and go vet
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-gofmt validate-govet validate-golint 
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-gofmt validate-govet validate-golint validate-misspell
 
 build: dist
 	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
@@ -72,7 +73,7 @@ run-dev:
 generate-webui: build-webui
 	if [ ! -d "static" ]; then \
 		mkdir -p static; \
-		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui gulp; \
+		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui npm run build; \
 		echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md; \
 	fi
 

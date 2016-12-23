@@ -1,0 +1,15 @@
+[backends]{{range .Applications}}
+    {{ $app := .}}
+    {{range .Instances}}
+    [backends.backend{{$app.Name}}.servers.server-{{ getInstanceID . }}]
+    url = "{{ getProtocol . }}://{{ .IpAddr }}:{{ getPort . }}"
+    weight = {{ getWeight . }}
+{{end}}{{end}}
+
+[frontends]{{range .Applications}}
+  [frontends.frontend{{.Name}}]
+    backend = "backend{{.Name}}"
+    entryPoints = ["http"]
+    [frontends.frontend{{.Name }}.routes.route-host{{.Name}}]
+      rule = "Host:{{ .Name | tolower }}"
+{{end}}

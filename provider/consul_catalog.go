@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
-	log "github.com/Sirupsen/logrus"
-	"github.com/cenkalti/backoff"
+	"github.com/Sirupsen/logrus"
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/job"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
@@ -23,13 +25,15 @@ const (
 	DefaultConsulCatalogTagPrefix = "traefik"
 )
 
+var _ Provider = (*ConsulCatalog)(nil)
+
 // ConsulCatalog holds configurations of the Consul catalog provider.
 type ConsulCatalog struct {
-	BaseProvider
-	Endpoint string `description:"Consul server endpoint"`
-	Domain   string `description:"Default domain used"`
-	client   *api.Client
-	Prefix   string
+	BaseProvider `mapstructure:",squash"`
+	Endpoint     string `description:"Consul server endpoint"`
+	Domain       string `description:"Default domain used"`
+	client       *api.Client
+	Prefix       string
 }
 
 type serviceUpdate struct {
@@ -209,12 +213,13 @@ func (provider *ConsulCatalog) getContraintTags(tags []string) []string {
 
 func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Configuration {
 	var FuncMap = template.FuncMap{
-		"getBackend":        provider.getBackend,
-		"getFrontendRule":   provider.getFrontendRule,
-		"getBackendName":    provider.getBackendName,
-		"getBackendAddress": provider.getBackendAddress,
-		"getAttribute":      provider.getAttribute,
-		"getEntryPoints":    provider.getEntryPoints,
+		"getBackend":           provider.getBackend,
+		"getFrontendRule":      provider.getFrontendRule,
+		"getBackendName":       provider.getBackendName,
+		"getBackendAddress":    provider.getBackendAddress,
+		"getAttribute":         provider.getAttribute,
+		"getEntryPoints":       provider.getEntryPoints,
+		"hasMaxconnAttributes": provider.hasMaxconnAttributes,
 	}
 
 	allNodes := []*api.ServiceEntry{}
@@ -249,6 +254,15 @@ func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Confi
 	return configuration
 }
 
+func (provider *ConsulCatalog) hasMaxconnAttributes(attributes []string) bool {
+	amount := provider.getAttribute("backend.maxconn.amount", attributes, "")
+	extractorfunc := provider.getAttribute("backend.maxconn.extractorfunc", attributes, "")
+	if amount != "" && extractorfunc != "" {
+		return true
+	}
+	return false
+}
+
 func (provider *ConsulCatalog) getNodes(index map[string][]string) ([]catalogUpdate, error) {
 	visited := make(map[string]bool)
 
@@ -257,7 +271,7 @@ func (provider *ConsulCatalog) getNodes(index map[string][]string) ([]catalogUpd
 		name := strings.ToLower(service)
 		if !strings.Contains(name, " ") && !visited[name] {
 			visited[name] = true
-			log.WithFields(log.Fields{
+			log.WithFields(logrus.Fields{
 				"service": name,
 			}).Debug("Fetching service")
 			healthy, err := provider.healthyNodes(name)
@@ -303,7 +317,7 @@ func (provider *ConsulCatalog) watch(configurationChan chan<- types.ConfigMessag
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints []types.Constraint) error {
+func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	config := api.DefaultConfig()
 	config.Address = provider.Endpoint
 	client, err := api.NewClient(config)
@@ -317,12 +331,12 @@ func (provider *ConsulCatalog) Provide(configurationChan chan<- types.ConfigMess
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Consul connection error %+v, retrying in %s", err, time)
 		}
-		worker := func() error {
+		operation := func() error {
 			return provider.watch(configurationChan, stop)
 		}
-		err := backoff.RetryNotify(worker, backoff.NewExponentialBackOff(), notify)
+		err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
-			log.Fatalf("Cannot connect to consul server %+v", err)
+			log.Errorf("Cannot connect to consul server %+v", err)
 		}
 	})
 

@@ -12,6 +12,7 @@ import (
 
 type myProvider struct {
 	BaseProvider
+	TLS *ClientTLS
 }
 
 func (p *myProvider) Foo() string {
@@ -54,6 +55,7 @@ func TestConfigurationErrors(t *testing.T) {
 				BaseProvider{
 					Filename: "/non/existent/template.tmpl",
 				},
+				nil,
 			},
 			expectedError: "open /non/existent/template.tmpl: no such file or directory",
 		},
@@ -67,6 +69,7 @@ func TestConfigurationErrors(t *testing.T) {
 				BaseProvider{
 					Filename: templateErrorFile.Name(),
 				},
+				nil,
 			},
 			expectedError: `function "Bar" not defined`,
 		},
@@ -75,6 +78,7 @@ func TestConfigurationErrors(t *testing.T) {
 				BaseProvider{
 					Filename: templateInvalidTOMLFile.Name(),
 				},
+				nil,
 			},
 			expectedError: "Near line 1 (last key parsed 'Hello'): Expected key separator '=', but got '<' instead",
 			funcMap: template.FuncMap{
@@ -130,6 +134,7 @@ func TestGetConfiguration(t *testing.T) {
 		BaseProvider{
 			Filename: templateFile.Name(),
 		},
+		nil,
 	}
 	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
@@ -191,6 +196,7 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 		BaseProvider{
 			Filename: templateFile.Name(),
 		},
+		nil,
 	}
 	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
@@ -209,15 +215,28 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 	}
 }
 
+func TestNilClientTLS(t *testing.T) {
+	provider := &myProvider{
+		BaseProvider{
+			Filename: "",
+		},
+		nil,
+	}
+	_, err := provider.TLS.CreateTLSConfig()
+	if err != nil {
+		t.Fatalf("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
+	}
+}
+
 func TestMatchingConstraints(t *testing.T) {
 	cases := []struct {
-		constraints []types.Constraint
+		constraints types.Constraints
 		tags        []string
 		expected    bool
 	}{
 		// simple test: must match
 		{
-			constraints: []types.Constraint{
+			constraints: types.Constraints{
 				{
 					Key:       "tag",
 					MustMatch: true,
@@ -231,7 +250,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// simple test: must match but does not match
 		{
-			constraints: []types.Constraint{
+			constraints: types.Constraints{
 				{
 					Key:       "tag",
 					MustMatch: true,
@@ -245,7 +264,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// simple test: must not match
 		{
-			constraints: []types.Constraint{
+			constraints: types.Constraints{
 				{
 					Key:       "tag",
 					MustMatch: false,
@@ -259,7 +278,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// complex test: globbing
 		{
-			constraints: []types.Constraint{
+			constraints: types.Constraints{
 				{
 					Key:       "tag",
 					MustMatch: true,
@@ -273,7 +292,7 @@ func TestMatchingConstraints(t *testing.T) {
 		},
 		// complex test: multiple constraints
 		{
-			constraints: []types.Constraint{
+			constraints: types.Constraints{
 				{
 					Key:       "tag",
 					MustMatch: true,
@@ -298,10 +317,66 @@ func TestMatchingConstraints(t *testing.T) {
 			BaseProvider{
 				Constraints: c.constraints,
 			},
+			nil,
 		}
 		actual, _ := provider.MatchConstraints(c.tags)
 		if actual != c.expected {
-			t.Fatalf("test #%v: expected %q, got %q, for %q", i, c.expected, actual, c.constraints)
+			t.Fatalf("test #%v: expected %t, got %t, for %#v", i, c.expected, actual, c.constraints)
 		}
+	}
+}
+
+func TestDefaultFuncMap(t *testing.T) {
+	templateFile, err := ioutil.TempFile("", "provider-configuration")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(templateFile.Name())
+	data := []byte(`
+  [backends]
+  [backends.{{ "backend-1" | replace  "-" "" }}]
+    [backends.{{ "BACKEND1" | tolower }}.circuitbreaker]
+      expression = "NetworkErrorRatio() > 0.5"
+    [backends.servers.server1]
+    url = "http://172.17.0.2:80"
+    weight = 10
+    [backends.backend1.servers.server2]
+    url = "http://172.17.0.3:80"
+    weight = 1
+
+[frontends]
+  [frontends.{{normalize "frontend/1"}}]
+  {{ $backend := "backend1/test/value" | split  "/" }}
+  {{ $backendid := index $backend 1 }}
+  {{ if "backend1" | contains "backend" }}
+  backend = "backend1"
+  {{end}}
+  passHostHeader = true
+    [frontends.frontend-1.routes.test_2]
+    rule = "Path"
+    value = "/test"`)
+	err = ioutil.WriteFile(templateFile.Name(), data, 0700)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider := &myProvider{
+		BaseProvider{
+			Filename: templateFile.Name(),
+		},
+		nil,
+	}
+	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
+	if err != nil {
+		t.Fatalf("Shouldn't have error out, got %v", err)
+	}
+	if configuration == nil {
+		t.Fatalf("Configuration should not be nil, but was")
+	}
+	if _, ok := configuration.Backends["backend1"]; !ok {
+		t.Fatalf("backend1 should exists, but it not")
+	}
+	if _, ok := configuration.Frontends["frontend-1"]; !ok {
+		t.Fatalf("Frontend frontend-1 should exists, but it not")
 	}
 }

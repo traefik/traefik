@@ -6,14 +6,14 @@
 [![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
 [![Go Report Card](https://goreportcard.com/badge/kubernetes/helm)](http://goreportcard.com/report/containous/traefik)
-[![Image Layer](https://badge.imagelayers.io/traefik:latest.svg)](https://imagelayers.io/?images=traefik)
+[![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
 
 
 Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
-It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Kubernetes](http://kubernetes.io/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), Rest API, file...) to manage its configuration automatically and dynamically.
+It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Kubernetes](http://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Mesos](https://github.com/apache/mesos), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), [Eureka](https://github.com/Netflix/eureka), Rest API, file...) to manage its configuration automatically and dynamically.
 
 ## Overview
 
@@ -45,27 +45,34 @@ Run it and forget it!
 - [It's fast](http://docs.traefik.io/benchmarks)
 - No dependency hell, single binary made with go
 - Rest API
-- Multiple backends supported: Docker, Mesos/Marathon, Consul, Etcd, and more to come
-- Watchers for backends, can listen change in backends to apply a new configuration automatically
+- Multiple backends supported: Docker, Swarm, Kubernetes, Marathon, Mesos, Consul, Etcd, and more to come
+- Watchers for backends, can listen for changes in backends to apply a new configuration automatically
 - Hot-reloading of configuration. No need to restart the process
 - Graceful shutdown http connections
 - Circuit breakers on backends
 - Round Robin, rebalancer load-balancers
 - Rest Metrics
-- [Tiny](https://imagelayers.io/?images=traefik) [official](https://hub.docker.com/r/_/traefik/) docker image included
+- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image included
 - SSL backends support
 - SSL frontend support (with SNI)
 - Clean AngularJS Web UI
 - Websocket support
 - HTTP/2 support
 - Retry request if network error
-- [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS)
+- [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS with renewal)
+- High Availability with cluster mode
 
-## Demo
+## Quickstart
 
+You can have a quick look at Træfɪk in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
 
-Here is a talk (in french) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
-You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Lets'Encrypt. 
+Here is a talk given by [Ed Robinson](https://github.com/errm) at the [ContainerCamp UK](https://container.camp) conference.
+You will learn fundamental Træfɪk features and see some demos with Kubernetes.
+
+[![Traefik ContainerCamp UK](http://img.youtube.com/vi/aFtpIShV60I/0.jpg)](https://www.youtube.com/watch?v=aFtpIShV60I)
+
+Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
+You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Let's Encrypt. 
 
 [![Traefik Devoxx France](http://img.youtube.com/vi/QvAz9mVx5TI/0.jpg)](http://www.youtube.com/watch?v=QvAz9mVx5TI)
 
@@ -84,7 +91,7 @@ You can access to a simple HTML frontend of Træfik.
 - [Manners](https://github.com/mailgun/manners): graceful shutdown of http.Handler servers
 - [Lego](https://github.com/xenolf/lego): the best [Let's Encrypt](https://letsencrypt.org) library in go
 
-## Quick start
+## Test it
 
 - The simple way: grab the latest binary from the [releases](https://github.com/containous/traefik/releases) page and just run it with the [sample configuration file](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml):
 
@@ -112,10 +119,14 @@ You can find the complete documentation [here](https://docs.traefik.io).
 
 Please refer to [this section](.github/CONTRIBUTING.md).
 
+## Code Of Conduct
+
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+
 ## Support
 
 You can join [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) to get basic support.
-If you prefer a commercial support, please contact [containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
+If you prefer commercial support, please contact [containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
 
 ## Træfɪk here and there
 
@@ -145,9 +156,13 @@ software products.
 Founded in 2014, Asteris creates next-generation infrastructure software for the modern datacenter. Asteris writes software that makes it easy for companies to implement continuous delivery and realtime data pipelines. We support the HashiCorp stack, along with Kubernetes, Apache Mesos, Spark and Kafka. We're core committers on mantl.io, consul-cli and mesos-consul.
 
 ## Maintainers
+
 - Emile Vauge [@emilevauge](https://github.com/emilevauge)
 - Vincent Demeester [@vdemeester](https://github.com/vdemeester)
-- Samuel Berthe [@samber](https://github.com/samber)
+- Russell Clare [@Russell-IO](https://github.com/Russell-IO)
+- Ed Robinson [@errm](https://github.com/errm)
+- Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
+- Manuel Laufenberg [@SantoDE](https://github.com/SantoDE)
 
 ## Credits
 

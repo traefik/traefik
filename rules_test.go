@@ -4,11 +4,11 @@ import (
 	"github.com/containous/mux"
 	"net/http"
 	"net/url"
+	"reflect"
 	"testing"
 )
 
 func TestParseOneRule(t *testing.T) {
-
 	router := mux.NewRouter()
 	route := router.NewRoute()
 	serverRoute := &serverRoute{route: route}
@@ -31,25 +31,57 @@ func TestParseOneRule(t *testing.T) {
 }
 
 func TestParseTwoRules(t *testing.T) {
-
 	router := mux.NewRouter()
 	route := router.NewRoute()
 	serverRoute := &serverRoute{route: route}
 	rules := &Rules{route: serverRoute}
 
-	expression := "Host:foo.bar;Path:/foobar"
+	expression := "Host: Foo.Bar ; Path:/FOObar"
 	routeResult, err := rules.Parse(expression)
 
 	if err != nil {
-		t.Fatal("Error while building route for Host:foo.bar;Path:/foobar")
+		t.Fatal("Error while building route for Host:foo.bar;Path:/FOObar")
 	}
 
 	request, err := http.NewRequest("GET", "http://foo.bar/foobar", nil)
 	routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
 
+	if routeMatch == true {
+		t.Log(err)
+		t.Fatal("Rule Host:foo.bar;Path:/FOObar don't match")
+	}
+
+	request, err = http.NewRequest("GET", "http://foo.bar/FOObar", nil)
+	routeMatch = routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
+
 	if routeMatch == false {
 		t.Log(err)
-		t.Fatal("Rule Host:foo.bar;Path:/foobar don't match")
+		t.Fatal("Rule Host:foo.bar;Path:/FOObar don't match")
+	}
+}
+
+func TestParseDomains(t *testing.T) {
+	rules := &Rules{}
+	expressionsSlice := []string{
+		"Host:foo.bar,test.bar",
+		"Path:/test",
+		"Host:foo.bar;Path:/test",
+		"Host: Foo.Bar ;Path:/test",
+	}
+	domainsSlice := [][]string{
+		{"foo.bar", "test.bar"},
+		{},
+		{"foo.bar"},
+		{"foo.bar"},
+	}
+	for i, expression := range expressionsSlice {
+		domains, err := rules.ParseDomains(expression)
+		if err != nil {
+			t.Fatalf("Error while parsing domains: %v", err)
+		}
+		if !reflect.DeepEqual(domains, domainsSlice[i]) {
+			t.Fatalf("Error parsing domains: expected %+v, got %+v", domainsSlice[i], domains)
+		}
 	}
 }
 

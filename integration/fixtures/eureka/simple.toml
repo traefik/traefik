@@ -1,0 +1,14 @@
+defaultEntryPoints = ["http"]
+
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+
+[eureka]
+  endpoint = "http://{{.EurekaHost}}:8761/eureka"
+  delay = "1s"
+[web]
+  address = ":8080"

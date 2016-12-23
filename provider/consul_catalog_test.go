@@ -61,7 +61,7 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 				"traefik.backend.weight=42",
 			},
 			key:          "backend.weight",
-			defaultValue: "",
+			defaultValue: "0",
 			expected:     "42",
 		},
 		{
@@ -70,8 +70,8 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 				"traefik.backend.wei=42",
 			},
 			key:          "backend.weight",
-			defaultValue: "",
-			expected:     "",
+			defaultValue: "0",
+			expected:     "0",
 		},
 	}
 
@@ -212,6 +212,8 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 							"traefik.backend.loadbalancer=drr",
 							"traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5",
 							"random.foo=bar",
+							"traefik.backend.maxconn.amount=1000",
+							"traefik.backend.maxconn.extractorfunc=client.ip",
 						},
 					},
 					Nodes: []*api.ServiceEntry{
@@ -259,6 +261,10 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        1000,
+						ExtractorFunc: "client.ip",
 					},
 				},
 			},

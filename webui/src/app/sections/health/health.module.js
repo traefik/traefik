@@ -1,19 +1,24 @@
-(function () {
-  'use strict';
+'use strict';
+var angular = require('angular');
+var traefikCoreHealth = require('../../core/health.resource');
+var HealthController = require('./health.controller');
 
-  angular.module('traefik.section.health', ['traefik.core.health'])
-    .config(config);
+var traefikSectionHealth = 'traefik.section.health';
+module.exports = traefikSectionHealth;
 
-    /** @ngInject */
-    function config($stateProvider) {
+angular
+  .module(traefikSectionHealth, [traefikCoreHealth])
+  .controller('HealthController', HealthController)
+  .config(config);
 
-      $stateProvider.state('health', {
-        url: '/health',
-        templateUrl: 'app/sections/health/health.html',
-        controller: 'HealthController',
-        controllerAs: 'healthCtrl'
-      });
+  /** @ngInject */
+  function config($stateProvider) {
 
-    }
+    $stateProvider.state('health', {
+      url: '/health',
+      template: require('./health.html'),
+      controller: 'HealthController',
+      controllerAs: 'healthCtrl'
+    });
 
-})();
+  }

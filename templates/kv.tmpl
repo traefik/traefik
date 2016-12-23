@@ -3,7 +3,7 @@
 
 [backends]{{range $backends}}
 {{$backend := .}}
-{{$servers := List $backend "/servers/" }}
+{{$servers := ListServers $backend }}
 
 {{$circuitBreaker := Get "" . "/circuitbreaker/" "expression"}}
 {{with $circuitBreaker}}
@@ -12,9 +12,11 @@
 {{end}}
 
 {{$loadBalancer := Get "" . "/loadbalancer/" "method"}}
+{{$sticky := Get "false" . "/loadbalancer/" "sticky"}}
 {{with $loadBalancer}}
 [backends."{{Last $backend}}".loadBalancer]
     method = "{{$loadBalancer}}"
+    sticky = {{$sticky}}
 {{end}}
 
 {{$maxConnAmt := Get "" . "/maxconn/" "amount"}}
@@ -30,7 +32,7 @@
 {{range $servers}}
 [backends."{{Last $backend}}".servers."{{Last .}}"]
     url = "{{Get "" . "/url"}}"
-    weight = {{Get ""  . "/weight"}}
+    weight = {{Get "0"  . "/weight"}}
 {{end}}
 {{end}}
 

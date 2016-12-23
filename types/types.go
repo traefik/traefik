@@ -1,8 +1,10 @@
 package types
 
 import (
+	"encoding"
 	"errors"
 	"fmt"
+	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
 	"strings"
 )
@@ -24,6 +26,7 @@ type MaxConn struct {
 // LoadBalancer holds load balancing configuration.
 type LoadBalancer struct {
 	Method string `json:"method,omitempty"`
+	Sticky bool   `json:"sticky,omitempty"`
 }
 
 // CircuitBreaker holds circuit breaker configuration.
@@ -40,10 +43,6 @@ type Server struct {
 // Route holds route configuration.
 type Route struct {
 	Rule string `json:"rule,omitempty"`
-	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
-	// TODO: backwards compatibility with DEPRECATED rule.Value
-	Value string `json:"value,omitempty"`
-	// ⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠⚠
 }
 
 // Frontend holds frontend configuration.
@@ -143,6 +142,27 @@ func (c *Constraint) String() string {
 	return c.Key + "!=" + c.Regex
 }
 
+var _ encoding.TextUnmarshaler = (*Constraint)(nil)
+
+// UnmarshalText define how unmarshal in TOML parsing
+func (c *Constraint) UnmarshalText(text []byte) error {
+	constraint, err := NewConstraint(string(text))
+	if err != nil {
+		return err
+	}
+	c.Key = constraint.Key
+	c.MustMatch = constraint.MustMatch
+	c.Regex = constraint.Regex
+	return nil
+}
+
+var _ encoding.TextMarshaler = (*Constraint)(nil)
+
+// MarshalText encodes the receiver into UTF-8-encoded text and returns the result.
+func (c *Constraint) MarshalText() (text []byte, err error) {
+	return []byte(c.String()), nil
+}
+
 // MatchConstraintWithAtLeastOneTag tests a constraint for one single service
 func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
 	for _, tag := range tags {
@@ -164,16 +184,16 @@ func (cs *Constraints) Set(str string) error {
 		if err != nil {
 			return err
 		}
-		*cs = append(*cs, *constraint)
+		*cs = append(*cs, constraint)
 	}
 	return nil
 }
 
 // Constraints holds a Constraint parser
-type Constraints []Constraint
+type Constraints []*Constraint
 
 //Get []*Constraint
-func (cs *Constraints) Get() interface{} { return []Constraint(*cs) }
+func (cs *Constraints) Get() interface{} { return []*Constraint(*cs) }
 
 //String returns []*Constraint in string
 func (cs *Constraints) String() string { return fmt.Sprintf("%+v", *cs) }
@@ -186,4 +206,46 @@ func (cs *Constraints) SetValue(val interface{}) {
 // Type exports the Constraints type as a string
 func (cs *Constraints) Type() string {
 	return fmt.Sprint("constraint")
+}
+
+// Store holds KV store cluster config
+type Store struct {
+	store.Store
+	Prefix string // like this "prefix" (without the /)
+}
+
+// Cluster holds cluster config
+type Cluster struct {
+	Node  string `description:"Node name"`
+	Store *Store
+}
+
+// Auth holds authentication configuration (BASIC, DIGEST, users)
+type Auth struct {
+	Basic       *Basic
+	Digest      *Digest
+	HeaderField string
+}
+
+// Users authentication users
+type Users []string
+
+// Basic HTTP basic authentication
+type Basic struct {
+	Users `mapstructure:","`
+}
+
+// Digest HTTP authentication
+type Digest struct {
+	Users `mapstructure:","`
+}
+
+// CanonicalDomain returns a lower case domain with trim space
+func CanonicalDomain(domain string) string {
+	return strings.ToLower(strings.TrimSpace(domain))
+}
+
+// Statistics provides options for monitoring request and response stats
+type Statistics struct {
+	RecentErrors int `description:"Number of recent errors logged"`
 }

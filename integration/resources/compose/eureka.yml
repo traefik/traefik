@@ -1,0 +1,5 @@
+eureka:
+  image: springcloud/eureka
+
+whoami1:
+  image: emilevauge/whoami

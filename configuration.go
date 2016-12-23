@@ -1,36 +1,42 @@
 package main
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/containous/traefik/acme"
-	"github.com/containous/traefik/provider"
-	"github.com/containous/traefik/types"
+	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
 )
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff
 type TraefikConfiguration struct {
-	GlobalConfiguration
-	ConfigFile string `short:"c" description:"Configuration file to use (TOML)."`
+	GlobalConfiguration `mapstructure:",squash"`
+	ConfigFile          string `short:"c" description:"Configuration file to use (TOML)."`
 }
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              int64                   `short:"g" description:"Configuration file to use (TOML)."`
+	GraceTimeOut              int64                   `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
+	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
 	AccessLogsFile            string                  `description:"Access logs file"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
-	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key'"`
-	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags."`
+	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
+	Cluster                   *types.Cluster          `description:"Enable clustering"`
+	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags"`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
 	ProvidersThrottleDuration time.Duration           `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
+	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	Docker                    *provider.Docker        `description:"Enable Docker backend"`
 	File                      *provider.File          `description:"Enable File backend"`
@@ -42,6 +48,8 @@ type GlobalConfiguration struct {
 	Zookeeper                 *provider.Zookepper     `description:"Enable Zookeeper backend"`
 	Boltdb                    *provider.BoltDb        `description:"Enable Boltdb backend"`
 	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
+	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
+	Eureka                    *provider.Eureka        `description:"Enable Eureka backend"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -68,7 +76,9 @@ func (dep *DefaultEntryPoints) Set(value string) error {
 }
 
 // Get return the EntryPoints map
-func (dep *DefaultEntryPoints) Get() interface{} { return DefaultEntryPoints(*dep) }
+func (dep *DefaultEntryPoints) Get() interface{} {
+	return DefaultEntryPoints(*dep)
+}
 
 // SetValue sets the EntryPoints map with val
 func (dep *DefaultEntryPoints) SetValue(val interface{}) {
@@ -93,7 +103,7 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?")
+	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?")
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
 		return errors.New("Bad EntryPoints format: " + value)
@@ -114,6 +124,14 @@ func (ep *EntryPoints) Set(value string) error {
 		tls = &TLS{
 			Certificates: certs,
 		}
+	} else if len(result["TLSACME"]) > 0 {
+		tls = &TLS{
+			Certificates: Certificates{},
+		}
+	}
+	if len(result["CA"]) > 0 {
+		files := strings.Split(result["CA"], ",")
+		tls.ClientCAFiles = files
 	}
 	var redirect *Redirect
 	if len(result["RedirectEntryPoint"]) > 0 || len(result["RedirectRegex"]) > 0 || len(result["RedirectReplacement"]) > 0 {
@@ -124,17 +142,25 @@ func (ep *EntryPoints) Set(value string) error {
 		}
 	}
 
+	compress := false
+	if len(result["Compress"]) > 0 {
+		compress = strings.EqualFold(result["Compress"], "enable") || strings.EqualFold(result["Compress"], "on")
+	}
+
 	(*ep)[result["Name"]] = &EntryPoint{
 		Address:  result["Address"],
 		TLS:      tls,
 		Redirect: redirect,
+		Compress: compress,
 	}
 
 	return nil
 }
 
 // Get return the EntryPoints map
-func (ep *EntryPoints) Get() interface{} { return EntryPoints(*ep) }
+func (ep *EntryPoints) Get() interface{} {
+	return EntryPoints(*ep)
+}
 
 // SetValue sets the EntryPoints map with val
 func (ep *EntryPoints) SetValue(val interface{}) {
@@ -152,6 +178,8 @@ type EntryPoint struct {
 	Address  string
 	TLS      *TLS
 	Redirect *Redirect
+	Auth     *types.Auth
+	Compress bool
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
@@ -163,11 +191,73 @@ type Redirect struct {
 
 // TLS configures TLS for an entry point
 type TLS struct {
-	Certificates Certificates
+	MinVersion    string
+	CipherSuites  []string
+	Certificates  Certificates
+	ClientCAFiles []string
+}
+
+// Map of allowed TLS minimum versions
+var minVersion = map[string]uint16{
+	`VersionTLS10`: tls.VersionTLS10,
+	`VersionTLS11`: tls.VersionTLS11,
+	`VersionTLS12`: tls.VersionTLS12,
+}
+
+// Map of TLS CipherSuites from crypto/tls
+var cipherSuites = map[string]uint16{
+	`TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`: tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	`TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`: tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA`:    tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA`:    tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+	`TLS_RSA_WITH_AES_128_GCM_SHA256`:       tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+	`TLS_RSA_WITH_AES_256_GCM_SHA384`:       tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+	`TLS_RSA_WITH_AES_128_CBC_SHA`:          tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+	`TLS_RSA_WITH_AES_256_CBC_SHA`:          tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`:   tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+	`TLS_RSA_WITH_3DES_EDE_CBC_SHA`:         tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
 }
 
 // Certificates defines traefik certificates type
+// Certs and Keys could be either a file path, or the file content itself
 type Certificates []Certificate
+
+//CreateTLSConfig creates a TLS config from Certificate structures
+func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
+	config := &tls.Config{}
+	config.Certificates = []tls.Certificate{}
+	certsSlice := []Certificate(*certs)
+	for _, v := range certsSlice {
+		isAPath := false
+		_, errCert := os.Stat(v.CertFile)
+		_, errKey := os.Stat(v.KeyFile)
+		if errCert == nil {
+			if errKey == nil {
+				isAPath = true
+			} else {
+				return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
+			}
+		} else if errKey == nil {
+			return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
+		}
+
+		cert := tls.Certificate{}
+		var err error
+		if isAPath {
+			cert, err = tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			cert, err = tls.X509KeyPair([]byte(v.CertFile), []byte(v.KeyFile))
+			if err != nil {
+				return nil, err
+			}
+		}
+		config.Certificates = append(config.Certificates, cert)
+	}
+	return config, nil
+}
 
 // String is the method to format the flag's value, part of the flag.Value interface.
 // The String method's output will be used in diagnostics.
@@ -175,21 +265,28 @@ func (certs *Certificates) String() string {
 	if len(*certs) == 0 {
 		return ""
 	}
-	return (*certs)[0].CertFile + "," + (*certs)[0].KeyFile
+	var result []string
+	for _, certificate := range *certs {
+		result = append(result, certificate.CertFile+","+certificate.KeyFile)
+	}
+	return strings.Join(result, ";")
 }
 
 // Set is the method to set the flag value, part of the flag.Value interface.
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (certs *Certificates) Set(value string) error {
-	files := strings.Split(value, ",")
-	if len(files) != 2 {
-		return errors.New("Bad certificates format: " + value)
+	certificates := strings.Split(value, ";")
+	for _, certificate := range certificates {
+		files := strings.Split(certificate, ",")
+		if len(files) != 2 {
+			return errors.New("Bad certificates format: " + value)
+		}
+		*certs = append(*certs, Certificate{
+			CertFile: files[0],
+			KeyFile:  files[1],
+		})
 	}
-	*certs = append(*certs, Certificate{
-		CertFile: files[0],
-		KeyFile:  files[1],
-	})
 	return nil
 }
 
@@ -199,6 +296,7 @@ func (certs *Certificates) Type() string {
 }
 
 // Certificate holds a SSL cert/key pair
+// Certs and Key could be either a file path, or the file content itself
 type Certificate struct {
 	CertFile string
 	KeyFile  string
@@ -214,7 +312,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	//default Docker
 	var defaultDocker provider.Docker
 	defaultDocker.Watch = true
+	defaultDocker.ExposedByDefault = true
 	defaultDocker.Endpoint = "unix:///var/run/docker.sock"
+	defaultDocker.SwarmMode = false
 
 	// default File
 	var defaultFile provider.File
@@ -224,52 +324,65 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default Web
 	var defaultWeb WebProvider
 	defaultWeb.Address = ":8080"
+	defaultWeb.Statistics = &types.Statistics{
+		RecentErrors: 10,
+	}
 
 	// default Marathon
 	var defaultMarathon provider.Marathon
 	defaultMarathon.Watch = true
 	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
 	defaultMarathon.ExposedByDefault = true
-	defaultMarathon.Constraints = []types.Constraint{}
+	defaultMarathon.Constraints = types.Constraints{}
+	defaultMarathon.DialerTimeout = 60
+	defaultMarathon.KeepAlive = 10
 
 	// default Consul
 	var defaultConsul provider.Consul
 	defaultConsul.Watch = true
 	defaultConsul.Endpoint = "127.0.0.1:8500"
 	defaultConsul.Prefix = "traefik"
-	defaultConsul.Constraints = []types.Constraint{}
+	defaultConsul.Constraints = types.Constraints{}
 
 	// default ConsulCatalog
 	var defaultConsulCatalog provider.ConsulCatalog
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
-	defaultConsulCatalog.Constraints = []types.Constraint{}
+	defaultConsulCatalog.Constraints = types.Constraints{}
 
 	// default Etcd
 	var defaultEtcd provider.Etcd
 	defaultEtcd.Watch = true
-	defaultEtcd.Endpoint = "127.0.0.1:400"
+	defaultEtcd.Endpoint = "127.0.0.1:2379"
 	defaultEtcd.Prefix = "/traefik"
-	defaultEtcd.Constraints = []types.Constraint{}
+	defaultEtcd.Constraints = types.Constraints{}
 
 	//default Zookeeper
 	var defaultZookeeper provider.Zookepper
 	defaultZookeeper.Watch = true
 	defaultZookeeper.Endpoint = "127.0.0.1:2181"
 	defaultZookeeper.Prefix = "/traefik"
-	defaultZookeeper.Constraints = []types.Constraint{}
+	defaultZookeeper.Constraints = types.Constraints{}
 
 	//default Boltdb
 	var defaultBoltDb provider.BoltDb
 	defaultBoltDb.Watch = true
 	defaultBoltDb.Endpoint = "127.0.0.1:4001"
 	defaultBoltDb.Prefix = "/traefik"
-	defaultBoltDb.Constraints = []types.Constraint{}
+	defaultBoltDb.Constraints = types.Constraints{}
 
 	//default Kubernetes
 	var defaultKubernetes provider.Kubernetes
 	defaultKubernetes.Watch = true
-	defaultKubernetes.Endpoint = "http://127.0.0.1:8080"
-	defaultKubernetes.Constraints = []types.Constraint{}
+	defaultKubernetes.Endpoint = ""
+	defaultKubernetes.LabelSelector = ""
+	defaultKubernetes.Constraints = types.Constraints{}
+
+	// default Mesos
+	var defaultMesos provider.Mesos
+	defaultMesos.Watch = true
+	defaultMesos.Endpoint = "http://127.0.0.1:5050"
+	defaultMesos.ExposedByDefault = true
+	defaultMesos.Constraints = types.Constraints{}
 
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
@@ -282,6 +395,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Zookeeper:     &defaultZookeeper,
 		Boltdb:        &defaultBoltDb,
 		Kubernetes:    &defaultKubernetes,
+		Mesos:         &defaultMesos,
 		Retry:         &Retry{},
 	}
 	return &TraefikConfiguration{
@@ -298,10 +412,11 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*EntryPoint{},
-			Constraints:               []types.Constraint{},
+			Constraints:               types.Constraints{},
 			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: time.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
+			CheckNewVersion:           true,
 		},
 		ConfigFile: "",
 	}

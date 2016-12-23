@@ -8,26 +8,34 @@ import (
 	"net/http"
 	"runtime"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/version"
 	"github.com/elazarl/go-bindata-assetfs"
-	"github.com/thoas/stats"
+	thoas_stats "github.com/thoas/stats"
 	"github.com/unrolled/render"
 )
 
-var metrics = stats.New()
+var (
+	metrics       = thoas_stats.New()
+	statsRecorder *middlewares.StatsRecorder
+)
 
 // WebProvider is a provider.Provider implementation that provides the UI.
 // FIXME to be handled another way.
 type WebProvider struct {
-	Address  string `description:"Web administration port"`
-	CertFile string `description:"SSL certificate"`
-	KeyFile  string `description:"SSL certificate"`
-	ReadOnly bool   `description:"Enable read only API"`
-	server   *Server
+	Address    string            `description:"Web administration port"`
+	CertFile   string            `description:"SSL certificate"`
+	KeyFile    string            `description:"SSL certificate"`
+	ReadOnly   bool              `description:"Enable read only API"`
+	Statistics *types.Statistics `description:"Enable more detailed statistics"`
+	server     *Server
+	Auth       *types.Auth
 }
 
 var (
@@ -46,14 +54,18 @@ func goroutines() interface{} {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ []types.Constraint) error {
+func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
+
 	systemRouter := mux.NewRouter()
 
 	// health route
 	systemRouter.Methods("GET").Path("/health").HandlerFunc(provider.getHealthHandler)
 
+	// ping route
+	systemRouter.Methods("GET").Path("/ping").HandlerFunc(provider.getPingHandler)
 	// API routes
 	systemRouter.Methods("GET").Path("/api").HandlerFunc(provider.getConfigHandler)
+	systemRouter.Methods("GET").Path("/api/version").HandlerFunc(provider.getVersionHandler)
 	systemRouter.Methods("GET").Path("/api/providers").HandlerFunc(provider.getConfigHandler)
 	systemRouter.Methods("GET").Path("/api/providers/{provider}").HandlerFunc(provider.getProviderHandler)
 	systemRouter.Methods("PUT").Path("/api/providers/{provider}").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
@@ -73,7 +85,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		body, _ := ioutil.ReadAll(request.Body)
 		err := json.Unmarshal(body, configuration)
 		if err == nil {
-			configurationChan <- types.ConfigMessage{"web", configuration}
+			configurationChan <- types.ConfigMessage{ProviderName: "web", Configuration: configuration}
 			provider.getConfigHandler(response, request)
 		} else {
 			log.Errorf("Error parsing configuration %+v", err)
@@ -101,28 +113,63 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	}
 
 	go func() {
+		var err error
+		var negroni = negroni.New()
+		if provider.Auth != nil {
+			authMiddleware, err := middlewares.NewAuthenticator(provider.Auth)
+			if err != nil {
+				log.Fatal("Error creating Auth: ", err)
+			}
+			negroni.Use(authMiddleware)
+		}
+		negroni.UseHandler(systemRouter)
+
 		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
-			err := http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, systemRouter)
-			if err != nil {
-				log.Fatal("Error creating server: ", err)
-			}
+			err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, negroni)
 		} else {
-			err := http.ListenAndServe(provider.Address, systemRouter)
-			if err != nil {
-				log.Fatal("Error creating server: ", err)
-			}
+			err = http.ListenAndServe(provider.Address, negroni)
+		}
+
+		if err != nil {
+			log.Fatal("Error creating server: ", err)
 		}
 	}()
 	return nil
 }
 
+// healthResponse combines data returned by thoas/stats with statistics (if
+// they are enabled).
+type healthResponse struct {
+	*thoas_stats.Data
+	*middlewares.Stats
+}
+
 func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, request *http.Request) {
-	templatesRenderer.JSON(response, http.StatusOK, metrics.Data())
+	health := &healthResponse{Data: metrics.Data()}
+	if statsRecorder != nil {
+		health.Stats = statsRecorder.Data()
+	}
+	templatesRenderer.JSON(response, http.StatusOK, health)
+}
+
+func (provider *WebProvider) getPingHandler(response http.ResponseWriter, request *http.Request) {
+	fmt.Fprintf(response, "OK")
 }
 
 func (provider *WebProvider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
 	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
 	templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
+}
+
+func (provider *WebProvider) getVersionHandler(response http.ResponseWriter, request *http.Request) {
+	v := struct {
+		Version  string
+		Codename string
+	}{
+		Version:  version.Version,
+		Codename: version.Codename,
+	}
+	templatesRenderer.JSON(response, http.StatusOK, v)
 }
 
 func (provider *WebProvider) getProviderHandler(response http.ResponseWriter, request *http.Request) {
@@ -232,6 +279,7 @@ func (provider *WebProvider) getRoutesHandler(response http.ResponseWriter, requ
 }
 
 func (provider *WebProvider) getRouteHandler(response http.ResponseWriter, request *http.Request) {
+
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]

@@ -1,7 +1,7 @@
 package middlewares
 
 import (
-	log "github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/log"
 	"github.com/vulcand/vulcand/plugin/rewrite"
 	"net/http"
 )

@@ -20,14 +20,15 @@ ssh-add ~/.ssh/traefik.id_rsa
 
 # download github release
 echo "Downloading ghr..."
-curl -LOs https://github.com/tcnksm/ghr/releases/download/pre-release/linux_amd64.zip
-unzip -q linux_amd64.zip
+curl -LOs https://github.com/tcnksm/ghr/releases/download/v0.5.0/ghr_v0.5.0_linux_amd64.zip
+unzip -q ghr_v0.5.0_linux_amd64.zip
 sudo mv ghr /usr/bin/ghr
 sudo chmod +x /usr/bin/ghr
 
 # github release and tag
 echo "Github release..."
-ghr -t $GITHUB_TOKEN -u containous -r traefik --prerelease ${VERSION} dist/
+tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .
+ghr -t $GITHUB_TOKEN -u containous -r traefik ${VERSION} dist/
 
 # update docs.traefik.io
 echo "Generating and updating documentation..."
