@@ -258,7 +258,6 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 		"getMaxConnAmount":            provider.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     provider.getMaxConnExtractorFunc,
 		"getSticky":                   provider.getSticky,
-		"replace":                     replace,
 	}
 
 	// filter containers
