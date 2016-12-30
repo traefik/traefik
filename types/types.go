@@ -4,9 +4,10 @@ import (
 	"encoding"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
-	"strings"
 )
 
 // Backend holds backend configuration.

@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/containous/flaeg"
-	"github.com/containous/traefik/version"
 	"io"
 	"os"
 	"runtime"
 	"text/template"
+
+	"github.com/containous/flaeg"
+	"github.com/containous/traefik/version"
 )
 
 var versionTemplate = `Version:      {{.Version}}

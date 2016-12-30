@@ -2,12 +2,13 @@ package cluster
 
 import (
 	"context"
+	"time"
+
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/docker/leadership"
-	"time"
 )
 
 // Leadership allows leadership election using a KV store

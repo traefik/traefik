@@ -2,6 +2,7 @@ package provider
 
 import (
 	"fmt"
+
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"

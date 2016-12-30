@@ -5,6 +5,12 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	fmtlog "log"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/staert"
@@ -14,11 +20,6 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/xenolf/lego/acme"
 	"github.com/xenolf/lego/providers/dns"
-	"io/ioutil"
-	fmtlog "log"
-	"os"
-	"strings"
-	"time"
 )
 
 var (

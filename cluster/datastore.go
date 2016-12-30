@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/cenk/backoff"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
-	"sync"
-	"time"
 )
 
 // Metadata stores Object plus metadata

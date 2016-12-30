@@ -1,9 +1,10 @@
 package job
 
 import (
-	"github.com/cenk/backoff"
 	"testing"
 	"time"
+
+	"github.com/cenk/backoff"
 )
 
 func TestJobBackOff(t *testing.T) {

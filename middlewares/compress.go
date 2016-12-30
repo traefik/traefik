@@ -1,8 +1,9 @@
 package middlewares
 
 import (
-	"github.com/NYTimes/gziphandler"
 	"net/http"
+
+	"github.com/NYTimes/gziphandler"
 )
 
 // Compress is a middleware that allows redirections

@@ -1,10 +1,11 @@
 package version
 
 import (
+	"net/url"
+
 	"github.com/containous/traefik/log"
 	"github.com/google/go-github/github"
 	goversion "github.com/hashicorp/go-version"
-	"net/url"
 )
 
 var (

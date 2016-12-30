@@ -1,8 +1,9 @@
 package provider
 
 import (
-	"github.com/ArthurHlt/go-eureka-client/eureka"
 	"testing"
+
+	"github.com/ArthurHlt/go-eureka-client/eureka"
 )
 
 func TestEurekaGetPort(t *testing.T) {
