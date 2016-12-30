@@ -23,7 +23,7 @@ import (
 
 var (
 	metrics       = thoas_stats.New()
-	statsRecorder *StatsRecorder
+	statsRecorder *middlewares.StatsRecorder
 )
 
 // WebProvider is a provider.Provider implementation that provides the UI.
@@ -141,7 +141,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 // they are enabled).
 type healthResponse struct {
 	*thoas_stats.Data
-	*Stats
+	*middlewares.Stats
 }
 
 func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, request *http.Request) {

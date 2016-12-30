@@ -31,9 +31,13 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		basicAuth := auth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if username := basicAuth.CheckAuth(r); username == "" {
-				log.Debugf("Auth failed...")
+				log.Debugf("Basic auth failed...")
 				basicAuth.RequireAuth(w, r)
 			} else {
+				log.Debugf("Basic auth success...")
+				if authConfig.HeaderField != "" {
+					r.Header[authConfig.HeaderField] = []string{username}
+				}
 				next.ServeHTTP(w, r)
 			}
 		})
@@ -45,8 +49,13 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		digestAuth := auth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if username, _ := digestAuth.CheckAuth(r); username == "" {
+				log.Debugf("Digest auth failed...")
 				digestAuth.RequireAuth(w, r)
 			} else {
+				log.Debugf("Digest auth success...")
+				if authConfig.HeaderField != "" {
+					r.Header[authConfig.HeaderField] = []string{username}
+				}
 				next.ServeHTTP(w, r)
 			}
 		})

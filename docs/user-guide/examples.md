@@ -115,3 +115,19 @@ defaultEntryPoints = ["http"]
   [entryPoints.http.auth.basic]
   users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 ```
+
+## Pass Authenticated user to application via headers
+
+Providing an authentication method as described above, it is possible to pass the user to the application
+via a configurable header value
+
+```
+defaultEntryPoints = ["http"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    headerField = "X-WebAuth-User"
+    [entryPoints.http.auth.basic]
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+```

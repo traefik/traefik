@@ -101,3 +101,33 @@ func TestDigestAuthFail(t *testing.T) {
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 }
+
+func TestBasicAuthUserHeader(t *testing.T) {
+	authMiddleware, err := NewAuthenticator(&types.Auth{
+		Basic: &types.Basic{
+			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
+		},
+		HeaderField: "X-WebAuth-User",
+	})
+	assert.NoError(t, err, "there should be no error")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "test", r.Header["X-WebAuth-User"][0], "auth user should be set")
+		fmt.Fprintln(w, "traefik")
+	})
+	n := negroni.New(authMiddleware)
+	n.UseHandler(handler)
+	ts := httptest.NewServer(n)
+	defer ts.Close()
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", ts.URL, nil)
+	req.SetBasicAuth("test", "test")
+	res, err := client.Do(req)
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
+
+	body, err := ioutil.ReadAll(res.Body)
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, "traefik\n", string(body), "they should be equal")
+}

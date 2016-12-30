@@ -1,4 +1,4 @@
-package main
+package middlewares
 
 import (
 	"net/http"
@@ -14,6 +14,13 @@ type StatsRecorder struct {
 	mutex           sync.RWMutex
 	numRecentErrors int
 	recentErrors    []*statsError
+}
+
+// NewStatsRecorder returns a new StatsRecorder
+func NewStatsRecorder(numRecentErrors int) *StatsRecorder {
+	return &StatsRecorder{
+		numRecentErrors: numRecentErrors,
+	}
 }
 
 // Stats includes all of the stats gathered by the recorder.

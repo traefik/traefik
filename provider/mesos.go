@@ -135,7 +135,6 @@ func (provider *Mesos) loadMesosConfig() *types.Configuration {
 		"getFrontendBackend": provider.getFrontendBackend,
 		"getID":              provider.getID,
 		"getFrontEndName":    provider.getFrontEndName,
-		"replace":            replace,
 	}
 
 	t := records.NewRecordGenerator(time.Duration(provider.StateTimeoutSecond) * time.Second)
