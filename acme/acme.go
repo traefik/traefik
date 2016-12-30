@@ -45,7 +45,7 @@ type ACME struct {
 	store               cluster.Store
 	challengeProvider   *challengeProvider
 	checkOnDemandDomain func(domain string) bool
-	TLSConfig						*tls.Config		`description:"TLS config in case wildcard certs are used"`
+	TLSConfig           *tls.Config `description:"TLS config in case wildcard certs are used"`
 }
 
 //Domains parse []Domain
