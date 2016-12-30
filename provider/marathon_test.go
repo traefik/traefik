@@ -81,8 +81,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "test",
 						AppID: "/test",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
@@ -128,8 +134,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "testLoadBalancerAndCircuitBreaker.dot",
 						AppID: "/testLoadBalancerAndCircuitBreaker.dot",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
@@ -180,8 +192,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "testMaxConn",
 						AppID: "/testMaxConn",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
@@ -229,8 +247,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "testMaxConnOnlySpecifyAmount",
 						AppID: "/testMaxConnOnlySpecifyAmount",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
@@ -275,8 +299,14 @@ func TestMarathonLoadConfig(t *testing.T) {
 					{
 						ID:    "testMaxConnOnlyExtractorFunc",
 						AppID: "/testMaxConnOnlyExtractorFunc",
-						Host:  "127.0.0.1",
+						Host:  "localhost",
 						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
 					},
 				},
 			},
@@ -388,7 +418,89 @@ func TestMarathonTaskFilter(t *testing.T) {
 		},
 		{
 			task: marathon.Task{
-				AppID: "disable",
+				AppID: "ipAddressOnePort",
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID: "ipAddressOnePort",
+						IPAddressPerTask: &marathon.IPAddressPerTask{
+							Discovery: &marathon.Discovery{
+								Ports: &[]marathon.Port{
+									{
+										Number: 8880,
+										Name:   "p1",
+									},
+								},
+							},
+						},
+						Labels: &map[string]string{},
+					},
+				},
+			},
+			expected:         true,
+			exposedByDefault: true,
+		},
+		{
+			task: marathon.Task{
+				AppID: "ipAddressTwoPortsUseFirst",
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID: "ipAddressTwoPortsUseFirst",
+						IPAddressPerTask: &marathon.IPAddressPerTask{
+							Discovery: &marathon.Discovery{
+								Ports: &[]marathon.Port{
+									{
+										Number: 8898,
+										Name:   "p1",
+									}, {
+										Number: 9999,
+										Name:   "p1",
+									},
+								},
+							},
+						},
+						Labels: &map[string]string{},
+					},
+				},
+			},
+			expected:         true,
+			exposedByDefault: true,
+		},
+		{
+			task: marathon.Task{
+				AppID: "ipAddressValidTwoPorts",
+			},
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID: "ipAddressValidTwoPorts",
+						IPAddressPerTask: &marathon.IPAddressPerTask{
+							Discovery: &marathon.Discovery{
+								Ports: &[]marathon.Port{
+									{
+										Number: 8898,
+										Name:   "p1",
+									}, {
+										Number: 9999,
+										Name:   "p2",
+									},
+								},
+							},
+						},
+						Labels: &map[string]string{
+							"traefik.portIndex": "0",
+						},
+					},
+				},
+			},
+			expected:         true,
+			exposedByDefault: true,
+		},
+		{
+			task: marathon.Task{
 				Ports: []int{80},
 			},
 			applications: &marathon.Applications{

@@ -147,7 +147,7 @@ func (_m *Marathon) CreateApplication(application *marathon.Application) (*marat
 }
 
 // DeleteApplication provides a mock function with given fields: name
-func (_m *Marathon) DeleteApplication(name string) (*marathon.DeploymentID, error) {
+func (_m *Marathon) DeleteApplication(name string, force bool) (*marathon.DeploymentID, error) {
 	ret := _m.Called(name)
 
 	var r0 *marathon.DeploymentID
@@ -534,7 +534,7 @@ func (_m *Marathon) CreateGroup(group *marathon.Group) error {
 }
 
 // DeleteGroup provides a mock function with given fields: name
-func (_m *Marathon) DeleteGroup(name string) (*marathon.DeploymentID, error) {
+func (_m *Marathon) DeleteGroup(name string, force bool) (*marathon.DeploymentID, error) {
 	ret := _m.Called(name)
 
 	var r0 *marathon.DeploymentID
@@ -557,7 +557,7 @@ func (_m *Marathon) DeleteGroup(name string) (*marathon.DeploymentID, error) {
 }
 
 // UpdateGroup provides a mock function with given fields: id, group
-func (_m *Marathon) UpdateGroup(id string, group *marathon.Group) (*marathon.DeploymentID, error) {
+func (_m *Marathon) UpdateGroup(id string, group *marathon.Group, force bool) (*marathon.DeploymentID, error) {
 	ret := _m.Called(id, group)
 
 	var r0 *marathon.DeploymentID
@@ -719,17 +719,18 @@ func (_m *Marathon) Subscriptions() (*marathon.Subscriptions, error) {
 }
 
 // AddEventsListener provides a mock function with given fields: channel, filter
-func (_m *Marathon) AddEventsListener(channel marathon.EventsChannel, filter int) error {
-	ret := _m.Called(channel, filter)
+func (_m *Marathon) AddEventsListener(filter int) (marathon.EventsChannel, error) {
+	update := make(marathon.EventsChannel, 5)
+	ret := _m.Called(update, filter)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(marathon.EventsChannel, int) error); ok {
-		r0 = rf(channel, filter)
+		r0 = rf(update, filter)
 	} else {
 		r0 = ret.Error(0)
 	}
 
-	return r0
+	return update, r0
 }
 
 // RemoveEventsListener provides a mock function with given fields: channel
@@ -849,4 +850,34 @@ func (_m *Marathon) AbdicateLeader() (string, error) {
 	}
 
 	return r0, r1
+}
+
+// ApplicationBy mocks the marathon client function but does nothing
+func (_m *Marathon) ApplicationBy(name string, opts *marathon.GetAppOpts) (*marathon.Application, error) {
+	return nil, nil
+}
+
+// Subscribe mocks the marathon client function but does nothing
+func (_m *Marathon) Subscribe(string) error {
+	return nil
+}
+
+// Queue mocks the marathon client function but does nothing
+func (_m *Marathon) Queue() (*marathon.Queue, error) {
+	return nil, nil
+}
+
+// DeleteQueueDelay mocks the marathon client function but does nothing
+func (_m *Marathon) DeleteQueueDelay(appID string) error {
+	return nil
+}
+
+// GroupsBy mocks the marathon client function but does nothing
+func (_m *Marathon) GroupsBy(opts *marathon.GetGroupOpts) (*marathon.Groups, error) {
+	return nil, nil
+}
+
+// GroupBy mocks the marathon client function but does nothing
+func (_m *Marathon) GroupBy(name string, opts *marathon.GetGroupOpts) (*marathon.Group, error) {
+	return nil, nil
 }
