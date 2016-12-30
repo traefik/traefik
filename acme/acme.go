@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	fmtlog "log"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -44,6 +45,7 @@ type ACME struct {
 	store               cluster.Store
 	challengeProvider   *challengeProvider
 	checkOnDemandDomain func(domain string) bool
+	TLSConfig						*tls.Config		`description:"TLS config in case wildcard certs are used"`
 }
 
 //Domains parse []Domain
@@ -119,6 +121,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	a.checkOnDemandDomain = checkOnDemandDomain
 	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
+	a.TLSConfig = tlsConfig
 	listener := func(object cluster.Object) error {
 		account := object.(*Account)
 		account.Init()
@@ -242,7 +245,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 	a.checkOnDemandDomain = checkOnDemandDomain
 	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
-
+	a.TLSConfig = tlsConfig
 	localStore := NewLocalStore(a.Storage)
 	a.store = localStore
 	a.challengeProvider = &challengeProvider{store: a.store}
@@ -329,6 +332,14 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := types.CanonicalDomain(clientHello.ServerName)
+	//use regex to test for wildcard certs that might have been added into TLSConfig
+	for k := range a.TLSConfig.NameToCertificate {
+		selector := "^" + strings.Replace(k, "*.", ".*\\.?", -1) + "$"
+		match, _ := regexp.MatchString(selector, domain)
+		if match {
+			return a.TLSConfig.NameToCertificate[k], nil
+		}
+	}
 	account := a.store.Get().(*Account)
 	if challengeCert, ok := a.challengeProvider.getCertificate(domain); ok {
 		log.Debugf("ACME got challenge %s", domain)

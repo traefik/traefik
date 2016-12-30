@@ -10,8 +10,6 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/xenolf/lego/acme"
 	"reflect"
-	"regexp"
-	"strings"
 	"sync"
 	"time"
 )
@@ -162,12 +160,6 @@ func (dc *DomainsCertificates) getCertificateForDomain(domainToFind string) (*Do
 		domains = append(domains, domainsCertificate.Domains.SANs...)
 		for _, domain := range domains {
 			if domain == domainToFind {
-				return domainsCertificate, true
-			}
-			//use regex to test for wildcard certs that might have been added by TLSConfig
-			selector := "^" + strings.Replace(domain, "*.", ".*\\.?", -1) + "$"
-			match, _ := regexp.MatchString(selector, domainToFind)
-			if match {
 				return domainsCertificate, true
 			}
 		}
