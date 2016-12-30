@@ -2,15 +2,15 @@ package acme
 
 import (
 	"crypto/tls"
+	"fmt"
 	"strings"
 	"sync"
+	"time"
 
-	"fmt"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
 	"github.com/xenolf/lego/acme"
-	"time"
 )
 
 var _ acme.ChallengeProviderTimeout = (*challengeProvider)(nil)

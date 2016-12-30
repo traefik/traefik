@@ -2,14 +2,13 @@ package provider
 
 import (
 	"errors"
+	"math"
 	"net"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"text/template"
-
-	"math"
-	"net/http"
 	"time"
 
 	"github.com/BurntSushi/ty/fun"

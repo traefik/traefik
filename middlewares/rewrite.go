@@ -1,9 +1,10 @@
 package middlewares
 
 import (
+	"net/http"
+
 	"github.com/containous/traefik/log"
 	"github.com/vulcand/vulcand/plugin/rewrite"
-	"net/http"
 )
 
 // Rewrite is a middleware that allows redirections

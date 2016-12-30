@@ -1,17 +1,18 @@
 package provider
 
 import (
+	"io/ioutil"
+	"strconv"
+	"strings"
+	"text/template"
+	"time"
+
 	"github.com/ArthurHlt/go-eureka-client/eureka"
 	log "github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"io/ioutil"
-	"strconv"
-	"strings"
-	"text/template"
-	"time"
 )
 
 // Eureka holds configuration of the Eureka provider.

@@ -5,12 +5,11 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/containous/traefik/provider/k8s"
+	"github.com/containous/traefik/types"
 	"k8s.io/client-go/1.5/pkg/api/v1"
 	"k8s.io/client-go/1.5/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/1.5/pkg/util/intstr"
-
-	"github.com/containous/traefik/provider/k8s"
-	"github.com/containous/traefik/types"
 )
 
 func TestLoadIngresses(t *testing.T) {

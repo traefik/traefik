@@ -2,12 +2,13 @@ package middlewares
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
+
 	"github.com/abbot/go-http-auth"
 	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
-	"net/http"
-	"strings"
 )
 
 // Authenticator is a middleware that provides HTTP basic and digest authentication

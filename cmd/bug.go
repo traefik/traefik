@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/containous/flaeg"
-	"github.com/mvdan/xurls"
 	"net/url"
 	"os/exec"
 	"regexp"
 	"runtime"
 	"text/template"
+
+	"github.com/containous/flaeg"
+	"github.com/mvdan/xurls"
 )
 
 var (
