@@ -181,16 +181,16 @@ Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
 ## Backends
 
 A backend is responsible to load-balance the traffic coming from one or more frontends to a set of http servers.
-Various methods of load-balancing is supported:
+Various methods of load-balancing are supported:
 
 - `wrr`: Weighted Round Robin
 - `drr`: Dynamic Round Robin: increases weights on servers that perform better than others. It also rolls back to original weights if the servers have changed.
 
 A circuit breaker can also be applied to a backend, preventing high loads on failing servers.
 Initial state is Standby. CB observes the statistics and does not modify the request.
-In case if condition matches, CB enters Tripped state, where it responds with predefines code or redirects to another frontend.
+In case the condition matches, CB enters Tripped state, where it responds with predefined code or redirects to another frontend.
 Once Tripped timer expires, CB enters Recovering state and resets all stats.
-In case if the condition does not match and recovery timer expires, CB enters Standby state.
+In case the condition does not match and recovery timer expires, CB enters Standby state.
 
 It can be configured using:
 
@@ -277,7 +277,7 @@ Træfɪk's configuration has two parts:
 
 ## Static Træfɪk configuration
 
-The static configuration is the global configuration which setting up connections to configuration backends and entrypoints. 
+The static configuration is the global configuration which is setting up connections to configuration backends and entrypoints. 
 
 Træfɪk can be configured using many configuration sources with the following precedence order. 
 Each item takes precedence over the item below it:
@@ -287,7 +287,7 @@ Each item takes precedence over the item below it:
 - [Configuration file](/basics/#configuration-file)
 - Default
 
-It means that arguments overrides configuration file, and Key-value Store overrides arguments.
+It means that arguments override configuration file, and Key-value Store overrides arguments.
 
 ### Configuration file
 
