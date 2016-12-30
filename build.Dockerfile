@@ -26,10 +26,10 @@ WORKDIR /go/src/github.com/containous/traefik
 
 COPY glide.yaml glide.yaml
 COPY glide.lock glide.lock
-RUN glide install -v
+RUN glide install --strip-vendor
 
 COPY integration/glide.yaml integration/glide.yaml
 COPY integration/glide.lock integration/glide.lock
-RUN cd integration && glide install
+RUN cd integration && glide install --strip-vendor
 
 COPY . /go/src/github.com/containous/traefik

@@ -1,7 +1,5 @@
-/*
-Copyright
-*/
-package main
+// Package server holds the engine of traefik
+package server
 
 import (
 	"context"
