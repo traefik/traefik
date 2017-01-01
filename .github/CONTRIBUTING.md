@@ -48,14 +48,14 @@ This can be verified via `$ go env`
 
 The idea behind `glide` is the following :
 
-- when checkout(ing) a project, run `$ glide install` from the cloned directory to install
+- when checkout(ing) a project, run `$ glide install -v` from the cloned directory to install
   (`go get …`) the dependencies in your `GOPATH`.
 - if you need another dependency, import and use it in
   the source, and run `$ glide get github.com/Masterminds/cookoo` to save it in
   `vendor` and add it to your `glide.yaml`.
 
 ```bash
-$ glide install
+$ glide install --strip-vendor
 # generate (Only required to integrate other components such as web dashboard)
 $ go generate
 # Standard go build
