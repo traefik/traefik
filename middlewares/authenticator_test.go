@@ -2,13 +2,14 @@ package middlewares
 
 import (
 	"fmt"
-	"github.com/codegangsta/negroni"
-	"github.com/containous/traefik/types"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/codegangsta/negroni"
+	"github.com/containous/traefik/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBasicAuthFail(t *testing.T) {

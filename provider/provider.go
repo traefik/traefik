@@ -2,15 +2,14 @@ package provider
 
 import (
 	"bytes"
-	"io/ioutil"
-	"strings"
-	"text/template"
-	"unicode"
-
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"strings"
+	"text/template"
+	"unicode"
 
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/autogen"

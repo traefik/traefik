@@ -9,9 +9,8 @@ import (
 	docker "github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/network"
+	"github.com/docker/engine-api/types/swarm"
 	"github.com/docker/go-connections/nat"
-
-	swarm "github.com/docker/engine-api/types/swarm"
 )
 
 func TestDockerGetFrontendName(t *testing.T) {

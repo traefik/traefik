@@ -2,9 +2,10 @@ package safe
 
 import (
 	"context"
-	"github.com/containous/traefik/log"
 	"runtime/debug"
 	"sync"
+
+	"github.com/containous/traefik/log"
 )
 
 type routine struct {

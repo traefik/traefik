@@ -7,11 +7,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
-	"github.com/containous/traefik/log"
-	"github.com/xenolf/lego/acme"
 	"reflect"
 	"sync"
 	"time"
+
+	"github.com/containous/traefik/log"
+	"github.com/xenolf/lego/acme"
 )
 
 // Account is used to store lets encrypt registration info

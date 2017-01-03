@@ -3,10 +3,11 @@ package middlewares
 import (
 	"bufio"
 	"bytes"
-	"github.com/containous/traefik/log"
-	"github.com/vulcand/oxy/utils"
 	"net"
 	"net/http"
+
+	"github.com/containous/traefik/log"
+	"github.com/vulcand/oxy/utils"
 )
 
 var (

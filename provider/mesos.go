@@ -2,11 +2,10 @@ package provider
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"text/template"
-
-	"fmt"
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
@@ -16,7 +15,8 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/mesos/mesos-go/detector"
-	_ "github.com/mesos/mesos-go/detector/zoo" // Registers the ZK detector
+	// Register mesos zoo the detector
+	_ "github.com/mesos/mesos-go/detector/zoo"
 	"github.com/mesosphere/mesos-dns/detect"
 	"github.com/mesosphere/mesos-dns/logging"
 	"github.com/mesosphere/mesos-dns/records"

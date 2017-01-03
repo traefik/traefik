@@ -3,10 +3,11 @@ package acme
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/log"
 	"io/ioutil"
 	"sync"
+
+	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/log"
 )
 
 var _ cluster.Store = (*LocalStore)(nil)

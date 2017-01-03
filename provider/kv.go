@@ -2,12 +2,12 @@
 package provider
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"text/template"
 	"time"
 
-	"errors"
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
