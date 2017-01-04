@@ -18,9 +18,7 @@ install:
 - sudo service docker start
 - sleep 5
 - docker version
-- pip install --user mkdocs
-- pip install --user pymdown-extensions
-- pip install --user mkdocs-bootswatch
+- pip install --user -r requirements.txt
 before_script:
 - make validate
 - make binary
