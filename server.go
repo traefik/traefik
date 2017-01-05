@@ -301,16 +301,27 @@ func (server *Server) postLoadConfig() {
 		currentConfigurations := server.currentConfigurations.Get().(configs)
 		for _, configuration := range currentConfigurations {
 			for _, frontend := range configuration.Frontends {
-				for _, route := range frontend.Routes {
-					rules := Rules{}
-					domains, err := rules.ParseDomains(route.Rule)
-					if err != nil {
-						log.Errorf("Error parsing domains: %v", err)
-					} else {
-						server.globalConfiguration.ACME.LoadCertificateForDomains(domains)
+
+				// check if one of the frontend entrypoints is configured with TLS
+				TLSEnabled := false
+				for _, entrypoint := range frontend.EntryPoints {
+					if server.globalConfiguration.EntryPoints[entrypoint].TLS != nil {
+						TLSEnabled = true
+						break
 					}
 				}
 
+				if TLSEnabled {
+					for _, route := range frontend.Routes {
+						rules := Rules{}
+						domains, err := rules.ParseDomains(route.Rule)
+						if err != nil {
+							log.Errorf("Error parsing domains: %v", err)
+						} else {
+							server.globalConfiguration.ACME.LoadCertificateForDomains(domains)
+						}
+					}
+				}
 			}
 		}
 	}
