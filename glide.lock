@@ -1,5 +1,5 @@
-hash: 2a2f73984ec9cccd62220c0eba5ddc82dec96b0044ffed48b25d964e2f3eee05
-updated: 2017-02-05T17:22:02.550162979+01:00
+hash: a0b0abed2162e490cbe75a6a36ebaaf39e748ee80e419e879e7253679a0bc134
+updated: 2017-02-05T18:09:09.856588042Z
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -35,12 +35,17 @@ imports:
   - aws/session
   - aws/signer/v4
   - private/protocol
+  - private/protocol/ec2query
+  - private/protocol/json/jsonutil
+  - private/protocol/jsonrpc
   - private/protocol/query
   - private/protocol/query/queryutil
   - private/protocol/rest
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
   - private/waiter
+  - service/ec2
+  - service/ecs
   - service/route53
   - service/sts
 - name: github.com/Azure/azure-sdk-for-go
@@ -735,7 +740,7 @@ testImports:
   subpackages:
   - specs-go
 - name: github.com/pkg/errors
-  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
+  version: 01fa4104b9c248c8945d14d9f128454d5b28d595
 - name: github.com/vbatts/tar-split
   version: 6810cedb21b2c3d0b9bb8f9af12ff2dc7a2f14df
   subpackages:
