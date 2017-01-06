@@ -7,16 +7,14 @@ import (
 	"text/template"
 	"time"
 
-	"k8s.io/client-go/1.5/pkg/api/v1"
-	"k8s.io/client-go/1.5/pkg/util/intstr"
-
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-
-	"github.com/cenk/backoff"
-	"github.com/containous/traefik/job"
+	"k8s.io/client-go/1.5/pkg/api/v1"
+	"k8s.io/client-go/1.5/pkg/util/intstr"
 )
 
 var _ Provider = (*Kubernetes)(nil)

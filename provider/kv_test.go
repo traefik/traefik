@@ -2,14 +2,14 @@ package provider
 
 import (
 	"errors"
-	"github.com/containous/traefik/types"
+	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"
-	"reflect"
-	"sort"
 )
 
 func TestKvList(t *testing.T) {

@@ -1,10 +1,9 @@
 package provider
 
 import (
+	"errors"
 	"reflect"
 	"testing"
-
-	"errors"
 
 	"github.com/containous/traefik/mocks"
 	"github.com/containous/traefik/types"

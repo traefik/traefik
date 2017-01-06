@@ -1,9 +1,10 @@
 package middlewares
 
 import (
+	"net/http"
+
 	"github.com/containous/mux"
 	"github.com/containous/traefik/safe"
-	"net/http"
 )
 
 // HandlerSwitcher allows hot switching of http.ServeMux

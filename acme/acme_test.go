@@ -2,12 +2,13 @@ package acme
 
 import (
 	"encoding/base64"
-	"github.com/xenolf/lego/acme"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"sync"
 	"testing"
+
+	"github.com/xenolf/lego/acme"
 )
 
 func TestDomainsSet(t *testing.T) {

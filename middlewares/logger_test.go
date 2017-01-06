@@ -2,8 +2,6 @@ package middlewares
 
 import (
 	"fmt"
-	shellwords "github.com/mattn/go-shellwords"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -11,6 +9,9 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	shellwords "github.com/mattn/go-shellwords"
+	"github.com/stretchr/testify/assert"
 )
 
 type logtestResponseWriter struct{}

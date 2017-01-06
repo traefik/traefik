@@ -1,8 +1,9 @@
 package log
 
 import (
-	"github.com/Sirupsen/logrus"
 	"io"
+
+	"github.com/Sirupsen/logrus"
 )
 
 var (
