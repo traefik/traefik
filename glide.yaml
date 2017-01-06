@@ -43,8 +43,6 @@ import:
   - store/etcd
   - store/zookeeper
 - package: github.com/elazarl/go-bindata-assetfs
-- package: github.com/gambol99/go-marathon
-  version: a558128c87724cd7430060ef5aedf39f83937f55
 - package: github.com/containous/mux
 - package: github.com/hashicorp/consul
   subpackages:
@@ -64,7 +62,7 @@ import:
   subpackages:
   - plugin/rewrite
 - package: github.com/xenolf/lego
-  version: cbd5d04c891979c23c3924f198e07ce32b39d282
+  version: ce8fb060cb8361a9ff8b5fb7c2347fa907b6fcac 
   subpackages:
   - acme
 - package: golang.org/x/net
@@ -100,6 +98,8 @@ import:
   version: ^1.1.0
 - package: k8s.io/client-go
   version: ^v1.5.0
+- package: github.com/gambol99/go-marathon
+  version: ^0.5.1
 - package: github.com/gogo/protobuf
   version: 0.3
 - package: github.com/ArthurHlt/go-eureka-client
