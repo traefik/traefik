@@ -47,6 +47,7 @@ docker-machine ssh worker1 "docker swarm join \
 	--listen-addr $(docker-machine ip worker1) \
 	--advertise-addr $(docker-machine ip worker1) \
 	$(docker-machine ip manager)"
+
 docker-machine ssh worker2 "docker swarm join \
 	--token=${worker_token} \
 	--listen-addr $(docker-machine ip worker2) \
@@ -119,15 +120,22 @@ docker-machine ssh manager "docker service create \
 	--name whoami0 \
 	--label traefik.port=80 \
 	--network traefik-net \
+	--label traefik.frontend.rule=Host:whoami0.traefik \
+	--label traefik.backend=whoami0 \
 	emilevauge/whoami"
+
 docker-machine ssh manager "docker service create \
 	--name whoami1 \
 	--label traefik.port=80 \
 	--network traefik-net \
+	--label traefik.frontend.rule=Host:whoam1.traefik \
+	--label traefik.backend=whoami1 \
+	--label traefik.backend.loadbalancer.sticky=true \
 	emilevauge/whoami"
 ```
 
-NOTE: If using `docker stack deploy`, there is [a specific way that the labels must be defined in the docker-compose file](https://github.com/containous/traefik/issues/994#issuecomment-269095109).
+Note that we set whoami1 to use sticky sessions (`--label traefik.backend.loadbalancer.sticky=true`).  We'll demonstrate that later.
+If using `docker stack deploy`, there is [a specific way that the labels must be defined in the docker-compose file](https://github.com/containous/traefik/issues/994#issuecomment-269095109).
 
 Check that everything is scheduled and started:
 
@@ -219,6 +227,84 @@ X-Forwarded-Host: 10.0.9.4:80
 X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
 ```
+
+## Scale both services
+
+```sh
+docker-machine ssh manager "docker service scale whoami0=5"
+
+docker-machine ssh manager "docker service scale whoami1=5"
+```
+
+
+Check that we now have 5 replicas of each `whoami` service:
+
+```sh
+docker-machine ssh manager "docker service ls"
+ID            NAME     REPLICAS  IMAGE              COMMAND
+ab046gpaqtln  whoami0  5/5       emilevauge/whoami
+cgfg5ifzrpgm  whoami1  5/5       emilevauge/whoami
+dtpl249tfghc  traefik  1/1       traefik            --docker --docker.swarmmode --docker.domain=traefik --docker.watch --web
+```
+## Access to your whoami0 through Træfɪk multiple times.
+
+Repeat the following command multiple times and note that the Hostname changes each time as Traefik load balances each request against the 5 tasks.
+```sh
+curl -H Host:whoami0.traefik http://$(docker-machine ip manager)
+Hostname: 8147a7746e7a
+IP: 127.0.0.1
+IP: ::1
+IP: 10.0.9.3
+IP: fe80::42:aff:fe00:903
+IP: 172.18.0.3
+IP: fe80::42:acff:fe12:3
+GET / HTTP/1.1
+Host: 10.0.9.3:80
+User-Agent: curl/7.35.0
+Accept: */*
+Accept-Encoding: gzip
+X-Forwarded-For: 192.168.99.1
+X-Forwarded-Host: 10.0.9.3:80
+X-Forwarded-Proto: http
+X-Forwarded-Server: 8fbc39271b4c
+```
+
+Do the same against whoami1.  
+```sh
+curl -H Host:whoami1.traefik http://$(docker-machine ip manager)
+Hostname: ba2c21488299
+IP: 127.0.0.1
+IP: ::1
+IP: 10.0.9.4
+IP: fe80::42:aff:fe00:904
+IP: 172.18.0.2
+IP: fe80::42:acff:fe12:2
+GET / HTTP/1.1
+Host: 10.0.9.4:80
+User-Agent: curl/7.35.0
+Accept: */*
+Accept-Encoding: gzip
+X-Forwarded-For: 192.168.99.1
+X-Forwarded-Host: 10.0.9.4:80
+X-Forwarded-Proto: http
+X-Forwarded-Server: 8fbc39271b4c
+```
+Wait, I thought we added the sticky flag to whoami1?  Traefik relies on a cookie to maintain stickyness so you'll need to test this with a browser.
+
+First you need to add whoami1.traefik to your hosts file:
+```ssh
+if [ -n "$(grep whoami1.traefik /etc/hosts)" ];  
+then 
+echo "whoami1.traefik already exists (make sure the ip is current)"; 
+else 
+sudo -- sh -c -e "echo '$(docker-machine ip manager)\twhoami1.traefik' 
+>> /etc/hosts"; 
+fi
+```
+
+Now open your browser and go to http://whoami1.traefik/
+
+You will now see that stickyness is maintained.
 
 ![](http://i.giphy.com/ujUdrdpX7Ok5W.gif)
 
