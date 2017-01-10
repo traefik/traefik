@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"encoding/json"
 	"github.com/containous/traefik/types"
 )
 
@@ -17,8 +18,28 @@ func TestForwarder(t *testing.T) {
 			t.Errorf("Missing forward request parameters. Informed just: %v", r.URL.Query())
 		}
 
+		if r.URL.Query().Get("idField") == "" {
+			t.Errorf("Missing forward request parameters. Informed just: %v", r.URL.Query())
+		}
+
+		if r.Header.Get("tokenField") == "" {
+			t.Errorf("Missing forward request parameter from header that was suppose to be transformed. Informed just: %v", r.Header)
+		}
+
+		if r.Header.Get("some_header") == "" {
+			t.Errorf("Missing forward request parameters from header that was supposed to be forwarded as is. Informed just: %v", r.Header)
+		}
+		cookie, err := r.Cookie("test")
+		if err != nil {
+			t.Error("Missing forward request cookie test")
+		}
+
+		if cookie.Value != "data" {
+			t.Errorf("The forward cookie is invalid: %v", cookie)
+		}
+
 		fmt.Println("Chamou o servidor")
-		fmt.Fprintln(w, "{ \"user\" : { \"id\" : 100, \"name\": \"John Lennon\" }}")
+		fmt.Fprintln(w, "{ \"user\" : { \"id\" : 100, \"name\": \"John Lennon\", \"accounts\": [\"first\", \"second\"] }}")
 
 	}))
 	defer ts.Close()
@@ -34,18 +55,50 @@ func TestForwarder(t *testing.T) {
 			t.Errorf("Missing replay parameter name. Parameters: %v", r.URL.Query())
 		}
 
+		if r.Header.Get("X-User-Accounts") == "" {
+			t.Errorf("Missing replay header X-User-Accounts. Headers: %v", r.Header)
+		}
+		var accounts []string
+		err := json.Unmarshal([]byte(r.Header.Get("X-User-Accounts")), &accounts)
+		if err != nil {
+			t.Errorf("Couldn't Unmarshal accounts got an error [ %v ] for input [ %s ]", err, r.Header.Get("X-User-Accounts"))
+		}
+		if len(accounts) != 2 {
+			t.Errorf("got an invalid amount of accounts %d while expecing 2 obj: %v", len(accounts), accounts)
+		}
+
 		nextCalled = true
 	}
 
-	req := httptest.NewRequest("GET", "http://example.com/foo?email=john@beatles.com", nil)
+	req := httptest.NewRequest("GET", "http://example.com/foo?email=john@beatles.com&id=xyz", nil)
+	req.Header.Set("token", "abc")
+	req.Header.Set("some_header", "some_data")
+	cookie := &http.Cookie{
+		Name:   "test",
+		Value:  "data",
+		Path:   "/test",
+		Domain: "example.com",
+	}
+	req.AddCookie(cookie)
 	w := httptest.NewRecorder()
 
 	forward := types.Forward{}
 	forward.Address = ts.URL
+	forward.ForwardAllHeaders = true
 	forward.RequestParameters = map[string]*types.ForwardRequestParameter{
 		"email": {
 			Name: "email",
 			As:   "emailField",
+			In:   "parameter",
+		},
+		"token": {
+			Name: "token",
+			As:   "tokenField",
+			In:   "header",
+		},
+		"id": {
+			Name: "id",
+			As:   "idField",
 		},
 	}
 	forward.ResponseReplayFields = map[string]*types.ResponseReplayField{
@@ -58,6 +111,11 @@ func TestForwarder(t *testing.T) {
 			Path: "user.name",
 			As:   "name",
 			In:   "parameter",
+		},
+		"accounts": {
+			Path: "user.accounts",
+			As:   "X-User-Accounts",
+			In:   "header",
 		},
 	}
 

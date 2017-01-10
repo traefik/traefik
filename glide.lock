@@ -1,5 +1,5 @@
-hash: 0d092f94db69882e79d229c34b9483899e1208eaa7dd0acdd5184635cb0cdaaa
-updated: 2017-01-12T12:31:31.35220213+01:00
+hash: 641c5b51e30a4ec0dac16fd0b0209860964594d139ff7a9d12bc97301490b8b0
+updated: 2017-01-17T10:30:21.194298544+02:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -402,11 +402,20 @@ imports:
   version: 65a174a3a4188c0b7099acbc6cfa0c53628d3287
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
+- name: github.com/stretchr/signature
+  version: 168b2a1e1b562bf381d47471e31f5979a2a51cd5
+- name: github.com/stretchr/stew
+  version: 80ef0842b48b329a6120607c817a85aff5a2ec71
+  subpackages:
+  - objects
+  - strings
 - name: github.com/stretchr/testify
   version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - mock
+- name: github.com/stretchr/tracer
+  version: 66d3696bba973e1697f7d68413b3f19c6d6e2a7c
 - name: github.com/thoas/stats
   version: 79b768ff1780f4e5b0ed132e192bfeefe9f85a9c
 - name: github.com/timewasted/linode

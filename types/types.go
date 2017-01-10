@@ -245,6 +245,7 @@ type Digest struct {
 // Forward authentication
 type Forward struct {
 	Address              string
+	ForwardAllHeaders    bool
 	RequestParameters    map[string]*ForwardRequestParameter
 	ResponseReplayFields map[string]*ResponseReplayField
 }
@@ -254,6 +255,7 @@ type Forward struct {
 type ForwardRequestParameter struct {
 	Name string
 	As   string
+	In   string
 }
 
 // ResponseReplayField describe witch fields from the forwarded authentication
