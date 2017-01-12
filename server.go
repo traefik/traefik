@@ -499,7 +499,7 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 	negroni.UseHandler(router)
 	tlsConfig, err := server.createTLSConfig(entryPointName, entryPoint.TLS, router)
 	if err != nil {
-		log.Errorf("Error creating TLS config %s", err)
+		log.Errorf("Error creating TLS config: %s", err)
 		return nil, err
 	}
 
@@ -517,7 +517,7 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 		TLSConfig: tlsConfig,
 	}, tlsConfig)
 	if err != nil {
-		log.Errorf("Error hijacking server %s", err)
+		log.Errorf("Error hijacking server: %s", err)
 		return nil, err
 	}
 	return gracefulServer, nil
