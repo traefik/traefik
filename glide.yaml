@@ -62,7 +62,7 @@ import:
   subpackages:
   - plugin/rewrite
 - package: github.com/xenolf/lego
-  version: ce8fb060cb8361a9ff8b5fb7c2347fa907b6fcac 
+  version: ce8fb060cb8361a9ff8b5fb7c2347fa907b6fcac
   subpackages:
   - acme
 - package: golang.org/x/net
@@ -114,3 +114,7 @@ import:
 - package: github.com/google/go-github
 - package: github.com/hashicorp/go-version
 - package: github.com/mvdan/xurls
+- package: github.com/go-kit/kit
+  version: v0.3.0
+  subpackages:
+  - metrics

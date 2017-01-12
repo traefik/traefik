@@ -715,6 +715,11 @@ $ curl -s "http://localhost:8080/api" | jq .
 - `/api/providers/{provider}/frontends/{frontend}/routes`: `GET` routes in a frontend
 - `/api/providers/{provider}/frontends/{frontend}/routes/{route}`: `GET` a route in a frontend
 
+- `/metrics`: You can enable Traefik to export internal metrics to different monitoring systems (Only Prometheus is supported at the moment).
+
+```bash
+$ traefik --web.metrics.prometheus --web.metrics.prometheus.buckets="100,300"
+```
 
 ## Docker backend
 
