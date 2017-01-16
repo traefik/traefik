@@ -328,6 +328,13 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		RecentErrors: 10,
 	}
 
+	// default Metrics
+	defaultWeb.Metrics = &types.Metrics{
+		Prometheus: &types.Prometheus{
+			Buckets: types.Buckets{100, 300, 1200, 5000},
+		},
+	}
+
 	// default Marathon
 	var defaultMarathon provider.Marathon
 	defaultMarathon.Watch = true

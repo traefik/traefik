@@ -106,6 +106,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(k8s.Namespaces{}), &k8s.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
+	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
 	//add commands
 	f.AddCommand(cmd.NewVersionCmd())

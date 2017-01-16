@@ -167,8 +167,15 @@ func (server *Server) stopLeadership() {
 
 func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
+
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
 		serverMiddlewares := []negroni.Handler{server.loggerMiddleware, metrics}
+		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
+			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
+				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus("Global", server.globalConfiguration.Web.Metrics.Prometheus))
+				serverMiddlewares = append(serverMiddlewares, metricsMiddleware)
+			}
+		}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
 			statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
 			serverMiddlewares = append(serverMiddlewares, statsRecorder)
@@ -691,6 +698,12 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 
 						var negroni = negroni.New()
+						if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
+							if server.globalConfiguration.Web.Metrics.Prometheus != nil {
+								metricsMiddlewareBackend := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
+								negroni.Use(metricsMiddlewareBackend)
+							}
+						}
 						if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
 							log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
 							cbreaker, err := middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
