@@ -331,7 +331,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default Metrics
 	defaultWeb.Metrics = &types.Metrics{
 		Prometheus: &types.Prometheus{
-			Buckets: types.Buckets{100, 300, 1200, 5000},
+			Buckets: types.Buckets{0.1, 0.3, 1.2, 5},
 		},
 	}
 
