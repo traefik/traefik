@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	reqsName    = "requests_total"
-	latencyName = "request_duration_milliseconds"
+	reqsName    = "traefik_requests_total"
+	latencyName = "traefik_request_duration_seconds"
 )
 
-// Prometheus is an Implementation for Metrics that exposes prometheus metrics for the number of requests,
-// the latency and the response size, partitioned by status code and method.
+// Prometheus is an Implementation for Metrics that exposes prometheus metrics for the latency
+// and the number of requests partitioned by status code and method.
 type Prometheus struct {
 	reqsCounter      metrics.Counter
 	latencyHistogram metrics.Histogram
@@ -45,17 +45,17 @@ func NewPrometheus(name string, config *types.Prometheus) *Prometheus {
 	if config.Buckets != nil {
 		buckets = config.Buckets
 	} else {
-		buckets = []float64{100, 300, 1200, 5000}
+		buckets = []float64{0.1, 0.3, 1.2, 5}
 	}
 
 	m.latencyHistogram = prometheus.NewHistogramFrom(
 		stdprometheus.HistogramOpts{
 			Name:        latencyName,
-			Help:        "How long it took to process the request, partitioned by status code and method.",
+			Help:        "How long it took to process the request.",
 			ConstLabels: stdprometheus.Labels{"service": name},
 			Buckets:     buckets,
 		},
-		[]string{"code", "method"},
+		[]string{},
 	)
 	return &m
 }

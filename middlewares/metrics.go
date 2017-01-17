@@ -37,7 +37,7 @@ func (m *MetricsWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next
 	next(prw, r)
 	labels := []string{"code", strconv.Itoa(prw.StatusCode()), "method", r.Method}
 	m.Impl.getReqsCounter().With(labels...).Add(1)
-	m.Impl.getLatencyHistogram().With(labels...).Observe(float64(time.Since(start).Nanoseconds()) / 1000000)
+	m.Impl.getLatencyHistogram().Observe(float64(time.Since(start).Seconds()))
 }
 
 func (rw *responseRecorder) StatusCode() int {
