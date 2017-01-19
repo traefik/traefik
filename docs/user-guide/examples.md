@@ -146,7 +146,7 @@ In addition to this, traefik provides basic functionality to modify the original
 This allows you to map a request parameter or header (in this case token) from e.g. `traefik.com/secret?token=foobar` to `authserver.com/auth?theToken=foobar`.
 Use the keywords name and as in the `entryPoints.http.auth.forward.requestParameters` setting key as shown in the example.
 As well you can set `entryPoints.http.auth.forward.forwardAllHeaders = true` to forward all request headers to the authentication server as they ware received by traefik.
-
+You can also forward specific cookies by setting `entryPoints.http.auth.forward.requestCookies` there you can also change the cookie name.
 Moreover, you can also replay certain information from the back end authentication response back to the original request received by traefik.
 For this to work, your authentication back end must send a JSON response.
 ```
@@ -157,19 +157,25 @@ defaultEntryPoints = ["http"]
   [entryPoints.http.auth.forward]
     address = "http://authserver.com/auth"
     forwardAllHeaders = true
-    [entryPoints.http.auth.Forward.requestParameters.email]
+    [entryPoints.http.auth.forward.requestParameters.email]
       name = "email"
       as = "theEmail"
       in = "parameter"
-    [entryPoints.http.auth.Forward.requestParameters.token]
+    [entryPoints.http.auth.forward.requestParameters.token]
       name = "token"
       as = "theToken"
       in = "header"
-    [entryPoints.http.auth.Forward.responseReplayFields.userId]
+    [entryPoints.http.auth.forward.requestHeaders.userId]
+      name = "userId"
+      as = "user_id"
+    [entryPoints.http.auth.forward.requestCookies.account]
+      name = "account"
+      as = "userAccount"
+    [entryPoints.http.auth.forward.responseReplayFields.userId]
       path = "user.id"
       as = "X-User-Id"
       in = "header"
-    [entryPoints.http.auth.Forward.responseReplayFields.userName]
+    [entryPoints.http.auth.forward.responseReplayFields.userName]
       path = "user.name"
       as = "" # No name transformation
       in = "parameter"
