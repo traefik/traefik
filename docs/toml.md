@@ -239,6 +239,10 @@ Supported filters:
 #      name = "email"
 #      as = "theEmail"
 #      in = "parameter"
+#    [entryPoints.http.auth.forward.requestParameters.email]
+#      name = "email"
+#      as = "theEmail"
+#      in = "parameter"
 #    [entryPoints.http.auth.forward.requestParameters.token]
 #      name = "token"
 #      as = "theToken"

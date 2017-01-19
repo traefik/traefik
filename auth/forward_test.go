@@ -31,11 +31,20 @@ func TestForwarder(t *testing.T) {
 		}
 		cookie, err := r.Cookie("test")
 		if err != nil {
-			t.Error("Missing forward request cookie test")
+			t.Errorf("Error getting forward request cookie test. Error: %s", err)
 		}
 
 		if cookie.Value != "data" {
 			t.Errorf("The forward cookie is invalid: %v", cookie)
+		}
+
+		cookie, err = r.Cookie("authTokenCookie")
+		if err != nil {
+			t.Errorf("Error getting forward transformation request cookie test. Error: %s", err)
+		}
+
+		if cookie.Value != "abc123" {
+			t.Errorf("The forward transformed cookie is invalid: %v", cookie)
 		}
 
 		fmt.Println("Chamou o servidor")
@@ -77,7 +86,14 @@ func TestForwarder(t *testing.T) {
 		Name:   "test",
 		Value:  "data",
 		Path:   "/test",
-		Domain: "example.com",
+		Domain: "www.example.com",
+	}
+	req.AddCookie(cookie)
+
+	cookie = &http.Cookie{
+		Name:   "auth_token",
+		Value:  "abc123",
+		Domain: ".example.com",
 	}
 	req.AddCookie(cookie)
 	w := httptest.NewRecorder()
@@ -116,6 +132,13 @@ func TestForwarder(t *testing.T) {
 			Path: "user.accounts",
 			As:   "X-User-Accounts",
 			In:   "header",
+		},
+	}
+
+	forward.RequestCookies = map[string]*types.ForwardRequestCookie{
+		"auth_token": {
+			Name: "auth_token",
+			As:   "authTokenCookie",
 		},
 	}
 

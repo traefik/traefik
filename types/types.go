@@ -246,6 +246,8 @@ type Digest struct {
 type Forward struct {
 	Address              string
 	ForwardAllHeaders    bool
+	RequestHeaders       map[string]*ForwardRequestHeader
+	RequestCookies       map[string]*ForwardRequestCookie
 	RequestParameters    map[string]*ForwardRequestParameter
 	ResponseReplayFields map[string]*ResponseReplayField
 }
@@ -264,6 +266,20 @@ type ResponseReplayField struct {
 	Path string
 	As   string
 	In   string
+}
+
+// ForwardRequestCookie describes the cookies extracted from the request
+// and sent to remote authentication server
+type ForwardRequestCookie struct {
+	Name string
+	As   string
+}
+
+// ForwardRequestHeader describes the headers extracted from the request
+// and sent to remote authentication server
+type ForwardRequestHeader struct {
+	Name string
+	As   string
 }
 
 // CanonicalDomain returns a lower case domain with trim space

@@ -40,13 +40,38 @@ func Forward(forward *types.Forward, w http.ResponseWriter, r *http.Request, nex
 		}
 	}
 	forwardReq.URL.RawQuery = forwardQuery.Encode()
+
+	for _, reqCookie := range forward.RequestCookies {
+		cookie, err := r.Cookie(reqCookie.Name)
+		if err != nil {
+			log.Debugf("Error getting cookie from request. Cookies : %v Error : %s ", r.Cookies(), err)
+			continue
+		}
+		if reqCookie.As != "" {
+			cookie.Name = reqCookie.As
+		}
+		forwardReq.AddCookie(cookie)
+	}
+
+	for _, reqHeader := range forward.RequestHeaders {
+		header := r.Header.Get(reqHeader.Name)
+		if header == "" {
+			log.Debugf("Header %s from request is not present. Headers : %v ", reqHeader.Name, r.Header)
+			continue
+		}
+		if reqHeader.As != "" {
+			forwardReq.Header.Set(reqHeader.As, header)
+		} else {
+			forwardReq.Header.Set(reqHeader.Name, header)
+		}
+	}
+
 	forwardResponse, forwardErr := client.Do(forwardReq)
 	if forwardErr != nil {
 		log.Debugf("Error calling %s. Cause: %s", forward.Address, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 	defer forwardResponse.Body.Close()
 	body, readError := ioutil.ReadAll(forwardResponse.Body)
 	if readError != nil {

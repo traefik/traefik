@@ -140,7 +140,7 @@ It works by forwarding any incoming request from traefik proxy to a specified en
 This endpoint address is called "authentication back end".
 The response of the authentication back end is then evaluated.
 The authentication back end has to send a response with an HTTP status code 200 to allow access.
-Any other status code will result in traefik returning the authentiucation back end response to the original request (so if your back end sends a response with a 503 header and any body, traefik will also send a 503 response including the body).
+Any other status code will result in traefik returning the authentication back end response to the original request (so if your back end sends a response with a 503 header and any body, traefik will also send a 503 response including the body).
 
 In addition to this, traefik provides basic functionality to modify the original request's query parameters before they are sent to the authentication back end.
 This allows you to map a request parameter or header (in this case token) from e.g. `traefik.com/secret?token=foobar` to `authserver.com/auth?theToken=foobar`.
