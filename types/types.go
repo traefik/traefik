@@ -4,10 +4,10 @@ import (
 	"encoding"
 	"errors"
 	"fmt"
-	"strings"
-
 	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
+	"strconv"
+	"strings"
 )
 
 // Backend holds backend configuration.
@@ -249,4 +249,46 @@ func CanonicalDomain(domain string) string {
 // Statistics provides options for monitoring request and response stats
 type Statistics struct {
 	RecentErrors int `description:"Number of recent errors logged"`
+}
+
+// Metrics provides options to expose and send Traefik metrics to different third party monitoring systems
+type Metrics struct {
+	Prometheus *Prometheus `description:"Prometheus metrics exporter type"`
+}
+
+// Prometheus can contain specific configuration used by the Prometheus Metrics exporter
+type Prometheus struct {
+	Buckets Buckets `description:"Buckets for latency metrics"`
+}
+
+// Buckets holds Prometheus Buckets
+type Buckets []float64
+
+//Set adds strings elem into the the parser
+//it splits str on "," and ";" and apply ParseFloat to string
+func (b *Buckets) Set(str string) error {
+	fargs := func(c rune) bool {
+		return c == ',' || c == ';'
+	}
+	// get function
+	slice := strings.FieldsFunc(str, fargs)
+	for _, bucket := range slice {
+		bu, err := strconv.ParseFloat(bucket, 64)
+		if err != nil {
+			return err
+		}
+		*b = append(*b, bu)
+	}
+	return nil
+}
+
+//Get []float64
+func (b *Buckets) Get() interface{} { return Buckets(*b) }
+
+//String return slice in a string
+func (b *Buckets) String() string { return fmt.Sprintf("%v", *b) }
+
+//SetValue sets []float64 into the parser
+func (b *Buckets) SetValue(val interface{}) {
+	*b = Buckets(val.(Buckets))
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/elazarl/go-bindata-assetfs"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/unrolled/render"
 )
@@ -34,6 +35,7 @@ type WebProvider struct {
 	KeyFile    string            `description:"SSL certificate"`
 	ReadOnly   bool              `description:"Enable read only API"`
 	Statistics *types.Statistics `description:"Enable more detailed statistics"`
+	Metrics    *types.Metrics    `description:"Enable a metrics exporter"`
 	server     *Server
 	Auth       *types.Auth
 }
@@ -57,6 +59,11 @@ func goroutines() interface{} {
 func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
 
 	systemRouter := mux.NewRouter()
+
+	// Prometheus route
+	if provider.Metrics != nil && provider.Metrics.Prometheus != nil {
+		systemRouter.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
+	}
 
 	// health route
 	systemRouter.Methods("GET").Path("/health").HandlerFunc(provider.getHealthHandler)

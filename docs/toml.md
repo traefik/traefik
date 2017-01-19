@@ -544,6 +544,10 @@ address = ":8080"
 # [web.statistics]
 #   RecentErrors = 10
 #
+# To enable Traefik to export internal metrics to Prometheus
+# [web.metrics.prometheus]
+#   Buckets=[0.1,0.3,1.2,5]
+#
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
 # Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate those ones
@@ -715,6 +719,11 @@ $ curl -s "http://localhost:8080/api" | jq .
 - `/api/providers/{provider}/frontends/{frontend}/routes`: `GET` routes in a frontend
 - `/api/providers/{provider}/frontends/{frontend}/routes/{route}`: `GET` a route in a frontend
 
+- `/metrics`: You can enable Traefik to export internal metrics to different monitoring systems (Only Prometheus is supported at the moment).
+
+```bash
+$ traefik --web.metrics.prometheus --web.metrics.prometheus.buckets="0.1,0.3,1.2,5"
+```
 
 ## Docker backend
 
