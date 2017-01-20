@@ -125,9 +125,15 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					}
 				}
 				if len(r.Host) > 0 {
+					rule := "Host:" + r.Host
+
+					if strings.Contains(r.Host, "*") {
+						rule = "HostRegexp:" + strings.Replace(r.Host, "*", "{subdomain:[A-Za-z0-9-_]+}", 1)
+					}
+
 					if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
 						templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host] = types.Route{
-							Rule: "Host:" + r.Host,
+							Rule: rule,
 						}
 					}
 				}
