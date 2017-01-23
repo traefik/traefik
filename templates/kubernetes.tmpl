@@ -1,4 +1,8 @@
 [backends]{{range $backendName, $backend := .Backends}}
+    {{if $backend.CircuitBreaker}}
+    [backends."{{$backendName}}".circuitbreaker]
+      expression = "{{$backend.CircuitBreaker.Expression}}"
+    {{end}}
     {{range $serverName, $server := $backend.Servers}}
     [backends."{{$backendName}}".servers."{{$serverName}}"]
     url = "{{$server.URL}}"

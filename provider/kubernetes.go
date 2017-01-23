@@ -167,6 +167,12 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					continue
 				}
 
+				if expression := service.Annotations["traefik.backend.circuitbreaker"]; expression != "" {
+					templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
+						Expression: expression,
+					}
+				}
+
 				protocol := "http"
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {

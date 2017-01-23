@@ -1258,6 +1258,234 @@ func TestHostlessIngress(t *testing.T) {
 	}
 }
 
+func TestCircuitBreakerAnnotation(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "testing",
+		},
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
+				{
+					Host: "foo",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Path: "/bar",
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service1",
+										ServicePort: intstr.FromInt(80),
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Host: "bar",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service2",
+										ServicePort: intstr.FromInt(802),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"traefik.backend.circuitbreaker": "NetworkErrorRatio() > 0.5",
+				},
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Ports: []v1.ServicePort{
+					{
+						Port: 80,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service2",
+				UID:       "2",
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"traefik.backend.circuitbreaker": "",
+				},
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.2",
+				Ports: []v1.ServicePort{
+					{
+						Port: 802,
+					},
+				},
+			},
+		},
+	}
+	endpoints := []*v1.Endpoints{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Subsets: []v1.EndpointSubset{
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.10.0.1",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Port: 8080,
+						},
+					},
+				},
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.21.0.1",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Port: 8080,
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service2",
+				UID:       "2",
+				Namespace: "testing",
+			},
+			Subsets: []v1.EndpointSubset{
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.15.0.1",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Name: "http",
+							Port: 8080,
+						},
+					},
+				},
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.15.0.2",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Name: "http",
+							Port: 8080,
+						},
+					},
+				},
+			},
+		},
+	}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Kubernetes{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo/bar": {
+				Servers: map[string]types.Server{
+					"http://10.10.0.1:8080": {
+						URL:    "http://10.10.0.1:8080",
+						Weight: 1,
+					},
+					"http://10.21.0.1:8080": {
+						URL:    "http://10.21.0.1:8080",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: &types.CircuitBreaker{
+					Expression: "NetworkErrorRatio() > 0.5",
+				},
+				LoadBalancer: nil,
+			},
+			"bar": {
+				Servers: map[string]types.Server{
+					"http://10.15.0.1:8080": {
+						URL:    "http://10.15.0.1:8080",
+						Weight: 1,
+					},
+					"http://10.15.0.2:8080": {
+						URL:    "http://10.15.0.2:8080",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer:   nil,
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo/bar": {
+				Backend:        "foo/bar",
+				PassHostHeader: true,
+				Priority:       len("/bar"),
+				Routes: map[string]types.Route{
+					"/bar": {
+						Rule: "PathPrefix:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+			"bar": {
+				Backend:        "bar",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"bar": {
+						Rule: "Host:bar",
+					},
+				},
+			},
+		},
+	}
+	actualJSON, _ := json.Marshal(actual)
+	expectedJSON, _ := json.Marshal(expected)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+	}
+}
+
 type clientMock struct {
 	ingresses []*v1beta1.Ingress
 	services  []*v1.Service
