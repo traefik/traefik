@@ -34,7 +34,9 @@ spec:
           containerPort: 80
           hostPort: 80
         - name: admin
-          containerPort: 8080
+          containerPort: 8081
         args:
+        - -d
         - --web
+        - --web.address=:8081
         - --kubernetes
