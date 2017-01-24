@@ -18,37 +18,6 @@ eval "$(ssh-agent -s)"
 chmod 600 ~/.ssh/traefik.id_rsa
 ssh-add ~/.ssh/traefik.id_rsa
 
-# download github release
-echo "Downloading ghr..."
-curl -LOs https://github.com/tcnksm/ghr/releases/download/v0.5.0/ghr_v0.5.0_linux_amd64.zip
-unzip -q ghr_v0.5.0_linux_amd64.zip
-sudo mv ghr /usr/bin/ghr
-sudo chmod +x /usr/bin/ghr
-
-# github release and tag
-echo "Github release..."
-tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .
-ghr -t $GITHUB_TOKEN -u containous -r traefik ${VERSION} dist/
-
-# update docs.traefik.io
-echo "Generating and updating documentation..."
-# DOESN'T WORK :'(
-# git remote add ssh git@github.com:containous/traefik.git
-# mkdocs gh-deploy -m $VERSION -c -r ssh
-
-mkdir site
-cd site
-git init
-git remote add origin git@github.com:containous/traefik.git
-git fetch origin
-git checkout gh-pages
-cd ..
-mkdocs build --clean
-cd site
-git add .
-echo $VERSION | git commit --file -
-git push -q -f origin gh-pages > /dev/null 2>&1
-
 # update traefik-library-image repo (official Docker image)
 echo "Updating traefik-library-imag repo..."
 git clone git@github.com:containous/traefik-library-image.git
