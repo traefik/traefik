@@ -16,6 +16,11 @@ env:
 #    packages:
 #    - docker-engine=$DOCKER_VERSION.*
 
+cache:
+  directories:
+  - $HOME/.glide
+  - $HOME/.npm
+
 before_install:
   - sudo -E apt-get -yq update
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-engine=${DOCKER_VERSION}*
