@@ -31,7 +31,7 @@ type Kubernetes struct {
 
 func (provider *Kubernetes) newK8sClient() (k8s.Client, error) {
 	if provider.Endpoint != "" {
-		log.Infof("Creating in cluster Kubernetes client with endpoint %", provider.Endpoint)
+		log.Infof("Creating in cluster Kubernetes client with endpoint %v", provider.Endpoint)
 		return k8s.NewInClusterClientWithEndpoint(provider.Endpoint)
 	}
 	log.Info("Creating in cluster Kubernetes client")
