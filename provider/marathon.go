@@ -264,6 +264,9 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 					return false
 				}
 			}
+		} else {
+			log.Debugf("Filtering marathon task %s with defined healthcheck as no healthcheck has run yet", task.AppID)
+			return false
 		}
 	}
 	return true
