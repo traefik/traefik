@@ -51,6 +51,7 @@ type GlobalConfiguration struct {
 	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
 	Eureka                    *provider.Eureka        `description:"Enable Eureka backend"`
 	ECS                       *provider.ECS           `description:"Enable ECS backend"`
+	Rancher                   *provider.Rancher       `description:"Enable Rancher backend"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -415,6 +416,10 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		ECS:           &defaultECS,
 		Retry:         &Retry{},
 	}
+
+	//default Rancher
+	//@TODO: ADD
+
 	return &TraefikConfiguration{
 		GlobalConfiguration: defaultConfiguration,
 	}
