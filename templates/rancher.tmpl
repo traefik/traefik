@@ -1,0 +1,38 @@
+{{$backendServers := .Backends}}
+[backends]{{range $backendName, $backend := .Backends}}
+    {{if hasCircuitBreakerLabel $backend}}
+    [backends.backend-{{$backendName}}.circuitbreaker]
+      expression = "{{getCircuitBreakerExpression $backend}}"
+    {{end}}
+
+    {{if hasLoadBalancerLabel $backend}}
+    [backends.backend-{{$backendName}}.loadbalancer]
+      method = "{{getLoadBalancerMethod $backend}}"
+      sticky = {{getSticky $backend}}
+    {{end}}
+
+    {{if hasMaxConnLabels $backend}}
+    [backends.backend-{{$backendName}}.maxconn]
+      amount = {{getMaxConnAmount $backend}}
+      extractorfunc = "{{getMaxConnExtractorFunc $backend}}"
+    {{end}}
+
+    {{range $index, $ip := $backend.Containers}}
+      [backends.backend-{{$backendName}}.servers.server-{{$index}}]
+      url = "{{getProtocol $backend}}://{{$ip}}:{{getPort $backend}}"
+      weight = {{getWeight $backend}}
+    {{end}}
+
+{{end}}
+
+[frontends]{{range $frontendName, $service := .Frontends}}
+    [frontends."frontend-{{$frontendName}}"]
+    backend = "backend-{{getBackend $service}}"
+    passHostHeader = {{getPassHostHeader $service}}
+    priority = {{getPriority $service}}
+    entryPoints = [{{range getEntryPoints $service}}
+        "{{.}}",
+    {{end}}]
+    [frontends."frontend-{{$frontendName}}".routes."route-frontend-{{$frontendName}}"]
+    rule = "{{getFrontendRule $service}}"
+{{end}}
