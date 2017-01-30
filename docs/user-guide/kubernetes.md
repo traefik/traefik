@@ -311,6 +311,11 @@ spec:
     app: cheese
     task: wensleydale
 ```
+
+> Notice that we also set a [circuit breaker expression](https://docs.traefik.io/basics/#backends) for one of the backends
+> by setting the `traefik.backend.circuitbreaker` annotation on the service.
+
+
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
 
 ```sh
@@ -410,10 +415,6 @@ spec:
 > Notice that we are configuring Træfɪk to strip the prefix from the url path
 > with the `traefik.frontend.rule.type` annotation so that we can use
 > the containers from the previous example without modification.
-
-> Notice that we also set a [circuit breaker expression](https://docs.traefik.io/basics/#backends) for one of the backends
-> by setting the `traefik.backend.circuitbreaker` annotation on the service.
-
 
 ```sh
 kubectl apply -f examples/k8s/cheeses-ingress.yaml
