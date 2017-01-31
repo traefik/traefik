@@ -1,12 +1,11 @@
 kubelet:
-  image: gcr.io/google_containers/hyperkube-amd64:v1.2.2
+  image: gcr.io/google_containers/hyperkube-amd64:v1.5.2
   privileged: true
   pid: host
   net : host
   volumes:
-    - /:/rootfs:ro
-    - /sys:/sys:ro
+    - /sys:/sys:rw
     - /var/lib/docker/:/var/lib/docker:rw
-    - /var/lib/kubelet/:/var/lib/kubelet:rw
+    - /var/lib/kubelet/:/var/lib/kubelet:rw,shared
     - /var/run:/var/run:rw
-  command: ['/hyperkube', 'kubelet', '--containerized', '--hostname-override=127.0.0.1', '--address=0.0.0.0', '--api-servers=http://localhost:8080', '--config=/etc/kubernetes/manifests', '--allow-privileged=true', '--v=2']
+  command: ['/hyperkube', 'kubelet', '--hostname-override=127.0.0.1', '--api-servers=http://localhost:8080', '--config=/etc/kubernetes/manifests', '--allow-privileged=true', '--v=2', '--cluster-dns=10.0.0.10', '--cluster-domain=cluster.local']
