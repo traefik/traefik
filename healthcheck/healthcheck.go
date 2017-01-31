@@ -2,12 +2,14 @@ package healthcheck
 
 import (
 	"context"
-	"github.com/containous/traefik/log"
-	"github.com/vulcand/oxy/roundrobin"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/safe"
+	"github.com/vulcand/oxy/roundrobin"
 )
 
 var singleton *HealthCheck
@@ -52,54 +54,56 @@ func NewBackendHealthCheck(URL string, lb loadBalancer) *BackendHealthCheck {
 }
 
 //SetBackendsConfiguration set backends configuration
-func (hc *HealthCheck) SetBackendsConfiguration(backends map[string]*BackendHealthCheck) {
+func (hc *HealthCheck) SetBackendsConfiguration(backends map[string]*BackendHealthCheck, parentCtx context.Context) {
 	hc.Backends = backends
 	if hc.cancel != nil {
 		hc.cancel()
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(parentCtx)
 	hc.cancel = cancel
 	hc.execute(ctx)
 }
 
 func (hc *HealthCheck) execute(ctx context.Context) {
 	for backendID, backend := range hc.Backends {
-		go func(backendID string, backend *BackendHealthCheck) {
+		currentBackend := backend
+		currentBackendID := backendID
+		safe.Go(func() {
 			for {
 				ticker := time.NewTicker(time.Second * 30)
 				select {
 				case <-ctx.Done():
-					log.Debugf("Refreshing All Healthcheck goroutines")
+					log.Debugf("Stopping all current Healthcheck goroutines")
 					return
 				case <-ticker.C:
-					log.Debugf("Refreshing Healthcheck for backend %s ", backendID)
-					enabledURLs := backend.lb.Servers()
+					log.Debugf("Refreshing Healthcheck for currentBackend %s ", currentBackendID)
+					enabledURLs := currentBackend.lb.Servers()
 					var newDisabledURLs []*url.URL
-					for _, url := range backend.DisabledURLs {
-						if testHealth(url, backend.URL) {
-							log.Debugf("Upsert %s", url.String())
-							backend.lb.UpsertServer(url, roundrobin.Weight(1))
+					for _, url := range currentBackend.DisabledURLs {
+						if checkHealth(url, currentBackend.URL) {
+							log.Debugf("HealthCheck is up [%s]: Upsert in server list", url.String())
+							currentBackend.lb.UpsertServer(url, roundrobin.Weight(1))
 						} else {
 							newDisabledURLs = append(newDisabledURLs, url)
 						}
 					}
-					backend.DisabledURLs = newDisabledURLs
+					currentBackend.DisabledURLs = newDisabledURLs
 
 					for _, url := range enabledURLs {
-						if !testHealth(url, backend.URL) {
-							log.Debugf("Remove %s", url.String())
-							backend.lb.RemoveServer(url)
-							backend.DisabledURLs = append(backend.DisabledURLs, url)
+						if !checkHealth(url, currentBackend.URL) {
+							log.Debugf("HealthCheck has failed [%s]: Remove from server list", url.String())
+							currentBackend.lb.RemoveServer(url)
+							currentBackend.DisabledURLs = append(currentBackend.DisabledURLs, url)
 						}
 					}
 
 				}
 			}
-		}(backendID, backend)
+		})
 	}
 }
 
-func testHealth(serverURL *url.URL, checkURL string) bool {
+func checkHealth(serverURL *url.URL, checkURL string) bool {
 	timeout := time.Duration(5 * time.Second)
 	client := http.Client{
 		Timeout: timeout,

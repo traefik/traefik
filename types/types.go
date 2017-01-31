@@ -4,10 +4,11 @@ import (
 	"encoding"
 	"errors"
 	"fmt"
-	"github.com/docker/libkv/store"
-	"github.com/ryanuber/go-glob"
 	"strconv"
 	"strings"
+
+	"github.com/docker/libkv/store"
+	"github.com/ryanuber/go-glob"
 )
 
 // Backend holds backend configuration.
@@ -36,7 +37,7 @@ type CircuitBreaker struct {
 	Expression string `json:"expression,omitempty"`
 }
 
-// HealthCheck holds healthchk configuration
+// HealthCheck holds HealthCheck configuration
 type HealthCheck struct {
 	URL string `json:"url,omitempty"`
 }

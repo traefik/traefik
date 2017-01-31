@@ -745,7 +745,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			}
 		}
 	}
-	healthcheck.GetHealthCheck().SetBackendsConfiguration(backendsHealthcheck)
+	healthcheck.GetHealthCheck().SetBackendsConfiguration(backendsHealthcheck, server.routinesPool.Ctx())
 	middlewares.SetBackend2FrontendMap(&backend2FrontendMap)
 	//sort routes
 	for _, serverEntryPoint := range serverEntryPoints {
