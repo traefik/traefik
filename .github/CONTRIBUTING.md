@@ -2,7 +2,7 @@
 
 ### Building
 
-You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` and `glide` (Method 2) in order to build traefik.
+You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` (Method 2) in order to build traefik. For changes to its dependencies, the `glide` dependency management tool and `glide-vc` plugin are required.
 
 #### Method 1: Using `Docker` and `Makefile`
 
@@ -26,7 +26,7 @@ $ ls dist/
 traefik*
 ```
 
-#### Method 2: Using `go` and `glide`
+#### Method 2: Using `go`
 
 ###### Setting up your `go` environment
 
@@ -42,20 +42,25 @@ This can be verified via `$ go env`
 - You will want to add those 2 export lines to your `.bashrc` or `.bash_profile`
 - You need `go-bindata` to be able to use `go generate` command (needed to build) : `$ go get github.com/jteeuwen/go-bindata/...` (Please note, the ellipses are required)
 
-###### Setting up your `glide` environment
+#### Setting up `glide` and `glide-vc` for dependency management
 
+- Glide is not required for building; however, it is necessary to modify dependencies (i.e., add, update, or remove third-party packages)
 - Glide can be installed either via homebrew: `$ brew install glide` or via the official glide script: `$ curl https://glide.sh/get | sh`
+- The glide plugin `glide-vc` must be installed from source: `go get github.com/sgotti/glide-vc`
 
-The idea behind `glide` is the following :
+If you want to add a dependency, use `$ glide get` to have glide put it into the vendor folder and update the glide manifest/lock files (`glide.yaml` and `glide.lock`, respectively). A following `glide-vc` run should be triggered to trim down the size of the vendor folder. The final result must be committed into VCS.
 
-- when checkout(ing) a project, run `$ glide install -v` from the cloned directory to install
-  (`go get …`) the dependencies in your `GOPATH`.
-- if you need another dependency, import and use it in
-  the source, and run `$ glide get github.com/Masterminds/cookoo` to save it in
-  `vendor` and add it to your `glide.yaml`.
+Dependencies for the integration tests in the `integration` folder are managed in a separate `integration/glide.yaml` file using the same toolset.
+
+Care must be taken to choose the right arguments to `glide` when dealing with either main or integration test dependencies, or otherwise risk ending up with a broken build. For that reason, the helper script `script/glide.sh` encapsulates the gory details and conveniently calls `glide-vc` as well. Call it without parameters for basic usage instructions.
+
+Here's a full example:
 
 ```bash
-$ glide install --strip-vendor
+# install the new main dependency github.com/foo/bar and minimize vendor size
+$ ./script/glide.sh get github.com/foo/bar
+# install another dependency, this time for the integration tests
+$ ( cd integration && ../script/glide.sh get github.com/baz/quuz )
 # generate (Only required to integrate other components such as web dashboard)
 $ go generate
 # Standard go build
@@ -105,14 +110,12 @@ TESTFLAGS="-check.f MyTestSuite.*Test" make test-integration
 
 More: https://labix.org/gocheck
 
-##### Method 2: `go` and `glide`
+##### Method 2: `go`
 
 - Tests can be run from the cloned directory, by `$ go test ./...` which should return `ok` similar to:
 ```
 ok      _/home/vincent/src/github/vdemeester/traefik    0.004s
 ```
-- Note that `$ go test ./...` will run all tests (including the ones in the vendor directory for the dependencies that glide have fetched). If you only want to run the tests for traefik use `$ go test $(glide novendor)` instead.
-
 
 ### Documentation
 
