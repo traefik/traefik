@@ -15,7 +15,6 @@ matrix:
   fast_finish: true
   include:
   - env: DOCKER_VERSION=1.10.3
-  - env: DOCKER_VERSION=1.13.0
   - env: DOCKER_VERSION=1.12.6
 
 before_install:
