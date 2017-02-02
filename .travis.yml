@@ -56,10 +56,12 @@ deploy:
       tags: true
   - provider: script
     script: script/deploy.sh
+    skip_cleanup: true
     on:
       repo: containous/traefik
       tags: true
   - provider: script
     script: script/deploy-docker.sh
+    skip_cleanup: true
     on:
       repo: containous/traefik
