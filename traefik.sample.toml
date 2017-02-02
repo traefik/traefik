@@ -262,6 +262,33 @@
 #   [entryPoints.http.auth.basic]
 #   users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 #
+# To enable forward auth on an entrypoint
+# This configuration will take the request parameters email and token, send it as theEmail and theToken 
+# to the authentication address http://authserver.com/auth. If the response code is 200
+# the body user object will have it's field id replayed in the header as X-User-Id and the field
+# name as a parameter userName.
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   [entryPoints.http.auth.forward]
+#   address = "http://authserver.com/auth"
+#    [entryPoints.http.auth.Forward.requestParameters.email]
+#    name = "email"
+#    as = "theEmail"
+#    [entryPoints.http.auth.Forward.requestParameters.token]
+#    name = "token"
+#    as = "theToken"
+#    [entryPoints.http.auth.Forward.responseReplayFields.userId]
+#    path = "user.id"
+#    as = "X-User-Id"
+#    in = "header"
+#    [entryPoints.http.auth.Forward.responseReplayFields.userName]
+#    path = "user.name"
+#    as = "user_name"
+#    in = "parameter"
+#
+#
+#
 # To specify an https entrypoint with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls):
 # [entryPoints]
 #   [entryPoints.https]

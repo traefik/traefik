@@ -131,3 +131,52 @@ defaultEntryPoints = ["http"]
     [entryPoints.http.auth.basic]
     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
 ```
+
+
+## Enable authentication forwarding
+
+Authentication forwarding is a mechanism to allow for arbitrary authentication back ends to be used.
+It works by forwarding any incoming request from traefik proxy to a specified endpoint (the setting key `entryPoints.http.auth.forward.address`).
+This endpoint address is called "authentication back end".
+The response of the authentication back end is then evaluated.
+The authentication back end has to send a response with an HTTP status code 200 to allow access.
+Any other status code will result in traefik returning the authentication back end response to the original request (so if your back end sends a response with a 503 header and any body, traefik will also send a 503 response including the body).
+
+In addition to this, traefik provides basic functionality to modify the original request's query parameters before they are sent to the authentication back end.
+This allows you to map a request parameter or header (in this case token) from e.g. `traefik.com/secret?token=foobar` to `authserver.com/auth?theToken=foobar`.
+Use the keywords name and as in the `entryPoints.http.auth.forward.requestParameters` setting key as shown in the example.
+As well you can set `entryPoints.http.auth.forward.forwardAllHeaders = true` to forward all request headers to the authentication server as they ware received by traefik.
+You can also forward specific cookies by setting `entryPoints.http.auth.forward.requestCookies` there you can also change the cookie name.
+Moreover, you can also replay certain information from the back end authentication response back to the original request received by traefik.
+For this to work, your authentication back end must send a JSON response.
+```
+defaultEntryPoints = ["http"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth.forward]
+    address = "http://authserver.com/auth"
+    forwardAllHeaders = true
+    [entryPoints.http.auth.forward.requestParameters.email]
+      name = "email"
+      as = "theEmail"
+      in = "parameter"
+    [entryPoints.http.auth.forward.requestParameters.token]
+      name = "token"
+      as = "theToken"
+      in = "header"
+    [entryPoints.http.auth.forward.requestHeaders.userId]
+      name = "userId"
+      as = "user_id"
+    [entryPoints.http.auth.forward.requestCookies.account]
+      name = "account"
+      as = "userAccount"
+    [entryPoints.http.auth.forward.responseReplayFields.userId]
+      path = "user.id"
+      as = "X-User-Id"
+      in = "header"
+    [entryPoints.http.auth.forward.responseReplayFields.userName]
+      path = "user.name"
+      as = "" # No name transformation
+      in = "parameter"
+```

@@ -101,7 +101,7 @@ import:
 - package: github.com/gambol99/go-marathon
   version: ^0.5.1
 - package: github.com/gogo/protobuf
-  version: 0.3
+  version: "0.3"
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
@@ -118,3 +118,6 @@ import:
   version: v0.3.0
   subpackages:
   - metrics
+- package: github.com/stretchr/stew
+  subpackages:
+  - objects
