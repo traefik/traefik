@@ -11,15 +11,15 @@ env:
     - VERSION: $TRAVIS_TAG
     - CODENAME: camembert
 
-#addons:
-#  apt:
-#    packages:
-#    - docker-engine=$DOCKER_VERSION.*
+matrix:
+  fast_finish: true
+  include:
+  - env: DOCKER_VERSION=1.10.3
+  - env: DOCKER_VERSION=1.12.6
 
 before_install:
   - sudo -E apt-get -yq update
   - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-engine=${DOCKER_VERSION}*
-
 install:
   - docker version
   - pip install --user -r requirements.txt
@@ -27,44 +27,39 @@ before_script:
   - make validate
   - make binary
 script:
-  - make test-unit
-  - make test-integration
+  - travis_retry make test-unit
+  - travis_retry make test-integration
 after_failure:
   - docker ps
-
-matrix:
-  fast_finish: true
-  include:
-  - env: DOCKER_VERSION=1.10.3
-  - env: DOCKER_VERSION=1.13.0
-  - env: DOCKER_VERSION=1.12.6
-    after_success:
-      - make crossbinary
-      - make image
-    before_deploy:
-      - mkdocs build --clean
-      - tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .
-    deploy:
-      - provider: pages
-        edge: true
-        github_token: ${GITHUB_TOKEN}
-        local_dir: site
-        on:
-          repo: containous/traefik
-          tags: true
-      - provider: releases
-        api_key: ${GITHUB_TOKEN}
-        file: dist/traefik_*
-        file_glob: true
-        on:
-          repo: containous/traefik
-          tags: true
-      - provider: scripts
-        script: script/deploy.sh
-        on:
-          repo: containous/traefik
-          tags: true
-      - provider: scripts
-        script: script/deploy-docker.sh
-        on:
-          repo: containous/traefik
+after_success:
+  - make crossbinary
+  - make image
+before_deploy:
+  - mkdocs build --clean
+  - tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .
+deploy:
+  - provider: pages
+    edge: true
+    github_token: ${GITHUB_TOKEN}
+    local_dir: site
+    skip_cleanup: true
+    on:
+      repo: containous/traefik
+      tags: true
+  - provider: releases
+    api_key: ${GITHUB_TOKEN}
+    file: dist/traefik*
+    skip_cleanup: true
+    file_glob: true
+    on:
+      repo: containous/traefik
+      tags: true
+  - provider: script
+    script: script/deploy.sh
+    on:
+      repo: containous/traefik
+      tags: true
+  - provider: script
+    script: script/deploy-docker.sh
+    on:
+      repo: containous/traefik
