@@ -210,7 +210,7 @@ func TestRemoveDuplicates(t *testing.T) {
 				t.Errorf("Bad expiration %s date for domain %+v, now %s", cert.tlsCert.Leaf.NotAfter.String(), cert, now.Add(48*time.Hour).Truncate(1*time.Second).String())
 			}
 		default:
-			t.Errorf("Unkown domain %+v", cert)
+			t.Errorf("Unknown domain %+v", cert)
 		}
 	}
 }

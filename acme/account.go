@@ -133,7 +133,7 @@ func (dc *DomainsCertificates) removeDuplicates() {
 		for i2 := i + 1; i2 < len(dc.Certs); i2++ {
 			if reflect.DeepEqual(dc.Certs[i].Domains, dc.Certs[i2].Domains) {
 				// delete
-				log.Warnf("Remove duplicate cert: %+v, exipration :%s", dc.Certs[i2].Domains, dc.Certs[i2].tlsCert.Leaf.NotAfter.String())
+				log.Warnf("Remove duplicate cert: %+v, expiration :%s", dc.Certs[i2].Domains, dc.Certs[i2].tlsCert.Leaf.NotAfter.String())
 				dc.Certs = append(dc.Certs[:i2], dc.Certs[i2+1:]...)
 				i2--
 			}
