@@ -172,7 +172,7 @@ func (server *Server) startHTTPServers() {
 		serverMiddlewares := []negroni.Handler{server.loggerMiddleware, metrics}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
 			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus("Global", server.globalConfiguration.Web.Metrics.Prometheus))
+				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
 				serverMiddlewares = append(serverMiddlewares, metricsMiddleware)
 			}
 		}
