@@ -14,12 +14,12 @@ ARG GLIDE_VERSION=v0.12.3
 
 # Download glide
 RUN mkdir -p /usr/local/bin \
-    && curl -SL https://github.com/Masterminds/glide/releases/download/${GLIDE_VERSION}/glide-${GLIDE_VERSION}-linux-amd64.tar.gz \
+    && curl -fL https://github.com/Masterminds/glide/releases/download/${GLIDE_VERSION}/glide-${GLIDE_VERSION}-linux-amd64.tar.gz \
     | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
 # Download docker
 RUN mkdir -p /usr/local/bin \
-    && curl -SL https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz \
+    && curl -fL https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz \
     | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
 WORKDIR /go/src/github.com/containous/traefik
