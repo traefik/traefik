@@ -257,13 +257,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 		go func(interval time.Duration) {
 			tick := time.Tick(interval)
 			for range tick {
-				if server.globalConfiguration.Web != nil {
-					if _, err := http.Head("http://" + server.globalConfiguration.Web.Address + "/ping"); err == nil {
-						daemon.SdNotify(true, "WATCHDOG=1")
-					}
-				} else {
-					daemon.SdNotify(true, "WATCHDOG=1")
-				}
+				daemon.SdNotify(true, "WATCHDOG=1")
 			}
 		}(t)
 	}
