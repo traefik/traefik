@@ -3,6 +3,11 @@
     [backends."{{$backendName}}".circuitbreaker]
       expression = "{{$backend.CircuitBreaker.Expression}}"
     {{end}}
+    [backends."{{$backendName}}".loadbalancer]
+      method = "{{$backend.LoadBalancer.Method}}"
+      {{if $backend.LoadBalancer.Sticky}}
+          sticky = true
+      {{end}}
     {{range $serverName, $server := $backend.Servers}}
     [backends."{{$backendName}}".servers."{{$serverName}}"]
     url = "{{$server.URL}}"

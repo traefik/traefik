@@ -1061,6 +1061,11 @@ Annotations can be used on containers to override default behaviour for the whol
 
 - `traefik.frontend.rule.type: PathPrefixStrip`: override the default frontend rule type (Default: `PathPrefix`).
 
+Annotations can be used on the Kubernetes service to override default behaviour:
+
+- `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
+- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
+
 You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml).
 
 Additionally, an annotation can be used on Kubernetes services to set the [circuit breaker expression](https://docs.traefik.io/basics/#backends) for a backend.

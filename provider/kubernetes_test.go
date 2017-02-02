@@ -216,7 +216,10 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -234,7 +237,10 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -564,7 +570,10 @@ func TestGetPassHostHeader(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -673,7 +682,10 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -859,7 +871,10 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -873,7 +888,10 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -1097,7 +1115,10 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -1111,7 +1132,10 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"awesome/quix": {
 				Servers: map[string]types.Server{
@@ -1121,7 +1145,10 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -1235,7 +1262,10 @@ func TestHostlessIngress(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -1258,7 +1288,7 @@ func TestHostlessIngress(t *testing.T) {
 	}
 }
 
-func TestCircuitBreakerAnnotation(t *testing.T) {
+func TestServiceAnnotations(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "testing",
@@ -1307,6 +1337,7 @@ func TestCircuitBreakerAnnotation(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"traefik.backend.circuitbreaker": "NetworkErrorRatio() > 0.5",
+					"traefik.backend.loadbalancer.method": "drr",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1325,6 +1356,7 @@ func TestCircuitBreakerAnnotation(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"traefik.backend.circuitbreaker": "",
+					"traefik.backend.loadbalancer.sticky": "true",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1436,7 +1468,10 @@ func TestCircuitBreakerAnnotation(t *testing.T) {
 				CircuitBreaker: &types.CircuitBreaker{
 					Expression: "NetworkErrorRatio() > 0.5",
 				},
-				LoadBalancer: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "drr",
+					Sticky: false,
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -1450,7 +1485,10 @@ func TestCircuitBreakerAnnotation(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+					Sticky: true,
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
