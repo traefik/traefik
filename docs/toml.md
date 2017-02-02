@@ -766,7 +766,7 @@ watch = true
 # filename = "docker.tmpl"
 
 # Expose containers by default in traefik
-# If set to false, containers that don't have `traefik.enable=true` will be ignored 
+# If set to false, containers that don't have `traefik.enable=true` will be ignored
 #
 # Optional
 # Default: true
@@ -1060,6 +1060,11 @@ Træfɪk can be configured to use Kubernetes Ingress as a backend configuration:
 Annotations can be used on containers to override default behaviour for the whole Ingress resource:
 
 - `traefik.frontend.rule.type: PathPrefixStrip`: override the default frontend rule type (Default: `PathPrefix`).
+
+Annotations can be used on the Kubernetes service to override default behaviour:
+
+- `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
+- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
 
 You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml).
 

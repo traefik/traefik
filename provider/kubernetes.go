@@ -114,6 +114,10 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
 						Servers: make(map[string]types.Server),
+						LoadBalancer: &types.LoadBalancer{
+							Sticky: false,
+							Method: "wrr",
+						},
 					}
 				}
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
@@ -167,6 +171,12 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					continue
 				}
 
+				if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
+					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
+				}
+				if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
+					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
+				}
 				protocol := "http"
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {
