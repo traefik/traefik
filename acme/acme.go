@@ -333,6 +333,14 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := types.CanonicalDomain(clientHello.ServerName)
+	//use regex to test for wildcard certs that might have been added into TLSConfig
+	for k := range a.TLSConfig.NameToCertificate {
+		selector := "^" + strings.Replace(k, "*.", ".*\\.?", -1) + "$"
+		match, _ := regexp.MatchString(selector, domain)
+		if match {
+			return a.TLSConfig.NameToCertificate[k], nil
+		}
+	}
 	account := a.store.Get().(*Account)
 	//use regex to test for wildcard certs that might have been added into TLSConfig
 	for k := range a.TLSConfig.NameToCertificate {
