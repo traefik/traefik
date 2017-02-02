@@ -505,7 +505,7 @@ func processPorts(application marathon.Application, task marathon.Task) []int {
 
 	// Using port definition if available
 	if application.PortDefinitions != nil && len(*application.PortDefinitions) > 0 {
-		ports := make([]int, 0)
+		var ports []int
 		for _, def := range *application.PortDefinitions {
 			if def.Port != nil {
 				ports = append(ports, *def.Port)
@@ -515,7 +515,7 @@ func processPorts(application marathon.Application, task marathon.Task) []int {
 	}
 	// If using IP-per-task using this port definition
 	if application.IPAddressPerTask != nil && len(*((*application.IPAddressPerTask).Discovery).Ports) > 0 {
-		ports := make([]int, 0)
+		var ports []int
 		for _, def := range *((*application.IPAddressPerTask).Discovery).Ports {
 			ports = append(ports, def.Number)
 		}

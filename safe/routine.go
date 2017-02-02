@@ -1,10 +1,10 @@
 package safe
 
 import (
+	"context"
 	"fmt"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/log"
-	"context"
 	"runtime/debug"
 	"sync"
 )
