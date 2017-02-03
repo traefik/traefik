@@ -6,7 +6,6 @@ import:
   - fun
 - package: github.com/Sirupsen/logrus
 - package: github.com/cenk/backoff
-- package: github.com/urfave/negroni
 - package: github.com/containous/flaeg
   version: a731c034dda967333efce5f8d276aeff11f8ff87
 - package: github.com/vulcand/oxy
@@ -23,18 +22,19 @@ import:
 - package: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - package: github.com/docker/engine-api
-  version: 62043eb79d581a32ea849645277023c550732e52
+  version: v0.4.0
   subpackages:
   - client
   - types
   - types/events
   - types/filters
-- package: github.com/docker/go-units
-  version: v0.3.1
 - package: github.com/docker/go-connections
+  version: v0.2.1
   subpackages:
   - sockets
   - tlsconfig
+- name: github.com/docker/go-units
+  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - package: github.com/docker/libkv
   subpackages:
   - store
@@ -48,7 +48,6 @@ import:
   subpackages:
   - api
 - package: github.com/mailgun/manners
-- package: github.com/parnurzeal/gorequest
 - package: github.com/streamrail/concurrent-map
 - package: github.com/stretchr/testify
   subpackages:
@@ -65,13 +64,9 @@ import:
   version: ce8fb060cb8361a9ff8b5fb7c2347fa907b6fcac
   subpackages:
   - acme
-- package: golang.org/x/net
-  version: release-branch.go1.7
-  subpackages:
-  - context
 - package: gopkg.in/fsnotify.v1
 - package: github.com/docker/docker
-  version: 534753663161334baba06f13b8efa4cad22b5bc5
+  version: v1.13.0
   subpackages:
   - namesgenerator
 - package: github.com/mattn/go-shellwords
@@ -83,15 +78,13 @@ import:
   - upid
   - mesosutil
   - detector
-- package: github.com/jarcoal/httpmock
+- package: github.com/miekg/dns
+  version: 8060d9f51305bbe024b99679454e62f552cd0b0b
 - package: github.com/mesosphere/mesos-dns
   version: b47dc4c19f215e98da687b15b4c64e70f629bea5
   repo: https://github.com/containous/mesos-dns.git
   vcs: git
-- package: github.com/tv42/zbase32
 - package: github.com/abbot/go-http-auth
-- package: github.com/miekg/dns
-  version: 5d001d020961ae1c184f9f8152fdc73810481677
 - package: github.com/NYTimes/gziphandler
 - package: github.com/docker/leadership
 - package: github.com/satori/go.uuid
@@ -100,13 +93,9 @@ import:
   version: ^v1.5.0
 - package: github.com/gambol99/go-marathon
   version: ^0.5.1
-- package: github.com/gogo/protobuf
-  version: 0.3
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
-- package: github.com/mitchellh/mapstructure
-  version: f3009df150dadf309fdee4a54ed65c124afad715
 - package: github.com/coreos/go-systemd
   version: v14
   subpackages:
@@ -119,3 +108,25 @@ import:
   subpackages:
   - metrics
 - package: github.com/eapache/channels
+  version: v1.1.0
+- package: golang.org/x/net
+  version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
+  subpackages:
+  - http2
+  - context
+- package: github.com/docker/distribution
+  version: v2.6.0
+- package: github.com/aws/aws-sdk-go
+  version: v1.6.18
+  subpackages:
+  - aws/endpoints
+- package: cloud.google.com/go
+  version: v0.6.0
+  subpackages:
+  - compute/metadata
+- package: github.com/gogo/protobuf
+  version: v0.3
+  subpackages:
+  - proto
+- package: golang.org/x/oauth2
+  version: 314dd2c0bf3ebd592ec0d20847d27e79d0dbe8dd
