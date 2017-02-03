@@ -1,6 +1,6 @@
 # Kubernetes Ingress Controller
 
-This guide explains how to use Træfɪk as an Ingress controller in a Kubernetes cluster. 
+This guide explains how to use Træfɪk as an Ingress controller in a Kubernetes cluster.
 If you are not familiar with Ingresses in Kubernetes you might want to read the [Kubernetes user guide](http://kubernetes.io/docs/user-guide/ingress/)
 
 The config files used in this guide can be found in the [examples directory](https://github.com/containous/traefik/tree/master/examples/k8s)
@@ -113,7 +113,7 @@ metadata:
   namespace: kube-system
 spec:
   selector:
-    k8s-app: traefik-ingress-lb 
+    k8s-app: traefik-ingress-lb
   ports:
   - port: 80
     targetPort: 8080
@@ -139,7 +139,7 @@ kubectl apply -f examples/k8s/ui.yaml
 ```
 
 Now lets setup an entry in our /etc/hosts file to route `traefik-ui.local`
-to our cluster. 
+to our cluster.
 
 > In production you would want to set up real dns entries.
 
@@ -299,6 +299,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wensleydale
+  annotations:
+    traefik.backend.circuitbreaker: "NetworkErrorRatio() > 0.5"
 spec:
   ports:
   - name: http
@@ -308,6 +310,11 @@ spec:
     app: cheese
     task: wensleydale
 ```
+
+> Notice that we also set a [circuit breaker expression](https://docs.traefik.io/basics/#backends) for one of the backends
+> by setting the `traefik.backend.circuitbreaker` annotation on the service.
+
+
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
 
 ```sh

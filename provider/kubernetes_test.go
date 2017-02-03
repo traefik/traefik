@@ -1288,7 +1288,7 @@ func TestHostlessIngress(t *testing.T) {
 	}
 }
 
-func TestLoadBalancerAnnotation(t *testing.T) {
+func TestServiceAnnotations(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "testing",
@@ -1336,6 +1336,7 @@ func TestLoadBalancerAnnotation(t *testing.T) {
 				UID:       "1",
 				Namespace: "testing",
 				Annotations: map[string]string{
+					"traefik.backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
 					"traefik.backend.loadbalancer.method": "drr",
 				},
 			},
@@ -1354,6 +1355,7 @@ func TestLoadBalancerAnnotation(t *testing.T) {
 				UID:       "2",
 				Namespace: "testing",
 				Annotations: map[string]string{
+					"traefik.backend.circuitbreaker":      "",
 					"traefik.backend.loadbalancer.sticky": "true",
 				},
 			},
@@ -1463,7 +1465,9 @@ func TestLoadBalancerAnnotation(t *testing.T) {
 						Weight: 1,
 					},
 				},
-				CircuitBreaker: nil,
+				CircuitBreaker: &types.CircuitBreaker{
+					Expression: "NetworkErrorRatio() > 0.5",
+				},
 				LoadBalancer: &types.LoadBalancer{
 					Method: "drr",
 					Sticky: false,

@@ -175,12 +175,18 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					continue
 				}
 
+				if expression := service.Annotations["traefik.backend.circuitbreaker"]; expression != "" {
+					templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
+						Expression: expression,
+					}
+				}
 				if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
 				if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
 				}
+
 				protocol := "http"
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {
