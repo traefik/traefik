@@ -120,7 +120,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 	notify := func(err error, time time.Duration) {
 		log.Errorf("Marathon connection error %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		log.Errorf("Cannot connect to Marathon server %+v", err)
 	}
@@ -505,7 +505,7 @@ func processPorts(application marathon.Application, task marathon.Task) []int {
 
 	// Using port definition if available
 	if application.PortDefinitions != nil && len(*application.PortDefinitions) > 0 {
-		ports := make([]int, 0)
+		var ports []int
 		for _, def := range *application.PortDefinitions {
 			if def.Port != nil {
 				ports = append(ports, *def.Port)
@@ -515,7 +515,7 @@ func processPorts(application marathon.Application, task marathon.Task) []int {
 	}
 	// If using IP-per-task using this port definition
 	if application.IPAddressPerTask != nil && len(*((*application.IPAddressPerTask).Discovery).Ports) > 0 {
-		ports := make([]int, 0)
+		var ports []int
 		for _, def := range *((*application.IPAddressPerTask).Discovery).Ports {
 			ports = append(ports, def.Number)
 		}

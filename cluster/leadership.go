@@ -16,7 +16,7 @@ type Leadership struct {
 	*safe.Pool
 	*types.Cluster
 	candidate *leadership.Candidate
-	leader    safe.Safe
+	leader    *safe.Safe
 	listeners []LeaderListener
 }
 
@@ -27,6 +27,7 @@ func NewLeadership(ctx context.Context, cluster *types.Cluster) *Leadership {
 		Cluster:   cluster,
 		candidate: leadership.NewCandidate(cluster.Store, cluster.Store.Prefix+"/leader", cluster.Node, 20*time.Second),
 		listeners: []LeaderListener{},
+		leader:    safe.New(false),
 	}
 }
 
@@ -46,7 +47,7 @@ func (l *Leadership) Participate(pool *safe.Pool) {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Leadership election error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, backOff, notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backOff, notify)
 		if err != nil {
 			log.Errorf("Cannot elect leadership %+v", err)
 		}

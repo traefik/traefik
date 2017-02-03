@@ -1,5 +1,44 @@
 # Change Log
 
+## [v1.1.2](https://github.com/containous/traefik/tree/v1.1.2) (2016-12-15)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.1.1...v1.1.2)
+
+**Fixed bugs:**
+
+- Problem during HTTPS redirection [\#952](https://github.com/containous/traefik/issues/952)
+- nil pointer with kubernetes ingress [\#934](https://github.com/containous/traefik/issues/934)
+- ConsulCatalog and File not working [\#903](https://github.com/containous/traefik/issues/903)
+- Traefik can not start [\#902](https://github.com/containous/traefik/issues/902)
+- Cannot connect to Kubernetes server failed to decode watch event [\#532](https://github.com/containous/traefik/issues/532)
+
+**Closed issues:**
+
+- Updating certificates with configuration file. [\#968](https://github.com/containous/traefik/issues/968)
+- Let's encrypt retrieving certificate from wrong IP [\#962](https://github.com/containous/traefik/issues/962)
+- let's encrypt and dashboard? [\#961](https://github.com/containous/traefik/issues/961)
+- Working HTTPS example for GKE? [\#960](https://github.com/containous/traefik/issues/960)
+- GKE design pattern [\#958](https://github.com/containous/traefik/issues/958)
+- Consul Catalog constraints does not seem to work [\#954](https://github.com/containous/traefik/issues/954)
+- Issue in building traefik from master [\#949](https://github.com/containous/traefik/issues/949)
+- Proxy http application to https doesn't seem to work correctly for all services [\#937](https://github.com/containous/traefik/issues/937)
+- Excessive requests to kubernetes apiserver [\#922](https://github.com/containous/traefik/issues/922)
+- I am getting a connection error while creating traefik with consul backend "dial tcp 127.0.0.1:8500: getsockopt: connection refused" [\#917](https://github.com/containous/traefik/issues/917)
+- SwarmMode - 1.13 RC2 - DNS RR - Individual IPs not retrieved [\#913](https://github.com/containous/traefik/issues/913)
+- Panic in kubernetes ingress \(traefik 1.1.0\) [\#910](https://github.com/containous/traefik/issues/910)
+- Kubernetes updating deployment image requires Ingress to be remade  [\#909](https://github.com/containous/traefik/issues/909)
+- \[ACME\] Too many currently pending authorizations [\#905](https://github.com/containous/traefik/issues/905)
+- WEB UI Authentication and Let's Encrypt : error 404 [\#754](https://github.com/containous/traefik/issues/754)
+- Traefik as ingress controller for SNI based routing in kubernetes [\#745](https://github.com/containous/traefik/issues/745)
+- Kubernetes Ingress backend: using self-signed certificates [\#486](https://github.com/containous/traefik/issues/486)
+- Kubernetes Ingress backend: can't find token and ca.crt [\#484](https://github.com/containous/traefik/issues/484)
+
+**Merged pull requests:**
+
+- Fix duplicate acme certificates [\#972](https://github.com/containous/traefik/pull/972) ([emilevauge](https://github.com/emilevauge))
+- Fix leadership panic [\#956](https://github.com/containous/traefik/pull/956) ([emilevauge](https://github.com/emilevauge))
+- Fix redirect regex [\#947](https://github.com/containous/traefik/pull/947) ([emilevauge](https://github.com/emilevauge))
+- Add operation recover [\#944](https://github.com/containous/traefik/pull/944) ([emilevauge](https://github.com/emilevauge))
+
 ## [v1.1.1](https://github.com/containous/traefik/tree/v1.1.1) (2016-11-29)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.1.0...v1.1.1)
 
