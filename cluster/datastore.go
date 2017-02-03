@@ -11,6 +11,7 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/safe"
 	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
 )
@@ -109,7 +110,7 @@ func (d *Datastore) watchChanges() error {
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Error in watch datastore: %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Error in watch datastore: %v", err)
 		}
@@ -176,7 +177,7 @@ func (d *Datastore) Begin() (Transaction, Object, error) {
 	}
 	ebo := backoff.NewExponentialBackOff()
 	ebo.MaxElapsedTime = 60 * time.Second
-	err = backoff.RetryNotify(operation, ebo, notify)
+	err = backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Datastore cannot sync: %v", err)
 	}
@@ -231,21 +232,21 @@ func (s *datastoreTransaction) Commit(object Object) error {
 	s.localLock.Lock()
 	defer s.localLock.Unlock()
 	if s.dirty {
-		return fmt.Errorf("transaction already used, please begin a new one")
+		return fmt.Errorf("Transaction already used, please begin a new one")
 	}
 	s.Datastore.meta.object = object
 	err := s.Datastore.meta.Marshall()
 	if err != nil {
-		return err
+		return fmt.Errorf("Marshall error: %s", err)
 	}
 	err = s.kv.StoreConfig(s.Datastore.meta)
 	if err != nil {
-		return err
+		return fmt.Errorf("StoreConfig error: %s", err)
 	}
 
 	err = s.remoteLock.Unlock()
 	if err != nil {
-		return err
+		return fmt.Errorf("Unlock error: %s", err)
 	}
 
 	s.dirty = true

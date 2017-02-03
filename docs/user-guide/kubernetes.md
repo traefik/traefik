@@ -19,7 +19,6 @@ We are going to deploy Træfɪk with a
 allow you to easily roll out config changes or update the image.
 
 ```yaml
-apiVersion: v1
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
@@ -85,7 +84,7 @@ traefik-ingress-controller-678226159-eqseo   1/1       Running   0          7m
 ```
 
 You should see that after submitting the Deployment to Kubernetes it has launched
-a pod, and it is now running. _It might take a few moments for kubenetes to pull
+a pod, and it is now running. _It might take a few moments for kubernetes to pull
 the Træfɪk image and start the container._
 
 > You could also check the deployment with the Kubernetes dashboard, run
