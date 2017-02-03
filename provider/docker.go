@@ -52,6 +52,7 @@ type Docker struct {
 
 // dockerData holds the need data to the Docker provider
 type dockerData struct {
+	ServiceName     string
 	Name            string
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
@@ -393,14 +394,14 @@ func (provider *Docker) getFrontendRule(container dockerData) string {
 	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
 	}
-	return "Host:" + provider.getSubDomain(container.Name) + "." + provider.Domain
+	return "Host:" + provider.getSubDomain(container.ServiceName) + "." + provider.Domain
 }
 
 func (provider *Docker) getBackend(container dockerData) string {
 	if label, err := getLabel(container, "traefik.backend"); err == nil {
 		return normalize(label)
 	}
-	return normalize(container.Name)
+	return normalize(container.ServiceName)
 }
 
 func (provider *Docker) getIPAddress(container dockerData) string {
@@ -559,6 +560,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 
 	if container.ContainerJSONBase != nil {
 		dockerData.Name = container.ContainerJSONBase.Name
+		dockerData.ServiceName = dockerData.Name //Default ServiceName to be the container's Name.
 
 		if container.ContainerJSONBase.HostConfig != nil {
 			dockerData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
@@ -641,6 +643,7 @@ func (provider *Docker) listServices(ctx context.Context, dockerClient client.AP
 
 func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) dockerData {
 	dockerData := dockerData{
+		ServiceName:     service.Spec.Annotations.Name,
 		Name:            service.Spec.Annotations.Name,
 		Labels:          service.Spec.Annotations.Labels,
 		NetworkSettings: networkSettings{},
@@ -691,6 +694,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 
 func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource) dockerData {
 	dockerData := dockerData{
+		ServiceName:     serviceDockerData.Name,
 		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
 		Labels:          serviceDockerData.Labels,
 		NetworkSettings: networkSettings{},

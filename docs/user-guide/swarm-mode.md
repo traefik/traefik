@@ -120,16 +120,12 @@ docker-machine ssh manager "docker service create \
 	--name whoami0 \
 	--label traefik.port=80 \
 	--network traefik-net \
-	--label traefik.frontend.rule=Host:whoami0.traefik \
-	--label traefik.backend=whoami0 \
 	emilevauge/whoami"
 
 docker-machine ssh manager "docker service create \
 	--name whoami1 \
 	--label traefik.port=80 \
 	--network traefik-net \
-	--label traefik.frontend.rule=Host:whoam1.traefik \
-	--label traefik.backend=whoami1 \
 	--label traefik.backend.loadbalancer.sticky=true \
 	emilevauge/whoami"
 ```
