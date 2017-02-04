@@ -347,7 +347,7 @@ imports:
 - name: github.com/mvdan/xurls
   version: fa08908f19eca8c491d68c6bd8b4b44faea6daf8
 - name: github.com/NYTimes/gziphandler
-  version: f6438dbf4a82c56684964b03956aa727b0d7816b
+  version: 6710af535839f57c687b62c4c23d649f9545d885
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
