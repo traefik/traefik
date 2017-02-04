@@ -47,7 +47,7 @@ func TestLogger(t *testing.T) {
 		logfilePath = filepath.Join("/tmp", logfileName)
 	}
 
-	// reset reuest id
+	// reset request id
 	atomic.StoreUint64(&reqidCounter, 0)
 	logger = NewLogger(logfilePath, "text")
 	defer cleanup()
@@ -97,7 +97,7 @@ func TestLoggerJSON(t *testing.T) {
 		logfilePath = filepath.Join("/tmp", logfileName)
 	}
 
-	// reset reuest id
+	// reset request id
 	atomic.StoreUint64(&reqidCounter, 0)
 	logger = NewLogger(logfilePath, "json")
 	defer cleanup()
