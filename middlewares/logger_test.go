@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync/atomic"
 	"testing"
 
 	shellwords "github.com/mattn/go-shellwords"
@@ -45,7 +47,9 @@ func TestLogger(t *testing.T) {
 		logfilePath = filepath.Join("/tmp", logfileName)
 	}
 
-	logger = NewLogger(logfilePath)
+	// reset reuest id
+	atomic.StoreUint64(&reqidCounter, 0)
+	logger = NewLogger(logfilePath, "text")
 	defer cleanup()
 	SetBackend2FrontendMap(&testBackend2FrontendMap)
 
@@ -83,6 +87,69 @@ func TestLogger(t *testing.T) {
 		assert.Equal(t, "1", tokens[10], printLogdata(logdata))
 		assert.Equal(t, testFrontendName, tokens[11], printLogdata(logdata))
 		assert.Equal(t, testBackendName, tokens[12], printLogdata(logdata))
+	}
+}
+
+func TestLoggerJSON(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		logfilePath = filepath.Join(os.Getenv("TEMP"), logfileName)
+	} else {
+		logfilePath = filepath.Join("/tmp", logfileName)
+	}
+
+	// reset reuest id
+	atomic.StoreUint64(&reqidCounter, 0)
+	logger = NewLogger(logfilePath, "json")
+	defer cleanup()
+	SetBackend2FrontendMap(&testBackend2FrontendMap)
+
+	r := &http.Request{
+		Header: map[string][]string{
+			"User-Agent": {testUserAgent},
+			"Referer":    {testReferer},
+		},
+		Proto:      testProto,
+		Host:       testHostname,
+		Method:     testMethod,
+		RemoteAddr: fmt.Sprintf("%s:%d", testHostname, testPort),
+		URL: &url.URL{
+			User: url.UserPassword(testUsername, ""),
+			Path: testPath,
+		},
+	}
+
+	expected := logEntry{
+		RemoteAddr:    testHostname,
+		Username:      testUsername,
+		Method:        testMethod,
+		URI:           testPath,
+		Protocol:      testProto,
+		Status:        testStatus,
+		Size:          12,
+		Referer:       testReferer,
+		UserAgent:     testUserAgent,
+		RequestID:     "1",
+		Frontend:      testFrontendName,
+		Backend:       testBackendName,
+		ElapsedMillis: 0,
+		Host:          testHostname,
+	}
+
+	logger.ServeHTTP(&logtestResponseWriter{}, r, LogWriterTestHandlerFunc)
+
+	if logdata, err := ioutil.ReadFile(logfilePath); err != nil {
+		fmt.Printf("%s\n%s\n", string(logdata), err.Error())
+		assert.Nil(t, err)
+	} else {
+		var actual logEntry
+		if err := json.Unmarshal(logdata, &actual); err != nil {
+			assert.Nil(t, err)
+		} else {
+			// time isn't an interface currently, so just don't comapre them
+			actual.Timestamp = ""
+			actual.ElapsedMillis = 0
+			assert.Equal(t, expected, actual)
+		}
 	}
 }
 

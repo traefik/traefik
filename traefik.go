@@ -178,7 +178,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	if globalConfiguration.InsecureSkipVerify {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
-	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile)
+	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile, globalConfiguration.AccessLogsFormat)
 	defer loggerMiddleware.Close()
 
 	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
