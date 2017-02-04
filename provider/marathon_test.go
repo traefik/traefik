@@ -1077,6 +1077,19 @@ func TestMarathonGetPort(t *testing.T) {
 				Ports: []int{80, 443},
 			},
 			expected: "443",
+		}, {
+			applications: []marathon.Application{
+				{
+					ID:     "application-with-port",
+					Ports:  []int{9999},
+					Labels: &map[string]string{},
+				},
+			},
+			task: marathon.Task{
+				AppID: "application-with-port",
+				Ports: []int{7777},
+			},
+			expected: "7777",
 		},
 	}
 
