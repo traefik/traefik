@@ -8,6 +8,8 @@ import (
 	"crypto/x509"
 	"errors"
 	"reflect"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -107,6 +109,38 @@ type DomainsCertificates struct {
 	lock  sync.RWMutex
 }
 
+func (dc *DomainsCertificates) Len() int {
+	return len(dc.Certs)
+}
+
+func (dc *DomainsCertificates) Swap(i, j int) {
+	dc.Certs[i], dc.Certs[j] = dc.Certs[j], dc.Certs[i]
+}
+
+func (dc *DomainsCertificates) Less(i, j int) bool {
+	if reflect.DeepEqual(dc.Certs[i].Domains, dc.Certs[j].Domains) {
+		return dc.Certs[i].tlsCert.Leaf.NotAfter.After(dc.Certs[j].tlsCert.Leaf.NotAfter)
+	}
+	if dc.Certs[i].Domains.Main == dc.Certs[j].Domains.Main {
+		return strings.Join(dc.Certs[i].Domains.SANs, ",") < strings.Join(dc.Certs[j].Domains.SANs, ",")
+	}
+	return dc.Certs[i].Domains.Main < dc.Certs[j].Domains.Main
+}
+
+func (dc *DomainsCertificates) removeDuplicates() {
+	sort.Sort(dc)
+	for i := 0; i < len(dc.Certs); i++ {
+		for i2 := i + 1; i2 < len(dc.Certs); i2++ {
+			if reflect.DeepEqual(dc.Certs[i].Domains, dc.Certs[i2].Domains) {
+				// delete
+				log.Warnf("Remove duplicate cert: %+v, expiration :%s", dc.Certs[i2].Domains, dc.Certs[i2].tlsCert.Leaf.NotAfter.String())
+				dc.Certs = append(dc.Certs[:i2], dc.Certs[i2+1:]...)
+				i2--
+			}
+		}
+	}
+}
+
 // Init inits DomainsCertificates
 func (dc *DomainsCertificates) Init() error {
 	dc.lock.Lock()
@@ -117,7 +151,15 @@ func (dc *DomainsCertificates) Init() error {
 			return err
 		}
 		domainsCertificate.tlsCert = &tlsCert
+		if domainsCertificate.tlsCert.Leaf == nil {
+			leaf, err := x509.ParseCertificate(domainsCertificate.tlsCert.Certificate[0])
+			if err != nil {
+				return err
+			}
+			domainsCertificate.tlsCert.Leaf = leaf
+		}
 	}
+	dc.removeDuplicates()
 	return nil
 }
 

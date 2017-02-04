@@ -1,4 +1,8 @@
 [backends]{{range $backendName, $backend := .Backends}}
+    {{if $backend.CircuitBreaker}}
+    [backends."{{$backendName}}".circuitbreaker]
+      expression = "{{$backend.CircuitBreaker.Expression}}"
+    {{end}}
     [backends."{{$backendName}}".loadbalancer]
       method = "{{$backend.LoadBalancer.Method}}"
       {{if $backend.LoadBalancer.Sticky}}

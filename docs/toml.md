@@ -1068,6 +1068,10 @@ Annotations can be used on the Kubernetes service to override default behaviour:
 
 You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml).
 
+Additionally, an annotation can be used on Kubernetes services to set the [circuit breaker expression](https://docs.traefik.io/basics/#backends) for a backend.
+
+- `traefik.backend.circuitbreaker: <expression>`: set the circuit breaker expression for the backend (Default: nil).
+
 ## Consul backend
 
 Træfɪk can be configured to use Consul as a backend configuration:

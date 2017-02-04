@@ -91,7 +91,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Kubernetes connection error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Cannot connect to Kubernetes server %+v", err)
 		}
@@ -110,6 +110,10 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 	PassHostHeader := provider.getPassHostHeader()
 	for _, i := range ingresses {
 		for _, r := range i.Spec.Rules {
+			if r.HTTP == nil {
+				log.Warnf("Error in ingress: HTTP is nil")
+				continue
+			}
 			for _, pa := range r.HTTP.Paths {
 				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
@@ -171,12 +175,18 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					continue
 				}
 
+				if expression := service.Annotations["traefik.backend.circuitbreaker"]; expression != "" {
+					templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
+						Expression: expression,
+					}
+				}
 				if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
 				if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
 				}
+
 				protocol := "http"
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {

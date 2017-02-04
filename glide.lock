@@ -1,5 +1,5 @@
-hash: 0d092f94db69882e79d229c34b9483899e1208eaa7dd0acdd5184635cb0cdaaa
-updated: 2017-01-12T12:31:31.35220213+01:00
+hash: ccd56edd81d054a00b23493227ff0765b020aa1de24f8a9d9ff54a05c0223885
+updated: 2017-02-03T09:45:05.719219148+01:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -213,6 +213,10 @@ imports:
   - store/zookeeper
 - name: github.com/donovanhide/eventsource
   version: fd1de70867126402be23c306e1ce32828455d85b
+- name: github.com/eapache/channels
+  version: 47238d5aae8c0fefd518ef2bee46290909cf8263
+- name: github.com/eapache/queue
+  version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/edeckers/auroradnsclient
   version: 8b777c170cfd377aa16bb4368f093017dddef3f9
   subpackages:
