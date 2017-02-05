@@ -3,7 +3,8 @@ FROM golang:1.7
 RUN go get github.com/jteeuwen/go-bindata/... \
 && go get github.com/golang/lint/golint \
 && go get github.com/kisielk/errcheck \
-&& go get github.com/client9/misspell/cmd/misspell
+&& go get github.com/client9/misspell/cmd/misspell \
+&& go get github.com/mattfarina/glide-hash
 
 # Which docker version to test on
 ARG DOCKER_VERSION=1.10.3
