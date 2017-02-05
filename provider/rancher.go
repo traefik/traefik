@@ -146,7 +146,7 @@ func (provider *Rancher) getDomain(service rancherData) string {
 	if label, err := getServiceLabel(service, "traefik.domain"); err == nil {
 		return label
 	}
-	return ""
+	return provider.Domain
 }
 
 func (provider *Rancher) hasMaxConnLabels(service rancherData) bool {
@@ -176,16 +176,6 @@ func (provider *Rancher) getMaxConnExtractorFunc(service rancherData) string {
 		return label
 	}
 	return "request.host"
-}
-
-// Container Stuff
-func (provider *Rancher) getIPAddress(container *rancher.Container) string {
-	ipAdress := container.PrimaryIpAddress
-
-	if ipAdress != "" {
-		return ipAdress
-	}
-	return ""
 }
 
 func getServiceLabel(service rancherData, label string) (string, error) {
@@ -362,7 +352,6 @@ func parseRancherData(environments []*rancher.Environment, services []*rancher.S
 func (provider *Rancher) loadRancherConfig(services []rancherData) *types.Configuration {
 
 	var RancherFuncMap = template.FuncMap{
-		"getIPAddress":                provider.getIPAddress,
 		"getPort":                     provider.getPort,
 		"getBackend":                  provider.getBackend,
 		"getWeight":                   provider.getWeight,
@@ -427,22 +416,10 @@ func (provider *Rancher) serviceFilter(service rancherData) bool {
 		return false
 	}
 
-	/*
-		constraintTags := strings.Split(container.Labels["traefik.tags"], ",")
-		if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
-			if failingConstraint != nil {
-				log.Debugf("Container %v pruned by '%v' constraint", container.Name, failingConstraint.String())
-			}
-			return false
-		}
-	*/
-
 	if service.Health != "" && service.Health != "healthy" {
 		log.Debugf("Filtering unhealthy or starting service %s", service.Name)
 		return false
 	}
-
-	log.Debugf("Service %s is enabled!", service.Name)
 
 	return true
 }
@@ -453,5 +430,5 @@ func isServiceEnabled(service rancherData, exposedByDefault bool) bool {
 		var v = service.Labels["traefik.enable"]
 		return exposedByDefault && v != "false" || v == "true"
 	}
-	return false
+	return exposedByDefault
 }
