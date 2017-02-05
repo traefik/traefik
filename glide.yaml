@@ -33,7 +33,7 @@ import:
   subpackages:
   - sockets
   - tlsconfig
-- name: github.com/docker/go-units
+- package: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - package: github.com/docker/libkv
   subpackages:
@@ -128,5 +128,3 @@ import:
   version: v0.3
   subpackages:
   - proto
-- package: golang.org/x/oauth2
-  version: 314dd2c0bf3ebd592ec0d20847d27e79d0dbe8dd
