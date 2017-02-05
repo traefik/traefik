@@ -59,11 +59,11 @@ $ glide install --strip-vendor
 # generate (Only required to integrate other components such as web dashboard)
 $ go generate
 # Standard go build
-$ go build
-# Using gox to build multiple platform
-$ gox "linux darwin" "386 amd64 arm" \
-    -output="dist/traefik_{{.OS}}-{{.Arch}}"
+$ go build -o dist/traefik ./cmd/
+# To build cross-platform
+$ GOARCH=arm GOOS=linux CGO_ENABLED=0 go build -o "dist/traefik_$OS-$ARCH" ./cmd
 # run other commands like tests
+$ go test ./provider
 ```
 
 ### Tests
