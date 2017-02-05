@@ -1,0 +1,17 @@
+[backends]{{range .Instances}}
+    [backends.backend-{{ .Name }}.servers.server-{{ .Name }}{{ .ID }}]
+    url = "{{ .Protocol }}://{{ .Host }}:{{ .Port }}"
+    weight = {{ .Weight }}
+{{end}}
+
+[frontends]{{range filterFrontends .Instances}}
+  [frontends.frontend-{{ .Name }}]
+  backend = "backend-{{ .Name }}"
+  passHostHeader = {{ .PassHostHeader }}
+  priority = {{ .Priority }}
+  entryPoints = [{{range  .EntryPoints }}
+    "{{.}}",
+  {{end}}]
+    [frontends.frontend-{{ .Name }}.routes.route-frontend-{{ .Name }}]
+    rule = "{{getFrontendRule .}}"
+{{end}}

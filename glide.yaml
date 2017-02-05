@@ -119,7 +119,15 @@ import:
 - package: github.com/aws/aws-sdk-go
   version: v1.6.18
   subpackages:
+  - aws
+  - aws/credentials
+  - aws/defaults
+  - aws/ec2metadata
   - aws/endpoints
+  - aws/request
+  - aws/session
+  - service/ec2
+  - service/ecs
 - package: cloud.google.com/go
   version: v0.6.0
   subpackages:
