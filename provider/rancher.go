@@ -1,46 +1,45 @@
 package provider
 
 import (
-	rancher "github.com/rancher/go-rancher/client"
-	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/types"
-	"github.com/containous/traefik/log"
+	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/types"
+	rancher "github.com/rancher/go-rancher/client"
 	"time"
-	"github.com/BurntSushi/ty/fun"
 	//"context"
 	"errors"
-	"strings"
-	"strconv"
-	"math"
 	"fmt"
+	"math"
+	"strconv"
+	"strings"
 	"text/template"
 )
 
 var _ Provider = (*Rancher)(nil)
 
-// Rancher holds configurations of the Docker provider.
+// Rancher holds configurations of the Rancher provider.
 type Rancher struct {
 	BaseProvider     `mapstructure:",squash"`
-	Endpoint         string     `description:"Rancher server HTTP(S) endpoint."`
-	AccessKey	 string     `description:"Rancher server access key."`
-	SecretKey	 string     `description:"Rancher server Secret Key."`
-	ExposedByDefault bool       `description:"Expose Services by default"`
-	Domain           string     `description:"Default domain used"`
+	Endpoint         string `description:"Rancher server HTTP(S) endpoint."`
+	AccessKey        string `description:"Rancher server access key."`
+	SecretKey        string `description:"Rancher server Secret Key."`
+	ExposedByDefault bool   `description:"Expose Services by default"`
+	Domain           string `description:"Default domain used"`
 }
 
 type rancherData struct {
-	Name            string
-	Labels          map[string]string // List of labels set to container or service
-	Containers 	[]string
-	Health          string
+	Name       string
+	Labels     map[string]string // List of labels set to container or service
+	Containers []string
+	Health     string
 }
 
-func (r rancherData)String() string{
+func (r rancherData) String() string {
 	return fmt.Sprintf("{name:%s, labels:%v, containers: %v, health: %s}", r.Name, r.Labels, r.Containers, r.Health)
 }
-
 
 // Frontend Labels
 func (provider *Rancher) getPassHostHeader(service rancherData) string {
@@ -71,7 +70,6 @@ func (provider *Rancher) getFrontendRule(service rancherData) string {
 	return "Host:" + strings.ToLower(strings.Replace(service.Name, "/", "_", -1)) + "." + provider.Domain
 }
 
-
 func (provider *Rancher) getFrontendName(service rancherData) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 	return normalize(provider.getFrontendRule(service))
@@ -85,7 +83,6 @@ func (provider *Rancher) getLoadBalancerMethod(service rancherData) string {
 	return "wrr"
 }
 
-
 func (provider *Rancher) hasLoadBalancerLabel(service rancherData) bool {
 	_, errMethod := getServiceLabel(service, "traefik.backend.loadbalancer.method")
 	_, errSticky := getServiceLabel(service, "traefik.backend.loadbalancer.sticky")
@@ -94,7 +91,6 @@ func (provider *Rancher) hasLoadBalancerLabel(service rancherData) bool {
 	}
 	return true
 }
-
 
 func (provider *Rancher) hasCircuitBreakerLabel(service rancherData) bool {
 	if _, err := getServiceLabel(service, "traefik.backend.circuitbreaker.expression"); err != nil {
@@ -182,18 +178,15 @@ func (provider *Rancher) getMaxConnExtractorFunc(service rancherData) string {
 	return "request.host"
 }
 
-
 // Container Stuff
 func (provider *Rancher) getIPAddress(container *rancher.Container) string {
-	ipAdress := container.PrimaryIpAddress;
+	ipAdress := container.PrimaryIpAddress
 
-	if ipAdress != ""{
+	if ipAdress != "" {
 		return ipAdress
 	}
 	return ""
 }
-
-
 
 func getServiceLabel(service rancherData, label string) (string, error) {
 	for key, value := range service.Labels {
@@ -212,6 +205,8 @@ func (provider *Rancher) createClient() (*rancher.RancherClient, error) {
 	})
 }
 
+// Provide allows the provider to provide configurations to traefik
+// using the given configuration channel.
 func (provider *Rancher) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 
 	safe.Go(func() {
@@ -224,10 +219,8 @@ func (provider *Rancher) Provide(configurationChan chan<- types.ConfigMessage, p
 
 			var rancherData = parseRancherData(environments, services, container)
 
-			fmt.Printf("Rancher Data #2 %s", &rancherData)
-
 			if err != nil {
-				log.Errorf("Failed to create a client for docker, error: %s", err)
+				log.Errorf("Failed to create a client for rancher, error: %s", err)
 				return err
 			}
 
@@ -251,7 +244,7 @@ func (provider *Rancher) Provide(configurationChan chan<- types.ConfigMessage, p
 	return nil
 }
 
-func listRancherEnvironments(client *rancher.RancherClient)([]*rancher.Environment){
+func listRancherEnvironments(client *rancher.RancherClient) []*rancher.Environment {
 
 	var environmentList = []*rancher.Environment{}
 
@@ -271,8 +264,8 @@ func listRancherEnvironments(client *rancher.RancherClient)([]*rancher.Environme
 
 /*
 "io.rancher.stack.name"
- */
-func listRancherServices(client *rancher.RancherClient)([]*rancher.Service){
+*/
+func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
 
 	var servicesList = []*rancher.Service{}
 
@@ -290,48 +283,61 @@ func listRancherServices(client *rancher.RancherClient)([]*rancher.Service){
 	return servicesList
 }
 
-func listRancherContainer(client *rancher.RancherClient)([]*rancher.Container){
+func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
 
-	var containerList = []*rancher.Container{}
+	containerList := []*rancher.Container{}
 
 	container, err := client.Container.List(nil)
+
+	log.Debugf("first container len: %i", len(container.Data))
 
 	if err != nil {
 		log.Errorf("Cannot get Rancher Services %+v", err)
 	}
 
-	for k, singleContainer := range container.Data {
-		log.Debugf("Adding container with id %s", singleContainer.Id)
-		containerList = append(containerList, &container.Data[k])
+	valid := true
+
+	for valid {
+		for k, singleContainer := range container.Data {
+			log.Debugf("Adding container with id %s", singleContainer.Id)
+			containerList = append(containerList, &container.Data[k])
+		}
+
+		log.Debugf("calling container.Next()")
+
+		container, err = container.Next()
+
+		if err != nil {
+			log.Debugf("Error - Break it babe")
+			break
+		}
+
+		if container == nil || len(container.Data) == 0 {
+			log.Debugf("No more containers - valid false")
+			valid = false
+		} else {
+			log.Debugf("Next length %i", len(container.Data))
+		}
 	}
 
 	return containerList
 }
 
 func parseRancherData(environments []*rancher.Environment, services []*rancher.Service, containers []*rancher.Container) []rancherData {
-
-	log.Debugf("Starting to parse Rancher Data")
-
 	var rancherDataList []rancherData
 
 	for _, environment := range environments {
 
-		log.Debugf("Iterating trough environment %s", environment.Name)
-
 		for _, service := range services {
-
-			log.Debugf("Iterating trough service %s with id %s for environment %s", service.Name, service.AccountId, environment.Id)
-
 			if service.EnvironmentId != environment.Id {
-				log.Debugf("NO MATCH")
 				continue
 			}
 
 			rancherData := rancherData{
-				Name:	environment.Name + "/" + service.Name,
-				Health: service.HealthState,
-				Labels: make(map[string]string),
-				Containers:  []string{},
+				Name:       environment.Name + "/" + service.Name,
+				Health:     service.HealthState,
+				Labels:     make(map[string]string),
+				Containers: []string{},
 			}
 
 			for key, value := range service.LaunchConfig.Labels {
@@ -339,7 +345,6 @@ func parseRancherData(environments []*rancher.Environment, services []*rancher.S
 			}
 
 			for _, container := range containers {
-
 				for key, value := range container.Labels {
 
 					if key == "io.rancher.stack_service.name" && value == rancherData.Name {
@@ -377,7 +382,6 @@ func (provider *Rancher) loadRancherConfig(services []rancherData) *types.Config
 		"getSticky":                   provider.getSticky,
 	}
 
-
 	// filter services
 	filteredServices := fun.Filter(func(service rancherData) bool {
 		return provider.serviceFilter(service)
@@ -393,13 +397,10 @@ func (provider *Rancher) loadRancherConfig(services []rancherData) *types.Config
 		backends[backendName] = service
 	}
 
-	fmt.Printf("Frontends %v", frontends)
-	fmt.Printf("Backends %v", backends)
-
 	templateObjects := struct {
-		Frontends   map[string]rancherData
-		Backends    map[string]rancherData
-		Domain     string
+		Frontends map[string]rancherData
+		Backends  map[string]rancherData
+		Domain    string
 	}{
 		frontends,
 		backends,
@@ -418,7 +419,7 @@ func (provider *Rancher) serviceFilter(service rancherData) bool {
 
 	if service.Labels["traefik.port"] == "" {
 		log.Debugf("Filtering service %s without traefik.port label", service.Name)
-		return false;
+		return false
 	}
 
 	if !isServiceEnabled(service, provider.ExposedByDefault) {
@@ -427,13 +428,13 @@ func (provider *Rancher) serviceFilter(service rancherData) bool {
 	}
 
 	/*
-	constraintTags := strings.Split(container.Labels["traefik.tags"], ",")
-	if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
-		if failingConstraint != nil {
-			log.Debugf("Container %v pruned by '%v' constraint", container.Name, failingConstraint.String())
+		constraintTags := strings.Split(container.Labels["traefik.tags"], ",")
+		if ok, failingConstraint := provider.MatchConstraints(constraintTags); !ok {
+			if failingConstraint != nil {
+				log.Debugf("Container %v pruned by '%v' constraint", container.Name, failingConstraint.String())
+			}
+			return false
 		}
-		return false
-	}
 	*/
 
 	if service.Health != "" && service.Health != "healthy" {
@@ -446,24 +447,9 @@ func (provider *Rancher) serviceFilter(service rancherData) bool {
 	return true
 }
 
-func (provider *Rancher) containerFilter(container *rancher.Container, instanceIds []string) bool {
-
-	//log.Debugf("Filtering Containers for InstanceIds %v ", instanceIds)
-	for _, instanceId := range instanceIds {
-
-		//log.Debugf("Looking for instanceId %s on on container %s", instanceId, container.Id)
-		if container.Id == instanceId {
-			//log.Debugf("Found container with id %s", instanceId)
-			return true
-		}
-	}
-
-	return false
-}
-
 func isServiceEnabled(service rancherData, exposedByDefault bool) bool {
 
-	if service.Labels["traefik.enable"] != ""  {
+	if service.Labels["traefik.enable"] != "" {
 		var v = service.Labels["traefik.enable"]
 		return exposedByDefault && v != "false" || v == "true"
 	}
