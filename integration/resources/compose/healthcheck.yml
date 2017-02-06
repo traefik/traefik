@@ -1,5 +1,5 @@
 whoami1:
-  image: juliens/whoami
+  image: emilevauge/whoami
 
 whoami2:
-  image: juliens/whoami
+  image: emilevauge/whoami
