@@ -595,9 +595,9 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 	return dockerData
 }
 
-// Escape beginning slash "/", convert all others to dash "-"
+// Escape beginning slash "/", convert all others to dash "-", and convert underscores "_" to dash "-"
 func (provider *Docker) getSubDomain(name string) string {
-	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
+	return strings.Replace(strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1), "_", "-", -1)
 }
 
 func (provider *Docker) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
