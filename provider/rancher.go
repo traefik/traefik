@@ -19,6 +19,7 @@ import (
 )
 
 const (
+	// RancherDefaultWatchTime is the duration of the interval when polling rancher
 	RancherDefaultWatchTime = 15 * time.Second
 )
 
@@ -279,7 +280,7 @@ func listRancherEnvironments(client *rancher.RancherClient) []*rancher.Environme
 		log.Errorf("Cannot get Rancher Environments %+v", err)
 	}
 
-	for k, _ := range environments.Data {
+	for k := range environments.Data {
 		environmentList = append(environmentList, &environments.Data[k])
 	}
 
@@ -296,7 +297,7 @@ func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
 		log.Errorf("Cannot get Rancher Services %+v", err)
 	}
 
-	for k, _ := range services.Data {
+	for k := range services.Data {
 		servicesList = append(servicesList, &services.Data[k])
 	}
 
