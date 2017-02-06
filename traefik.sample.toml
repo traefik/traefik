@@ -868,6 +868,67 @@
 # filename = "boltdb.tmpl"
 
 
+################################################################
+# ECS configuration backend
+################################################################
+
+# Enable ECS configuration backend
+#
+# Optional
+#
+# [ecs]
+
+# ECS Cluster Name
+#
+# Optional
+# Default: "default"
+#
+# Cluster = "default"
+
+# Enable watch ECS changes
+#
+# Optional
+# Default: true
+#
+# Watch = true
+
+# Polling interval (in seconds)
+#
+# Optional
+# Default: 15
+#
+# RefreshSeconds = 15
+
+# Expose ECS services by default in traefik
+#
+# Optional
+# Default: true
+#
+# ExposedByDefault = false
+
+# Region to use when connecting to AWS
+#
+# Optional
+#
+# Region = "us-east-1"
+
+# AccessKeyID to use when connecting to AWS
+#
+# Optional
+#
+# AccessKeyID = "abc"
+
+# SecretAccessKey to use when connecting to AWS
+#
+# Optional
+#
+# SecretAccessKey = "123"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "ecs.tmpl"
 
 
 ################################################################

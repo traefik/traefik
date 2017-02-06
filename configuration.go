@@ -51,6 +51,7 @@ type GlobalConfiguration struct {
 	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
 	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
 	Eureka                    *provider.Eureka        `description:"Enable Eureka backend"`
+	ECS                       *provider.ECS           `description:"Enable ECS backend"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -392,6 +393,14 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMesos.ExposedByDefault = true
 	defaultMesos.Constraints = types.Constraints{}
 
+	//default ECS
+	var defaultECS provider.ECS
+	defaultECS.Watch = true
+	defaultECS.ExposedByDefault = true
+	defaultECS.RefreshSeconds = 15
+	defaultECS.Cluster = "default"
+	defaultECS.Constraints = types.Constraints{}
+
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
 		File:          &defaultFile,
@@ -404,6 +413,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Boltdb:        &defaultBoltDb,
 		Kubernetes:    &defaultKubernetes,
 		Mesos:         &defaultMesos,
+		ECS:           &defaultECS,
 		Retry:         &Retry{},
 	}
 	return &TraefikConfiguration{

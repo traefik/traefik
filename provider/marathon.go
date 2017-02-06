@@ -496,11 +496,6 @@ func (provider *Marathon) getCircuitBreakerExpression(application marathon.Appli
 
 func processPorts(application marathon.Application, task marathon.Task) []int {
 
-	// First using application ports
-	if len(application.Ports) > 0 {
-		return application.Ports
-	}
-
 	// Using default port configuration
 	if task.Ports != nil && len(task.Ports) > 0 {
 		return task.Ports

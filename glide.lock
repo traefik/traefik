@@ -1,8 +1,12 @@
-hash: ccd56edd81d054a00b23493227ff0765b020aa1de24f8a9d9ff54a05c0223885
-updated: 2017-02-03T09:45:05.719219148+01:00
+hash: a0b0abed2162e490cbe75a6a36ebaaf39e748ee80e419e879e7253679a0bc134
+updated: 2017-02-05T18:09:09.856588042Z
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
+- name: cloud.google.com/go
+  version: c116c7972ec94f148459a304d07a67ecbc770d4b
+  subpackages:
+  - compute/metadata
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
 - name: github.com/ArthurHlt/go-eureka-client
@@ -12,7 +16,7 @@ imports:
 - name: github.com/ArthurHlt/gominlog
   version: 068c01ce147ad68fca25ef3fa29ae5395ae273ab
 - name: github.com/aws/aws-sdk-go
-  version: 90dec2183a5f5458ee79cbaf4b8e9ab910bc81a6
+  version: 3f8f870ec9939e32b3372abf74d24e468bcd285d
   subpackages:
   - aws
   - aws/awserr
@@ -22,20 +26,28 @@ imports:
   - aws/corehandlers
   - aws/credentials
   - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
   - aws/defaults
   - aws/ec2metadata
+  - aws/endpoints
   - aws/request
   - aws/session
   - aws/signer/v4
-  - private/endpoints
   - private/protocol
+  - private/protocol/ec2query
+  - private/protocol/json/jsonutil
+  - private/protocol/jsonrpc
   - private/protocol/query
   - private/protocol/query/queryutil
   - private/protocol/rest
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
   - private/waiter
+  - service/ec2
+  - service/ecs
   - service/route53
+  - service/sts
 - name: github.com/Azure/azure-sdk-for-go
   version: 1620af6b32398bfc91827ceae54a8cc1f55df04d
   subpackages:
@@ -93,7 +105,7 @@ imports:
   - oauth2
   - oidc
 - name: github.com/coreos/go-systemd
-  version: 43e4800a6165b4e02bb2a36673c54b230d6f7b26
+  version: 48702e0da86bd25e76cfef347e2adeb434a0d0a6
   subpackages:
   - daemon
 - name: github.com/coreos/pkg
@@ -114,7 +126,7 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: 9ed569b5d1ac936e6494082958d63a6aa4fff99a
 - name: github.com/docker/distribution
-  version: 87917f30529e6a7fca8eaff2932424915fb11225
+  version: 325b0804fef3a66309d962357aac3c2ce3f4d329
   subpackages:
   - context
   - digest
@@ -123,14 +135,25 @@ imports:
   - registry/api/v2
   - registry/client
   - registry/client/auth
+  - registry/client/auth/challenge
   - registry/client/transport
   - registry/storage/cache
   - registry/storage/cache/memory
   - uuid
 - name: github.com/docker/docker
-  version: 534753663161334baba06f13b8efa4cad22b5bc5
+  version: 49bf474f9ed7ce7143a59d1964ff7b7fd9b52178
   subpackages:
+  - api/types
   - api/types/backend
+  - api/types/blkiodev
+  - api/types/container
+  - api/types/filters
+  - api/types/mount
+  - api/types/network
+  - api/types/registry
+  - api/types/strslice
+  - api/types/swarm
+  - api/types/versions
   - builder
   - builder/dockerignore
   - cliconfig
@@ -140,6 +163,7 @@ imports:
   - image/v1
   - layer
   - namesgenerator
+  - oci
   - opts
   - pkg/archive
   - pkg/chrootarchive
@@ -152,9 +176,9 @@ imports:
   - pkg/jsonlog
   - pkg/jsonmessage
   - pkg/longpath
-  - pkg/mflag
   - pkg/mount
   - pkg/namesgenerator
+  - pkg/plugingetter
   - pkg/plugins
   - pkg/plugins/transport
   - pkg/pools
@@ -172,11 +196,12 @@ imports:
   - pkg/term
   - pkg/term/windows
   - pkg/urlutil
+  - plugin/v2
   - reference
   - registry
   - runconfig/opts
 - name: github.com/docker/engine-api
-  version: 62043eb79d581a32ea849645277023c550732e52
+  version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
   subpackages:
   - client
   - client/transport
@@ -200,7 +225,7 @@ imports:
   - sockets
   - tlsconfig
 - name: github.com/docker/go-units
-  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/docker/leadership
   version: bfc7753dd48af19513b29deec23c364bf0f274eb
 - name: github.com/docker/libkv
@@ -292,8 +317,6 @@ imports:
   version: 9ec0427d51411407c0402b093a1771cb75af9679
   subpackages:
   - lib
-- name: github.com/jarcoal/httpmock
-  version: 145b10d659265440f062c31ea15326166bae56ee
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jonboulle/clockwork
@@ -341,7 +364,7 @@ imports:
 - name: github.com/Microsoft/go-winio
   version: ce2922f643c8fd76b46cadc7f404a06282678b34
 - name: github.com/miekg/dns
-  version: 5d001d020961ae1c184f9f8152fdc73810481677
+  version: 8060d9f51305bbe024b99679454e62f552cd0b0b
 - name: github.com/mitchellh/mapstructure
   version: f3009df150dadf309fdee4a54ed65c124afad715
 - name: github.com/mvdan/xurls
@@ -353,13 +376,14 @@ imports:
 - name: github.com/opencontainers/runc
   version: 1a81e9ab1f138c091fe5c86d0883f87716088527
   subpackages:
+  - libcontainer/configs
+  - libcontainer/devices
+  - libcontainer/system
   - libcontainer/user
 - name: github.com/ovh/go-ovh
   version: a8a4c0bc40e56322142649bda7b2b4bb15145b6e
   subpackages:
   - ovh
-- name: github.com/parnurzeal/gorequest
-  version: 045012d33ef41ea146c1b675df9296d0dc1a212d
 - name: github.com/pborman/uuid
   version: 5007efa264d92316c43112bc573e754bc889b7b1
 - name: github.com/pmezard/go-difflib
@@ -425,8 +449,6 @@ imports:
   - codec
 - name: github.com/unrolled/render
   version: 198ad4d8b8a4612176b804ca10555b222a086b40
-- name: github.com/urfave/negroni
-  version: fde5e16d32adc7ad637e9cd9ad21d4ebc6192535
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
@@ -488,7 +510,7 @@ imports:
   - blowfish
   - ocsp
 - name: golang.org/x/net
-  version: d4c55e66d8c3a2f3382d264b08e3e3454a66355a
+  version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
   subpackages:
   - context
   - context/ctxhttp
@@ -713,6 +735,12 @@ testImports:
   version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
 - name: github.com/libkermit/docker-check
   version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
+- name: github.com/opencontainers/runtime-spec
+  version: 06479209bdc0d4135911688c18157bd39bd99c22
+  subpackages:
+  - specs-go
+- name: github.com/pkg/errors
+  version: 01fa4104b9c248c8945d14d9f128454d5b28d595
 - name: github.com/vbatts/tar-split
   version: 6810cedb21b2c3d0b9bb8f9af12ff2dc7a2f14df
   subpackages:
@@ -727,3 +755,7 @@ testImports:
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
   version: 00f9fafb54d2244d291b86ab63d12c38bd5c3886
+- name: golang.org/x/time
+  version: a4bde12657593d5e90d0533a3e4fd95e635124cb
+  subpackages:
+  - rate

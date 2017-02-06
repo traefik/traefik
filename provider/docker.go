@@ -31,8 +31,6 @@ import (
 )
 
 const (
-	// DockerAPIVersion is a constant holding the version of the Docker API traefik will use
-	DockerAPIVersion string = "1.21"
 	// SwarmAPIVersion is a constant holding the version of the Docker API traefik will use
 	SwarmAPIVersion string = "1.24"
 	// SwarmDefaultWatchTime is the duration of the interval when polling docker
