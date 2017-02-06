@@ -1,5 +1,5 @@
-hash: a0b0abed2162e490cbe75a6a36ebaaf39e748ee80e419e879e7253679a0bc134
-updated: 2017-02-05T18:09:09.856588042Z
+hash: b2ac93355c3f551a75216a800337cee9321f6c9a04a18ab1fa8d8152e89b7595
+updated: 2017-02-05T23:00:24.927243212+01:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -300,6 +300,8 @@ imports:
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/gorilla/context
   version: 1ea25387ff6f684839d82767c1733ff4d4d15d0a
+- name: github.com/gorilla/websocket
+  version: c36f2fe5c330f0ac404b616b96c438b8616b1aaf
 - name: github.com/hashicorp/consul
   version: fce7d75609a04eeb9d4bf41c8dc592aac18fc97d
   subpackages:
@@ -370,7 +372,7 @@ imports:
 - name: github.com/mvdan/xurls
   version: fa08908f19eca8c491d68c6bd8b4b44faea6daf8
 - name: github.com/NYTimes/gziphandler
-  version: f6438dbf4a82c56684964b03956aa727b0d7816b
+  version: 6710af535839f57c687b62c4c23d649f9545d885
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
@@ -386,6 +388,8 @@ imports:
   - ovh
 - name: github.com/pborman/uuid
   version: 5007efa264d92316c43112bc573e754bc889b7b1
+- name: github.com/pkg/errors
+  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -414,6 +418,12 @@ imports:
   version: ab4b0d7ff424c462da486aef27f354cdeb29a319
   subpackages:
   - src/egoscale
+- name: github.com/rancher/go-rancher
+  version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e
+  subpackages:
+  - client
+- name: github.com/rcrowley/go-metrics
+  version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
 - name: github.com/ryanuber/go-glob
   version: 572520ed46dbddaed19ea3d9541bdd0494163693
 - name: github.com/samuel/go-zookeeper
@@ -739,8 +749,6 @@ testImports:
   version: 06479209bdc0d4135911688c18157bd39bd99c22
   subpackages:
   - specs-go
-- name: github.com/pkg/errors
-  version: 01fa4104b9c248c8945d14d9f128454d5b28d595
 - name: github.com/vbatts/tar-split
   version: 6810cedb21b2c3d0b9bb8f9af12ff2dc7a2f14df
   subpackages:
