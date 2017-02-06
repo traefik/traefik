@@ -110,7 +110,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
-        req.Host = fmt.Sprintf("%s.docker.localhost", strings.Replace(name, "_", "-", -1))
+	req.Host = fmt.Sprintf("%s.docker.localhost", strings.Replace(name, "_", "-", -1))
 	resp, err := client.Do(req)
 
 	c.Assert(err, checker.IsNil)
