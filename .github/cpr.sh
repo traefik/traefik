@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# git config --global alias.rpr '!sh .github/rpr.sh'
+# git config --global alias.cpr '!sh .github/cpr.sh'
 
 set -e # stop on error
 
-usage="$(basename "$0") pr remote/branch -- rebase a Pull Request against a remote branch"
+usage="$(basename "$0") pr -- Checkout a Pull Request locally"
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 1 ]; then
     echo "Illegal number of parameters"
     echo "$usage" >&2
     exit 1
@@ -18,18 +18,9 @@ set -x # echo on
 
 initial=$(git rev-parse --abbrev-ref HEAD)
 pr=$1
-base=$2
 remote=$(curl -s https://api.github.com/repos/containous/traefik/pulls/$pr | jq -r .head.repo.owner.login)
 branch=$(curl -s https://api.github.com/repos/containous/traefik/pulls/$pr | jq -r .head.ref)
 
-clean ()
-{
-    .github/rmpr.sh $pr
-}
-
-trap clean EXIT
-
-.github/cpr.sh $pr
-
-git rebase $base
-git push -f $remote $branch
+git remote add $remote git@github.com:$remote/traefik.git
+git fetch $remote $branch
+git checkout -t $remote/$branch
