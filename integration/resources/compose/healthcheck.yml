@@ -1,0 +1,5 @@
+whoami1:
+  image: juliens/whoami
+
+whoami2:
+  image: juliens/whoami
