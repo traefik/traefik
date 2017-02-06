@@ -54,7 +54,7 @@ func NewBackendHealthCheck(URL string, lb loadBalancer) *BackendHealthCheck {
 }
 
 //SetBackendsConfiguration set backends configuration
-func (hc *HealthCheck) SetBackendsConfiguration(backends map[string]*BackendHealthCheck, parentCtx context.Context) {
+func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendHealthCheck) {
 	hc.Backends = backends
 	if hc.cancel != nil {
 		hc.cancel()
