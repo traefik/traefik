@@ -401,6 +401,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultECS.Cluster = "default"
 	defaultECS.Constraints = types.Constraints{}
 
+	//default Rancher
+	var defaultRancher provider.Rancher
+	defaultRancher.Watch = true
+	defaultRancher.ExposedByDefault = true
+
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
 		File:          &defaultFile,
@@ -414,6 +419,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Kubernetes:    &defaultKubernetes,
 		Mesos:         &defaultMesos,
 		ECS:           &defaultECS,
+		Rancher:       &defaultRancher,
 		Retry:         &Retry{},
 	}
 
