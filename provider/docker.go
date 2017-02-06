@@ -52,6 +52,7 @@ type Docker struct {
 
 // dockerData holds the need data to the Docker provider
 type dockerData struct {
+	ServiceName     string
 	Name            string
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
@@ -129,7 +130,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 			log.Debugf("Docker connection established with docker %s (API %s)", version.Version, version.APIVersion)
 			var dockerDataList []dockerData
 			if provider.SwarmMode {
-				dockerDataList, err = listServices(ctx, dockerClient)
+				dockerDataList, err = provider.listServices(ctx, dockerClient)
 				if err != nil {
 					log.Errorf("Failed to list services for docker swarm mode, error %s", err)
 					return err
@@ -156,7 +157,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 						for {
 							select {
 							case <-ticker.C:
-								services, err := listServices(ctx, dockerClient)
+								services, err := provider.listServices(ctx, dockerClient)
 								if err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
 									return
@@ -256,8 +257,8 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 		"getMaxConnAmount":            provider.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     provider.getMaxConnExtractorFunc,
 		"getSticky":                   provider.getSticky,
+		"getIsBackendLBSwarm":         provider.getIsBackendLBSwarm,
 	}
-
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
 		return provider.containerFilter(container)
@@ -393,14 +394,14 @@ func (provider *Docker) getFrontendRule(container dockerData) string {
 	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
 	}
-	return "Host:" + provider.getSubDomain(container.Name) + "." + provider.Domain
+	return "Host:" + provider.getSubDomain(container.ServiceName) + "." + provider.Domain
 }
 
 func (provider *Docker) getBackend(container dockerData) string {
 	if label, err := getLabel(container, "traefik.backend"); err == nil {
 		return normalize(label)
 	}
-	return normalize(container.Name)
+	return normalize(container.ServiceName)
 }
 
 func (provider *Docker) getIPAddress(container dockerData) string {
@@ -455,8 +456,15 @@ func (provider *Docker) getWeight(container dockerData) string {
 }
 
 func (provider *Docker) getSticky(container dockerData) string {
-	if _, err := getLabel(container, "traefik.backend.loadbalancer.sticky"); err == nil {
-		return "true"
+	if label, err := getLabel(container, "traefik.backend.loadbalancer.sticky"); err == nil {
+		return label
+	}
+	return "false"
+}
+
+func (provider *Docker) getIsBackendLBSwarm(container dockerData) string {
+	if label, err := getLabel(container, "traefik.backend.loadbalancer.swarm"); err == nil {
+		return label
 	}
 	return "false"
 }
@@ -552,6 +560,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 
 	if container.ContainerJSONBase != nil {
 		dockerData.Name = container.ContainerJSONBase.Name
+		dockerData.ServiceName = dockerData.Name //Default ServiceName to be the container's Name.
 
 		if container.ContainerJSONBase.HostConfig != nil {
 			dockerData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
@@ -591,7 +600,7 @@ func (provider *Docker) getSubDomain(name string) string {
 	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
 }
 
-func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
+func (provider *Docker) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
 	if err != nil {
 		return []dockerData{}, err
@@ -612,11 +621,21 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 	}
 
 	var dockerDataList []dockerData
+	var dockerDataListTasks []dockerData
 
 	for _, service := range serviceList {
 		dockerData := parseService(service, networkMap)
+		useSwarmLB, _ := strconv.ParseBool(provider.getIsBackendLBSwarm(dockerData))
 
-		dockerDataList = append(dockerDataList, dockerData)
+		if useSwarmLB {
+			dockerDataList = append(dockerDataList, dockerData)
+		} else {
+			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dockerData, networkMap)
+
+			for _, dockerDataTask := range dockerDataListTasks {
+				dockerDataList = append(dockerDataList, dockerDataTask)
+			}
+		}
 	}
 	return dockerDataList, err
 
@@ -624,6 +643,7 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 
 func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) dockerData {
 	dockerData := dockerData{
+		ServiceName:     service.Spec.Annotations.Name,
 		Name:            service.Spec.Annotations.Name,
 		Labels:          service.Spec.Annotations.Labels,
 		NetworkSettings: networkSettings{},
@@ -648,7 +668,52 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 				} else {
 					log.Debug("Network not found, id: %s", virtualIP.NetworkID)
 				}
+			}
+		}
+	}
+	return dockerData
+}
 
+func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
+	serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource) ([]dockerData, error) {
+	serviceIDFilter := filters.NewArgs()
+	serviceIDFilter.Add("service", serviceID)
+	taskList, err := dockerClient.TaskList(ctx, dockertypes.TaskListOptions{Filter: serviceIDFilter})
+
+	if err != nil {
+		return []dockerData{}, err
+	}
+	var dockerDataList []dockerData
+
+	for _, task := range taskList {
+		dockerData := parseTasks(task, serviceDockerData, networkMap)
+		dockerDataList = append(dockerDataList, dockerData)
+	}
+	return dockerDataList, err
+}
+
+func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource) dockerData {
+	dockerData := dockerData{
+		ServiceName:     serviceDockerData.Name,
+		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
+		Labels:          serviceDockerData.Labels,
+		NetworkSettings: networkSettings{},
+	}
+
+	if task.NetworksAttachments != nil {
+		dockerData.NetworkSettings.Networks = make(map[string]*networkData)
+		for _, virtualIP := range task.NetworksAttachments {
+			if networkService, present := networkMap[virtualIP.Network.ID]; present {
+				// Not sure about this next loop - when would a task have multiple IP's for the same network?
+				for _, addr := range virtualIP.Addresses {
+					ip, _, _ := net.ParseCIDR(addr)
+					network := &networkData{
+						ID:   virtualIP.Network.ID,
+						Name: networkService.Name,
+						Addr: ip.String(),
+					}
+					dockerData.NetworkSettings.Networks[network.Name] = network
+				}
 			}
 		}
 	}
