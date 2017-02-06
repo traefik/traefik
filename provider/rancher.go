@@ -1,6 +1,9 @@
 package provider
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
@@ -8,14 +11,15 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	rancher "github.com/rancher/go-rancher/client"
-	"time"
-	//"context"
-	"errors"
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
+)
+
+const (
+	RancherDefaultWatchTime = 15 * time.Second
 )
 
 var _ Provider = (*Rancher)(nil)
@@ -202,7 +206,7 @@ func (provider *Rancher) Provide(configurationChan chan<- types.ConfigMessage, p
 	safe.Go(func() {
 		operation := func() error {
 			rancherClient, err := provider.createClient()
-			//ctx := context.Background()
+			ctx := context.Background()
 			var environments = listRancherEnvironments(rancherClient)
 			var services = listRancherServices(rancherClient)
 			var container = listRancherContainer(rancherClient)
@@ -218,6 +222,37 @@ func (provider *Rancher) Provide(configurationChan chan<- types.ConfigMessage, p
 			configurationChan <- types.ConfigMessage{
 				ProviderName:  "rancher",
 				Configuration: configuration,
+			}
+
+			if provider.Watch {
+				_, cancel := context.WithCancel(ctx)
+				ticker := time.NewTicker(RancherDefaultWatchTime)
+				pool.Go(func(stop chan bool) {
+					for {
+						select {
+						case <-ticker.C:
+
+							log.Debugf("Refreshing new Data from Rancher API")
+							var environments = listRancherEnvironments(rancherClient)
+							var services = listRancherServices(rancherClient)
+							var container = listRancherContainer(rancherClient)
+
+							rancherData := parseRancherData(environments, services, container)
+
+							configuration := provider.loadRancherConfig(rancherData)
+							if configuration != nil {
+								configurationChan <- types.ConfigMessage{
+									ProviderName:  "rancher",
+									Configuration: configuration,
+								}
+							}
+						case <-stop:
+							ticker.Stop()
+							cancel()
+							return
+						}
+					}
+				})
 			}
 
 			return nil
@@ -244,17 +279,13 @@ func listRancherEnvironments(client *rancher.RancherClient) []*rancher.Environme
 		log.Errorf("Cannot get Rancher Environments %+v", err)
 	}
 
-	for k, environment := range environments.Data {
-		log.Debugf("Adding environment with id %s", environment.Id)
+	for k, _ := range environments.Data {
 		environmentList = append(environmentList, &environments.Data[k])
 	}
 
 	return environmentList
 }
 
-/*
-"io.rancher.stack.name"
-*/
 func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
 
 	var servicesList = []*rancher.Service{}
@@ -265,8 +296,7 @@ func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
 		log.Errorf("Cannot get Rancher Services %+v", err)
 	}
 
-	for k, service := range services.Data {
-		log.Debugf("Adding service with id %s", service.Id)
+	for k, _ := range services.Data {
 		servicesList = append(servicesList, &services.Data[k])
 	}
 
@@ -288,25 +318,18 @@ func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
 	valid := true
 
 	for valid {
-		for k, singleContainer := range container.Data {
-			log.Debugf("Adding container with id %s", singleContainer.Id)
+		for k := range container.Data {
 			containerList = append(containerList, &container.Data[k])
 		}
-
-		log.Debugf("calling container.Next()")
 
 		container, err = container.Next()
 
 		if err != nil {
-			log.Debugf("Error - Break it babe")
 			break
 		}
 
 		if container == nil || len(container.Data) == 0 {
-			log.Debugf("No more containers - valid false")
 			valid = false
-		} else {
-			log.Debugf("Next length %i", len(container.Data))
 		}
 	}
 
