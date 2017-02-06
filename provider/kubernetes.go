@@ -19,6 +19,14 @@ import (
 
 var _ Provider = (*Kubernetes)(nil)
 
+const (
+	annotationFrontendRuleType = "traefik.frontend.rule.type"
+	ruleTypePathPrefixStrip    = "PathPrefixStrip"
+	ruleTypePathStrip          = "PathStrip"
+	ruleTypePath               = "Path"
+	ruleTypePathPrefix         = "PathPrefix"
+)
+
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
 	BaseProvider           `mapstructure:",squash"`
@@ -157,29 +165,22 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						}
 					}
 				}
-				if len(pa.Path) > 0 {
-					ruleType := i.Annotations["traefik.frontend.rule.type"]
 
-					switch strings.ToLower(ruleType) {
-					case "pathprefixstrip":
-						ruleType = "PathPrefixStrip"
-					case "pathstrip":
-						ruleType = "PathStrip"
-					case "path":
-						ruleType = "Path"
-					case "pathprefix":
-						ruleType = "PathPrefix"
-					case "":
-						ruleType = "PathPrefix"
-					default:
-						log.Warnf("Unknown RuleType %s for %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
-						ruleType = "PathPrefix"
+				if len(pa.Path) > 0 {
+					ruleType, unknown := getRuleTypeFromAnnotation(i.Annotations)
+					switch {
+					case unknown:
+						log.Warnf("Unknown RuleType '%s' for Ingress %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
+						fallthrough
+					case ruleType == "":
+						ruleType = ruleTypePathPrefix
 					}
 
 					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
 						Rule: ruleType + ":" + pa.Path,
 					}
 				}
+
 				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
 				if err != nil || !exists {
 					log.Warnf("Error retrieving service %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
@@ -294,4 +295,25 @@ func (provider *Kubernetes) loadConfig(templateObjects types.Configuration) *typ
 		log.Error(err)
 	}
 	return configuration
+}
+
+func getRuleTypeFromAnnotation(annotations map[string]string) (ruleType string, unknown bool) {
+	ruleType = annotations[annotationFrontendRuleType]
+	for _, knownRuleType := range []string{
+		ruleTypePathPrefixStrip,
+		ruleTypePathStrip,
+		ruleTypePath,
+		ruleTypePathPrefix,
+	} {
+		if strings.ToLower(ruleType) == strings.ToLower(knownRuleType) {
+			return knownRuleType, false
+		}
+	}
+
+	if ruleType != "" {
+		// Annotation is set but does not match anything we know.
+		unknown = true
+	}
+
+	return ruleType, unknown
 }
