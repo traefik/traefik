@@ -658,7 +658,15 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									continue frontend
 								}
 								if configuration.Backends[frontend.Backend].HealthCheck != nil {
-									backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, rebalancer)
+									var interval time.Duration
+									if configuration.Backends[frontend.Backend].HealthCheck.Interval != "" {
+										interval, err = time.ParseDuration(configuration.Backends[frontend.Backend].HealthCheck.Interval)
+										if err != nil {
+											log.Errorf("Wrong healthcheck interval: %s", err)
+											interval = time.Second * 30
+										}
+									}
+									backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, interval, rebalancer)
 								}
 							}
 						case types.Wrr:
@@ -684,7 +692,15 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								}
 							}
 							if configuration.Backends[frontend.Backend].HealthCheck != nil {
-								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, rr)
+								var interval time.Duration
+								if configuration.Backends[frontend.Backend].HealthCheck.Interval != "" {
+									interval, err = time.ParseDuration(configuration.Backends[frontend.Backend].HealthCheck.Interval)
+									if err != nil {
+										log.Errorf("Wrong healthcheck interval: %s", err)
+										interval = time.Second * 30
+									}
+								}
+								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, interval, rr)
 							}
 						}
 						maxConns := configuration.Backends[frontend.Backend].MaxConn
