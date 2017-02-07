@@ -136,3 +136,5 @@ import:
   version: v0.3
   subpackages:
   - proto
+- package: github.com/rancher/go-rancher
+  version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e

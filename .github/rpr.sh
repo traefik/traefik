@@ -24,6 +24,7 @@ branch=$(curl -s https://api.github.com/repos/containous/traefik/pulls/$pr | jq 
 
 clean ()
 {
+    git checkout $initial
     .github/rmpr.sh $pr
 }
 
