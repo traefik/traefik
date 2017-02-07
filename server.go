@@ -377,6 +377,9 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.ECS != nil {
 		server.providers = append(server.providers, server.globalConfiguration.ECS)
 	}
+	if server.globalConfiguration.Rancher != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Rancher)
+	}
 }
 
 func (server *Server) startProviders() {
