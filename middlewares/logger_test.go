@@ -145,7 +145,7 @@ func TestLoggerJSON(t *testing.T) {
 		if err := json.Unmarshal(logdata, &actual); err != nil {
 			assert.Nil(t, err)
 		} else {
-			// time isn't an interface currently, so just don't comapre them
+			// time isn't an interface currently, so just don't compare them
 			actual.Timestamp = ""
 			actual.ElapsedMillis = 0
 			assert.Equal(t, expected, actual)
