@@ -1,5 +1,5 @@
-hash: b2ac93355c3f551a75216a800337cee9321f6c9a04a18ab1fa8d8152e89b7595
-updated: 2017-02-05T23:00:24.927243212+01:00
+hash: a94aaaac36b5953a904ab271961baaafb367fdc2f9ef23cd74140ad5afc84281
+updated: 2017-02-08T15:44:41.533464297-08:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -9,6 +9,8 @@ imports:
   - compute/metadata
 - name: github.com/abbot/go-http-auth
   version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
+- name: github.com/armon/go-proxyproto
+  version: 3daa90aec0039a806299b9078f4422fee950f33c
 - name: github.com/ArthurHlt/go-eureka-client
   version: ba361cd0f9f571b4e871421423d2f02f5689c3d2
   subpackages:
@@ -422,8 +424,6 @@ imports:
   version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e
   subpackages:
   - client
-- name: github.com/rcrowley/go-metrics
-  version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
 - name: github.com/ryanuber/go-glob
   version: 572520ed46dbddaed19ea3d9541bdd0494163693
 - name: github.com/samuel/go-zookeeper
@@ -602,7 +602,7 @@ imports:
 - name: gopkg.in/yaml.v2
   version: bef53efd0c76e49e6de55ead051f886bea7e9420
 - name: k8s.io/client-go
-  version: 843f7c4f28b1f647f664f883697107d5c02c5acc
+  version: 1195e3a8ee1a529d53eed7c624527a68555ddf1f
   subpackages:
   - 1.5/discovery
   - 1.5/kubernetes

@@ -138,3 +138,4 @@ import:
   - proto
 - package: github.com/rancher/go-rancher
   version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e
+- package: github.com/armon/go-proxyproto

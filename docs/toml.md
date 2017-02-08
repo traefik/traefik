@@ -226,6 +226,12 @@ Supported filters:
 #   address = ":80"
 #   compress = true
 
+# To enable use parsing of ProxyProtocol:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   proxyprotocol = true
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
