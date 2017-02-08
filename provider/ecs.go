@@ -275,37 +275,48 @@ func (provider *ECS) listInstances(ctx context.Context, client *awsClient) ([]ec
 }
 
 func (provider *ECS) lookupEc2Instances(ctx context.Context, client *awsClient, containerArns []*string) ([]*ec2.Instance, error) {
-	req, containerResp := client.ecs.DescribeContainerInstancesRequest(&ecs.DescribeContainerInstancesInput{
-		ContainerInstances: containerArns,
-		Cluster:            &provider.Cluster,
-	})
-
-	if err := wrapAws(ctx, req); err != nil {
-		return nil, err
-	}
 
 	order := make(map[string]int)
+	instanceIds := make([]*string, len(containerArns))
+	instances := make([]*ec2.Instance, len(containerArns))
 	for i, arn := range containerArns {
 		order[*arn] = i
 	}
 
-	instanceIds := make([]*string, len(containerArns))
-	for i, container := range containerResp.ContainerInstances {
-		order[*container.Ec2InstanceId] = order[*container.ContainerInstanceArn]
-		instanceIds[i] = container.Ec2InstanceId
+	req, _ := client.ecs.DescribeContainerInstancesRequest(&ecs.DescribeContainerInstancesInput{
+		ContainerInstances: containerArns,
+		Cluster:            &provider.Cluster,
+	})
+
+	for ; req != nil; req = req.NextPage() {
+		if err := wrapAws(ctx, req); err != nil {
+			return nil, err
+		}
+
+		containerResp := req.Data.(*ecs.DescribeContainerInstancesOutput)
+		for i, container := range containerResp.ContainerInstances {
+			order[*container.Ec2InstanceId] = order[*container.ContainerInstanceArn]
+			instanceIds[i] = container.Ec2InstanceId
+		}
 	}
 
-	req, instancesResp := client.ec2.DescribeInstancesRequest(&ec2.DescribeInstancesInput{
+	req, _ = client.ec2.DescribeInstancesRequest(&ec2.DescribeInstancesInput{
 		InstanceIds: instanceIds,
 	})
 
-	if err := wrapAws(ctx, req); err != nil {
-		return nil, err
-	}
+	for ; req != nil; req = req.NextPage() {
+		if err := wrapAws(ctx, req); err != nil {
+			return nil, err
+		}
 
-	instances := make([]*ec2.Instance, len(containerArns))
-	for _, r := range instancesResp.Reservations {
-		instances[order[*r.Instances[0].InstanceId]] = r.Instances[0]
+		instancesResp := req.Data.(*ec2.DescribeInstancesOutput)
+		for _, r := range instancesResp.Reservations {
+			for _, i := range r.Instances {
+				if i.InstanceId != nil {
+					instances[order[*i.InstanceId]] = i
+				}
+			}
+		}
 	}
 	return instances, nil
 }
@@ -337,6 +348,23 @@ func (i ecsInstance) label(k string) string {
 func (provider *ECS) filterInstance(i ecsInstance) bool {
 	if len(i.container.NetworkBindings) == 0 {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if i.machine == nil ||
+		i.machine.State == nil ||
+		i.machine.State.Name == nil {
+		log.Debugf("Filtering ecs instance in an missing ec2 information %s (%s)", i.Name, i.ID)
+		return false
+	}
+
+	if *i.machine.State.Name != ec2.InstanceStateNameRunning {
+		log.Debugf("Filtering ecs instance in an incorrect state %s (%s) (state = %s)", i.Name, i.ID, *i.machine.State.Name)
+		return false
+	}
+
+	if i.machine.PrivateIpAddress == nil {
+		log.Debugf("Filtering ecs instance without an ip address %s (%s)", i.Name, i.ID)
 		return false
 	}
 
