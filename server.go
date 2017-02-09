@@ -533,9 +533,8 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 			proxyListener := &proxyproto.Listener{Listener: newListener}
 
 			return manners.NewWithOptions(manners.Options{Server: httpServer, Listener: proxyListener}), nil
-		} else {
-			return manners.NewWithServer(httpServer), nil
 		}
+		return manners.NewWithServer(httpServer), nil
 	}
 	gracefulServer, err := oldServer.HijackListener(&http.Server{
 		Addr:      entryPoint.Address,
