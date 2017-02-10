@@ -107,7 +107,6 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 		map[string]*types.Backend{},
 		map[string]*types.Frontend{},
 	}
-	PassHostHeader := provider.getPassHostHeader()
 	for _, i := range ingresses {
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
@@ -124,6 +123,18 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						},
 					}
 				}
+
+				PassHostHeader := provider.getPassHostHeader()
+
+				passHostHeaderAnnotation := i.Annotations["traefik.frontend.passHostHeader"]
+				switch passHostHeaderAnnotation {
+				case "true":
+					PassHostHeader = true
+				case "false":
+					PassHostHeader = false
+
+				}
+
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:        r.Host + pa.Path,
