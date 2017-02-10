@@ -31,6 +31,13 @@ func TestLoadIngresses(t *testing.T) {
 										ServicePort: intstr.FromInt(80),
 									},
 								},
+								{
+									Path: "/namedthing",
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service4",
+										ServicePort: intstr.FromString("https"),
+									},
+								},
 							},
 						},
 					},
@@ -103,6 +110,24 @@ func TestLoadIngresses(t *testing.T) {
 						Name: "http",
 						Port: 80,
 					},
+					{
+						Name: "https",
+						Port: 443,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service4",
+				UID:       "4",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP:    "10.0.0.4",
+				Type:         "ExternalName",
+				ExternalName: "example.com",
+				Ports: []v1.ServicePort{
 					{
 						Name: "https",
 						Port: 443,
@@ -221,6 +246,19 @@ func TestLoadIngresses(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"foo/namedthing": {
+				Servers: map[string]types.Server{
+					"https://example.com": {
+						URL:    "https://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
 			"bar": {
 				Servers: map[string]types.Server{
 					"2": {
@@ -251,6 +289,19 @@ func TestLoadIngresses(t *testing.T) {
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+			"foo/namedthing": {
+				Backend:        "foo/namedthing",
+				PassHostHeader: true,
+				Priority:       len("/namedthing"),
+				Routes: map[string]types.Route{
+					"/namedthing": {
+						Rule: "PathPrefix:/namedthing",
 					},
 					"foo": {
 						Rule: "Host:foo",
