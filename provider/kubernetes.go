@@ -218,7 +218,9 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 							if err != nil {
 								log.Errorf("Error while retrieving endpoints from k8s API %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
 								continue
-							} else if !exists {
+							}
+
+							if !exists {
 								log.Errorf("Service not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 								continue
 							}
