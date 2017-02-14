@@ -132,7 +132,8 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					PassHostHeader = true
 				case "false":
 					PassHostHeader = false
-
+				default:
+					log.Warnf("Unknown value of %s for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
 				}
 
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
