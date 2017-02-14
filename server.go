@@ -385,13 +385,14 @@ func (server *Server) configureProviders() {
 func (server *Server) startProviders() {
 	// start providers
 	for _, provider := range server.providers {
+		providerType := reflect.TypeOf(provider)
 		jsonConf, _ := json.Marshal(provider)
-		log.Infof("Starting provider %v %s", reflect.TypeOf(provider), jsonConf)
+		log.Infof("Starting provider %v %s", providerType, jsonConf)
 		currentProvider := provider
 		safe.Go(func() {
 			err := currentProvider.Provide(server.configurationChan, server.routinesPool, server.globalConfiguration.Constraints)
 			if err != nil {
-				log.Errorf("Error starting provider %s", err)
+				log.Errorf("Error starting provider %v: %s", providerType, err)
 			}
 		})
 	}

@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -30,7 +32,9 @@ const (
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
 	BaseProvider           `mapstructure:",squash"`
-	Endpoint               string         `description:"Kubernetes server endpoint"`
+	Endpoint               string         `description:"Kubernetes server endpoint (required for external cluster client)"`
+	Token                  string         `description:"Kubernetes bearer token (not needed for in-cluster client)"`
+	CertAuthFilePath       string         `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
 	DisablePassHostHeaders bool           `description:"Kubernetes disable PassHost Headers"`
 	Namespaces             k8s.Namespaces `description:"Kubernetes namespaces"`
 	LabelSelector          string         `description:"Kubernetes api label selector to use"`
@@ -38,12 +42,18 @@ type Kubernetes struct {
 }
 
 func (provider *Kubernetes) newK8sClient() (k8s.Client, error) {
+	withEndpoint := ""
 	if provider.Endpoint != "" {
-		log.Infof("Creating in cluster Kubernetes client with endpoint %v", provider.Endpoint)
-		return k8s.NewInClusterClientWithEndpoint(provider.Endpoint)
+		withEndpoint = fmt.Sprintf(" with endpoint %v", provider.Endpoint)
 	}
-	log.Info("Creating in cluster Kubernetes client")
-	return k8s.NewInClusterClient()
+
+	if os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "" {
+		log.Infof("Creating in-cluster Kubernetes client%s\n", withEndpoint)
+		return k8s.NewInClusterClient(provider.Endpoint)
+	}
+
+	log.Infof("Creating cluster-external Kubernetes client%s\n", withEndpoint)
+	return k8s.NewExternalClusterClient(provider.Endpoint, provider.Token, provider.CertAuthFilePath)
 }
 
 // Provide allows the provider to provide configurations to traefik

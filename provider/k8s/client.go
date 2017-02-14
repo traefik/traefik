@@ -1,6 +1,9 @@
 package k8s
 
 import (
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"time"
 
 	"k8s.io/client-go/1.5/kubernetes"
@@ -39,32 +42,48 @@ type clientImpl struct {
 	clientset *kubernetes.Clientset
 }
 
-// NewInClusterClient returns a new Kubernetes client that expect to run inside the cluster
-func NewInClusterClient() (Client, error) {
+// NewInClusterClient returns a new Kubernetes client that is expected to run
+// inside the cluster.
+func NewInClusterClient(endpoint string) (Client, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, err
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create in-cluster configuration: %s", err)
 	}
 
-	return &clientImpl{
-		clientset: clientset,
-	}, nil
+	if endpoint != "" {
+		config.Host = endpoint
+	}
+
+	return createClientFromConfig(config)
 }
 
-// NewInClusterClientWithEndpoint is the same as NewInClusterClient but uses the provided endpoint URL
-func NewInClusterClientWithEndpoint(endpoint string) (Client, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
+// NewExternalClusterClient returns a new Kubernetes client that may run outside
+// of the cluster.
+// The endpoint parameter must not be empty.
+func NewExternalClusterClient(endpoint, token, caFilePath string) (Client, error) {
+	if endpoint == "" {
+		return nil, errors.New("endpoint missing for external cluster client")
 	}
 
-	config.Host = endpoint
+	config := &rest.Config{
+		Host:        endpoint,
+		BearerToken: token,
+	}
 
-	clientset, err := kubernetes.NewForConfig(config)
+	if caFilePath != "" {
+		caData, err := ioutil.ReadFile(caFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read CA file %s: %s", caFilePath, err)
+		}
+
+		config.TLSClientConfig = rest.TLSClientConfig{CAData: caData}
+	}
+
+	return createClientFromConfig(config)
+}
+
+func createClientFromConfig(c *rest.Config) (Client, error) {
+	clientset, err := kubernetes.NewForConfig(c)
 	if err != nil {
 		return nil, err
 	}

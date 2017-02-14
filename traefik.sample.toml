@@ -665,17 +665,46 @@
 
 # Kubernetes server endpoint
 #
-# When deployed as a replication controller in Kubernetes,
-# Traefik will use env variable KUBERNETES_SERVICE_HOST
-# and KUBERNETES_SERVICE_PORT_HTTPS as endpoint
+# When deployed as a replication controller in Kubernetes, Traefik will use
+# the environment variables KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT
+# to construct the endpoint.
 # Secure token will be found in /var/run/secrets/kubernetes.io/serviceaccount/token
 # and SSL CA cert in /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 #
+# The endpoint may be given to override the environment variable values.
+#
+# When the environment variables are not found, Traefik will try to connect to
+# the Kubernetes API server with an external-cluster client. In this case, the
+# endpoint is required. Specifically, it may be set to the URL used by
+# `kubectl proxy` to connect to a Kubernetes cluster from localhost.
+#
+# Optional for in-cluster configuration, required otherwise
+# Default: empty
+#
+# endpoint = "http://127.0.0.1:8001"
+
+# Bearer token used for the Kubernetes client configuration.
+#
 # Optional
+# Default: empty
 #
-# endpoint = "http://localhost:8080"
+# token = "my token"
+
+# Path to the certificate authority file used for the Kubernetes client
+# configuration.
+#
+# Optional
+# Default: empty
+#
+# certAuthFilePath = "/my/ca.crt"
+
+# Array of namespaces to watch.
+#
+# Optional
+# Default: ["default"].
+#
 # namespaces = ["default"]
-#
+
 # See: http://kubernetes.io/docs/user-guide/labels/#list-and-watch-filtering
 # labelselector = "A and not B"
 
