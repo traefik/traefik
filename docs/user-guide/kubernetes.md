@@ -428,3 +428,48 @@ You should now be able to visit the websites in your browser.
 * [cheeses.local/stilton](http://cheeses.local/stilton/)
 * [cheeses.local/cheddar](http://cheeses.local/cheddar/)
 * [cheeses.local/wensleydale](http://cheeses.local/wensleydale/)
+
+## Disable passing the Host header
+By default Træfɪk will pass the incoming Host header on to the upstream resource. There
+are times however where you may not want this to be the case. For example if your service
+is of the ExternalName type.
+
+To disable passing the Host header set the "traefik.frontend.passHostHeader" annotation on
+your ingress to "false".
+
+Here is an example ingress definition:
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example
+  annotations:
+    traefik.frontend.passHostHeader: "false"
+spec:
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /static
+        backend:
+          serviceName: static
+          servicePort: https
+```
+
+And an example service definition:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: static
+spec:
+  ports:
+  - name: https
+    port: 443
+  type: ExternalName
+  externalName: static.otherdomain.com
+```
+
+If you were to visit example.com/static the request would then be passed onto
+static.otherdomain.com/static and static.otherdomain.com would receive the
+request with the Host header being static.otherdomain.com.
