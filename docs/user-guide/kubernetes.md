@@ -434,8 +434,15 @@ By default Træfɪk will pass the incoming Host header on to the upstream resour
 are times however where you may not want this to be the case. For example if your service
 is of the ExternalName type.
 
-To disable passing the Host header set the "traefik.frontend.passHostHeader" annotation on
-your ingress to "false".
+### Disable entirely
+Add the following to your toml config:
+```toml
+disablePassHostHeaders = true
+```
+
+### Disable per ingress
+To disable passing the Host header per ingress resource set the "traefik.frontend.passHostHeader"
+annotation on your ingress to "false".
 
 Here is an example ingress definition:
 ```yaml
@@ -473,3 +480,7 @@ spec:
 If you were to visit example.com/static the request would then be passed onto
 static.otherdomain.com/static and static.otherdomain.com would receive the
 request with the Host header being static.otherdomain.com.
+
+Note: The per ingress annotation overides whatever the global value is set to. So you
+could set `disablePassHostHeaders` to true in your toml file and then enable passing
+the host header per ingress if you wanted.
