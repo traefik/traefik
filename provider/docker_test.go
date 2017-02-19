@@ -247,7 +247,7 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 			},
 			expected: "10.11.12.13",
 			networks: map[string]*docker.NetworkResource{
-				"1": &docker.NetworkResource{},
+				"1": {},
 			},
 		},
 		{
@@ -271,7 +271,7 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 			},
 			expected: "10.11.12.13",
 			networks: map[string]*docker.NetworkResource{
-				"1": &docker.NetworkResource{},
+				"1": {},
 			},
 		},
 		{
@@ -299,8 +299,8 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 			},
 			expected: "10.11.12.14",
 			networks: map[string]*docker.NetworkResource{
-				"1": &docker.NetworkResource{},
-				"2": &docker.NetworkResource{},
+				"1": {},
+				"2": {},
 			},
 		},
 		{
@@ -329,8 +329,8 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 			},
 			expected: "127.0.0.1",
 			networks: map[string]*docker.NetworkResource{
-				"1": &docker.NetworkResource{},
-				"2": &docker.NetworkResource{},
+				"1": {},
+				"2": {},
 			},
 		},
 		{
@@ -350,7 +350,7 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 			},
 			expected: "10.11.12.14",
 			networks: map[string]*docker.NetworkResource{
-				"2": &docker.NetworkResource{},
+				"2": {},
 			},
 		},
 		{
@@ -380,7 +380,7 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 			},
 			expected: "",
 			networks: map[string]*docker.NetworkResource{
-				"2": &docker.NetworkResource{},
+				"2": {},
 			},
 		},
 		{
@@ -1109,7 +1109,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				},
 			},
 			networks: map[string]*docker.NetworkResource{
-				"1": &docker.NetworkResource{},
+				"1": {},
 			},
 		},
 		{
@@ -1200,7 +1200,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				},
 			},
 			networks: map[string]*docker.NetworkResource{
-				"1": &docker.NetworkResource{},
+				"1": {},
 			},
 		},
 		{
@@ -1267,7 +1267,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				},
 			},
 			networks: map[string]*docker.NetworkResource{
-				"1": &docker.NetworkResource{},
+				"1": {},
 			},
 		},
 	}
