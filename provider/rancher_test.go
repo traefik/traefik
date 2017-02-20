@@ -89,6 +89,12 @@ func TestRancherGetFrontendRule(t *testing.T) {
 		},
 		{
 			service: rancherData{
+				Name: "foo/bar",
+			},
+			expected: "Host:foo.bar.rancher.localhost",
+		},
+		{
+			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
 					"traefik.frontend.rule": "Host:foo.bar.com",
@@ -388,7 +394,7 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 		{
 			services: []rancherData{
 				{
-					Name: "test-service",
+					Name: "test/service",
 					Labels: map[string]string{
 						"traefik.port": "80",
 					},
@@ -405,7 +411,7 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test-service-rancher-localhost": {
-							Rule: "Host:test-service.rancher.localhost",
+							Rule: "Host:test.service.rancher.localhost",
 						},
 					},
 				},

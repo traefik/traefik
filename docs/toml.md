@@ -1453,3 +1453,72 @@ Træfɪk needs the following policy to read ECS information:
     ]
 }
 ```
+
+# Rancher backend
+
+Træfɪk can be configured to use Rancher as a backend configuration:
+
+
+```toml
+################################################################
+# Rancher configuration backend
+################################################################
+
+# Enable Rancher configuration backend
+#
+# Optional
+#
+[rancher]
+
+# Default domain used.
+# Can be overridden by setting the "traefik.domain" label on an service.
+#
+# Required
+#
+domain = "rancher.localhost"
+
+# Enable watch Rancher changes
+#
+# Optional
+# Default: true
+#
+Watch = true
+
+# Expose Rancher services by default in traefik
+#
+# Optional
+# Default: true
+#
+ExposedByDefault = false
+
+# Endpoint to use when connecting to Rancher
+#
+# Optional
+# Endpoint = "http://rancherserver.example.com"
+
+# AccessKey to use when connecting to Rancher
+#
+# Optional
+# AccessKey = "XXXXXXXXX"
+
+# SecretKey to use when connecting to Rancher
+#
+# Optional
+# SecretKey = "XXXXXXXXXXX"
+
+```
+
+If you're deploying traefik as a service within rancher, you can alternatively set these labels on the service to let it only fetch data of its current environment. The settings `endpoint`, `accesskey` and `secretkey` can be omitted then.
+
+- `io.rancher.container.create_agent=true`
+- `io.rancher.container.agent.role=environment`
+
+Labels can be used on task containers to override default behaviour:
+
+- `traefik.protocol=https`: override the default `http` protocol
+- `traefik.weight=10`: assign this weight to the container
+- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
+- `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
+- `traefik.frontend.priority=10`: override default frontend priority
+- `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
