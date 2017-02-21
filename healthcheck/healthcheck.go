@@ -26,6 +26,7 @@ func GetHealthCheck() *HealthCheck {
 // BackendHealthCheck HealthCheck configuration for a backend
 type BackendHealthCheck struct {
 	URL          string
+	Interval     time.Duration
 	DisabledURLs []*url.URL
 	lb           loadBalancer
 }
@@ -49,8 +50,8 @@ func newHealthCheck() *HealthCheck {
 }
 
 // NewBackendHealthCheck Instantiate a new BackendHealthCheck
-func NewBackendHealthCheck(URL string, lb loadBalancer) *BackendHealthCheck {
-	return &BackendHealthCheck{URL, nil, lb}
+func NewBackendHealthCheck(URL string, interval time.Duration, lb loadBalancer) *BackendHealthCheck {
+	return &BackendHealthCheck{URL, interval, nil, lb}
 }
 
 //SetBackendsConfiguration set backends configuration
@@ -70,7 +71,7 @@ func (hc *HealthCheck) execute(ctx context.Context) {
 		currentBackendID := backendID
 		safe.Go(func() {
 			for {
-				ticker := time.NewTicker(time.Second * 30)
+				ticker := time.NewTicker(currentBackend.Interval)
 				select {
 				case <-ctx.Done():
 					log.Debugf("Stopping all current Healthcheck goroutines")
