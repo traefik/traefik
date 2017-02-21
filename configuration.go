@@ -105,7 +105,7 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?")
+	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?\\s*(?:ProxyProtocol:(?P<ProxyProtocol>\\S*))?")
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
 		return errors.New("Bad EntryPoints format: " + value)
@@ -149,11 +149,17 @@ func (ep *EntryPoints) Set(value string) error {
 		compress = strings.EqualFold(result["Compress"], "enable") || strings.EqualFold(result["Compress"], "on")
 	}
 
+	proxyprotocol := false
+	if len(result["ProxyProtocol"]) > 0 {
+		proxyprotocol = strings.EqualFold(result["ProxyProtocol"], "enable") || strings.EqualFold(result["ProxyProtocol"], "on")
+	}
+
 	(*ep)[result["Name"]] = &EntryPoint{
-		Address:  result["Address"],
-		TLS:      tls,
-		Redirect: redirect,
-		Compress: compress,
+		Address:       result["Address"],
+		TLS:           tls,
+		Redirect:      redirect,
+		Compress:      compress,
+		ProxyProtocol: proxyprotocol,
 	}
 
 	return nil
@@ -176,12 +182,13 @@ func (ep *EntryPoints) Type() string {
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
-	Network  string
-	Address  string
-	TLS      *TLS
-	Redirect *Redirect
-	Auth     *types.Auth
-	Compress bool
+	Network       string
+	Address       string
+	TLS           *TLS
+	Redirect      *Redirect
+	Auth          *types.Auth
+	Compress      bool
+	ProxyProtocol bool
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL

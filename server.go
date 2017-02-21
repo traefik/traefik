@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,6 +21,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/armon/go-proxyproto"
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
@@ -518,12 +520,21 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 	}
 
 	if oldServer == nil {
-		return manners.NewWithServer(
-			&http.Server{
-				Addr:      entryPoint.Address,
-				Handler:   negroni,
-				TLSConfig: tlsConfig,
-			}), nil
+		httpServer := &http.Server{
+			Addr:      entryPoint.Address,
+			Handler:   negroni,
+			TLSConfig: tlsConfig,
+		}
+		if entryPoint.ProxyProtocol {
+			newListener, err := net.Listen("tcp", entryPoint.Address)
+			if err != nil {
+				log.Error("Error opening listener ", err)
+			}
+			proxyListener := &proxyproto.Listener{Listener: newListener}
+
+			return manners.NewWithOptions(manners.Options{Server: httpServer, Listener: proxyListener}), nil
+		}
+		return manners.NewWithServer(httpServer), nil
 	}
 	gracefulServer, err := oldServer.HijackListener(&http.Server{
 		Addr:      entryPoint.Address,
