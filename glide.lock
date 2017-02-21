@@ -1,5 +1,5 @@
 hash: b2ac93355c3f551a75216a800337cee9321f6c9a04a18ab1fa8d8152e89b7595
-updated: 2017-02-05T23:00:24.927243212+01:00
+updated: 2017-02-20T16:04:18.834166585+01:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -258,7 +258,7 @@ imports:
   - log
   - swagger
 - name: github.com/gambol99/go-marathon
-  version: 9ab64d9f0259e8800911d92ebcd4d5b981917919
+  version: 6b00a5b651b1beb2c6821863f7c60df490bd46c8
 - name: github.com/ghodss/yaml
   version: 04f313413ffd65ce25f2541bfd2b2ceec5c0908c
 - name: github.com/go-ini/ini
@@ -422,8 +422,6 @@ imports:
   version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e
   subpackages:
   - client
-- name: github.com/rcrowley/go-metrics
-  version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
 - name: github.com/ryanuber/go-glob
   version: 572520ed46dbddaed19ea3d9541bdd0494163693
 - name: github.com/samuel/go-zookeeper
@@ -602,7 +600,7 @@ imports:
 - name: gopkg.in/yaml.v2
   version: bef53efd0c76e49e6de55ead051f886bea7e9420
 - name: k8s.io/client-go
-  version: 843f7c4f28b1f647f664f883697107d5c02c5acc
+  version: 1195e3a8ee1a529d53eed7c624527a68555ddf1f
   subpackages:
   - 1.5/discovery
   - 1.5/kubernetes
