@@ -329,7 +329,7 @@
 #
 # To enable Traefik to export internal metrics to Prometheus
 # [web.metrics.prometheus]
-#   Buckets=[0.1,0.3,1.2,5]
+#   Buckets=[0.1,0.3,1.2,5.0]
 #
 
 # To enable basic auth on the webui
