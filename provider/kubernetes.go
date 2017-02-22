@@ -107,7 +107,6 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 		map[string]*types.Backend{},
 		map[string]*types.Frontend{},
 	}
-	PassHostHeader := provider.getPassHostHeader()
 	for _, i := range ingresses {
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
@@ -124,6 +123,19 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						},
 					}
 				}
+
+				PassHostHeader := provider.getPassHostHeader()
+
+				passHostHeaderAnnotation := i.Annotations["traefik.frontend.passHostHeader"]
+				switch passHostHeaderAnnotation {
+				case "true":
+					PassHostHeader = true
+				case "false":
+					PassHostHeader = false
+				default:
+					log.Warnf("Unknown value of %s for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
+				}
+
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:        r.Host + pa.Path,
@@ -193,28 +205,44 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						if port.Port == 443 {
 							protocol = "https"
 						}
-						endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-						if err != nil || !exists {
-							log.Errorf("Error retrieving endpoints %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
-							continue
-						}
-						if len(endpoints.Subsets) == 0 {
-							log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-							templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
-								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
+						if service.Spec.Type == "ExternalName" {
+							url := protocol + "://" + service.Spec.ExternalName
+							name := url
+
+							templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+								URL:    url,
 								Weight: 1,
 							}
 						} else {
-							for _, subset := range endpoints.Subsets {
-								for _, address := range subset.Addresses {
-									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
-									name := url
-									if address.TargetRef != nil && address.TargetRef.Name != "" {
-										name = address.TargetRef.Name
-									}
-									templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
-										URL:    url,
-										Weight: 1,
+							endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+							if err != nil {
+								log.Errorf("Error while retrieving endpoints from k8s API %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
+								continue
+							}
+
+							if !exists {
+								log.Errorf("Service not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								continue
+							}
+
+							if len(endpoints.Subsets) == 0 {
+								log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
+									URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
+									Weight: 1,
+								}
+							} else {
+								for _, subset := range endpoints.Subsets {
+									for _, address := range subset.Addresses {
+										url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+										name := url
+										if address.TargetRef != nil && address.TargetRef.Name != "" {
+											name = address.TargetRef.Name
+										}
+										templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+											URL:    url,
+											Weight: 1,
+										}
 									}
 								}
 							}
