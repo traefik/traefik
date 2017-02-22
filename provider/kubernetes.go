@@ -108,6 +108,12 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 		map[string]*types.Frontend{},
 	}
 	for _, i := range ingresses {
+		ingressClass := i.Annotations["kubernetes.io/ingress.class"]
+
+		if ingressClass != "" && strings.ToLower(ingressClass) != "traefik" {
+			continue
+		}
+
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
 				log.Warnf("Error in ingress: HTTP is nil")
