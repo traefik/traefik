@@ -106,7 +106,6 @@ func (provider *ConsulCatalog) watchServices(stopCh <-chan struct{}) <-chan map[
 			}
 			opts.WaitIndex = meta.LastIndex
 
-
 			data, _, err := catalog.Services(&api.QueryOptions{})
 			if err != nil {
 				log.WithError(err).Errorf("Failed to list services")
