@@ -37,6 +37,9 @@ func makeEcsInstance(containerDef *ecs.ContainerDefinition) ecsInstance {
 		containerDefinition: containerDef,
 		machine: &ec2.Instance{
 			PrivateIpAddress: aws.String("10.0.0.0"),
+			State: &ec2.InstanceState{
+				Name: aws.String(ec2.InstanceStateNameRunning),
+			},
 		},
 	}
 }
@@ -70,10 +73,10 @@ func TestEcsProtocol(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
+	for i, c := range cases {
 		value := c.instanceInfo.Protocol()
 		if value != c.expected {
-			t.Fatalf("Should have been %s, got %s", c.expected, value)
+			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
 		}
 	}
 }
@@ -89,10 +92,10 @@ func TestEcsHost(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
+	for i, c := range cases {
 		value := c.instanceInfo.Host()
 		if value != c.expected {
-			t.Fatalf("Should have been %s, got %s", c.expected, value)
+			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
 		}
 	}
 }
@@ -108,10 +111,10 @@ func TestEcsPort(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
+	for i, c := range cases {
 		value := c.instanceInfo.Port()
 		if value != c.expected {
-			t.Fatalf("Should have been %s, got %s", c.expected, value)
+			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
 		}
 	}
 }
@@ -133,10 +136,10 @@ func TestEcsWeight(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
+	for i, c := range cases {
 		value := c.instanceInfo.Weight()
 		if value != c.expected {
-			t.Fatalf("Should have been %s, got %s", c.expected, value)
+			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
 		}
 	}
 }
@@ -158,10 +161,10 @@ func TestEcsPassHostHeader(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
+	for i, c := range cases {
 		value := c.instanceInfo.PassHostHeader()
 		if value != c.expected {
-			t.Fatalf("Should have been %s, got %s", c.expected, value)
+			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
 		}
 	}
 }
@@ -183,10 +186,10 @@ func TestEcsPriority(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
+	for i, c := range cases {
 		value := c.instanceInfo.Priority()
 		if value != c.expected {
-			t.Fatalf("Should have been %s, got %s", c.expected, value)
+			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
 		}
 	}
 }
@@ -214,10 +217,94 @@ func TestEcsEntryPoints(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
+	for i, c := range cases {
 		value := c.instanceInfo.EntryPoints()
 		if !reflect.DeepEqual(value, c.expected) {
-			t.Fatalf("Should have been %s, got %s", c.expected, value)
+			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+		}
+	}
+}
+
+func TestFilterInstance(t *testing.T) {
+
+	nilPrivateIP := simpleEcsInstance(map[string]*string{})
+	nilPrivateIP.machine.PrivateIpAddress = nil
+
+	nilMachine := simpleEcsInstance(map[string]*string{})
+	nilMachine.machine = nil
+
+	nilMachineState := simpleEcsInstance(map[string]*string{})
+	nilMachineState.machine.State = nil
+
+	nilMachineStateName := simpleEcsInstance(map[string]*string{})
+	nilMachineStateName.machine.State.Name = nil
+
+	invalidMachineState := simpleEcsInstance(map[string]*string{})
+	invalidMachineState.machine.State.Name = aws.String(ec2.InstanceStateNameStopped)
+
+	cases := []struct {
+		expected         bool
+		exposedByDefault bool
+		instanceInfo     ecsInstance
+	}{
+		{
+			expected:         true,
+			exposedByDefault: true,
+			instanceInfo:     simpleEcsInstance(map[string]*string{}),
+		},
+		{
+			expected:         false,
+			exposedByDefault: false,
+			instanceInfo:     simpleEcsInstance(map[string]*string{}),
+		},
+		{
+			expected:         false,
+			exposedByDefault: true,
+			instanceInfo: simpleEcsInstance(map[string]*string{
+				"traefik.enable": aws.String("false"),
+			}),
+		},
+		{
+			expected:         true,
+			exposedByDefault: false,
+			instanceInfo: simpleEcsInstance(map[string]*string{
+				"traefik.enable": aws.String("true"),
+			}),
+		},
+		{
+			expected:         false,
+			exposedByDefault: true,
+			instanceInfo:     nilPrivateIP,
+		},
+		{
+			expected:         false,
+			exposedByDefault: true,
+			instanceInfo:     nilMachine,
+		},
+		{
+			expected:         false,
+			exposedByDefault: true,
+			instanceInfo:     nilMachineState,
+		},
+		{
+			expected:         false,
+			exposedByDefault: true,
+			instanceInfo:     nilMachineStateName,
+		},
+		{
+			expected:         false,
+			exposedByDefault: true,
+			instanceInfo:     invalidMachineState,
+		},
+	}
+
+	for i, c := range cases {
+		provider := &ECS{
+			ExposedByDefault: c.exposedByDefault,
+		}
+		value := provider.filterInstance(c.instanceInfo)
+		if value != c.expected {
+			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
 		}
 	}
 }
