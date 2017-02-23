@@ -2184,3 +2184,90 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 		}
 	}
 }
+
+func TestSwarmTaskParsing(t *testing.T) {
+	cases := []struct {
+		service       swarm.Service
+		tasks         []swarm.Task
+		isGlobalSvc   bool
+		expectedNames map[string]string
+		networks      map[string]*docker.NetworkResource
+	}{
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					Annotations: swarm.Annotations{
+						Name: "container",
+					},
+				},
+			},
+			tasks: []swarm.Task{
+				{
+					ID:   "id1",
+					Slot: 1,
+				},
+				{
+					ID:   "id2",
+					Slot: 2,
+				},
+				{
+					ID:   "id3",
+					Slot: 3,
+				},
+			},
+			isGlobalSvc: false,
+			expectedNames: map[string]string{
+				"id1": "container.1",
+				"id2": "container.2",
+				"id3": "container.3",
+			},
+			networks: map[string]*docker.NetworkResource{
+				"1": {
+					Name: "foo",
+				},
+			},
+		},
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					Annotations: swarm.Annotations{
+						Name: "container",
+					},
+				},
+			},
+			tasks: []swarm.Task{
+				{
+					ID: "id1",
+				},
+				{
+					ID: "id2",
+				},
+				{
+					ID: "id3",
+				},
+			},
+			isGlobalSvc: true,
+			expectedNames: map[string]string{
+				"id1": "container.id1",
+				"id2": "container.id2",
+				"id3": "container.id3",
+			},
+			networks: map[string]*docker.NetworkResource{
+				"1": {
+					Name: "foo",
+				},
+			},
+		},
+	}
+
+	for _, e := range cases {
+		dockerData := parseService(e.service, e.networks)
+
+		for _, task := range e.tasks {
+			taskDockerData := parseTasks(task, dockerData, map[string]*docker.NetworkResource{}, e.isGlobalSvc)
+			if !reflect.DeepEqual(taskDockerData.Name, e.expectedNames[task.ID]) {
+				t.Fatalf("expect %v, got %v", e.expectedNames[task.ID], taskDockerData.Name)
+			}
+		}
+	}
+}
