@@ -1609,7 +1609,7 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"kubernetes.io/ingress.class": "traefik",
+					"kubernetes.io/ingress.class":     "traefik",
 					"traefik.frontend.passHostHeader": "true",
 				},
 			},
