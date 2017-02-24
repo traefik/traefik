@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -25,7 +26,7 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 	var err error
 	authenticator := Authenticator{}
 	if authConfig.Basic != nil {
-		authenticator.users, err = parserBasicUsers(authConfig.Basic.Users)
+		authenticator.users, err = parserBasicUsers(authConfig.Basic)
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +44,7 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 			}
 		})
 	} else if authConfig.Digest != nil {
-		authenticator.users, err = parserDigestUsers(authConfig.Digest.Users)
+		authenticator.users, err = parserDigestUsers(authConfig.Digest)
 		if err != nil {
 			return nil, err
 		}
@@ -64,9 +65,17 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 	return &authenticator, nil
 }
 
-func parserBasicUsers(users types.Users) (map[string]string, error) {
+func parserBasicUsers(basic *types.Basic) (map[string]string, error) {
+	var userStrs []string
+	if basic.UsersFile != "" {
+		var err error
+		if userStrs, err = getLinesFromFile(basic.UsersFile); err != nil {
+			return nil, err
+		}
+	}
+	userStrs = append(basic.Users, userStrs...)
 	userMap := make(map[string]string)
-	for _, user := range users {
+	for _, user := range userStrs {
 		split := strings.Split(user, ":")
 		if len(split) != 2 {
 			return nil, fmt.Errorf("Error parsing Authenticator user: %v", user)
@@ -76,9 +85,17 @@ func parserBasicUsers(users types.Users) (map[string]string, error) {
 	return userMap, nil
 }
 
-func parserDigestUsers(users types.Users) (map[string]string, error) {
+func parserDigestUsers(digest *types.Digest) (map[string]string, error) {
+	var userStrs []string
+	if digest.UsersFile != "" {
+		var err error
+		if userStrs, err = getLinesFromFile(digest.UsersFile); err != nil {
+			return nil, err
+		}
+	}
+	userStrs = append(digest.Users, userStrs...)
 	userMap := make(map[string]string)
-	for _, user := range users {
+	for _, user := range userStrs {
 		split := strings.Split(user, ":")
 		if len(split) != 3 {
 			return nil, fmt.Errorf("Error parsing Authenticator user: %v", user)
@@ -86,6 +103,23 @@ func parserDigestUsers(users types.Users) (map[string]string, error) {
 		userMap[split[0]+":"+split[1]] = split[2]
 	}
 	return userMap, nil
+}
+
+func getLinesFromFile(filename string) ([]string, error) {
+	dat, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	// Trim lines and filter out blanks
+	rawLines := strings.Split(string(dat), "\n")
+	var filteredLines []string
+	for _, rawLine := range rawLines {
+		line := strings.TrimSpace(rawLine)
+		if line != "" {
+			filteredLines = append(filteredLines, line)
+		}
+	}
+	return filteredLines, nil
 }
 
 func (a *Authenticator) secretBasic(user, realm string) string {
