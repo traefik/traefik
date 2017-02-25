@@ -110,7 +110,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 	for _, i := range ingresses {
 		ingressClass := i.Annotations["kubernetes.io/ingress.class"]
 
-		if processIngress(ingressClass) {
+		if shouldProcessIngress(ingressClass) {
 			for _, r := range i.Spec.Rules {
 				if r.HTTP == nil {
 					log.Warnf("Error in ingress: HTTP is nil")
@@ -284,7 +284,7 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 	return false
 }
 
-func processIngress(ingressClass string) bool {
+func shouldProcessIngress(ingressClass string) bool {
 	switch ingressClass {
 	case "":
 		return true
