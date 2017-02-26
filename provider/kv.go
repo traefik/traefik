@@ -162,6 +162,9 @@ func (provider *Kv) list(keys ...string) []string {
 func (provider *Kv) listServers(backend string) []string {
 	serverNames := provider.list(backend, "/servers/")
 	return fun.Filter(func(serverName string) bool {
+		if _, err := provider.kvclient.Get(fmt.Sprint(serverName, "/url")); err != nil {
+			return false
+		}
 		return provider.checkConstraints(serverName, "/tags")
 	}, serverNames).([]string)
 }
