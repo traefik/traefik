@@ -282,6 +282,11 @@
 #   address = ":80"
 #   compress = true
 
+# To bind to a particular IP address only:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = "10.42.13.37:80"
+
 # Enable retry sending request if network error
 #
 # Optional
