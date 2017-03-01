@@ -286,9 +286,7 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 
 func shouldProcessIngress(ingressClass string) bool {
 	switch ingressClass {
-	case "":
-		return true
-	case "traefik":
+	case "", "traefik":
 		return true
 	default:
 		return false
