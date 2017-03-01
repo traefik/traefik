@@ -494,5 +494,5 @@ the host header per ingress if you wanted.
 ## Excluding an ingress from Træfɪk
 You can control which ingress Træfɪk cares about by using the "kubernetes.io/ingress.class"
 annotation. By default if the annotation is not set at all Træfɪk will include the
-ingress. If the annotation is set to another other than traefik or a blank string
+ingress. If the annotation is set to anything other than traefik or a blank string
 Træfɪk will ignore it.
