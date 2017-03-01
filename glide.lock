@@ -1,5 +1,5 @@
-hash: b2ac93355c3f551a75216a800337cee9321f6c9a04a18ab1fa8d8152e89b7595
-updated: 2017-02-20T16:04:18.834166585+01:00
+hash: 371df47479647f1f980b5f58678e139841fa66b934e31282b1c84d2cd0986691
+updated: 2017-03-01T14:28:35.85133862-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -460,7 +460,7 @@ imports:
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
-  version: fcc76b52eb8568540a020b7a99e854d9d752b364
+  version: 9920d3561dd2a20cf74c0fe48ec9d3d94414daa1
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
