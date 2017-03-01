@@ -110,148 +110,150 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 	for _, i := range ingresses {
 		ingressClass := i.Annotations["kubernetes.io/ingress.class"]
 
-		if shouldProcessIngress(ingressClass) {
-			for _, r := range i.Spec.Rules {
-				if r.HTTP == nil {
-					log.Warnf("Error in ingress: HTTP is nil")
+		if !shouldProcessIngress(ingressClass) {
+			continue
+		}
+
+		for _, r := range i.Spec.Rules {
+			if r.HTTP == nil {
+				log.Warnf("Error in ingress: HTTP is nil")
+				continue
+			}
+			for _, pa := range r.HTTP.Paths {
+				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
+					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
+						Servers: make(map[string]types.Server),
+						LoadBalancer: &types.LoadBalancer{
+							Sticky: false,
+							Method: "wrr",
+						},
+					}
+				}
+
+				PassHostHeader := provider.getPassHostHeader()
+
+				passHostHeaderAnnotation := i.Annotations["traefik.frontend.passHostHeader"]
+				switch passHostHeaderAnnotation {
+				case "true":
+					PassHostHeader = true
+				case "false":
+					PassHostHeader = false
+				default:
+					log.Warnf("Unknown value of %s for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
+				}
+
+				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
+					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
+						Backend:        r.Host + pa.Path,
+						PassHostHeader: PassHostHeader,
+						Routes:         make(map[string]types.Route),
+						Priority:       len(pa.Path),
+					}
+				}
+				if len(r.Host) > 0 {
+					rule := "Host:" + r.Host
+
+					if strings.Contains(r.Host, "*") {
+						rule = "HostRegexp:" + strings.Replace(r.Host, "*", "{subdomain:[A-Za-z0-9-_]+}", 1)
+					}
+
+					if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
+						templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host] = types.Route{
+							Rule: rule,
+						}
+					}
+				}
+				if len(pa.Path) > 0 {
+					ruleType := i.Annotations["traefik.frontend.rule.type"]
+
+					switch strings.ToLower(ruleType) {
+					case "pathprefixstrip":
+						ruleType = "PathPrefixStrip"
+					case "pathstrip":
+						ruleType = "PathStrip"
+					case "path":
+						ruleType = "Path"
+					case "pathprefix":
+						ruleType = "PathPrefix"
+					case "":
+						ruleType = "PathPrefix"
+					default:
+						log.Warnf("Unknown RuleType %s for %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
+						ruleType = "PathPrefix"
+					}
+
+					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
+						Rule: ruleType + ":" + pa.Path,
+					}
+				}
+				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
+				if err != nil || !exists {
+					log.Warnf("Error retrieving service %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
+					delete(templateObjects.Frontends, r.Host+pa.Path)
 					continue
 				}
-				for _, pa := range r.HTTP.Paths {
-					if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
-						templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
-							Servers: make(map[string]types.Server),
-							LoadBalancer: &types.LoadBalancer{
-								Sticky: false,
-								Method: "wrr",
-							},
-						}
+
+				if expression := service.Annotations["traefik.backend.circuitbreaker"]; expression != "" {
+					templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
+						Expression: expression,
 					}
+				}
+				if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
+					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
+				}
+				if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
+					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
+				}
 
-					PassHostHeader := provider.getPassHostHeader()
-
-					passHostHeaderAnnotation := i.Annotations["traefik.frontend.passHostHeader"]
-					switch passHostHeaderAnnotation {
-					case "true":
-						PassHostHeader = true
-					case "false":
-						PassHostHeader = false
-					default:
-						log.Warnf("Unknown value of %s for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
-					}
-
-					if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
-						templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
-							Backend:        r.Host + pa.Path,
-							PassHostHeader: PassHostHeader,
-							Routes:         make(map[string]types.Route),
-							Priority:       len(pa.Path),
+				protocol := "http"
+				for _, port := range service.Spec.Ports {
+					if equalPorts(port, pa.Backend.ServicePort) {
+						if port.Port == 443 {
+							protocol = "https"
 						}
-					}
-					if len(r.Host) > 0 {
-						rule := "Host:" + r.Host
+						if service.Spec.Type == "ExternalName" {
+							url := protocol + "://" + service.Spec.ExternalName
+							name := url
 
-						if strings.Contains(r.Host, "*") {
-							rule = "HostRegexp:" + strings.Replace(r.Host, "*", "{subdomain:[A-Za-z0-9-_]+}", 1)
-						}
-
-						if _, exists := templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host]; !exists {
-							templateObjects.Frontends[r.Host+pa.Path].Routes[r.Host] = types.Route{
-								Rule: rule,
+							templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+								URL:    url,
+								Weight: 1,
 							}
-						}
-					}
-					if len(pa.Path) > 0 {
-						ruleType := i.Annotations["traefik.frontend.rule.type"]
-
-						switch strings.ToLower(ruleType) {
-						case "pathprefixstrip":
-							ruleType = "PathPrefixStrip"
-						case "pathstrip":
-							ruleType = "PathStrip"
-						case "path":
-							ruleType = "Path"
-						case "pathprefix":
-							ruleType = "PathPrefix"
-						case "":
-							ruleType = "PathPrefix"
-						default:
-							log.Warnf("Unknown RuleType %s for %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
-							ruleType = "PathPrefix"
-						}
-
-						templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-							Rule: ruleType + ":" + pa.Path,
-						}
-					}
-					service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
-					if err != nil || !exists {
-						log.Warnf("Error retrieving service %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
-						delete(templateObjects.Frontends, r.Host+pa.Path)
-						continue
-					}
-
-					if expression := service.Annotations["traefik.backend.circuitbreaker"]; expression != "" {
-						templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
-							Expression: expression,
-						}
-					}
-					if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
-						templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
-					}
-					if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
-						templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
-					}
-
-					protocol := "http"
-					for _, port := range service.Spec.Ports {
-						if equalPorts(port, pa.Backend.ServicePort) {
-							if port.Port == 443 {
-								protocol = "https"
+						} else {
+							endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+							if err != nil {
+								log.Errorf("Error while retrieving endpoints from k8s API %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
+								continue
 							}
-							if service.Spec.Type == "ExternalName" {
-								url := protocol + "://" + service.Spec.ExternalName
-								name := url
 
-								templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
-									URL:    url,
+							if !exists {
+								log.Errorf("Service not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								continue
+							}
+
+							if len(endpoints.Subsets) == 0 {
+								log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
+									URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
 									Weight: 1,
 								}
 							} else {
-								endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-								if err != nil {
-									log.Errorf("Error while retrieving endpoints from k8s API %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
-									continue
-								}
-
-								if !exists {
-									log.Errorf("Service not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-									continue
-								}
-
-								if len(endpoints.Subsets) == 0 {
-									log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-									templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
-										URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
-										Weight: 1,
-									}
-								} else {
-									for _, subset := range endpoints.Subsets {
-										for _, address := range subset.Addresses {
-											url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
-											name := url
-											if address.TargetRef != nil && address.TargetRef.Name != "" {
-												name = address.TargetRef.Name
-											}
-											templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
-												URL:    url,
-												Weight: 1,
-											}
+								for _, subset := range endpoints.Subsets {
+									for _, address := range subset.Addresses {
+										url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+										name := url
+										if address.TargetRef != nil && address.TargetRef.Name != "" {
+											name = address.TargetRef.Name
+										}
+										templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+											URL:    url,
+											Weight: 1,
 										}
 									}
 								}
 							}
-							break
 						}
+						break
 					}
 				}
 			}
