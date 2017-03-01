@@ -2,8 +2,7 @@
 
 source "$(dirname "$BASH_SOURCE")/.validate"
 
-grep `glide-hash` glide.lock
-if [ $? -eq 0 ]; then
+if grep -q "$(glide-hash)" glide.lock; then
 	echo 'Congratulations! glide.lock is unchanged.'
 else
 	{
