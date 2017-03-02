@@ -1,5 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
+
+declare -i MAX_PARALLEL_JOBS=4
+
+build_binary_capped() {
+	declare -lr os="$1"
+	declare -lr arch="$2"
+
+	echo "Building binary for ${os}/${arch}..."
+	GOARCH="${arch}" GOOS="${os}" CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=${VERSION} -X github.com/containous/traefik/version.Codename=${CODENAME} -X github.com/containous/traefik/version.BuildDate=${DATE}" -o "dist/traefik_${os}-${arch}" . &
+	if [[ MAX_PARALLEL_JOBS -ne 0 ]]; then
+		((MAX_PARALLEL_JOBS--))
+	else
+		echo "waiting for next build job to complete..."
+		wait -n
+	fi
+}
 
 if ! test -e autogen/gen.go; then
 	echo >&2 'error: generate must be run before crossbinary'
@@ -26,18 +42,15 @@ OS_PLATFORM_ARG=(linux darwin windows freebsd openbsd)
 OS_ARCH_ARG=(386 amd64)
 for OS in ${OS_PLATFORM_ARG[@]}; do
   for ARCH in ${OS_ARCH_ARG[@]}; do
-    echo "Building binary for $OS/$ARCH..."
-    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=$VERSION -X github.com/containous/traefik/version.Codename=$CODENAME -X github.com/containous/traefik/version.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" .
+		build_binary_capped "${OS}" "${ARCH}"
   done
 done
 
 
 # Build arm binaries
-OS_PLATFORM_ARG=(linux)
-OS_ARCH_ARG=(arm arm64)
-for OS in ${OS_PLATFORM_ARG[@]}; do
-  for ARCH in ${OS_ARCH_ARG[@]}; do
-    echo "Building binary for $OS/$ARCH..."
-    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=$VERSION -X github.com/containous/traefik/version.Codename=$CODENAME -X github.com/containous/traefik/version.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" .
-  done
-done
+build_binary_capped 'linux' 'arm'
+build_binary_capped 'linux' 'arm64'
+
+echo "waiting for in-flight build jobs to complete..."
+wait
+echo "all build jobs completed successfully."
