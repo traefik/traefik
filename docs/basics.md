@@ -92,6 +92,10 @@ You can use multiple rules by separating them by `;`.
 
 You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
 
+In order to use path regular expressions, you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces. Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used. Example: `/posts/{id:[0-9]+}`.
+
+(Note that the variable has no special meaning; however, it is required by gorilla/mux which embeds the regular expression and defines the syntax.)
+
 Here is an example of frontends definition:
 
 ```toml
