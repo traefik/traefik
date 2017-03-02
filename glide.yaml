@@ -139,7 +139,7 @@ import:
   subpackages:
   - proto
 - package: github.com/rancher/go-rancher
-  version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e
+  version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
 - package: golang.org/x/oauth2/google
   version: 7fdf09982454086d5570c7db3e11f360194830ca
 - package: github.com/googleapis/gax-go
