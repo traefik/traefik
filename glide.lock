@@ -1,10 +1,15 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 hash: b1cbcbd938a47a246b0d4d634037b76e63486c63e5867b339f92bcbd7453b75c
 updated: 2017-04-07T11:34:46.101385591+01:00
 =======
 hash: b4e99f1210c5bfb7784b55c9ec5b54629fadaea0625b29e540979b1acbd7dc09
 updated: 2017-03-02T09:39:03.718549862+01:00
 >>>>>>> 9af5ba3... Bump go-rancher version
+=======
+hash: 6d21d24827ef1c9321e8a41a328c42f891281af2ea68841d42411f23b0666d4b
+updated: 2017-03-02T14:57:08.032744661-07:00
+>>>>>>> eebbf6e... update oxy hash
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -403,7 +408,7 @@ imports:
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
-  version: fcc76b52eb8568540a020b7a99e854d9d752b364
+  version: 9920d3561dd2a20cf74c0fe48ec9d3d94414daa1
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
