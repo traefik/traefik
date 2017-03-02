@@ -163,6 +163,7 @@ Founded in 2014, Asteris creates next-generation infrastructure software for the
 - Ed Robinson [@errm](https://github.com/errm)
 - Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
 - Manuel Laufenberg [@SantoDE](https://github.com/SantoDE)
+- Timo Reimann [@timoreimann](https://github.com/timoreimann)
 
 ## Credits
 
