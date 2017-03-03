@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-declare -i MAX_PARALLEL_JOBS=4
+declare -i MAX_PARALLEL_JOBS=8
 
 build_binary_capped() {
 	declare -lr os="$1"
