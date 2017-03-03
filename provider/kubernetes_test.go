@@ -1492,6 +1492,7 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
+					"kubernetes.io/ingress.class":     "traefik",
 					"traefik.frontend.passHostHeader": "true",
 				},
 			},
@@ -1506,6 +1507,34 @@ func TestIngressAnnotations(t *testing.T) {
 										Path: "/stuff",
 										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"kubernetes.io/ingress.class": "somethingOtherThanTraefik",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "herp",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/derp",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service2",
 											ServicePort: intstr.FromInt(80),
 										},
 									},

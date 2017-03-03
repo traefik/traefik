@@ -123,6 +123,8 @@ kind: Ingress
 metadata:
   name: traefik-web-ui
   namespace: kube-system
+  annotations:
+    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: traefik-ui.local
@@ -328,6 +330,8 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: cheese
+  annotations:
+    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: stilton.local
@@ -390,6 +394,7 @@ kind: Ingress
 metadata:
   name: cheeses
   annotations:
+    kubernetes.io/ingress.class: traefik
     traefik.frontend.rule.type: pathprefixstrip
 spec:
   rules:
@@ -451,6 +456,7 @@ kind: Ingress
 metadata:
   name: example
   annotations:
+    kubernetes.io/ingress.class: traefik
     traefik.frontend.passHostHeader: "false"
 spec:
   rules:
@@ -484,3 +490,9 @@ request with the Host header being static.otherdomain.com.
 Note: The per ingress annotation overides whatever the global value is set to. So you
 could set `disablePassHostHeaders` to true in your toml file and then enable passing
 the host header per ingress if you wanted.
+
+## Excluding an ingress from Træfɪk
+You can control which ingress Træfɪk cares about by using the "kubernetes.io/ingress.class"
+annotation. By default if the annotation is not set at all Træfɪk will include the
+ingress. If the annotation is set to anything other than traefik or a blank string
+Træfɪk will ignore it.

@@ -116,6 +116,12 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 		map[string]*types.Frontend{},
 	}
 	for _, i := range ingresses {
+		ingressClass := i.Annotations["kubernetes.io/ingress.class"]
+
+		if !shouldProcessIngress(ingressClass) {
+			continue
+		}
+
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
 				log.Warnf("Error in ingress: HTTP is nil")
@@ -279,6 +285,15 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 		return true
 	}
 	return false
+}
+
+func shouldProcessIngress(ingressClass string) bool {
+	switch ingressClass {
+	case "", "traefik":
+		return true
+	default:
+		return false
+	}
 }
 
 func (provider *Kubernetes) getPassHostHeader() bool {
