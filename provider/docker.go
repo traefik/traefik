@@ -525,12 +525,19 @@ func (provider *Docker) getFrontendRule(container dockerData) string {
 	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
 	}
+	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
+		return "Host:" + provider.getSubDomain(labels["com.docker.compose.project"]+"_"+labels["com.docker.compose.service"]) + "." + provider.Domain
+	}
+
 	return "Host:" + provider.getSubDomain(container.ServiceName) + "." + provider.Domain
 }
 
 func (provider *Docker) getBackend(container dockerData) string {
 	if label, err := getLabel(container, "traefik.backend"); err == nil {
 		return normalize(label)
+	}
+	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
+		return normalize(labels["com.docker.compose.project"] + "_" + labels["com.docker.compose.service"])
 	}
 	return normalize(container.ServiceName)
 }
