@@ -78,11 +78,14 @@ func (p *CatalogProvider) watchServices(stopCh <-chan struct{}) <-chan map[strin
 	watchCh := make(chan map[string][]string)
 
 	catalog := p.client.Catalog()
+	health := p.client.Health()
+	var lastHealthIndex uint64
 
 	safe.Go(func() {
 		defer close(watchCh)
 
-		opts := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
+		catalogOptions := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
+		healthOptions := &api.QueryOptions{}
 
 		for {
 			select {
@@ -91,18 +94,30 @@ func (p *CatalogProvider) watchServices(stopCh <-chan struct{}) <-chan map[strin
 			default:
 			}
 
-			data, meta, err := catalog.Services(opts)
+			data, catalogMeta, err := catalog.Services(catalogOptions)
 			if err != nil {
 				log.WithError(err).Errorf("Failed to list services")
 				return
 			}
 
+			// Listening to changes that leads to `passing` state or degrades from it.
+			// The call is used just as a trigger for further actions
+			// (intentionally there is no interest in the received data).
+			_, healthMeta, err := health.State("passing", healthOptions)
+			if err != nil {
+				log.WithError(err).Errorf("Failed to retrieve health checks")
+				return
+			}
+
 			// If LastIndex didn't change then it means `Get` returned
 			// because of the WaitTime and the key didn't changed.
-			if opts.WaitIndex == meta.LastIndex {
+			sameServiceAmount := catalogOptions.WaitIndex == catalogMeta.LastIndex
+			sameServiceHealth := lastHealthIndex == healthMeta.LastIndex
+			if sameServiceAmount && sameServiceHealth {
 				continue
 			}
-			opts.WaitIndex = meta.LastIndex
+			catalogOptions.WaitIndex = catalogMeta.LastIndex
+			lastHealthIndex = healthMeta.LastIndex
 
 			if data != nil {
 				watchCh <- data
