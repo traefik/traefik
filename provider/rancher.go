@@ -4,6 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
+	"os"
+	"strconv"
+	"strings"
+	"text/template"
+	"time"
+
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
@@ -11,11 +18,6 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	rancher "github.com/rancher/go-rancher/client"
-	"math"
-	"strconv"
-	"strings"
-	"text/template"
-	"time"
 )
 
 const (
@@ -72,7 +74,7 @@ func (provider *Rancher) getFrontendRule(service rancherData) string {
 	if label, err := getServiceLabel(service, "traefik.frontend.rule"); err == nil {
 		return label
 	}
-	return "Host:" + strings.ToLower(strings.Replace(service.Name, "/", "_", -1)) + "." + provider.Domain
+	return "Host:" + strings.ToLower(strings.Replace(service.Name, "/", ".", -1)) + "." + provider.Domain
 }
 
 func (provider *Rancher) getFrontendName(service rancherData) string {
@@ -193,11 +195,24 @@ func getServiceLabel(service rancherData, label string) (string, error) {
 }
 
 func (provider *Rancher) createClient() (*rancher.RancherClient, error) {
+
+	rancherURL := getenv("CATTLE_URL", provider.Endpoint)
+	accessKey := getenv("CATTLE_ACCESS_KEY", provider.AccessKey)
+	secretKey := getenv("CATTLE_SECRET_KEY", provider.SecretKey)
+
 	return rancher.NewRancherClient(&rancher.ClientOpts{
-		Url:       provider.Endpoint,
-		AccessKey: provider.AccessKey,
-		SecretKey: provider.SecretKey,
+		Url:       rancherURL,
+		AccessKey: accessKey,
+		SecretKey: secretKey,
 	})
+}
+
+func getenv(key, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
 }
 
 // Provide allows the provider to provide configurations to traefik
@@ -207,17 +222,18 @@ func (provider *Rancher) Provide(configurationChan chan<- types.ConfigMessage, p
 	safe.Go(func() {
 		operation := func() error {
 			rancherClient, err := provider.createClient()
+
+			if err != nil {
+				log.Errorf("Failed to create a client for rancher, error: %s", err)
+				return err
+			}
+
 			ctx := context.Background()
 			var environments = listRancherEnvironments(rancherClient)
 			var services = listRancherServices(rancherClient)
 			var container = listRancherContainer(rancherClient)
 
 			var rancherData = parseRancherData(environments, services, container)
-
-			if err != nil {
-				log.Errorf("Failed to create a client for rancher, error: %s", err)
-				return err
-			}
 
 			configuration := provider.loadRancherConfig(rancherData)
 			configurationChan <- types.ConfigMessage{

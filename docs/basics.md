@@ -239,6 +239,20 @@ For example:
     [backends.backend1.loadbalancer]
       sticky = true
 ```
+
+Healthcheck URL can be configured with a relative URL for `healthcheck.URL`.
+Interval between healthcheck can be configured by using `healthcheck.interval`
+(default: 30s)
+
+For example:
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.healthcheck]
+      URL = "/health"
+      interval = "10s"
+```
+
 ## Servers
 
 Servers are simply defined using a `URL`. You can also apply a custom `weight` to each server (this will be used by load-balancing).
