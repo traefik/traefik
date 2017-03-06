@@ -58,11 +58,13 @@
 #
 # ProvidersThrottleDuration = "5s"
 
-# If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
-# If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
+# Controls the maximum idle (keep-alive) connections to keep per-host. If zero, DefaultMaxIdleConnsPerHost
+# from the Go standard library net/http module is used.
+# If you encounter 'too many open files' errors, you can either increase this
+# value or change the `ulimit`.
 #
 # Optional
-# Default: http.DefaultMaxIdleConnsPerHost
+# Default: 200
 #
 # MaxIdleConnsPerHost = 200
 
