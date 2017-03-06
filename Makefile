@@ -6,7 +6,8 @@ TRAEFIK_ENVS := \
 	-e TESTFLAGS \
 	-e VERBOSE \
 	-e VERSION \
-	-e CODENAME
+	-e CODENAME \
+	-e MAX_PARALLEL_JOBS
 
 SRCS = $(shell git ls-files '*.go' | grep -v '^external/')
 
