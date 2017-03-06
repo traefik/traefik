@@ -1,5 +1,54 @@
 # Change Log
 
+
+## [v1.2.0-rc2](https://github.com/containous/traefik/tree/v1.2.0-rc2) (2017-03-01)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.2.0-rc1...v1.2.0-rc2)
+
+**Implemented enhancements:**
+
+- Are there plans to support the service type ExternalName in Kubernetes? [\#1142](https://github.com/containous/traefik/issues/1142)
+- Kubernetes Ingress and sticky support [\#911](https://github.com/containous/traefik/issues/911)
+- kubernetes client does not support InsecureSkipVerify [\#876](https://github.com/containous/traefik/issues/876)
+- Support active health checking like HAProxy [\#824](https://github.com/containous/traefik/issues/824)
+- Allow k8s ingress controller serviceAccountToken and serviceAccountCACert to be changed [\#611](https://github.com/containous/traefik/issues/611)
+
+**Fixed bugs:**
+
+- \[rancher\] invalid memory address or nil pointer dereference [\#1134](https://github.com/containous/traefik/issues/1134)
+- Kubernetes default backend should work [\#1073](https://github.com/containous/traefik/issues/1073)
+
+**Closed issues:**
+
+- Are release Download links broken? [\#1201](https://github.com/containous/traefik/issues/1201)
+- Bind to specific ip address [\#1193](https://github.com/containous/traefik/issues/1193)
+- DNS01 challenge use the wrong zone through route53 [\#1192](https://github.com/containous/traefik/issues/1192)
+- Reverse proxy https to http backends fails [\#1180](https://github.com/containous/traefik/issues/1180)
+- Swarm Mode + Letsecrypt + KV Store [\#1176](https://github.com/containous/traefik/issues/1176)
+- docker deploy -c example.yml    e [\#1169](https://github.com/containous/traefik/issues/1169)
+- Traefik not finding dynamically added services \(Docker Swarm Mode\) [\#1168](https://github.com/containous/traefik/issues/1168)
+- Traefik with Kubernetes backend - keep getting 401 on all GET requests to kube-apiserver [\#1166](https://github.com/containous/traefik/issues/1166)
+- Near line 15 \(last key parsed 'backends.backend-monitor-viz.servers'\): Key 'backends.backend-monitor-viz.servers.server-monitor\_viz-1' has already been defined. [\#1154](https://github.com/containous/traefik/issues/1154)
+- How to reuse SSL certificates automatically fetched from Let´s encrypt? [\#1152](https://github.com/containous/traefik/issues/1152)
+- Dynamically ban ip when backend repeatedly returns specified status code. \( 403 \) [\#1136](https://github.com/containous/traefik/issues/1136)
+- Always get 404 accessing my nginx backend service [\#1112](https://github.com/containous/traefik/issues/1112)
+- Incomplete Docu [\#1091](https://github.com/containous/traefik/issues/1091)
+- LoadCertificateForDomains: runtime error: invalid memory address [\#1069](https://github.com/containous/traefik/issues/1069)
+- Traefik creating backends & mappings for ingress annotated with ingress.class: nginx [\#1058](https://github.com/containous/traefik/issues/1058)
+- ACME file format description [\#1012](https://github.com/containous/traefik/issues/1012)
+- SwarmMode - Not routing on worker node [\#838](https://github.com/containous/traefik/issues/838)
+- Migrate k8s to kubernetes/client-go  [\#678](https://github.com/containous/traefik/issues/678)
+- Support for sticky session with kubernetes ingress as backend [\#674](https://github.com/containous/traefik/issues/674)
+
+**Merged pull requests:**
+
+- Revert "Ensure that we don't add balancees with no health check runs … [\#1198](https://github.com/containous/traefik/pull/1198) ([jangie](https://github.com/jangie))
+- Small fixes and improvments [\#1173](https://github.com/containous/traefik/pull/1173) ([SantoDE](https://github.com/SantoDE))
+- Fix docker issues with global and dead tasks [\#1167](https://github.com/containous/traefik/pull/1167) ([christopherobin](https://github.com/christopherobin))
+- Better ECS error checking [\#1143](https://github.com/containous/traefik/pull/1143) ([lpetre](https://github.com/lpetre))
+- Fix stats race condition [\#1141](https://github.com/containous/traefik/pull/1141) ([emilevauge](https://github.com/emilevauge))
+- ECS: Docs - info about cred. resolution and required access policies [\#1137](https://github.com/containous/traefik/pull/1137) ([rickard-von-essen](https://github.com/rickard-von-essen))
+- Healthcheck tests and doc [\#1132](https://github.com/containous/traefik/pull/1132) ([Juliens](https://github.com/Juliens))
+
 ## [v1.2.0-rc1](https://github.com/containous/traefik/tree/v1.2.0-rc1) (2017-02-06)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.1.2...v1.2.0-rc1)
 
