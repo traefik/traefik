@@ -1,5 +1,5 @@
-hash: b2ac93355c3f551a75216a800337cee9321f6c9a04a18ab1fa8d8152e89b7595
-updated: 2017-02-20T16:04:18.834166585+01:00
+hash: f2a0b9af55c8312762e4148bd876e5bd2451c240b407fbb6d4a5dbc56bf46c05
+updated: 2017-03-03T10:21:14.720631882+01:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -444,7 +444,7 @@ imports:
   - assert
   - mock
 - name: github.com/thoas/stats
-  version: 79b768ff1780f4e5b0ed132e192bfeefe9f85a9c
+  version: 152b5d051953fdb6e45f14b6826962aadc032324
 - name: github.com/timewasted/linode
   version: 37e84520dcf74488f67654f9c775b9752c232dc1
   subpackages:

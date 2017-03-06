@@ -626,11 +626,12 @@ func (provider *Docker) listServices(ctx context.Context, dockerClient client.AP
 	for _, service := range serviceList {
 		dockerData := parseService(service, networkMap)
 		useSwarmLB, _ := strconv.ParseBool(provider.getIsBackendLBSwarm(dockerData))
+		isGlobalSvc := service.Spec.Mode.Global != nil
 
 		if useSwarmLB {
 			dockerDataList = append(dockerDataList, dockerData)
 		} else {
-			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dockerData, networkMap)
+			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dockerData, networkMap, isGlobalSvc)
 
 			for _, dockerDataTask := range dockerDataListTasks {
 				dockerDataList = append(dockerDataList, dockerDataTask)
@@ -675,9 +676,10 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 }
 
 func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
-	serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource) ([]dockerData, error) {
+	serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) ([]dockerData, error) {
 	serviceIDFilter := filters.NewArgs()
 	serviceIDFilter.Add("service", serviceID)
+	serviceIDFilter.Add("desired-state", "running")
 	taskList, err := dockerClient.TaskList(ctx, dockertypes.TaskListOptions{Filter: serviceIDFilter})
 
 	if err != nil {
@@ -686,18 +688,22 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	var dockerDataList []dockerData
 
 	for _, task := range taskList {
-		dockerData := parseTasks(task, serviceDockerData, networkMap)
+		dockerData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
 		dockerDataList = append(dockerDataList, dockerData)
 	}
 	return dockerDataList, err
 }
 
-func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource) dockerData {
+func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
 	dockerData := dockerData{
 		ServiceName:     serviceDockerData.Name,
 		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
 		Labels:          serviceDockerData.Labels,
 		NetworkSettings: networkSettings{},
+	}
+
+	if isGlobalSvc == true {
+		dockerData.Name = serviceDockerData.Name + "." + task.ID
 	}
 
 	if task.NetworksAttachments != nil {
