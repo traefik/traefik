@@ -629,7 +629,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 					},
 				},
 			},
-			expected:         true,
+			expected:         false,
 			exposedByDefault: true,
 		},
 		{
