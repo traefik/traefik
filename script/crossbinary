@@ -1,21 +1,28 @@
 #!/usr/bin/env bash
 set -e
 
-declare -i MAX_PARALLEL_JOBS=8
+declare -i cur_parallel_jobs=${MAX_PARALLEL_JOBS:-1}
 
 build_binary_capped() {
 	declare -lr os="$1"
 	declare -lr arch="$2"
 
-	echo "Building binary for ${os}/${arch}..."
-	GOARCH="${arch}" GOOS="${os}" CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=${VERSION} -X github.com/containous/traefik/version.Codename=${CODENAME} -X github.com/containous/traefik/version.BuildDate=${DATE}" -o "dist/traefik_${os}-${arch}" . &
-	if [[ MAX_PARALLEL_JOBS -ne 0 ]]; then
-		((MAX_PARALLEL_JOBS--))
-	else
-		echo "waiting for next build job to complete..."
+	if [[ cur_parallel_jobs -eq 0 ]]; then
+		echo "waiting for one build job to complete..."
 		wait -n
+	else
+		((cur_parallel_jobs--))
 	fi
+	echo "building binary for ${os}/${arch}..."
+	GOARCH="${arch}" GOOS="${os}" CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=${VERSION} -X github.com/containous/traefik/version.Codename=${CODENAME} -X github.com/containous/traefik/version.BuildDate=${DATE}" -o "dist/traefik_${os}-${arch}" . &
 }
+
+if [[ ${cur_parallel_jobs} -le 0 ]]; then
+	echo >&2 'max number of parallel build jobs must be larger zero'
+	false
+fi
+
+echo "cross-building binaries with concurrency level ${cur_parallel_jobs}"
 
 if ! test -e autogen/gen.go; then
 	echo >&2 'error: generate must be run before crossbinary'
