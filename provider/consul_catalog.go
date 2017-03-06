@@ -93,6 +93,8 @@ func (provider *ConsulCatalog) watchServices(stopCh <-chan struct{}) <-chan map[
 			default:
 			}
 
+			// Listening to changes that leads to `passing` state or degrades from it.
+			// The call is used just as a trigger for further actions (intentionally there is no interest in the received data).
 			_, meta, err := health.State("passing", opts)
 			if err != nil {
 				log.WithError(err).Errorf("Failed to retrieve health checks")
