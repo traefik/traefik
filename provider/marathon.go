@@ -256,13 +256,14 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 
 	//filter healthchecks
 	if application.HasHealthChecks() {
-		if task.HasHealthCheckResults() {
-			for _, healthcheck := range task.HealthCheckResults {
-				// found one bad healthcheck, return false
-				if !healthcheck.Alive {
-					log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
-					return false
-				}
+		if !task.HasHealthCheckResults() {
+			return false
+		}
+		for _, healthcheck := range task.HealthCheckResults {
+			// found one bad healthcheck, return false
+			if !healthcheck.Alive {
+				log.Debugf("Filtering marathon task %s with bad healthcheck", task.AppID)
+				return false
 			}
 		}
 	}
