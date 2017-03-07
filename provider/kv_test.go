@@ -304,7 +304,7 @@ func (s *Mock) Get(key string) (*store.KVPair, error) {
 			return kvPair, nil
 		}
 	}
-	return nil, nil
+	return nil, store.ErrKeyNotFound
 }
 
 func (s *Mock) Delete(key string) error {
@@ -408,6 +408,14 @@ func TestKVLoadConfig(t *testing.T) {
 				},
 				{
 					Key:   "traefik/backends/backend.with.dot.too/servers/server.with.dot/weight",
+					Value: []byte("0"),
+				},
+				{
+					Key:   "traefik/backends/backend.with.dot.too/servers/server.with.dot.without.url",
+					Value: []byte(""),
+				},
+				{
+					Key:   "traefik/backends/backend.with.dot.too/servers/server.with.dot.without.url/weight",
 					Value: []byte("0"),
 				},
 			},
