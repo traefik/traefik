@@ -330,7 +330,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 	account := a.store.Get().(*Account)
 	//use regex to test for wildcard certs that might have been added into TLSConfig
 	for k := range a.TLSConfig.NameToCertificate {
-		selector := "^" + strings.Replace(k, "*.", ".*\\.?", -1) + "$"
+		selector := "^" + strings.Replace(k, "*.", "[^\\.]*\\.?", -1) + "$"
 		match, _ := regexp.MatchString(selector, domain)
 		if match {
 			return a.TLSConfig.NameToCertificate[k], nil
