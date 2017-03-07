@@ -154,6 +154,7 @@ func (ep *EntryPoints) Set(value string) error {
 		TLS:      tls,
 		Redirect: redirect,
 		Compress: compress,
+		Mode:     "http",
 	}
 
 	return nil
@@ -182,6 +183,7 @@ type EntryPoint struct {
 	Redirect *Redirect
 	Auth     *types.Auth
 	Compress bool
+	Mode	string
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
