@@ -65,6 +65,8 @@ storageFile = "acme.json"
 onDemand = true
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
+# Ignore certificate requests for domains like *.local3.com
+ignoreFilters = ['*.\.local3.com']
 
 [[acme.domains]]
   main = "local1.com"
