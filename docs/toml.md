@@ -368,7 +368,7 @@ entryPoint = "https"
 # Optional
 #
 # Example to ignore certificate generation for domains that are not like *.foo.domain.tld
-# IngnoreFilters = ['.*\.?[^foo]\.domain\.tld']
+# IgnoreFilters = ['.*\.?[^f][^o][^o]\.domain\.tld']
 
 # CA server to use
 # Uncomment the line to run on the staging let's encrypt server
