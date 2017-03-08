@@ -353,20 +353,8 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 }
 
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	var wildcardCertificate *tls.Certificate
 	domain := types.CanonicalDomain(clientHello.ServerName)
 	account := a.store.Get().(*Account)
-
-	// Check if we have a wildcard cert into TLSConfig that could be used
-	log.Debugf("Checking wildcard certificate matching for %v", domain)
-	for k := range a.TLSConfig.NameToCertificate {
-		selector := "^" + strings.Replace(k, "*.", "[^\\.]*\\.?", -1) + "$"
-		match, _ := regexp.MatchString(selector, domain)
-		if match {
-			log.Debugf("Found a wildcard certificate to use as fallback: %v", k)
-			wildcardCertificate = a.TLSConfig.NameToCertificate[k]
-		}
-	}
 
 	// Check for existing challenge cert
 	log.Debugf("Checking ACME challenge for %v", domain)
@@ -389,9 +377,15 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		return a.loadCertificateOnDemand(clientHello)
 	}
 
-	if wildcardCertificate != nil {
-		log.Debugf("Returning wildcard certificate for %s", domain)
-		return wildcardCertificate, nil
+	// Check if we have a wildcard cert into TLSConfig that could be used
+	log.Debugf("Checking wildcard certificate matching for %v", domain)
+	for k := range a.TLSConfig.NameToCertificate {
+		selector := "^" + strings.Replace(k, "*.", "[^\\.]*\\.?", -1) + "$"
+		match, _ := regexp.MatchString(selector, domain)
+		if match {
+			log.Debugf("Found a wildcard certificate to use as fallback: %v", k)
+			return a.TLSConfig.NameToCertificate[k], nil
+		}
 	}
 
 	log.Debugf("No certificate found to return for %s", domain)
