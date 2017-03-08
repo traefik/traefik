@@ -560,7 +560,7 @@ func listContainers(ctx context.Context, dockerClient client.APIClient, traefikC
 	// get available networks
 	var networkList []dockertypes.NetworkResource
 	if traefikContainerID != "" {
-		networkList, err = getNetworks(ctx, dockerClient, traefikContainerID, dockertypes.NetworkListOptions{})
+		networkList, err = getContainerNetworks(ctx, dockerClient, traefikContainerID, dockertypes.NetworkListOptions{})
 	} else {
 		networkList, err = dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{})
 	}
@@ -652,7 +652,7 @@ func (provider *Docker) listServices(ctx context.Context, dockerClient client.AP
 	var networkList []dockertypes.NetworkResource
 
 	if traefikContainerID != "" {
-		networkList, err = getNetworks(ctx, dockerClient, traefikContainerID, networkListOptions)
+		networkList, err = getContainerNetworks(ctx, dockerClient, traefikContainerID, networkListOptions)
 	} else {
 		networkList, err = dockerClient.NetworkList(ctx, networkListOptions)
 	}
@@ -774,7 +774,8 @@ func containerExists(ctx context.Context, cli client.ContainerAPIClient, id stri
 	return true
 }
 
-func getNetworks(ctx context.Context, cli client.APIClient, containerID string,
+// get networks attached to a container
+func getContainerNetworks(ctx context.Context, cli client.APIClient, containerID string,
 	options dockertypes.NetworkListOptions) ([]dockertypes.NetworkResource, error) {
 	container, err := cli.ContainerInspect(ctx, containerID)
 	if err != nil {
