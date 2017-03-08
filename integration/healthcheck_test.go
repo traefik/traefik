@@ -2,12 +2,9 @@ package main
 
 import (
 	"bytes"
-	"errors"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/containous/traefik/integration/utils"
@@ -42,16 +39,7 @@ func (s *HealchCheckSuite) TestSimpleConfiguration(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Host:test.localhost") {
-			return errors.New("Incorrect traefik config: " + string(body))
-		}
-		return nil
-	})
+	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, utils.BodyContains("Host:test.localhost"))
 	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{}
