@@ -823,6 +823,17 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 - `traefik.docker.network`: Set the docker network to use for connections to this container
 
+If several ports need to be exposed from a container, the services labels can be used
+- `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
+- `traefik.<service-name>.protocol=https`: assign `https` protocol. Overrides `traefik.protocol`.
+- `traefik.<service-name>.weight=10`: assign this service weight. Overrides `traefik.weight`.
+- `traefik.<service-name>.frontend.backend=fooBackend`: assign this service frontend to `foobackend`. Default is to assign to the service backend.
+- `traefik.<service-name>.frontend.entryPoints=http`: assign this service entrypoints. Overrides `traefik.frontend.entrypoints`.
+- `traefik.<service-name>.frontend.passHostHeader=true`: Forward client `Host` header to the backend. Overrides `traefik.frontend.passHostHeader`.
+- `traefik.<service-name>.frontend.priority=10`: assign the service frontend priority. Overrides `traefik.frontend.priority`.
+- `traefik.<service-name>.frontend.rule=Path:/foo`: assign the service frontend rule. Overrides `traefik.frontend.rule`.
+
+
 NB: when running inside a container, Træfɪk will need network access through `docker network connect <network> <traefik-container>`
 
 ## Marathon backend

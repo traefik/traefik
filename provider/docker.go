@@ -28,6 +28,7 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
 	"github.com/vdemeester/docker-events"
+	"regexp"
 )
 
 const (
@@ -258,6 +259,16 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 		"getMaxConnExtractorFunc":     provider.getMaxConnExtractorFunc,
 		"getSticky":                   provider.getSticky,
 		"getIsBackendLBSwarm":         provider.getIsBackendLBSwarm,
+		"hasServices":                 provider.hasServices,
+		"getServiceNames":             provider.getServiceNames,
+		"getServicePort":              provider.getServicePort,
+		"getServiceWeight":            provider.getServiceWeight,
+		"getServiceProtocol":          provider.getServiceProtocol,
+		"getServiceEntryPoints":       provider.getServiceEntryPoints,
+		"getServiceFrontendRule":      provider.getServiceFrontendRule,
+		"getServicePassHostHeader":    provider.getServicePassHostHeader,
+		"getServicePriority":          provider.getServicePriority,
+		"getServiceBackend":           provider.getServiceBackend,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -301,6 +312,126 @@ func (provider *Docker) hasCircuitBreakerLabel(container dockerData) bool {
 		return false
 	}
 	return true
+}
+
+// Regexp used to extract the name of the service and the name of the property for this service
+// All properties are under the format traefik.<servicename>.frontent.*= except the port/weight/protocol directly after traefik.<servicename>.
+var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.*?)\.(?P<property_name>port|weight|protocol|frontend\.(.*))$`)
+
+// Map of services properties
+// we can get it with label[serviceName][propertyName] and we got the propertyValue
+type labelServiceProperties map[string]map[string]string
+
+// Check if for the given container, we find labels that are defining services
+func (provider *Docker) hasServices(container dockerData) bool {
+	return len(extractServicesLabels(container.Labels)) > 0
+}
+
+// Extract the service labels from container labels of dockerData struct
+func extractServicesLabels(labels map[string]string) labelServiceProperties {
+	v := make(labelServiceProperties)
+
+	for index, serviceProperty := range labels {
+		matches := servicesPropertiesRegexp.FindStringSubmatch(index)
+		if matches != nil {
+			result := make(map[string]string)
+			for i, name := range servicesPropertiesRegexp.SubexpNames() {
+				if i != 0 {
+					result[name] = matches[i]
+				}
+			}
+			serviceName := result["service_name"]
+			if _, ok := v[serviceName]; !ok {
+				v[serviceName] = make(map[string]string)
+			}
+			v[serviceName][result["property_name"]] = serviceProperty
+		}
+	}
+
+	return v
+}
+
+// Gets the entry for a service label searching in all labels of the given container
+func getContainerServiceLabel(container dockerData, serviceName string, entry string) (string, bool) {
+	value, ok := extractServicesLabels(container.Labels)[serviceName][entry]
+	return value, ok
+}
+
+// Gets array of service names for a given container
+func (provider *Docker) getServiceNames(container dockerData) []string {
+	labelServiceProperties := extractServicesLabels(container.Labels)
+	keys := make([]string, 0, len(labelServiceProperties))
+	for k := range labelServiceProperties {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// Extract entrypoints from labels for a given service and a given docker container
+func (provider *Docker) getServiceEntryPoints(container dockerData, serviceName string) []string {
+	if entryPoints, ok := getContainerServiceLabel(container, serviceName, "frontend.entryPoints"); ok {
+		return strings.Split(entryPoints, ",")
+	}
+	return provider.getEntryPoints(container)
+
+}
+
+// Extract passHostHeader from labels for a given service and a given docker container
+func (provider *Docker) getServicePassHostHeader(container dockerData, serviceName string) string {
+	if servicePassHostHeader, ok := getContainerServiceLabel(container, serviceName, "frontend.passHostHeader"); ok {
+		return servicePassHostHeader
+	}
+	return provider.getPassHostHeader(container)
+}
+
+// Extract priority from labels for a given service and a given docker container
+func (provider *Docker) getServicePriority(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.priority"); ok {
+		return value
+	}
+	return provider.getPriority(container)
+
+}
+
+// Extract backend from labels for a given service and a given docker container
+func (provider *Docker) getServiceBackend(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.backend"); ok {
+		return value
+	}
+	return provider.getBackend(container) + "-" + normalize(serviceName)
+}
+
+// Extract rule from labels for a given service and a given docker container
+func (provider *Docker) getServiceFrontendRule(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.rule"); ok {
+		return value
+	}
+	return provider.getFrontendRule(container)
+
+}
+
+// Extract port from labels for a given service and a given docker container
+func (provider *Docker) getServicePort(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, "port"); ok {
+		return value
+	}
+	return provider.getPort(container)
+}
+
+// Extract weight from labels for a given service and a given docker container
+func (provider *Docker) getServiceWeight(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, "weight"); ok {
+		return value
+	}
+	return provider.getWeight(container)
+}
+
+// Extract protocol from labels for a given service and a given docker container
+func (provider *Docker) getServiceProtocol(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, "protocol"); ok {
+		return value
+	}
+	return provider.getProtocol(container)
 }
 
 func (provider *Docker) hasLoadBalancerLabel(container dockerData) bool {
