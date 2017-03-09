@@ -1,5 +1,3 @@
-dist/
-vendor/
-!dist/traefik
-site/
-**/*.test
+/dist/
+!/dist/traefik
+/site/
