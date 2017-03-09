@@ -1020,6 +1020,59 @@ ExposedByDefault = false
 
 
 ################################################################
+# DynamoDB configuration backend
+################################################################
+
+# Enable DynamoDB configuration backend
+#
+# Optional
+#
+# [dynamodb]
+
+# DynamoDB Table Name
+#
+# Optional
+#
+# TableName = "traefik"
+
+# Enable watch DynamoDB changes
+#
+# Optional
+#
+# Watch = true
+
+# Polling interval (in seconds)
+#
+# Optional
+#
+# RefreshSeconds = 15
+
+# Region to use when connecting to AWS
+#
+# Required
+#
+# Region = "us-east-1"
+
+# AccessKeyID to use when connecting to AWS
+#
+# Optional
+#
+# AccessKeyID = "abc"
+
+# SecretAccessKey to use when connecting to AWS
+#
+# Optional
+#
+# SecretAccessKey = "123"
+
+# Endpoint of dynamodb when testing locally
+#
+# Optional
+#
+# Endpoint = "http://localhost:8080"
+
+
+################################################################
 # Sample rules
 ################################################################
 # [backends]
