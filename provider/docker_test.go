@@ -56,7 +56,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 					},
 				},
 			},
-			expected: "Host-foo-bar-docker-localhost",
+			expected: "Host-bar-foo-docker-localhost",
 		},
 		{
 			container: docker.ContainerJSON{
@@ -159,7 +159,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 					},
 				},
 			},
-			expected: "Host:foo-bar.docker.localhost",
+			expected: "Host:bar.foo.docker.localhost",
 		},
 		{
 			container: docker.ContainerJSON{
@@ -235,7 +235,7 @@ func TestDockerGetBackend(t *testing.T) {
 					},
 				},
 			},
-			expected: "foo-bar",
+			expected: "bar-foo",
 		},
 	}
 

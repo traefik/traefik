@@ -526,7 +526,7 @@ func (provider *Docker) getFrontendRule(container dockerData) string {
 		return label
 	}
 	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
-		return "Host:" + provider.getSubDomain(labels["com.docker.compose.project"]+"_"+labels["com.docker.compose.service"]) + "." + provider.Domain
+		return "Host:" + provider.getSubDomain(labels["com.docker.compose.service"]+"."+labels["com.docker.compose.project"]) + "." + provider.Domain
 	}
 
 	return "Host:" + provider.getSubDomain(container.ServiceName) + "." + provider.Domain
@@ -537,7 +537,7 @@ func (provider *Docker) getBackend(container dockerData) string {
 		return normalize(label)
 	}
 	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
-		return normalize(labels["com.docker.compose.project"] + "_" + labels["com.docker.compose.service"])
+		return normalize(labels["com.docker.compose.service"] + "_" + labels["com.docker.compose.project"])
 	}
 	return normalize(container.ServiceName)
 }
