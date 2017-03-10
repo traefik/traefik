@@ -374,7 +374,9 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		if a.checkOnDemandDomain != nil && !a.checkOnDemandDomain(domain) {
 			return nil, nil
 		}
-		return a.loadCertificateOnDemand(clientHello)
+		if cert, err := a.loadCertificateOnDemand(clientHello); cert != nil || err != nil {
+			return cert, err
+		}
 	}
 
 	// Check if we have a wildcard cert into TLSConfig that could be used
@@ -534,11 +536,26 @@ func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.C
 	if certificateResource, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
 		return certificateResource.tlsCert, nil
 	}
+	// Check if our domain is matching our ingoreFilters
+	if len(a.IgnoreFilters) > 0 {
+		for _, filter := range a.IgnoreFilters {
+			regexp, err := regexp.Compile(filter)
+			if err != nil {
+				log.Warnf("The ACME ignore filter %v, is not a valid regular expression and will be skipped.", filter)
+				continue
+			}
+			if regexp.MatchString(domain) {
+				log.Infof("Acme request for domain %v will be ignored as per filter %v", domain, filter)
+				return nil, nil
+			}
+		}
+	}
+	log.Debugf("Will generate a new acme cert on demand for %v", domain)
 	certificate, err := a.getDomainsCertificates([]string{domain})
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Got certificate on demand for domain %s", domain)
+	log.Debugf("Obtained on demand ACME certificate for domain %s", domain)
 
 	transaction, object, err := a.store.Begin()
 	if err != nil {
@@ -603,7 +620,7 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 				}
 				for _, d := range domains {
 					if regexp.MatchString(d) {
-						log.Debugf("Acme request for domain %v  will be ignored as per filter %v", d, filter)
+						log.Infof("Acme request for domains %+v will be ignored as per filter %v against %v", domain, filter, d)
 						return
 					}
 				}
