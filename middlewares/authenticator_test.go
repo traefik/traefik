@@ -5,12 +5,64 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestAuthUsersFromFile(t *testing.T) {
+	tests := []struct {
+		authType   string
+		usersStr   string
+		userKeys   []string
+		parserFunc func(fileName string) (map[string]string, error)
+	}{
+		{
+			authType: "basic",
+			usersStr: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/\ntest2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0\n",
+			userKeys: []string{"test", "test2"},
+			parserFunc: func(fileName string) (map[string]string, error) {
+				basic := &types.Basic{
+					UsersFile: fileName,
+				}
+				return parserBasicUsers(basic)
+			},
+		},
+		{
+			authType: "digest",
+			usersStr: "test:traefik:a2688e031edb4be6a3797f3882655c05 \ntest2:traefik:518845800f9e2bfb1f1f740ec24f074e\n",
+			userKeys: []string{"test:traefik", "test2:traefik"},
+			parserFunc: func(fileName string) (map[string]string, error) {
+				digest := &types.Digest{
+					UsersFile: fileName,
+				}
+				return parserDigestUsers(digest)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.authType, func(t *testing.T) {
+			t.Parallel()
+			usersFile, err := ioutil.TempFile("", "auth-users")
+			assert.NoError(t, err, "there should be no error")
+			defer os.Remove(usersFile.Name())
+			_, err = usersFile.Write([]byte(test.usersStr))
+			assert.NoError(t, err, "there should be no error")
+			users, err := test.parserFunc(usersFile.Name())
+			assert.NoError(t, err, "there should be no error")
+			assert.Equal(t, 2, len(users), "they should be equal")
+			_, ok := users[test.userKeys[0]]
+			assert.True(t, ok, "user test should be found")
+			_, ok = users[test.userKeys[1]]
+			assert.True(t, ok, "user test2 should be found")
+		})
+	}
+}
 
 func TestBasicAuthFail(t *testing.T) {
 	authMiddleware, err := NewAuthenticator(&types.Auth{
