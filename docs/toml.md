@@ -1520,6 +1520,13 @@ Watch = true
 #
 ExposedByDefault = false
 
+# Use host IP addresses instead of containers
+#
+# Optional
+# Default: false
+#
+UseHostIPs = true
+
 # Endpoint to use when connecting to Rancher
 #
 # Optional
