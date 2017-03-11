@@ -96,7 +96,9 @@ func TestKvList(t *testing.T) {
 	// Error case
 	provider := &Kv{
 		kvclient: &Mock{
-			Error: true,
+			Error: KvError{
+				List: store.ErrKeyNotFound,
+			},
 		},
 	}
 	actual := provider.list("anything")
@@ -187,7 +189,9 @@ func TestKvGet(t *testing.T) {
 	// Error case
 	provider := &Kv{
 		kvclient: &Mock{
-			Error: true,
+			Error: KvError{
+				Get: store.ErrKeyNotFound,
+			},
 		},
 	}
 	actual := provider.get("", "anything")
@@ -284,9 +288,15 @@ func TestKvWatchTree(t *testing.T) {
 	}
 }
 
+// Override Get/List to return a error
+type KvError struct {
+	Get  error
+	List error
+}
+
 // Extremely limited mock store so we can test initialization
 type Mock struct {
-	Error           bool
+	Error           KvError
 	KVPairs         []*store.KVPair
 	WatchTreeMethod func() <-chan []*store.KVPair
 }
@@ -296,8 +306,8 @@ func (s *Mock) Put(key string, value []byte, opts *store.WriteOptions) error {
 }
 
 func (s *Mock) Get(key string) (*store.KVPair, error) {
-	if s.Error {
-		return nil, errors.New("Error")
+	if err := s.Error.Get; err != nil {
+		return nil, err
 	}
 	for _, kvPair := range s.KVPairs {
 		if kvPair.Key == key {
@@ -333,8 +343,8 @@ func (s *Mock) NewLock(key string, options *store.LockOptions) (store.Locker, er
 
 // List mock
 func (s *Mock) List(prefix string) ([]*store.KVPair, error) {
-	if s.Error {
-		return nil, errors.New("Error")
+	if err := s.Error.List; err != nil {
+		return nil, err
 	}
 	kv := []*store.KVPair{}
 	for _, kvPair := range s.KVPairs {
