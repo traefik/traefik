@@ -204,6 +204,7 @@ var minVersion = map[string]uint16{
 }
 
 // Map of TLS CipherSuites from crypto/tls
+// Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
 var cipherSuites = map[string]uint16{
 	`TLS_RSA_WITH_RC4_128_SHA`:                tls.TLS_RSA_WITH_RC4_128_SHA,
 	`TLS_RSA_WITH_3DES_EDE_CBC_SHA`:           tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
