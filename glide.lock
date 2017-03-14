@@ -1,5 +1,5 @@
-hash: f2a0b9af55c8312762e4148bd876e5bd2451c240b407fbb6d4a5dbc56bf46c05
-updated: 2017-03-03T10:21:14.720631882+01:00
+hash: 0fc656d627dd823780fd0c6536bc3fdc938d0e622b3861c1e2012331a5de1f8c
+updated: 2017-03-14T16:21:14.720631882+01:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -422,6 +422,10 @@ imports:
   version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e
   subpackages:
   - client
+- name: github.com/rs/cors
+  version: a62a804a8a009876ca59105f7899938a1349f4b3
+- name: github.com/rs/xhandler
+  version: d9d9599b6aaf6a058cb7b1f48291ded2cbd13390
 - name: github.com/ryanuber/go-glob
   version: 572520ed46dbddaed19ea3d9541bdd0494163693
 - name: github.com/samuel/go-zookeeper

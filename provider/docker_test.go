@@ -582,6 +582,78 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 	}
 }
 
+func TestDockerGetCORS(t *testing.T) {
+	provider := &Docker{}
+	containers := []struct {
+		container docker.ContainerJSON
+		expected  *types.CORS
+	}{
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "foo",
+				},
+				Config: &container.Config{},
+			},
+			expected: nil,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "test",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.frontend.cors.allowedOrigins":     "foo.com,bar.com",
+						"traefik.frontend.cors.allowedMethods":     "GET, POST",
+						"traefik.frontend.cors.allowedHeaders":     "Content-Type,Authentication",
+						"traefik.frontend.cors.exposedHeaders":     "Content-Type",
+						"traefik.frontend.cors.allowCredentials":   "true",
+						"traefik.frontend.cors.maxAge":             "100",
+						"traefik.frontend.cors.optionsPassthrough": "true",
+					},
+				},
+			},
+			expected: &types.CORS{
+				AllowedOrigins:     []string{"foo.com", "bar.com"},
+				AllowedMethods:     []string{"GET", "POST"},
+				AllowedHeaders:     []string{"Content-Type", "Authentication"},
+				ExposedHeaders:     []string{"Content-Type"},
+				AllowCredentials:   true,
+				MaxAge:             100,
+				OptionsPassthrough: true,
+			},
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "bar",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.frontend.cors.allowedMethods": "GET, DELETE",
+					},
+				},
+			},
+			expected: &types.CORS{
+				AllowedMethods:     []string{"GET", "DELETE"},
+				AllowCredentials:   false,
+				MaxAge:             0,
+				OptionsPassthrough: false,
+			},
+		},
+	}
+
+	for _, e := range containers {
+		dockerData := parseContainer(e.container)
+		actual := provider.getCORS(dockerData)
+
+		if (actual == nil || e.expected == nil) && actual != e.expected || !(actual == nil || e.expected == nil) && !reflect.DeepEqual(*actual, *e.expected) {
+			t.Fatalf("expected %v, got %v", e.expected, actual)
+		}
+	}
+}
+
 func TestDockerGetLabel(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
@@ -1710,6 +1782,82 @@ func TestSwarmGetPassHostHeader(t *testing.T) {
 		actual := provider.getPassHostHeader(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
+		}
+	}
+}
+
+func TestSwarmGetCORS(t *testing.T) {
+	provider := &Docker{
+		SwarmMode: true,
+	}
+
+	services := []struct {
+		service  swarm.Service
+		expected *types.CORS
+	}{
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					Annotations: swarm.Annotations{
+						Name: "bar",
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					Annotations: swarm.Annotations{
+						Name: "bar",
+						Labels: map[string]string{
+							"traefik.frontend.cors.allowedOrigins":     "foo.com,bar.com",
+							"traefik.frontend.cors.allowedMethods":     "GET, POST",
+							"traefik.frontend.cors.allowedHeaders":     "Content-Type,Authentication",
+							"traefik.frontend.cors.exposedHeaders":     "Content-Type",
+							"traefik.frontend.cors.allowCredentials":   "true",
+							"traefik.frontend.cors.maxAge":             "100",
+							"traefik.frontend.cors.optionsPassthrough": "true",
+						},
+					},
+				},
+			},
+			expected: &types.CORS{
+				AllowedOrigins:     []string{"foo.com", "bar.com"},
+				AllowedMethods:     []string{"GET", "POST"},
+				AllowedHeaders:     []string{"Content-Type", "Authentication"},
+				ExposedHeaders:     []string{"Content-Type"},
+				AllowCredentials:   true,
+				MaxAge:             100,
+				OptionsPassthrough: true,
+			},
+		},
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					Annotations: swarm.Annotations{
+						Name: "bar",
+						Labels: map[string]string{
+							"traefik.frontend.cors.allowedMethods": "GET, DELETE",
+						},
+					},
+				},
+			},
+			expected: &types.CORS{
+				AllowedMethods:     []string{"GET", "DELETE"},
+				AllowCredentials:   false,
+				MaxAge:             0,
+				OptionsPassthrough: false,
+			},
+		},
+	}
+
+	for _, e := range services {
+		dockerData := parseService(e.service, map[string]*docker.NetworkResource{})
+		actual := provider.getCORS(dockerData)
+
+		if (actual == nil || e.expected == nil) && actual != e.expected || !(actual == nil || e.expected == nil) && !reflect.DeepEqual(*actual, *e.expected) {
+			t.Fatalf("expected %v, got %v", e.expected, actual)
 		}
 	}
 }

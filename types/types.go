@@ -54,6 +54,17 @@ type Route struct {
 	Rule string `json:"rule,omitempty"`
 }
 
+// CORS holds CORS configuration
+type CORS struct {
+	AllowedOrigins     []string `json:"allowedOrigins,omitempty"`
+	AllowedMethods     []string `json:"allowedMethods,omitempty"`
+	AllowedHeaders     []string `json:"allowedHeaders,omitempty"`
+	ExposedHeaders     []string `json:"exposedHeaders,omitempty"`
+	AllowCredentials   bool     `json:"alloweCredentials,omitempty"`
+	MaxAge             int      `json:"maxAge,omitempty"`
+	OptionsPassthrough bool     `json:"optionsPassthrough,omitempty"`
+}
+
 // Frontend holds frontend configuration.
 type Frontend struct {
 	EntryPoints    []string         `json:"entryPoints,omitempty"`
@@ -61,6 +72,7 @@ type Frontend struct {
 	Routes         map[string]Route `json:"routes,omitempty"`
 	PassHostHeader bool             `json:"passHostHeader,omitempty"`
 	Priority       int              `json:"priority"`
+	CORS           *CORS            `json:"cors,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
