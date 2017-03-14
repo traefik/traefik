@@ -2,6 +2,7 @@ package provider
 
 import (
 	"encoding/json"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -1524,11 +1525,283 @@ func TestServiceAnnotations(t *testing.T) {
 	}
 }
 
+func TestKubeAPIErrors(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "testing",
+		},
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
+				{
+					Host: "foo",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Path: "/bar",
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service1",
+										ServicePort: intstr.FromInt(80),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+
+	services := []*v1.Service{{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "service1",
+			UID:       "1",
+			Namespace: "testing",
+		},
+		Spec: v1.ServiceSpec{
+			ClusterIP: "10.0.0.1",
+			Ports: []v1.ServicePort{
+				{
+					Port: 80,
+				},
+			},
+		},
+	}}
+
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	apiErr := errors.New("failed kube api call")
+
+	testCases := []struct {
+		desc            string
+		apiServiceErr   error
+		apiEndpointsErr error
+	}{
+		{
+			desc:          "failed service call",
+			apiServiceErr: apiErr,
+		},
+		{
+			desc:            "failed endpoints call",
+			apiEndpointsErr: apiErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			client := clientMock{
+				ingresses:         ingresses,
+				services:          services,
+				endpoints:         endpoints,
+				watchChan:         watchChan,
+				apiServiceError:   tc.apiServiceErr,
+				apiEndpointsError: tc.apiEndpointsErr,
+			}
+
+			provider := Kubernetes{}
+			if _, err := provider.loadIngresses(client); err != apiErr {
+				t.Errorf("Got error %v, wanted error %v", err, apiErr)
+			}
+		})
+	}
+}
+
+func TestMissingResources(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "testing",
+		},
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
+				{
+					Host: "foo",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service1",
+										ServicePort: intstr.FromInt(80),
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Host: "bar",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service2",
+										ServicePort: intstr.FromInt(80),
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Host: "tar",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service3",
+										ServicePort: intstr.FromInt(80),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Ports: []v1.ServicePort{
+					{
+						Port: 80,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service3",
+				UID:       "3",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.3",
+				Ports: []v1.ServicePort{
+					{
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+	endpoints := []*v1.Endpoints{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Subsets: []v1.EndpointSubset{
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.10.0.1",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Port: 8080,
+						},
+					},
+				},
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.20.0.1",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Port: 8080,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Kubernetes{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo": {
+				Servers: map[string]types.Server{
+					"http://10.10.0.1:8080": {
+						URL:    "http://10.10.0.1:8080",
+						Weight: 1,
+					},
+					"http://10.20.0.1:8080": {
+						URL:    "http://10.20.0.1:8080",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+					Sticky: false,
+				},
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo": {
+				Backend:        "foo",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+			"tar": {
+				Backend:        "tar",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"tar": {
+						Rule: "Host:tar",
+					},
+				},
+			},
+		},
+	}
+
+	actualJSON, _ := json.Marshal(actual)
+	expectedJSON, _ := json.Marshal(expected)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+	}
+}
+
 type clientMock struct {
 	ingresses []*v1beta1.Ingress
 	services  []*v1.Service
 	endpoints []*v1.Endpoints
 	watchChan chan interface{}
+
+	apiServiceError   error
+	apiEndpointsError error
 }
 
 func (c clientMock) GetIngresses(namespaces k8s.Namespaces) []*v1beta1.Ingress {
@@ -1543,6 +1816,10 @@ func (c clientMock) GetIngresses(namespaces k8s.Namespaces) []*v1beta1.Ingress {
 }
 
 func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error) {
+	if c.apiServiceError != nil {
+		return &v1.Service{}, false, c.apiServiceError
+	}
+
 	for _, service := range c.services {
 		if service.Namespace == namespace && service.Name == name {
 			return service, true, nil
@@ -1552,6 +1829,10 @@ func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error
 }
 
 func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
+	if c.apiEndpointsError != nil {
+		return &v1.Endpoints{}, false, c.apiEndpointsError
+	}
+
 	for _, endpoints := range c.endpoints {
 		if endpoints.Namespace == namespace && endpoints.Name == name {
 			return endpoints, true, nil

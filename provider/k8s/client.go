@@ -3,6 +3,7 @@ package k8s
 import (
 	"time"
 
+	"github.com/containous/traefik/log"
 	"k8s.io/client-go/1.5/kubernetes"
 	"k8s.io/client-go/1.5/pkg/api"
 	"k8s.io/client-go/1.5/pkg/api/v1"
@@ -39,30 +40,17 @@ type clientImpl struct {
 	clientset *kubernetes.Clientset
 }
 
-// NewInClusterClient returns a new Kubernetes client that expect to run inside the cluster
-func NewInClusterClient() (Client, error) {
+// NewClient returns a new Kubernetes client
+func NewClient(endpoint string) (Client, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, err
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return nil, err
+		log.Warnf("Kubernetes in cluster config error, trying from out of cluster: %s", err)
+		config = &rest.Config{}
 	}
 
-	return &clientImpl{
-		clientset: clientset,
-	}, nil
-}
-
-// NewInClusterClientWithEndpoint is the same as NewInClusterClient but uses the provided endpoint URL
-func NewInClusterClientWithEndpoint(endpoint string) (Client, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
+	if len(endpoint) > 0 {
+		config.Host = endpoint
 	}
-
-	config.Host = endpoint
 
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
