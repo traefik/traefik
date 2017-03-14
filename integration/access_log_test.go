@@ -15,6 +15,7 @@ import (
 	"github.com/go-check/check"
 	shellwords "github.com/mattn/go-shellwords"
 
+	"bufio"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -61,18 +62,20 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	accessLog, err := ioutil.ReadFile("access.log")
+	file, err := os.Open("access.log")
 	c.Assert(err, checker.IsNil)
-	lines := strings.Split(string(accessLog), "\n")
+	accessLog := bufio.NewScanner(file)
 	count := 0
-	for i, line := range lines {
+	for accessLog.Scan() {
+		line := accessLog.Text()
+		c.Log(line)
+		count++
 		if len(line) > 0 {
-			count++
 			tokens, err := shellwords.Parse(line)
 			c.Assert(err, checker.IsNil)
-			c.Assert(len(tokens), checker.Equals, 13)
+			c.Assert(len(tokens), checker.Equals, 13) // not 14 because 'referer' is blank
 			c.Assert(tokens[6], checker.Equals, "200")
-			c.Assert(tokens[9], checker.Equals, fmt.Sprintf("%d", i+1))
+			c.Assert(tokens[9], checker.Equals, fmt.Sprintf("%d", count))
 			c.Assert(strings.HasPrefix(tokens[10], "frontend"), checker.True)
 			c.Assert(strings.HasPrefix(tokens[11], "http://127.0.0.1:808"), checker.True)
 			c.Assert(regexp.MustCompile("^\\d+ms$").MatchString(tokens[12]), checker.True)
@@ -80,8 +83,12 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	}
 	c.Assert(count, checker.Equals, 3)
 
+	verifyEmptyErrorLog(c, "traefik.log")
+}
+
+func verifyEmptyErrorLog(c *check.C, name string) {
 	// Verify no other Traefik problems
-	traefikLog, err = ioutil.ReadFile("traefik.log")
+	traefikLog, err := ioutil.ReadFile(name)
 	c.Assert(err, checker.IsNil)
 	if len(traefikLog) > 0 {
 		fmt.Printf("%s\n", string(traefikLog))

@@ -19,7 +19,6 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/cmd"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -107,6 +106,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(k8s.Namespaces{}), &k8s.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
+	f.AddParser(reflect.TypeOf([]string{}), &flaeg.SliceStrings{})
 
 	//add commands
 	f.AddCommand(cmd.NewVersionCmd())
@@ -178,8 +178,6 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	if globalConfiguration.InsecureSkipVerify {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
-	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile)
-	defer loggerMiddleware.Close()
 
 	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
 		// no filename, setting to global config file
