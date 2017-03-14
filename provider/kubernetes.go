@@ -29,19 +29,10 @@ type Kubernetes struct {
 	lastConfiguration      safe.Safe
 }
 
-func (provider *Kubernetes) newK8sClient() (k8s.Client, error) {
-	if provider.Endpoint != "" {
-		log.Infof("Creating in cluster Kubernetes client with endpoint %v", provider.Endpoint)
-		return k8s.NewInClusterClientWithEndpoint(provider.Endpoint)
-	}
-	log.Info("Creating in cluster Kubernetes client")
-	return k8s.NewInClusterClient()
-}
-
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	k8sClient, err := provider.newK8sClient()
+	k8sClient, err := k8s.NewClient(provider.Endpoint)
 	if err != nil {
 		return err
 	}
