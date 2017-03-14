@@ -25,11 +25,11 @@ func GetHealthCheck() *HealthCheck {
 
 // BackendHealthCheck HealthCheck configuration for a backend
 type BackendHealthCheck struct {
-	URL            string
-	Interval       time.Duration
-	DisabledURLs   []*url.URL
+	Path         string
+	Interval     time.Duration
+	DisabledURLs []*url.URL
 	requestTimeout time.Duration
-	lb             loadBalancer
+	lb           loadBalancer
 }
 
 var launch = false
@@ -85,12 +85,12 @@ func (hc *HealthCheck) execute(ctx context.Context, backendID string, backend *B
 	checkBackend(backend)
 	ticker := time.NewTicker(backend.Interval)
 	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			log.Debugf("Stopping all current Healthcheck goroutines")
-			return
-		case <-ticker.C:
+			for {
+				select {
+				case <-ctx.Done():
+					log.Debugf("Stopping all current Healthcheck goroutines")
+					return
+				case <-ticker.C:
 			log.Debugf("Refreshing healthcheck for currentBackend %s ", backendID)
 			checkBackend(backend)
 		}
@@ -98,33 +98,33 @@ func (hc *HealthCheck) execute(ctx context.Context, backendID string, backend *B
 }
 
 func checkBackend(currentBackend *BackendHealthCheck) {
-	enabledURLs := currentBackend.lb.Servers()
-	var newDisabledURLs []*url.URL
-	for _, url := range currentBackend.DisabledURLs {
+					enabledURLs := currentBackend.lb.Servers()
+					var newDisabledURLs []*url.URL
+					for _, url := range currentBackend.DisabledURLs {
 		if checkHealth(url, currentBackend) {
-			log.Debugf("HealthCheck is up [%s]: Upsert in server list", url.String())
-			currentBackend.lb.UpsertServer(url, roundrobin.Weight(1))
-		} else {
+							log.Debugf("HealthCheck is up [%s]: Upsert in server list", url.String())
+							currentBackend.lb.UpsertServer(url, roundrobin.Weight(1))
+						} else {
 			log.Warnf("HealthCheck is still failing [%s]", url.String())
-			newDisabledURLs = append(newDisabledURLs, url)
-		}
-	}
-	currentBackend.DisabledURLs = newDisabledURLs
+							newDisabledURLs = append(newDisabledURLs, url)
+						}
+					}
+					currentBackend.DisabledURLs = newDisabledURLs
 
-	for _, url := range enabledURLs {
+					for _, url := range enabledURLs {
 		if !checkHealth(url, currentBackend) {
 			log.Warnf("HealthCheck has failed [%s]: Remove from server list", url.String())
-			currentBackend.lb.RemoveServer(url)
-			currentBackend.DisabledURLs = append(currentBackend.DisabledURLs, url)
-		}
-	}
+							currentBackend.lb.RemoveServer(url)
+							currentBackend.DisabledURLs = append(currentBackend.DisabledURLs, url)
+						}
+					}
 }
 
 func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) bool {
 	client := http.Client{
 		Timeout: backend.requestTimeout,
 	}
-	resp, err := client.Get(serverURL.String() + backend.URL)
+	resp, err := client.Get(serverURL.String() + backend.Path)
 	if err == nil {
 		defer resp.Body.Close()
 	}

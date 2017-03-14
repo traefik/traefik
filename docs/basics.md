@@ -240,16 +240,22 @@ For example:
       sticky = true
 ```
 
-Healthcheck URL can be configured with a relative URL for `healthcheck.URL`.
-Interval between healthcheck can be configured by using `healthcheck.interval`
-(default: 30s)
+A health check can be configured in order to remove a backend from LB rotation
+as long as it keeps returning HTTP status codes other than 200 OK to HTTP GET
+requests periodically carried out by Traefik. The check is defined by a path
+appended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how
+often the health check should be executed (the default being 30 seconds). Each
+backend must respond to the health check within 5 seconds.
+
+A recovering backend returning 200 OK responses again is being returned to the
+LB rotation pool.
 
 For example:
 ```toml
 [backends]
   [backends.backend1]
     [backends.backend1.healthcheck]
-      URL = "/health"
+      path = "/health"
       interval = "10s"
 ```
 
