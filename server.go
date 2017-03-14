@@ -737,6 +737,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								negroni.Use(metricsMiddlewareBackend)
 							}
 						}
+						if frontend.CORS != nil {
+							corsMiddleware := middlewares.NewCORS(frontend.CORS)
+							negroni.Use(corsMiddleware)
+						}
 						if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
 							log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
 							cbreaker, err := middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
