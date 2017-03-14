@@ -1005,12 +1005,14 @@ domain = "mesos.localhost"
 # Zookeeper timeout (in seconds)
 #
 # Optional
+# Default: 30
 #
 # ZkDetectionTimeout = 30
 
 # Polling interval (in seconds)
 #
 # Optional
+# Default: 30
 #
 # RefreshSeconds = 30
 
@@ -1023,8 +1025,9 @@ domain = "mesos.localhost"
 # HTTP Timeout (in seconds)
 #
 # Optional
+# Default: 30
 #
-# StateTimeoutSecond = "host"
+# StateTimeoutSecond = "30"
 ```
 
 ## Kubernetes Ingress backend
