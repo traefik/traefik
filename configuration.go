@@ -408,6 +408,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMesos.Endpoint = "http://127.0.0.1:5050"
 	defaultMesos.ExposedByDefault = true
 	defaultMesos.Constraints = types.Constraints{}
+	defaultMesos.RefreshSeconds = 30
+	defaultMesos.ZkDetectionTimeout = 30
+	defaultMesos.StateTimeoutSecond = 30
 
 	//default ECS
 	var defaultECS provider.ECS
