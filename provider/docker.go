@@ -269,6 +269,7 @@ func (provider *Docker) loadDockerConfig(containersInspected []dockerData) *type
 		"getServicePassHostHeader":    provider.getServicePassHostHeader,
 		"getServicePriority":          provider.getServicePriority,
 		"getServiceBackend":           provider.getServiceBackend,
+		"getCORS":                     provider.getCORS,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -621,6 +622,48 @@ func (provider *Docker) getPassHostHeader(container dockerData) string {
 	return "true"
 }
 
+func (provider *Docker) getCORS(container dockerData) *types.CORS {
+	hasCORS := false
+	c := &types.CORS{}
+	if value, err := getLabel(container, "traefik.frontend.cors.allowedOrigins"); err == nil {
+		c.AllowedOrigins = trimSpaceArray(strings.Split(value, ","))
+		hasCORS = true
+	}
+	if value, err := getLabel(container, "traefik.frontend.cors.allowedMethods"); err == nil {
+		c.AllowedMethods = trimSpaceArray(strings.Split(value, ","))
+		hasCORS = true
+	}
+	if value, err := getLabel(container, "traefik.frontend.cors.allowedHeaders"); err == nil {
+		c.AllowedHeaders = trimSpaceArray(strings.Split(value, ","))
+		hasCORS = true
+	}
+	if value, err := getLabel(container, "traefik.frontend.cors.exposedHeaders"); err == nil {
+		c.ExposedHeaders = trimSpaceArray(strings.Split(value, ","))
+		hasCORS = true
+	}
+	if value, err := getLabel(container, "traefik.frontend.cors.allowCredentials"); err == nil {
+		c.AllowCredentials = value == "true"
+		hasCORS = true
+	}
+	if value, err := getLabel(container, "traefik.frontend.cors.maxAge"); err == nil {
+		maxAge, errConv := strconv.Atoi(value)
+		if errConv != nil {
+			log.Errorf("Unable to parse traefik.frontend.cors.maxAge %s", value)
+		} else {
+			c.MaxAge = maxAge
+			hasCORS = true
+		}
+	}
+	if value, err := getLabel(container, "traefik.frontend.cors.optionsPassthrough"); err == nil {
+		c.OptionsPassthrough = value == "true"
+		hasCORS = true
+	}
+	if !hasCORS {
+		return nil
+	}
+	return c
+}
+
 func (provider *Docker) getPriority(container dockerData) string {
 	if priority, err := getLabel(container, "traefik.frontend.priority"); err == nil {
 		return priority
@@ -855,4 +898,11 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 		}
 	}
 	return dockerData
+}
+
+func trimSpaceArray(in []string) []string {
+	for i := range in {
+		in[i] = strings.TrimSpace(in[i])
+	}
+	return in
 }

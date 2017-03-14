@@ -60,5 +60,16 @@
   {{end}}]
     [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
     rule = "{{getFrontendRule $container}}"
+    {{$CORS := getCORS $container}}
+    {{if $CORS}}
+    [frontends."frontend-{{$frontend}}".cors]
+    {{if $CORS.AllowedOrigins}}allowedOrigins = [{{range $CORS.AllowedOrigins}}"{{.}}",{{end}}]{{end}}
+    {{if $CORS.AllowedMethods}}allowedMethods = [{{range $CORS.AllowedMethods}}"{{.}}",{{end}}]{{end}}
+    {{if $CORS.AllowedHeaders}}allowedHeaders = [{{range $CORS.AllowedHeaders}}"{{.}}",{{end}}]{{end}}
+    {{if $CORS.ExposedHeaders}}exposedHeaders = [{{range $CORS.ExposedHeaders}}"{{.}}",{{end}}]{{end}}
+    allowCredentials = {{$CORS.AllowCredentials}}
+    maxAge = {{$CORS.MaxAge}}
+    optionsPassthrough = {{$CORS.OptionsPassthrough}}
+    {{end}}
   {{end}}
 {{end}}
