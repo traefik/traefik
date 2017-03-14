@@ -8,7 +8,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
-  version: 9920d3561dd2a20cf74c0fe48ec9d3d94414daa1
+  version: f88530866c561d24a6b5aac49f76d6351b788b9f
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -35,12 +35,15 @@ import:
 - package: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - package: github.com/docker/libkv
+  version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
   subpackages:
   - store
   - store/boltdb
   - store/consul
   - store/etcd
   - store/zookeeper
+- package: github.com/docker/libcompose
+  version: v0.4.0  
 - package: github.com/elazarl/go-bindata-assetfs
 - package: github.com/containous/mux
 - package: github.com/hashicorp/consul
@@ -86,6 +89,7 @@ import:
 - package: github.com/abbot/go-http-auth
 - package: github.com/NYTimes/gziphandler
 - package: github.com/docker/leadership
+  version: bfc7753dd48af19513b29deec23c364bf0f274eb
 - package: github.com/satori/go.uuid
   version: ^1.1.0
 - package: k8s.io/client-go
