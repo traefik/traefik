@@ -198,8 +198,13 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 				}
 
 				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
-				if err != nil || !exists {
-					log.Warnf("Error retrieving service %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
+				if err != nil {
+					log.Errorf("Error while retrieving service information from k8s API %s/%s: %v", service.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
+					return nil, err
+				}
+
+				if !exists {
+					log.Errorf("Service not found for %s/%s", service.ObjectMeta.Namespace, pa.Backend.ServiceName)
 					delete(templateObjects.Frontends, r.Host+pa.Path)
 					continue
 				}
@@ -234,11 +239,11 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 							endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 							if err != nil {
 								log.Errorf("Error while retrieving endpoints from k8s API %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
-								continue
+								return nil, err
 							}
 
 							if !exists {
-								log.Errorf("Service not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								log.Errorf("Service endpoints not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 								continue
 							}
 
