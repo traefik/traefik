@@ -2,6 +2,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 hash: b1cbcbd938a47a246b0d4d634037b76e63486c63e5867b339f92bcbd7453b75c
 updated: 2017-04-07T11:34:46.101385591+01:00
 =======
@@ -20,6 +21,10 @@ updated: 2017-03-14T10:10:22.924762706Z
 hash: 6d21d24827ef1c9321e8a41a328c42f891281af2ea68841d42411f23b0666d4b
 updated: 2017-03-02T14:57:08.032744661-07:00
 >>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
+=======
+hash: 741ec5fae23f12e6c0fa0e4c7c00c0af06fac1ddc199dd4b45c904856890b347
+updated: 2017-03-15T10:48:05.202095822+01:00
+>>>>>>> 7c55a4f... Update github.com/containous/oxy only.
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -555,7 +560,7 @@ imports:
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
-  version: 9920d3561dd2a20cf74c0fe48ec9d3d94414daa1
+  version: f88530866c561d24a6b5aac49f76d6351b788b9f
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
