@@ -1,7 +1,6 @@
 package version
 
 import (
-	"context"
 	"net/url"
 
 	"github.com/containous/traefik/log"
@@ -30,7 +29,7 @@ func CheckNewVersion() {
 		return
 	}
 	client.BaseURL = updateURL
-	releases, resp, err := client.Repositories.ListReleases(context.Background(), "containous", "traefik", nil)
+	releases, resp, err := client.Repositories.ListReleases("containous", "traefik", nil)
 	if err != nil {
 		log.Warnf("Error checking new version: %s", err)
 		return
