@@ -78,6 +78,7 @@ func (a nodeSorter) Less(i int, j int) bool {
 func (provider *ConsulCatalog) watchServices(stopCh <-chan struct{}) <-chan map[string][]string {
 	watchCh := make(chan map[string][]string)
 
+	health := provider.client.Health()
 	catalog := provider.client.Catalog()
 
 	safe.Go(func() {
@@ -92,9 +93,11 @@ func (provider *ConsulCatalog) watchServices(stopCh <-chan struct{}) <-chan map[
 			default:
 			}
 
-			data, meta, err := catalog.Services(opts)
+			// Listening to changes that leads to `passing` state or degrades from it.
+			// The call is used just as a trigger for further actions (intentionally there is no interest in the received data).
+			_, meta, err := health.State("passing", opts)
 			if err != nil {
-				log.WithError(err).Errorf("Failed to list services")
+				log.WithError(err).Errorf("Failed to retrieve health checks")
 				return
 			}
 
@@ -105,6 +108,11 @@ func (provider *ConsulCatalog) watchServices(stopCh <-chan struct{}) <-chan map[
 			}
 			opts.WaitIndex = meta.LastIndex
 
+			data, _, err := catalog.Services(&api.QueryOptions{})
+			if err != nil {
+				log.WithError(err).Errorf("Failed to list services")
+				return
+			}
 			if data != nil {
 				watchCh <- data
 			}
