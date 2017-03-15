@@ -128,7 +128,7 @@ func TestDataCaptureWithBackend(t *testing.T) {
 	r := newRequest("POST", testTargetPath)
 	rec := httptest.NewRecorder()
 
-	logger.ServeHTTP(rec, r, swapUrlHandler(frontend))
+	logger.ServeHTTP(rec, r, swapURLHandler(frontend))
 
 	now := time.Now().UTC()
 	assert.Equal(t, 1, len(lf.events))
@@ -238,7 +238,7 @@ func TestLogger(t *testing.T) {
 	r := newRequest("POST", testTargetPath)
 	rec := httptest.NewRecorder()
 
-	logger.ServeHTTP(rec, r, swapUrlHandler(frontend))
+	logger.ServeHTTP(rec, r, swapURLHandler(frontend))
 
 	err = logger.Close()
 	assert.Nil(t, err, "%v", err)
@@ -282,7 +282,7 @@ func redirHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(307)
 }
 
-func swapUrlHandler(next http.Handler) http.HandlerFunc {
+func swapURLHandler(next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.URL = parsedBackendURL
 		next.ServeHTTP(w, r)

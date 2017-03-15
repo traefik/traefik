@@ -27,6 +27,8 @@ func NewLogHandler(appender LogAppender) *LogHandler {
 	return &LogHandler{appender}
 }
 
+// GetLogDataTable gets the request context object that contains logging data. This accretes
+// data as the request passes through the middleware chain.
 func GetLogDataTable(req *http.Request) *LogData {
 	return req.Context().Value(dataTableKey).(*LogData)
 }
