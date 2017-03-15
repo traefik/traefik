@@ -361,10 +361,10 @@ func TestMarathonLoadConfig(t *testing.T) {
 			} else {
 				// Compare backends
 				if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-					t.Errorf("got backend %v, want %v", spew.Sdump(actualConfig.Backends), spew.Sdump(c.expectedBackends))
+					t.Errorf("got backend\n%v\nwant\n\n%v", spew.Sdump(actualConfig.Backends), spew.Sdump(c.expectedBackends))
 				}
 				if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-					t.Errorf("got frontend %v, want %v", spew.Sdump(actualConfig.Frontends), spew.Sdump(c.expectedFrontends))
+					t.Errorf("got frontend\n%v\nwant\n\n%v", spew.Sdump(actualConfig.Frontends), spew.Sdump(c.expectedFrontends))
 				}
 			}
 		})
@@ -1428,6 +1428,125 @@ func TestMarathonGetSubDomain(t *testing.T) {
 			t.Errorf("expected %q, got %q", a.expected, actual)
 		}
 	}
+}
+
+func TestMarathonHasHealthCheckLabels(t *testing.T) {
+	tests := []struct {
+		desc  string
+		value *string
+		want  bool
+	}{
+		{
+			desc:  "label missing",
+			value: nil,
+			want:  false,
+		},
+		{
+			desc:  "empty path",
+			value: stringp(""),
+			want:  false,
+		},
+		{
+			desc:  "non-empty path",
+			value: stringp("/path"),
+			want:  true,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			app := marathon.Application{
+				Labels: &map[string]string{},
+			}
+			if test.value != nil {
+				app.AddLabel(labelBackendHealthCheckPath, *test.value)
+			}
+			prov := &Provider{}
+			got := prov.hasHealthCheckLabels(app)
+			if got != test.want {
+				t.Errorf("got %t, want %t", got, test.want)
+			}
+		})
+	}
+}
+
+func TestMarathonGetHealthCheckPath(t *testing.T) {
+	tests := []struct {
+		desc  string
+		value *string
+		want  string
+	}{
+		{
+			desc:  "label missing",
+			value: nil,
+			want:  "",
+		},
+		{
+			desc:  "path existing",
+			value: stringp("/path"),
+			want:  "/path",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			app := marathon.Application{}
+			app.EmptyLabels()
+			if test.value != nil {
+				app.AddLabel(labelBackendHealthCheckPath, *test.value)
+			}
+			prov := &Provider{}
+			got := prov.getHealthCheckPath(app)
+			if got != test.want {
+				t.Errorf("got %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+func TestMarathonGetHealthCheckInterval(t *testing.T) {
+	tests := []struct {
+		desc  string
+		value *string
+		want  string
+	}{
+		{
+			desc:  "label missing",
+			value: nil,
+			want:  "",
+		},
+		{
+			desc:  "interval existing",
+			value: stringp("5m"),
+			want:  "5m",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			app := marathon.Application{
+				Labels: &map[string]string{},
+			}
+			if test.value != nil {
+				app.AddLabel(labelBackendHealthCheckInterval, *test.value)
+			}
+			prov := &Provider{}
+			got := prov.getHealthCheckInterval(app)
+			if got != test.want {
+				t.Errorf("got %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
+func stringp(s string) *string {
+	return &s
 }
 
 func TestGetBackendServer(t *testing.T) {

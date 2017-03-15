@@ -24,8 +24,10 @@ import (
 )
 
 const (
-	labelPort      = "traefik.port"
-	labelPortIndex = "traefik.portIndex"
+	labelPort                       = "traefik.port"
+	labelPortIndex                  = "traefik.portIndex"
+	labelBackendHealthCheckPath     = "traefik.backend.healthcheck.path"
+	labelBackendHealthCheckInterval = "traefik.backend.healthcheck.interval"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -157,6 +159,9 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		"getLoadBalancerMethod":       p.getLoadBalancerMethod,
 		"getCircuitBreakerExpression": p.getCircuitBreakerExpression,
 		"getSticky":                   p.getSticky,
+		"hasHealthCheckLabels":        p.hasHealthCheckLabels,
+		"getHealthCheckPath":          p.getHealthCheckPath,
+		"getHealthCheckInterval":      p.getHealthCheckInterval,
 	}
 
 	applications, err := p.marathonClient.Applications(nil)
@@ -459,6 +464,24 @@ func (p *Provider) getCircuitBreakerExpression(application marathon.Application)
 		return label
 	}
 	return "NetworkErrorRatio() > 1"
+}
+
+func (p *Provider) hasHealthCheckLabels(application marathon.Application) bool {
+	return p.getHealthCheckPath(application) != ""
+}
+
+func (p *Provider) getHealthCheckPath(application marathon.Application) string {
+	if label, ok := p.getLabel(application, labelBackendHealthCheckPath); ok {
+		return label
+	}
+	return ""
+}
+
+func (p *Provider) getHealthCheckInterval(application marathon.Application) string {
+	if label, ok := p.getLabel(application, labelBackendHealthCheckInterval); ok {
+		return label
+	}
+	return ""
 }
 
 func processPorts(application marathon.Application, task marathon.Task) (int, error) {
