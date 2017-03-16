@@ -1723,10 +1723,12 @@ func TestMissingResources(t *testing.T) {
 
 	watchChan := make(chan interface{})
 	client := clientMock{
-		ingresses:    ingresses,
-		services:     services,
-		endpoints:    endpoints,
-		watchChan:    watchChan,
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+
+		// TODO: Update all tests to cope with "properExists == true" correctly and remove flag.
 		properExists: true,
 	}
 	provider := Kubernetes{}
