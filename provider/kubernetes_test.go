@@ -1617,13 +1617,13 @@ func TestMissingResources(t *testing.T) {
 		Spec: v1beta1.IngressSpec{
 			Rules: []v1beta1.IngressRule{
 				{
-					Host: "foo",
+					Host: "fully_working",
 					IngressRuleValue: v1beta1.IngressRuleValue{
 						HTTP: &v1beta1.HTTPIngressRuleValue{
 							Paths: []v1beta1.HTTPIngressPath{
 								{
 									Backend: v1beta1.IngressBackend{
-										ServiceName: "service1",
+										ServiceName: "fully_working_service",
 										ServicePort: intstr.FromInt(80),
 									},
 								},
@@ -1632,13 +1632,13 @@ func TestMissingResources(t *testing.T) {
 					},
 				},
 				{
-					Host: "bar",
+					Host: "missing_service",
 					IngressRuleValue: v1beta1.IngressRuleValue{
 						HTTP: &v1beta1.HTTPIngressRuleValue{
 							Paths: []v1beta1.HTTPIngressPath{
 								{
 									Backend: v1beta1.IngressBackend{
-										ServiceName: "service2",
+										ServiceName: "missing_service_service",
 										ServicePort: intstr.FromInt(80),
 									},
 								},
@@ -1647,13 +1647,13 @@ func TestMissingResources(t *testing.T) {
 					},
 				},
 				{
-					Host: "tar",
+					Host: "missing_endpoints",
 					IngressRuleValue: v1beta1.IngressRuleValue{
 						HTTP: &v1beta1.HTTPIngressRuleValue{
 							Paths: []v1beta1.HTTPIngressPath{
 								{
 									Backend: v1beta1.IngressBackend{
-										ServiceName: "service3",
+										ServiceName: "missing_endpoints_service",
 										ServicePort: intstr.FromInt(80),
 									},
 								},
@@ -1667,7 +1667,7 @@ func TestMissingResources(t *testing.T) {
 	services := []*v1.Service{
 		{
 			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
+				Name:      "fully_working_service",
 				UID:       "1",
 				Namespace: "testing",
 			},
@@ -1682,7 +1682,7 @@ func TestMissingResources(t *testing.T) {
 		},
 		{
 			ObjectMeta: v1.ObjectMeta{
-				Name:      "service3",
+				Name:      "missing_endpoints_service",
 				UID:       "3",
 				Namespace: "testing",
 			},
@@ -1699,7 +1699,7 @@ func TestMissingResources(t *testing.T) {
 	endpoints := []*v1.Endpoints{
 		{
 			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
+				Name:      "fully_working_service",
 				UID:       "1",
 				Namespace: "testing",
 			},
@@ -1708,18 +1708,6 @@ func TestMissingResources(t *testing.T) {
 					Addresses: []v1.EndpointAddress{
 						{
 							IP: "10.10.0.1",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Port: 8080,
-						},
-					},
-				},
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.20.0.1",
 						},
 					},
 					Ports: []v1.EndpointPort{
