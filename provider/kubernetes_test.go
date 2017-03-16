@@ -8,10 +8,10 @@ import (
 
 	"github.com/containous/traefik/provider/k8s"
 	"github.com/containous/traefik/types"
+	"github.com/davecgh/go-spew/spew"
 	"k8s.io/client-go/1.5/pkg/api/v1"
 	"k8s.io/client-go/1.5/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/1.5/pkg/util/intstr"
-	"github.com/davecgh/go-spew/spew"
 )
 
 func TestLoadIngresses(t *testing.T) {
@@ -1723,10 +1723,11 @@ func TestMissingResources(t *testing.T) {
 
 	watchChan := make(chan interface{})
 	client := clientMock{
-		ingresses: ingresses,
-		services:  services,
-		endpoints: endpoints,
-		watchChan: watchChan,
+		ingresses:    ingresses,
+		services:     services,
+		endpoints:    endpoints,
+		watchChan:    watchChan,
+		properExists: true,
 	}
 	provider := Kubernetes{}
 	actual, err := provider.loadIngresses(client)
@@ -1757,12 +1758,7 @@ func TestMissingResources(t *testing.T) {
 				},
 			},
 			"missing_endpoints": {
-				Servers: map[string]types.Server{
-					"3": {
-						URL:    "http://10.0.0.3:80",
-						Weight: 1,
-					},
-				},
+				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
@@ -1789,15 +1785,6 @@ func TestMissingResources(t *testing.T) {
 					},
 				},
 			},
-			"missing_service": {
-				Backend:        "missing_service",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"missing_service": {
-						Rule: "Host:missing_service",
-					},
-				},
-			},
 		},
 	}
 
@@ -1814,6 +1801,8 @@ type clientMock struct {
 
 	apiServiceError   error
 	apiEndpointsError error
+
+	properExists bool
 }
 
 func (c clientMock) GetIngresses(namespaces k8s.Namespaces) []*v1beta1.Ingress {
@@ -1837,7 +1826,7 @@ func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error
 			return service, true, nil
 		}
 	}
-	return &v1.Service{}, true, nil
+	return &v1.Service{}, false, nil
 }
 
 func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
@@ -1850,6 +1839,11 @@ func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, e
 			return endpoints, true, nil
 		}
 	}
+
+	if c.properExists {
+		return &v1.Endpoints{}, false, nil
+	}
+
 	return &v1.Endpoints{}, true, nil
 }
 
