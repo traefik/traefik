@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/1.5/pkg/api/v1"
 	"k8s.io/client-go/1.5/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/1.5/pkg/util/intstr"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestLoadIngresses(t *testing.T) {
@@ -1800,11 +1801,8 @@ func TestMissingResources(t *testing.T) {
 		},
 	}
 
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
-
 	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+		t.Fatalf("expected\n%v\ngot\n\n%v", spew.Sdump(expected), spew.Sdump(actual))
 	}
 }
 
