@@ -1735,14 +1735,29 @@ func TestMissingResources(t *testing.T) {
 
 	expected := &types.Configuration{
 		Backends: map[string]*types.Backend{
-			"foo": {
+			"fully_working": {
 				Servers: map[string]types.Server{
 					"http://10.10.0.1:8080": {
 						URL:    "http://10.10.0.1:8080",
 						Weight: 1,
 					},
-					"http://10.20.0.1:8080": {
-						URL:    "http://10.20.0.1:8080",
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+					Sticky: false,
+				},
+			},
+			"missing_service": {
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+					Sticky: false,
+				},
+			},
+			"missing_endpoints": {
+				Servers: map[string]types.Server{
+					"3": {
+						URL:    "http://10.0.0.3:80",
 						Weight: 1,
 					},
 				},
@@ -1754,21 +1769,30 @@ func TestMissingResources(t *testing.T) {
 			},
 		},
 		Frontends: map[string]*types.Frontend{
-			"foo": {
-				Backend:        "foo",
+			"fully_working": {
+				Backend:        "fully_working",
 				PassHostHeader: true,
 				Routes: map[string]types.Route{
-					"foo": {
-						Rule: "Host:foo",
+					"fully_working": {
+						Rule: "Host:fully_working",
 					},
 				},
 			},
-			"tar": {
-				Backend:        "tar",
+			"missing_endpoints": {
+				Backend:        "missing_endpoints",
 				PassHostHeader: true,
 				Routes: map[string]types.Route{
-					"tar": {
-						Rule: "Host:tar",
+					"missing_endpoints": {
+						Rule: "Host:missing_endpoints",
+					},
+				},
+			},
+			"missing_service": {
+				Backend:        "missing_service",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"missing_service": {
+						Rule: "Host:missing_service",
 					},
 				},
 			},
