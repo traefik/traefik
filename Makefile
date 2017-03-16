@@ -42,7 +42,7 @@ test-unit: build ## run the unit tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit
 
 test-integration: build ## run the integration tests
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-integration
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary test-integration
 
 validate: build  ## validate gofmt, golint and go vet
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-glide validate-gofmt validate-govet validate-golint validate-misspell
@@ -59,7 +59,7 @@ build-no-cache: dist
 shell: build ## start a shell inside the build env
 	$(DOCKER_RUN_TRAEFIK) /bin/bash
 
-image: build ## build a docker traefik image 
+image: build ## build a docker traefik image
 	docker build -t $(TRAEFIK_IMAGE) .
 
 dist:
