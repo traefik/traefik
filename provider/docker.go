@@ -828,6 +828,9 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	var dockerDataList []dockerData
 
 	for _, task := range taskList {
+		if task.Status.State != swarm.TaskStateRunning {
+			continue
+		}
 		dockerData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
 		dockerDataList = append(dockerDataList, dockerData)
 	}
