@@ -1749,6 +1749,7 @@ func TestMissingResources(t *testing.T) {
 				},
 			},
 			"missing_service": {
+				Servers: map[string]types.Server{},
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
 					Sticky: false,
