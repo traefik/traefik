@@ -68,6 +68,7 @@ var defaultCoreKeys = []string{
 	HTTPHost,
 	HTTPMethod,
 	HTTPRequestPath,
+	HTTPRequestLine,
 	HTTPProtocol,
 	OriginDuration,
 	OriginContentSize,
