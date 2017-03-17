@@ -1,5 +1,5 @@
-hash: f2a0b9af55c8312762e4148bd876e5bd2451c240b407fbb6d4a5dbc56bf46c05
-updated: 2017-03-03T10:21:14.720631882+01:00
+hash: 9d7c36c335fe9106ec79cb86a3b3824c23b63d3fb3a3fb4c75bd6915f3afcdd4
+updated: 2017-03-08T18:53:12.139107148-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -44,6 +44,10 @@ imports:
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
   - private/waiter
+  - service/dynamodb
+  - service/dynamodb/dynamodbattribute
+  - service/dynamodb/dynamodbiface
+  - service/dynamodbattribute
   - service/ec2
   - service/ecs
   - service/route53
