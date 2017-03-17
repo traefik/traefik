@@ -5,7 +5,7 @@
 *.iml
 /traefik
 /traefik.toml
-/vendor/
+vendor/
 /static/
 .vscode/
 /site/

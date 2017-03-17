@@ -173,6 +173,7 @@ func TestJsonAppenderDefault(t *testing.T) {
 			{"HTTPPort", "HTTPPort"},
 			{"HTTPMethod", "HTTPMethod"},
 			{"HTTPRequestPath", "HTTPRequestPath"},
+			{"HTTPRequestLine", "HTTPRequestLine"},
 			{"HTTPProtocol", "HTTPProtocol"},
 			{"OriginDuration", "OriginDuration"},
 			{"OriginContentSize", "OriginContentSize"},
