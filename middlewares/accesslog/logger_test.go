@@ -12,10 +12,12 @@ import (
 
 	"bufio"
 	"bytes"
+	"github.com/NYTimes/gziphandler"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -24,7 +26,15 @@ import (
 type logtestResponseWriter struct{}
 
 const (
-	helloWorld = "Hello, World"
+	textMessage = `So shaken as we are, so wan with care,
+Find we a time for frighted peace to pant
+And breathe short-winded accents of new broils
+To be commenced in strands afar remote.
+No more the thirsty entrance of this soil
+Shall daub her lips with her own children’s blood.
+Nor more shall trenching war channel her fields,
+Nor bruise her flow’rets with the armed hoofs
+Of hostile paces.`
 
 	testFrontendName = "frontend"
 	testBackendName  = "backend"
@@ -158,7 +168,7 @@ func TestDataCaptureWithBackend(t *testing.T) {
 		ClientUsername:        testUsername,
 		ClientRemoteAddr:      testRemoteAddr,
 		OriginDuration:        0,
-		OriginContentSize:     int64(12),
+		OriginContentSize:     int64(len(textMessage)),
 		HTTPAddr:              testTarget,
 		HTTPHost:              testTargetHost,
 		HTTPPort:              testTargetPort,
@@ -168,9 +178,71 @@ func TestDataCaptureWithBackend(t *testing.T) {
 		HTTPRequestLine:       "POST " + testTargetPath + " HTTP/1.1",
 		OriginStatus:          200,
 		DownstreamStatus:      200,
-		DownstreamContentSize: int64(12),
+		DownstreamContentSize: int64(len(textMessage)),
 		RequestCount:          uint64(1),
-		GzipRatio:             float64(1),
+		Overhead:              0,
+		// n.b. GzipRatio=1 so should be elided.
+	}, e0.Core)
+}
+
+func TestDataCaptureWithBackendAndGzip(t *testing.T) {
+	backend := NewSaveBackend(http.HandlerFunc(simpleHandlerFunc), testBackendName)
+	frontend := NewSaveFrontend(backend, testFrontendName)
+	settings := &types.AccessLog{}
+	buf := &bytes.Buffer{}
+	lf := &captureLogFormatter{}
+	la := LogAppender{settings: settings, formatter: lf, file: buf, buf: buf}
+	logger := NewLogHandler(la)
+
+	defer logger.Close()
+
+	r := newRequest("POST", testTargetPath)
+	r.Header.Set("Accept-Encoding", "gzip")
+	rec := httptest.NewRecorder()
+
+	logger.ServeHTTP(rec, r, swapURLHandler(gziphandler.GzipHandler(frontend)))
+
+	now := time.Now().UTC()
+	assert.Equal(t, 1, len(lf.events))
+	e0 := lf.events[0]
+
+	// checks on time-sensitive fields come first
+	assert.True(t, e0.Core[StartUTC].(time.Time).Before(now))
+	assert.True(t, e0.Core[OriginDuration].(time.Duration) >= time.Millisecond && e0.Core[OriginDuration].(time.Duration) < 2*time.Millisecond)
+	assert.True(t, e0.Core[Duration].(time.Duration) >= e0.Core[OriginDuration].(time.Duration) && e0.Core[Duration].(time.Duration) < 3*time.Millisecond)
+	assert.True(t, e0.Core[Overhead].(time.Duration) > 0)
+
+	e0.Core[StartUTC] = now
+	e0.Core[StartLocal] = now
+	e0.Core[Duration] = 0
+	e0.Core[OriginDuration] = 0
+	e0.Core[Overhead] = 0
+
+	assertCoreEqual(t, CoreLogData{
+		StartUTC:              now,
+		StartLocal:            now,
+		Duration:              0,
+		FrontendName:          testFrontendName,
+		BackendName:           testBackendName,
+		BackendURL:            parsedBackendURL,
+		ClientHost:            testRemoteHost,
+		ClientPort:            testRemotePort,
+		ClientUsername:        testUsername,
+		ClientRemoteAddr:      testRemoteAddr,
+		OriginDuration:        0,
+		OriginContentSize:     int64(len(textMessage)),
+		HTTPAddr:              testTarget,
+		HTTPHost:              testTargetHost,
+		HTTPPort:              testTargetPort,
+		HTTPMethod:            "POST",
+		HTTPRequestPath:       testTargetPath,
+		HTTPProtocol:          "HTTP/1.1",
+		HTTPRequestLine:       "POST " + testTargetPath + " HTTP/1.1",
+		OriginStatus:          200,
+		DownstreamStatus:      200,
+		DownstreamContentSize: int64(263),
+		RequestCount:          uint64(2),
+		GzipRatio:             float64(1.4334600760456273),
 		Overhead:              0,
 	}, e0.Core)
 }
@@ -223,7 +295,7 @@ func TestDataCaptureWithRedirect(t *testing.T) {
 		HTTPRequestLine:       "POST " + testTargetPath + " HTTP/1.1",
 		DownstreamStatus:      307,
 		DownstreamContentSize: int64(0),
-		RequestCount:          uint64(2),
+		RequestCount:          uint64(3),
 		Overhead:              0,
 	}, e0.Core)
 }
@@ -261,10 +333,10 @@ func TestLogger(t *testing.T) {
 			assert.Equal(t, fmt.Sprintf("%s", r.URL.String()), tokens[6], line)
 			assert.Equal(t, fmt.Sprintf("%s\"", r.Proto), tokens[7], line)
 			assert.Equal(t, fmt.Sprintf("%d", 200), tokens[8], line)
-			assert.Equal(t, fmt.Sprintf("%d", len(helloWorld)), tokens[9], line)
+			assert.Equal(t, fmt.Sprintf("%d", len(textMessage)), tokens[9], line)
 			assert.Equal(t, quoted(testReferrer), tokens[10], line)
 			assert.Equal(t, quoted(testUserAgent), tokens[11], line)
-			assert.Equal(t, "3", tokens[12], line)
+			assert.Equal(t, "4", tokens[12], line)
 			assert.Equal(t, quoted(testFrontendName), tokens[13], line)
 			assert.Equal(t, quoted(testBackendURL), tokens[14], line)
 		}
@@ -272,11 +344,13 @@ func TestLogger(t *testing.T) {
 	}
 }
 
+//-------------------------------------------------------------------------------------------------
+
 func simpleHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	time.Sleep(time.Millisecond)
-	rw.Header().Set("Content-Length", "12")
+	rw.Header().Set("Content-Length", strconv.Itoa(len(textMessage)))
 	rw.Header().Set("Content-Type", "text/html")
-	rw.Write([]byte(helloWorld))
+	rw.Write([]byte(textMessage))
 	rw.WriteHeader(200)
 }
 
@@ -291,6 +365,14 @@ func swapURLHandler(next http.Handler) http.HandlerFunc {
 		r.URL = parsedBackendURL
 		next.ServeHTTP(w, r)
 	})
+}
+
+type compress struct{}
+
+// ServerHTTP is a function used by negroni
+func (c *compress) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	newGzipHandler := gziphandler.GzipHandler(next)
+	newGzipHandler.ServeHTTP(rw, r)
 }
 
 //-------------------------------------------------------------------------------------------------

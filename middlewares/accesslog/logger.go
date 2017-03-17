@@ -109,7 +109,11 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crw *captureResponse
 	core[DownstreamStatus] = crw.Status()
 	core[DownstreamContentSize] = crw.Size()
 	if original, ok := core[OriginContentSize]; ok {
-		core[GzipRatio] = float64(original.(int64)) / float64(crw.Size())
+		o64 := original.(int64)
+		if o64 != crw.Size() {
+			// n.b divide-by-zero is tolerated here and dealt with elsewhere as appropriate
+			core[GzipRatio] = float64(o64) / float64(crw.Size())
+		}
 	}
 
 	// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
