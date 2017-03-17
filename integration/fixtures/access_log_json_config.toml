@@ -19,7 +19,9 @@ defaultEntryPoints = ["http"]
   coreFields = [
     "StartLocal:            time_local",
     "Duration:              request_time",
+    "HTTPAddr:              addr",
     "HTTPHost:              host",
+    "HTTPPort:              port",
     "HTTPMethod:            method",
     "HTTPRequestPath:       request_path",
     "HTTPProtocol:          protocol",

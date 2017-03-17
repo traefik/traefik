@@ -46,7 +46,8 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	if l.appender.IsOpen() {
 		core[RequestCount] = nextRequestCount()
 		if req.Host != "" {
-			core[HTTPHost] = req.Host
+			core[HTTPAddr] = req.Host
+			core[HTTPHost], core[HTTPPort] = silentSplitHostPort(req.Host)
 		}
 		// copy the URL without the scheme, hostname etc
 		u := &url.URL{

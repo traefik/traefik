@@ -68,7 +68,9 @@ func (s *AccessLogJSONSuite) TestAccessLogJSON(c *check.C) {
 			//\"Content-Type\":\"text/plain; charset=utf-8\",\"Content-Length\":\"22\"}"
 			c.Assert(line, checker.Contains, `"time_local":"`)
 			c.Assert(line, checker.Contains, `"request_time":0`)
-			c.Assert(line, checker.Contains, `"host":"127.0.0.1:8000"`)
+			c.Assert(line, checker.Contains, `"addr":"127.0.0.1:8000"`)
+			c.Assert(line, checker.Contains, `"host":"127.0.0.1"`)
+			c.Assert(line, checker.Contains, `"port":"8000"`)
 			c.Assert(line, checker.Contains, `"method":"GET"`)
 			c.Assert(line, checker.Contains, `"protocol":"HTTP/1.1"`)
 			c.Assert(line, checker.Contains, `"remote_addr":"127.0.0.1:`)

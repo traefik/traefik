@@ -26,8 +26,12 @@ const (
 	ClientPort = "ClientPort"
 	// ClientUsername is the map key used for the username provided in the URL, if present.
 	ClientUsername = "ClientUsername"
-	// HTTPHost is the map key used for the HTTP Host header (which is treated as not a header by the Go API).
+	// HTTPAddr is the map key used for the HTTP Host header (usually IP:port). This is treated as not a header by the Go API.
+	HTTPAddr = "HTTPAddr"
+	// HTTPHost is the map key used for the HTTP Host server name (not including port).
 	HTTPHost = "HTTPHost"
+	// HTTPPort is the map key used for the TCP port from the HTTP Host.
+	HTTPPort = "HTTPPort"
 	// HTTPMethod is the map key used for the HTTP method.
 	HTTPMethod = "HTTPMethod"
 	// HTTPRequestPath is the map key used for the HTTP request URI, not including the scheme, host or port.
@@ -65,7 +69,9 @@ var defaultCoreKeys = []string{
 	ClientHost,
 	ClientPort,
 	ClientUsername,
+	HTTPAddr,
 	HTTPHost,
+	HTTPPort,
 	HTTPMethod,
 	HTTPRequestPath,
 	HTTPRequestLine,
