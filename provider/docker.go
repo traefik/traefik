@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -28,7 +29,6 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
 	"github.com/vdemeester/docker-events"
-	"regexp"
 )
 
 const (
@@ -543,6 +543,8 @@ func (provider *Docker) getIPAddress(container dockerData) string {
 			if network != nil {
 				return network.Addr
 			}
+
+			log.Warn("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", label, container.Name)
 		}
 	}
 
