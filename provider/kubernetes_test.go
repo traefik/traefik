@@ -1729,6 +1729,7 @@ func TestMissingResources(t *testing.T) {
 		watchChan: watchChan,
 
 		// TODO: Update all tests to cope with "properExists == true" correctly and remove flag.
+		// See https://github.com/containous/traefik/issues/1307
 		properExists: true,
 	}
 	provider := Kubernetes{}
