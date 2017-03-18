@@ -6,7 +6,6 @@ import (
 	"math"
 	"net"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
