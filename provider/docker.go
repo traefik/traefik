@@ -550,6 +550,8 @@ func (provider *Docker) getIPAddress(container dockerData) string {
 			if network != nil {
 				return network.Addr
 			}
+
+			log.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", label, container.Name)
 		}
 	}
 
