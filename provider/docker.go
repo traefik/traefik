@@ -1,8 +1,10 @@
 package provider
 
 import (
+	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"net"
 	"net/http"
@@ -142,7 +144,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 			}
 
 			var traefikContainerID string
-			if inContainer {
+			if inContainer && runtime.GOOS == "linux" {
 				traefikContainerID, err = getContainerID()
 				if err != nil {
 					log.Errorf("Failed to get container ID for docker, error: %s", err)
@@ -802,9 +804,25 @@ func getContainerNetworks(ctx context.Context, cli client.APIClient, containerID
 
 // get container ID from inside a container
 func getContainerID() (string, error) {
-	hostname, err := os.Hostname()
+	cgroup := "/proc/self/cgroup"
+
+	file, err := os.Open(cgroup)
 	if err != nil {
 		return "", err
 	}
-	return hostname, nil
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "docker") {
+			i := strings.LastIndex(line, "/")
+			containerID := line[i+1:]
+			return containerID, nil
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return "", err
+	}
+
+	return "", fmt.Errorf("Failed to get container ID from %s", cgroup)
 }
