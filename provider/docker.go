@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"text/template"
@@ -19,6 +20,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
+	"github.com/docker/docker/pkg/parsers/operatingsystem"
 	"github.com/docker/engine-api/client"
 	dockertypes "github.com/docker/engine-api/types"
 	dockercontainertypes "github.com/docker/engine-api/types/container"
@@ -141,15 +143,24 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 				traefikContainerID = hostname
 			}
 
+			var inContainer bool
+			if runtime.GOOS == "linux" {
+				inContainer, err = operatingsystem.IsContainerized()
+				if err != nil {
+					log.Errorf("Failed to determine if traefik is containerized for docker, error: %s", err)
+					return err
+				}
+			}
+
 			var dockerDataList []dockerData
 			if provider.SwarmMode {
-				dockerDataList, err = provider.listServices(ctx, dockerClient, traefikContainerID)
+				dockerDataList, err = provider.listServices(ctx, dockerClient, inContainer, traefikContainerID)
 				if err != nil {
 					log.Errorf("Failed to list services for docker swarm mode, error %s", err)
 					return err
 				}
 			} else {
-				dockerDataList, err = listContainers(ctx, dockerClient, traefikContainerID)
+				dockerDataList, err = listContainers(ctx, dockerClient, inContainer, traefikContainerID)
 				if err != nil {
 					log.Errorf("Failed to list containers for docker, error %s", err)
 					return err
@@ -170,7 +181,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 						for {
 							select {
 							case <-ticker.C:
-								services, err := provider.listServices(ctx, dockerClient, traefikContainerID)
+								services, err := provider.listServices(ctx, dockerClient, inContainer, traefikContainerID)
 								if err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
 									return
@@ -210,7 +221,7 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 					eventHandler := events.NewHandler(events.ByAction)
 					startStopHandle := func(m eventtypes.Message) {
 						log.Debugf("Docker event received %+v", m)
-						containers, err := listContainers(ctx, dockerClient, traefikContainerID)
+						containers, err := listContainers(ctx, dockerClient, inContainer, traefikContainerID)
 						if err != nil {
 							log.Errorf("Failed to list containers for docker, error %s", err)
 							// Call cancel to get out of the monitor
@@ -550,7 +561,7 @@ func getLabels(container dockerData, labels []string) (map[string]string, error)
 	return foundLabels, globalErr
 }
 
-func listContainers(ctx context.Context, dockerClient client.APIClient, traefikContainerID string) ([]dockerData, error) {
+func listContainers(ctx context.Context, dockerClient client.APIClient, inContainer bool, traefikContainerID string) ([]dockerData, error) {
 	containerList, err := dockerClient.ContainerList(ctx, dockertypes.ContainerListOptions{})
 	if err != nil {
 		return []dockerData{}, err
@@ -559,7 +570,7 @@ func listContainers(ctx context.Context, dockerClient client.APIClient, traefikC
 
 	// get available networks
 	var networkList []dockertypes.NetworkResource
-	if traefikContainerID != "" {
+	if inContainer {
 		networkList, err = getContainerNetworks(ctx, dockerClient, traefikContainerID, dockertypes.NetworkListOptions{})
 	} else {
 		networkList, err = dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{})
@@ -637,7 +648,7 @@ func (provider *Docker) getSubDomain(name string) string {
 	return strings.Replace(strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1), "_", "-", -1)
 }
 
-func (provider *Docker) listServices(ctx context.Context, dockerClient client.APIClient, traefikContainerID string) ([]dockerData, error) {
+func (provider *Docker) listServices(ctx context.Context, dockerClient client.APIClient, inContainer bool, traefikContainerID string) ([]dockerData, error) {
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
 	if err != nil {
 		return []dockerData{}, err
@@ -650,8 +661,7 @@ func (provider *Docker) listServices(ctx context.Context, dockerClient client.AP
 	}
 
 	var networkList []dockertypes.NetworkResource
-
-	if traefikContainerID != "" {
+	if inContainer {
 		networkList, err = getContainerNetworks(ctx, dockerClient, traefikContainerID, networkListOptions)
 	} else {
 		networkList, err = dockerClient.NetworkList(ctx, networkListOptions)
