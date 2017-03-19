@@ -132,22 +132,20 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 			version, err := dockerClient.ServerVersion(ctx)
 			log.Debugf("Docker connection established with docker %s (API %s)", version.Version, version.APIVersion)
 
-			hostname, err := os.Hostname()
-			if err != nil {
-				log.Errorf("Failed to get hostname for docker, error %s", err)
-				return err
-			}
-
-			var traefikContainerID string
-			if containerExists(ctx, dockerClient, hostname) {
-				traefikContainerID = hostname
-			}
-
 			var inContainer bool
 			if runtime.GOOS == "linux" {
 				inContainer, err = operatingsystem.IsContainerized()
 				if err != nil {
 					log.Errorf("Failed to determine if traefik is containerized for docker, error: %s", err)
+					return err
+				}
+			}
+
+			var traefikContainerID string
+			if inContainer {
+				traefikContainerID, err = getContainerID()
+				if err != nil {
+					log.Errorf("Failed to get container ID for docker, error: %s", err)
 					return err
 				}
 			}
@@ -777,13 +775,6 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 	return dockerData
 }
 
-func containerExists(ctx context.Context, cli client.ContainerAPIClient, id string) bool {
-	if _, err := cli.ContainerInspect(ctx, id); err != nil {
-		return false
-	}
-	return true
-}
-
 // get networks attached to a container
 func getContainerNetworks(ctx context.Context, cli client.APIClient, containerID string,
 	options dockertypes.NetworkListOptions) ([]dockertypes.NetworkResource, error) {
@@ -807,4 +798,13 @@ func getContainerNetworks(ctx context.Context, cli client.APIClient, containerID
 	}
 
 	return fun.Filter(filter, networks).([]dockertypes.NetworkResource), nil
+}
+
+// get container ID from inside a container
+func getContainerID() (string, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "", err
+	}
+	return hostname, nil
 }
