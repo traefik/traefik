@@ -367,14 +367,6 @@ func swapURLHandler(next http.Handler) http.HandlerFunc {
 	})
 }
 
-type compress struct{}
-
-// ServerHTTP is a function used by negroni
-func (c *compress) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	newGzipHandler := gziphandler.GzipHandler(next)
-	newGzipHandler.ServeHTTP(rw, r)
-}
-
 //-------------------------------------------------------------------------------------------------
 
 func BenchmarkCommonLogFormatToFile(b *testing.B) {

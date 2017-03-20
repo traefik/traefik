@@ -251,10 +251,10 @@
 #     is the difference between the above two.
 #
 #   * GzipRatio: the response body compression ratio achieved. A
-#     number less than 1 indicates some compression. Note that very
+#     number greater than 1 indicates some compression. Note that very
 #     small responses are typically made larger by compression, in
-#     which case the GzipRatio might be greater than 1. Omitted if
-#     the information is unavailable.
+#     which case the GzipRatio might be less than 1. Omitted if
+#     the information is unavailable or the value is 1 (no compression).
 #
 #   * ClientRemoteAddr: the remote address of the user-agent,
 #     ClientHost and ClientPort are extracted from this remote address.
