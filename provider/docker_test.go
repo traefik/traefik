@@ -15,6 +15,7 @@ import (
 	"github.com/docker/engine-api/types/swarm"
 	"github.com/docker/go-connections/nat"
 	"golang.org/x/net/context"
+	"strconv"
 )
 
 func TestDockerGetFrontendName(t *testing.T) {
@@ -103,12 +104,16 @@ func TestDockerGetFrontendName(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		actual := provider.getFrontendName(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			actual := provider.getFrontendName(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -180,12 +185,16 @@ func TestDockerGetFrontendRule(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		actual := provider.getFrontendRule(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			actual := provider.getFrontendRule(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -243,12 +252,16 @@ func TestDockerGetBackend(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		actual := provider.getBackend(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			actual := provider.getBackend(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -344,12 +357,16 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		actual := provider.getIPAddress(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			actual := provider.getIPAddress(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -457,12 +474,16 @@ func TestDockerGetPort(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		actual := provider.getPort(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			actual := provider.getPort(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -497,12 +518,16 @@ func TestDockerGetWeight(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		actual := provider.getWeight(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			actual := provider.getWeight(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -539,12 +564,16 @@ func TestDockerGetDomain(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		actual := provider.getDomain(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			actual := provider.getDomain(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -579,12 +608,16 @@ func TestDockerGetProtocol(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		actual := provider.getProtocol(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			actual := provider.getProtocol(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -618,12 +651,16 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		actual := provider.getPassHostHeader(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			actual := provider.getPassHostHeader(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -656,18 +693,22 @@ func TestDockerGetLabel(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		label, err := getLabel(dockerData, "foo")
-		if e.expected != "" {
-			if err == nil || !strings.Contains(err.Error(), e.expected) {
-				t.Fatalf("expected an error with %q, got %v", e.expected, err)
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			label, err := getLabel(dockerData, "foo")
+			if e.expected != "" {
+				if err == nil || !strings.Contains(err.Error(), e.expected) {
+					t.Errorf("expected an error with %q, got %v", e.expected, err)
+				}
+			} else {
+				if label != "bar" {
+					t.Errorf("expected label 'bar', got %s", label)
+				}
 			}
-		} else {
-			if label != "bar" {
-				t.Fatalf("expected label 'bar', got %s", label)
-			}
-		}
+		})
 	}
 }
 
@@ -723,17 +764,21 @@ func TestDockerGetLabels(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		dockerData := parseContainer(e.container)
-		labels, err := getLabels(dockerData, []string{"foo", "bar"})
-		if !reflect.DeepEqual(labels, e.expectedLabels) {
-			t.Fatalf("expect %v, got %v", e.expectedLabels, labels)
-		}
-		if e.expectedError != "" {
-			if err == nil || !strings.Contains(err.Error(), e.expectedError) {
-				t.Fatalf("expected an error with %q, got %v", e.expectedError, err)
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			labels, err := getLabels(dockerData, []string{"foo", "bar"})
+			if !reflect.DeepEqual(labels, e.expectedLabels) {
+				t.Errorf("expect %v, got %v", e.expectedLabels, labels)
 			}
-		}
+			if e.expectedError != "" {
+				if err == nil || !strings.Contains(err.Error(), e.expectedError) {
+					t.Errorf("expected an error with %q, got %v", e.expectedError, err)
+				}
+			}
+		})
 	}
 }
 
@@ -957,13 +1002,17 @@ func TestDockerTraefikFilter(t *testing.T) {
 		},
 	}
 
-	for _, e := range containers {
-		provider.ExposedByDefault = e.exposedByDefault
-		dockerData := parseContainer(e.container)
-		actual := provider.containerFilter(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %v for %+v, got %+v", e.expected, e, actual)
-		}
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			provider.ExposedByDefault = e.exposedByDefault
+			dockerData := parseContainer(e.container)
+			actual := provider.containerFilter(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %v for %+v, got %+v", e.expected, e, actual)
+			}
+		})
 	}
 }
 
@@ -1179,21 +1228,25 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 		ExposedByDefault: true,
 	}
 
-	for _, c := range cases {
-		var dockerDataList []dockerData
-		for _, container := range c.containers {
-			dockerData := parseContainer(container)
-			dockerDataList = append(dockerDataList, dockerData)
-		}
+	for caseID, c := range cases {
+		c := c
+		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
+			t.Parallel()
+			var dockerDataList []dockerData
+			for _, container := range c.containers {
+				dockerData := parseContainer(container)
+				dockerDataList = append(dockerDataList, dockerData)
+			}
 
-		actualConfig := provider.loadDockerConfig(dockerDataList)
-		// Compare backends
-		if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-			t.Fatalf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
-		}
-		if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-			t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
-		}
+			actualConfig := provider.loadDockerConfig(dockerDataList)
+			// Compare backends
+			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
+				t.Errorf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
+			}
+			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
+				t.Errorf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
+			}
+		})
 	}
 }
 
@@ -1277,12 +1330,16 @@ func TestSwarmGetFrontendName(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		actual := provider.getFrontendName(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			actual := provider.getFrontendName(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -1349,12 +1406,16 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		actual := provider.getFrontendRule(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			actual := provider.getFrontendRule(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -1406,12 +1467,16 @@ func TestSwarmGetBackend(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		actual := provider.getBackend(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			actual := provider.getBackend(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -1503,12 +1568,16 @@ func TestSwarmGetIPAddress(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		actual := provider.getIPAddress(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			actual := provider.getIPAddress(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -1541,12 +1610,16 @@ func TestSwarmGetPort(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		actual := provider.getPort(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			actual := provider.getPort(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -1593,12 +1666,16 @@ func TestSwarmGetWeight(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		actual := provider.getWeight(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			actual := provider.getWeight(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -1646,12 +1723,16 @@ func TestSwarmGetDomain(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		actual := provider.getDomain(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			actual := provider.getDomain(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -1698,12 +1779,16 @@ func TestSwarmGetProtocol(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		actual := provider.getProtocol(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			actual := provider.getProtocol(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
@@ -1750,17 +1835,20 @@ func TestSwarmGetPassHostHeader(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		actual := provider.getPassHostHeader(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			actual := provider.getPassHostHeader(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
 	}
 }
 
 func TestSwarmGetLabel(t *testing.T) {
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -1799,18 +1887,22 @@ func TestSwarmGetLabel(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		label, err := getLabel(dockerData, "foo")
-		if e.expected != "" {
-			if err == nil || !strings.Contains(err.Error(), e.expected) {
-				t.Fatalf("expected an error with %q, got %v", e.expected, err)
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			label, err := getLabel(dockerData, "foo")
+			if e.expected != "" {
+				if err == nil || !strings.Contains(err.Error(), e.expected) {
+					t.Errorf("expected an error with %q, got %v", e.expected, err)
+				}
+			} else {
+				if label != "bar" {
+					t.Errorf("expected label 'bar', got %s", label)
+				}
 			}
-		} else {
-			if label != "bar" {
-				t.Fatalf("expected label 'bar', got %s", label)
-			}
-		}
+		})
 	}
 }
 
@@ -1871,17 +1963,21 @@ func TestSwarmGetLabels(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		labels, err := getLabels(dockerData, []string{"foo", "bar"})
-		if !reflect.DeepEqual(labels, e.expectedLabels) {
-			t.Fatalf("expect %v, got %v", e.expectedLabels, labels)
-		}
-		if e.expectedError != "" {
-			if err == nil || !strings.Contains(err.Error(), e.expectedError) {
-				t.Fatalf("expected an error with %q, got %v", e.expectedError, err)
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			labels, err := getLabels(dockerData, []string{"foo", "bar"})
+			if !reflect.DeepEqual(labels, e.expectedLabels) {
+				t.Errorf("expect %v, got %v", e.expectedLabels, labels)
 			}
-		}
+			if e.expectedError != "" {
+				if err == nil || !strings.Contains(err.Error(), e.expectedError) {
+					t.Errorf("expected an error with %q, got %v", e.expectedError, err)
+				}
+			}
+		})
 	}
 }
 
@@ -2035,13 +2131,17 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		dockerData := parseService(e.service, e.networks)
-		provider.ExposedByDefault = e.exposedByDefault
-		actual := provider.containerFilter(dockerData)
-		if actual != e.expected {
-			t.Fatalf("expected %v for %+v, got %+v", e.expected, e, actual)
-		}
+	for serviceID, e := range services {
+		e := e
+		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			provider.ExposedByDefault = e.exposedByDefault
+			actual := provider.containerFilter(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %v for %+v, got %+v", e.expected, e, actual)
+			}
+		})
 	}
 }
 
@@ -2212,21 +2312,25 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 		SwarmMode:        true,
 	}
 
-	for _, c := range cases {
-		var dockerDataList []dockerData
-		for _, service := range c.services {
-			dockerData := parseService(service, c.networks)
-			dockerDataList = append(dockerDataList, dockerData)
-		}
+	for caseID, c := range cases {
+		c := c
+		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
+			t.Parallel()
+			var dockerDataList []dockerData
+			for _, service := range c.services {
+				dockerData := parseService(service, c.networks)
+				dockerDataList = append(dockerDataList, dockerData)
+			}
 
-		actualConfig := provider.loadDockerConfig(dockerDataList)
-		// Compare backends
-		if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-			t.Fatalf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
-		}
-		if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-			t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
-		}
+			actualConfig := provider.loadDockerConfig(dockerDataList)
+			// Compare backends
+			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
+				t.Errorf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
+			}
+			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
+				t.Errorf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
+			}
+		})
 	}
 }
 
@@ -2305,15 +2409,19 @@ func TestSwarmTaskParsing(t *testing.T) {
 		},
 	}
 
-	for _, e := range cases {
-		dockerData := parseService(e.service, e.networks)
+	for caseID, e := range cases {
+		e := e
+		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
 
-		for _, task := range e.tasks {
-			taskDockerData := parseTasks(task, dockerData, map[string]*docker.NetworkResource{}, e.isGlobalSVC)
-			if !reflect.DeepEqual(taskDockerData.Name, e.expectedNames[task.ID]) {
-				t.Fatalf("expect %v, got %v", e.expectedNames[task.ID], taskDockerData.Name)
+			for _, task := range e.tasks {
+				taskDockerData := parseTasks(task, dockerData, map[string]*docker.NetworkResource{}, e.isGlobalSVC)
+				if !reflect.DeepEqual(taskDockerData.Name, e.expectedNames[task.ID]) {
+					t.Errorf("expect %v, got %v", e.expectedNames[task.ID], taskDockerData.Name)
+				}
 			}
-		}
+		})
 	}
 }
 
@@ -2390,20 +2498,24 @@ func TestListTasks(t *testing.T) {
 		},
 	}
 
-	for _, e := range cases {
-		dockerData := parseService(e.service, e.networks)
-		dockerClient := &fakeTasksClient{tasks: e.tasks}
-		taskDockerData, _ := listTasks(context.Background(), dockerClient, e.service.ID, dockerData, map[string]*docker.NetworkResource{}, e.isGlobalSVC)
+	for caseID, e := range cases {
+		e := e
+		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseService(e.service, e.networks)
+			dockerClient := &fakeTasksClient{tasks: e.tasks}
+			taskDockerData, _ := listTasks(context.Background(), dockerClient, e.service.ID, dockerData, map[string]*docker.NetworkResource{}, e.isGlobalSVC)
 
-		if len(e.expectedTasks) != len(taskDockerData) {
-			t.Fatalf("expected tasks %v, got %v", spew.Sprint(e.expectedTasks), spew.Sprint(taskDockerData))
-		}
-
-		for i, taskID := range e.expectedTasks {
-			if taskDockerData[i].Name != taskID {
-				t.Fatalf("expect task id %v, got %v", taskID, taskDockerData[i].Name)
+			if len(e.expectedTasks) != len(taskDockerData) {
+				t.Errorf("expected tasks %v, got %v", spew.Sdump(e.expectedTasks), spew.Sdump(taskDockerData))
 			}
-		}
+
+			for i, taskID := range e.expectedTasks {
+				if taskDockerData[i].Name != taskID {
+					t.Errorf("expect task id %v, got %v", taskID, taskDockerData[i].Name)
+				}
+			}
+		})
 	}
 }
 
