@@ -84,7 +84,7 @@ func (s *AccessLogJSONSuite) TestAccessLogJSON(c *check.C) {
 				c.Assert(line, checker.Contains, `"frontend":"frontend1"`)
 				c.Assert(line, checker.Contains, `"proxy_host":"backend1"`)
 				c.Assert(line, checker.Contains, `"proxy_url":"http://127.0.0.1:8081"`)
-				c.Assert(line, checker.Contains, `"upstream_response_length":24`)
+				c.Assert(line, checker.Contains, `"origin_response_length":24`)
 				c.Assert(line, checker.Contains, `"body_bytes_sent":48`)
 				c.Assert(line, checker.Contains, `"gzip_ratio":0.5`)
 			case 2:
@@ -92,7 +92,7 @@ func (s *AccessLogJSONSuite) TestAccessLogJSON(c *check.C) {
 				c.Assert(line, checker.Contains, `"frontend":"frontend2"`)
 				c.Assert(line, checker.Contains, `"proxy_host":"backend2"`)
 				c.Assert(line, checker.Contains, `"proxy_url":"http://127.0.0.1:809`)
-				c.Assert(line, checker.Contains, `"upstream_response_length":26`)
+				c.Assert(line, checker.Contains, `"origin_response_length":26`)
 				c.Assert(line, checker.Contains, `"body_bytes_sent":50`)
 				c.Assert(line, checker.Contains, `"gzip_ratio":0.52`)
 			case 3:
@@ -100,7 +100,7 @@ func (s *AccessLogJSONSuite) TestAccessLogJSON(c *check.C) {
 				c.Assert(line, checker.Contains, `"frontend":"frontend2"`)
 				c.Assert(line, checker.Contains, `"proxy_host":"backend2"`)
 				c.Assert(line, checker.Contains, `"proxy_url":"http://127.0.0.1:809`)
-				c.Assert(line, checker.Contains, `"upstream_response_length":28`)
+				c.Assert(line, checker.Contains, `"origin_response_length":28`)
 				c.Assert(line, checker.Contains, `"body_bytes_sent":52`)
 				c.Assert(line, checker.Contains, `"gzip_ratio":0.5385`)
 			}

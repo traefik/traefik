@@ -43,11 +43,17 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 
 	r2 := req.WithContext(context.WithValue(req.Context(), dataTableKey, logDataTable))
 
+	var crr *captureRequestReader
+	if req.Body != nil {
+		crr = &captureRequestReader{req.Body, 0}
+		r2.Body = crr
+	}
+
 	if l.appender.IsOpen() {
 		core[RequestCount] = nextRequestCount()
 		if req.Host != "" {
-			core[HTTPAddr] = req.Host
-			core[HTTPHost], core[HTTPPort] = silentSplitHostPort(req.Host)
+			core[RequestAddr] = req.Host
+			core[RequestHost], core[RequestPort] = silentSplitHostPort(req.Host)
 		}
 		// copy the URL without the scheme, hostname etc
 		u := &url.URL{
@@ -58,12 +64,12 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 			Fragment:   req.URL.Fragment,
 		}
 		us := u.String()
-		core[HTTPMethod] = req.Method
-		core[HTTPRequestPath] = us
-		core[HTTPProtocol] = req.Proto
-		core[HTTPRequestLine] = fmt.Sprintf("%s %s %s", req.Method, us, req.Proto)
+		core[RequestMethod] = req.Method
+		core[RequestPath] = us
+		core[RequestProtocol] = req.Proto
+		core[RequestLine] = fmt.Sprintf("%s %s %s", req.Method, us, req.Proto)
 
-		core[ClientRemoteAddr] = req.RemoteAddr
+		core[ClientAddr] = req.RemoteAddr
 		core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
 		core[ClientUsername] = usernameIfPresent(req.URL)
 
@@ -72,7 +78,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 		next.ServeHTTP(crw, r2)
 
 		logDataTable.DownstreamResponse = crw.Header()
-		l.logTheRoundTrip(logDataTable, crw)
+		l.logTheRoundTrip(logDataTable, crr, crw)
 
 	} else {
 		next(rw, r2)
@@ -103,10 +109,16 @@ func usernameIfPresent(u *url.URL) string {
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time
-func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crw *captureResponseWriter) {
+func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestReader, crw *captureResponseWriter) {
 
 	core := logDataTable.Core
+
+	if crr != nil {
+		core[RequestContentSize] = crr.count
+	}
+
 	core[DownstreamStatus] = crw.Status()
+	core[DownstreamStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
 	core[DownstreamContentSize] = crw.Size()
 	if original, ok := core[OriginContentSize]; ok {
 		o64 := original.(int64)

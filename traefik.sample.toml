@@ -256,7 +256,7 @@
 #     which case the GzipRatio might be less than 1. Omitted if
 #     the information is unavailable or the value is 1 (no compression).
 #
-#   * ClientRemoteAddr: the remote address of the user-agent,
+#   * ClientAddr: the remote address of the user-agent,
 #     ClientHost and ClientPort are extracted from this remote address.
 #
 #[accessLog]
@@ -268,18 +268,24 @@
 #    "StartUTC:              time_utc",
 #    "StartLocal:            time_local",
 #    "Duration:              total_duration",
-#    "HTTPAddr:              host",
-#    "HTTPMethod:            method",
-#    "HTTPRequestPath:       request_path",
-#    "HTTPProtocol:          protocol",
-#    "ClientRemoteAddr:      remote_addr",
+#    "RequestAddr:           host_and_port",
+#    "RequestHost:           host",
+#    "RequestPort:           port",
+#    "RequestMethod:         method",
+#    "RequestPath:           request_path",
+#    "RequestProtocol:       protocol",
+#    "RequestLine:           request_line",
+#    "RequestContentSize:    request_body_size",
+#    "ClientAddr:            remote_addr",
 #    "ClientHost:            remote_ip",
 #    "ClientPort:            remote_port",
 #    "ClientUsername:        remote_user",
 #    "OriginDuration:        origin_duration",
 #    "OriginStatus:          origin_status",
-#    "OriginContentSize:     upstream_response_length",
+#    "OriginStatusLine:      origin_status_line",
+#    "OriginContentSize:     origin_response_length",
 #    "DownstreamStatus:      status",
+#    "DownstreamStatusLine:  status_line",
 #    "DownstreamContentSize: body_bytes_sent",
 #    "FrontendName:          frontend",
 #    "BackendName:           proxy_host",

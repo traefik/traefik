@@ -47,12 +47,12 @@ func fixtureLogDataTable(count uint64) *LogData {
 			ClientUsername:        testUsername,
 			OriginDuration:        time.Millisecond,
 			OriginContentSize:     102,
-			HTTPAddr:              testTarget,
-			HTTPHost:              testTargetHost,
-			HTTPPort:              testTargetPort,
-			HTTPMethod:            "GET",
-			HTTPRequestPath:       "/y/xy/z",
-			HTTPProtocol:          "HTTP/1.1",
+			RequestAddr:           testTarget,
+			RequestHost:           testTargetHost,
+			RequestPort:           testTargetPort,
+			RequestMethod:         "GET",
+			RequestPath:           "/y/xy/z",
+			RequestProtocol:       "HTTP/1.1",
 			OriginStatus:          200,
 			DownstreamStatus:      200,
 			DownstreamContentSize: 82,
@@ -104,10 +104,10 @@ func TestJsonLogFormatter(t *testing.T) {
 			"BackendURL:BackendURL",
 			"OriginDuration:OriginDuration",
 			"OriginContentSize:OriginContentSize",
-			"HTTPAddr:HTTPAddr",
-			"HTTPMethod:HTTPMethod",
-			"HTTPRequestPath:HTTPRequestPath",
-			"HTTPProtocol:HTTPProtocol",
+			"RequestAddr:RequestAddr",
+			"RequestMethod:RequestMethod",
+			"RequestPath:RequestPath",
+			"RequestProtocol:RequestProtocol",
 			"OriginStatus:OriginStatus",
 			"DownstreamContentSize:DownstreamContentSize",
 			"RequestCount:RequestCount",
@@ -131,7 +131,7 @@ func TestJsonLogFormatter(t *testing.T) {
 	assert.Equal(t,
 		`","Duration":0.002,"thefrontend":"frontend","BackendName":"backend","BackendURL":"http://test.host.name:8181/a/b/c?q=1#z1","OriginDuration":0.001,`+
 			`"OriginContentSize":102,`+
-			`"HTTPAddr":"test.host.name:8181","HTTPMethod":"GET","HTTPRequestPath":"/y/xy/z","HTTPProtocol":"HTTP/1.1",`+
+			`"RequestAddr":"test.host.name:8181","RequestMethod":"GET","RequestPath":"/y/xy/z","RequestProtocol":"HTTP/1.1",`+
 			`"OriginStatus":200,"DownstreamContentSize":82,"RequestCount":12345,`+
 			`"ClHost":"190.190.190.190","ClPort":"20121","ClUsername":"-",`+
 			`"user_agent":"user-agent-very-very-long-string","referrer":"http://example.com/x/y/z",`+

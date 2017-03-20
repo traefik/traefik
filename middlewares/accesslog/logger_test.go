@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http/httptest"
+	"sort"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -60,6 +61,7 @@ var (
 	logfileDir       string
 	logFileCount     int64
 	parsedBackendURL *url.URL
+	allCoreKeySlice  []string
 )
 
 func init() {
@@ -69,6 +71,12 @@ func init() {
 		logfileDir = "/tmp"
 	}
 	parsedBackendURL, _ = url.Parse(testBackendURL)
+
+	allCoreKeySlice = defaultCoreKeys
+	for k := range allCoreKeys {
+		allCoreKeySlice = append(allCoreKeySlice, k)
+	}
+	sort.StringSlice(allCoreKeySlice).Sort()
 }
 
 func logfilePath() string {
@@ -127,7 +135,7 @@ func TestBlankFile(t *testing.T) {
 func TestDataCaptureWithBackend(t *testing.T) {
 	backend := NewSaveBackend(http.HandlerFunc(simpleHandlerFunc), testBackendName)
 	frontend := NewSaveFrontend(backend, testFrontendName)
-	settings := &types.AccessLog{}
+	settings := &types.AccessLog{CoreFields: allCoreKeySlice}
 	buf := &bytes.Buffer{}
 	lf := &captureLogFormatter{}
 	la := LogAppender{settings: settings, formatter: lf, file: buf, buf: buf}
@@ -136,6 +144,7 @@ func TestDataCaptureWithBackend(t *testing.T) {
 	defer logger.Close()
 
 	r := newRequest("POST", testTargetPath)
+	r.Body = ioutil.NopCloser(bytes.NewBufferString("[1,2,3]"))
 	rec := httptest.NewRecorder()
 
 	logger.ServeHTTP(rec, r, swapURLHandler(frontend))
@@ -166,18 +175,21 @@ func TestDataCaptureWithBackend(t *testing.T) {
 		ClientHost:            testRemoteHost,
 		ClientPort:            testRemotePort,
 		ClientUsername:        testUsername,
-		ClientRemoteAddr:      testRemoteAddr,
+		ClientAddr:            testRemoteAddr,
 		OriginDuration:        0,
 		OriginContentSize:     int64(len(textMessage)),
-		HTTPAddr:              testTarget,
-		HTTPHost:              testTargetHost,
-		HTTPPort:              testTargetPort,
-		HTTPMethod:            "POST",
-		HTTPRequestPath:       testTargetPath,
-		HTTPProtocol:          "HTTP/1.1",
-		HTTPRequestLine:       "POST " + testTargetPath + " HTTP/1.1",
+		RequestAddr:           testTarget,
+		RequestHost:           testTargetHost,
+		RequestPort:           testTargetPort,
+		RequestMethod:         "POST",
+		RequestPath:           testTargetPath,
+		RequestProtocol:       "HTTP/1.1",
+		RequestLine:           "POST " + testTargetPath + " HTTP/1.1",
+		RequestContentSize:    int64(7),
 		OriginStatus:          200,
+		OriginStatusLine:      "200 OK",
 		DownstreamStatus:      200,
+		DownstreamStatusLine:  "200 OK",
 		DownstreamContentSize: int64(len(textMessage)),
 		RequestCount:          uint64(1),
 		Overhead:              0,
@@ -188,7 +200,7 @@ func TestDataCaptureWithBackend(t *testing.T) {
 func TestDataCaptureWithBackendAndGzip(t *testing.T) {
 	backend := NewSaveBackend(http.HandlerFunc(simpleHandlerFunc), testBackendName)
 	frontend := NewSaveFrontend(backend, testFrontendName)
-	settings := &types.AccessLog{}
+	settings := &types.AccessLog{CoreFields: allCoreKeySlice}
 	buf := &bytes.Buffer{}
 	lf := &captureLogFormatter{}
 	la := LogAppender{settings: settings, formatter: lf, file: buf, buf: buf}
@@ -228,18 +240,20 @@ func TestDataCaptureWithBackendAndGzip(t *testing.T) {
 		ClientHost:            testRemoteHost,
 		ClientPort:            testRemotePort,
 		ClientUsername:        testUsername,
-		ClientRemoteAddr:      testRemoteAddr,
+		ClientAddr:            testRemoteAddr,
 		OriginDuration:        0,
 		OriginContentSize:     int64(len(textMessage)),
-		HTTPAddr:              testTarget,
-		HTTPHost:              testTargetHost,
-		HTTPPort:              testTargetPort,
-		HTTPMethod:            "POST",
-		HTTPRequestPath:       testTargetPath,
-		HTTPProtocol:          "HTTP/1.1",
-		HTTPRequestLine:       "POST " + testTargetPath + " HTTP/1.1",
+		RequestAddr:           testTarget,
+		RequestHost:           testTargetHost,
+		RequestPort:           testTargetPort,
+		RequestMethod:         "POST",
+		RequestPath:           testTargetPath,
+		RequestProtocol:       "HTTP/1.1",
+		RequestLine:           "POST " + testTargetPath + " HTTP/1.1",
 		OriginStatus:          200,
+		OriginStatusLine:      "200 OK",
 		DownstreamStatus:      200,
+		DownstreamStatusLine:  "200 OK",
 		DownstreamContentSize: int64(263),
 		RequestCount:          uint64(2),
 		GzipRatio:             float64(1.4334600760456273),
@@ -249,7 +263,7 @@ func TestDataCaptureWithBackendAndGzip(t *testing.T) {
 
 func TestDataCaptureWithRedirect(t *testing.T) {
 	frontend := NewSaveFrontend(http.HandlerFunc(redirHandlerFunc), testFrontendName)
-	settings := &types.AccessLog{}
+	settings := &types.AccessLog{CoreFields: allCoreKeySlice}
 	buf := &bytes.Buffer{}
 	lf := &captureLogFormatter{}
 	la := LogAppender{settings: settings, formatter: lf, file: buf, buf: buf}
@@ -285,15 +299,16 @@ func TestDataCaptureWithRedirect(t *testing.T) {
 		ClientHost:            testRemoteHost,
 		ClientPort:            testRemotePort,
 		ClientUsername:        testUsername,
-		ClientRemoteAddr:      testRemoteAddr,
-		HTTPAddr:              testTarget,
-		HTTPHost:              testTargetHost,
-		HTTPPort:              testTargetPort,
-		HTTPMethod:            "POST",
-		HTTPRequestPath:       testTargetPath,
-		HTTPProtocol:          "HTTP/1.1",
-		HTTPRequestLine:       "POST " + testTargetPath + " HTTP/1.1",
+		ClientAddr:            testRemoteAddr,
+		RequestAddr:           testTarget,
+		RequestHost:           testTargetHost,
+		RequestPort:           testTargetPort,
+		RequestMethod:         "POST",
+		RequestPath:           testTargetPath,
+		RequestProtocol:       "HTTP/1.1",
+		RequestLine:           "POST " + testTargetPath + " HTTP/1.1",
 		DownstreamStatus:      307,
+		DownstreamStatusLine:  "307 Temporary Redirect",
 		DownstreamContentSize: int64(0),
 		RequestCount:          uint64(3),
 		Overhead:              0,
@@ -347,6 +362,9 @@ func TestLogger(t *testing.T) {
 //-------------------------------------------------------------------------------------------------
 
 func simpleHandlerFunc(rw http.ResponseWriter, r *http.Request) {
+	if r.Body != nil {
+		io.Copy(ioutil.Discard, r.Body)
+	}
 	time.Sleep(time.Millisecond)
 	rw.Header().Set("Content-Length", strconv.Itoa(len(textMessage)))
 	rw.Header().Set("Content-Type", "text/html")

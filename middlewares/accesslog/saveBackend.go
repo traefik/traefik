@@ -1,6 +1,7 @@
 package accesslog
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -41,6 +42,7 @@ func (sb *SaveBackend) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// use UTC to handle switchover of daylight saving correctly
 	table.Core[OriginDuration] = time.Now().UTC().Sub(start)
 	table.Core[OriginStatus] = crw.Status()
+	table.Core[OriginStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
 	// make copy of headers so we can ensure there is no subsequent mutation during response processing
 	table.OriginResponse = copyHeaders(crw.Header())
 	table.Core[OriginContentSize] = crw.Size()
