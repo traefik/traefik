@@ -33,4 +33,4 @@ trap clean EXIT
 .github/cpr.sh $pr
 
 git rebase $base
-git push -f $remote $branch
+git push --force-with-lease $remote $branch

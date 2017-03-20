@@ -1,0 +1,16 @@
+dynamo:
+  image: deangiberson/aws-dynamodb-local
+  command: -sharedDb
+  ports:
+    - "8000:8000"
+  expose:
+    - "8000"
+
+whoami1:
+  image: emilevauge/whoami
+
+whoami2:
+  image: emilevauge/whoami
+
+whoami3:
+  image: emilevauge/whoami

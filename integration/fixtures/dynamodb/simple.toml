@@ -1,0 +1,16 @@
+defaultEntryPoints = ["http"]
+
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8080"
+
+[dynamodb]
+  AccessKeyID = "key"
+  SecretAccessKey = "secret"
+  Endpoint = "{{.DynamoURL}}"
+  Region = "us-east-1"
+
+[web]
+  address = ":8081"

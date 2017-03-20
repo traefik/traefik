@@ -380,6 +380,9 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.Rancher != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Rancher)
 	}
+	if server.globalConfiguration.DynamoDB != nil {
+		server.providers = append(server.providers, server.globalConfiguration.DynamoDB)
+	}
 }
 
 func (server *Server) startProviders() {
