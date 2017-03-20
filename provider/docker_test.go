@@ -6,11 +6,15 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/types"
+	"github.com/davecgh/go-spew/spew"
+	dockerclient "github.com/docker/engine-api/client"
 	docker "github.com/docker/engine-api/types"
+	dockertypes "github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/network"
 	"github.com/docker/engine-api/types/swarm"
 	"github.com/docker/go-connections/nat"
+	"golang.org/x/net/context"
 )
 
 func TestDockerGetFrontendName(t *testing.T) {
@@ -2230,7 +2234,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 	cases := []struct {
 		service       swarm.Service
 		tasks         []swarm.Task
-		isGlobalSvc   bool
+		isGlobalSVC   bool
 		expectedNames map[string]string
 		networks      map[string]*docker.NetworkResource
 	}{
@@ -2256,7 +2260,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 					Slot: 3,
 				},
 			},
-			isGlobalSvc: false,
+			isGlobalSVC: false,
 			expectedNames: map[string]string{
 				"id1": "container.1",
 				"id2": "container.2",
@@ -2287,7 +2291,7 @@ func TestSwarmTaskParsing(t *testing.T) {
 					ID: "id3",
 				},
 			},
-			isGlobalSvc: true,
+			isGlobalSVC: true,
 			expectedNames: map[string]string{
 				"id1": "container.id1",
 				"id2": "container.id2",
@@ -2305,9 +2309,99 @@ func TestSwarmTaskParsing(t *testing.T) {
 		dockerData := parseService(e.service, e.networks)
 
 		for _, task := range e.tasks {
-			taskDockerData := parseTasks(task, dockerData, map[string]*docker.NetworkResource{}, e.isGlobalSvc)
+			taskDockerData := parseTasks(task, dockerData, map[string]*docker.NetworkResource{}, e.isGlobalSVC)
 			if !reflect.DeepEqual(taskDockerData.Name, e.expectedNames[task.ID]) {
 				t.Fatalf("expect %v, got %v", e.expectedNames[task.ID], taskDockerData.Name)
+			}
+		}
+	}
+}
+
+type fakeTasksClient struct {
+	dockerclient.APIClient
+	tasks []swarm.Task
+	err   error
+}
+
+func (c *fakeTasksClient) TaskList(ctx context.Context, options dockertypes.TaskListOptions) ([]swarm.Task, error) {
+	return c.tasks, c.err
+}
+
+func TestListTasks(t *testing.T) {
+	cases := []struct {
+		service       swarm.Service
+		tasks         []swarm.Task
+		isGlobalSVC   bool
+		expectedTasks []string
+		networks      map[string]*docker.NetworkResource
+	}{
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					Annotations: swarm.Annotations{
+						Name: "container",
+					},
+				},
+			},
+			tasks: []swarm.Task{
+				{
+					ID:   "id1",
+					Slot: 1,
+					Status: swarm.TaskStatus{
+						State: swarm.TaskStateRunning,
+					},
+				},
+				{
+					ID:   "id2",
+					Slot: 2,
+					Status: swarm.TaskStatus{
+						State: swarm.TaskStatePending,
+					},
+				},
+				{
+					ID:   "id3",
+					Slot: 3,
+				},
+				{
+					ID:   "id4",
+					Slot: 4,
+					Status: swarm.TaskStatus{
+						State: swarm.TaskStateRunning,
+					},
+				},
+				{
+					ID:   "id5",
+					Slot: 5,
+					Status: swarm.TaskStatus{
+						State: swarm.TaskStateFailed,
+					},
+				},
+			},
+			isGlobalSVC: false,
+			expectedTasks: []string{
+				"container.1",
+				"container.4",
+			},
+			networks: map[string]*docker.NetworkResource{
+				"1": {
+					Name: "foo",
+				},
+			},
+		},
+	}
+
+	for _, e := range cases {
+		dockerData := parseService(e.service, e.networks)
+		dockerClient := &fakeTasksClient{tasks: e.tasks}
+		taskDockerData, _ := listTasks(context.Background(), dockerClient, e.service.ID, dockerData, map[string]*docker.NetworkResource{}, e.isGlobalSVC)
+
+		if len(e.expectedTasks) != len(taskDockerData) {
+			t.Fatalf("expected tasks %v, got %v", spew.Sprint(e.expectedTasks), spew.Sprint(taskDockerData))
+		}
+
+		for i, taskID := range e.expectedTasks {
+			if taskDockerData[i].Name != taskID {
+				t.Fatalf("expect task id %v, got %v", taskID, taskDockerData[i].Name)
 			}
 		}
 	}
