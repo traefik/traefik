@@ -37,6 +37,7 @@ func init() {
 	check.Suite(&MesosSuite{})
 	check.Suite(&EurekaSuite{})
 	check.Suite(&AcmeSuite{})
+	check.Suite(&DynamoDBSuite{})
 }
 
 var traefikBinary = "../dist/traefik"

@@ -127,6 +127,9 @@ import:
   - aws/endpoints
   - aws/request
   - aws/session
+  - service/dynamodb
+  - service/dynamodb/dynamodbiface
+  - service/dynamodbattribute
   - service/ec2
   - service/ecs
 - package: cloud.google.com/go
