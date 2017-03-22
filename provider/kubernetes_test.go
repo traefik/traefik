@@ -2111,7 +2111,7 @@ func (c clientMock) GetIngresses(namespaces k8s.Namespaces) []*v1beta1.Ingress {
 
 func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error) {
 	if c.apiServiceError != nil {
-		return &v1.Service{}, false, c.apiServiceError
+		return nil, false, c.apiServiceError
 	}
 
 	for _, service := range c.services {
@@ -2119,12 +2119,12 @@ func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error
 			return service, true, nil
 		}
 	}
-	return &v1.Service{}, false, nil
+	return nil, false, nil
 }
 
 func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
 	if c.apiEndpointsError != nil {
-		return &v1.Endpoints{}, false, c.apiEndpointsError
+		return nil, false, c.apiEndpointsError
 	}
 
 	for _, endpoints := range c.endpoints {
@@ -2134,7 +2134,7 @@ func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, e
 	}
 
 	if c.properExists {
-		return &v1.Endpoints{}, false, nil
+		return nil, false, nil
 	}
 
 	return &v1.Endpoints{}, true, nil

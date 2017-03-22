@@ -199,12 +199,12 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 
 				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
 				if err != nil {
-					log.Errorf("Error while retrieving service information from k8s API %s/%s: %v", service.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
+					log.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
 					return nil, err
 				}
 
 				if !exists {
-					log.Errorf("Service not found for %s/%s", service.ObjectMeta.Namespace, pa.Backend.ServiceName)
+					log.Errorf("Service not found for %s/%s", i.ObjectMeta.Namespace, pa.Backend.ServiceName)
 					delete(templateObjects.Frontends, r.Host+pa.Path)
 					continue
 				}
