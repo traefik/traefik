@@ -219,8 +219,8 @@
 #
 # There are four blocks of fields: coreFields, requestHeaders,
 # originResponseHeaders and downstreamResponseHeaders. When the
-# output format is "json", they select which items are included;
-# otherwise they are ignored.
+# output format is "json", these blocks select which items are included;
+# otherwise the corresponding items are ignored.
 #
 # The order of these fields determines the output ordering.
 # Each field can be either
@@ -268,7 +268,7 @@
 #    "StartUTC:              time_utc",
 #    "StartLocal:            time_local",
 #    "Duration:              total_duration",
-#    "RequestAddr:           host_and_port",
+#    "RequestAddr:           addr",
 #    "RequestHost:           host",
 #    "RequestPort:           port",
 #    "RequestMethod:         method",
@@ -276,6 +276,7 @@
 #    "RequestProtocol:       protocol",
 #    "RequestLine:           request_line",
 #    "RequestContentSize:    request_body_size",
+#    "RequestCount:          request_count",
 #    "ClientAddr:            remote_addr",
 #    "ClientHost:            remote_ip",
 #    "ClientPort:            remote_port",
@@ -290,6 +291,7 @@
 #    "FrontendName:          frontend",
 #    "BackendName:           proxy_host",
 #    "BackendURL:            proxy_url",
+#    "BackendAddr:           origin_addr",
 #    "Overhead:              overhead",
 #    "GzipRatio:             gzip_ratio"]
 #

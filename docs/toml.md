@@ -299,7 +299,7 @@ The core fields are:
    which case the GzipRatio might be greater than 1. Omitted if
    the information is unavailable.
 
-Here is a fuller example, and this includes the renaming of every data field.
+Here is a fuller example, and this includes the renaming of all the data fields available.
 ```
 [accessLog]
   file       = "access-log.json.gz"
@@ -311,22 +311,30 @@ Here is a fuller example, and this includes the renaming of every data field.
     "StartUTC:              time_utc",
     "StartLocal:            time_local",
     "Duration:              total_duration",
-    "RequestAddr:              host",
-    "RequestMethod:            method",
-    "RequestPath:       request_path",
-    "RequestProtocol:          protocol",
-    "ClientAddr:      remote_addr",
+    "RequestAddr:           addr",
+    "RequestHost:           host",
+    "RequestPort:           port",
+    "RequestMethod:         method",
+    "RequestPath:           request_path",
+    "RequestProtocol:       protocol",
+    "RequestLine:           request_line",
+    "RequestContentSize:    request_body_size",
+    "RequestCount:          request_count",
+    "ClientAddr:            remote_addr",
     "ClientHost:            remote_ip",
     "ClientPort:            remote_port",
     "ClientUsername:        remote_user",
     "OriginDuration:        origin_duration",
     "OriginStatus:          origin_status",
-    "OriginContentSize:     upstream_response_length",
+    "OriginStatusLine:      origin_status_line",
+    "OriginContentSize:     origin_response_length",
     "DownstreamStatus:      status",
+    "DownstreamStatusLine:  status_line",
     "DownstreamContentSize: body_bytes_sent",
     "FrontendName:          frontend",
     "BackendName:           proxy_host",
     "BackendURL:            proxy_url",
+    "BackendAddr:           origin_addr",
     "Overhead:              overhead",
     "GzipRatio:             gzip_ratio"]
 

@@ -48,7 +48,8 @@ Of hostile paces.`
 	testTarget     = testTargetHost + ":" + testTargetPort
 	testTargetPath = "/a/b/c?q=1#z1"
 	testTargetURL  = "http://" + testTarget + testTargetPath
-	testBackendURL = "http://10.1.2.3:8001"
+	testBackendAddr = "10.1.2.3:8001"
+	testBackendURL = "http://" + testBackendAddr
 
 	// User agent
 	testRemoteHost = "190.190.190.190"
@@ -172,6 +173,7 @@ func TestDataCaptureWithBackend(t *testing.T) {
 		FrontendName:          testFrontendName,
 		BackendName:           testBackendName,
 		BackendURL:            parsedBackendURL,
+		BackendAddr:           testBackendAddr,
 		ClientHost:            testRemoteHost,
 		ClientPort:            testRemotePort,
 		ClientUsername:        testUsername,
@@ -237,6 +239,7 @@ func TestDataCaptureWithBackendAndGzip(t *testing.T) {
 		FrontendName:          testFrontendName,
 		BackendName:           testBackendName,
 		BackendURL:            parsedBackendURL,
+		BackendAddr:           testBackendAddr,
 		ClientHost:            testRemoteHost,
 		ClientPort:            testRemotePort,
 		ClientUsername:        testUsername,
@@ -315,7 +318,7 @@ func TestDataCaptureWithRedirect(t *testing.T) {
 	}, e0.Core)
 }
 
-func TestLogger(t *testing.T) {
+func TestCLFLogger(t *testing.T) {
 	file := logfilePath()
 	backend := NewSaveBackend(http.HandlerFunc(simpleHandlerFunc), testBackendName)
 	frontend := NewSaveFrontend(backend, testFrontendName)

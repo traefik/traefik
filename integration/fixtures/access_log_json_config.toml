@@ -17,14 +17,23 @@ defaultEntryPoints = ["http"]
   timeFormat = "2006-01-02T15:04:05Z"
 
   coreFields = [
+    "StartUTC:              time_utc",
     "StartLocal:            time_local",
-    "Duration:              request_time",
+    "Duration:              total_duration",
     "RequestAddr:           addr",
     "RequestHost:           host",
     "RequestPort:           port",
     "RequestMethod:         method",
     "RequestPath:           request_path",
     "RequestProtocol:       protocol",
+    "RequestLine:           request_line",
+    "RequestContentSize:    request_body_size",
+    "RequestCount:          request_count",
+    "ClientAddr:            remote_addr",
+    "ClientHost:            remote_ip",
+    "ClientPort:            remote_port",
+    "ClientUsername:        remote_user",
+    "OriginDuration:        origin_duration",
     "OriginStatus:          origin_status",
     "OriginStatusLine:      origin_status_line",
     "OriginContentSize:     origin_response_length",
@@ -34,10 +43,8 @@ defaultEntryPoints = ["http"]
     "FrontendName:          frontend",
     "BackendName:           proxy_host",
     "BackendURL:            proxy_url",
-    "ClientUsername:        remote_user",
-    "ClientAddr:            remote_addr",
-    "ClientHost:            remote_ip",
-    "ClientPort:            remote_port",
+    "BackendAddr:           origin_addr",
+    "Overhead:              overhead",
     "GzipRatio:             gzip_ratio"]
 
   requestHeaders = [

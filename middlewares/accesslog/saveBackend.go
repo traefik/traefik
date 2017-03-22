@@ -33,6 +33,7 @@ func (sb *SaveBackend) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	table := GetLogDataTable(r)
 	table.Core[BackendName] = sb.backendName
 	table.Core[BackendURL] = r.URL // note that this is *not* the original incoming URL
+	table.Core[BackendAddr] = r.URL.Host
 
 	crw := &captureResponseWriter{rw: rw}
 	start := time.Now().UTC()

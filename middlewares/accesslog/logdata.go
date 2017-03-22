@@ -18,6 +18,8 @@ const (
 	BackendName = "BackendName"
 	// BackendURL is the map key used for the URL of the Traefik backend.
 	BackendURL = "BackendURL"
+	// BackendAddr is the map key used for the IP:port of the Traefik backend (extracted from BackendURL)
+	BackendAddr = "BackendAddr"
 	// ClientAddr is the map key used for the remote address in its original form (usually IP:port).
 	ClientAddr = "ClientAddr"
 	// ClientHost is the map key used for the remote IP address from which the client request was received.
@@ -99,6 +101,7 @@ func init() {
 	for _, k := range defaultCoreKeys {
 		allCoreKeys[k] = struct{}{}
 	}
+	allCoreKeys[BackendAddr] = struct{}{}
 	allCoreKeys[ClientAddr] = struct{}{}
 	allCoreKeys[RequestAddr] = struct{}{}
 	allCoreKeys[RequestLine] = struct{}{}
@@ -109,7 +112,7 @@ func init() {
 	allCoreKeys[Overhead] = struct{}{}
 }
 
-// CoreLogData is analysed by reflection - don't add any nested elements (but some methods are supported, below)
+// CoreLogData holds the fields computed from the request/response.
 type CoreLogData map[string]interface{}
 
 // LogData is the data captured by the middleware so that it can be logged.
