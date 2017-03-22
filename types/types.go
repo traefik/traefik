@@ -18,6 +18,7 @@ type Backend struct {
 	LoadBalancer   *LoadBalancer     `json:"loadBalancer,omitempty"`
 	MaxConn        *MaxConn          `json:"maxConn,omitempty"`
 	HealthCheck    *HealthCheck      `json:"healthCheck,omitempty"`
+	AuditTap       *AuditSink        `json:"auditTap,omitempty"`
 }
 
 // MaxConn holds maximum connection configuration
@@ -362,4 +363,15 @@ func (b *Buckets) SetValue(val interface{}) {
 type AccessLog struct {
 	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty"`
 	Format   string `json:"format,omitempty" description:"Access log format: json | common"`
+}
+
+// AuditSink holds AuditSink configuration
+type AuditSink struct {
+	Type            string `json:"type,omitempty" description:"The type of sink: File/HTTP/Kafka/AMQP"`
+	Endpoint        string `json:"endpoint,omitempty" description:"Endpoint for audit tap. e.g. url for HTTP/Kafka/AMQP or filename for File"`
+	Destination     string `json:"destination,omitempty" description:"For Kafka the topic, AMQP the exchange etc."`
+	MaxEntityLength string `json:"maxEntityLength,omitempty" description:"MaxEntityLength truncates entities (bodies) longer than this (units are allowed, eg. 32KiB)"`
+	NumProducers    int    `json:"numProducers,omitempty" description:"The number of concurrent producers which can send messages to the endpoint"`
+	ChannelLength   int    `json:"channelLength,omitempty" description:"Size of the in-memory message channel.  Used as a buffer in case of Producer failure"`
+	DiskStorePath   string `json:"diskStorePath,omitempty" description:"Directory path for disk-backed persistent audit message queue"`
 }

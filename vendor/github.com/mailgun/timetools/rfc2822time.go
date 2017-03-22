@@ -3,6 +3,8 @@ package timetools
 import (
 	"strconv"
 	"time"
+
+	"gopkg.in/mgo.v2/bson"
 )
 
 // We use RFC2822 format for timestamps everywhere ('Thu, 13 Oct 2011 18:02:00 GMT'), but
@@ -35,6 +37,20 @@ func (t *RFC2822Time) UnmarshalJSON(s []byte) error {
 	if *(*time.Time)(t), err = time.Parse(time.RFC1123, q); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (t RFC2822Time) GetBSON() (interface{}, error) {
+	return time.Time(t), nil
+}
+
+func (t *RFC2822Time) SetBSON(raw bson.Raw) error {
+	var result time.Time
+	err := raw.Unmarshal(&result)
+	if err != nil {
+		return err
+	}
+	*t = RFC2822Time(result)
 	return nil
 }
 

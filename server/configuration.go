@@ -45,6 +45,7 @@ type GlobalConfiguration struct {
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
 	AccessLogsFile            string                  `description:"(Deprecated) Access logs file"` // Deprecated
 	AccessLog                 *types.AccessLog        `description:"Access log settings"`
+	AuditSink                 *types.AuditSink        `description:"Audit Sink settings"`
 	TraefikLogsFile           string                  `description:"Traefik logs file. Stdout is used when omitted or empty"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
@@ -450,6 +451,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultRancher.Watch = true
 	defaultRancher.ExposedByDefault = true
 	defaultRancher.RefreshSeconds = 15
+	defaultRancher.EnableServiceHealthFilter = false
 
 	// default DynamoDB
 	var defaultDynamoDB dynamodb.Provider
@@ -483,6 +485,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		HealthCheck:   &HealthCheckConfig{},
 		AccessLog:     &defaultAccessLog,
 	}
+
+	//default Rancher
+	//@TODO: ADD
 
 	return &TraefikConfiguration{
 		GlobalConfiguration: defaultConfiguration,

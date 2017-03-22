@@ -1,0 +1,25 @@
+rabbitmq:
+  image: rabbitmq:alpine
+  ports:
+    - "5672:5672"
+
+nginx1:
+  image: nginx
+  ports:
+    - "8881:80"
+nginx2:
+  image: nginx
+  ports:
+    - "8882:80"
+nginx3:
+  image: nginx
+  ports:
+    - "8883:80"
+nginx4:
+  image: nginx
+  ports:
+    - "8884:80"
+nginx5:
+  image: nginx
+  ports:
+    - "8885:80"
