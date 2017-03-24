@@ -533,7 +533,7 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 		Addr:        entryPoint.Address,
 		Handler:     negroni,
 		TLSConfig:   tlsConfig,
-		IdleTimeout: server.globalConfiguration.IdleConnTimeout,
+		IdleTimeout: server.globalConfiguration.IdleTimeout,
 	}, nil
 }
 
