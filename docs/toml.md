@@ -532,6 +532,12 @@ To enable it:
 [web]
 address = ":8080"
 
+# Set the root path for webui and API
+#
+# Optional
+#
+# path = "/mypath"
+#
 # SSL certificate and key used
 #
 # Optional
