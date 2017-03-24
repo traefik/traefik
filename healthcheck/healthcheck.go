@@ -2,6 +2,7 @@ package healthcheck
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"sync"
@@ -11,9 +12,6 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/vulcand/oxy/roundrobin"
 )
-
-// DefaultInterval is the default health check interval.
-const DefaultInterval = 30 * time.Second
 
 var singleton *HealthCheck
 var once sync.Once
@@ -31,6 +29,10 @@ type Options struct {
 	Path     string
 	Interval time.Duration
 	LB       LoadBalancer
+}
+
+func (opt Options) String() string {
+	return fmt.Sprintf("[Path: %s Interval: %s]", opt.Path, opt.Interval)
 }
 
 // BackendHealthCheck HealthCheck configuration for a backend

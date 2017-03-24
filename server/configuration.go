@@ -27,6 +27,9 @@ import (
 	"github.com/containous/traefik/types"
 )
 
+// DefaultHealthCheckInterval is the default health check interval.
+const DefaultHealthCheckInterval = 30 * time.Second
+
 // TraefikConfiguration holds GlobalConfiguration and other stuff
 type TraefikConfiguration struct {
 	GlobalConfiguration `mapstructure:",squash"`
@@ -52,6 +55,7 @@ type GlobalConfiguration struct {
 	IdleTimeout               flaeg.Duration          `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
+	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
 	Docker                    *docker.Provider        `description:"Enable Docker backend"`
 	File                      *file.Provider          `description:"Enable File backend"`
 	Web                       *WebProvider            `description:"Enable Web backend"`
@@ -337,6 +341,11 @@ type Retry struct {
 	Attempts int `description:"Number of attempts"`
 }
 
+// HealthCheckConfig contains health check configuration parameters.
+type HealthCheckConfig struct {
+	Interval flaeg.Duration `description:"Default periodicity of enabled health checks"`
+}
+
 // NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
 func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	//default Docker
@@ -461,6 +470,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Rancher:       &defaultRancher,
 		DynamoDB:      &defaultDynamoDB,
 		Retry:         &Retry{},
+		HealthCheck:   &HealthCheckConfig{},
 	}
 
 	//default Rancher
@@ -485,7 +495,10 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			ProvidersThrottleDuration: flaeg.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
 			IdleTimeout:               flaeg.Duration(180 * time.Second),
-			CheckNewVersion:           true,
+			HealthCheck: &HealthCheckConfig{
+				Interval: flaeg.Duration(DefaultHealthCheckInterval),
+			},
+			CheckNewVersion: true,
 		},
 		ConfigFile: "",
 	}
