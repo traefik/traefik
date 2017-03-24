@@ -20,6 +20,8 @@ import (
 	"syscall"
 	"time"
 
+	"sync"
+
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
@@ -35,7 +37,6 @@ import (
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
-	"sync"
 )
 
 var oxyLogger = &OxyLogger{}
@@ -529,9 +530,10 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 	}
 
 	return &http.Server{
-		Addr:      entryPoint.Address,
-		Handler:   negroni,
-		TLSConfig: tlsConfig,
+		Addr:        entryPoint.Address,
+		Handler:     negroni,
+		TLSConfig:   tlsConfig,
+		IdleTimeout: server.globalConfiguration.IdleConnTimeout,
 	}, nil
 }
 
