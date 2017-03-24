@@ -62,10 +62,11 @@ type serverEntryPoint struct {
 }
 
 type serverRoute struct {
-	route         *mux.Route
-	stripPrefixes []string
-	addPrefix     string
-	replacePath   string
+	route              *mux.Route
+	stripPrefixes      []string
+	stripPrefixesRegex []string
+	addPrefix          string
+	replacePath        string
 }
 
 // NewServer returns an initialized Server.
@@ -805,6 +806,11 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 			Prefixes: serverRoute.stripPrefixes,
 			Handler:  handler,
 		}
+	}
+
+	// strip prefix with regex
+	if len(serverRoute.stripPrefixesRegex) > 0 {
+		handler = middlewares.NewStripPrefixRegex(handler, serverRoute.stripPrefixesRegex)
 	}
 
 	// path replace
