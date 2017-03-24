@@ -17,10 +17,9 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"sync"
 	"syscall"
 	"time"
-
-	"sync"
 
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
