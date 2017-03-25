@@ -57,7 +57,7 @@ whoami4:
 We should now fill the store with the Træfɪk global configuration, as we do with a [TOML file configuration](/toml).
 To do that, we can send the Key-value pairs via [curl commands](https://www.consul.io/intro/getting-started/kv.html) or via the [Web UI](https://www.consul.io/intro/getting-started/ui.html).
 
-Hopefully, Træfɪk allows automation of this process using the `storeconfig` subcommand.
+Fortunately, Træfɪk allows automation of this process using the `storeconfig` subcommand.
 Please refer to the [store Træfɪk configuration](/user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
 
 Here is the toml configuration we would like to store in the Key-value Store  :
