@@ -1539,6 +1539,7 @@ Watch = true
 ExposedByDefault = false
 
 # Use host IP addresses instead of containers
+# Please note that you will need to specify AccessKey and SecretKey when træfik is running outside of Rancher cluster.
 #
 # Optional
 # Default: false

@@ -325,19 +325,21 @@ func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
 
 func listRancherPublicEndponts(client *rancher.RancherClient) map[string]string {
 
-	var publicEndpointMap = make(map[string]string)
+	publicEndpointMap := map[string]string{}
 
 	hosts, err := client.Host.List(nil)
 
 	if err != nil {
-		log.Errorf("Cannot get Rancher Endpoints %+v", err)
+		log.Errorf("cannot get Rancher Endpoints %+v", err)
 	}
 
 	for k := range hosts.Data {
 		for e := range hosts.Data[k].PublicEndpoints {
 			endpointData := hosts.Data[k].PublicEndpoints[e]
-			endpoint := endpointData.(map[string]interface{})
-			publicEndpointMap[endpoint["instanceId"].(string)] = endpoint["ipAddress"].(string)
+			endpoint, ok := endpointData.(map[string]interface{})
+			if ok {
+				publicEndpointMap[endpoint["instanceId"].(string)] = endpoint["ipAddress"].(string)
+			}
 		}
 	}
 
@@ -399,7 +401,7 @@ func (provider *Rancher) parseRancherData(environments []*rancher.Environment, s
 			}
 
 			for _, container := range containers {
-				if !(container.State == "running" && container.HealthState == "healthy") {
+				if container.State != "running" || container.HealthState != "healthy" {
 					continue
 				}
 
