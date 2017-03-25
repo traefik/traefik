@@ -1,5 +1,5 @@
-hash: 9d7c36c335fe9106ec79cb86a3b3824c23b63d3fb3a3fb4c75bd6915f3afcdd4
-updated: 2017-03-08T18:53:12.139107148-07:00
+hash: 56175c5c588abf1169ba2425ac6dd7e3e5a8cf8ab6ad3f75cad51e45f5e94e3a
+updated: 2017-03-23T22:43:06.217624505+01:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -132,78 +132,12 @@ imports:
 - name: github.com/docker/distribution
   version: 325b0804fef3a66309d962357aac3c2ce3f4d329
   subpackages:
-  - context
   - digest
   - reference
-  - registry/api/errcode
-  - registry/api/v2
-  - registry/client
-  - registry/client/auth
-  - registry/client/auth/challenge
-  - registry/client/transport
-  - registry/storage/cache
-  - registry/storage/cache/memory
-  - uuid
 - name: github.com/docker/docker
   version: 49bf474f9ed7ce7143a59d1964ff7b7fd9b52178
   subpackages:
-  - api/types
-  - api/types/backend
-  - api/types/blkiodev
-  - api/types/container
-  - api/types/filters
-  - api/types/mount
-  - api/types/network
-  - api/types/registry
-  - api/types/strslice
-  - api/types/swarm
-  - api/types/versions
-  - builder
-  - builder/dockerignore
-  - cliconfig
-  - cliconfig/configfile
-  - daemon/graphdriver
-  - image
-  - image/v1
-  - layer
   - namesgenerator
-  - oci
-  - opts
-  - pkg/archive
-  - pkg/chrootarchive
-  - pkg/fileutils
-  - pkg/gitutils
-  - pkg/homedir
-  - pkg/httputils
-  - pkg/idtools
-  - pkg/ioutils
-  - pkg/jsonlog
-  - pkg/jsonmessage
-  - pkg/longpath
-  - pkg/mount
-  - pkg/namesgenerator
-  - pkg/plugingetter
-  - pkg/plugins
-  - pkg/plugins/transport
-  - pkg/pools
-  - pkg/progress
-  - pkg/promise
-  - pkg/random
-  - pkg/reexec
-  - pkg/signal
-  - pkg/stdcopy
-  - pkg/streamformatter
-  - pkg/stringid
-  - pkg/symlink
-  - pkg/system
-  - pkg/tarsum
-  - pkg/term
-  - pkg/term/windows
-  - pkg/urlutil
-  - plugin/v2
-  - reference
-  - registry
-  - runconfig/opts
 - name: github.com/docker/engine-api
   version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
   subpackages:
@@ -329,8 +263,6 @@ imports:
   version: 72f9bd7c4e0c2a40055ab3d0f09654f730cce982
 - name: github.com/juju/ratelimit
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
-- name: github.com/mailgun/manners
-  version: a585afd9d65c0e05f6c003f921e71ebc05074f4f
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
 - name: github.com/mailru/easyjson
@@ -382,9 +314,6 @@ imports:
 - name: github.com/opencontainers/runc
   version: 1a81e9ab1f138c091fe5c86d0883f87716088527
   subpackages:
-  - libcontainer/configs
-  - libcontainer/devices
-  - libcontainer/system
   - libcontainer/user
 - name: github.com/ovh/go-ovh
   version: a8a4c0bc40e56322142649bda7b2b4bb15145b6e
@@ -709,63 +638,4 @@ imports:
   - 1.5/tools/clientcmd/api
   - 1.5/tools/metrics
   - 1.5/transport
-testImports:
-- name: github.com/Azure/go-ansiterm
-  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
-  subpackages:
-  - winterm
-- name: github.com/cloudfoundry-incubator/candiedyaml
-  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
-- name: github.com/docker/libcompose
-  version: d1876c1d68527a49c0aac22a0b161acc7296b740
-  subpackages:
-  - config
-  - docker
-  - docker/builder
-  - docker/client
-  - docker/network
-  - labels
-  - logger
-  - lookup
-  - project
-  - project/events
-  - project/options
-  - utils
-  - version
-  - yaml
-- name: github.com/flynn/go-shlex
-  version: 3f9db97f856818214da2e1057f8ad84803971cff
-- name: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
-- name: github.com/gorilla/mux
-  version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
-- name: github.com/libkermit/compose
-  version: cadc5a3b83a15790174bd7fbc75ea2529785e772
-  subpackages:
-  - check
-- name: github.com/libkermit/docker
-  version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
-- name: github.com/libkermit/docker-check
-  version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
-- name: github.com/opencontainers/runtime-spec
-  version: 06479209bdc0d4135911688c18157bd39bd99c22
-  subpackages:
-  - specs-go
-- name: github.com/vbatts/tar-split
-  version: 6810cedb21b2c3d0b9bb8f9af12ff2dc7a2f14df
-  subpackages:
-  - archive/tar
-  - tar/asm
-  - tar/storage
-- name: github.com/vdemeester/shakers
-  version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
-- name: github.com/xeipuuv/gojsonpointer
-  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
-- name: github.com/xeipuuv/gojsonreference
-  version: e02fc20de94c78484cd5ffb007f8af96be030a45
-- name: github.com/xeipuuv/gojsonschema
-  version: 00f9fafb54d2244d291b86ab63d12c38bd5c3886
-- name: golang.org/x/time
-  version: a4bde12657593d5e90d0533a3e4fd95e635124cb
-  subpackages:
-  - rate
+testImports: []

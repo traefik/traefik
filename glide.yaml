@@ -47,7 +47,6 @@ import:
 - package: github.com/hashicorp/consul
   subpackages:
   - api
-- package: github.com/mailgun/manners
 - package: github.com/streamrail/concurrent-map
 - package: github.com/stretchr/testify
   subpackages:
