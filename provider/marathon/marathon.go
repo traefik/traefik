@@ -42,6 +42,7 @@ type Provider struct {
 	TLS                     *provider.ClientTLS `description:"Enable Docker TLS support"`
 	DialerTimeout           flaeg.Duration      `description:"Set a non-default connection timeout for Marathon"`
 	KeepAlive               flaeg.Duration      `description:"Set a non-default TCP Keep Alive time in seconds"`
+	ForceTaskHostname       bool                `description:"Force to use the task IP hostname."`
 	Basic                   *Basic
 	marathonClient          marathon.Marathon
 }
@@ -526,11 +527,15 @@ func (p *Provider) getBackendServer(task marathon.Task, applications []marathon.
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
 		return ""
 	}
-	if len(task.IPAddresses) == 0 {
+	switch {
+	case application.IPAddressPerTask == nil || p.ForceTaskHostname:
+		return task.Host
+	case len(task.IPAddresses) == 0:
+		log.Errorf("Missing marathon IPAddress from task %s", task.AppID)
 		return ""
-	} else if len(task.IPAddresses) == 1 {
+	case len(task.IPAddresses) == 1:
 		return task.IPAddresses[0].IPAddress
-	} else {
+	default:
 		ipAddressIdxStr, ok := p.getLabel(application, "traefik.ipAddressIdx")
 		if !ok {
 			log.Errorf("Unable to get marathon IPAddress from task %s", task.AppID)

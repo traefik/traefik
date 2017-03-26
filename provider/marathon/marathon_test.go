@@ -1,9 +1,12 @@
 package marathon
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 	"testing"
+
+	"fmt"
 
 	"github.com/containous/traefik/mocks"
 	"github.com/containous/traefik/testhelpers"
@@ -108,7 +111,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				"backend-test": {
 					Servers: map[string]types.Server{
 						"server-test": {
-							URL:    "http://127.0.0.1:80",
+							URL:    "http://localhost:80",
 							Weight: 0,
 						},
 					},
@@ -161,7 +164,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				"backend-testLoadBalancerAndCircuitBreaker.dot": {
 					Servers: map[string]types.Server{
 						"server-testLoadBalancerAndCircuitBreaker-dot": {
-							URL:    "http://127.0.0.1:80",
+							URL:    "http://localhost:80",
 							Weight: 0,
 						},
 					},
@@ -219,7 +222,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				"backend-testMaxConn": {
 					Servers: map[string]types.Server{
 						"server-testMaxConn": {
-							URL:    "http://127.0.0.1:80",
+							URL:    "http://localhost:80",
 							Weight: 0,
 						},
 					},
@@ -274,7 +277,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				"backend-testMaxConnOnlySpecifyAmount": {
 					Servers: map[string]types.Server{
 						"server-testMaxConnOnlySpecifyAmount": {
-							URL:    "http://127.0.0.1:80",
+							URL:    "http://localhost:80",
 							Weight: 0,
 						},
 					},
@@ -326,7 +329,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				"backend-testMaxConnOnlyExtractorFunc": {
 					Servers: map[string]types.Server{
 						"server-testMaxConnOnlyExtractorFunc": {
-							URL:    "http://127.0.0.1:80",
+							URL:    "http://localhost:80",
 							Weight: 0,
 						},
 					},
@@ -337,27 +340,37 @@ func TestMarathonLoadConfig(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		fakeClient := newFakeClient(c.applicationsError, c.applications, c.tasksError, c.tasks)
-		provider := &Provider{
-			Domain:           "docker.localhost",
-			ExposedByDefault: true,
-			marathonClient:   fakeClient,
+		appID := ""
+		if len(c.applications.Apps) > 0 {
+			appID = c.applications.Apps[0].ID
 		}
-		actualConfig := provider.loadMarathonConfig()
-		fakeClient.AssertExpectations(t)
-		if c.expectedNil {
-			if actualConfig != nil {
-				t.Fatalf("Should have been nil, got %v", actualConfig)
+		t.Run(fmt.Sprintf("Running case: %s", appID), func(t *testing.T) {
+			fakeClient := newFakeClient(c.applicationsError, c.applications, c.tasksError, c.tasks)
+			provider := &Provider{
+				Domain:           "docker.localhost",
+				ExposedByDefault: true,
+				marathonClient:   fakeClient,
 			}
-		} else {
-			// Compare backends
-			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-				t.Fatalf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
+			actualConfig := provider.loadMarathonConfig()
+			fakeClient.AssertExpectations(t)
+			if c.expectedNil {
+				if actualConfig != nil {
+					t.Fatalf("Should have been nil, got %v", actualConfig)
+				}
+			} else {
+				// Compare backends
+				if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
+					expected, _ := json.Marshal(c.expectedBackends)
+					actual, _ := json.Marshal(actualConfig.Backends)
+					t.Fatalf("expected\t %s\n, \tgot %s\n", expected, actual)
+				}
+				if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
+					expected, _ := json.Marshal(c.expectedFrontends)
+					actual, _ := json.Marshal(actualConfig.Frontends)
+					t.Fatalf("expected\t %s\n, got\t %s\n", expected, actual)
+				}
 			}
-			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-				t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
-			}
-		}
+		})
 	}
 }
 
@@ -1449,5 +1462,78 @@ func TestMarathonGetSubDomain(t *testing.T) {
 		if actual != a.expected {
 			t.Errorf("expected %q, got %q", a.expected, actual)
 		}
+	}
+}
+
+func TestGetBackendServer(t *testing.T) {
+
+	applications := []struct {
+		forceTaskHostname bool
+		application       marathon.Application
+		expected          string
+	}{
+		{
+			application: marathon.Application{
+				ID: "app-without-IP-per-task",
+			},
+			expected: "sample.com",
+		},
+		{
+			application: marathon.Application{
+
+				ID: "app-with-IP-per-task",
+				IPAddressPerTask: &marathon.IPAddressPerTask{
+					Discovery: &marathon.Discovery{
+						Ports: &[]marathon.Port{
+							{
+								Number: 8880,
+								Name:   "p1",
+							},
+						},
+					},
+				},
+			},
+			expected: "192.168.0.1",
+		}, {
+			forceTaskHostname: true,
+			application: marathon.Application{
+				ID: "app-with-hostname-enforced",
+				IPAddressPerTask: &marathon.IPAddressPerTask{
+					Discovery: &marathon.Discovery{
+						Ports: &[]marathon.Port{
+							{
+								Number: 8880,
+								Name:   "p1",
+							},
+						},
+					},
+				},
+			},
+			expected: "sample.com",
+		},
+	}
+
+	for _, app := range applications {
+		t.Run(fmt.Sprintf("running %s", app.application.ID), func(t *testing.T) {
+			provider := &Provider{}
+			provider.ForceTaskHostname = app.forceTaskHostname
+
+			applications := []marathon.Application{app.application}
+
+			task := marathon.Task{
+				AppID: app.application.ID,
+				Host:  "sample.com",
+				IPAddresses: []*marathon.IPAddress{
+					{
+						IPAddress: "192.168.0.1",
+					},
+				},
+			}
+
+			actual := provider.getBackendServer(task, applications)
+			if actual != app.expected {
+				t.Errorf("App %s, expected %q, got %q", task.AppID, app.expected, actual)
+			}
+		})
 	}
 }
