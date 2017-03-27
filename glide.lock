@@ -1,5 +1,5 @@
-hash: 741ec5fae23f12e6c0fa0e4c7c00c0af06fac1ddc199dd4b45c904856890b347
-updated: 2017-03-15T10:48:05.202095822+01:00
+hash: b689cb0faed68086641d9e3504ee29498e5bf06b088ad4fcd1e76543446d4d9a
+updated: 2017-03-27T14:29:54.009570184+02:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -125,6 +125,10 @@ imports:
   version: f6b1d56f1c048bd94d7e42ac36efb4d57b069b6f
 - name: github.com/dgrijalva/jwt-go
   version: 9ed569b5d1ac936e6494082958d63a6aa4fff99a
+- name: github.com/dnsimple/dnsimple-go
+  version: eeb343928d9a3de357a650c8c25d8f1318330d57
+  subpackages:
+  - dnsimple
 - name: github.com/docker/distribution
   version: 325b0804fef3a66309d962357aac3c2ce3f4d329
   subpackages:
@@ -482,12 +486,8 @@ imports:
   - plugin
   - plugin/rewrite
   - router
-- name: github.com/weppos/dnsimple-go
-  version: 65c1ca73cb19baf0f8b2b33219b7f57595a3ccb0
-  subpackages:
-  - dnsimple
 - name: github.com/xenolf/lego
-  version: ce8fb060cb8361a9ff8b5fb7c2347fa907b6fcac
+  version: 0e2937900b224325f4476745a9b53aef246b7410
   subpackages:
   - acme
   - providers/dns
