@@ -20,6 +20,8 @@ import (
 	"syscall"
 	"time"
 
+	"sync"
+
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
@@ -35,7 +37,6 @@ import (
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
-	"sync"
 )
 
 var oxyLogger = &OxyLogger{}
@@ -120,8 +121,9 @@ func (server *Server) Stop() {
 		wg.Add(1)
 		go func(serverEntryPointName string, serverEntryPoint *serverEntryPoint) {
 			defer wg.Done()
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut)*time.Second)
-			log.Debugf("Waiting %d seconds before killing connections on entrypoint %s...", server.globalConfiguration.GraceTimeOut, serverEntryPointName)
+			graceTimeOut := time.Duration(server.globalConfiguration.GraceTimeOut)
+			ctx, cancel := context.WithTimeout(context.Background(), graceTimeOut)
+			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
 			if err := serverEntryPoint.httpServer.Shutdown(ctx); err != nil {
 				log.Debugf("Wait is over due to: %s", err)
 				serverEntryPoint.httpServer.Close()
@@ -136,7 +138,7 @@ func (server *Server) Stop() {
 
 // Close destroys the server
 func (server *Server) Close() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut))
 	go func(ctx context.Context) {
 		<-ctx.Done()
 		if ctx.Err() == context.Canceled {
@@ -231,16 +233,17 @@ func (server *Server) listenProviders(stop chan bool) {
 			} else {
 				lastConfigs.Set(configMsg.ProviderName, &configMsg)
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
-				if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
+				providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
+				if time.Now().After(lastReceivedConfigurationValue.Add(providersThrottleDuration)) {
 					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					// last config received more than n s ago
 					server.configurationValidatedChan <- configMsg
 				} else {
 					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					safe.Go(func() {
-						<-time.After(server.globalConfiguration.ProvidersThrottleDuration)
+						<-time.After(providersThrottleDuration)
 						lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
-						if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
+						if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(providersThrottleDuration))) {
 							log.Debugf("Waited for %s config, OK", configMsg.ProviderName)
 							if lastConfig, ok := lastConfigs.Get(configMsg.ProviderName); ok {
 								server.configurationValidatedChan <- *lastConfig.(*types.ConfigMessage)
