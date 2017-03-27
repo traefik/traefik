@@ -1,5 +1,13 @@
 # Change Log
 
+## [v1.2.1](https://github.com/containous/traefik/tree/v1.2.1) (2017-03-27)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.2.0...v1.2.1)
+
+**Merged pull requests:**
+
+- bump lego 0e2937900 [\#1347](https://github.com/containous/traefik/pull/1347) ([emilevauge](https://github.com/emilevauge))
+- k8s: Do not log service fields when GetService is failing. [\#1331](https://github.com/containous/traefik/pull/1331) ([timoreimann](https://github.com/timoreimann))
+
 ## [v1.2.0](https://github.com/containous/traefik/tree/v1.2.0) (2017-03-20)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.1.2...v1.2.0)
 
