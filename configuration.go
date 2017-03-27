@@ -52,6 +52,7 @@ type GlobalConfiguration struct {
 	Eureka                    *provider.Eureka        `description:"Enable Eureka backend"`
 	ECS                       *provider.ECS           `description:"Enable ECS backend"`
 	Rancher                   *provider.Rancher       `description:"Enable Rancher backend"`
+	DynamoDB                  *provider.DynamoDB      `description:"Enable DynamoDB backend"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -207,17 +208,30 @@ var minVersion = map[string]uint16{
 }
 
 // Map of TLS CipherSuites from crypto/tls
+// Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
 var cipherSuites = map[string]uint16{
-	`TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`: tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	`TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`: tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-	`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA`:    tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-	`TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA`:    tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-	`TLS_RSA_WITH_AES_128_GCM_SHA256`:       tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-	`TLS_RSA_WITH_AES_256_GCM_SHA384`:       tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-	`TLS_RSA_WITH_AES_128_CBC_SHA`:          tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-	`TLS_RSA_WITH_AES_256_CBC_SHA`:          tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-	`TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`:   tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-	`TLS_RSA_WITH_3DES_EDE_CBC_SHA`:         tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	`TLS_RSA_WITH_RC4_128_SHA`:                tls.TLS_RSA_WITH_RC4_128_SHA,
+	`TLS_RSA_WITH_3DES_EDE_CBC_SHA`:           tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	`TLS_RSA_WITH_AES_128_CBC_SHA`:            tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+	`TLS_RSA_WITH_AES_256_CBC_SHA`:            tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+	`TLS_RSA_WITH_AES_128_CBC_SHA256`:         tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
+	`TLS_RSA_WITH_AES_128_GCM_SHA256`:         tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+	`TLS_RSA_WITH_AES_256_GCM_SHA384`:         tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+	`TLS_ECDHE_ECDSA_WITH_RC4_128_SHA`:        tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
+	`TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA`:    tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+	`TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA`:    tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_RC4_128_SHA`:          tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
+	`TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`:     tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA`:      tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA`:      tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+	`TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256`: tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+	`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256`:   tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+	`TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`:   tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	`TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256`: tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	`TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`:   tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	`TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384`: tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	`TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305`:    tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+	`TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305`:  tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
 }
 
 // Certificates defines traefik certificates type
@@ -406,6 +420,13 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultRancher.Watch = true
 	defaultRancher.ExposedByDefault = true
 
+	// default DynamoDB
+	var defaultDynamoDB provider.DynamoDB
+	defaultDynamoDB.Constraints = types.Constraints{}
+	defaultDynamoDB.RefreshSeconds = 15
+	defaultDynamoDB.TableName = "traefik"
+	defaultDynamoDB.Watch = true
+
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
 		File:          &defaultFile,
@@ -420,6 +441,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Mesos:         &defaultMesos,
 		ECS:           &defaultECS,
 		Rancher:       &defaultRancher,
+		DynamoDB:      &defaultDynamoDB,
 		Retry:         &Retry{},
 	}
 

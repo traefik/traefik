@@ -19,15 +19,39 @@
 
     {{$servers := index $backendServers $backendName}}
     {{range $serverName, $server := $servers}}
+    {{if hasServices $server}}
+      {{$services := getServiceNames $server}}
+      {{range $serviceIndex, $serviceName := $services}}
+      [backends.backend-{{getServiceBackend $server $serviceName}}.servers.service]
+      url = "{{getServiceProtocol $server $serviceName}}://{{getIPAddress $server}}:{{getServicePort $server $serviceName}}"
+      weight = {{getServiceWeight $server $serviceName}}
+      {{end}}
+    {{else}}
       [backends.backend-{{$backendName}}.servers.server-{{$server.Name | replace "/" "" | replace "." "-"}}]
       url = "{{getProtocol $server}}://{{getIPAddress $server}}:{{getPort $server}}"
       weight = {{getWeight $server}}
+    {{end}}
     {{end}}
 
 {{end}}
 
 [frontends]{{range $frontend, $containers := .Frontends}}
-  [frontends."frontend-{{$frontend}}"]{{$container := index $containers 0}}
+  {{$container := index $containers 0}}
+  {{if hasServices $container}}
+  {{$services := getServiceNames $container}}
+  {{range $serviceIndex, $serviceName := $services}}
+  [frontends."frontend-{{getServiceBackend $container $serviceName}}"]
+  backend = "backend-{{getServiceBackend $container $serviceName}}"
+  passHostHeader = {{getServicePassHostHeader $container $serviceName}}
+  priority = {{getServicePriority $container $serviceName}}
+  entryPoints = [{{range getServiceEntryPoints $container $serviceName}}
+    "{{.}}",
+  {{end}}]
+    [frontends."frontend-{{getServiceBackend $container $serviceName}}".routes."service-{{$serviceName | replace "/" "" | replace "." "-"}}"]
+    rule = "{{getServiceFrontendRule $container $serviceName}}"
+  {{end}}
+  {{else}}
+  [frontends."frontend-{{$frontend}}"]
   backend = "backend-{{getBackend $container}}"
   passHostHeader = {{getPassHostHeader $container}}
   priority = {{getPriority $container}}
@@ -36,4 +60,5 @@
   {{end}}]
     [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
     rule = "{{getFrontendRule $container}}"
+  {{end}}
 {{end}}

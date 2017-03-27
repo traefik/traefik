@@ -532,6 +532,12 @@ To enable it:
 [web]
 address = ":8080"
 
+# Set the root path for webui and API
+#
+# Optional
+#
+# path = "/mypath"
+#
 # SSL certificate and key used
 #
 # Optional
@@ -822,6 +828,17 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 - `traefik.docker.network`: Set the docker network to use for connections to this container
+
+If several ports need to be exposed from a container, the services labels can be used
+- `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
+- `traefik.<service-name>.protocol=https`: assign `https` protocol. Overrides `traefik.protocol`.
+- `traefik.<service-name>.weight=10`: assign this service weight. Overrides `traefik.weight`.
+- `traefik.<service-name>.frontend.backend=fooBackend`: assign this service frontend to `foobackend`. Default is to assign to the service backend.
+- `traefik.<service-name>.frontend.entryPoints=http`: assign this service entrypoints. Overrides `traefik.frontend.entrypoints`.
+- `traefik.<service-name>.frontend.passHostHeader=true`: Forward client `Host` header to the backend. Overrides `traefik.frontend.passHostHeader`.
+- `traefik.<service-name>.frontend.priority=10`: assign the service frontend priority. Overrides `traefik.frontend.priority`.
+- `traefik.<service-name>.frontend.rule=Path:/foo`: assign the service frontend rule. Overrides `traefik.frontend.rule`.
+
 
 NB: when running inside a container, Træfɪk will need network access through `docker network connect <network> <traefik-container>`
 
@@ -1558,3 +1575,74 @@ Labels can be used on task containers to override default behaviour:
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
+
+
+## DynamoDB backend
+
+Træfɪk can be configured to use Amazon DynamoDB as a backend configuration:
+
+
+```toml
+################################################################
+# DynamoDB configuration backend
+################################################################
+
+# Enable DynamoDB configuration backend
+#
+# Optional
+#
+[dynamodb]
+
+# DyanmoDB Table Name
+#
+# Optional
+#
+TableName = "traefik"
+
+# Enable watch DynamoDB changes
+#
+# Optional
+#
+Watch = true
+
+# Polling interval (in seconds)
+#
+# Optional
+#
+RefreshSeconds = 15
+
+# Region to use when connecting to AWS
+#
+# Required
+#
+# Region = "us-west-1"
+
+# AccessKeyID to use when connecting to AWS
+#
+# Optional
+#
+# AccessKeyID = "abc"
+
+# SecretAccessKey to use when connecting to AWS
+#
+# Optional
+#
+# SecretAccessKey = "123"
+
+# Endpoint of local dynamodb instance for testing
+#
+# Optional
+#
+# Endpoint = "http://localhost:8080"
+
+```
+
+Items in the dynamodb table must have three attributes: 
+
+
+- 'id' : string
+    - The id is the primary key.
+- 'name' : string
+    - The name is used as the name of the frontend or backend.
+- 'frontend' or 'backend' : map
+    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See types/types.go for details. The presence or absence of this attribute determines its type. So an item should never have both a 'frontend' and a 'backend' attribute. 
