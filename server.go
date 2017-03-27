@@ -595,7 +595,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					log.Debugf("Creating route %s %s", routeName, route.Rule)
 				}
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
-				var negroni = negroni.New()
+				negroni := negroni.New()
 				if entryPoint.Redirect != nil {
 					if redirectHandlers[entryPointName] != nil {
 						negroni.Use(redirectHandlers[entryPointName])
