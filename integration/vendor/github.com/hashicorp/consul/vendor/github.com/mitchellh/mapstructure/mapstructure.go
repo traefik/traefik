@@ -698,7 +698,7 @@ func (d *Decoder) decodeStruct(name string, data interface{}, val reflect.Value)
 		if !rawMapVal.IsValid() {
 			// Do a slower search by iterating over each key and
 			// doing case-insensitive search.
-			for dataValKey, _ := range dataValKeys {
+			for dataValKey := range dataValKeys {
 				mK, ok := dataValKey.Interface().(string)
 				if !ok {
 					// Not a string key
@@ -746,7 +746,7 @@ func (d *Decoder) decodeStruct(name string, data interface{}, val reflect.Value)
 
 	if d.config.ErrorUnused && len(dataValKeysUnused) > 0 {
 		keys := make([]string, 0, len(dataValKeysUnused))
-		for rawKey, _ := range dataValKeysUnused {
+		for rawKey := range dataValKeysUnused {
 			keys = append(keys, rawKey.(string))
 		}
 		sort.Strings(keys)
@@ -761,7 +761,7 @@ func (d *Decoder) decodeStruct(name string, data interface{}, val reflect.Value)
 
 	// Add the unused keys to the list of unused keys if we're tracking metadata
 	if d.config.Metadata != nil {
-		for rawKey, _ := range dataValKeysUnused {
+		for rawKey := range dataValKeysUnused {
 			key := rawKey.(string)
 			if name != "" {
 				key = fmt.Sprintf("%s.%s", name, key)
