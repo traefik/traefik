@@ -219,7 +219,7 @@ func Gen(w io.Writer, buildTags, pkgName, uid string, useUnsafe bool, ti *TypeIn
 	}
 	// use a sorted set of im keys, so that we can get consistent output
 	imKeys := make([]string, 0, len(x.im))
-	for k, _ := range x.im {
+	for k := range x.im {
 		imKeys = append(imKeys, k)
 	}
 	sort.Strings(imKeys)

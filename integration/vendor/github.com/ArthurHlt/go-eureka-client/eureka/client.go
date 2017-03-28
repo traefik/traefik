@@ -12,15 +12,15 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"time"
 	"strings"
+	"time"
 )
 
 const (
 	defaultBufferSize = 10
-	UP = "UP"
-	DOWN = "DOWN"
-	STARTING = "STARTING"
+	UP                = "UP"
+	DOWN              = "DOWN"
+	STARTING          = "STARTING"
 )
 
 type Config struct {
@@ -49,8 +49,8 @@ type Client struct {
 	// Argument numReqs is the number of http.Requests that have been made so far.
 	// Argument lastResp is the http.Responses from the last request.
 	// Argument err is the reason of the failure.
-	CheckRetry  func(cluster *Cluster, numReqs int,
-	lastResp http.Response, err error) error
+	CheckRetry func(cluster *Cluster, numReqs int,
+		lastResp http.Response, err error) error
 }
 
 // NewClient create a basic client that is configured to be used
