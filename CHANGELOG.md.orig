@@ -1,5 +1,7 @@
 # Change Log
 
+<<<<<<< HEAD
+=======
 ## [v1.2.1](https://github.com/containous/traefik/tree/v1.2.1) (2017-03-27)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.2.0...v1.2.1)
 
@@ -84,6 +86,7 @@
 - \(WIP\) feat: HealthCheck [\#918](https://github.com/containous/traefik/pull/918) ([Juliens](https://github.com/Juliens))
 - Add ability to set authenticated user in request header [\#889](https://github.com/containous/traefik/pull/889) ([ViViDboarder](https://github.com/ViViDboarder))
 - IP-per-task: [\#841](https://github.com/containous/traefik/pull/841) ([diegooliveira](https://github.com/diegooliveira))
+>>>>>>> v1.2
 
 ## [v1.2.0-rc2](https://github.com/containous/traefik/tree/v1.2.0-rc2) (2017-03-01)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.2.0-rc1...v1.2.0-rc2)

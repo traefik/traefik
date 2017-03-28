@@ -25,7 +25,11 @@ func GetHealthCheck() *HealthCheck {
 
 // BackendHealthCheck HealthCheck configuration for a backend
 type BackendHealthCheck struct {
+<<<<<<< HEAD
+	URL          string
+=======
 	Path         string
+>>>>>>> v1.2
 	Interval     time.Duration
 	DisabledURLs []*url.URL
 	lb           loadBalancer

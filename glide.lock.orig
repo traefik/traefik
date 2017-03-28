@@ -1,5 +1,10 @@
-hash: d6badf6c3e596dc834fb6076c7f382ff99d605441a5121b59c9eec72bceb769b
-updated: 2017-03-28T14:15:21.547765743+02:00
+<<<<<<< HEAD
+hash: 56175c5c588abf1169ba2425ac6dd7e3e5a8cf8ab6ad3f75cad51e45f5e94e3a
+updated: 2017-03-23T22:43:06.217624505+01:00
+=======
+hash: b689cb0faed68086641d9e3504ee29498e5bf06b088ad4fcd1e76543446d4d9a
+updated: 2017-03-27T14:29:54.009570184+02:00
+>>>>>>> v1.2
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -130,7 +135,7 @@ imports:
 - name: github.com/dgrijalva/jwt-go
   version: 9ed569b5d1ac936e6494082958d63a6aa4fff99a
 - name: github.com/dnsimple/dnsimple-go
-  version: 99dd98ee4c5c94d50cc7b3ff57e443704a36c453
+  version: eeb343928d9a3de357a650c8c25d8f1318330d57
   subpackages:
   - dnsimple
 - name: github.com/docker/distribution

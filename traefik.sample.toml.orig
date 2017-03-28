@@ -1023,6 +1023,7 @@ ExposedByDefault = false
 # Optional
 # SecretKey = "XXXXXXXXXXX"
 
+<<<<<<< HEAD
 
 ################################################################
 # DynamoDB configuration backend
@@ -1076,6 +1077,8 @@ ExposedByDefault = false
 #
 # Endpoint = "http://localhost:8080"
 
+=======
+>>>>>>> v1.2
 
 ################################################################
 # Sample rules

@@ -305,6 +305,8 @@ func TestFilterInstance(t *testing.T) {
 		value := provider.filterInstance(c.instanceInfo)
 		if value != c.expected {
 			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+<<<<<<< HEAD
+=======
 		}
 	}
 }
@@ -344,6 +346,7 @@ func TestTaskChunking(t *testing.T) {
 
 		if !reflect.DeepEqual(outCount, c.expectedLengths) {
 			t.Errorf("Chunking %d elements, expected %#v, got %#v", c.count, c.expectedLengths, outCount)
+>>>>>>> v1.2
 		}
 	}
 }

@@ -39,7 +39,11 @@ type CircuitBreaker struct {
 
 // HealthCheck holds HealthCheck configuration
 type HealthCheck struct {
+<<<<<<< HEAD
+	URL      string `json:"url,omitempty"`
+=======
 	Path     string `json:"path,omitempty"`
+>>>>>>> v1.2
 	Interval string `json:"interval,omitempty"`
 }
 
