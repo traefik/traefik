@@ -308,3 +308,42 @@ func TestFilterInstance(t *testing.T) {
 		}
 	}
 }
+
+func TestTaskChunking(t *testing.T) {
+	provider := &ECS{}
+
+	testval := "a"
+	cases := []struct {
+		count           int
+		expectedLengths []int
+	}{
+		{0, []int(nil)},
+		{1, []int{1}},
+		{99, []int{99}},
+		{100, []int{100}},
+		{101, []int{100, 1}},
+		{199, []int{100, 99}},
+		{200, []int{100, 100}},
+		{201, []int{100, 100, 1}},
+		{555, []int{100, 100, 100, 100, 100, 55}},
+		{1001, []int{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 1}},
+	}
+
+	for _, c := range cases {
+		var tasks []*string
+		for v := 0; v < c.count; v++ {
+			tasks = append(tasks, &testval)
+		}
+
+		out := provider.chunkedTaskArns(tasks)
+		var outCount []int
+
+		for _, el := range out {
+			outCount = append(outCount, len(el))
+		}
+
+		if !reflect.DeepEqual(outCount, c.expectedLengths) {
+			t.Errorf("Chunking %d elements, expected %#v, got %#v", c.count, c.expectedLengths, outCount)
+		}
+	}
+}
