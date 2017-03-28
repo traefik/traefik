@@ -71,7 +71,7 @@ const (
 )
 
 // These are written out in the default case when no config is provided to specify keys of interest.
-var defaultCoreKeys = []string{
+var defaultCoreKeys = [...]string{
 	StartUTC,
 	Duration,
 	FrontendName,

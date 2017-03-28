@@ -73,7 +73,7 @@ func init() {
 	}
 	parsedBackendURL, _ = url.Parse(testBackendURL)
 
-	allCoreKeySlice = defaultCoreKeys
+	allCoreKeySlice = defaultCoreKeys[:]
 	for k := range allCoreKeys {
 		allCoreKeySlice = append(allCoreKeySlice, k)
 	}
