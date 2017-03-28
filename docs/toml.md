@@ -1305,6 +1305,13 @@ prefix = "/traefik"
 #
 # filename = "etcd.tmpl"
 
+# Use etcd user/pass authentication
+#
+# Optional
+#
+# username = foo
+# password = bar
+
 # Enable etcd TLS connection
 #
 # Optional
