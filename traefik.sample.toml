@@ -91,7 +91,7 @@
 #
 # Backend-specific constraint
 # [consulCatalog]
-#   endpoint = 127.0.0.1:8500
+#   endpoint = "127.0.0.1:8500"
 #   constraints = ["tag==api"]
 #
 # Multiple constraints
@@ -99,7 +99,7 @@
 #   - "tag!=" must match with none of tags
 # constraints = ["tag!=us-*", "tag!=asia-*"]
 # [consulCatalog]
-#   endpoint = 127.0.0.1:8500
+#   endpoint = "127.0.0.1:8500"
 #   constraints = ["tag==api", "tag!=v*-beta"]
 
 # Enable ACME (Let's Encrypt): automatic SSL
