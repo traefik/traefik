@@ -36,6 +36,7 @@ type WebProvider struct {
 	ReadOnly   bool              `description:"Enable read only API"`
 	Statistics *types.Statistics `description:"Enable more detailed statistics"`
 	Metrics    *types.Metrics    `description:"Enable a metrics exporter"`
+	Path       string            `description:"Root path for dashboard and API"`
 	server     *Server
 	Auth       *types.Auth
 }
@@ -60,22 +61,35 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 
 	systemRouter := mux.NewRouter()
 
+	if provider.Path == "" {
+		provider.Path = "/"
+	}
+
+	if provider.Path != "/" {
+		if provider.Path[len(provider.Path)-1:] != "/" {
+			provider.Path += "/"
+		}
+		systemRouter.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+			http.Redirect(response, request, provider.Path, 302)
+		})
+	}
+
 	// Prometheus route
 	if provider.Metrics != nil && provider.Metrics.Prometheus != nil {
-		systemRouter.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
+		systemRouter.Methods("GET").Path(provider.Path + "metrics").Handler(promhttp.Handler())
 	}
 
 	// health route
-	systemRouter.Methods("GET").Path("/health").HandlerFunc(provider.getHealthHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "health").HandlerFunc(provider.getHealthHandler)
 
 	// ping route
-	systemRouter.Methods("GET").Path("/ping").HandlerFunc(provider.getPingHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "ping").HandlerFunc(provider.getPingHandler)
 	// API routes
-	systemRouter.Methods("GET").Path("/api").HandlerFunc(provider.getConfigHandler)
-	systemRouter.Methods("GET").Path("/api/version").HandlerFunc(provider.getVersionHandler)
-	systemRouter.Methods("GET").Path("/api/providers").HandlerFunc(provider.getConfigHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}").HandlerFunc(provider.getProviderHandler)
-	systemRouter.Methods("PUT").Path("/api/providers/{provider}").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+	systemRouter.Methods("GET").Path(provider.Path + "api").HandlerFunc(provider.getConfigHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/version").HandlerFunc(provider.getVersionHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers").HandlerFunc(provider.getConfigHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers/{provider}").HandlerFunc(provider.getProviderHandler)
+	systemRouter.Methods("PUT").Path(provider.Path + "api/providers/{provider}").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if provider.ReadOnly {
 			response.WriteHeader(http.StatusForbidden)
 			fmt.Fprintf(response, "REST API is in read-only mode")
@@ -99,24 +113,24 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 			http.Error(response, fmt.Sprintf("%+v", err), http.StatusBadRequest)
 		}
 	})
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends").HandlerFunc(provider.getBackendsHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}").HandlerFunc(provider.getBackendHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers").HandlerFunc(provider.getServersHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers/{server}").HandlerFunc(provider.getServerHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends").HandlerFunc(provider.getFrontendsHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}").HandlerFunc(provider.getFrontendHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes").HandlerFunc(provider.getRoutesHandler)
-	systemRouter.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes/{route}").HandlerFunc(provider.getRouteHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers/{provider}/backends").HandlerFunc(provider.getBackendsHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers/{provider}/backends/{backend}").HandlerFunc(provider.getBackendHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers/{provider}/backends/{backend}/servers").HandlerFunc(provider.getServersHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers/{provider}/backends/{backend}/servers/{server}").HandlerFunc(provider.getServerHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers/{provider}/frontends").HandlerFunc(provider.getFrontendsHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers/{provider}/frontends/{frontend}").HandlerFunc(provider.getFrontendHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers/{provider}/frontends/{frontend}/routes").HandlerFunc(provider.getRoutesHandler)
+	systemRouter.Methods("GET").Path(provider.Path + "api/providers/{provider}/frontends/{frontend}/routes/{route}").HandlerFunc(provider.getRouteHandler)
 
 	// Expose dashboard
-	systemRouter.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-		http.Redirect(response, request, "/dashboard/", 302)
+	systemRouter.Methods("GET").Path(provider.Path).HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		http.Redirect(response, request, provider.Path+"dashboard/", 302)
 	})
-	systemRouter.Methods("GET").PathPrefix("/dashboard/").Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
+	systemRouter.Methods("GET").PathPrefix(provider.Path + "dashboard/").Handler(http.StripPrefix(provider.Path+"dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
 
 	// expvars
 	if provider.server.globalConfiguration.Debug {
-		systemRouter.Methods("GET").Path("/debug/vars").HandlerFunc(expvarHandler)
+		systemRouter.Methods("GET").Path(provider.Path + "debug/vars").HandlerFunc(expvarHandler)
 	}
 
 	go func() {
