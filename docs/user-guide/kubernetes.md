@@ -12,7 +12,7 @@ on your machine, as it is the quickest way to get a local Kubernetes cluster set
 
 2. The `kubectl` binary should be [installed on your workstation](http://kubernetes.io/docs/getting-started-guides/minikube/#download-kubectl).
 
-## Deploy Træfɪk
+## Deploy Træfik using a Deployment object
 
 We are going to deploy Træfɪk with a
 [Deployment](http://kubernetes.io/docs/user-guide/deployments/), as this will
@@ -99,6 +99,18 @@ curl $(minikube ip)
 ```
 
 > We expect to see a 404 response here as we haven't yet given Træfɪk any configuration.
+
+## Deploy Træfik using Helm Chart
+
+Instead of installing Træfik via a Deployment object, you can also use the Træfik Helm chart.
+
+Install Træfik chart by:
+
+```sh
+helm install stable/traefik
+```
+
+For more information, check out [the doc](https://github.com/kubernetes/charts/tree/master/stable/traefik).
 
 ## Submitting An Ingress to the cluster.
 
