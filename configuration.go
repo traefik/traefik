@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/plugin"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
 )
@@ -40,6 +41,7 @@ type GlobalConfiguration struct {
 	IdleTimeout               flaeg.Duration          `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
+	Plugins                   plugin.Plugins          `description:"External plugins definition"`
 	Docker                    *provider.Docker        `description:"Enable Docker backend"`
 	File                      *provider.File          `description:"Enable File backend"`
 	Web                       *WebProvider            `description:"Enable Web backend"`
@@ -470,6 +472,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			MaxIdleConnsPerHost:       200,
 			IdleTimeout:               flaeg.Duration(180 * time.Second),
 			CheckNewVersion:           true,
+			Plugins:                   plugin.Plugins{},
 		},
 		ConfigFile: "",
 	}
