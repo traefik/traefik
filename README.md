@@ -1,6 +1,6 @@
 
 <p align="center">
-<img src="docs/img/traefik.logo.png" alt="Træfɪk" title="Træfɪk" />
+<img src="docs/img/traefik.logo.png" alt="Træfik" title="Træfik" />
 </p>
 
 [![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
@@ -28,16 +28,16 @@ But a microservices architecture is dynamic... Services are added, removed, kill
 
 Traditional reverse-proxies are not natively dynamic. You can't change their configuration and hot-reload easily.
 
-Here enters Træfɪk.
+Here enters Træfik.
 
 ![Architecture](docs/img/architecture.png)
 
-Træfɪk can listen to your service registry/orchestrator API, and knows each time a microservice is added, removed, killed or upgraded, and can generate its configuration automatically.
+Træfik can listen to your service registry/orchestrator API, and knows each time a microservice is added, removed, killed or upgraded, and can generate its configuration automatically.
 Routes to your services will be created instantly.
 
 Run it and forget it!
-
-
+  
+  
 
 
 ## Features
@@ -64,15 +64,15 @@ Run it and forget it!
 
 ## Quickstart
 
-You can have a quick look at Træfɪk in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
+You can have a quick look at Træfik in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
 
 Here is a talk given by [Ed Robinson](https://github.com/errm) at the [ContainerCamp UK](https://container.camp) conference.
-You will learn fundamental Træfɪk features and see some demos with Kubernetes.
+You will learn fundamental Træfik features and see some demos with Kubernetes.
 
 [![Traefik ContainerCamp UK](http://img.youtube.com/vi/aFtpIShV60I/0.jpg)](https://www.youtube.com/watch?v=aFtpIShV60I)
 
-Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference.
-You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Let's Encrypt.
+Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
+You will learn fundamental Træfik features and see some demos with Docker, Mesos/Marathon and Let's Encrypt. 
 
 [![Traefik Devoxx France](http://img.youtube.com/vi/QvAz9mVx5TI/0.jpg)](http://www.youtube.com/watch?v=QvAz9mVx5TI)
 
@@ -126,33 +126,6 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 You can join [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) to get basic support.
 If you prefer commercial support, please contact [containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
-
-## Træfɪk here and there
-
-These projects use Træfɪk internally. If your company uses Træfɪk, we would be glad to get your feedback :) Contact us on [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
-
-- Project [Mantl](https://mantl.io/) from Cisco
-
-![Web UI Providers](docs/img/mantl-logo.png)
-> Mantl is a modern platform for rapidly deploying globally distributed services. A container orchestrator, docker, a network stack, something to pool your logs, something to monitor health, a sprinkle of service discovery and some automation.
-
-- Project [Apollo](http://capgemini.github.io/devops/apollo/) from Cap Gemini
-
-![Web UI Providers](docs/img/apollo-logo.png)
-> Apollo is an open source project to aid with building and deploying IAAS and PAAS services. It is particularly geared towards managing containerized applications across multiple hosts, and big data type workloads. Apollo leverages other open source components to provide basic mechanisms for deployment, maintenance, and scaling of infrastructure and applications.
-
-## Partners
-
-[![Zenika](docs/img/zenika.logo.png)](https://zenika.com)
-
-Zenika is one of the leading providers of professional Open Source services and agile methodologies in
-Europe. We provide consulting, development, training and support for the world’s leading Open Source
-software products.
-
-
-[![Asteris](docs/img/asteris.logo.png)](https://aster.is)
-
-Founded in 2014, Asteris creates next-generation infrastructure software for the modern datacenter. Asteris writes software that makes it easy for companies to implement continuous delivery and realtime data pipelines. We support the HashiCorp stack, along with Kubernetes, Apache Mesos, Spark and Kafka. We're core committers on mantl.io, consul-cli and mesos-consul.
 
 ## Maintainers
 

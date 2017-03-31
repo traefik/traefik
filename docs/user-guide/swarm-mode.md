@@ -2,7 +2,7 @@
 
 This section explains how to create a multi-host docker cluster with
 swarm mode using [docker-machine](https://docs.docker.com/machine) and
-how to deploy Træfɪk on it.
+how to deploy Træfik on it.
 
 The cluster consists of:
 
@@ -143,7 +143,7 @@ cgfg5ifzrpgm  whoami1  1/1       emilevauge/whoami
 dtpl249tfghc  traefik  1/1       traefik            --docker --docker.swarmmode --docker.domain=traefik --docker.watch --web
 ```
 
-## Access to your apps through Træfɪk
+## Access to your apps through Træfik
 
 ```sh
 curl -H Host:whoami0.traefik http://$(docker-machine ip manager)
@@ -242,7 +242,7 @@ ab046gpaqtln  whoami0  5/5       emilevauge/whoami
 cgfg5ifzrpgm  whoami1  5/5       emilevauge/whoami
 dtpl249tfghc  traefik  1/1       traefik            --docker --docker.swarmmode --docker.domain=traefik --docker.watch --web
 ```
-## Access to your whoami0 through Træfɪk multiple times.
+## Access to your whoami0 through Træfik multiple times.
 
 Repeat the following command multiple times and note that the Hostname changes each time as Traefik load balances each request against the 5 tasks.
 ```sh

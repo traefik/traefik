@@ -6,7 +6,7 @@
     "Fernandez Ludovic <lfernandez.dev@gmail.com>",
     "Micaël Mbagira <micael.mbagira@icloud.com>"
   ],
-  "description": "Front end for Træfɪk",
+  "description": "Front end for Træfik",
   "license": "MIT",
   "dependencies": {
     "angular": "^1.4.2",
