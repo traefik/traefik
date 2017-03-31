@@ -13,6 +13,7 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/plugin"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
@@ -156,7 +157,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 					},
 				}
 
-				srv := NewServer(globalConfig)
+				srv := NewServer(globalConfig, plugin.NewManager())
 				if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 					t.Fatalf("got error: %s", err)
 				}
@@ -328,7 +329,7 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 		},
 	}
 
-	srv := NewServer(globalConfig)
+	srv := NewServer(globalConfig, plugin.NewManager())
 	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
 	}
@@ -554,6 +555,7 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 						"test": test.entrypoint,
 					},
 				},
+				manager: plugin.NewManager(),
 			}
 
 			srv.serverEntryPoints = srv.buildEntryPoints(srv.globalConfiguration)

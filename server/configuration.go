@@ -12,6 +12,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/plugin"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -59,6 +60,7 @@ type GlobalConfiguration struct {
 	RootCAs                   RootCAs                 `description:"Add cert file for self-signed certicate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
+	Plugins                   plugin.Plugins          `description:"External plugins definition"`
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings"`
 	File                      *file.Provider          `description:"Enable File backend with default settings"`
 	Web                       *WebProvider            `description:"Enable Web backend with default settings"`
@@ -570,6 +572,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 				Interval: flaeg.Duration(DefaultHealthCheckInterval),
 			},
 			CheckNewVersion: true,
+			Plugins:         plugin.Plugins{},
 		},
 		ConfigFile: "",
 	}

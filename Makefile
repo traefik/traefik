@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: all plugin
 
 TRAEFIK_ENVS := \
 	-e OS_ARCH_ARG \
@@ -25,6 +25,9 @@ DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKE
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
 DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
 DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
+PLUGIN_DIR := "$(dir $(path))"
+PLUGIN_FILE := $(notdir $(path))
+PLUGIN_BASENAME := $(basename $(PLUGIN_FILE))
 
 
 print-%: ; @echo $*=$($*)
@@ -105,6 +108,9 @@ generate-webui: build-webui
 		docker run --rm -v "$$PWD/static":'/src/static' traefik-webui npm run build; \
 		echo 'For more informations show `webui/readme.md`' > $$PWD/static/DONT-EDIT-FILES-IN-THIS-DIRECTORY.md; \
 	fi
+
+plugin: build ## build a Traefik plugin
+	docker run -it -v ${PLUGIN_DIR}:/plugin $(TRAEFIK_DEV_IMAGE) go build -buildmode=plugin -o /plugin/${PLUGIN_BASENAME}.so /plugin/${PLUGIN_FILE}
 
 lint:
 	script/validate-golint
