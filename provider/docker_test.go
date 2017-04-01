@@ -21,6 +21,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -30,6 +31,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "Host-foo-docker-localhost",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -43,6 +45,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 				},
 			},
 			expected: "Headers-User-Agent-bat-0-1-0",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -56,6 +59,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 				},
 			},
 			expected: "Host-foo-bar",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -69,6 +73,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 				},
 			},
 			expected: "Path-test",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -82,11 +87,12 @@ func TestDockerGetFrontendName(t *testing.T) {
 				},
 			},
 			expected: "PathPrefix-test2",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.getFrontendName(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
@@ -102,6 +108,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -111,6 +118,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "Host:foo.docker.localhost",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -120,6 +128,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "Host:bar.docker.localhost",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -133,6 +142,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 				},
 			},
 			expected: "Host:foo.bar",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -146,11 +156,12 @@ func TestDockerGetFrontendRule(t *testing.T) {
 				},
 			},
 			expected: "Path:/test",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.getFrontendRule(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
@@ -164,6 +175,7 @@ func TestDockerGetBackend(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -173,6 +185,7 @@ func TestDockerGetBackend(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "foo",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -182,6 +195,7 @@ func TestDockerGetBackend(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "bar",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -195,11 +209,12 @@ func TestDockerGetBackend(t *testing.T) {
 				},
 			},
 			expected: "foobar",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.getBackend(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
@@ -213,6 +228,7 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -223,12 +239,16 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 				NetworkSettings: &docker.NetworkSettings{
 					Networks: map[string]*network.EndpointSettings{
 						"testnet": {
+							NetworkID: "1",
 							IPAddress: "10.11.12.13",
 						},
 					},
 				},
 			},
 			expected: "10.11.12.13",
+			networks: map[string]*docker.NetworkResource{
+				"1": {},
+			},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -243,12 +263,16 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 				NetworkSettings: &docker.NetworkSettings{
 					Networks: map[string]*network.EndpointSettings{
 						"nottestnet": {
+							NetworkID: "1",
 							IPAddress: "10.11.12.13",
 						},
 					},
 				},
 			},
 			expected: "10.11.12.13",
+			networks: map[string]*docker.NetworkResource{
+				"1": {},
+			},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -263,15 +287,21 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 				NetworkSettings: &docker.NetworkSettings{
 					Networks: map[string]*network.EndpointSettings{
 						"testnet1": {
+							NetworkID: "1",
 							IPAddress: "10.11.12.13",
 						},
 						"testnet2": {
+							NetworkID: "2",
 							IPAddress: "10.11.12.14",
 						},
 					},
 				},
 			},
 			expected: "10.11.12.14",
+			networks: map[string]*docker.NetworkResource{
+				"1": {},
+				"2": {},
+			},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -287,20 +317,81 @@ func TestDockerGetIPAddress(t *testing.T) { // TODO
 				NetworkSettings: &docker.NetworkSettings{
 					Networks: map[string]*network.EndpointSettings{
 						"testnet1": {
+							NetworkID: "1",
 							IPAddress: "10.11.12.13",
 						},
 						"testnet2": {
+							NetworkID: "2",
 							IPAddress: "10.11.12.14",
 						},
 					},
 				},
 			},
 			expected: "127.0.0.1",
+			networks: map[string]*docker.NetworkResource{
+				"1": {},
+				"2": {},
+			},
+		},
+		{
+			container: docker.ContainerJSON{
+				NetworkSettings: &docker.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{
+						"unreachable": {
+							NetworkID: "1",
+							IPAddress: "10.11.12.13",
+						},
+						"reachable": {
+							NetworkID: "2",
+							IPAddress: "10.11.12.14",
+						},
+					},
+				},
+			},
+			expected: "10.11.12.14",
+			networks: map[string]*docker.NetworkResource{
+				"2": {},
+			},
+		},
+		{
+			container: docker.ContainerJSON{
+				NetworkSettings: &docker.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{
+						"unreachable": {
+							NetworkID: "1",
+							IPAddress: "10.11.12.13",
+						},
+					},
+				},
+			},
+			expected: "",
+			networks: map[string]*docker.NetworkResource{},
+		},
+		{
+			container: docker.ContainerJSON{
+				NetworkSettings: &docker.NetworkSettings{
+					Networks: map[string]*network.EndpointSettings{
+						"unreachable": {
+							NetworkID: "1",
+							IPAddress: "10.11.12.13",
+						},
+					},
+				},
+			},
+			expected: "",
+			networks: map[string]*docker.NetworkResource{
+				"2": {},
+			},
+		},
+		{
+			container: docker.ContainerJSON{},
+			expected:  "",
+			networks:  map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.getIPAddress(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
@@ -314,6 +405,7 @@ func TestDockerGetPort(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -324,6 +416,7 @@ func TestDockerGetPort(t *testing.T) {
 				NetworkSettings: &docker.NetworkSettings{},
 			},
 			expected: "",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -340,6 +433,7 @@ func TestDockerGetPort(t *testing.T) {
 				},
 			},
 			expected: "80",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		// FIXME handle this better..
 		// {
@@ -368,6 +462,7 @@ func TestDockerGetPort(t *testing.T) {
 				NetworkSettings: &docker.NetworkSettings{},
 			},
 			expected: "8080",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -388,6 +483,7 @@ func TestDockerGetPort(t *testing.T) {
 				},
 			},
 			expected: "8080",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -409,11 +505,12 @@ func TestDockerGetPort(t *testing.T) {
 				},
 			},
 			expected: "8080",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.getPort(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
@@ -427,6 +524,7 @@ func TestDockerGetWeight(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -436,6 +534,7 @@ func TestDockerGetWeight(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "0",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -449,11 +548,12 @@ func TestDockerGetWeight(t *testing.T) {
 				},
 			},
 			expected: "10",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.getWeight(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
@@ -469,6 +569,7 @@ func TestDockerGetDomain(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -478,6 +579,7 @@ func TestDockerGetDomain(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "docker.localhost",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -491,11 +593,12 @@ func TestDockerGetDomain(t *testing.T) {
 				},
 			},
 			expected: "foo.bar",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.getDomain(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
@@ -509,6 +612,7 @@ func TestDockerGetProtocol(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -518,6 +622,7 @@ func TestDockerGetProtocol(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "http",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -531,11 +636,12 @@ func TestDockerGetProtocol(t *testing.T) {
 				},
 			},
 			expected: "https",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.getProtocol(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
@@ -548,6 +654,7 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -557,6 +664,7 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "true",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -570,11 +678,12 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 				},
 			},
 			expected: "false",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.getPassHostHeader(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %q, got %q", e.expected, actual)
@@ -586,6 +695,7 @@ func TestDockerGetLabel(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
+		networks  map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -595,6 +705,7 @@ func TestDockerGetLabel(t *testing.T) {
 				Config: &container.Config{},
 			},
 			expected: "Label not found:",
+			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -608,11 +719,12 @@ func TestDockerGetLabel(t *testing.T) {
 				},
 			},
 			expected: "",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		label, err := getLabel(dockerData, "foo")
 		if e.expected != "" {
 			if err == nil || !strings.Contains(err.Error(), e.expected) {
@@ -631,6 +743,7 @@ func TestDockerGetLabels(t *testing.T) {
 		container      docker.ContainerJSON
 		expectedLabels map[string]string
 		expectedError  string
+		networks       map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -641,6 +754,7 @@ func TestDockerGetLabels(t *testing.T) {
 			},
 			expectedLabels: map[string]string{},
 			expectedError:  "Label not found:",
+			networks:       map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -657,6 +771,7 @@ func TestDockerGetLabels(t *testing.T) {
 				"foo": "fooz",
 			},
 			expectedError: "Label not found: bar",
+			networks:      map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -675,11 +790,12 @@ func TestDockerGetLabels(t *testing.T) {
 				"bar": "barz",
 			},
 			expectedError: "",
+			networks:      map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		labels, err := getLabels(dockerData, []string{"foo", "bar"})
 		if !reflect.DeepEqual(labels, e.expectedLabels) {
 			t.Fatalf("expect %v, got %v", e.expectedLabels, labels)
@@ -698,6 +814,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 		container        docker.ContainerJSON
 		exposedByDefault bool
 		expected         bool
+		networks         map[string]*docker.NetworkResource
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -709,6 +826,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: true,
 			expected:         false,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -730,6 +848,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: true,
 			expected:         false,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -751,6 +870,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: true,
 			expected:         true,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -769,6 +889,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: true,
 			expected:         true,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -786,6 +907,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: true,
 			expected:         true,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -808,6 +930,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: true,
 			expected:         true,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -829,6 +952,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: true,
 			expected:         true,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -850,6 +974,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: true,
 			expected:         true,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -871,6 +996,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: true,
 			expected:         true,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -888,6 +1014,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: false,
 			expected:         false,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -909,12 +1036,13 @@ func TestDockerTraefikFilter(t *testing.T) {
 			},
 			exposedByDefault: false,
 			expected:         true,
+			networks:         map[string]*docker.NetworkResource{},
 		},
 	}
 
 	for _, e := range containers {
 		provider.ExposedByDefault = e.exposedByDefault
-		dockerData := parseContainer(e.container)
+		dockerData := parseContainer(e.container, e.networks)
 		actual := provider.containerFilter(dockerData)
 		if actual != e.expected {
 			t.Fatalf("expected %v for %+v, got %+v", e.expected, e, actual)
@@ -927,11 +1055,13 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 		containers        []docker.ContainerJSON
 		expectedFrontends map[string]*types.Frontend
 		expectedBackends  map[string]*types.Backend
+		networks          map[string]*docker.NetworkResource
 	}{
 		{
 			containers:        []docker.ContainerJSON{},
 			expectedFrontends: map[string]*types.Frontend{},
 			expectedBackends:  map[string]*types.Backend{},
+			networks:          map[string]*docker.NetworkResource{},
 		},
 		{
 			containers: []docker.ContainerJSON{
@@ -948,6 +1078,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						},
 						Networks: map[string]*network.EndpointSettings{
 							"bridge": {
+								NetworkID: "1",
 								IPAddress: "127.0.0.1",
 							},
 						},
@@ -977,6 +1108,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					CircuitBreaker: nil,
 				},
 			},
+			networks: map[string]*docker.NetworkResource{
+				"1": {},
+			},
 		},
 		{
 			containers: []docker.ContainerJSON{
@@ -998,6 +1132,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						},
 						Networks: map[string]*network.EndpointSettings{
 							"bridge": {
+								NetworkID: "1",
 								IPAddress: "127.0.0.1",
 							},
 						},
@@ -1020,6 +1155,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						},
 						Networks: map[string]*network.EndpointSettings{
 							"bridge": {
+								NetworkID: "1",
 								IPAddress: "127.0.0.1",
 							},
 						},
@@ -1063,6 +1199,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					CircuitBreaker: nil,
 				},
 			},
+			networks: map[string]*docker.NetworkResource{
+				"1": {},
+			},
 		},
 		{
 			containers: []docker.ContainerJSON{
@@ -1088,6 +1227,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						},
 						Networks: map[string]*network.EndpointSettings{
 							"bridge": {
+								NetworkID: "1",
 								IPAddress: "127.0.0.1",
 							},
 						},
@@ -1126,6 +1266,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					},
 				},
 			},
+			networks: map[string]*docker.NetworkResource{
+				"1": {},
+			},
 		},
 	}
 
@@ -1137,7 +1280,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 	for _, c := range cases {
 		var dockerDataList []dockerData
 		for _, container := range c.containers {
-			dockerData := parseContainer(container)
+			dockerData := parseContainer(container, c.networks)
 			dockerDataList = append(dockerDataList, dockerData)
 		}
 
@@ -1455,6 +1598,82 @@ func TestSwarmGetIPAddress(t *testing.T) {
 					Name: "barnet",
 				},
 			},
+		},
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					EndpointSpec: &swarm.EndpointSpec{
+						Mode: swarm.ResolutionModeVIP,
+					},
+				},
+				Endpoint: swarm.Endpoint{
+					VirtualIPs: []swarm.EndpointVirtualIP{
+						{
+							NetworkID: "1",
+							Addr:      "10.11.12.13/24",
+						},
+						{
+							NetworkID: "2",
+							Addr:      "10.11.12.99/24",
+						},
+					},
+				},
+			},
+			expected: "10.11.12.99",
+			networks: map[string]*docker.NetworkResource{
+				"2": {},
+			},
+		},
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					EndpointSpec: &swarm.EndpointSpec{
+						Mode: swarm.ResolutionModeVIP,
+					},
+				},
+				Endpoint: swarm.Endpoint{
+					VirtualIPs: []swarm.EndpointVirtualIP{
+						{
+							NetworkID: "1",
+							Addr:      "10.11.12.13/24",
+						},
+					},
+				},
+			},
+			expected: "",
+			networks: map[string]*docker.NetworkResource{
+				"2": {},
+			},
+		},
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					EndpointSpec: &swarm.EndpointSpec{
+						Mode: swarm.ResolutionModeVIP,
+					},
+				},
+				Endpoint: swarm.Endpoint{
+					VirtualIPs: []swarm.EndpointVirtualIP{
+						{
+							NetworkID: "1",
+							Addr:      "10.11.12.13/24",
+						},
+					},
+				},
+			},
+			expected: "",
+			networks: map[string]*docker.NetworkResource{},
+		},
+		{
+			service: swarm.Service{
+				Spec: swarm.ServiceSpec{
+					EndpointSpec: &swarm.EndpointSpec{
+						Mode: swarm.ResolutionModeVIP,
+					},
+				},
+			},
+			expected: "",
+			networks: map[string]*docker.NetworkResource{},
 		},
 	}
 
