@@ -21,8 +21,6 @@ import (
 	"syscall"
 	"time"
 
-	"sync"
-
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
@@ -536,7 +534,7 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 		Addr:        entryPoint.Address,
 		Handler:     negroni,
 		TLSConfig:   tlsConfig,
-		IdleTimeout: server.globalConfiguration.IdleTimeout,
+		IdleTimeout: time.Duration(server.globalConfiguration.IdleTimeout),
 	}, nil
 }
 
