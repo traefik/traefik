@@ -7,7 +7,6 @@ import:
 - package: github.com/Sirupsen/logrus
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
-  version: a731c034dda967333efce5f8d276aeff11f8ff87
 - package: github.com/vulcand/oxy
   version: fcc76b52eb8568540a020b7a99e854d9d752b364
   repo: https://github.com/containous/oxy.git
