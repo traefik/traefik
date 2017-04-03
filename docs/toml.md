@@ -556,7 +556,7 @@ address = ":8080"
 #
 # To enable Traefik to export internal metrics to Prometheus
 # [web.metrics.prometheus]
-#   Buckets=[0.1,0.3,1.2,5]
+#   Buckets=[0.1,0.3,1.2,5.0]
 #
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
@@ -735,7 +735,7 @@ $ curl -s "http://localhost:8080/api" | jq .
 - `/metrics`: You can enable Traefik to export internal metrics to different monitoring systems (Only Prometheus is supported at the moment).
 
 ```bash
-$ traefik --web.metrics.prometheus --web.metrics.prometheus.buckets="0.1,0.3,1.2,5"
+$ traefik --web.metrics.prometheus --web.metrics.prometheus.buckets="0.1,0.3,1.2,5.0"
 ```
 
 ## Docker backend
@@ -823,7 +823,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
 - `traefik.enable=false`: disable this container in Træfɪk
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}` or `Host:{service}.{project_name}.{domain}` if you are using `docker-compose`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
