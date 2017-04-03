@@ -69,6 +69,8 @@
 
 # IdleTimeout: maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
 # This is set to enforce closing of stale client connections.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
 #
 # Optional
 # Default: "180s"
