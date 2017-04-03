@@ -9,13 +9,15 @@
 # Global configuration
 ################################################################
 
-# Timeout in seconds.
-# Duration to give active requests a chance to finish during hot-reloads
+# Duration to give active requests a chance to finish during hot-reloads.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: 10
+# Default: "10s"
 #
-# graceTimeOut = 10
+# graceTimeOut = "10s"
 
 # Enable debug mode
 #
@@ -56,11 +58,14 @@
 # Backends throttle duration: minimum duration in seconds between 2 events from providers
 # before applying a new configuration. It avoids unnecessary reloads if multiples events
 # are sent in a short amount of time.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: "2"
+# Default: "2s"
 #
-# ProvidersThrottleDuration = "5"
+# ProvidersThrottleDuration = "2s"
 
 # If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
 # If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
@@ -932,19 +937,25 @@ domain = "marathon.localhost"
 # dcosToken = "xxxxxx"
 
 # Override DialerTimeout
-# Amount of time in seconds to allow the Marathon provider to wait to open a TCP
-# connection to a Marathon master
+# Amount of time to allow the Marathon provider to wait to open a TCP connection
+# to a Marathon master.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: 60
-# dialerTimeout = 5
+# Default: "60s"
+# dialerTimeout = "60s"
 
-# Set the TCP Keep Alive interval (in seconds) for the Marathon HTTP Client
+# Set the TCP Keep Alive interval for the Marathon HTTP Client.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: 10
+# Default: "10s"
 #
-# keepAlive = 10
+# keepAlive = "10s"
 ```
 
 Labels can be used on containers to override default behaviour:
