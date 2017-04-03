@@ -36,7 +36,7 @@ type GlobalConfiguration struct {
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
 	ProvidersThrottleDuration time.Duration           `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
-	IdleTimeout               time.Duration           `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
+	IdleTimeout               flaeg.Duration          `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	Docker                    *provider.Docker        `description:"Enable Docker backend"`
@@ -467,7 +467,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: time.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
-			IdleTimeout:               time.Duration(180 * time.Second),
+			IdleTimeout:               flaeg.Duration(180 * time.Second),
 			CheckNewVersion:           true,
 		},
 		ConfigFile: "",
