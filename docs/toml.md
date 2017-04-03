@@ -62,6 +62,14 @@
 #
 # ProvidersThrottleDuration = "5"
 
+# IdleTimeout: maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
+# This is set to enforce closing of stale client connections.
+#
+# Optional
+# Default: "180s"
+#
+# IdleTimeout = "360s"
+
 # If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
 # If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
 #
@@ -1637,7 +1645,7 @@ RefreshSeconds = 15
 
 ```
 
-Items in the dynamodb table must have three attributes: 
+Items in the dynamodb table must have three attributes:
 
 
 - 'id' : string
@@ -1645,4 +1653,4 @@ Items in the dynamodb table must have three attributes:
 - 'name' : string
     - The name is used as the name of the frontend or backend.
 - 'frontend' or 'backend' : map
-    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See types/types.go for details. The presence or absence of this attribute determines its type. So an item should never have both a 'frontend' and a 'backend' attribute. 
+    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See types/types.go for details. The presence or absence of this attribute determines its type. So an item should never have both a 'frontend' and a 'backend' attribute.
