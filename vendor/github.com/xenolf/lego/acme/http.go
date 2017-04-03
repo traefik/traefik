@@ -31,14 +31,14 @@ const (
 func httpHead(url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to head %q: %v", url, err)
 	}
 
 	req.Header.Set("User-Agent", userAgent())
 
 	resp, err = HTTPClient.Do(req)
 	if err != nil {
-		return resp, err
+		return resp, fmt.Errorf("failed to do head %q: %v", url, err)
 	}
 	resp.Body.Close()
 	return resp, err
@@ -49,7 +49,7 @@ func httpHead(url string) (resp *http.Response, err error) {
 func httpPost(url string, bodyType string, body io.Reader) (resp *http.Response, err error) {
 	req, err := http.NewRequest("POST", url, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to post %q: %v", url, err)
 	}
 	req.Header.Set("Content-Type", bodyType)
 	req.Header.Set("User-Agent", userAgent())
@@ -62,7 +62,7 @@ func httpPost(url string, bodyType string, body io.Reader) (resp *http.Response,
 func httpGet(url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get %q: %v", url, err)
 	}
 	req.Header.Set("User-Agent", userAgent())
 
@@ -74,7 +74,7 @@ func httpGet(url string) (resp *http.Response, err error) {
 func getJSON(uri string, respBody interface{}) (http.Header, error) {
 	resp, err := httpGet(uri)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get %q: %v", uri, err)
+		return nil, fmt.Errorf("failed to get json %q: %v", uri, err)
 	}
 	defer resp.Body.Close()
 

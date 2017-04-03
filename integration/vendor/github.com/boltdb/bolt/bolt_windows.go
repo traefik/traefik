@@ -89,7 +89,7 @@ func flock(db *DB, mode os.FileMode, exclusive bool, timeout time.Duration) erro
 func funlock(db *DB) error {
 	err := unlockFileEx(syscall.Handle(db.lockfile.Fd()), 0, 1, 0, &syscall.Overlapped{})
 	db.lockfile.Close()
-	os.Remove(db.path+lockExt)
+	os.Remove(db.path + lockExt)
 	return err
 }
 

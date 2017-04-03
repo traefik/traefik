@@ -1,8 +1,8 @@
 package eureka
 
 import (
-	"encoding/xml"
 	"encoding/json"
+	"encoding/xml"
 	"regexp"
 )
 
@@ -10,7 +10,6 @@ type MetaData struct {
 	Map   map[string]string
 	Class string
 }
-
 
 type Vraw struct {
 	Content []byte `xml:",innerxml"`
@@ -38,7 +37,6 @@ func (s *MetaData) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	tokens = append(tokens, xml.EndElement{
 		Name: start.Name,
 	})
-
 
 	for _, t := range tokens {
 		err := e.EncodeToken(t)

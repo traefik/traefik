@@ -122,7 +122,7 @@ func (c *Coordinate) rawDistanceTo(other *Coordinate) float64 {
 // already been checked to be compatible.
 func add(vec1 []float64, vec2 []float64) []float64 {
 	ret := make([]float64, len(vec1))
-	for i, _ := range ret {
+	for i := range ret {
 		ret[i] = vec1[i] + vec2[i]
 	}
 	return ret
@@ -132,7 +132,7 @@ func add(vec1 []float64, vec2 []float64) []float64 {
 // dimensions have already been checked to be compatible.
 func diff(vec1 []float64, vec2 []float64) []float64 {
 	ret := make([]float64, len(vec1))
-	for i, _ := range ret {
+	for i := range ret {
 		ret[i] = vec1[i] - vec2[i]
 	}
 	return ret
@@ -141,7 +141,7 @@ func diff(vec1 []float64, vec2 []float64) []float64 {
 // mul returns vec multiplied by a scalar factor.
 func mul(vec []float64, factor float64) []float64 {
 	ret := make([]float64, len(vec))
-	for i, _ := range vec {
+	for i := range vec {
 		ret[i] = vec[i] * factor
 	}
 	return ret
@@ -150,7 +150,7 @@ func mul(vec []float64, factor float64) []float64 {
 // magnitude computes the magnitude of the vec.
 func magnitude(vec []float64) float64 {
 	sum := 0.0
-	for i, _ := range vec {
+	for i := range vec {
 		sum += vec[i] * vec[i]
 	}
 	return math.Sqrt(sum)
@@ -168,7 +168,7 @@ func unitVectorAt(vec1 []float64, vec2 []float64) ([]float64, float64) {
 	}
 
 	// Otherwise, just return a random unit vector.
-	for i, _ := range ret {
+	for i := range ret {
 		ret[i] = rand.Float64() - 0.5
 	}
 	if mag := magnitude(ret); mag > zeroThreshold {

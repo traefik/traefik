@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license found in the LICENSE file.
 
 /*
-High Performance, Feature-Rich Idiomatic Go codec/encoding library for 
+High Performance, Feature-Rich Idiomatic Go codec/encoding library for
 binc, msgpack, cbor, json.
 
 Supported Serialization formats are:
@@ -11,7 +11,7 @@ Supported Serialization formats are:
   - binc:    http://github.com/ugorji/binc
   - cbor:    http://cbor.io http://tools.ietf.org/html/rfc7049
   - json:    http://json.org http://tools.ietf.org/html/rfc7159
-  - simple: 
+  - simple:
 
 To install:
 
@@ -19,7 +19,7 @@ To install:
 
 This package understands the 'unsafe' tag, to allow using unsafe semantics:
 
-  - When decoding into a struct, you need to read the field name as a string 
+  - When decoding into a struct, you need to read the field name as a string
     so you can find the struct field it is mapped to.
     Using `unsafe` will bypass the allocation and copying overhead of []byte->string conversion.
 
@@ -38,9 +38,9 @@ Rich Feature Set includes:
   - Very High Performance.
     Our extensive benchmarks show us outperforming Gob, Json, Bson, etc by 2-4X.
   - Multiple conversions:
-    Package coerces types where appropriate 
+    Package coerces types where appropriate
     e.g. decode an int in the stream into a float, etc.
-  - Corner Cases: 
+  - Corner Cases:
     Overflows, nil maps/slices, nil values in streams are handled correctly
   - Standard field renaming via tags
   - Support for omitting empty fields during an encoding
@@ -56,7 +56,7 @@ Rich Feature Set includes:
   - Fast (no-reflection) encoding/decoding of common maps and slices
   - Code-generation for faster performance.
   - Support binary (e.g. messagepack, cbor) and text (e.g. json) formats
-  - Support indefinite-length formats to enable true streaming 
+  - Support indefinite-length formats to enable true streaming
     (for formats which support it e.g. json, cbor)
   - Support canonical encoding, where a value is ALWAYS encoded as same sequence of bytes.
     This mostly applies to maps, where iteration order is non-deterministic.
@@ -67,12 +67,12 @@ Rich Feature Set includes:
   - Encode/Decode from/to chan types (for iterative streaming support)
   - Drop-in replacement for encoding/json. `json:` key in struct tag supported.
   - Provides a RPC Server and Client Codec for net/rpc communication protocol.
-  - Handle unique idiosynchracies of codecs e.g. 
-    - For messagepack, configure how ambiguities in handling raw bytes are resolved 
-    - For messagepack, provide rpc server/client codec to support 
+  - Handle unique idiosynchracies of codecs e.g.
+    - For messagepack, configure how ambiguities in handling raw bytes are resolved
+    - For messagepack, provide rpc server/client codec to support
       msgpack-rpc protocol defined at:
       https://github.com/msgpack-rpc/msgpack-rpc/blob/master/spec.md
-  
+
 Extension Support
 
 Users can register a function to handle the encoding or decoding of

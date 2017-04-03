@@ -171,7 +171,7 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx 
 	w.WriteHeader(response.StatusCode)
 
 	stream := f.streamResponse
-	if ! stream {
+	if !stream {
 		contentType, err := utils.GetHeaderMediaType(response.Header, ContentType)
 		if err == nil {
 			stream = contentType == "text/event-stream"
@@ -253,7 +253,7 @@ func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request,
 
 	if outReq.URL.Scheme == "wss" {
 		if f.TLSClientConfig == nil {
-			f.TLSClientConfig = &tls.Config{}
+			f.TLSClientConfig = http.DefaultTransport.(*http.Transport).TLSClientConfig
 		}
 		dial = func(network, address string) (net.Conn, error) {
 			return tls.Dial("tcp", host, f.TLSClientConfig)
@@ -282,6 +282,8 @@ func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request,
 	defer underlyingConn.Close()
 	defer targetConn.Close()
 
+	ctx.log.Infof("Writing outgoing Websocket request to target connection: %+v", outReq)
+
 	// write the modified incoming request to the dialed connection
 	if err = outReq.Write(targetConn); err != nil {
 		ctx.log.Errorf("Unable to copy request to target: %v", err)
@@ -305,6 +307,15 @@ func (f *websocketForwarder) copyRequest(req *http.Request, u *url.URL) (outReq 
 
 	outReq.URL = utils.CopyURL(req.URL)
 	outReq.URL.Scheme = u.Scheme
+
+	//sometimes backends might be registered as HTTP/HTTPS servers so translate URLs to websocket URLs.
+	switch u.Scheme {
+	case "https":
+		outReq.URL.Scheme = "wss"
+	case "http":
+		outReq.URL.Scheme = "ws"
+	}
+
 	outReq.URL.Host = u.Host
 	outReq.URL.Opaque = req.RequestURI
 	// raw query is already included in RequestURI, so ignore it to avoid dupes

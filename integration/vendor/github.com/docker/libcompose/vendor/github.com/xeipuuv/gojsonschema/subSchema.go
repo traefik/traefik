@@ -214,7 +214,7 @@ func (s *subSchema) PatternPropertiesString() string {
 	}
 
 	patternPropertiesKeySlice := []string{}
-	for pk, _ := range s.patternProperties {
+	for pk := range s.patternProperties {
 		patternPropertiesKeySlice = append(patternPropertiesKeySlice, `"`+pk+`"`)
 	}
 
