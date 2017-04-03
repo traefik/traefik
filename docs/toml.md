@@ -62,11 +62,13 @@
 #
 # ProvidersThrottleDuration = "5"
 
-# If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
-# If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
+# Controls the maximum idle (keep-alive) connections to keep per-host. If zero, DefaultMaxIdleConnsPerHost
+# from the Go standard library net/http module is used.
+# If you encounter 'too many open files' errors, you can either increase this
+# value or change the `ulimit`.
 #
 # Optional
-# Default: http.DefaultMaxIdleConnsPerHost
+# Default: 200
 #
 # MaxIdleConnsPerHost = 200
 
@@ -827,7 +829,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
-- `traefik.docker.network`: Set the docker network to use for connections to this container
+- `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 
 If several ports need to be exposed from a container, the services labels can be used
 - `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
@@ -1027,12 +1029,14 @@ domain = "mesos.localhost"
 # Zookeeper timeout (in seconds)
 #
 # Optional
+# Default: 30
 #
 # ZkDetectionTimeout = 30
 
 # Polling interval (in seconds)
 #
 # Optional
+# Default: 30
 #
 # RefreshSeconds = 30
 
@@ -1045,8 +1049,9 @@ domain = "mesos.localhost"
 # HTTP Timeout (in seconds)
 #
 # Optional
+# Default: 30
 #
-# StateTimeoutSecond = "host"
+# StateTimeoutSecond = "30"
 ```
 
 ## Kubernetes Ingress backend
@@ -1466,6 +1471,105 @@ ExposedByDefault = false
 # SecretAccessKey = "123"
 
 ```
+
+Labels can be used on task containers to override default behaviour:
+
+- `traefik.protocol=https`: override the default `http` protocol
+- `traefik.weight=10`: assign this weight to the container
+- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
+- `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
+- `traefik.frontend.priority=10`: override default frontend priority
+- `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
+
+If `AccessKeyID`/`SecretAccessKey` is not given credentials will be resolved in the following order:
+
+- From environment variables; `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`.
+- Shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to `default` and `~/.aws/credentials`.
+- EC2 instance role or ECS task role
+
+Træfɪk needs the following policy to read ECS information:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Traefik ECS read access",
+            "Effect": "Allow",
+            "Action": [
+                "ecs:ListTasks",
+                "ecs:DescribeTasks",
+                "ecs:DescribeContainerInstances",
+                "ecs:DescribeTaskDefinition",
+                "ec2:DescribeInstances"
+            ],
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}
+```
+
+# Rancher backend
+
+Træfɪk can be configured to use Rancher as a backend configuration:
+
+
+```toml
+################################################################
+# Rancher configuration backend
+################################################################
+
+# Enable Rancher configuration backend
+#
+# Optional
+#
+[rancher]
+
+# Default domain used.
+# Can be overridden by setting the "traefik.domain" label on an service.
+#
+# Required
+#
+domain = "rancher.localhost"
+
+# Enable watch Rancher changes
+#
+# Optional
+# Default: true
+#
+Watch = true
+
+# Expose Rancher services by default in traefik
+#
+# Optional
+# Default: true
+#
+ExposedByDefault = false
+
+# Endpoint to use when connecting to Rancher
+#
+# Optional
+# Endpoint = "http://rancherserver.example.com"
+
+# AccessKey to use when connecting to Rancher
+#
+# Optional
+# AccessKey = "XXXXXXXXX"
+
+# SecretKey to use when connecting to Rancher
+#
+# Optional
+# SecretKey = "XXXXXXXXXXX"
+
+```
+
+If you're deploying traefik as a service within rancher, you can alternatively set these labels on the service to let it only fetch data of its current environment. The settings `endpoint`, `accesskey` and `secretkey` can be omitted then.
+
+- `io.rancher.container.create_agent=true`
+- `io.rancher.container.agent.role=environment`
 
 Labels can be used on task containers to override default behaviour:
 

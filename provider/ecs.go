@@ -206,13 +206,28 @@ func (provider *ECS) listInstances(ctx context.Context, client *awsClient) ([]ec
 		taskArns = append(taskArns, req.Data.(*ecs.ListTasksOutput).TaskArns...)
 	}
 
-	req, taskResp := client.ecs.DescribeTasksRequest(&ecs.DescribeTasksInput{
-		Tasks:   taskArns,
-		Cluster: &provider.Cluster,
-	})
+	// Early return: if we can't list tasks we have nothing to
+	// describe below - likely empty cluster/permissions are bad.  This
+	// stops the AWS API from returning a 401 when you DescribeTasks
+	// with no input.
+	if len(taskArns) == 0 {
+		return []ecsInstance{}, nil
+	}
 
-	if err := wrapAws(ctx, req); err != nil {
-		return nil, err
+	chunkedTaskArns := provider.chunkedTaskArns(taskArns)
+	var tasks []*ecs.Task
+
+	for _, arns := range chunkedTaskArns {
+		req, taskResp := client.ecs.DescribeTasksRequest(&ecs.DescribeTasksInput{
+			Tasks:   arns,
+			Cluster: &provider.Cluster,
+		})
+
+		if err := wrapAws(ctx, req); err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, taskResp.Tasks...)
+
 	}
 
 	containerInstanceArns := make([]*string, 0)
@@ -221,7 +236,7 @@ func (provider *ECS) listInstances(ctx context.Context, client *awsClient) ([]ec
 	taskDefinitionArns := make([]*string, 0)
 	byTaskDefinition := make(map[string]int)
 
-	for _, task := range taskResp.Tasks {
+	for _, task := range tasks {
 		if _, found := byContainerInstance[*task.ContainerInstanceArn]; !found {
 			byContainerInstance[*task.ContainerInstanceArn] = len(containerInstanceArns)
 			containerInstanceArns = append(containerInstanceArns, task.ContainerInstanceArn)
@@ -243,7 +258,7 @@ func (provider *ECS) listInstances(ctx context.Context, client *awsClient) ([]ec
 	}
 
 	var instances []ecsInstance
-	for _, task := range taskResp.Tasks {
+	for _, task := range tasks {
 
 		machineIdx := byContainerInstance[*task.ContainerInstanceArn]
 		taskDefIdx := byTaskDefinition[*task.TaskDefinitionArn]
@@ -396,6 +411,22 @@ func (provider *ECS) getFrontendRule(i ecsInstance) string {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + provider.Domain
+}
+
+// ECS expects no more than 100 parameters be passed to a DescribeTask call; thus, pack
+// each string into an array capped at 100 elements
+func (provider *ECS) chunkedTaskArns(tasks []*string) [][]*string {
+	var chunkedTasks [][]*string
+	for i := 0; i < len(tasks); i += 100 {
+		sliceEnd := -1
+		if i+100 < len(tasks) {
+			sliceEnd = i + 100
+		} else {
+			sliceEnd = len(tasks)
+		}
+		chunkedTasks = append(chunkedTasks, tasks[i:sliceEnd])
+	}
+	return chunkedTasks
 }
 
 func (i ecsInstance) Protocol() string {

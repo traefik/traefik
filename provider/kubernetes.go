@@ -198,8 +198,13 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 				}
 
 				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
-				if err != nil || !exists {
-					log.Warnf("Error retrieving service %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
+				if err != nil {
+					log.Errorf("Error while retrieving service information from k8s API %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
+					return nil, err
+				}
+
+				if !exists {
+					log.Errorf("Service not found for %s/%s", i.ObjectMeta.Namespace, pa.Backend.ServiceName)
 					delete(templateObjects.Frontends, r.Host+pa.Path)
 					continue
 				}
@@ -233,17 +238,17 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						} else {
 							endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 							if err != nil {
-								log.Errorf("Error while retrieving endpoints from k8s API %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
-								continue
+								log.Errorf("Error retrieving endpoints %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
+								return nil, err
 							}
 
 							if !exists {
-								log.Errorf("Service not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								log.Errorf("Endpoints not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 								continue
 							}
 
 							if len(endpoints.Subsets) == 0 {
-								log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								log.Warnf("Service endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
 								templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
 									URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
 									Weight: 1,

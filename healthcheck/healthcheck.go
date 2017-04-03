@@ -25,7 +25,7 @@ func GetHealthCheck() *HealthCheck {
 
 // BackendHealthCheck HealthCheck configuration for a backend
 type BackendHealthCheck struct {
-	URL          string
+	Path         string
 	Interval     time.Duration
 	DisabledURLs []*url.URL
 	lb           loadBalancer
@@ -81,7 +81,7 @@ func (hc *HealthCheck) execute(ctx context.Context) {
 					enabledURLs := currentBackend.lb.Servers()
 					var newDisabledURLs []*url.URL
 					for _, url := range currentBackend.DisabledURLs {
-						if checkHealth(url, currentBackend.URL) {
+						if checkHealth(url, currentBackend.Path) {
 							log.Debugf("HealthCheck is up [%s]: Upsert in server list", url.String())
 							currentBackend.lb.UpsertServer(url, roundrobin.Weight(1))
 						} else {
@@ -91,7 +91,7 @@ func (hc *HealthCheck) execute(ctx context.Context) {
 					currentBackend.DisabledURLs = newDisabledURLs
 
 					for _, url := range enabledURLs {
-						if !checkHealth(url, currentBackend.URL) {
+						if !checkHealth(url, currentBackend.Path) {
 							log.Debugf("HealthCheck has failed [%s]: Remove from server list", url.String())
 							currentBackend.lb.RemoveServer(url)
 							currentBackend.DisabledURLs = append(currentBackend.DisabledURLs, url)
@@ -104,12 +104,12 @@ func (hc *HealthCheck) execute(ctx context.Context) {
 	}
 }
 
-func checkHealth(serverURL *url.URL, checkURL string) bool {
+func checkHealth(serverURL *url.URL, path string) bool {
 	timeout := time.Duration(5 * time.Second)
 	client := http.Client{
 		Timeout: timeout,
 	}
-	resp, err := client.Get(serverURL.String() + checkURL)
+	resp, err := client.Get(serverURL.String() + path)
 	if err != nil || resp.StatusCode != 200 {
 		return false
 	}

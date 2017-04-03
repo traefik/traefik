@@ -6,6 +6,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -28,7 +29,6 @@ import (
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
 	"github.com/vdemeester/docker-events"
-	"regexp"
 )
 
 const (
@@ -550,6 +550,8 @@ func (provider *Docker) getIPAddress(container dockerData) string {
 			if network != nil {
 				return network.Addr
 			}
+
+			log.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", label, container.Name)
 		}
 	}
 
@@ -826,6 +828,9 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	var dockerDataList []dockerData
 
 	for _, task := range taskList {
+		if task.Status.State != swarm.TaskStateRunning {
+			continue
+		}
 		dockerData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
 		dockerDataList = append(dockerDataList, dockerData)
 	}
