@@ -712,7 +712,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								log.Errorf("Skipping frontend %s...", frontendName)
 								continue frontend
 							}
-							log.Debugf("Creating loadd-balancer connlimit")
+							log.Debugf("Creating load-balancer connlimit")
 							lb, err = connlimit.New(lb, extractFunc, maxConns.Amount, connlimit.Logger(oxyLogger))
 							if err != nil {
 								log.Errorf("Error creating connlimit: %v", err)
