@@ -17,10 +17,9 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"sync"
 	"syscall"
 	"time"
-
-	"sync"
 
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
@@ -532,9 +531,10 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 	}
 
 	return &http.Server{
-		Addr:      entryPoint.Address,
-		Handler:   negroni,
-		TLSConfig: tlsConfig,
+		Addr:        entryPoint.Address,
+		Handler:     negroni,
+		TLSConfig:   tlsConfig,
+		IdleTimeout: time.Duration(server.globalConfiguration.IdleTimeout),
 	}, nil
 }
 
