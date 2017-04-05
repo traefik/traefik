@@ -13,7 +13,6 @@ defaultEntryPoints = ["http"]
 
 [accessLog]
   file   = "access.log"
-  #format = "json"
 
 ################################################################
 # Web configuration backend

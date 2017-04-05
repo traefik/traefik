@@ -2,13 +2,9 @@ package main
 
 import (
 	"bufio"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
-	"time"
-
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -29,15 +25,8 @@ func (s *AccessLogJSONSuite) TestAccessLogJSON(c *check.C) {
 	defer os.Remove("access-log.json")
 	defer os.Remove("traefik.log")
 
-	time.Sleep(500 * time.Millisecond)
-
 	// Verify Traefik started OK
-	traefikLog, err := ioutil.ReadFile("traefik.log")
-	c.Assert(err, checker.IsNil)
-	if len(traefikLog) > 0 {
-		fmt.Printf("%sn", string(traefikLog))
-		c.Assert(len(traefikLog), checker.Equals, 0)
-	}
+	verifyEmptyErrorLog(c, "traefik.log")
 
 	// Start test servers
 	ts1 := startAccessLogServer(8081)

@@ -17,6 +17,7 @@ import (
 
 	"bufio"
 	checker "github.com/vdemeester/shakers"
+	"github.com/containous/traefik/integration/utils"
 )
 
 // AccessLogSuite
@@ -35,15 +36,8 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	defer os.Remove("access.log")
 	defer os.Remove("traefik.log")
 
-	time.Sleep(500 * time.Millisecond)
-
 	// Verify Traefik started OK
-	traefikLog, err := ioutil.ReadFile("traefik.log")
-	c.Assert(err, checker.IsNil)
-	if len(traefikLog) > 0 {
-		fmt.Printf("%s\n", string(traefikLog))
-		c.Assert(len(traefikLog), checker.Equals, 0)
-	}
+	verifyEmptyErrorLog(c, "traefik.log")
 
 	// Start test servers
 	ts1 := startAccessLogServer(8081)
@@ -87,13 +81,18 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 }
 
 func verifyEmptyErrorLog(c *check.C, name string) {
-	// Verify no other Traefik problems
-	traefikLog, err := ioutil.ReadFile(name)
+	err := utils.Try(30*time.Second, func() error {
+		traefikLog, e2 := ioutil.ReadFile(name)
+		if e2 != nil {
+			return e2
+		}
+		if len(traefikLog) > 0 {
+			fmt.Printf("%s\n", string(traefikLog))
+			c.Assert(len(traefikLog), checker.Equals, 0)
+		}
+		return nil
+	})
 	c.Assert(err, checker.IsNil)
-	if len(traefikLog) > 0 {
-		fmt.Printf("%s\n", string(traefikLog))
-		c.Assert(len(traefikLog), checker.Equals, 0)
-	}
 }
 
 func startAccessLogServer(port int) (ts *httptest.Server) {
