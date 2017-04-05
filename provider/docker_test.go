@@ -47,6 +47,20 @@ func TestDockerGetFrontendName(t *testing.T) {
 		{
 			container: docker.ContainerJSON{
 				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "mycontainer",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"com.docker.compose.project": "foo",
+						"com.docker.compose.service": "bar",
+					},
+				},
+			},
+			expected: "Host-bar-foo-docker-localhost",
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
 					Name: "test",
 				},
 				Config: &container.Config{
@@ -133,6 +147,19 @@ func TestDockerGetFrontendRule(t *testing.T) {
 				},
 			},
 			expected: "Host:foo.bar",
+		}, {
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "test",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"com.docker.compose.project": "foo",
+						"com.docker.compose.service": "bar",
+					},
+				},
+			},
+			expected: "Host:bar.foo.docker.localhost",
 		},
 		{
 			container: docker.ContainerJSON{
@@ -195,6 +222,20 @@ func TestDockerGetBackend(t *testing.T) {
 				},
 			},
 			expected: "foobar",
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "test",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"com.docker.compose.project": "foo",
+						"com.docker.compose.service": "bar",
+					},
+				},
+			},
+			expected: "bar-foo",
 		},
 	}
 

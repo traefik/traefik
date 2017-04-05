@@ -1,5 +1,5 @@
-hash: 56175c5c588abf1169ba2425ac6dd7e3e5a8cf8ab6ad3f75cad51e45f5e94e3a
-updated: 2017-03-23T22:43:06.217624505+01:00
+hash: 8349c21c53c639aa79752c4e4b07e323ddb4f05be783564d7de687afbb6f2d67
+updated: 2017-03-28T22:35:17.448681338+02:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -87,7 +87,7 @@ imports:
 - name: github.com/codegangsta/negroni
   version: dc6b9d037e8dab60cbfc09c61d6932537829be8b
 - name: github.com/containous/flaeg
-  version: a731c034dda967333efce5f8d276aeff11f8ff87
+  version: b5d2dc5878df07c2d74413348186982e7b865871
 - name: github.com/containous/mux
   version: a819b77bba13f0c0cbe36e437bc2e948411b3996
 - name: github.com/containous/staert
@@ -239,7 +239,7 @@ imports:
 - name: github.com/gorilla/context
   version: 1ea25387ff6f684839d82767c1733ff4d4d15d0a
 - name: github.com/gorilla/websocket
-  version: c36f2fe5c330f0ac404b616b96c438b8616b1aaf
+  version: 4873052237e4eeda85cf50c071ef33836fe8e139
 - name: github.com/hashicorp/consul
   version: fce7d75609a04eeb9d4bf41c8dc592aac18fc97d
   subpackages:
@@ -322,7 +322,7 @@ imports:
 - name: github.com/pborman/uuid
   version: 5007efa264d92316c43112bc573e754bc889b7b1
 - name: github.com/pkg/errors
-  version: 248dadf4e9068a0b3e79f02ed0a610d935de5302
+  version: bfd5150e4e41705ded2129ec33379de1cb90b513
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
