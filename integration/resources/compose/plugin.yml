@@ -1,0 +1,18 @@
+whoami:
+  image: emilevauge/whoami
+  labels:
+    traefik.frontend.rule: Host:test.localhost
+
+plugin-sample:
+  image: golang
+  command: go build -buildmode=plugin -o plugin/sample/plugin.so plugin/sample/plugin.go
+  volumes:
+    - ../plugin:/plugin
+    - ../../../:/go/src/github.com/containous/traefik
+
+bad-load:
+  image: golang
+  command: go build -buildmode=plugin -o plugin/bad-load/plugin.so plugin/bad-load/plugin.go
+  working_dir: /go/src/github.com/containous/traefik/integration/resources
+  volumes:
+    - ../../../:/go/src/github.com/containous/traefik
