@@ -16,8 +16,8 @@ import (
 	shellwords "github.com/mattn/go-shellwords"
 
 	"bufio"
-	checker "github.com/vdemeester/shakers"
 	"github.com/containous/traefik/integration/utils"
+	checker "github.com/vdemeester/shakers"
 )
 
 // AccessLogSuite

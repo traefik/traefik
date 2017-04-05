@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/types"
 	"io"
 	"math"
 	"net/http"
@@ -13,6 +11,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/types"
 )
 
 type tuple struct {
@@ -20,11 +21,16 @@ type tuple struct {
 }
 
 type jsonLogFormatter struct {
-	timeFormat                       string
-	coreMapping, requestMapping      []tuple
-	originMapping, downstreamMapping []tuple
+	timeFormat        string
+	coreMapping       []tuple
+	requestMapping    []tuple
+	originMapping     []tuple
+	downstreamMapping []tuple
 }
 
+// convertFieldsToMappings splits all the input strings on the colon character
+// and returns the {sourceKey, translatedKey} tuples. Any input string without a
+// colon will produce a tuple in which the sourceKey and translatedKey are the same.
 func convertFieldsToMappings(fields []string) []tuple {
 	var mapping []tuple
 	for _, s := range fields {
@@ -47,8 +53,12 @@ func convertFieldsToMappings(fields []string) []tuple {
 	return mapping
 }
 
+// newJSONLogFormatter constructs a jsonLogFormatter with its four categories
+// of configuration (i.e. four sets of tuples). The core fields will be given
+// defaults if the config has not specified any.
 func newJSONLogFormatter(settings *types.AccessLog) jsonLogFormatter {
 	jlf := jsonLogFormatter{timeFormat: settings.TimeFormat}
+	ok := true
 
 	if len(settings.CoreFields) == 0 {
 		// default is to propagate all fields
@@ -58,25 +68,56 @@ func newJSONLogFormatter(settings *types.AccessLog) jsonLogFormatter {
 		}
 	} else {
 		jlf.coreMapping = convertFieldsToMappings(settings.CoreFields)
-		validateCoreFields(jlf.coreMapping)
+		ok = requireNoDuplicates(jlf.coreMapping) && ok
+		ok = validateCoreFields(jlf.coreMapping) && ok
 	}
 
 	if len(settings.RequestHeaders) > 0 {
 		jlf.requestMapping = convertFieldsToMappings(settings.RequestHeaders)
+		ok = requireNoDuplicates(jlf.requestMapping) && ok
 	}
 
 	if len(settings.OriginResponseHeaders) > 0 {
 		jlf.originMapping = convertFieldsToMappings(settings.OriginResponseHeaders)
+		ok = requireNoDuplicates(jlf.originMapping) && ok
 	}
 
 	if len(settings.DownstreamResponseHeaders) > 0 {
 		jlf.downstreamMapping = convertFieldsToMappings(settings.DownstreamResponseHeaders)
+		ok = requireNoDuplicates(jlf.downstreamMapping) && ok
+	}
+
+	if !ok {
+		exiter.Exit(1)
 	}
 
 	return jlf
 }
 
-func validateCoreFields(mappings []tuple) {
+func requireNoDuplicates(mappings []tuple) bool {
+	sourceKeys := make(map[string]struct{})
+	transKeys := make(map[string]struct{})
+	duplicates := ""
+
+	for _, m := range mappings {
+		if _, exists := sourceKeys[m.sourceKey]; exists {
+			duplicates = duplicates + " " + m.sourceKey
+		}
+		if _, exists := transKeys[m.translatedKey]; exists {
+			duplicates = duplicates + " " + m.translatedKey
+		}
+		sourceKeys[m.sourceKey] = struct{}{}
+		transKeys[m.translatedKey] = struct{}{}
+	}
+
+	if len(duplicates) > 0 {
+		log.Errorf("Duplicate access log fields:%s", duplicates)
+		return false
+	}
+	return true
+}
+
+func validateCoreFields(mappings []tuple) bool {
 	var invalidFields []string
 
 	for _, m := range mappings {
@@ -88,8 +129,9 @@ func validateCoreFields(mappings []tuple) {
 
 	if len(invalidFields) > 0 {
 		log.Errorf("Unsupported access log fields: %v", invalidFields)
-		exiter.Exit(1)
+		return false
 	}
+	return true
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -133,7 +175,7 @@ func (l jsonLogFormatter) Write(w io.Writer, logDataTable *LogData) error {
 }
 
 func asSeconds(d time.Duration) float64 {
-	// half-rounded up
+	// half-rounded up to the nearest millisecond, then converted to seconds
 	return float64((d.Nanoseconds()+500000)/1000000) / 1000
 }
 

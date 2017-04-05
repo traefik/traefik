@@ -4,13 +4,12 @@ import (
 	"bufio"
 	"compress/gzip"
 	"fmt"
-	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/types"
 	"io"
 	"os"
 	"strings"
-	"sync"
 	"time"
+	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/types"
 )
 
 // default format for time presentation
@@ -34,8 +33,6 @@ type LogAppender struct {
 	formatter LogFormatter
 	file      io.Writer
 	buf       io.Writer
-	ch        chan *LogData
-	wg        *sync.WaitGroup
 }
 
 // NewLogAppender creates a new instance of LogAppender using the settings provided.
@@ -108,16 +105,9 @@ func (l *LogAppender) Open() error {
 			return err
 		}
 
-		if l.settings.Async && l.settings.ChannelBuffer >= 0 {
-			l.ch = make(chan *LogData, l.settings.ChannelBuffer)
-			l.wg = &sync.WaitGroup{}
-			l.wg.Add(1)
-			go l.delayedWriteLoop()
-		} else {
-			// this prevents write races and is a performance optimisation over
-			// simply using the goroutine with an unbuffered channel
-			l.buf = LinearWriter(l.buf)
-		}
+		// this prevents write races and is a performance optimisation over
+		// simply using the goroutine with an unbuffered channel
+		l.buf = LinearWriter(l.buf)
 	}
 	return nil
 }
@@ -144,12 +134,6 @@ func (l *LogAppender) flushBufferAndCloseFile() error {
 // If the appender was using a separate goroutine, this will be terminated.
 func (l *LogAppender) Close() error {
 	if l.IsOpen() {
-		if l.ch != nil {
-			close(l.ch)
-			l.wg.Wait()
-			l.ch = nil
-		}
-
 		err := l.flushBufferAndCloseFile()
 		if err != nil {
 			return err
@@ -160,20 +144,7 @@ func (l *LogAppender) Close() error {
 
 // Write writes a log event to the current appender.
 func (l LogAppender) Write(logDataTable *LogData) error {
-	if l.ch != nil {
-		// via goroutine
-		l.ch <- logDataTable
-		return nil
-	}
-	// direct to file
 	return l.formatter.Write(l.buf, logDataTable)
-}
-
-func (l LogAppender) delayedWriteLoop() {
-	for logDataTable := range l.ch {
-		l.formatter.Write(l.buf, logDataTable)
-	}
-	l.wg.Done()
 }
 
 //-------------------------------------------------------------------------------------------------

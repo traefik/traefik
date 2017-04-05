@@ -11,7 +11,7 @@ import (
 )
 
 func TestLinearWriter(t *testing.T) {
-	file := logfilePath()
+	file := logfilePath("")
 
 	w, err := os.Create(file)
 	assert.Nil(t, err, "%v", err)

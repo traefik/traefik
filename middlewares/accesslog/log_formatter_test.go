@@ -154,7 +154,7 @@ func TestGzipRatioDivideByZero(t *testing.T) {
 	assert.Equal(t, `{"FrontendName":"frontend","BackendName":"backend"`+"}\n", s)
 }
 
-func TestNewJsonLogFormatter(t *testing.T) {
+func TestNewJsonLogFormatterValidation(t *testing.T) {
 	exiter.(*stubExiter).callCount = 0
 	buf := &bytes.Buffer{}
 	log.SetOutput(buf)
@@ -173,4 +173,49 @@ func TestNewJsonLogFormatter(t *testing.T) {
 
 	strings.Index(logEntry, "level=")
 	assert.True(t, strings.Contains(logEntry, "Unsupported access log fields: [NonExistent]"), "%s", logEntry)
+}
+
+func TestNewJsonLogFormatterValidationNonBlank(t *testing.T) {
+	exiter.(*stubExiter).callCount = 0
+	buf := &bytes.Buffer{}
+	log.SetOutput(buf)
+	defer log.SetOutput(os.Stderr)
+
+	newJSONLogFormatter(&types.AccessLog{
+		CoreFields:                []string{" ", " : "},
+		RequestHeaders:            []string{" ", " : "},
+		OriginResponseHeaders:     []string{" ", " : "},
+		DownstreamResponseHeaders: []string{" ", " : "},
+	})
+
+	assert.Equal(t, 1, exiter.(*stubExiter).callCount)
+
+	logEntry := buf.String()
+
+	strings.Index(logEntry, "level=")
+	assert.True(t, strings.Contains(logEntry, "Unsupported access log fields: [ ]"), "%s", logEntry)
+}
+
+func TestNewJsonLogFormatterValidationNoDuplicates(t *testing.T) {
+	exiter.(*stubExiter).callCount = 0
+	buf := &bytes.Buffer{}
+	log.SetOutput(buf)
+	defer log.SetOutput(os.Stderr)
+
+	newJSONLogFormatter(&types.AccessLog{
+		CoreFields:                []string{"Duration:x", "Duration:y", "FrontendName:end", "BackendName:end"},
+		RequestHeaders:            []string{"Host: http_host", "Host: http_host"},
+		OriginResponseHeaders:     []string{"Server: server", "Server: server"},
+		DownstreamResponseHeaders: []string{"Location: location", "Location: location"},
+	})
+
+	assert.Equal(t, 1, exiter.(*stubExiter).callCount)
+
+	logEntry := buf.String()
+
+	strings.Index(logEntry, "level=")
+	assert.True(t, strings.Contains(logEntry, "Duplicate access log fields: Duration end"), "%s", logEntry)
+	assert.True(t, strings.Contains(logEntry, "Duplicate access log fields: Host http_host"), "%s", logEntry)
+	assert.True(t, strings.Contains(logEntry, "Duplicate access log fields: Server server"), "%s", logEntry)
+	assert.True(t, strings.Contains(logEntry, "Duplicate access log fields: Location location"), "%s", logEntry)
 }

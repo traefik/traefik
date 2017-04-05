@@ -7,9 +7,10 @@ traefikLogsFile = "traefik.log"
 logLevel = "ERROR"
 
 defaultEntryPoints = ["http"]
+
 [entryPoints]
   [entryPoints.http]
-  address = ":8000"
+    address = ":8000"
 
 [accessLog]
   file   = "access.log"
@@ -18,7 +19,7 @@ defaultEntryPoints = ["http"]
 # Web configuration backend
 ################################################################
 [web]
-address = ":7888"
+  address = ":7888"
 
 ################################################################
 # File configuration backend
@@ -41,11 +42,11 @@ address = ":7888"
        url = "http://127.0.0.1:8083"
  [frontends]
    [frontends.frontend1]
-   backend = "backend1"
+     backend = "backend1"
      [frontends.frontend1.routes.test_1]
-     rule = "Path: /test1"
+       rule = "Path: /test1"
    [frontends.frontend2]
-   backend = "backend2"
-   passHostHeader = true
+     backend = "backend2"
+     passHostHeader = true
      [frontends.frontend2.routes.test_2]
-     rule = "Path: /test2"
+       rule = "Path: /test2"

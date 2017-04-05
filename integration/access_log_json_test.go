@@ -2,11 +2,11 @@ package main
 
 import (
 	"bufio"
+	"github.com/go-check/check"
+	checker "github.com/vdemeester/shakers"
 	"net/http"
 	"os"
 	"os/exec"
-	"github.com/go-check/check"
-	checker "github.com/vdemeester/shakers"
 )
 
 // AccessLogSuite

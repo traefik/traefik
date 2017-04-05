@@ -80,10 +80,10 @@ func init() {
 	sort.StringSlice(allCoreKeySlice).Sort()
 }
 
-func logfilePath() string {
+func logfilePath(suffix string) string {
 	// each test gets a unique file name, avoiding conflict should tests fail.
 	n := atomic.AddInt64(&logFileCount, 1)
-	name := fmt.Sprintf("traefikTestLogger%d.log", n)
+	name := fmt.Sprintf("traefikTestLogger%d.log", n) + suffix
 	path := filepath.Join(logfileDir, name)
 	os.Remove(path) // if present; ignore any error otherwise
 	return path
@@ -319,7 +319,7 @@ func TestDataCaptureWithRedirect(t *testing.T) {
 }
 
 func TestCLFLogger(t *testing.T) {
-	file := logfilePath()
+	file := logfilePath("")
 	backend := NewSaveBackend(http.HandlerFunc(simpleHandlerFunc), testBackendName)
 	frontend := NewSaveFrontend(backend, testFrontendName)
 	settings := &types.AccessLog{File: file}
@@ -397,32 +397,20 @@ func BenchmarkCommonLogFormatToFile(b *testing.B) {
 		file      string
 		gzipLevel int
 		buff      string
-		async     bool
-		chansize  int
 	}{
-		{"plain unbuffered sync", "tmp.log", 0, "", false, 0},
-		{"plain unbuffered async 0", "tmp.log", 0, "", true, 0},
-		{"plain unbuffered async 100", "tmp.log", 0, "", true, 100},
-		{"plain buffer=256B sync", "tmp.log", 0, "256B", false, 0},
-		{"plain buffer=4KiB sync", "tmp.log", 0, "4KiB", false, 0},
-		{"plain buffer=4KiB async 0", "tmp.log", 0, "4KiB", true, 0},
-		{"plain buffer=4KiB async 100", "tmp.log", 0, "4KiB", true, 100},
-		{"plain buffer=64KiB sync", "tmp.log", 0, "64KiB", false, 0},
-		{"plain buffer=64KiB async 0", "tmp.log", 0, "64KiB", true, 0},
-		{"plain buffer=64KiB async 100", "tmp.log", 0, "64KiB", true, 100},
-		{"plain buffer=512KiB sync", "tmp.log", 0, "512KiB", false, 0},
-		{"plain buffer=512KiB async 0", "tmp.log", 0, "512KiB", true, 0},
-		{"plain buffer=512KiB async 100", "tmp.log", 0, "512KiB", true, 100},
-		{"gzip -1 unbuffered sync", "tmp.log.gz", -1, "", false, 0},
-		{"gzip 9 unbuffered sync", "tmp.log.gz", 9, "", false, 0},
-		{"gzip 2 unbuffered sync", "tmp.log.gz", 2, "", false, 0},
-		{"gzip 2 unbuffered async 0", "tmp.log.gz", 2, "", true, 0},
-		{"gzip 2 unbuffered async 100", "tmp.log.gz", 2, "", true, 100},
+		{"plain unbuffered", "tmp.log", 0, ""},
+		{"plain buffer=256B", "tmp.log", 0, "256B"},
+		{"plain buffer=4KiB", "tmp.log", 0, "4KiB"},
+		{"plain buffer=64KiB", "tmp.log", 0, "64KiB"},
+		{"plain buffer=512KiB", "tmp.log", 0, "512KiB"},
+		{"gzip -1 unbuffered", "tmp.log.gz", -1, ""},
+		{"gzip 9 unbuffered", "tmp.log.gz", 9, ""},
+		{"gzip 2 unbuffered", "tmp.log.gz", 2, ""},
 	}
 	for _, bm := range benchmarks {
 		defer os.Remove(bm.file)
 		b.Run(bm.name, func(b *testing.B) {
-			cfg := &types.AccessLog{File: bm.file, GzipLevel: bm.gzipLevel, BufferSize: bm.buff, Async: bm.async, ChannelBuffer: bm.chansize}
+			cfg := &types.AccessLog{File: bm.file, GzipLevel: bm.gzipLevel, BufferSize: bm.buff}
 			la, err := NewLogAppender(cfg)
 			if err != nil {
 				b.Fatal(err)

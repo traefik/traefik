@@ -309,8 +309,6 @@ type AccessLog struct {
 	Format                    string   `json:"format,omitempty" description:"Access log format: json | common (default: common)"`
 	TimeFormat                string   `json:"timeFormat,omitempty" description:"Format of timestamps in the access log (default: '02/Jan/2006:15:04:05 -0700')"`
 	BufferSize                string   `json:"bufferSize,omitempty" description:"Access log output buffer size (e.g. '4 KiB')"`
-	Async                     bool     `json:"async,omitempty" description:"Write the access log via a separate goroutine"`
-	ChannelBuffer             int      `json:"channelBuffer,omitempty" description:"Max number of messages in the access log async channel (0 or more)"`
 	GzipLevel                 int      `json:"gzipLevel,omitempty" description:"Access log gzip compression (1-9 or 0 for default)"`
 	CoreFields                []string `json:"coreFields,omitempty" description:"Access log core JSON fields: either a list of names or list of name:replacement tuples"`
 	RequestHeaders            []string `json:"requestHeaders,omitempty" description:"Access log request JSON fields: either a list of names or list of name:replacement tuples"`

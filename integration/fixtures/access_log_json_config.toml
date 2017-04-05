@@ -8,8 +8,8 @@ defaultEntryPoints = ["http"]
 
 [entryPoints]
   [entryPoints.http]
-  address = ":8000"
-  compress = true
+    address = ":8000"
+    compress = true
 
 [accessLog]
   file       = "access-log.json"
@@ -69,7 +69,7 @@ defaultEntryPoints = ["http"]
 # Web configuration backend
 ################################################################
 [web]
-address = ":7888"
+  address = ":7888"
 
 ################################################################
 # File configuration backend
@@ -79,24 +79,25 @@ address = ":7888"
 ################################################################
 # rules
 ################################################################
- [backends]
-   [backends.backend1]
-     [backends.backend1.servers.server1]
-       url = "http://127.0.0.1:8081"
-   [backends.backend2]
-     [backends.backend2.LoadBalancer]
-       method = "drr"
-     [backends.backend2.servers.server1]
-       url = "http://127.0.0.1:8092"
-     [backends.backend2.servers.server2]
-       url = "http://127.0.0.1:8093"
- [frontends]
-   [frontends.frontend1]
-   backend = "backend1"
-     [frontends.frontend1.routes.test_1]
-     rule = "PathPrefix: /test1/"
-   [frontends.frontend2]
-   backend = "backend2"
-   passHostHeader = true
-     [frontends.frontend2.routes.test_2]
-     rule = "PathPrefix: /test2/"
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+      url = "http://127.0.0.1:8081"
+  [backends.backend2]
+    [backends.backend2.LoadBalancer]
+      method = "drr"
+    [backends.backend2.servers.server1]
+      url = "http://127.0.0.1:8092"
+    [backends.backend2.servers.server2]
+      url = "http://127.0.0.1:8093"
+
+[frontends]
+  [frontends.frontend1]
+    backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+      rule = "PathPrefix: /test1/"
+  [frontends.frontend2]
+    backend = "backend2"
+    passHostHeader = true
+    [frontends.frontend2.routes.test_2]
+      rule = "PathPrefix: /test2/"
