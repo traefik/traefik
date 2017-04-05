@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -8,7 +9,6 @@ import (
 	"os/exec"
 	"time"
 
-	"bufio"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
