@@ -40,6 +40,9 @@ all: generate-webui build ## validate all checks, build linux binary, run all te
 binary: generate-webui build ## build the linux binary
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
 
+binary-musl: generate-webui build ## build the linux binary
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary-musl
+
 crossbinary: generate-webui build ## cross build the non-linux binaries
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate crossbinary
 
@@ -68,7 +71,7 @@ test-unit: build ## run the unit tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit
 
 test-integration: build ## run the integration tests
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary test-integration
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary binary-musl test-integration
 
 validate: build  ## validate gofmt, golint and go vet
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-glide validate-gofmt validate-govet validate-golint validate-misspell validate-vendor
