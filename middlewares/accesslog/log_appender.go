@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"time"
+
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )

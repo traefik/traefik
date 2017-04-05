@@ -2,13 +2,14 @@ package accesslog
 
 import (
 	"bufio"
+	"compress/gzip"
 	"fmt"
-	"github.com/containous/traefik/types"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
-	"compress/gzip"
+
+	"github.com/containous/traefik/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLogAppenderSimpleFile(t *testing.T) {

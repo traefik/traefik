@@ -2,9 +2,9 @@ package accesslog
 
 import (
 	"bufio"
+	"fmt"
 	"net"
 	"net/http"
-	"fmt"
 )
 
 // captureResponseWriter is a wrapper of type http.ResponseWriter
