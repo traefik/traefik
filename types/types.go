@@ -60,6 +60,7 @@ type Frontend struct {
 	Backend              string           `json:"backend,omitempty"`
 	Routes               map[string]Route `json:"routes,omitempty"`
 	PassHostHeader       bool             `json:"passHostHeader,omitempty"`
+	PassTLSCert          bool             `json:"passTLSCert,omitempty"`
 	Priority             int              `json:"priority"`
 	BasicAuth            []string         `json:"basicAuth"`
 	WhitelistSourceRange []string         `json:"whitelistSourceRange,omitempty"`
