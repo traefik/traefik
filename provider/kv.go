@@ -76,7 +76,7 @@ func (provider *Kv) watchKv(configurationChan chan<- types.ConfigMessage, prefix
 	notify := func(err error, time time.Duration) {
 		log.Errorf("KV connection error: %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		return fmt.Errorf("Cannot connect to KV server: %v", err)
 	}
@@ -107,7 +107,7 @@ func (provider *Kv) provide(configurationChan chan<- types.ConfigMessage, pool *
 	notify := func(err error, time time.Duration) {
 		log.Errorf("KV connection error: %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		return fmt.Errorf("Cannot connect to KV server: %v", err)
 	}
@@ -162,6 +162,13 @@ func (provider *Kv) list(keys ...string) []string {
 func (provider *Kv) listServers(backend string) []string {
 	serverNames := provider.list(backend, "/servers/")
 	return fun.Filter(func(serverName string) bool {
+		key := fmt.Sprint(serverName, "/url")
+		if _, err := provider.kvclient.Get(key); err != nil {
+			if err != store.ErrKeyNotFound {
+				log.Errorf("Failed to retrieve value for key %s: %s", key, err)
+			}
+			return false
+		}
 		return provider.checkConstraints(serverName, "/tags")
 	}, serverNames).([]string)
 }

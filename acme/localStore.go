@@ -40,19 +40,15 @@ func (s *LocalStore) Load() (cluster.Object, error) {
 	defer s.storageLock.Unlock()
 	account := &Account{}
 
+	err := checkPermissions(s.file)
+	if err != nil {
+		return nil, err
+	}
 	f, err := os.Open(s.file)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	fi, err := f.Stat()
-	if err != nil {
-		return nil, err
-	}
-	if fi.Mode().Perm()&0077 != 0 {
-		return nil, fmt.Errorf("permissions %o for %s are too open, please use 600", fi.Mode().Perm(), s.file)
-	}
-
 	file, err := ioutil.ReadAll(f)
 	if err != nil {
 		return nil, err

@@ -2,7 +2,9 @@ package provider
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/containous/traefik/provider/k8s"
@@ -29,6 +31,13 @@ func TestLoadIngresses(t *testing.T) {
 									Backend: v1beta1.IngressBackend{
 										ServiceName: "service1",
 										ServicePort: intstr.FromInt(80),
+									},
+								},
+								{
+									Path: "/namedthing",
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service4",
+										ServicePort: intstr.FromString("https"),
 									},
 								},
 							},
@@ -103,6 +112,24 @@ func TestLoadIngresses(t *testing.T) {
 						Name: "http",
 						Port: 80,
 					},
+					{
+						Name: "https",
+						Port: 443,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service4",
+				UID:       "4",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP:    "10.0.0.4",
+				Type:         "ExternalName",
+				ExternalName: "example.com",
+				Ports: []v1.ServicePort{
 					{
 						Name: "https",
 						Port: 443,
@@ -216,7 +243,23 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
+			"foo/namedthing": {
+				Servers: map[string]types.Server{
+					"https://example.com": {
+						URL:    "https://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -234,7 +277,10 @@ func TestLoadIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -245,6 +291,19 @@ func TestLoadIngresses(t *testing.T) {
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+			"foo/namedthing": {
+				Backend:        "foo/namedthing",
+				PassHostHeader: true,
+				Priority:       len("/namedthing"),
+				Routes: map[string]types.Route{
+					"/namedthing": {
+						Rule: "PathPrefix:/namedthing",
 					},
 					"foo": {
 						Rule: "Host:foo",
@@ -271,230 +330,111 @@ func TestLoadIngresses(t *testing.T) {
 }
 
 func TestRuleType(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
+	tests := []struct {
+		desc             string
+		ingressRuleType  string
+		frontendRuleType string
+	}{
 		{
-			ObjectMeta: v1.ObjectMeta{
-				Annotations: map[string]string{"traefik.frontend.rule.type": "PathPrefixStrip"}, //camel case
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo1",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar1",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			desc:             "implicit default",
+			ingressRuleType:  "",
+			frontendRuleType: ruleTypePathPrefix,
 		},
 		{
-			ObjectMeta: v1.ObjectMeta{
-				Annotations: map[string]string{"traefik.frontend.rule.type": "path"}, //lower case
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo1",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar2",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			desc:             "unknown ingress / explicit default",
+			ingressRuleType:  "unknown",
+			frontendRuleType: ruleTypePathPrefix,
 		},
 		{
-			ObjectMeta: v1.ObjectMeta{
-				Annotations: map[string]string{"traefik.frontend.rule.type": "PathPrefix"}, //path prefix
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo2",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar1",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			desc:             "explicit ingress",
+			ingressRuleType:  ruleTypePath,
+			frontendRuleType: ruleTypePath,
 		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Annotations: map[string]string{"traefik.frontend.rule.type": "PathStrip"}, //path strip
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo2",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar2",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Annotations: map[string]string{"traefik.frontend.rule.type": "PathXXStrip"}, //wrong rule
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo1",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar3",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name: "service1",
-				UID:  "1",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 801,
-					},
-				},
-			},
-		},
-	}
-	watchChan := make(chan interface{})
-	client := clientMock{
-		ingresses: ingresses,
-		services:  services,
-		watchChan: watchChan,
-	}
-	provider := Kubernetes{DisablePassHostHeaders: true}
-	actualConfig, err := provider.loadIngresses(client)
-	actual := actualConfig.Frontends
-	if err != nil {
-		t.Fatalf("error %+v", err)
 	}
 
-	expected := map[string]*types.Frontend{
-		"foo1/bar1": {
-			Backend:  "foo1/bar1",
-			Priority: len("/bar1"),
-			Routes: map[string]types.Route{
-				"/bar1": {
-					Rule: "PathPrefixStrip:/bar1",
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			ingress := &v1beta1.Ingress{
+				Spec: v1beta1.IngressSpec{
+					Rules: []v1beta1.IngressRule{
+						{
+							Host: "host",
+							IngressRuleValue: v1beta1.IngressRuleValue{
+								HTTP: &v1beta1.HTTPIngressRuleValue{
+									Paths: []v1beta1.HTTPIngressPath{
+										{
+											Path: "/path",
+											Backend: v1beta1.IngressBackend{
+												ServiceName: "service",
+												ServicePort: intstr.FromInt(80),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
-				"foo1": {
-					Rule: "Host:foo1",
-				},
-			},
-		},
-		"foo1/bar2": {
-			Backend:  "foo1/bar2",
-			Priority: len("/bar2"),
-			Routes: map[string]types.Route{
-				"/bar2": {
-					Rule: "Path:/bar2",
-				},
-				"foo1": {
-					Rule: "Host:foo1",
-				},
-			},
-		},
-		"foo2/bar1": {
-			Backend:  "foo2/bar1",
-			Priority: len("/bar1"),
-			Routes: map[string]types.Route{
-				"/bar1": {
-					Rule: "PathPrefix:/bar1",
-				},
-				"foo2": {
-					Rule: "Host:foo2",
-				},
-			},
-		},
-		"foo2/bar2": {
-			Backend:  "foo2/bar2",
-			Priority: len("/bar2"),
-			Routes: map[string]types.Route{
-				"/bar2": {
-					Rule: "PathStrip:/bar2",
-				},
-				"foo2": {
-					Rule: "Host:foo2",
-				},
-			},
-		},
-		"foo1/bar3": {
-			Backend:  "foo1/bar3",
-			Priority: len("/bar3"),
-			Routes: map[string]types.Route{
-				"/bar3": {
-					Rule: "PathPrefix:/bar3",
-				},
-				"foo1": {
-					Rule: "Host:foo1",
-				},
-			},
-		},
-	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
+			}
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+			if test.ingressRuleType != "" {
+				ingress.ObjectMeta.Annotations = map[string]string{
+					annotationFrontendRuleType: test.ingressRuleType,
+				}
+			}
+
+			service := &v1.Service{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "service",
+					UID:  "1",
+				},
+				Spec: v1.ServiceSpec{
+					ClusterIP: "10.0.0.1",
+					Ports: []v1.ServicePort{
+						{
+							Name: "http",
+							Port: 801,
+						},
+					},
+				},
+			}
+
+			watchChan := make(chan interface{})
+			client := clientMock{
+				ingresses: []*v1beta1.Ingress{ingress},
+				services:  []*v1.Service{service},
+				watchChan: watchChan,
+			}
+			provider := Kubernetes{DisablePassHostHeaders: true}
+			actualConfig, err := provider.loadIngresses(client)
+			if err != nil {
+				t.Fatalf("error loading ingresses: %+v", err)
+			}
+
+			actual := actualConfig.Frontends
+			expected := map[string]*types.Frontend{
+				"host/path": {
+					Backend:  "host/path",
+					Priority: len("/path"),
+					Routes: map[string]types.Route{
+						"/path": {
+							Rule: fmt.Sprintf("%s:/path", test.frontendRuleType),
+						},
+						"host": {
+							Rule: "Host:host",
+						},
+					},
+				},
+			}
+
+			if !reflect.DeepEqual(expected, actual) {
+				expectedJSON, _ := json.Marshal(expected)
+				actualJSON, _ := json.Marshal(actual)
+				t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+			}
+		})
 	}
 }
 
@@ -564,7 +504,10 @@ func TestGetPassHostHeader(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -673,7 +616,10 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -859,7 +805,10 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -873,7 +822,10 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -1097,7 +1049,10 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"bar": {
 				Servers: map[string]types.Server{
@@ -1111,7 +1066,10 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 			"awesome/quix": {
 				Servers: map[string]types.Server{
@@ -1121,7 +1079,10 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -1235,7 +1196,10 @@ func TestHostlessIngress(t *testing.T) {
 					},
 				},
 				CircuitBreaker: nil,
-				LoadBalancer:   nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
 			},
 		},
 		Frontends: map[string]*types.Frontend{
@@ -1255,6 +1219,598 @@ func TestHostlessIngress(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+	}
+}
+
+func TestServiceAnnotations(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "testing",
+		},
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
+				{
+					Host: "foo",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Path: "/bar",
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service1",
+										ServicePort: intstr.FromInt(80),
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Host: "bar",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service2",
+										ServicePort: intstr.FromInt(802),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"traefik.backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
+					"traefik.backend.loadbalancer.method": "drr",
+				},
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Ports: []v1.ServicePort{
+					{
+						Port: 80,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service2",
+				UID:       "2",
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"traefik.backend.circuitbreaker":      "",
+					"traefik.backend.loadbalancer.sticky": "true",
+				},
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.2",
+				Ports: []v1.ServicePort{
+					{
+						Port: 802,
+					},
+				},
+			},
+		},
+	}
+	endpoints := []*v1.Endpoints{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Subsets: []v1.EndpointSubset{
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.10.0.1",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Port: 8080,
+						},
+					},
+				},
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.21.0.1",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Port: 8080,
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service2",
+				UID:       "2",
+				Namespace: "testing",
+			},
+			Subsets: []v1.EndpointSubset{
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.15.0.1",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Name: "http",
+							Port: 8080,
+						},
+					},
+				},
+				{
+					Addresses: []v1.EndpointAddress{
+						{
+							IP: "10.15.0.2",
+						},
+					},
+					Ports: []v1.EndpointPort{
+						{
+							Name: "http",
+							Port: 8080,
+						},
+					},
+				},
+			},
+		},
+	}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Kubernetes{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo/bar": {
+				Servers: map[string]types.Server{
+					"http://10.10.0.1:8080": {
+						URL:    "http://10.10.0.1:8080",
+						Weight: 1,
+					},
+					"http://10.21.0.1:8080": {
+						URL:    "http://10.21.0.1:8080",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: &types.CircuitBreaker{
+					Expression: "NetworkErrorRatio() > 0.5",
+				},
+				LoadBalancer: &types.LoadBalancer{
+					Method: "drr",
+					Sticky: false,
+				},
+			},
+			"bar": {
+				Servers: map[string]types.Server{
+					"http://10.15.0.1:8080": {
+						URL:    "http://10.15.0.1:8080",
+						Weight: 1,
+					},
+					"http://10.15.0.2:8080": {
+						URL:    "http://10.15.0.2:8080",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+					Sticky: true,
+				},
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo/bar": {
+				Backend:        "foo/bar",
+				PassHostHeader: true,
+				Priority:       len("/bar"),
+				Routes: map[string]types.Route{
+					"/bar": {
+						Rule: "PathPrefix:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+			"bar": {
+				Backend:        "bar",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"bar": {
+						Rule: "Host:bar",
+					},
+				},
+			},
+		},
+	}
+	actualJSON, _ := json.Marshal(actual)
+	expectedJSON, _ := json.Marshal(expected)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+	}
+}
+
+func TestIngressAnnotations(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"traefik.frontend.passHostHeader": "false",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "foo",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/bar",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"kubernetes.io/ingress.class":     "traefik",
+					"traefik.frontend.passHostHeader": "true",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "other",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/stuff",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"kubernetes.io/ingress.class": "somethingOtherThanTraefik",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "herp",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/derp",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service2",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP:    "10.0.0.1",
+				Type:         "ExternalName",
+				ExternalName: "example.com",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Kubernetes{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo/bar": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
+			"other/stuff": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo/bar": {
+				Backend:        "foo/bar",
+				PassHostHeader: false,
+				Priority:       len("/bar"),
+				Routes: map[string]types.Route{
+					"/bar": {
+						Rule: "PathPrefix:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+			"other/stuff": {
+				Backend:        "other/stuff",
+				PassHostHeader: true,
+				Priority:       len("/stuff"),
+				Routes: map[string]types.Route{
+					"/stuff": {
+						Rule: "PathPrefix:/stuff",
+					},
+					"other": {
+						Rule: "Host:other",
+					},
+				},
+			},
+		},
+	}
+
+	actualJSON, _ := json.Marshal(actual)
+	expectedJSON, _ := json.Marshal(expected)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+	}
+}
+
+func TestInvalidPassHostHeaderValue(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"traefik.frontend.passHostHeader": "herpderp",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "foo",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/bar",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP:    "10.0.0.1",
+				Type:         "ExternalName",
+				ExternalName: "example.com",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Kubernetes{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo/bar": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo/bar": {
+				Backend:        "foo/bar",
+				PassHostHeader: true,
+				Priority:       len("/bar"),
+				Routes: map[string]types.Route{
+					"/bar": {
+						Rule: "PathPrefix:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+		},
+	}
+
+	actualJSON, _ := json.Marshal(actual)
+	expectedJSON, _ := json.Marshal(expected)
+
+	if !reflect.DeepEqual(actual, expected) {
+		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+	}
+}
+
+func TestGetRuleTypeFromAnnotation(t *testing.T) {
+	tests := []struct {
+		in            string
+		wantedUnknown bool
+	}{
+		{
+			in:            ruleTypePathPrefixStrip,
+			wantedUnknown: false,
+		},
+		{
+			in:            ruleTypePathStrip,
+			wantedUnknown: false,
+		},
+		{
+			in:            ruleTypePath,
+			wantedUnknown: false,
+		},
+		{
+			in:            ruleTypePathPrefix,
+			wantedUnknown: false,
+		},
+		{
+			wantedUnknown: false,
+		},
+		{
+			in:            "Unknown",
+			wantedUnknown: true,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		inputs := []string{test.in, strings.ToLower(test.in)}
+		if inputs[0] == inputs[1] {
+			// Lower-casing makes no difference -- truncating to single case.
+			inputs = inputs[:1]
+		}
+		for _, input := range inputs {
+			t.Run(fmt.Sprintf("in='%s'", input), func(t *testing.T) {
+				t.Parallel()
+				annotations := map[string]string{}
+				if test.in != "" {
+					annotations[annotationFrontendRuleType] = test.in
+				}
+
+				gotRuleType, gotUnknown := getRuleTypeFromAnnotation(annotations)
+
+				if gotUnknown != test.wantedUnknown {
+					t.Errorf("got unknown '%t', wanted '%t'", gotUnknown, test.wantedUnknown)
+				}
+
+				if gotRuleType != test.in {
+					t.Errorf("got rule type '%s', wanted '%s'", gotRuleType, test.in)
+				}
+			})
+		}
 	}
 }
 

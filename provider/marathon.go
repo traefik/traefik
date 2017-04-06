@@ -13,6 +13,7 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
@@ -25,15 +26,15 @@ var _ Provider = (*Marathon)(nil)
 // Marathon holds configuration of the Marathon provider.
 type Marathon struct {
 	BaseProvider
-	Endpoint                string        `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
-	Domain                  string        `description:"Default domain used"`
-	ExposedByDefault        bool          `description:"Expose Marathon apps by default"`
-	GroupsAsSubDomains      bool          `description:"Convert Marathon groups to subdomains"`
-	DCOSToken               string        `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
-	MarathonLBCompatibility bool          `description:"Add compatibility with marathon-lb labels"`
-	TLS                     *ClientTLS    `description:"Enable Docker TLS support"`
-	DialerTimeout           time.Duration `description:"Set a non-default connection timeout for Marathon"`
-	KeepAlive               time.Duration `description:"Set a non-default TCP Keep Alive time in seconds"`
+	Endpoint                string         `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
+	Domain                  string         `description:"Default domain used"`
+	ExposedByDefault        bool           `description:"Expose Marathon apps by default"`
+	GroupsAsSubDomains      bool           `description:"Convert Marathon groups to subdomains"`
+	DCOSToken               string         `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
+	MarathonLBCompatibility bool           `description:"Add compatibility with marathon-lb labels"`
+	TLS                     *ClientTLS     `description:"Enable Docker TLS support"`
+	DialerTimeout           flaeg.Duration `description:"Set a non-default connection timeout for Marathon"`
+	KeepAlive               flaeg.Duration `description:"Set a non-default TCP Keep Alive time in seconds"`
 	Basic                   *MarathonBasic
 	marathonClient          marathon.Marathon
 }
@@ -71,8 +72,8 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 		config.HTTPClient = &http.Client{
 			Transport: &http.Transport{
 				DialContext: (&net.Dialer{
-					KeepAlive: provider.KeepAlive * time.Second,
-					Timeout:   time.Second * provider.DialerTimeout,
+					KeepAlive: time.Duration(provider.KeepAlive),
+					Timeout:   time.Duration(provider.DialerTimeout),
 				}).DialContext,
 				TLSClientConfig: TLSConfig,
 			},
@@ -120,7 +121,7 @@ func (provider *Marathon) Provide(configurationChan chan<- types.ConfigMessage, 
 	notify := func(err error, time time.Duration) {
 		log.Errorf("Marathon connection error %+v, retrying in %s", err, time)
 	}
-	err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
 		log.Errorf("Cannot connect to Marathon server %+v", err)
 	}
@@ -234,22 +235,9 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 		}
 	}
 	if portValueLabel != "" {
-		port, err := strconv.Atoi((*application.Labels)["traefik.port"])
+		_, err := strconv.Atoi((*application.Labels)["traefik.port"])
 		if err != nil {
 			log.Debugf("Filtering marathon task %s with unexpected value for traefik.port label", task.AppID)
-			return false
-		}
-
-		var foundPort bool
-		for _, exposedPort := range ports {
-			if port == exposedPort {
-				foundPort = true
-				break
-			}
-		}
-
-		if !foundPort {
-			log.Debugf("Filtering marathon task %s without a matching port for traefik.port label", task.AppID)
 			return false
 		}
 	}
@@ -493,11 +481,6 @@ func (provider *Marathon) getCircuitBreakerExpression(application marathon.Appli
 
 func processPorts(application marathon.Application, task marathon.Task) []int {
 
-	// First using application ports
-	if len(application.Ports) > 0 {
-		return application.Ports
-	}
-
 	// Using default port configuration
 	if task.Ports != nil && len(task.Ports) > 0 {
 		return task.Ports
@@ -505,7 +488,7 @@ func processPorts(application marathon.Application, task marathon.Task) []int {
 
 	// Using port definition if available
 	if application.PortDefinitions != nil && len(*application.PortDefinitions) > 0 {
-		ports := make([]int, 0)
+		var ports []int
 		for _, def := range *application.PortDefinitions {
 			if def.Port != nil {
 				ports = append(ports, *def.Port)
@@ -515,7 +498,7 @@ func processPorts(application marathon.Application, task marathon.Task) []int {
 	}
 	// If using IP-per-task using this port definition
 	if application.IPAddressPerTask != nil && len(*((*application.IPAddressPerTask).Discovery).Ports) > 0 {
-		ports := make([]int, 0)
+		var ports []int
 		for _, def := range *((*application.IPAddressPerTask).Discovery).Ports {
 			ports = append(ports, def.Number)
 		}

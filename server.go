@@ -17,18 +17,19 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"github.com/mailgun/manners"
 	"github.com/streamrail/concurrent-map"
 	"github.com/vulcand/oxy/cbreaker"
 	"github.com/vulcand/oxy/connlimit"
@@ -57,7 +58,7 @@ type Server struct {
 type serverEntryPoints map[string]*serverEntryPoint
 
 type serverEntryPoint struct {
-	httpServer *manners.GracefulServer
+	httpServer *http.Server
 	httpRouter *middlewares.HandlerSwitcher
 }
 
@@ -113,21 +114,30 @@ func (server *Server) Wait() {
 
 // Stop stops the server
 func (server *Server) Stop() {
-	for serverEntryPointName, serverEntryPoint := range server.serverEntryPoints {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut)*time.Second)
-		go func() {
-			log.Debugf("Waiting %d seconds before killing connections on entrypoint %s...", 30, serverEntryPointName)
-			serverEntryPoint.httpServer.BlockingClose()
+	defer log.Info("Server stopped")
+	var wg sync.WaitGroup
+	for sepn, sep := range server.serverEntryPoints {
+		wg.Add(1)
+		go func(serverEntryPointName string, serverEntryPoint *serverEntryPoint) {
+			defer wg.Done()
+			graceTimeOut := time.Duration(server.globalConfiguration.GraceTimeOut)
+			ctx, cancel := context.WithTimeout(context.Background(), graceTimeOut)
+			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
+			if err := serverEntryPoint.httpServer.Shutdown(ctx); err != nil {
+				log.Debugf("Wait is over due to: %s", err)
+				serverEntryPoint.httpServer.Close()
+			}
 			cancel()
-		}()
-		<-ctx.Done()
+			log.Debugf("Entrypoint %s closed", serverEntryPointName)
+		}(sepn, sep)
 	}
+	wg.Wait()
 	server.stopChan <- true
 }
 
 // Close destroys the server
 func (server *Server) Close() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut))
 	go func(ctx context.Context) {
 		<-ctx.Done()
 		if ctx.Err() == context.Canceled {
@@ -172,7 +182,7 @@ func (server *Server) startHTTPServers() {
 		serverMiddlewares := []negroni.Handler{server.loggerMiddleware, metrics}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
 			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus("Global", server.globalConfiguration.Web.Metrics.Prometheus))
+				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
 				serverMiddlewares = append(serverMiddlewares, metricsMiddleware)
 			}
 		}
@@ -190,7 +200,7 @@ func (server *Server) startHTTPServers() {
 		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
 			serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 		}
-		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], nil, serverMiddlewares...)
+		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], serverMiddlewares...)
 		if err != nil {
 			log.Fatal("Error preparing server: ", err)
 		}
@@ -222,16 +232,17 @@ func (server *Server) listenProviders(stop chan bool) {
 			} else {
 				lastConfigs.Set(configMsg.ProviderName, &configMsg)
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
-				if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
+				providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
+				if time.Now().After(lastReceivedConfigurationValue.Add(providersThrottleDuration)) {
 					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					// last config received more than n s ago
 					server.configurationValidatedChan <- configMsg
 				} else {
 					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					safe.Go(func() {
-						<-time.After(server.globalConfiguration.ProvidersThrottleDuration)
+						<-time.After(providersThrottleDuration)
 						lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
-						if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(server.globalConfiguration.ProvidersThrottleDuration))) {
+						if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(providersThrottleDuration))) {
 							log.Debugf("Waited for %s config, OK", configMsg.ProviderName)
 							if lastConfig, ok := lastConfigs.Get(configMsg.ProviderName); ok {
 								server.configurationValidatedChan <- *lastConfig.(*types.ConfigMessage)
@@ -373,18 +384,28 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.Eureka != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Eureka)
 	}
+	if server.globalConfiguration.ECS != nil {
+		server.providers = append(server.providers, server.globalConfiguration.ECS)
+	}
+	if server.globalConfiguration.Rancher != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Rancher)
+	}
+	if server.globalConfiguration.DynamoDB != nil {
+		server.providers = append(server.providers, server.globalConfiguration.DynamoDB)
+	}
 }
 
 func (server *Server) startProviders() {
 	// start providers
 	for _, provider := range server.providers {
+		providerType := reflect.TypeOf(provider)
 		jsonConf, _ := json.Marshal(provider)
-		log.Infof("Starting provider %v %s", reflect.TypeOf(provider), jsonConf)
+		log.Infof("Starting provider %v %s", providerType, jsonConf)
 		currentProvider := provider
 		safe.Go(func() {
 			err := currentProvider.Provide(server.configurationChan, server.routinesPool, server.globalConfiguration.Constraints)
 			if err != nil {
-				log.Errorf("Error starting provider %s", err)
+				log.Errorf("Error starting provider %v: %s", providerType, err)
 			}
 		})
 	}
@@ -482,21 +503,20 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 	return config, nil
 }
 
-func (server *Server) startServer(srv *manners.GracefulServer, globalConfiguration GlobalConfiguration) {
+func (server *Server) startServer(srv *http.Server, globalConfiguration GlobalConfiguration) {
 	log.Infof("Starting server on %s", srv.Addr)
+	var err error
 	if srv.TLSConfig != nil {
-		if err := srv.ListenAndServeTLSWithConfig(srv.TLSConfig); err != nil {
-			log.Fatal("Error creating server: ", err)
-		}
+		err = srv.ListenAndServeTLS("", "")
 	} else {
-		if err := srv.ListenAndServe(); err != nil {
-			log.Fatal("Error creating server: ", err)
-		}
+		err = srv.ListenAndServe()
 	}
-	log.Info("Server stopped")
+	if err != nil {
+		log.Error("Error creating server: ", err)
+	}
 }
 
-func (server *Server) prepareServer(entryPointName string, router *middlewares.HandlerSwitcher, entryPoint *EntryPoint, oldServer *manners.GracefulServer, middlewares ...negroni.Handler) (*manners.GracefulServer, error) {
+func (server *Server) prepareServer(entryPointName string, router *middlewares.HandlerSwitcher, entryPoint *EntryPoint, middlewares ...negroni.Handler) (*http.Server, error) {
 	log.Infof("Preparing server %s %+v", entryPointName, entryPoint)
 	// middlewares
 	var negroni = negroni.New()
@@ -510,24 +530,12 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 		return nil, err
 	}
 
-	if oldServer == nil {
-		return manners.NewWithServer(
-			&http.Server{
-				Addr:      entryPoint.Address,
-				Handler:   negroni,
-				TLSConfig: tlsConfig,
-			}), nil
-	}
-	gracefulServer, err := oldServer.HijackListener(&http.Server{
-		Addr:      entryPoint.Address,
-		Handler:   negroni,
-		TLSConfig: tlsConfig,
-	}, tlsConfig)
-	if err != nil {
-		log.Errorf("Error hijacking server: %s", err)
-		return nil, err
-	}
-	return gracefulServer, nil
+	return &http.Server{
+		Addr:        entryPoint.Address,
+		Handler:     negroni,
+		TLSConfig:   tlsConfig,
+		IdleTimeout: time.Duration(server.globalConfiguration.IdleTimeout),
+	}, nil
 }
 
 func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) map[string]*serverEntryPoint {
@@ -548,6 +556,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	redirectHandlers := make(map[string]http.Handler)
 
 	backends := map[string]http.Handler{}
+
+	backendsHealthcheck := map[string]*healthcheck.BackendHealthCheck{}
+
 	backend2FrontendMap := map[string]string{}
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
@@ -647,6 +658,17 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									log.Errorf("Skipping frontend %s...", frontendName)
 									continue frontend
 								}
+								if configuration.Backends[frontend.Backend].HealthCheck != nil {
+									var interval time.Duration
+									if configuration.Backends[frontend.Backend].HealthCheck.Interval != "" {
+										interval, err = time.ParseDuration(configuration.Backends[frontend.Backend].HealthCheck.Interval)
+										if err != nil {
+											log.Errorf("Wrong healthcheck interval: %s", err)
+											interval = time.Second * 30
+										}
+									}
+									backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, interval, rebalancer)
+								}
 							}
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
@@ -670,6 +692,17 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									continue frontend
 								}
 							}
+							if configuration.Backends[frontend.Backend].HealthCheck != nil {
+								var interval time.Duration
+								if configuration.Backends[frontend.Backend].HealthCheck.Interval != "" {
+									interval, err = time.ParseDuration(configuration.Backends[frontend.Backend].HealthCheck.Interval)
+									if err != nil {
+										log.Errorf("Wrong healthcheck interval: %s", err)
+										interval = time.Second * 30
+									}
+								}
+								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(configuration.Backends[frontend.Backend].HealthCheck.URL, interval, rr)
+							}
 						}
 						maxConns := configuration.Backends[frontend.Backend].MaxConn
 						if maxConns != nil && maxConns.Amount != 0 {
@@ -679,7 +712,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								log.Errorf("Skipping frontend %s...", frontendName)
 								continue frontend
 							}
-							log.Debugf("Creating loadd-balancer connlimit")
+							log.Debugf("Creating load-balancer connlimit")
 							lb, err = connlimit.New(lb, extractFunc, maxConns.Amount, connlimit.Logger(oxyLogger))
 							if err != nil {
 								log.Errorf("Error creating connlimit: %v", err)
@@ -732,6 +765,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			}
 		}
 	}
+	healthcheck.GetHealthCheck().SetBackendsConfiguration(server.routinesPool.Ctx(), backendsHealthcheck)
 	middlewares.SetBackend2FrontendMap(&backend2FrontendMap)
 	//sort routes
 	for _, serverEntryPoint := range serverEntryPoints {
@@ -764,7 +798,7 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 	regex := entryPoint.Redirect.Regex
 	replacement := entryPoint.Redirect.Replacement
 	if len(entryPoint.Redirect.EntryPoint) > 0 {
-		regex = "^(?:https?:\\/\\/)?([\\da-z\\.-]+)(?::\\d+)?(.*)$"
+		regex = "^(?:https?:\\/\\/)?([\\w\\._-]+)(?::\\d+)?(.*)$"
 		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint] == nil {
 			return nil, errors.New("Unknown entrypoint " + entryPoint.Redirect.EntryPoint)
 		}

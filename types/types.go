@@ -4,10 +4,11 @@ import (
 	"encoding"
 	"errors"
 	"fmt"
-	"github.com/docker/libkv/store"
-	"github.com/ryanuber/go-glob"
 	"strconv"
 	"strings"
+
+	"github.com/docker/libkv/store"
+	"github.com/ryanuber/go-glob"
 )
 
 // Backend holds backend configuration.
@@ -16,6 +17,7 @@ type Backend struct {
 	CircuitBreaker *CircuitBreaker   `json:"circuitBreaker,omitempty"`
 	LoadBalancer   *LoadBalancer     `json:"loadBalancer,omitempty"`
 	MaxConn        *MaxConn          `json:"maxConn,omitempty"`
+	HealthCheck    *HealthCheck      `json:"healthCheck,omitempty"`
 }
 
 // MaxConn holds maximum connection configuration
@@ -33,6 +35,12 @@ type LoadBalancer struct {
 // CircuitBreaker holds circuit breaker configuration.
 type CircuitBreaker struct {
 	Expression string `json:"expression,omitempty"`
+}
+
+// HealthCheck holds HealthCheck configuration
+type HealthCheck struct {
+	URL      string `json:"url,omitempty"`
+	Interval string `json:"interval,omitempty"`
 }
 
 // Server holds server configuration.
@@ -233,12 +241,14 @@ type Users []string
 
 // Basic HTTP basic authentication
 type Basic struct {
-	Users `mapstructure:","`
+	Users     `mapstructure:","`
+	UsersFile string
 }
 
 // Digest HTTP authentication
 type Digest struct {
-	Users `mapstructure:","`
+	Users     `mapstructure:","`
+	UsersFile string
 }
 
 // CanonicalDomain returns a lower case domain with trim space

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
@@ -23,7 +24,7 @@ type TraefikConfiguration struct {
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              int64                   `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
+	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
 	AccessLogsFile            string                  `description:"Access logs file"`
@@ -34,8 +35,9 @@ type GlobalConfiguration struct {
 	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags"`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
-	ProvidersThrottleDuration time.Duration           `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
+	ProvidersThrottleDuration flaeg.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
+	IdleTimeout               flaeg.Duration          `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	Docker                    *provider.Docker        `description:"Enable Docker backend"`
@@ -50,6 +52,9 @@ type GlobalConfiguration struct {
 	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
 	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
 	Eureka                    *provider.Eureka        `description:"Enable Eureka backend"`
+	ECS                       *provider.ECS           `description:"Enable ECS backend"`
+	Rancher                   *provider.Rancher       `description:"Enable Rancher backend"`
+	DynamoDB                  *provider.DynamoDB      `description:"Enable DynamoDB backend"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -205,17 +210,30 @@ var minVersion = map[string]uint16{
 }
 
 // Map of TLS CipherSuites from crypto/tls
+// Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
 var cipherSuites = map[string]uint16{
-	`TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`: tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	`TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`: tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-	`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA`:    tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-	`TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA`:    tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-	`TLS_RSA_WITH_AES_128_GCM_SHA256`:       tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-	`TLS_RSA_WITH_AES_256_GCM_SHA384`:       tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-	`TLS_RSA_WITH_AES_128_CBC_SHA`:          tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-	`TLS_RSA_WITH_AES_256_CBC_SHA`:          tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-	`TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`:   tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-	`TLS_RSA_WITH_3DES_EDE_CBC_SHA`:         tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	`TLS_RSA_WITH_RC4_128_SHA`:                tls.TLS_RSA_WITH_RC4_128_SHA,
+	`TLS_RSA_WITH_3DES_EDE_CBC_SHA`:           tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+	`TLS_RSA_WITH_AES_128_CBC_SHA`:            tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+	`TLS_RSA_WITH_AES_256_CBC_SHA`:            tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+	`TLS_RSA_WITH_AES_128_CBC_SHA256`:         tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
+	`TLS_RSA_WITH_AES_128_GCM_SHA256`:         tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+	`TLS_RSA_WITH_AES_256_GCM_SHA384`:         tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+	`TLS_ECDHE_ECDSA_WITH_RC4_128_SHA`:        tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
+	`TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA`:    tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+	`TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA`:    tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_RC4_128_SHA`:          tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
+	`TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA`:     tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA`:      tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+	`TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA`:      tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+	`TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256`: tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+	`TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256`:   tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+	`TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`:   tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+	`TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256`: tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+	`TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`:   tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+	`TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384`: tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+	`TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305`:    tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+	`TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305`:  tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
 }
 
 // Certificates defines traefik certificates type
@@ -391,6 +409,26 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMesos.ExposedByDefault = true
 	defaultMesos.Constraints = types.Constraints{}
 
+	//default ECS
+	var defaultECS provider.ECS
+	defaultECS.Watch = true
+	defaultECS.ExposedByDefault = true
+	defaultECS.RefreshSeconds = 15
+	defaultECS.Cluster = "default"
+	defaultECS.Constraints = types.Constraints{}
+
+	//default Rancher
+	var defaultRancher provider.Rancher
+	defaultRancher.Watch = true
+	defaultRancher.ExposedByDefault = true
+
+	// default DynamoDB
+	var defaultDynamoDB provider.DynamoDB
+	defaultDynamoDB.Constraints = types.Constraints{}
+	defaultDynamoDB.RefreshSeconds = 15
+	defaultDynamoDB.TableName = "traefik"
+	defaultDynamoDB.Watch = true
+
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
 		File:          &defaultFile,
@@ -403,8 +441,15 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Boltdb:        &defaultBoltDb,
 		Kubernetes:    &defaultKubernetes,
 		Mesos:         &defaultMesos,
+		ECS:           &defaultECS,
+		Rancher:       &defaultRancher,
+		DynamoDB:      &defaultDynamoDB,
 		Retry:         &Retry{},
 	}
+
+	//default Rancher
+	//@TODO: ADD
+
 	return &TraefikConfiguration{
 		GlobalConfiguration: defaultConfiguration,
 	}
@@ -414,15 +459,16 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 func NewTraefikConfiguration() *TraefikConfiguration {
 	return &TraefikConfiguration{
 		GlobalConfiguration: GlobalConfiguration{
-			GraceTimeOut:              10,
+			GraceTimeOut:              flaeg.Duration(10 * time.Second),
 			AccessLogsFile:            "",
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*EntryPoint{},
 			Constraints:               types.Constraints{},
 			DefaultEntryPoints:        []string{},
-			ProvidersThrottleDuration: time.Duration(2 * time.Second),
+			ProvidersThrottleDuration: flaeg.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
+			IdleTimeout:               flaeg.Duration(180 * time.Second),
 			CheckNewVersion:           true,
 		},
 		ConfigFile: "",

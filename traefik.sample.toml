@@ -2,13 +2,15 @@
 # Global configuration
 ################################################################
 
-# Timeout in seconds.
-# Duration to give active requests a chance to finish during hot-reloads
+# Duration to give active requests a chance to finish during hot-reloads.
+# Can be provided in a format supported by Go's time.ParseDuration function or
+# as raw values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: 10
+# Default: "10s"
 #
-# graceTimeOut = 10
+# graceTimeOut = "10s"
 
 # Enable debug mode
 #
@@ -47,11 +49,14 @@
 # Backends throttle duration: minimum duration in seconds between 2 events from providers
 # before applying a new configuration. It avoids unnecessary reloads if multiples events
 # are sent in a short amount of time.
+# Can be provided in a format supported by Go's time.ParseDuration function or
+# as raw values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: "2"
+# Default: "2s"
 #
-# ProvidersThrottleDuration = "5"
+# ProvidersThrottleDuration = "5s"
 
 # If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
 # If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
@@ -91,7 +96,7 @@
 #
 # Backend-specific constraint
 # [consulCatalog]
-#   endpoint = 127.0.0.1:8500
+#   endpoint = "127.0.0.1:8500"
 #   constraints = ["tag==api"]
 #
 # Multiple constraints
@@ -99,7 +104,7 @@
 #   - "tag!=" must match with none of tags
 # constraints = ["tag!=us-*", "tag!=asia-*"]
 # [consulCatalog]
-#   endpoint = 127.0.0.1:8500
+#   endpoint = "127.0.0.1:8500"
 #   constraints = ["tag==api", "tag!=v*-beta"]
 
 # Enable ACME (Let's Encrypt): automatic SSL
@@ -247,20 +252,24 @@
 # To enable basic auth on an entrypoint
 # with 2 user/pass: test:test and test2:test2
 # Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate those ones
+# Users can be specified directly in the toml file, or indirectly by referencing an external file; if both are provided, the two are merged, with external file contents having precedence
 # [entryPoints]
 #   [entryPoints.http]
 #   address = ":80"
 #   [entryPoints.http.auth.basic]
 #   users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+#   usersFile = "/path/to/.htpasswd"
 #
 # To enable digest auth on an entrypoint
 # with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
 # You can use htdigest to generate those ones
+# Users can be specified directly in the toml file, or indirectly by referencing an external file; if both are provided, the two are merged, with external file contents having precedence
 # [entryPoints]
 #   [entryPoints.http]
 #   address = ":80"
 #   [entryPoints.http.auth.basic]
 #   users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+#   usersFile = "/path/to/.htdigest"
 #
 # To specify an https entrypoint with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls):
 # [entryPoints]
@@ -281,6 +290,11 @@
 #   [entryPoints.http]
 #   address = ":80"
 #   compress = true
+
+# To bind to a particular IP address only:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = "10.42.13.37:80"
 
 # Enable retry sending request if network error
 #
@@ -329,19 +343,23 @@
 #
 # To enable Traefik to export internal metrics to Prometheus
 # [web.metrics.prometheus]
-#   Buckets=[0.1,0.3,1.2,5]
+#   Buckets=[0.1,0.3,1.2,5.0]
 #
 
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
 # Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate those ones
+# Users can be specified directly in the toml file, or indirectly by referencing an external file; if both are provided, the two are merged, with external file contents having precedence
 #   [web.auth.basic]
 #     users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+#     usersFile = "/path/to/.htpasswd"
 # To enable digest auth on the webui
 # with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
 # You can use htdigest to generate those ones
+# Users can be specified directly in the toml file, or indirectly by referencing an external file; if both are provided, the two are merged, with external file contents having precedence
 #   [web.auth.digest]
 #     users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+#     usersFile = "/path/to/.htdigest"
 
 
 ################################################################
@@ -544,12 +562,15 @@
 # groupsAsSubDomains = true
 
 # Override DialerTimeout
-# Amount of time in seconds to allow the Marathon provider to wait to open a TCP
-# connection to a Marathon master
+# Amount of time to allow the Marathon provider to wait to open a TCP connection
+# to a Marathon master.
+# Can be provided in a format supported by Go's time.ParseDuration function or
+# as raw values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: 60
-# dialerTimeout = 5
+# Default: "60s"
+# dialerTimeout = "60s"
 
 # Enable Marathon basic authentication
 #
@@ -566,12 +587,15 @@
 # dcosToken = "xxxxxx"
 
 
-# Set the TCP Keep Alive interval (in seconds) for the Marathon HTTP Client
+# Set the TCP Keep Alive interval for the Marathon HTTP Client.
+# Can be provided in a format supported by Go's time.ParseDuration function or
+# as raw values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: 10
+# Default: "10s"
 #
-# keepAlive = 10
+# keepAlive = "10s"
 
 ################################################################
 # Mesos configuration backend
@@ -660,17 +684,46 @@
 
 # Kubernetes server endpoint
 #
-# When deployed as a replication controller in Kubernetes,
-# Traefik will use env variable KUBERNETES_SERVICE_HOST
-# and KUBERNETES_SERVICE_PORT_HTTPS as endpoint
+# When deployed as a replication controller in Kubernetes, Traefik will use
+# the environment variables KUBERNETES_SERVICE_HOST and KUBERNETES_SERVICE_PORT
+# to construct the endpoint.
 # Secure token will be found in /var/run/secrets/kubernetes.io/serviceaccount/token
 # and SSL CA cert in /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 #
+# The endpoint may be given to override the environment variable values.
+#
+# When the environment variables are not found, Traefik will try to connect to
+# the Kubernetes API server with an external-cluster client. In this case, the
+# endpoint is required. Specifically, it may be set to the URL used by
+# `kubectl proxy` to connect to a Kubernetes cluster from localhost.
+#
+# Optional for in-cluster configuration, required otherwise
+# Default: empty
+#
+# endpoint = "http://127.0.0.1:8001"
+
+# Bearer token used for the Kubernetes client configuration.
+#
 # Optional
+# Default: empty
 #
-# endpoint = "http://localhost:8080"
+# token = "my token"
+
+# Path to the certificate authority file used for the Kubernetes client
+# configuration.
+#
+# Optional
+# Default: empty
+#
+# certAuthFilePath = "/my/ca.crt"
+
+# Array of namespaces to watch.
+#
+# Optional
+# Default: ["default"].
+#
 # namespaces = ["default"]
-#
+
 # See: http://kubernetes.io/docs/user-guide/labels/#list-and-watch-filtering
 # labelselector = "A and not B"
 
@@ -868,6 +921,166 @@
 # filename = "boltdb.tmpl"
 
 
+################################################################
+# ECS configuration backend
+################################################################
+
+# Enable ECS configuration backend
+#
+# Optional
+#
+# [ecs]
+
+# ECS Cluster Name
+#
+# Optional
+# Default: "default"
+#
+# Cluster = "default"
+
+# Enable watch ECS changes
+#
+# Optional
+# Default: true
+#
+# Watch = true
+
+# Polling interval (in seconds)
+#
+# Optional
+# Default: 15
+#
+# RefreshSeconds = 15
+
+# Expose ECS services by default in traefik
+#
+# Optional
+# Default: true
+#
+# ExposedByDefault = false
+
+# Region to use when connecting to AWS
+#
+# Optional
+#
+# Region = "us-east-1"
+
+# AccessKeyID to use when connecting to AWS
+#
+# Optional
+#
+# AccessKeyID = "abc"
+
+# SecretAccessKey to use when connecting to AWS
+#
+# Optional
+#
+# SecretAccessKey = "123"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "ecs.tmpl"
+
+################################################################
+# Rancher configuration backend
+################################################################
+
+# Enable Rancher configuration backend
+#
+# Optional
+#
+[rancher]
+
+# Default domain used.
+# Can be overridden by setting the "traefik.domain" label on an service.
+#
+# Required
+#
+domain = "rancher.localhost"
+
+# Enable watch Rancher changes
+#
+# Optional
+# Default: true
+#
+Watch = true
+
+# Expose Rancher services by default in traefik
+#
+# Optional
+# Default: true
+#
+ExposedByDefault = false
+
+# Endpoint to use when connecting to Rancher
+#
+# Optional
+# Endpoint = "http://rancherserver.example.com"
+
+# AccessKey to use when connecting to Rancher
+#
+# Optional
+# AccessKey = "XXXXXXXXX"
+
+# SecretKey to use when connecting to Rancher
+#
+# Optional
+# SecretKey = "XXXXXXXXXXX"
+
+
+################################################################
+# DynamoDB configuration backend
+################################################################
+
+# Enable DynamoDB configuration backend
+#
+# Optional
+#
+# [dynamodb]
+
+# DynamoDB Table Name
+#
+# Optional
+#
+# TableName = "traefik"
+
+# Enable watch DynamoDB changes
+#
+# Optional
+#
+# Watch = true
+
+# Polling interval (in seconds)
+#
+# Optional
+#
+# RefreshSeconds = 15
+
+# Region to use when connecting to AWS
+#
+# Required
+#
+# Region = "us-east-1"
+
+# AccessKeyID to use when connecting to AWS
+#
+# Optional
+#
+# AccessKeyID = "abc"
+
+# SecretAccessKey to use when connecting to AWS
+#
+# Optional
+#
+# SecretAccessKey = "123"
+
+# Endpoint of dynamodb when testing locally
+#
+# Optional
+#
+# Endpoint = "http://localhost:8080"
 
 
 ################################################################

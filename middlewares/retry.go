@@ -3,6 +3,7 @@ package middlewares
 import (
 	"bufio"
 	"bytes"
+	"io/ioutil"
 	"net"
 	"net/http"
 
@@ -32,6 +33,13 @@ func NewRetry(attempts int, next http.Handler) *Retry {
 }
 
 func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	// if we might make multiple attempts, swap the body for an ioutil.NopCloser
+	// cf https://github.com/containous/traefik/issues/1008
+	if retry.attempts > 1 {
+		body := r.Body
+		defer body.Close()
+		r.Body = ioutil.NopCloser(body)
+	}
 	attempts := 1
 	for {
 		recorder := NewRecorder()

@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -19,10 +21,20 @@ import (
 
 var _ Provider = (*Kubernetes)(nil)
 
+const (
+	annotationFrontendRuleType = "traefik.frontend.rule.type"
+	ruleTypePathPrefixStrip    = "PathPrefixStrip"
+	ruleTypePathStrip          = "PathStrip"
+	ruleTypePath               = "Path"
+	ruleTypePathPrefix         = "PathPrefix"
+)
+
 // Kubernetes holds configurations of the Kubernetes provider.
 type Kubernetes struct {
 	BaseProvider           `mapstructure:",squash"`
-	Endpoint               string         `description:"Kubernetes server endpoint"`
+	Endpoint               string         `description:"Kubernetes server endpoint (required for external cluster client)"`
+	Token                  string         `description:"Kubernetes bearer token (not needed for in-cluster client)"`
+	CertAuthFilePath       string         `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
 	DisablePassHostHeaders bool           `description:"Kubernetes disable PassHost Headers"`
 	Namespaces             k8s.Namespaces `description:"Kubernetes namespaces"`
 	LabelSelector          string         `description:"Kubernetes api label selector to use"`
@@ -30,12 +42,18 @@ type Kubernetes struct {
 }
 
 func (provider *Kubernetes) newK8sClient() (k8s.Client, error) {
+	withEndpoint := ""
 	if provider.Endpoint != "" {
-		log.Infof("Creating in cluster Kubernetes client with endpoint %v", provider.Endpoint)
-		return k8s.NewInClusterClientWithEndpoint(provider.Endpoint)
+		withEndpoint = fmt.Sprintf(" with endpoint %v", provider.Endpoint)
 	}
-	log.Info("Creating in cluster Kubernetes client")
-	return k8s.NewInClusterClient()
+
+	if os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "" {
+		log.Infof("Creating in-cluster Kubernetes client%s\n", withEndpoint)
+		return k8s.NewInClusterClient(provider.Endpoint)
+	}
+
+	log.Infof("Creating cluster-external Kubernetes client%s\n", withEndpoint)
+	return k8s.NewExternalClusterClient(provider.Endpoint, provider.Token, provider.CertAuthFilePath)
 }
 
 // Provide allows the provider to provide configurations to traefik
@@ -91,7 +109,7 @@ func (provider *Kubernetes) Provide(configurationChan chan<- types.ConfigMessage
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Kubernetes connection error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
 			log.Errorf("Cannot connect to Kubernetes server %+v", err)
 		}
@@ -107,15 +125,41 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 		map[string]*types.Backend{},
 		map[string]*types.Frontend{},
 	}
-	PassHostHeader := provider.getPassHostHeader()
 	for _, i := range ingresses {
+		ingressClass := i.Annotations["kubernetes.io/ingress.class"]
+
+		if !shouldProcessIngress(ingressClass) {
+			continue
+		}
+
 		for _, r := range i.Spec.Rules {
+			if r.HTTP == nil {
+				log.Warnf("Error in ingress: HTTP is nil")
+				continue
+			}
 			for _, pa := range r.HTTP.Paths {
 				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
 						Servers: make(map[string]types.Server),
+						LoadBalancer: &types.LoadBalancer{
+							Sticky: false,
+							Method: "wrr",
+						},
 					}
 				}
+
+				PassHostHeader := provider.getPassHostHeader()
+
+				passHostHeaderAnnotation := i.Annotations["traefik.frontend.passHostHeader"]
+				switch passHostHeaderAnnotation {
+				case "true":
+					PassHostHeader = true
+				case "false":
+					PassHostHeader = false
+				default:
+					log.Warnf("Unknown value of %s for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
+				}
+
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:        r.Host + pa.Path,
@@ -137,34 +181,39 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						}
 					}
 				}
-				if len(pa.Path) > 0 {
-					ruleType := i.Annotations["traefik.frontend.rule.type"]
 
-					switch strings.ToLower(ruleType) {
-					case "pathprefixstrip":
-						ruleType = "PathPrefixStrip"
-					case "pathstrip":
-						ruleType = "PathStrip"
-					case "path":
-						ruleType = "Path"
-					case "pathprefix":
-						ruleType = "PathPrefix"
-					case "":
-						ruleType = "PathPrefix"
-					default:
-						log.Warnf("Unknown RuleType %s for %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
-						ruleType = "PathPrefix"
+				if len(pa.Path) > 0 {
+					ruleType, unknown := getRuleTypeFromAnnotation(i.Annotations)
+					switch {
+					case unknown:
+						log.Warnf("Unknown RuleType '%s' for Ingress %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
+						fallthrough
+					case ruleType == "":
+						ruleType = ruleTypePathPrefix
 					}
 
 					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
 						Rule: ruleType + ":" + pa.Path,
 					}
 				}
+
 				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
 				if err != nil || !exists {
 					log.Warnf("Error retrieving service %s/%s: %v", i.ObjectMeta.Namespace, pa.Backend.ServiceName, err)
 					delete(templateObjects.Frontends, r.Host+pa.Path)
 					continue
+				}
+
+				if expression := service.Annotations["traefik.backend.circuitbreaker"]; expression != "" {
+					templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
+						Expression: expression,
+					}
+				}
+				if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
+					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
+				}
+				if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
+					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
 				}
 
 				protocol := "http"
@@ -173,28 +222,44 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 						if port.Port == 443 {
 							protocol = "https"
 						}
-						endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-						if err != nil || !exists {
-							log.Errorf("Error retrieving endpoints %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
-							continue
-						}
-						if len(endpoints.Subsets) == 0 {
-							log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-							templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
-								URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
+						if service.Spec.Type == "ExternalName" {
+							url := protocol + "://" + service.Spec.ExternalName
+							name := url
+
+							templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+								URL:    url,
 								Weight: 1,
 							}
 						} else {
-							for _, subset := range endpoints.Subsets {
-								for _, address := range subset.Addresses {
-									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
-									name := url
-									if address.TargetRef != nil && address.TargetRef.Name != "" {
-										name = address.TargetRef.Name
-									}
-									templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
-										URL:    url,
-										Weight: 1,
+							endpoints, exists, err := k8sClient.GetEndpoints(service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+							if err != nil {
+								log.Errorf("Error while retrieving endpoints from k8s API %s/%s: %v", service.ObjectMeta.Namespace, service.ObjectMeta.Name, err)
+								continue
+							}
+
+							if !exists {
+								log.Errorf("Service not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								continue
+							}
+
+							if len(endpoints.Subsets) == 0 {
+								log.Warnf("Endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
+									URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
+									Weight: 1,
+								}
+							} else {
+								for _, subset := range endpoints.Subsets {
+									for _, address := range subset.Addresses {
+										url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+										name := url
+										if address.TargetRef != nil && address.TargetRef.Name != "" {
+											name = address.TargetRef.Name
+										}
+										templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+											URL:    url,
+											Weight: 1,
+										}
 									}
 								}
 							}
@@ -232,6 +297,15 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 	return false
 }
 
+func shouldProcessIngress(ingressClass string) bool {
+	switch ingressClass {
+	case "", "traefik":
+		return true
+	default:
+		return false
+	}
+}
+
 func (provider *Kubernetes) getPassHostHeader() bool {
 	if provider.DisablePassHostHeaders {
 		return false
@@ -246,4 +320,25 @@ func (provider *Kubernetes) loadConfig(templateObjects types.Configuration) *typ
 		log.Error(err)
 	}
 	return configuration
+}
+
+func getRuleTypeFromAnnotation(annotations map[string]string) (ruleType string, unknown bool) {
+	ruleType = annotations[annotationFrontendRuleType]
+	for _, knownRuleType := range []string{
+		ruleTypePathPrefixStrip,
+		ruleTypePathStrip,
+		ruleTypePath,
+		ruleTypePathPrefix,
+	} {
+		if strings.ToLower(ruleType) == strings.ToLower(knownRuleType) {
+			return knownRuleType, false
+		}
+	}
+
+	if ruleType != "" {
+		// Annotation is set but does not match anything we know.
+		unknown = true
+	}
+
+	return ruleType, unknown
 }

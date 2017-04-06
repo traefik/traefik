@@ -1,6 +1,6 @@
 # Kubernetes Ingress Controller
 
-This guide explains how to use Træfɪk as an Ingress controller in a Kubernetes cluster. 
+This guide explains how to use Træfɪk as an Ingress controller in a Kubernetes cluster.
 If you are not familiar with Ingresses in Kubernetes you might want to read the [Kubernetes user guide](http://kubernetes.io/docs/user-guide/ingress/)
 
 The config files used in this guide can be found in the [examples directory](https://github.com/containous/traefik/tree/master/examples/k8s)
@@ -19,7 +19,6 @@ We are going to deploy Træfɪk with a
 allow you to easily roll out config changes or update the image.
 
 ```yaml
-apiVersion: v1
 kind: Deployment
 apiVersion: extensions/v1beta1
 metadata:
@@ -85,7 +84,7 @@ traefik-ingress-controller-678226159-eqseo   1/1       Running   0          7m
 ```
 
 You should see that after submitting the Deployment to Kubernetes it has launched
-a pod, and it is now running. _It might take a few moments for kubenetes to pull
+a pod, and it is now running. _It might take a few moments for kubernetes to pull
 the Træfɪk image and start the container._
 
 > You could also check the deployment with the Kubernetes dashboard, run
@@ -114,7 +113,7 @@ metadata:
   namespace: kube-system
 spec:
   selector:
-    k8s-app: traefik-ingress-lb 
+    k8s-app: traefik-ingress-lb
   ports:
   - port: 80
     targetPort: 8080
@@ -124,6 +123,8 @@ kind: Ingress
 metadata:
   name: traefik-web-ui
   namespace: kube-system
+  annotations:
+    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: traefik-ui.local
@@ -140,7 +141,7 @@ kubectl apply -f examples/k8s/ui.yaml
 ```
 
 Now lets setup an entry in our /etc/hosts file to route `traefik-ui.local`
-to our cluster. 
+to our cluster.
 
 > In production you would want to set up real dns entries.
 
@@ -300,6 +301,8 @@ apiVersion: v1
 kind: Service
 metadata:
   name: wensleydale
+  annotations:
+    traefik.backend.circuitbreaker: "NetworkErrorRatio() > 0.5"
 spec:
   ports:
   - name: http
@@ -309,6 +312,11 @@ spec:
     app: cheese
     task: wensleydale
 ```
+
+> Notice that we also set a [circuit breaker expression](https://docs.traefik.io/basics/#backends) for one of the backends
+> by setting the `traefik.backend.circuitbreaker` annotation on the service.
+
+
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
 
 ```sh
@@ -322,6 +330,8 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: cheese
+  annotations:
+    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: stilton.local
@@ -384,6 +394,7 @@ kind: Ingress
 metadata:
   name: cheeses
   annotations:
+    kubernetes.io/ingress.class: traefik
     traefik.frontend.rule.type: pathprefixstrip
 spec:
   rules:
@@ -422,3 +433,66 @@ You should now be able to visit the websites in your browser.
 * [cheeses.local/stilton](http://cheeses.local/stilton/)
 * [cheeses.local/cheddar](http://cheeses.local/cheddar/)
 * [cheeses.local/wensleydale](http://cheeses.local/wensleydale/)
+
+## Disable passing the Host header
+By default Træfɪk will pass the incoming Host header on to the upstream resource. There
+are times however where you may not want this to be the case. For example if your service
+is of the ExternalName type.
+
+### Disable entirely
+Add the following to your toml config:
+```toml
+disablePassHostHeaders = true
+```
+
+### Disable per ingress
+To disable passing the Host header per ingress resource set the "traefik.frontend.passHostHeader"
+annotation on your ingress to "false".
+
+Here is an example ingress definition:
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: example
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.frontend.passHostHeader: "false"
+spec:
+  rules:
+  - host: example.com
+    http:
+      paths:
+      - path: /static
+        backend:
+          serviceName: static
+          servicePort: https
+```
+
+And an example service definition:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: static
+spec:
+  ports:
+  - name: https
+    port: 443
+  type: ExternalName
+  externalName: static.otherdomain.com
+```
+
+If you were to visit example.com/static the request would then be passed onto
+static.otherdomain.com/static and static.otherdomain.com would receive the
+request with the Host header being static.otherdomain.com.
+
+Note: The per ingress annotation overides whatever the global value is set to. So you
+could set `disablePassHostHeaders` to true in your toml file and then enable passing
+the host header per ingress if you wanted.
+
+## Excluding an ingress from Træfɪk
+You can control which ingress Træfɪk cares about by using the "kubernetes.io/ingress.class"
+annotation. By default if the annotation is not set at all Træfɪk will include the
+ingress. If the annotation is set to anything other than traefik or a blank string
+Træfɪk will ignore it.
