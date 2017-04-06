@@ -357,7 +357,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 	account := a.store.Get().(*Account)
 
 	// Check for existing challenge cert
-	log.Debugf("Checking ACME challenge for %v", domain)
+	log.Debugf("Checking ACME challenge for %s", domain)
 	if challengeCert, ok := a.challengeProvider.getCertificate(domain); ok {
 		log.Debugf("Returning ACME challenge cert for %s", domain)
 		return challengeCert, nil
@@ -538,20 +538,12 @@ func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.C
 	if certificateResource, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
 		return certificateResource.tlsCert, nil
 	}
+
 	// Check if our domain is matching our ingoreFilters
-	if len(a.IgnoreFilters) > 0 {
-		for _, filter := range a.IgnoreFilters {
-			regexp, err := regexp.Compile(filter)
-			if err != nil {
-				log.Warnf("The ACME ignore filter %v, is not a valid regular expression and will be skipped.", filter)
-				continue
-			}
-			if regexp.MatchString(domain) {
-				log.Infof("Acme request for domain %v will be ignored as per filter %v", domain, filter)
-				return nil, nil
-			}
-		}
+	if a.isDomainFiltered(domain) {
+		return nil, nil
 	}
+
 	log.Debugf("Will generate a new acme cert on demand for %v", domain)
 	certificate, err := a.getDomainsCertificates([]string{domain})
 	if err != nil {
@@ -613,19 +605,9 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 		}
 
 		// Check if our domains are matching our ingoreFilters
-		if len(a.IgnoreFilters) > 0 {
-			for _, filter := range a.IgnoreFilters {
-				regexp, rerr := regexp.Compile(filter)
-				if rerr != nil {
-					log.Warnf("The ACME ignore filter %v, is not a valid regular expression and will be skipped.", filter)
-					continue
-				}
-				for _, d := range domains {
-					if regexp.MatchString(d) {
-						log.Infof("Acme request for domains %+v will be ignored as per filter %v against %v", domain, filter, d)
-						return
-					}
-				}
+		for _, d := range domains {
+			if a.isDomainFiltered(d) {
+				return
 			}
 		}
 
@@ -681,4 +663,21 @@ func (a *ACME) runJobs() {
 			function()
 		}
 	})
+}
+
+func (a *ACME) isDomainFiltered(domain string) bool {
+	if len(a.IgnoreFilters) > 0 {
+		for _, filter := range a.IgnoreFilters {
+			regexp, err := regexp.Compile(filter)
+			if err != nil {
+				log.Warnf("The ACME ignore filter %v, is not a valid regular expression and will be skipped.", filter)
+				continue
+			}
+			if regexp.MatchString(domain) {
+				log.Infof("Acme request for domain %v will be ignored as per filter %v", domain, filter)
+				return true
+			}
+		}
+	}
+	return false
 }
