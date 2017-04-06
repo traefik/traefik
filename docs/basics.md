@@ -94,7 +94,7 @@ Separate multiple rule values by `,` (comma) in order to enable ANY semantics (i
 
 Separate multiple rule values by `;` (semicolon) in order to enable ALL semantics (i.e., forward a request if all rules match).
 
-You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
+You can optionally enable `passHostHeader` to forward client `Host` header to the backend. You can also optionally enable `passTLSCert` to forward TLS Client certificates to the backend.
 
 Following is the list of existing matcher rules along with examples:
 
@@ -140,6 +140,7 @@ Here is an example of frontends definition:
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
+  passTLSCert = true
   priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
@@ -161,34 +162,34 @@ As seen in the previous example, you can combine multiple rules.
 In TOML file, you can use multiple routes:
 
 ```toml
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Host:test3.localhost"
-  [frontends.frontend3.routes.test_2]
-  rule = "Path:/test"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host:test3.localhost"
+    [frontends.frontend3.routes.test_2]
+    rule = "Path:/test"
 ```
 
 Here `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched.
 You can also use the notation using a `;` separator, same result:
 
 ```toml
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Host:test3.localhost;Path:/test"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host:test3.localhost;Path:/test"
 ```
 
 Finally, you can create a rule to bind multiple domains or Path to a frontend, using the `,` separator:
 
 ```toml
-[frontends.frontend2]
-   [frontends.frontend2.routes.test_1]
-   rule = "Host:test1.localhost,test2.localhost"
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Path:/test1,/test2"
+ [frontends.frontend2]
+    [frontends.frontend2.routes.test_1]
+    rule = "Host:test1.localhost,test2.localhost"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Path:/test1,/test2"
 ```
 
 ### Rules Order
@@ -218,19 +219,19 @@ By default, routes will be sorted (in descending order) using rules length (to a
 You can customize priority by frontend:
 
 ```toml
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-  priority = 10
-  passHostHeader = true
-    [frontends.frontend1.routes.test_1]
-    rule = "PathPrefix:/to"
-  [frontends.frontend2]
-  priority = 5
-  backend = "backend2"
-  passHostHeader = true
-    [frontends.frontend2.routes.test_1]
-    rule = "PathPrefix:/toto"
+  [frontends]
+    [frontends.frontend1]
+    backend = "backend1"
+    priority = 10
+    passHostHeader = true
+      [frontends.frontend1.routes.test_1]
+      rule = "PathPrefix:/to"
+    [frontends.frontend2]
+    priority = 5
+    backend = "backend2"
+    passHostHeader = true
+      [frontends.frontend2.routes.test_1]
+      rule = "PathPrefix:/toto"
 ```
 
 Here, `frontend1` will be matched before `frontend2` (`10 > 5`).

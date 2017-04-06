@@ -418,6 +418,33 @@ func (server *Server) listenSignals() {
 	server.Stop()
 }
 
+func createClientTLSConfig(tlsOption *TLS) (*tls.Config, error) {
+	if tlsOption == nil {
+		return nil, errors.New("no TLS provided")
+	}
+
+	config, err := tlsOption.Certificates.CreateTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(tlsOption.ClientCAFiles) > 0 {
+		pool := x509.NewCertPool()
+		for _, caFile := range tlsOption.ClientCAFiles {
+			data, err := ioutil.ReadFile(caFile)
+			if err != nil {
+				return nil, err
+			}
+			if !pool.AppendCertsFromPEM(data) {
+				return nil, errors.New("invalid certificate(s) in " + caFile)
+			}
+		}
+		config.RootCAs = pool
+	}
+	config.BuildNameToCertificate()
+	return config, nil
+}
+
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI
 func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, router *middlewares.HandlerSwitcher) (*tls.Config, error) {
 	if tlsOption == nil {
@@ -500,6 +527,7 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 			}
 		}
 	}
+
 	return config, nil
 }
 
@@ -549,6 +577,17 @@ func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) 
 	return serverEntryPoints
 }
 
+// clientTLSRoundTripper is used for forwarding client authentication to
+// backend server
+func clientTLSRoundTripper(config *tls.Config) http.RoundTripper {
+	if config == nil {
+		return http.DefaultTransport
+	}
+	return &http.Transport{
+		TLSClientConfig: config,
+	}
+}
+
 // LoadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
 func (server *Server) loadConfig(configurations configs, globalConfiguration GlobalConfiguration) (map[string]*serverEntryPoint, error) {
@@ -565,12 +604,6 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 			log.Debugf("Creating frontend %s", frontendName)
 
-			fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
-			if err != nil {
-				log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
-				log.Errorf("Skipping frontend %s...", frontendName)
-				continue frontend
-			}
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
 				log.Errorf("Skipping frontend %s...", frontendName)
@@ -618,6 +651,31 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				}
 				if backends[entryPointName+frontend.Backend] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
+
+					var (
+						tlsConfig *tls.Config
+						err       error
+						lb        http.Handler
+					)
+
+					if frontend.PassTLSCert {
+						tlsConfig, err = createClientTLSConfig(entryPoint.TLS)
+						if err != nil {
+							log.Errorf("Failed to create TLS config for frontend %s: %v", frontendName, err)
+							continue frontend
+						}
+					}
+
+					// passing nil will use the roundtripper http.DefaultTransport
+					rt := clientTLSRoundTripper(tlsConfig)
+
+					fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader), forward.RoundTripper(rt))
+					if err != nil {
+						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
+
 					var rr *roundrobin.RoundRobin
 					var saveFrontend http.Handler
 					if server.accessLoggerMiddleware != nil {
@@ -627,6 +685,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					} else {
 						rr, _ = roundrobin.New(fwd)
 					}
+
 					if configuration.Backends[frontend.Backend] == nil {
 						log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
 						log.Errorf("Skipping frontend %s...", frontendName)
@@ -648,7 +707,6 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						sticky = roundrobin.NewStickySession(cookiename)
 					}
 
-					var lb http.Handler
 					switch lbMethod {
 					case types.Drr:
 						log.Debugf("Creating load-balancer drr")
