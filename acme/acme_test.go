@@ -67,6 +67,25 @@ func TestDomainsSetAppend(t *testing.T) {
 	}
 }
 
+func TestDomainIgnoreFilter(t *testing.T) {
+	a := ACME{}
+	a.IgnoreFilters.Set(`.*\.?[^f][^o][^o]\.domain\.tld,bar\.domain2\.tld`)
+	// bar\.domain2\.tld filter domains that are like bar.domain.tld
+	if !a.isDomainFiltered("bar.domain2.tld") {
+		t.Error("bar.domain.tld should have been filtered")
+	}
+	if a.isDomainFiltered("aar.domain2.tld") {
+		t.Error("aar.domain.tld should not have been filtered")
+	}
+	// .*\.?[^f][^o][^o]\.domain\.tld filter domains that are not *.foo.domain.tld
+	if !a.isDomainFiltered("bar.domain.tld") {
+		t.Error("bar.domain.tld should have been filtered")
+	}
+	if a.isDomainFiltered("foo.domain.tld") {
+		t.Error("foo.domain.tld should not have been filtered")
+	}
+}
+
 func TestCertificatesRenew(t *testing.T) {
 	foo1Cert, foo1Key, _ := generateKeyPair("foo1.com", time.Now())
 	foo2Cert, foo2Key, _ := generateKeyPair("foo2.com", time.Now())
