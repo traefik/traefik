@@ -315,15 +315,16 @@ func (server *Server) postLoadConfig() {
 			for _, frontend := range configuration.Frontends {
 
 				// check if one of the frontend entrypoints is configured with TLS
-				TLSEnabled := false
+				// and is configured with ACME
+				ACMEEnabled := false
 				for _, entrypoint := range frontend.EntryPoints {
-					if server.globalConfiguration.EntryPoints[entrypoint].TLS != nil {
-						TLSEnabled = true
+					if server.globalConfiguration.ACME.EntryPoint == entrypoint && server.globalConfiguration.EntryPoints[entrypoint].TLS != nil {
+						ACMEEnabled = true
 						break
 					}
 				}
 
-				if TLSEnabled {
+				if ACMEEnabled {
 					for _, route := range frontend.Routes {
 						rules := Rules{}
 						domains, err := rules.ParseDomains(route.Rule)
