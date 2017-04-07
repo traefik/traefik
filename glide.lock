@@ -1,5 +1,5 @@
-hash: 8349c21c53c639aa79752c4e4b07e323ddb4f05be783564d7de687afbb6f2d67
-updated: 2017-04-07T10:06:47.901457262+01:00
+hash: fa4c40400ed94e105a9a1a0d163ac9c4ecea4598ad4ee4fef5237a39d4f28d0a
+updated: 2017-04-07T10:50:34.091189379+01:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -53,17 +53,16 @@ imports:
   - service/route53
   - service/sts
 - name: github.com/Azure/azure-sdk-for-go
-  version: 1620af6b32398bfc91827ceae54a8cc1f55df04d
+  version: 088007b3b08cc02b27f2eadfdcd870958460ce7e
   subpackages:
   - arm/dns
 - name: github.com/Azure/go-autorest
-  version: 32cc2321122a649b7ba4e323527bcb145134fd47
+  version: a2fdd780c9a50455cecd249b00bdc3eb73a78e31
   subpackages:
   - autorest
   - autorest/azure
   - autorest/date
   - autorest/to
-  - autorest/validation
 - name: github.com/beorn7/perks
   version: b965b613227fddccbfffe13eae360ed3fa822f8d
   subpackages:
@@ -129,6 +128,10 @@ imports:
   version: f6b1d56f1c048bd94d7e42ac36efb4d57b069b6f
 - name: github.com/dgrijalva/jwt-go
   version: 9ed569b5d1ac936e6494082958d63a6aa4fff99a
+- name: github.com/dnsimple/dnsimple-go
+  version: 5a5b427618a76f9eed5ede0f3e6306fbd9311d2e
+  subpackages:
+  - dnsimple
 - name: github.com/docker/distribution
   version: 325b0804fef3a66309d962357aac3c2ce3f4d329
   subpackages:
@@ -415,12 +418,8 @@ imports:
   - plugin
   - plugin/rewrite
   - router
-- name: github.com/weppos/dnsimple-go
-  version: 65c1ca73cb19baf0f8b2b33219b7f57595a3ccb0
-  subpackages:
-  - dnsimple
 - name: github.com/xenolf/lego
-  version: ce8fb060cb8361a9ff8b5fb7c2347fa907b6fcac
+  version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
   subpackages:
   - acme
   - providers/dns

@@ -60,7 +60,7 @@ import:
   subpackages:
   - plugin/rewrite
 - package: github.com/xenolf/lego
-  version: ce8fb060cb8361a9ff8b5fb7c2347fa907b6fcac
+  version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
   subpackages:
   - acme
 - package: gopkg.in/fsnotify.v1

@@ -183,6 +183,16 @@ func WithBaseURL(baseURL string) PrepareDecorator {
 	}
 }
 
+// WithCustomBaseURL returns a PrepareDecorator that replaces brace-enclosed keys within the
+// request base URL (i.e., http.Request.URL) with the corresponding values from the passed map.
+func WithCustomBaseURL(baseURL string, urlParameters map[string]interface{}) PrepareDecorator {
+	parameters := ensureValueStrings(urlParameters)
+	for key, value := range parameters {
+		baseURL = strings.Replace(baseURL, "{"+key+"}", value, -1)
+	}
+	return WithBaseURL(baseURL)
+}
+
 // WithFormData returns a PrepareDecoratore that "URL encodes" (e.g., bar=baz&foo=quux) into the
 // http.Request body.
 func WithFormData(v url.Values) PrepareDecorator {
