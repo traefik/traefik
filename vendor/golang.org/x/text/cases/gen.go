@@ -76,7 +76,7 @@ type breakCategory int
 const (
 	breakBreak breakCategory = iota
 	breakLetter
-	breakMid
+	breakIgnored
 )
 
 // mapping returns the case mapping for the given case type.
@@ -162,14 +162,9 @@ func parseUCD() []runeInfo {
 
 		// We collapse the word breaking properties onto the categories we need.
 		switch p.String(1) { // TODO: officially we need to canonicalize.
-		case "MidLetter", "MidNumLet", "Single_Quote":
-			ri.BreakCat = breakMid
-			if !ri.CaseIgnorable {
-				// finalSigma relies on the fact that all breakMid runes are
-				// also a Case_Ignorable. Revisit this code when this changes.
-				log.Fatalf("Rune %U, which has a break category mid, is not a case ignorable", ri)
-			}
-		case "ALetter", "Hebrew_Letter", "Numeric", "Extend", "ExtendNumLet", "Format", "ZWJ":
+		case "Format", "MidLetter", "MidNumLet", "Single_Quote":
+			ri.BreakCat = breakIgnored
+		case "ALetter", "Hebrew_Letter", "Numeric", "Extend", "ExtendNumLet":
 			ri.BreakCat = breakLetter
 		}
 	})
@@ -245,11 +240,8 @@ func makeEntry(ri *runeInfo) {
 	case above: // Above
 		ccc = cccAbove
 	}
-	switch ri.BreakCat {
-	case breakBreak:
+	if ri.BreakCat == breakBreak {
 		ccc = cccBreak
-	case breakMid:
-		ri.entry |= isMidBit
 	}
 
 	ri.entry |= ccc
@@ -698,7 +690,7 @@ func genTablesTest() {
 	parse("auxiliary/WordBreakProperty.txt", func(p *ucd.Parser) {
 		switch p.String(1) {
 		case "Extend", "Format", "MidLetter", "MidNumLet", "Single_Quote",
-			"ALetter", "Hebrew_Letter", "Numeric", "ExtendNumLet", "ZWJ":
+			"ALetter", "Hebrew_Letter", "Numeric", "ExtendNumLet":
 			notBreak[p.Rune(0)] = true
 		}
 	})

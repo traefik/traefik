@@ -89,7 +89,7 @@ import:
 - package: github.com/satori/go.uuid
   version: ^1.1.0
 - package: k8s.io/client-go
-  version: ^v1.5.0
+  version: v2.0.0
 - package: github.com/gambol99/go-marathon
   version: ^0.5.1
 - package: github.com/ArthurHlt/go-eureka-client
@@ -131,7 +131,7 @@ import:
   - service/ec2
   - service/ecs
 - package: cloud.google.com/go
-  version: v0.6.0
+  version: v0.7.0
   subpackages:
   - compute/metadata
 - package: github.com/gogo/protobuf
@@ -140,3 +140,9 @@ import:
   - proto
 - package: github.com/rancher/go-rancher
   version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e
+- package: golang.org/x/oauth2/google
+  version: 7fdf09982454086d5570c7db3e11f360194830ca
+- package: github.com/googleapis/gax-go
+  version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
+- package: google.golang.org/grpc
+  version: v1.2.0
