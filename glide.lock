@@ -1,5 +1,5 @@
 hash: 8349c21c53c639aa79752c4e4b07e323ddb4f05be783564d7de687afbb6f2d67
-updated: 2017-03-28T22:35:17.448681338+02:00
+updated: 2017-04-07T10:06:47.901457262+01:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -69,7 +69,7 @@ imports:
   subpackages:
   - quantile
 - name: github.com/blang/semver
-  version: 3a37c301dda64cbe17f16f661b4c976803c0e2d2
+  version: 31b736133b98f26d5e078ec9eb591666edfd091f
 - name: github.com/boltdb/bolt
   version: 5cc10bbbc5c141029940133bb33c9e969512a698
 - name: github.com/BurntSushi/toml
@@ -101,7 +101,7 @@ imports:
   - pkg/pathutil
   - pkg/types
 - name: github.com/coreos/go-oidc
-  version: 9e117111587506b9dc83b7b38263268bf48352ea
+  version: 5644a2f50e2d2d5ba0b474bc5bc55fea1925936d
   subpackages:
   - http
   - jose
@@ -198,7 +198,7 @@ imports:
 - name: github.com/gambol99/go-marathon
   version: 6b00a5b651b1beb2c6821863f7c60df490bd46c8
 - name: github.com/ghodss/yaml
-  version: 04f313413ffd65ce25f2541bfd2b2ceec5c0908c
+  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
   version: 6f66b0e091edb3c7b380f7c4f0f884274d550b67
 - name: github.com/go-kit/kit
@@ -208,13 +208,13 @@ imports:
   - metrics/internal/lv
   - metrics/prometheus
 - name: github.com/go-openapi/jsonpointer
-  version: 8d96a2dc61536b690bd36b2e9df0b3c0b62825b2
+  version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
 - name: github.com/go-openapi/jsonreference
-  version: 36d33bfe519efae5632669801b180bf1a245da3b
+  version: 13c6e3589ad90f49bd3e3bbe2c2cb3d7a4142272
 - name: github.com/go-openapi/spec
-  version: 34b5ffff717ab4535aef76e3dd90818bddde571b
+  version: 6aced65f8501fe1217321abf0749d354824ba2ff
 - name: github.com/go-openapi/swag
-  version: 96d7b9ebd181a1735a1c9ac87914f2b32fbf56c9
+  version: 1d0bd113de87027671077d3c71eb3ac5d7dbba72
 - name: github.com/gogo/protobuf
   version: 909568be09de550ed094403c2bf8a261b5bb730a
   subpackages:
@@ -235,7 +235,7 @@ imports:
   subpackages:
   - query
 - name: github.com/google/gofuzz
-  version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
+  version: bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5
 - name: github.com/gorilla/context
   version: 1ea25387ff6f684839d82767c1733ff4d4d15d0a
 - name: github.com/gorilla/websocket
@@ -266,7 +266,7 @@ imports:
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
 - name: github.com/mailru/easyjson
-  version: 9d6630dc8c577b56cb9687a9cf9e8578aca7298a
+  version: d5b7844b561a7bc640052f1b935f7b800330d7e0
   subpackages:
   - buffer
   - jlexer
@@ -320,7 +320,7 @@ imports:
   subpackages:
   - ovh
 - name: github.com/pborman/uuid
-  version: 5007efa264d92316c43112bc573e754bc889b7b1
+  version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - name: github.com/pkg/errors
   version: bfd5150e4e41705ded2129ec33379de1cb90b513
 - name: github.com/pmezard/go-difflib
@@ -344,7 +344,7 @@ imports:
 - name: github.com/prometheus/procfs
   version: 454a56f35412459b5e684fd5ec0f9211b94f002a
 - name: github.com/PuerkitoBio/purell
-  version: 0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4
+  version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/pyr/egoscale
@@ -479,7 +479,15 @@ imports:
   vcs: git
   subpackages:
   - .
+  - cases
+  - internal
+  - internal/tag
+  - language
+  - runes
+  - secure/bidirule
+  - secure/precis
   - transform
+  - unicode/bidi
   - unicode/norm
   - width
 - name: google.golang.org/api
