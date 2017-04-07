@@ -6,16 +6,16 @@ import (
 	"io/ioutil"
 	"time"
 
-	"k8s.io/client-go/1.5/kubernetes"
-	"k8s.io/client-go/1.5/pkg/api"
-	"k8s.io/client-go/1.5/pkg/api/v1"
-	"k8s.io/client-go/1.5/pkg/apis/extensions/v1beta1"
-	"k8s.io/client-go/1.5/pkg/fields"
-	"k8s.io/client-go/1.5/pkg/labels"
-	"k8s.io/client-go/1.5/pkg/runtime"
-	"k8s.io/client-go/1.5/pkg/watch"
-	"k8s.io/client-go/1.5/rest"
-	"k8s.io/client-go/1.5/tools/cache"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api"
+	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	"k8s.io/client-go/pkg/fields"
+	"k8s.io/client-go/pkg/labels"
+	"k8s.io/client-go/pkg/runtime"
+	"k8s.io/client-go/pkg/watch"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 )
 
 const resyncPeriod = time.Minute * 5
@@ -111,7 +111,7 @@ func (c *clientImpl) GetIngresses(namespaces Namespaces) []*v1beta1.Ingress {
 // WatchIngresses starts the watch of Kubernetes Ingresses resources and updates the corresponding store
 func (c *clientImpl) WatchIngresses(labelSelector labels.Selector, watchCh chan<- interface{}, stopCh <-chan struct{}) {
 	source := NewListWatchFromClient(
-		c.clientset.ExtensionsClient,
+		c.clientset.ExtensionsV1beta1().RESTClient(),
 		"ingresses",
 		api.NamespaceAll,
 		fields.Everything(),
@@ -157,7 +157,7 @@ func (c *clientImpl) GetService(namespace, name string) (*v1.Service, bool, erro
 // WatchServices starts the watch of Kubernetes Service resources and updates the corresponding store
 func (c *clientImpl) WatchServices(watchCh chan<- interface{}, stopCh <-chan struct{}) {
 	source := cache.NewListWatchFromClient(
-		c.clientset.CoreClient,
+		c.clientset.CoreV1().RESTClient(),
 		"services",
 		api.NamespaceAll,
 		fields.Everything())
@@ -186,7 +186,7 @@ func (c *clientImpl) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, 
 // WatchEndpoints starts the watch of Kubernetes Endpoints resources and updates the corresponding store
 func (c *clientImpl) WatchEndpoints(watchCh chan<- interface{}, stopCh <-chan struct{}) {
 	source := cache.NewListWatchFromClient(
-		c.clientset.CoreClient,
+		c.clientset.CoreV1().RESTClient(),
 		"endpoints",
 		api.NamespaceAll,
 		fields.Everything())

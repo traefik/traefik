@@ -73,7 +73,7 @@ func SendWithSender(s Sender, r *http.Request, decorators ...SendDecorator) (*ht
 func AfterDelay(d time.Duration) SendDecorator {
 	return func(s Sender) Sender {
 		return SenderFunc(func(r *http.Request) (*http.Response, error) {
-			if !DelayForBackoff(d, 1, r.Cancel) {
+			if !DelayForBackoff(d, 0, r.Cancel) {
 				return nil, fmt.Errorf("autorest: AfterDelay canceled before full delay")
 			}
 			return s.Do(r)
@@ -97,7 +97,7 @@ func DoCloseIfError() SendDecorator {
 		return SenderFunc(func(r *http.Request) (*http.Response, error) {
 			resp, err := s.Do(r)
 			if err != nil {
-				Respond(resp, ByClosing())
+				Respond(resp, ByDiscardingBody(), ByClosing())
 			}
 			return resp, err
 		})
@@ -156,6 +156,7 @@ func DoPollForStatusCodes(duration time.Duration, delay time.Duration, codes ...
 
 				for err == nil && ResponseHasStatusCode(resp, codes...) {
 					Respond(resp,
+						ByDiscardingBody(),
 						ByClosing())
 					resp, err = SendWithSender(s, r,
 						AfterDelay(GetRetryAfter(resp, delay)))
@@ -257,6 +258,8 @@ func WithLogging(logger *log.Logger) SendDecorator {
 // passed attempt (i.e., an exponential backoff delay). Backoff duration is in seconds and can set
 // to zero for no delay. The delay may be canceled by closing the passed channel. If terminated early,
 // returns false.
+// Note: Passing attempt 1 will result in doubling "backoff" duration. Treat this as a zero-based attempt
+// count.
 func DelayForBackoff(backoff time.Duration, attempt int, cancel <-chan struct{}) bool {
 	select {
 	case <-time.After(time.Duration(backoff.Seconds()*math.Pow(2, float64(attempt))) * time.Second):

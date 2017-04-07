@@ -8,6 +8,7 @@ package internal
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -57,7 +58,32 @@ func WithContext(parent netcontext.Context, req *http.Request) netcontext.Contex
 	return withContext(parent, c)
 }
 
+type testingContext struct {
+	appengine.Context
+
+	req *http.Request
+}
+
+func (t *testingContext) FullyQualifiedAppID() string { return "dev~testcontext" }
+func (t *testingContext) Call(service, method string, _, _ appengine_internal.ProtoMessage, _ *appengine_internal.CallOptions) error {
+	if service == "__go__" && method == "GetNamespace" {
+		return nil
+	}
+	return fmt.Errorf("testingContext: unsupported Call")
+}
+func (t *testingContext) Request() interface{} { return t.req }
+
+func ContextForTesting(req *http.Request) netcontext.Context {
+	return withContext(netcontext.Background(), &testingContext{req: req})
+}
+
 func Call(ctx netcontext.Context, service, method string, in, out proto.Message) error {
+	if ns := NamespaceFromContext(ctx); ns != "" {
+		if fn, ok := NamespaceMods[service]; ok {
+			fn(in, ns)
+		}
+	}
+
 	if f, ctx, ok := callOverrideFromContext(ctx); ok {
 		return f(ctx, service, method, in, out)
 	}

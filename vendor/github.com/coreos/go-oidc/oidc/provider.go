@@ -567,7 +567,7 @@ func (n *pcsStepNext) step(fn pcsStepFunc) (next pcsStepper) {
 		next = &pcsStepNext{aft: ttl}
 	} else {
 		next = &pcsStepRetry{aft: time.Second}
-		log.Printf("go-oidc: provider config sync failed, retrying in %v: %v", next.after(), err)
+		log.Printf("go-oidc: provider config sync falied, retyring in %v: %v", next.after(), err)
 	}
 	return
 }
@@ -586,7 +586,7 @@ func (r *pcsStepRetry) step(fn pcsStepFunc) (next pcsStepper) {
 		next = &pcsStepNext{aft: ttl}
 	} else {
 		next = &pcsStepRetry{aft: timeutil.ExpBackoff(r.aft, time.Minute)}
-		log.Printf("go-oidc: provider config sync failed, retrying in %v: %v", next.after(), err)
+		log.Printf("go-oidc: provider config sync falied, retyring in %v: %v", next.after(), err)
 	}
 	return
 }

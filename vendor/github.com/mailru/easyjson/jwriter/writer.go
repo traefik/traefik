@@ -2,7 +2,6 @@
 package jwriter
 
 import (
-	"encoding/base64"
 	"io"
 	"strconv"
 	"unicode/utf8"
@@ -10,19 +9,8 @@ import (
 	"github.com/mailru/easyjson/buffer"
 )
 
-// Flags describe various encoding options. The behavior may be actually implemented in the encoder, but
-// Flags field in Writer is used to set and pass them around.
-type Flags int
-
-const (
-	NilMapAsEmpty   Flags = 1 << iota // Encode nil map as '{}' rather than 'null'.
-	NilSliceAsEmpty                   // Encode nil slice as '[]' rather than 'null'.
-)
-
 // Writer is a JSON writer.
 type Writer struct {
-	Flags Flags
-
 	Error  error
 	Buffer buffer.Buffer
 }
@@ -69,19 +57,6 @@ func (w *Writer) Raw(data []byte, err error) {
 	default:
 		w.RawString("null")
 	}
-}
-
-// Base64Bytes appends data to the buffer after base64 encoding it
-func (w *Writer) Base64Bytes(data []byte) {
-	if data == nil {
-		w.Buffer.AppendString("null")
-		return
-	}
-	w.Buffer.AppendByte('"')
-	dst := make([]byte, base64.StdEncoding.EncodedLen(len(data)))
-	base64.StdEncoding.Encode(dst, data)
-	w.Buffer.AppendBytes(dst)
-	w.Buffer.AppendByte('"')
 }
 
 func (w *Writer) Uint8(n uint8) {
@@ -225,12 +200,6 @@ func (w *Writer) Bool(v bool) {
 
 const chars = "0123456789abcdef"
 
-func isNotEscapedSingleChar(c byte) bool {
-	// Note: might make sense to use a table if there are more chars to escape. With 4 chars
-	// it benchmarks the same.
-	return c != '<' && c != '\\' && c != '"' && c != '>' && c >= 0x20 && c < utf8.RuneSelf
-}
-
 func (w *Writer) String(s string) {
 	w.Buffer.AppendByte('"')
 
@@ -240,32 +209,39 @@ func (w *Writer) String(s string) {
 	p := 0 // last non-escape symbol
 
 	for i := 0; i < len(s); {
-		c := s[i]
-
-		if isNotEscapedSingleChar(c) {
-			// single-width character, no escaping is required
-			i++
-			continue
-		} else if c < utf8.RuneSelf {
-			// single-with character, need to escape
-			w.Buffer.AppendString(s[p:i])
+		// single-with character
+		if c := s[i]; c < utf8.RuneSelf {
+			var escape byte
 			switch c {
 			case '\t':
-				w.Buffer.AppendString(`\t`)
+				escape = 't'
 			case '\r':
-				w.Buffer.AppendString(`\r`)
+				escape = 'r'
 			case '\n':
-				w.Buffer.AppendString(`\n`)
+				escape = 'n'
 			case '\\':
-				w.Buffer.AppendString(`\\`)
+				escape = '\\'
 			case '"':
-				w.Buffer.AppendString(`\"`)
+				escape = '"'
+			case '<', '>':
+				// do nothing
 			default:
+				if c >= 0x20 {
+					// no escaping is required
+					i++
+					continue
+				}
+			}
+			if escape != 0 {
+				w.Buffer.AppendString(s[p:i])
+				w.Buffer.AppendByte('\\')
+				w.Buffer.AppendByte(escape)
+			} else {
+				w.Buffer.AppendString(s[p:i])
 				w.Buffer.AppendString(`\u00`)
 				w.Buffer.AppendByte(chars[c>>4])
 				w.Buffer.AppendByte(chars[c&0xf])
 			}
-
 			i++
 			p = i
 			continue

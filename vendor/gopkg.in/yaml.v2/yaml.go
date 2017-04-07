@@ -117,11 +117,12 @@ func Unmarshal(in []byte, out interface{}) (err error) {
 //                  Does not apply to zero valued structs.
 //
 //     flow         Marshal using a flow style (useful for structs,
-//                  sequences and maps.
+//                  sequences and maps).
 //
-//     inline       Inline the struct it's applied to, so its fields
-//                  are processed as if they were part of the outer
-//                  struct.
+//     inline       Inline the field, which must be a struct or a map,
+//                  causing all of its fields or keys to be processed as if
+//                  they were part of the outer struct. For maps, keys must
+//                  not conflict with the yaml keys of other struct fields.
 //
 // In addition, if the key is "-", the field is ignored.
 //
@@ -255,15 +256,14 @@ func getStructInfo(st reflect.Type) (*structInfo, error) {
 
 		if inline {
 			switch field.Type.Kind() {
-			// TODO: Implement support for inline maps.
-			//case reflect.Map:
-			//	if inlineMap >= 0 {
-			//		return nil, errors.New("Multiple ,inline maps in struct " + st.String())
-			//	}
-			//	if field.Type.Key() != reflect.TypeOf("") {
-			//		return nil, errors.New("Option ,inline needs a map with string keys in struct " + st.String())
-			//	}
-			//	inlineMap = info.Num
+			case reflect.Map:
+				if inlineMap >= 0 {
+					return nil, errors.New("Multiple ,inline maps in struct " + st.String())
+				}
+				if field.Type.Key() != reflect.TypeOf("") {
+					return nil, errors.New("Option ,inline needs a map with string keys in struct " + st.String())
+				}
+				inlineMap = info.Num
 			case reflect.Struct:
 				sinfo, err := getStructInfo(field.Type)
 				if err != nil {
@@ -324,13 +324,15 @@ func isZero(v reflect.Value) bool {
 		return v.Len() == 0
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return v.Int() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		return v.Uint() == 0
 	case reflect.Bool:
 		return !v.Bool()
 	case reflect.Struct:
 		vt := v.Type()
-		for i := v.NumField()-1; i >= 0; i-- {
+		for i := v.NumField() - 1; i >= 0; i-- {
 			if vt.Field(i).PkgPath != "" {
 				continue // Private field
 			}

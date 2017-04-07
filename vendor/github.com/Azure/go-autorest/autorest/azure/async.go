@@ -3,12 +3,13 @@ package azure
 import (
 	"bytes"
 	"fmt"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/date"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/go-autorest/autorest/date"
 )
 
 const (

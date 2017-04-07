@@ -15,8 +15,8 @@ import (
 	"github.com/containous/traefik/provider/k8s"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"k8s.io/client-go/1.5/pkg/api/v1"
-	"k8s.io/client-go/1.5/pkg/util/intstr"
+	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/util/intstr"
 )
 
 var _ Provider = (*Kubernetes)(nil)

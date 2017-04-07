@@ -82,20 +82,5 @@ func Logf(ctx netcontext.Context, level int64, format string, args ...interface{
 
 // NamespacedContext wraps a Context to support namespaces.
 func NamespacedContext(ctx netcontext.Context, namespace string) netcontext.Context {
-	n := &namespacedContext{
-		namespace: namespace,
-	}
-	return withNamespace(WithCallOverride(ctx, n.call), namespace)
-}
-
-type namespacedContext struct {
-	namespace string
-}
-
-func (n *namespacedContext) call(ctx netcontext.Context, service, method string, in, out proto.Message) error {
-	// Apply any namespace mods.
-	if mod, ok := NamespaceMods[service]; ok {
-		mod(in, n.namespace)
-	}
-	return Call(ctx, service, method, in, out)
+	return withNamespace(ctx, namespace)
 }
