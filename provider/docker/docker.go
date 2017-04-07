@@ -523,6 +523,11 @@ func (p *Provider) containerFilter(container dockerData) bool {
 		return false
 	}
 
+	if len(p.getFrontendRule(container)) == 0 {
+		log.Debugf("Filtering container with empty frontend rule %s", container.Name)
+		return false
+	}
+
 	return true
 }
 
@@ -537,11 +542,10 @@ func (p *Provider) getFrontendRule(container dockerData) string {
 	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
 	}
-	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
-		return "Host:" + p.getSubDomain(labels["com.docker.compose.service"]+"."+labels["com.docker.compose.project"]) + "." + p.Domain
+	if len(p.Domain) > 0 {
+		return "Host:" + p.getSubDomain(container.ServiceName) + "." + p.Domain
 	}
-
-	return "Host:" + p.getSubDomain(container.ServiceName) + "." + p.Domain
+	return ""
 }
 
 func (p *Provider) getBackend(container dockerData) string {

@@ -503,86 +503,122 @@ func TestSwarmGetLabels(t *testing.T) {
 
 func TestSwarmTraefikFilter(t *testing.T) {
 	services := []struct {
-		service          swarm.Service
-		exposedByDefault bool
-		expected         bool
-		networks         map[string]*docker.NetworkResource
+		service  swarm.Service
+		expected bool
+		networks map[string]*docker.NetworkResource
+		provider *Provider
 	}{
 		{
-			service:          swarmService(),
-			exposedByDefault: true,
-			expected:         false,
-			networks:         map[string]*docker.NetworkResource{},
+			service:  swarmService(),
+			expected: false,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.enable": "false",
 				"traefik.port":   "80",
 			})),
-			exposedByDefault: true,
-			expected:         false,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: false,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.frontend.rule": "Host:foo.bar",
 				"traefik.port":          "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.port": "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.enable": "true",
 				"traefik.port":   "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.enable": "anything",
 				"traefik.port":   "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.frontend.rule": "Host:foo.bar",
 				"traefik.port":          "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.port": "80",
 			})),
-			exposedByDefault: false,
-			expected:         false,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: false,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.enable": "true",
 				"traefik.port":   "80",
 			})),
-			exposedByDefault: false,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
 		},
 	}
 
@@ -591,11 +627,7 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
-			provider := &Provider{
-				SwarmMode: true,
-			}
-			provider.ExposedByDefault = e.exposedByDefault
-			actual := provider.containerFilter(dockerData)
+			actual := e.provider.containerFilter(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %v for %+v, got %+v", e.expected, e, actual)
 			}
