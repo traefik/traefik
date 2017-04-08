@@ -30,6 +30,9 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	kitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/go-kit/kit/metrics/prometheus"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/streamrail/concurrent-map"
 	"github.com/vulcand/oxy/cbreaker"
 	"github.com/vulcand/oxy/connlimit"
@@ -48,6 +51,7 @@ type Server struct {
 	signals                    chan os.Signal
 	stopChan                   chan bool
 	providers                  []provider.Provider
+	backendReloadCounter       kitmetrics.Counter
 	currentConfigurations      safe.Safe
 	globalConfiguration        GlobalConfiguration
 	loggerMiddleware           *middlewares.Logger
@@ -88,6 +92,13 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 		// leadership creation if cluster mode
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
 	}
+	server.backendReloadCounter = prometheus.NewCounterFrom(
+		stdprometheus.CounterOpts{
+			Name: "traefik_backend_reload_total",
+			Help: "How many backend requests, partitioned by state and type.",
+		},
+		[]string{"state", "type"},
+	)
 
 	return server
 }
@@ -219,17 +230,22 @@ func (server *Server) listenProviders(stop chan bool) {
 			return
 		case configMsg, ok := <-server.configurationChan:
 			if !ok {
+				server.backendReloadCounter.With("state", "failed", "type", configMsg.ProviderName).Add(1)
 				return
 			}
+			var labels []string
 			server.defaultConfigurationValues(configMsg.Configuration)
 			currentConfigurations := server.currentConfigurations.Get().(configs)
 			jsonConf, _ := json.Marshal(configMsg.Configuration)
 			log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
 			if configMsg.Configuration == nil || configMsg.Configuration.Backends == nil && configMsg.Configuration.Frontends == nil {
 				log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
+				labels = []string{"state", "failed", "type", configMsg.ProviderName}
 			} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 				log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
+				labels = []string{"state", "successful", "type", configMsg.ProviderName}
 			} else {
+				labels = []string{"state", "successful", "type", configMsg.ProviderName}
 				lastConfigs.Set(configMsg.ProviderName, &configMsg)
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
 				providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
@@ -252,6 +268,7 @@ func (server *Server) listenProviders(stop chan bool) {
 				}
 				lastReceivedConfiguration.Set(time.Now())
 			}
+			server.backendReloadCounter.With(labels...).Add(1)
 		}
 	}
 }
