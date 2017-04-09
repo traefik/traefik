@@ -30,7 +30,7 @@ type MetricsWrapper struct {
 	getName fn
 }
 
-// NewMetricsWrapper return a MetricsWrapper struct with
+// NewBackendMetricsWrapper return a MetricsWrapper struct with
 // a given Metrics implementation e.g Prometheuss
 func NewBackendMetricsWrapper(impl Metrics) *MetricsWrapper {
 
@@ -47,6 +47,8 @@ func NewBackendMetricsWrapper(impl Metrics) *MetricsWrapper {
 	return &metricsWrapper
 }
 
+// NewFrontendMetricsWrapper return a MetricsWrapper struct with
+// a given Metrics implementation e.g Prometheuss
 func NewFrontendMetricsWrapper(impl Metrics) *MetricsWrapper {
 
 	var f = func(r *http.Request) string {
