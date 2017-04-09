@@ -193,7 +193,7 @@ func (server *Server) startHTTPServers() {
 		serverMiddlewares := []negroni.Handler{server.loggerMiddleware, metrics}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
 			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
+				metricsMiddleware := middlewares.NewBackendMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
 				serverMiddlewares = append(serverMiddlewares, metricsMiddleware)
 			}
 		}
@@ -591,7 +591,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				log.Errorf("Skipping frontend %s...", frontendName)
 				continue frontend
 			}
-			saveBackend := middlewares.NewSaveBackend(fwd)
+
+			metricsMiddlewareBackend := middlewares.NewTransformer(fwd, middlewares.NewFrontendMetricsWrapper(middlewares.NewPrometheus(frontendName, server.globalConfiguration.Web.Metrics.Prometheus)))
+
+			saveBackend := middlewares.NewSaveBackend(metricsMiddlewareBackend)
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
 				log.Errorf("Skipping frontend %s...", frontendName)
@@ -750,7 +753,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						var negroni = negroni.New()
 						if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
 							if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-								metricsMiddlewareBackend := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
+								metricsMiddlewareBackend := middlewares.NewBackendMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
 								negroni.Use(metricsMiddlewareBackend)
 							}
 						}

@@ -42,19 +42,19 @@ func NewPrometheus(name string, config *types.Prometheus) *Prometheus {
 	m.reqsCounter = prometheus.NewCounterFrom(
 		stdprometheus.CounterOpts{
 			Name:        reqsName,
-			Help:        "How many HTTP requests processed, partitioned by status code, server and method.",
+			Help:        "How many HTTP requests processed, partitioned by type (frontend/backend), status code, name (route/server) and method.",
 			ConstLabels: stdprometheus.Labels{"service": name},
 		},
-		[]string{"code", "server", "method"},
+		[]string{"type", "code", "name", "method"},
 	)
 
 	m.reqsStatusCounter = prometheus.NewCounterFrom(
 		stdprometheus.CounterOpts{
 			Name:        reqsStatusName,
-			Help:        "How many HTTP requests processed, partitioned by state (successful/failing), server and method.",
+			Help:        "How many HTTP requests processed, partitioned by type (frontend/backend), state (successful/failing), name (route/server) and method.",
 			ConstLabels: stdprometheus.Labels{"service": name},
 		},
-		[]string{"state", "server", "method"},
+		[]string{"type", "state", "name", "method"},
 	)
 
 	var buckets []float64
