@@ -670,7 +670,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								}
 								backend2FrontendMap[url.String()] = frontendName
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight), roundrobin.Name(serverName)); err != nil {
 									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
 									log.Errorf("Skipping frontend %s...", frontendName)
 									continue frontend
@@ -703,7 +703,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								}
 								backend2FrontendMap[url.String()] = frontendName
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight), roundrobin.Name(serverName)); err != nil {
 									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
 									log.Errorf("Skipping frontend %s...", frontendName)
 									continue frontend

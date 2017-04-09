@@ -21,6 +21,16 @@ func Weight(w int) ServerOption {
 	}
 }
 
+func Name(n string) ServerOption {
+	return func(s *server) error {
+		if n == "" {
+			return fmt.Errorf("Name shouldn't be empty")
+		}
+		s.name = n
+		return nil
+	}
+}
+
 // ErrorHandler is a functional argument that sets error handler of the server
 func ErrorHandler(h utils.ErrorHandler) LBOption {
 	return func(s *RoundRobin) error {
@@ -89,7 +99,7 @@ func (r *RoundRobin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !stuck {
-		url, err := r.NextServer()
+		url, name, err := r.NextServer()
 		if err != nil {
 			r.errHandler.ServeHTTP(w, req, err)
 			return
@@ -98,17 +108,18 @@ func (r *RoundRobin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if r.ss != nil {
 			r.ss.StickBackend(url, &w)
 		}
+		newReq.Header.Set("X-OXY-NAME", name)
 		newReq.URL = url
 	}
 	r.next.ServeHTTP(w, &newReq)
 }
 
-func (r *RoundRobin) NextServer() (*url.URL, error) {
+func (r *RoundRobin) NextServer() (*url.URL, string, error) {
 	srv, err := r.nextServer()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return utils.CopyURL(srv.url), nil
+	return utils.CopyURL(srv.url), srv.name, nil
 }
 
 func (r *RoundRobin) nextServer() (*server, error) {
@@ -278,6 +289,7 @@ type server struct {
 	url *url.URL
 	// Relative weight for the enpoint to other enpoints in the load balancer
 	weight int
+	name   string
 }
 
 const defaultWeight = 1
@@ -292,6 +304,6 @@ type balancerHandler interface {
 	ServerWeight(u *url.URL) (int, bool)
 	RemoveServer(u *url.URL) error
 	UpsertServer(u *url.URL, options ...ServerOption) error
-	NextServer() (*url.URL, error)
+	NextServer() (*url.URL, string, error)
 	Next() http.Handler
 }

@@ -37,7 +37,7 @@ func (m *MetricsWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next
 	start := time.Now()
 	prw := &responseRecorder{rw, http.StatusOK}
 	next(prw, r)
-	labels := []string{"code", strconv.Itoa(prw.StatusCode()), "method", r.Method}
+	labels := []string{"code", strconv.Itoa(prw.StatusCode()), "method", r.Method, "server", r.Header.Get("X-OXY-NAME")}
 
 	var state string
 	if prw.StatusCode() < 400 {
@@ -46,7 +46,7 @@ func (m *MetricsWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next
 		state = "Failing"
 	}
 
-	labelsStatus := []string{"state", state, "method", r.Method}
+	labelsStatus := []string{"state", state, "method", r.Method, "server", r.Header.Get("X-OXY-NAME")}
 	m.Impl.getReqsCounter().With(labels...).Add(1)
 	m.Impl.getReqsStatusCounter().With(labelsStatus...).Add(1)
 	m.Impl.getLatencyHistogram().Observe(float64(time.Since(start).Seconds()))

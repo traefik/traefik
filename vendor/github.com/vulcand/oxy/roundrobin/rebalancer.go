@@ -165,7 +165,7 @@ func (rb *Rebalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !stuck {
-		url, err := rb.next.NextServer()
+		url, name, err := rb.next.NextServer()
 		if err != nil {
 			rb.errHandler.ServeHTTP(w, req, err)
 			return
@@ -175,6 +175,7 @@ func (rb *Rebalancer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			rb.ss.StickBackend(url, &w)
 		}
 
+		newReq.Header.Set("X-OXY-NAME", name)
 		newReq.URL = url
 	}
 	rb.next.Next().ServeHTTP(pw, &newReq)
