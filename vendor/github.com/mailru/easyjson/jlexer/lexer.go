@@ -5,7 +5,6 @@
 package jlexer
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io"
 	"reflect"
@@ -506,7 +505,7 @@ func (r *Lexer) SkipRecursive() {
 				return
 			}
 		case c == '\\' && inQuotes:
-			wasEscape = !wasEscape
+			wasEscape = true
 			continue
 		case c == '"' && inQuotes:
 			inQuotes = wasEscape
@@ -516,11 +515,7 @@ func (r *Lexer) SkipRecursive() {
 		wasEscape = false
 	}
 	r.pos = len(r.Data)
-	r.err = &LexerError{
-		Reason: "EOF reached while skipping array/object or token",
-		Offset: r.pos,
-		Data:   string(r.Data[r.pos:]),
-	}
+	r.err = io.EOF
 }
 
 // Raw fetches the next item recursively as a data slice
@@ -530,34 +525,6 @@ func (r *Lexer) Raw() []byte {
 		return nil
 	}
 	return r.Data[r.start:r.pos]
-}
-
-// IsStart returns whether the lexer is positioned at the start
-// of an input string.
-func (r *Lexer) IsStart() bool {
-	return r.pos == 0
-}
-
-// Consumed reads all remaining bytes from the input, publishing an error if
-// there is anything but whitespace remaining.
-func (r *Lexer) Consumed() {
-	if r.pos > len(r.Data) {
-		return
-	}
-
-	for _, c := range r.Data[r.pos:] {
-		if c != ' ' && c != '\t' && c != '\r' && c != '\n' {
-			r.err = &LexerError{
-				Reason: "invalid character '" + string(c) + "' after top-level value",
-				Offset: r.pos,
-				Data:   string(r.Data[r.pos:]),
-			}
-			return
-		}
-
-		r.pos++
-		r.start++
-	}
 }
 
 // UnsafeString returns the string value if the token is a string literal.
@@ -591,28 +558,6 @@ func (r *Lexer) String() string {
 	ret := string(r.token.byteValue)
 	r.consume()
 	return ret
-}
-
-// Bytes reads a string literal and base64 decodes it into a byte slice.
-func (r *Lexer) Bytes() []byte {
-	if r.token.kind == tokenUndef && r.Ok() {
-		r.fetchToken()
-	}
-	if !r.Ok() || r.token.kind != tokenString {
-		r.errInvalidToken("string")
-		return nil
-	}
-	ret := make([]byte, base64.StdEncoding.DecodedLen(len(r.token.byteValue)))
-	len, err := base64.StdEncoding.Decode(ret, r.token.byteValue)
-	if err != nil {
-		r.err = &LexerError{
-			Reason: err.Error(),
-		}
-		return nil
-	}
-
-	r.consume()
-	return ret[:len]
 }
 
 // Bool reads a true or false boolean keyword.

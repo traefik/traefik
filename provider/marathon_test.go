@@ -519,39 +519,19 @@ func TestMarathonTaskFilter(t *testing.T) {
 		{
 			task: marathon.Task{
 				AppID: "specify-port-number",
-				Ports: []int{80, 443},
+				Ports: []int{80},
 			},
 			applications: &marathon.Applications{
 				Apps: []marathon.Application{
 					{
-						ID:    "specify-port-number",
-						Ports: []int{80, 443},
-						Labels: &map[string]string{
-							"traefik.port": "80",
-						},
-					},
-				},
-			},
-			expected:         true,
-			exposedByDefault: true,
-		},
-		{
-			task: marathon.Task{
-				AppID: "specify-unknown-port-number",
-				Ports: []int{80, 443},
-			},
-			applications: &marathon.Applications{
-				Apps: []marathon.Application{
-					{
-						ID:    "specify-unknown-port-number",
-						Ports: []int{80, 443},
+						ID: "specify-port-number",
 						Labels: &map[string]string{
 							"traefik.port": "8080",
 						},
 					},
 				},
 			},
-			expected:         false,
+			expected:         true,
 			exposedByDefault: true,
 		},
 		{

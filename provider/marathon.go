@@ -235,22 +235,9 @@ func (provider *Marathon) taskFilter(task marathon.Task, applications *marathon.
 		}
 	}
 	if portValueLabel != "" {
-		port, err := strconv.Atoi((*application.Labels)["traefik.port"])
+		_, err := strconv.Atoi((*application.Labels)["traefik.port"])
 		if err != nil {
 			log.Debugf("Filtering marathon task %s with unexpected value for traefik.port label", task.AppID)
-			return false
-		}
-
-		var foundPort bool
-		for _, exposedPort := range ports {
-			if port == exposedPort {
-				foundPort = true
-				break
-			}
-		}
-
-		if !foundPort {
-			log.Debugf("Filtering marathon task %s without a matching port for traefik.port label", task.AppID)
 			return false
 		}
 	}
