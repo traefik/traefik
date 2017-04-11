@@ -1,5 +1,13 @@
 # Change Log
 
+## [v1.2.2](https://github.com/containous/traefik/tree/v1.2.2) (2017-04-11)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.2.1...v1.2.2)
+
+**Merged pull requests:**
+
+- Carry PR 1271 [\#1417](https://github.com/containous/traefik/pull/1417) ([emilevauge](https://github.com/emilevauge))
+- Fix postloadconfig acme & Docker filter empty rule [\#1401](https://github.com/containous/traefik/pull/1401) ([emilevauge](https://github.com/emilevauge))
+
 ## [v1.2.1](https://github.com/containous/traefik/tree/v1.2.1) (2017-03-27)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.2.0...v1.2.1)
 
