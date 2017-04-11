@@ -237,7 +237,7 @@ For example:
 [backends]
   [backends.backend1]
     [backends.backend1.loadbalancer]
-      sticky = true
+      sticky = "cookie"
 ```
 
 Healthcheck URL can be configured with a relative URL for `healthcheck.URL`.

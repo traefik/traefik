@@ -244,7 +244,6 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -257,7 +256,6 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -278,7 +276,6 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -505,7 +502,6 @@ func TestGetPassHostHeader(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -617,7 +613,6 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -806,7 +801,6 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -823,7 +817,6 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1050,7 +1043,6 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1067,7 +1059,6 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1080,7 +1071,6 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1197,7 +1187,6 @@ func TestHostlessIngress(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1290,7 +1279,7 @@ func TestServiceAnnotations(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"traefik.backend.circuitbreaker":      "",
-					"traefik.backend.loadbalancer.sticky": "true",
+					"traefik.backend.loadbalancer.sticky": "cookie",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1404,7 +1393,6 @@ func TestServiceAnnotations(t *testing.T) {
 				},
 				LoadBalancer: &types.LoadBalancer{
 					Method: "drr",
-					Sticky: false,
 				},
 			},
 			"bar": {
@@ -1421,7 +1409,7 @@ func TestServiceAnnotations(t *testing.T) {
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
-					Sticky: true,
+					Sticky: "cookie",
 				},
 			},
 		},
@@ -1592,7 +1580,6 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1605,7 +1592,6 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1725,7 +1711,6 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},

@@ -142,7 +142,7 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
 						Servers: make(map[string]types.Server),
 						LoadBalancer: &types.LoadBalancer{
-							Sticky: false,
+							Sticky: "false",
 							Method: "wrr",
 						},
 					}
@@ -212,9 +212,12 @@ func (provider *Kubernetes) loadIngresses(k8sClient k8s.Client) (*types.Configur
 				if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
-				if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
-					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
+
+				stickyType := service.Annotations["traefik.backend.loadbalancer.sticky"]
+				if stickyType == "true" {
+					stickyType = "cookie"
 				}
+				templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = stickyType
 
 				protocol := "http"
 				for _, port := range service.Spec.Ports {

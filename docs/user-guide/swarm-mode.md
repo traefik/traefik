@@ -126,11 +126,11 @@ docker-machine ssh manager "docker service create \
 	--name whoami1 \
 	--label traefik.port=80 \
 	--network traefik-net \
-	--label traefik.backend.loadbalancer.sticky=true \
+	--label traefik.backend.loadbalancer.sticky=cookie \
 	emilevauge/whoami"
 ```
 
-Note that we set whoami1 to use sticky sessions (`--label traefik.backend.loadbalancer.sticky=true`).  We'll demonstrate that later.
+Note that we set whoami1 to use sticky sessions (`--label traefik.backend.loadbalancer.sticky=cookie`).  We'll demonstrate that later.
 If using `docker stack deploy`, there is [a specific way that the labels must be defined in the docker-compose file](https://github.com/containous/traefik/issues/994#issuecomment-269095109).
 
 Check that everything is scheduled and started:

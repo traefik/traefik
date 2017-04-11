@@ -1160,6 +1160,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
+						Sticky: "false",
 					},
 					MaxConn: &types.MaxConn{
 						Amount:        1000,

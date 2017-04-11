@@ -8,7 +8,7 @@
     {{if hasLoadBalancerLabel $backend}}
     [backends.backend-{{$backendName}}.loadbalancer]
       method = "{{getLoadBalancerMethod $backend}}"
-      sticky = {{getSticky $backend}}
+      sticky = "{{getSticky $backend}}"
     {{end}}
 
     {{if hasMaxConnLabels $backend}}

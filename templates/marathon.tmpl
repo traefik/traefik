@@ -14,7 +14,7 @@
 {{ if hasLoadBalancerLabels . }}
       [backends."backend{{getFrontendBackend . }}".loadbalancer]
         method = "{{getLoadBalancerMethod . }}"
-        sticky = {{getSticky .}}
+        sticky = "{{getSticky .}}"
 {{end}}
 {{ if hasCircuitBreakerLabels . }}
       [backends."backend{{getFrontendBackend . }}".circuitbreaker]

@@ -594,8 +594,11 @@ func (provider *Docker) getWeight(container dockerData) string {
 }
 
 func (provider *Docker) getSticky(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.loadbalancer.sticky"); err == nil {
-		return label
+	if sticky, err := getLabel(container, "traefik.backend.loadbalancer.sticky"); err == nil {
+		if sticky == "true" {
+			return "cookie"
+		}
+		return sticky
 	}
 	return "false"
 }
