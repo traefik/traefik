@@ -5,7 +5,10 @@
 
 package github
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // LicensesService handles communication with the license related
 // methods of the GitHub API.
@@ -58,7 +61,7 @@ func (l License) String() string {
 // List popular open source licenses.
 //
 // GitHub API docs: https://developer.github.com/v3/licenses/#list-all-licenses
-func (s *LicensesService) List() ([]*License, *Response, error) {
+func (s *LicensesService) List(ctx context.Context) ([]*License, *Response, error) {
 	req, err := s.client.NewRequest("GET", "licenses", nil)
 	if err != nil {
 		return nil, nil, err
@@ -67,19 +70,19 @@ func (s *LicensesService) List() ([]*License, *Response, error) {
 	// TODO: remove custom Accept header when this API fully launches
 	req.Header.Set("Accept", mediaTypeLicensesPreview)
 
-	licenses := new([]*License)
-	resp, err := s.client.Do(req, licenses)
+	var licenses []*License
+	resp, err := s.client.Do(ctx, req, &licenses)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return *licenses, resp, err
+	return licenses, resp, nil
 }
 
 // Get extended metadata for one license.
 //
 // GitHub API docs: https://developer.github.com/v3/licenses/#get-an-individual-license
-func (s *LicensesService) Get(licenseName string) (*License, *Response, error) {
+func (s *LicensesService) Get(ctx context.Context, licenseName string) (*License, *Response, error) {
 	u := fmt.Sprintf("licenses/%s", licenseName)
 
 	req, err := s.client.NewRequest("GET", u, nil)
@@ -91,10 +94,10 @@ func (s *LicensesService) Get(licenseName string) (*License, *Response, error) {
 	req.Header.Set("Accept", mediaTypeLicensesPreview)
 
 	license := new(License)
-	resp, err := s.client.Do(req, license)
+	resp, err := s.client.Do(ctx, req, license)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return license, resp, err
+	return license, resp, nil
 }

@@ -48,9 +48,8 @@ func (s *UsersService) Get(username string) (*account.User, *http.Response, erro
 			if err.(*Error).Message == "Unknown user" {
 				return nil, resp, ErrUserMissing
 			}
-		default:
-			return nil, resp, err
 		}
+		return nil, resp, err
 	}
 
 	return &u, resp, nil
@@ -73,9 +72,8 @@ func (s *UsersService) Create(u *account.User) (*http.Response, error) {
 			if err.(*Error).Message == "request failed:Login Name is already in use." {
 				return resp, ErrUserExists
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -100,9 +98,8 @@ func (s *UsersService) Update(u *account.User) (*http.Response, error) {
 			if err.(*Error).Message == "Unknown user" {
 				return resp, ErrUserMissing
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -126,9 +123,8 @@ func (s *UsersService) Delete(username string) (*http.Response, error) {
 			if err.(*Error).Message == "Unknown user" {
 				return resp, ErrUserMissing
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -136,7 +132,7 @@ func (s *UsersService) Delete(username string) (*http.Response, error) {
 
 var (
 	// ErrUserExists bundles PUT create error.
-	ErrUserExists = errors.New("User already exists.")
+	ErrUserExists = errors.New("user already exists")
 	// ErrUserMissing bundles GET/POST/DELETE error.
-	ErrUserMissing = errors.New("User does not exist.")
+	ErrUserMissing = errors.New("user does not exist")
 )

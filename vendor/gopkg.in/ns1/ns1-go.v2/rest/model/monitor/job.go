@@ -19,10 +19,10 @@ type Job struct {
 	Config Config `json:"config"`
 
 	// The current status of the monitor.
-	Status map[string]Status `json:"status,omitempty"`
+	Status map[string]*Status `json:"status,omitempty"`
 
 	// Rules for determining failure conditions.
-	Rules []*Rule `json:"rules"`
+	Rules []*Rule `json:"rules,omitempty"`
 
 	// List of regions in which to run the monitor.
 	// eg, ["dal", "sin", "sjc", "lga", "ams"]
@@ -66,7 +66,7 @@ type Job struct {
 
 	// If true, notifications are sent for any regional failure (and failback if desired),
 	// in addition to global state notifications.
-	NotifyRegional bool `json:"notidy_regional"`
+	NotifyRegional bool `json:"notify_regional"`
 
 	// If true, a notification is sent when a job returns to an "up" state.
 	NotifyFailback bool `json:"notify_failback"`
@@ -97,6 +97,15 @@ type Result struct {
 type Status struct {
 	Since  int    `json:"since"`
 	Status string `json:"status"`
+}
+
+// StatusLog wraps an NS1 /monitoring/history resource
+type StatusLog struct {
+	Job    string `json:"job"`
+	Region string `json:"region"`
+	Status string `json:"status"`
+	Since  int    `json:"since"`
+	Until  int    `json:"until"`
 }
 
 // Rule wraps an element of a Job's "rules" attribute

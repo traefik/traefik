@@ -5,12 +5,15 @@
 
 package github
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // GitignoresService provides access to the gitignore related functions in the
 // GitHub API.
 //
-// GitHub API docs: http://developer.github.com/v3/gitignore/
+// GitHub API docs: https://developer.github.com/v3/gitignore/
 type GitignoresService service
 
 // Gitignore represents a .gitignore file as returned by the GitHub API.
@@ -25,26 +28,26 @@ func (g Gitignore) String() string {
 
 // List all available Gitignore templates.
 //
-// http://developer.github.com/v3/gitignore/#listing-available-templates
-func (s GitignoresService) List() ([]string, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/gitignore/#listing-available-templates
+func (s GitignoresService) List(ctx context.Context) ([]string, *Response, error) {
 	req, err := s.client.NewRequest("GET", "gitignore/templates", nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	availableTemplates := new([]string)
-	resp, err := s.client.Do(req, availableTemplates)
+	var availableTemplates []string
+	resp, err := s.client.Do(ctx, req, &availableTemplates)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return *availableTemplates, resp, err
+	return availableTemplates, resp, nil
 }
 
 // Get a Gitignore by name.
 //
-// http://developer.github.com/v3/gitignore/#get-a-single-template
-func (s GitignoresService) Get(name string) (*Gitignore, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/gitignore/#get-a-single-template
+func (s GitignoresService) Get(ctx context.Context, name string) (*Gitignore, *Response, error) {
 	u := fmt.Sprintf("gitignore/templates/%v", name)
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
@@ -52,10 +55,10 @@ func (s GitignoresService) Get(name string) (*Gitignore, *Response, error) {
 	}
 
 	gitignore := new(Gitignore)
-	resp, err := s.client.Do(req, gitignore)
+	resp, err := s.client.Do(ctx, req, gitignore)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return gitignore, resp, err
+	return gitignore, resp, nil
 }

@@ -341,8 +341,8 @@ func TestRuleType(t *testing.T) {
 			desc:             "implicit default",
 			ingressRuleType:  "",
 			frontendRuleType: ruleTypePathPrefix,
-			},
-					{
+		},
+		{
 			desc:             "unknown ingress / explicit default",
 			ingressRuleType:  "unknown",
 			frontendRuleType: ruleTypePathPrefix,
@@ -351,7 +351,7 @@ func TestRuleType(t *testing.T) {
 			desc:             "explicit ingress",
 			ingressRuleType:  ruleTypePath,
 			frontendRuleType: ruleTypePath,
-			},
+		},
 	}
 
 	for _, test := range tests {
@@ -359,27 +359,27 @@ func TestRuleType(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			ingress := &v1beta1.Ingress{
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
+				Spec: v1beta1.IngressSpec{
+					Rules: []v1beta1.IngressRule{
+						{
 							Host: "host",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
+							IngressRuleValue: v1beta1.IngressRuleValue{
+								HTTP: &v1beta1.HTTPIngressRuleValue{
+									Paths: []v1beta1.HTTPIngressPath{
+										{
 											Path: "/path",
-										Backend: v1beta1.IngressBackend{
+											Backend: v1beta1.IngressBackend{
 												ServiceName: "service",
 												ServicePort: intstr.FromInt(80),
+											},
+										},
 									},
 								},
 							},
 						},
 					},
 				},
-			},
-		},
-	}
+			}
 
 			if test.ingressRuleType != "" {
 				ingress.ObjectMeta.Annotations = map[string]string{
@@ -388,54 +388,54 @@ func TestRuleType(t *testing.T) {
 			}
 
 			service := &v1.Service{
-			ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: v1.ObjectMeta{
 					Name: "service",
-				UID:  "1",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 801,
+					UID:  "1",
+				},
+				Spec: v1.ServiceSpec{
+					ClusterIP: "10.0.0.1",
+					Ports: []v1.ServicePort{
+						{
+							Name: "http",
+							Port: 801,
+						},
 					},
 				},
-			},
-	}
+			}
 
-	watchChan := make(chan interface{})
-	client := clientMock{
+			watchChan := make(chan interface{})
+			client := clientMock{
 				ingresses: []*v1beta1.Ingress{ingress},
 				services:  []*v1.Service{service},
-		watchChan: watchChan,
-	}
-	provider := Kubernetes{DisablePassHostHeaders: true}
-	actualConfig, err := provider.loadIngresses(client)
-	if err != nil {
+				watchChan: watchChan,
+			}
+			provider := Kubernetes{DisablePassHostHeaders: true}
+			actualConfig, err := provider.loadIngresses(client)
+			if err != nil {
 				t.Fatalf("error loading ingresses: %+v", err)
-	}
+			}
 
 			actual := actualConfig.Frontends
-	expected := map[string]*types.Frontend{
+			expected := map[string]*types.Frontend{
 				"host/path": {
 					Backend:  "host/path",
 					Priority: len("/path"),
-			Routes: map[string]types.Route{
+					Routes: map[string]types.Route{
 						"/path": {
 							Rule: fmt.Sprintf("%s:/path", test.frontendRuleType),
-				},
+						},
 						"host": {
 							Rule: "Host:host",
+						},
+					},
 				},
-			},
-		},
-	}
+			}
 
 			if !reflect.DeepEqual(expected, actual) {
 				expectedJSON, _ := json.Marshal(expected)
-	actualJSON, _ := json.Marshal(actual)
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+				actualJSON, _ := json.Marshal(actual)
+				t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+			}
 		})
 	}
 }

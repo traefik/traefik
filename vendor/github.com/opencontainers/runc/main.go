@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -129,7 +130,20 @@ func main() {
 		}
 		return nil
 	}
+	// If the command returns an error, cli takes upon itself to print
+	// the error on cli.ErrWriter and exit.
+	// Use our own writer here to ensure the log gets sent to the right location.
+	cli.ErrWriter = &FatalWriter{cli.ErrWriter}
 	if err := app.Run(os.Args); err != nil {
 		fatal(err)
 	}
+}
+
+type FatalWriter struct {
+	cliErrWriter io.Writer
+}
+
+func (f *FatalWriter) Write(p []byte) (n int, err error) {
+	logrus.Error(string(p))
+	return f.cliErrWriter.Write(p)
 }

@@ -20,11 +20,19 @@ var psCommand = cli.Command{
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "format, f",
-			Value: "",
+			Value: "table",
 			Usage: `select one of: ` + formatOptions,
 		},
 	},
 	Action: func(context *cli.Context) error {
+		if err := checkArgs(context, 1, minArgs); err != nil {
+			return err
+		}
+		// XXX: Currently not supported with rootless containers.
+		if isRootless() {
+			return fmt.Errorf("runc ps requires root")
+		}
+
 		container, err := getContainer(context)
 		if err != nil {
 			return err
@@ -35,21 +43,27 @@ var psCommand = cli.Command{
 			return err
 		}
 
-		if context.String("format") == "json" {
-			if err := json.NewEncoder(os.Stdout).Encode(pids); err != nil {
-				return err
-			}
-			return nil
+		switch context.String("format") {
+		case "table":
+		case "json":
+			return json.NewEncoder(os.Stdout).Encode(pids)
+		default:
+			return fmt.Errorf("invalid format option")
 		}
 
-		psArgs := context.Args().Get(1)
-		if psArgs == "" {
-			psArgs = "-ef"
+		// [1:] is to remove command name, ex:
+		// context.Args(): [containet_id ps_arg1 ps_arg2 ...]
+		// psArgs:         [ps_arg1 ps_arg2 ...]
+		//
+		psArgs := context.Args()[1:]
+		if len(psArgs) == 0 {
+			psArgs = []string{"-ef"}
 		}
 
-		output, err := exec.Command("ps", strings.Split(psArgs, " ")...).Output()
+		cmd := exec.Command("ps", psArgs...)
+		output, err := cmd.CombinedOutput()
 		if err != nil {
-			return err
+			return fmt.Errorf("%s: %s", err, output)
 		}
 
 		lines := strings.Split(string(output), "\n")
@@ -78,6 +92,7 @@ var psCommand = cli.Command{
 		}
 		return nil
 	},
+	SkipArgReorder: true,
 }
 
 func getPidIndex(title string) (int, error) {

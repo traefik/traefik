@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 // Server (virtual machine) on Vultr account
@@ -36,6 +38,8 @@ type Server struct {
 	KVMUrl           string      `json:"kvm_url"`
 	AutoBackups      string      `json:"auto_backups"`
 	Tag              string      `json:"tag"`
+	OSID             string      `json:"OSID"`
+	AppID            string      `json:"APPID"`
 }
 
 // ServerOptions are optional parameters to be used during server creation
@@ -52,6 +56,21 @@ type ServerOptions struct {
 	DontNotifyOnActivate bool
 	Hostname             string
 	Tag                  string
+	AppID                string
+}
+
+type servers []Server
+
+func (s servers) Len() int      { return len(s) }
+func (s servers) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s servers) Less(i, j int) bool {
+	// sort order: name, ip
+	if strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name) {
+		return true
+	} else if strings.ToLower(s[i].Name) > strings.ToLower(s[j].Name) {
+		return false
+	}
+	return s[i].MainIP < s[j].MainIP
 }
 
 // V6Network represents a IPv6 network of a Vultr server
@@ -140,6 +159,18 @@ func (s *Server) UnmarshalJSON(data []byte) (err error) {
 	}
 	s.AllowedBandwidth = ab
 
+	value = fmt.Sprintf("%v", fields["OSID"])
+	if value == "<nil>" {
+		value = ""
+	}
+	s.OSID = value
+
+	value = fmt.Sprintf("%v", fields["APPID"])
+	if value == "<nil>" {
+		value = ""
+	}
+	s.AppID = value
+
 	s.ID = fmt.Sprintf("%v", fields["SUBID"])
 	s.Name = fmt.Sprintf("%v", fields["label"])
 	s.OS = fmt.Sprintf("%v", fields["os"])
@@ -180,29 +211,31 @@ func (s *Server) UnmarshalJSON(data []byte) (err error) {
 }
 
 // GetServers returns a list of current virtual machines on Vultr account
-func (c *Client) GetServers() (servers []Server, err error) {
+func (c *Client) GetServers() (serverList []Server, err error) {
 	var serverMap map[string]Server
 	if err := c.get(`server/list`, &serverMap); err != nil {
 		return nil, err
 	}
 
 	for _, server := range serverMap {
-		servers = append(servers, server)
+		serverList = append(serverList, server)
 	}
-	return servers, nil
+	sort.Sort(servers(serverList))
+	return serverList, nil
 }
 
 // GetServersByTag returns a list of all virtual machines matching by tag
-func (c *Client) GetServersByTag(tag string) (servers []Server, err error) {
+func (c *Client) GetServersByTag(tag string) (serverList []Server, err error) {
 	var serverMap map[string]Server
 	if err := c.get(`server/list?tag=`+tag, &serverMap); err != nil {
 		return nil, err
 	}
 
 	for _, server := range serverMap {
-		servers = append(servers, server)
+		serverList = append(serverList, server)
 	}
-	return servers, nil
+	sort.Sort(servers(serverList))
+	return serverList, nil
 }
 
 // GetServer returns the virtual machine with the given ID
@@ -273,6 +306,10 @@ func (c *Client) CreateServer(name string, regionID, planID, osID int, options *
 
 		if options.Tag != "" {
 			values.Add("tag", options.Tag)
+		}
+
+		if options.AppID != "" {
+			values.Add("APPID", options.AppID)
 		}
 	}
 
@@ -371,6 +408,7 @@ func (c *Client) ListOSforServer(id string) (os []OS, err error) {
 	for _, o := range osMap {
 		os = append(os, o)
 	}
+	sort.Sort(oses(os))
 	return os, nil
 }
 
@@ -445,4 +483,31 @@ func (c *Client) BandwidthOfServer(id string) (bandwidth []map[string]string, er
 	}
 
 	return bandwidth, nil
+}
+
+// ChangeApplicationofServer changes the virtual machine to a different application
+func (c *Client) ChangeApplicationofServer(id string, appID string) error {
+	values := url.Values{
+		"SUBID": {id},
+		"APPID": {appID},
+	}
+
+	if err := c.post(`server/app_change`, values, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+// ListApplicationsforServer lists all available operating systems to which an existing virtual machine can be changed
+func (c *Client) ListApplicationsforServer(id string) (apps []Application, err error) {
+	var appMap map[string]Application
+	if err := c.get(`server/app_change_list?SUBID=`+id, &appMap); err != nil {
+		return nil, err
+	}
+
+	for _, app := range appMap {
+		apps = append(apps, app)
+	}
+	sort.Sort(applications(apps))
+	return apps, nil
 }

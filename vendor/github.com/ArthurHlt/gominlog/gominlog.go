@@ -1,26 +1,26 @@
 package gominlog
 
 import (
-	"fmt"
-	"github.com/daviddengcn/go-colortext"
-	"io"
 	"log"
 	"os"
-	"regexp"
+	"fmt"
 	"runtime"
+	"github.com/fatih/color"
+	"regexp"
 	"strings"
+	"io"
 )
 
 type Level int
 
 const (
-	Loff     = Level(^uint(0) >> 1)
-	Lsevere  = Level(1000)
-	Lerror   = Level(900)
+	Loff = Level(^uint(0) >> 1)
+	Lsevere = Level(1000)
+	Lerror = Level(900)
 	Lwarning = Level(800)
-	Linfo    = Level(700)
-	Ldebug   = Level(600)
-	Lall     = Level(-Loff - 1)
+	Linfo = Level(700)
+	Ldebug = Level(600)
+	Lall = Level(-Loff - 1)
 )
 
 type MinLog struct {
@@ -48,6 +48,14 @@ func NewClassicMinLogWithPackageName(packageName string) *MinLog {
 func NewMinLog(appName string, level Level, withColor bool, flag int) *MinLog {
 	minLog := &MinLog{}
 	logWriter := os.Stdout
+	minLog.log = log.New(logWriter, "", flag)
+	minLog.isColorized = withColor
+	minLog.packageName = appName
+	minLog.level = level
+	return minLog
+}
+func NewMinLogWithWriter(appName string, level Level, withColor bool, flag int, logWriter io.Writer) *MinLog {
+	minLog := &MinLog{}
 	minLog.log = log.New(logWriter, "", flag)
 	minLog.isColorized = withColor
 	minLog.packageName = appName
@@ -89,10 +97,11 @@ func (this *MinLog) IsColorized() bool {
 	return this.isColorized
 }
 func (this *MinLog) GetLogger() *log.Logger {
+
 	return this.log
 }
 
-func (this *MinLog) logMessage(typeLog string, colorFg ct.Color, colorBg ct.Color, args ...interface{}) {
+func (this *MinLog) logMessage(typeLog string, colorFg color.Attribute, colorBg color.Attribute, args ...interface{}) {
 	var text string
 	msg := ""
 	flags := this.log.Flags()
@@ -100,7 +109,7 @@ func (this *MinLog) logMessage(typeLog string, colorFg ct.Color, colorBg ct.Colo
 		msg += this.trace()
 		this.log.SetFlags(flags - log.Lshortfile)
 	}
-	text, ok := args[0].(string)
+	text, ok := args[0].(string);
 	if !ok {
 		panic("Firt argument should be a string")
 	}
@@ -113,51 +122,47 @@ func (this *MinLog) logMessage(typeLog string, colorFg ct.Color, colorBg ct.Colo
 	this.writeMsgInLogger(msg, colorFg, colorBg)
 	this.log.SetFlags(flags)
 }
-func (this *MinLog) writeMsgInLogger(msg string, colorFg ct.Color, colorBg ct.Color) {
-	if this.isColorized && colorFg > 0 {
-		ct.Foreground(colorFg, false)
-	}
-	if this.isColorized && colorBg > 0 {
-		ct.ChangeColor(colorFg, false, colorBg, false)
+func (this *MinLog) writeMsgInLogger(msg string, colorFg color.Attribute, colorBg color.Attribute) {
+	if this.isColorized && int(colorBg) == 0 {
+		msg = color.New(colorFg).Sprint(msg)
+	} else if this.isColorized {
+		msg = color.New(colorFg, colorBg).Sprint(msg)
 	}
 	this.log.Print(msg)
-	if this.isColorized {
-		ct.ResetColor()
-	}
 }
 func (this *MinLog) Error(args ...interface{}) {
 	if this.level > Lerror {
 		return
 	}
-	this.logMessage("ERROR", ct.Red, 0, args...)
+	this.logMessage("ERROR", color.FgRed, 0, args...)
 }
 
 func (this *MinLog) Severe(args ...interface{}) {
 	if this.level > Lsevere {
 		return
 	}
-	this.logMessage("SEVERE", ct.Red, ct.Yellow, args...)
+	this.logMessage("SEVERE", color.FgRed, color.BgYellow, args...)
 }
 
 func (this *MinLog) Debug(args ...interface{}) {
 	if this.level > Ldebug {
 		return
 	}
-	this.logMessage("DEBUG", ct.Blue, 0, args...)
+	this.logMessage("DEBUG", color.FgBlue, 0, args...)
 }
 
 func (this *MinLog) Info(args ...interface{}) {
 	if this.level > Linfo {
 		return
 	}
-	this.logMessage("INFO", ct.Cyan, 0, args...)
+	this.logMessage("INFO", color.FgCyan, 0, args...)
 }
 
 func (this *MinLog) Warning(args ...interface{}) {
 	if this.level > Lwarning {
 		return
 	}
-	this.logMessage("WARNING", ct.Yellow, 0, args...)
+	this.logMessage("WARNING", color.FgYellow, 0, args...)
 }
 func (this *MinLog) trace() string {
 	var shortFile string
@@ -167,7 +172,7 @@ func (this *MinLog) trace() string {
 	file, line := f.FileLine(pc[2])
 	if this.packageName == "" {
 		execFileSplit := strings.Split(os.Args[0], "/")
-		this.packageName = execFileSplit[len(execFileSplit)-1]
+		this.packageName = execFileSplit[len(execFileSplit) - 1]
 	}
 	regex, err := regexp.Compile(regexp.QuoteMeta(this.packageName) + "/(.*)")
 	if err != nil {
@@ -176,7 +181,7 @@ func (this *MinLog) trace() string {
 	subMatch := regex.FindStringSubmatch(file)
 	if len(subMatch) < 2 {
 		fileSplit := strings.Split(file, "/")
-		shortFile = fileSplit[len(fileSplit)-1]
+		shortFile = fileSplit[len(fileSplit) - 1]
 	} else {
 		shortFile = subMatch[1]
 	}

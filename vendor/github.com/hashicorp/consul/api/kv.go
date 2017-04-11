@@ -11,13 +11,35 @@ import (
 
 // KVPair is used to represent a single K/V entry
 type KVPair struct {
-	Key         string
+	// Key is the name of the key. It is also part of the URL path when accessed
+	// via the API.
+	Key string
+
+	// CreateIndex holds the index corresponding the creation of this KVPair. This
+	// is a read-only field.
 	CreateIndex uint64
+
+	// ModifyIndex is used for the Check-And-Set operations and can also be fed
+	// back into the WaitIndex of the QueryOptions in order to perform blocking
+	// queries.
 	ModifyIndex uint64
-	LockIndex   uint64
-	Flags       uint64
-	Value       []byte
-	Session     string
+
+	// LockIndex holds the index corresponding to a lock on this key, if any. This
+	// is a read-only field.
+	LockIndex uint64
+
+	// Flags are any user-defined flags on the key. It is up to the implementer
+	// to check these values, since Consul does not treat them specially.
+	Flags uint64
+
+	// Value is the value for the key. This can be any value, but it will be
+	// base64 encoded upon transport.
+	Value []byte
+
+	// Session is a string representing the ID of the session. Any other
+	// interactions with this key over the same session must specify the same
+	// session ID.
+	Session string
 }
 
 // KVPairs is a list of KVPair objects
@@ -28,21 +50,21 @@ type KVOp string
 
 const (
 	KVSet          KVOp = "set"
-	KVDelete            = "delete"
-	KVDeleteCAS         = "delete-cas"
-	KVDeleteTree        = "delete-tree"
-	KVCAS               = "cas"
-	KVLock              = "lock"
-	KVUnlock            = "unlock"
-	KVGet               = "get"
-	KVGetTree           = "get-tree"
-	KVCheckSession      = "check-session"
-	KVCheckIndex        = "check-index"
+	KVDelete       KVOp = "delete"
+	KVDeleteCAS    KVOp = "delete-cas"
+	KVDeleteTree   KVOp = "delete-tree"
+	KVCAS          KVOp = "cas"
+	KVLock         KVOp = "lock"
+	KVUnlock       KVOp = "unlock"
+	KVGet          KVOp = "get"
+	KVGetTree      KVOp = "get-tree"
+	KVCheckSession KVOp = "check-session"
+	KVCheckIndex   KVOp = "check-index"
 )
 
 // KVTxnOp defines a single operation inside a transaction.
 type KVTxnOp struct {
-	Verb    string
+	Verb    KVOp
 	Key     string
 	Value   []byte
 	Flags   uint64
@@ -70,7 +92,8 @@ func (c *Client) KV() *KV {
 	return &KV{c}
 }
 
-// Get is used to lookup a single key
+// Get is used to lookup a single key. The returned pointer
+// to the KVPair will be nil if the key does not exist.
 func (k *KV) Get(key string, q *QueryOptions) (*KVPair, *QueryMeta, error) {
 	resp, qm, err := k.getInternal(key, nil, q)
 	if err != nil {
@@ -133,7 +156,7 @@ func (k *KV) Keys(prefix, separator string, q *QueryOptions) ([]string, *QueryMe
 }
 
 func (k *KV) getInternal(key string, params map[string]string, q *QueryOptions) (*http.Response, *QueryMeta, error) {
-	r := k.c.newRequest("GET", "/v1/kv/"+key)
+	r := k.c.newRequest("GET", "/v1/kv/"+strings.TrimPrefix(key, "/"))
 	r.setQueryOptions(q)
 	for param, val := range params {
 		r.params.Set(param, val)
@@ -254,7 +277,7 @@ func (k *KV) DeleteTree(prefix string, w *WriteOptions) (*WriteMeta, error) {
 }
 
 func (k *KV) deleteInternal(key string, params map[string]string, q *WriteOptions) (bool, *WriteMeta, error) {
-	r := k.c.newRequest("DELETE", "/v1/kv/"+key)
+	r := k.c.newRequest("DELETE", "/v1/kv/"+strings.TrimPrefix(key, "/"))
 	r.setWriteOptions(q)
 	for param, val := range params {
 		r.params.Set(param, val)

@@ -8,7 +8,7 @@ TRAEFIK_ENVS := \
 	-e VERSION \
 	-e CODENAME
 
-SRCS = $(shell git ls-files '*.go' | grep -v '^external/')
+SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/' | grep -v '^integration/vendor/')
 
 BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"

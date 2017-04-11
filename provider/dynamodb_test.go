@@ -19,7 +19,7 @@ type mockDynamoDBCLient struct {
 
 var backend = &types.Backend{
 	HealthCheck: &types.HealthCheck{
-		URL: "/build",
+		Path: "/build",
 	},
 	Servers: map[string]types.Server{
 		"server1": {

@@ -14,10 +14,10 @@ import (
 )
 
 func killContainer(container libcontainer.Container) error {
-	container.Signal(syscall.SIGKILL)
+	_ = container.Signal(syscall.SIGKILL, false)
 	for i := 0; i < 100; i++ {
 		time.Sleep(100 * time.Millisecond)
-		if err := container.Signal(syscall.Signal(0)); err != nil {
+		if err := container.Signal(syscall.Signal(0), false); err != nil {
 			destroy(container)
 			return nil
 		}
@@ -27,7 +27,7 @@ func killContainer(container libcontainer.Container) error {
 
 var deleteCommand = cli.Command{
 	Name:  "delete",
-	Usage: "delete any resources held by the container often used with detached containers",
+	Usage: "delete any resources held by the container often used with detached container",
 	ArgsUsage: `<container-id>
 
 Where "<container-id>" is the name for the instance of the container.
@@ -41,21 +41,26 @@ status of "ubuntu01" as "stopped" the following will delete resources held for
 	Flags: []cli.Flag{
 		cli.BoolFlag{
 			Name:  "force, f",
-			Usage: "Forcibly kills the container if it is still running",
+			Usage: "Forcibly deletes the container if it is still running (uses SIGKILL)",
 		},
 	},
 	Action: func(context *cli.Context) error {
+		if err := checkArgs(context, 1, exactArgs); err != nil {
+			return err
+		}
+
+		id := context.Args().First()
 		container, err := getContainer(context)
 		if err != nil {
 			if lerr, ok := err.(libcontainer.Error); ok && lerr.Code() == libcontainer.ContainerNotExists {
 				// if there was an aborted start or something of the sort then the container's directory could exist but
 				// libcontainer does not see it because the state.json file inside that directory was never created.
-				path := filepath.Join(context.GlobalString("root"), context.Args().First())
-				if err := os.RemoveAll(path); err != nil {
-					return err
+				path := filepath.Join(context.GlobalString("root"), id)
+				if e := os.RemoveAll(path); e != nil {
+					fmt.Fprintf(os.Stderr, "remove %s: %v\n", path, e)
 				}
 			}
-			return nil
+			return err
 		}
 		s, err := container.Status()
 		if err != nil {
@@ -69,9 +74,11 @@ status of "ubuntu01" as "stopped" the following will delete resources held for
 		default:
 			if context.Bool("force") {
 				return killContainer(container)
+			} else {
+				return fmt.Errorf("cannot delete container %s that is not stopped: %s\n", id, s)
 			}
-			return fmt.Errorf("cannot delete container that is not stopped: %s", s)
 		}
+
 		return nil
 	},
 }

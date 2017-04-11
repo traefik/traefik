@@ -15,6 +15,9 @@ paused. `,
 
 Use runc list to identiy instances of containers and their current status.`,
 	Action: func(context *cli.Context) error {
+		if err := checkArgs(context, 1, exactArgs); err != nil {
+			return err
+		}
 		container, err := getContainer(context)
 		if err != nil {
 			return err
@@ -22,6 +25,7 @@ Use runc list to identiy instances of containers and their current status.`,
 		if err := container.Pause(); err != nil {
 			return err
 		}
+
 		return nil
 	},
 }
@@ -37,6 +41,9 @@ resumed.`,
 
 Use runc list to identiy instances of containers and their current status.`,
 	Action: func(context *cli.Context) error {
+		if err := checkArgs(context, 1, exactArgs); err != nil {
+			return err
+		}
 		container, err := getContainer(context)
 		if err != nil {
 			return err
@@ -44,6 +51,7 @@ Use runc list to identiy instances of containers and their current status.`,
 		if err := container.Resume(); err != nil {
 			return err
 		}
+
 		return nil
 	},
 }

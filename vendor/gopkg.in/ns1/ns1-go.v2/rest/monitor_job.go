@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"gopkg.in/ns1/ns1-go.v2/rest/model/monitor"
 )
@@ -105,4 +106,29 @@ func (s *JobsService) Delete(id string) (*http.Response, error) {
 	}
 
 	return resp, nil
+}
+
+// History takes an ID and returns status log history for a specific monitoring job.
+//
+// NS1 API docs: https://ns1.com/api/#history-get
+func (s *JobsService) History(id string, opts ...func(*url.Values)) ([]*monitor.StatusLog, *http.Response, error) {
+	v := url.Values{}
+	for _, opt := range opts {
+		opt(&v)
+	}
+
+	path := fmt.Sprintf("%s/%s?%s", "monitoring/history", id, v.Encode())
+
+	req, err := s.client.NewRequest("GET", path, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var slgs []*monitor.StatusLog
+	resp, err := s.client.Do(req, &slgs)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return slgs, resp, nil
 }

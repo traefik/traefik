@@ -1,51 +1,19 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-hash: b1cbcbd938a47a246b0d4d634037b76e63486c63e5867b339f92bcbd7453b75c
-updated: 2017-04-07T11:34:46.101385591+01:00
-=======
-hash: b4e99f1210c5bfb7784b55c9ec5b54629fadaea0625b29e540979b1acbd7dc09
-updated: 2017-03-02T09:39:03.718549862+01:00
->>>>>>> 9af5ba3... Bump go-rancher version
-=======
-hash: 6d21d24827ef1c9321e8a41a328c42f891281af2ea68841d42411f23b0666d4b
-updated: 2017-03-02T14:57:08.032744661-07:00
->>>>>>> eebbf6e... update oxy hash
-=======
-hash: f4360ad29820f7366aeb1bb85f3765c0b9dc4388ed5a072ead82209b5230ce25
-updated: 2017-03-14T10:10:22.924762706Z
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
-=======
-hash: 6d21d24827ef1c9321e8a41a328c42f891281af2ea68841d42411f23b0666d4b
-updated: 2017-03-02T14:57:08.032744661-07:00
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
-=======
-hash: 741ec5fae23f12e6c0fa0e4c7c00c0af06fac1ddc199dd4b45c904856890b347
-updated: 2017-03-15T10:48:05.202095822+01:00
->>>>>>> 7c55a4f... Update github.com/containous/oxy only.
-=======
-hash: b689cb0faed68086641d9e3504ee29498e5bf06b088ad4fcd1e76543446d4d9a
-updated: 2017-03-27T14:29:54.009570184+02:00
->>>>>>> 0d657a0... bump lego 0e2937900
+hash: 2abed980e61ff7659b181849419aadcb8d9d63594a5ac3215d09df0ea12a1700
+updated: 2017-04-11T17:02:21.540487905+02:00
 imports:
-- name: bitbucket.org/ww/goautoneg
-  version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
   subpackages:
   - compute/metadata
   - internal
 - name: github.com/abbot/go-http-auth
-  version: cb4372376e1e00e9f6ab9ec142e029302c9e7140
+  version: d45c47bedec736d172957bd394786b76626fa8ac
 - name: github.com/ArthurHlt/go-eureka-client
-  version: ba361cd0f9f571b4e871421423d2f02f5689c3d2
+  version: 9d0a49cbd39aa3634ae1977e9f519a262b10adaf
   subpackages:
   - eureka
 - name: github.com/ArthurHlt/gominlog
-  version: 068c01ce147ad68fca25ef3fa29ae5395ae273ab
+  version: 72eebf980f467d3ab3a8b4ddf660f664911ce519
 - name: github.com/aws/aws-sdk-go
   version: 3f8f870ec9939e32b3372abf74d24e468bcd285d
   subpackages:
@@ -84,63 +52,38 @@ imports:
   - service/route53
   - service/sts
 - name: github.com/Azure/azure-sdk-for-go
-<<<<<<< HEAD
-<<<<<<< HEAD
   version: 088007b3b08cc02b27f2eadfdcd870958460ce7e
   subpackages:
   - arm/dns
 - name: github.com/Azure/go-autorest
   version: a2fdd780c9a50455cecd249b00bdc3eb73a78e31
-=======
-  version: 4897648e310020dae650a89c31ff633284c13a24
-  subpackages:
-  - arm/dns
-- name: github.com/Azure/go-autorest
-  version: ec5f4903f77ed9927ac95b19ab8e44ada64c1356
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
-=======
-  version: 1620af6b32398bfc91827ceae54a8cc1f55df04d
-  subpackages:
-  - arm/dns
-- name: github.com/Azure/go-autorest
-  version: 32cc2321122a649b7ba4e323527bcb145134fd47
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
   subpackages:
   - autorest
   - autorest/azure
   - autorest/date
   - autorest/to
-  - autorest/validation
 - name: github.com/beorn7/perks
-  version: b965b613227fddccbfffe13eae360ed3fa822f8d
+  version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
   - quantile
 - name: github.com/blang/semver
-<<<<<<< HEAD
-<<<<<<< HEAD
   version: 31b736133b98f26d5e078ec9eb591666edfd091f
-=======
-  version: 4a1e882c79dcf4ec00d2e29fac74b9c8938d5052
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
-=======
-  version: 3a37c301dda64cbe17f16f661b4c976803c0e2d2
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
 - name: github.com/boltdb/bolt
-  version: 5cc10bbbc5c141029940133bb33c9e969512a698
+  version: e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd
 - name: github.com/BurntSushi/toml
-  version: 99064174e013895bbd9b025c31100bd1d9b590ca
+  version: b26d9c308763d68093482582cea63d69be07a0f0
 - name: github.com/BurntSushi/ty
   version: 6add9cd6ad42d389d6ead1dde60b4ad71e46fd74
   subpackages:
   - fun
 - name: github.com/cenk/backoff
-  version: 8edc80b07f38c27352fb186d971c628a6c32552b
+  version: 5d150e7eec023ce7a124856b37c68e54b4050ac7
 - name: github.com/codahale/hdrhistogram
   version: 9208b142303c12d8899bae836fd524ac9338b4fd
 - name: github.com/codegangsta/cli
   version: bf4a526f48af7badd25d2cb02d587e1b01be3b50
 - name: github.com/codegangsta/negroni
-  version: dc6b9d037e8dab60cbfc09c61d6932537829be8b
+  version: c0db5feaa33826cd5117930c8f4ee5c0f565eec6
 - name: github.com/containous/flaeg
   version: b5d2dc5878df07c2d74413348186982e7b865871
 - name: github.com/containous/mux
@@ -150,21 +93,15 @@ imports:
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
-  - Godeps/_workspace/src/github.com/ugorji/go/codec
-  - Godeps/_workspace/src/golang.org/x/net/context
+  - Godeps/_workspace/src/github.com/coreos/go-systemd/journal
+  - Godeps/_workspace/src/github.com/coreos/pkg/capnslog
   - client
+  - pkg/fileutil
   - pkg/pathutil
   - pkg/types
+  - version
 - name: github.com/coreos/go-oidc
-<<<<<<< HEAD
-<<<<<<< HEAD
   version: 5644a2f50e2d2d5ba0b474bc5bc55fea1925936d
-=======
-  version: be73733bb8cc830d0205609b95d125215f8e9c70
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
-=======
-  version: 9e117111587506b9dc83b7b38263268bf48352ea
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
   subpackages:
   - http
   - jose
@@ -182,34 +119,17 @@ imports:
   - httputil
   - timeutil
 - name: github.com/davecgh/go-spew
-  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
   subpackages:
   - spew
-- name: github.com/daviddengcn/go-colortext
-  version: 3b18c8575a432453d41fdafb340099fff5bba2f7
 - name: github.com/decker502/dnspod-go
-  version: f6b1d56f1c048bd94d7e42ac36efb4d57b069b6f
+  version: 68650ee11e182e30773781d391c66a0c80ccf9f2
 - name: github.com/dgrijalva/jwt-go
-<<<<<<< HEAD
-<<<<<<< HEAD
-  version: 9ed569b5d1ac936e6494082958d63a6aa4fff99a
+  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/dnsimple/dnsimple-go
   version: 5a5b427618a76f9eed5ede0f3e6306fbd9311d2e
   subpackages:
   - dnsimple
-=======
-  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
-=======
-  version: 9ed569b5d1ac936e6494082958d63a6aa4fff99a
-<<<<<<< HEAD
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
-=======
-- name: github.com/dnsimple/dnsimple-go
-  version: eeb343928d9a3de357a650c8c25d8f1318330d57
-  subpackages:
-  - dnsimple
->>>>>>> 0d657a0... bump lego 0e2937900
 - name: github.com/docker/distribution
   version: 325b0804fef3a66309d962357aac3c2ce3f4d329
   subpackages:
@@ -218,67 +138,7 @@ imports:
 - name: github.com/docker/docker
   version: 49bf474f9ed7ce7143a59d1964ff7b7fd9b52178
   subpackages:
-<<<<<<< HEAD
   - namesgenerator
-=======
-  - api/types
-  - api/types/backend
-  - api/types/blkiodev
-  - api/types/container
-  - api/types/filters
-  - api/types/mount
-  - api/types/network
-  - api/types/registry
-  - api/types/strslice
-  - api/types/swarm
-  - api/types/versions
-  - builder
-  - builder/dockerignore
-  - cliconfig
-  - cliconfig/configfile
-  - daemon/graphdriver
-  - image
-  - image/v1
-  - layer
-  - namesgenerator
-  - oci
-  - opts
-  - pkg/archive
-  - pkg/chrootarchive
-  - pkg/fileutils
-  - pkg/gitutils
-  - pkg/homedir
-  - pkg/httputils
-  - pkg/idtools
-  - pkg/ioutils
-  - pkg/jsonlog
-  - pkg/jsonmessage
-  - pkg/longpath
-  - pkg/mount
-  - pkg/namesgenerator
-  - pkg/plugingetter
-  - pkg/plugins
-  - pkg/plugins/transport
-  - pkg/pools
-  - pkg/progress
-  - pkg/promise
-  - pkg/random
-  - pkg/reexec
-  - pkg/signal
-  - pkg/stdcopy
-  - pkg/streamformatter
-  - pkg/stringid
-  - pkg/symlink
-  - pkg/system
-  - pkg/tarsum
-  - pkg/term
-  - pkg/term/windows
-  - pkg/urlutil
-  - plugin/v2
-  - reference
-  - registry
-  - runconfig/opts
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
 - name: github.com/docker/engine-api
   version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
   subpackages:
@@ -306,9 +166,9 @@ imports:
 - name: github.com/docker/go-units
   version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/docker/leadership
-  version: bfc7753dd48af19513b29deec23c364bf0f274eb
+  version: 0a913e2d71a12fd14a028452435cb71ac8d82cb6
 - name: github.com/docker/libkv
-  version: 35d3e2084c650109e7bcc7282655b1bc8ba924ff
+  version: 1d8431073ae03cdaedb198a89722f3aab6d418ef
   subpackages:
   - store
   - store/boltdb
@@ -330,18 +190,20 @@ imports:
   - tokens
   - zones
 - name: github.com/elazarl/go-bindata-assetfs
-  version: 57eb5e1fc594ad4b0b1dbea7b286d299e0cb43c2
+  version: 30f82fa23fd844bd5bb1e5f216db87fd77b5eb43
 - name: github.com/emicklei/go-restful
   version: 892402ba11a2e2fd5e1295dd633481f27365f14d
   subpackages:
   - log
   - swagger
+- name: github.com/fatih/color
+  version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/gambol99/go-marathon
   version: 6b00a5b651b1beb2c6821863f7c60df490bd46c8
 - name: github.com/ghodss/yaml
-  version: 04f313413ffd65ce25f2541bfd2b2ceec5c0908c
+  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
-  version: 6f66b0e091edb3c7b380f7c4f0f884274d550b67
+  version: e7fea39b01aea8d5671f6858f0532f56e8bff3a5
 - name: github.com/go-kit/kit
   version: f66b0e13579bfc5a48b9e2a94b1209c107ea1f41
   subpackages:
@@ -349,33 +211,13 @@ imports:
   - metrics/internal/lv
   - metrics/prometheus
 - name: github.com/go-openapi/jsonpointer
-<<<<<<< HEAD
-<<<<<<< HEAD
   version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
-=======
-  version: 779f45308c19820f1a69e9a4cd965f496e0da10f
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
-=======
-  version: 8d96a2dc61536b690bd36b2e9df0b3c0b62825b2
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
 - name: github.com/go-openapi/jsonreference
   version: 13c6e3589ad90f49bd3e3bbe2c2cb3d7a4142272
 - name: github.com/go-openapi/spec
-<<<<<<< HEAD
-<<<<<<< HEAD
   version: 6aced65f8501fe1217321abf0749d354824ba2ff
 - name: github.com/go-openapi/swag
   version: 1d0bd113de87027671077d3c71eb3ac5d7dbba72
-=======
-  version: 02fb9cd3430ed0581e0ceb4804d5d4b3cc702694
-- name: github.com/go-openapi/swag
-  version: d5f8ebc3b1c55a4cf6489eeae7354f338cfe299e
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
-=======
-  version: 34b5ffff717ab4535aef76e3dd90818bddde571b
-- name: github.com/go-openapi/swag
-  version: 96d7b9ebd181a1735a1c9ac87914f2b32fbf56c9
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
 - name: github.com/gogo/protobuf
   version: 909568be09de550ed094403c2bf8a261b5bb730a
   subpackages:
@@ -384,15 +226,15 @@ imports:
 - name: github.com/golang/glog
   version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
 - name: github.com/golang/protobuf
-  version: 5677a0e3d5e89854c9974e1256839ee23f8233ca
+  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
   subpackages:
   - proto
 - name: github.com/google/go-github
-  version: c8ebe3a4d7f0791a6315b7410353d4084c58805d
+  version: 6896997c7c9fe603fb9d2e8e92303bb18481e60a
   subpackages:
   - github
 - name: github.com/google/go-querystring
-  version: 9235644dd9e52eeae6fa48efd539fdc351a0af53
+  version: 53e6ce116135b80d037921a7fdd5138cf32d7a8a
   subpackages:
   - query
 - name: github.com/google/gofuzz
@@ -400,24 +242,23 @@ imports:
 - name: github.com/googleapis/gax-go
   version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
 - name: github.com/gorilla/context
-  version: 1ea25387ff6f684839d82767c1733ff4d4d15d0a
+  version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/websocket
-  version: 4873052237e4eeda85cf50c071ef33836fe8e139
+  version: a91eba7f97777409bc2c443f5534d41dd20c5720
 - name: github.com/hashicorp/consul
-  version: fce7d75609a04eeb9d4bf41c8dc592aac18fc97d
+  version: 3f92cc70e8163df866873c16c6d89889b5c95fc4
   subpackages:
   - api
 - name: github.com/hashicorp/go-cleanhttp
-  version: 875fb671b3ddc66f8e2f0acc33829c8cb989a38d
+  version: 3573b8b52aa7b37b9358d966a898feb387f62437
 - name: github.com/hashicorp/go-version
-  version: e96d3840402619007766590ecea8dd7af1292276
+  version: 03c5bf6be031b6dd45afec16b1cf94fc8938bc77
 - name: github.com/hashicorp/serf
-  version: 6c4672d66fc6312ddde18399262943e21175d831
+  version: 19f2c401e122352c047a84d6584dd51e2fb8fcc4
   subpackages:
   - coordinate
-  - serf
 - name: github.com/JamesClonk/vultr
-  version: 9ec0427d51411407c0402b093a1771cb75af9679
+  version: 0f156dd232bc4ebf8a32ba83fec57c0e4c9db69f
   subpackages:
   - lib
 - name: github.com/jmespath/go-jmespath
@@ -429,23 +270,21 @@ imports:
 - name: github.com/mailgun/timetools
   version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
 - name: github.com/mailru/easyjson
-<<<<<<< HEAD
-<<<<<<< HEAD
   version: d5b7844b561a7bc640052f1b935f7b800330d7e0
-=======
-  version: db58e6f9072c545a3a24b8d44c51d81fff6dcb51
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
-=======
-  version: 9d6630dc8c577b56cb9687a9cf9e8578aca7298a
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
   subpackages:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/mattn/go-colorable
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
+- name: github.com/mattn/go-isatty
+  version: 57fdcb988a5c543893cc61bce354a6e24ab70022
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/mattn/go-shellwords
-  version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
+  version: 02e3cf038dcea8290e44424da473dd12be796a8a
 - name: github.com/matttproud/golang_protobuf_extensions
-  version: fc2b8d3a73c4867e51861bbdd5ae3c1f0869dd6a
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
   subpackages:
   - pbutil
 - name: github.com/mesos/mesos-go
@@ -471,63 +310,58 @@ imports:
   - records/state
   - util
 - name: github.com/Microsoft/go-winio
-  version: ce2922f643c8fd76b46cadc7f404a06282678b34
+  version: fff283ad5116362ca252298cfc9b95828956d85d
 - name: github.com/miekg/dns
   version: 8060d9f51305bbe024b99679454e62f552cd0b0b
 - name: github.com/mitchellh/mapstructure
-  version: f3009df150dadf309fdee4a54ed65c124afad715
+  version: 53818660ed4955e899c0bcafa97299a388bd7c8e
 - name: github.com/mvdan/xurls
-  version: fa08908f19eca8c491d68c6bd8b4b44faea6daf8
+  version: db96455566f05ffe42bd6ac671f05eeb1152b45d
 - name: github.com/NYTimes/gziphandler
-  version: 6710af535839f57c687b62c4c23d649f9545d885
+  version: 22d4470af89e09998fc16b35029df973932df4ae
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/runc
-  version: 1a81e9ab1f138c091fe5c86d0883f87716088527
+  version: 50401b5b4c2e01e4f1372b73a021742deeaf4e2d
   subpackages:
   - libcontainer/user
 - name: github.com/ovh/go-ovh
-  version: a8a4c0bc40e56322142649bda7b2b4bb15145b6e
+  version: d2207178e10e4527e8f222fd8707982df8c3af17
   subpackages:
   - ovh
 - name: github.com/pborman/uuid
-<<<<<<< HEAD
-<<<<<<< HEAD
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
-=======
-  version: 1b00554d822231195d1babd97ff4a781231955c9
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
-=======
-  version: 5007efa264d92316c43112bc573e754bc889b7b1
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
 - name: github.com/pkg/errors
-  version: bfd5150e4e41705ded2129ec33379de1cb90b513
+  version: ff09b135c25aae272398c51a07235b90a75aa4f0
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
 - name: github.com/prometheus/client_golang
-  version: c5b7fccd204277076155f10851dad72b76a49317
+  version: 08fd2e12372a66e68e30523c7642e0cbc3e4fbde
   subpackages:
   - prometheus
   - prometheus/promhttp
 - name: github.com/prometheus/client_model
-  version: fa8ad6fec33561be4280a8f0514318c79d7f6cb6
+  version: 6f3806018612930941127f2a7c6c453ba2c527d2
   subpackages:
   - go
 - name: github.com/prometheus/common
-  version: ffe929a3f4c4faeaa10f2b9535c2b1be3ad15650
+  version: 49fee292b27bfff7f354ee0f64e1bc4850462edf
   subpackages:
   - expfmt
+  - internal/bitbucket.org/ww/goautoneg
   - model
 - name: github.com/prometheus/procfs
-  version: 454a56f35412459b5e684fd5ec0f9211b94f002a
+  version: a1dba9ce8baed984a2495b658c82687f8157b98f
+  subpackages:
+  - xfs
 - name: github.com/PuerkitoBio/purell
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/pyr/egoscale
-  version: ab4b0d7ff424c462da486aef27f354cdeb29a319
+  version: 987e683a7552f34ee586217d1cc8507d52e80ab9
   subpackages:
   - src/egoscale
 - name: github.com/rancher/go-rancher
@@ -535,23 +369,23 @@ imports:
   subpackages:
   - client
 - name: github.com/ryanuber/go-glob
-  version: 572520ed46dbddaed19ea3d9541bdd0494163693
+  version: 256dc444b735e061061cf46c809487313d5b0065
 - name: github.com/samuel/go-zookeeper
-  version: e64db453f3512cade908163702045e0f31137843
+  version: 1d7be4effb13d2d908342d349d71a284a7542693
   subpackages:
   - zk
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
 - name: github.com/Sirupsen/logrus
-  version: a283a10442df8dc09befd873fab202bf8a253d6a
+  version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - name: github.com/spf13/pflag
   version: 5ccb023bc27df288a957c5e994cd44fd19619465
 - name: github.com/streamrail/concurrent-map
-  version: 65a174a3a4188c0b7099acbc6cfa0c53628d3287
+  version: 8bf1e9bacbf65b10c81d0f4314cf2b1ebef728b5
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
-  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
   subpackages:
   - assert
   - mock
@@ -568,7 +402,7 @@ imports:
   subpackages:
   - codec
 - name: github.com/unrolled/render
-  version: 198ad4d8b8a4612176b804ca10555b222a086b40
+  version: 50716a0a853771bb36bfce61a45cdefdb98c2e6e
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
@@ -595,11 +429,7 @@ imports:
   - plugin/rewrite
   - router
 - name: github.com/xenolf/lego
-<<<<<<< HEAD
   version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
-=======
-  version: 0e2937900b224325f4476745a9b53aef246b7410
->>>>>>> 0d657a0... bump lego 0e2937900
   subpackages:
   - acme
   - providers/dns
@@ -655,8 +485,6 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-<<<<<<< HEAD
-<<<<<<< HEAD
   version: 2910a502d2bf9e43193af9d68ca516529614eed3
   subpackages:
   - cases
@@ -665,16 +493,6 @@ imports:
   - runes
   - secure/bidirule
   - secure/precis
-=======
-  version: f28f36722d5ef2f9655ad3de1f248e3e52ad5ebd
-=======
-  version: a49bea13b776691cb1b49873e5d8df96ec74831a
->>>>>>> 7b1c0a9... Reset glide files to versions from upstream/v1.2.
-  repo: https://github.com/golang/text.git
-  vcs: git
-  subpackages:
-  - .
->>>>>>> 8392846... Update vulcand and pin deps in glide.yaml
   - transform
   - unicode/bidi
   - unicode/norm
@@ -713,17 +531,18 @@ imports:
   - tap
   - transport
 - name: gopkg.in/fsnotify.v1
-  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
+  version: 629574ca2a5df945712d3079857300b5e4da0236
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/ini.v1
-  version: 6f66b0e091edb3c7b380f7c4f0f884274d550b67
+  version: e7fea39b01aea8d5671f6858f0532f56e8bff3a5
 - name: gopkg.in/mgo.v2
-  version: 29cc868a5ca65f401ff318143f9408d02f4799cc
+  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
   subpackages:
   - bson
+  - internal/json
 - name: gopkg.in/ns1/ns1-go.v2
-  version: d8d10b7f448291ddbdce48d4594fb1b667014c8b
+  version: 2abc76c60bf88ba33b15d1d87a13f624d8dff956
   subpackages:
   - rest
   - rest/model/account
@@ -732,14 +551,13 @@ imports:
   - rest/model/filter
   - rest/model/monitor
 - name: gopkg.in/square/go-jose.v1
-  version: e3f973b66b91445ec816dd7411ad1b6495a5a2fc
+  version: aa2e30fdd1fe9dd3394119af66451ae790d50e0d
   subpackages:
   - cipher
   - json
 - name: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
 - name: k8s.io/client-go
-<<<<<<< HEAD
   version: e121606b0d09b2e1c467183ee46217fa85a6b672
   subpackages:
   - discovery
@@ -850,170 +668,3 @@ imports:
   - tools/metrics
   - transport
 testImports: []
-=======
-  version: 1195e3a8ee1a529d53eed7c624527a68555ddf1f
-  subpackages:
-  - 1.5/discovery
-  - 1.5/kubernetes
-  - 1.5/kubernetes/typed/apps/v1alpha1
-  - 1.5/kubernetes/typed/authentication/v1beta1
-  - 1.5/kubernetes/typed/authorization/v1beta1
-  - 1.5/kubernetes/typed/autoscaling/v1
-  - 1.5/kubernetes/typed/batch/v1
-  - 1.5/kubernetes/typed/certificates/v1alpha1
-  - 1.5/kubernetes/typed/core/v1
-  - 1.5/kubernetes/typed/extensions/v1beta1
-  - 1.5/kubernetes/typed/policy/v1alpha1
-  - 1.5/kubernetes/typed/rbac/v1alpha1
-  - 1.5/kubernetes/typed/storage/v1beta1
-  - 1.5/pkg/api
-  - 1.5/pkg/api/errors
-  - 1.5/pkg/api/install
-  - 1.5/pkg/api/meta
-  - 1.5/pkg/api/meta/metatypes
-  - 1.5/pkg/api/resource
-  - 1.5/pkg/api/unversioned
-  - 1.5/pkg/api/v1
-  - 1.5/pkg/api/validation/path
-  - 1.5/pkg/apimachinery
-  - 1.5/pkg/apimachinery/announced
-  - 1.5/pkg/apimachinery/registered
-  - 1.5/pkg/apis/apps
-  - 1.5/pkg/apis/apps/install
-  - 1.5/pkg/apis/apps/v1alpha1
-  - 1.5/pkg/apis/authentication
-  - 1.5/pkg/apis/authentication/install
-  - 1.5/pkg/apis/authentication/v1beta1
-  - 1.5/pkg/apis/authorization
-  - 1.5/pkg/apis/authorization/install
-  - 1.5/pkg/apis/authorization/v1beta1
-  - 1.5/pkg/apis/autoscaling
-  - 1.5/pkg/apis/autoscaling/install
-  - 1.5/pkg/apis/autoscaling/v1
-  - 1.5/pkg/apis/batch
-  - 1.5/pkg/apis/batch/install
-  - 1.5/pkg/apis/batch/v1
-  - 1.5/pkg/apis/batch/v2alpha1
-  - 1.5/pkg/apis/certificates
-  - 1.5/pkg/apis/certificates/install
-  - 1.5/pkg/apis/certificates/v1alpha1
-  - 1.5/pkg/apis/extensions
-  - 1.5/pkg/apis/extensions/install
-  - 1.5/pkg/apis/extensions/v1beta1
-  - 1.5/pkg/apis/policy
-  - 1.5/pkg/apis/policy/install
-  - 1.5/pkg/apis/policy/v1alpha1
-  - 1.5/pkg/apis/rbac
-  - 1.5/pkg/apis/rbac/install
-  - 1.5/pkg/apis/rbac/v1alpha1
-  - 1.5/pkg/apis/storage
-  - 1.5/pkg/apis/storage/install
-  - 1.5/pkg/apis/storage/v1beta1
-  - 1.5/pkg/auth/user
-  - 1.5/pkg/conversion
-  - 1.5/pkg/conversion/queryparams
-  - 1.5/pkg/fields
-  - 1.5/pkg/genericapiserver/openapi/common
-  - 1.5/pkg/labels
-  - 1.5/pkg/runtime
-  - 1.5/pkg/runtime/serializer
-  - 1.5/pkg/runtime/serializer/json
-  - 1.5/pkg/runtime/serializer/protobuf
-  - 1.5/pkg/runtime/serializer/recognizer
-  - 1.5/pkg/runtime/serializer/streaming
-  - 1.5/pkg/runtime/serializer/versioning
-  - 1.5/pkg/selection
-  - 1.5/pkg/third_party/forked/golang/reflect
-  - 1.5/pkg/types
-  - 1.5/pkg/util
-  - 1.5/pkg/util/cert
-  - 1.5/pkg/util/clock
-  - 1.5/pkg/util/errors
-  - 1.5/pkg/util/flowcontrol
-  - 1.5/pkg/util/framer
-  - 1.5/pkg/util/integer
-  - 1.5/pkg/util/intstr
-  - 1.5/pkg/util/json
-  - 1.5/pkg/util/labels
-  - 1.5/pkg/util/net
-  - 1.5/pkg/util/parsers
-  - 1.5/pkg/util/rand
-  - 1.5/pkg/util/runtime
-  - 1.5/pkg/util/sets
-  - 1.5/pkg/util/uuid
-  - 1.5/pkg/util/validation
-  - 1.5/pkg/util/validation/field
-  - 1.5/pkg/util/wait
-  - 1.5/pkg/util/yaml
-  - 1.5/pkg/version
-  - 1.5/pkg/watch
-  - 1.5/pkg/watch/versioned
-  - 1.5/plugin/pkg/client/auth
-  - 1.5/plugin/pkg/client/auth/gcp
-  - 1.5/plugin/pkg/client/auth/oidc
-  - 1.5/rest
-  - 1.5/tools/cache
-  - 1.5/tools/clientcmd/api
-  - 1.5/tools/metrics
-  - 1.5/transport
-testImports:
-- name: github.com/Azure/go-ansiterm
-  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
-  subpackages:
-  - winterm
-- name: github.com/cloudfoundry-incubator/candiedyaml
-  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
-- name: github.com/docker/libcompose
-  version: d1876c1d68527a49c0aac22a0b161acc7296b740
-  subpackages:
-  - config
-  - docker
-  - docker/builder
-  - docker/client
-  - docker/network
-  - labels
-  - logger
-  - lookup
-  - project
-  - project/events
-  - project/options
-  - utils
-  - version
-  - yaml
-- name: github.com/flynn/go-shlex
-  version: 3f9db97f856818214da2e1057f8ad84803971cff
-- name: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
-- name: github.com/gorilla/mux
-  version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
-- name: github.com/libkermit/compose
-  version: cadc5a3b83a15790174bd7fbc75ea2529785e772
-  subpackages:
-  - check
-- name: github.com/libkermit/docker
-  version: 55e3595409924fcfbb850811e5a7cdbe8960a0b7
-- name: github.com/libkermit/docker-check
-  version: cbe0ef03b3d23070eac4d00ba8828f2cc7f7e5a3
-- name: github.com/opencontainers/runtime-spec
-  version: 06479209bdc0d4135911688c18157bd39bd99c22
-  subpackages:
-  - specs-go
-- name: github.com/vbatts/tar-split
-  version: 6810cedb21b2c3d0b9bb8f9af12ff2dc7a2f14df
-  subpackages:
-  - archive/tar
-  - tar/asm
-  - tar/storage
-- name: github.com/vdemeester/shakers
-  version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
-- name: github.com/xeipuuv/gojsonpointer
-  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
-- name: github.com/xeipuuv/gojsonreference
-  version: e02fc20de94c78484cd5ffb007f8af96be030a45
-- name: github.com/xeipuuv/gojsonschema
-  version: 00f9fafb54d2244d291b86ab63d12c38bd5c3886
-- name: golang.org/x/time
-  version: a4bde12657593d5e90d0533a3e4fd95e635124cb
-  subpackages:
-  - rate
->>>>>>> 9af5ba3... Bump go-rancher version

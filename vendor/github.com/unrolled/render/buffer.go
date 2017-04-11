@@ -39,3 +39,8 @@ func (bp *BufferPool) Put(b *bytes.Buffer) {
 	default: // Discard the buffer if the pool is full.
 	}
 }
+
+// Initialize buffer pool for writing templates into.
+func init() {
+	bufPool = NewBufferPool(64)
+}
