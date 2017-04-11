@@ -742,11 +742,10 @@ func TestDockerGetLabels(t *testing.T) {
 }
 
 func TestDockerTraefikFilter(t *testing.T) {
-	provider := Docker{}
 	containers := []struct {
-		container        docker.ContainerJSON
-		exposedByDefault bool
-		expected         bool
+		container docker.ContainerJSON
+		expected  bool
+		provider  *Docker
 	}{
 		{
 			container: docker.ContainerJSON{
@@ -756,8 +755,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 				Config:          &container.Config{},
 				NetworkSettings: &docker.NetworkSettings{},
 			},
-			exposedByDefault: true,
-			expected:         false,
+			expected: false,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			container: docker.ContainerJSON{
@@ -777,8 +779,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         false,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: false,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -798,8 +803,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -816,8 +824,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -833,8 +844,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -855,8 +869,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -876,8 +893,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -897,8 +917,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -918,8 +941,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -935,8 +961,11 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: false,
-			expected:         false,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
+			expected: false,
 		},
 		{
 			container: docker.ContainerJSON{
@@ -956,8 +985,58 @@ func TestDockerTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: false,
-			expected:         true,
+			provider: &Docker{
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.enable": "true",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Docker{
+				ExposedByDefault: false,
+			},
+			expected: false,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.enable":        "true",
+						"traefik.frontend.rule": "Host:i.love.this.host",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Docker{
+				ExposedByDefault: false,
+			},
+			expected: true,
 		},
 	}
 
@@ -965,9 +1044,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 		e := e
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-			provider.ExposedByDefault = e.exposedByDefault
 			dockerData := parseContainer(e.container)
-			actual := provider.containerFilter(dockerData)
+			actual := e.provider.containerFilter(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %v for %+v, got %+v", e.expected, e, actual)
 			}
@@ -1941,14 +2019,11 @@ func TestSwarmGetLabels(t *testing.T) {
 }
 
 func TestSwarmTraefikFilter(t *testing.T) {
-	provider := &Docker{
-		SwarmMode: true,
-	}
 	services := []struct {
-		service          swarm.Service
-		exposedByDefault bool
-		expected         bool
-		networks         map[string]*docker.NetworkResource
+		service  swarm.Service
+		expected bool
+		networks map[string]*docker.NetworkResource
+		provider *Docker
 	}{
 		{
 			service: swarm.Service{
@@ -1958,9 +2033,13 @@ func TestSwarmTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         false,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: false,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Docker{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarm.Service{
@@ -1974,9 +2053,13 @@ func TestSwarmTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         false,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: false,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Docker{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarm.Service{
@@ -1990,9 +2073,13 @@ func TestSwarmTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Docker{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarm.Service{
@@ -2005,9 +2092,13 @@ func TestSwarmTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Docker{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarm.Service{
@@ -2021,9 +2112,13 @@ func TestSwarmTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Docker{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarm.Service{
@@ -2037,9 +2132,13 @@ func TestSwarmTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Docker{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarm.Service{
@@ -2053,9 +2152,13 @@ func TestSwarmTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Docker{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarm.Service{
@@ -2068,9 +2171,13 @@ func TestSwarmTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: false,
-			expected:         false,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: false,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Docker{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
 		},
 		{
 			service: swarm.Service{
@@ -2084,9 +2191,13 @@ func TestSwarmTraefikFilter(t *testing.T) {
 					},
 				},
 			},
-			exposedByDefault: false,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Docker{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
 		},
 	}
 
@@ -2095,8 +2206,7 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
-			provider.ExposedByDefault = e.exposedByDefault
-			actual := provider.containerFilter(dockerData)
+			actual := e.provider.containerFilter(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %v for %+v, got %+v", e.expected, e, actual)
 			}
