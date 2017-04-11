@@ -1,5 +1,28 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
+
+declare -i cur_parallel_jobs=${MAX_PARALLEL_JOBS:-1}
+
+build_binary_capped() {
+	declare -lr os="$1"
+	declare -lr arch="$2"
+
+	if [[ cur_parallel_jobs -eq 0 ]]; then
+		echo "waiting for one build job to complete..."
+		wait -n
+	else
+		((cur_parallel_jobs--))
+	fi
+	echo "building binary for ${os}/${arch}..."
+	GOARCH="${arch}" GOOS="${os}" CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=${VERSION} -X github.com/containous/traefik/version.Codename=${CODENAME} -X github.com/containous/traefik/version.BuildDate=${DATE}" -o "dist/traefik_${os}-${arch}" . &
+}
+
+if [[ ${cur_parallel_jobs} -le 0 ]]; then
+	echo >&2 'max number of parallel build jobs must be larger zero'
+	false
+fi
+
+echo "cross-building binaries with concurrency level ${cur_parallel_jobs}"
 
 if ! test -e autogen/gen.go; then
 	echo >&2 'error: generate must be run before crossbinary'
@@ -24,20 +47,17 @@ rm -f dist/traefik_*
 # Build 386 amd64 binaries
 OS_PLATFORM_ARG=(linux darwin windows freebsd openbsd)
 OS_ARCH_ARG=(386 amd64)
-for OS in ${OS_PLATFORM_ARG[@]}; do
-  for ARCH in ${OS_ARCH_ARG[@]}; do
-    echo "Building binary for $OS/$ARCH..."
-    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=$VERSION -X github.com/containous/traefik/version.Codename=$CODENAME -X github.com/containous/traefik/version.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" .
+for OS in "${OS_PLATFORM_ARG[@]}"; do
+  for ARCH in "${OS_ARCH_ARG[@]}"; do
+		build_binary_capped "${OS}" "${ARCH}"
   done
 done
 
 
 # Build arm binaries
-OS_PLATFORM_ARG=(linux)
-OS_ARCH_ARG=(arm arm64)
-for OS in ${OS_PLATFORM_ARG[@]}; do
-  for ARCH in ${OS_ARCH_ARG[@]}; do
-    echo "Building binary for $OS/$ARCH..."
-    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=$VERSION -X github.com/containous/traefik/version.Codename=$CODENAME -X github.com/containous/traefik/version.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" .
-  done
-done
+build_binary_capped 'linux' 'arm'
+build_binary_capped 'linux' 'arm64'
+
+echo "waiting for in-flight build jobs to complete..."
+wait
+echo "all build jobs completed successfully."

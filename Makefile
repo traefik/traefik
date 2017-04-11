@@ -6,7 +6,8 @@ TRAEFIK_ENVS := \
 	-e TESTFLAGS \
 	-e VERBOSE \
 	-e VERSION \
-	-e CODENAME
+	-e CODENAME \
+	-e MAX_PARALLEL_JOBS
 
 SRCS = $(shell git ls-files '*.go' | grep -v '^external/')
 
@@ -32,7 +33,7 @@ all: generate-webui build ## validate all checks, build linux binary, run all te
 binary: generate-webui build ## build the linux binary
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
 
-crossbinary: generate-webui build ## cross build the non-linux binaries
+crossbinary: build ## cross build the non-linux binaries
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate crossbinary
 
 test: build ## run the unit and integration tests
