@@ -67,6 +67,64 @@ To deploy Træfɪk to your cluster start by submitting the deployment to the clu
 ```sh
 kubectl apply -f examples/k8s/traefik.yaml
 ```
+### Role Based Access Control configuration (optional)
+
+Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/) in 1.6+ to allow fine-grained control
+of Kubernetes resources and api.
+
+If your cluster is configured with RBAC, you need to authorize Traefik to use
+kubernetes API using ClusterRole, ServiceAccount and ClusterRoleBinding resources:
+
+```yaml
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: traefik-ingress-controller
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - endpoints
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik-ingress-controller
+  namespace: kube-system
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: traefik-ingress-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: traefik-ingress-controller
+subjects:
+- kind: ServiceAccount
+  name: traefik-ingress-controller
+  namespace: kube-system
+```
+
+Then you add the service account information to Traefik deployment spec:
+  `serviceAccountName: traefik-ingress-controller`
+
+[examples/k8s/traefik-with-rbac.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-with-rbac.yaml)
 
 ### Check the deployment
 
