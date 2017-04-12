@@ -1814,11 +1814,79 @@ func TestGetRuleTypeFromAnnotation(t *testing.T) {
 	}
 }
 
+func TestGetServiceErrors(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"traefik.frontend.passHostHeader": "true",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "foo",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/bar",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "notExists",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	services := []*v1.Service{}
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+		apiServiceError: true,
+	}
+	provider := Kubernetes{}
+	_, err := provider.loadIngresses(client)
+
+	if err == nil {
+		t.Fatal("Should have raised error when loading services but did not.")
+	}
+
+	client = clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+		apiEndpointsError: true,
+	}
+	provider = Kubernetes{}
+	_, err = provider.loadIngresses(client)
+
+	if err == nil {
+		t.Fatal("Should have raised error when loading service endpoints but did not.")
+	}
+}
+
 type clientMock struct {
 	ingresses []*v1beta1.Ingress
 	services  []*v1.Service
 	endpoints []*v1.Endpoints
 	watchChan chan interface{}
+
+	err             error
+	apiServiceError bool
+	apiEndpointsError bool
 }
 
 func (c clientMock) GetIngresses(namespaces k8s.Namespaces) []*v1beta1.Ingress {
@@ -1833,6 +1901,10 @@ func (c clientMock) GetIngresses(namespaces k8s.Namespaces) []*v1beta1.Ingress {
 }
 
 func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error) {
+	if c.apiServiceError {
+		return &v1.Service{}, true, c.err
+	}
+
 	for _, service := range c.services {
 		if service.Namespace == namespace && service.Name == name {
 			return service, true, nil
@@ -1842,6 +1914,10 @@ func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error
 }
 
 func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
+	if c.apiEndpointsError {
+		return &v1.Endpoints{}, true, c.err
+	}
+
 	for _, endpoints := range c.endpoints {
 		if endpoints.Namespace == namespace && endpoints.Name == name {
 			return endpoints, true, nil
