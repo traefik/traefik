@@ -27,8 +27,9 @@ type GlobalConfiguration struct {
 	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
-	AccessLogsFile            string                  `description:"Access logs file"`
-	TraefikLogsFile           string                  `description:"Traefik logs file"`
+	AccessLogsFile            string                  `description:"Access log file"`
+	AccessLog                 *types.AccessLog        `description:"Access log settings (instead of accessLogFile)"`
+	TraefikLogsFile           string                  `description:"Traefik log file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
 	Cluster                   *types.Cluster          `description:"Enable clustering"`
@@ -464,6 +465,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 		GlobalConfiguration: GlobalConfiguration{
 			GraceTimeOut:              flaeg.Duration(10 * time.Second),
 			AccessLogsFile:            "",
+			AccessLog:                 &types.AccessLog{},
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*EntryPoint{},

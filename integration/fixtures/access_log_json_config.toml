@@ -1,0 +1,103 @@
+################################################################
+# Global configuration
+################################################################
+traefikLogsFile = "traefik.log"
+logLevel = "ERROR"
+
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+    address = ":8000"
+    compress = true
+
+[accessLog]
+  file       = "access-log.json"
+  format     = "json"
+  timeFormat = "2006-01-02T15:04:05Z"
+
+  coreFields = [
+    "StartUTC:              time_utc",
+    "StartLocal:            time_local",
+    "Duration:              total_duration",
+    "RequestAddr:           addr",
+    "RequestHost:           host",
+    "RequestPort:           port",
+    "RequestMethod:         method",
+    "RequestPath:           request_path",
+    "RequestProtocol:       protocol",
+    "RequestLine:           request_line",
+    "RequestContentSize:    request_body_size",
+    "RequestCount:          request_count",
+    "ClientAddr:            remote_addr",
+    "ClientHost:            remote_ip",
+    "ClientPort:            remote_port",
+    "ClientUsername:        remote_user",
+    "OriginDuration:        origin_duration",
+    "OriginStatus:          origin_status",
+    "OriginStatusLine:      origin_status_line",
+    "OriginContentSize:     origin_response_length",
+    "DownstreamStatus:      status",
+    "DownstreamStatusLine:  status_line",
+    "DownstreamContentSize: body_bytes_sent",
+    "FrontendName:          frontend",
+    "BackendName:           proxy_host",
+    "BackendURL:            proxy_url",
+    "BackendAddr:           origin_addr",
+    "Overhead:              overhead",
+    "GzipRatio:             gzip_ratio"]
+
+  requestHeaders = [
+    "Referer:         http_referrer",
+    "User-Agent:      http_user_agent",
+    "X-Request-Chain: http_x_request_chain",
+    "X-Session-Id:    http_x_session_id",
+    "X-Request-Id:    http_x_request_id",
+    "True-Client-Ip:  http_true_client_ip"]
+
+  originResponseHeaders = [
+    "Content-Type:   content_type",
+    "Content-Length: content_length",
+    "Server:         upstream_http_server",
+    "Proxy_Agent:    upstream_http_proxy_agent"]
+
+  downstreamResponseHeaders = [
+    "Content-Length: sent_content_length",
+    "Location:       sent_http_location"]
+
+################################################################
+# Web configuration backend
+################################################################
+[web]
+  address = ":7888"
+
+################################################################
+# File configuration backend
+################################################################
+[file]
+
+################################################################
+# rules
+################################################################
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+      url = "http://127.0.0.1:8081"
+  [backends.backend2]
+    [backends.backend2.LoadBalancer]
+      method = "drr"
+    [backends.backend2.servers.server1]
+      url = "http://127.0.0.1:8092"
+    [backends.backend2.servers.server2]
+      url = "http://127.0.0.1:8093"
+
+[frontends]
+  [frontends.frontend1]
+    backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+      rule = "PathPrefix: /test1/"
+  [frontends.frontend2]
+    backend = "backend2"
+    passHostHeader = true
+    [frontends.frontend2.routes.test_2]
+      rule = "PathPrefix: /test2/"

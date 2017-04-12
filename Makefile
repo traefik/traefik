@@ -59,13 +59,13 @@ build-no-cache: dist
 shell: build ## start a shell inside the build env
 	$(DOCKER_RUN_TRAEFIK) /bin/bash
 
-image: binary ## build a docker traefik image
+image: build ## build a docker traefik image
 	docker build -t $(TRAEFIK_IMAGE) .
 
 dist:
 	mkdir dist
 
-run-dev:
+run-dev: generate-webui
 	go generate
 	go build
 	./traefik
@@ -82,5 +82,9 @@ lint:
 
 fmt:
 	gofmt -s -l -w $(SRCS)
+
+clean:
+	sudo rm -rf dist static site autogen/gen.go traefik
+
 help: ## this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

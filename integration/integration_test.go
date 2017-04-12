@@ -25,6 +25,7 @@ func Test(t *testing.T) {
 func init() {
 	check.Suite(&SimpleSuite{})
 	check.Suite(&AccessLogSuite{})
+	check.Suite(&AccessLogJSONSuite{})
 	check.Suite(&HTTPSSuite{})
 	check.Suite(&FileSuite{})
 	check.Suite(&DockerSuite{})

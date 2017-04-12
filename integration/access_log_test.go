@@ -15,6 +15,8 @@ import (
 	"github.com/go-check/check"
 	shellwords "github.com/mattn/go-shellwords"
 
+	"bufio"
+	"github.com/containous/traefik/integration/utils"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -34,15 +36,8 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	defer os.Remove("access.log")
 	defer os.Remove("traefik.log")
 
-	time.Sleep(500 * time.Millisecond)
-
 	// Verify Traefik started OK
-	traefikLog, err := ioutil.ReadFile("traefik.log")
-	c.Assert(err, checker.IsNil)
-	if len(traefikLog) > 0 {
-		fmt.Printf("%s\n", string(traefikLog))
-		c.Assert(len(traefikLog), checker.Equals, 0)
-	}
+	verifyEmptyErrorLog(c, "traefik.log")
 
 	// Start test servers
 	ts1 := startAccessLogServer(8081)
@@ -61,18 +56,20 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	accessLog, err := ioutil.ReadFile("access.log")
+	file, err := os.Open("access.log")
 	c.Assert(err, checker.IsNil)
-	lines := strings.Split(string(accessLog), "\n")
+	accessLog := bufio.NewScanner(file)
 	count := 0
-	for i, line := range lines {
+	for accessLog.Scan() {
+		line := accessLog.Text()
+		c.Log(line)
+		count++
 		if len(line) > 0 {
-			count++
 			tokens, err := shellwords.Parse(line)
 			c.Assert(err, checker.IsNil)
-			c.Assert(len(tokens), checker.Equals, 13)
+			c.Assert(len(tokens), checker.Equals, 13) // not 14 because 'referer' is blank
 			c.Assert(tokens[6], checker.Equals, "200")
-			c.Assert(tokens[9], checker.Equals, fmt.Sprintf("%d", i+1))
+			c.Assert(tokens[9], checker.Equals, fmt.Sprintf("%d", count))
 			c.Assert(strings.HasPrefix(tokens[10], "frontend"), checker.True)
 			c.Assert(strings.HasPrefix(tokens[11], "http://127.0.0.1:808"), checker.True)
 			c.Assert(regexp.MustCompile("^\\d+ms$").MatchString(tokens[12]), checker.True)
@@ -80,13 +77,22 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	}
 	c.Assert(count, checker.Equals, 3)
 
-	// Verify no other Traefik problems
-	traefikLog, err = ioutil.ReadFile("traefik.log")
+	verifyEmptyErrorLog(c, "traefik.log")
+}
+
+func verifyEmptyErrorLog(c *check.C, name string) {
+	err := utils.Try(30*time.Second, func() error {
+		traefikLog, e2 := ioutil.ReadFile(name)
+		if e2 != nil {
+			return e2
+		}
+		if len(traefikLog) > 0 {
+			fmt.Printf("%s\n", string(traefikLog))
+			c.Assert(len(traefikLog), checker.Equals, 0)
+		}
+		return nil
+	})
 	c.Assert(err, checker.IsNil)
-	if len(traefikLog) > 0 {
-		fmt.Printf("%s\n", string(traefikLog))
-		c.Assert(len(traefikLog), checker.Equals, 0)
-	}
 }
 
 func startAccessLogServer(port int) (ts *httptest.Server) {
