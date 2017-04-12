@@ -607,6 +607,15 @@ func (d *decoder) mappingStruct(n *node, out reflect.Value) (good bool) {
 	}
 	name := settableValueOf("")
 	l := len(n.children)
+
+	var inlineMap reflect.Value
+	var elemType reflect.Type
+	if sinfo.InlineMap != -1 {
+		inlineMap = out.Field(sinfo.InlineMap)
+		inlineMap.Set(reflect.New(inlineMap.Type()).Elem())
+		elemType = inlineMap.Type().Elem()
+	}
+
 	for i := 0; i < l; i += 2 {
 		ni := n.children[i]
 		if isMerge(ni) {
@@ -624,6 +633,13 @@ func (d *decoder) mappingStruct(n *node, out reflect.Value) (good bool) {
 				field = out.FieldByIndex(info.Inline)
 			}
 			d.unmarshal(n.children[i+1], field)
+		} else if sinfo.InlineMap != -1 {
+			if inlineMap.IsNil() {
+				inlineMap.Set(reflect.MakeMap(inlineMap.Type()))
+			}
+			value := reflect.New(elemType).Elem()
+			d.unmarshal(n.children[i+1], value)
+			inlineMap.SetMapIndex(name, value)
 		}
 	}
 	return true

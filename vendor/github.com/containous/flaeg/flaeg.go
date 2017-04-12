@@ -3,7 +3,6 @@ package flaeg
 import (
 	"errors"
 	"fmt"
-	flag "github.com/ogier/pflag"
 	"io"
 	"io/ioutil"
 	"os"
@@ -14,6 +13,8 @@ import (
 	"text/tabwriter"
 	"text/template"
 	"time"
+
+	flag "github.com/ogier/pflag"
 )
 
 // ErrParserNotFound is thrown when a field is flaged but not parser match its type
@@ -131,8 +132,8 @@ func loadParsers(customParsers map[reflect.Type]Parser) (map[reflect.Type]Parser
 	var float64Parser float64Value
 	parsers[reflect.TypeOf(float64(1.5))] = &float64Parser
 
-	var durationParser durationValue
-	parsers[reflect.TypeOf(time.Second)] = &durationParser
+	var durationParser Duration
+	parsers[reflect.TypeOf(Duration(time.Second))] = &durationParser
 
 	var timeParser timeValue
 	parsers[reflect.TypeOf(time.Now())] = &timeParser
@@ -473,7 +474,7 @@ func PrintHelpWithCommand(flagmap map[string]reflect.StructField, defaultValmap 
 	// Define a templates
 	// Using POSXE STD : http://pubs.opengroup.org/onlinepubs/9699919799/
 	const helper = `{{if .ProgDescription}}{{.ProgDescription}}
-	
+
 {{end}}Usage: {{.ProgName}} [--flag=flag_argument] [-f[flag_argument]] ...     set flag_argument to flag(s)
    or: {{.ProgName}} [--flag[=true|false| ]] [-f[true|false| ]] ...     set true/false to boolean flag(s)
 {{if .SubCommands}}

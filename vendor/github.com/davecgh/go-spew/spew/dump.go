@@ -129,7 +129,7 @@ func (d *dumpState) dumpPtr(v reflect.Value) {
 	d.w.Write(closeParenBytes)
 
 	// Display pointer information.
-	if len(pointerChain) > 0 {
+	if !d.cs.DisablePointerAddresses && len(pointerChain) > 0 {
 		d.w.Write(openParenBytes)
 		for i, addr := range pointerChain {
 			if i > 0 {
@@ -282,13 +282,13 @@ func (d *dumpState) dump(v reflect.Value) {
 	case reflect.Map, reflect.String:
 		valueLen = v.Len()
 	}
-	if valueLen != 0 || valueCap != 0 {
+	if valueLen != 0 || !d.cs.DisableCapacities && valueCap != 0 {
 		d.w.Write(openParenBytes)
 		if valueLen != 0 {
 			d.w.Write(lenEqualsBytes)
 			printInt(d.w, int64(valueLen), 10)
 		}
-		if valueCap != 0 {
+		if !d.cs.DisableCapacities && valueCap != 0 {
 			if valueLen != 0 {
 				d.w.Write(spaceBytes)
 			}

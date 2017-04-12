@@ -7,6 +7,8 @@ import (
 
 	"github.com/hashicorp/consul/command"
 	"github.com/hashicorp/consul/command/agent"
+	"github.com/hashicorp/consul/command/base"
+	"github.com/hashicorp/consul/version"
 	"github.com/mitchellh/cli"
 )
 
@@ -14,116 +16,323 @@ import (
 var Commands map[string]cli.CommandFactory
 
 func init() {
-	ui := &cli.BasicUi{Writer: os.Stdout}
+	ui := &cli.BasicUi{Writer: os.Stdout, ErrorWriter: os.Stderr}
 
 	Commands = map[string]cli.CommandFactory{
 		"agent": func() (cli.Command, error) {
 			return &agent.Command{
-				Revision:          GitCommit,
-				Version:           Version,
-				VersionPrerelease: VersionPrerelease,
-				HumanVersion:      GetHumanVersion(),
-				Ui:                ui,
+				Command: base.Command{
+					Flags: base.FlagSetNone,
+					Ui:    ui,
+				},
+				Revision:          version.GitCommit,
+				Version:           version.Version,
+				VersionPrerelease: version.VersionPrerelease,
+				HumanVersion:      version.GetHumanVersion(),
 				ShutdownCh:        make(chan struct{}),
 			}, nil
 		},
 
 		"configtest": func() (cli.Command, error) {
 			return &command.ConfigTestCommand{
-				Ui: ui,
+				Command: base.Command{
+					Flags: base.FlagSetNone,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"event": func() (cli.Command, error) {
 			return &command.EventCommand{
-				Ui: ui,
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"exec": func() (cli.Command, error) {
 			return &command.ExecCommand{
 				ShutdownCh: makeShutdownCh(),
-				Ui:         ui,
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"force-leave": func() (cli.Command, error) {
 			return &command.ForceLeaveCommand{
-				Ui: ui,
+				Command: base.Command{
+					Flags: base.FlagSetClientHTTP,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"info": func() (cli.Command, error) {
+			return &command.InfoCommand{
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetClientHTTP,
+				},
 			}, nil
 		},
 
 		"join": func() (cli.Command, error) {
 			return &command.JoinCommand{
-				Ui: ui,
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetClientHTTP,
+				},
 			}, nil
 		},
 
 		"keygen": func() (cli.Command, error) {
 			return &command.KeygenCommand{
-				Ui: ui,
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetNone,
+				},
 			}, nil
 		},
 
 		"keyring": func() (cli.Command, error) {
 			return &command.KeyringCommand{
-				Ui: ui,
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetClientHTTP,
+				},
+			}, nil
+		},
+
+		"kv": func() (cli.Command, error) {
+			return &command.KVCommand{
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetNone,
+				},
+			}, nil
+		},
+
+		"kv delete": func() (cli.Command, error) {
+			return &command.KVDeleteCommand{
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetHTTP,
+				},
+			}, nil
+		},
+
+		"kv get": func() (cli.Command, error) {
+			return &command.KVGetCommand{
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetHTTP,
+				},
+			}, nil
+		},
+
+		"kv put": func() (cli.Command, error) {
+			return &command.KVPutCommand{
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetHTTP,
+				},
+			}, nil
+		},
+
+		"kv export": func() (cli.Command, error) {
+			return &command.KVExportCommand{
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetHTTP,
+				},
+			}, nil
+		},
+
+		"kv import": func() (cli.Command, error) {
+			return &command.KVImportCommand{
+				Command: base.Command{
+					Ui:    ui,
+					Flags: base.FlagSetHTTP,
+				},
 			}, nil
 		},
 
 		"leave": func() (cli.Command, error) {
 			return &command.LeaveCommand{
-				Ui: ui,
+				Command: base.Command{
+					Flags: base.FlagSetClientHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"lock": func() (cli.Command, error) {
 			return &command.LockCommand{
 				ShutdownCh: makeShutdownCh(),
-				Ui:         ui,
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"maint": func() (cli.Command, error) {
 			return &command.MaintCommand{
-				Ui: ui,
+				Command: base.Command{
+					Flags: base.FlagSetClientHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"members": func() (cli.Command, error) {
 			return &command.MembersCommand{
-				Ui: ui,
+				Command: base.Command{
+					Flags: base.FlagSetClientHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"monitor": func() (cli.Command, error) {
 			return &command.MonitorCommand{
 				ShutdownCh: makeShutdownCh(),
-				Ui:         ui,
+				Command: base.Command{
+					Flags: base.FlagSetClientHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
-		"info": func() (cli.Command, error) {
-			return &command.InfoCommand{
-				Ui: ui,
+		"operator": func() (cli.Command, error) {
+			return &command.OperatorCommand{
+				Command: base.Command{
+					Flags: base.FlagSetNone,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"operator autopilot": func() (cli.Command, error) {
+			return &command.OperatorAutopilotCommand{
+				Command: base.Command{
+					Flags: base.FlagSetNone,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"operator autopilot get-config": func() (cli.Command, error) {
+			return &command.OperatorAutopilotGetCommand{
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"operator autopilot set-config": func() (cli.Command, error) {
+			return &command.OperatorAutopilotSetCommand{
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"operator raft": func() (cli.Command, error) {
+			return &command.OperatorRaftCommand{
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"operator raft list-peers": func() (cli.Command, error) {
+			return &command.OperatorRaftListCommand{
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"operator raft remove-peer": func() (cli.Command, error) {
+			return &command.OperatorRaftRemoveCommand{
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"reload": func() (cli.Command, error) {
 			return &command.ReloadCommand{
-				Ui: ui,
+				Command: base.Command{
+					Flags: base.FlagSetClientHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"rtt": func() (cli.Command, error) {
 			return &command.RTTCommand{
+				Command: base.Command{
+					Flags: base.FlagSetClientHTTP,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"snapshot": func() (cli.Command, error) {
+			return &command.SnapshotCommand{
 				Ui: ui,
+			}, nil
+		},
+
+		"snapshot restore": func() (cli.Command, error) {
+			return &command.SnapshotRestoreCommand{
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"snapshot save": func() (cli.Command, error) {
+			return &command.SnapshotSaveCommand{
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"snapshot inspect": func() (cli.Command, error) {
+			return &command.SnapshotInspectCommand{
+				Command: base.Command{
+					Flags: base.FlagSetNone,
+					Ui:    ui,
+				},
+			}, nil
+		},
+
+		"validate": func() (cli.Command, error) {
+			return &command.ValidateCommand{
+				Command: base.Command{
+					Flags: base.FlagSetNone,
+					Ui:    ui,
+				},
 			}, nil
 		},
 
 		"version": func() (cli.Command, error) {
 			return &command.VersionCommand{
-				HumanVersion: GetHumanVersion(),
+				HumanVersion: version.GetHumanVersion(),
 				Ui:           ui,
 			}, nil
 		},
@@ -131,7 +340,10 @@ func init() {
 		"watch": func() (cli.Command, error) {
 			return &command.WatchCommand{
 				ShutdownCh: makeShutdownCh(),
-				Ui:         ui,
+				Command: base.Command{
+					Flags: base.FlagSetHTTP,
+					Ui:    ui,
+				},
 			}, nil
 		},
 	}

@@ -59,6 +59,14 @@ func New(handlers ...Handler) *Negroni {
 	}
 }
 
+// With returns a new Negroni instance that is a combination of the negroni
+// receiver's handlers and the provided handlers.
+func (n *Negroni) With(handlers ...Handler) *Negroni {
+	return New(
+		append(n.handlers, handlers...)...,
+	)
+}
+
 // Classic returns a new Negroni instance with the default middleware already
 // in the stack.
 //

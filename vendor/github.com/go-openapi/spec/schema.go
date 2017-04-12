@@ -269,7 +269,7 @@ func (s Schema) JSONLookup(token string) (interface{}, error) {
 	}
 
 	r, _, err := jsonpointer.GetForToken(s.SchemaProps, token)
-	if r != nil || (err != nil && !strings.HasPrefix(err.Error(), "object has no field")) {
+	if r != nil || err != nil {
 		return r, err
 	}
 	r, _, err = jsonpointer.GetForToken(s.SwaggerSchemaProps, token)

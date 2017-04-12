@@ -33,6 +33,9 @@ var (
 
 
 ### What did you see instead?
+
+
+### If applicable, please paste the log output in debug mode ('--debug' switch)
 `
 )
 

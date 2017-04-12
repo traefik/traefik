@@ -26,7 +26,7 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	defer cmd.Process.Kill()
 	output := b.Bytes()
 
-	c.Assert(string(output), checker.Contains, "Near line 0 (last key parsed ''): Bare keys cannot contain '{'")
+	c.Assert(string(output), checker.Contains, "Near line 0 (last key parsed ''): bare keys cannot contain '{'")
 }
 
 func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
@@ -70,7 +70,7 @@ func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
 	defer cmd.Process.Kill()
 	output := b.Bytes()
 
-	c.Assert(string(output), checker.Contains, "\\\"DefaultEntryPoints\\\":[\\\"http\\\"]")
+	c.Assert(string(output), checker.Contains, "\"DefaultEntryPoints\":[\"http\"]")
 }
 
 func (s *SimpleSuite) TestPrintHelp(c *check.C) {

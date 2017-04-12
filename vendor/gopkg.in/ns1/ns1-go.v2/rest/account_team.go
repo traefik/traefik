@@ -48,9 +48,8 @@ func (s *TeamsService) Get(id string) (*account.Team, *http.Response, error) {
 			if err.(*Error).Message == "Unknown team id" {
 				return nil, resp, ErrTeamMissing
 			}
-		default:
-			return nil, resp, err
 		}
+		return nil, resp, err
 	}
 
 	return &t, resp, nil
@@ -73,9 +72,8 @@ func (s *TeamsService) Create(t *account.Team) (*http.Response, error) {
 			if err.(*Error).Message == fmt.Sprintf("team with name \"%s\" exists", t.Name) {
 				return resp, ErrTeamExists
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -100,9 +98,8 @@ func (s *TeamsService) Update(t *account.Team) (*http.Response, error) {
 			if err.(*Error).Message == "unknown team id" {
 				return resp, ErrTeamMissing
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -126,9 +123,8 @@ func (s *TeamsService) Delete(id string) (*http.Response, error) {
 			if err.(*Error).Message == "unknown team id" {
 				return resp, ErrTeamMissing
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -136,7 +132,7 @@ func (s *TeamsService) Delete(id string) (*http.Response, error) {
 
 var (
 	// ErrTeamExists bundles PUT create error.
-	ErrTeamExists = errors.New("Team already exists.")
+	ErrTeamExists = errors.New("team already exists")
 	// ErrTeamMissing bundles GET/POST/DELETE error.
-	ErrTeamMissing = errors.New("Team does not exist.")
+	ErrTeamMissing = errors.New("team does not exist")
 )

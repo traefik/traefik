@@ -12,8 +12,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"go/build"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,7 +26,6 @@ import (
 var (
 	verbose     = flag.Bool("v", false, "verbose output")
 	force       = flag.Bool("force", false, "ignore failing dependencies")
-	doCore      = flag.Bool("core", false, "force an update to core")
 	excludeList = flag.String("exclude", "",
 		"comma-separated list of packages to exclude")
 
@@ -64,7 +61,6 @@ func main() {
 	// variable. This will prevent duplicate downloads and also will enable long
 	// tests, which really need to be run after each generated package.
 
-	updateCore := *doCore
 	if gen.UnicodeVersion() != unicode.Version {
 		fmt.Printf("Requested Unicode version %s; core unicode version is %s.\n",
 			gen.UnicodeVersion(),
@@ -76,44 +72,24 @@ func main() {
 		if gen.UnicodeVersion() < unicode.Version && !*force {
 			os.Exit(2)
 		}
-		updateCore = true
 	}
-
-	var unicode = &dependency{}
-	if updateCore {
-		fmt.Printf("Updating core to version %s...\n", gen.UnicodeVersion())
-		unicode = generate("unicode")
-
-		// Test some users of the unicode packages, especially the ones that
-		// keep a mirrored table. These may need to be corrected by hand.
-		generate("regexp", unicode)
-		generate("strconv", unicode) // mimics Unicode table
-		generate("strings", unicode)
-		generate("testing", unicode) // mimics Unicode table
-	}
-
 	var (
-		cldr       = generate("./unicode/cldr", unicode)
-		language   = generate("./language", cldr)
-		internal   = generate("./internal", unicode, language)
-		norm       = generate("./unicode/norm", unicode)
-		rangetable = generate("./unicode/rangetable", unicode)
-		cases      = generate("./cases", unicode, norm, language, rangetable)
-		width      = generate("./width", unicode)
-		bidi       = generate("./unicode/bidi", unicode, norm, rangetable)
-		_          = generate("./secure/precis", unicode, norm, rangetable, cases, width, bidi)
-		_          = generate("./encoding/htmlindex", unicode, language)
-		_          = generate("./currency", unicode, cldr, language, internal)
-		_          = generate("./internal/number", unicode, cldr, language, internal)
-		_          = generate("./language/display", unicode, cldr, language, internal)
-		_          = generate("./collate", unicode, norm, cldr, language, rangetable)
-		_          = generate("./search", unicode, norm, cldr, language, rangetable)
+		cldr       = generate("unicode/cldr")
+		language   = generate("language", cldr)
+		internal   = generate("internal", language)
+		norm       = generate("unicode/norm")
+		rangetable = generate("unicode/rangetable")
+		cases      = generate("cases", norm, language, rangetable)
+		width      = generate("width")
+		bidi       = generate("unicode/bidi", norm, rangetable)
+		_          = generate("secure/precis", norm, rangetable, cases, width, bidi)
+		_          = generate("encoding/htmlindex", language)
+		_          = generate("currency", cldr, language, internal)
+		_          = generate("internal/number", cldr, language, internal)
+		_          = generate("language/display", cldr, language)
+		_          = generate("collate", norm, cldr, language, rangetable)
+		_          = generate("search", norm, cldr, language, rangetable)
 	)
-
-	if updateCore {
-		copyVendored()
-		generate("vendor/golang_org/x/net/idna", unicode, norm, width, cases)
-	}
 	all.Wait()
 
 	if hasErrors {
@@ -157,7 +133,7 @@ func generate(pkg string, deps ...*dependency) *dependency {
 		if *verbose {
 			args = append(args, "-v")
 		}
-		args = append(args, pkg)
+		args = append(args, "./"+pkg)
 		cmd := exec.Command(filepath.Join(runtime.GOROOT(), "bin", "go"), args...)
 		w := &bytes.Buffer{}
 		cmd.Stderr = w
@@ -185,27 +161,6 @@ func generate(pkg string, deps ...*dependency) *dependency {
 		fmt.Print(wt.String())
 	}()
 	return &wg
-}
-
-func copyVendored() {
-	// Copy the vendored files. Some more may need to be copied in by hand.
-	dir := filepath.Join(build.Default.GOROOT, "src/vendor/golang_org/x/text")
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		b, err := ioutil.ReadFile(path[len(dir)+1:])
-		if err != nil {
-			return err
-		}
-		vprintf("=== COPY %s\n", path)
-		b = bytes.Replace(b, []byte("golang.org"), []byte("golang_org"), -1)
-		return ioutil.WriteFile(path, b, 0666)
-	})
-	if err != nil {
-		fmt.Println("Copying vendored files failed:", err)
-		os.Exit(1)
-	}
 }
 
 func contains(a []string, s string) bool {

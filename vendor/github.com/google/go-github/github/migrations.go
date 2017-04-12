@@ -6,6 +6,7 @@
 package github
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -74,7 +75,7 @@ type startMigration struct {
 // repos is a slice of repository names to migrate.
 //
 // GitHub API docs: https://developer.github.com/v3/migration/migrations/#start-a-migration
-func (s *MigrationService) StartMigration(org string, repos []string, opt *MigrationOptions) (*Migration, *Response, error) {
+func (s *MigrationService) StartMigration(ctx context.Context, org string, repos []string, opt *MigrationOptions) (*Migration, *Response, error) {
 	u := fmt.Sprintf("orgs/%v/migrations", org)
 
 	body := &startMigration{Repositories: repos}
@@ -92,7 +93,7 @@ func (s *MigrationService) StartMigration(org string, repos []string, opt *Migra
 	req.Header.Set("Accept", mediaTypeMigrationsPreview)
 
 	m := &Migration{}
-	resp, err := s.client.Do(req, m)
+	resp, err := s.client.Do(ctx, req, m)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -103,7 +104,7 @@ func (s *MigrationService) StartMigration(org string, repos []string, opt *Migra
 // ListMigrations lists the most recent migrations.
 //
 // GitHub API docs: https://developer.github.com/v3/migration/migrations/#get-a-list-of-migrations
-func (s *MigrationService) ListMigrations(org string) ([]*Migration, *Response, error) {
+func (s *MigrationService) ListMigrations(ctx context.Context, org string) ([]*Migration, *Response, error) {
 	u := fmt.Sprintf("orgs/%v/migrations", org)
 
 	req, err := s.client.NewRequest("GET", u, nil)
@@ -115,7 +116,7 @@ func (s *MigrationService) ListMigrations(org string) ([]*Migration, *Response, 
 	req.Header.Set("Accept", mediaTypeMigrationsPreview)
 
 	var m []*Migration
-	resp, err := s.client.Do(req, &m)
+	resp, err := s.client.Do(ctx, req, &m)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -127,7 +128,7 @@ func (s *MigrationService) ListMigrations(org string) ([]*Migration, *Response, 
 // id is the migration ID.
 //
 // GitHub API docs: https://developer.github.com/v3/migration/migrations/#get-the-status-of-a-migration
-func (s *MigrationService) MigrationStatus(org string, id int) (*Migration, *Response, error) {
+func (s *MigrationService) MigrationStatus(ctx context.Context, org string, id int) (*Migration, *Response, error) {
 	u := fmt.Sprintf("orgs/%v/migrations/%v", org, id)
 
 	req, err := s.client.NewRequest("GET", u, nil)
@@ -139,7 +140,7 @@ func (s *MigrationService) MigrationStatus(org string, id int) (*Migration, *Res
 	req.Header.Set("Accept", mediaTypeMigrationsPreview)
 
 	m := &Migration{}
-	resp, err := s.client.Do(req, m)
+	resp, err := s.client.Do(ctx, req, m)
 	if err != nil {
 		return nil, resp, err
 	}
@@ -151,7 +152,7 @@ func (s *MigrationService) MigrationStatus(org string, id int) (*Migration, *Res
 // id is the migration ID.
 //
 // GitHub API docs: https://developer.github.com/v3/migration/migrations/#download-a-migration-archive
-func (s *MigrationService) MigrationArchiveURL(org string, id int) (url string, err error) {
+func (s *MigrationService) MigrationArchiveURL(ctx context.Context, org string, id int) (url string, err error) {
 	u := fmt.Sprintf("orgs/%v/migrations/%v/archive", org, id)
 
 	req, err := s.client.NewRequest("GET", u, nil)
@@ -174,7 +175,7 @@ func (s *MigrationService) MigrationArchiveURL(org string, id int) (url string, 
 	}
 	defer func() { s.client.client.CheckRedirect = saveRedirect }()
 
-	_, err = s.client.Do(req, nil) // expect error from disable redirect
+	_, err = s.client.Do(ctx, req, nil) // expect error from disable redirect
 	if err == nil {
 		return "", errors.New("expected redirect, none provided")
 	}
@@ -188,7 +189,7 @@ func (s *MigrationService) MigrationArchiveURL(org string, id int) (url string, 
 // id is the migration ID.
 //
 // GitHub API docs: https://developer.github.com/v3/migration/migrations/#delete-a-migration-archive
-func (s *MigrationService) DeleteMigration(org string, id int) (*Response, error) {
+func (s *MigrationService) DeleteMigration(ctx context.Context, org string, id int) (*Response, error) {
 	u := fmt.Sprintf("orgs/%v/migrations/%v/archive", org, id)
 
 	req, err := s.client.NewRequest("DELETE", u, nil)
@@ -199,7 +200,7 @@ func (s *MigrationService) DeleteMigration(org string, id int) (*Response, error
 	// TODO: remove custom Accept header when this API fully launches.
 	req.Header.Set("Accept", mediaTypeMigrationsPreview)
 
-	return s.client.Do(req, nil)
+	return s.client.Do(ctx, req, nil)
 }
 
 // UnlockRepo unlocks a repository that was locked for migration.
@@ -208,7 +209,7 @@ func (s *MigrationService) DeleteMigration(org string, id int) (*Response, error
 // is complete and you no longer need the source data.
 //
 // GitHub API docs: https://developer.github.com/v3/migration/migrations/#unlock-a-repository
-func (s *MigrationService) UnlockRepo(org string, id int, repo string) (*Response, error) {
+func (s *MigrationService) UnlockRepo(ctx context.Context, org string, id int, repo string) (*Response, error) {
 	u := fmt.Sprintf("orgs/%v/migrations/%v/repos/%v/lock", org, id, repo)
 
 	req, err := s.client.NewRequest("DELETE", u, nil)
@@ -219,5 +220,5 @@ func (s *MigrationService) UnlockRepo(org string, id int, repo string) (*Respons
 	// TODO: remove custom Accept header when this API fully launches.
 	req.Header.Set("Accept", mediaTypeMigrationsPreview)
 
-	return s.client.Do(req, nil)
+	return s.client.Do(ctx, req, nil)
 }

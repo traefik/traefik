@@ -24,7 +24,7 @@ type event struct {
 
 // stats is the runc specific stats structure for stability when encoding and decoding stats.
 type stats struct {
-	Cpu     cpu                `json:"cpu"`
+	CPU     cpu                `json:"cpu"`
 	Memory  memory             `json:"memory"`
 	Pids    pids               `json:"pids"`
 	Blkio   blkio              `json:"blkio"`
@@ -108,6 +108,9 @@ information is displayed once every 5 seconds.`,
 		cli.BoolFlag{Name: "stats", Usage: "display the container's stats then exit"},
 	},
 	Action: func(context *cli.Context) error {
+		if err := checkArgs(context, 1, exactArgs); err != nil {
+			return err
+		}
 		container, err := getContainer(context)
 		if err != nil {
 			return err
@@ -121,7 +124,6 @@ information is displayed once every 5 seconds.`,
 			return err
 		}
 		if status == libcontainer.Stopped {
-			fatalf("container with id %s is not running", container.ID())
 			return fmt.Errorf("container with id %s is not running", container.ID())
 		}
 		var (
@@ -196,13 +198,13 @@ func convertLibcontainerStats(ls *libcontainer.Stats) *stats {
 	s.Pids.Current = cg.PidsStats.Current
 	s.Pids.Limit = cg.PidsStats.Limit
 
-	s.Cpu.Usage.Kernel = cg.CpuStats.CpuUsage.UsageInKernelmode
-	s.Cpu.Usage.User = cg.CpuStats.CpuUsage.UsageInUsermode
-	s.Cpu.Usage.Total = cg.CpuStats.CpuUsage.TotalUsage
-	s.Cpu.Usage.Percpu = cg.CpuStats.CpuUsage.PercpuUsage
-	s.Cpu.Throttling.Periods = cg.CpuStats.ThrottlingData.Periods
-	s.Cpu.Throttling.ThrottledPeriods = cg.CpuStats.ThrottlingData.ThrottledPeriods
-	s.Cpu.Throttling.ThrottledTime = cg.CpuStats.ThrottlingData.ThrottledTime
+	s.CPU.Usage.Kernel = cg.CpuStats.CpuUsage.UsageInKernelmode
+	s.CPU.Usage.User = cg.CpuStats.CpuUsage.UsageInUsermode
+	s.CPU.Usage.Total = cg.CpuStats.CpuUsage.TotalUsage
+	s.CPU.Usage.Percpu = cg.CpuStats.CpuUsage.PercpuUsage
+	s.CPU.Throttling.Periods = cg.CpuStats.ThrottlingData.Periods
+	s.CPU.Throttling.ThrottledPeriods = cg.CpuStats.ThrottlingData.ThrottledPeriods
+	s.CPU.Throttling.ThrottledTime = cg.CpuStats.ThrottlingData.ThrottledTime
 
 	s.Memory.Cache = cg.MemoryStats.Cache
 	s.Memory.Kernel = convertMemoryEntry(cg.MemoryStats.KernelUsage)

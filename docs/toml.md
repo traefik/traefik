@@ -9,13 +9,15 @@
 # Global configuration
 ################################################################
 
-# Timeout in seconds.
-# Duration to give active requests a chance to finish during hot-reloads
+# Duration to give active requests a chance to finish during hot-reloads.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: 10
+# Default: "10s"
 #
-# graceTimeOut = 10
+# graceTimeOut = "10s"
 
 # Enable debug mode
 #
@@ -56,17 +58,32 @@
 # Backends throttle duration: minimum duration in seconds between 2 events from providers
 # before applying a new configuration. It avoids unnecessary reloads if multiples events
 # are sent in a short amount of time.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: "2"
+# Default: "2s"
 #
-# ProvidersThrottleDuration = "5"
+# ProvidersThrottleDuration = "2s"
 
-# If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
-# If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
+# IdleTimeout: maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
+# This is set to enforce closing of stale client connections.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
 #
 # Optional
-# Default: http.DefaultMaxIdleConnsPerHost
+# Default: "180s"
+#
+# IdleTimeout = "360s"
+
+# Controls the maximum idle (keep-alive) connections to keep per-host. If zero, DefaultMaxIdleConnsPerHost
+# from the Go standard library net/http module is used.
+# If you encounter 'too many open files' errors, you can either increase this
+# value or change the `ulimit`.
+#
+# Optional
+# Default: 200
 #
 # MaxIdleConnsPerHost = 200
 
@@ -556,7 +573,7 @@ address = ":8080"
 #
 # To enable Traefik to export internal metrics to Prometheus
 # [web.metrics.prometheus]
-#   Buckets=[0.1,0.3,1.2,5]
+#   Buckets=[0.1,0.3,1.2,5.0]
 #
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
@@ -735,7 +752,7 @@ $ curl -s "http://localhost:8080/api" | jq .
 - `/metrics`: You can enable Traefik to export internal metrics to different monitoring systems (Only Prometheus is supported at the moment).
 
 ```bash
-$ traefik --web.metrics.prometheus --web.metrics.prometheus.buckets="0.1,0.3,1.2,5"
+$ traefik --web.metrics.prometheus --web.metrics.prometheus.buckets="0.1,0.3,1.2,5.0"
 ```
 
 ## Docker backend
@@ -823,11 +840,11 @@ Labels can be used on containers to override default behaviour:
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
 - `traefik.enable=false`: disable this container in Træfɪk
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}` or `Host:{service}.{project_name}.{domain}` if you are using `docker-compose`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
-- `traefik.docker.network`: Set the docker network to use for connections to this container
+- `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 
 If several ports need to be exposed from a container, the services labels can be used
 - `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
@@ -932,19 +949,25 @@ domain = "marathon.localhost"
 # dcosToken = "xxxxxx"
 
 # Override DialerTimeout
-# Amount of time in seconds to allow the Marathon provider to wait to open a TCP
-# connection to a Marathon master
+# Amount of time to allow the Marathon provider to wait to open a TCP connection
+# to a Marathon master.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: 60
-# dialerTimeout = 5
+# Default: "60s"
+# dialerTimeout = "60s"
 
-# Set the TCP Keep Alive interval (in seconds) for the Marathon HTTP Client
+# Set the TCP Keep Alive interval for the Marathon HTTP Client.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
 #
 # Optional
-# Default: 10
+# Default: "10s"
 #
-# keepAlive = 10
+# keepAlive = "10s"
 ```
 
 Labels can be used on containers to override default behaviour:
@@ -1027,12 +1050,14 @@ domain = "mesos.localhost"
 # Zookeeper timeout (in seconds)
 #
 # Optional
+# Default: 30
 #
 # ZkDetectionTimeout = 30
 
 # Polling interval (in seconds)
 #
 # Optional
+# Default: 30
 #
 # RefreshSeconds = 30
 
@@ -1045,8 +1070,9 @@ domain = "mesos.localhost"
 # HTTP Timeout (in seconds)
 #
 # Optional
+# Default: 30
 #
-# StateTimeoutSecond = "host"
+# StateTimeoutSecond = "30"
 ```
 
 ## Kubernetes Ingress backend
@@ -1645,7 +1671,7 @@ RefreshSeconds = 15
 
 ```
 
-Items in the dynamodb table must have three attributes: 
+Items in the dynamodb table must have three attributes:
 
 
 - 'id' : string
@@ -1653,4 +1679,4 @@ Items in the dynamodb table must have three attributes:
 - 'name' : string
     - The name is used as the name of the frontend or backend.
 - 'frontend' or 'backend' : map
-    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See types/types.go for details. The presence or absence of this attribute determines its type. So an item should never have both a 'frontend' and a 'backend' attribute. 
+    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See types/types.go for details. The presence or absence of this attribute determines its type. So an item should never have both a 'frontend' and a 'backend' attribute.

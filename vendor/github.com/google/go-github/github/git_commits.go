@@ -6,6 +6,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -27,10 +28,11 @@ type Commit struct {
 	Tree         *Tree                  `json:"tree,omitempty"`
 	Parents      []Commit               `json:"parents,omitempty"`
 	Stats        *CommitStats           `json:"stats,omitempty"`
+	HTMLURL      *string                `json:"html_url,omitempty"`
 	URL          *string                `json:"url,omitempty"`
 	Verification *SignatureVerification `json:"verification,omitempty"`
 
-	// CommentCount is the number of GitHub comments on the commit.  This
+	// CommentCount is the number of GitHub comments on the commit. This
 	// is only populated for requests that fetch GitHub data like
 	// Pulls.ListCommits, Repositories.ListCommits, etc.
 	CommentCount *int `json:"comment_count,omitempty"`
@@ -40,7 +42,7 @@ func (c Commit) String() string {
 	return Stringify(c)
 }
 
-// CommitAuthor represents the author or committer of a commit.  The commit
+// CommitAuthor represents the author or committer of a commit. The commit
 // author may not correspond to a GitHub User.
 type CommitAuthor struct {
 	Date  *time.Time `json:"date,omitempty"`
@@ -57,8 +59,8 @@ func (c CommitAuthor) String() string {
 
 // GetCommit fetchs the Commit object for a given SHA.
 //
-// GitHub API docs: http://developer.github.com/v3/git/commits/#get-a-commit
-func (s *GitService) GetCommit(owner string, repo string, sha string) (*Commit, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/git/commits/#get-a-commit
+func (s *GitService) GetCommit(ctx context.Context, owner string, repo string, sha string) (*Commit, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/git/commits/%v", owner, repo, sha)
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
@@ -69,12 +71,12 @@ func (s *GitService) GetCommit(owner string, repo string, sha string) (*Commit, 
 	req.Header.Set("Accept", mediaTypeGitSigningPreview)
 
 	c := new(Commit)
-	resp, err := s.client.Do(req, c)
+	resp, err := s.client.Do(ctx, req, c)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return c, resp, err
+	return c, resp, nil
 }
 
 // createCommit represents the body of a CreateCommit request.
@@ -87,29 +89,33 @@ type createCommit struct {
 }
 
 // CreateCommit creates a new commit in a repository.
+// commit must not be nil.
 //
 // The commit.Committer is optional and will be filled with the commit.Author
 // data if omitted. If the commit.Author is omitted, it will be filled in with
 // the authenticated user’s information and the current date.
 //
-// GitHub API docs: http://developer.github.com/v3/git/commits/#create-a-commit
-func (s *GitService) CreateCommit(owner string, repo string, commit *Commit) (*Commit, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/git/commits/#create-a-commit
+func (s *GitService) CreateCommit(ctx context.Context, owner string, repo string, commit *Commit) (*Commit, *Response, error) {
+	if commit == nil {
+		return nil, nil, fmt.Errorf("commit must be provided")
+	}
+
 	u := fmt.Sprintf("repos/%v/%v/git/commits", owner, repo)
 
-	body := &createCommit{}
-	if commit != nil {
-		parents := make([]string, len(commit.Parents))
-		for i, parent := range commit.Parents {
-			parents[i] = *parent.SHA
-		}
+	parents := make([]string, len(commit.Parents))
+	for i, parent := range commit.Parents {
+		parents[i] = *parent.SHA
+	}
 
-		body = &createCommit{
-			Author:    commit.Author,
-			Committer: commit.Committer,
-			Message:   commit.Message,
-			Tree:      commit.Tree.SHA,
-			Parents:   parents,
-		}
+	body := &createCommit{
+		Author:    commit.Author,
+		Committer: commit.Committer,
+		Message:   commit.Message,
+		Parents:   parents,
+	}
+	if commit.Tree != nil {
+		body.Tree = commit.Tree.SHA
 	}
 
 	req, err := s.client.NewRequest("POST", u, body)
@@ -118,10 +124,10 @@ func (s *GitService) CreateCommit(owner string, repo string, commit *Commit) (*C
 	}
 
 	c := new(Commit)
-	resp, err := s.client.Do(req, c)
+	resp, err := s.client.Do(ctx, req, c)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return c, resp, err
+	return c, resp, nil
 }

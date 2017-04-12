@@ -24,7 +24,12 @@ func newFreelist() *freelist {
 
 // size returns the size of the page after serialization.
 func (f *freelist) size() int {
-	return pageHeaderSize + (int(unsafe.Sizeof(pgid(0))) * f.count())
+	n := f.count()
+	if n >= 0xFFFF {
+		// The first element will be used to store the count. See freelist.write.
+		n++
+	}
+	return pageHeaderSize + (int(unsafe.Sizeof(pgid(0))) * n)
 }
 
 // count returns count of pages on the freelist
@@ -46,16 +51,15 @@ func (f *freelist) pending_count() int {
 	return count
 }
 
-// all returns a list of all free ids and all pending ids in one sorted list.
-func (f *freelist) all() []pgid {
-	m := make(pgids, 0)
-
+// copyall copies into dst a list of all free ids and all pending ids in one sorted list.
+// f.count returns the minimum length required for dst.
+func (f *freelist) copyall(dst []pgid) {
+	m := make(pgids, 0, f.pending_count())
 	for _, list := range f.pending {
 		m = append(m, list...)
 	}
-
 	sort.Sort(m)
-	return pgids(f.ids).merge(m)
+	mergepgids(dst, f.ids, m)
 }
 
 // allocate returns the starting page id of a contiguous list of pages of a given size.
@@ -166,12 +170,16 @@ func (f *freelist) read(p *page) {
 	}
 
 	// Copy the list of page ids from the freelist.
-	ids := ((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[idx:count]
-	f.ids = make([]pgid, len(ids))
-	copy(f.ids, ids)
+	if count == 0 {
+		f.ids = nil
+	} else {
+		ids := ((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[idx:count]
+		f.ids = make([]pgid, len(ids))
+		copy(f.ids, ids)
 
-	// Make sure they're sorted.
-	sort.Sort(pgids(f.ids))
+		// Make sure they're sorted.
+		sort.Sort(pgids(f.ids))
+	}
 
 	// Rebuild the page cache.
 	f.reindex()
@@ -182,20 +190,22 @@ func (f *freelist) read(p *page) {
 // become free.
 func (f *freelist) write(p *page) error {
 	// Combine the old free pgids and pgids waiting on an open transaction.
-	ids := f.all()
 
 	// Update the header flag.
 	p.flags |= freelistPageFlag
 
 	// The page.count can only hold up to 64k elements so if we overflow that
 	// number then we handle it by putting the size in the first element.
-	if len(ids) < 0xFFFF {
-		p.count = uint16(len(ids))
-		copy(((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[:], ids)
+	lenids := f.count()
+	if lenids == 0 {
+		p.count = uint16(lenids)
+	} else if lenids < 0xFFFF {
+		p.count = uint16(lenids)
+		f.copyall(((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[:])
 	} else {
 		p.count = 0xFFFF
-		((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[0] = pgid(len(ids))
-		copy(((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[1:], ids)
+		((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[0] = pgid(lenids)
+		f.copyall(((*[maxAllocSize]pgid)(unsafe.Pointer(&p.ptr)))[1:])
 	}
 
 	return nil
@@ -230,7 +240,7 @@ func (f *freelist) reload(p *page) {
 
 // reindex rebuilds the free cache based on available and pending free lists.
 func (f *freelist) reindex() {
-	f.cache = make(map[pgid]bool)
+	f.cache = make(map[pgid]bool, len(f.ids))
 	for _, id := range f.ids {
 		f.cache[id] = true
 	}

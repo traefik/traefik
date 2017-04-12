@@ -7,9 +7,8 @@ import:
 - package: github.com/Sirupsen/logrus
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
-  version: a731c034dda967333efce5f8d276aeff11f8ff87
 - package: github.com/vulcand/oxy
-  version: fcc76b52eb8568540a020b7a99e854d9d752b364
+  version: f88530866c561d24a6b5aac49f76d6351b788b9f
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -61,7 +60,7 @@ import:
   subpackages:
   - plugin/rewrite
 - package: github.com/xenolf/lego
-  version: ce8fb060cb8361a9ff8b5fb7c2347fa907b6fcac
+  version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
   subpackages:
   - acme
 - package: gopkg.in/fsnotify.v1
@@ -90,7 +89,7 @@ import:
 - package: github.com/satori/go.uuid
   version: ^1.1.0
 - package: k8s.io/client-go
-  version: ^v1.5.0
+  version: v2.0.0
 - package: github.com/gambol99/go-marathon
   version: ^0.5.1
 - package: github.com/ArthurHlt/go-eureka-client
@@ -132,7 +131,7 @@ import:
   - service/ec2
   - service/ecs
 - package: cloud.google.com/go
-  version: v0.6.0
+  version: v0.7.0
   subpackages:
   - compute/metadata
 - package: github.com/gogo/protobuf
@@ -140,4 +139,10 @@ import:
   subpackages:
   - proto
 - package: github.com/rancher/go-rancher
-  version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e
+  version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
+- package: golang.org/x/oauth2/google
+  version: 7fdf09982454086d5570c7db3e11f360194830ca
+- package: github.com/googleapis/gax-go
+  version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
+- package: google.golang.org/grpc
+  version: v1.2.0

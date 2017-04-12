@@ -67,6 +67,10 @@ func newRSARecipient(keyAlg KeyAlgorithm, publicKey *rsa.PublicKey) (recipientKe
 		return recipientKeyInfo{}, ErrUnsupportedAlgorithm
 	}
 
+	if publicKey == nil {
+		return recipientKeyInfo{}, errors.New("invalid public key")
+	}
+
 	return recipientKeyInfo{
 		keyAlg: keyAlg,
 		keyEncrypter: &rsaEncrypterVerifier{
@@ -82,6 +86,10 @@ func newRSASigner(sigAlg SignatureAlgorithm, privateKey *rsa.PrivateKey) (recipi
 	case RS256, RS384, RS512, PS256, PS384, PS512:
 	default:
 		return recipientSigInfo{}, ErrUnsupportedAlgorithm
+	}
+
+	if privateKey == nil {
+		return recipientSigInfo{}, errors.New("invalid private key")
 	}
 
 	return recipientSigInfo{
@@ -104,6 +112,10 @@ func newECDHRecipient(keyAlg KeyAlgorithm, publicKey *ecdsa.PublicKey) (recipien
 		return recipientKeyInfo{}, ErrUnsupportedAlgorithm
 	}
 
+	if publicKey == nil || !publicKey.Curve.IsOnCurve(publicKey.X, publicKey.Y) {
+		return recipientKeyInfo{}, errors.New("invalid public key")
+	}
+
 	return recipientKeyInfo{
 		keyAlg: keyAlg,
 		keyEncrypter: &ecEncrypterVerifier{
@@ -119,6 +131,10 @@ func newECDSASigner(sigAlg SignatureAlgorithm, privateKey *ecdsa.PrivateKey) (re
 	case ES256, ES384, ES512:
 	default:
 		return recipientSigInfo{}, ErrUnsupportedAlgorithm
+	}
+
+	if privateKey == nil {
+		return recipientSigInfo{}, errors.New("invalid private key")
 	}
 
 	return recipientSigInfo{
@@ -199,7 +215,7 @@ func (ctx rsaDecrypterSigner) decrypt(jek []byte, alg KeyAlgorithm, generator ke
 		// When decrypting an RSA-PKCS1v1.5 payload, we must take precautions to
 		// prevent chosen-ciphertext attacks as described in RFC 3218, "Preventing
 		// the Million Message Attack on Cryptographic Message Syntax". We are
-		// therefore deliberatly ignoring errors here.
+		// therefore deliberately ignoring errors here.
 		_ = rsa.DecryptPKCS1v15SessionKey(rand.Reader, ctx.privateKey, jek, cek)
 
 		return cek, nil
@@ -370,6 +386,10 @@ func (ctx ecDecrypterSigner) decryptKey(headers rawHeader, recipient *recipientI
 		return nil, errors.New("square/go-jose: invalid epk header")
 	}
 
+	if !ctx.privateKey.Curve.IsOnCurve(publicKey.X, publicKey.Y) {
+		return nil, errors.New("square/go-jose: invalid public key in epk header")
+	}
+
 	apuData := headers.Apu.bytes()
 	apvData := headers.Apv.bytes()
 
@@ -474,6 +494,8 @@ func (ctx ecEncrypterVerifier) verifyPayload(payload []byte, signature []byte, a
 	case ES512:
 		keySize = 66
 		hash = crypto.SHA512
+	default:
+		return ErrUnsupportedAlgorithm
 	}
 
 	if len(signature) != 2*keySize {

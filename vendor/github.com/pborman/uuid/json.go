@@ -7,21 +7,17 @@ package uuid
 import "errors"
 
 func (u UUID) MarshalJSON() ([]byte, error) {
-	if len(u) != 16 {
+	if len(u) == 0 {
 		return []byte(`""`), nil
 	}
-	var js [38]byte
-	js[0] = '"'
-	encodeHex(js[1:], u)
-	js[37] = '"'
-	return js[:], nil
+	return []byte(`"` + u.String() + `"`), nil
 }
 
 func (u *UUID) UnmarshalJSON(data []byte) error {
-	if string(data) == `""` {
+	if len(data) == 0 || string(data) == `""` {
 		return nil
 	}
-	if data[0] != '"' {
+	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
 		return errors.New("invalid UUID format")
 	}
 	data = data[1 : len(data)-1]

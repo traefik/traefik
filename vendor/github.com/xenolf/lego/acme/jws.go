@@ -16,8 +16,7 @@ import (
 type jws struct {
 	directoryURL string
 	privKey      crypto.PrivateKey
-	nonces       []string
-	sync.Mutex
+	nonces       nonceManager
 }
 
 func keyAsJWK(key interface{}) *jose.JsonWebKey {
@@ -32,23 +31,26 @@ func keyAsJWK(key interface{}) *jose.JsonWebKey {
 	}
 }
 
-// Posts a JWS signed message to the specified URL
+// Posts a JWS signed message to the specified URL.
+// It does NOT close the response body, so the caller must
+// do that if no error was returned.
 func (j *jws) post(url string, content []byte) (*http.Response, error) {
 	signedContent, err := j.signContent(content)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to sign content -> %s", err.Error())
 	}
 
 	resp, err := httpPost(url, "application/jose+json", bytes.NewBuffer([]byte(signedContent.FullSerialize())))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to HTTP POST to %s -> %s", url, err.Error())
 	}
 
-	j.Lock()
-	defer j.Unlock()
-	j.getNonceFromResponse(resp)
+	nonce, nonceErr := getNonceFromResponse(resp)
+	if nonceErr == nil {
+		j.nonces.Push(nonce)
+	}
 
-	return resp, err
+	return resp, nil
 }
 
 func (j *jws) signContent(content []byte) (*jose.JsonWebSignature, error) {
@@ -67,49 +69,63 @@ func (j *jws) signContent(content []byte) (*jose.JsonWebSignature, error) {
 
 	signer, err := jose.NewSigner(alg, j.privKey)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to create jose signer -> %s", err.Error())
 	}
 	signer.SetNonceSource(j)
 
 	signed, err := signer.Sign(content)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Failed to sign content -> %s", err.Error())
 	}
 	return signed, nil
 }
 
-func (j *jws) getNonceFromResponse(resp *http.Response) error {
+func (j *jws) Nonce() (string, error) {
+	if nonce, ok := j.nonces.Pop(); ok {
+		return nonce, nil
+	}
+
+	return getNonce(j.directoryURL)
+}
+
+type nonceManager struct {
+	nonces []string
+	sync.Mutex
+}
+
+func (n *nonceManager) Pop() (string, bool) {
+	n.Lock()
+	defer n.Unlock()
+
+	if len(n.nonces) == 0 {
+		return "", false
+	}
+
+	nonce := n.nonces[len(n.nonces)-1]
+	n.nonces = n.nonces[:len(n.nonces)-1]
+	return nonce, true
+}
+
+func (n *nonceManager) Push(nonce string) {
+	n.Lock()
+	defer n.Unlock()
+	n.nonces = append(n.nonces, nonce)
+}
+
+func getNonce(url string) (string, error) {
+	resp, err := httpHead(url)
+	if err != nil {
+		return "", fmt.Errorf("Failed to get nonce from HTTP HEAD -> %s", err.Error())
+	}
+
+	return getNonceFromResponse(resp)
+}
+
+func getNonceFromResponse(resp *http.Response) (string, error) {
 	nonce := resp.Header.Get("Replay-Nonce")
 	if nonce == "" {
-		return fmt.Errorf("Server did not respond with a proper nonce header.")
+		return "", fmt.Errorf("Server did not respond with a proper nonce header.")
 	}
 
-	j.nonces = append(j.nonces, nonce)
-	return nil
-}
-
-func (j *jws) getNonce() error {
-	resp, err := httpHead(j.directoryURL)
-	if err != nil {
-		return err
-	}
-
-	return j.getNonceFromResponse(resp)
-}
-
-func (j *jws) Nonce() (string, error) {
-	j.Lock()
-	defer j.Unlock()
-	nonce := ""
-	if len(j.nonces) == 0 {
-		err := j.getNonce()
-		if err != nil {
-			return nonce, err
-		}
-	}
-	if len(j.nonces) == 0 {
-		return "", fmt.Errorf("Can't get nonce")
-	}
-	nonce, j.nonces = j.nonces[len(j.nonces)-1], j.nonces[:len(j.nonces)-1]
 	return nonce, nil
 }

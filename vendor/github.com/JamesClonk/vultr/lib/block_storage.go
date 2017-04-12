@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
 	"strconv"
+	"strings"
 )
 
 // BlockStorage on Vultr account
@@ -17,6 +19,25 @@ type BlockStorage struct {
 	Cost       string `json:"cost_per_month"`
 	Status     string `json:"status"`
 	AttachedTo string `json:"attached_to_SUBID"`
+}
+
+type blockstorages []BlockStorage
+
+func (b blockstorages) Len() int      { return len(b) }
+func (b blockstorages) Swap(i, j int) { b[i], b[j] = b[j], b[i] }
+func (b blockstorages) Less(i, j int) bool {
+	// sort order: name, size, status
+	if strings.ToLower(b[i].Name) < strings.ToLower(b[j].Name) {
+		return true
+	} else if strings.ToLower(b[i].Name) > strings.ToLower(b[j].Name) {
+		return false
+	}
+	if b[i].SizeGB < b[j].SizeGB {
+		return true
+	} else if b[i].SizeGB > b[j].SizeGB {
+		return false
+	}
+	return b[i].Status < b[j].Status
 }
 
 // UnmarshalJSON implements json.Unmarshaller on BlockStorage.
@@ -87,6 +108,7 @@ func (c *Client) GetBlockStorages() (storages []BlockStorage, err error) {
 	if err := c.get(`block/list`, &storages); err != nil {
 		return nil, err
 	}
+	sort.Sort(blockstorages(storages))
 	return storages, nil
 }
 

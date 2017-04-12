@@ -32,7 +32,7 @@ type concatKDF struct {
 
 // NewConcatKDF builds a KDF reader based on the given inputs.
 func NewConcatKDF(hash crypto.Hash, z, algID, ptyUInfo, ptyVInfo, supPubInfo, supPrivInfo []byte) io.Reader {
-	buffer := make([]byte, len(algID)+len(ptyUInfo)+len(ptyVInfo)+len(supPubInfo)+len(supPrivInfo))
+	buffer := make([]byte, uint64(len(algID))+uint64(len(ptyUInfo))+uint64(len(ptyVInfo))+uint64(len(supPubInfo))+uint64(len(supPrivInfo)))
 	n := 0
 	n += copy(buffer, algID)
 	n += copy(buffer[n:], ptyUInfo)

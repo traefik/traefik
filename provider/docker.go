@@ -525,12 +525,19 @@ func (provider *Docker) getFrontendRule(container dockerData) string {
 	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
 		return label
 	}
+	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
+		return "Host:" + provider.getSubDomain(labels["com.docker.compose.service"]+"."+labels["com.docker.compose.project"]) + "." + provider.Domain
+	}
+
 	return "Host:" + provider.getSubDomain(container.ServiceName) + "." + provider.Domain
 }
 
 func (provider *Docker) getBackend(container dockerData) string {
 	if label, err := getLabel(container, "traefik.backend"); err == nil {
 		return normalize(label)
+	}
+	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
+		return normalize(labels["com.docker.compose.service"] + "_" + labels["com.docker.compose.project"])
 	}
 	return normalize(container.ServiceName)
 }
@@ -543,6 +550,8 @@ func (provider *Docker) getIPAddress(container dockerData) string {
 			if network != nil {
 				return network.Addr
 			}
+
+			log.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", label, container.Name)
 		}
 	}
 
@@ -819,6 +828,9 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	var dockerDataList []dockerData
 
 	for _, task := range taskList {
+		if task.Status.State != swarm.TaskStateRunning {
+			continue
+		}
 		dockerData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
 		dockerDataList = append(dockerDataList, dockerData)
 	}

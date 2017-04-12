@@ -5,7 +5,10 @@
 
 package github
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // Key represents a public SSH key used to authenticate a user or deploy script.
 type Key struct {
@@ -20,11 +23,11 @@ func (k Key) String() string {
 	return Stringify(k)
 }
 
-// ListKeys lists the verified public keys for a user.  Passing the empty
+// ListKeys lists the verified public keys for a user. Passing the empty
 // string will fetch keys for the authenticated user.
 //
-// GitHub API docs: http://developer.github.com/v3/users/keys/#list-public-keys-for-a-user
-func (s *UsersService) ListKeys(user string, opt *ListOptions) ([]*Key, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/users/keys/#list-public-keys-for-a-user
+func (s *UsersService) ListKeys(ctx context.Context, user string, opt *ListOptions) ([]*Key, *Response, error) {
 	var u string
 	if user != "" {
 		u = fmt.Sprintf("users/%v/keys", user)
@@ -41,19 +44,19 @@ func (s *UsersService) ListKeys(user string, opt *ListOptions) ([]*Key, *Respons
 		return nil, nil, err
 	}
 
-	keys := new([]*Key)
-	resp, err := s.client.Do(req, keys)
+	var keys []*Key
+	resp, err := s.client.Do(ctx, req, &keys)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return *keys, resp, err
+	return keys, resp, nil
 }
 
 // GetKey fetches a single public key.
 //
-// GitHub API docs: http://developer.github.com/v3/users/keys/#get-a-single-public-key
-func (s *UsersService) GetKey(id int) (*Key, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/users/keys/#get-a-single-public-key
+func (s *UsersService) GetKey(ctx context.Context, id int) (*Key, *Response, error) {
 	u := fmt.Sprintf("user/keys/%v", id)
 
 	req, err := s.client.NewRequest("GET", u, nil)
@@ -62,18 +65,18 @@ func (s *UsersService) GetKey(id int) (*Key, *Response, error) {
 	}
 
 	key := new(Key)
-	resp, err := s.client.Do(req, key)
+	resp, err := s.client.Do(ctx, req, key)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return key, resp, err
+	return key, resp, nil
 }
 
 // CreateKey adds a public key for the authenticated user.
 //
-// GitHub API docs: http://developer.github.com/v3/users/keys/#create-a-public-key
-func (s *UsersService) CreateKey(key *Key) (*Key, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/users/keys/#create-a-public-key
+func (s *UsersService) CreateKey(ctx context.Context, key *Key) (*Key, *Response, error) {
 	u := "user/keys"
 
 	req, err := s.client.NewRequest("POST", u, key)
@@ -82,18 +85,18 @@ func (s *UsersService) CreateKey(key *Key) (*Key, *Response, error) {
 	}
 
 	k := new(Key)
-	resp, err := s.client.Do(req, k)
+	resp, err := s.client.Do(ctx, req, k)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return k, resp, err
+	return k, resp, nil
 }
 
 // DeleteKey deletes a public key.
 //
-// GitHub API docs: http://developer.github.com/v3/users/keys/#delete-a-public-key
-func (s *UsersService) DeleteKey(id int) (*Response, error) {
+// GitHub API docs: https://developer.github.com/v3/users/keys/#delete-a-public-key
+func (s *UsersService) DeleteKey(ctx context.Context, id int) (*Response, error) {
 	u := fmt.Sprintf("user/keys/%v", id)
 
 	req, err := s.client.NewRequest("DELETE", u, nil)
@@ -101,5 +104,5 @@ func (s *UsersService) DeleteKey(id int) (*Response, error) {
 		return nil, err
 	}
 
-	return s.client.Do(req, nil)
+	return s.client.Do(ctx, req, nil)
 }

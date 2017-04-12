@@ -8,11 +8,7 @@
 // Package norm contains types and functions for normalizing Unicode strings.
 package norm // import "golang.org/x/text/unicode/norm"
 
-import (
-	"unicode/utf8"
-
-	"golang.org/x/text/transform"
-)
+import "unicode/utf8"
 
 // A Form denotes a canonical representation of Unicode code points.
 // The Unicode-defined normalization and equivalence forms are:
@@ -267,34 +263,6 @@ func (f Form) QuickSpan(b []byte) int {
 	return n
 }
 
-// Span implements transform.SpanningTransformer. It returns a boundary n such
-// that b[0:n] == f(b[0:n]). It is not guaranteed to return the largest such n.
-func (f Form) Span(b []byte, atEOF bool) (n int, err error) {
-	n, ok := formTable[f].quickSpan(inputBytes(b), 0, len(b), atEOF)
-	if n < len(b) {
-		if !ok {
-			err = transform.ErrEndOfSpan
-		} else {
-			err = transform.ErrShortSrc
-		}
-	}
-	return n, err
-}
-
-// SpanString returns a boundary n such that s[0:n] == f(s[0:n]).
-// It is not guaranteed to return the largest such n.
-func (f Form) SpanString(s string, atEOF bool) (n int, err error) {
-	n, ok := formTable[f].quickSpan(inputString(s), 0, len(s), atEOF)
-	if n < len(s) {
-		if !ok {
-			err = transform.ErrEndOfSpan
-		} else {
-			err = transform.ErrShortSrc
-		}
-	}
-	return n, err
-}
-
 // quickSpan returns a boundary n such that src[0:n] == f(src[0:n]) and
 // whether any non-normalized parts were found. If atEOF is false, n will
 // not point past the last segment if this segment might be become
@@ -353,7 +321,7 @@ func (f *formInfo) quickSpan(src input, i, end int, atEOF bool) (n int, ok bool)
 	return lastSegStart, false
 }
 
-// QuickSpanString returns a boundary n such that s[0:n] == f(s[0:n]).
+// QuickSpanString returns a boundary n such that b[0:n] == f(s[0:n]).
 // It is not guaranteed to return the largest such n.
 func (f Form) QuickSpanString(s string) int {
 	n, _ := formTable[f].quickSpan(inputString(s), 0, len(s), true)

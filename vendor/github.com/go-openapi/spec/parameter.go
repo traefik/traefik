@@ -16,7 +16,6 @@ package spec
 
 import (
 	"encoding/json"
-	"strings"
 
 	"github.com/go-openapi/jsonpointer"
 	"github.com/go-openapi/swag"
@@ -101,16 +100,15 @@ func (p Parameter) JSONLookup(token string) (interface{}, error) {
 	if token == "$ref" {
 		return &p.Ref, nil
 	}
-
 	r, _, err := jsonpointer.GetForToken(p.CommonValidations, token)
-	if err != nil && !strings.HasPrefix(err.Error(), "object has no field") {
+	if err != nil {
 		return nil, err
 	}
 	if r != nil {
 		return r, nil
 	}
 	r, _, err = jsonpointer.GetForToken(p.SimpleSchema, token)
-	if err != nil && !strings.HasPrefix(err.Error(), "object has no field") {
+	if err != nil {
 		return nil, err
 	}
 	if r != nil {
