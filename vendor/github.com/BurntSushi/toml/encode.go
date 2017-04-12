@@ -241,7 +241,7 @@ func (enc *Encoder) eArrayOfTables(key Key, rv reflect.Value) {
 func (enc *Encoder) eTable(key Key, rv reflect.Value) {
 	panicIfInvalidKey(key)
 	if len(key) == 1 {
-		// Output an extra new line between top-level tables.
+		// Output an extra newline between top-level tables.
 		// (The newline isn't written if nothing else has been written though.)
 		enc.newline()
 	}

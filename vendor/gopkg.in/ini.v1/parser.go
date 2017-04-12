@@ -193,7 +193,7 @@ func hasSurroundedQuote(in string, quote byte) bool {
 		strings.IndexByte(in[1:], quote) == len(in)-2
 }
 
-func (p *parser) readValue(in []byte, ignoreContinuation bool) (string, error) {
+func (p *parser) readValue(in []byte, ignoreContinuation, ignoreInlineComment bool) (string, error) {
 	line := strings.TrimLeftFunc(string(in), unicode.IsSpace)
 	if len(line) == 0 {
 		return "", nil
@@ -217,18 +217,21 @@ func (p *parser) readValue(in []byte, ignoreContinuation bool) (string, error) {
 		return line[startIdx : pos+startIdx], nil
 	}
 
-	// Won't be able to reach here if value only contains whitespace.
+	// Won't be able to reach here if value only contains whitespace
 	line = strings.TrimSpace(line)
 
-	// Check continuation lines when desired.
+	// Check continuation lines when desired
 	if !ignoreContinuation && line[len(line)-1] == '\\' {
 		return p.readContinuationLines(line[:len(line)-1])
 	}
 
-	i := strings.IndexAny(line, "#;")
-	if i > -1 {
-		p.comment.WriteString(line[i:])
-		line = strings.TrimSpace(line[:i])
+	// Check if ignore inline comment
+	if !ignoreInlineComment {
+		i := strings.IndexAny(line, "#;")
+		if i > -1 {
+			p.comment.WriteString(line[i:])
+			line = strings.TrimSpace(line[:i])
+		}
 	}
 
 	// Trim single quotes
@@ -318,11 +321,14 @@ func (f *File) parse(reader io.Reader) (err error) {
 		if err != nil {
 			// Treat as boolean key when desired, and whole line is key name.
 			if IsErrDelimiterNotFound(err) && f.options.AllowBooleanKeys {
-				key, err := section.NewKey(string(line), "true")
+				kname, err := p.readValue(line, f.options.IgnoreContinuation, f.options.IgnoreInlineComment)
 				if err != nil {
 					return err
 				}
-				key.isBooleanType = true
+				key, err := section.NewBooleanKey(kname)
+				if err != nil {
+					return err
+				}
 				key.Comment = strings.TrimSpace(p.comment.String())
 				p.comment.Reset()
 				continue
@@ -338,17 +344,16 @@ func (f *File) parse(reader io.Reader) (err error) {
 			p.count++
 		}
 
-		key, err := section.NewKey(kname, "")
+		value, err := p.readValue(line[offset:], f.options.IgnoreContinuation, f.options.IgnoreInlineComment)
+		if err != nil {
+			return err
+		}
+
+		key, err := section.NewKey(kname, value)
 		if err != nil {
 			return err
 		}
 		key.isAutoIncrement = isAutoIncr
-
-		value, err := p.readValue(line[offset:], f.options.IgnoreContinuation)
-		if err != nil {
-			return err
-		}
-		key.SetValue(value)
 		key.Comment = strings.TrimSpace(p.comment.String())
 		p.comment.Reset()
 	}

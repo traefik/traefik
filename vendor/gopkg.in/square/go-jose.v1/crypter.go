@@ -19,6 +19,7 @@ package jose
 import (
 	"crypto/ecdsa"
 	"crypto/rsa"
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -292,9 +293,15 @@ func (ctx *genericEncrypter) EncryptWithAuthData(plaintext, aad []byte) (*JsonWe
 	return obj, nil
 }
 
-// Decrypt and validate the object and return the plaintext.
+// Decrypt and validate the object and return the plaintext. Note that this
+// function does not support multi-recipient, if you desire multi-recipient
+// decryption use DecryptMulti instead.
 func (obj JsonWebEncryption) Decrypt(decryptionKey interface{}) ([]byte, error) {
 	headers := obj.mergedHeaders(nil)
+
+	if len(obj.recipients) > 1 {
+		return nil, errors.New("square/go-jose: too many recipients in payload; expecting only one")
+	}
 
 	if len(headers.Crit) > 0 {
 		return nil, fmt.Errorf("square/go-jose: unsupported crit header")
@@ -323,7 +330,65 @@ func (obj JsonWebEncryption) Decrypt(decryptionKey interface{}) ([]byte, error) 
 	authData := obj.computeAuthData()
 
 	var plaintext []byte
-	for _, recipient := range obj.recipients {
+	recipient := obj.recipients[0]
+	recipientHeaders := obj.mergedHeaders(&recipient)
+
+	cek, err := decrypter.decryptKey(recipientHeaders, &recipient, generator)
+	if err == nil {
+		// Found a valid CEK -- let's try to decrypt.
+		plaintext, err = cipher.decrypt(cek, authData, parts)
+	}
+
+	if plaintext == nil {
+		return nil, ErrCryptoFailure
+	}
+
+	// The "zip" header parameter may only be present in the protected header.
+	if obj.protected.Zip != "" {
+		plaintext, err = decompress(obj.protected.Zip, plaintext)
+	}
+
+	return plaintext, err
+}
+
+// DecryptMulti decrypts and validates the object and returns the plaintexts,
+// with support for multiple recipients. It returns the index of the recipient
+// for which the decryption was successful, the merged headers for that recipient,
+// and the plaintext.
+func (obj JsonWebEncryption) DecryptMulti(decryptionKey interface{}) (int, JoseHeader, []byte, error) {
+	globalHeaders := obj.mergedHeaders(nil)
+
+	if len(globalHeaders.Crit) > 0 {
+		return -1, JoseHeader{}, nil, fmt.Errorf("square/go-jose: unsupported crit header")
+	}
+
+	decrypter, err := newDecrypter(decryptionKey)
+	if err != nil {
+		return -1, JoseHeader{}, nil, err
+	}
+
+	cipher := getContentCipher(globalHeaders.Enc)
+	if cipher == nil {
+		return -1, JoseHeader{}, nil, fmt.Errorf("square/go-jose: unsupported enc value '%s'", string(globalHeaders.Enc))
+	}
+
+	generator := randomKeyGenerator{
+		size: cipher.keySize(),
+	}
+
+	parts := &aeadParts{
+		iv:         obj.iv,
+		ciphertext: obj.ciphertext,
+		tag:        obj.tag,
+	}
+
+	authData := obj.computeAuthData()
+
+	index := -1
+	var plaintext []byte
+	var headers rawHeader
+
+	for i, recipient := range obj.recipients {
 		recipientHeaders := obj.mergedHeaders(&recipient)
 
 		cek, err := decrypter.decryptKey(recipientHeaders, &recipient, generator)
@@ -331,19 +396,21 @@ func (obj JsonWebEncryption) Decrypt(decryptionKey interface{}) ([]byte, error) 
 			// Found a valid CEK -- let's try to decrypt.
 			plaintext, err = cipher.decrypt(cek, authData, parts)
 			if err == nil {
+				index = i
+				headers = recipientHeaders
 				break
 			}
 		}
 	}
 
-	if plaintext == nil {
-		return nil, ErrCryptoFailure
+	if plaintext == nil || err != nil {
+		return -1, JoseHeader{}, nil, ErrCryptoFailure
 	}
 
-	// The "zip" header paramter may only be present in the protected header.
+	// The "zip" header parameter may only be present in the protected header.
 	if obj.protected.Zip != "" {
 		plaintext, err = decompress(obj.protected.Zip, plaintext)
 	}
 
-	return plaintext, err
+	return index, headers.sanitized(), plaintext, err
 }

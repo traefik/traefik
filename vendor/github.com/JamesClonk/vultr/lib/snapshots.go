@@ -1,6 +1,10 @@
 package lib
 
-import "net/url"
+import (
+	"net/url"
+	"sort"
+	"strings"
+)
 
 // Snapshot of a virtual machine on Vultr account
 type Snapshot struct {
@@ -11,17 +15,32 @@ type Snapshot struct {
 	Created     string `json:"date_created"`
 }
 
+type snapshots []Snapshot
+
+func (s snapshots) Len() int      { return len(s) }
+func (s snapshots) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s snapshots) Less(i, j int) bool {
+	// sort order: description, created
+	if strings.ToLower(s[i].Description) < strings.ToLower(s[j].Description) {
+		return true
+	} else if strings.ToLower(s[i].Description) > strings.ToLower(s[j].Description) {
+		return false
+	}
+	return s[i].Created < s[j].Created
+}
+
 // GetSnapshots retrieves a list of all snapshots on Vultr account
-func (c *Client) GetSnapshots() (snapshots []Snapshot, err error) {
+func (c *Client) GetSnapshots() (snapshotList []Snapshot, err error) {
 	var snapshotMap map[string]Snapshot
 	if err := c.get(`snapshot/list`, &snapshotMap); err != nil {
 		return nil, err
 	}
 
 	for _, snapshot := range snapshotMap {
-		snapshots = append(snapshots, snapshot)
+		snapshotList = append(snapshotList, snapshot)
 	}
-	return snapshots, nil
+	sort.Sort(snapshots(snapshotList))
+	return snapshotList, nil
 }
 
 // CreateSnapshot creates a new virtual machine snapshot

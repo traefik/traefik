@@ -5,10 +5,12 @@
 
 package github
 
+import "context"
+
 // ActivityService handles communication with the activity related
 // methods of the GitHub API.
 //
-// GitHub API docs: http://developer.github.com/v3/activity/
+// GitHub API docs: https://developer.github.com/v3/activity/
 type ActivityService service
 
 // FeedLink represents a link to a related resource.
@@ -51,14 +53,14 @@ type Feeds struct {
 //
 // Note: Private feeds are only returned when authenticating via Basic Auth
 // since current feed URIs use the older, non revocable auth tokens.
-func (s *ActivityService) ListFeeds() (*Feeds, *Response, error) {
+func (s *ActivityService) ListFeeds(ctx context.Context) (*Feeds, *Response, error) {
 	req, err := s.client.NewRequest("GET", "feeds", nil)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	f := &Feeds{}
-	resp, err := s.client.Do(req, f)
+	resp, err := s.client.Do(ctx, req, f)
 	if err != nil {
 		return nil, resp, err
 	}

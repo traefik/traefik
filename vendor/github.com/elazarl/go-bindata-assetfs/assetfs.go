@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -145,14 +146,22 @@ func (fs *AssetFS) Open(name string) (http.File, error) {
 	}
 	if b, err := fs.Asset(name); err == nil {
 		timestamp := defaultFileTimestamp
-		if info, err := fs.AssetInfo(name); err == nil {
-			timestamp = info.ModTime()
+		if fs.AssetInfo != nil {
+			if info, err := fs.AssetInfo(name); err == nil {
+				timestamp = info.ModTime()
+			}
 		}
 		return NewAssetFile(name, b, timestamp), nil
 	}
 	if children, err := fs.AssetDir(name); err == nil {
 		return NewAssetDirectory(name, children, fs), nil
 	} else {
+		// If the error is not found, return an error that will
+		// result in a 404 error. Otherwise the server returns
+		// a 500 error for files not found.
+		if strings.Contains(err.Error(), "not found") {
+			return nil, os.ErrNotExist
+		}
 		return nil, err
 	}
 }

@@ -28,8 +28,9 @@ type Upgrader struct {
 	HandshakeTimeout time.Duration
 
 	// ReadBufferSize and WriteBufferSize specify I/O buffer sizes. If a buffer
-	// size is zero, then a default value of 4096 is used. The I/O buffer sizes
-	// do not limit the size of the messages that can be sent or received.
+	// size is zero, then buffers allocated by the HTTP server are used. The
+	// I/O buffer sizes do not limit the size of the messages that can be sent
+	// or received.
 	ReadBufferSize, WriteBufferSize int
 
 	// Subprotocols specifies the server's supported protocols in order of

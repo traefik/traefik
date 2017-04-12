@@ -6,6 +6,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -25,8 +26,8 @@ func (g GistComment) String() string {
 
 // ListComments lists all comments for a gist.
 //
-// GitHub API docs: http://developer.github.com/v3/gists/comments/#list-comments-on-a-gist
-func (s *GistsService) ListComments(gistID string, opt *ListOptions) ([]*GistComment, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/gists/comments/#list-comments-on-a-gist
+func (s *GistsService) ListComments(ctx context.Context, gistID string, opt *ListOptions) ([]*GistComment, *Response, error) {
 	u := fmt.Sprintf("gists/%v/comments", gistID)
 	u, err := addOptions(u, opt)
 	if err != nil {
@@ -38,19 +39,19 @@ func (s *GistsService) ListComments(gistID string, opt *ListOptions) ([]*GistCom
 		return nil, nil, err
 	}
 
-	comments := new([]*GistComment)
-	resp, err := s.client.Do(req, comments)
+	var comments []*GistComment
+	resp, err := s.client.Do(ctx, req, &comments)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return *comments, resp, err
+	return comments, resp, nil
 }
 
 // GetComment retrieves a single comment from a gist.
 //
-// GitHub API docs: http://developer.github.com/v3/gists/comments/#get-a-single-comment
-func (s *GistsService) GetComment(gistID string, commentID int) (*GistComment, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/gists/comments/#get-a-single-comment
+func (s *GistsService) GetComment(ctx context.Context, gistID string, commentID int) (*GistComment, *Response, error) {
 	u := fmt.Sprintf("gists/%v/comments/%v", gistID, commentID)
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
@@ -58,18 +59,18 @@ func (s *GistsService) GetComment(gistID string, commentID int) (*GistComment, *
 	}
 
 	c := new(GistComment)
-	resp, err := s.client.Do(req, c)
+	resp, err := s.client.Do(ctx, req, c)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return c, resp, err
+	return c, resp, nil
 }
 
 // CreateComment creates a comment for a gist.
 //
-// GitHub API docs: http://developer.github.com/v3/gists/comments/#create-a-comment
-func (s *GistsService) CreateComment(gistID string, comment *GistComment) (*GistComment, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/gists/comments/#create-a-comment
+func (s *GistsService) CreateComment(ctx context.Context, gistID string, comment *GistComment) (*GistComment, *Response, error) {
 	u := fmt.Sprintf("gists/%v/comments", gistID)
 	req, err := s.client.NewRequest("POST", u, comment)
 	if err != nil {
@@ -77,18 +78,18 @@ func (s *GistsService) CreateComment(gistID string, comment *GistComment) (*Gist
 	}
 
 	c := new(GistComment)
-	resp, err := s.client.Do(req, c)
+	resp, err := s.client.Do(ctx, req, c)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return c, resp, err
+	return c, resp, nil
 }
 
 // EditComment edits an existing gist comment.
 //
-// GitHub API docs: http://developer.github.com/v3/gists/comments/#edit-a-comment
-func (s *GistsService) EditComment(gistID string, commentID int, comment *GistComment) (*GistComment, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/gists/comments/#edit-a-comment
+func (s *GistsService) EditComment(ctx context.Context, gistID string, commentID int, comment *GistComment) (*GistComment, *Response, error) {
 	u := fmt.Sprintf("gists/%v/comments/%v", gistID, commentID)
 	req, err := s.client.NewRequest("PATCH", u, comment)
 	if err != nil {
@@ -96,23 +97,23 @@ func (s *GistsService) EditComment(gistID string, commentID int, comment *GistCo
 	}
 
 	c := new(GistComment)
-	resp, err := s.client.Do(req, c)
+	resp, err := s.client.Do(ctx, req, c)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return c, resp, err
+	return c, resp, nil
 }
 
 // DeleteComment deletes a gist comment.
 //
-// GitHub API docs: http://developer.github.com/v3/gists/comments/#delete-a-comment
-func (s *GistsService) DeleteComment(gistID string, commentID int) (*Response, error) {
+// GitHub API docs: https://developer.github.com/v3/gists/comments/#delete-a-comment
+func (s *GistsService) DeleteComment(ctx context.Context, gistID string, commentID int) (*Response, error) {
 	u := fmt.Sprintf("gists/%v/comments/%v", gistID, commentID)
 	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.client.Do(req, nil)
+	return s.client.Do(ctx, req, nil)
 }

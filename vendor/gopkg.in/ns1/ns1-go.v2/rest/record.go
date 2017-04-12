@@ -30,9 +30,8 @@ func (s *RecordsService) Get(zone, domain, t string) (*dns.Record, *http.Respons
 			if err.(*Error).Message == "record not found" {
 				return nil, resp, ErrRecordMissing
 			}
-		default:
-			return nil, resp, err
 		}
+		return nil, resp, err
 	}
 
 	return &r, resp, nil
@@ -61,9 +60,8 @@ func (s *RecordsService) Create(r *dns.Record) (*http.Response, error) {
 			case "record already exists":
 				return resp, ErrRecordExists
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -92,9 +90,8 @@ func (s *RecordsService) Update(r *dns.Record) (*http.Response, error) {
 			case "record already exists":
 				return resp, ErrRecordExists
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -118,9 +115,8 @@ func (s *RecordsService) Delete(zone string, domain string, t string) (*http.Res
 			if err.(*Error).Message == "record not found" {
 				return resp, ErrRecordMissing
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -128,7 +124,7 @@ func (s *RecordsService) Delete(zone string, domain string, t string) (*http.Res
 
 var (
 	// ErrRecordExists bundles PUT create error.
-	ErrRecordExists = errors.New("Record already exists.")
+	ErrRecordExists = errors.New("record already exists")
 	// ErrRecordMissing bundles GET/POST/DELETE error.
-	ErrRecordMissing = errors.New("Record does not exist.")
+	ErrRecordMissing = errors.New("record does not exist")
 )

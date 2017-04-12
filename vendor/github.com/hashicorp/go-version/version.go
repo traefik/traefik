@@ -166,24 +166,38 @@ func comparePart(preSelf string, preOther string) int {
 		return 0
 	}
 
+	selfNumeric := true
+	_, err := strconv.ParseInt(preSelf, 10, 64)
+	if err != nil {
+		selfNumeric = false
+	}
+
+	otherNumeric := true
+	_, err = strconv.ParseInt(preOther, 10, 64)
+	if err != nil {
+		otherNumeric = false
+	}
+
 	// if a part is empty, we use the other to decide
 	if preSelf == "" {
-		_, notIsNumeric := strconv.ParseInt(preOther, 10, 64)
-		if notIsNumeric == nil {
+		if otherNumeric {
 			return -1
 		}
 		return 1
 	}
 
 	if preOther == "" {
-		_, notIsNumeric := strconv.ParseInt(preSelf, 10, 64)
-		if notIsNumeric == nil {
+		if selfNumeric {
 			return 1
 		}
 		return -1
 	}
 
-	if preSelf > preOther {
+	if selfNumeric && !otherNumeric {
+		return -1
+	} else if !selfNumeric && otherNumeric {
+		return 1
+	} else if preSelf > preOther {
 		return 1
 	}
 

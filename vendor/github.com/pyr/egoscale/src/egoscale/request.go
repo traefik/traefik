@@ -10,7 +10,16 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sort"
 )
+
+func csQuotePlus(s string) string {
+	return strings.Replace(s, "+", "%20", -1)
+}
+
+func csEncode(s string) string {
+	return csQuotePlus(url.QueryEscape(s))
+}
 
 func rawValue(b json.RawMessage) (json.RawMessage, error) {
 	var m map[string]json.RawMessage
@@ -21,7 +30,6 @@ func rawValue(b json.RawMessage) (json.RawMessage, error) {
 	for _, v := range m {
 		return v, nil
 	}
-	//return nil, fmt.Errorf("Unable to extract raw value from:\n\n%s\n\n", string(b))
 	return nil, nil
 }
 
@@ -51,7 +59,6 @@ func (exo *Client) ParseResponse(resp *http.Response) (json.RawMessage, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		fmt.Printf("ERROR: %s\n", b)
 		var e Error
 		if err := json.Unmarshal(b, &e); err != nil {
 			return nil, err
@@ -75,17 +82,27 @@ func (exo *Client) ParseResponse(resp *http.Response) (json.RawMessage, error) {
 func (exo *Client) Request(command string, params url.Values) (json.RawMessage, error) {
 
 	mac := hmac.New(sha1.New, []byte(exo.apiSecret))
+	keys := make([]string, 0)
+	unencoded := make([]string, 0)
 
 	params.Set("apikey", exo.apiKey)
 	params.Set("command", command)
 	params.Set("response", "json")
 
-	s := strings.Replace(strings.ToLower(params.Encode()), "+", "%20", -1)
-	mac.Write([]byte(s))
-	signature := url.QueryEscape(base64.StdEncoding.EncodeToString(mac.Sum(nil)))
+	for k, _ := range(params) {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range(keys) {
+		arg := k + "=" + csEncode(params[k][0])
+		unencoded = append(unencoded, arg)
+	}
+	sign_string := strings.ToLower(strings.Join(unencoded, "&"))
 
-	s = params.Encode()
-	url := exo.endpoint + "?" + s + "&signature=" + signature
+	mac.Write([]byte(sign_string))
+	signature := csEncode(base64.StdEncoding.EncodeToString(mac.Sum(nil)))
+	query := params.Encode()
+	url := exo.endpoint + "?" + csQuotePlus(query) + "&signature=" + signature
 
 	resp, err := exo.client.Get(url)
 	if err != nil {

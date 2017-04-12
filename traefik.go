@@ -261,7 +261,6 @@ func run(traefikConfiguration *TraefikConfiguration) {
 			}
 		}(t)
 	}
-	log.Info(t.String())
 	server.Wait()
 	log.Info("Shutting down")
 }

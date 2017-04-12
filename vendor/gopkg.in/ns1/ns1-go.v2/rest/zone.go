@@ -48,9 +48,8 @@ func (s *ZonesService) Get(zone string) (*dns.Zone, *http.Response, error) {
 			if err.(*Error).Message == "zone not found" {
 				return nil, resp, ErrZoneMissing
 			}
-		default:
-			return nil, resp, err
 		}
+		return nil, resp, err
 	}
 
 	return &z, resp, nil
@@ -75,9 +74,8 @@ func (s *ZonesService) Create(z *dns.Zone) (*http.Response, error) {
 			if err.(*Error).Message == "zone already exists" {
 				return resp, ErrZoneExists
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -102,9 +100,8 @@ func (s *ZonesService) Update(z *dns.Zone) (*http.Response, error) {
 			if err.(*Error).Message == "zone not found" {
 				return resp, ErrZoneMissing
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -128,9 +125,8 @@ func (s *ZonesService) Delete(zone string) (*http.Response, error) {
 			if err.(*Error).Message == "zone not found" {
 				return resp, ErrZoneMissing
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -138,7 +134,7 @@ func (s *ZonesService) Delete(zone string) (*http.Response, error) {
 
 var (
 	// ErrZoneExists bundles PUT create error.
-	ErrZoneExists = errors.New("Zone already exists.")
+	ErrZoneExists = errors.New("zone already exists")
 	// ErrZoneMissing bundles GET/POST/DELETE error.
-	ErrZoneMissing = errors.New("Zone does not exist.")
+	ErrZoneMissing = errors.New("zone does not exist")
 )

@@ -6,6 +6,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 )
 
@@ -20,7 +21,7 @@ type RepositoryMergeRequest struct {
 // Merge a branch in the specified repository.
 //
 // GitHub API docs: https://developer.github.com/v3/repos/merging/#perform-a-merge
-func (s *RepositoriesService) Merge(owner, repo string, request *RepositoryMergeRequest) (*RepositoryCommit, *Response, error) {
+func (s *RepositoriesService) Merge(ctx context.Context, owner, repo string, request *RepositoryMergeRequest) (*RepositoryCommit, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/merges", owner, repo)
 	req, err := s.client.NewRequest("POST", u, request)
 	if err != nil {
@@ -28,10 +29,10 @@ func (s *RepositoriesService) Merge(owner, repo string, request *RepositoryMerge
 	}
 
 	commit := new(RepositoryCommit)
-	resp, err := s.client.Do(req, commit)
+	resp, err := s.client.Do(ctx, req, commit)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return commit, resp, err
+	return commit, resp, nil
 }
