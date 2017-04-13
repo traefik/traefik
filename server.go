@@ -554,12 +554,10 @@ func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) 
 func (server *Server) loadConfig(configurations configs, globalConfiguration GlobalConfiguration) (map[string]*serverEntryPoint, error) {
 	serverEntryPoints := server.buildEntryPoints(globalConfiguration)
 	redirectHandlers := make(map[string]negroni.Handler)
-
 	backends := map[string]http.Handler{}
-
 	backendsHealthcheck := map[string]*healthcheck.BackendHealthCheck{}
-
 	backend2FrontendMap := map[string]string{}
+
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
 	frontend:
@@ -611,7 +609,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						redirectHandlers[entryPointName] = handler
 					}
 				}
-				if backends[frontend.Backend] == nil {
+				if backends[entryPointName+frontend.Backend] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 					var lb http.Handler
 					rr, _ := roundrobin.New(saveBackend)
@@ -749,14 +747,14 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					} else {
 						negroni.UseHandler(lb)
 					}
-					backends[frontend.Backend] = negroni
+					backends[entryPointName+frontend.Backend] = negroni
 				} else {
 					log.Debugf("Reusing backend %s", frontend.Backend)
 				}
 				if frontend.Priority > 0 {
 					newServerRoute.route.Priority(frontend.Priority)
 				}
-				server.wireFrontendBackend(newServerRoute, backends[frontend.Backend])
+				server.wireFrontendBackend(newServerRoute, backends[entryPointName+frontend.Backend])
 
 				err := newServerRoute.route.GetError()
 				if err != nil {
