@@ -1,5 +1,12 @@
 # Change Log
 
+## [v1.2.3](https://github.com/containous/traefik/tree/v1.2.3) (2017-04-13)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.2.2...v1.2.3)
+
+**Merged pull requests:**
+
+- Fix too many redirect [\#1433](https://github.com/containous/traefik/pull/1433) ([emilevauge](https://github.com/emilevauge))
+
 ## [v1.2.2](https://github.com/containous/traefik/tree/v1.2.2) (2017-04-11)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.2.1...v1.2.2)
 
