@@ -381,7 +381,9 @@ func (tx *Tx) Check() <-chan error {
 func (tx *Tx) check(ch chan error) {
 	// Check if any pages are double freed.
 	freed := make(map[pgid]bool)
-	for _, id := range tx.db.freelist.all() {
+	all := make([]pgid, tx.db.freelist.count())
+	tx.db.freelist.copyall(all)
+	for _, id := range all {
 		if freed[id] {
 			ch <- fmt.Errorf("page %d: already freed", id)
 		}

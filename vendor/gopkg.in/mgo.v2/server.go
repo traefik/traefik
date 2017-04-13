@@ -402,6 +402,15 @@ func (servers *mongoServers) Empty() bool {
 	return len(servers.slice) == 0
 }
 
+func (servers *mongoServers) HasMongos() bool {
+	for _, s := range servers.slice {
+		if s.Info().Mongos {
+			return true
+		}
+	}
+	return false
+}
+
 // BestFit returns the best guess of what would be the most interesting
 // server to perform operations on at this point in time.
 func (servers *mongoServers) BestFit(mode Mode, serverTags []bson.D) *mongoServer {
@@ -421,6 +430,8 @@ func (servers *mongoServers) BestFit(mode Mode, serverTags []bson.D) *mongoServe
 		switch {
 		case serverTags != nil && !next.info.Mongos && !next.hasTags(serverTags):
 			// Must have requested tags.
+		case mode == Secondary && next.info.Master && !next.info.Mongos:
+			// Must be a secondary or mongos.
 		case next.info.Master != best.info.Master && mode != Nearest:
 			// Prefer slaves, unless the mode is PrimaryPreferred.
 			swap = (mode == PrimaryPreferred) != best.info.Master

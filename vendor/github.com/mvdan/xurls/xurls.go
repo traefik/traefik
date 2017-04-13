@@ -11,12 +11,14 @@ import "regexp"
 
 const (
 	letter    = `\p{L}`
+	mark      = `\p{M}`
 	number    = `\p{N}`
-	iriChar   = letter + number
+	iriChar   = letter + mark + number
 	currency  = `\p{Sc}`
 	otherSymb = `\p{So}`
 	endChar   = iriChar + `/\-+_&~*%=#` + currency + otherSymb
-	midChar   = endChar + `@.,:;'?!|`
+	otherPunc = `\p{Po}`
+	midChar   = endChar + `|` + otherPunc
 	wellParen = `\([` + midChar + `]*(\([` + midChar + `]*\)[` + midChar + `]*)*\)`
 	wellBrack = `\[[` + midChar + `]*(\[[` + midChar + `]*\][` + midChar + `]*)*\]`
 	wellBrace = `\{[` + midChar + `]*(\{[` + midChar + `]*\}[` + midChar + `]*)*\}`

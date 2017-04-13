@@ -37,10 +37,18 @@ func realMain() int {
 		}
 	}
 
+	// Filter out the configtest command from the help display
+	var included []string
+	for command := range Commands {
+		if command != "configtest" {
+			included = append(included, command)
+		}
+	}
+
 	cli := &cli.CLI{
 		Args:     args,
 		Commands: Commands,
-		HelpFunc: cli.BasicHelpFunc("consul"),
+		HelpFunc: cli.FilteredHelpFunc(included, cli.BasicHelpFunc("consul")),
 	}
 
 	exitCode, err := cli.Run()

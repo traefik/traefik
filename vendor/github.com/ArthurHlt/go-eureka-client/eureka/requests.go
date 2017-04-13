@@ -67,7 +67,7 @@ type InstanceInfo struct {
 type DataCenterInfo struct {
 	Name     string             `xml:"name" json:"name"`
 	Class    string             `xml:"class,attr" json:"@class"`
-	Metadata DataCenterMetadata `xml:"metadata,omitempty" json:"metadata,omitempty"`
+	Metadata *DataCenterMetadata `xml:"metadata,omitempty" json:"metadata,omitempty"`
 }
 
 type DataCenterMetadata struct {
@@ -106,6 +106,8 @@ func NewRawRequest(method, relativePath string, body []byte, cancel <-chan bool)
 func NewInstanceInfo(hostName, app, ip string, port int, ttl uint, isSsl bool) *InstanceInfo {
 	dataCenterInfo := &DataCenterInfo{
 		Name: "MyOwn",
+		Class:    "com.netflix.appinfo.InstanceInfo$DefaultDataCenterInfo",
+		Metadata: nil,
 	}
 	leaseInfo := &LeaseInfo{
 		EvictionDurationInSecs: ttl,

@@ -77,11 +77,13 @@
 #
 # IdleTimeout = "360s"
 
-# If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used.
-# If you encounter 'too many open files' errors, you can either change this value, or change `ulimit` value.
+# Controls the maximum idle (keep-alive) connections to keep per-host. If zero, DefaultMaxIdleConnsPerHost
+# from the Go standard library net/http module is used.
+# If you encounter 'too many open files' errors, you can either increase this
+# value or change the `ulimit`.
 #
 # Optional
-# Default: http.DefaultMaxIdleConnsPerHost
+# Default: 200
 #
 # MaxIdleConnsPerHost = 200
 
@@ -842,7 +844,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
-- `traefik.docker.network`: Set the docker network to use for connections to this container
+- `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 
 If several ports need to be exposed from a container, the services labels can be used
 - `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
@@ -1048,12 +1050,14 @@ domain = "mesos.localhost"
 # Zookeeper timeout (in seconds)
 #
 # Optional
+# Default: 30
 #
 # ZkDetectionTimeout = 30
 
 # Polling interval (in seconds)
 #
 # Optional
+# Default: 30
 #
 # RefreshSeconds = 30
 
@@ -1066,8 +1070,9 @@ domain = "mesos.localhost"
 # HTTP Timeout (in seconds)
 #
 # Optional
+# Default: 30
 #
-# StateTimeoutSecond = "host"
+# StateTimeoutSecond = "30"
 ```
 
 ## Kubernetes Ingress backend

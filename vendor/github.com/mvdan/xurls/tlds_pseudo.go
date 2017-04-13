@@ -19,7 +19,6 @@ var PseudoTLDs = []string{
 	`invalid`,   // Invalid domain
 	`local`,     // Local network
 	`localhost`, // Local network
-	`onion`,     // Tor hidden services
 	`test`,      // Test domain
 	`zkey`,      // GNS domain name
 }

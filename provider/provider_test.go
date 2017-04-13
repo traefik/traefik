@@ -80,7 +80,7 @@ func TestConfigurationErrors(t *testing.T) {
 				},
 				nil,
 			},
-			expectedError: "Near line 1 (last key parsed 'Hello'): Expected key separator '=', but got '<' instead",
+			expectedError: "Near line 1 (last key parsed 'Hello'): expected key separator '=', but got '<' instead",
 			funcMap: template.FuncMap{
 				"Foo": func() string {
 					return "bar"

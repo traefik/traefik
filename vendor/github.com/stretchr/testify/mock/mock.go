@@ -15,10 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func inin() {
-	spew.Config.SortKeys = true
-}
-
 // TestingT is an interface wrapper around *testing.T
 type TestingT interface {
 	Logf(format string, args ...interface{})
@@ -283,7 +279,7 @@ func (m *Mock) Called(arguments ...interface{}) Arguments {
 	functionPath := runtime.FuncForPC(pc).Name()
 	//Next four lines are required to use GCCGO function naming conventions.
 	//For Ex:  github_com_docker_libkv_store_mock.WatchTree.pN39_github_com_docker_libkv_store_mock.Mock
-	//uses inteface information unlike golang github.com/docker/libkv/store/mock.(*Mock).WatchTree
+	//uses interface information unlike golang github.com/docker/libkv/store/mock.(*Mock).WatchTree
 	//With GCCGO we need to remove interface information starting from pN<dd>.
 	re := regexp.MustCompile("\\.pN\\d+_")
 	if re.MatchString(functionPath) {
@@ -746,8 +742,8 @@ func diff(expected interface{}, actual interface{}) string {
 		return ""
 	}
 
-	e := spew.Sdump(expected)
-	a := spew.Sdump(actual)
+	e := spewConfig.Sdump(expected)
+	a := spewConfig.Sdump(actual)
 
 	diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
 		A:        difflib.SplitLines(e),
@@ -760,4 +756,11 @@ func diff(expected interface{}, actual interface{}) string {
 	})
 
 	return diff
+}
+
+var spewConfig = spew.ConfigState{
+	Indent:                  " ",
+	DisablePointerAddresses: true,
+	DisableCapacities:       true,
+	SortKeys:                true,
 }

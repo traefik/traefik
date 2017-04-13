@@ -247,7 +247,7 @@ func (e *encoder) addElemName(kind byte, name string) {
 func (e *encoder) addElem(name string, v reflect.Value, minSize bool) {
 
 	if !v.IsValid() {
-		e.addElemName('\x0A', name)
+		e.addElemName(0x0A, name)
 		return
 	}
 
@@ -276,29 +276,29 @@ func (e *encoder) addElem(name string, v reflect.Value, minSize bool) {
 				panic("ObjectIDs must be exactly 12 bytes long (got " +
 					strconv.Itoa(len(s)) + ")")
 			}
-			e.addElemName('\x07', name)
+			e.addElemName(0x07, name)
 			e.addBytes([]byte(s)...)
 		case typeSymbol:
-			e.addElemName('\x0E', name)
+			e.addElemName(0x0E, name)
 			e.addStr(s)
 		case typeJSONNumber:
 			n := v.Interface().(json.Number)
 			if i, err := n.Int64(); err == nil {
-				e.addElemName('\x12', name)
+				e.addElemName(0x12, name)
 				e.addInt64(i)
 			} else if f, err := n.Float64(); err == nil {
-				e.addElemName('\x01', name)
+				e.addElemName(0x01, name)
 				e.addFloat64(f)
 			} else {
 				panic("failed to convert json.Number to a number: " + s)
 			}
 		default:
-			e.addElemName('\x02', name)
+			e.addElemName(0x02, name)
 			e.addStr(s)
 		}
 
 	case reflect.Float32, reflect.Float64:
-		e.addElemName('\x01', name)
+		e.addElemName(0x01, name)
 		e.addFloat64(v.Float())
 
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
@@ -306,40 +306,40 @@ func (e *encoder) addElem(name string, v reflect.Value, minSize bool) {
 		if int64(u) < 0 {
 			panic("BSON has no uint64 type, and value is too large to fit correctly in an int64")
 		} else if u <= math.MaxInt32 && (minSize || v.Kind() <= reflect.Uint32) {
-			e.addElemName('\x10', name)
+			e.addElemName(0x10, name)
 			e.addInt32(int32(u))
 		} else {
-			e.addElemName('\x12', name)
+			e.addElemName(0x12, name)
 			e.addInt64(int64(u))
 		}
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		switch v.Type() {
 		case typeMongoTimestamp:
-			e.addElemName('\x11', name)
+			e.addElemName(0x11, name)
 			e.addInt64(v.Int())
 
 		case typeOrderKey:
 			if v.Int() == int64(MaxKey) {
-				e.addElemName('\x7F', name)
+				e.addElemName(0x7F, name)
 			} else {
-				e.addElemName('\xFF', name)
+				e.addElemName(0xFF, name)
 			}
 
 		default:
 			i := v.Int()
 			if (minSize || v.Type().Kind() != reflect.Int64) && i >= math.MinInt32 && i <= math.MaxInt32 {
 				// It fits into an int32, encode as such.
-				e.addElemName('\x10', name)
+				e.addElemName(0x10, name)
 				e.addInt32(int32(i))
 			} else {
-				e.addElemName('\x12', name)
+				e.addElemName(0x12, name)
 				e.addInt64(i)
 			}
 		}
 
 	case reflect.Bool:
-		e.addElemName('\x08', name)
+		e.addElemName(0x08, name)
 		if v.Bool() {
 			e.addBytes(1)
 		} else {
@@ -347,40 +347,40 @@ func (e *encoder) addElem(name string, v reflect.Value, minSize bool) {
 		}
 
 	case reflect.Map:
-		e.addElemName('\x03', name)
+		e.addElemName(0x03, name)
 		e.addDoc(v)
 
 	case reflect.Slice:
 		vt := v.Type()
 		et := vt.Elem()
 		if et.Kind() == reflect.Uint8 {
-			e.addElemName('\x05', name)
-			e.addBinary('\x00', v.Bytes())
+			e.addElemName(0x05, name)
+			e.addBinary(0x00, v.Bytes())
 		} else if et == typeDocElem || et == typeRawDocElem {
-			e.addElemName('\x03', name)
+			e.addElemName(0x03, name)
 			e.addDoc(v)
 		} else {
-			e.addElemName('\x04', name)
+			e.addElemName(0x04, name)
 			e.addDoc(v)
 		}
 
 	case reflect.Array:
 		et := v.Type().Elem()
 		if et.Kind() == reflect.Uint8 {
-			e.addElemName('\x05', name)
+			e.addElemName(0x05, name)
 			if v.CanAddr() {
-				e.addBinary('\x00', v.Slice(0, v.Len()).Interface().([]byte))
+				e.addBinary(0x00, v.Slice(0, v.Len()).Interface().([]byte))
 			} else {
 				n := v.Len()
 				e.addInt32(int32(n))
-				e.addBytes('\x00')
+				e.addBytes(0x00)
 				for i := 0; i < n; i++ {
 					el := v.Index(i)
 					e.addBytes(byte(el.Uint()))
 				}
 			}
 		} else {
-			e.addElemName('\x04', name)
+			e.addElemName(0x04, name)
 			e.addDoc(v)
 		}
 
@@ -399,11 +399,16 @@ func (e *encoder) addElem(name string, v reflect.Value, minSize bool) {
 			e.addBytes(s.Data...)
 
 		case Binary:
-			e.addElemName('\x05', name)
+			e.addElemName(0x05, name)
 			e.addBinary(s.Kind, s.Data)
 
+		case Decimal128:
+			e.addElemName(0x13, name)
+			e.addInt64(int64(s.l))
+			e.addInt64(int64(s.h))
+
 		case DBPointer:
-			e.addElemName('\x0C', name)
+			e.addElemName(0x0C, name)
 			e.addStr(s.Namespace)
 			if len(s.Id) != 12 {
 				panic("ObjectIDs must be exactly 12 bytes long (got " +
@@ -412,16 +417,16 @@ func (e *encoder) addElem(name string, v reflect.Value, minSize bool) {
 			e.addBytes([]byte(s.Id)...)
 
 		case RegEx:
-			e.addElemName('\x0B', name)
+			e.addElemName(0x0B, name)
 			e.addCStr(s.Pattern)
 			e.addCStr(s.Options)
 
 		case JavaScript:
 			if s.Scope == nil {
-				e.addElemName('\x0D', name)
+				e.addElemName(0x0D, name)
 				e.addStr(s.Code)
 			} else {
-				e.addElemName('\x0F', name)
+				e.addElemName(0x0F, name)
 				start := e.reserveInt32()
 				e.addStr(s.Code)
 				e.addDoc(reflect.ValueOf(s.Scope))
@@ -430,18 +435,18 @@ func (e *encoder) addElem(name string, v reflect.Value, minSize bool) {
 
 		case time.Time:
 			// MongoDB handles timestamps as milliseconds.
-			e.addElemName('\x09', name)
+			e.addElemName(0x09, name)
 			e.addInt64(s.Unix()*1000 + int64(s.Nanosecond()/1e6))
 
 		case url.URL:
-			e.addElemName('\x02', name)
+			e.addElemName(0x02, name)
 			e.addStr(s.String())
 
 		case undefined:
-			e.addElemName('\x06', name)
+			e.addElemName(0x06, name)
 
 		default:
-			e.addElemName('\x03', name)
+			e.addElemName(0x03, name)
 			e.addDoc(v)
 		}
 

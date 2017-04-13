@@ -125,7 +125,6 @@ func (exo *Client) GetVirtualMachine(id string) (*VirtualMachine, error) {
 	params.Set("id", id)
 
 	resp, err := exo.Request("listVirtualMachines", params)
-
 	if err != nil {
 		return nil, err
 	}
@@ -144,19 +143,14 @@ func (exo *Client) GetVirtualMachine(id string) (*VirtualMachine, error) {
 	}
 }
 
-func (exo *Client) ListVirtualMachines(id string) ([]*VirtualMachine, error) {
+func (exo *Client) ListVirtualMachines() ([]*VirtualMachine, error) {
 
-	params := url.Values{}
-	params.Set("id", id)
-
-	resp, err := exo.Request("listVirtualMachines", params)
-
+ 	resp, err := exo.Request("listVirtualMachines", url.Values{})
 	if err != nil {
 		return nil, err
 	}
 
 	var r ListVirtualMachinesResponse
-
 	if err := json.Unmarshal(resp, &r); err != nil {
 		return nil, err
 	}

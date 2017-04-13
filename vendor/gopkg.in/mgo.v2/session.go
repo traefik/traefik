@@ -146,7 +146,10 @@ var (
 	ErrCursor   = errors.New("invalid cursor")
 )
 
-const defaultPrefetch = 0.25
+const (
+	defaultPrefetch  = 0.25
+	maxUpsertRetries = 5
+)
 
 // Dial establishes a new session to the cluster identified by the given seed
 // server(s). The session will enable communication with all of the servers in
@@ -1008,6 +1011,8 @@ type indexSpec struct {
 	DefaultLanguage  string  "default_language,omitempty"
 	LanguageOverride string  "language_override,omitempty"
 	TextIndexVersion int     "textIndexVersion,omitempty"
+
+	Collation *Collation "collation,omitempty"
 }
 
 type Index struct {
@@ -1046,6 +1051,54 @@ type Index struct {
 	// from the weighted sum of the frequency for each of the indexed fields in
 	// that document. The default field weight is 1.
 	Weights map[string]int
+
+	// Collation defines the collation to use for the index.
+	Collation *Collation
+}
+
+type Collation struct {
+
+	// Locale defines the collation locale.
+	Locale string `bson:"locale"`
+
+	// CaseLevel defines whether to turn case sensitivity on at strength 1 or 2.
+	CaseLevel bool `bson:"caseLevel,omitempty"`
+
+	// CaseFirst may be set to "upper" or "lower" to define whether
+	// to have uppercase or lowercase items first. Default is "off".
+	CaseFirst string `bson:"caseFirst,omitempty"`
+
+	// Strength defines the priority of comparison properties, as follows:
+	//
+	//   1 (primary)    - Strongest level, denote difference between base characters
+	//   2 (secondary)  - Accents in characters are considered secondary differences
+	//   3 (tertiary)   - Upper and lower case differences in characters are
+	//                    distinguished at the tertiary level
+	//   4 (quaternary) - When punctuation is ignored at level 1-3, an additional
+	//                    level can be used to distinguish words with and without
+	//                    punctuation. Should only be used if ignoring punctuation
+	//                    is required or when processing Japanese text.
+	//   5 (identical)  - When all other levels are equal, the identical level is
+	//                    used as a tiebreaker. The Unicode code point values of
+	//                    the NFD form of each string are compared at this level,
+	//                    just in case there is no difference at levels 1-4
+	//
+	// Strength defaults to 3.
+	Strength int `bson:"strength,omitempty"`
+
+	// NumericOrdering defines whether to order numbers based on numerical
+	// order and not collation order.
+	NumericOrdering bool `bson:"numericOrdering,omitempty"`
+
+	// Alternate controls whether spaces and punctuation are considered base characters.
+	// May be set to "non-ignorable" (spaces and punctuation considered base characters)
+	// or "shifted" (spaces and punctuation not considered base characters, and only
+	// distinguished at strength > 3). Defaults to "non-ignorable".
+	Alternate string `bson:"alternate,omitempty"`
+
+	// Backwards defines whether to have secondary differences considered in reverse order,
+	// as done in the French language.
+	Backwards bool `bson:"backwards,omitempty"`
 }
 
 // mgo.v3: Drop Minf and Maxf and transform Min and Max to floats.
@@ -1239,6 +1292,7 @@ func (c *Collection) EnsureIndex(index Index) error {
 		Weights:          keyInfo.weights,
 		DefaultLanguage:  index.DefaultLanguage,
 		LanguageOverride: index.LanguageOverride,
+		Collation:        index.Collation,
 	}
 
 	if spec.Min == 0 && spec.Max == 0 {
@@ -1453,6 +1507,7 @@ func indexFromSpec(spec indexSpec) Index {
 		DefaultLanguage:  spec.DefaultLanguage,
 		LanguageOverride: spec.LanguageOverride,
 		ExpireAfter:      time.Duration(spec.ExpireAfter) * time.Second,
+		Collation:        spec.Collation,
 	}
 	if float64(int(spec.Min)) == spec.Min && float64(int(spec.Max)) == spec.Max {
 		index.Min = int(spec.Min)
@@ -1582,6 +1637,8 @@ func (s *Session) Refresh() {
 
 // SetMode changes the consistency mode for the session.
 //
+// The default mode is Strong.
+//
 // In the Strong consistency mode reads and writes will always be made to
 // the primary server using a unique connection so that reads and writes are
 // fully consistent, ordered, and observing the most up-to-date data.
@@ -1655,6 +1712,8 @@ func (s *Session) SetSyncTimeout(d time.Duration) {
 
 // SetSocketTimeout sets the amount of time to wait for a non-responding
 // socket to the database before it is forcefully closed.
+//
+// The default timeout is 1 minute.
 func (s *Session) SetSocketTimeout(d time.Duration) {
 	s.m.Lock()
 	s.sockTimeout = d
@@ -1784,6 +1843,9 @@ func (s *Session) Safe() (safe *Safe) {
 // If the safe parameter is not nil, any changing query (insert, update, ...)
 // will be followed by a getLastError command with the specified parameters,
 // to ensure the request was correctly processed.
+//
+// The default is &Safe{}, meaning check for errors and use the default
+// behavior for all fields.
 //
 // The safe.W parameter determines how many servers should confirm a write
 // before the operation is considered successful.  If set to 0 or 1, the
@@ -2332,8 +2394,7 @@ type queryError struct {
 	ErrMsg        string
 	Assertion     string
 	Code          int
-	AssertionCode int        "assertionCode"
-	LastError     *LastError "lastErrorObject"
+	AssertionCode int "assertionCode"
 }
 
 type QueryError struct {
@@ -2478,7 +2539,15 @@ func (c *Collection) Upsert(selector interface{}, update interface{}) (info *Cha
 		Flags:      1,
 		Upsert:     true,
 	}
-	lerr, err := c.writeOp(&op, true)
+	var lerr *LastError
+	for i := 0; i < maxUpsertRetries; i++ {
+		lerr, err = c.writeOp(&op, true)
+		// Retry duplicate key errors on upserts.
+		// https://docs.mongodb.com/v3.2/reference/method/db.collection.update/#use-unique-indexes
+		if !IsDup(err) {
+			break
+		}
+	}
 	if err == nil && lerr != nil {
 		info = &ChangeInfo{}
 		if lerr.UpdatedExisting {
@@ -2983,9 +3052,6 @@ func checkQueryError(fullname string, d []byte) error {
 Error:
 	result := &queryError{}
 	bson.Unmarshal(d, result)
-	if result.LastError != nil {
-		return result.LastError
-	}
 	if result.Err == "" && result.ErrMsg == "" {
 		return nil
 	}
@@ -3201,13 +3267,14 @@ func (db *Database) run(socket *mongoSocket, cmd, result interface{}) (err error
 	}
 	if result != nil {
 		err = bson.Unmarshal(data, result)
-		if err == nil {
+		if err != nil {
+			debugf("Run command unmarshaling failed: %#v", op, err)
+			return err
+		}
+		if globalDebug && globalLogger != nil {
 			var res bson.M
 			bson.Unmarshal(data, &res)
 			debugf("Run command unmarshaled: %#v, result: %#v", op, res)
-		} else {
-			debugf("Run command unmarshaling failed: %#v", op, err)
-			return err
 		}
 	}
 	return checkQueryError(op.collection, data)
@@ -3552,6 +3619,34 @@ func (iter *Iter) Close() error {
 	}
 	iter.m.Unlock()
 	return err
+}
+
+// Done returns true only if a follow up Next call is guaranteed
+// to return false.
+//
+// For an iterator created with Tail, Done may return false for
+// an iterator that has no more data. Otherwise it's guaranteed
+// to return false only if there is data or an error happened.
+//
+// Done may block waiting for a pending query to verify whether
+// more data is actually available or not.
+func (iter *Iter) Done() bool {
+	iter.m.Lock()
+	defer iter.m.Unlock()
+
+	for {
+		if iter.docData.Len() > 0 {
+			return false
+		}
+		if iter.docsToReceive > 1 {
+			return true
+		}
+		if iter.docsToReceive > 0 {
+			iter.gotReply.Wait()
+			continue
+		}
+		return iter.op.cursorId == 0
+	}
 }
 
 // Timeout returns true if Next returned false due to a timeout of
@@ -4208,8 +4303,16 @@ func (q *Query) Apply(change Change, result interface{}) (info *ChangeInfo, err 
 	session.SetMode(Strong, false)
 
 	var doc valueResult
-	err = session.DB(dbname).Run(&cmd, &doc)
-	if err != nil {
+	for i := 0; i < maxUpsertRetries; i++ {
+		err = session.DB(dbname).Run(&cmd, &doc)
+		if err == nil {
+			break
+		}
+		if change.Upsert && IsDup(err) && i+1 < maxUpsertRetries {
+			// Retry duplicate key errors on upserts.
+			// https://docs.mongodb.com/v3.2/reference/method/db.collection.update/#use-unique-indexes
+			continue
+		}
 		if qerr, ok := err.(*QueryError); ok && qerr.Message == "No matching object found" {
 			return nil, ErrNotFound
 		}
@@ -4258,12 +4361,12 @@ type BuildInfo struct {
 // equal to the provided version number. If more than one number is
 // provided, numbers will be considered as major, minor, and so on.
 func (bi *BuildInfo) VersionAtLeast(version ...int) bool {
-	for i := range version {
+	for i, vi := range version {
 		if i == len(bi.VersionArray) {
 			return false
 		}
-		if bi.VersionArray[i] < version[i] {
-			return false
+		if bivi := bi.VersionArray[i]; bivi != vi {
+			return bivi >= vi
 		}
 	}
 	return true
@@ -4525,7 +4628,7 @@ func (c *Collection) writeOp(op interface{}, ordered bool) (lerr *LastError, err
 				lerr.N += oplerr.N
 				lerr.modified += oplerr.modified
 				if err != nil {
-					for ei := range lerr.ecases {
+					for ei := range oplerr.ecases {
 						oplerr.ecases[ei].Index += i
 					}
 					lerr.ecases = append(lerr.ecases, oplerr.ecases...)

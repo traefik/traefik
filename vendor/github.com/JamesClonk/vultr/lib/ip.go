@@ -1,6 +1,9 @@
 package lib
 
-import "net/url"
+import (
+	"net/url"
+	"sort"
+)
 
 // IPv4 information of a virtual machine
 type IPv4 struct {
@@ -11,6 +14,20 @@ type IPv4 struct {
 	ReverseDNS string `json:"reverse"`
 }
 
+type ipv4s []IPv4
+
+func (s ipv4s) Len() int      { return len(s) }
+func (s ipv4s) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s ipv4s) Less(i, j int) bool {
+	// sort order: type, ip
+	if s[i].Type < s[j].Type {
+		return true
+	} else if s[i].Type > s[j].Type {
+		return false
+	}
+	return s[i].IP < s[j].IP
+}
+
 // IPv6 information of a virtual machine
 type IPv6 struct {
 	IP          string `json:"ip"`
@@ -19,11 +36,31 @@ type IPv6 struct {
 	Type        string `json:"type"`
 }
 
+type ipv6s []IPv6
+
+func (s ipv6s) Len() int      { return len(s) }
+func (s ipv6s) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s ipv6s) Less(i, j int) bool {
+	// sort order: type, ip
+	if s[i].Type < s[j].Type {
+		return true
+	} else if s[i].Type > s[j].Type {
+		return false
+	}
+	return s[i].IP < s[j].IP
+}
+
 // ReverseDNSIPv6 information of a virtual machine
 type ReverseDNSIPv6 struct {
 	IP         string `json:"ip"`
 	ReverseDNS string `json:"reverse"`
 }
+
+type reverseDNSIPv6s []ReverseDNSIPv6
+
+func (s reverseDNSIPv6s) Len() int           { return len(s) }
+func (s reverseDNSIPv6s) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s reverseDNSIPv6s) Less(i, j int) bool { return s[i].IP < s[j].IP }
 
 // ListIPv4 lists the IPv4 information of a virtual machine
 func (c *Client) ListIPv4(id string) (list []IPv4, err error) {
@@ -37,6 +74,7 @@ func (c *Client) ListIPv4(id string) (list []IPv4, err error) {
 			list = append(list, ip)
 		}
 	}
+	sort.Sort(ipv4s(list))
 	return list, nil
 }
 
@@ -52,6 +90,7 @@ func (c *Client) ListIPv6(id string) (list []IPv6, err error) {
 			list = append(list, ip)
 		}
 	}
+	sort.Sort(ipv6s(list))
 	return list, nil
 }
 
@@ -67,6 +106,7 @@ func (c *Client) ListIPv6ReverseDNS(id string) (list []ReverseDNSIPv6, err error
 			list = append(list, ip)
 		}
 	}
+	sort.Sort(reverseDNSIPv6s(list))
 	return list, nil
 }
 
