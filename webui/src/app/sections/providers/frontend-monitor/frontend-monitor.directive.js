@@ -8,8 +8,7 @@ function frontendMonitor() {
     controllerAs: 'frontendCtrl',
     bindToController: true,
     scope: {
-      frontend: '=',
-      frontendId: '='
+      frontend: '='
     }
   };
 }
