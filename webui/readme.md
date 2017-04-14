@@ -27,7 +27,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
   - `yarn install`
 
 - Build static Web UI, execute the following command:
-  - `gulp`
+  - `yarn run build`
 
 - Static contents are build in the directory `static`
 
@@ -50,7 +50,7 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 - Edit files in `webui/src`
 
 - Run in development mode :
-  - `gulp serve`
+  - `yarn run serve`
 
 - Træfɪk API connections are defined in:
   - `webui/src/app/core/health.resource.js`
