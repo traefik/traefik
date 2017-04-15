@@ -183,7 +183,7 @@ func (provider *Marathon) loadMarathonConfig() *types.Configuration {
 		provider.Domain,
 	}
 
-	configuration, err := provider.getConfiguration("templates/marathon.tmpl", MarathonFuncMap, templateObjects)
+	configuration, err := provider.GetConfiguration("templates/marathon.tmpl", MarathonFuncMap, templateObjects)
 	if err != nil {
 		log.Error(err)
 	}

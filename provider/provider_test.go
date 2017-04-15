@@ -91,7 +91,7 @@ func TestConfigurationErrors(t *testing.T) {
 	}
 
 	for _, invalid := range invalids {
-		configuration, err := invalid.provider.getConfiguration(invalid.defaultTemplate, invalid.funcMap, nil)
+		configuration, err := invalid.provider.GetConfiguration(invalid.defaultTemplate, invalid.funcMap, nil)
 		if err == nil || !strings.Contains(err.Error(), invalid.expectedError) {
 			t.Fatalf("should have generate an error with %q, got %v", invalid.expectedError, err)
 		}
@@ -136,7 +136,7 @@ func TestGetConfiguration(t *testing.T) {
 		},
 		nil,
 	}
-	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
+	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
@@ -198,7 +198,7 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 		},
 		nil,
 	}
-	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
+	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
@@ -345,7 +345,7 @@ func TestDefaultFuncMap(t *testing.T) {
     weight = 1
 
 [frontends]
-  [frontends.{{normalize "frontend/1"}}]
+  [frontends.{{Normalize "frontend/1"}}]
   {{ $backend := "backend1/test/value" | split  "/" }}
   {{ $backendid := index $backend 1 }}
   {{ if "backend1" | contains "backend" }}
@@ -366,7 +366,7 @@ func TestDefaultFuncMap(t *testing.T) {
 		},
 		nil,
 	}
-	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
+	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}

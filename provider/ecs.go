@@ -182,7 +182,7 @@ func (provider *ECS) loadECSConfig(ctx context.Context, client *awsClient) (*typ
 
 	instances = fun.Filter(provider.filterInstance, instances).([]ecsInstance)
 
-	return provider.getConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
+	return provider.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
 		Instances []ecsInstance
 	}{
 		instances,

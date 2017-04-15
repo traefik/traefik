@@ -12,6 +12,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/types"
 )
 
@@ -40,7 +41,7 @@ type GlobalConfiguration struct {
 	IdleTimeout               flaeg.Duration          `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
-	Docker                    *provider.Docker        `description:"Enable Docker backend"`
+	Docker                    *docker.Provider        `description:"Enable Docker backend"`
 	File                      *provider.File          `description:"Enable File backend"`
 	Web                       *WebProvider            `description:"Enable Web backend"`
 	Marathon                  *provider.Marathon      `description:"Enable Marathon backend"`
@@ -328,7 +329,7 @@ type Retry struct {
 // NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
 func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	//default Docker
-	var defaultDocker provider.Docker
+	var defaultDocker docker.Provider
 	defaultDocker.Watch = true
 	defaultDocker.ExposedByDefault = true
 	defaultDocker.Endpoint = "unix:///var/run/docker.sock"

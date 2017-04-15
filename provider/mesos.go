@@ -167,7 +167,7 @@ func (provider *Mesos) loadMesosConfig() *types.Configuration {
 		provider.Domain,
 	}
 
-	configuration, err := provider.getConfiguration("templates/mesos.tmpl", mesosFuncMap, templateObjects)
+	configuration, err := provider.GetConfiguration("templates/mesos.tmpl", mesosFuncMap, templateObjects)
 	if err != nil {
 		log.Error(err)
 	}
