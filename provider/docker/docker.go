@@ -41,7 +41,7 @@ const (
 
 var _ provider.Provider = (*Provider)(nil)
 
-// Provider holds configurations of the Provider p.
+// Provider holds configurations of the Provider.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
 	Endpoint              string              `description:"Provider server endpoint. Can be a tcp or a unix socket endpoint"`

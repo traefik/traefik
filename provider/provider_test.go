@@ -345,7 +345,7 @@ func TestDefaultFuncMap(t *testing.T) {
     weight = 1
 
 [frontends]
-  [frontends.{{Normalize "frontend/1"}}]
+  [frontends.{{normalize "frontend/1"}}]
   {{ $backend := "backend1/test/value" | split  "/" }}
   {{ $backendid := index $backend 1 }}
   {{ if "backend1" | contains "backend" }}
