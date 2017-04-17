@@ -55,6 +55,7 @@ type GlobalConfiguration struct {
 	ECS                       *provider.ECS           `description:"Enable ECS backend"`
 	Rancher                   *provider.Rancher       `description:"Enable Rancher backend"`
 	DynamoDB                  *provider.DynamoDB      `description:"Enable DynamoDB backend"`
+	WebAPI                    *provider.WebAPI        `description:"Enable WebAPI backend"`
 }
 
 // DefaultEntryPoints holds default entry points
