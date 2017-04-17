@@ -27,7 +27,7 @@ OS_ARCH_ARG=(386 amd64)
 for OS in ${OS_PLATFORM_ARG[@]}; do
   for ARCH in ${OS_ARCH_ARG[@]}; do
     echo "Building binary for $OS/$ARCH..."
-    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=$VERSION -X github.com/containous/traefik/version.Codename=$CODENAME -X github.com/containous/traefik/version.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" .
+    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=$VERSION -X github.com/containous/traefik/version.Codename=$CODENAME -X github.com/containous/traefik/version.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" ./cmd/traefik/
   done
 done
 
@@ -38,6 +38,6 @@ OS_ARCH_ARG=(arm arm64)
 for OS in ${OS_PLATFORM_ARG[@]}; do
   for ARCH in ${OS_ARCH_ARG[@]}; do
     echo "Building binary for $OS/$ARCH..."
-    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=$VERSION -X github.com/containous/traefik/version.Codename=$CODENAME -X github.com/containous/traefik/version.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" .
+    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/containous/traefik/version.Version=$VERSION -X github.com/containous/traefik/version.Codename=$CODENAME -X github.com/containous/traefik/version.BuildDate=$DATE" -o "dist/traefik_$OS-$ARCH" ./cmd/traefik/
   done
 done

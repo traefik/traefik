@@ -17,11 +17,11 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/cmd"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/server"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
@@ -33,8 +33,8 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	//traefik config inits
-	traefikConfiguration := NewTraefikConfiguration()
-	traefikPointersConfiguration := NewTraefikDefaultPointersConfiguration()
+	traefikConfiguration := server.NewTraefikConfiguration()
+	traefikPointersConfiguration := server.NewTraefikDefaultPointersConfiguration()
 	//traefik Command init
 	traefikCmd := &flaeg.Command{
 		Name: "traefik",
@@ -101,16 +101,16 @@ Complete documentation is available at https://traefik.io`,
 	//init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
 	//add custom parsers
-	f.AddParser(reflect.TypeOf(EntryPoints{}), &EntryPoints{})
-	f.AddParser(reflect.TypeOf(DefaultEntryPoints{}), &DefaultEntryPoints{})
+	f.AddParser(reflect.TypeOf(server.EntryPoints{}), &server.EntryPoints{})
+	f.AddParser(reflect.TypeOf(server.DefaultEntryPoints{}), &server.DefaultEntryPoints{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
 	//add commands
-	f.AddCommand(cmd.NewVersionCmd())
-	f.AddCommand(cmd.NewBugCmd(traefikConfiguration, traefikPointersConfiguration))
+	f.AddCommand(newVersionCmd())
+	f.AddCommand(newBugCmd(traefikConfiguration, traefikPointersConfiguration))
 	f.AddCommand(storeconfigCmd)
 
 	usedCmd, err := f.GetCommand()
@@ -168,7 +168,7 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func run(traefikConfiguration *TraefikConfiguration) {
+func run(traefikConfiguration *server.TraefikConfiguration) {
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
 
 	// load global configuration
@@ -191,7 +191,7 @@ func run(traefikConfiguration *TraefikConfiguration) {
 	}
 
 	if len(globalConfiguration.EntryPoints) == 0 {
-		globalConfiguration.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
+		globalConfiguration.EntryPoints = map[string]*server.EntryPoint{"http": {Address: ":80"}}
 		globalConfiguration.DefaultEntryPoints = []string{"http"}
 	}
 
@@ -241,9 +241,9 @@ func run(traefikConfiguration *TraefikConfiguration) {
 		log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
 	}
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
-	server := NewServer(globalConfiguration)
-	server.Start()
-	defer server.Close()
+	svr := server.NewServer(globalConfiguration)
+	svr.Start()
+	defer svr.Close()
 	sent, err := daemon.SdNotify(true, "READY=1")
 	if !sent && err != nil {
 		log.Error("Fail to notify", err)
@@ -261,13 +261,13 @@ func run(traefikConfiguration *TraefikConfiguration) {
 			}
 		}(t)
 	}
-	server.Wait()
+	svr.Wait()
 	log.Info("Shutting down")
 }
 
 // CreateKvSource creates KvSource
 // TLS support is enable for Consul and Etcd backends
-func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSource, error) {
+func CreateKvSource(traefikConfiguration *server.TraefikConfiguration) (*staert.KvSource, error) {
 	var kv *staert.KvSource
 	var store store.Store
 	var err error

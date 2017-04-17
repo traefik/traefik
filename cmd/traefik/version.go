@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"fmt"
@@ -17,8 +17,8 @@ Go version:   {{.GoVersion}}
 Built:        {{.BuildTime}}
 OS/Arch:      {{.Os}}/{{.Arch}}`
 
-// NewVersionCmd builds a new Version command
-func NewVersionCmd() *flaeg.Command {
+// newVersionCmd builds a new Version command
+func newVersionCmd() *flaeg.Command {
 
 	//version Command init
 	return &flaeg.Command{

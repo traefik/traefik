@@ -1,16 +1,17 @@
-package main
+package server
 
 import (
 	"errors"
 	"fmt"
-	"github.com/BurntSushi/ty/fun"
-	"github.com/containous/mux"
-	"github.com/containous/traefik/types"
 	"net"
 	"net/http"
 	"reflect"
 	"sort"
 	"strings"
+
+	"github.com/BurntSushi/ty/fun"
+	"github.com/containous/mux"
+	"github.com/containous/traefik/types"
 )
 
 // Rules holds rule parsing and configuration

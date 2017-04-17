@@ -67,7 +67,8 @@ $ go generate
 $ go build
 # Using gox to build multiple platform
 $ gox "linux darwin" "386 amd64 arm" \
-    -output="dist/traefik_{{.OS}}-{{.Arch}}"
+    -output="dist/traefik_{{.OS}}-{{.Arch}}" \
+    ./cmd/traefik
 # run other commands like tests
 ```
 

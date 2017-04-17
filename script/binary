@@ -26,4 +26,8 @@ if [ -z "$DATE" ]; then
 fi
 
 # Build binaries
-CGO_ENABLED=0 GOGC=off go build $FLAGS -ldflags "-s -w -X github.com/containous/traefik/version.Version=$VERSION -X github.com/containous/traefik/version.Codename=$CODENAME -X github.com/containous/traefik/version.BuildDate=$DATE" -a -installsuffix nocgo -o dist/traefik .
+CGO_ENABLED=0 GOGC=off go build $FLAGS -ldflags "-s -w \
+    -X github.com/containous/traefik/version.Version=$VERSION \
+    -X github.com/containous/traefik/version.Codename=$CODENAME \
+    -X github.com/containous/traefik/version.BuildDate=$DATE" \
+    -a -installsuffix nocgo -o dist/traefik ./cmd/traefik

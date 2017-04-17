@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"bytes"
@@ -39,8 +39,8 @@ var (
 `
 )
 
-// NewBugCmd builds a new Bug command
-func NewBugCmd(traefikConfiguration interface{}, traefikPointersConfiguration interface{}) *flaeg.Command {
+// newBugCmd builds a new Bug command
+func newBugCmd(traefikConfiguration interface{}, traefikPointersConfiguration interface{}) *flaeg.Command {
 
 	//version Command init
 	return &flaeg.Command{
