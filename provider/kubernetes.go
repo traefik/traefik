@@ -320,7 +320,7 @@ func (provider *Kubernetes) getPassHostHeader() bool {
 
 func (provider *Kubernetes) loadConfig(templateObjects types.Configuration) *types.Configuration {
 	var FuncMap = template.FuncMap{}
-	configuration, err := provider.getConfiguration("templates/kubernetes.tmpl", FuncMap, templateObjects)
+	configuration, err := provider.GetConfiguration("templates/kubernetes.tmpl", FuncMap, templateObjects)
 	if err != nil {
 		log.Error(err)
 	}

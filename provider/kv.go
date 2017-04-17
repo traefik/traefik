@@ -130,7 +130,7 @@ func (provider *Kv) loadConfig() *types.Configuration {
 		"Last":        provider.last,
 	}
 
-	configuration, err := provider.getConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
+	configuration, err := provider.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
 	if err != nil {
 		log.Error(err)
 	}

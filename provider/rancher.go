@@ -79,7 +79,7 @@ func (provider *Rancher) getFrontendRule(service rancherData) string {
 
 func (provider *Rancher) getFrontendName(service rancherData) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
-	return normalize(provider.getFrontendRule(service))
+	return Normalize(provider.getFrontendRule(service))
 }
 
 // Backend Labels
@@ -122,9 +122,9 @@ func (provider *Rancher) getSticky(service rancherData) string {
 
 func (provider *Rancher) getBackend(service rancherData) string {
 	if label, err := getServiceLabel(service, "traefik.backend"); err == nil {
-		return normalize(label)
+		return Normalize(label)
 	}
-	return normalize(service.Name)
+	return Normalize(service.Name)
 }
 
 // Generall Application Stuff
@@ -436,7 +436,7 @@ func (provider *Rancher) loadRancherConfig(services []rancherData) *types.Config
 		provider.Domain,
 	}
 
-	configuration, err := provider.getConfiguration("templates/rancher.tmpl", RancherFuncMap, templateObjects)
+	configuration, err := provider.GetConfiguration("templates/rancher.tmpl", RancherFuncMap, templateObjects)
 	if err != nil {
 		log.Error(err)
 	}

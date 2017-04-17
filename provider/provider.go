@@ -51,7 +51,8 @@ func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint)
 	return true, nil
 }
 
-func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
+// GetConfiguration return the provider configuration using templating
+func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
 	var (
 		buf []byte
 		err error
@@ -60,7 +61,7 @@ func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap temp
 	var defaultFuncMap = template.FuncMap{
 		"replace":   replace,
 		"tolower":   strings.ToLower,
-		"normalize": normalize,
+		"normalize": Normalize,
 		"split":     split,
 		"contains":  contains,
 	}
@@ -112,7 +113,8 @@ func split(sep, s string) []string {
 	return strings.Split(s, sep)
 }
 
-func normalize(name string) string {
+// Normalize transform a string that work with the rest of traefik
+func Normalize(name string) string {
 	fargs := func(c rune) bool {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c)
 	}

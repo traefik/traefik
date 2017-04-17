@@ -176,7 +176,7 @@ func (provider *ConsulCatalog) getBackendName(node *api.ServiceEntry, index int)
 	serviceName := strings.ToLower(node.Service.Service) + "--" + node.Service.Address + "--" + strconv.Itoa(node.Service.Port)
 
 	for _, tag := range node.Service.Tags {
-		serviceName += "--" + normalize(tag)
+		serviceName += "--" + Normalize(tag)
 	}
 
 	serviceName = strings.Replace(serviceName, ".", "-", -1)
@@ -246,7 +246,7 @@ func (provider *ConsulCatalog) buildConfig(catalog []catalogUpdate) *types.Confi
 		Nodes:    allNodes,
 	}
 
-	configuration, err := provider.getConfiguration("templates/consul_catalog.tmpl", FuncMap, templateObjects)
+	configuration, err := provider.GetConfiguration("templates/consul_catalog.tmpl", FuncMap, templateObjects)
 	if err != nil {
 		log.WithError(err).Error("Failed to create config")
 	}

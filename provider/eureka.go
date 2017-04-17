@@ -108,7 +108,7 @@ func (provider *Eureka) buildConfiguration() (*types.Configuration, error) {
 		applications.Applications,
 	}
 
-	configuration, err := provider.getConfiguration("templates/eureka.tmpl", EurekaFuncMap, templateObjects)
+	configuration, err := provider.GetConfiguration("templates/eureka.tmpl", EurekaFuncMap, templateObjects)
 	if err != nil {
 		log.Error(err)
 	}
