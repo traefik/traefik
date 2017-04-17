@@ -833,7 +833,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
 - `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
 - `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
-- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
+- `traefik.backend.loadbalancer.sticky=cookie`: enable backend sticky sessions
 - `traefik.backend.loadbalancer.swarm=true `: use Swarm's inbuilt load balancer (only relevant under Swarm Mode).
 - `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5`: create a [circuit breaker](/basics/#backends) to be used against the backend
 - `traefik.port=80`: register this port. Useful when the container exposes multiples ports.
@@ -976,7 +976,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
 - `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
 - `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
-- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
+- `traefik.backend.loadbalancer.sticky=cookie`: enable backend sticky sessions
 - `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5`: create a [circuit breaker](/basics/#backends) to be used against the backend
 - `traefik.portIndex=1`: register port by index in the application's ports array. Useful when the application exposes multiple ports.
 - `traefik.port=80`: register the explicit application port value. Cannot be used alongside `traefik.portIndex`.
@@ -1144,7 +1144,7 @@ Annotations can be used on containers to override default behaviour for the whol
 Annotations can be used on the Kubernetes service to override default behaviour:
 
 - `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
-- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
+- `traefik.backend.loadbalancer.sticky=cookie`: enable backend sticky sessions
 
 You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml).
 

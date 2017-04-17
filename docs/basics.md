@@ -237,7 +237,7 @@ For example:
 [backends]
   [backends.backend1]
     [backends.backend1.loadbalancer]
-      sticky = true
+      sticky = "cookie"
 ```
 
 A health check can be configured in order to remove a backend from LB rotation

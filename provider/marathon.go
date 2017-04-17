@@ -354,6 +354,9 @@ func (provider *Marathon) getProtocol(task marathon.Task, applications []maratho
 
 func (provider *Marathon) getSticky(application marathon.Application) string {
 	if sticky, err := provider.getLabel(application, "traefik.backend.loadbalancer.sticky"); err == nil {
+		if sticky == "true" {
+			return "cookie"
+		}
 		return sticky
 	}
 	return "false"

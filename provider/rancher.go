@@ -114,8 +114,11 @@ func (provider *Rancher) getCircuitBreakerExpression(service rancherData) string
 }
 
 func (provider *Rancher) getSticky(service rancherData) string {
-	if _, err := getServiceLabel(service, "traefik.backend.loadbalancer.sticky"); err == nil {
-		return "true"
+	if sticky, err := getServiceLabel(service, "traefik.backend.loadbalancer.sticky"); err == nil {
+		if sticky == "true" {
+			return "cookie"
+		}
+		return sticky
 	}
 	return "false"
 }

@@ -169,6 +169,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 					},
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
+						Sticky: "false",
 					},
 				},
 			},

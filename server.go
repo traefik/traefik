@@ -627,20 +627,16 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							continue frontend
 						}
 
-						stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
-						cookiename := "_TRAEFIK_BACKEND"
-						var sticky *roundrobin.StickySession
-
-						if stickysession {
-							sticky = roundrobin.NewStickySession(cookiename)
-						}
+						stickySessionType := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
+						stickySessionCookieName := "_TRAEFIK_BACKEND"
 
 						switch lbMethod {
 						case types.Drr:
 							log.Debugf("Creating load-balancer drr")
 							rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
-							if stickysession {
-								log.Debugf("Sticky session with cookie %v", cookiename)
+							if stickySessionType == "cookie" {
+								log.Debugf("Sticky session with cookie %v", stickySessionCookieName)
+								sticky := roundrobin.NewStickySession(stickySessionCookieName)
 								rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
 							}
 							lb = rebalancer
@@ -672,8 +668,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							}
 						case types.Wrr:
 							log.Debugf("Creating load-balancer wrr")
-							if stickysession {
-								log.Debugf("Sticky session with cookie %v", cookiename)
+							if stickySessionType == "cookie" {
+								log.Debugf("Sticky session with cookie %v", stickySessionCookieName)
+								sticky := roundrobin.NewStickySession(stickySessionCookieName)
 								rr, _ = roundrobin.New(saveBackend, roundrobin.EnableStickySession(sticky))
 							}
 							lb = rr

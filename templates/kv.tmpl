@@ -16,7 +16,7 @@
 {{with $loadBalancer}}
 [backends."{{Last $backend}}".loadBalancer]
     method = "{{$loadBalancer}}"
-    sticky = {{$sticky}}
+    sticky = "{{$sticky}}"
 {{end}}
 
 {{$maxConnAmt := Get "" . "/maxconn/" "amount"}}
