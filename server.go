@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/plugin"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -53,6 +54,7 @@ type Server struct {
 	loggerMiddleware           *middlewares.Logger
 	routinesPool               *safe.Pool
 	leadership                 *cluster.Leadership
+	manager                    *plugin.Manager
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -69,7 +71,7 @@ type serverRoute struct {
 }
 
 // NewServer returns an initialized Server.
-func NewServer(globalConfiguration GlobalConfiguration) *Server {
+func NewServer(globalConfiguration GlobalConfiguration, manager *plugin.Manager) *Server {
 	server := new(Server)
 
 	server.serverEntryPoints = make(map[string]*serverEntryPoint)
@@ -84,6 +86,7 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server.globalConfiguration = globalConfiguration
 	server.loggerMiddleware = middlewares.NewLogger(globalConfiguration.AccessLogsFile)
 	server.routinesPool = safe.NewPool(context.Background())
+	server.manager = manager
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
@@ -199,6 +202,9 @@ func (server *Server) startHTTPServers() {
 		}
 		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
 			serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
+		}
+		for _, m := range server.manager.GetMiddlewares() {
+			serverMiddlewares = append(serverMiddlewares, *m)
 		}
 		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], serverMiddlewares...)
 		if err != nil {
