@@ -59,7 +59,7 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 	)
 	configuration := new(types.Configuration)
 	var defaultFuncMap = template.FuncMap{
-		"replace":   replace,
+		"replace":   Replace,
 		"tolower":   strings.ToLower,
 		"normalize": Normalize,
 		"split":     split,
@@ -101,7 +101,8 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 	return configuration, nil
 }
 
-func replace(s1 string, s2 string, s3 string) string {
+// Replace is an alias for strings.Replace
+func Replace(s1 string, s2 string, s3 string) string {
 	return strings.Replace(s3, s1, s2, -1)
 }
 
@@ -122,7 +123,8 @@ func Normalize(name string) string {
 	return strings.Join(strings.FieldsFunc(name, fargs), "-")
 }
 
-func reverseStringSlice(slice *[]string) {
+// ReverseStringSlice invert the order of the given slice of string
+func ReverseStringSlice(slice *[]string) {
 	for i, j := 0, len(*slice)-1; i < j; i, j = i+1, j-1 {
 		(*slice)[i], (*slice)[j] = (*slice)[j], (*slice)[i]
 	}

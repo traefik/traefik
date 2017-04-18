@@ -20,7 +20,7 @@ import (
 	"github.com/containous/traefik/cmd"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/provider/k8s"
+	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
@@ -104,7 +104,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(EntryPoints{}), &EntryPoints{})
 	f.AddParser(reflect.TypeOf(DefaultEntryPoints{}), &DefaultEntryPoints{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
-	f.AddParser(reflect.TypeOf(k8s.Namespaces{}), &k8s.Namespaces{})
+	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
