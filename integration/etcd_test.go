@@ -1,23 +1,23 @@
 package main
 
 import (
-	"github.com/go-check/check"
 	"net/http"
 	"os/exec"
 	"time"
 
+	"github.com/go-check/check"
+
 	checker "github.com/vdemeester/shakers"
 
 	"crypto/tls"
-	"errors"
-	"fmt"
+	"io/ioutil"
+	"os"
+	"strings"
+
 	"github.com/containous/traefik/integration/utils"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/etcd"
-	"io/ioutil"
-	"os"
-	"strings"
 )
 
 // Etcd test suites (using libcompose)
@@ -47,10 +47,7 @@ func (s *EtcdSuite) SetUpTest(c *check.C) {
 	// wait for etcd
 	err = utils.Try(60*time.Second, func() error {
 		_, err := kv.Exists("test")
-		if err != nil {
-			return fmt.Errorf("Etcd connection error to %s: %v", url, err)
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 }
@@ -142,24 +139,12 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	// wait for etcd
 	err = utils.Try(60*time.Second, func() error {
 		_, err := s.kv.Exists("/traefik/frontends/frontend2/routes/test_2/rule")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Path:/test") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, utils.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{}
@@ -212,10 +197,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	// wait for etcd
 	err = utils.Try(60*time.Second, func() error {
 		_, err := s.kv.Exists("/traefik/entrypoints/http/address")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 
@@ -279,24 +261,12 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	// wait for etcd
 	err = utils.Try(60*time.Second, func() error {
 		_, err := s.kv.Exists("/traefik/frontends/frontend2/routes/test_2/rule")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Path:/test") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, utils.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
 	//check
@@ -391,10 +361,7 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 	// wait for etcd
 	err = utils.Try(60*time.Second, func() error {
 		_, err := s.kv.Exists("/traefik/frontends/frontend2/routes/test_2/rule")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 
@@ -403,16 +370,7 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Host:snitest.org") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, utils.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
 	//check
@@ -455,10 +413,7 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 		var p *store.KVPair
 		err = utils.Try(60*time.Second, func() error {
 			p, err = s.kv.Get(key)
-			if err != nil {
-				return err
-			}
-			return nil
+			return err
 		})
 		c.Assert(err, checker.IsNil)
 

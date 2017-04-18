@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -41,12 +39,7 @@ func (s *EurekaSuite) TestSimpleConfiguration(c *check.C) {
 	eurekaURL := "http://" + eurekaHost + ":8761/eureka/apps"
 
 	// wait for eureka
-	err = utils.TryRequest(eurekaURL, 60*time.Second, func(res *http.Response) error {
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = utils.TryRequest(eurekaURL, 60*time.Second, nil)
 	c.Assert(err, checker.IsNil)
 
 	eurekaTemplate := `
@@ -81,16 +74,7 @@ func (s *EurekaSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, 204)
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Host:tests-integration-traefik") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, utils.BodyContains("Host:tests-integration-traefik"))
 	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{}

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containous/traefik/integration/utils"
 	"github.com/go-check/check"
 	shellwords "github.com/mattn/go-shellwords"
 
@@ -34,7 +35,12 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	defer os.Remove("access.log")
 	defer os.Remove("traefik.log")
 
-	time.Sleep(500 * time.Millisecond)
+	utils.Try(1*time.Second, func() error {
+		if _, err := os.Stat("traefik.log"); err != nil {
+			return fmt.Errorf("could not get stats for log file: %s", err)
+		}
+		return nil
+	})
 
 	// Verify Traefik started OK
 	traefikLog, err := ioutil.ReadFile("traefik.log")

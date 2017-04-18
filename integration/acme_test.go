@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-check/check"
 
-	"errors"
 	"github.com/containous/traefik/integration/utils"
 	checker "github.com/vdemeester/shakers"
 )
@@ -26,17 +25,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	boulderHost := s.composeProject.Container(c, "boulder").NetworkSettings.IPAddress
 
 	// wait for boulder
-	err := utils.Try(120*time.Second, func() error {
-		resp, err := http.Get("http://" + boulderHost + ":4000/directory")
-		if err != nil {
-			return err
-		}
-		if resp.StatusCode != 200 {
-			return errors.New("Expected http 200 from boulder")
-		}
-		return nil
-	})
-
+	err := utils.TryRequest("http://"+boulderHost+":4000/directory", 120*time.Second, utils.StatusCodeIs(200))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -65,13 +54,7 @@ func (s *AcmeSuite) TestRetrieveAcmeCertificate(c *check.C) {
 	client := &http.Client{Transport: tr}
 
 	// wait for traefik (generating acme account take some seconds)
-	err = utils.Try(30*time.Second, func() error {
-		_, err := client.Get("https://127.0.0.1:5001")
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = utils.TryRequest("https://127.0.0.1:5001", 60*time.Second, nil)
 	c.Assert(err, checker.IsNil)
 
 	tr = &http.Transport{

@@ -6,21 +6,22 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/containous/staert"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/consul"
 	"github.com/go-check/check"
 
-	"errors"
-	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/integration/utils"
-	"github.com/containous/traefik/provider"
-	checker "github.com/vdemeester/shakers"
 	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/integration/utils"
+	"github.com/containous/traefik/provider"
+	checker "github.com/vdemeester/shakers"
 )
 
 // Consul test suites (using libcompose)
@@ -49,10 +50,7 @@ func (s *ConsulSuite) setupConsul(c *check.C) {
 	// wait for consul
 	err = utils.Try(60*time.Second, func() error {
 		_, err := kv.Exists("test")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 }
@@ -88,10 +86,7 @@ func (s *ConsulSuite) setupConsulTLS(c *check.C) {
 	// wait for consul
 	err = utils.Try(60*time.Second, func() error {
 		_, err := kv.Exists("test")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 }
@@ -115,11 +110,11 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	time.Sleep(500 * time.Millisecond)
-	resp, err := http.Get("http://127.0.0.1:8000/")
+	resp, err := utils.TryGetResponse("http://127.0.0.1:8000/", 1*time.Second)
+	c.Assert(err, checker.IsNil)
+	defer resp.Body.Close()
 
 	// Expected a 404 as we did not configure anything
-	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, 404)
 }
 
@@ -192,16 +187,7 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Path:/test") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, utils.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{}
@@ -255,10 +241,7 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	// wait for consul
 	err = utils.Try(60*time.Second, func() error {
 		_, err := s.kv.Exists("traefik/entrypoints/http/address")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 
@@ -322,24 +305,12 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	// wait for consul
 	err = utils.Try(60*time.Second, func() error {
 		_, err := s.kv.Exists("traefik/frontends/frontend2/routes/test_2/rule")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Path:/test") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, utils.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
 	//check
@@ -364,10 +335,7 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 	// wait for consul
 	err = utils.Try(60*time.Second, func() error {
 		_, err := s.kv.Exists("traefik/web/address")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
 	c.Assert(err, checker.IsNil)
 
@@ -386,13 +354,7 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, func(res *http.Response) error {
-		_, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, nil)
 	c.Assert(err, checker.IsNil)
 
 }
@@ -420,10 +382,7 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 		var p *store.KVPair
 		err = utils.Try(60*time.Second, func() error {
 			p, err = s.kv.Get(key)
-			if err != nil {
-				return err
-			}
-			return nil
+			return err
 		})
 		c.Assert(err, checker.IsNil)
 
