@@ -35,6 +35,7 @@ type Rancher struct {
 	SecretKey        string `description:"Rancher server Secret Key."`
 	ExposedByDefault bool   `description:"Expose Services by default"`
 	Domain           string `description:"Default domain used"`
+	UseHostIPs       bool   `description:"Use Rancher host IP addresses instead of containers"`
 }
 
 type rancherData struct {
@@ -231,9 +232,10 @@ func (provider *Rancher) Provide(configurationChan chan<- types.ConfigMessage, p
 			ctx := context.Background()
 			var environments = listRancherEnvironments(rancherClient)
 			var services = listRancherServices(rancherClient)
+			var endpoints = listRancherPublicEndponts(rancherClient)
 			var container = listRancherContainer(rancherClient)
 
-			var rancherData = parseRancherData(environments, services, container)
+			var rancherData = provider.parseRancherData(environments, services, endpoints, container)
 
 			configuration := provider.loadRancherConfig(rancherData)
 			configurationChan <- types.ConfigMessage{
@@ -252,9 +254,10 @@ func (provider *Rancher) Provide(configurationChan chan<- types.ConfigMessage, p
 							log.Debugf("Refreshing new Data from Rancher API")
 							var environments = listRancherEnvironments(rancherClient)
 							var services = listRancherServices(rancherClient)
+							var endpoints = listRancherPublicEndponts(rancherClient)
 							var container = listRancherContainer(rancherClient)
 
-							rancherData := parseRancherData(environments, services, container)
+							rancherData := provider.parseRancherData(environments, services, endpoints, container)
 
 							configuration := provider.loadRancherConfig(rancherData)
 							if configuration != nil {
@@ -320,6 +323,29 @@ func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
 	return servicesList
 }
 
+func listRancherPublicEndponts(client *rancher.RancherClient) map[string]string {
+
+	publicEndpointMap := map[string]string{}
+
+	hosts, err := client.Host.List(nil)
+
+	if err != nil {
+		log.Errorf("cannot get Rancher Endpoints %+v", err)
+	}
+
+	for k := range hosts.Data {
+		for e := range hosts.Data[k].PublicEndpoints {
+			endpointData := hosts.Data[k].PublicEndpoints[e]
+			endpoint, ok := endpointData.(map[string]interface{})
+			if ok {
+				publicEndpointMap[endpoint["instanceId"].(string)] = endpoint["ipAddress"].(string)
+			}
+		}
+	}
+
+	return publicEndpointMap
+}
+
 func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
 
 	containerList := []*rancher.Container{}
@@ -353,7 +379,7 @@ func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
 	return containerList
 }
 
-func parseRancherData(environments []*rancher.Environment, services []*rancher.Service, containers []*rancher.Container) []rancherData {
+func (provider *Rancher) parseRancherData(environments []*rancher.Environment, services []*rancher.Service, endpoints map[string]string, containers []*rancher.Container) []rancherData {
 	var rancherDataList []rancherData
 
 	for _, environment := range environments {
@@ -375,10 +401,17 @@ func parseRancherData(environments []*rancher.Environment, services []*rancher.S
 			}
 
 			for _, container := range containers {
-				for key, value := range container.Labels {
+				if container.State != "running" || container.HealthState != "healthy" {
+					continue
+				}
 
+				for key, value := range container.Labels {
 					if key == "io.rancher.stack_service.name" && value == rancherData.Name {
-						rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
+						if provider.UseHostIPs {
+							rancherData.Containers = append(rancherData.Containers, endpoints[container.Id])
+						} else {
+							rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
+						}
 					}
 				}
 			}
