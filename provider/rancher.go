@@ -286,11 +286,14 @@ func (provider *Rancher) Provide(configurationChan chan<- types.ConfigMessage, p
 	return nil
 }
 
-func listRancherEnvironments(client *rancher.RancherClient) []*rancher.Environment {
+func listRancherEnvironments(client *rancher.RancherClient) []*rancher.Project {
 
-	var environmentList = []*rancher.Environment{}
+	// Rancher Environment in frontend UI is actually project in API
+	// https://forums.rancher.com/t/api-key-for-all-environments/279/9
+	
+	var environmentList = []*rancher.Project{}
 
-	environments, err := client.Environment.List(nil)
+	environments, err := client.Project.List(nil)
 
 	if err != nil {
 		log.Errorf("Cannot get Rancher Environments %+v", err)
@@ -353,7 +356,7 @@ func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
 	return containerList
 }
 
-func parseRancherData(environments []*rancher.Environment, services []*rancher.Service, containers []*rancher.Container) []rancherData {
+func parseRancherData(environments []*rancher.Project, services []*rancher.Service, containers []*rancher.Container) []rancherData {
 	var rancherDataList []rancherData
 
 	for _, environment := range environments {
