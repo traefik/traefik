@@ -36,8 +36,8 @@ Træfɪk can listen to your service registry/orchestrator API, and knows each ti
 Routes to your services will be created instantly.
 
 Run it and forget it!
-  
-  
+
+
 
 
 ## Features
@@ -71,14 +71,14 @@ You will learn fundamental Træfɪk features and see some demos with Kubernetes.
 
 [![Traefik ContainerCamp UK](http://img.youtube.com/vi/aFtpIShV60I/0.jpg)](https://www.youtube.com/watch?v=aFtpIShV60I)
 
-Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
-You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Let's Encrypt. 
+Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference.
+You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Let's Encrypt.
 
 [![Traefik Devoxx France](http://img.youtube.com/vi/QvAz9mVx5TI/0.jpg)](http://www.youtube.com/watch?v=QvAz9mVx5TI)
 
 ## Web UI
 
-You can access to a simple HTML frontend of Træfik.
+You can access the simple HTML frontend of Træfik.
 
 ![Web UI Providers](docs/img/web.frontend.png)
 ![Web UI Health](docs/img/traefik-health.png)
