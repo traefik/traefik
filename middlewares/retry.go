@@ -11,21 +11,24 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
+// Compile time validation responseRecorder implements http interfaces correctly.
 var (
-	_ Stateful = &ResponseRecorder{}
+	_ Stateful = &retryResponseRecorder{}
 )
 
 // Retry is a middleware that retries requests
 type Retry struct {
 	attempts int
 	next     http.Handler
+	listener RetryListener
 }
 
 // NewRetry returns a new Retry instance
-func NewRetry(attempts int, next http.Handler) *Retry {
+func NewRetry(attempts int, next http.Handler, listener RetryListener) *Retry {
 	return &Retry{
 		attempts: attempts,
 		next:     next,
+		listener: listener,
 	}
 }
 
@@ -39,7 +42,7 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	attempts := 1
 	for {
-		recorder := NewRecorder()
+		recorder := newRetryResponseRecorder()
 		recorder.responseWriter = rw
 		retry.next.ServeHTTP(recorder, r)
 		if !isNetworkError(recorder.Code) || attempts >= retry.attempts {
@@ -50,6 +53,7 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		attempts++
 		log.Debugf("New attempt %d for request: %v", attempts, r.URL)
+		retry.listener.Retried(attempts)
 	}
 }
 
@@ -57,9 +61,16 @@ func isNetworkError(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusGatewayTimeout
 }
 
-// ResponseRecorder is an implementation of http.ResponseWriter that
-// records its mutations for later inspection in tests.
-type ResponseRecorder struct {
+// RetryListener is used to inform about retry attempts.
+type RetryListener interface {
+	// Retried will be called when a retry happens, with the request attempt passed to it.
+	// For the first retry this will be attempt 2.
+	Retried(attempt int)
+}
+
+// retryResponseRecorder is an implementation of http.ResponseWriter that
+// records its mutations for later inspection.
+type retryResponseRecorder struct {
 	Code      int           // the HTTP response code from WriteHeader
 	HeaderMap http.Header   // the HTTP response headers
 	Body      *bytes.Buffer // if non-nil, the bytes.Buffer to append written data to
@@ -68,9 +79,9 @@ type ResponseRecorder struct {
 	err            error
 }
 
-// NewRecorder returns an initialized ResponseRecorder.
-func NewRecorder() *ResponseRecorder {
-	return &ResponseRecorder{
+// newRetryResponseRecorder returns an initialized retryResponseRecorder.
+func newRetryResponseRecorder() *retryResponseRecorder {
+	return &retryResponseRecorder{
 		HeaderMap: make(http.Header),
 		Body:      new(bytes.Buffer),
 		Code:      200,
@@ -78,7 +89,7 @@ func NewRecorder() *ResponseRecorder {
 }
 
 // Header returns the response headers.
-func (rw *ResponseRecorder) Header() http.Header {
+func (rw *retryResponseRecorder) Header() http.Header {
 	m := rw.HeaderMap
 	if m == nil {
 		m = make(http.Header)
@@ -88,7 +99,7 @@ func (rw *ResponseRecorder) Header() http.Header {
 }
 
 // Write always succeeds and writes to rw.Body, if not nil.
-func (rw *ResponseRecorder) Write(buf []byte) (int, error) {
+func (rw *retryResponseRecorder) Write(buf []byte) (int, error) {
 	if rw.err != nil {
 		return 0, rw.err
 	}
@@ -96,27 +107,27 @@ func (rw *ResponseRecorder) Write(buf []byte) (int, error) {
 }
 
 // WriteHeader sets rw.Code.
-func (rw *ResponseRecorder) WriteHeader(code int) {
+func (rw *retryResponseRecorder) WriteHeader(code int) {
 	rw.Code = code
 }
 
 // Hijack hijacks the connection
-func (rw *ResponseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+func (rw *retryResponseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return rw.responseWriter.(http.Hijacker).Hijack()
 }
 
 // CloseNotify returns a channel that receives at most a
 // single value (true) when the client connection has gone
 // away.
-func (rw *ResponseRecorder) CloseNotify() <-chan bool {
+func (rw *retryResponseRecorder) CloseNotify() <-chan bool {
 	return rw.responseWriter.(http.CloseNotifier).CloseNotify()
 }
 
 // Flush sends any buffered data to the client.
-func (rw *ResponseRecorder) Flush() {
+func (rw *retryResponseRecorder) Flush() {
 	_, err := rw.responseWriter.Write(rw.Body.Bytes())
 	if err != nil {
-		log.Errorf("Error writing response in ResponseRecorder: %s", err)
+		log.Errorf("Error writing response in retryResponseRecorder: %s", err)
 		rw.err = err
 	}
 	rw.Body.Reset()
