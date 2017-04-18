@@ -192,11 +192,9 @@ func (server *Server) startHTTPServers() {
 		if server.accessLoggerMiddleware != nil {
 			serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 		}
-		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
-			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
-				serverMiddlewares = append(serverMiddlewares, metricsMiddleware)
-			}
+		metrics := newMetrics(server.globalConfiguration, newServerEntryPointName)
+		if metrics != nil {
+			serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(metrics))
 		}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
 			statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
@@ -726,21 +724,15 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							continue frontend
 						}
 					}
-					// retry ?
-					if globalConfiguration.Retry != nil {
-						retries := len(configuration.Backends[frontend.Backend].Servers)
-						if globalConfiguration.Retry.Attempts > 0 {
-							retries = globalConfiguration.Retry.Attempts
-						}
-						lb = middlewares.NewRetry(retries, lb)
-						log.Debugf("Creating retries max attempts %d", retries)
-					}
 
-					if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
-						if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-							metricsMiddlewareBackend := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
-							negroni.Use(metricsMiddlewareBackend)
-						}
+					metrics := newMetrics(server.globalConfiguration, frontend.Backend)
+
+					if globalConfiguration.Retry != nil {
+						retryListener := middlewares.NewMetricsRetryListener(metrics)
+						lb = registerRetryMiddleware(lb, globalConfiguration, configuration, frontend.Backend, retryListener)
+					}
+					if metrics != nil {
+						negroni.Use(middlewares.NewMetricsWrapper(metrics))
 					}
 
 					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
@@ -960,4 +952,38 @@ func (*Server) configureBackends(backends map[string]*types.Backend) {
 			}
 		}
 	}
+}
+
+// newMetrics instantiates the proper Metrics implementation, depending on the global configuration.
+// Note that given there is no metrics instrumentation configured, it will return nil.
+func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metrics {
+	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
+	if metricsEnabled && globalConfig.Web.Metrics.Prometheus != nil {
+		metrics, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
+		if err != nil {
+			log.Errorf("Error creating Prometheus Metrics implementation: %s", err)
+			return nil
+		}
+		return metrics
+	}
+
+	return nil
+}
+
+func registerRetryMiddleware(
+	httpHandler http.Handler,
+	globalConfig GlobalConfiguration,
+	config *types.Configuration,
+	backend string,
+	listener middlewares.RetryListener,
+) http.Handler {
+	retries := len(config.Backends[backend].Servers)
+	if globalConfig.Retry.Attempts > 0 {
+		retries = globalConfig.Retry.Attempts
+	}
+
+	httpHandler = middlewares.NewRetry(retries, httpHandler, listener)
+	log.Debugf("Creating retries max attempts %d", retries)
+
+	return httpHandler
 }
