@@ -641,6 +641,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					Backend:        "backend-test",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
+					BasicAuth:      []string{},
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test-docker-localhost": {
 							Rule: "Host:test.docker.localhost",
@@ -674,6 +675,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 						"traefik.port":                 "80",
 						"traefik.backend":              "foobar",
 						"traefik.frontend.entryPoints": "http,https",
+						"traefik.frontend.auth.basic":  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -693,6 +695,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					Backend:        "backend-foobar",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
+					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test1-docker-localhost": {
 							Rule: "Host:test1.docker.localhost",
@@ -703,6 +706,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					Backend:        "backend-foobar",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
+					BasicAuth:      []string{},
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test2-docker-localhost": {
 							Rule: "Host:test2.docker.localhost",

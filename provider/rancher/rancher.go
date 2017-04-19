@@ -88,6 +88,13 @@ func (p *Provider) getFrontendRule(service rancherData) string {
 	return "Host:" + strings.ToLower(strings.Replace(service.Name, "/", ".", -1)) + "." + p.Domain
 }
 
+func (p *Provider) getBasicAuth(service rancherData) []string {
+	if basicAuth, err := getServiceLabel(service, "traefik.frontend.auth.basic"); err == nil {
+		return strings.Split(basicAuth, ",")
+	}
+	return []string{}
+}
+
 func (p *Provider) getFrontendName(service rancherData) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 	return provider.Normalize(p.getFrontendRule(service))
@@ -411,6 +418,7 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 		"getPassHostHeader":           p.getPassHostHeader,
 		"getPriority":                 p.getPriority,
 		"getEntryPoints":              p.getEntryPoints,
+		"getBasicAuth":                p.getBasicAuth,
 		"getFrontendRule":             p.getFrontendRule,
 		"hasCircuitBreakerLabel":      p.hasCircuitBreakerLabel,
 		"getCircuitBreakerExpression": p.getCircuitBreakerExpression,

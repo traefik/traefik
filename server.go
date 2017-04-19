@@ -580,6 +580,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				log.Errorf("Skipping frontend %s...", frontendName)
 				continue frontend
 			}
+
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
 				if _, ok := serverEntryPoints[entryPointName]; !ok {
@@ -587,6 +588,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					log.Errorf("Skipping frontend %s...", frontendName)
 					continue frontend
 				}
+
 				newServerRoute := &serverRoute{route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
 				for routeName, route := range frontend.Routes {
 					err := getRoute(newServerRoute, &route)
@@ -597,6 +599,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					}
 					log.Debugf("Creating route %s %s", routeName, route.Rule)
 				}
+
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
 				if entryPoint.Redirect != nil {
 					if redirectHandlers[entryPointName] != nil {
@@ -737,6 +740,24 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								negroni.Use(metricsMiddlewareBackend)
 							}
 						}
+
+						if len(frontend.BasicAuth) > 0 {
+							users := types.Users{}
+							for _, user := range frontend.BasicAuth {
+								users = append(users, user)
+							}
+
+							auth := &types.Auth{}
+							auth.Basic = &types.Basic{
+								Users: users,
+							}
+							authMiddleware, err := middlewares.NewAuthenticator(auth)
+							if err != nil {
+								log.Fatal("Error creating Auth: ", err)
+							}
+							negroni.Use(authMiddleware)
+						}
+
 						if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
 							log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
 							cbreaker, err := middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
