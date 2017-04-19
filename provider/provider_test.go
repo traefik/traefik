@@ -169,7 +169,7 @@ func TestReplace(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual := replace("foo", "bar", c.str)
+		actual := Replace("foo", "bar", c.str)
 		if actual != c.expected {
 			t.Fatalf("expected %q, got %q, for %q", c.expected, actual, c.str)
 		}

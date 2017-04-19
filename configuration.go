@@ -11,8 +11,19 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
-	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/boltdb"
+	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
+	"github.com/containous/traefik/provider/dynamodb"
+	"github.com/containous/traefik/provider/ecs"
+	"github.com/containous/traefik/provider/etcd"
+	"github.com/containous/traefik/provider/eureka"
+	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/provider/kubernetes"
+	"github.com/containous/traefik/provider/marathon"
+	"github.com/containous/traefik/provider/mesos"
+	"github.com/containous/traefik/provider/rancher"
+	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
 )
 
@@ -42,20 +53,20 @@ type GlobalConfiguration struct {
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	Docker                    *docker.Provider        `description:"Enable Docker backend"`
-	File                      *provider.File          `description:"Enable File backend"`
+	File                      *file.Provider          `description:"Enable File backend"`
 	Web                       *WebProvider            `description:"Enable Web backend"`
-	Marathon                  *provider.Marathon      `description:"Enable Marathon backend"`
-	Consul                    *provider.Consul        `description:"Enable Consul backend"`
-	ConsulCatalog             *provider.ConsulCatalog `description:"Enable Consul catalog backend"`
-	Etcd                      *provider.Etcd          `description:"Enable Etcd backend"`
-	Zookeeper                 *provider.Zookepper     `description:"Enable Zookeeper backend"`
-	Boltdb                    *provider.BoltDb        `description:"Enable Boltdb backend"`
-	Kubernetes                *provider.Kubernetes    `description:"Enable Kubernetes backend"`
-	Mesos                     *provider.Mesos         `description:"Enable Mesos backend"`
-	Eureka                    *provider.Eureka        `description:"Enable Eureka backend"`
-	ECS                       *provider.ECS           `description:"Enable ECS backend"`
-	Rancher                   *provider.Rancher       `description:"Enable Rancher backend"`
-	DynamoDB                  *provider.DynamoDB      `description:"Enable DynamoDB backend"`
+	Marathon                  *marathon.Provider      `description:"Enable Marathon backend"`
+	Consul                    *consul.Provider        `description:"Enable Consul backend"`
+	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend"`
+	Etcd                      *etcd.Provider          `description:"Enable Etcd backend"`
+	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend"`
+	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend"`
+	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend"`
+	Mesos                     *mesos.Provider         `description:"Enable Mesos backend"`
+	Eureka                    *eureka.Provider        `description:"Enable Eureka backend"`
+	ECS                       *ecs.Provider           `description:"Enable ECS backend"`
+	Rancher                   *rancher.Provider       `description:"Enable Rancher backend"`
+	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -336,7 +347,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDocker.SwarmMode = false
 
 	// default File
-	var defaultFile provider.File
+	var defaultFile file.Provider
 	defaultFile.Watch = true
 	defaultFile.Filename = "" //needs equivalent to  viper.ConfigFileUsed()
 
@@ -355,7 +366,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	}
 
 	// default Marathon
-	var defaultMarathon provider.Marathon
+	var defaultMarathon marathon.Provider
 	defaultMarathon.Watch = true
 	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
 	defaultMarathon.ExposedByDefault = true
@@ -364,47 +375,47 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMarathon.KeepAlive = 10
 
 	// default Consul
-	var defaultConsul provider.Consul
+	var defaultConsul consul.Provider
 	defaultConsul.Watch = true
 	defaultConsul.Endpoint = "127.0.0.1:8500"
 	defaultConsul.Prefix = "traefik"
 	defaultConsul.Constraints = types.Constraints{}
 
-	// default ConsulCatalog
-	var defaultConsulCatalog provider.ConsulCatalog
+	// default CatalogProvider
+	var defaultConsulCatalog consul.CatalogProvider
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
 	defaultConsulCatalog.Constraints = types.Constraints{}
 
 	// default Etcd
-	var defaultEtcd provider.Etcd
+	var defaultEtcd etcd.Provider
 	defaultEtcd.Watch = true
 	defaultEtcd.Endpoint = "127.0.0.1:2379"
 	defaultEtcd.Prefix = "/traefik"
 	defaultEtcd.Constraints = types.Constraints{}
 
 	//default Zookeeper
-	var defaultZookeeper provider.Zookepper
+	var defaultZookeeper zk.Provider
 	defaultZookeeper.Watch = true
 	defaultZookeeper.Endpoint = "127.0.0.1:2181"
 	defaultZookeeper.Prefix = "/traefik"
 	defaultZookeeper.Constraints = types.Constraints{}
 
 	//default Boltdb
-	var defaultBoltDb provider.BoltDb
+	var defaultBoltDb boltdb.Provider
 	defaultBoltDb.Watch = true
 	defaultBoltDb.Endpoint = "127.0.0.1:4001"
 	defaultBoltDb.Prefix = "/traefik"
 	defaultBoltDb.Constraints = types.Constraints{}
 
-	//default Kubernetes
-	var defaultKubernetes provider.Kubernetes
+	//default Provider
+	var defaultKubernetes kubernetes.Provider
 	defaultKubernetes.Watch = true
 	defaultKubernetes.Endpoint = ""
 	defaultKubernetes.LabelSelector = ""
 	defaultKubernetes.Constraints = types.Constraints{}
 
 	// default Mesos
-	var defaultMesos provider.Mesos
+	var defaultMesos mesos.Provider
 	defaultMesos.Watch = true
 	defaultMesos.Endpoint = "http://127.0.0.1:5050"
 	defaultMesos.ExposedByDefault = true
@@ -414,7 +425,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultMesos.StateTimeoutSecond = 30
 
 	//default ECS
-	var defaultECS provider.ECS
+	var defaultECS ecs.Provider
 	defaultECS.Watch = true
 	defaultECS.ExposedByDefault = true
 	defaultECS.RefreshSeconds = 15
@@ -422,12 +433,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultECS.Constraints = types.Constraints{}
 
 	//default Rancher
-	var defaultRancher provider.Rancher
+	var defaultRancher rancher.Provider
 	defaultRancher.Watch = true
 	defaultRancher.ExposedByDefault = true
 
 	// default DynamoDB
-	var defaultDynamoDB provider.DynamoDB
+	var defaultDynamoDB dynamodb.Provider
 	defaultDynamoDB.Constraints = types.Constraints{}
 	defaultDynamoDB.RefreshSeconds = 15
 	defaultDynamoDB.TableName = "traefik"

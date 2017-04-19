@@ -41,15 +41,15 @@ const (
 
 var _ provider.Provider = (*Provider)(nil)
 
-// Provider holds configurations of the Provider.
+// Provider holds configurations of the provider.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
-	Endpoint              string              `description:"Provider server endpoint. Can be a tcp or a unix socket endpoint"`
+	Endpoint              string              `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
 	Domain                string              `description:"Default domain used"`
-	TLS                   *provider.ClientTLS `description:"Enable Provider TLS support"`
+	TLS                   *provider.ClientTLS `description:"Enable Docker TLS support"`
 	ExposedByDefault      bool                `description:"Expose containers by default"`
 	UseBindPortIP         bool                `description:"Use the ip address from the bound port, rather than from the inner network"`
-	SwarmMode             bool                `description:"Use Provider on Swarm Mode"`
+	SwarmMode             bool                `description:"Use Docker on Swarm Mode"`
 }
 
 // dockerData holds the need data to the Provider p
@@ -112,7 +112,7 @@ func (p *Provider) createClient() (client.APIClient, error) {
 
 }
 
-// Provide allows the p to provide configurations to traefik
+// Provide allows the docker provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	p.Constraints = append(p.Constraints, constraints...)
