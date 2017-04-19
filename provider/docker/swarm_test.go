@@ -12,6 +12,7 @@ import (
 	docker "github.com/docker/engine-api/types"
 	dockertypes "github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/swarm"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 )
 
@@ -70,9 +71,7 @@ func TestSwarmGetFrontendName(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			actual := provider.getFrontendName(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -120,9 +119,7 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			actual := provider.getFrontendRule(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -162,9 +159,7 @@ func TestSwarmGetBackend(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			actual := provider.getBackend(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -225,9 +220,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			actual := provider.getIPAddress(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -260,9 +253,7 @@ func TestSwarmGetPort(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			actual := provider.getPort(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -297,9 +288,7 @@ func TestSwarmGetWeight(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			actual := provider.getWeight(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -335,9 +324,7 @@ func TestSwarmGetDomain(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			actual := provider.getDomain(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -372,9 +359,7 @@ func TestSwarmGetProtocol(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			actual := provider.getProtocol(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -409,9 +394,7 @@ func TestSwarmGetPassHostHeader(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			actual := provider.getPassHostHeader(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -498,14 +481,12 @@ func TestSwarmGetLabels(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
 			labels, err := getLabels(dockerData, []string{"foo", "bar"})
-			if !reflect.DeepEqual(labels, e.expectedLabels) {
-				t.Errorf("expect %v, got %v", e.expectedLabels, labels)
-			}
 			if e.expectedError != "" {
 				if err == nil || !strings.Contains(err.Error(), e.expectedError) {
 					t.Errorf("expected an error with %q, got %v", e.expectedError, err)
 				}
 			}
+			assert.Equal(t, e.expectedLabels, labels)
 		})
 	}
 }
@@ -605,9 +586,7 @@ func TestSwarmTraefikFilter(t *testing.T) {
 			dockerData := parseService(e.service, e.networks)
 			provider.ExposedByDefault = e.exposedByDefault
 			actual := provider.containerFilter(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %v for %+v, got %+v", e.expected, e, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -751,13 +730,8 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 			}
 
 			actualConfig := provider.loadDockerConfig(dockerDataList)
-			// Compare backends
-			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-				t.Errorf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
-			}
-			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-				t.Errorf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
-			}
+			assert.Equal(t, c.expectedBackends, actualConfig.Backends)
+			assert.Equal(t, c.expectedFrontends, actualConfig.Frontends)
 		})
 	}
 }
