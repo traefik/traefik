@@ -844,6 +844,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
+- `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets a Basic Auth for that frontend with the users test:test and test2:test2
 - `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 
 If several ports need to be exposed from a container, the services labels can be used
@@ -852,10 +853,10 @@ If several ports need to be exposed from a container, the services labels can be
 - `traefik.<service-name>.weight=10`: assign this service weight. Overrides `traefik.weight`.
 - `traefik.<service-name>.frontend.backend=fooBackend`: assign this service frontend to `foobackend`. Default is to assign to the service backend.
 - `traefik.<service-name>.frontend.entryPoints=http`: assign this service entrypoints. Overrides `traefik.frontend.entrypoints`.
+- `traefik.<service-name>.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` Sets a Basic Auth for that frontend with the users test:test and test2:test2.
 - `traefik.<service-name>.frontend.passHostHeader=true`: Forward client `Host` header to the backend. Overrides `traefik.frontend.passHostHeader`.
 - `traefik.<service-name>.frontend.priority=10`: assign the service frontend priority. Overrides `traefik.frontend.priority`.
 - `traefik.<service-name>.frontend.rule=Path:/foo`: assign the service frontend rule. Overrides `traefik.frontend.rule`.
-
 
 NB: when running inside a container, Træfɪk will need network access through `docker network connect <network> <traefik-container>`
 
@@ -1601,6 +1602,7 @@ Labels can be used on task containers to override default behaviour:
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
+- `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets a Basic Auth for that frontend with the users test:test and test2:test2
 
 
 ## DynamoDB backend

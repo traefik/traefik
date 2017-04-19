@@ -396,7 +396,8 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 				{
 					Name: "test/service",
 					Labels: map[string]string{
-						"traefik.port": "80",
+						"traefik.port":                "80",
+						"traefik.frontend.auth.basic": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					},
 					Health:     "healthy",
 					Containers: []string{"127.0.0.1"},
@@ -407,6 +408,7 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 					Backend:        "backend-test-service",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
+					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 					Priority:       0,
 
 					Routes: map[string]types.Route{

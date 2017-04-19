@@ -250,6 +250,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getPassHostHeader":           p.getPassHostHeader,
 		"getPriority":                 p.getPriority,
 		"getEntryPoints":              p.getEntryPoints,
+		"getBasicAuth":                p.getBasicAuth,
 		"getFrontendRule":             p.getFrontendRule,
 		"hasCircuitBreakerLabel":      p.hasCircuitBreakerLabel,
 		"getCircuitBreakerExpression": p.getCircuitBreakerExpression,
@@ -266,6 +267,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServiceWeight":            p.getServiceWeight,
 		"getServiceProtocol":          p.getServiceProtocol,
 		"getServiceEntryPoints":       p.getServiceEntryPoints,
+		"getServiceBasicAuth":         p.getServiceBasicAuth,
 		"getServiceFrontendRule":      p.getServiceFrontendRule,
 		"getServicePassHostHeader":    p.getServicePassHostHeader,
 		"getServicePriority":          p.getServicePriority,
@@ -374,6 +376,15 @@ func (p *Provider) getServiceEntryPoints(container dockerData, serviceName strin
 		return strings.Split(entryPoints, ",")
 	}
 	return p.getEntryPoints(container)
+
+}
+
+// Extract basic auth from labels for a given service and a given docker container
+func (p *Provider) getServiceBasicAuth(container dockerData, serviceName string) []string {
+	if basicAuth, ok := getContainerServiceLabel(container, serviceName, "frontend.auth.basic"); ok {
+		return strings.Split(basicAuth, ",")
+	}
+	return p.getBasicAuth(container)
 
 }
 
@@ -642,6 +653,14 @@ func (p *Provider) getEntryPoints(container dockerData) []string {
 	if entryPoints, err := getLabel(container, "traefik.frontend.entryPoints"); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
+	return []string{}
+}
+
+func (p *Provider) getBasicAuth(container dockerData) []string {
+	if basicAuth, err := getLabel(container, "traefik.frontend.auth.basic"); err == nil {
+		return strings.Split(basicAuth, ",")
+	}
+
 	return []string{}
 }
 

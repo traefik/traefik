@@ -332,6 +332,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 					labels(map[string]string{
 						"traefik.service.port":                 "2503",
 						"traefik.service.frontend.entryPoints": "http,https",
+						"traefik.service.frontend.auth.basic":  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -344,6 +345,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 					Backend:        "backend-foo-service",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
+					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 					Routes: map[string]types.Route{
 						"service-service": {
 							Rule: "Host:foo.docker.localhost",
@@ -376,6 +378,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 						"traefik.service.frontend.rule":           "Path:/mypath",
 						"traefik.service.frontend.priority":       "5000",
 						"traefik.service.frontend.entryPoints":    "http,https,ws",
+						"traefik.service.frontend.auth.basic":     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -401,6 +404,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 					PassHostHeader: false,
 					Priority:       5000,
 					EntryPoints:    []string{"http", "https", "ws"},
+					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 					Routes: map[string]types.Route{
 						"service-service": {
 							Rule: "Path:/mypath",
@@ -411,6 +415,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 					Backend:        "backend-test2-anotherservice",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
+					BasicAuth:      []string{},
 					Routes: map[string]types.Route{
 						"service-anotherservice": {
 							Rule: "Path:/anotherpath",
