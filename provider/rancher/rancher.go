@@ -26,6 +26,10 @@ const (
 	RancherDefaultWatchTime = 15 * time.Second
 )
 
+var (
+	withoutPagination *rancher.ListOpts
+)
+
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
@@ -43,6 +47,12 @@ type rancherData struct {
 	Labels     map[string]string // List of labels set to container or service
 	Containers []string
 	Health     string
+}
+
+func init() {
+	withoutPagination = &rancher.ListOpts{
+		Filters: map[string]interface{}{"limit": 0},
+	}
 }
 
 func (r rancherData) String() string {
@@ -291,7 +301,7 @@ func listRancherEnvironments(client *rancher.RancherClient) []*rancher.Environme
 
 	var environmentList = []*rancher.Environment{}
 
-	environments, err := client.Environment.List(nil)
+	environments, err := client.Environment.List(withoutPagination)
 
 	if err != nil {
 		log.Errorf("Cannot get Provider Environments %+v", err)
@@ -308,7 +318,7 @@ func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
 
 	var servicesList = []*rancher.Service{}
 
-	services, err := client.Service.List(nil)
+	services, err := client.Service.List(withoutPagination)
 
 	if err != nil {
 		log.Errorf("Cannot get Provider Services %+v", err)
@@ -325,7 +335,7 @@ func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
 
 	containerList := []*rancher.Container{}
 
-	container, err := client.Container.List(nil)
+	container, err := client.Container.List(withoutPagination)
 
 	log.Debugf("first container len: %i", len(container.Data))
 
