@@ -1,11 +1,12 @@
-package main
+package server
 
 import (
-	"github.com/containous/mux"
 	"net/http"
 	"net/url"
 	"reflect"
 	"testing"
+
+	"github.com/containous/mux"
 )
 
 func TestParseOneRule(t *testing.T) {
