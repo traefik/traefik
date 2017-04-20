@@ -9,7 +9,10 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -175,10 +178,73 @@ func (server *Server) stopLeadership() {
 	}
 }
 
+func (server *Server) forward2(conn net.Conn) {
+//	client, err := net.Dial("tcp", "192.168.10.50:80")
+//	if err != nil {
+//		log.Fatalf("Dial failed: %v", err)
+//	}
+	log.Printf("Connected to something %v\n", conn)
+	currentConfigurations := server.currentConfigurations.Get().(configs)
+	for _, configuration := range currentConfigurations {
+//		fmt.Println(configuration)
+		for _, frontend := range configuration.Frontends {
+			for _, entrypoint := range frontend.EntryPoints {
+				if server.globalConfiguration.EntryPoints[entrypoint].Mode == "tcp" {
+					fmt.Println("We found a entrypoint, yeh..", )
+					if backend := configuration.Backends[frontend.Backend]; backend != nil {
+						if len(backend.Servers) != 0 {
+							fmt.Println("Servers, yeh..")
+							for _, server := range backend.Servers {
+								client, err := net.Dial("tcp", server.URL)
+								if err != nil {
+									log.Fatalf("Dial failed: %v", err)
+								}
+								cp := func(dst io.Writer, src io.Reader) {
+									defer client.Close()
+									defer conn.Close()
+									defer fmt.Println("Goodbye :(")
+									io.Copy(dst, src)
+								}
+								go cp(client, conn)
+								go cp(conn, client)
+								fmt.Println(server.URL)
+								break
+							}
+						}
+						fmt.Println(configuration.Backends[frontend.Backend])
+					}
+					break
+				}
+			}
+			fmt.Println(frontend)
+		}
+	}
+}
+
 func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
 
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
+		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Mode == "tcp" {
+			fmt.Println("everyone loves tcp (for now)")
+			// http://blog.evilissimo.net/simple-port-fowarder-in-golang
+			// https://github.com/yhat/wsutil/blob/master/wsutil.go
+			listener, err := net.Listen("tcp", server.globalConfiguration.EntryPoints[newServerEntryPointName].Address)
+			if err != nil {
+				log.Fatalf("Failed to setup listener: %v", err)
+			}
+			go func() {
+				for {
+					conn, err := listener.Accept()
+					if err != nil {
+						log.Fatalf("ERROR: failed to accept listener: %v", err)
+					}
+					log.Printf("Accepted connection %v\n", conn)
+					go server.forward2(conn)
+				}
+			}()
+			continue
+		}
 		serverMiddlewares := []negroni.Handler{server.loggerMiddleware, metrics}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
 			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
@@ -296,8 +362,10 @@ func (server *Server) listenConfigurations(stop chan bool) {
 			newServerEntryPoints, err := server.loadConfig(newConfigurations, server.globalConfiguration)
 			if err == nil {
 				for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
-					server.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
-					log.Infof("Server configuration reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
+					if server.serverEntryPoints[newServerEntryPointName].httpRouter == nil {
+						server.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
+						log.Infof("Server configuration reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
+					}
 				}
 				server.currentConfigurations.Set(newConfigurations)
 				server.postLoadConfig()
@@ -651,8 +719,8 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								url, err := url.Parse(server.URL)
 								if err != nil {
 									log.Errorf("Error parsing server URL %s: %v", server.URL, err)
-									log.Errorf("Skipping frontend %s...", frontendName)
-									continue frontend
+//									log.Errorf("Skipping frontend %s...", frontendName)
+//									continue frontend
 								}
 								backend2FrontendMap[url.String()] = frontendName
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
