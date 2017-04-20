@@ -97,6 +97,38 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, 205)
 }
 
+// TestWithMozillaRecommendedTLSConfig
+// Tests that Mozilla recommended configuration was applied
+// TODO: Add assertions on ciphers / TLS versions
+func (s *HTTPSSuite) TestWithMozillaRecommendedTLSConfig(c *check.C) {
+	cmd := exec.Command(traefikBinary, "--configFile=fixtures/https/https_mozilla_config.toml")
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	backend1 := startTestServer("9010", 200)
+	defer backend1.Close()
+
+	time.Sleep(2000 * time.Millisecond)
+
+	tr1 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         "snitest.com",
+		},
+	}
+
+	client := &http.Client{Transport: tr1}
+	req, _ := http.NewRequest("GET", "https://127.0.0.1:4443/", nil)
+	req.Host = "snitest.com"
+	req.Header.Set("Host", "snitest.com")
+	req.Header.Set("Accept", "*/*")
+	resp, err := client.Do(req)
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, 200)
+
+}
+
 // TestWithClientCertificateAuthentication
 // The client has to send a certificate signed by a CA trusted by the server
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {

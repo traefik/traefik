@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/mozillatlsconfig"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -482,6 +483,17 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 	// BuildNameToCertificate parses the CommonName and SubjectAlternateName fields
 	// in each certificate and populates the config.NameToCertificate map.
 	config.BuildNameToCertificate()
+
+	// Apply Mozilla recommended TLS Configuration if set in the config TOML
+	if len(server.globalConfiguration.EntryPoints[entryPointName].TLS.MozillaRecommendedConfiguration) >0 {
+		configurationName :=server.globalConfiguration.EntryPoints[entryPointName].TLS.MozillaRecommendedConfiguration
+		err := mozillatlsconfig.ApplyMozillaRecommendedTLSConfig(config, configurationName)
+		if (err != nil) {
+			return nil, err
+		}
+	}
+
+
 	//Set the minimum TLS version if set in the config TOML
 	if minConst, exists := minVersion[server.globalConfiguration.EntryPoints[entryPointName].TLS.MinVersion]; exists {
 		config.PreferServerCipherSuites = true

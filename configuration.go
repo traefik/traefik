@@ -212,6 +212,7 @@ type TLS struct {
 	CipherSuites  []string
 	Certificates  Certificates
 	ClientCAFiles []string
+	MozillaRecommendedConfiguration string
 }
 
 // Map of allowed TLS minimum versions
