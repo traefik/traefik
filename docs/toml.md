@@ -46,6 +46,13 @@
 #
 # accessLogsFile = "log/access.log"
 
+# Access logs format
+# Format of access logs. Currently, only "text" and "json" are supported.
+#
+# Optional
+#
+# accessLogsFormat = "text"
+
 # Log level
 #
 # Optional

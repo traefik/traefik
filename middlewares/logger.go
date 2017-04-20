@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -25,13 +27,15 @@ Logger writes each request and its response to the access log.
 It gets some information from the logInfoResponseWriter set up by previous middleware.
 */
 type Logger struct {
-	file *os.File
+	file   *os.File
+	format string
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time
 type frontendBackendLoggingHandler struct {
 	reqid       string
 	writer      io.Writer
+	format      string
 	handlerFunc http.HandlerFunc
 }
 
@@ -51,16 +55,61 @@ type logInfoResponseWriter struct {
 	size     int
 }
 
+// logEntry is a single log entry for use in encoding to json
+type logEntry struct {
+	RemoteAddr    string `json:"remoteAddr"`
+	Username      string `json:"username"`
+	Timestamp     string `json:"timestamp"`
+	Method        string `json:"method"`
+	URI           string `json:"uri"`
+	Protocol      string `json:"protocol"`
+	Status        int    `json:"status"`
+	Size          int    `json:"size"`
+	Referer       string `json:"referer"`
+	UserAgent     string `json:"userAgent"`
+	RequestID     string `json:"requestID"`
+	Frontend      string `json:"frontend"`
+	Backend       string `json:"backend"`
+	ElapsedMillis int64  `json:"elapsedMillis"`
+	Host          string `json:"host"`
+}
+
+// logEntryPool is used as we allocate a new logEntry on every request
+var logEntryPool = sync.Pool{
+	New: func() interface{} {
+		return &logEntry{}
+	},
+}
+
+func (fblh *frontendBackendLoggingHandler) writeJSON(e *logEntry) {
+	data, err := json.Marshal(e)
+	if err != nil {
+		log.Error("unable to marshal json for log entry", err)
+		return
+	}
+	data = append(data, newLineByte)
+	// must do single write, rather than two (data then newline) to avoid interleaving lines
+	fblh.writer.Write(data)
+}
+
+func (fblh *frontendBackendLoggingHandler) writeText(e *logEntry) {
+	fmt.Fprintf(fblh.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %dms%s`,
+		e.Host, e.Username, e.Timestamp, e.Method, e.URI, e.Protocol, e.Status, e.Size, e.Referer, e.UserAgent, e.RequestID, e.Frontend, e.Backend, e.ElapsedMillis, "\n")
+}
+
+// newLineByte is simple "\n" as a byte
+var newLineByte = []byte("\n")[0]
+
 // NewLogger returns a new Logger instance.
-func NewLogger(file string) *Logger {
+func NewLogger(file, format string) *Logger {
 	if len(file) > 0 {
 		fi, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Error("Error opening file", err)
 		}
-		return &Logger{fi}
+		return &Logger{file: fi, format: format}
 	}
-	return &Logger{nil}
+	return &Logger{file: nil, format: format}
 }
 
 // SetBackend2FrontendMap is called by server.go to set up frontend translation
@@ -75,7 +124,8 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 		reqid := strconv.FormatUint(atomic.AddUint64(&reqidCounter, 1), 10)
 		r.Header[loggerReqidHeader] = []string{reqid}
 		defer deleteReqid(r, reqid)
-		frontendBackendLoggingHandler{reqid, l.file, next}.ServeHTTP(rw, r)
+
+		(&frontendBackendLoggingHandler{reqid, l.file, l.format, next}).ServeHTTP(rw, r)
 	}
 }
 
@@ -104,7 +154,7 @@ func (l *Logger) Close() {
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time
-func (fblh frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (fblh *frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	startTime := time.Now()
 	infoRw := &logInfoResponseWriter{rw: rw}
 	infoRwMap.Set(fblh.reqid, infoRw)
@@ -123,26 +173,35 @@ func (fblh frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req 
 		host = req.RemoteAddr
 	}
 
-	ts := startTime.Format("02/Jan/2006:15:04:05 -0700")
-	method := req.Method
 	uri := url.RequestURI()
 	if qmIndex := strings.Index(uri, "?"); qmIndex > 0 {
 		uri = uri[0:qmIndex]
 	}
-	proto := req.Proto
-	referer := req.Referer()
-	agent := req.UserAgent()
 
-	frontend := strings.TrimPrefix(infoRw.GetFrontend(), "frontend-")
-	backend := infoRw.GetBackend()
-	status := infoRw.GetStatus()
-	size := infoRw.GetSize()
+	e := logEntryPool.Get().(*logEntry)
+	defer logEntryPool.Put(e)
 
-	elapsed := time.Now().UTC().Sub(startTime.UTC())
-	elapsedMillis := elapsed.Nanoseconds() / 1000000
-	fmt.Fprintf(fblh.writer, `%s - %s [%s] "%s %s %s" %d %d "%s" "%s" %s "%s" "%s" %dms%s`,
-		host, username, ts, method, uri, proto, status, size, referer, agent, fblh.reqid, frontend, backend, elapsedMillis, "\n")
+	e.RemoteAddr = host
+	e.Username = username
+	e.Timestamp = startTime.Format("02/Jan/2006:15:04:05 -0700")
+	e.Method = req.Method
+	e.URI = uri
+	e.Protocol = req.Proto
+	e.Status = infoRw.GetStatus()
+	e.Size = infoRw.GetSize()
+	e.Referer = req.Referer()
+	e.UserAgent = req.UserAgent()
+	e.RequestID = fblh.reqid
+	e.Frontend = strings.TrimPrefix(infoRw.GetFrontend(), "frontend-")
+	e.Backend = infoRw.GetBackend()
+	e.ElapsedMillis = time.Since(startTime).Nanoseconds() / 1000000
+	e.Host = req.Host
 
+	if fblh.format == "json" {
+		fblh.writeJSON(e)
+	} else {
+		fblh.writeText(e)
+	}
 }
 
 func (lirw *logInfoResponseWriter) Header() http.Header {

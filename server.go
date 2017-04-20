@@ -82,7 +82,7 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	currentConfigurations := make(configs)
 	server.currentConfigurations.Set(currentConfigurations)
 	server.globalConfiguration = globalConfiguration
-	server.loggerMiddleware = middlewares.NewLogger(globalConfiguration.AccessLogsFile)
+	server.loggerMiddleware = middlewares.NewLogger(globalConfiguration.AccessLogsFile, globalConfiguration.AccessLogsFormat)
 	server.routinesPool = safe.NewPool(context.Background())
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
