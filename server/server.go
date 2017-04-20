@@ -598,7 +598,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				}
 
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
-				if entryPoint.Redirect != nil {
+				if entryPoint.Redirect != nil && configuration.Backends[frontend.Backend] == nil {
 					if redirectHandlers[entryPointName] != nil {
 						newServerRoute.route.Handler(redirectHandlers[entryPointName])
 					} else if handler, err := server.loadEntryPointConfig(entryPointName, entryPoint); err != nil {
