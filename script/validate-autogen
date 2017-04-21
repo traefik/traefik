@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -o errexit
 set -o pipefail
 set -o nounset
@@ -6,7 +6,7 @@ set -o nounset
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"; export SCRIPTDIR
 source "${SCRIPTDIR}/.validate"
 
-# Iterate over all directories containing vendor folders.
+# Iterate over all directories containing templates folders.
 IFS=$'\n' files=( $(validate_diff --diff-filter=ACMR --name-only -- templates || true) )
 
 if [[ ${#files[@]} -gt 0 ]]; then
