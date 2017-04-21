@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/containous/traefik/middlewares/common"
 )
 
 // StatsRecorder is an optional middleware that records more details statistics
@@ -11,14 +13,18 @@ import (
 // requests that have caused errors (4xx and 5xx status codes), making it easy
 // to pinpoint problems.
 type StatsRecorder struct {
+	common.BasicMiddleware
 	mutex           sync.RWMutex
 	numRecentErrors int
 	recentErrors    []*statsError
 }
 
+var _ common.Middleware = &StatsRecorder{}
+
 // NewStatsRecorder returns a new StatsRecorder
-func NewStatsRecorder(numRecentErrors int) *StatsRecorder {
+func NewStatsRecorder(numRecentErrors int, next http.Handler) common.Middleware {
 	return &StatsRecorder{
+		BasicMiddleware: common.NewMiddleware(next),
 		numRecentErrors: numRecentErrors,
 	}
 }
@@ -54,9 +60,10 @@ func (r *responseRecorder) WriteHeader(status int) {
 // ServeHTTP silently extracts information from the request and response as it
 // is processed. If the response is 4xx or 5xx, add it to the list of 10 most
 // recent errors.
-func (s *StatsRecorder) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (s *StatsRecorder) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	recorder := &responseRecorder{w, http.StatusOK}
-	next(recorder, r)
+	s.Next().ServeHTTP(recorder, r)
+
 	if recorder.statusCode >= 400 {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()

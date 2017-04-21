@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/containous/traefik/middlewares/common"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,7 +18,7 @@ import (
 type logtestResponseWriter struct{}
 
 var (
-	logger                  *Logger
+	logger                  common.Middleware
 	logfileName             = "traefikTestLogger.log"
 	logfilePath             string
 	helloWorld              = "Hello, World"
@@ -45,7 +46,9 @@ func TestLogger(t *testing.T) {
 		logfilePath = filepath.Join("/tmp", logfileName)
 	}
 
-	logger = NewLogger(logfilePath)
+	fi, _ := os.OpenFile(logfilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	logger = NewLogger(fi, &loghandler{})
 	defer cleanup()
 	SetBackend2FrontendMap(&testBackend2FrontendMap)
 
@@ -64,7 +67,7 @@ func TestLogger(t *testing.T) {
 		},
 	}
 
-	logger.ServeHTTP(&logtestResponseWriter{}, r, LogWriterTestHandlerFunc)
+	logger.ServeHTTP(&logtestResponseWriter{}, r)
 
 	if logdata, err := ioutil.ReadFile(logfilePath); err != nil {
 		fmt.Printf("%s\n%s\n", string(logdata), err.Error())
@@ -99,7 +102,9 @@ func printLogdata(logdata []byte) string {
 		string(logdata))
 }
 
-func LogWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
+type loghandler struct{}
+
+func (lh *loghandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rw.Write([]byte(helloWorld))
 	rw.WriteHeader(testStatus)
 	saveBackendNameForLogger(r, testBackendName)

@@ -20,14 +20,12 @@ func NewHandlerSwitcher(newHandler *mux.Router) (hs *HandlerSwitcher) {
 }
 
 func (hs *HandlerSwitcher) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	handlerBackup := hs.handler.Get().(*mux.Router)
-	handlerBackup.ServeHTTP(rw, r)
+	hs.GetHandler().ServeHTTP(rw, r)
 }
 
 // GetHandler returns the current http.ServeMux
 func (hs *HandlerSwitcher) GetHandler() (newHandler *mux.Router) {
-	handler := hs.handler.Get().(*mux.Router)
-	return handler
+	return hs.handler.Get().(*mux.Router)
 }
 
 // UpdateHandler safely updates the current http.ServeMux with a new one

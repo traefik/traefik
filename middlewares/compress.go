@@ -4,14 +4,21 @@ import (
 	"net/http"
 
 	"github.com/NYTimes/gziphandler"
+	"github.com/containous/traefik/middlewares/common"
 )
 
-// Compress is a middleware that allows redirections
+// Compress is a middleware that gzips content.
 type Compress struct {
+	common.BasicMiddleware
 }
 
-// ServerHTTP is a function used by negroni
-func (c *Compress) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	newGzipHandler := gziphandler.GzipHandler(next)
-	newGzipHandler.ServeHTTP(rw, r)
+var _ common.Middleware = &Compress{}
+
+// NewCompress creates a new middleware that gzips content.
+func NewCompress(next http.Handler) common.Middleware {
+	return &Compress{common.NewMiddleware(gziphandler.GzipHandler(next))}
+}
+
+func (c *Compress) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	c.Next().ServeHTTP(rw, r)
 }

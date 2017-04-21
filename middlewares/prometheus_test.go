@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -24,16 +23,14 @@ func TestPrometheus(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 
-	n := negroni.New()
-	metricsMiddlewareBackend := NewMetricsWrapper(NewPrometheus("test", &types.Prometheus{}))
-	n.Use(metricsMiddlewareBackend)
 	r := http.NewServeMux()
 	r.Handle("/metrics", promhttp.Handler())
 	r.HandleFunc(`/ok`, func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "ok")
 	})
-	n.UseHandler(r)
+
+	metricsMiddlewareBackend := NewMetricsWrapper(NewPrometheus("test", &types.Prometheus{}), r)
 
 	req1, err := http.NewRequest("GET", "http://localhost:3000/ok", nil)
 	if err != nil {
@@ -44,8 +41,8 @@ func TestPrometheus(t *testing.T) {
 		t.Error(err)
 	}
 
-	n.ServeHTTP(recorder, req1)
-	n.ServeHTTP(recorder, req2)
+	metricsMiddlewareBackend.ServeHTTP(recorder, req1)
+	metricsMiddlewareBackend.ServeHTTP(recorder, req2)
 	body := recorder.Body.String()
 	if !strings.Contains(body, reqsName) {
 		t.Errorf("body does not contain request total entry '%s'", reqsName)
@@ -55,12 +52,9 @@ func TestPrometheus(t *testing.T) {
 	}
 
 	// Register the same metrics again
-	metricsMiddlewareBackend = NewMetricsWrapper(NewPrometheus("test", &types.Prometheus{}))
-	n = negroni.New()
-	n.Use(metricsMiddlewareBackend)
-	n.UseHandler(r)
+	metricsMiddlewareBackend = NewMetricsWrapper(NewPrometheus("test", &types.Prometheus{}), r)
 
-	n.ServeHTTP(recorder, req2)
+	metricsMiddlewareBackend.ServeHTTP(recorder, req2)
 
 	metricsFamily, err = prometheus.DefaultGatherer.Gather()
 	if err != nil {

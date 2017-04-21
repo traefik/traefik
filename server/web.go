@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/log"
@@ -135,20 +134,18 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 
 	go func() {
 		var err error
-		var negroni = negroni.New()
+		var handler http.Handler = systemRouter
 		if provider.Auth != nil {
-			authMiddleware, err := middlewares.NewAuthenticator(provider.Auth)
+			handler, err = middlewares.NewAuthenticator(provider.Auth, systemRouter)
 			if err != nil {
 				log.Fatal("Error creating Auth: ", err)
 			}
-			negroni.Use(authMiddleware)
 		}
-		negroni.UseHandler(systemRouter)
 
 		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
-			err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, negroni)
+			err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, handler)
 		} else {
-			err = http.ListenAndServe(provider.Address, negroni)
+			err = http.ListenAndServe(provider.Address, handler)
 		}
 
 		if err != nil {

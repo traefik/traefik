@@ -8,7 +8,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -65,26 +64,25 @@ func TestAuthUsersFromFile(t *testing.T) {
 }
 
 func TestBasicAuthFail(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{
 			Users: []string{"test"},
 		},
-	})
+	}, handler)
 	assert.Contains(t, err.Error(), "Error parsing Authenticator user", "should contains")
 
 	authMiddleware, err = NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{
 			Users: []string{"test:test"},
 		},
-	})
+	}, handler)
 	assert.NoError(t, err, "there should be no error")
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
-	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
+	ts := httptest.NewServer(authMiddleware)
 	defer ts.Close()
 
 	client := &http.Client{}
@@ -96,19 +94,18 @@ func TestBasicAuthFail(t *testing.T) {
 }
 
 func TestBasicAuthSuccess(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{
 			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		},
-	})
+	}, handler)
 	assert.NoError(t, err, "there should be no error")
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
-	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
+	ts := httptest.NewServer(authMiddleware)
 	defer ts.Close()
 
 	client := &http.Client{}
@@ -124,27 +121,26 @@ func TestBasicAuthSuccess(t *testing.T) {
 }
 
 func TestDigestAuthFail(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Digest: &types.Digest{
 			Users: []string{"test"},
 		},
-	})
+	}, handler)
 	assert.Contains(t, err.Error(), "Error parsing Authenticator user", "should contains")
 
 	authMiddleware, err = NewAuthenticator(&types.Auth{
 		Digest: &types.Digest{
 			Users: []string{"test:traefik:test"},
 		},
-	})
+	}, handler)
 	assert.NoError(t, err, "there should be no error")
 	assert.NotNil(t, authMiddleware, "this should not be nil")
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
-	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
+	ts := httptest.NewServer(authMiddleware)
 	defer ts.Close()
 
 	client := &http.Client{}
@@ -156,21 +152,20 @@ func TestDigestAuthFail(t *testing.T) {
 }
 
 func TestBasicAuthUserHeader(t *testing.T) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "test", r.Header["X-WebAuth-User"][0], "auth user should be set")
+		fmt.Fprintln(w, "traefik")
+	})
+
 	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{
 			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		},
 		HeaderField: "X-WebAuth-User",
-	})
+	}, handler)
 	assert.NoError(t, err, "there should be no error")
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "test", r.Header["X-WebAuth-User"][0], "auth user should be set")
-		fmt.Fprintln(w, "traefik")
-	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
+	ts := httptest.NewServer(authMiddleware)
 	defer ts.Close()
 
 	client := &http.Client{}
