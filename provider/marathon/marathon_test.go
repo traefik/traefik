@@ -344,7 +344,8 @@ func TestMarathonLoadConfig(t *testing.T) {
 		if len(c.applications.Apps) > 0 {
 			appID = c.applications.Apps[0].ID
 		}
-		t.Run(fmt.Sprintf("Running case: %s", appID), func(t *testing.T) {
+		t.Run(fmt.Sprintf("app ID: %s", appID), func(t *testing.T) {
+			t.Parallel()
 			fakeClient := newFakeClient(c.applicationsError, c.applications, c.tasksError, c.tasks)
 			provider := &Provider{
 				Domain:           "docker.localhost",
@@ -355,15 +356,15 @@ func TestMarathonLoadConfig(t *testing.T) {
 			fakeClient.AssertExpectations(t)
 			if c.expectedNil {
 				if actualConfig != nil {
-					t.Fatalf("Should have been nil, got %v", actualConfig)
+					t.Fatalf("configuration should have been nil, got %v", actualConfig)
 				}
 			} else {
 				// Compare backends
 				if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-					t.Errorf("got %v, want %v", spew.Sdump(actualConfig.Backends), spew.Sdump(c.expectedBackends))
+					t.Errorf("got backend %v, want %v", spew.Sdump(actualConfig.Backends), spew.Sdump(c.expectedBackends))
 				}
 				if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-					t.Errorf("got %v, want %v", spew.Sdump(actualConfig.Frontends), spew.Sdump(c.expectedFrontends))
+					t.Errorf("got frontend %v, want %v", spew.Sdump(actualConfig.Frontends), spew.Sdump(c.expectedFrontends))
 				}
 			}
 		})
@@ -1510,7 +1511,7 @@ func TestGetBackendServer(t *testing.T) {
 	}
 
 	for _, app := range applications {
-		t.Run(fmt.Sprintf("running %s", app.application.ID), func(t *testing.T) {
+		t.Run(app.application.ID, func(t *testing.T) {
 			provider := &Provider{}
 			provider.ForceTaskHostname = app.forceTaskHostname
 

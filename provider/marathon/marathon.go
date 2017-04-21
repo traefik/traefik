@@ -42,7 +42,7 @@ type Provider struct {
 	TLS                     *provider.ClientTLS `description:"Enable Docker TLS support"`
 	DialerTimeout           flaeg.Duration      `description:"Set a non-default connection timeout for Marathon"`
 	KeepAlive               flaeg.Duration      `description:"Set a non-default TCP Keep Alive time in seconds"`
-	ForceTaskHostname       bool                `description:"Force to use the task IP hostname."`
+	ForceTaskHostname       bool                `description:"Force to use the task's hostname."`
 	Basic                   *Basic
 	marathonClient          marathon.Marathon
 }
@@ -527,25 +527,28 @@ func (p *Provider) getBackendServer(task marathon.Task, applications []marathon.
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
 		return ""
 	}
+
+	numTaskIPAddresses := len(task.IPAddresses)
 	switch {
 	case application.IPAddressPerTask == nil || p.ForceTaskHostname:
 		return task.Host
-	case len(task.IPAddresses) == 0:
-		log.Errorf("Missing marathon IPAddress from task %s", task.AppID)
+	case numTaskIPAddresses == 0:
+		log.Errorf("Missing IP address for Marathon application %s on task %s", application.ID, task.ID)
 		return ""
-	case len(task.IPAddresses) == 1:
+	case numTaskIPAddresses == 1:
 		return task.IPAddresses[0].IPAddress
 	default:
 		ipAddressIdxStr, ok := p.getLabel(application, "traefik.ipAddressIdx")
 		if !ok {
-			log.Errorf("Unable to get marathon IPAddress from task %s", task.AppID)
+			log.Errorf("Found %d task IP addresses but missing IP address index for Marathon application %s on task %s", numTaskIPAddresses, application.ID, task.ID)
 			return ""
 		}
 		ipAddressIdx, err := strconv.Atoi(ipAddressIdxStr)
 		if err != nil {
-			log.Errorf("Invalid marathon IPAddress from task %s", task.AppID)
+			log.Errorf("Cannot use IP address index to select from %d task IP addresses for Marathon application %s on task %s: %s", numTaskIPAddresses, application.ID, task.ID, err)
 			return ""
 		}
+
 		return task.IPAddresses[ipAddressIdx].IPAddress
 	}
 }
