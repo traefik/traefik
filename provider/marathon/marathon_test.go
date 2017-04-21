@@ -1,7 +1,6 @@
 package marathon
 
 import (
-	"encoding/json"
 	"errors"
 	"reflect"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/containous/traefik/mocks"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gambol99/go-marathon"
 	"github.com/stretchr/testify/mock"
 )
@@ -360,14 +360,10 @@ func TestMarathonLoadConfig(t *testing.T) {
 			} else {
 				// Compare backends
 				if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-					expected, _ := json.Marshal(c.expectedBackends)
-					actual, _ := json.Marshal(actualConfig.Backends)
-					t.Fatalf("expected\t %s\n, \tgot %s\n", expected, actual)
+					t.Errorf("got %v, want %v", spew.Sdump(actualConfig.Backends), spew.Sdump(c.expectedBackends))
 				}
 				if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-					expected, _ := json.Marshal(c.expectedFrontends)
-					actual, _ := json.Marshal(actualConfig.Frontends)
-					t.Fatalf("expected\t %s\n, got\t %s\n", expected, actual)
+					t.Errorf("got %v, want %v", spew.Sdump(actualConfig.Frontends), spew.Sdump(c.expectedFrontends))
 				}
 			}
 		})
