@@ -1431,73 +1431,139 @@ func TestMarathonGetSubDomain(t *testing.T) {
 }
 
 func TestGetBackendServer(t *testing.T) {
-
-	applications := []struct {
-		forceTaskHostname bool
+	appID := "appId"
+	host := "host"
+	tests := []struct {
+		desc              string
 		application       marathon.Application
-		expected          string
+		addIPAddrPerTask  bool
+		task              marathon.Task
+		forceTaskHostname bool
+		wantServer        string
 	}{
 		{
-			application: marathon.Application{
-				ID: "app-without-IP-per-task",
-			},
-			expected: "sample.com",
+			desc:        "application missing",
+			application: marathon.Application{ID: "other"},
+			wantServer:  "",
 		},
 		{
-			application: marathon.Application{
-
-				ID: "app-with-IP-per-task",
-				IPAddressPerTask: &marathon.IPAddressPerTask{
-					Discovery: &marathon.Discovery{
-						Ports: &[]marathon.Port{
-							{
-								Number: 8880,
-								Name:   "p1",
-							},
-						},
-					},
-				},
-			},
-			expected: "192.168.0.1",
-		}, {
+			desc:       "application without IP-per-task",
+			wantServer: host,
+		},
+		{
+			desc:              "task hostname override",
+			addIPAddrPerTask:  true,
 			forceTaskHostname: true,
-			application: marathon.Application{
-				ID: "app-with-hostname-enforced",
-				IPAddressPerTask: &marathon.IPAddressPerTask{
-					Discovery: &marathon.Discovery{
-						Ports: &[]marathon.Port{
-							{
-								Number: 8880,
-								Name:   "p1",
-							},
-						},
+			wantServer:        host,
+		},
+		{
+			desc: "task IP address missing",
+			task: marathon.Task{
+				IPAddresses: []*marathon.IPAddress{},
+			},
+			addIPAddrPerTask: true,
+			wantServer:       "",
+		},
+		{
+			desc: "single task IP address",
+			task: marathon.Task{
+				IPAddresses: []*marathon.IPAddress{
+					{
+						IPAddress: "1.1.1.1",
 					},
 				},
 			},
-			expected: "sample.com",
+			addIPAddrPerTask: true,
+			wantServer:       "1.1.1.1",
+		},
+		{
+			desc: "multiple task IP addresses without index label",
+			task: marathon.Task{
+				IPAddresses: []*marathon.IPAddress{
+					{
+						IPAddress: "1.1.1.1",
+					},
+					{
+						IPAddress: "2.2.2.2",
+					},
+				},
+			},
+			addIPAddrPerTask: true,
+			wantServer:       "",
+		},
+		{
+			desc: "multiple task IP addresses with invalid index label",
+			application: marathon.Application{
+				Labels: &map[string]string{"traefik.ipAddressIdx": "invalid"},
+			},
+			task: marathon.Task{
+				IPAddresses: []*marathon.IPAddress{
+					{
+						IPAddress: "1.1.1.1",
+					},
+					{
+						IPAddress: "2.2.2.2",
+					},
+				},
+			},
+			addIPAddrPerTask: true,
+			wantServer:       "",
+		},
+		{
+			desc: "multiple task IP addresses with valid index label",
+			application: marathon.Application{
+				Labels: &map[string]string{"traefik.ipAddressIdx": "1"},
+			},
+			task: marathon.Task{
+				IPAddresses: []*marathon.IPAddress{
+					{
+						IPAddress: "1.1.1.1",
+					},
+					{
+						IPAddress: "2.2.2.2",
+					},
+				},
+			},
+			addIPAddrPerTask: true,
+			wantServer:       "2.2.2.2",
 		},
 	}
 
-	for _, app := range applications {
-		t.Run(app.application.ID, func(t *testing.T) {
-			provider := &Provider{}
-			provider.ForceTaskHostname = app.forceTaskHostname
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			provider := &Provider{ForceTaskHostname: test.forceTaskHostname}
 
-			applications := []marathon.Application{app.application}
-
-			task := marathon.Task{
-				AppID: app.application.ID,
-				Host:  "sample.com",
-				IPAddresses: []*marathon.IPAddress{
-					{
-						IPAddress: "192.168.0.1",
-					},
-				},
+			// Populate application.
+			if test.application.ID == "" {
+				test.application.ID = appID
 			}
+			if test.application.Labels == nil {
+				test.application.Labels = &map[string]string{}
+			}
+			if test.addIPAddrPerTask {
+				test.application.IPAddressPerTask = &marathon.IPAddressPerTask{
+					Discovery: &marathon.Discovery{
+						Ports: &[]marathon.Port{
+							{
+								Number: 8000,
+								Name:   "port",
+							},
+						},
+					},
+				}
+			}
+			applications := []marathon.Application{test.application}
 
-			actual := provider.getBackendServer(task, applications)
-			if actual != app.expected {
-				t.Errorf("App %s, expected %q, got %q", task.AppID, app.expected, actual)
+			// Populate task.
+			test.task.AppID = appID
+			test.task.Host = "host"
+
+			gotServer := provider.getBackendServer(test.task, applications)
+
+			if gotServer != test.wantServer {
+				t.Errorf("got server '%s', want '%s'", gotServer, test.wantServer)
 			}
 		})
 	}
