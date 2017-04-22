@@ -482,12 +482,9 @@ func processPorts(application marathon.Application, task marathon.Task) (int, er
 	portIndexLabel, ok := (*application.Labels)[labelPortIndex]
 	if ok {
 		var err error
-		portIndex, err = strconv.Atoi(portIndexLabel)
-		switch {
-		case err != nil:
-			return 0, fmt.Errorf("failed to parse port index label: %s", err)
-		case portIndex < 0, portIndex > len(ports)-1:
-			return 0, fmt.Errorf("port index %d must be within port range (0, %d)", portIndex, len(ports)-1)
+		portIndex, err = parseIndex(portIndexLabel, len(ports))
+		if err != nil {
+			return 0, fmt.Errorf("cannot use port index to select from %d ports: %s", len(ports), err)
 		}
 	}
 	return ports[portIndex], nil
@@ -543,7 +540,8 @@ func (p *Provider) getBackendServer(task marathon.Task, applications []marathon.
 			log.Errorf("Found %d task IP addresses but missing IP address index for Marathon application %s on task %s", numTaskIPAddresses, application.ID, task.ID)
 			return ""
 		}
-		ipAddressIdx, err := strconv.Atoi(ipAddressIdxStr)
+
+		ipAddressIdx, err := parseIndex(ipAddressIdxStr, numTaskIPAddresses)
 		if err != nil {
 			log.Errorf("Cannot use IP address index to select from %d task IP addresses for Marathon application %s on task %s: %s", numTaskIPAddresses, application.ID, task.ID, err)
 			return ""
@@ -551,4 +549,16 @@ func (p *Provider) getBackendServer(task marathon.Task, applications []marathon.
 
 		return task.IPAddresses[ipAddressIdx].IPAddress
 	}
+}
+
+func parseIndex(index string, length int) (int, error) {
+	parsed, err := strconv.Atoi(index)
+	switch {
+	case err != nil:
+		return 0, fmt.Errorf("failed to parse index '%s': %s", index, err)
+	case parsed < 0, parsed > length-1:
+		return 0, fmt.Errorf("index %d must be within range (0, %d)", parsed, length-1)
+	}
+
+	return parsed, nil
 }

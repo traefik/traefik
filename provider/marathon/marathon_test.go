@@ -1068,38 +1068,6 @@ func TestMarathonGetPort(t *testing.T) {
 			expected: "",
 		},
 		{
-			desc: "sub-zero port index specified",
-			applications: []marathon.Application{
-				{
-					ID: "app",
-					Labels: &map[string]string{
-						"traefik.portIndex": "-1",
-					},
-				},
-			},
-			task: marathon.Task{
-				AppID: "app",
-				Ports: []int{80},
-			},
-			expected: "",
-		},
-		{
-			desc: "too high port index specified",
-			applications: []marathon.Application{
-				{
-					ID: "app",
-					Labels: &map[string]string{
-						"traefik.portIndex": "42",
-					},
-				},
-			},
-			task: marathon.Task{
-				AppID: "app",
-				Ports: []int{80, 443},
-			},
-			expected: "",
-		},
-		{
 			desc: "task port preferred over application port",
 			applications: []marathon.Application{
 				{
@@ -1530,6 +1498,64 @@ func TestGetBackendServer(t *testing.T) {
 			actual := provider.getBackendServer(task, applications)
 			if actual != app.expected {
 				t.Errorf("App %s, expected %q, got %q", task.AppID, app.expected, actual)
+			}
+		})
+	}
+}
+
+func TestParseIndex(t *testing.T) {
+	tests := []struct {
+		idxStr        string
+		length        int
+		shouldSucceed bool
+		parsed        int
+	}{
+		{
+			idxStr:        "illegal",
+			length:        42,
+			shouldSucceed: false,
+		},
+		{
+			idxStr:        "-1",
+			length:        42,
+			shouldSucceed: false,
+		},
+		{
+			idxStr:        "10",
+			length:        1,
+			shouldSucceed: false,
+		},
+		{
+			idxStr:        "10",
+			length:        10,
+			shouldSucceed: false,
+		},
+		{
+			idxStr:        "0",
+			length:        1,
+			shouldSucceed: true,
+			parsed:        0,
+		},
+		{
+			idxStr:        "10",
+			length:        11,
+			shouldSucceed: true,
+			parsed:        10,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(fmt.Sprintf("parseIndex(%s, %d)", test.idxStr, test.length), func(t *testing.T) {
+			t.Parallel()
+			parsed, err := parseIndex(test.idxStr, test.length)
+
+			if test.shouldSucceed != (err == nil) {
+				t.Fatalf("got error '%s', want error: %t", err, !test.shouldSucceed)
+			}
+
+			if test.shouldSucceed && parsed != test.parsed {
+				t.Errorf("got parsed index %d, want %d", parsed, test.parsed)
 			}
 		})
 	}
