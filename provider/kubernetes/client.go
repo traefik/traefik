@@ -26,6 +26,7 @@ const resyncPeriod = time.Minute * 5
 type Client interface {
 	GetIngresses(namespaces Namespaces) []*v1beta1.Ingress
 	GetService(namespace, name string) (*v1.Service, bool, error)
+	GetSecret(namespace, name string) (*v1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error)
 	WatchAll(labelSelector string, stopCh <-chan struct{}) (<-chan interface{}, error)
 }
@@ -34,10 +35,12 @@ type clientImpl struct {
 	ingController *cache.Controller
 	svcController *cache.Controller
 	epController  *cache.Controller
+	secController *cache.Controller
 
 	ingStore cache.Store
 	svcStore cache.Store
 	epStore  cache.Store
+	secStore cache.Store
 
 	clientset *kubernetes.Clientset
 }
@@ -154,6 +157,16 @@ func (c *clientImpl) GetService(namespace, name string) (*v1.Service, bool, erro
 	return service, exists, err
 }
 
+func (c *clientImpl) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
+	var secret *v1.Secret
+	item, exists, err := c.secStore.GetByKey(namespace + "/" + name)
+	if err == nil && item != nil {
+		secret = item.(*v1.Secret)
+	}
+
+	return secret, exists, err
+}
+
 // WatchServices starts the watch of Provider Service resources and updates the corresponding store
 func (c *clientImpl) WatchServices(watchCh chan<- interface{}, stopCh <-chan struct{}) {
 	source := cache.NewListWatchFromClient(
@@ -199,6 +212,21 @@ func (c *clientImpl) WatchEndpoints(watchCh chan<- interface{}, stopCh <-chan st
 	go c.epController.Run(stopCh)
 }
 
+func (c *clientImpl) WatchSecrets(watchCh chan<- interface{}, stopCh <-chan struct{}) {
+	source := cache.NewListWatchFromClient(
+		c.clientset.CoreV1().RESTClient(),
+		"secrets",
+		api.NamespaceAll,
+		fields.Everything())
+
+	c.secStore, c.secController = cache.NewInformer(
+		source,
+		&v1.Endpoints{},
+		resyncPeriod,
+		newResourceEventHandlerFuncs(watchCh))
+	go c.secController.Run(stopCh)
+}
+
 // WatchAll returns events in the cluster and updates the stores via informer
 // Filters ingresses by labelSelector
 func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan struct{}) (<-chan interface{}, error) {
@@ -213,6 +241,7 @@ func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan struct{}) (<-c
 	c.WatchIngresses(kubeLabelSelector, eventCh, stopCh)
 	c.WatchServices(eventCh, stopCh)
 	c.WatchEndpoints(eventCh, stopCh)
+	c.WatchSecrets(eventCh, stopCh)
 
 	go func() {
 		defer close(watchCh)
