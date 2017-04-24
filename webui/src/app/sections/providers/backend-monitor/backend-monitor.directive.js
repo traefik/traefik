@@ -8,8 +8,7 @@ function backendMonitor() {
     controllerAs: 'backendCtrl',
     bindToController: true,
     scope: {
-      backend: '=',
-      backendId: '='
+      backend: '='
     }
   };
 }

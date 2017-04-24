@@ -162,11 +162,6 @@ func (server *Server) Close() {
 func (server *Server) startLeadership() {
 	if server.leadership != nil {
 		server.leadership.Participate(server.routinesPool)
-		// server.leadership.AddGoCtx(func(ctx context.Context) {
-		// 	log.Debugf("Started test routine")
-		// 	<-ctx.Done()
-		// 	log.Debugf("Stopped test routine")
-		// })
 	}
 }
 
