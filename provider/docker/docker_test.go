@@ -12,10 +12,6 @@ import (
 )
 
 func TestDockerGetFrontendName(t *testing.T) {
-	provider := &Provider{
-		Domain: "docker.localhost",
-	}
-
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -62,6 +58,9 @@ func TestDockerGetFrontendName(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
+			provider := &Provider{
+				Domain: "docker.localhost",
+			}
 			actual := provider.getFrontendName(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -71,10 +70,6 @@ func TestDockerGetFrontendName(t *testing.T) {
 }
 
 func TestDockerGetFrontendRule(t *testing.T) {
-	provider := &Provider{
-		Domain: "docker.localhost",
-	}
-
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -112,6 +107,9 @@ func TestDockerGetFrontendRule(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
+			provider := &Provider{
+				Domain: "docker.localhost",
+			}
 			actual := provider.getFrontendRule(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -121,8 +119,6 @@ func TestDockerGetFrontendRule(t *testing.T) {
 }
 
 func TestDockerGetBackend(t *testing.T) {
-	provider := &Provider{}
-
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -155,6 +151,7 @@ func TestDockerGetBackend(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
+			provider := &Provider{}
 			actual := provider.getBackend(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -164,8 +161,6 @@ func TestDockerGetBackend(t *testing.T) {
 }
 
 func TestDockerGetIPAddress(t *testing.T) {
-	provider := &Provider{}
-
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -208,6 +203,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
+			provider := &Provider{}
 			actual := provider.getIPAddress(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -217,8 +213,6 @@ func TestDockerGetIPAddress(t *testing.T) {
 }
 
 func TestDockerGetPort(t *testing.T) {
-	provider := &Provider{}
-
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -271,6 +265,7 @@ func TestDockerGetPort(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
+			provider := &Provider{}
 			actual := provider.getPort(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -280,8 +275,6 @@ func TestDockerGetPort(t *testing.T) {
 }
 
 func TestDockerGetWeight(t *testing.T) {
-	provider := &Provider{}
-
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -303,6 +296,7 @@ func TestDockerGetWeight(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
+			provider := &Provider{}
 			actual := provider.getWeight(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -312,10 +306,6 @@ func TestDockerGetWeight(t *testing.T) {
 }
 
 func TestDockerGetDomain(t *testing.T) {
-	provider := &Provider{
-		Domain: "docker.localhost",
-	}
-
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -337,6 +327,9 @@ func TestDockerGetDomain(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
+			provider := &Provider{
+				Domain: "docker.localhost",
+			}
 			actual := provider.getDomain(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -346,8 +339,6 @@ func TestDockerGetDomain(t *testing.T) {
 }
 
 func TestDockerGetProtocol(t *testing.T) {
-	provider := &Provider{}
-
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -369,6 +360,7 @@ func TestDockerGetProtocol(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
+			provider := &Provider{}
 			actual := provider.getProtocol(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -378,7 +370,6 @@ func TestDockerGetProtocol(t *testing.T) {
 }
 
 func TestDockerGetPassHostHeader(t *testing.T) {
-	provider := &Provider{}
 	containers := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -400,6 +391,7 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
+			provider := &Provider{}
 			actual := provider.getPassHostHeader(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -496,7 +488,6 @@ func TestDockerGetLabels(t *testing.T) {
 }
 
 func TestDockerTraefikFilter(t *testing.T) {
-	provider := Provider{}
 	containers := []struct {
 		container        docker.ContainerJSON
 		exposedByDefault bool
@@ -626,6 +617,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 		e := e
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
+			provider := Provider{}
 			provider.ExposedByDefault = e.exposedByDefault
 			dockerData := parseContainer(e.container)
 			actual := provider.containerFilter(dockerData)
@@ -801,11 +793,6 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 		},
 	}
 
-	provider := &Provider{
-		Domain:           "docker.localhost",
-		ExposedByDefault: true,
-	}
-
 	for caseID, c := range cases {
 		c := c
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
@@ -816,6 +803,10 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				dockerDataList = append(dockerDataList, dockerData)
 			}
 
+			provider := &Provider{
+				Domain:           "docker.localhost",
+				ExposedByDefault: true,
+			}
 			actualConfig := provider.loadDockerConfig(dockerDataList)
 			// Compare backends
 			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
