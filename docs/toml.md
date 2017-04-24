@@ -105,9 +105,9 @@
 
 ### Constraints
 
-In a micro-service architecture, with a central service discovery, setting constraints limits Træfɪk scope to a smaller number of routes.
+In a micro-service architecture, with a central service discovery, setting constraints limits Træfik scope to a smaller number of routes.
 
-Træfɪk filters services according to service attributes/tags set in your configuration backends.
+Træfik filters services according to service attributes/tags set in your configuration backends.
 
 Supported backends:
 
@@ -399,7 +399,7 @@ entryPoint = "https"
 
 ## File backend
 
-Like any other reverse proxy, Træfɪk can be configured with a file. You have two choices:
+Like any other reverse proxy, Træfik can be configured with a file. You have two choices:
 
 - simply add your configuration at the end of the global configuration file `traefik.toml`:
 
@@ -533,7 +533,7 @@ filename = "rules.toml"
     rule = "Path:/test"
 ```
 
-If you want Træfɪk to watch file changes automatically, just add:
+If you want Træfik to watch file changes automatically, just add:
 
 ```toml
 [file]
@@ -621,11 +621,11 @@ OK
 ```sh
 $ curl -s "http://localhost:8080/health" | jq .
 {
-  // Træfɪk PID
+  // Træfik PID
   "pid": 2458,
-  // Træfɪk server uptime (formated time)
+  // Træfik server uptime (formated time)
   "uptime": "39m6.885931127s",
-  //  Træfɪk server uptime in seconds
+  //  Træfik server uptime in seconds
   "uptime_sec": 2346.885931127,
   // current server date
   "time": "2015-10-07 18:32:24.362238909 +0200 CEST",
@@ -635,7 +635,7 @@ $ curl -s "http://localhost:8080/health" | jq .
   "status_code_count": {
     "502": 1
   },
-  // count HTTP response status code since Træfɪk started
+  // count HTTP response status code since Træfik started
   "total_status_code_count": {
     "200": 7,
     "404": 21,
@@ -757,7 +757,7 @@ $ traefik --web.metrics.prometheus --web.metrics.prometheus.buckets="0.1,0.3,1.2
 
 ## Docker backend
 
-Træfɪk can be configured to use Docker as a backend configuration:
+Træfik can be configured to use Docker as a backend configuration:
 
 ```toml
 ################################################################
@@ -839,7 +839,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.port=80`: register this port. Useful when the container exposes multiples ports.
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
-- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.enable=false`: disable this container in Træfik
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}` or `Host:{service}.{project_name}.{domain}` if you are using `docker-compose`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
@@ -858,11 +858,11 @@ If several ports need to be exposed from a container, the services labels can be
 - `traefik.<service-name>.frontend.priority=10`: assign the service frontend priority. Overrides `traefik.frontend.priority`.
 - `traefik.<service-name>.frontend.rule=Path:/foo`: assign the service frontend rule. Overrides `traefik.frontend.rule`.
 
-NB: when running inside a container, Træfɪk will need network access through `docker network connect <network> <traefik-container>`
+NB: when running inside a container, Træfik will need network access through `docker network connect <network> <traefik-container>`
 
 ## Marathon backend
 
-Træfɪk can be configured to use Marathon as a backend configuration:
+Træfik can be configured to use Marathon as a backend configuration:
 
 
 ```toml
@@ -983,7 +983,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.port=80`: register the explicit application port value. Cannot be used alongside `traefik.portIndex`.
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the application
-- `traefik.enable=false`: disable this application in Træfɪk
+- `traefik.enable=false`: disable this application in Træfik
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
@@ -992,7 +992,7 @@ Labels can be used on containers to override default behaviour:
 
 ## Mesos generic backend
 
-Træfɪk can be configured to use Mesos as a backend configuration:
+Træfik can be configured to use Mesos as a backend configuration:
 
 
 ```toml
@@ -1079,7 +1079,7 @@ domain = "mesos.localhost"
 ## Kubernetes Ingress backend
 
 
-Træfɪk can be configured to use Kubernetes Ingress as a backend configuration:
+Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 
 ```toml
 ################################################################
@@ -1155,7 +1155,7 @@ Additionally, an annotation can be used on Kubernetes services to set the [circu
 
 ## Consul backend
 
-Træfɪk can be configured to use Consul as a backend configuration:
+Træfik can be configured to use Consul as a backend configuration:
 
 ```toml
 ################################################################
@@ -1207,7 +1207,7 @@ Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-val
 
 ## Consul catalog backend
 
-Træfɪk can be configured to use service discovery catalog of Consul as a backend configuration:
+Træfik can be configured to use service discovery catalog of Consul as a backend configuration:
 
 ```toml
 ################################################################
@@ -1244,7 +1244,7 @@ used in consul.
 
 Additional settings can be defined using Consul Catalog tags:
 
-- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.enable=false`: disable this container in Træfik
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.backend.weight=10`: assign this weight to the container
 - `traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5`
@@ -1258,7 +1258,7 @@ Additional settings can be defined using Consul Catalog tags:
 
 ## Etcd backend
 
-Træfɪk can be configured to use Etcd as a backend configuration:
+Træfik can be configured to use Etcd as a backend configuration:
 
 ```toml
 ################################################################
@@ -1311,7 +1311,7 @@ Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-val
 
 ## Zookeeper backend
 
-Træfɪk can be configured to use Zookeeper as a backend configuration:
+Træfik can be configured to use Zookeeper as a backend configuration:
 
 ```toml
 ################################################################
@@ -1353,7 +1353,7 @@ Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-val
 
 ## BoltDB backend
 
-Træfɪk can be configured to use BoltDB as a backend configuration:
+Træfik can be configured to use BoltDB as a backend configuration:
 
 ```toml
 ################################################################
@@ -1393,7 +1393,7 @@ prefix = "/traefik"
 
 ## Eureka backend
 
-Træfɪk can be configured to use Eureka as a backend configuration:
+Træfik can be configured to use Eureka as a backend configuration:
 
 
 ```toml
@@ -1432,7 +1432,7 @@ Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-val
 
 ## ECS backend
 
-Træfɪk can be configured to use Amazon ECS as a backend configuration:
+Træfik can be configured to use Amazon ECS as a backend configuration:
 
 
 ```toml
@@ -1498,7 +1498,7 @@ Labels can be used on task containers to override default behaviour:
 
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
-- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.enable=false`: disable this container in Træfik
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
@@ -1510,7 +1510,7 @@ If `AccessKeyID`/`SecretAccessKey` is not given credentials will be resolved in 
 - Shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to `default` and `~/.aws/credentials`.
 - EC2 instance role or ECS task role
 
-Træfɪk needs the following policy to read ECS information:
+Træfik needs the following policy to read ECS information:
 
 ```json
 {
@@ -1536,7 +1536,7 @@ Træfɪk needs the following policy to read ECS information:
 
 # Rancher backend
 
-Træfɪk can be configured to use Rancher as a backend configuration:
+Træfik can be configured to use Rancher as a backend configuration:
 
 
 ```toml
@@ -1597,7 +1597,7 @@ Labels can be used on task containers to override default behaviour:
 
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
-- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.enable=false`: disable this container in Træfik
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
@@ -1607,7 +1607,7 @@ Labels can be used on task containers to override default behaviour:
 
 ## DynamoDB backend
 
-Træfɪk can be configured to use Amazon DynamoDB as a backend configuration:
+Træfik can be configured to use Amazon DynamoDB as a backend configuration:
 
 
 ```toml
@@ -1665,7 +1665,7 @@ RefreshSeconds = 15
 
 ```
 
-Items in the dynamodb table must have three attributes:
+Items in the dynamodb table must have three attributes: 
 
 
 - 'id' : string
@@ -1673,4 +1673,4 @@ Items in the dynamodb table must have three attributes:
 - 'name' : string
     - The name is used as the name of the frontend or backend.
 - 'frontend' or 'backend' : map
-    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See types/types.go for details. The presence or absence of this attribute determines its type. So an item should never have both a 'frontend' and a 'backend' attribute.
+    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See types/types.go for details. The presence or absence of this attribute determines its type. So an item should never have both a 'frontend' and a 'backend' attribute. 

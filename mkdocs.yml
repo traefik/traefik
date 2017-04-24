@@ -1,5 +1,5 @@
-site_name: Træfɪk
-site_description: Træfɪk Documentation
+site_name: Træfik
+site_description: Træfik Documentation
 site_author: containo.us
 site_url: https://docs.traefik.io
 
@@ -16,7 +16,7 @@ theme: united
 site_favicon: 'img/traefik.icon.png'
 
 # Copyright
-copyright: "Copyright &copy; 2016 Containous SAS"
+copyright: "Copyright &copy; 2016-2017 Containous SAS"
 
 # Options
 extra:
