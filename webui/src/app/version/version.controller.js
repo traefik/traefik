@@ -1,7 +1,7 @@
 'use strict';
 
 /** @ngInject */
-function VersionController($scope, $interval, $log, Version) {
+function VersionController($scope, Version) {
   Version.get(function (version) {
     $scope.version = version;
   });

@@ -108,6 +108,8 @@ import:
   - metrics
 - package: github.com/eapache/channels
   version: v1.1.0
+- package: golang.org/x/sys
+  version: 8d1157a435470616f975ff9bb013bea8d0962067
 - package: golang.org/x/net
   version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
   subpackages:
