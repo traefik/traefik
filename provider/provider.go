@@ -51,16 +51,17 @@ func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint)
 	return true, nil
 }
 
-func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
+// GetConfiguration return the provider configuration using templating
+func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
 	var (
 		buf []byte
 		err error
 	)
 	configuration := new(types.Configuration)
 	var defaultFuncMap = template.FuncMap{
-		"replace":   replace,
+		"replace":   Replace,
 		"tolower":   strings.ToLower,
-		"normalize": normalize,
+		"normalize": Normalize,
 		"split":     split,
 		"contains":  contains,
 	}
@@ -100,7 +101,8 @@ func (p *BaseProvider) getConfiguration(defaultTemplateFile string, funcMap temp
 	return configuration, nil
 }
 
-func replace(s1 string, s2 string, s3 string) string {
+// Replace is an alias for strings.Replace
+func Replace(s1 string, s2 string, s3 string) string {
 	return strings.Replace(s3, s1, s2, -1)
 }
 
@@ -112,7 +114,8 @@ func split(sep, s string) []string {
 	return strings.Split(s, sep)
 }
 
-func normalize(name string) string {
+// Normalize transform a string that work with the rest of traefik
+func Normalize(name string) string {
 	fargs := func(c rune) bool {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c)
 	}
@@ -120,7 +123,8 @@ func normalize(name string) string {
 	return strings.Join(strings.FieldsFunc(name, fargs), "-")
 }
 
-func reverseStringSlice(slice *[]string) {
+// ReverseStringSlice invert the order of the given slice of string
+func ReverseStringSlice(slice *[]string) {
 	for i, j := 0, len(*slice)-1; i < j; i, j = i+1, j-1 {
 		(*slice)[i], (*slice)[j] = (*slice)[j], (*slice)[i]
 	}

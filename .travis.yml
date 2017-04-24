@@ -23,18 +23,15 @@ before_install:
 install:
   - docker version
   - pip install --user -r requirements.txt
+  - make pull-images
 before_script:
   - make validate
-  - make binary
-script:
-  - travis_retry make test-unit
-  - travis_retry make test-integration
+script: travis_retry make test-unit && travis_retry make test-integration
 after_failure:
   - docker ps
-after_success:
+before_deploy:
   - make crossbinary
   - make image
-before_deploy:
   - mkdocs build --clean
   - tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .
 deploy:

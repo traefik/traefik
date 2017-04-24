@@ -49,9 +49,9 @@ func (s *APIKeysService) Get(keyID string) (*account.APIKey, *http.Response, err
 			if err.(*Error).Message == "unknown api key" {
 				return nil, resp, ErrKeyMissing
 			}
-		default:
-			return nil, resp, err
+
 		}
+		return nil, resp, err
 	}
 
 	return &a, resp, nil
@@ -74,9 +74,8 @@ func (s *APIKeysService) Create(a *account.APIKey) (*http.Response, error) {
 			if err.(*Error).Message == fmt.Sprintf("api key with name \"%s\" exists", a.Name) {
 				return resp, ErrKeyExists
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -101,9 +100,8 @@ func (s *APIKeysService) Update(a *account.APIKey) (*http.Response, error) {
 			if err.(*Error).Message == "unknown api key" {
 				return resp, ErrKeyMissing
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -127,9 +125,8 @@ func (s *APIKeysService) Delete(keyID string) (*http.Response, error) {
 			if err.(*Error).Message == "unknown api key" {
 				return resp, ErrKeyMissing
 			}
-		default:
-			return resp, err
 		}
+		return resp, err
 	}
 
 	return resp, nil
@@ -137,7 +134,7 @@ func (s *APIKeysService) Delete(keyID string) (*http.Response, error) {
 
 var (
 	// ErrKeyExists bundles PUT create error.
-	ErrKeyExists = errors.New("Key already exists.")
+	ErrKeyExists = errors.New("key already exists")
 	// ErrKeyMissing bundles GET/POST/DELETE error.
-	ErrKeyMissing = errors.New("Key does not exist.")
+	ErrKeyMissing = errors.New("key does not exist")
 )

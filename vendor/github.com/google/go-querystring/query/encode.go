@@ -217,16 +217,16 @@ func reflectValue(values url.Values, val reflect.Value, scope string) error {
 			continue
 		}
 
-		if sv.Type() == timeType {
-			values.Add(name, valueString(sv, opts))
-			continue
-		}
-
 		for sv.Kind() == reflect.Ptr {
 			if sv.IsNil() {
 				break
 			}
 			sv = sv.Elem()
+		}
+
+		if sv.Type() == timeType {
+			values.Add(name, valueString(sv, opts))
+			continue
 		}
 
 		if sv.Kind() == reflect.Struct {

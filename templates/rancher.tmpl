@@ -33,6 +33,9 @@
     entryPoints = [{{range getEntryPoints $service}}
         "{{.}}",
     {{end}}]
+    basicAuth = [{{range getBasicAuth $service}}
+        "{{.}}",
+    {{end}}]
     [frontends."frontend-{{$frontendName}}".routes."route-frontend-{{$frontendName}}"]
     rule = "{{getFrontendRule $service}}"
 {{end}}

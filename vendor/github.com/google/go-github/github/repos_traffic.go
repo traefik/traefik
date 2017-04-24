@@ -5,7 +5,10 @@
 
 package github
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // TrafficReferrer represent information about traffic from a referrer .
 type TrafficReferrer struct {
@@ -52,7 +55,7 @@ type TrafficBreakdownOptions struct {
 // ListTrafficReferrers list the top 10 referrers over the last 14 days.
 //
 // GitHub API docs: https://developer.github.com/v3/repos/traffic/#list-referrers
-func (s *RepositoriesService) ListTrafficReferrers(owner, repo string) ([]*TrafficReferrer, *Response, error) {
+func (s *RepositoriesService) ListTrafficReferrers(ctx context.Context, owner, repo string) ([]*TrafficReferrer, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/traffic/popular/referrers", owner, repo)
 
 	req, err := s.client.NewRequest("GET", u, nil)
@@ -60,22 +63,19 @@ func (s *RepositoriesService) ListTrafficReferrers(owner, repo string) ([]*Traff
 		return nil, nil, err
 	}
 
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeTrafficPreview)
-
-	trafficReferrers := new([]*TrafficReferrer)
-	resp, err := s.client.Do(req, &trafficReferrers)
+	var trafficReferrers []*TrafficReferrer
+	resp, err := s.client.Do(ctx, req, &trafficReferrers)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return *trafficReferrers, resp, err
+	return trafficReferrers, resp, nil
 }
 
 // ListTrafficPaths list the top 10 popular content over the last 14 days.
 //
 // GitHub API docs: https://developer.github.com/v3/repos/traffic/#list-paths
-func (s *RepositoriesService) ListTrafficPaths(owner, repo string) ([]*TrafficPath, *Response, error) {
+func (s *RepositoriesService) ListTrafficPaths(ctx context.Context, owner, repo string) ([]*TrafficPath, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/traffic/popular/paths", owner, repo)
 
 	req, err := s.client.NewRequest("GET", u, nil)
@@ -83,22 +83,19 @@ func (s *RepositoriesService) ListTrafficPaths(owner, repo string) ([]*TrafficPa
 		return nil, nil, err
 	}
 
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeTrafficPreview)
-
-	var paths = new([]*TrafficPath)
-	resp, err := s.client.Do(req, &paths)
+	var paths []*TrafficPath
+	resp, err := s.client.Do(ctx, req, &paths)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return *paths, resp, err
+	return paths, resp, nil
 }
 
 // ListTrafficViews get total number of views for the last 14 days and breaks it down either per day or week.
 //
 // GitHub API docs: https://developer.github.com/v3/repos/traffic/#views
-func (s *RepositoriesService) ListTrafficViews(owner, repo string, opt *TrafficBreakdownOptions) (*TrafficViews, *Response, error) {
+func (s *RepositoriesService) ListTrafficViews(ctx context.Context, owner, repo string, opt *TrafficBreakdownOptions) (*TrafficViews, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/traffic/views", owner, repo)
 	u, err := addOptions(u, opt)
 	if err != nil {
@@ -110,22 +107,19 @@ func (s *RepositoriesService) ListTrafficViews(owner, repo string, opt *TrafficB
 		return nil, nil, err
 	}
 
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeTrafficPreview)
-
 	trafficViews := new(TrafficViews)
-	resp, err := s.client.Do(req, &trafficViews)
+	resp, err := s.client.Do(ctx, req, &trafficViews)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return trafficViews, resp, err
+	return trafficViews, resp, nil
 }
 
 // ListTrafficClones get total number of clones for the last 14 days and breaks it down either per day or week for the last 14 days.
 //
 // GitHub API docs: https://developer.github.com/v3/repos/traffic/#views
-func (s *RepositoriesService) ListTrafficClones(owner, repo string, opt *TrafficBreakdownOptions) (*TrafficClones, *Response, error) {
+func (s *RepositoriesService) ListTrafficClones(ctx context.Context, owner, repo string, opt *TrafficBreakdownOptions) (*TrafficClones, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/traffic/clones", owner, repo)
 	u, err := addOptions(u, opt)
 	if err != nil {
@@ -137,14 +131,11 @@ func (s *RepositoriesService) ListTrafficClones(owner, repo string, opt *Traffic
 		return nil, nil, err
 	}
 
-	// TODO: remove custom Accept header when this API fully launches.
-	req.Header.Set("Accept", mediaTypeTrafficPreview)
-
 	trafficClones := new(TrafficClones)
-	resp, err := s.client.Do(req, &trafficClones)
+	resp, err := s.client.Do(ctx, req, &trafficClones)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return trafficClones, resp, err
+	return trafficClones, resp, nil
 }

@@ -8,7 +8,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
-  version: fcc76b52eb8568540a020b7a99e854d9d752b364
+  version: f88530866c561d24a6b5aac49f76d6351b788b9f
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -108,6 +108,8 @@ import:
   - metrics
 - package: github.com/eapache/channels
   version: v1.1.0
+- package: golang.org/x/sys
+  version: 8d1157a435470616f975ff9bb013bea8d0962067
 - package: golang.org/x/net
   version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
   subpackages:
@@ -139,7 +141,7 @@ import:
   subpackages:
   - proto
 - package: github.com/rancher/go-rancher
-  version: 2c43ff300f3eafcbd7d0b89b10427fc630efdc1e
+  version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
 - package: golang.org/x/oauth2/google
   version: 7fdf09982454086d5570c7db3e11f360194830ca
 - package: github.com/googleapis/gax-go

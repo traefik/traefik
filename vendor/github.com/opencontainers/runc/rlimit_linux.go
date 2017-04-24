@@ -43,7 +43,7 @@ var rlimitMap = map[string]int{
 func strToRlimit(key string) (int, error) {
 	rl, ok := rlimitMap[key]
 	if !ok {
-		return 0, fmt.Errorf("Wrong rlimit value: %s", key)
+		return 0, fmt.Errorf("wrong rlimit value: %s", key)
 	}
 	return rl, nil
 }

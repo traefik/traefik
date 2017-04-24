@@ -80,7 +80,7 @@ func TestConfigurationErrors(t *testing.T) {
 				},
 				nil,
 			},
-			expectedError: "Near line 1 (last key parsed 'Hello'): Expected key separator '=', but got '<' instead",
+			expectedError: "Near line 1 (last key parsed 'Hello'): expected key separator '=', but got '<' instead",
 			funcMap: template.FuncMap{
 				"Foo": func() string {
 					return "bar"
@@ -91,7 +91,7 @@ func TestConfigurationErrors(t *testing.T) {
 	}
 
 	for _, invalid := range invalids {
-		configuration, err := invalid.provider.getConfiguration(invalid.defaultTemplate, invalid.funcMap, nil)
+		configuration, err := invalid.provider.GetConfiguration(invalid.defaultTemplate, invalid.funcMap, nil)
 		if err == nil || !strings.Contains(err.Error(), invalid.expectedError) {
 			t.Fatalf("should have generate an error with %q, got %v", invalid.expectedError, err)
 		}
@@ -136,7 +136,7 @@ func TestGetConfiguration(t *testing.T) {
 		},
 		nil,
 	}
-	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
+	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
@@ -169,7 +169,7 @@ func TestReplace(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual := replace("foo", "bar", c.str)
+		actual := Replace("foo", "bar", c.str)
 		if actual != c.expected {
 			t.Fatalf("expected %q, got %q, for %q", c.expected, actual, c.str)
 		}
@@ -198,7 +198,7 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 		},
 		nil,
 	}
-	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
+	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
@@ -366,7 +366,7 @@ func TestDefaultFuncMap(t *testing.T) {
 		},
 		nil,
 	}
-	configuration, err := provider.getConfiguration(templateFile.Name(), nil, nil)
+	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
 	if err != nil {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}

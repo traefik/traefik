@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"sort"
+	"strings"
 )
 
 // StartupScript on Vultr account
@@ -12,6 +14,14 @@ type StartupScript struct {
 	Name    string `json:"name"`
 	Type    string `json:"type"`
 	Content string `json:"script"`
+}
+
+type startupscripts []StartupScript
+
+func (s startupscripts) Len() int      { return len(s) }
+func (s startupscripts) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s startupscripts) Less(i, j int) bool {
+	return strings.ToLower(s[i].Name) < strings.ToLower(s[j].Name)
 }
 
 // UnmarshalJSON implements json.Unmarshaller on StartupScript.
@@ -47,6 +57,7 @@ func (c *Client) GetStartupScripts() (scripts []StartupScript, err error) {
 		}
 		scripts = append(scripts, script)
 	}
+	sort.Sort(startupscripts(scripts))
 	return scripts, nil
 }
 

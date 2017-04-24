@@ -31,7 +31,7 @@ traefik*
 ###### Setting up your `go` environment
 
 - You need `go` v1.7+
-- It is recommended you clone Træfɪk into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
+- It is recommended you clone Træfik into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
 - This will allow your `GOPATH` and `PATH` variable to be set to `~/go` via:
 ```
 $ export GOPATH=~/go
@@ -67,7 +67,8 @@ $ go generate
 $ go build
 # Using gox to build multiple platform
 $ gox "linux darwin" "386 amd64 arm" \
-    -output="dist/traefik_{{.OS}}-{{.Arch}}"
+    -output="dist/traefik_{{.OS}}-{{.Arch}}" \
+    ./cmd/traefik
 # run other commands like tests
 ```
 

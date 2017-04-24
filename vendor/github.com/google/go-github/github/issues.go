@@ -6,6 +6,7 @@
 package github
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -13,7 +14,7 @@ import (
 // IssuesService handles communication with the issue related
 // methods of the GitHub API.
 //
-// GitHub API docs: http://developer.github.com/v3/issues/
+// GitHub API docs: https://developer.github.com/v3/issues/
 type IssuesService service
 
 // Issue represents a GitHub issue on a repository.
@@ -26,6 +27,7 @@ type Issue struct {
 	ID               *int              `json:"id,omitempty"`
 	Number           *int              `json:"number,omitempty"`
 	State            *string           `json:"state,omitempty"`
+	Locked           *bool             `json:"locked,omitempty"`
 	Title            *string           `json:"title,omitempty"`
 	Body             *string           `json:"body,omitempty"`
 	User             *User             `json:"user,omitempty"`
@@ -35,6 +37,7 @@ type Issue struct {
 	ClosedAt         *time.Time        `json:"closed_at,omitempty"`
 	CreatedAt        *time.Time        `json:"created_at,omitempty"`
 	UpdatedAt        *time.Time        `json:"updated_at,omitempty"`
+	ClosedBy         *User             `json:"closed_by,omitempty"`
 	URL              *string           `json:"url,omitempty"`
 	HTMLURL          *string           `json:"html_url,omitempty"`
 	Milestone        *Milestone        `json:"milestone,omitempty"`
@@ -68,22 +71,22 @@ type IssueRequest struct {
 // IssueListOptions specifies the optional parameters to the IssuesService.List
 // and IssuesService.ListByOrg methods.
 type IssueListOptions struct {
-	// Filter specifies which issues to list.  Possible values are: assigned,
-	// created, mentioned, subscribed, all.  Default is "assigned".
+	// Filter specifies which issues to list. Possible values are: assigned,
+	// created, mentioned, subscribed, all. Default is "assigned".
 	Filter string `url:"filter,omitempty"`
 
-	// State filters issues based on their state.  Possible values are: open,
-	// closed, all.  Default is "open".
+	// State filters issues based on their state. Possible values are: open,
+	// closed, all. Default is "open".
 	State string `url:"state,omitempty"`
 
 	// Labels filters issues based on their label.
 	Labels []string `url:"labels,comma,omitempty"`
 
-	// Sort specifies how to sort issues.  Possible values are: created, updated,
-	// and comments.  Default value is "created".
+	// Sort specifies how to sort issues. Possible values are: created, updated,
+	// and comments. Default value is "created".
 	Sort string `url:"sort,omitempty"`
 
-	// Direction in which to sort issues.  Possible values are: asc, desc.
+	// Direction in which to sort issues. Possible values are: asc, desc.
 	// Default is "desc".
 	Direction string `url:"direction,omitempty"`
 
@@ -102,32 +105,32 @@ type PullRequestLinks struct {
 	PatchURL *string `json:"patch_url,omitempty"`
 }
 
-// List the issues for the authenticated user.  If all is true, list issues
+// List the issues for the authenticated user. If all is true, list issues
 // across all the user's visible repositories including owned, member, and
 // organization repositories; if false, list only owned and member
 // repositories.
 //
-// GitHub API docs: http://developer.github.com/v3/issues/#list-issues
-func (s *IssuesService) List(all bool, opt *IssueListOptions) ([]*Issue, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/issues/#list-issues
+func (s *IssuesService) List(ctx context.Context, all bool, opt *IssueListOptions) ([]*Issue, *Response, error) {
 	var u string
 	if all {
 		u = "issues"
 	} else {
 		u = "user/issues"
 	}
-	return s.listIssues(u, opt)
+	return s.listIssues(ctx, u, opt)
 }
 
 // ListByOrg fetches the issues in the specified organization for the
 // authenticated user.
 //
-// GitHub API docs: http://developer.github.com/v3/issues/#list-issues
-func (s *IssuesService) ListByOrg(org string, opt *IssueListOptions) ([]*Issue, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/issues/#list-issues
+func (s *IssuesService) ListByOrg(ctx context.Context, org string, opt *IssueListOptions) ([]*Issue, *Response, error) {
 	u := fmt.Sprintf("orgs/%v/issues", org)
-	return s.listIssues(u, opt)
+	return s.listIssues(ctx, u, opt)
 }
 
-func (s *IssuesService) listIssues(u string, opt *IssueListOptions) ([]*Issue, *Response, error) {
+func (s *IssuesService) listIssues(ctx context.Context, u string, opt *IssueListOptions) ([]*Issue, *Response, error) {
 	u, err := addOptions(u, opt)
 	if err != nil {
 		return nil, nil, err
@@ -141,28 +144,28 @@ func (s *IssuesService) listIssues(u string, opt *IssueListOptions) ([]*Issue, *
 	// TODO: remove custom Accept header when this API fully launches.
 	req.Header.Set("Accept", mediaTypeReactionsPreview)
 
-	issues := new([]*Issue)
-	resp, err := s.client.Do(req, issues)
+	var issues []*Issue
+	resp, err := s.client.Do(ctx, req, &issues)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return *issues, resp, err
+	return issues, resp, nil
 }
 
 // IssueListByRepoOptions specifies the optional parameters to the
 // IssuesService.ListByRepo method.
 type IssueListByRepoOptions struct {
-	// Milestone limits issues for the specified milestone.  Possible values are
+	// Milestone limits issues for the specified milestone. Possible values are
 	// a milestone number, "none" for issues with no milestone, "*" for issues
 	// with any milestone.
 	Milestone string `url:"milestone,omitempty"`
 
-	// State filters issues based on their state.  Possible values are: open,
-	// closed, all.  Default is "open".
+	// State filters issues based on their state. Possible values are: open,
+	// closed, all. Default is "open".
 	State string `url:"state,omitempty"`
 
-	// Assignee filters issues based on their assignee.  Possible values are a
+	// Assignee filters issues based on their assignee. Possible values are a
 	// user name, "none" for issues that are not assigned, "*" for issues with
 	// any assigned user.
 	Assignee string `url:"assignee,omitempty"`
@@ -176,11 +179,11 @@ type IssueListByRepoOptions struct {
 	// Labels filters issues based on their label.
 	Labels []string `url:"labels,omitempty,comma"`
 
-	// Sort specifies how to sort issues.  Possible values are: created, updated,
-	// and comments.  Default value is "created".
+	// Sort specifies how to sort issues. Possible values are: created, updated,
+	// and comments. Default value is "created".
 	Sort string `url:"sort,omitempty"`
 
-	// Direction in which to sort issues.  Possible values are: asc, desc.
+	// Direction in which to sort issues. Possible values are: asc, desc.
 	// Default is "desc".
 	Direction string `url:"direction,omitempty"`
 
@@ -192,8 +195,8 @@ type IssueListByRepoOptions struct {
 
 // ListByRepo lists the issues for the specified repository.
 //
-// GitHub API docs: http://developer.github.com/v3/issues/#list-issues-for-a-repository
-func (s *IssuesService) ListByRepo(owner string, repo string, opt *IssueListByRepoOptions) ([]*Issue, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/issues/#list-issues-for-a-repository
+func (s *IssuesService) ListByRepo(ctx context.Context, owner string, repo string, opt *IssueListByRepoOptions) ([]*Issue, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/issues", owner, repo)
 	u, err := addOptions(u, opt)
 	if err != nil {
@@ -208,19 +211,19 @@ func (s *IssuesService) ListByRepo(owner string, repo string, opt *IssueListByRe
 	// TODO: remove custom Accept header when this API fully launches.
 	req.Header.Set("Accept", mediaTypeReactionsPreview)
 
-	issues := new([]*Issue)
-	resp, err := s.client.Do(req, issues)
+	var issues []*Issue
+	resp, err := s.client.Do(ctx, req, &issues)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return *issues, resp, err
+	return issues, resp, nil
 }
 
 // Get a single issue.
 //
-// GitHub API docs: http://developer.github.com/v3/issues/#get-a-single-issue
-func (s *IssuesService) Get(owner string, repo string, number int) (*Issue, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/issues/#get-a-single-issue
+func (s *IssuesService) Get(ctx context.Context, owner string, repo string, number int) (*Issue, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/issues/%d", owner, repo, number)
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
@@ -231,18 +234,18 @@ func (s *IssuesService) Get(owner string, repo string, number int) (*Issue, *Res
 	req.Header.Set("Accept", mediaTypeReactionsPreview)
 
 	issue := new(Issue)
-	resp, err := s.client.Do(req, issue)
+	resp, err := s.client.Do(ctx, req, issue)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return issue, resp, err
+	return issue, resp, nil
 }
 
 // Create a new issue on the specified repository.
 //
-// GitHub API docs: http://developer.github.com/v3/issues/#create-an-issue
-func (s *IssuesService) Create(owner string, repo string, issue *IssueRequest) (*Issue, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/issues/#create-an-issue
+func (s *IssuesService) Create(ctx context.Context, owner string, repo string, issue *IssueRequest) (*Issue, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/issues", owner, repo)
 	req, err := s.client.NewRequest("POST", u, issue)
 	if err != nil {
@@ -250,18 +253,18 @@ func (s *IssuesService) Create(owner string, repo string, issue *IssueRequest) (
 	}
 
 	i := new(Issue)
-	resp, err := s.client.Do(req, i)
+	resp, err := s.client.Do(ctx, req, i)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return i, resp, err
+	return i, resp, nil
 }
 
 // Edit an issue.
 //
-// GitHub API docs: http://developer.github.com/v3/issues/#edit-an-issue
-func (s *IssuesService) Edit(owner string, repo string, number int, issue *IssueRequest) (*Issue, *Response, error) {
+// GitHub API docs: https://developer.github.com/v3/issues/#edit-an-issue
+func (s *IssuesService) Edit(ctx context.Context, owner string, repo string, number int, issue *IssueRequest) (*Issue, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/issues/%d", owner, repo, number)
 	req, err := s.client.NewRequest("PATCH", u, issue)
 	if err != nil {
@@ -269,36 +272,36 @@ func (s *IssuesService) Edit(owner string, repo string, number int, issue *Issue
 	}
 
 	i := new(Issue)
-	resp, err := s.client.Do(req, i)
+	resp, err := s.client.Do(ctx, req, i)
 	if err != nil {
 		return nil, resp, err
 	}
 
-	return i, resp, err
+	return i, resp, nil
 }
 
 // Lock an issue's conversation.
 //
 // GitHub API docs: https://developer.github.com/v3/issues/#lock-an-issue
-func (s *IssuesService) Lock(owner string, repo string, number int) (*Response, error) {
+func (s *IssuesService) Lock(ctx context.Context, owner string, repo string, number int) (*Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/issues/%d/lock", owner, repo, number)
 	req, err := s.client.NewRequest("PUT", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.client.Do(req, nil)
+	return s.client.Do(ctx, req, nil)
 }
 
 // Unlock an issue's conversation.
 //
 // GitHub API docs: https://developer.github.com/v3/issues/#unlock-an-issue
-func (s *IssuesService) Unlock(owner string, repo string, number int) (*Response, error) {
+func (s *IssuesService) Unlock(ctx context.Context, owner string, repo string, number int) (*Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/issues/%d/lock", owner, repo, number)
 	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.client.Do(req, nil)
+	return s.client.Do(ctx, req, nil)
 }

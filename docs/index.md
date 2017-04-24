@@ -1,5 +1,5 @@
 <p align="center">
-<img src="img/traefik.logo.png" alt="Træfɪk" title="Træfɪk" />
+<img src="img/traefik.logo.png" alt="Træfik" title="Træfik" />
 </p>
 
 [![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
@@ -10,7 +10,7 @@
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
 
 
-Træfɪk is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
+Træfik (pronounced like [traffic](https://speak-ipa.bearbin.net/speak.cgi?speak=%CB%88tr%C3%A6f%C9%AAk)) is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
 It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), [Amazon ECS](https://aws.amazon.com/ecs/), [Amazon DynamoDB](https://aws.amazon.com/dynamodb/), Rest API, file...) to manage its configuration automatically and dynamically.
 
 ## Overview
@@ -26,11 +26,11 @@ But a microservices architecture is dynamic... Services are added, removed, kill
 
 Traditional reverse-proxies are not natively dynamic. You can't change their configuration and hot-reload easily.
 
-Here enters Træfɪk.
+Here enters Træfik.
 
 ![Architecture](img/architecture.png)
 
-Træfɪk can listen to your service registry/orchestrator API, and knows each time a microservice is added, removed, killed or upgraded, and can generate its configuration automatically.
+Træfik can listen to your service registry/orchestrator API, and knows each time a microservice is added, removed, killed or upgraded, and can generate its configuration automatically.
 Routes to your services will be created instantly.
 
 Run it and forget it!
@@ -38,15 +38,15 @@ Run it and forget it!
 
 ## Quickstart
 
-You can have a quick look at Træfɪk in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
+You can have a quick look at Træfik in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
 
 Here is a talk given by [Ed Robinson](https://github.com/errm) at the [ContainerCamp UK](https://container.camp) conference.
-You will learn fundamental Træfɪk features and see some demos with Kubernetes.
+You will learn fundamental Træfik features and see some demos with Kubernetes.
 
 [![Traefik ContainerCamp UK](http://img.youtube.com/vi/aFtpIShV60I/0.jpg)](https://www.youtube.com/watch?v=aFtpIShV60I)
 
 Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
-You will learn fundamental Træfɪk features and see some demos with Docker, Mesos/Marathon and Let's Encrypt. 
+You will learn fundamental Træfik features and see some demos with Docker, Mesos/Marathon and Let's Encrypt. 
 
 [![Traefik Devoxx France](http://img.youtube.com/vi/QvAz9mVx5TI/0.jpg)](http://www.youtube.com/watch?v=QvAz9mVx5TI)
 
@@ -70,7 +70,7 @@ docker run -d -p 8080:8080 -p 80:80 -v $PWD/traefik.toml:/etc/traefik/traefik.to
 
 ## Test it
 
-You can test Træfɪk easily using [Docker compose](https://docs.docker.com/compose), with this `docker-compose.yml` file in a folder named `traefik`:
+You can test Træfik easily using [Docker compose](https://docs.docker.com/compose), with this `docker-compose.yml` file in a folder named `traefik`:
 
 ```yaml
 version: '2'
@@ -97,7 +97,7 @@ Start it from within the `traefik` folder:
 
     docker-compose up -d
 
-In a browser you may open `http://localhost:8080` to access Træfɪk's dashboard and observe the following magic.
+In a browser you may open `http://localhost:8080` to access Træfik's dashboard and observe the following magic.
 
 Now, create a folder named `test` and create a `docker-compose.yml` in it with this content:
 

@@ -38,6 +38,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -204,6 +205,7 @@ func readRandomUint32() uint32 {
 // machineId stores machine id generated once and used in subsequent calls
 // to NewObjectId function.
 var machineId = readMachineId()
+var processId = os.Getpid()
 
 // readMachineId generates and returns a machine id.
 // If this function fails to get the hostname it will cause a runtime error.
@@ -234,9 +236,8 @@ func NewObjectId() ObjectId {
 	b[5] = machineId[1]
 	b[6] = machineId[2]
 	// Pid, 2 bytes, specs don't specify endianness, but we use big endian.
-	pid := os.Getpid()
-	b[7] = byte(pid >> 8)
-	b[8] = byte(pid)
+	b[7] = byte(processId >> 8)
+	b[8] = byte(processId)
 	// Increment, 3 bytes, big endian
 	i := atomic.AddUint32(&objectIdCounter, 1)
 	b[9] = byte(i >> 16)
@@ -276,6 +277,22 @@ var nullBytes = []byte("null")
 
 // UnmarshalJSON turns *bson.ObjectId into a json.Unmarshaller.
 func (id *ObjectId) UnmarshalJSON(data []byte) error {
+	if len(data) > 0 && (data[0] == '{' || data[0] == 'O') {
+		var v struct {
+			Id json.RawMessage `json:"$oid"`
+			Func struct {
+				Id json.RawMessage
+			} `json:"$oidFunc"`
+		}
+		err := jdec(data, &v)
+		if err == nil {
+			if len(v.Id) > 0 {
+				data = []byte(v.Id)
+			} else {
+				data = []byte(v.Func.Id)
+			}
+		}
+	}
 	if len(data) == 2 && data[0] == '"' && data[1] == '"' || bytes.Equal(data, nullBytes) {
 		*id = ""
 		return nil

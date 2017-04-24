@@ -13,12 +13,12 @@ Let's take our example from the [overview](https://docs.traefik.io/#overview) ag
 
 > ![Architecture](img/architecture.png)
 
-Let's zoom on Træfɪk and have an overview of its internal architecture:
+Let's zoom on Træfik and have an overview of its internal architecture:
 
 
 ![Architecture](img/internal.png)
 
-- Incoming requests end on [entrypoints](#entrypoints), as the name suggests, they are the network entry points into Træfɪk (listening port, SSL, traffic redirection...).
+- Incoming requests end on [entrypoints](#entrypoints), as the name suggests, they are the network entry points into Træfik (listening port, SSL, traffic redirection...).
 - Traffic is then forwarded to a matching [frontend](#frontends). A frontend defines routes from [entrypoints](#entrypoints) to [backends](#backends).
 Routes are created using requests fields (`Host`, `Path`, `Headers`...) and can match or not a request.
 - The [frontend](#frontends) will then send the request to a [backend](#backends). A backend can be composed by one or more [servers](#servers), and by a load-balancing strategy.
@@ -26,7 +26,7 @@ Routes are created using requests fields (`Host`, `Path`, `Headers`...) and can 
 
 ## Entrypoints
 
-Entrypoints are the network entry points into Træfɪk.
+Entrypoints are the network entry points into Træfik.
 They can be defined using:
 
 - a port (80, 443...)
@@ -73,28 +73,58 @@ And here is another example with client certificate authentication:
 
 ## Frontends
 
-A frontend is a set of rules that forwards the incoming traffic from an entrypoint to a backend.
-Frontends can be defined using the following rules:
+A frontend consists of a set of rules that determine how incoming requests are forwarded from an entrypoint to a backend.
 
-- `Headers: Content-Type, application/json`: Headers adds a matcher for request header values. It accepts a sequence of key/value pairs to be matched.
-- `HeadersRegexp: Content-Type, application/(text|json)`: Regular expressions can be used with headers as well. It accepts a sequence of key/value pairs, where the value has regex support.
-- `Host: traefik.io, www.traefik.io`: Match request host with given host list.
-- `HostRegexp: traefik.io, {subdomain:[a-z]+}.traefik.io`: Adds a matcher for the URL hosts. It accepts templates with zero or more URL variables enclosed by `{}`. Variables can define an optional regexp pattern to be matched.
-- `Method: GET, POST, PUT`: Method adds a matcher for HTTP methods. It accepts a sequence of one or more methods to be matched.
-- `Path: /products/, /articles/{category}/{id:[0-9]+}`: Path adds a matcher for the URL paths. It accepts templates with zero or more URL variables enclosed by `{}`.
-- `PathStrip`: Same as `Path` but strip the given prefix from the request URL's Path.
-- `PathPrefix`: PathPrefix adds a matcher for the URL path prefixes. This matches if the given template is a prefix of the full URL path.
-- `PathPrefixStrip`: Same as `PathPrefix` but strip the given prefix from the request URL's Path.
-- `AddPrefix`: Add prefix to the request URL's Path.
+Rules may be classified in one of two groups: Modifiers and matchers.
 
-You can use multiple values for a rule by separating them with `,`.
-You can use multiple rules by separating them by `;`.
+### Modifiers
+
+Modifier rules only modify the request. They do not have any impact on routing decisions being made.
+
+Following is the list of existing modifier rules:
+
+- `AddPrefix: /products`: Add path prefix to the existing request path prior to forwarding the request to the backend.
+
+### Matchers
+
+Matcher rules determine if a particular request should be forwarded to a backend.
+
+Separate multiple rule values by `,` (comma) in order to enable ANY semantics (i.e., forward a request if any rule matches). Does not work for `Headers` and `HeadersRegexp`.
+
+Separate multiple rule values by `;` (semicolon) in order to enable ALL semantics (i.e., forward a request if all rules match).
 
 You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
 
-In order to use path regular expressions, you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces. Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used. Example: `/posts/{id:[0-9]+}`.
+Following is the list of existing matcher rules along with examples:
 
-(Note that the variable has no special meaning; however, it is required by gorilla/mux which embeds the regular expression and defines the syntax.)
+- `Headers: Content-Type, application/json`: Match HTTP header. It accepts a comma-separated key/value pair where both key and value must be literals.
+- `HeadersRegexp: Content-Type, application/(text|json)`: Match HTTP header. It accepts a comma-separated key/value pair where the key must be a literal and the value may be a literal or a regular expression.
+- `Host: traefik.io, www.traefik.io`: Match request host. It accepts a sequence of literal hosts.
+- `HostRegexp: traefik.io, {subdomain:[a-z]+}.traefik.io`: Match request host. It accepts a sequence of literal and regular expression hosts.
+- `Method: GET, POST, PUT`: Match request HTTP method. It accepts a sequence of HTTP methods.
+- `Path: /products/, /articles/{category}/{id:[0-9]+}`: Match exact request path. It accepts a sequence of literal and regular expression paths.
+- `PathStrip: /products/, /articles/{category}/{id:[0-9]+}`: Match exact path and strip off the path prior to forwarding the request to the backend. It accepts a sequence of literal and regular expression paths.
+- `PathPrefix: /products/, /articles/{category}/{id:[0-9]+}`: Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.
+- `PathPrefixStrip: /products/, /articles/{category}/{id:[0-9]+}`: Match request prefix path and strip off the path prefix prior to forwarding the request to the backend. It accepts a sequence of literal and regular expression prefix paths. Starting with Traefik 1.3, the stripped prefix path will be available in the `X-Forwarded-Prefix` header.
+
+In order to use regular expressions with Host and Path matchers, you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces. Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used. Example: `/posts/{id:[0-9]+}`.
+
+(Note that the variable has no special meaning; however, it is required by the gorilla/mux dependency which embeds the regular expression and defines the syntax.)
+
+#### Path Matcher Usage Guidelines
+
+This section explains when to use the various path matchers.
+
+Use `Path` if your backend listens on the exact path only. For instance, `Path: /products` would match `/products` but not `/products/shoes`.
+
+Use a `*Prefix*` matcher if your backend listens on a particular base path but also serves requests on sub-paths. For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`. Since the path is forwarded as-is, your backend is expected to listen on `/products`.
+
+Use a `*Strip` matcher if your backend listens on the root path (`/`) but should be routeable on a specific prefix. For instance, `PathPrefixStrip: /products` would match `/products` but also `/products/shoes` and `/products/shirts`. Since the path is stripped prior to forwarding, your backend is expected to listen on `/`.
+If your backend is serving assets (e.g., images or Javascript files), chances are it must return properly constructed relative URLs. Continuing on the example, the backend should return `/products/shoes/image.png` (and not `/images.png` which Traefik would likely not be able to associate with the same backend). The `X-Forwarded-Prefix` header (available since Traefik 1.3) can be queried to build such URLs dynamically.
+
+Instead of distinguishing your backends by path only, you can add a Host matcher to the mix. That way, namespacing of your backends happens on the basis of hosts in addition to paths.
+
+### Examples
 
 Here is an example of frontends definition:
 
@@ -240,16 +270,22 @@ For example:
       sticky = true
 ```
 
-Healthcheck URL can be configured with a relative URL for `healthcheck.URL`.
-Interval between healthcheck can be configured by using `healthcheck.interval`
-(default: 30s)
+A health check can be configured in order to remove a backend from LB rotation
+as long as it keeps returning HTTP status codes other than 200 OK to HTTP GET
+requests periodically carried out by Traefik. The check is defined by a path
+appended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how
+often the health check should be executed (the default being 30 seconds). Each
+backend must respond to the health check within 5 seconds.
+
+A recovering backend returning 200 OK responses again is being returned to the
+LB rotation pool.
 
 For example:
 ```toml
 [backends]
   [backends.backend1]
     [backends.backend1.healthcheck]
-      URL = "/health"
+      path = "/health"
       interval = "10s"
 ```
 
@@ -288,17 +324,17 @@ Here is an example of backends and servers definition:
 
 # Configuration
 
-Træfɪk's configuration has two parts: 
+Træfik's configuration has two parts: 
 
-- The [static Træfɪk configuration](/basics#static-trfk-configuration) which is loaded only at the beginning. 
-- The [dynamic Træfɪk configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
+- The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning. 
+- The [dynamic Træfik configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
 
 
-## Static Træfɪk configuration
+## Static Træfik configuration
 
 The static configuration is the global configuration which is setting up connections to configuration backends and entrypoints. 
 
-Træfɪk can be configured using many configuration sources with the following precedence order. 
+Træfik can be configured using many configuration sources with the following precedence order. 
 Each item takes precedence over the item below it:
 
 - [Key-value Store](/basics/#key-value-stores)
@@ -310,7 +346,7 @@ It means that arguments override configuration file, and Key-value Store overrid
 
 ### Configuration file
 
-By default, Træfɪk will try to find a `traefik.toml` in the following places:
+By default, Træfik will try to find a `traefik.toml` in the following places:
 
 - `/etc/traefik/`
 - `$HOME/.traefik/`
@@ -336,7 +372,7 @@ Note that all default values will be displayed as well.
 
 ### Key-value stores
 
-Træfɪk supports several Key-value stores:
+Træfik supports several Key-value stores:
 
 - [Consul](https://consul.io)
 - [etcd](https://coreos.com/etcd/)
@@ -345,7 +381,7 @@ Træfɪk supports several Key-value stores:
 
 Please refer to the [User Guide Key-value store configuration](/user-guide/kv-config/) section to get documentation on it.
 
-## Dynamic Træfɪk configuration
+## Dynamic Træfik configuration
 
 The dynamic configuration concerns : 
 
@@ -353,9 +389,9 @@ The dynamic configuration concerns :
 - [Backends](/basics/#backends) 
 - [Servers](/basics/#servers) 
 
-Træfɪk can hot-reload those rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
+Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
 
-We only need to enable `watch` option to make Træfɪk watch configuration backend changes and generate its configuration automatically.
+We only need to enable `watch` option to make Træfik watch configuration backend changes and generate its configuration automatically.
 Routes to services will be created and updated instantly at any changes.
 
 Please refer to the [configuration backends](/toml/#configuration-backends) section to get documentation on it.
@@ -364,10 +400,10 @@ Please refer to the [configuration backends](/toml/#configuration-backends) sect
 
 Usage: `traefik [command] [--flag=flag_argument]`
 
-List of Træfɪk available commands with description :                                                             
+List of Træfik available commands with description :                                                             
 
 - `version` : Print version 
-- `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfɪk configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
+- `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
 
 Each command may have related flags. 
 All those related flags will be displayed with :

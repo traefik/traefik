@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"syscall"
 
@@ -83,6 +84,14 @@ using the runc checkpoint command.`,
 		},
 	},
 	Action: func(context *cli.Context) error {
+		if err := checkArgs(context, 1, exactArgs); err != nil {
+			return err
+		}
+		// XXX: Currently this is untested with rootless containers.
+		if isRootless() {
+			return fmt.Errorf("runc restore requires root")
+		}
+
 		imagePath := context.String("image-path")
 		id := context.Args().First()
 		if id == "" {
@@ -147,7 +156,7 @@ func restoreContainer(context *cli.Context, spec *specs.Spec, config *configs.Co
 
 	setManageCgroupsMode(context, options)
 
-	if err := setEmptyNsMask(context, options); err != nil {
+	if err = setEmptyNsMask(context, options); err != nil {
 		return -1, err
 	}
 
@@ -158,29 +167,34 @@ func restoreContainer(context *cli.Context, spec *specs.Spec, config *configs.Co
 		defer destroy(container)
 	}
 	process := &libcontainer.Process{}
-	tty, err := setupIO(process, rootuid, rootgid, "", false, detach)
+	tty, err := setupIO(process, rootuid, rootgid, false, detach, "")
 	if err != nil {
 		return -1, err
 	}
-	defer tty.Close()
-	handler := newSignalHandler(tty, !context.Bool("no-subreaper"))
+
+	notifySocket := newNotifySocket(context, os.Getenv("NOTIFY_SOCKET"), id)
+	if notifySocket != nil {
+		notifySocket.setupSpec(context, spec)
+		notifySocket.setupSocket()
+	}
+
+	handler := newSignalHandler(!context.Bool("no-subreaper"), notifySocket)
 	if err := container.Restore(process, options); err != nil {
 		return -1, err
 	}
+	// We don't need to do a tty.recvtty because config.Terminal is always false.
+	defer tty.Close()
 	if err := tty.ClosePostStart(); err != nil {
 		return -1, err
 	}
 	if pidFile := context.String("pid-file"); pidFile != "" {
 		if err := createPidFile(pidFile, process); err != nil {
-			process.Signal(syscall.SIGKILL)
-			process.Wait()
+			_ = process.Signal(syscall.SIGKILL)
+			_, _ = process.Wait()
 			return -1, err
 		}
 	}
-	if detach {
-		return 0, nil
-	}
-	return handler.forward(process)
+	return handler.forward(process, tty, detach)
 }
 
 func criuOptions(context *cli.Context) *libcontainer.CriuOpts {
@@ -191,10 +205,12 @@ func criuOptions(context *cli.Context) *libcontainer.CriuOpts {
 	return &libcontainer.CriuOpts{
 		ImagesDirectory:         imagePath,
 		WorkDirectory:           context.String("work-path"),
+		ParentImage:             context.String("parent-path"),
 		LeaveRunning:            context.Bool("leave-running"),
 		TcpEstablished:          context.Bool("tcp-established"),
 		ExternalUnixConnections: context.Bool("ext-unix-sk"),
 		ShellJob:                context.Bool("shell-job"),
 		FileLocks:               context.Bool("file-locks"),
+		PreDump:                 context.Bool("pre-dump"),
 	}
 }

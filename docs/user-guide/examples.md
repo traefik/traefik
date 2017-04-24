@@ -1,7 +1,7 @@
 
 # Examples
 
-You will find here some configuration examples of Træfɪk.
+You will find here some configuration examples of Træfik.
 
 ## HTTP only
 

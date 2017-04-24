@@ -1,26 +1,25 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
+	"strings"
+	"sync"
 	"time"
 
-	"context"
 	"github.com/containous/staert"
+	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/integration/utils"
+	"github.com/containous/traefik/provider"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/consul"
 	"github.com/go-check/check"
-
-	"errors"
-	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/integration/utils"
-	"github.com/containous/traefik/provider"
 	checker "github.com/vdemeester/shakers"
-	"io/ioutil"
-	"os"
-	"strings"
-	"sync"
 )
 
 // Consul test suites (using libcompose)

@@ -15,7 +15,7 @@ import (
 var singleton *HealthCheck
 var once sync.Once
 
-// GetHealthCheck Get HealtchCheck Singleton
+// GetHealthCheck returns the health check which is guaranteed to be a singleton.
 func GetHealthCheck() *HealthCheck {
 	once.Do(func() {
 		singleton = newHealthCheck()
@@ -25,7 +25,7 @@ func GetHealthCheck() *HealthCheck {
 
 // BackendHealthCheck HealthCheck configuration for a backend
 type BackendHealthCheck struct {
-	URL            string
+	Path           string
 	Interval       time.Duration
 	DisabledURLs   []*url.URL
 	requestTimeout time.Duration
@@ -53,9 +53,9 @@ func newHealthCheck() *HealthCheck {
 }
 
 // NewBackendHealthCheck Instantiate a new BackendHealthCheck
-func NewBackendHealthCheck(URL string, interval time.Duration, lb loadBalancer) *BackendHealthCheck {
+func NewBackendHealthCheck(Path string, interval time.Duration, lb loadBalancer) *BackendHealthCheck {
 	return &BackendHealthCheck{
-		URL:            URL,
+		Path:           Path,
 		Interval:       interval,
 		requestTimeout: 5 * time.Second,
 		lb:             lb,
@@ -124,7 +124,7 @@ func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) bool {
 	client := http.Client{
 		Timeout: backend.requestTimeout,
 	}
-	resp, err := client.Get(serverURL.String() + backend.URL)
+	resp, err := client.Get(serverURL.String() + backend.Path)
 	if err == nil {
 		defer resp.Body.Close()
 	}

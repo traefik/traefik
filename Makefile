@@ -8,7 +8,7 @@ TRAEFIK_ENVS := \
 	-e VERSION \
 	-e CODENAME
 
-SRCS = $(shell git ls-files '*.go' | grep -v '^external/')
+SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/' | grep -v '^integration/vendor/')
 
 BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"
@@ -82,5 +82,11 @@ lint:
 
 fmt:
 	gofmt -s -l -w $(SRCS)
+
+pull-images:
+	for f in $(shell find ./integration/resources/compose/ -type f); do \
+		docker-compose -f $$f pull; \
+	done
+
 help: ## this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
