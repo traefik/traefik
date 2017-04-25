@@ -65,6 +65,7 @@ type serverRoute struct {
 	route         *mux.Route
 	stripPrefixes []string
 	addPrefix     string
+	replacePath   string
 }
 
 // NewServer returns an initialized Server.
@@ -803,6 +804,14 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 		handler = &middlewares.StripPrefix{
 			Prefixes: serverRoute.stripPrefixes,
 			Handler:  handler,
+		}
+	}
+
+	// path replace
+	if len(serverRoute.replacePath) > 0 {
+		handler = &middlewares.ReplacePath{
+			Path:    serverRoute.replacePath,
+			Handler: handler,
 		}
 	}
 

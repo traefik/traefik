@@ -75,6 +75,13 @@ func (r *Rules) pathStrip(paths ...string) *mux.Route {
 	return r.route.route
 }
 
+func (r *Rules) replacePath(paths ...string) *mux.Route {
+	for _, path := range paths {
+		r.route.replacePath = path
+	}
+	return r.route.route
+}
+
 func (r *Rules) addPrefix(paths ...string) *mux.Route {
 	for _, path := range paths {
 		r.route.addPrefix = path
@@ -116,6 +123,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		"Headers":         r.headers,
 		"HeadersRegexp":   r.headersRegexp,
 		"AddPrefix":       r.addPrefix,
+		"ReplacePath":     r.replacePath,
 	}
 
 	if len(expression) == 0 {
