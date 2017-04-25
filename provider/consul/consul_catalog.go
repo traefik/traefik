@@ -22,8 +22,6 @@ import (
 const (
 	// DefaultWatchWaitTime is the duration to wait when polling consul
 	DefaultWatchWaitTime = 15 * time.Second
-	// DefaultConsulCatalogTagPrefix is a prefix for additional service/node configurations
-	DefaultConsulCatalogTagPrefix = "traefik"
 )
 
 var _ provider.Provider = (*CatalogProvider)(nil)
@@ -33,8 +31,8 @@ type CatalogProvider struct {
 	provider.BaseProvider `mapstructure:",squash"`
 	Endpoint              string `description:"Consul server endpoint"`
 	Domain                string `description:"Default domain used"`
+	Prefix                string `description:"Prefix used for Consul catalog tags"`
 	client                *api.Client
-	Prefix                string
 }
 
 type serviceUpdate struct {
@@ -190,8 +188,8 @@ func (p *CatalogProvider) getBackendName(node *api.ServiceEntry, index int) stri
 
 func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {
 	for _, tag := range tags {
-		if strings.Index(strings.ToLower(tag), DefaultConsulCatalogTagPrefix+".") == 0 {
-			if kv := strings.SplitN(tag[len(DefaultConsulCatalogTagPrefix+"."):], "=", 2); len(kv) == 2 && strings.ToLower(kv[0]) == strings.ToLower(name) {
+		if strings.Index(strings.ToLower(tag), p.Prefix+".") == 0 {
+			if kv := strings.SplitN(tag[len(p.Prefix+"."):], "=", 2); len(kv) == 2 && strings.ToLower(kv[0]) == strings.ToLower(name) {
 				return kv[1]
 			}
 		}
@@ -203,8 +201,8 @@ func (p *CatalogProvider) getContraintTags(tags []string) []string {
 	var list []string
 
 	for _, tag := range tags {
-		if strings.Index(strings.ToLower(tag), DefaultConsulCatalogTagPrefix+".tags=") == 0 {
-			splitedTags := strings.Split(tag[len(DefaultConsulCatalogTagPrefix+".tags="):], ",")
+		if strings.Index(strings.ToLower(tag), p.Prefix+".tags=") == 0 {
+			splitedTags := strings.Split(tag[len(p.Prefix+".tags="):], ",")
 			list = append(list, splitedTags...)
 		}
 	}
