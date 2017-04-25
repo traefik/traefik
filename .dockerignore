@@ -1,2 +1,3 @@
 dist/
+!dist/traefik
 site/
