@@ -16,26 +16,51 @@ import (
 
 var (
 	bugtracker  = "https://github.com/containous/traefik/issues/new"
-	bugTemplate = `### What version of Traefik are you using?
-` + "```" + `
-{{.Version}}
-` + "```" + `
+	bugTemplate = `<!--
+How to write a good issue?
 
-### What is your environment & configuration (arguments, toml...)?
-` + "```" + `
-{{.Configuration}}
-` + "```" + `
+Read https://github.com/containous/traefik/blob/master/.github/how-to-write-a-good-issue.md
+
+And the contributing guide: https://github.com/containous/traefik/blob/master/.github/CONTRIBUTING.md
+-->
+
+### Do you want to request a *feature* or report a *bug*?
+
 
 ### What did you do?
+
 
 
 ### What did you expect to see?
 
 
+
 ### What did you see instead?
 
 
-### If applicable, please paste the log output in debug mode ('--debug' switch)
+
+### Output of ` + "`" + `traefik version` + "`" + `: (_What version of Traefik are you using?_)
+
+` + "```" + `
+{{.Version}}
+` + "```" + `
+
+### What is your environment & configuration (arguments, toml, provider, platform, ...)?
+
+` + "```" + `toml
+{{.Configuration}}
+` + "```" + `
+
+<!--
+Add more configuration information here.
+-->
+
+### If applicable, please paste the log output in debug mode (` + "`" + `--debug` + "`" + ` switch)
+
+` + "```" + `
+(paste your output here)
+` + "```" + `
+
 `
 )
 
@@ -78,8 +103,8 @@ func newBugCmd(traefikConfiguration interface{}, traefikPointersConfiguration in
 			}
 
 			body := bug.String()
-			url := bugtracker + "?body=" + url.QueryEscape(body)
-			if err := openBrowser(url); err != nil {
+			URL := bugtracker + "?body=" + url.QueryEscape(body)
+			if err := openBrowser(URL); err != nil {
 				fmt.Print("Please file a new issue at " + bugtracker + " using this template:\n\n")
 				fmt.Print(body)
 			}
@@ -92,15 +117,15 @@ func newBugCmd(traefikConfiguration interface{}, traefikPointersConfiguration in
 	}
 }
 
-func openBrowser(url string) error {
+func openBrowser(URL string) error {
 	var err error
 	switch runtime.GOOS {
 	case "linux":
-		err = exec.Command("xdg-open", url).Start()
+		err = exec.Command("xdg-open", URL).Start()
 	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", URL).Start()
 	case "darwin":
-		err = exec.Command("open", url).Start()
+		err = exec.Command("open", URL).Start()
 	default:
 		err = fmt.Errorf("unsupported platform")
 	}

@@ -33,7 +33,7 @@ traefik*
 - You need `go` v1.7+
 - It is recommended you clone Træfik into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
 - This will allow your `GOPATH` and `PATH` variable to be set to `~/go` via:
-```
+```bash
 $ export GOPATH=~/go
 $ export PATH=$PATH:$GOPATH/bin
 ```
@@ -95,7 +95,7 @@ Test success
 ```
 
 For development purposes, you can specify which tests to run by using:
-```
+```bash
 # Run every tests in the MyTest suite
 TESTFLAGS="-check.f MyTestSuite" make test-integration
 
@@ -124,7 +124,7 @@ The [documentation site](http://docs.traefik.io/) is built with [mkdocs](http://
 
 First make sure you have python and pip installed
 
-```
+```shell
 $ python --version
 Python 2.7.2
 $ pip --version
@@ -133,13 +133,13 @@ pip 1.5.2
 
 Then install mkdocs with pip
 
-```
+```shell
 $ pip install mkdocs
 ```
 
 To test documentation locally run `mkdocs serve` in the root directory, this should start a server locally to preview your changes.
 
-```
+```shell
 $ mkdocs serve
 INFO    -  Building documentation...
 WARNING -  Config value: 'theme'. Warning: The theme 'united' will be removed in an upcoming MkDocs release. See http://www.mkdocs.org/about/release-notes/ for more details
