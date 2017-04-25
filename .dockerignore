@@ -1,3 +1,2 @@
-/dist/
-!/dist/traefik
-/site/
+dist/
+site/

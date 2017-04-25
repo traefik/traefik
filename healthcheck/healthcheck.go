@@ -15,7 +15,7 @@ import (
 var singleton *HealthCheck
 var once sync.Once
 
-// GetHealthCheck Get HealtchCheck Singleton
+// GetHealthCheck returns the health check which is guaranteed to be a singleton.
 func GetHealthCheck() *HealthCheck {
 	once.Do(func() {
 		singleton = newHealthCheck()
