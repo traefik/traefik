@@ -6,7 +6,8 @@ TRAEFIK_ENVS := \
 	-e TESTFLAGS \
 	-e VERBOSE \
 	-e VERSION \
-	-e CODENAME
+	-e CODENAME \
+	-e TESTDIRS
 
 SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/' | grep -v '^integration/vendor/')
 
