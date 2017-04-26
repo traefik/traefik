@@ -13,12 +13,12 @@ Let's take our example from the [overview](https://docs.traefik.io/#overview) ag
 
 > ![Architecture](img/architecture.png)
 
-Let's zoom on Træfɪk and have an overview of its internal architecture:
+Let's zoom on Træfik and have an overview of its internal architecture:
 
 
 ![Architecture](img/internal.png)
 
-- Incoming requests end on [entrypoints](#entrypoints), as the name suggests, they are the network entry points into Træfɪk (listening port, SSL, traffic redirection...).
+- Incoming requests end on [entrypoints](#entrypoints), as the name suggests, they are the network entry points into Træfik (listening port, SSL, traffic redirection...).
 - Traffic is then forwarded to a matching [frontend](#frontends). A frontend defines routes from [entrypoints](#entrypoints) to [backends](#backends).
 Routes are created using requests fields (`Host`, `Path`, `Headers`...) and can match or not a request.
 - The [frontend](#frontends) will then send the request to a [backend](#backends). A backend can be composed by one or more [servers](#servers), and by a load-balancing strategy.
@@ -26,7 +26,7 @@ Routes are created using requests fields (`Host`, `Path`, `Headers`...) and can 
 
 ## Entrypoints
 
-Entrypoints are the network entry points into Træfɪk.
+Entrypoints are the network entry points into Træfik.
 They can be defined using:
 
 - a port (80, 443...)
@@ -324,17 +324,17 @@ Here is an example of backends and servers definition:
 
 # Configuration
 
-Træfɪk's configuration has two parts: 
+Træfik's configuration has two parts: 
 
-- The [static Træfɪk configuration](/basics#static-trfk-configuration) which is loaded only at the beginning. 
-- The [dynamic Træfɪk configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
+- The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning. 
+- The [dynamic Træfik configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
 
 
-## Static Træfɪk configuration
+## Static Træfik configuration
 
 The static configuration is the global configuration which is setting up connections to configuration backends and entrypoints. 
 
-Træfɪk can be configured using many configuration sources with the following precedence order. 
+Træfik can be configured using many configuration sources with the following precedence order. 
 Each item takes precedence over the item below it:
 
 - [Key-value Store](/basics/#key-value-stores)
@@ -346,7 +346,7 @@ It means that arguments override configuration file, and Key-value Store overrid
 
 ### Configuration file
 
-By default, Træfɪk will try to find a `traefik.toml` in the following places:
+By default, Træfik will try to find a `traefik.toml` in the following places:
 
 - `/etc/traefik/`
 - `$HOME/.traefik/`
@@ -372,7 +372,7 @@ Note that all default values will be displayed as well.
 
 ### Key-value stores
 
-Træfɪk supports several Key-value stores:
+Træfik supports several Key-value stores:
 
 - [Consul](https://consul.io)
 - [etcd](https://coreos.com/etcd/)
@@ -381,7 +381,7 @@ Træfɪk supports several Key-value stores:
 
 Please refer to the [User Guide Key-value store configuration](/user-guide/kv-config/) section to get documentation on it.
 
-## Dynamic Træfɪk configuration
+## Dynamic Træfik configuration
 
 The dynamic configuration concerns : 
 
@@ -389,9 +389,9 @@ The dynamic configuration concerns :
 - [Backends](/basics/#backends) 
 - [Servers](/basics/#servers) 
 
-Træfɪk can hot-reload those rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
+Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
 
-We only need to enable `watch` option to make Træfɪk watch configuration backend changes and generate its configuration automatically.
+We only need to enable `watch` option to make Træfik watch configuration backend changes and generate its configuration automatically.
 Routes to services will be created and updated instantly at any changes.
 
 Please refer to the [configuration backends](/toml/#configuration-backends) section to get documentation on it.
@@ -400,10 +400,10 @@ Please refer to the [configuration backends](/toml/#configuration-backends) sect
 
 Usage: `traefik [command] [--flag=flag_argument]`
 
-List of Træfɪk available commands with description :                                                             
+List of Træfik available commands with description :                                                             
 
 - `version` : Print version 
-- `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfɪk configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
+- `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
 
 Each command may have related flags. 
 All those related flags will be displayed with :

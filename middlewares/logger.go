@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/middlewares/common"
+	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/streamrail/concurrent-map"
 )
 
@@ -97,6 +98,13 @@ func (l *Logger) Close() {
 	if l.file != nil {
 		l.file.Close()
 	}
+
+	next := l.Next()
+	if next != nil {
+		if c, ok := next.(common.Middleware); ok {
+			c.Close()
+		}
+	}
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time
@@ -129,8 +137,9 @@ func (fblh frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req 
 	referer := req.Referer()
 	agent := req.UserAgent()
 
-	frontend := strings.TrimPrefix(infoRw.GetFrontend(), "frontend-")
-	backend := infoRw.GetBackend()
+	logTable := accesslog.GetLogDataTable(req)
+	frontend := logTable.Core[accesslog.FrontendName]
+	backend := logTable.Core[accesslog.BackendURL]
 	status := infoRw.GetStatus()
 	size := infoRw.GetSize()
 

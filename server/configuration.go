@@ -385,6 +385,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultConsulCatalog consul.CatalogProvider
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
 	defaultConsulCatalog.Constraints = types.Constraints{}
+	defaultConsulCatalog.Prefix = "traefik"
 
 	// default Etcd
 	var defaultEtcd etcd.Provider

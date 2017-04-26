@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/middlewares/common"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/stretchr/testify/assert"
@@ -67,7 +69,15 @@ func TestLogger(t *testing.T) {
 		},
 	}
 
-	logger.ServeHTTP(&logtestResponseWriter{}, r)
+	// Temporary - until new access logger is fully implemented
+	// create the data table and populate frontend and backend
+	core := make(accesslog.CoreLogData)
+	logDataTable := &accesslog.LogData{Core: core, Request: r.Header}
+	logDataTable.Core[accesslog.FrontendName] = testFrontendName
+	logDataTable.Core[accesslog.BackendURL] = testBackendName
+	req := r.WithContext(context.WithValue(r.Context(), accesslog.DataTableKey, logDataTable))
+
+	logger.ServeHTTP(&logtestResponseWriter{}, req)
 
 	if logdata, err := ioutil.ReadFile(logfilePath); err != nil {
 		fmt.Printf("%s\n%s\n", string(logdata), err.Error())
