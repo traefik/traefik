@@ -16,16 +16,16 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
-// HealchCheck test suites (using libcompose)
-type HealchCheckSuite struct{ BaseSuite }
+// HealthCheck test suites (using libcompose)
+type HealthCheckSuite struct{ BaseSuite }
 
-func (s *HealchCheckSuite) SetUpSuite(c *check.C) {
+func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "healthcheck")
 	s.composeProject.Start(c)
 
 }
 
-func (s *HealchCheckSuite) TestSimpleConfiguration(c *check.C) {
+func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 
 	whoami1Host := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 	whoami2Host := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress

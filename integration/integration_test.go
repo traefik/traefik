@@ -37,7 +37,7 @@ func init() {
 	check.Suite(&EurekaSuite{})
 	check.Suite(&AcmeSuite{})
 	check.Suite(&DynamoDBSuite{})
-	check.Suite(&HealchCheckSuite{})
+	check.Suite(&HealthCheckSuite{})
 }
 
 var traefikBinary = "../dist/traefik"
