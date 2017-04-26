@@ -23,6 +23,7 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/middlewares/common"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
@@ -218,6 +219,8 @@ func (server *Server) startHTTPServers() {
 		chain = common.NewAdapter(metrics, chain)
 
 		chain = middlewares.NewLogger(server.accessLogFile, chain)
+
+		chain = accesslog.NewLogHandler(chain)
 
 		entryPoint := server.globalConfiguration.EntryPoints[newServerEntryPointName]
 		newsrv, err := server.prepareServer(newServerEntryPointName, entryPoint, chain, newServerEntryPoint.httpRouter)
@@ -648,7 +651,8 @@ func (server *Server) createFrontendHandler(fwd http.Handler,
 			log.Errorf("Skipping frontend %s...", frontendName)
 			return
 		} else {
-			newServerRoute.route.Handler(handler)
+			saveFrontend := accesslog.NewSaveFrontend(handler, frontendName)
+			newServerRoute.route.Handler(saveFrontend)
 			redirectHandlers[entryPointName] = handler
 		}
 	} else {
@@ -676,9 +680,9 @@ func (server *Server) createBackendHandler(fwd http.Handler, frontendName, backe
 	backendsHealthcheck map[string]*healthcheck.BackendHealthCheck,
 	backend2FrontendMap map[string]string) (http.Handler, bool) {
 
-	log.Debugf("Creating backend %s", backendName)
-	saveBackend := middlewares.NewSaveBackend(fwd)
-	rr, _ := roundrobin.New(saveBackend)
+	saveBackend := accesslog.NewSaveBackend(fwd, backendName)
+	saveFrontend := accesslog.NewSaveFrontend(saveBackend, frontendName)
+	rr, _ := roundrobin.New(saveFrontend)
 	if configuration.Backends[backendName] == nil {
 		log.Errorf("Undefined backend '%s' for frontend %s", backendName, frontendName)
 		log.Errorf("Skipping frontend %s...", frontendName)
