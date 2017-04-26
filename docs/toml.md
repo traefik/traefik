@@ -969,6 +969,16 @@ domain = "marathon.localhost"
 # Default: "10s"
 #
 # keepAlive = "10s"
+
+# By default, a task's IP address (as returned by the Marathon API) is used as 
+# backend server if an IP-per-task configuration can be found; otherwise, the
+# name of the host running the task is used.
+# The latter behavior can be enforced by enabling this switch.
+# 
+# Optional
+# Default: false
+#
+# forceTaskHostname: false 
 ```
 
 Labels can be used on containers to override default behaviour:
