@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/containous/traefik/middlewares/common"
 	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/middlewares/common"
 	"github.com/streamrail/concurrent-map"
 )
 

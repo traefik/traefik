@@ -3,12 +3,12 @@ package accesslog
 import (
 	"context"
 	"fmt"
+	"github.com/containous/traefik/middlewares/common"
 	"net"
 	"net/http"
 	"net/url"
 	"sync/atomic"
 	"time"
-	"github.com/containous/traefik/middlewares/common"
 )
 
 type key string
