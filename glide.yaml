@@ -49,7 +49,9 @@ import:
 - package: github.com/streamrail/concurrent-map
 - package: github.com/stretchr/testify
   subpackages:
+  - assert
   - mock
+  - require
 - package: github.com/thoas/stats
   version: 152b5d051953fdb6e45f14b6826962aadc032324
 - package: github.com/unrolled/render
