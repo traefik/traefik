@@ -84,6 +84,7 @@ Modifier rules only modify the request. They do not have any impact on routing d
 Following is the list of existing modifier rules:
 
 - `AddPrefix: /products`: Add path prefix to the existing request path prior to forwarding the request to the backend.
+- `ReplacePath: /serverless-path`: Replaces the path and adds the old path to the `X-Replaced-Path` header. Useful for mapping to AWS Lambda or Google Cloud Functions.
 
 ### Matchers
 
