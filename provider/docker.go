@@ -1,14 +1,11 @@
 package provider
 
 import (
-	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"math"
 	"net"
 	"net/http"
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -802,30 +799,4 @@ func getContainerNetworks(ctx context.Context, cli client.APIClient, containerID
 	}
 
 	return fun.Filter(filter, networks).([]dockertypes.NetworkResource), nil
-}
-
-// get container ID from inside a container
-func getContainerID() (string, error) {
-	cgroup := "/proc/self/cgroup"
-
-	file, err := os.Open(cgroup)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if strings.Contains(line, "docker") {
-			i := strings.LastIndex(line, "/")
-			containerID := line[i+1:]
-			return containerID, nil
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-
-	return "", fmt.Errorf("Failed to get container ID from %s", cgroup)
 }
