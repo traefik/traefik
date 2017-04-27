@@ -7,6 +7,7 @@ import (
 	fmtlog "log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -206,6 +207,13 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 	}
 	log.SetLevel(level)
 	if len(globalConfiguration.TraefikLogsFile) > 0 {
+		dir := filepath.Dir(globalConfiguration.TraefikLogsFile)
+
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			log.Errorf("Failed to create log path %s: %s", dir, err)
+		}
+
 		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		defer func() {
 			if err := fi.Close(); err != nil {
