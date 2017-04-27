@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	shellwords "github.com/mattn/go-shellwords"
@@ -18,8 +17,7 @@ type logtestResponseWriter struct{}
 
 var (
 	logger                  *Logger
-	logfileName             = "traefikTestLogger.log"
-	logfilePath             string
+	logfileNameSuffix       = "/traefik/logger/test.log"
 	helloWorld              = "Hello, World"
 	testBackendName         = "http://127.0.0.1/testBackend"
 	testFrontendName        = "testFrontend"
@@ -39,14 +37,21 @@ var (
 )
 
 func TestLogger(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		logfilePath = filepath.Join(os.Getenv("TEMP"), logfileName)
-	} else {
-		logfilePath = filepath.Join("/tmp", logfileName)
+	tmp, err := ioutil.TempDir("", "testlogger")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %s", err)
 	}
+	defer os.RemoveAll(tmp)
+
+	logfilePath := filepath.Join(tmp, logfileNameSuffix)
 
 	logger = NewLogger(logfilePath)
-	defer cleanup()
+	defer logger.Close()
+
+	if _, err := os.Stat(logfilePath); os.IsNotExist(err) {
+		t.Fatalf("logger should create %s", logfilePath)
+	}
+
 	SetBackend2FrontendMap(&testBackend2FrontendMap)
 
 	r := &http.Request{
@@ -84,11 +89,6 @@ func TestLogger(t *testing.T) {
 		assert.Equal(t, testFrontendName, tokens[11], printLogdata(logdata))
 		assert.Equal(t, testBackendName, tokens[12], printLogdata(logdata))
 	}
-}
-
-func cleanup() {
-	logger.Close()
-	os.Remove(logfilePath)
 }
 
 func printLogdata(logdata []byte) string {
