@@ -136,6 +136,8 @@ func (provider *Docker) Provide(configurationChan chan<- types.ConfigMessage, po
 
 			var inContainer bool
 			if runtime.GOOS == "linux" {
+				// No-op on Windows, always returns false.
+				// No-op on FreeBSD and Darwin, always returns false and error.
 				inContainer, err = operatingsystem.IsContainerized()
 				if err != nil {
 					log.Errorf("Failed to determine if traefik is containerized for docker, error: %s", err)
