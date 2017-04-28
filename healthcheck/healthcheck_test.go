@@ -148,12 +148,16 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			defer ts.Close()
 
 			lb := &testLoadBalancer{RWMutex: &sync.RWMutex{}}
-			backend := NewBackendHealthCheck("/path", healthCheckInterval, lb)
+			backend := NewBackendHealthCheck(Options{
+				Path:     "/path",
+				Interval: healthCheckInterval,
+				LB:       lb,
+			})
 			serverURL := MustParseURL(ts.URL)
 			if test.startHealthy {
 				lb.servers = append(lb.servers, serverURL)
 			} else {
-				backend.DisabledURLs = append(backend.DisabledURLs, serverURL)
+				backend.disabledURLs = append(backend.disabledURLs, serverURL)
 			}
 
 			healthCheck := HealthCheck{

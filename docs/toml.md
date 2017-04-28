@@ -989,6 +989,8 @@ Labels can be used on containers to override default behaviour:
 - `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
 - `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
 - `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5`: create a [circuit breaker](/basics/#backends) to be used against the backend
+- `traefik.backend.healthcheck.path=/health`: set the Traefik health check path [default: no health checks]
+- `traefik.backend.healthcheck.interval=5s`: sets a custom health check interval in Go-parseable (`time.ParseDuration`) format [default: 30s]
 - `traefik.portIndex=1`: register port by index in the application's ports array. Useful when the application exposes multiple ports.
 - `traefik.port=80`: register the explicit application port value. Cannot be used alongside `traefik.portIndex`.
 - `traefik.protocol=https`: override the default `http` protocol

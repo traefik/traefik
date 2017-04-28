@@ -13,7 +13,7 @@ logLevel = "DEBUG"
 [backends]
   [backends.backend1]
     [backends.backend1.healthcheck]
-    url = "/health"
+    path = "/health"
     interval = "1s"
     [backends.backend1.servers.server1]
     url = "http://{{.Server1}}:80"
