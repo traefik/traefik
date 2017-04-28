@@ -357,6 +357,39 @@ func (r *Route) PathPrefix(tpl string) *Route {
 	return r
 }
 
+// PathStrip ------------------------------------------------------------------
+
+// PathStrip returns a regexp for the URL path.
+// See Route.Path() for details on the tpl argument.
+func (r *Route) PathStrip(tpl string) (*regexp.Regexp, error) {
+	rr, err := newRouteRegexp(tpl, false, false, false, r.strictSlash)
+	if err == nil {
+		return rr.regexp, nil
+	} else {
+		return nil, err
+	}
+}
+
+// PathPrefixStrip ------------------------------------------------------------------
+
+// PathPrefixStrip returns a regexp for the URL path prefix. This matches if the given
+// template is a prefix of the full URL path. See Route.Path() for details on
+// the tpl argument.
+//
+// Note that it does not treat slashes specially ("/foobar/" will be matched by
+// the prefix "/foo") so you may want to use a trailing slash here.
+//
+// Also note that the setting of Router.StrictSlash() has no effect on routes
+// with a PathPrefix matcher.
+func (r *Route) PathPrefixStrip(tpl string) (*regexp.Regexp, error) {
+	rr, err := newRouteRegexp(tpl, false, true, false, r.strictSlash)
+	if err == nil {
+		return rr.regexp, nil
+	} else {
+		return nil, err
+	}
+}
+
 // Query ----------------------------------------------------------------------
 
 // Queries adds a matcher for URL query values.

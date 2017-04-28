@@ -63,7 +63,7 @@ type serverEntryPoint struct {
 
 type serverRoute struct {
 	route         *mux.Route
-	stripPrefixes []string
+	stripPrefixes []*regexp.Regexp
 	addPrefix     string
 	replacePath   string
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/types"
+	"regexp"
 )
 
 // Rules holds rule parsing and configuration
@@ -67,10 +68,13 @@ func (a bySize) Less(i, j int) bool { return len(a[i]) > len(a[j]) }
 
 func (r *Rules) pathStrip(paths ...string) *mux.Route {
 	sort.Sort(bySize(paths))
-	r.route.stripPrefixes = paths
+	r.route.stripPrefixes = []*regexp.Regexp{}
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
 		router.Path(strings.TrimSpace(path))
+		if regexp, err := r.route.route.PathStrip(strings.TrimSpace(path)); err == nil {
+			r.route.stripPrefixes = append(r.route.stripPrefixes, regexp)
+		}
 	}
 	return r.route.route
 }
@@ -91,10 +95,13 @@ func (r *Rules) addPrefix(paths ...string) *mux.Route {
 
 func (r *Rules) pathPrefixStrip(paths ...string) *mux.Route {
 	sort.Sort(bySize(paths))
-	r.route.stripPrefixes = paths
+	r.route.stripPrefixes = []*regexp.Regexp{}
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
 		router.PathPrefix(strings.TrimSpace(path))
+		if regexp, err := r.route.route.PathPrefixStrip(strings.TrimSpace(path)); err == nil {
+			r.route.stripPrefixes = append(r.route.stripPrefixes, regexp)
+		}
 	}
 	return r.route.route
 }
