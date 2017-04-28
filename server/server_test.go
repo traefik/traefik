@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/types"
 	"github.com/vulcand/oxy/roundrobin"
@@ -41,6 +42,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 					EntryPoints: EntryPoints{
 						"http": &EntryPoint{},
 					},
+					HealthCheck: &HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
 				}
 
 				dynamicConfigs := configs{
@@ -87,6 +89,7 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 
 func TestServerParseHealthCheckOptions(t *testing.T) {
 	lb := &testLoadBalancer{}
+	globalInterval := 15 * time.Second
 
 	tests := []struct {
 		desc     string
@@ -113,7 +116,7 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 			},
 			wantOpts: &healthcheck.Options{
 				Path:     "/path",
-				Interval: healthcheck.DefaultInterval,
+				Interval: globalInterval,
 				LB:       lb,
 			},
 		},
@@ -121,11 +124,11 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 			desc: "sub-zero interval",
 			hc: &types.HealthCheck{
 				Path:     "/path",
-				Interval: "-15s",
+				Interval: "-42s",
 			},
 			wantOpts: &healthcheck.Options{
 				Path:     "/path",
-				Interval: healthcheck.DefaultInterval,
+				Interval: globalInterval,
 				LB:       lb,
 			},
 		},
@@ -148,7 +151,7 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			gotOpts := parseHealthCheckOptions(lb, "backend", test.hc)
+			gotOpts := parseHealthCheckOptions(lb, "backend", test.hc, HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
 			if !reflect.DeepEqual(gotOpts, test.wantOpts) {
 				t.Errorf("got health check options %+v, want %+v", gotOpts, test.wantOpts)
 			}

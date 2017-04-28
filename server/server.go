@@ -659,8 +659,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									log.Errorf("Skipping frontend %s...", frontendName)
 									continue frontend
 								}
-								hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck)
+								hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
 								if hcOpts != nil {
+									log.Debugf("Setting up backend health check %s", *hcOpts)
 									backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 								}
 							}
@@ -685,8 +686,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									continue frontend
 								}
 							}
-							hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck)
+							hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
 							if hcOpts != nil {
+								log.Debugf("Setting up backend health check %s", *hcOpts)
 								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 							}
 						}
@@ -847,12 +849,12 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	return router
 }
 
-func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck) *healthcheck.Options {
+func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck, hcConfig HealthCheckConfig) *healthcheck.Options {
 	if hc == nil || hc.Path == "" {
 		return nil
 	}
 
-	interval := healthcheck.DefaultInterval
+	interval := time.Duration(hcConfig.Interval)
 	if hc.Interval != "" {
 		intervalOverride, err := time.ParseDuration(hc.Interval)
 		switch {
