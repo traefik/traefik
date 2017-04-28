@@ -855,6 +855,13 @@
 #
 # filename = "etcd.tmpl"
 
+# Use etcd user/pass authentication
+#
+# Optional
+#
+# username = foo
+# password = bar
+
 # Enable etcd TLS connection
 #
 # Optional
@@ -864,7 +871,6 @@
 # cert = "/etc/ssl/etcd.crt"
 # key = "/etc/ssl/etcd.key"
 # insecureskipverify = true
-
 
 ################################################################
 # Zookeeper configuration backend

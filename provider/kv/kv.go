@@ -24,6 +24,8 @@ type Provider struct {
 	Endpoint              string              `description:"Comma separated server endpoints"`
 	Prefix                string              `description:"Prefix used for KV store"`
 	TLS                   *provider.ClientTLS `description:"Enable TLS support"`
+	Username              string              `description:"KV Username"`
+	Password              string              `description:"KV Password"`
 	StoreType             store.Backend
 	Kvclient              store.Store
 }
@@ -33,6 +35,8 @@ func (p *Provider) CreateStore() (store.Store, error) {
 	storeConfig := &store.Config{
 		ConnectionTimeout: 30 * time.Second,
 		Bucket:            "traefik",
+		Username:          p.Username,
+		Password:          p.Password,
 	}
 
 	if p.TLS != nil {
