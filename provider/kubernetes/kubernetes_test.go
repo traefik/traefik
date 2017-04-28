@@ -264,10 +264,6 @@ func TestLoadIngresses(t *testing.T) {
 			},
 			"bar": {
 				Servers: map[string]types.Server{
-					"2": {
-						URL:    "http://10.0.0.2:802",
-						Weight: 1,
-					},
 					"https://10.15.0.1:8443": {
 						URL:    "https://10.15.0.1:8443",
 						Weight: 1,
@@ -498,12 +494,7 @@ func TestGetPassHostHeader(t *testing.T) {
 	expected := &types.Configuration{
 		Backends: map[string]*types.Backend{
 			"foo/bar": {
-				Servers: map[string]types.Server{
-					"1": {
-						URL:    "http://10.0.0.1:801",
-						Weight: 1,
-					},
-				},
+				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Sticky: false,
@@ -610,12 +601,7 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 	expected := &types.Configuration{
 		Backends: map[string]*types.Backend{
 			"foo": {
-				Servers: map[string]types.Server{
-					"1": {
-						URL:    "http://10.0.0.1:80",
-						Weight: 1,
-					},
-				},
+				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Sticky: false,
@@ -799,12 +785,7 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 	expected := &types.Configuration{
 		Backends: map[string]*types.Backend{
 			"foo/bar": {
-				Servers: map[string]types.Server{
-					"1": {
-						URL:    "http://10.0.0.1:801",
-						Weight: 1,
-					},
-				},
+				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Sticky: false,
@@ -812,16 +793,7 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 				},
 			},
 			"bar": {
-				Servers: map[string]types.Server{
-					"2": {
-						URL:    "http://10.0.0.2:802",
-						Weight: 1,
-					},
-					"3": {
-						URL:    "https://10.0.0.3:443",
-						Weight: 1,
-					},
-				},
+				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Sticky: false,
@@ -1043,12 +1015,7 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 	expected := &types.Configuration{
 		Backends: map[string]*types.Backend{
 			"foo/bar": {
-				Servers: map[string]types.Server{
-					"1": {
-						URL:    "http://10.0.0.1:801",
-						Weight: 1,
-					},
-				},
+				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Sticky: false,
@@ -1056,16 +1023,7 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				},
 			},
 			"bar": {
-				Servers: map[string]types.Server{
-					"2": {
-						URL:    "http://10.0.0.2:802",
-						Weight: 1,
-					},
-					"3": {
-						URL:    "https://10.0.0.3:443",
-						Weight: 1,
-					},
-				},
+				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Sticky: false,
@@ -1073,12 +1031,7 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 				},
 			},
 			"awesome/quix": {
-				Servers: map[string]types.Server{
-					"17": {
-						URL:    "http://10.0.0.4:801",
-						Weight: 1,
-					},
-				},
+				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Sticky: false,
@@ -1190,12 +1143,7 @@ func TestHostlessIngress(t *testing.T) {
 	expected := &types.Configuration{
 		Backends: map[string]*types.Backend{
 			"/bar": {
-				Servers: map[string]types.Server{
-					"1": {
-						URL:    "http://10.0.0.1:801",
-						Weight: 1,
-					},
-				},
+				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Sticky: false,
@@ -2016,11 +1964,8 @@ func TestMissingResources(t *testing.T) {
 		services:  services,
 		endpoints: endpoints,
 		watchChan: watchChan,
-
-		// TODO: Update all tests to cope with "properExists == true" correctly and remove flag.
-		// See https://github.com/containous/traefik/issues/1307
-		properExists: true,
 	}
+
 	provider := Provider{}
 	actual, err := provider.loadIngresses(client)
 	if err != nil {
@@ -2093,8 +2038,6 @@ type clientMock struct {
 
 	apiServiceError   error
 	apiEndpointsError error
-
-	properExists bool
 }
 
 func (c clientMock) GetIngresses(namespaces Namespaces) []*v1beta1.Ingress {
@@ -2132,11 +2075,7 @@ func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, e
 		}
 	}
 
-	if c.properExists {
-		return nil, false, nil
-	}
-
-	return &v1.Endpoints{}, true, nil
+	return &v1.Endpoints{}, false, nil
 }
 
 func (c clientMock) WatchAll(labelString string, stopCh <-chan struct{}) (<-chan interface{}, error) {
