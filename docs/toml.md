@@ -1583,25 +1583,24 @@ ExposedByDefault = false
 
 # Endpoint to use when connecting to Rancher
 #
-# Optional
-# Endpoint = "http://rancherserver.example.com"
+# Required
+# Endpoint = "http://rancherserver.example.com/v1"
 
 # AccessKey to use when connecting to Rancher
 #
-# Optional
-# AccessKey = "XXXXXXXXX"
+# Required
+# AccessKey = "XXXXXXXXXXXXXXXXXXXX"
 
 # SecretKey to use when connecting to Rancher
 #
-# Optional
-# SecretKey = "XXXXXXXXXXX"
+# Required
+# SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 ```
 
-If you're deploying traefik as a service within rancher, you can alternatively set these labels on the service to let it only fetch data of its current environment. The settings `endpoint`, `accesskey` and `secretkey` can be omitted then.
+As traefik needs access to the rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters. 
 
-- `io.rancher.container.create_agent=true`
-- `io.rancher.container.agent.role=environment`
+To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`. This can be found within the API Key advanced options.
 
 Labels can be used on task containers to override default behaviour:
 

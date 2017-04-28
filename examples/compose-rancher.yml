@@ -1,9 +1,6 @@
 traefik:
   image: traefik
-  command: --web --rancher --rancher.domain=rancher.localhost --logLevel=DEBUG
-    labels:
-      io.rancher.container.agent.role: environment
-      io.rancher.container.create_agent: 'true'
+  command: --web --rancher --rancher.domain=rancher.localhost --rancher.endpoint=http://example.com --rancher.accesskey=XXXXXXX --rancher.secretkey=YYYYYY --logLevel=DEBUG
   ports:
     - "80:80"
     - "443:443"

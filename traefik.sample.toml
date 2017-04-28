@@ -1006,43 +1006,43 @@
 #
 # Optional
 #
-#[rancher]
+# [rancher]
 
 # Default domain used.
 # Can be overridden by setting the "traefik.domain" label on an service.
 #
 # Required
 #
-#domain = "rancher.localhost"
+# domain = "rancher.localhost"
 
 # Enable watch Rancher changes
 #
 # Optional
 # Default: true
 #
-#Watch = true
+# Watch = true
 
 # Expose Rancher services by default in traefik
 #
 # Optional
 # Default: true
 #
-#ExposedByDefault = false
+# ExposedByDefault = false
 
 # Endpoint to use when connecting to Rancher
 #
-# Optional
-# Endpoint = "http://rancherserver.example.com"
+# Required
+# Endpoint = "http://rancherserver.example.com/v1"
 
 # AccessKey to use when connecting to Rancher
 #
-# Optional
-# AccessKey = "XXXXXXXXX"
+# Required
+# AccessKey = "XXXXXXXXXXXXXXXXXXXX"
 
 # SecretKey to use when connecting to Rancher
 #
-# Optional
-# SecretKey = "XXXXXXXXXXX"
+# Required
+# SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 
 ################################################################
