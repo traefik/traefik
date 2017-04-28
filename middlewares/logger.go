@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/middlewares/common"
 	"github.com/streamrail/concurrent-map"
 )
 
@@ -26,14 +26,17 @@ Logger writes each request and its response to the access log.
 It gets some information from the logInfoResponseWriter set up by previous middleware.
 */
 type Logger struct {
+	common.BasicMiddleware
 	file *os.File
 }
 
+var _ common.Middleware = &Logger{}
+
 // Logging handler to log frontend name, backend name, and elapsed time
 type frontendBackendLoggingHandler struct {
-	reqid       string
-	writer      io.Writer
-	handlerFunc http.HandlerFunc
+	reqid   string
+	writer  io.Writer
+	handler http.Handler
 }
 
 var (
@@ -53,15 +56,8 @@ type logInfoResponseWriter struct {
 }
 
 // NewLogger returns a new Logger instance.
-func NewLogger(file string) *Logger {
-	if len(file) > 0 {
-		fi, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			log.Error("Error opening file", err)
-		}
-		return &Logger{fi}
-	}
-	return &Logger{nil}
+func NewLogger(file *os.File, next http.Handler) common.Middleware {
+	return &Logger{BasicMiddleware: common.NewMiddleware(next), file: file}
 }
 
 // SetBackend2FrontendMap is called by server.go to set up frontend translation
@@ -69,14 +65,14 @@ func SetBackend2FrontendMap(newMap *map[string]string) {
 	backend2FrontendMap = newMap
 }
 
-func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if l.file == nil {
-		next(rw, r)
+		l.Next().ServeHTTP(rw, r)
 	} else {
 		reqid := strconv.FormatUint(atomic.AddUint64(&reqidCounter, 1), 10)
 		r.Header[loggerReqidHeader] = []string{reqid}
 		defer deleteReqid(r, reqid)
-		frontendBackendLoggingHandler{reqid, l.file, next}.ServeHTTP(rw, r)
+		frontendBackendLoggingHandler{reqid, l.file, l.Next()}.ServeHTTP(rw, r)
 	}
 }
 
@@ -102,6 +98,13 @@ func (l *Logger) Close() {
 	if l.file != nil {
 		l.file.Close()
 	}
+
+	next := l.Next()
+	if next != nil {
+		if c, ok := next.(common.Middleware); ok {
+			c.Close()
+		}
+	}
 }
 
 // Logging handler to log frontend name, backend name, and elapsed time
@@ -109,7 +112,7 @@ func (fblh frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req 
 	startTime := time.Now()
 	infoRw := &logInfoResponseWriter{rw: rw}
 	infoRwMap.Set(fblh.reqid, infoRw)
-	fblh.handlerFunc(infoRw, req)
+	fblh.handler.ServeHTTP(infoRw, req)
 
 	username := "-"
 	url := *req.URL

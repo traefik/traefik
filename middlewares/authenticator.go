@@ -7,61 +7,88 @@ import (
 	"strings"
 
 	"github.com/abbot/go-http-auth"
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/common"
 	"github.com/containous/traefik/types"
 )
 
 // Authenticator is a middleware that provides HTTP basic and digest authentication
 type Authenticator struct {
-	handler negroni.Handler
-	users   map[string]string
+	common.BasicMiddleware
+	users map[string]string
+	hf    http.HandlerFunc
 }
 
-// NewAuthenticator builds a new Autenticator given a config
-func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
+var _ common.Middleware = &Authenticator{}
+
+type authWrapper interface {
+	CheckAuth(r *http.Request) (username string, authinfo *string)
+}
+
+// NewAuthenticator builds a new Authenticator given a config
+func NewAuthenticator(authConfig *types.Auth, next http.Handler) (common.Middleware, error) {
 	if authConfig == nil {
 		return nil, fmt.Errorf("Error creating Authenticator: auth is nil")
 	}
-	var err error
-	authenticator := Authenticator{}
+
 	if authConfig.Basic != nil {
-		authenticator.users, err = parserBasicUsers(authConfig.Basic)
-		if err != nil {
-			return nil, err
-		}
-		basicAuth := auth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
-		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-			if username := basicAuth.CheckAuth(r); username == "" {
-				log.Debugf("Basic auth failed...")
-				basicAuth.RequireAuth(w, r)
-			} else {
-				log.Debugf("Basic auth success...")
-				if authConfig.HeaderField != "" {
-					r.Header[authConfig.HeaderField] = []string{username}
-				}
-				next.ServeHTTP(w, r)
-			}
-		})
+		return newBasicAuthenticator(authConfig, next)
 	} else if authConfig.Digest != nil {
-		authenticator.users, err = parserDigestUsers(authConfig.Digest)
-		if err != nil {
-			return nil, err
-		}
-		digestAuth := auth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
-		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-			if username, _ := digestAuth.CheckAuth(r); username == "" {
-				log.Debugf("Digest auth failed...")
-				digestAuth.RequireAuth(w, r)
-			} else {
-				log.Debugf("Digest auth success...")
-				if authConfig.HeaderField != "" {
-					r.Header[authConfig.HeaderField] = []string{username}
-				}
-				next.ServeHTTP(w, r)
-			}
-		})
+		return newDigestAuthenticator(authConfig, next)
 	}
+
+	return nil, fmt.Errorf("Error creating Authenticator: auth must have basic or digest settings")
+}
+
+func newDigestAuthenticator(authConfig *types.Auth, next http.Handler) (common.Middleware, error) {
+	users, err := parserDigestUsers(authConfig.Digest)
+	if err != nil {
+		return nil, err
+	}
+
+	authenticator := Authenticator{common.NewMiddleware(next), users, nil}
+
+	digestAuth := auth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
+
+	authenticator.hf = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if username, _ := digestAuth.CheckAuth(r); username == "" {
+			log.Debugf("Digest auth failed...")
+			digestAuth.RequireAuth(w, r)
+		} else {
+			log.Debugf("Digest auth success...")
+			if authConfig.HeaderField != "" {
+				r.Header[authConfig.HeaderField] = []string{username}
+			}
+			authenticator.hf.ServeHTTP(w, r)
+		}
+	})
+
+	return &authenticator, nil
+}
+
+func newBasicAuthenticator(authConfig *types.Auth, next http.Handler) (common.Middleware, error) {
+	users, err := parserBasicUsers(authConfig.Basic)
+	if err != nil {
+		return nil, err
+	}
+
+	authenticator := Authenticator{common.NewMiddleware(next), users, nil}
+
+	basicAuth := auth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
+
+	authenticator.hf = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if username := basicAuth.CheckAuth(r); username == "" {
+			log.Debugf("Basic auth failed...")
+			basicAuth.RequireAuth(w, r)
+		} else {
+			log.Debugf("Basic auth success...")
+			if authConfig.HeaderField != "" {
+				r.Header[authConfig.HeaderField] = []string{username}
+			}
+			authenticator.Next().ServeHTTP(w, r)
+		}
+	})
+
 	return &authenticator, nil
 }
 
@@ -138,6 +165,6 @@ func (a *Authenticator) secretDigest(user, realm string) string {
 	return ""
 }
 
-func (a *Authenticator) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	a.handler.ServeHTTP(rw, r, next)
+func (a *Authenticator) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	a.hf(rw, r)
 }

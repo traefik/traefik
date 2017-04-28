@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/common"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -20,15 +21,15 @@ var (
 
 // Retry is a middleware that retries requests
 type Retry struct {
+	common.BasicMiddleware
 	attempts int
-	next     http.Handler
 }
 
 // NewRetry returns a new Retry instance
 func NewRetry(attempts int, next http.Handler) *Retry {
 	return &Retry{
-		attempts: attempts,
-		next:     next,
+		common.NewMiddleware(next),
+		attempts,
 	}
 }
 
@@ -44,7 +45,9 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	for {
 		recorder := NewRecorder()
 		recorder.responseWriter = rw
-		retry.next.ServeHTTP(recorder, r)
+
+		retry.Next().ServeHTTP(recorder, r)
+
 		if !isNetworkError(recorder.Code) || attempts >= retry.attempts {
 			utils.CopyHeaders(rw.Header(), recorder.Header())
 			rw.WriteHeader(recorder.Code)
@@ -59,6 +62,8 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func isNetworkError(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusGatewayTimeout
 }
+
+//-------------------------------------------------------------------------------------------------
 
 // ResponseRecorder is an implementation of http.ResponseWriter that
 // records its mutations for later inspection in tests.

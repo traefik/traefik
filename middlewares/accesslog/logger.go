@@ -3,6 +3,7 @@ package accesslog
 import (
 	"context"
 	"fmt"
+	"github.com/containous/traefik/middlewares/common"
 	"net"
 	"net/http"
 	"net/url"
@@ -23,11 +24,14 @@ const (
 // Note: Current implementation collects log data but does not have the facility to
 // write anywhere.
 type LogHandler struct {
+	common.BasicMiddleware
 }
 
+var _ common.Middleware = &LogHandler{}
+
 // NewLogHandler creates a new LogHandler
-func NewLogHandler() *LogHandler {
-	return &LogHandler{}
+func NewLogHandler(next http.Handler) common.Middleware {
+	return &LogHandler{BasicMiddleware: common.NewMiddleware(next)}
 }
 
 // GetLogDataTable gets the request context object that contains logging data. This accretes
@@ -36,7 +40,7 @@ func GetLogDataTable(req *http.Request) *LogData {
 	return req.Context().Value(DataTableKey).(*LogData)
 }
 
-func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	now := time.Now().UTC()
 	core := make(CoreLogData)
 
@@ -77,15 +81,10 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 
 	crw := &captureResponseWriter{rw: rw}
 
-	next.ServeHTTP(crw, reqWithDataTable)
+	l.Next().ServeHTTP(crw, reqWithDataTable)
 
 	logDataTable.DownstreamResponse = crw.Header()
 	l.logTheRoundTrip(logDataTable, crr, crw)
-}
-
-// Close closes the Logger (i.e. the file etc).
-func (l *LogHandler) Close() error {
-	return nil
 }
 
 func silentSplitHostPort(value string) (host string, port string) {

@@ -1,12 +1,13 @@
 package middlewares
 
 import (
+	"net/http"
+
 	"github.com/containous/traefik/types"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"net/http"
 )
 
 const (
@@ -20,6 +21,8 @@ type Prometheus struct {
 	reqsCounter      metrics.Counter
 	latencyHistogram metrics.Histogram
 }
+
+var _ Metrics = &Prometheus{}
 
 func (p *Prometheus) getReqsCounter() metrics.Counter {
 	return p.reqsCounter
