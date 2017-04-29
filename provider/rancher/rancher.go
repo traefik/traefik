@@ -21,11 +21,6 @@ import (
 	rancher "github.com/rancher/go-rancher/client"
 )
 
-const (
-	// RancherDefaultWatchTime is the duration of the interval when polling rancher
-	RancherDefaultWatchTime = 15 * time.Second
-)
-
 var (
 	withoutPagination *rancher.ListOpts
 )
@@ -34,12 +29,14 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
-	Endpoint              string `description:"Rancher server HTTP(S) endpoint."`
-	AccessKey             string `description:"Rancher server access key."`
-	SecretKey             string `description:"Rancher server Secret Key."`
-	ExposedByDefault      bool   `description:"Expose Services by default"`
-	Domain                string `description:"Default domain used"`
+	provider.BaseProvider     `mapstructure:",squash"`
+	Endpoint                  string `description:"Rancher server HTTP(S) endpoint."`
+	AccessKey                 string `description:"Rancher server access key."`
+	SecretKey                 string `description:"Rancher server Secret Key."`
+	ExposedByDefault          bool   `description:"Expose Services by default"`
+	Domain                    string `description:"Default domain used"`
+	RefreshSeconds            int    `description:"Polling interval (in seconds)"`
+	EnableServiceHealthFilter bool   `description:"Filter services with unhealthy states and health states."`
 }
 
 type rancherData struct {
@@ -47,6 +44,7 @@ type rancherData struct {
 	Labels     map[string]string // List of labels set to container or service
 	Containers []string
 	Health     string
+	State      string
 }
 
 func init() {
@@ -56,7 +54,7 @@ func init() {
 }
 
 func (r rancherData) String() string {
-	return fmt.Sprintf("{name:%s, labels:%v, containers: %v, health: %s}", r.Name, r.Labels, r.Containers, r.Health)
+	return fmt.Sprintf("{name:%s, labels:%v, containers: %v, health: %s, state: %s}", r.Name, r.Labels, r.Containers, r.Health, r.State)
 }
 
 // Frontend Labels
@@ -261,7 +259,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 			if p.Watch {
 				_, cancel := context.WithCancel(ctx)
-				ticker := time.NewTicker(RancherDefaultWatchTime)
+				ticker := time.NewTicker(time.Second * time.Duration(p.RefreshSeconds))
 				pool.Go(func(stop chan bool) {
 					for {
 						select {
@@ -384,6 +382,7 @@ func parseRancherData(environments []*rancher.Environment, services []*rancher.S
 			rancherData := rancherData{
 				Name:       environment.Name + "/" + service.Name,
 				Health:     service.HealthState,
+				State:      service.State,
 				Labels:     make(map[string]string),
 				Containers: []string{},
 			}
@@ -393,11 +392,8 @@ func parseRancherData(environments []*rancher.Environment, services []*rancher.S
 			}
 
 			for _, container := range containers {
-				for key, value := range container.Labels {
-
-					if key == "io.rancher.stack_service.name" && value == rancherData.Name {
-						rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
-					}
+				if container.Labels["io.rancher.stack_service.name"] == rancherData.Name && containerFilter(container) {
+					rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
 				}
 			}
 			rancherDataList = append(rancherDataList, rancherData)
@@ -463,6 +459,20 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 
 }
 
+func containerFilter(container *rancher.Container) bool {
+	if container.HealthState != "" && container.HealthState != "healthy" && container.HealthState != "updating-healthy" {
+		log.Debugf("Filtering container %s with healthState of %s", container.Name, container.HealthState)
+		return false
+	}
+
+	if container.State != "" && container.State != "running" && container.State != "updating-running" {
+		log.Debugf("Filtering container %s with state of %s", container.Name, container.State)
+		return false
+	}
+
+	return true
+}
+
 func (p *Provider) serviceFilter(service rancherData) bool {
 
 	if service.Labels["traefik.port"] == "" {
@@ -475,9 +485,18 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 		return false
 	}
 
-	if service.Health != "" && service.Health != "healthy" {
-		log.Debugf("Filtering unhealthy or starting service %s", service.Name)
-		return false
+	// Only filter services by Health (HealthState) and State if EnableServiceHealthFilter is true
+	if p.EnableServiceHealthFilter {
+
+		if service.Health != "" && service.Health != "healthy" && service.Health != "updating-healthy" {
+			log.Debugf("Filtering service %s with healthState of %s", service.Name, service.Health)
+			return false
+		}
+
+		if service.State != "" && service.State != "active" && service.State != "updating-active" && service.State != "upgraded" {
+			log.Debugf("Filtering service %s with state of %s", service.Name, service.State)
+			return false
+		}
 	}
 
 	return true

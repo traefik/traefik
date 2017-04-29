@@ -1,11 +1,147 @@
 package rancher
 
 import (
-	"github.com/containous/traefik/types"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/containous/traefik/types"
+	rancher "github.com/rancher/go-rancher/client"
 )
+
+func TestRancherServiceFilter(t *testing.T) {
+	provider := &Provider{
+		Domain: "rancher.localhost",
+		EnableServiceHealthFilter: true,
+	}
+
+	services := []struct {
+		service  rancherData
+		expected bool
+	}{
+		{
+			service: rancherData{
+				Labels: map[string]string{
+					"traefik.enable": "true",
+				},
+				Health: "healthy",
+				State:  "active",
+			},
+			expected: false,
+		},
+		{
+			service: rancherData{
+				Labels: map[string]string{
+					"traefik.port":   "80",
+					"traefik.enable": "false",
+				},
+				Health: "healthy",
+				State:  "active",
+			},
+			expected: false,
+		},
+		{
+			service: rancherData{
+				Labels: map[string]string{
+					"traefik.port":   "80",
+					"traefik.enable": "true",
+				},
+				Health: "unhealthy",
+				State:  "active",
+			},
+			expected: false,
+		},
+		{
+			service: rancherData{
+				Labels: map[string]string{
+					"traefik.port":   "80",
+					"traefik.enable": "true",
+				},
+				Health: "healthy",
+				State:  "inactive",
+			},
+			expected: false,
+		},
+		{
+			service: rancherData{
+				Labels: map[string]string{
+					"traefik.port":   "80",
+					"traefik.enable": "true",
+				},
+				Health: "healthy",
+				State:  "active",
+			},
+			expected: true,
+		},
+		{
+			service: rancherData{
+				Labels: map[string]string{
+					"traefik.port":   "80",
+					"traefik.enable": "true",
+				},
+				Health: "healthy",
+				State:  "upgraded",
+			},
+			expected: true,
+		},
+	}
+
+	for _, e := range services {
+		actual := provider.serviceFilter(e.service)
+		if actual != e.expected {
+			t.Fatalf("expected %t, got %t", e.expected, actual)
+		}
+	}
+}
+
+func TestRancherContainerFilter(t *testing.T) {
+	containers := []struct {
+		container *rancher.Container
+		expected  bool
+	}{
+		{
+			container: &rancher.Container{
+				HealthState: "unhealthy",
+				State:       "running",
+			},
+			expected: false,
+		},
+		{
+			container: &rancher.Container{
+				HealthState: "healthy",
+				State:       "stopped",
+			},
+			expected: false,
+		},
+		{
+			container: &rancher.Container{
+				State: "stopped",
+			},
+			expected: false,
+		},
+		{
+			container: &rancher.Container{
+				HealthState: "healthy",
+				State:       "running",
+			},
+			expected: true,
+		},
+		{
+			container: &rancher.Container{
+				HealthState: "updating-healthy",
+				State:       "updating-running",
+			},
+			expected: true,
+		},
+	}
+
+	for _, e := range containers {
+		actual := containerFilter(e.container)
+		if actual != e.expected {
+			t.Fatalf("expected %t, got %t", e.expected, actual)
+		}
+	}
+}
 
 func TestRancherGetFrontendName(t *testing.T) {
 	provider := &Provider{
