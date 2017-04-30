@@ -272,6 +272,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServicePassHostHeader":    p.getServicePassHostHeader,
 		"getServicePriority":          p.getServicePriority,
 		"getServiceBackend":           p.getServiceBackend,
+		"getWhitelistSourceRange":     p.getWhitelistSourceRange,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -661,6 +662,15 @@ func (p *Provider) getPassHostHeader(container dockerData) string {
 		return passHostHeader
 	}
 	return "true"
+}
+
+func (p *Provider) getWhitelistSourceRange(container dockerData) []string {
+	var whitelistSourceRange []string
+
+	if whitelistSourceRangeLabel, err := getLabel(container, "traefik.frontend.whitelistSourceRange"); err == nil {
+		whitelistSourceRange = provider.SplitAndTrimString(whitelistSourceRangeLabel)
+	}
+	return whitelistSourceRange
 }
 
 func (p *Provider) getPriority(container dockerData) string {

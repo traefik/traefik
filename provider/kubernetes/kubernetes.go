@@ -31,6 +31,8 @@ const (
 	ruleTypePathStrip          = "PathStrip"
 	ruleTypePath               = "Path"
 	ruleTypePathPrefix         = "PathPrefix"
+
+	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
 )
 
 const traefikDefaultRealm = "traefik"
@@ -171,17 +173,21 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					return nil, errors.New("no realm customization supported")
 				}
 
+				witelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
+				whitelistSourceRange := provider.SplitAndTrimString(witelistSourceRangeAnnotation)
+
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
 					if err != nil {
 						return nil, err
 					}
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
-						Backend:        r.Host + pa.Path,
-						PassHostHeader: PassHostHeader,
-						Routes:         make(map[string]types.Route),
-						Priority:       len(pa.Path),
-						BasicAuth:      basicAuthCreds,
+						Backend:              r.Host + pa.Path,
+						PassHostHeader:       PassHostHeader,
+						Routes:               make(map[string]types.Route),
+						Priority:             len(pa.Path),
+						BasicAuth:            basicAuthCreds,
+						WhitelistSourceRange: whitelistSourceRange,
 					}
 				}
 				if len(r.Host) > 0 {

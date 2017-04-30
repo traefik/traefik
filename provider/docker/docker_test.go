@@ -400,6 +400,68 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 	}
 }
 
+func TestDockerGetWhitelistSourceRange(t *testing.T) {
+	containers := []struct {
+		desc      string
+		container docker.ContainerJSON
+		expected  []string
+	}{
+		{
+			desc:      "no whitelist-label",
+			container: containerJSON(),
+			expected:  nil,
+		},
+		{
+			desc: "whitelist-label with empty string",
+			container: containerJSON(labels(map[string]string{
+				"traefik.frontend.whitelistSourceRange": "",
+			})),
+			expected: nil,
+		},
+		{
+			desc: "whitelist-label with IPv4 mask",
+			container: containerJSON(labels(map[string]string{
+				"traefik.frontend.whitelistSourceRange": "1.2.3.4/16",
+			})),
+			expected: []string{
+				"1.2.3.4/16",
+			},
+		},
+		{
+			desc: "whitelist-label with IPv6 mask",
+			container: containerJSON(labels(map[string]string{
+				"traefik.frontend.whitelistSourceRange": "fe80::/16",
+			})),
+			expected: []string{
+				"fe80::/16",
+			},
+		},
+		{
+			desc: "whitelist-label with multiple masks",
+			container: containerJSON(labels(map[string]string{
+				"traefik.frontend.whitelistSourceRange": "1.1.1.1/24, 1234:abcd::42/32",
+			})),
+			expected: []string{
+				"1.1.1.1/24",
+				"1234:abcd::42/32",
+			},
+		},
+	}
+
+	for _, e := range containers {
+		e := e
+		t.Run(e.desc, func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			provider := &Provider{}
+			actual := provider.getWhitelistSourceRange(dockerData)
+			if !reflect.DeepEqual(actual, e.expected) {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
+	}
+}
+
 func TestDockerGetLabel(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON

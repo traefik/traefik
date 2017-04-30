@@ -716,6 +716,14 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							negroni.Use(metricsMiddlewareBackend)
 						}
 					}
+					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
+					if err != nil {
+						log.Fatalf("Error creating IP Whitelister: %s", err)
+					} else if ipWhitelistMiddleware != nil {
+						negroni.Use(ipWhitelistMiddleware)
+						log.Infof("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
+					}
+
 					if len(frontend.BasicAuth) > 0 {
 						users := types.Users{}
 						for _, user := range frontend.BasicAuth {
@@ -768,6 +776,21 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
 	}
 	return serverEntryPoints, nil
+}
+
+func configureIPWhitelistMiddleware(whitelistSourceRanges []string) (negroni.Handler, error) {
+	if len(whitelistSourceRanges) > 0 {
+		ipSourceRanges := whitelistSourceRanges
+		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(ipSourceRanges)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return ipWhitelistMiddleware, nil
+	}
+
+	return nil, nil
 }
 
 func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Handler) {

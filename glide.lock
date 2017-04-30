@@ -1,4 +1,4 @@
-hash: 1aa32496b865dda72d76c7cba3458f1c2c467acf0b99aab4609323f109aa64f6
+hash: e59e8244152a823cd3633fb09cdd583c4e5be78d7b50fb7047ba6b6a9ed5e8ec
 updated: 2017-05-02T11:46:23.91434995-04:00
 imports:
 - name: cloud.google.com/go

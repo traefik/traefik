@@ -23,6 +23,9 @@
   basicAuth = [{{range $frontend.BasicAuth}}
       "{{.}}",
   {{end}}]
+  whitelistSourceRange = [{{range $frontend.WhitelistSourceRange}}
+    "{{.}}",
+  {{end}}]
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
     rule = "{{$route.Rule}}"
