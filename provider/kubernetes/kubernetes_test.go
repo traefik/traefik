@@ -1523,6 +1523,35 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"kubernetes.io/ingress.class":                  "traefik",
+					"ingress.kubernetes.io/whitelist-source-range": "1.1.1.1/24, 1234:abcd::42/32",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "test",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/whitelist-source-range",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	services := []*v1.Service{
 		{
@@ -1613,6 +1642,19 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"test/whitelist-source-range": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
@@ -1654,6 +1696,23 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 				BasicAuth: []string{"myUser:myEncodedPW"},
+			},
+			"test/whitelist-source-range": {
+				Backend:        "test/whitelist-source-range",
+				PassHostHeader: true,
+				WhitelistSourceRange: []string{
+					"1.1.1.1/24",
+					"1234:abcd::42/32",
+				},
+				Priority: len("/whitelist-source-range"),
+				Routes: map[string]types.Route{
+					"/whitelist-source-range": {
+						Rule: "PathPrefix:/whitelist-source-range",
+					},
+					"test": {
+						Rule: "Host:test",
+					},
+				},
 			},
 		},
 	}
