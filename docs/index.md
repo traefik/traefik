@@ -121,14 +121,14 @@ networks:
 
 Then, start and scale it in the `test` folder:
 
-```
+```shell
 docker-compose up -d
 docker-compose scale whoami=2
 ```
 
 Finally, test load-balancing between the two services `test_whoami_1` and `test_whoami_2`:
 
-```bash
+```shell
 $ curl -H Host:whoami.docker.localhost http://127.0.0.1
 Hostname: ef194d07634a
 IP: 127.0.0.1

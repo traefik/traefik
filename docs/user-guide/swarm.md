@@ -21,13 +21,13 @@ We first follow [this guide](https://docs.docker.com/engine/userguide/networking
 
 This machine is the service registry of our cluster.
 
-```sh
+```shell
 docker-machine create -d virtualbox mh-keystore
 ```
 
 Then we install the service registry [Consul](https://consul.io) on this machine:
 
-```sh
+```shell
 eval "$(docker-machine env mh-keystore)"
 docker run -d \
     -p "8500:8500" \
@@ -39,7 +39,7 @@ docker run -d \
 
 This machine is a swarm master and a swarm agent on it.
 
-```sh
+```shell
 docker-machine create -d virtualbox \
     --swarm --swarm-master \
     --swarm-discovery="consul://$(docker-machine ip mh-keystore):8500" \
@@ -52,7 +52,7 @@ docker-machine create -d virtualbox \
 
 This machine have a swarm agent on it.
 
-```sh
+```shell
 docker-machine create -d virtualbox \
     --swarm \
     --swarm-discovery="consul://$(docker-machine ip mh-keystore):8500" \
@@ -65,7 +65,7 @@ docker-machine create -d virtualbox \
 
 Create the overlay network on the swarm master:
 
-```sh
+```shell
 eval $(docker-machine env --swarm mhs-demo0)
 docker network create --driver overlay --subnet=10.0.9.0/24 my-net
 ```
@@ -74,7 +74,7 @@ docker network create --driver overlay --subnet=10.0.9.0/24 my-net
 
 Deploy Træfik:
 
-```sh
+```shell
 docker $(docker-machine config mhs-demo0) run \
     -d \
     -p 80:80 -p 8080:8080 \
@@ -110,7 +110,7 @@ Let's explain this command:
 
 We can now deploy our app on the cluster, here [whoami](https://github.com/emilevauge/whoami), a simple web server in GO, on the network `my-net`:
 
-```sh
+```shell
 eval $(docker-machine env --swarm mhs-demo0)
 docker run -d --name=whoami0 --net=my-net --env="constraint:node==mhs-demo0" emilevauge/whoami
 docker run -d --name=whoami1 --net=my-net --env="constraint:node==mhs-demo1" emilevauge/whoami
@@ -118,7 +118,7 @@ docker run -d --name=whoami1 --net=my-net --env="constraint:node==mhs-demo1" emi
 
 Check that everything is started:
 
-```sh
+```shell
 docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                                      NAMES
 ba2c21488299        emilevauge/whoami   "/whoamI"                8 seconds ago       Up 9 seconds        80/tcp                                                     mhs-demo1/whoami1
@@ -128,7 +128,7 @@ ba2c21488299        emilevauge/whoami   "/whoamI"                8 seconds ago  
 
 ## Access to your apps through Træfik
 
-```sh
+```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip mhs-demo0)
 Hostname: 8147a7746e7a
 IP: 127.0.0.1
@@ -167,4 +167,3 @@ X-Forwarded-Server: 8fbc39271b4c
 ```
 
 ![](http://i.giphy.com/ujUdrdpX7Ok5W.gif)
-

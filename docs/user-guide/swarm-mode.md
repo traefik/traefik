@@ -22,7 +22,7 @@ The cluster consists of:
 First, let's create all the required nodes. It's a shorter version of
 the [swarm tutorial](https://docs.docker.com/engine/swarm/swarm-tutorial/).
 
-```sh
+```shell
 docker-machine create -d virtualbox manager
 docker-machine create -d virtualbox worker1
 docker-machine create -d virtualbox worker2
@@ -34,7 +34,7 @@ Then, let's setup the cluster, in order :
 2. get the token for other host to join
 3. on both workers, join the cluster with the token
 
-```sh
+```shell
 docker-machine ssh manager "docker swarm init \
 	--listen-addr $(docker-machine ip manager) \
 	--advertise-addr $(docker-machine ip manager)"
@@ -57,7 +57,7 @@ docker-machine ssh worker2 "docker swarm join \
 
 Let's validate the cluster is up and running.
 
-```sh
+```shell
 docker-machine ssh manager docker node ls
 ID                           HOSTNAME  STATUS  AVAILABILITY  MANAGER STATUS
 2a770ov9vixeadep674265u1n    worker1   Ready   Active
@@ -67,7 +67,7 @@ esbhhy6vnqv90xomjaomdgy46    worker2   Ready   Active
 
 Finally, let's create a network for Træfik to use.
 
-```sh
+```shell
 docker-machine ssh manager "docker network create --driver=overlay traefik-net"
 ```
 
@@ -79,7 +79,7 @@ on a manager node — we are going to use a
 [constraint](https://docs.docker.com/engine/reference/commandline/service_create/#/specify-service-constraints-constraint) for
 that.
 
-```
+```shell
 docker-machine ssh manager "docker service create \
 	--name traefik \
 	--constraint=node.role==manager \
@@ -115,7 +115,7 @@ We can now deploy our app on the cluster,
 here [whoami](https://github.com/emilevauge/whoami), a simple web
 server in Go. We start 2 services, on the `traefik-net` network.
 
-```sh
+```shell
 docker-machine ssh manager "docker service create \
 	--name whoami0 \
 	--label traefik.port=80 \
@@ -135,7 +135,7 @@ If using `docker stack deploy`, there is [a specific way that the labels must be
 
 Check that everything is scheduled and started:
 
-```sh
+```shell
 docker-machine ssh manager "docker service ls"
 ID            NAME     REPLICAS  IMAGE              COMMAND
 ab046gpaqtln  whoami0  1/1       emilevauge/whoami
@@ -145,7 +145,7 @@ dtpl249tfghc  traefik  1/1       traefik            --docker --docker.swarmmode 
 
 ## Access to your apps through Træfik
 
-```sh
+```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip manager)
 Hostname: 8147a7746e7a
 IP: 127.0.0.1
@@ -186,7 +186,7 @@ X-Forwarded-Server: 8fbc39271b4c
 Note that as Træfik is published, you can access it from any machine
 and not only the manager.
 
-```sh
+```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip worker1)
 Hostname: 8147a7746e7a
 IP: 127.0.0.1
@@ -226,7 +226,7 @@ X-Forwarded-Server: 8fbc39271b4c
 
 ## Scale both services
 
-```sh
+```shell
 docker-machine ssh manager "docker service scale whoami0=5"
 
 docker-machine ssh manager "docker service scale whoami1=5"
@@ -235,7 +235,7 @@ docker-machine ssh manager "docker service scale whoami1=5"
 
 Check that we now have 5 replicas of each `whoami` service:
 
-```sh
+```shell
 docker-machine ssh manager "docker service ls"
 ID            NAME     REPLICAS  IMAGE              COMMAND
 ab046gpaqtln  whoami0  5/5       emilevauge/whoami
@@ -245,7 +245,7 @@ dtpl249tfghc  traefik  1/1       traefik            --docker --docker.swarmmode 
 ## Access to your whoami0 through Træfik multiple times.
 
 Repeat the following command multiple times and note that the Hostname changes each time as Traefik load balances each request against the 5 tasks.
-```sh
+```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip manager)
 Hostname: 8147a7746e7a
 IP: 127.0.0.1
@@ -266,7 +266,7 @@ X-Forwarded-Server: 8fbc39271b4c
 ```
 
 Do the same against whoami1.  
-```sh
+```shell
 curl -H Host:whoami1.traefik http://$(docker-machine ip manager)
 Hostname: ba2c21488299
 IP: 127.0.0.1
@@ -303,5 +303,3 @@ Now open your browser and go to http://whoami1.traefik/
 You will now see that stickyness is maintained.
 
 ![](http://i.giphy.com/ujUdrdpX7Ok5W.gif)
-
-

@@ -206,7 +206,7 @@ spec:
 ```
 [examples/k8s/ui.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/ui.yaml)
 
-```sh
+```shell
 kubectl apply -f examples/k8s/ui.yaml
 ```
 
@@ -217,7 +217,7 @@ to our cluster.
 
 > You can get the ip address of your minikube instance by running `minikube ip`
 
-```
+```shell
 echo "$(minikube ip) traefik-ui.local" | sudo tee -a /etc/hosts
 ```
 
@@ -333,7 +333,7 @@ spec:
 ```
 [examples/k8s/cheese-deployments.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-deployments.yaml)
 
-```sh
+```shell
 kubectl apply -f examples/k8s/cheese-deployments.yaml
 ```
 
@@ -389,7 +389,7 @@ spec:
 
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
 
-```sh
+```shell
 kubectl apply -f examples/k8s/cheese-services.yaml
 ```
 
@@ -430,7 +430,7 @@ spec:
 
 > Notice that we list each hostname, and add a backend service.
 
-```sh
+```shell
 kubectl apply -f examples/k8s/cheese-ingress.yaml
 ```
 
@@ -441,7 +441,7 @@ with a Server set up for each pod.
 If you edit your `/etc/hosts` again you should be able to access the cheese
 websites in your browser.
 
-```sh
+```shell
 echo "$(minikube ip) stilton.local cheddar.local wensleydale.local" | sudo tee -a /etc/hosts
 ```
 
@@ -490,11 +490,11 @@ spec:
 > with the `traefik.frontend.rule.type` annotation so that we can use
 > the containers from the previous example without modification.
 
-```sh
+```shell
 kubectl apply -f examples/k8s/cheeses-ingress.yaml
 ```
 
-```sh
+```shell
 echo "$(minikube ip) cheeses.local" | sudo tee -a /etc/hosts
 ```
 
@@ -562,7 +562,11 @@ could set `disablePassHostHeaders` to true in your toml file and then enable pas
 the host header per ingress if you wanted.
 
 ## Excluding an ingress from Træfik
-You can control which ingress Træfik cares about by using the "kubernetes.io/ingress.class"
+
+You can control which ingress Træfik cares about by using the `kubernetes.io/ingress.class`
 annotation. By default if the annotation is not set at all Træfik will include the
 ingress. If the annotation is set to anything other than traefik or a blank string
 Træfik will ignore it.
+
+
+![](http://i.giphy.com/ujUdrdpX7Ok5W.gif)

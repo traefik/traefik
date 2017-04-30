@@ -120,9 +120,9 @@ Supported backends:
 
 Supported filters:
 
-- ```tag```
+- `tag`
 
-```
+```toml
 # Constraints definition
 #
 # Optional
@@ -619,7 +619,7 @@ address = ":8080"
 
 - `/ping`: `GET` simple endpoint to check for Træfik process liveness.
 
-```sh
+```shell
 $ curl -sv "http://localhost:8080/ping"
 *   Trying ::1...
 * Connected to localhost (::1) port 8080 (#0)
@@ -639,7 +639,7 @@ OK
 
 - `/health`: `GET` json metrics
 
-```sh
+```shell
 $ curl -s "http://localhost:8080/health" | jq .
 {
   // Træfik PID
@@ -698,7 +698,7 @@ $ curl -s "http://localhost:8080/health" | jq .
 
 - `/api`: `GET` configuration for all providers
 
-```sh
+```shell
 $ curl -s "http://localhost:8080/api" | jq .
 {
   "file": {
@@ -1717,12 +1717,12 @@ RefreshSeconds = 15
 
 ```
 
-Items in the dynamodb table must have three attributes: 
+Items in the `dynamodb` table must have three attributes: 
 
 
-- 'id' : string
+- `id` : string
     - The id is the primary key.
-- 'name' : string
+- `name` : string
     - The name is used as the name of the frontend or backend.
-- 'frontend' or 'backend' : map
-    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See types/types.go for details. The presence or absence of this attribute determines its type. So an item should never have both a 'frontend' and a 'backend' attribute. 
+- `frontend` or `backend` : map
+    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See `types/types.go` for details. The presence or absence of this attribute determines its type. So an item should never have both a `frontend` and a `backend` attribute. 
