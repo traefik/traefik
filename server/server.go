@@ -28,6 +28,9 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	kitmetrics "github.com/go-kit/kit/metrics"
+	"github.com/go-kit/kit/metrics/prometheus"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/streamrail/concurrent-map"
 	"github.com/vulcand/oxy/cbreaker"
 	"github.com/vulcand/oxy/connlimit"
@@ -46,6 +49,7 @@ type Server struct {
 	signals                    chan os.Signal
 	stopChan                   chan bool
 	providers                  []provider.Provider
+	backendReloadCounter       kitmetrics.Counter
 	currentConfigurations      safe.Safe
 	globalConfiguration        GlobalConfiguration
 	loggerMiddleware           *middlewares.Logger
@@ -90,6 +94,13 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 		// leadership creation if cluster mode
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
 	}
+	server.backendReloadCounter = prometheus.NewCounterFrom(
+		stdprometheus.CounterOpts{
+			Name: "traefik_backend_reload_total",
+			Help: "How many backend requests, partitioned by state and type.",
+		},
+		[]string{"state", "type"},
+	)
 
 	return server
 }
@@ -180,7 +191,7 @@ func (server *Server) startHTTPServers() {
 		serverMiddlewares := []negroni.Handler{server.accessLoggerMiddleware, server.loggerMiddleware, metrics}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
 			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
+				metricsMiddleware := middlewares.NewBackendMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
 				serverMiddlewares = append(serverMiddlewares, metricsMiddleware)
 			}
 		}
@@ -217,17 +228,22 @@ func (server *Server) listenProviders(stop chan bool) {
 			return
 		case configMsg, ok := <-server.configurationChan:
 			if !ok {
+				server.backendReloadCounter.With("state", "failed", "type", configMsg.ProviderName).Add(1)
 				return
 			}
+			var labels []string
 			server.defaultConfigurationValues(configMsg.Configuration)
 			currentConfigurations := server.currentConfigurations.Get().(configs)
 			jsonConf, _ := json.Marshal(configMsg.Configuration)
 			log.Debugf("Configuration received from provider %s: %s", configMsg.ProviderName, string(jsonConf))
 			if configMsg.Configuration == nil || configMsg.Configuration.Backends == nil && configMsg.Configuration.Frontends == nil {
 				log.Infof("Skipping empty Configuration for provider %s", configMsg.ProviderName)
+				labels = []string{"state", "failed", "type", configMsg.ProviderName}
 			} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 				log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
+				labels = []string{"state", "successful", "type", configMsg.ProviderName}
 			} else {
+				labels = []string{"state", "successful", "type", configMsg.ProviderName}
 				lastConfigs.Set(configMsg.ProviderName, &configMsg)
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
 				providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
@@ -250,6 +266,7 @@ func (server *Server) listenProviders(stop chan bool) {
 				}
 				lastReceivedConfiguration.Set(time.Now())
 			}
+			server.backendReloadCounter.With(labels...).Add(1)
 		}
 	}
 }
@@ -571,6 +588,11 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				log.Errorf("Skipping frontend %s...", frontendName)
 				continue frontend
 			}
+
+			metricsMiddlewareBackend := middlewares.NewTransformer(fwd, middlewares.NewFrontendMetricsWrapper(middlewares.NewPrometheus(frontendName, server.globalConfiguration.Web.Metrics.Prometheus)))
+
+			saveBackend := middlewares.NewSaveBackend(metricsMiddlewareBackend)
+
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
 				log.Errorf("Skipping frontend %s...", frontendName)
@@ -654,7 +676,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									continue frontend
 								}
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight), roundrobin.Name(serverName)); err != nil {
 									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
 									log.Errorf("Skipping frontend %s...", frontendName)
 									continue frontend
@@ -680,7 +702,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									continue frontend
 								}
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight), roundrobin.Name(serverName)); err != nil {
 									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
 									log.Errorf("Skipping frontend %s...", frontendName)
 									continue frontend
@@ -721,7 +743,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						var negroni = negroni.New()
 						if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
 							if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-								metricsMiddlewareBackend := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
+								metricsMiddlewareBackend := middlewares.NewBackendMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
 								negroni.Use(metricsMiddlewareBackend)
 							}
 						}
