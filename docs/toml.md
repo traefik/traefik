@@ -1604,12 +1604,25 @@ domain = "rancher.localhost"
 #
 Watch = true
 
+# Polling interval (in seconds)
+#
+# Optional
+#
+RefreshSeconds = 15
+
 # Expose Rancher services by default in traefik
 #
 # Optional
 # Default: true
 #
 ExposedByDefault = false
+
+# Filter services with unhealthy states and health states
+#
+# Optional
+# Default: false
+#
+EnableServiceHealthFilter = false
 
 # Endpoint to use when connecting to Rancher
 #
