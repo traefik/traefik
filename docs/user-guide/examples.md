@@ -5,7 +5,7 @@ You will find here some configuration examples of Træfik.
 
 ## HTTP only
 
-```
+```toml
 defaultEntryPoints = ["http"]
 [entryPoints]
   [entryPoints.http]
@@ -14,7 +14,7 @@ defaultEntryPoints = ["http"]
 
 ## HTTP + HTTPS (with SNI)
 
-```
+```toml
 defaultEntryPoints = ["http", "https"]
 [entryPoints]
   [entryPoints.http]
@@ -33,7 +33,7 @@ Note that we can either give path to certificate file or directly the file conte
 
 ## HTTP redirect on HTTPS
 
-```
+```toml
 defaultEntryPoints = ["http", "https"]
 [entryPoints]
   [entryPoints.http]
@@ -50,7 +50,7 @@ defaultEntryPoints = ["http", "https"]
 
 ## Let's Encrypt support
 
-```
+```toml
 [entryPoints]
   [entryPoints.https]
   address = ":443"
@@ -80,7 +80,7 @@ entryPoint = "https"
 
 ## Override entrypoints in frontends
 
-```
+```toml
 [frontends]
   [frontends.frontend1]
   backend = "backend2"
@@ -107,7 +107,7 @@ With two user/pass:
 
 Passwords are encoded in MD5: you can use htpasswd to generate those ones.
 
-```
+```toml
 defaultEntryPoints = ["http"]
 [entryPoints]
   [entryPoints.http]
@@ -121,7 +121,7 @@ defaultEntryPoints = ["http"]
 Providing an authentication method as described above, it is possible to pass the user to the application
 via a configurable header value
 
-```
+```toml
 defaultEntryPoints = ["http"]
 [entryPoints]
   [entryPoints.http]
@@ -134,7 +134,7 @@ defaultEntryPoints = ["http"]
 
 ## Override the Traefik HTTP server IdleTimeout and/or throttle configurations from re-loading too quickly
 
-```
+```toml
 IdleTimeout = "360s"
 ProvidersThrottleDuration = "5s"
 ```

@@ -24,7 +24,7 @@ The Træfik global configuration will be getted from a [Consul](https://consul.i
 First we have to launch Consul in a container. 
 The [docker-compose file](https://docs.docker.com/compose/compose-file/) allows us to launch Consul and four instances of the trivial app [emilevauge/whoamI](https://github.com/emilevauge/whoamI) : 
 
-```yml
+```yaml
 consul:
   image: progrium/consul
   command: -server -bootstrap -log-level debug -ui-dir /ui
@@ -112,9 +112,9 @@ And there, the same global configuration in the Key-value Store (using `prefix =
 | `/traefik/consul/prefix`                                  | `traefik`                                                     |
 | `/traefik/web/address`                                    | `:8081`                                                       |
 
-In case you are setting key values manually,:
- - Remember to specify the indexes (`0`,`1`, `2`, ... ) under prefixes `/traefik/defaultentrypoints/` and `/traefik/entrypoints/https/tls/certificates/` in order to match the global configuration structure.
- - Be careful to give the correct IP address and port on the key `/traefik/consul/endpoint`.
+In case you are setting key values manually:
+- Remember to specify the indexes (`0`,`1`, `2`, ... ) under prefixes `/traefik/defaultentrypoints/` and `/traefik/entrypoints/https/tls/certificates/` in order to match the global configuration structure.
+- Be careful to give the correct IP address and port on the key `/traefik/consul/endpoint`.
 
 Note that we can either give path to certificate file or directly the file content itself.
 
@@ -126,7 +126,7 @@ All the rest of the global configuration is stored in Consul.
 
 Here is the [docker-compose file](https://docs.docker.com/compose/compose-file/) :
 
-```yml
+```yaml
 traefik:
   image: traefik
   command: --consul --consul.endpoint=127.0.0.1:8500
@@ -306,7 +306,7 @@ Don't forget to [setup the connection between Træfik and Key-value store](/user
 The static Træfik configuration in a key-value store can be automatically created and updated, using the [`storeconfig` subcommand](/basics/#commands).
 
 ```bash
-$ traefik storeconfig [flags] ...
+$ traefik storeconfig [flags] ...
 ```
 This command is here only to automate the [process which upload the configuration into the Key-value store](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store).
 Træfik will not start but the [static configuration](/basics/#static-trfk-configuration) will be uploaded into the Key-value store.
@@ -314,7 +314,7 @@ If you configured ACME (Let's Encrypt), your registration account and your certi
 
 To upload your ACME certificates to the KV store, get your traefik TOML file and add the new `storage` option in the `acme` section:
 
-```
+```toml
 [acme]
 email = "test@traefik.io"
 storage = "traefik/acme/account" # the key where to store your certificates in the KV store
@@ -323,6 +323,7 @@ storageFile = "acme.json" # your old certificates store
 
 Call `traefik storeconfig` to upload your config in the KV store.
 Then remove the line `storageFile = "acme.json"` from your TOML config file.
+
 That's it!
 
-
+![](http://i.giphy.com/ujUdrdpX7Ok5W.gif)

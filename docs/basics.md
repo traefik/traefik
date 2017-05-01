@@ -161,34 +161,34 @@ As seen in the previous example, you can combine multiple rules.
 In TOML file, you can use multiple routes:
 
 ```toml
-  [frontends.frontend3]
-  backend = "backend2"
-    [frontends.frontend3.routes.test_1]
-    rule = "Host:test3.localhost"
-    [frontends.frontend3.routes.test_2]
-    rule = "Path:/test"
+[frontends.frontend3]
+backend = "backend2"
+  [frontends.frontend3.routes.test_1]
+  rule = "Host:test3.localhost"
+  [frontends.frontend3.routes.test_2]
+  rule = "Path:/test"
 ```
 
 Here `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched.
 You can also use the notation using a `;` separator, same result:
 
 ```toml
-  [frontends.frontend3]
-  backend = "backend2"
-    [frontends.frontend3.routes.test_1]
-    rule = "Host:test3.localhost;Path:/test"
+[frontends.frontend3]
+backend = "backend2"
+  [frontends.frontend3.routes.test_1]
+  rule = "Host:test3.localhost;Path:/test"
 ```
 
 Finally, you can create a rule to bind multiple domains or Path to a frontend, using the `,` separator:
 
 ```toml
- [frontends.frontend2]
-    [frontends.frontend2.routes.test_1]
-    rule = "Host:test1.localhost,test2.localhost"
-  [frontends.frontend3]
-  backend = "backend2"
-    [frontends.frontend3.routes.test_1]
-    rule = "Path:/test1,/test2"
+[frontends.frontend2]
+   [frontends.frontend2.routes.test_1]
+   rule = "Host:test1.localhost,test2.localhost"
+[frontends.frontend3]
+backend = "backend2"
+  [frontends.frontend3.routes.test_1]
+  rule = "Path:/test1,/test2"
 ```
 
 ### Priorities
@@ -198,20 +198,20 @@ By default, routes will be sorted (in descending order) using rules length (to a
 
 You can customize priority by frontend:
 
-```
-  [frontends]
-    [frontends.frontend1]
-    backend = "backend1"
-    priority = 10
-    passHostHeader = true
-      [frontends.frontend1.routes.test_1]
-      rule = "PathPrefix:/to"
-    [frontends.frontend2]
-    priority = 5
-    backend = "backend2"
-    passHostHeader = true
-      [frontends.frontend2.routes.test_1]
-      rule = "PathPrefix:/toto"
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+  priority = 10
+  passHostHeader = true
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefix:/to"
+  [frontends.frontend2]
+  priority = 5
+  backend = "backend2"
+  passHostHeader = true
+    [frontends.frontend2.routes.test_1]
+    rule = "PathPrefix:/toto"
 ```
 
 Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
@@ -412,7 +412,7 @@ Each command may have related flags.
 All those related flags will be displayed with :
 
 ```bash
-$ traefik [command] --help
+$ traefik [command] --help
 ```
 
 Note that each command is described at the beginning of the help section:
