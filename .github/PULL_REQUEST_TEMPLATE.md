@@ -1,9 +1,19 @@
 <!--
-How to write a good pull request?
+PLEASE READ THIS MESSAGE.
 
-Read https://github.com/containous/traefik/blob/master/.github/how-to-write-a-good-pull-request.md.
+HOW TO WRITE A GOOD PULL REQUEST?
 
-And the contributing guide: https://github.com/containous/traefik/blob/master/.github/CONTRIBUTING.md.
+- Make it small.
+- Do only one thing.
+- Avoid re-formatting.
+- Make sure the code builds.
+- Make sure all tests pass.
+- Add tests.
+- Write useful descriptions and titles.
+- Address review comments in terms of additional commits.
+- Do not amend/squash existing ones unless the PR is trivial.
+- Read the contributing guide: https://github.com/containous/traefik/blob/master/.github/CONTRIBUTING.md.
+
 -->
 
 ### Description
