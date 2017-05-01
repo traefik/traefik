@@ -1,9 +1,9 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 source "$(dirname "$BASH_SOURCE")/.validate"
 
 IFS=$'\n'
-files=( $(validate_diff --diff-filter=ACMR --name-only -- '*.go' | grep -v '^\(integration/\)\?vendor/' || true) )
+files=( $(validate_diff --diff-filter=ACMR --name-only -- '*.go' | grep -v '^\(integration/\)\?vendor/\|autogen' || true) )
 unset IFS
 
 badFiles=()

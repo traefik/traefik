@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 if [ -n "$TRAVIS_TAG" ] && [ "$DOCKER_VERSION" = "1.10.3" ]; then

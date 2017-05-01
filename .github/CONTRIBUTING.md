@@ -61,7 +61,8 @@ Here's a full example:
 $ ./script/glide.sh get github.com/foo/bar
 # install another dependency, this time for the integration tests
 $ ( cd integration && ../script/glide.sh get github.com/baz/quuz )
-# generate (Only required to integrate other components such as web dashboard)
+# generate
+# (required to merge non-code components into the final binary, such as the web dashboard and provider's Go templates)
 $ go generate
 # Standard go build
 $ go build
@@ -71,6 +72,10 @@ $ gox "linux darwin" "386 amd64 arm" \
     ./cmd/traefik
 # run other commands like tests
 ```
+
+### Updating the templates
+
+If you happen to update the provider templates (in `/templates`), you need to run `go generate` to update the `autogen` package.
 
 ### Tests
 
