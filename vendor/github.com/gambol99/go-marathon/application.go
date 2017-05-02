@@ -56,43 +56,47 @@ type Port struct {
 
 // Application is the definition for an application in marathon
 type Application struct {
-	ID                         string               `json:"id,omitempty"`
-	Cmd                        *string              `json:"cmd,omitempty"`
-	Args                       *[]string            `json:"args,omitempty"`
-	Constraints                *[][]string          `json:"constraints,omitempty"`
-	Container                  *Container           `json:"container,omitempty"`
-	CPUs                       float64              `json:"cpus,omitempty"`
-	Disk                       *float64             `json:"disk,omitempty"`
-	Env                        *map[string]string   `json:"env,omitempty"`
-	Executor                   *string              `json:"executor,omitempty"`
-	HealthChecks               *[]HealthCheck       `json:"healthChecks,omitempty"`
-	Instances                  *int                 `json:"instances,omitempty"`
-	Mem                        *float64             `json:"mem,omitempty"`
-	Tasks                      []*Task              `json:"tasks,omitempty"`
-	Ports                      []int                `json:"ports"`
-	PortDefinitions            *[]PortDefinition    `json:"portDefinitions,omitempty"`
-	RequirePorts               *bool                `json:"requirePorts,omitempty"`
-	BackoffSeconds             *float64             `json:"backoffSeconds,omitempty"`
-	BackoffFactor              *float64             `json:"backoffFactor,omitempty"`
-	MaxLaunchDelaySeconds      *float64             `json:"maxLaunchDelaySeconds,omitempty"`
-	TaskKillGracePeriodSeconds *float64             `json:"taskKillGracePeriodSeconds,omitempty"`
-	Deployments                []map[string]string  `json:"deployments,omitempty"`
-	Dependencies               []string             `json:"dependencies"`
-	TasksRunning               int                  `json:"tasksRunning,omitempty"`
-	TasksStaged                int                  `json:"tasksStaged,omitempty"`
-	TasksHealthy               int                  `json:"tasksHealthy,omitempty"`
-	TasksUnhealthy             int                  `json:"tasksUnhealthy,omitempty"`
-	TaskStats                  map[string]TaskStats `json:"taskStats,omitempty"`
-	User                       string               `json:"user,omitempty"`
-	UpgradeStrategy            *UpgradeStrategy     `json:"upgradeStrategy,omitempty"`
-	Uris                       *[]string            `json:"uris,omitempty"`
-	Version                    string               `json:"version,omitempty"`
-	VersionInfo                *VersionInfo         `json:"versionInfo,omitempty"`
-	Labels                     *map[string]string   `json:"labels,omitempty"`
-	AcceptedResourceRoles      []string             `json:"acceptedResourceRoles,omitempty"`
-	LastTaskFailure            *LastTaskFailure     `json:"lastTaskFailure,omitempty"`
-	Fetch                      *[]Fetch             `json:"fetch,omitempty"`
-	IPAddressPerTask           *IPAddressPerTask    `json:"ipAddress,omitempty"`
+	ID                         string              `json:"id,omitempty"`
+	Cmd                        *string             `json:"cmd,omitempty"`
+	Args                       *[]string           `json:"args,omitempty"`
+	Constraints                *[][]string         `json:"constraints,omitempty"`
+	Container                  *Container          `json:"container,omitempty"`
+	CPUs                       float64             `json:"cpus,omitempty"`
+	GPUs                       *float64            `json:"gpus,omitempty"`
+	Disk                       *float64            `json:"disk,omitempty"`
+	Env                        *map[string]string  `json:"env,omitempty"`
+	Executor                   *string             `json:"executor,omitempty"`
+	HealthChecks               *[]HealthCheck      `json:"healthChecks,omitempty"`
+	ReadinessChecks            *[]ReadinessCheck   `json:"readinessChecks,omitempty"`
+	Instances                  *int                `json:"instances,omitempty"`
+	Mem                        *float64            `json:"mem,omitempty"`
+	Tasks                      []*Task             `json:"tasks,omitempty"`
+	Ports                      []int               `json:"ports"`
+	PortDefinitions            *[]PortDefinition   `json:"portDefinitions,omitempty"`
+	RequirePorts               *bool               `json:"requirePorts,omitempty"`
+	BackoffSeconds             *float64            `json:"backoffSeconds,omitempty"`
+	BackoffFactor              *float64            `json:"backoffFactor,omitempty"`
+	MaxLaunchDelaySeconds      *float64            `json:"maxLaunchDelaySeconds,omitempty"`
+	TaskKillGracePeriodSeconds *float64            `json:"taskKillGracePeriodSeconds,omitempty"`
+	Deployments                []map[string]string `json:"deployments,omitempty"`
+	// Available when embedding readiness information through query parameter.
+	ReadinessCheckResults *[]ReadinessCheckResult `json:"readinessCheckResults,omitempty"`
+	Dependencies          []string                `json:"dependencies"`
+	TasksRunning          int                     `json:"tasksRunning,omitempty"`
+	TasksStaged           int                     `json:"tasksStaged,omitempty"`
+	TasksHealthy          int                     `json:"tasksHealthy,omitempty"`
+	TasksUnhealthy        int                     `json:"tasksUnhealthy,omitempty"`
+	TaskStats             map[string]TaskStats    `json:"taskStats,omitempty"`
+	User                  string                  `json:"user,omitempty"`
+	UpgradeStrategy       *UpgradeStrategy        `json:"upgradeStrategy,omitempty"`
+	Uris                  *[]string               `json:"uris,omitempty"`
+	Version               string                  `json:"version,omitempty"`
+	VersionInfo           *VersionInfo            `json:"versionInfo,omitempty"`
+	Labels                *map[string]string      `json:"labels,omitempty"`
+	AcceptedResourceRoles []string                `json:"acceptedResourceRoles,omitempty"`
+	LastTaskFailure       *LastTaskFailure        `json:"lastTaskFailure,omitempty"`
+	Fetch                 *[]Fetch                `json:"fetch,omitempty"`
+	IPAddressPerTask      *IPAddressPerTask       `json:"ipAddress,omitempty"`
 }
 
 // ApplicationVersions is a collection of application versions for a specific app in marathon
@@ -177,6 +181,22 @@ func (r *Application) Command(cmd string) *Application {
 //		cpu:	the CPU shared (check Docker docs) per instance
 func (r *Application) CPU(cpu float64) *Application {
 	r.CPUs = cpu
+	return r
+}
+
+// SetGPUs set the amount of GPU per instance which is assigned to the application
+//		gpu:	the GPU (check MESOS docs) per instance
+func (r *Application) SetGPUs(gpu float64) *Application {
+	r.GPUs = &gpu
+	return r
+}
+
+// EmptyGPUs explicitly empties GPUs -- use this if you need to empty
+// gpus of an application that already has gpus set (setting port definitions to nil will
+// keep the current value)
+func (r *Application) EmptyGPUs() *Application {
+	g := 0.0
+	r.GPUs = &g
 	return r
 }
 
@@ -386,6 +406,26 @@ func (r *Application) EmptyHealthChecks() *Application {
 // HasHealthChecks is a helper method, used to check if an application has health checks
 func (r *Application) HasHealthChecks() bool {
 	return r.HealthChecks != nil && len(*r.HealthChecks) > 0
+}
+
+// AddReadinessCheck adds a readiness check.
+func (r *Application) AddReadinessCheck(readinessCheck ReadinessCheck) *Application {
+	if r.ReadinessChecks == nil {
+		r.EmptyReadinessChecks()
+	}
+
+	readinessChecks := *r.ReadinessChecks
+	readinessChecks = append(readinessChecks, readinessCheck)
+	r.ReadinessChecks = &readinessChecks
+
+	return r
+}
+
+// EmptyReadinessChecks empties the readiness checks.
+func (r *Application) EmptyReadinessChecks() *Application {
+	r.ReadinessChecks = &[]ReadinessCheck{}
+
+	return r
 }
 
 // DeploymentIDs retrieves the application deployments IDs

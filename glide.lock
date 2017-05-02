@@ -1,5 +1,5 @@
-hash: 0f1c54f36d88f4625c048686f733842d09d48525b1cf84dc05d4acc698cfd86f
-updated: 2017-04-11T17:02:21.540487905+02:00
+hash: 4859757da2a6ffcb080f0d03b050754d7a8f42a38dec8e8b5a2b7ad98f9cb604
+updated: 2017-05-02T02:14:58.499276128Z
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -95,6 +95,8 @@ imports:
   subpackages:
   - Godeps/_workspace/src/github.com/coreos/go-systemd/journal
   - Godeps/_workspace/src/github.com/coreos/pkg/capnslog
+  - Godeps/_workspace/src/github.com/ugorji/go/codec
+  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/fileutil
   - pkg/pathutil
@@ -133,12 +135,70 @@ imports:
 - name: github.com/docker/distribution
   version: 325b0804fef3a66309d962357aac3c2ce3f4d329
   subpackages:
+  - context
   - digest
   - reference
+  - registry/api/errcode
+  - registry/api/v2
+  - registry/client
+  - registry/client/auth
+  - registry/client/auth/challenge
+  - registry/client/transport
+  - registry/storage/cache
+  - registry/storage/cache/memory
+  - uuid
 - name: github.com/docker/docker
-  version: 49bf474f9ed7ce7143a59d1964ff7b7fd9b52178
+  version: 4845c567eb35d68f35b0b1713a09b0c8d47fe67e
   subpackages:
+  - api
+  - api/types
+  - api/types/blkiodev
+  - api/types/container
+  - api/types/events
+  - api/types/filters
+  - api/types/image
+  - api/types/mount
+  - api/types/network
+  - api/types/registry
+  - api/types/strslice
+  - api/types/swarm
+  - api/types/time
+  - api/types/versions
+  - api/types/volume
+  - builder/dockerignore
+  - cli/command/image/build
+  - cli/config
+  - cli/config/configfile
+  - client
   - namesgenerator
+  - opts
+  - pkg/archive
+  - pkg/fileutils
+  - pkg/gitutils
+  - pkg/homedir
+  - pkg/httputils
+  - pkg/idtools
+  - pkg/ioutils
+  - pkg/jsonlog
+  - pkg/jsonmessage
+  - pkg/longpath
+  - pkg/namesgenerator
+  - pkg/pools
+  - pkg/progress
+  - pkg/promise
+  - pkg/random
+  - pkg/stdcopy
+  - pkg/streamformatter
+  - pkg/stringid
+  - pkg/symlink
+  - pkg/system
+  - pkg/tarsum
+  - pkg/term
+  - pkg/term/windows
+  - pkg/tlsconfig
+  - pkg/urlutil
+  - registry
+  - runconfig/opts
 - name: github.com/docker/engine-api
   version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
   subpackages:
@@ -199,7 +259,7 @@ imports:
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/gambol99/go-marathon
-  version: 6b00a5b651b1beb2c6821863f7c60df490bd46c8
+  version: d672c6fbb499596869d95146a26e7d0746c06c54
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
@@ -324,6 +384,7 @@ imports:
 - name: github.com/opencontainers/runc
   version: 50401b5b4c2e01e4f1372b73a021742deeaf4e2d
   subpackages:
+  - libcontainer/system
   - libcontainer/user
 - name: github.com/ovh/go-ovh
   version: d2207178e10e4527e8f222fd8707982df8c3af17
@@ -667,4 +728,61 @@ imports:
   - tools/clientcmd/api
   - tools/metrics
   - transport
-testImports: []
+testImports:
+- name: github.com/Azure/go-ansiterm
+  version: fa152c58bc15761d0200cb75fe958b89a9d4888e
+  subpackages:
+  - winterm
+- name: github.com/docker/libcompose
+  version: c6a7d4679d065a4f50e08d4d1fe13776062cf1ec
+  subpackages:
+  - config
+  - docker
+  - docker/auth
+  - docker/builder
+  - docker/client
+  - docker/container
+  - docker/ctx
+  - docker/image
+  - docker/network
+  - docker/service
+  - docker/volume
+  - labels
+  - logger
+  - lookup
+  - project
+  - project/events
+  - project/options
+  - utils
+  - version
+  - yaml
+- name: github.com/docker/libtrust
+  version: fa567046d9b14f6aa788882a950d69651d230b21
+- name: github.com/flynn/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff
+- name: github.com/go-check/check
+  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+- name: github.com/gorilla/mux
+  version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
+- name: github.com/libkermit/compose
+  version: d18cc8ec55cd7033d6c11c0db3b8f521ddbe339a
+  subpackages:
+  - check
+- name: github.com/libkermit/docker
+  version: 4585c8ba51a219e3c8df6b9d355438e4d540fe70
+- name: github.com/libkermit/docker-check
+  version: 182e98fd61f66048b3b794f7645b0262104cbf84
+- name: github.com/Nvveen/Gotty
+  version: cd527374f1e5bff4938207604a14f2e38a9cf512
+- name: github.com/vdemeester/shakers
+  version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
+- name: github.com/xeipuuv/gojsonpointer
+  version: 6fe8760cad3569743d51ddbb243b26f8456742dc
+- name: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- name: github.com/xeipuuv/gojsonschema
+  version: a55c211c418162597a32c74c7230f81adb5ad616
+- name: golang.org/x/time
+  version: a4bde12657593d5e90d0533a3e4fd95e635124cb
+  subpackages:
+  - rate

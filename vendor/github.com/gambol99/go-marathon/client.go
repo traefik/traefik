@@ -174,14 +174,19 @@ type marathonClient struct {
 	ipAddress string
 	// the http server
 	eventsHTTP *http.Server
-	// the http client use for making requests
-	httpClient *http.Client
 	// the marathon hosts
 	hosts *cluster
 	// a map of service you wish to listen to
 	listeners map[EventsChannel]EventsChannelContext
 	// a custom logger for debug log messages
 	debugLog *log.Logger
+	// the marathon HTTP client to ensure consistency in requests
+	client *httpClient
+}
+
+type httpClient struct {
+	// the configuration for the marathon HTTP client
+	config Config
 }
 
 // NewClient creates a new marathon client
@@ -197,8 +202,11 @@ func NewClient(config Config) (Marathon, error) {
 		config.PollingWaitTime = defaultPollingWaitTime
 	}
 
+	// step: setup shared client
+	client := &httpClient{config: config}
+
 	// step: create a new cluster
-	hosts, err := newCluster(config.HTTPClient, config.URL)
+	hosts, err := newCluster(client, config.URL, config.DCOSToken != "")
 	if err != nil {
 		return nil, err
 	}
@@ -209,11 +217,11 @@ func NewClient(config Config) (Marathon, error) {
 	}
 
 	return &marathonClient{
-		config:     config,
-		listeners:  make(map[EventsChannel]EventsChannelContext),
-		hosts:      hosts,
-		httpClient: config.HTTPClient,
-		debugLog:   log.New(debugLogOutput, "", 0),
+		config:    config,
+		listeners: make(map[EventsChannel]EventsChannelContext),
+		hosts:     hosts,
+		debugLog:  log.New(debugLogOutput, "", 0),
+		client:    client,
 	}, nil
 }
 
@@ -246,34 +254,25 @@ func (r *marathonClient) apiDelete(uri string, post, result interface{}) error {
 	return r.apiCall("DELETE", uri, post, result)
 }
 
-func (r *marathonClient) apiCall(method, uri string, body, result interface{}) error {
+func (r *marathonClient) apiCall(method, url string, body, result interface{}) error {
 	for {
-		// step: grab a member from the cluster and attempt to perform the request
-		member, err := r.hosts.getMember()
-		if err != nil {
-			return ErrMarathonDown
-		}
-
-		// step: Create the endpoint url
-		url := fmt.Sprintf("%s/%s", member, uri)
-		if r.config.DCOSToken != "" {
-			url = fmt.Sprintf("%s/%s", member+"/marathon", uri)
-		}
-
 		// step: marshall the request to json
 		var requestBody []byte
+		var err error
 		if body != nil {
 			if requestBody, err = json.Marshal(body); err != nil {
 				return err
 			}
 		}
 
-		// step: create the api request
-		request, err := r.buildAPIRequest(method, url, bytes.NewReader(requestBody))
+		// step: create the API request
+		request, member, err := r.buildAPIRequest(method, url, bytes.NewReader(requestBody))
 		if err != nil {
 			return err
 		}
-		response, err := r.httpClient.Do(request)
+
+		// step: perform the API request
+		response, err := r.client.Do(request)
 		if err != nil {
 			r.hosts.markDown(member)
 			// step: attempt the request on another member
@@ -318,26 +317,48 @@ func (r *marathonClient) apiCall(method, uri string, body, result interface{}) e
 }
 
 // buildAPIRequest creates a default API request
-func (r *marathonClient) buildAPIRequest(method, url string, reader io.Reader) (*http.Request, error) {
-	// Make the http request to Marathon
-	request, err := http.NewRequest(method, url, reader)
+func (r *marathonClient) buildAPIRequest(method, uri string, reader io.Reader) (request *http.Request, member string, err error) {
+	// Grab a member from the cluster
+	member, err = r.hosts.getMember()
+	if err != nil {
+		return nil, "", ErrMarathonDown
+	}
+
+	// Build the HTTP request to Marathon
+	request, err = r.client.buildMarathonRequest(method, member, uri, reader)
+	if err != nil {
+		return nil, member, err
+	}
+	return request, member, nil
+}
+
+func (rc *httpClient) buildMarathonRequest(method string, member string, uri string, reader io.Reader) (request *http.Request, err error) {
+	// Create the endpoint URL
+	url := fmt.Sprintf("%s/%s", member, uri)
+
+	// Instantiate an HTTP request
+	request, err = http.NewRequest(method, url, reader)
 	if err != nil {
 		return nil, err
 	}
 
 	// Add any basic auth and the content headers
-	if r.config.HTTPBasicAuthUser != "" && r.config.HTTPBasicPassword != "" {
-		request.SetBasicAuth(r.config.HTTPBasicAuthUser, r.config.HTTPBasicPassword)
+	if rc.config.HTTPBasicAuthUser != "" && rc.config.HTTPBasicPassword != "" {
+		request.SetBasicAuth(rc.config.HTTPBasicAuthUser, rc.config.HTTPBasicPassword)
 	}
 
-	if r.config.DCOSToken != "" {
-		request.Header.Add("Authorization", "token="+r.config.DCOSToken)
+	if rc.config.DCOSToken != "" {
+		request.Header.Add("Authorization", "token="+rc.config.DCOSToken)
 	}
 
 	request.Header.Add("Content-Type", "application/json")
 	request.Header.Add("Accept", "application/json")
 
 	return request, nil
+}
+
+func (rc *httpClient) Do(request *http.Request) (response *http.Response, err error) {
+	return rc.config.HTTPClient.Do(request)
 }
 
 var oneLogLineRegex = regexp.MustCompile(`(?m)^\s*`)

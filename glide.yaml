@@ -65,7 +65,7 @@ import:
   - acme
 - package: gopkg.in/fsnotify.v1
 - package: github.com/docker/docker
-  version: v1.13.0
+  version: v17.04.0-ce
   subpackages:
   - namesgenerator
 - package: github.com/mattn/go-shellwords
@@ -91,7 +91,7 @@ import:
 - package: k8s.io/client-go
   version: v2.0.0
 - package: github.com/gambol99/go-marathon
-  version: ^0.5.1
+  version: d672c6fbb499596869d95146a26e7d0746c06c54
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka

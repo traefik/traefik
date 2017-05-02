@@ -27,6 +27,7 @@ type HealthCheck struct {
 	GracePeriodSeconds     int      `json:"gracePeriodSeconds,omitempty"`
 	IntervalSeconds        int      `json:"intervalSeconds,omitempty"`
 	TimeoutSeconds         int      `json:"timeoutSeconds,omitempty"`
+	IgnoreHTTP1xx          *bool    `json:"ignoreHttp1xx,ommitempty"`
 }
 
 // SetCommand sets the given command on the health check.
@@ -56,6 +57,12 @@ func (h HealthCheck) SetPath(p string) HealthCheck {
 // SetMaxConsecutiveFailures sets the maximum consecutive failures on the health check.
 func (h HealthCheck) SetMaxConsecutiveFailures(i int) HealthCheck {
 	h.MaxConsecutiveFailures = &i
+	return h
+}
+
+// SetIgnoreHTTP1xx sets ignore http 1xx on the health check.
+func (h HealthCheck) SetIgnoreHTTP1xx(ignore bool) HealthCheck {
+	h.IgnoreHTTP1xx = &ignore
 	return h
 }
 
