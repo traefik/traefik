@@ -65,7 +65,7 @@ import:
   - acme
 - package: gopkg.in/fsnotify.v1
 - package: github.com/docker/docker
-  version: v17.04.0-ce
+  version: v1.13.0
   subpackages:
   - namesgenerator
 - package: github.com/mattn/go-shellwords
