@@ -117,6 +117,7 @@ Supported backends:
 - Zookeeper
 - Etcd
 - Consul Catalog
+- Rancher
 
 Supported filters:
 

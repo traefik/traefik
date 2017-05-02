@@ -234,6 +234,7 @@ func getenv(key, fallback string) string {
 // Provide allows the rancher provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+	p.Constraints = append(p.Constraints, constraints...)
 
 	safe.Go(func() {
 		operation := func() error {
@@ -482,6 +483,14 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 
 	if !isServiceEnabled(service, p.ExposedByDefault) {
 		log.Debugf("Filtering disabled service %s", service.Name)
+		return false
+	}
+
+	constraintTags := strings.Split(service.Labels["traefik.tags"], ",")
+	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
+		if failingConstraint != nil {
+			log.Debugf("Filtering service %s with constraint %s", service.Name, failingConstraint.String())
+		}
 		return false
 	}
 
