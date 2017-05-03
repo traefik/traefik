@@ -15,6 +15,9 @@ func TestRancherServiceFilter(t *testing.T) {
 		EnableServiceHealthFilter: true,
 	}
 
+	constraint, _ := types.NewConstraint("tag==ch*se")
+	provider.Constraints = types.Constraints{constraint}
+
 	services := []struct {
 		service  rancherData
 		expected bool
@@ -54,6 +57,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
+					"traefik.tags":   "not-cheesy",
 					"traefik.port":   "80",
 					"traefik.enable": "true",
 				},
@@ -65,6 +69,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
+					"traefik.tags":   "cheese",
 					"traefik.port":   "80",
 					"traefik.enable": "true",
 				},
@@ -76,11 +81,24 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
+					"traefik.tags":   "cheeeeese",
 					"traefik.port":   "80",
 					"traefik.enable": "true",
 				},
 				Health: "healthy",
 				State:  "upgraded",
+			},
+			expected: true,
+		},
+		{
+			service: rancherData{
+				Labels: map[string]string{
+					"traefik.tags":   "chose",
+					"traefik.port":   "80",
+					"traefik.enable": "true",
+				},
+				Health: "healthy",
+				State:  "active",
 			},
 			expected: true,
 		},

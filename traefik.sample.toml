@@ -1081,6 +1081,12 @@
 # Required
 # SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
+# Constraints
+#
+# Optional
+#
+# constraints = ["tag==api", "tag==chee*e"]
+# Matching with containers having this tag: "traefik.tags=cheese,wine"
 
 ################################################################
 # DynamoDB configuration backend
