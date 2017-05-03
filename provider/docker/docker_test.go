@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -9,6 +8,7 @@ import (
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/engine-api/types"
 	"github.com/docker/go-connections/nat"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDockerGetFrontendName(t *testing.T) {
@@ -62,9 +62,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 				Domain: "docker.localhost",
 			}
 			actual := provider.getFrontendName(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -111,9 +109,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 				Domain: "docker.localhost",
 			}
 			actual := provider.getFrontendRule(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -153,9 +149,7 @@ func TestDockerGetBackend(t *testing.T) {
 			dockerData := parseContainer(e.container)
 			provider := &Provider{}
 			actual := provider.getBackend(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -205,9 +199,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 			dockerData := parseContainer(e.container)
 			provider := &Provider{}
 			actual := provider.getIPAddress(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -266,9 +258,7 @@ func TestDockerGetPort(t *testing.T) {
 			dockerData := parseContainer(e.container)
 			provider := &Provider{}
 			actual := provider.getPort(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -297,9 +287,7 @@ func TestDockerGetWeight(t *testing.T) {
 			dockerData := parseContainer(e.container)
 			provider := &Provider{}
 			actual := provider.getWeight(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -330,9 +318,7 @@ func TestDockerGetDomain(t *testing.T) {
 				Domain: "docker.localhost",
 			}
 			actual := provider.getDomain(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -361,9 +347,7 @@ func TestDockerGetProtocol(t *testing.T) {
 			dockerData := parseContainer(e.container)
 			provider := &Provider{}
 			actual := provider.getProtocol(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -392,9 +376,7 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 			dockerData := parseContainer(e.container)
 			provider := &Provider{}
 			actual := provider.getPassHostHeader(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -474,14 +456,12 @@ func TestDockerGetLabels(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
 			labels, err := getLabels(dockerData, []string{"foo", "bar"})
-			if !reflect.DeepEqual(labels, e.expectedLabels) {
-				t.Errorf("expect %v, got %v", e.expectedLabels, labels)
-			}
 			if e.expectedError != "" {
 				if err == nil || !strings.Contains(err.Error(), e.expectedError) {
 					t.Errorf("expected an error with %q, got %v", e.expectedError, err)
 				}
 			}
+			assert.Equal(t, e.expectedLabels, labels)
 		})
 	}
 }
@@ -620,9 +600,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 			provider.ExposedByDefault = e.exposedByDefault
 			dockerData := parseContainer(e.container)
 			actual := provider.containerFilter(dockerData)
-			if actual != e.expected {
-				t.Errorf("expected %v for %+v (%+v, %+v), got %+v", e.expected, e.container, e.container.NetworkSettings, e.container.ContainerJSONBase, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -807,13 +785,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				ExposedByDefault: true,
 			}
 			actualConfig := provider.loadDockerConfig(dockerDataList)
-			// Compare backends
-			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-				t.Errorf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
-			}
-			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-				t.Errorf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
-			}
+			assert.Equal(t, c.expectedBackends, actualConfig.Backends)
+			assert.Equal(t, c.expectedFrontends, actualConfig.Frontends)
 		})
 	}
 }

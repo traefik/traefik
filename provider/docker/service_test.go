@@ -1,13 +1,13 @@
 package docker
 
 import (
-	"reflect"
 	"strconv"
 	"testing"
 
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/engine-api/types"
 	"github.com/docker/go-connections/nat"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDockerGetServiceProtocol(t *testing.T) {
@@ -41,9 +41,7 @@ func TestDockerGetServiceProtocol(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
 			actual := provider.getServiceProtocol(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -79,9 +77,7 @@ func TestDockerGetServiceWeight(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
 			actual := provider.getServiceWeight(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -117,9 +113,7 @@ func TestDockerGetServicePort(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
 			actual := provider.getServicePort(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -155,9 +149,7 @@ func TestDockerGetServiceFrontendRule(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
 			actual := provider.getServiceFrontendRule(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -193,9 +185,7 @@ func TestDockerGetServiceBackend(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
 			actual := provider.getServiceBackend(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -231,9 +221,7 @@ func TestDockerGetServicePriority(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
 			actual := provider.getServicePriority(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -269,9 +257,7 @@ func TestDockerGetServicePassHostHeader(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
 			actual := provider.getServicePassHostHeader(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -307,9 +293,7 @@ func TestDockerGetServiceEntryPoints(t *testing.T) {
 			t.Parallel()
 			dockerData := parseContainer(e.container)
 			actual := provider.getServiceEntryPoints(dockerData, "myservice")
-			if !reflect.DeepEqual(actual, e.expected) {
-				t.Fatalf("expected %q, got %q for container %q", e.expected, actual, dockerData.Name)
-			}
+			assert.Equal(t, e.expected, actual)
 		})
 	}
 }
@@ -462,13 +446,8 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 			}
 
 			actualConfig := provider.loadDockerConfig(dockerDataList)
-			// Compare backends
-			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-				t.Fatalf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
-			}
-			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-				t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
-			}
+			assert.Equal(t, c.expectedBackends, actualConfig.Backends)
+			assert.Equal(t, c.expectedFrontends, actualConfig.Frontends)
 		})
 	}
 }
