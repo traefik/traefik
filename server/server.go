@@ -24,7 +24,6 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
-	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -49,7 +48,6 @@ type Server struct {
 	currentConfigurations      safe.Safe
 	globalConfiguration        GlobalConfiguration
 	loggerMiddleware           *middlewares.Logger
-	accessLoggerMiddleware     *accesslog.LogHandler
 	routinesPool               *safe.Pool
 	leadership                 *cluster.Leadership
 }
@@ -84,7 +82,6 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server.currentConfigurations.Set(currentConfigurations)
 	server.globalConfiguration = globalConfiguration
 	server.loggerMiddleware = middlewares.NewLogger(globalConfiguration.AccessLogsFile)
-	server.accessLoggerMiddleware = accesslog.NewLogHandler()
 	server.routinesPool = safe.NewPool(context.Background())
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
@@ -157,7 +154,6 @@ func (server *Server) Close() {
 	close(server.signals)
 	close(server.stopChan)
 	server.loggerMiddleware.Close()
-	server.accessLoggerMiddleware.Close()
 	cancel()
 }
 
@@ -177,7 +173,7 @@ func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
 
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
-		serverMiddlewares := []negroni.Handler{server.accessLoggerMiddleware, server.loggerMiddleware, metrics}
+		serverMiddlewares := []negroni.Handler{server.loggerMiddleware, metrics}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
 			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
 				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
@@ -557,6 +553,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 	backendsHealthcheck := map[string]*healthcheck.BackendHealthCheck{}
 
+	backend2FrontendMap := map[string]string{}
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
 	frontend:
@@ -571,6 +568,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				log.Errorf("Skipping frontend %s...", frontendName)
 				continue frontend
 			}
+			saveBackend := middlewares.NewSaveBackend(fwd)
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
 				log.Errorf("Skipping frontend %s...", frontendName)
@@ -605,16 +603,14 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
 					} else {
-						saveFrontend := accesslog.NewSaveFrontend(handler, frontendName)
-						newServerRoute.route.Handler(saveFrontend)
-						redirectHandlers[entryPointName] = saveFrontend
+						newServerRoute.route.Handler(handler)
+						redirectHandlers[entryPointName] = handler
 					}
 				} else {
 					if backends[frontend.Backend] == nil {
 						log.Debugf("Creating backend %s", frontend.Backend)
-						saveBackend := accesslog.NewSaveBackend(fwd, frontend.Backend)
-						saveFrontend := accesslog.NewSaveFrontend(saveBackend, frontendName)
-						rr, _ := roundrobin.New(saveFrontend)
+						var lb http.Handler
+						rr, _ := roundrobin.New(saveBackend)
 						if configuration.Backends[frontend.Backend] == nil {
 							log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
 							log.Errorf("Skipping frontend %s...", frontendName)
@@ -636,7 +632,6 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							sticky = roundrobin.NewStickySession(cookiename)
 						}
 
-						var lb http.Handler
 						switch lbMethod {
 						case types.Drr:
 							log.Debugf("Creating load-balancer drr")
@@ -653,6 +648,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									log.Errorf("Skipping frontend %s...", frontendName)
 									continue frontend
 								}
+								backend2FrontendMap[url.String()] = frontendName
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
 								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
 									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
@@ -669,7 +665,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							log.Debugf("Creating load-balancer wrr")
 							if stickysession {
 								log.Debugf("Sticky session with cookie %v", cookiename)
-								rr, _ = roundrobin.New(saveFrontend, roundrobin.EnableStickySession(sticky))
+								rr, _ = roundrobin.New(saveBackend, roundrobin.EnableStickySession(sticky))
 							}
 							lb = rr
 							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
@@ -679,6 +675,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 									log.Errorf("Skipping frontend %s...", frontendName)
 									continue frontend
 								}
+								backend2FrontendMap[url.String()] = frontendName
 								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
 								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
 									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
@@ -772,6 +769,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 		}
 	}
 	healthcheck.GetHealthCheck().SetBackendsConfiguration(server.routinesPool.Ctx(), backendsHealthcheck)
+	middlewares.SetBackend2FrontendMap(&backend2FrontendMap)
 	//sort routes
 	for _, serverEntryPoint := range serverEntryPoints {
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
