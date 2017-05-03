@@ -1,4 +1,5 @@
 /dist
+/autogen/gen.go
 .idea
 .intellij
 *.iml
