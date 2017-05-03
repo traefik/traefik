@@ -337,6 +337,62 @@ func TestMarathonLoadConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			applications: &marathon.Applications{
+				Apps: []marathon.Application{
+					{
+						ID:    "/testHealthCheck",
+						Ports: []int{80},
+						Labels: &map[string]string{
+							labelBackendHealthCheckPath:     "/path",
+							labelBackendHealthCheckInterval: "5m",
+						},
+					},
+				},
+			},
+			tasks: &marathon.Tasks{
+				Tasks: []marathon.Task{
+					{
+						ID:    "testHealthCheck",
+						AppID: "/testHealthCheck",
+						Host:  "127.0.0.1",
+						Ports: []int{80},
+						IPAddresses: []*marathon.IPAddress{
+							{
+								IPAddress: "127.0.0.1",
+								Protocol:  "tcp",
+							},
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-testHealthCheck": {
+					Backend:        "backend-testHealthCheck",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					Routes: map[string]types.Route{
+						"route-host-testHealthCheck": {
+							Rule: "Host:testHealthCheck.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-testHealthCheck": {
+					Servers: map[string]types.Server{
+						"server-testHealthCheck": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+					HealthCheck: &types.HealthCheck{
+						Path:     "/path",
+						Interval: "5m",
+					},
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {
