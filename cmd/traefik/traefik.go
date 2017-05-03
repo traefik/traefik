@@ -244,22 +244,25 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 	svr := server.NewServer(globalConfiguration)
 	svr.Start()
 	defer svr.Close()
-	sent, err := daemon.SdNotify(true, "READY=1")
+	sent, err := daemon.SdNotify(false, "READY=1")
 	if !sent && err != nil {
 		log.Error("Fail to notify", err)
 	}
-	t, err := daemon.SdWatchdogEnabled(true)
+	t, err := daemon.SdWatchdogEnabled(false)
 	if err != nil {
 		log.Error("Problem with watchdog", err)
 	} else if t != 0 {
 		// Send a ping each half time given
 		t = t / 2
-		go func(interval time.Duration) {
-			tick := time.Tick(interval)
+		log.Info("Watchdog activated with timer each ", t)
+		safe.Go(func() {
+			tick := time.Tick(t)
 			for range tick {
-				daemon.SdNotify(true, "WATCHDOG=1")
+				if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
+					log.Error("Fail to tick watchdog")
+				}
 			}
-		}(t)
+		})
 	}
 	svr.Wait()
 	log.Info("Shutting down")
