@@ -133,7 +133,7 @@ func TestDockerGetServiceFrontendRule(t *testing.T) {
 	}{
 		{
 			container: containerJSON(name("foo")),
-			expected:  "Host:foo.",
+			expected:  "",
 		},
 		{
 			container: containerJSON(labels(map[string]string{

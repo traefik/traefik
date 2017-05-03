@@ -8,6 +8,7 @@ import (
 
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/engine-api/types"
+	"github.com/docker/engine-api/types/container"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -488,127 +489,300 @@ func TestDockerGetLabels(t *testing.T) {
 
 func TestDockerTraefikFilter(t *testing.T) {
 	containers := []struct {
-		container        docker.ContainerJSON
-		exposedByDefault bool
-		expected         bool
+		container docker.ContainerJSON
+		expected  bool
+		provider  *Provider
 	}{
 		{
-			container:        containerJSON(),
-			exposedByDefault: true,
-			expected:         false,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config:          &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{},
+			},
+			expected: false,
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
-			container: containerJSON(
-				labels(map[string]string{
-					"traefik.enable": "false",
-				}),
-				ports(nat.PortMap{
-					"80/tcp": {},
-				}),
-			),
-			exposedByDefault: true,
-			expected:         false,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.enable": "false",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: false,
 		},
 		{
-			container: containerJSON(
-				labels(map[string]string{
-					"traefik.frontend.rule": "Host:foo.bar",
-				}),
-				ports(nat.PortMap{
-					"80/tcp": {},
-				}),
-			),
-			exposedByDefault: true,
-			expected:         true,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.frontend.rule": "Host:foo.bar",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
-			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp":  {},
-					"443/tcp": {},
-				}),
-			),
-			exposedByDefault: true,
-			expected:         true,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container-multi-ports",
+				},
+				Config: &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp":  {},
+							"443/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
-			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp": {},
-				}),
-			),
-			exposedByDefault: true,
-			expected:         true,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
-			container: containerJSON(
-				labels(map[string]string{
-					"traefik.port": "80",
-				}),
-				ports(nat.PortMap{
-					"80/tcp":  {},
-					"443/tcp": {},
-				}),
-			),
-			exposedByDefault: true,
-			expected:         true,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.port": "80",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp":  {},
+							"443/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
-			container: containerJSON(
-				labels(map[string]string{
-					"traefik.enable": "true",
-				}),
-				ports(nat.PortMap{
-					"80/tcp": {},
-				}),
-			),
-			exposedByDefault: true,
-			expected:         true,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.enable": "true",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
-			container: containerJSON(
-				labels(map[string]string{
-					"traefik.enable": "anything",
-				}),
-				ports(nat.PortMap{
-					"80/tcp": {},
-				}),
-			),
-			exposedByDefault: true,
-			expected:         true,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.enable": "anything",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
-			container: containerJSON(
-				labels(map[string]string{
-					"traefik.frontend.rule": "Host:foo.bar",
-				}),
-				ports(nat.PortMap{
-					"80/tcp": {},
-				}),
-			),
-			exposedByDefault: true,
-			expected:         true,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.frontend.rule": "Host:foo.bar",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
+			expected: true,
 		},
 		{
-			container: containerJSON(
-				ports(nat.PortMap{
-					"80/tcp": {},
-				}),
-			),
-			exposedByDefault: false,
-			expected:         false,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
+			expected: false,
 		},
 		{
-			container: containerJSON(
-				labels(map[string]string{
-					"traefik.enable": "true",
-				}),
-				ports(nat.PortMap{
-					"80/tcp": {},
-				}),
-			),
-			exposedByDefault: false,
-			expected:         true,
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.enable": "true",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
+			expected: true,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.enable": "true",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				ExposedByDefault: false,
+			},
+			expected: false,
+		},
+		{
+			container: docker.ContainerJSON{
+				ContainerJSONBase: &docker.ContainerJSONBase{
+					Name: "container",
+				},
+				Config: &container.Config{
+					Labels: map[string]string{
+						"traefik.enable":        "true",
+						"traefik.frontend.rule": "Host:i.love.this.host",
+					},
+				},
+				NetworkSettings: &docker.NetworkSettings{
+					NetworkSettingsBase: docker.NetworkSettingsBase{
+						Ports: nat.PortMap{
+							"80/tcp": {},
+						},
+					},
+				},
+			},
+			provider: &Provider{
+				ExposedByDefault: false,
+			},
+			expected: true,
 		},
 	}
 
@@ -616,12 +790,10 @@ func TestDockerTraefikFilter(t *testing.T) {
 		e := e
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-			provider := Provider{}
-			provider.ExposedByDefault = e.exposedByDefault
 			dockerData := parseContainer(e.container)
-			actual := provider.containerFilter(dockerData)
+			actual := e.provider.containerFilter(dockerData)
 			if actual != e.expected {
-				t.Errorf("expected %v for %+v (%+v, %+v), got %+v", e.expected, e.container, e.container.NetworkSettings, e.container.ContainerJSONBase, actual)
+				t.Errorf("expected %v for %+v, got %+v", e.expected, e, actual)
 			}
 		})
 	}

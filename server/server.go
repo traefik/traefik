@@ -315,15 +315,16 @@ func (server *Server) postLoadConfig() {
 			for _, frontend := range configuration.Frontends {
 
 				// check if one of the frontend entrypoints is configured with TLS
-				TLSEnabled := false
+				// and is configured with ACME
+				ACMEEnabled := false
 				for _, entrypoint := range frontend.EntryPoints {
-					if server.globalConfiguration.EntryPoints[entrypoint].TLS != nil {
-						TLSEnabled = true
+					if server.globalConfiguration.ACME.EntryPoint == entrypoint && server.globalConfiguration.EntryPoints[entrypoint].TLS != nil {
+						ACMEEnabled = true
 						break
 					}
 				}
 
-				if TLSEnabled {
+				if ACMEEnabled {
 					for _, route := range frontend.Routes {
 						rules := Rules{}
 						domains, err := rules.ParseDomains(route.Rule)
@@ -547,13 +548,11 @@ func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) 
 // provider configurations.
 func (server *Server) loadConfig(configurations configs, globalConfiguration GlobalConfiguration) (map[string]*serverEntryPoint, error) {
 	serverEntryPoints := server.buildEntryPoints(globalConfiguration)
-	redirectHandlers := make(map[string]http.Handler)
-
+	redirectHandlers := make(map[string]negroni.Handler)
 	backends := map[string]http.Handler{}
-
 	backendsHealthcheck := map[string]*healthcheck.BackendHealthCheck{}
-
 	backend2FrontendMap := map[string]string{}
+
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
 	frontend:
@@ -595,172 +594,170 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				}
 
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
+				negroni := negroni.New()
 				if entryPoint.Redirect != nil {
 					if redirectHandlers[entryPointName] != nil {
-						newServerRoute.route.Handler(redirectHandlers[entryPointName])
+						negroni.Use(redirectHandlers[entryPointName])
 					} else if handler, err := server.loadEntryPointConfig(entryPointName, entryPoint); err != nil {
 						log.Errorf("Error loading entrypoint configuration for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
 					} else {
-						newServerRoute.route.Handler(handler)
+						negroni.Use(handler)
 						redirectHandlers[entryPointName] = handler
 					}
-				} else {
-					if backends[frontend.Backend] == nil {
-						log.Debugf("Creating backend %s", frontend.Backend)
-						var lb http.Handler
-						rr, _ := roundrobin.New(saveBackend)
-						if configuration.Backends[frontend.Backend] == nil {
-							log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
-							log.Errorf("Skipping frontend %s...", frontendName)
-							continue frontend
-						}
+				}
+				if backends[entryPointName+frontend.Backend] == nil {
+					log.Debugf("Creating backend %s", frontend.Backend)
+					var lb http.Handler
+					rr, _ := roundrobin.New(saveBackend)
+					if configuration.Backends[frontend.Backend] == nil {
+						log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
 
-						lbMethod, err := types.NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
-						if err != nil {
-							log.Errorf("Error loading load balancer method '%+v' for frontend %s: %v", configuration.Backends[frontend.Backend].LoadBalancer, frontendName, err)
-							log.Errorf("Skipping frontend %s...", frontendName)
-							continue frontend
-						}
+					lbMethod, err := types.NewLoadBalancerMethod(configuration.Backends[frontend.Backend].LoadBalancer)
+					if err != nil {
+						log.Errorf("Error loading load balancer method '%+v' for frontend %s: %v", configuration.Backends[frontend.Backend].LoadBalancer, frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
 
-						stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
-						cookiename := "_TRAEFIK_BACKEND"
-						var sticky *roundrobin.StickySession
+					stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
+					cookiename := "_TRAEFIK_BACKEND"
+					var sticky *roundrobin.StickySession
 
+					if stickysession {
+						sticky = roundrobin.NewStickySession(cookiename)
+					}
+
+					switch lbMethod {
+					case types.Drr:
+						log.Debugf("Creating load-balancer drr")
+						rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
 						if stickysession {
-							sticky = roundrobin.NewStickySession(cookiename)
+							log.Debugf("Sticky session with cookie %v", cookiename)
+							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
 						}
-
-						switch lbMethod {
-						case types.Drr:
-							log.Debugf("Creating load-balancer drr")
-							rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
-							if stickysession {
-								log.Debugf("Sticky session with cookie %v", cookiename)
-								rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
+						lb = rebalancer
+						for serverName, server := range configuration.Backends[frontend.Backend].Servers {
+							url, err := url.Parse(server.URL)
+							if err != nil {
+								log.Errorf("Error parsing server URL %s: %v", server.URL, err)
+								log.Errorf("Skipping frontend %s...", frontendName)
+								continue frontend
 							}
-							lb = rebalancer
-							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-								url, err := url.Parse(server.URL)
-								if err != nil {
-									log.Errorf("Error parsing server URL %s: %v", server.URL, err)
-									log.Errorf("Skipping frontend %s...", frontendName)
-									continue frontend
-								}
-								backend2FrontendMap[url.String()] = frontendName
-								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
-									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
-									log.Errorf("Skipping frontend %s...", frontendName)
-									continue frontend
-								}
-								hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
-								if hcOpts != nil {
-									log.Debugf("Setting up backend health check %s", *hcOpts)
-									backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
-								}
+							backend2FrontendMap[url.String()] = frontendName
+							log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
+							if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+								log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
+								log.Errorf("Skipping frontend %s...", frontendName)
+								continue frontend
 							}
-						case types.Wrr:
-							log.Debugf("Creating load-balancer wrr")
-							if stickysession {
-								log.Debugf("Sticky session with cookie %v", cookiename)
-								rr, _ = roundrobin.New(saveBackend, roundrobin.EnableStickySession(sticky))
-							}
-							lb = rr
-							for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-								url, err := url.Parse(server.URL)
-								if err != nil {
-									log.Errorf("Error parsing server URL %s: %v", server.URL, err)
-									log.Errorf("Skipping frontend %s...", frontendName)
-									continue frontend
-								}
-								backend2FrontendMap[url.String()] = frontendName
-								log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-								if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
-									log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
-									log.Errorf("Skipping frontend %s...", frontendName)
-									continue frontend
-								}
-							}
-							hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
+							hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
 							if hcOpts != nil {
 								log.Debugf("Setting up backend health check %s", *hcOpts)
 								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 							}
 						}
-						maxConns := configuration.Backends[frontend.Backend].MaxConn
-						if maxConns != nil && maxConns.Amount != 0 {
-							extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
+					case types.Wrr:
+						log.Debugf("Creating load-balancer wrr")
+						if stickysession {
+							log.Debugf("Sticky session with cookie %v", cookiename)
+							rr, _ = roundrobin.New(saveBackend, roundrobin.EnableStickySession(sticky))
+						}
+						lb = rr
+						for serverName, server := range configuration.Backends[frontend.Backend].Servers {
+							url, err := url.Parse(server.URL)
 							if err != nil {
-								log.Errorf("Error creating connlimit: %v", err)
+								log.Errorf("Error parsing server URL %s: %v", server.URL, err)
 								log.Errorf("Skipping frontend %s...", frontendName)
 								continue frontend
 							}
-							log.Debugf("Creating load-balancer connlimit")
-							lb, err = connlimit.New(lb, extractFunc, maxConns.Amount, connlimit.Logger(oxyLogger))
-							if err != nil {
-								log.Errorf("Error creating connlimit: %v", err)
+							backend2FrontendMap[url.String()] = frontendName
+							log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
+							if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
+								log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
 								log.Errorf("Skipping frontend %s...", frontendName)
 								continue frontend
 							}
 						}
-						// retry ?
-						if globalConfiguration.Retry != nil {
-							retries := len(configuration.Backends[frontend.Backend].Servers)
-							if globalConfiguration.Retry.Attempts > 0 {
-								retries = globalConfiguration.Retry.Attempts
-							}
-							lb = middlewares.NewRetry(retries, lb)
-							log.Debugf("Creating retries max attempts %d", retries)
+						hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
+						if hcOpts != nil {
+							log.Debugf("Setting up backend health check %s", *hcOpts)
+							backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
+						}
+					}
+					maxConns := configuration.Backends[frontend.Backend].MaxConn
+					if maxConns != nil && maxConns.Amount != 0 {
+						extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
+						if err != nil {
+							log.Errorf("Error creating connlimit: %v", err)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
+						}
+						log.Debugf("Creating load-balancer connlimit")
+						lb, err = connlimit.New(lb, extractFunc, maxConns.Amount, connlimit.Logger(oxyLogger))
+						if err != nil {
+							log.Errorf("Error creating connlimit: %v", err)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
+						}
+					}
+					// retry ?
+					if globalConfiguration.Retry != nil {
+						retries := len(configuration.Backends[frontend.Backend].Servers)
+						if globalConfiguration.Retry.Attempts > 0 {
+							retries = globalConfiguration.Retry.Attempts
+						}
+						lb = middlewares.NewRetry(retries, lb)
+						log.Debugf("Creating retries max attempts %d", retries)
+					}
+
+					if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
+						if server.globalConfiguration.Web.Metrics.Prometheus != nil {
+							metricsMiddlewareBackend := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
+							negroni.Use(metricsMiddlewareBackend)
+						}
+					}
+					if len(frontend.BasicAuth) > 0 {
+						users := types.Users{}
+						for _, user := range frontend.BasicAuth {
+							users = append(users, user)
 						}
 
-						var negroni = negroni.New()
-						if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
-							if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-								metricsMiddlewareBackend := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
-								negroni.Use(metricsMiddlewareBackend)
-							}
+						auth := &types.Auth{}
+						auth.Basic = &types.Basic{
+							Users: users,
 						}
-
-						if len(frontend.BasicAuth) > 0 {
-							users := types.Users{}
-							for _, user := range frontend.BasicAuth {
-								users = append(users, user)
-							}
-
-							auth := &types.Auth{}
-							auth.Basic = &types.Basic{
-								Users: users,
-							}
-							authMiddleware, err := middlewares.NewAuthenticator(auth)
-							if err != nil {
-								log.Fatal("Error creating Auth: ", err)
-							}
-							negroni.Use(authMiddleware)
+						authMiddleware, err := middlewares.NewAuthenticator(auth)
+						if err != nil {
+							log.Fatal("Error creating Auth: ", err)
 						}
-
-						if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
-							log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
-							cbreaker, err := middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
-							if err != nil {
-								log.Errorf("Error creating circuit breaker: %v", err)
-								log.Errorf("Skipping frontend %s...", frontendName)
-								continue frontend
-							}
-							negroni.Use(cbreaker)
-						} else {
-							negroni.UseHandler(lb)
+						negroni.Use(authMiddleware)
+					}
+					if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
+						log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
+						cbreaker, err := middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
+						if err != nil {
+							log.Errorf("Error creating circuit breaker: %v", err)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
 						}
-						backends[frontend.Backend] = negroni
+						negroni.Use(cbreaker)
 					} else {
-						log.Debugf("Reusing backend %s", frontend.Backend)
+						negroni.UseHandler(lb)
 					}
-					if frontend.Priority > 0 {
-						newServerRoute.route.Priority(frontend.Priority)
-					}
-					server.wireFrontendBackend(newServerRoute, backends[frontend.Backend])
+					backends[entryPointName+frontend.Backend] = negroni
+				} else {
+					log.Debugf("Reusing backend %s", frontend.Backend)
 				}
+				if frontend.Priority > 0 {
+					newServerRoute.route.Priority(frontend.Priority)
+				}
+				server.wireFrontendBackend(newServerRoute, backends[entryPointName+frontend.Backend])
+
 				err := newServerRoute.route.GetError()
 				if err != nil {
 					log.Errorf("Error building route: %s", err)
@@ -810,7 +807,7 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 	serverRoute.route.Handler(handler)
 }
 
-func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *EntryPoint) (http.Handler, error) {
+func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *EntryPoint) (negroni.Handler, error) {
 	regex := entryPoint.Redirect.Regex
 	replacement := entryPoint.Redirect.Replacement
 	if len(entryPoint.Redirect.EntryPoint) > 0 {
@@ -834,9 +831,8 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 		return nil, err
 	}
 	log.Debugf("Creating entryPoint redirect %s -> %s : %s -> %s", entryPointName, entryPoint.Redirect.EntryPoint, regex, replacement)
-	negroni := negroni.New()
-	negroni.Use(rewrite)
-	return negroni, nil
+
+	return rewrite, nil
 }
 
 func (server *Server) buildDefaultHTTPRouter() *mux.Router {
