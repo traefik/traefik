@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/streamrail/concurrent-map"
 )
 
@@ -134,9 +133,8 @@ func (fblh frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req 
 	referer := req.Referer()
 	agent := req.UserAgent()
 
-	logTable := accesslog.GetLogDataTable(req)
-	frontend := logTable.Core[accesslog.FrontendName]
-	backend := logTable.Core[accesslog.BackendURL]
+	frontend := strings.TrimPrefix(infoRw.GetFrontend(), "frontend-")
+	backend := infoRw.GetBackend()
 	status := infoRw.GetStatus()
 	size := infoRw.GetSize()
 
