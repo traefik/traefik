@@ -151,7 +151,7 @@ func TestPrometheusRegisterMetricsMultipleTimes(t *testing.T) {
 func setupTestHTTPHandler() http.Handler {
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/metrics", promhttp.Handler())
-	serveMux.Handle("/ok", &networkFailingHTTPHandler{failAtCalls: []int{1}})
+	serveMux.Handle("/ok", &networkFailingHTTPHandler{failAtCalls: []int{1}, netErrorRecorder: &DefaultNetErrorRecorder{}})
 
 	metrics, _ := newPrometheusMetrics()
 
