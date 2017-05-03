@@ -23,4 +23,4 @@ branch=$(curl -s https://api.github.com/repos/containous/traefik/pulls/$pr | jq 
 
 git remote add $remote git@github.com:$remote/traefik.git
 git fetch $remote $branch
-git checkout -t $remote/$branch
+git checkout -t -b "$pr--$branch" $remote/$branch
