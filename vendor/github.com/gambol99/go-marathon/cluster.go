@@ -18,7 +18,6 @@ package marathon
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
 	"sync"
@@ -38,8 +37,8 @@ type cluster struct {
 	sync.RWMutex
 	// a collection of nodes
 	members []*member
-	// the http client
-	client *http.Client
+	// the marathon HTTP client to ensure consistency in requests
+	client *httpClient
 }
 
 // member represents an individual endpoint
@@ -51,7 +50,7 @@ type member struct {
 }
 
 // newCluster returns a new marathon cluster
-func newCluster(client *http.Client, marathonURL string) (*cluster, error) {
+func newCluster(client *httpClient, marathonURL string, isDCOS bool) (*cluster, error) {
 	// step: extract and basic validate the endpoints
 	var members []*member
 	var defaultProto string
@@ -81,6 +80,13 @@ func newCluster(client *http.Client, marathonURL string) (*cluster, error) {
 		// step: check for empty hosts
 		if u.Host == "" {
 			return nil, newInvalidEndpointError("endpoint: %s must have a host", endpoint)
+		}
+
+		// step: if DCOS is set and no path is given, set the default DCOS path.
+		// done in order to maintain compatibility with automatic addition of the
+		// default DCOS path.
+		if isDCOS && strings.TrimLeft(u.Path, "/") == "" {
+			u.Path = defaultDCOSPath
 		}
 
 		// step: create a new node for this endpoint
@@ -125,9 +131,12 @@ func (c *cluster) markDown(endpoint string) {
 func (c *cluster) healthCheckNode(node *member) {
 	// step: wait for the node to become active ... we are assuming a /ping is enough here
 	for {
-		res, err := c.client.Get(fmt.Sprintf("%s/ping", node.endpoint))
-		if err == nil && res.StatusCode == 200 {
-			break
+		req, err := c.client.buildMarathonRequest("GET", node.endpoint, "/ping", nil)
+		if err == nil {
+			res, err := c.client.Do(req)
+			if err == nil && res.StatusCode == 200 {
+				break
+			}
 		}
 		<-time.After(time.Duration(5 * time.Second))
 	}

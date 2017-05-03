@@ -91,7 +91,7 @@ import:
 - package: k8s.io/client-go
   version: v2.0.0
 - package: github.com/gambol99/go-marathon
-  version: ^0.5.1
+  version: d672c6fbb499596869d95146a26e7d0746c06c54
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka

@@ -1,5 +1,5 @@
-hash: 0f1c54f36d88f4625c048686f733842d09d48525b1cf84dc05d4acc698cfd86f
-updated: 2017-04-11T17:02:21.540487905+02:00
+hash: 1aa32496b865dda72d76c7cba3458f1c2c467acf0b99aab4609323f109aa64f6
+updated: 2017-05-02T11:46:23.91434995-04:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -95,6 +95,8 @@ imports:
   subpackages:
   - Godeps/_workspace/src/github.com/coreos/go-systemd/journal
   - Godeps/_workspace/src/github.com/coreos/pkg/capnslog
+  - Godeps/_workspace/src/github.com/ugorji/go/codec
+  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/fileutil
   - pkg/pathutil
@@ -199,7 +201,7 @@ imports:
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/gambol99/go-marathon
-  version: 6b00a5b651b1beb2c6821863f7c60df490bd46c8
+  version: d672c6fbb499596869d95146a26e7d0746c06c54
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
