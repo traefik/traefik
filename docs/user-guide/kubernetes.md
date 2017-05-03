@@ -505,19 +505,22 @@ You should now be able to visit the websites in your browser.
 * [cheeses.local/wensleydale](http://cheeses.local/wensleydale/)
 
 ## Disable passing the Host header
-By default Træfik will pass the incoming Host header on to the upstream resource. There
-are times however where you may not want this to be the case. For example if your service
-is of the ExternalName type.
+
+By default Træfik will pass the incoming Host header on to the upstream resource.
+There are times however where you may not want this to be the case.
+For example if your service is of the ExternalName type.
 
 ### Disable entirely
+
 Add the following to your toml config:
 ```toml
 disablePassHostHeaders = true
 ```
 
 ### Disable per ingress
-To disable passing the Host header per ingress resource set the "traefik.frontend.passHostHeader"
-annotation on your ingress to "false".
+
+To disable passing the Host header per ingress resource set the `traefik.frontend.passHostHeader`
+annotation on your ingress to `false`.
 
 Here is an example ingress definition:
 ```yaml
@@ -557,16 +560,15 @@ If you were to visit example.com/static the request would then be passed onto
 static.otherdomain.com/static and static.otherdomain.com would receive the
 request with the Host header being static.otherdomain.com.
 
-Note: The per ingress annotation overides whatever the global value is set to. So you
-could set `disablePassHostHeaders` to true in your toml file and then enable passing
+Note: The per ingress annotation overides whatever the global value is set to.
+So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing 
 the host header per ingress if you wanted.
 
 ## Excluding an ingress from Træfik
 
-You can control which ingress Træfik cares about by using the `kubernetes.io/ingress.class`
-annotation. By default if the annotation is not set at all Træfik will include the
-ingress. If the annotation is set to anything other than traefik or a blank string
-Træfik will ignore it.
+You can control which ingress Træfik cares about by using the `kubernetes.io/ingress.class` annotation.
+By default if the annotation is not set at all Træfik will include the ingress.
+If the annotation is set to anything other than traefik or a blank string Træfik will ignore it.
 
 
 ![](http://i.giphy.com/ujUdrdpX7Ok5W.gif)

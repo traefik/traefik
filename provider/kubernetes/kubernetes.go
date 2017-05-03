@@ -1,6 +1,9 @@
 package kubernetes
 
 import (
+	"bufio"
+	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -16,6 +19,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
 )
 
@@ -28,6 +32,8 @@ const (
 	ruleTypePath               = "Path"
 	ruleTypePathPrefix         = "PathPrefix"
 )
+
+const traefikDefaultRealm = "traefik"
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -159,13 +165,21 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				default:
 					log.Warnf("Unknown value of %s for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
 				}
+				if realm := i.Annotations["ingress.kubernetes.io/auth-realm"]; realm != "" && realm != traefikDefaultRealm {
+					return nil, errors.New("no realm customization supported")
+				}
 
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
+					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
+					if err != nil {
+						return nil, err
+					}
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:        r.Host + pa.Path,
 						PassHostHeader: PassHostHeader,
 						Routes:         make(map[string]types.Route),
 						Priority:       len(pa.Path),
+						BasicAuth:      basicAuthCreds,
 					}
 				}
 				if len(r.Host) > 0 {
@@ -276,6 +290,56 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 	}
 	return &templateObjects, nil
+}
+
+func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
+	authType, exists := i.Annotations["ingress.kubernetes.io/auth-type"]
+	if !exists {
+		return nil, nil
+	}
+	if strings.ToLower(authType) != "basic" {
+		return nil, fmt.Errorf("unsupported auth-type: %q", authType)
+	}
+	authSecret := i.Annotations["ingress.kubernetes.io/auth-secret"]
+	if authSecret == "" {
+		return nil, errors.New("auth-secret annotation must be set")
+	}
+	basicAuthCreds, err := loadAuthCredentials(i.Namespace, authSecret, k8sClient)
+	if err != nil {
+		return nil, err
+	}
+	if len(basicAuthCreds) == 0 {
+		return nil, errors.New("secret file without credentials")
+	}
+	return basicAuthCreds, nil
+}
+
+func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
+	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
+	switch { // keep order of case conditions
+	case err != nil:
+		return nil, fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
+	case !ok:
+		return nil, fmt.Errorf("secret %q/%q not found", namespace, secretName)
+	case secret == nil:
+		return nil, errors.New("secret data must not be nil")
+	case len(secret.Data) != 1:
+		return nil, errors.New("secret must contain single element only")
+	default:
+	}
+	var firstSecret []byte
+	for _, v := range secret.Data {
+		firstSecret = v
+		break
+	}
+	creds := make([]string, 0)
+	scanner := bufio.NewScanner(bytes.NewReader(firstSecret))
+	for scanner.Scan() {
+		if cred := scanner.Text(); cred != "" {
+			creds = append(creds, cred)
+		}
+	}
+	return creds, nil
 }
 
 func endpointPortNumber(servicePort v1.ServicePort, endpointPorts []v1.EndpointPort) int {

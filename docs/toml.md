@@ -1186,6 +1186,22 @@ Additionally, an annotation can be used on Kubernetes services to set the [circu
 
 - `traefik.backend.circuitbreaker: <expression>`: set the circuit breaker expression for the backend (Default: nil).
 
+### Authentication
+
+Is possible to add additional authentication annotations in the Ingress rule.
+The source of the authentication is a secret that contains usernames and passwords inside the the key auth.
+
+- `ingress.kubernetes.io/auth-type`: `basic`
+- `ingress.kubernetes.io/auth-secret`: contains the usernames and passwords with access to the paths defined in the Ingress Rule.
+
+The secret must be created in the same namespace as the Ingress rule.
+
+Limitations:
+
+- Basic authentication only.
+- Realm not configurable; only `traefik` default.
+- Secret must contain only single file.
+
 ## Consul backend
 
 Træfik can be configured to use Consul as a backend configuration:
@@ -1718,7 +1734,6 @@ RefreshSeconds = 15
 ```
 
 Items in the `dynamodb` table must have three attributes: 
-
 
 - `id` : string
     - The id is the primary key.

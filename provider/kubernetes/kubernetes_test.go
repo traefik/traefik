@@ -1470,6 +1470,35 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
+					"ingress.kubernetes.io/auth-type":   "basic",
+					"ingress.kubernetes.io/auth-secret": "mySecret",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "basic",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/auth",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
 					"kubernetes.io/ingress.class": "somethingOtherThanTraefik",
 				},
 			},
@@ -1515,12 +1544,25 @@ func TestIngressAnnotations(t *testing.T) {
 			},
 		},
 	}
+	secrets := []*v1.Secret{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "mySecret",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Data: map[string][]byte{
+				"auth": []byte("myUser:myEncodedPW"),
+			},
+		},
+	}
 
 	endpoints := []*v1.Endpoints{}
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
+		secrets:   secrets,
 		endpoints: endpoints,
 		watchChan: watchChan,
 	}
@@ -1546,6 +1588,19 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 			},
 			"other/stuff": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
+			"basic/auth": {
 				Servers: map[string]types.Server{
 					"http://example.com": {
 						URL:    "http://example.com",
@@ -1585,6 +1640,20 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:other",
 					},
 				},
+			},
+			"basic/auth": {
+				Backend:        "basic/auth",
+				PassHostHeader: true,
+				Priority:       len("/auth"),
+				Routes: map[string]types.Route{
+					"/auth": {
+						Rule: "PathPrefix:/auth",
+					},
+					"basic": {
+						Rule: "Host:basic",
+					},
+				},
+				BasicAuth: []string{"myUser:myEncodedPW"},
 			},
 		},
 	}
@@ -2030,13 +2099,102 @@ func TestMissingResources(t *testing.T) {
 	}
 }
 
+func TestBasicAuthInTemplate(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"ingress.kubernetes.io/auth-type":   "basic",
+					"ingress.kubernetes.io/auth-secret": "mySecret",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "basic",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/auth",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP:    "10.0.0.1",
+				Type:         "ExternalName",
+				ExternalName: "example.com",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+	secrets := []*v1.Secret{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "mySecret",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Data: map[string][]byte{
+				"auth": []byte("myUser:myEncodedPW"),
+			},
+		},
+	}
+
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		secrets:   secrets,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	actual = provider.loadConfig(*actual)
+	got := actual.Frontends["basic/auth"].BasicAuth
+	if !reflect.DeepEqual(got, []string{"myUser:myEncodedPW"}) {
+		t.Fatalf("unexpected credentials: %+v", got)
+	}
+}
+
 type clientMock struct {
 	ingresses []*v1beta1.Ingress
 	services  []*v1.Service
+	secrets   []*v1.Secret
 	endpoints []*v1.Endpoints
 	watchChan chan interface{}
 
 	apiServiceError   error
+	apiSecretError    error
 	apiEndpointsError error
 }
 
@@ -2059,6 +2217,19 @@ func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error
 	for _, service := range c.services {
 		if service.Namespace == namespace && service.Name == name {
 			return service, true, nil
+		}
+	}
+	return nil, false, nil
+}
+
+func (c clientMock) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
+	if c.apiSecretError != nil {
+		return nil, false, c.apiSecretError
+	}
+
+	for _, secret := range c.secrets {
+		if secret.Namespace == namespace && secret.Name == name {
+			return secret, true, nil
 		}
 	}
 	return nil, false, nil
