@@ -11,7 +11,6 @@
   "dependencies": {
     "angular": "^1.4.2",
     "angular-animate": "^1.5.8",
-    "animate.css": "^3.4.0",
     "angular-aria": "^1.5.8",
     "angular-cookies": "^1.5.8",
     "angular-messages": "^1.5.8",
@@ -20,6 +19,7 @@
     "angular-sanitize": "^1.5.8",
     "angular-ui-bootstrap": "^2.0.0",
     "angular-ui-router": "^0.3.1",
+    "animate.css": "^3.4.0",
     "bootstrap": "^3.3.6",
     "moment": "^2.14.1",
     "nvd3": "^1.8.4"
@@ -27,7 +27,9 @@
   "devDependencies": {
     "angular-mocks": "^1.4.2",
     "autoprefixer": "^6.2.2",
-    "babel-loader": "^6.2.0",
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-preset-es2015": "^6.24.1",
     "browser-sync": "^2.9.11",
     "browser-sync-spa": "^1.0.3",
     "css-loader": "^0.23.1",
