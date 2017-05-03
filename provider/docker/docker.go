@@ -594,9 +594,23 @@ func (p *Provider) getPort(container dockerData) string {
 	if label, err := getLabel(container, "traefik.port"); err == nil {
 		return label
 	}
-	for key := range container.NetworkSettings.Ports {
-		return key.Port()
+
+	// See iteration order in https://blog.golang.org/go-maps-in-action
+	var ports []nat.Port
+	for p := range container.NetworkSettings.Ports {
+		ports = append(ports, p)
 	}
+
+	less := func(i, j nat.Port) bool {
+		return i.Int() < j.Int()
+	}
+	nat.Sort(ports, less)
+
+	if len(ports) > 0 {
+		min := ports[0]
+		return min.Port()
+	}
+
 	return ""
 }
 

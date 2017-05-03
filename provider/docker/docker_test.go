@@ -227,14 +227,13 @@ func TestDockerGetPort(t *testing.T) {
 			})),
 			expected: "80",
 		},
-		// FIXME handle this better..
-		//{
-		//	container: containerJSON(ports(nat.PortMap{
-		//		"80/tcp": {},
-		//		"443/tcp": {},
-		//	})),
-		//	expected: "80",
-		//},
+		{
+			container: containerJSON(ports(nat.PortMap{
+				"80/tcp":  {},
+				"443/tcp": {},
+			})),
+			expected: "80",
+		},
 		{
 			container: containerJSON(labels(map[string]string{
 				"traefik.port": "8080",
