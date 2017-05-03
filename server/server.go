@@ -595,6 +595,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	redirectHandlers := make(map[string]negroni.Handler)
 	backends := map[string]http.Handler{}
 	backendsHealthcheck := map[string]*healthcheck.BackendHealthCheck{}
+	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
@@ -669,7 +670,12 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					// passing nil will use the roundtripper http.DefaultTransport
 					rt := clientTLSRoundTripper(tlsConfig)
 
-					fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader), forward.RoundTripper(rt))
+					fwd, err := forward.New(
+						forward.Logger(oxyLogger),
+						forward.PassHostHeader(frontend.PassHostHeader),
+						forward.RoundTripper(rt),
+						forward.ErrorHandler(errorHandler),
+					)
 					if err != nil {
 						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
