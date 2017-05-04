@@ -4,17 +4,19 @@
 function ProvidersController($scope, $interval, $log, Providers) {
   const vm = this;
 
-  vm.providers = Providers.get();
+  function loadProviders() {
+    Providers
+      .get()
+      .then(providers => vm.providers = providers)
+      .catch(error => {
+        vm.providers = {};
+        $log.error(error);
+      });
+  }
 
-  const intervalId = $interval(function () {
-    Providers.get(function (providers) {
-      vm.providers = providers;
-    }, function (error) {
-      vm.providers = {};
-      $log.error(error);
-    });
+  loadProviders();
 
-  }, 2000);
+  const intervalId = $interval(loadProviders, 2000);
 
   $scope.$on('$destroy', function () {
     $interval.cancel(intervalId);
