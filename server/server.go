@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -540,7 +541,7 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) map[string]*serverEntryPoint {
 	serverEntryPoints := make(map[string]*serverEntryPoint)
 	for entryPointName := range globalConfiguration.EntryPoints {
-		router := server.buildDefaultHTTPRouter()
+		router := server.buildDefaultHTTPRouter(globalConfiguration)
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
 			httpRouter: middlewares.NewHandlerSwitcher(router),
 		}
@@ -841,12 +842,26 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 	return rewrite, nil
 }
 
-func (server *Server) buildDefaultHTTPRouter() *mux.Router {
+func (server *Server) buildDefaultHTTPRouter(globalConfiguration GlobalConfiguration) *mux.Router {
 	router := mux.NewRouter()
-	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	router.NotFoundHandler = newNotFounderHandler(globalConfiguration)
 	router.StrictSlash(true)
 	router.SkipClean(true)
 	return router
+}
+
+func newNotFounderHandler(globalConfiguration GlobalConfiguration) http.Handler {
+	log.Debugf("Setting up not found handler to serve %d responses", globalConfiguration.NoRouteResponseCode)
+
+	responseCode := globalConfiguration.NoRouteResponseCode
+	if responseCode == 0 {
+		responseCode = http.StatusNotFound
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(responseCode)
+		fmt.Fprint(w, http.StatusText(responseCode))
+	})
 }
 
 func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck, hcConfig HealthCheckConfig) *healthcheck.Options {

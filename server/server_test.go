@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"testing"
@@ -154,6 +156,55 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 			gotOpts := parseHealthCheckOptions(lb, "backend", test.hc, HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
 			if !reflect.DeepEqual(gotOpts, test.wantOpts) {
 				t.Errorf("got health check options %+v, want %+v", gotOpts, test.wantOpts)
+			}
+		})
+	}
+}
+
+func TestNewNotFounderHandler(t *testing.T) {
+	tests := []struct {
+		name           string
+		globalConfig   GlobalConfiguration
+		wantStatusCode int
+		wantBody       string
+	}{
+		{
+			name:           "default",
+			globalConfig:   GlobalConfiguration{},
+			wantStatusCode: http.StatusNotFound,
+			wantBody:       "Not Found",
+		},
+		{
+			name:           "not found",
+			globalConfig:   GlobalConfiguration{NoRouteResponseCode: http.StatusNotFound},
+			wantStatusCode: http.StatusNotFound,
+			wantBody:       "Not Found",
+		},
+		{
+			name:           "bad gateway",
+			globalConfig:   GlobalConfiguration{NoRouteResponseCode: http.StatusBadGateway},
+			wantStatusCode: http.StatusBadGateway,
+			wantBody:       "Bad Gateway",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			notFoundHandler := newNotFounderHandler(test.globalConfig)
+			recorder := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", "http://localhost/notknown", nil)
+
+			notFoundHandler.ServeHTTP(recorder, req)
+
+			if recorder.Code != test.wantStatusCode {
+				t.Errorf("got wrong status status code %v, want %v", recorder.Code, test.wantStatusCode)
+			}
+			if recorder.Body.String() != test.wantBody {
+				t.Errorf("got wrong body %v, want %v", recorder.Body.String(), test.wantBody)
 			}
 		})
 	}
