@@ -10,6 +10,7 @@ env:
     - REPO: $TRAVIS_REPO_SLUG
     - VERSION: $TRAVIS_TAG
     - CODENAME: raclette
+    - N_MAKE_JOBS: 2
 
 matrix:
   fast_finish: true
@@ -26,11 +27,13 @@ install:
   - make pull-images
 before_script:
   - make validate
-script: make test-unit && travis_retry make test-integration
+script:
+  - make test-unit && travis_retry make test-integration
+  - make -j${N_MAKE_JOBS} crossbinary-default-parallel
 after_failure:
   - docker ps
 before_deploy:
-  - make crossbinary
+  - make -j${N_MAKE_JOBS} crossbinary-others-parallel
   - make image
   - mkdocs build --clean
   - tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .

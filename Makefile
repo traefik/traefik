@@ -41,14 +41,21 @@ crossbinary: generate-webui build ## cross build the non-linux binaries
 
 crossbinary-parallel:
 	$(MAKE) generate-webui
-	$(MAKE) build
-	$(MAKE) crossbinary-default crossbinary-others
+	$(MAKE) build crossbinary-default crossbinary-others
 
 crossbinary-default: generate-webui build
 	$(DOCKER_RUN_TRAEFIK_NOTTY) ./script/make.sh generate crossbinary-default
 
+crossbinary-default-parallel:
+	$(MAKE) generate-webui
+	$(MAKE) build crossbinary-default
+
 crossbinary-others: generate-webui build
 	$(DOCKER_RUN_TRAEFIK_NOTTY) ./script/make.sh generate crossbinary-others
+
+crossbinary-others-parallel:
+	$(MAKE) generate-webui
+	$(MAKE) build crossbinary-others
 
 test: build ## run the unit and integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit binary test-integration
