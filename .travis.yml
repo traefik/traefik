@@ -33,10 +33,14 @@ script:
 after_failure:
   - docker ps
 before_deploy:
-  - make -j${N_MAKE_JOBS} crossbinary-others-parallel
-  - make image
-  - mkdocs build --clean
-  - tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .
+  - >
+    if ! [ "$BEFORE_DEPLOY_RUN" ]; then
+      export BEFORE_DEPLOY_RUN=1;
+      make -j${N_MAKE_JOBS} crossbinary-others-parallel;
+      make image;
+      mkdocs build --clean;
+      tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .;
+    fi
 deploy:
   - provider: pages
     edge: true
