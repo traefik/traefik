@@ -541,7 +541,7 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) map[string]*serverEntryPoint {
 	serverEntryPoints := make(map[string]*serverEntryPoint)
 	for entryPointName := range globalConfiguration.EntryPoints {
-		router := server.buildDefaultHTTPRouter(globalConfiguration)
+		router := server.buildDefaultHTTPRouter(globalConfiguration.NoRouteResponseCode)
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
 			httpRouter: middlewares.NewHandlerSwitcher(router),
 		}
@@ -842,9 +842,9 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 	return rewrite, nil
 }
 
-func (server *Server) buildDefaultHTTPRouter(globalConfiguration GlobalConfiguration) *mux.Router {
+func (server *Server) buildDefaultHTTPRouter(noRouteResponseCode int) *mux.Router {
 	router := mux.NewRouter()
-	router.NotFoundHandler = newNotFounderHandler(globalConfiguration.NoRouteResponseCode)
+	router.NotFoundHandler = newNotFounderHandler(noRouteResponseCode)
 	router.StrictSlash(true)
 	router.SkipClean(true)
 	return router
