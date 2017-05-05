@@ -26,6 +26,9 @@ $ ls dist/
 traefik*
 ```
 
+Note: use `make image DOCKER_BUILD_ARGS="--build-arg=..."` to customize docker build command line,
+for example to propagate HTTP proxy settings.
+
 #### Method 2: Using `go`
 
 ###### Setting up your `go` environment
