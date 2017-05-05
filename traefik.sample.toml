@@ -46,7 +46,7 @@
 #
 # logLevel = "ERROR"
 
-# HTTP response code to send when no route to backend exists
+# HTTP response code to send when no route to backend exists.
 #
 # Optional
 # Default: 404

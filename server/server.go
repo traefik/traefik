@@ -844,19 +844,22 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 
 func (server *Server) buildDefaultHTTPRouter(globalConfiguration GlobalConfiguration) *mux.Router {
 	router := mux.NewRouter()
-	router.NotFoundHandler = newNotFounderHandler(globalConfiguration)
+	router.NotFoundHandler = newNotFounderHandler(globalConfiguration.NoRouteResponseCode)
 	router.StrictSlash(true)
 	router.SkipClean(true)
 	return router
 }
 
-func newNotFounderHandler(globalConfiguration GlobalConfiguration) http.Handler {
-	log.Debugf("Setting up not found handler to serve %d responses", globalConfiguration.NoRouteResponseCode)
-
-	responseCode := globalConfiguration.NoRouteResponseCode
+func newNotFounderHandler(responseCode int) http.Handler {
 	if responseCode == 0 {
 		responseCode = http.StatusNotFound
 	}
+	if http.StatusText(responseCode) == "" {
+		log.Warnf("Wrong NoRouteResponseCode %d configured. Falling back to 404 (http.StatusNotFound)", responseCode)
+		responseCode = http.StatusNotFound
+	}
+
+	log.Debugf("Setting up not found handler to serve %d responses", responseCode)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(responseCode)

@@ -163,28 +163,34 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 
 func TestNewNotFounderHandler(t *testing.T) {
 	tests := []struct {
-		name           string
-		globalConfig   GlobalConfiguration
-		wantStatusCode int
-		wantBody       string
+		name                string
+		noRouteResponseCode int
+		wantStatusCode      int
+		wantBody            string
 	}{
 		{
-			name:           "default",
-			globalConfig:   GlobalConfiguration{},
-			wantStatusCode: http.StatusNotFound,
-			wantBody:       "Not Found",
+			name:                "default",
+			noRouteResponseCode: 0,
+			wantStatusCode:      http.StatusNotFound,
+			wantBody:            "Not Found",
 		},
 		{
-			name:           "not found",
-			globalConfig:   GlobalConfiguration{NoRouteResponseCode: http.StatusNotFound},
-			wantStatusCode: http.StatusNotFound,
-			wantBody:       "Not Found",
+			name:                "not found",
+			noRouteResponseCode: http.StatusNotFound,
+			wantStatusCode:      http.StatusNotFound,
+			wantBody:            "Not Found",
 		},
 		{
-			name:           "bad gateway",
-			globalConfig:   GlobalConfiguration{NoRouteResponseCode: http.StatusBadGateway},
-			wantStatusCode: http.StatusBadGateway,
-			wantBody:       "Bad Gateway",
+			name:                "bad gateway",
+			noRouteResponseCode: http.StatusBadGateway,
+			wantStatusCode:      http.StatusBadGateway,
+			wantBody:            "Bad Gateway",
+		},
+		{
+			name:                "invalid status code",
+			noRouteResponseCode: 1000,
+			wantStatusCode:      http.StatusNotFound,
+			wantBody:            "Not Found",
 		},
 	}
 
@@ -194,9 +200,9 @@ func TestNewNotFounderHandler(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			notFoundHandler := newNotFounderHandler(test.globalConfig)
+			notFoundHandler := newNotFounderHandler(test.noRouteResponseCode)
 			recorder := httptest.NewRecorder()
-			req := httptest.NewRequest("GET", "http://localhost/notknown", nil)
+			req := httptest.NewRequest(http.MethodGet, "http://localhost/notknown", nil)
 
 			notFoundHandler.ServeHTTP(recorder, req)
 
