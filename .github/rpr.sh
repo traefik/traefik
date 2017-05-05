@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # git config --global alias.rpr '!sh .github/rpr.sh'
 
@@ -33,4 +33,4 @@ trap clean EXIT
 .github/cpr.sh $pr
 
 git rebase $base
-git push --force-with-lease $remote "$pr--$branch"
+git push --force-with-lease $remote $pr--$branch:$branch
