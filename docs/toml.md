@@ -55,6 +55,13 @@
 #
 # logLevel = "ERROR"
 
+# HTTP response code to send when no route to backend exists.
+#
+# Optional
+# Default: 404
+#
+# noRouteResponseCode = 404
+
 # Backends throttle duration: minimum duration in seconds between 2 events from providers
 # before applying a new configuration. It avoids unnecessary reloads if multiples events
 # are sent in a short amount of time.
