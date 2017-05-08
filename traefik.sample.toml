@@ -1098,27 +1098,58 @@
 #
 # ExposedByDefault = false
 
-# Filter services with unhealthy states and health states
+# Filter services with unhealthy states and inactive states
 #
 # Optional
 # Default: false
 #
-# EnableServiceHealthFilter = false
+# EnableServiceHealthFilter = true
 
-# Endpoint to use when connecting to Rancher
+# Enable Rancher API configuration backend
+#
+# Optional
+# Default: true
+#
+# [rancher.api]
+
+# Endpoint to use when connecting to the Rancher API
 #
 # Required
 # Endpoint = "http://rancherserver.example.com/v1"
 
-# AccessKey to use when connecting to Rancher
+# AccessKey to use when connecting to the Rancher API
 #
 # Required
 # AccessKey = "XXXXXXXXXXXXXXXXXXXX"
 
-# SecretKey to use when connecting to Rancher
+# SecretKey to use when connecting to the Rancher API
 #
 # Required
 # SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Enable Rancher metadata service configuration backend instead of the API
+# configuration backend
+#
+# Optional
+# Default: false
+#
+# [rancher.metadataservice]
+
+# Poll the Rancher metadata service for changes every `rancher.RefreshSeconds`
+# NOTE: this is less accurate than the default long polling technique which
+# will provide near instantaneous updates to Traefik
+#
+# Optional
+# Default: false
+#
+# IntervalPoll = true
+
+# Prefix used for accessing the Rancher metadata service
+#
+# Optional
+# Default: "/latest"
+#
+# Prefix = "/2016-07-29"
 
 # Constraints
 #
