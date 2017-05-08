@@ -163,6 +163,8 @@ import:
   version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
 - package: golang.org/x/oauth2
   version: 7fdf09982454086d5570c7db3e11f360194830ca
+- package: github.com/rancher/go-rancher-metadata
+  version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
   subpackages:
   - google
 - package: github.com/googleapis/gax-go

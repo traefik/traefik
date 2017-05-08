@@ -1,4 +1,4 @@
-hash: 34ceb7bd979d43efdbf721ccb9d983061c06db527148f90f1784db89f6d089f0
+hash: 088194c8357ca08e27476866b9007adfa7711500fe0c78650ecb397c4f70075a
 updated: 2017-05-19T23:30:19.890844996+02:00
 imports:
 - name: cloud.google.com/go
@@ -364,6 +364,10 @@ imports:
   version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
   subpackages:
   - client
+- name: github.com/rancher/go-rancher-metadata
+  version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
+  subpackages:
+  - metadata
 - name: github.com/ryanuber/go-glob
   version: 256dc444b735e061061cf46c809487313d5b0065
 - name: github.com/samuel/go-zookeeper

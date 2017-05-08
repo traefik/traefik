@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/types"
-	rancher "github.com/rancher/go-rancher/client"
 )
 
 func TestRancherServiceFilter(t *testing.T) {
@@ -114,49 +113,41 @@ func TestRancherServiceFilter(t *testing.T) {
 
 func TestRancherContainerFilter(t *testing.T) {
 	containers := []struct {
-		container *rancher.Container
-		expected  bool
+		name        string
+		healthState string
+		state       string
+		expected    bool
 	}{
 		{
-			container: &rancher.Container{
-				HealthState: "unhealthy",
-				State:       "running",
-			},
+			healthState: "unhealthy",
+			state:       "running",
+			expected:    false,
+		},
+		{
+			healthState: "healthy",
+			state:       "stopped",
+			expected:    false,
+		},
+		{
+			state:    "stopped",
 			expected: false,
 		},
 		{
-			container: &rancher.Container{
-				HealthState: "healthy",
-				State:       "stopped",
-			},
-			expected: false,
+			healthState: "healthy",
+			state:       "running",
+			expected:    true,
 		},
 		{
-			container: &rancher.Container{
-				State: "stopped",
-			},
-			expected: false,
-		},
-		{
-			container: &rancher.Container{
-				HealthState: "healthy",
-				State:       "running",
-			},
-			expected: true,
-		},
-		{
-			container: &rancher.Container{
-				HealthState: "updating-healthy",
-				State:       "updating-running",
-			},
-			expected: true,
+			healthState: "updating-healthy",
+			state:       "updating-running",
+			expected:    true,
 		},
 	}
 
-	for _, e := range containers {
-		actual := containerFilter(e.container)
-		if actual != e.expected {
-			t.Fatalf("expected %t, got %t", e.expected, actual)
+	for _, container := range containers {
+		actual := containerFilter(container.name, container.healthState, container.state)
+		if actual != container.expected {
+			t.Fatalf("expected %t, got %t", container.expected, actual)
 		}
 	}
 }
@@ -506,7 +497,7 @@ func TestRancherGetLabel(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 			},
-			expected: "Label not found",
+			expected: "label not found",
 		},
 		{
 			service: rancherData{
@@ -593,9 +584,7 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 
 	for _, c := range cases {
 		var rancherDataList []rancherData
-		for _, service := range c.services {
-			rancherDataList = append(rancherDataList, service)
-		}
+		rancherDataList = append(rancherDataList, c.services...)
 
 		actualConfig := provider.loadRancherConfig(rancherDataList)
 
