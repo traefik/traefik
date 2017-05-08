@@ -1320,6 +1320,15 @@ domain = "consul.localhost"
 # Optional
 #
 prefix = "traefik"
+
+# Default frontEnd Rule for Consul services
+# The format is a Go Template with ".ServiceName", ".Domain" and ".Attributes" available
+# "getTag(name, tags, defaultValue)", "hasTag(name, tags)" and "getAttribute(name, tags, defaultValue)" functions are available
+# "getAttribute(...)" function uses prefixed tag names based on "prefix" value
+#
+# Optional
+#
+frontEndRule = "Host:{{.ServiceName}}.{{Domain}}"
 ```
 
 This backend will create routes matching on hostname based on the service name
@@ -1334,7 +1343,7 @@ Additional settings can be defined using Consul Catalog tags:
 - `traefik.backend.loadbalancer=drr`: override the default load balancing mode
 - `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
 - `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{{.ServiceName}}.{{.Domain}}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
