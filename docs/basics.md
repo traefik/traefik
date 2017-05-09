@@ -191,6 +191,25 @@ backend = "backend2"
   rule = "Path:/test1,/test2"
 ```
 
+### Rules Order
+
+When combining `Modifier` rules with `Matcher` rules, it is important to remember that `Modifier` rules **ALWAYS** apply after the `Matcher` rules.  
+The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portion of the rule will apply first, and the `Modifier` will apply later.
+
+- `PathStrip`
+- `PathStripRegex`
+- `PathPrefixStrip`
+- `PathPrefixStripRegex`
+
+`Modifiers` will be applied in a pre-determined order regardless of their order in the `rule` configuration section.
+
+1. `PathStrip`
+2. `PathPrefixStrip`
+3. `PathStripRegex`
+4. `PathPrefixStripRegex`
+5. `AddPrefix`
+6. `ReplacePath` 
+
 ### Priorities
 
 By default, routes will be sorted (in descending order) using rules length (to avoid path overlap):

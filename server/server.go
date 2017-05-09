@@ -776,7 +776,17 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 }
 
 func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Handler) {
-	// add prefix
+	// path replace - This needs to always be the very last on the handler chain (first in the order in this function)
+	// -- Replacing Path should happen at the very end of the Modifier chain, after all the Matcher+Modifiers ran
+	if len(serverRoute.replacePath) > 0 {
+		handler = &middlewares.ReplacePath{
+			Path:    serverRoute.replacePath,
+			Handler: handler,
+		}
+	}
+
+	// add prefix - This needs to always be right before ReplacePath on the chain (second in order in this function)
+	// -- Adding Path Prefix should happen after all *Strip Matcher+Modifiers ran, but before Replace (in case it's configured)
 	if len(serverRoute.addPrefix) > 0 {
 		handler = &middlewares.AddPrefix{
 			Prefix:  serverRoute.addPrefix,
@@ -795,14 +805,6 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 	// strip prefix with regex
 	if len(serverRoute.stripPrefixesRegex) > 0 {
 		handler = middlewares.NewStripPrefixRegex(handler, serverRoute.stripPrefixesRegex)
-	}
-
-	// path replace
-	if len(serverRoute.replacePath) > 0 {
-		handler = &middlewares.ReplacePath{
-			Path:    serverRoute.replacePath,
-			Handler: handler,
-		}
 	}
 
 	serverRoute.route.Handler(handler)
