@@ -5,6 +5,8 @@ export secure='btt4r13t09gQlHb6gYrvGC2yGCMMHfnp1Mz1RQedc4Mpf/FfT8aE6xmK2a2i9CCvs
 
 export REPO='containous/traefik'
 
+export DOCKER_VERSION=1.12.6
+
 if VERSION=$(git describe --exact-match --abbrev=0 --tags);
 then
   export VERSION
