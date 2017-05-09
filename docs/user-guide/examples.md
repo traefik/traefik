@@ -138,3 +138,10 @@ defaultEntryPoints = ["http"]
 IdleTimeout = "360s"
 ProvidersThrottleDuration = "5s"
 ```
+
+## Return a preferred custom error page instead of the default Traefik error page.  
+
+```
+[ErrorPages]
+errorPage = "/usr/traefik/Custom.html"
+```

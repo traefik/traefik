@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -58,6 +59,7 @@ type GlobalConfiguration struct {
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
 	Docker                    *docker.Provider        `description:"Enable Docker backend"`
 	File                      *file.Provider          `description:"Enable File backend"`
+	ErrorPages                *middlewares.ErrorPages `description:"Enable the use of a custom error page"`
 	Web                       *WebProvider            `description:"Enable Web backend"`
 	Marathon                  *marathon.Provider      `description:"Enable Marathon backend"`
 	Consul                    *consul.Provider        `description:"Enable Consul backend"`

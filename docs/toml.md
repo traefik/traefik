@@ -33,6 +33,13 @@
 #
 # checkNewVersion = false
 
+# Enable the use of a custom error page
+#
+# Optional
+#
+# [ErrorPages]
+# errorPage = "/usr/traefik/Custom.html"
+
 # Traefik logs file
 # If not defined, logs to stdout
 #

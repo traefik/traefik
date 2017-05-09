@@ -553,6 +553,11 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	backendsHealthcheck := map[string]*healthcheck.BackendHealthCheck{}
 	backend2FrontendMap := map[string]string{}
 
+	var errorPageHandler utils.ErrorHandler
+	if globalConfiguration.ErrorPages != nil {
+		errorPageHandler = middlewares.NewErrorPagesHandler(globalConfiguration.ErrorPages.ErrorPage)
+	}
+
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
 	frontend:
@@ -562,6 +567,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 			log.Debugf("Creating frontend %s", frontendName)
 
 			fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
+			if globalConfiguration.ErrorPages != nil {
+				fwd, err = forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader), forward.ErrorHandler(errorPageHandler))
+			}
 			if err != nil {
 				log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
 				log.Errorf("Skipping frontend %s...", frontendName)
@@ -611,6 +619,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					log.Debugf("Creating backend %s", frontend.Backend)
 					var lb http.Handler
 					rr, _ := roundrobin.New(saveBackend)
+					if globalConfiguration.ErrorPages != nil {
+						rr, _ = roundrobin.New(saveBackend, roundrobin.ErrorHandler(errorPageHandler))
+					}
 					if configuration.Backends[frontend.Backend] == nil {
 						log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
 						log.Errorf("Skipping frontend %s...", frontendName)
