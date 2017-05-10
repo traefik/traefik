@@ -39,6 +39,6 @@ bmysql:
         MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
     log_driver: none
 brabbitmq:
-    image: rabbitmq:3
+    image: rabbitmq:3-alpine
     environment:
         RABBITMQ_NODE_IP_ADDRESS: "0.0.0.0"
