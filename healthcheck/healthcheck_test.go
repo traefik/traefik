@@ -193,6 +193,73 @@ func TestSetBackendsConfiguration(t *testing.T) {
 	}
 }
 
+func TestNewRequest(t *testing.T) {
+	tests := []struct {
+		desc     string
+		host     string
+		port     int
+		path     string
+		expected string
+	}{
+		{
+			desc:     "no port override",
+			host:     "backend1:80",
+			port:     0,
+			path:     "/test",
+			expected: "http://backend1:80/test",
+		},
+		{
+			desc:     "port override",
+			host:     "backend2:80",
+			port:     8080,
+			path:     "/test",
+			expected: "http://backend2:8080/test",
+		},
+		{
+			desc:     "no port override with no port in host",
+			host:     "backend1",
+			port:     0,
+			path:     "/health",
+			expected: "http://backend1/health",
+		},
+		{
+			desc:     "port override with no port in host",
+			host:     "backend2",
+			port:     8080,
+			path:     "/health",
+			expected: "http://backend2:8080/health",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			backend := NewBackendHealthCheck(
+				Options{
+					Path: test.path,
+					Port: test.port,
+				})
+
+			u := &url.URL{
+				Scheme: "http",
+				Host:   test.host,
+			}
+
+			req, err := backend.newRequest(u)
+			if err != nil {
+				t.Fatalf("failed to create new backend request: %s", err)
+			}
+
+			actual := req.URL.String()
+			if actual != test.expected {
+				t.Fatalf("got %s for healthcheck URL, wanted %s", actual, test.expected)
+			}
+		})
+	}
+
+}
+
 func MustParseURL(rawurl string) *url.URL {
 	u, err := url.Parse(rawurl)
 	if err != nil {

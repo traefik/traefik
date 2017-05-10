@@ -296,8 +296,9 @@ A health check can be configured in order to remove a backend from LB rotation
 as long as it keeps returning HTTP status codes other than 200 OK to HTTP GET
 requests periodically carried out by Traefik. The check is defined by a path
 appended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how
-often the health check should be executed (the default being 30 seconds). Each
-backend must respond to the health check within 5 seconds.
+often the health check should be executed (the default being 30 seconds).
+Each backend must respond to the health check within 5 seconds.
+By default, the port of the backend server is used, however, this may be overridden.  
 
 A recovering backend returning 200 OK responses again is being returned to the
 LB rotation pool.
@@ -309,6 +310,16 @@ For example:
     [backends.backend1.healthcheck]
       path = "/health"
       interval = "10s"
+```
+
+To use a different port for the healthcheck:
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.healthcheck]
+      path = "/health"
+      interval = "10s"
+      port = 8080
 ```
 
 ## Servers
@@ -346,17 +357,17 @@ Here is an example of backends and servers definition:
 
 # Configuration
 
-Træfik's configuration has two parts: 
+Træfik's configuration has two parts:
 
-- The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning. 
+- The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning.
 - The [dynamic Træfik configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
 
 
 ## Static Træfik configuration
 
-The static configuration is the global configuration which is setting up connections to configuration backends and entrypoints. 
+The static configuration is the global configuration which is setting up connections to configuration backends and entrypoints.
 
-Træfik can be configured using many configuration sources with the following precedence order. 
+Træfik can be configured using many configuration sources with the following precedence order.
 Each item takes precedence over the item below it:
 
 - [Key-value Store](/basics/#key-value-stores)
@@ -398,18 +409,18 @@ Træfik supports several Key-value stores:
 
 - [Consul](https://consul.io)
 - [etcd](https://coreos.com/etcd/)
-- [ZooKeeper](https://zookeeper.apache.org/) 
+- [ZooKeeper](https://zookeeper.apache.org/)
 - [boltdb](https://github.com/boltdb/bolt)
 
 Please refer to the [User Guide Key-value store configuration](/user-guide/kv-config/) section to get documentation on it.
 
 ## Dynamic Træfik configuration
 
-The dynamic configuration concerns : 
+The dynamic configuration concerns :
 
 - [Frontends](/basics/#frontends)
-- [Backends](/basics/#backends) 
-- [Servers](/basics/#servers) 
+- [Backends](/basics/#backends)
+- [Servers](/basics/#servers)
 
 Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
 
@@ -427,7 +438,7 @@ List of Træfik available commands with description :             
 - `version` : Print version 
 - `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
 
-Each command may have related flags. 
+Each command may have related flags.
 All those related flags will be displayed with :
 
 ```bash
@@ -439,4 +450,3 @@ Note that each command is described at the beginning of the help section:
 ```bash
 $ traefik --help
 ```
-
