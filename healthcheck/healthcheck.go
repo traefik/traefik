@@ -3,8 +3,10 @@ package healthcheck
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -27,6 +29,7 @@ func GetHealthCheck() *HealthCheck {
 // Options are the public health check options.
 type Options struct {
 	Path     string
+	Port     int
 	Interval time.Duration
 	LB       LoadBalancer
 }
@@ -127,11 +130,32 @@ func checkBackend(currentBackend *BackendHealthCheck) {
 	}
 }
 
+func (backend *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
+	if backend.Options.Port == 0 {
+		return http.NewRequest("GET", serverURL.String()+backend.Path, nil)
+	}
+
+	// copy the url and add the port to the host
+	u := &url.URL{}
+	*u = *serverURL
+	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(backend.Options.Port))
+	u.Path = u.Path + backend.Path
+
+	return http.NewRequest("GET", u.String(), nil)
+}
+
 func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) bool {
 	client := http.Client{
 		Timeout: backend.requestTimeout,
 	}
-	resp, err := client.Get(serverURL.String() + backend.Path)
+	req, err := backend.newRequest(serverURL)
+	if err != nil {
+		log.Errorf("Failed to create HTTP request [%s] for healthcheck: %s", serverURL, err)
+		return false
+	}
+
+	resp, err := client.Do(req)
+
 	if err == nil {
 		defer resp.Body.Close()
 	}
