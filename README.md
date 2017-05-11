@@ -137,6 +137,7 @@ If you prefer commercial support, please contact [containo.us](https://containo.
 - Manuel Laufenberg [@SantoDE](https://github.com/SantoDE)
 - Thomas Recloux [@trecloux](https://github.com/trecloux)
 - Timo Reimann [@timoreimann](https://github.com/timoreimann)
+- Ludovic Fernandez [@ldez](https://github.com/ldez)
 
 ## Credits
 
