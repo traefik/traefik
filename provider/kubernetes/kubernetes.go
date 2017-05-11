@@ -156,14 +156,16 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				PassHostHeader := p.getPassHostHeader()
 
-				passHostHeaderAnnotation := i.Annotations["traefik.frontend.passHostHeader"]
-				switch passHostHeaderAnnotation {
-				case "true":
-					PassHostHeader = true
-				case "false":
+				passHostHeaderAnnotation, ok := i.Annotations["traefik.frontend.passHostHeader"]
+				switch {
+				case !ok:
+					// No op.
+				case passHostHeaderAnnotation == "false":
 					PassHostHeader = false
+				case passHostHeaderAnnotation == "true":
+					PassHostHeader = true
 				default:
-					log.Warnf("Unknown value of %s for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
+					log.Warnf("Unknown value '%s' for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
 				}
 				if realm := i.Annotations["ingress.kubernetes.io/auth-realm"]; realm != "" && realm != traefikDefaultRealm {
 					return nil, errors.New("no realm customization supported")
