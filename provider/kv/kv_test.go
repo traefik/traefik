@@ -20,21 +20,21 @@ func TestKvList(t *testing.T) {
 	}{
 		{
 			provider: &Provider{
-				Kvclient: &Mock{},
+				kvclient: &Mock{},
 			},
 			keys:     []string{},
 			expected: []string{},
 		},
 		{
 			provider: &Provider{
-				Kvclient: &Mock{},
+				kvclient: &Mock{},
 			},
 			keys:     []string{"traefik"},
 			expected: []string{},
 		},
 		{
 			provider: &Provider{
-				Kvclient: &Mock{
+				kvclient: &Mock{
 					KVPairs: []*store.KVPair{
 						{
 							Key:   "foo",
@@ -48,7 +48,7 @@ func TestKvList(t *testing.T) {
 		},
 		{
 			provider: &Provider{
-				Kvclient: &Mock{
+				kvclient: &Mock{
 					KVPairs: []*store.KVPair{
 						{
 							Key:   "foo",
@@ -62,7 +62,7 @@ func TestKvList(t *testing.T) {
 		},
 		{
 			provider: &Provider{
-				Kvclient: &Mock{
+				kvclient: &Mock{
 					KVPairs: []*store.KVPair{
 						{
 							Key:   "foo/baz/1",
@@ -95,7 +95,7 @@ func TestKvList(t *testing.T) {
 
 	// Error case
 	provider := &Provider{
-		Kvclient: &Mock{
+		kvclient: &Mock{
 			Error: KvError{
 				List: store.ErrKeyNotFound,
 			},
@@ -115,21 +115,21 @@ func TestKvGet(t *testing.T) {
 	}{
 		{
 			provider: &Provider{
-				Kvclient: &Mock{},
+				kvclient: &Mock{},
 			},
 			keys:     []string{},
 			expected: "",
 		},
 		{
 			provider: &Provider{
-				Kvclient: &Mock{},
+				kvclient: &Mock{},
 			},
 			keys:     []string{"traefik"},
 			expected: "",
 		},
 		{
 			provider: &Provider{
-				Kvclient: &Mock{
+				kvclient: &Mock{
 					KVPairs: []*store.KVPair{
 						{
 							Key:   "foo",
@@ -143,7 +143,7 @@ func TestKvGet(t *testing.T) {
 		},
 		{
 			provider: &Provider{
-				Kvclient: &Mock{
+				kvclient: &Mock{
 					KVPairs: []*store.KVPair{
 						{
 							Key:   "foo",
@@ -157,7 +157,7 @@ func TestKvGet(t *testing.T) {
 		},
 		{
 			provider: &Provider{
-				Kvclient: &Mock{
+				kvclient: &Mock{
 					KVPairs: []*store.KVPair{
 						{
 							Key:   "foo/baz/1",
@@ -188,7 +188,7 @@ func TestKvGet(t *testing.T) {
 
 	// Error case
 	provider := &Provider{
-		Kvclient: &Mock{
+		kvclient: &Mock{
 			Error: KvError{
 				Get: store.ErrKeyNotFound,
 			},
@@ -249,7 +249,7 @@ func TestKvWatchTree(t *testing.T) {
 	returnedChans := make(chan chan []*store.KVPair)
 	provider := &KvMock{
 		Provider{
-			Kvclient: &Mock{
+			kvclient: &Mock{
 				WatchTreeMethod: func() <-chan []*store.KVPair {
 					c := make(chan []*store.KVPair, 10)
 					returnedChans <- c
@@ -378,7 +378,7 @@ func (s *Mock) Close() {
 func TestKVLoadConfig(t *testing.T) {
 	provider := &Provider{
 		Prefix: "traefik",
-		Kvclient: &Mock{
+		kvclient: &Mock{
 			KVPairs: []*store.KVPair{
 				{
 					Key:   "traefik/frontends/frontend.with.dot",
