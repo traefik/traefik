@@ -8,4 +8,4 @@ docker version
 pip install --user -r requirements.txt
 
 make pull-images
-make validate
+ci_retry make validate

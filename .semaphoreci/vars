@@ -17,3 +17,25 @@ fi
 export CODENAME=raclette
 
 export N_MAKE_JOBS=2
+
+
+function ci_retry {
+
+    local NRETRY=3
+    local NSLEEP=5
+    local n=0
+
+    until [ $n -ge $NRETRY ]
+    do
+        "$@" && break
+        n=$[$n+1]
+        echo "$@ failed, attempt ${n}/${NRETRY}"
+        sleep $NSLEEP
+    done
+
+    [ $n -lt $NRETRY ]
+
+}
+
+export -f ci_retry
+
