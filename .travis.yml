@@ -11,32 +11,20 @@ env:
     - VERSION: $TRAVIS_TAG
     - CODENAME: raclette
     - N_MAKE_JOBS: 2
+    - DOCKER_VERSION: 1.12.6
 
-matrix:
-  fast_finish: true
-  include:
-  - env: DOCKER_VERSION=1.10.3
-  - env: DOCKER_VERSION=1.12.6
-
-before_install:
-  - sudo -E apt-get -yq update
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-engine=${DOCKER_VERSION}*
-install:
-  - docker version
-  - pip install --user -r requirements.txt
-  - make pull-images
-before_script:
-  - make validate
 script:
-  - make test-unit && travis_retry make test-integration
-  - make -j${N_MAKE_JOBS} crossbinary-default-parallel
-after_failure:
-  - docker ps
+- echo "Skipping tests... (Tests are executed on SemaphoreCI)"
+
 before_deploy:
   - >
     if ! [ "$BEFORE_DEPLOY_RUN" ]; then
       export BEFORE_DEPLOY_RUN=1;
-      make -j${N_MAKE_JOBS} crossbinary-others-parallel;
+      sudo -E apt-get -yq update;
+      sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-engine=${DOCKER_VERSION}*;
+      docker version;
+      pip install --user -r requirements.txt;
+      make -j${N_MAKE_JOBS} crossbinary-parallel;
       make image;
       mkdocs build --clean;
       tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .;
