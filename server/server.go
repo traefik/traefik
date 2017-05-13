@@ -541,7 +541,7 @@ func (server *Server) prepareServer(entryPointName string, router *middlewares.H
 func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) map[string]*serverEntryPoint {
 	serverEntryPoints := make(map[string]*serverEntryPoint)
 	for entryPointName := range globalConfiguration.EntryPoints {
-		router := server.buildDefaultHTTPRouter(globalConfiguration.NoRouteResponseCode)
+		router := buildDefaultHTTPRouter(globalConfiguration)
 		serverEntryPoints[entryPointName] = &serverEntryPoint{
 			httpRouter: middlewares.NewHandlerSwitcher(router),
 		}
@@ -842,28 +842,32 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 	return rewrite, nil
 }
 
-func (server *Server) buildDefaultHTTPRouter(noRouteResponseCode int) *mux.Router {
+func buildDefaultHTTPRouter(globalConfig GlobalConfiguration) *mux.Router {
 	router := mux.NewRouter()
+
+	noRouteResponseCode := globalConfig.NoRouteResponseCode
+	if noRouteResponseCode == 0 {
+		noRouteResponseCode = http.StatusNotFound
+	}
+	if noRouteResponseCode < 100 || noRouteResponseCode > 599 {
+		log.Errorf("Invalid NoRouteResponseCode %d configured. Falling back to 404 NotFound", noRouteResponseCode)
+		noRouteResponseCode = http.StatusNotFound
+	}
+	log.Debugf("Setting up NotFoundHandler to serve %d responses", noRouteResponseCode)
+
 	router.NotFoundHandler = newNotFounderHandler(noRouteResponseCode)
 	router.StrictSlash(true)
 	router.SkipClean(true)
+
 	return router
 }
 
 func newNotFounderHandler(responseCode int) http.Handler {
-	if responseCode == 0 {
-		responseCode = http.StatusNotFound
-	}
-	if http.StatusText(responseCode) == "" {
-		log.Warnf("Wrong NoRouteResponseCode %d configured. Falling back to 404 (http.StatusNotFound)", responseCode)
-		responseCode = http.StatusNotFound
-	}
-
-	log.Debugf("Setting up not found handler to serve %d responses", responseCode)
+	statusText := http.StatusText(responseCode)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(responseCode)
-		fmt.Fprint(w, http.StatusText(responseCode))
+		fmt.Fprint(w, statusText)
 	})
 }
 

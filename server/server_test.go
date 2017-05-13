@@ -161,6 +161,49 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 	}
 }
 
+func TestBuildDefaultHTTPRouterSetupNotFoundHandler(t *testing.T) {
+	tests := []struct {
+		name                   string
+		globalConfig           GlobalConfiguration
+		wantNotFoundStatusCode int
+	}{
+		{
+			name:                   "default",
+			globalConfig:           GlobalConfiguration{},
+			wantNotFoundStatusCode: http.StatusNotFound,
+		},
+		{
+			name:                   "sane config",
+			globalConfig:           GlobalConfiguration{NoRouteResponseCode: http.StatusBadGateway},
+			wantNotFoundStatusCode: http.StatusBadGateway,
+		},
+		{
+			name:                   "invalid config",
+			globalConfig:           GlobalConfiguration{NoRouteResponseCode: 1000},
+			wantNotFoundStatusCode: http.StatusNotFound,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			recorder := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "http://localhost/notknown", nil)
+
+			router := buildDefaultHTTPRouter(test.globalConfig)
+			router.ServeHTTP(recorder, req)
+
+			if recorder.Code != test.wantNotFoundStatusCode {
+				t.Errorf("got wrong status status code %v, want %v", recorder.Code, test.wantNotFoundStatusCode)
+			}
+		})
+	}
+
+}
+
 func TestNewNotFounderHandler(t *testing.T) {
 	tests := []struct {
 		name                string
@@ -168,12 +211,6 @@ func TestNewNotFounderHandler(t *testing.T) {
 		wantStatusCode      int
 		wantBody            string
 	}{
-		{
-			name:                "default",
-			noRouteResponseCode: 0,
-			wantStatusCode:      http.StatusNotFound,
-			wantBody:            "Not Found",
-		},
 		{
 			name:                "not found",
 			noRouteResponseCode: http.StatusNotFound,
@@ -185,12 +222,6 @@ func TestNewNotFounderHandler(t *testing.T) {
 			noRouteResponseCode: http.StatusBadGateway,
 			wantStatusCode:      http.StatusBadGateway,
 			wantBody:            "Bad Gateway",
-		},
-		{
-			name:                "invalid status code",
-			noRouteResponseCode: 1000,
-			wantStatusCode:      http.StatusNotFound,
-			wantBody:            "Not Found",
 		},
 	}
 
