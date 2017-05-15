@@ -341,7 +341,8 @@ func TestConfigureBackends(t *testing.T) {
 				LoadBalancer: test.lb,
 			}
 
-			configureBackends(map[string]*types.Backend{
+			srv := Server{}
+			srv.configureBackends(map[string]*types.Backend{
 				"backend": backend,
 			})
 

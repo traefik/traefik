@@ -255,7 +255,7 @@ func (server *Server) defaultConfigurationValues(configuration *types.Configurat
 		return
 	}
 	server.configureFrontends(configuration.Frontends)
-	configureBackends(configuration.Backends)
+	server.configureBackends(configuration.Backends)
 }
 
 func (server *Server) listenConfigurations(stop chan bool) {
@@ -889,7 +889,7 @@ func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
 	}
 }
 
-func configureBackends(backends map[string]*types.Backend) {
+func (*Server) configureBackends(backends map[string]*types.Backend) {
 	for backendName, backend := range backends {
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
 		if err != nil {
