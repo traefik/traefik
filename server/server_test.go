@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -275,5 +276,83 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 	srv := NewServer(globalConfig)
 	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
+	}
+}
+
+func TestConfigureBackends(t *testing.T) {
+	validMethod := "Drr"
+	defaultMethod := "wrr"
+
+	tests := []struct {
+		desc       string
+		lb         *types.LoadBalancer
+		wantMethod string
+		wantSticky bool
+	}{
+		{
+			desc: "valid load balancer method with sticky enabled",
+			lb: &types.LoadBalancer{
+				Method: validMethod,
+				Sticky: true,
+			},
+			wantMethod: validMethod,
+			wantSticky: true,
+		},
+		{
+			desc: "valid load balancer method with sticky disabled",
+			lb: &types.LoadBalancer{
+				Method: validMethod,
+				Sticky: false,
+			},
+			wantMethod: validMethod,
+			wantSticky: false,
+		},
+		{
+			desc: "invalid load balancer method with sticky enabled",
+			lb: &types.LoadBalancer{
+				Method: "Invalid",
+				Sticky: true,
+			},
+			wantMethod: defaultMethod,
+			wantSticky: true,
+		},
+		{
+			desc: "invalid load balancer method with sticky disabled",
+			lb: &types.LoadBalancer{
+				Method: "Invalid",
+				Sticky: false,
+			},
+			wantMethod: defaultMethod,
+			wantSticky: false,
+		},
+		{
+			desc:       "missing load balancer",
+			lb:         nil,
+			wantMethod: defaultMethod,
+			wantSticky: false,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			backend := &types.Backend{
+				LoadBalancer: test.lb,
+			}
+
+			srv := Server{}
+			srv.configureBackends(map[string]*types.Backend{
+				"backend": backend,
+			})
+
+			wantLB := types.LoadBalancer{
+				Method: test.wantMethod,
+				Sticky: test.wantSticky,
+			}
+			if !reflect.DeepEqual(*backend.LoadBalancer, wantLB) {
+				t.Errorf("got backend load-balancer\n%v\nwant\n%v\n", spew.Sdump(backend.LoadBalancer), spew.Sdump(wantLB))
+			}
+		})
 	}
 }

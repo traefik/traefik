@@ -254,19 +254,8 @@ func (server *Server) defaultConfigurationValues(configuration *types.Configurat
 	if configuration == nil || configuration.Frontends == nil {
 		return
 	}
-	for _, frontend := range configuration.Frontends {
-		// default endpoints if not defined in frontends
-		if len(frontend.EntryPoints) == 0 {
-			frontend.EntryPoints = server.globalConfiguration.DefaultEntryPoints
-		}
-	}
-	for backendName, backend := range configuration.Backends {
-		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
-		if err != nil {
-			log.Debugf("Load balancer method '%+v' for backend %s: %v. Using default wrr.", backend.LoadBalancer, backendName, err)
-			backend.LoadBalancer = &types.LoadBalancer{Method: "wrr"}
-		}
-	}
+	server.configureFrontends(configuration.Frontends)
+	server.configureBackends(configuration.Backends)
 }
 
 func (server *Server) listenConfigurations(stop chan bool) {
@@ -889,4 +878,30 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
+	for _, frontend := range frontends {
+		// default endpoints if not defined in frontends
+		if len(frontend.EntryPoints) == 0 {
+			frontend.EntryPoints = server.globalConfiguration.DefaultEntryPoints
+		}
+	}
+}
+
+func (*Server) configureBackends(backends map[string]*types.Backend) {
+	for backendName, backend := range backends {
+		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
+		if err != nil {
+			log.Debugf("Validation of load balancer method for backend %s failed: %s. Using default method wrr.", backendName, err)
+			var sticky bool
+			if backend.LoadBalancer != nil {
+				sticky = backend.LoadBalancer.Sticky
+			}
+			backend.LoadBalancer = &types.LoadBalancer{
+				Method: "wrr",
+				Sticky: sticky,
+			}
+		}
+	}
 }
