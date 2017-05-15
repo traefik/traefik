@@ -173,12 +173,12 @@ func TestBuildDefaultHTTPRouterSetupNotFoundHandler(t *testing.T) {
 			wantNotFoundStatusCode: http.StatusNotFound,
 		},
 		{
-			name:                   "sane config",
+			name:                   "valid response code",
 			globalConfig:           GlobalConfiguration{NoRouteResponseCode: http.StatusBadGateway},
 			wantNotFoundStatusCode: http.StatusBadGateway,
 		},
 		{
-			name:                   "invalid config",
+			name:                   "invalid response code",
 			globalConfig:           GlobalConfiguration{NoRouteResponseCode: 1000},
 			wantNotFoundStatusCode: http.StatusNotFound,
 		},
