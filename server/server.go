@@ -655,7 +655,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								log.Errorf("Skipping frontend %s...", frontendName)
 								continue frontend
 							}
-							hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
+							hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
 							if hcOpts != nil {
 								log.Debugf("Setting up backend health check %s", *hcOpts)
 								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
@@ -683,7 +683,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								continue frontend
 							}
 						}
-						hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
+						hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
@@ -733,9 +733,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 						authMiddleware, err := middlewares.NewAuthenticator(auth)
 						if err != nil {
-							log.Fatal("Error creating Auth: ", err)
+							log.Errorf("Error creating Auth: %s", err)
+						} else {
+							negroni.Use(authMiddleware)
 						}
-						negroni.Use(authMiddleware)
 					}
 					if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
@@ -843,8 +844,8 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	return router
 }
 
-func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck, hcConfig HealthCheckConfig) *healthcheck.Options {
-	if hc == nil || hc.Path == "" {
+func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck, hcConfig *HealthCheckConfig) *healthcheck.Options {
+	if hc == nil || hc.Path == "" || hcConfig == nil {
 		return nil
 	}
 
