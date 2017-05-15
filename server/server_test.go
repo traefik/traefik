@@ -151,10 +151,47 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			gotOpts := parseHealthCheckOptions(lb, "backend", test.hc, HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
+			gotOpts := parseHealthCheckOptions(lb, "backend", test.hc, &HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
 			if !reflect.DeepEqual(gotOpts, test.wantOpts) {
 				t.Errorf("got health check options %+v, want %+v", gotOpts, test.wantOpts)
 			}
 		})
+	}
+}
+
+func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
+	globalConfig := GlobalConfiguration{
+		EntryPoints: EntryPoints{
+			"http": &EntryPoint{},
+		},
+	}
+
+	dynamicConfigs := configs{
+		"config": &types.Configuration{
+			Frontends: map[string]*types.Frontend{
+				"frontend": {
+					EntryPoints: []string{"http"},
+					Backend:     "backend",
+					BasicAuth:   []string{""},
+				},
+			},
+			Backends: map[string]*types.Backend{
+				"backend": {
+					Servers: map[string]types.Server{
+						"server": {
+							URL: "http://localhost",
+						},
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "Wrr",
+					},
+				},
+			},
+		},
+	}
+
+	srv := NewServer(globalConfig)
+	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
+		t.Fatalf("got error: %s", err)
 	}
 }
