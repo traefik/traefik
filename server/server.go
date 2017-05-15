@@ -1060,13 +1060,32 @@ func (*Server) configureBackends(backends map[string]*types.Backend) {
 // Note that given there is no metrics instrumentation configured, it will return nil.
 func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metrics {
 	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
-	if metricsEnabled && globalConfig.Web.Metrics.Prometheus != nil {
-		metrics, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
-		if err != nil {
-			log.Errorf("Error creating Prometheus Metrics implementation: %s", err)
-			return nil
+	if metricsEnabled {
+		// Create MultiMetric
+		metrics := []middlewares.Metrics{}
+
+		if globalConfig.Web.Metrics.Prometheus != nil {
+			metric, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
+			if err != nil {
+				log.Errorf("Error creating Prometheus Metrics implementation: %s", err)
+			}
+			log.Debug("Configured Prometheus Metrics")
+			metrics = append(metrics, metric)
 		}
-		return metrics
+		if globalConfig.Web.Metrics.Datadog != nil {
+			middlewares.InitDatadogClient(globalConfig.Web.Metrics.Datadog)
+			metric := middlewares.NewDataDog(name)
+			log.Debugf("Configured DataDog Metrics pushing to %s once every %s", globalConfig.Web.Metrics.Datadog.Address, globalConfig.Web.Metrics.Datadog.PushInterval)
+			metrics = append(metrics, metric)
+		}
+		if globalConfig.Web.Metrics.StatsD != nil {
+			middlewares.InitStatsdClient(globalConfig.Web.Metrics.StatsD)
+			metric := middlewares.NewStatsD(name)
+			log.Debugf("Configured StatsD Metrics pushing to %s once every %s", globalConfig.Web.Metrics.StatsD.Address, globalConfig.Web.Metrics.StatsD.PushInterval)
+			metrics = append(metrics, metric)
+		}
+
+		return middlewares.NewMultiMetrics(metrics)
 	}
 
 	return nil
