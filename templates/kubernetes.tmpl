@@ -1,4 +1,5 @@
 [backends]{{range $backendName, $backend := .Backends}}
+    [backends."{{$backendName}}"]
     {{if $backend.CircuitBreaker}}
     [backends."{{$backendName}}".circuitbreaker]
       expression = "{{$backend.CircuitBreaker.Expression}}"

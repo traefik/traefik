@@ -252,28 +252,25 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							}
 
 							if !exists {
-								log.Errorf("Endpoints not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-								continue
+								log.Warnf("Endpoints not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								break
 							}
 
 							if len(endpoints.Subsets) == 0 {
-								log.Warnf("Service endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-								templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
-									URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
-									Weight: 1,
-								}
-							} else {
-								for _, subset := range endpoints.Subsets {
-									for _, address := range subset.Addresses {
-										url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
-										name := url
-										if address.TargetRef != nil && address.TargetRef.Name != "" {
-											name = address.TargetRef.Name
-										}
-										templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
-											URL:    url,
-											Weight: 1,
-										}
+								log.Warnf("Endpoints not available for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								break
+							}
+
+							for _, subset := range endpoints.Subsets {
+								for _, address := range subset.Addresses {
+									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+									name := url
+									if address.TargetRef != nil && address.TargetRef.Name != "" {
+										name = address.TargetRef.Name
+									}
+									templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+										URL:    url,
+										Weight: 1,
 									}
 								}
 							}
