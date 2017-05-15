@@ -12,10 +12,7 @@ import (
 )
 
 var (
-	_ http.ResponseWriter = &ResponseRecorder{}
-	_ http.Hijacker       = &ResponseRecorder{}
-	_ http.Flusher        = &ResponseRecorder{}
-	_ http.CloseNotifier  = &ResponseRecorder{}
+	_ Stateful = &ResponseRecorder{}
 )
 
 // Retry is a middleware that retries requests
