@@ -12,68 +12,15 @@ on your machine, as it is the quickest way to get a local Kubernetes cluster set
 
 2. The `kubectl` binary should be [installed on your workstation](http://kubernetes.io/docs/getting-started-guides/minikube/#download-kubectl).
 
-## Deploy Træfik using a Deployment object
+### Role Based Access Control configuration (Kubernetes 1.6+ only)
 
-We are going to deploy Træfik with a
-[Deployment](http://kubernetes.io/docs/user-guide/deployments/), as this will
-allow you to easily roll out config changes or update the image.
-
-```yaml
-kind: Deployment
-apiVersion: extensions/v1beta1
-metadata:
-  name: traefik-ingress-controller
-  namespace: kube-system
-  labels:
-    k8s-app: traefik-ingress-lb
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      k8s-app: traefik-ingress-lb
-  template:
-    metadata:
-      labels:
-        k8s-app: traefik-ingress-lb
-        name: traefik-ingress-lb
-    spec:
-      terminationGracePeriodSeconds: 60
-      containers:
-      - image: traefik
-        name: traefik-ingress-lb
-        resources:
-          limits:
-            cpu: 200m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-            memory: 20Mi
-        ports:
-        - containerPort: 80
-          hostPort: 80
-        - containerPort: 8080
-        args:
-        - --web
-        - --kubernetes
-```
-[examples/k8s/traefik.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik.yaml)
-
-> notice that we binding port 80 on the Træfik container to port 80 on the host.
-> With a multi node cluster we might expose Træfik with a NodePort or LoadBalancer service
-> and run more than 1 replica of Træfik for high availability.
-
-To deploy Træfik to your cluster start by submitting the deployment to the cluster with `kubectl`:
-
-```sh
-kubectl apply -f examples/k8s/traefik.yaml
-```
-### Role Based Access Control configuration (optional)
-
-Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/) in 1.6+ to allow fine-grained control
+Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control
 of Kubernetes resources and api.
 
-If your cluster is configured with RBAC, you need to authorize Traefik to use
-kubernetes API using ClusterRole, ServiceAccount and ClusterRoleBinding resources:
+If your cluster is configured with RBAC, you may need to authorize Traefik to use
+kubernetes API using ClusterRole and ClusterRoleBinding resources:
+
+_Note: your cluster may have suitable ClusterRoles already setup, but the following should work everywhere_
 
 ```yaml
 ---
@@ -101,12 +48,6 @@ rules:
       - list
       - watch
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: traefik-ingress-controller
-  namespace: kube-system
----
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
@@ -121,10 +62,75 @@ subjects:
   namespace: kube-system
 ```
 
-Then you add the service account information to Traefik deployment spec:
-  `serviceAccountName: traefik-ingress-controller`
+[examples/k8s/traefik-rbac.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-rbac.yaml)
 
-[examples/k8s/traefik-with-rbac.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-with-rbac.yaml)
+```shell
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-rbac.yaml
+```
+
+## Deploy Træfik using a Deployment object
+
+We are going to deploy Træfik with a
+[Deployment](http://kubernetes.io/docs/user-guide/deployments/), as this will
+allow you to easily roll out config changes or update the image.
+
+```yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik-ingress-controller
+  namespace: kube-system
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: traefik-ingress-controller
+  namespace: kube-system
+  labels:
+    k8s-app: traefik-ingress-lb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: traefik-ingress-lb
+  template:
+    metadata:
+      labels:
+        k8s-app: traefik-ingress-lb
+        name: traefik-ingress-lb
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      terminationGracePeriodSeconds: 60
+      containers:
+      - image: traefik
+        name: traefik-ingress-lb
+        resources:
+          limits:
+            cpu: 200m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        ports:
+        - containerPort: 80
+          hostPort: 80
+        - containerPort: 8080
+        args:
+        - --web
+        - --kubernetes
+```
+[examples/k8s/traefik.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik.yaml)
+
+> notice that we binding port 80 on the Træfik container to port 80 on the host.
+> With a multi node cluster we might expose Træfik with a NodePort or LoadBalancer service
+> and run more than 1 replica of Træfik for high availability.
+
+To deploy Træfik to your cluster start by submitting the deployment to the cluster with `kubectl`:
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml
+```
 
 ### Check the deployment
 
@@ -132,7 +138,7 @@ Now lets check if our deployment was successful.
 
 Start by listing the pods in the `kube-system` namespace:
 
-```sh
+```shell
 $kubectl --namespace=kube-system get pods
 
 NAME                                         READY     STATUS    RESTARTS   AGE
@@ -207,7 +213,7 @@ spec:
 [examples/k8s/ui.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/ui.yaml)
 
 ```shell
-kubectl apply -f examples/k8s/ui.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/ui.yaml
 ```
 
 Now lets setup an entry in our /etc/hosts file to route `traefik-ui.local`
@@ -334,7 +340,7 @@ spec:
 [examples/k8s/cheese-deployments.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-deployments.yaml)
 
 ```shell
-kubectl apply -f examples/k8s/cheese-deployments.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-deployments.yaml
 ```
 
 Next we need to setup a service for each of the cheese pods.
@@ -390,7 +396,7 @@ spec:
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
 
 ```shell
-kubectl apply -f examples/k8s/cheese-services.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-services.yaml
 ```
 
 Now we can submit an ingress for the cheese websites.
@@ -431,7 +437,7 @@ spec:
 > Notice that we list each hostname, and add a backend service.
 
 ```shell
-kubectl apply -f examples/k8s/cheese-ingress.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml
 ```
 
 Now visit the [Træfik dashboard](http://traefik-ui.local/) and you should
@@ -491,7 +497,7 @@ spec:
 > the containers from the previous example without modification.
 
 ```shell
-kubectl apply -f examples/k8s/cheeses-ingress.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheeses-ingress.yaml
 ```
 
 ```shell
