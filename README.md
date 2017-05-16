@@ -134,7 +134,6 @@ If you prefer commercial support, please contact [containo.us](https://containo.
 - Ed Robinson [@errm](https://github.com/errm)
 - Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
 - Manuel Laufenberg [@SantoDE](https://github.com/SantoDE)
-- Thomas Recloux [@trecloux](https://github.com/trecloux)
 - Timo Reimann [@timoreimann](https://github.com/timoreimann)
 - Ludovic Fernandez [@ldez](https://github.com/ldez)
 
