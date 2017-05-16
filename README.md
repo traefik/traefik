@@ -131,7 +131,6 @@ If you prefer commercial support, please contact [containo.us](https://containo.
 
 - Emile Vauge [@emilevauge](https://github.com/emilevauge)
 - Vincent Demeester [@vdemeester](https://github.com/vdemeester)
-- Russell Clare [@Russell-IO](https://github.com/Russell-IO)
 - Ed Robinson [@errm](https://github.com/errm)
 - Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
 - Manuel Laufenberg [@SantoDE](https://github.com/SantoDE)
