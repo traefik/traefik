@@ -1,5 +1,19 @@
 # Change Log
 
+## [v1.3.0-rc2](https://github.com/containous/traefik/tree/v1.3.0-rc2) (2017-05-16)
+[Full Changelog](https://github.com/containous/traefik/compare/v1.3.0-rc1...v1.3.0-rc2)
+
+**Merged pull requests:**
+
+- doc: Traefik cluster in beta. [\#1610](https://github.com/containous/traefik/pull/1610) ([ldez](https://github.com/ldez))
+- SemaphoreCI on 1.3 branch [\#1608](https://github.com/containous/traefik/pull/1608) ([ldez](https://github.com/ldez))
+- Fix empty basic auth [\#1601](https://github.com/containous/traefik/pull/1601) ([emilevauge](https://github.com/emilevauge))
+- Fix stats hijack [\#1598](https://github.com/containous/traefik/pull/1598) ([emilevauge](https://github.com/emilevauge))
+- Fix exported fields providers [\#1588](https://github.com/containous/traefik/pull/1588) ([emilevauge](https://github.com/emilevauge))
+- Maintain sticky flag on LB method validation failure. [\#1585](https://github.com/containous/traefik/pull/1585) ([timoreimann](https://github.com/timoreimann))
+- \[Kubernetes\] Ignore missing pass host header annotation. [\#1581](https://github.com/containous/traefik/pull/1581) ([timoreimann](https://github.com/timoreimann))
+- Fixed ReplacePath rule executing out of order, when combined with PathPrefixStrip [\#1577](https://github.com/containous/traefik/pull/1577) ([aantono](https://github.com/aantono))
+
 ## [v1.3.0-rc1](https://github.com/containous/traefik/tree/v1.3.0-rc1) (2017-05-04)
 [Full Changelog](https://github.com/containous/traefik/compare/v1.2.3...v1.3.0-rc1)
 
