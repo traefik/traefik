@@ -458,7 +458,7 @@ defaultEntryPoints = ["http", "https"]
     url = "http://172.17.0.3:80"
     weight = 1
   [backends.backend2]
-    [backends.backend1.maxconn]
+    [backends.backend2.maxconn]
       amount = 10
       extractorfunc = "request.host"
     [backends.backend2.LoadBalancer]
@@ -525,7 +525,7 @@ filename = "rules.toml"
     url = "http://172.17.0.3:80"
     weight = 1
   [backends.backend2]
-    [backends.backend1.maxconn]
+    [backends.backend2.maxconn]
       amount = 10
       extractorfunc = "request.host"
     [backends.backend2.LoadBalancer]
@@ -851,7 +851,7 @@ swarmmode = false
 
 Labels can be used on containers to override default behaviour:
 
-- `traefik.backend=foo`: give the name `backend-foo` to the generated backend for this container.
+- `traefik.backend=foo`: give the name `foo` to the generated backend for this container.
 - `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
 - `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
 - `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
