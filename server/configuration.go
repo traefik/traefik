@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -45,6 +46,7 @@ type GlobalConfiguration struct {
 	AccessLogsFile            string                  `description:"Access logs file"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
+	NoRouteResponseCode       int                     `description:"HTTP response code to send when no route to backend exists"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
 	Cluster                   *types.Cluster          `description:"Enable clustering"`
 	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags"`
@@ -491,6 +493,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			AccessLogsFile:            "",
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
+			NoRouteResponseCode:       http.StatusNotFound,
 			EntryPoints:               map[string]*EntryPoint{},
 			Constraints:               types.Constraints{},
 			DefaultEntryPoints:        []string{},

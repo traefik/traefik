@@ -1,8 +1,6 @@
 package server
 
 import (
-	"net/http"
-
 	"github.com/containous/traefik/log"
 )
 
@@ -23,9 +21,4 @@ func (oxylogger *OxyLogger) Warningf(format string, args ...interface{}) {
 // Errorf logs specified string as Warningf level in logrus.
 func (oxylogger *OxyLogger) Errorf(format string, args ...interface{}) {
 	log.Warningf(format, args...)
-}
-
-func notFoundHandler(w http.ResponseWriter, r *http.Request) {
-	http.NotFound(w, r)
-	//templatesRenderer.HTML(w, http.StatusNotFound, "notFound", nil)
 }
