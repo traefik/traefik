@@ -2,12 +2,18 @@
 # Global configuration
 ################################################################
 traefikLogsFile = "traefik.log"
-accessLogsFile = "access.log"
 logLevel = "ERROR"
 defaultEntryPoints = ["http"]
 [entryPoints]
   [entryPoints.http]
   address = ":8000"
+
+################################################################
+# Access log configuration
+################################################################
+[accessLog]
+  file = "access.log"
+  bufferSize = "0"
 
 ################################################################
 # Web configuration backend

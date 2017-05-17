@@ -14,6 +14,7 @@ import (
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/assert"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -352,6 +353,68 @@ func TestConfigureBackends(t *testing.T) {
 			}
 			if !reflect.DeepEqual(*backend.LoadBalancer, wantLB) {
 				t.Errorf("got backend load-balancer\n%v\nwant\n%v\n", spew.Sdump(backend.LoadBalancer), spew.Sdump(wantLB))
+			}
+		})
+	}
+}
+
+func TestNewServerAccessLogConfig(t *testing.T) {
+	cases := []struct {
+		desc                   string
+		globalCfg              GlobalConfiguration
+		accessLogConfig        *types.AccessLog
+		accessLogMiddlewareSet bool
+	}{
+		{
+			desc:                   "Test with no config",
+			globalCfg:              GlobalConfiguration{},
+			accessLogConfig:        nil,
+			accessLogMiddlewareSet: false,
+		},
+		{
+			desc:      "Test with AccessLogFiles set",
+			globalCfg: GlobalConfiguration{AccessLogsFile: "foo.log"},
+			accessLogConfig: &types.AccessLog{
+				File:       "foo.log",
+				Format:     "clf",
+				TimeFormat: "02/Jan/2006:15:04:05 -0700",
+				BufferSize: "0",
+				GzipLevel:  -1,
+			},
+			accessLogMiddlewareSet: true,
+		},
+		{
+			desc: "Test with AccessLog set",
+			globalCfg: GlobalConfiguration{AccessLog: &types.AccessLog{
+				File:       "foo.log",
+				Format:     "json",
+				TimeFormat: "02/Jan/2006:15:04:05 -0700",
+				BufferSize: "4 KiB",
+				GzipLevel:  1,
+			}},
+			accessLogConfig: &types.AccessLog{
+				File:       "foo.log",
+				Format:     "json",
+				TimeFormat: "02/Jan/2006:15:04:05 -0700",
+				BufferSize: "4 KiB",
+				GzipLevel:  1,
+			},
+			accessLogMiddlewareSet: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			tc := tc
+			t.Parallel()
+
+			s := NewServer(tc.globalCfg)
+
+			assert.Equal(t, tc.accessLogConfig, s.globalConfiguration.AccessLog)
+			if tc.accessLogMiddlewareSet {
+				assert.NotNil(t, s.accessLoggerMiddleware)
+			} else {
+				assert.Nil(t, s.accessLoggerMiddleware)
 			}
 		})
 	}
