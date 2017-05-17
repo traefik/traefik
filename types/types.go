@@ -81,18 +81,17 @@ var loadBalancerMethodNames = []string{
 
 // NewLoadBalancerMethod create a new LoadBalancerMethod from a given LoadBalancer.
 func NewLoadBalancerMethod(loadBalancer *LoadBalancer) (LoadBalancerMethod, error) {
+	var method string
 	if loadBalancer != nil {
+		method = loadBalancer.Method
 		for i, name := range loadBalancerMethodNames {
-			if strings.EqualFold(name, loadBalancer.Method) {
+			if strings.EqualFold(name, method) {
 				return LoadBalancerMethod(i), nil
 			}
 		}
 	}
-	return Wrr, ErrInvalidLoadBalancerMethod
+	return Wrr, fmt.Errorf("invalid load-balancing method '%s'", method)
 }
-
-// ErrInvalidLoadBalancerMethod is thrown when the specified load balancing method is invalid.
-var ErrInvalidLoadBalancerMethod = errors.New("Invalid method, using default")
 
 // Configuration of a provider.
 type Configuration struct {

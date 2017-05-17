@@ -45,14 +45,14 @@ type Provider struct {
 	DialerTimeout           flaeg.Duration      `description:"Set a non-default connection timeout for Marathon"`
 	KeepAlive               flaeg.Duration      `description:"Set a non-default TCP Keep Alive time in seconds"`
 	ForceTaskHostname       bool                `description:"Force to use the task's hostname."`
-	Basic                   *Basic
+	Basic                   *Basic              `description:"Enable basic authentication"`
 	marathonClient          marathon.Marathon
 }
 
 // Basic holds basic authentication specific configurations
 type Basic struct {
-	HTTPBasicAuthUser string
-	HTTPBasicPassword string
+	HTTPBasicAuthUser string `description:"Basic authentication User"`
+	HTTPBasicPassword string `description:"Basic authentication Password"`
 }
 
 type lightMarathonClient interface {
