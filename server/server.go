@@ -177,7 +177,7 @@ func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
 
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
-		serverMiddlewares := []negroni.Handler{server.accessLoggerMiddleware, server.loggerMiddleware, metrics}
+		serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler(), server.accessLoggerMiddleware, server.loggerMiddleware, metrics}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
 			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
 				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
@@ -258,19 +258,8 @@ func (server *Server) defaultConfigurationValues(configuration *types.Configurat
 	if configuration == nil || configuration.Frontends == nil {
 		return
 	}
-	for _, frontend := range configuration.Frontends {
-		// default endpoints if not defined in frontends
-		if len(frontend.EntryPoints) == 0 {
-			frontend.EntryPoints = server.globalConfiguration.DefaultEntryPoints
-		}
-	}
-	for backendName, backend := range configuration.Backends {
-		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
-		if err != nil {
-			log.Debugf("Load balancer method '%+v' for backend %s: %v. Using default wrr.", backend.LoadBalancer, backendName, err)
-			backend.LoadBalancer = &types.LoadBalancer{Method: "wrr"}
-		}
-	}
+	server.configureFrontends(configuration.Frontends)
+	server.configureBackends(configuration.Backends)
 }
 
 func (server *Server) listenConfigurations(stop chan bool) {
@@ -661,7 +650,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								log.Errorf("Skipping frontend %s...", frontendName)
 								continue frontend
 							}
-							hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
+							hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
 							if hcOpts != nil {
 								log.Debugf("Setting up backend health check %s", *hcOpts)
 								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
@@ -689,7 +678,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								continue frontend
 							}
 						}
-						hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, *globalConfiguration.HealthCheck)
+						hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
@@ -739,9 +728,10 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 						authMiddleware, err := middlewares.NewAuthenticator(auth)
 						if err != nil {
-							log.Fatal("Error creating Auth: ", err)
+							log.Errorf("Error creating Auth: %s", err)
+						} else {
+							negroni.Use(authMiddleware)
 						}
-						negroni.Use(authMiddleware)
 					}
 					if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
@@ -781,7 +771,17 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 }
 
 func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Handler) {
-	// add prefix
+	// path replace - This needs to always be the very last on the handler chain (first in the order in this function)
+	// -- Replacing Path should happen at the very end of the Modifier chain, after all the Matcher+Modifiers ran
+	if len(serverRoute.replacePath) > 0 {
+		handler = &middlewares.ReplacePath{
+			Path:    serverRoute.replacePath,
+			Handler: handler,
+		}
+	}
+
+	// add prefix - This needs to always be right before ReplacePath on the chain (second in order in this function)
+	// -- Adding Path Prefix should happen after all *Strip Matcher+Modifiers ran, but before Replace (in case it's configured)
 	if len(serverRoute.addPrefix) > 0 {
 		handler = &middlewares.AddPrefix{
 			Prefix:  serverRoute.addPrefix,
@@ -800,14 +800,6 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 	// strip prefix with regex
 	if len(serverRoute.stripPrefixesRegex) > 0 {
 		handler = middlewares.NewStripPrefixRegex(handler, serverRoute.stripPrefixesRegex)
-	}
-
-	// path replace
-	if len(serverRoute.replacePath) > 0 {
-		handler = &middlewares.ReplacePath{
-			Path:    serverRoute.replacePath,
-			Handler: handler,
-		}
 	}
 
 	serverRoute.route.Handler(handler)
@@ -849,8 +841,8 @@ func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	return router
 }
 
-func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck, hcConfig HealthCheckConfig) *healthcheck.Options {
-	if hc == nil || hc.Path == "" {
+func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck, hcConfig *HealthCheckConfig) *healthcheck.Options {
+	if hc == nil || hc.Path == "" || hcConfig == nil {
 		return nil
 	}
 
@@ -892,4 +884,30 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
+	for _, frontend := range frontends {
+		// default endpoints if not defined in frontends
+		if len(frontend.EntryPoints) == 0 {
+			frontend.EntryPoints = server.globalConfiguration.DefaultEntryPoints
+		}
+	}
+}
+
+func (*Server) configureBackends(backends map[string]*types.Backend) {
+	for backendName, backend := range backends {
+		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
+		if err != nil {
+			log.Debugf("Validation of load balancer method for backend %s failed: %s. Using default method wrr.", backendName, err)
+			var sticky bool
+			if backend.LoadBalancer != nil {
+				sticky = backend.LoadBalancer.Sticky
+			}
+			backend.LoadBalancer = &types.LoadBalancer{
+				Method: "wrr",
+				Sticky: sticky,
+			}
+		}
+	}
 }

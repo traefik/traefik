@@ -1,9 +1,15 @@
 package middlewares
 
 import (
+	"bufio"
+	"net"
 	"net/http"
 	"sync"
 	"time"
+)
+
+var (
+	_ Stateful = &responseRecorder{}
 )
 
 // StatsRecorder is an optional middleware that records more details statistics
@@ -49,6 +55,23 @@ type responseRecorder struct {
 func (r *responseRecorder) WriteHeader(status int) {
 	r.ResponseWriter.WriteHeader(status)
 	r.statusCode = status
+}
+
+// Hijack hijacks the connection
+func (r *responseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	return r.ResponseWriter.(http.Hijacker).Hijack()
+}
+
+// CloseNotify returns a channel that receives at most a
+// single value (true) when the client connection has gone
+// away.
+func (r *responseRecorder) CloseNotify() <-chan bool {
+	return r.ResponseWriter.(http.CloseNotifier).CloseNotify()
+}
+
+// Flush sends any buffered data to the client.
+func (r *responseRecorder) Flush() {
+	r.ResponseWriter.(http.Flusher).Flush()
 }
 
 // ServeHTTP silently extracts information from the request and response as it
