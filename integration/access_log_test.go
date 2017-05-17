@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 	shellwords "github.com/mattn/go-shellwords"
 
@@ -31,10 +32,17 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
+
 	defer os.Remove("access.log")
 	defer os.Remove("traefik.log")
 
-	time.Sleep(500 * time.Millisecond)
+	err = try.Do(1*time.Second, func() error {
+		if _, err := os.Stat("traefik.log"); err != nil {
+			return fmt.Errorf("could not get stats for log file: %s", err)
+		}
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
 
 	// Verify Traefik started OK
 	traefikLog, err := ioutil.ReadFile("traefik.log")
@@ -53,11 +61,11 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	defer ts3.Close()
 
 	// Make some requests
-	_, err = http.Get("http://127.0.0.1:8000/test1")
+	err = try.GetRequest("http://127.0.0.1:8000/test1", 500*time.Millisecond)
 	c.Assert(err, checker.IsNil)
-	_, err = http.Get("http://127.0.0.1:8000/test2")
+	err = try.GetRequest("http://127.0.0.1:8000/test2", 500*time.Millisecond)
 	c.Assert(err, checker.IsNil)
-	_, err = http.Get("http://127.0.0.1:8000/test2")
+	err = try.GetRequest("http://127.0.0.1:8000/test2", 500*time.Millisecond)
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
@@ -71,14 +79,14 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 			tokens, err := shellwords.Parse(line)
 			c.Assert(err, checker.IsNil)
 			c.Assert(len(tokens), checker.Equals, 13)
-			c.Assert(tokens[6], checker.Equals, "200")
+			c.Assert(regexp.MustCompile(`^\d{3}$`).MatchString(tokens[6]), checker.True)
 			c.Assert(tokens[9], checker.Equals, fmt.Sprintf("%d", i+1))
 			c.Assert(strings.HasPrefix(tokens[10], "frontend"), checker.True)
 			c.Assert(strings.HasPrefix(tokens[11], "http://127.0.0.1:808"), checker.True)
-			c.Assert(regexp.MustCompile("^\\d+ms$").MatchString(tokens[12]), checker.True)
+			c.Assert(regexp.MustCompile(`^\d+ms$`).MatchString(tokens[12]), checker.True)
 		}
 	}
-	c.Assert(count, checker.Equals, 3)
+	c.Assert(count, checker.GreaterOrEqualThan, 3)
 
 	// Verify no other Traefik problems
 	traefikLog, err = ioutil.ReadFile("traefik.log")

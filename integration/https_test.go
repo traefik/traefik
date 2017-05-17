@@ -5,11 +5,10 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"os/exec"
 	"time"
 
+	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
-
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -20,12 +19,14 @@ type HTTPSSuite struct{ BaseSuite }
 // "snitest.com", which happens to match the CN of 'snitest.com.crt'. The test
 // verifies that traefik presents the correct certificate.
 func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/https/https_sni.toml")
+	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/https_sni.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	time.Sleep(500 * time.Millisecond)
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
@@ -51,17 +52,24 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik routes the requests to the expected backends.
 func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/https/https_sni.toml")
+	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/https_sni.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	backend1 := startTestServer("9010", 204)
-	backend2 := startTestServer("9020", 205)
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	c.Assert(err, checker.IsNil)
+
+	backend1 := startTestServer("9010", http.StatusNoContent)
+	backend2 := startTestServer("9020", http.StatusResetContent)
 	defer backend1.Close()
 	defer backend2.Close()
 
-	time.Sleep(2000 * time.Millisecond)
+	err = try.GetRequest(backend1.URL, 1*time.Second, try.StatusCodeIs(http.StatusNoContent))
+	c.Assert(err, checker.IsNil)
+	err = try.GetRequest(backend2.URL, 1*time.Second, try.StatusCodeIs(http.StatusResetContent))
+	c.Assert(err, checker.IsNil)
 
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -77,35 +85,39 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 	}
 
 	client := &http.Client{Transport: tr1}
-	req, _ := http.NewRequest("GET", "https://127.0.0.1:4443/", nil)
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
 	req.Host = "snitest.com"
 	req.Header.Set("Host", "snitest.com")
 	req.Header.Set("Accept", "*/*")
 	resp, err := client.Do(req)
 	c.Assert(err, checker.IsNil)
 	// Expected a 204 (from backend1)
-	c.Assert(resp.StatusCode, checker.Equals, 204)
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusNoContent)
 
 	client = &http.Client{Transport: tr2}
-	req, _ = http.NewRequest("GET", "https://127.0.0.1:4443/", nil)
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
 	req.Host = "snitest.org"
 	req.Header.Set("Host", "snitest.org")
 	req.Header.Set("Accept", "*/*")
 	resp, err = client.Do(req)
 	c.Assert(err, checker.IsNil)
 	// Expected a 205 (from backend2)
-	c.Assert(resp.StatusCode, checker.Equals, 205)
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusResetContent)
 }
 
 // TestWithClientCertificateAuthentication
 // The client has to send a certificate signed by a CA trusted by the server
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/https/clientca/https_1ca1config.toml")
+	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/clientca/https_1ca1config.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	time.Sleep(500 * time.Millisecond)
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
@@ -144,12 +156,14 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 // TestWithClientCertificateAuthentication
 // Use two CA:s and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/https/clientca/https_2ca1config.toml")
+	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/clientca/https_2ca1config.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	time.Sleep(500 * time.Millisecond)
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 500*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
@@ -201,12 +215,14 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 // TestWithClientCertificateAuthentication
 // Use two CA:s in two different files and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFiles(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/https/clientca/https_2ca2config.toml")
+	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/clientca/https_2ca2config.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	time.Sleep(500 * time.Millisecond)
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains("Host:snitest.org"))
+	c.Assert(err, checker.IsNil)
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
@@ -269,5 +285,5 @@ func startTestServer(port string, statusCode int) (ts *httptest.Server) {
 		Config:   &http.Server{Handler: handler},
 	}
 	ts.Start()
-	return
+	return ts
 }
