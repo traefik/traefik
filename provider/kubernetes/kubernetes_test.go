@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/containous/traefik/types"
@@ -333,19 +332,14 @@ func TestRuleType(t *testing.T) {
 		frontendRuleType string
 	}{
 		{
-			desc:             "implicit default",
+			desc:             "rule type annotation missing",
 			ingressRuleType:  "",
 			frontendRuleType: ruleTypePathPrefix,
 		},
 		{
-			desc:             "unknown ingress / explicit default",
-			ingressRuleType:  "unknown",
-			frontendRuleType: ruleTypePathPrefix,
-		},
-		{
-			desc:             "explicit ingress",
-			ingressRuleType:  ruleTypePath,
-			frontendRuleType: ruleTypePath,
+			desc:             "rule type annotation set",
+			ingressRuleType:  "Path",
+			frontendRuleType: "Path",
 		},
 	}
 
@@ -1770,65 +1764,6 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 
 	if !reflect.DeepEqual(actual, expected) {
 		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
-}
-
-func TestGetRuleTypeFromAnnotation(t *testing.T) {
-	tests := []struct {
-		in            string
-		wantedUnknown bool
-	}{
-		{
-			in:            ruleTypePathPrefixStrip,
-			wantedUnknown: false,
-		},
-		{
-			in:            ruleTypePathStrip,
-			wantedUnknown: false,
-		},
-		{
-			in:            ruleTypePath,
-			wantedUnknown: false,
-		},
-		{
-			in:            ruleTypePathPrefix,
-			wantedUnknown: false,
-		},
-		{
-			wantedUnknown: false,
-		},
-		{
-			in:            "Unknown",
-			wantedUnknown: true,
-		},
-	}
-
-	for _, test := range tests {
-		test := test
-		inputs := []string{test.in, strings.ToLower(test.in)}
-		if inputs[0] == inputs[1] {
-			// Lower-casing makes no difference -- truncating to single case.
-			inputs = inputs[:1]
-		}
-		for _, input := range inputs {
-			t.Run(fmt.Sprintf("in='%s'", input), func(t *testing.T) {
-				t.Parallel()
-				annotations := map[string]string{}
-				if test.in != "" {
-					annotations[annotationFrontendRuleType] = test.in
-				}
-
-				gotRuleType, gotUnknown := getRuleTypeFromAnnotation(annotations)
-
-				if gotUnknown != test.wantedUnknown {
-					t.Errorf("got unknown '%t', wanted '%t'", gotUnknown, test.wantedUnknown)
-				}
-
-				if gotRuleType != test.in {
-					t.Errorf("got rule type '%s', wanted '%s'", gotRuleType, test.in)
-				}
-			})
-		}
 	}
 }
 

@@ -27,9 +27,6 @@ var _ provider.Provider = (*Provider)(nil)
 
 const (
 	annotationFrontendRuleType = "traefik.frontend.rule.type"
-	ruleTypePathPrefixStrip    = "PathPrefixStrip"
-	ruleTypePathStrip          = "PathStrip"
-	ruleTypePath               = "Path"
 	ruleTypePathPrefix         = "PathPrefix"
 )
 
@@ -199,12 +196,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				if len(pa.Path) > 0 {
-					ruleType, unknown := getRuleTypeFromAnnotation(i.Annotations)
-					switch {
-					case unknown:
-						log.Warnf("Unknown RuleType '%s' for Ingress %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
-						fallthrough
-					case ruleType == "":
+					ruleType := i.Annotations[annotationFrontendRuleType]
+					if ruleType == "" {
 						ruleType = ruleTypePathPrefix
 					}
 
@@ -391,25 +384,4 @@ func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Config
 		log.Error(err)
 	}
 	return configuration
-}
-
-func getRuleTypeFromAnnotation(annotations map[string]string) (ruleType string, unknown bool) {
-	ruleType = annotations[annotationFrontendRuleType]
-	for _, knownRuleType := range []string{
-		ruleTypePathPrefixStrip,
-		ruleTypePathStrip,
-		ruleTypePath,
-		ruleTypePathPrefix,
-	} {
-		if strings.ToLower(ruleType) == strings.ToLower(knownRuleType) {
-			return knownRuleType, false
-		}
-	}
-
-	if ruleType != "" {
-		// Annotation is set but does not match anything we know.
-		unknown = true
-	}
-
-	return ruleType, unknown
 }
