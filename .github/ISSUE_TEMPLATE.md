@@ -1,12 +1,12 @@
 <!--
 PLEASE READ THIS MESSAGE.
 
-Please keep in mind that the GitHub issue tracker is not intended as a general support forum, but for reporting bugs and feature requests.
+=== DO *NOT* FILE ISSUES FOR GENERAL SUPPORT QUESTIONS. ===
 
-For other type of questions, consider using one of:
+The issue tracker is for reporting bugs and feature requests only. For end-user related support questions, refer to one of the following:
 
+- Stack Overflow (using the "traefik" tag): https://stackoverflow.com/questions/tagged/traefik
 - the Traefik community Slack channel: https://traefik.herokuapp.com
-- StackOverflow: https://stackoverflow.com/questions/tagged/traefik
 
 HOW TO WRITE A GOOD ISSUE?
 
@@ -20,6 +20,8 @@ HOW TO WRITE A GOOD ISSUE?
 -->
 
 ### Do you want to request a *feature* or report a *bug*?
+
+(If you intend to ask a support question: **DO NOT FILE AN ISSUE**. Use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) or [Slack](https://traefik.herokuapp.com) instead.)
 
 
 
