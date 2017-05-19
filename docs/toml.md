@@ -323,7 +323,7 @@ email = "test@traefik.io"
 #
 # Required
 #
-storage = "acme.json" # or "traefik/acme/account" if using KV store
+storageFile = "acme.json" # or "traefik/acme/account" if using KV store
 
 # Entrypoint to proxy acme challenge/apply certificates to.
 # WARNING, must point to an entrypoint on port 443
