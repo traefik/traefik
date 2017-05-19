@@ -1,5 +1,5 @@
 hash: 1aa32496b865dda72d76c7cba3458f1c2c467acf0b99aab4609323f109aa64f6
-updated: 2017-05-02T11:46:23.91434995-04:00
+updated: 2017-05-19T23:30:19.890844996+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -201,7 +201,7 @@ imports:
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/gambol99/go-marathon
-  version: d672c6fbb499596869d95146a26e7d0746c06c54
+  version: 15ea23e360abb8b25071e677aed344f31838e403
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
