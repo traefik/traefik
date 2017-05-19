@@ -337,9 +337,19 @@ func TestRuleType(t *testing.T) {
 			frontendRuleType: ruleTypePathPrefix,
 		},
 		{
-			desc:             "rule type annotation set",
+			desc:             "Path rule type annotation set",
 			ingressRuleType:  "Path",
 			frontendRuleType: "Path",
+		},
+		{
+			desc:             "PathStrip rule type annotation set",
+			ingressRuleType:  "PathStrip",
+			frontendRuleType: "PathStrip",
+		},
+		{
+			desc:             "PathStripPrefix rule type annotation set",
+			ingressRuleType:  "PathStripPrefix",
+			frontendRuleType: "PathStripPrefix",
 		},
 	}
 
