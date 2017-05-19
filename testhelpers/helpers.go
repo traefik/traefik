@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 // Intp returns a pointer to the given integer value.
@@ -18,4 +19,13 @@ func MustNewRequest(method, urlStr string, body io.Reader) *http.Request {
 		panic(fmt.Sprintf("failed to create HTTP %s Request for '%s': %s", method, urlStr, err))
 	}
 	return request
+}
+
+// MustParseURL parses a string into URL and panics if it can't
+func MustParseURL(rawurl string) *url.URL {
+	u, err := url.Parse(rawurl)
+	if err != nil {
+		panic(fmt.Sprintf("failed to parse URL '%s': %s", rawurl, err))
+	}
+	return u
 }

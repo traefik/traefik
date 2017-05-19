@@ -2,7 +2,6 @@ package healthcheck
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/traefik/testhelpers"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -153,7 +153,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 				Interval: healthCheckInterval,
 				LB:       lb,
 			})
-			serverURL := MustParseURL(ts.URL)
+			serverURL := testhelpers.MustParseURL(ts.URL)
 			if test.startHealthy {
 				lb.servers = append(lb.servers, serverURL)
 			} else {
@@ -191,12 +191,4 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			}
 		})
 	}
-}
-
-func MustParseURL(rawurl string) *url.URL {
-	u, err := url.Parse(rawurl)
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse URL '%s': %s", rawurl, err))
-	}
-	return u
 }

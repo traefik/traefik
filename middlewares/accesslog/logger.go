@@ -18,16 +18,15 @@ const (
 	DataTableKey key = "LogDataTable"
 )
 
-// LogHandler will write each request and its response to the access log.
+// LogHandler writes each request and its response to the access log.
 // It gets some information from the logInfoResponseWriter set up by previous middleware.
-// Note: Current implementation collects log data but does not have the facility to
-// write anywhere.
 type LogHandler struct {
+	appender LogAppender
 }
 
-// NewLogHandler creates a new LogHandler
-func NewLogHandler() *LogHandler {
-	return &LogHandler{}
+// NewLogHandler creates a new LogHandler using the appender provided.
+func NewLogHandler(appender LogAppender) *LogHandler {
+	return &LogHandler{appender}
 }
 
 // GetLogDataTable gets the request context object that contains logging data. This accretes
@@ -52,40 +51,44 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 		reqWithDataTable.Body = crr
 	}
 
-	core[RequestCount] = nextRequestCount()
-	if req.Host != "" {
-		core[RequestAddr] = req.Host
-		core[RequestHost], core[RequestPort] = silentSplitHostPort(req.Host)
+	if l.appender.IsOpen() {
+		core[RequestCount] = nextRequestCount()
+		if req.Host != "" {
+			core[RequestAddr] = req.Host
+			core[RequestHost], core[RequestPort] = silentSplitHostPort(req.Host)
+		}
+		// copy the URL without the scheme, hostname etc
+		urlCopy := &url.URL{
+			Path:       req.URL.Path,
+			RawPath:    req.URL.RawPath,
+			RawQuery:   req.URL.RawQuery,
+			ForceQuery: req.URL.ForceQuery,
+			Fragment:   req.URL.Fragment,
+		}
+		urlCopyString := urlCopy.String()
+		core[RequestMethod] = req.Method
+		core[RequestPath] = urlCopyString
+		core[RequestProtocol] = req.Proto
+		core[RequestLine] = fmt.Sprintf("%s %s %s", req.Method, urlCopyString, req.Proto)
+
+		core[ClientAddr] = req.RemoteAddr
+		core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
+		core[ClientUsername] = usernameIfPresent(req.URL)
+
+		crw := &captureResponseWriter{rw: rw}
+
+		next.ServeHTTP(crw, reqWithDataTable)
+
+		logDataTable.DownstreamResponse = crw.Header()
+		l.logTheRoundTrip(logDataTable, crr, crw)
+	} else {
+		next.ServeHTTP(rw, reqWithDataTable)
 	}
-	// copy the URL without the scheme, hostname etc
-	urlCopy := &url.URL{
-		Path:       req.URL.Path,
-		RawPath:    req.URL.RawPath,
-		RawQuery:   req.URL.RawQuery,
-		ForceQuery: req.URL.ForceQuery,
-		Fragment:   req.URL.Fragment,
-	}
-	urlCopyString := urlCopy.String()
-	core[RequestMethod] = req.Method
-	core[RequestPath] = urlCopyString
-	core[RequestProtocol] = req.Proto
-	core[RequestLine] = fmt.Sprintf("%s %s %s", req.Method, urlCopyString, req.Proto)
-
-	core[ClientAddr] = req.RemoteAddr
-	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
-	core[ClientUsername] = usernameIfPresent(req.URL)
-
-	crw := &captureResponseWriter{rw: rw}
-
-	next.ServeHTTP(crw, reqWithDataTable)
-
-	logDataTable.DownstreamResponse = crw.Header()
-	l.logTheRoundTrip(logDataTable, crr, crw)
 }
 
 // Close closes the Logger (i.e. the file etc).
 func (l *LogHandler) Close() error {
-	return nil
+	return l.appender.Close()
 }
 
 func silentSplitHostPort(value string) (host string, port string) {
@@ -133,6 +136,8 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 	} else {
 		core[Overhead] = total
 	}
+
+	l.appender.Write(logDataTable)
 }
 
 //-------------------------------------------------------------------------------------------------
