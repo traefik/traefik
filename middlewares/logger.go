@@ -123,6 +123,9 @@ func (fblh frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req 
 	if err != nil {
 		host = req.RemoteAddr
 	}
+	if forwardedFor := req.Header.Get("X-Forwarded-For"); forwardedFor != "" {
+		host = forwardedFor
+	}
 
 	ts := startTime.Format("02/Jan/2006:15:04:05 -0700")
 	method := req.Method
@@ -130,7 +133,12 @@ func (fblh frontendBackendLoggingHandler) ServeHTTP(rw http.ResponseWriter, req 
 	if qmIndex := strings.Index(uri, "?"); qmIndex > 0 {
 		uri = uri[0:qmIndex]
 	}
+
 	proto := req.Proto
+	if forwardedProto := req.Header.Get("X-Forwarded-Proto"); forwardedProto != "" {
+		proto = forwardedProto
+	}
+
 	referer := req.Referer()
 	agent := req.UserAgent()
 
