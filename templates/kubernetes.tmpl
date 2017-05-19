@@ -18,6 +18,9 @@
 [frontends]{{range $frontendName, $frontend := .Frontends}}
   [frontends."{{$frontendName}}"]
   backend = "{{$frontend.Backend}}"
+  basicAuth = [{{range $frontend.BasicAuth}}
+    "{{.}}",
+  {{end}}]
   priority = {{$frontend.Priority}}
   passHostHeader = {{$frontend.PassHostHeader}}
   basicAuth = [{{range $frontend.BasicAuth}}

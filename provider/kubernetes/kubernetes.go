@@ -138,6 +138,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			continue
 		}
 
+		BasicAuth := getBasicAuth(i)
+
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
 				log.Warnf("Error in ingress: HTTP is nil")
@@ -178,6 +180,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:        r.Host + pa.Path,
+						BasicAuth:      BasicAuth,
 						PassHostHeader: PassHostHeader,
 						Routes:         make(map[string]types.Route),
 						Priority:       len(pa.Path),
@@ -375,6 +378,15 @@ func shouldProcessIngress(ingressClass string) bool {
 	default:
 		return false
 	}
+}
+
+func getBasicAuth(ingress *v1beta1.Ingress) []string {
+   for key, value := range ingress.Annotations {
+       if key == "traefik.frontend.auth.basic" {
+           return strings.Split(value, ",")
+       }
+   }
+   return []string{}
 }
 
 func (p *Provider) getPassHostHeader() bool {
