@@ -19,6 +19,13 @@
     sticky = {{$sticky}}
 {{end}}
 
+{{$healthCheck := Get "" . "/healthcheck/" "path"}}
+{{with $healthCheck}}
+[backends."{{Last $backend}}".healthCheck]
+    path = "{{$healthCheck}}"
+    interval = "{{ Get "30s" $backend "/healthcheck/" "interval" }}"
+{{end}}
+
 {{$maxConnAmt := Get "" . "/maxconn/" "amount"}}
 {{$maxConnExtractorFunc := Get "" . "/maxconn/" "extractorfunc"}}
 {{with $maxConnAmt}}
