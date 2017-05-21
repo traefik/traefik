@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="630.37738"
+   height="423.51019"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="Traefik_logo.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.1767767"
+     inkscape:cx="706.72576"
+     inkscape:cy="222.16942"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1548"
+     inkscape:window-height="722"
+     inkscape:window-x="1982"
+     inkscape:window-y="100"
+     inkscape:window-maximized="0"
+     fit-margin-top="5"
+     fit-margin-right="5"
+     fit-margin-bottom="5"
+     fit-margin-left="5" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-53.848491,-162.04136)">
+    <path
+       style="fill:#37abc8;fill-opacity:1"
+       d="m 437.4375,167.0625 c -20.81562,0.40343 -41.65835,6.58948 -59.9375,18.8125 -13.50929,9.03348 -26.29697,22.4578 -33.875,35.5 l -2.625,4.5 -1.8125,-1.15625 C 319.57532,211.9472 296.39724,208.6185 274.875,215.5 c -27.12913,8.67423 -47.5511,32.57872 -51.28125,60 -0.55864,4.10672 -0.8196,4.80121 -1.84375,5 -14.58661,2.83136 -25.29381,6.99861 -36.1875,14.0625 -23.84749,15.46364 -38.30702,40.05214 -41.71875,66.28125 l 65.875,0 c 2.48129,-7.4097 9.29924,-12.83793 17.4375,-13.25 0.33142,-0.0168 0.66439,0 1,0 8.57209,0 15.81228,5.55218 18.40625,13.25 l 28.25,0 c 2.48318,-7.40622 9.27048,-12.83806 17.40625,-13.25 0.33142,-0.0168 0.66439,0 1,0 3.00085,0 5.83466,0.6933 8.375,1.90625 l 41.59375,-41.5625 c -0.79687,-2.12462 -1.25,-4.40866 -1.25,-6.8125 0,-10.40406 8.1635,-18.91729 18.4375,-19.4375 0.33142,-0.0168 0.66439,0 1,0 8.57209,0 15.84353,5.55218 18.4375,13.25 l 196.7185,0 c -6.17434,-4.09863 -12.77692,-7.47014 -19.24975,-9.78125 l -5.1875,-1.875 -0.1875,-6.875 c -0.74912,-28.3837 -11.65252,-54.4174 -31.40625,-75 -22.24845,-23.18198 -52.63968,-34.93337 -83.0625,-34.34375 z M 361.375,294.125 c -3.86295,0 -6.96875,3.13705 -6.96875,7 0,3.86294 3.1058,7 6.96875,7 3.86295,0 7,-3.13706 7,-7 0,-3.86295 -3.13705,-7 -7,-7 z m 18.4375,13.1875 c -2.59397,7.69782 -9.86541,13.25 -18.4375,13.25 -3.80557,0 -7.34707,-1.1119 -10.34375,-3 L 310.5,358.09375 c 0.4532,0.87305 0.83808,1.80581 1.15625,2.75 l 28.21875,0 c 2.48318,-7.40622 9.27048,-12.83806 17.40625,-13.25 0.33142,-0.0168 0.66439,0 1,0 8.57209,0 15.84353,5.55218 18.4375,13.25 l 93.125,0 0,0.46875 c 2.34331,-7.65394 9.24977,-13.29785 17.5625,-13.71875 0.33142,-0.0168 0.66439,0 1,0 10.73967,0 19.46875,8.69783 19.46875,19.4375 0,10.73966 -8.72908,19.4375 -19.46875,19.4375 -8.72597,0 -16.1025,-5.74252 -18.5625,-13.65625 l 0,0.40625 -93.125,0 c -0.54797,1.62614 -1.31501,3.16075 -2.25,4.5625 L 414.75,418.0625 c 2.57692,-1.48372 5.50941,-2.37191 8.65625,-2.53125 0.33142,-0.0168 0.66439,0 1,0 8.57209,0 15.84353,5.55218 18.4375,13.25 l 157.00025,0 c 7.19704,-9.53625 12.60233,-20.3733 15.531,-31.84375 7.72691,-30.26331 0.75774,-60.89403 -19.21875,-84.6875 -1.40818,-1.67724 -2.90317,-3.32837 -4.50025,-4.9375 z m -151.65625,52.71875 c -3.86295,0 -6.96875,3.13705 -6.96875,7 0,3.86294 3.1058,7 6.96875,7 3.86295,0 7,-3.13706 7,-7 0,-3.86295 -3.13705,-7 -7,-7 z m 65.0625,0 c -3.86295,0 -6.96875,3.13705 -6.96875,7 0,3.86294 3.1058,7 6.96875,7 3.86295,0 7,-3.13706 7,-7 0,-3.86295 -3.13705,-7 -7,-7 z m 65.0625,0 c -3.86295,0 -6.96875,3.13705 -6.96875,7 0,3.86294 3.1058,7 6.96875,7 3.86295,0 7,-3.13706 7,-7 0,-3.86295 -3.13705,-7 -7,-7 z m 130.125,0 c -3.86295,0 -6.96875,3.13705 -6.96875,7 0,3.86294 3.1058,7 6.96875,7 3.86295,0 7,-3.13706 7,-7 0,-3.86295 -3.13705,-7 -7,-7 z M 143.063,373.21875 c 0.0499,16.93616 4.67947,34.05993 14.34325,49.4375 14.94783,23.78584 40.77578,40.04188 68.625,43.1875 6.47759,0.73163 302.189,0.79262 308.5625,0.0625 6.99975,-0.80186 12.82948,-2.05831 19.40625,-4.15625 12.90551,-4.11677 24.81833,-11.33106 34.75,-20.625 l -145.875,0 c -2.58268,7.7177 -9.88247,13.28125 -18.46875,13.28125 -10.73965,0 -19.4375,-8.69784 -19.4375,-19.4375 0,-2.70024 0.56854,-5.28617 1.5625,-7.625 l -41.75,-41.75 0.40625,-0.40625 c -2.15117,0.8177 -4.46963,1.28125 -6.90625,1.28125 -8.57207,0 -15.82032,-5.55218 -18.40625,-13.25 l -28.21875,0 c -2.59397,7.69782 -9.86541,13.25 -18.4375,13.25 -8.57207,0 -15.82032,-5.55218 -18.40625,-13.25 l -28.25,0 c -2.59397,7.69782 -9.83416,13.25 -18.40625,13.25 -8.57207,0 -15.85157,-5.55218 -18.4375,-13.25 z m 281.34325,54.75 c -3.86295,0 -6.96875,3.13705 -6.96875,7 0,3.86294 3.1058,7 6.96875,7 3.86295,0 7,-3.13706 7,-7 0,-3.86295 -3.13705,-7 -7,-7 z"
+       id="path3000"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="sscccsssscccscccsccscscccccssssssscscccccsccccsssccccccsccssccsssssssssssssssssssscssssccsscccsccsccsccsssss"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813" />
+    <path
+       style="color:#000000;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="m 599.84375,428.78125 -11.09375,12.375 c 21.16667,0 42.33333,0 63.5,0 l 10.21875,0 0,-12.375 -10.21875,0 c -17.46875,0 -34.9375,0 -52.40625,0 z"
+       id="rect3816-1-7-7-22"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccccc"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813" />
+    <path
+       style="color:#000000;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="m 666.09375,279.78125 0,15.15625 -41.8125,0 -47.75,0 15.125,12.375 32.625,0 41.8125,0 0,15.40625 9.5625,0 0,-42.9375 -9.5625,0 z"
+       id="rect3816-1-7-7-22-1-6"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813"
+       inkscape:connector-curvature="0" />
+    <path
+       style="color:#000000;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="m 118.53726,360.84214 25.30446,0 -0.77872,12.36399 -23.82474,4.4e-4 z"
+       id="rect3816-1-7-7-22-1-3"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813" />
+    <path
+       style="font-size:72.26069641px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#4d4d4d;fill-opacity:1;stroke:none;font-family:Roboto;-inkscape-font-specification:Roboto"
+       inkscape:connector-curvature="0"
+       id="path32847"
+       d="m 651.7047,338.53013 c 0.0235,-0.23525 0.0529,-0.5234 0.0882,-0.86445 0.0353,-0.3411 0.0647,-0.69393 0.0882,-1.0585 0.0235,-0.36462 0.047,-0.72334 0.0706,-1.07615 0.0235,-0.35286 0.0353,-0.65865 0.0353,-0.91737 -3e-5,-1.90534 -0.28818,-3.44605 -0.86445,-4.62215 -0.57632,-1.17613 -1.46429,-2.0347 -2.66391,-2.5757 l -24.16922,0 0,-11.89055 38.17679,0 0,11.1496 -4.90441,0.38812 c 1.76414,0.94088 3.1402,2.11111 4.12817,3.51071 0.9879,1.39956 1.48187,3.01672 1.48191,4.85149 -4e-5,0.58803 -0.0353,1.17021 -0.10585,1.74653 -0.0706,0.57627 -0.17646,1.09965 -0.31755,1.57012 z"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813" />
+    <path
+       style="font-size:72.26069641px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#37abc8;fill-opacity:1;stroke:none;font-family:Roboto;-inkscape-font-specification:Roboto"
+       inkscape:connector-curvature="0"
+       id="path32849"
+       d="m 623.58372,381.16381 c 0,-2.91681 0.41752,-5.49251 1.25256,-7.72709 0.83504,-2.23466 1.99352,-4.12821 3.47543,-5.68065 -0.63511,-0.63514 -1.24081,-1.38785 -1.8171,-2.25815 -0.5763,-0.87035 -1.07615,-1.85241 -1.49955,-2.94618 -0.42341,-1.09381 -0.76448,-2.30521 -1.02323,-3.6342 -0.25874,-1.32903 -0.38811,-2.78154 -0.38811,-4.35752 0,-2.42282 0.28814,-4.56335 0.86444,-6.4216 0.5763,-1.85828 1.3937,-3.41663 2.45221,-4.67507 1.0585,-1.25845 2.33459,-2.21111 3.82826,-2.85797 1.49367,-0.64687 3.15787,-0.9703 4.99262,-0.9703 3.74004,0 6.62153,1.54071 8.64447,4.62215 2.0229,3.08142 3.03436,7.65651 3.03439,13.7253 l 0,4.79856 1.62304,0 c 1.55245,-3e-5 2.76973,-0.39991 3.65185,-1.19964 0.88206,-0.79979 1.3231,-1.96414 1.32313,-3.49307 -3e-5,-1.69363 -0.34698,-2.98736 -1.04086,-3.88119 -0.69394,-0.89387 -1.54663,-1.34079 -2.55806,-1.34078 l 0.67039,-11.89055 c 1.76414,-1e-5 3.38131,0.40575 4.85148,1.21728 1.47012,0.81152 2.7462,1.96411 3.82827,3.45779 1.08199,1.49366 1.92291,3.30488 2.52277,5.43366 0.59978,2.12876 0.89969,4.5104 0.89973,7.14492 -4e-5,2.32869 -0.26466,4.43982 -0.79388,6.3334 -0.52929,1.89352 -1.33493,3.5342 -2.41692,4.92205 1.05847,1.43483 1.86411,3.08728 2.41692,4.95734 0.55274,1.86999 0.81736,3.98112 0.79388,6.33339 -4e-5,2.49333 -0.39992,4.73383 -1.19964,6.72152 -0.7998,1.98759 -1.95239,3.6812 -3.45779,5.08083 -1.50546,1.39952 -3.32256,2.47567 -5.4513,3.22844 -2.1288,0.75266 -4.5222,1.12902 -7.18021,1.12908 l -6.24518,0 0,-22.54619 c -1.01148,0.1411 -1.94061,0.40573 -2.7874,0.79388 -0.84682,0.38808 -1.57013,0.92322 -2.16994,1.6054 -0.59983,0.68211 -1.07028,1.51716 -1.41134,2.50514 -0.34108,0.98789 -0.51162,2.15225 -0.51161,3.49307 -10e-6,1.15255 0.0588,2.18753 0.17641,3.10495 0.11761,0.91732 0.28226,1.77001 0.49397,2.55805 0.2117,0.78795 0.46456,1.53479 0.7586,2.24051 0.29402,0.70562 0.60569,1.42305 0.93501,2.1523 l -7.26841,2.85796 c -0.56454,-0.72925 -1.09967,-1.61134 -1.6054,-2.64626 -0.50573,-1.03504 -0.95853,-2.18764 -1.35841,-3.45779 -0.39988,-1.27026 -0.71744,-2.61691 -0.95266,-4.03997 -0.23522,-1.42315 -0.35283,-2.88741 -0.35283,-4.3928 z m 8.18578,-24.34564 c -10e-6,1.05848 0.21757,2.12287 0.65274,3.19316 0.43516,1.07024 0.95853,1.99349 1.57012,2.76976 l 6.2099,0 0,-4.728 c -10e-6,-1.08205 -0.12938,-2.02882 -0.38811,-2.84032 -0.25877,-0.81154 -0.59984,-1.49369 -1.02323,-2.04645 -0.42341,-0.55279 -0.91738,-0.96443 -1.48191,-1.23492 -0.56455,-0.27052 -1.14084,-0.40578 -1.72889,-0.40576 -1.19965,-2e-5 -2.13466,0.42927 -2.80504,1.28785 -0.6704,0.85855 -1.00559,2.19344 -1.00558,4.00468 z m 22.22863,23.95752 c -3e-5,-1.05854 -0.16469,-1.96415 -0.49397,-2.71683 -0.32934,-0.75275 -0.79979,-1.3761 -1.41134,-1.87003 -0.61161,-0.494 -1.3408,-0.88212 -2.18758,-1.16435 -0.84683,-0.28231 -1.78772,-0.48225 -2.82268,-0.59982 l 0,10.90261 0.91737,0 c 1.90528,-5e-5 3.38131,-0.38817 4.42808,-1.16436 1.04672,-0.77628 1.57009,-1.90535 1.57012,-3.38722 z"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813" />
+    <path
+       style="font-size:72.26069641px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#4d4d4d;fill-opacity:1;stroke:none;font-family:Roboto;-inkscape-font-specification:Roboto"
+       inkscape:connector-curvature="0"
+       id="path32851"
+       d="m 624.28939,404.5568 29.92044,0 0,-5.53951 8.25635,0 0,5.53951 3.10495,0 c 2.21106,0 4.1693,0.34107 5.87471,1.02323 1.70532,0.68214 3.13431,1.65832 4.28695,2.92853 1.15255,1.2702 2.02287,2.80503 2.61098,4.6045 0.58801,1.79945 0.88204,3.82825 0.88209,6.08642 -5e-5,1.01144 -0.0706,1.97585 -0.2117,2.89325 -0.14119,0.91734 -0.3176,1.81119 -0.52925,2.68154 l -8.75032,0.0353 c 0.11757,-0.39991 0.19989,-0.82919 0.24698,-1.28785 0.047,-0.45871 0.0705,-1.00561 0.0706,-1.64069 -4e-5,-1.74067 -0.38228,-3.07556 -1.14671,-4.00468 -0.76452,-0.92915 -1.87595,-1.39372 -3.3343,-1.3937 l -3.10495,0 0,7.44483 -8.25635,0 0,-7.44483 -29.92044,0 z"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813" />
+    <path
+       style="font-size:72.26069641px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#4d4d4d;fill-opacity:1;stroke:none;font-family:Roboto;-inkscape-font-specification:Roboto"
+       inkscape:connector-curvature="0"
+       id="path32855"
+       d="m 638.50865,463.40974 -3.35193,-3.35193 -10.86733,0 0,-11.89056 54.2308,0 0,11.89056 -28.79137,0 1.58776,1.19964 11.1496,8.96202 0,14.25455 -15.70118,-13.37246 -22.47561,14.25455 0,-13.61945 z"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813" />
+    <path
+       sodipodi:nodetypes="cccccccccsccccccc"
+       style="font-size:72.26069641px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#4d4d4d;fill-opacity:1;stroke:none;font-family:Roboto;-inkscape-font-specification:Roboto"
+       inkscape:connector-curvature="0"
+       id="path32853-6"
+       d="m 672.31029,428.09092 c 0.84675,-10e-6 1.62299,0.16479 2.32871,0.49438 0.70562,0.32957 1.3172,0.79954 1.83475,1.40988 0.51744,0.61034 0.91732,1.33053 1.19964,2.16061 0.28221,0.83005 0.42335,1.75777 0.4234,2.78315 -5e-5,1.02536 -0.14119,1.95308 -0.4234,2.78315 -0.28232,0.83006 -0.6822,1.55026 -1.19964,2.16061 -0.51755,0.61032 -1.12913,1.08029 -1.83475,1.40989 -0.70572,0.32956 -1.48196,0.49436 -2.32871,0.49437 -0.84685,-1e-5 -1.62309,-0.16481 -2.32872,-0.49437 -0.70571,-0.3296 -1.31729,-0.79957 -1.83474,-1.40989 -0.51753,-0.61035 -0.91741,-1.33055 -1.19964,-2.16061 -0.28231,-0.83007 -0.42344,-1.75779 -0.4234,-2.78315 -4e-5,-1.02538 0.14109,-1.9531 0.4234,-2.78315 0.28223,-0.83008 0.68211,-1.55027 1.19964,-2.16061 0.51745,-0.61034 1.12903,-1.08031 1.83474,-1.40988 0.70563,-0.32959 1.48187,-0.49439 2.32872,-0.49438 z"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813" />
+    <path
+       style="color:#000000;fill:#37abc8;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="m 260.84449,444.83337 c 0,0 -0.0608,44.39467 0,58.625 0,11.02151 8.91588,19.9375 19.93736,19.9375 11.02151,0 19.96864,-8.91599 19.96864,-19.9375 0.0526,-14.22641 0,-58.625 0,-58.625 z"
+       id="path32913"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccsccc"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png" />
+    <path
+       style="color:#000000;fill:#37abc8;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="m 310.8855,441.98905 c 0,0 -0.0608,104.39467 0,118.625 0,11.02151 8.91602,19.9375 19.9375,19.9375 11.02151,0 19.9685,-8.91599 19.9685,-19.9375 0.0526,-14.22641 0,-118.625 0,-118.625 z"
+       id="path32913-1"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccsccc"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png" />
+    <path
+       style="color:#000000;fill:#37abc8;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="m 360.92652,456.50377 c 0,0 -0.0608,10.39467 0,24.625 0,11.02151 8.91612,19.9375 19.9376,19.9375 11.02151,0 19.9684,-8.91599 19.9684,-19.9375 0.0526,-14.22641 0,-24.625 0,-24.625 z"
+       id="path32913-1-9"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccsccc"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-ydpi="121.03813"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png" />
+    <path
+       inkscape:export-ydpi="121.03813"
+       inkscape:export-xdpi="121.03813"
+       inkscape:export-filename="C:\Users\pkeersbulik\traefik\traefik\docs\img\Traefik_logo_800x533.png"
+       inkscape:connector-curvature="0"
+       id="path3002-7-5-4-0"
+       d="m 102.80952,346.91469 c -10.273996,0.52021 -18.437496,9.03344 -18.437496,19.4375 0,10.73966 8.69785,19.4375 19.437496,19.4375 10.73967,0 19.46875,-8.69784 19.46875,-19.4375 0,-10.73967 -8.72908,-19.4375 -19.46875,-19.4375 -0.33561,0 -0.66858,-0.0168 -1,0 z m 1,12.4375 c 3.86295,0 7,3.13705 7,7 0,3.86294 -3.13705,7 -7,7 -3.862946,0 -6.968746,-3.13706 -6.968746,-7 0,-3.86295 3.1058,-7 6.968746,-7 z"
+       style="color:#000000;fill:#4d4d4d;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.41299999;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+  </g>
+</svg>
