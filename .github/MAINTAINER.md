@@ -8,7 +8,7 @@ If we open/look an issue/PR, we must add a `king/*` and an `area/*`.
 
 * `contributor/need-more-information`: we need more information from the contributor in order to analyze a problem.
 * `contributor/waiting-for-corrections`: we need the contributor to take actions in order to move forward with a PR. **(only for PR)**
-* `contributor/needs-rebase`: use it only when there is some conflicts (and an automatic rebase is not possible). **(only for PR)** _[bot, humans]_
+* `contributor/needs-resolve-conflicts`: use it only when there is some conflicts (and an automatic rebase is not possible). **(only for PR)** _[bot, humans]_
 
 ### Kind
 
@@ -56,6 +56,7 @@ If we open/look an issue/PR, we must add a `king/*` and an `area/*`.
 * `area/webui`: Web UI related.
 * `area/infrastructure`: related to CI or Traefik building scripts.
 * `area/documentation`: regards improving/adding documentation.
+* `area/cluster`: Traefik clustering related.
 
 ### Priority
 
