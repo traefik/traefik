@@ -78,12 +78,12 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 			count++
 			tokens, err := shellwords.Parse(line)
 			c.Assert(err, checker.IsNil)
-			c.Assert(len(tokens), checker.Equals, 13)
+			c.Assert(len(tokens), checker.Equals, 14)
 			c.Assert(regexp.MustCompile(`^\d{3}$`).MatchString(tokens[6]), checker.True)
-			c.Assert(tokens[9], checker.Equals, fmt.Sprintf("%d", i+1))
-			c.Assert(strings.HasPrefix(tokens[10], "frontend"), checker.True)
-			c.Assert(strings.HasPrefix(tokens[11], "http://127.0.0.1:808"), checker.True)
-			c.Assert(regexp.MustCompile(`^\d+ms$`).MatchString(tokens[12]), checker.True)
+			c.Assert(tokens[10], checker.Equals, fmt.Sprintf("%d", i+1))
+			c.Assert(strings.HasPrefix(tokens[11], "frontend"), checker.True)
+			c.Assert(strings.HasPrefix(tokens[12], "http://127.0.0.1:808"), checker.True)
+			c.Assert(regexp.MustCompile(`^\d+ms$`).MatchString(tokens[13]), checker.True)
 		}
 	}
 	c.Assert(count, checker.GreaterOrEqualThan, 3)
