@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -55,6 +56,13 @@ type logInfoResponseWriter struct {
 // NewLogger returns a new Logger instance.
 func NewLogger(file string) *Logger {
 	if len(file) > 0 {
+		dir := filepath.Dir(file)
+
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			log.Errorf("Failed to create log path %s: %s", dir, err)
+		}
+
 		fi, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		if err != nil {
 			log.Error("Error opening file", err)
