@@ -1,35 +1,38 @@
 {{$apps := .Applications}}
-[backends]{{range .Tasks}}
-    [backends."backend{{getBackend . $apps}}".servers."server-{{.ID | replace "." "-"}}"]
-    url = "{{getProtocol . $apps}}://{{getBackendServer . $apps}}:{{getPort . $apps}}"
-    weight = {{getWeight . $apps}}
+
+{{range $app := $apps}}
+{{range $app.Tasks}}
+    [backends."backend{{getBackend $app}}".servers."server-{{.ID | replace "." "-"}}"]
+    url = "{{getProtocol $app}}://{{getBackendServer . $app}}:{{getPort . $app}}"
+    weight = {{getWeight $app}}
+{{end}}
 {{end}}
 
-{{range .Applications}}
+{{range $apps}}
 {{ if hasMaxConnLabels . }}
-      [backends."backend{{getFrontendBackend . }}".maxconn]
+      [backends."backend{{getBackend . }}".maxconn]
         amount = {{getMaxConnAmount . }}
         extractorfunc = "{{getMaxConnExtractorFunc . }}"
 {{end}}
 {{ if hasLoadBalancerLabels . }}
-      [backends."backend{{getFrontendBackend . }}".loadbalancer]
+      [backends."backend{{getBackend . }}".loadbalancer]
         method = "{{getLoadBalancerMethod . }}"
         sticky = {{getSticky .}}
 {{end}}
 {{ if hasCircuitBreakerLabels . }}
-      [backends."backend{{getFrontendBackend . }}".circuitbreaker]
+      [backends."backend{{getBackend . }}".circuitbreaker]
         expression = "{{getCircuitBreakerExpression . }}"
 {{end}}
 {{ if hasHealthCheckLabels . }}
-      [backends."backend{{getFrontendBackend . }}".healthcheck]
+      [backends."backend{{getBackend . }}".healthcheck]
         path = "{{getHealthCheckPath . }}"
         interval = "{{getHealthCheckInterval . }}"
 {{end}}
 {{end}}
 
-[frontends]{{range .Applications}}
+[frontends]{{range $apps}}
   [frontends."frontend{{.ID | replace "/" "-"}}"]
-  backend = "backend{{getFrontendBackend .}}"
+  backend = "backend{{getBackend .}}"
   passHostHeader = {{getPassHostHeader .}}
   priority = {{getPriority .}}
   entryPoints = [{{range getEntryPoints .}}
