@@ -1,7 +1,6 @@
-package middlewares
+package accesslog
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,32 +9,29 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/containous/traefik/middlewares/accesslog"
 	shellwords "github.com/mattn/go-shellwords"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type logtestResponseWriter struct{}
 
 var (
-	logger                  *Logger
+	logger            *LogHandler
 	logfileNameSuffix       = "/traefik/logger/test.log"
 	helloWorld              = "Hello, World"
 	testBackendName         = "http://127.0.0.1/testBackend"
 	testFrontendName        = "testFrontend"
 	testStatus              = 123
+	testContentSize   int64 = 12
 	testHostname            = "TestHost"
 	testUsername            = "TestUser"
-	testPath                = "http://testpath"
+	testPath                = "testpath"
 	testPort                = 8181
 	testProto               = "HTTP/0.0"
 	testMethod              = "POST"
 	testReferer             = "testReferer"
 	testUserAgent           = "testUserAgent"
-	testBackend2FrontendMap = map[string]string{
-		testBackendName: testFrontendName,
-	}
-	printedLogdata bool
 )
 
 func TestLogger(t *testing.T) {
@@ -47,16 +43,15 @@ func TestLogger(t *testing.T) {
 
 	logfilePath := filepath.Join(tmp, logfileNameSuffix)
 
-	logger = NewLogger(logfilePath)
+	logger, err = NewLogHandler(logfilePath)
+	require.NoError(t, err)
 	defer logger.Close()
 
 	if _, err := os.Stat(logfilePath); os.IsNotExist(err) {
 		t.Fatalf("logger should create %s", logfilePath)
 	}
 
-	SetBackend2FrontendMap(&testBackend2FrontendMap)
-
-	r := &http.Request{
+	req := &http.Request{
 		Header: map[string][]string{
 			"User-Agent": {testUserAgent},
 			"Referer":    {testReferer},
@@ -70,14 +65,6 @@ func TestLogger(t *testing.T) {
 			Path: testPath,
 		},
 	}
-
-	// Temporary - until new access logger is fully implemented
-	// create the data table and populate frontend and backend
-	core := make(accesslog.CoreLogData)
-	logDataTable := &accesslog.LogData{Core: core, Request: r.Header}
-	logDataTable.Core[accesslog.FrontendName] = testFrontendName
-	logDataTable.Core[accesslog.BackendURL] = testBackendName
-	req := r.WithContext(context.WithValue(r.Context(), accesslog.DataTableKey, logDataTable))
 
 	logger.ServeHTTP(&logtestResponseWriter{}, req, LogWriterTestHandlerFunc)
 
@@ -105,14 +92,19 @@ func printLogdata(logdata []byte) string {
 	return fmt.Sprintf(
 		"\nExpected: %s\n"+
 			"Actual:   %s",
-		"TestHost - TestUser [13/Apr/2016:07:14:19 -0700] \"POST http://testpath HTTP/0.0\" 123 12 \"testReferer\" \"testUserAgent\" 1 \"testFrontend\" \"http://127.0.0.1/testBackend\" 1ms",
+		"TestHost - TestUser [13/Apr/2016:07:14:19 -0700] \"POST testpath HTTP/0.0\" 123 12 \"testReferer\" \"testUserAgent\" 1 \"testFrontend\" \"http://127.0.0.1/testBackend\" 1ms",
 		string(logdata))
 }
 
 func LogWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	rw.Write([]byte(helloWorld))
 	rw.WriteHeader(testStatus)
-	saveBackendNameForLogger(r, testBackendName)
+
+	logDataTable := GetLogDataTable(r)
+	logDataTable.Core[FrontendName] = testFrontendName
+	logDataTable.Core[BackendURL] = testBackendName
+	logDataTable.Core[OriginStatus] = testStatus
+	logDataTable.Core[OriginContentSize] = testContentSize
 }
 
 func (lrw *logtestResponseWriter) Header() http.Header {

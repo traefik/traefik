@@ -2,12 +2,17 @@ package accesslog
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"sync/atomic"
 	"time"
+
+	"github.com/Sirupsen/logrus"
 )
 
 type key string
@@ -19,15 +24,35 @@ const (
 )
 
 // LogHandler will write each request and its response to the access log.
-// It gets some information from the logInfoResponseWriter set up by previous middleware.
-// Note: Current implementation collects log data but does not have the facility to
-// write anywhere.
 type LogHandler struct {
+	logger *logrus.Logger
+	file   *os.File
 }
 
 // NewLogHandler creates a new LogHandler
-func NewLogHandler() *LogHandler {
-	return &LogHandler{}
+func NewLogHandler(filePath string) (*LogHandler, error) {
+	if len(filePath) == 0 {
+		return nil, errors.New("Empty file name specified for accessLogsFile")
+	}
+
+	dir := filepath.Dir(filePath)
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create log path %s: %s", dir, err)
+	}
+
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file: %s %s", dir, err)
+	}
+
+	logger := &logrus.Logger{
+		Out:       file,
+		Formatter: new(CommonLogFormatter),
+		Hooks:     make(logrus.LevelHooks),
+		Level:     logrus.InfoLevel,
+	}
+	return &LogHandler{logger: logger, file: file}, nil
 }
 
 // GetLogDataTable gets the request context object that contains logging data. This accretes
@@ -85,7 +110,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 
 // Close closes the Logger (i.e. the file etc).
 func (l *LogHandler) Close() error {
-	return nil
+	return l.file.Close()
 }
 
 func silentSplitHostPort(value string) (host string, port string) {
@@ -133,6 +158,26 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 	} else {
 		core[Overhead] = total
 	}
+
+	fields := logrus.Fields{}
+
+	for k, v := range logDataTable.Core {
+		fields[k] = v
+	}
+
+	for k := range logDataTable.Request {
+		fields["request_"+k] = logDataTable.Request.Get(k)
+	}
+
+	for k := range logDataTable.OriginResponse {
+		fields["origin_"+k] = logDataTable.OriginResponse.Get(k)
+	}
+
+	for k := range logDataTable.DownstreamResponse {
+		fields["downstream_"+k] = logDataTable.DownstreamResponse.Get(k)
+	}
+
+	l.logger.WithFields(fields).Println()
 }
 
 //-------------------------------------------------------------------------------------------------
