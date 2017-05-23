@@ -388,8 +388,12 @@ func parseRancherData(environments []*rancher.Environment, services []*rancher.S
 				Containers: []string{},
 			}
 
-			for key, value := range service.LaunchConfig.Labels {
-				rancherData.Labels[key] = value.(string)
+			if service.LaunchConfig == nil || service.LaunchConfig.Labels == nil {
+				log.Warnf("Rancher Service Labels are missing. Environment: %s, service: %s", environment.Name, service.Name)
+			} else {
+				for key, value := range service.LaunchConfig.Labels {
+					rancherData.Labels[key] = value.(string)
+				}
 			}
 
 			for _, container := range containers {
