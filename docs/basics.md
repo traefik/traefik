@@ -208,7 +208,7 @@ The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portio
 3. `PathStripRegex`
 4. `PathPrefixStripRegex`
 5. `AddPrefix`
-6. `ReplacePath` 
+6. `ReplacePath`
 
 ### Priorities
 
@@ -354,6 +354,30 @@ Here is an example of backends and servers definition:
 - `backend1` will forward the traffic to two servers: `http://172.17.0.2:80"` with weight `10` and `http://172.17.0.3:80` with weight `1` using default `wrr` load-balancing strategy.
 - `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
 - a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
+
+## Custom Error pages
+Custom error pages can be returned, in lieu of the default, according frontend-configured ranges of HTTP Status codes.  In the example below, if a 503 status is returned from the frontend "website", the custom error page at http://2.3.4.5/500.html is returned with the actual status code set in the HTTP header.  Note, the 500.html page itself is not hosted on traefik, but some other infrastructure.  The configured status code ranges are inclusive; that is, in the below example, the 500.html page will be returned for status codes 500 through, and including, 599.  
+
+```toml
+[frontends]
+  [frontends.website]
+  backend = "website"
+  [errors]
+    [error.network]
+    status = ["500-599"]
+    backend = "error"
+    query = "/500.html"
+  [frontends.website.routes.website]
+  rule = "Host: website.mydomain.com"
+
+[backends]
+  [backends.website]
+    [backends.website.servers.website]
+    url = "https://1.2.3.4"
+  [backends.error]
+    [backends.error.servers.error]
+    url = "http://2.3.4.5"
+```
 
 # Configuration
 
