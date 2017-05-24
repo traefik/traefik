@@ -1,5 +1,24 @@
 # Change Log
 
+## [v1.3.0-rc3](https://github.com/containous/traefik/tree/v1.3.0-rc3) (2017-05-24)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.0-rc2...v1.3.0-rc3)
+
+**Enhancements:**
+- [#1658](https://api.github.com/repos/containous/traefik/issues/1658) Get testify/require dependency. ([timoreimann](https://api.github.com/users/timoreimann))
+
+**Bug fixes:**
+- [#1507](https://api.github.com/repos/containous/traefik/issues/1507) Create log folder if not present ([tanyadegurechaff](https://api.github.com/users/tanyadegurechaff))
+- [#1604](https://api.github.com/repos/containous/traefik/issues/1604) [k8s] Ignore Ingresses with empty Endpoint subsets. ([timoreimann](https://api.github.com/users/timoreimann))
+- [#1630](https://api.github.com/repos/containous/traefik/issues/1630) [k8s] Remove rule type path list. ([timoreimann](https://api.github.com/users/timoreimann))
+- [#1635](https://api.github.com/repos/containous/traefik/issues/1635) Upgrade go-marathon to 15ea23e. ([timoreimann](https://api.github.com/users/timoreimann))
+- [#1638](https://api.github.com/repos/containous/traefik/issues/1638) Fix behavior for PathPrefixStrip ([seryl](https://api.github.com/users/seryl))
+- [#1654](https://api.github.com/repos/containous/traefik/issues/1654) fix: Empty Rancher Service Labels. ([ldez](https://api.github.com/users/ldez))
+
+**Documentation:**
+- [#1578](https://api.github.com/repos/containous/traefik/issues/1578) Add Marathon guide. ([Stibbons](https://api.github.com/users/Stibbons))
+- [#1602](https://api.github.com/repos/containous/traefik/issues/1602) Re Orginise k8s docs to make 1.6 usage easier ([errm](https://api.github.com/users/errm))
+- [#1642](https://api.github.com/repos/containous/traefik/issues/1642) Update changelog ([ldez](https://api.github.com/users/ldez))
+
 ## [v1.3.0-rc2](https://github.com/containous/traefik/tree/v1.3.0-rc2) (2017-05-16)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.0-rc1...v1.3.0-rc2)
 
