@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"sort"
@@ -51,6 +52,7 @@ type Server struct {
 	accessLoggerMiddleware     *accesslog.LogHandler
 	routinesPool               *safe.Pool
 	leadership                 *cluster.Leadership
+	error404                   errorMapping
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -58,6 +60,11 @@ type serverEntryPoints map[string]*serverEntryPoint
 type serverEntryPoint struct {
 	httpServer *http.Server
 	httpRouter *middlewares.HandlerSwitcher
+}
+
+type errorMapping struct {
+	contents  string
+	extension string
 }
 
 type serverRoute struct {
@@ -87,6 +94,20 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 		// leadership creation if cluster mode
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
 	}
+	server.error404 = errorMapping{
+		contents:  "404 page not found",
+		extension: "txt",
+	}
+	if globalConfiguration.Custom404ErrorFile != "" {
+		contents, err := ioutil.ReadFile(globalConfiguration.Custom404ErrorFile)
+		if err == nil {
+			server.error404 = errorMapping{
+				contents:  string(contents),
+				extension: filepath.Ext(globalConfiguration.Custom404ErrorFile),
+			}
+		} else {
+			log.Infof("Experienced error reading %s, using default 404 mapping", globalConfiguration.Custom404ErrorFile)
+		}
 
 	var err error
 	server.accessLoggerMiddleware, err = accesslog.NewLogHandler(globalConfiguration.AccessLogsFile)
@@ -877,12 +898,20 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 
 func (server *Server) buildDefaultHTTPRouter() *mux.Router {
 	router := mux.NewRouter()
-	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler(contentTypeForExtension(server.error404.extension), server.error404.contents))
 	router.StrictSlash(true)
 	router.SkipClean(true)
 	return router
 }
 
+func contentTypeForExtension(extension string) string {
+	switch extension {
+	case ".htm", ".html":
+		return "text/html"
+	default:
+		return "text/plain"
+	}
+}
 func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *types.HealthCheck, hcConfig *HealthCheckConfig) *healthcheck.Options {
 	if hc == nil || hc.Path == "" || hcConfig == nil {
 		return nil
