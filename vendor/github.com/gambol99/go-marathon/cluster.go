@@ -131,7 +131,7 @@ func (c *cluster) markDown(endpoint string) {
 func (c *cluster) healthCheckNode(node *member) {
 	// step: wait for the node to become active ... we are assuming a /ping is enough here
 	for {
-		req, err := c.client.buildMarathonRequest("GET", node.endpoint, "/ping", nil)
+		req, err := c.client.buildMarathonRequest("GET", node.endpoint, "ping", nil)
 		if err == nil {
 			res, err := c.client.Do(req)
 			if err == nil && res.StatusCode == 200 {

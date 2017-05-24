@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/containous/traefik/types"
@@ -333,19 +332,24 @@ func TestRuleType(t *testing.T) {
 		frontendRuleType string
 	}{
 		{
-			desc:             "implicit default",
+			desc:             "rule type annotation missing",
 			ingressRuleType:  "",
 			frontendRuleType: ruleTypePathPrefix,
 		},
 		{
-			desc:             "unknown ingress / explicit default",
-			ingressRuleType:  "unknown",
-			frontendRuleType: ruleTypePathPrefix,
+			desc:             "Path rule type annotation set",
+			ingressRuleType:  "Path",
+			frontendRuleType: "Path",
 		},
 		{
-			desc:             "explicit ingress",
-			ingressRuleType:  ruleTypePath,
-			frontendRuleType: ruleTypePath,
+			desc:             "PathStrip rule type annotation set",
+			ingressRuleType:  "PathStrip",
+			frontendRuleType: "PathStrip",
+		},
+		{
+			desc:             "PathStripPrefix rule type annotation set",
+			ingressRuleType:  "PathStripPrefix",
+			frontendRuleType: "PathStripPrefix",
 		},
 	}
 
@@ -1832,65 +1836,6 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 	}
 }
 
-func TestGetRuleTypeFromAnnotation(t *testing.T) {
-	tests := []struct {
-		in            string
-		wantedUnknown bool
-	}{
-		{
-			in:            ruleTypePathPrefixStrip,
-			wantedUnknown: false,
-		},
-		{
-			in:            ruleTypePathStrip,
-			wantedUnknown: false,
-		},
-		{
-			in:            ruleTypePath,
-			wantedUnknown: false,
-		},
-		{
-			in:            ruleTypePathPrefix,
-			wantedUnknown: false,
-		},
-		{
-			wantedUnknown: false,
-		},
-		{
-			in:            "Unknown",
-			wantedUnknown: true,
-		},
-	}
-
-	for _, test := range tests {
-		test := test
-		inputs := []string{test.in, strings.ToLower(test.in)}
-		if inputs[0] == inputs[1] {
-			// Lower-casing makes no difference -- truncating to single case.
-			inputs = inputs[:1]
-		}
-		for _, input := range inputs {
-			t.Run(fmt.Sprintf("in='%s'", input), func(t *testing.T) {
-				t.Parallel()
-				annotations := map[string]string{}
-				if test.in != "" {
-					annotations[annotationFrontendRuleType] = test.in
-				}
-
-				gotRuleType, gotUnknown := getRuleTypeFromAnnotation(annotations)
-
-				if gotUnknown != test.wantedUnknown {
-					t.Errorf("got unknown '%t', wanted '%t'", gotUnknown, test.wantedUnknown)
-				}
-
-				if gotRuleType != test.in {
-					t.Errorf("got rule type '%s', wanted '%s'", gotRuleType, test.in)
-				}
-			})
-		}
-	}
-}
-
 func TestKubeAPIErrors(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{{
 		ObjectMeta: v1.ObjectMeta{
@@ -2027,6 +1972,21 @@ func TestMissingResources(t *testing.T) {
 						},
 					},
 				},
+				{
+					Host: "missing_endpoint_subsets",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "missing_endpoint_subsets_service",
+										ServicePort: intstr.FromInt(80),
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}}
@@ -2061,6 +2021,21 @@ func TestMissingResources(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "missing_endpoint_subsets_service",
+				UID:       "4",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.4",
+				Ports: []v1.ServicePort{
+					{
+						Port: 80,
+					},
+				},
+			},
+		},
 	}
 	endpoints := []*v1.Endpoints{
 		{
@@ -2083,6 +2058,14 @@ func TestMissingResources(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "missing_endpoint_subsets_service",
+				UID:       "4",
+				Namespace: "testing",
+			},
+			Subsets: []v1.EndpointSubset{},
 		},
 	}
 
@@ -2130,6 +2113,14 @@ func TestMissingResources(t *testing.T) {
 					Sticky: false,
 				},
 			},
+			"missing_endpoint_subsets": {
+				Servers:        map[string]types.Server{},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+					Sticky: false,
+				},
+			},
 		},
 		Frontends: map[string]*types.Frontend{
 			"fully_working": {
@@ -2147,6 +2138,15 @@ func TestMissingResources(t *testing.T) {
 				Routes: map[string]types.Route{
 					"missing_endpoints": {
 						Rule: "Host:missing_endpoints",
+					},
+				},
+			},
+			"missing_endpoint_subsets": {
+				Backend:        "missing_endpoint_subsets",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"missing_endpoint_subsets": {
+						Rule: "Host:missing_endpoint_subsets",
 					},
 				},
 			},

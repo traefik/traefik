@@ -27,9 +27,6 @@ var _ provider.Provider = (*Provider)(nil)
 
 const (
 	annotationFrontendRuleType = "traefik.frontend.rule.type"
-	ruleTypePathPrefixStrip    = "PathPrefixStrip"
-	ruleTypePathStrip          = "PathStrip"
-	ruleTypePath               = "Path"
 	ruleTypePathPrefix         = "PathPrefix"
 
 	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
@@ -205,12 +202,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				if len(pa.Path) > 0 {
-					ruleType, unknown := getRuleTypeFromAnnotation(i.Annotations)
-					switch {
-					case unknown:
-						log.Warnf("Unknown RuleType '%s' for Ingress %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
-						fallthrough
-					case ruleType == "":
+					ruleType := i.Annotations[annotationFrontendRuleType]
+					if ruleType == "" {
 						ruleType = ruleTypePathPrefix
 					}
 
@@ -265,28 +258,25 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							}
 
 							if !exists {
-								log.Errorf("Endpoints not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-								continue
+								log.Warnf("Endpoints not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								break
 							}
 
 							if len(endpoints.Subsets) == 0 {
-								log.Warnf("Service endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-								templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
-									URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
-									Weight: 1,
-								}
-							} else {
-								for _, subset := range endpoints.Subsets {
-									for _, address := range subset.Addresses {
-										url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
-										name := url
-										if address.TargetRef != nil && address.TargetRef.Name != "" {
-											name = address.TargetRef.Name
-										}
-										templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
-											URL:    url,
-											Weight: 1,
-										}
+								log.Warnf("Endpoints not available for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								break
+							}
+
+							for _, subset := range endpoints.Subsets {
+								for _, address := range subset.Addresses {
+									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+									name := url
+									if address.TargetRef != nil && address.TargetRef.Name != "" {
+										name = address.TargetRef.Name
+									}
+									templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+										URL:    url,
+										Weight: 1,
 									}
 								}
 							}
@@ -397,25 +387,4 @@ func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Config
 		log.Error(err)
 	}
 	return configuration
-}
-
-func getRuleTypeFromAnnotation(annotations map[string]string) (ruleType string, unknown bool) {
-	ruleType = annotations[annotationFrontendRuleType]
-	for _, knownRuleType := range []string{
-		ruleTypePathPrefixStrip,
-		ruleTypePathStrip,
-		ruleTypePath,
-		ruleTypePathPrefix,
-	} {
-		if strings.ToLower(ruleType) == strings.ToLower(knownRuleType) {
-			return knownRuleType, false
-		}
-	}
-
-	if ruleType != "" {
-		// Annotation is set but does not match anything we know.
-		unknown = true
-	}
-
-	return ruleType, unknown
 }
