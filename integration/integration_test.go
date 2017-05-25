@@ -23,6 +23,7 @@ func Test(t *testing.T) {
 }
 
 func init() {
+	check.Suite(&ErrorPagesSuite{})
 	check.Suite(&SimpleSuite{})
 	check.Suite(&AccessLogSuite{})
 	check.Suite(&HTTPSSuite{})
