@@ -23,7 +23,6 @@ func Test(t *testing.T) {
 }
 
 func init() {
-	check.Suite(&ErrorPagesSuite{})
 	check.Suite(&SimpleSuite{})
 	check.Suite(&AccessLogSuite{})
 	check.Suite(&HTTPSSuite{})
@@ -39,6 +38,7 @@ func init() {
 	check.Suite(&EurekaSuite{})
 	check.Suite(&AcmeSuite{})
 	check.Suite(&DynamoDBSuite{})
+	check.Suite(&ErrorPagesSuite{})
 }
 
 var traefikBinary = "../dist/traefik"

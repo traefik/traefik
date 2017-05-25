@@ -1,8 +1,4 @@
 nginx:
   image: nginx:alpine
-  ports:
-    - "8881:80"
 apache:
   image: httpd:2.4
-  ports:
-    - "8882:80"
