@@ -36,6 +36,7 @@
 # Access logs file
 #
 # Optional
+# Deprecated - see [accessLog] lower down
 #
 # accessLogsFile = "log/access.log"
 
@@ -218,6 +219,30 @@
 # [[acme.domains]]
 #   main = "local4.com"
 
+
+# Set access log options
+#
+# Optional
+#
+# [accessLog]
+
+# Sets the file path for the access log. If none is given (the default)
+# no access logs are produced. Intermediate directories are created if
+# necessary.
+#
+# Optional
+# Default: ""
+#
+# filePath = "/path/to/log/log.txt"
+#
+
+# Format is either "json" or "common".
+#
+# Optional
+# Default: "common"
+#
+# format = "common"
+#
 
 # Entrypoints definition
 #

@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -42,7 +43,8 @@ type GlobalConfiguration struct {
 	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
-	AccessLogsFile            string                  `description:"Access logs file"`
+	AccessLogsFile            string                  `description:"(Deprecated) Access logs file"` // Deprecated
+	AccessLog                 *types.AccessLog        `description:"Access log settings"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
@@ -456,6 +458,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDynamoDB.TableName = "traefik"
 	defaultDynamoDB.Watch = true
 
+	// default AccessLog
+	defaultAccessLog := types.AccessLog{
+		Format:   accesslog.CommonFormat,
+		FilePath: "",
+	}
+
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
 		File:          &defaultFile,
@@ -473,6 +481,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		DynamoDB:      &defaultDynamoDB,
 		Retry:         &Retry{},
 		HealthCheck:   &HealthCheckConfig{},
+		AccessLog:     &defaultAccessLog,
 	}
 
 	//default Rancher

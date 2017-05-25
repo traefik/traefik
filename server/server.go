@@ -88,10 +88,16 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
 	}
 
-	var err error
-	server.accessLoggerMiddleware, err = accesslog.NewLogHandler(globalConfiguration.AccessLogsFile)
-	if err != nil {
-		log.Warnf("Unable to create log handler: %s", err)
+	if globalConfiguration.AccessLogsFile != "" {
+		globalConfiguration.AccessLog = &types.AccessLog{FilePath: globalConfiguration.AccessLogsFile, Format: accesslog.CommonFormat}
+	}
+
+	if globalConfiguration.AccessLog != nil {
+		var err error
+		server.accessLoggerMiddleware, err = accesslog.NewLogHandler(globalConfiguration.AccessLog)
+		if err != nil {
+			log.Warnf("Unable to create log handler: %s", err)
+		}
 	}
 	return server
 }
