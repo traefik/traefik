@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
@@ -12,7 +13,7 @@ import (
 
 //ErrorPagesHandler is a middleware that provides the custom error pages
 type ErrorPagesHandler struct {
-	HTTPCodeRanges     [][]int
+	HTTPCodeRanges     [][2]int
 	BackendURL         string
 	errorPageForwarder *forward.Forwarder
 }
@@ -26,7 +27,7 @@ func NewErrorPagesHandler(errorPage types.ErrorPage, backendURL string) (*ErrorP
 
 	//Break out the http status code ranges into a low int and high int
 	//for ease of use at runtime
-	var blocks [][]int
+	var blocks [][2]int
 	for _, block := range errorPage.Status {
 		codes := strings.Split(block, "-")
 		lowCode, err := strconv.Atoi(codes[0])
@@ -37,11 +38,13 @@ func NewErrorPagesHandler(errorPage types.ErrorPage, backendURL string) (*ErrorP
 		if err != nil {
 			return nil, err
 		}
-		blocks = append(blocks, []int{lowCode, highCode})
+		blocks = append(blocks, [2]int{lowCode, highCode})
 	}
-	return &ErrorPagesHandler{HTTPCodeRanges: blocks,
-		BackendURL:         backendURL + errorPage.Query,
-		errorPageForwarder: fwd}, nil
+	return &ErrorPagesHandler{
+			HTTPCodeRanges:     blocks,
+			BackendURL:         backendURL + errorPage.Query,
+			errorPageForwarder: fwd},
+		nil
 }
 
 func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
@@ -52,8 +55,9 @@ func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request,
 	//check the recorder code against the configured http status code ranges
 	for _, block := range ep.HTTPCodeRanges {
 		if recorder.Code >= block[0] && recorder.Code <= block[1] {
+			log.Debugf("Caught HTTP Status Code %d, returning error page", recorder.Code)
 			w.WriteHeader(recorder.Code)
-			if newReq, err := http.NewRequest("GET", ep.BackendURL, nil); err != nil {
+			if newReq, err := http.NewRequest(http.MethodGet, ep.BackendURL, nil); err != nil {
 				w.Write([]byte(http.StatusText(recorder.Code)))
 			} else {
 				ep.errorPageForwarder.ServeHTTP(w, newReq)
