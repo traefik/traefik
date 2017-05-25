@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/types"
 )
 
 type key string
@@ -21,6 +22,12 @@ const (
 	// DataTableKey is the key within the request context used to
 	// store the Log Data Table
 	DataTableKey key = "LogDataTable"
+
+	// CommonFormat is the common logging format (CLF)
+	CommonFormat = "common"
+
+	// JSONFormat is the JSON logging format
+	JSONFormat = "json"
 )
 
 // LogHandler will write each request and its response to the access log.
@@ -30,25 +37,36 @@ type LogHandler struct {
 }
 
 // NewLogHandler creates a new LogHandler
-func NewLogHandler(filePath string) (*LogHandler, error) {
-	if len(filePath) == 0 {
-		return nil, errors.New("Empty file name specified for accessLogsFile")
+func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
+	if len(config.FilePath) == 0 {
+		return nil, errors.New("Empty file path specified for accessLogsFile")
 	}
 
-	dir := filepath.Dir(filePath)
+	dir := filepath.Dir(config.FilePath)
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create log path %s: %s", dir, err)
 	}
 
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	file, err := os.OpenFile(config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %s %s", dir, err)
 	}
 
+	var formatter logrus.Formatter
+
+	switch config.Format {
+	case CommonFormat:
+		formatter = new(CommonLogFormatter)
+	case JSONFormat:
+		formatter = new(logrus.JSONFormatter)
+	default:
+		return nil, fmt.Errorf("unsupported access log format: %s", config.Format)
+	}
+
 	logger := &logrus.Logger{
 		Out:       file,
-		Formatter: new(CommonLogFormatter),
+		Formatter: formatter,
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
 	}
