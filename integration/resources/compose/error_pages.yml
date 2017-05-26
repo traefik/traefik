@@ -1,0 +1,4 @@
+nginx:
+  image: nginx:alpine
+apache:
+  image: httpd:2.4
