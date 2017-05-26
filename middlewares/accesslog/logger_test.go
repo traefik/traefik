@@ -70,10 +70,10 @@ func TestLogger(t *testing.T) {
 
 	if logdata, err := ioutil.ReadFile(logfilePath); err != nil {
 		fmt.Printf("%s\n%s\n", string(logdata), err.Error())
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	} else if tokens, err := shellwords.Parse(string(logdata)); err != nil {
 		fmt.Printf("%s\n", err.Error())
-		assert.Nil(t, err)
+		assert.NoError(t, err)
 	} else if assert.Equal(t, 14, len(tokens), printLogdata(logdata)) {
 		assert.Equal(t, testHostname, tokens[0], printLogdata(logdata))
 		assert.Equal(t, testUsername, tokens[2], printLogdata(logdata))

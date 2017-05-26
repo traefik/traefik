@@ -167,12 +167,12 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		// get function
 		parsedFunctions := strings.FieldsFunc(rule, f)
 		if len(parsedFunctions) == 0 {
-			return errors.New("Error parsing rule: '" + rule + "'")
+			return fmt.Errorf("error parsing rule: '%s'", rule)
 		}
 		functionName := strings.TrimSpace(parsedFunctions[0])
 		parsedFunction, ok := functions[functionName]
 		if !ok {
-			return errors.New("Error parsing rule: '" + rule + "'. Unknown function: '" + parsedFunctions[0] + "'")
+			return fmt.Errorf("error parsing rule: '%s'. Unknown function: '%s'", rule, parsedFunctions[0])
 		}
 		parsedFunctions = append(parsedFunctions[:0], parsedFunctions[1:]...)
 		fargs := func(c rune) bool {
@@ -181,7 +181,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		// get function
 		parsedArgs := strings.FieldsFunc(strings.Join(parsedFunctions, ":"), fargs)
 		if len(parsedArgs) == 0 {
-			return errors.New("Error parsing args from rule: '" + rule + "'")
+			return fmt.Errorf("error parsing args from rule: '%s'", rule)
 		}
 
 		for i := range parsedArgs {
@@ -215,12 +215,12 @@ func (r *Rules) Parse(expression string) (*mux.Route, error) {
 			}
 
 		} else {
-			return errors.New("Method not found: '" + functionName + "'")
+			return fmt.Errorf("Method not found: '%s'", functionName)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing rule: %v", err)
+		return nil, fmt.Errorf("error parsing rule: %v", err)
 	}
 	return resultRoute, nil
 }
@@ -235,7 +235,7 @@ func (r *Rules) ParseDomains(expression string) ([]string, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing domains: %v", err)
+		return nil, fmt.Errorf("error parsing domains: %v", err)
 	}
 	return fun.Map(types.CanonicalDomain, domains).([]string), nil
 }

@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
-	"github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
@@ -96,7 +95,7 @@ func (p *CatalogProvider) watchServices(stopCh <-chan struct{}) <-chan map[strin
 
 			data, catalogMeta, err := catalog.Services(catalogOptions)
 			if err != nil {
-				log.WithError(err).Errorf("Failed to list services")
+				log.WithError(err).Error("Failed to list services")
 				return
 			}
 
@@ -105,7 +104,7 @@ func (p *CatalogProvider) watchServices(stopCh <-chan struct{}) <-chan map[strin
 			// (intentionally there is no interest in the received data).
 			_, healthMeta, err := health.State("passing", healthOptions)
 			if err != nil {
-				log.WithError(err).Errorf("Failed to retrieve health checks")
+				log.WithError(err).Error("Failed to retrieve health checks")
 				return
 			}
 
@@ -133,7 +132,7 @@ func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
 	opts := &api.QueryOptions{}
 	data, _, err := health.Service(service, "", true, opts)
 	if err != nil {
-		log.WithError(err).Errorf("Failed to fetch details of " + service)
+		log.WithError(err).Errorf("Failed to fetch details of %s", service)
 		return catalogUpdate{}, err
 	}
 
@@ -285,9 +284,7 @@ func (p *CatalogProvider) getNodes(index map[string][]string) ([]catalogUpdate, 
 		name := strings.ToLower(service)
 		if !strings.Contains(name, " ") && !visited[name] {
 			visited[name] = true
-			log.WithFields(logrus.Fields{
-				"service": name,
-			}).Debug("Fetching service")
+			log.WithField("service", name).Debug("Fetching service")
 			healthy, err := p.healthyNodes(name)
 			if err != nil {
 				return nil, err

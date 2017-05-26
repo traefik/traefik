@@ -118,7 +118,7 @@ func newBugCmd(traefikConfiguration interface{}, traefikPointersConfiguration in
 			body := bug.String()
 			URL := bugtracker + "?body=" + url.QueryEscape(body)
 			if err := openBrowser(URL); err != nil {
-				fmt.Print("Please file a new issue at " + bugtracker + " using this template:\n\n")
+				fmt.Printf("Please file a new issue at %s using this template:\n\n", bugtracker)
 				fmt.Print(body)
 			}
 
