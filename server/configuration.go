@@ -88,7 +88,7 @@ func (dep *DefaultEntryPoints) String() string {
 func (dep *DefaultEntryPoints) Set(value string) error {
 	entrypoints := strings.Split(value, ",")
 	if len(entrypoints) == 0 {
-		return errors.New("Bad DefaultEntryPoints format: " + value)
+		return fmt.Errorf("bad DefaultEntryPoints format: %s", value)
 	}
 	for _, entrypoint := range entrypoints {
 		*dep = append(*dep, entrypoint)
@@ -127,7 +127,7 @@ func (ep *EntryPoints) Set(value string) error {
 	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?")
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
-		return errors.New("Bad EntryPoints format: " + value)
+		return fmt.Errorf("bad EntryPoints format: %s", value)
 	}
 	matchResult := match[0]
 	result := make(map[string]string)
@@ -269,10 +269,10 @@ func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
 			if errKey == nil {
 				isAPath = true
 			} else {
-				return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
+				return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
 			}
 		} else if errKey == nil {
-			return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
+			return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
 		}
 
 		cert := tls.Certificate{}
@@ -314,7 +314,7 @@ func (certs *Certificates) Set(value string) error {
 	for _, certificate := range certificates {
 		files := strings.Split(certificate, ",")
 		if len(files) != 2 {
-			return errors.New("Bad certificates format: " + value)
+			return fmt.Errorf("bad certificates format: %s", value)
 		}
 		*certs = append(*certs, Certificate{
 			CertFile: files[0],
