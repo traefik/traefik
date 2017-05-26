@@ -424,6 +424,14 @@
 #
 # filename = "rules.toml"
 
+# Rules file
+# If defined, traefik will load rules from .toml files in this directory.
+#
+# Optional
+#
+# directory = "/path/to/config/"
+
+
 # Enable watch file changes
 #
 # Optional
