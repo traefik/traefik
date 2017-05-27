@@ -71,6 +71,7 @@ type GlobalConfiguration struct {
 	ECS                       *ecs.Provider           `description:"Enable ECS backend"`
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend"`
+	Custom404ErrorFile        string                  `description:"Set a custom file to return on 404."`
 }
 
 // DefaultEntryPoints holds default entry points
