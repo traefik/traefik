@@ -3,10 +3,11 @@ package server
 import (
 	"net/http"
 	"net/url"
-	"reflect"
 	"testing"
 
 	"github.com/containous/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseOneRule(t *testing.T) {
@@ -17,17 +18,12 @@ func TestParseOneRule(t *testing.T) {
 
 	expression := "Host:foo.bar"
 	routeResult, err := rules.Parse(expression)
-
-	if err != nil {
-		t.Fatalf("Error while building route for Host:foo.bar: %s", err)
-	}
+	require.NoError(t, err, "Error while building route for %s", expression)
 
 	request, err := http.NewRequest("GET", "http://foo.bar", nil)
 	routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
 
-	if !routeMatch {
-		t.Fatalf("Rule Host:foo.bar don't match: %s", err)
-	}
+	assert.True(t, routeMatch, "Rule %s don't match.", expression)
 }
 
 func TestParseTwoRules(t *testing.T) {
@@ -39,47 +35,54 @@ func TestParseTwoRules(t *testing.T) {
 	expression := "Host: Foo.Bar ; Path:/FOObar"
 	routeResult, err := rules.Parse(expression)
 
-	if err != nil {
-		t.Fatalf("Error while building route for Host:foo.bar;Path:/FOObar: %s", err)
-	}
+	require.NoError(t, err, "Error while building route for %s.", expression)
 
-	request, err := http.NewRequest("GET", "http://foo.bar/foobar", nil)
+	request, _ := http.NewRequest("GET", "http://foo.bar/foobar", nil)
 	routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
 
-	if routeMatch {
-		t.Fatalf("Rule Host:foo.bar;Path:/FOObar don't match: %s", err)
-	}
+	assert.False(t, routeMatch, "Rule %s don't match.", expression)
 
-	request, err = http.NewRequest("GET", "http://foo.bar/FOObar", nil)
+	request, _ = http.NewRequest("GET", "http://foo.bar/FOObar", nil)
 	routeMatch = routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
 
-	if !routeMatch {
-		t.Fatalf("Rule Host:foo.bar;Path:/FOObar don't match: %s", err)
-	}
+	assert.True(t, routeMatch, "Rule %s don't match.", expression)
 }
 
 func TestParseDomains(t *testing.T) {
 	rules := &Rules{}
-	expressionsSlice := []string{
-		"Host:foo.bar,test.bar",
-		"Path:/test",
-		"Host:foo.bar;Path:/test",
-		"Host: Foo.Bar ;Path:/test",
+
+	tests := []struct {
+		expression string
+		domain     []string
+	}{
+		{
+			expression: "Host:foo.bar,test.bar",
+			domain:     []string{"foo.bar", "test.bar"},
+		},
+		{
+			expression: "Path:/test",
+			domain:     []string{},
+		},
+		{
+			expression: "Host:foo.bar;Path:/test",
+			domain:     []string{"foo.bar"},
+		},
+		{
+			expression: "Host: Foo.Bar ;Path:/test",
+			domain:     []string{"foo.bar"},
+		},
 	}
-	domainsSlice := [][]string{
-		{"foo.bar", "test.bar"},
-		{},
-		{"foo.bar"},
-		{"foo.bar"},
-	}
-	for i, expression := range expressionsSlice {
-		domains, err := rules.ParseDomains(expression)
-		if err != nil {
-			t.Fatalf("Error while parsing domains: %v", err)
-		}
-		if !reflect.DeepEqual(domains, domainsSlice[i]) {
-			t.Fatalf("Error parsing domains: expected %+v, got %+v", domainsSlice[i], domains)
-		}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.expression, func(t *testing.T) {
+			t.Parallel()
+
+			domains, err := rules.ParseDomains(test.expression)
+			require.NoError(t, err, "%s: Error while parsing domain.", test.expression)
+
+			assert.EqualValues(t, test.domain, domains, "%s: Error parsing domains from expression.", test.expression)
+		})
 	}
 }
 
@@ -87,70 +90,49 @@ func TestPriorites(t *testing.T) {
 	router := mux.NewRouter()
 	router.StrictSlash(true)
 	rules := &Rules{route: &serverRoute{route: router.NewRoute()}}
-	routeFoo, err := rules.Parse("PathPrefix:/foo")
-	if err != nil {
-		t.Fatalf("Error while building route for PathPrefix:/foo: %s", err)
-	}
+	expression01 := "PathPrefix:/foo"
+
+	routeFoo, err := rules.Parse(expression01)
+	require.NoError(t, err, "Error while building route for %s", expression01)
+
 	fooHandler := &fakeHandler{name: "fooHandler"}
 	routeFoo.Handler(fooHandler)
 
-	if !router.Match(&http.Request{URL: &url.URL{
-		Path: "/foo",
-	}}, &mux.RouteMatch{}) {
-		t.Fatal("Error matching route")
-	}
+	routeMatch := router.Match(&http.Request{URL: &url.URL{Path: "/foo"}}, &mux.RouteMatch{})
+	assert.True(t, routeMatch, "Error matching route")
 
-	if router.Match(&http.Request{URL: &url.URL{
-		Path: "/fo",
-	}}, &mux.RouteMatch{}) {
-		t.Fatal("Error matching route")
-	}
+	routeMatch = router.Match(&http.Request{URL: &url.URL{Path: "/fo"}}, &mux.RouteMatch{})
+	assert.False(t, routeMatch, "Error matching route")
 
 	multipleRules := &Rules{route: &serverRoute{route: router.NewRoute()}}
-	routeFoobar, err := multipleRules.Parse("PathPrefix:/foobar")
-	if err != nil {
-		t.Fatalf("Error while building route for PathPrefix:/foobar: %s", err)
-	}
+	expression02 := "PathPrefix:/foobar"
+
+	routeFoobar, err := multipleRules.Parse(expression02)
+	require.NoError(t, err, "Error while building route for %s", expression02)
+
 	foobarHandler := &fakeHandler{name: "foobarHandler"}
 	routeFoobar.Handler(foobarHandler)
-	if !router.Match(&http.Request{URL: &url.URL{
-		Path: "/foo",
-	}}, &mux.RouteMatch{}) {
-		t.Fatal("Error matching route")
-	}
+	routeMatch = router.Match(&http.Request{URL: &url.URL{Path: "/foo"}}, &mux.RouteMatch{})
+
+	assert.True(t, routeMatch, "Error matching route")
+
 	fooMatcher := &mux.RouteMatch{}
-	if !router.Match(&http.Request{URL: &url.URL{
-		Path: "/foobar",
-	}}, fooMatcher) {
-		t.Fatal("Error matching route")
-	}
+	routeMatch = router.Match(&http.Request{URL: &url.URL{Path: "/foobar"}}, fooMatcher)
 
-	if fooMatcher.Handler == foobarHandler {
-		t.Fatal("Error matching priority")
-	}
-
-	if fooMatcher.Handler != fooHandler {
-		t.Fatal("Error matching priority")
-	}
+	assert.True(t, routeMatch, "Error matching route")
+	assert.NotEqual(t, fooMatcher.Handler, foobarHandler, "Error matching priority")
+	assert.Equal(t, fooMatcher.Handler, fooHandler, "Error matching priority")
 
 	routeFoo.Priority(1)
 	routeFoobar.Priority(10)
 	router.SortRoutes()
 
 	foobarMatcher := &mux.RouteMatch{}
-	if !router.Match(&http.Request{URL: &url.URL{
-		Path: "/foobar",
-	}}, foobarMatcher) {
-		t.Fatal("Error matching route")
-	}
+	routeMatch = router.Match(&http.Request{URL: &url.URL{Path: "/foobar"}}, foobarMatcher)
 
-	if foobarMatcher.Handler != foobarHandler {
-		t.Fatal("Error matching priority")
-	}
-
-	if foobarMatcher.Handler == fooHandler {
-		t.Fatal("Error matching priority")
-	}
+	assert.True(t, routeMatch, "Error matching route")
+	assert.Equal(t, foobarMatcher.Handler, foobarHandler, "Error matching priority")
+	assert.NotEqual(t, foobarMatcher.Handler, fooHandler, "Error matching priority")
 }
 
 type fakeHandler struct {
