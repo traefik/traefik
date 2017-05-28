@@ -1,10 +1,10 @@
-package middlewares_test
+package middlewares
 
 import (
 	"net/http"
 	"testing"
 
-	"github.com/containous/traefik/middlewares"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReplacePath(t *testing.T) {
@@ -17,28 +17,22 @@ func TestReplacePath(t *testing.T) {
 
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {
-			var newPath, oldPath string
-			handler := &middlewares.ReplacePath{
+
+			var expectedPath, actualHeader string
+			handler := &ReplacePath{
 				Path: replacementPath,
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					newPath = r.URL.Path
-					oldPath = r.Header.Get("X-Replaced-Path")
+					expectedPath = r.URL.Path
+					actualHeader = r.Header.Get(ReplacedPathHeader)
 				}),
 			}
 
 			req, err := http.NewRequest("GET", "http://localhost"+path, nil)
-			if err != nil {
-				t.Error(err)
-			}
+			assert.NoError(t, err, "%s: unexpected error.", path)
 
 			handler.ServeHTTP(nil, req)
-			if newPath != replacementPath {
-				t.Fatalf("new path should be '%s'", replacementPath)
-			}
-
-			if oldPath != path {
-				t.Fatalf("old path should be '%s'", path)
-			}
+			assert.Equal(t, expectedPath, replacementPath, "%s: unexpected path.", path)
+			assert.Equal(t, path, actualHeader, "%s: unexpected '%s' header.", path, ReplacedPathHeader)
 		})
 	}
 }
