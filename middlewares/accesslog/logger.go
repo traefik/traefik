@@ -2,7 +2,6 @@ package accesslog
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -38,19 +37,13 @@ type LogHandler struct {
 
 // NewLogHandler creates a new LogHandler
 func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
-	if len(config.FilePath) == 0 {
-		return nil, errors.New("Empty file path specified for accessLogsFile")
-	}
-
-	dir := filepath.Dir(config.FilePath)
-
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create log path %s: %s", dir, err)
-	}
-
-	file, err := os.OpenFile(config.FilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
-	if err != nil {
-		return nil, fmt.Errorf("error opening file: %s %s", dir, err)
+	file := os.Stdout
+	if len(config.FilePath) > 0 {
+		f, err := openAccessLogFile(config.FilePath)
+		if err != nil {
+			return nil, fmt.Errorf("error opening access log file: %s", err)
+		}
+		file = f
 	}
 
 	var formatter logrus.Formatter
@@ -71,6 +64,21 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		Level:     logrus.InfoLevel,
 	}
 	return &LogHandler{logger: logger, file: file}, nil
+}
+
+func openAccessLogFile(filePath string) (*os.File, error) {
+	dir := filepath.Dir(filePath)
+
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create log path %s: %s", dir, err)
+	}
+
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file %s: %s", filePath, err)
+	}
+
+	return file, nil
 }
 
 // GetLogDataTable gets the request context object that contains logging data. This accretes

@@ -45,7 +45,7 @@ type GlobalConfiguration struct {
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
 	AccessLogsFile            string                  `description:"(Deprecated) Access logs file"` // Deprecated
 	AccessLog                 *types.AccessLog        `description:"Access log settings"`
-	TraefikLogsFile           string                  `description:"Traefik logs file"`
+	TraefikLogsFile           string                  `description:"Traefik logs file. Stdout is used when omitted or empty"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
 	Cluster                   *types.Cluster          `description:"Enable clustering"`
