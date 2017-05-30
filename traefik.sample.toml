@@ -220,21 +220,21 @@
 #   main = "local4.com"
 
 
-# Set access log options
+# Enable access logs
+# By default it will write to stdout and produce logs in the textual
+# Common Log Format (CLF), extended with additional fields.
 #
 # Optional
 #
 # [accessLog]
 
-# Sets the file path for the access log. If none is given (the default)
-# no access logs are produced. Intermediate directories are created if
-# necessary.
+# Sets the file path for the access log. If not specified, stdout will be used.
+# Intermediate directories are created if necessary.
 #
 # Optional
-# Default: ""
+# Default: os.Stdout
 #
 # filePath = "/path/to/log/log.txt"
-#
 
 # Format is either "json" or "common".
 #
@@ -242,7 +242,6 @@
 # Default: "common"
 #
 # format = "common"
-#
 
 # Entrypoints definition
 #

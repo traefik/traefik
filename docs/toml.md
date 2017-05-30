@@ -154,10 +154,15 @@ Supported filters:
 
 ## Access log definition
 
-The standard access log uses the textual Common Log Format (CLF), extended with additional fields.
-Alternatively logs can be written in JSON. 
-Using the default CLF option is simple, e.g.
+Access logs are written when `[accessLog]` is defined. 
+By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
 
+To enable access logs using the default settings just add the `[accessLog]` entry.
+```toml
+[accessLog]
+```
+
+To write the logs into a logfile specify the `filePath`.
 ```toml
 [accessLog]
   filePath = "/path/to/access.log"
