@@ -269,7 +269,7 @@ Given the key structure below, Træfik will use the `http://172.17.0.2:80` as it
 
 | Key                                                                     | Value                       |
 |-------------------------------------------------------------------------|-----------------------------|
-| `/traefik/alias`                                                        | `/traefik_configurations/1` |
+| `/traefik/alias`                                                        | `traefik_configurations/1` |
 | `/traefik_configurations/1/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
 | `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
 
@@ -277,7 +277,7 @@ When an atomic configuration change is required, you may write a new configurati
 
 | Key                                                                     | Value                       |
 |-------------------------------------------------------------------------|-----------------------------|
-| `/traefik/alias`                                                        | `/traefik_configurations/1` |
+| `/traefik/alias`                                                        | `traefik_configurations/1` |
 | `/traefik_configurations/1/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
 | `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
 | `/traefik_configurations/2/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
@@ -289,7 +289,7 @@ Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` co
 
 | Key                                                                     | Value                       |
 |-------------------------------------------------------------------------|-----------------------------|
-| `/traefik/alias`                                                        | `/traefik_configurations/2` |
+| `/traefik/alias`                                                        | `traefik_configurations/2` |
 | `/traefik_configurations/1/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
 | `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
 | `/traefik_configurations/2/backends/backend1/servers/server1/url`       | `http://172.17.0.3:80`      |
