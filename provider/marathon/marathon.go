@@ -145,6 +145,7 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		"getPort":                     p.getPort,
 		"getWeight":                   p.getWeight,
 		"getDomain":                   p.getDomain,
+		"getSubDomain":                p.getSubDomain,
 		"getProtocol":                 p.getProtocol,
 		"getPassHostHeader":           p.getPassHostHeader,
 		"getPriority":                 p.getPriority,
