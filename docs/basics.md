@@ -537,3 +537,11 @@ $ traefik bug
 ```
 
 See https://www.youtube.com/watch?v=Lyz62L8m93I.
+
+# Log Rotation
+
+Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.  This allows the logs
+to be rotated and processed by an external program, such as `logrotate`.
+
+Note that this does not work on Windows due to the lack of USR signals.
+
