@@ -94,21 +94,23 @@ func TestStripPrefix(t *testing.T) {
 			t.Parallel()
 
 			var actualPath, actualHeader string
-			server := httptest.NewServer(&StripPrefix{
+			handler := &StripPrefix{
 				Prefixes: test.prefixes,
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					actualPath = r.URL.Path
 					actualHeader = r.Header.Get(ForwardedPrefixHeader)
 				}),
-			})
-			defer server.Close()
+			}
 
-			resp, err := http.Get(server.URL + test.path)
-			require.NoError(t, err, "%s: failed to send GET request.", test.desc)
+			req, err := http.NewRequest(http.MethodGet, "http://localhost"+test.path, nil)
+			require.NoError(t, err, "%s: unexpected error.", test.desc)
 
-			assert.Equal(t, test.expectedStatusCode, resp.StatusCode, "%s: unexpected status code.", test.desc)
-			assert.Equal(t, test.expectedPath, actualPath, "%s: unexpected path.", test.desc)
-			assert.Equal(t, test.expectedHeader, actualHeader, "%s: unexpected '%s' header.", test.desc, ForwardedPrefixHeader)
+			resp := &httptest.ResponseRecorder{Code: http.StatusOK}
+			handler.ServeHTTP(resp, req)
+
+			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
+			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
+			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ForwardedPrefixHeader)
 		})
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestReplacePath(t *testing.T) {
@@ -27,12 +28,12 @@ func TestReplacePath(t *testing.T) {
 				}),
 			}
 
-			req, err := http.NewRequest("GET", "http://localhost"+path, nil)
-			assert.NoError(t, err, "%s: unexpected error.", path)
+			req, err := http.NewRequest(http.MethodGet, "http://localhost"+path, nil)
+			require.NoError(t, err, "%s: unexpected error.", path)
 
 			handler.ServeHTTP(nil, req)
-			assert.Equal(t, expectedPath, replacementPath, "%s: unexpected path.", path)
-			assert.Equal(t, path, actualHeader, "%s: unexpected '%s' header.", path, ReplacedPathHeader)
+			assert.Equal(t, expectedPath, replacementPath, "Unexpected path.")
+			assert.Equal(t, path, actualHeader, "Unexpected '%s' header.", ReplacedPathHeader)
 		})
 	}
 }

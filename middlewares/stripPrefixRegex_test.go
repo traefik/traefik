@@ -21,45 +21,45 @@ func TestStripPrefixRegex(t *testing.T) {
 	}{
 		{
 			path:               "/a/test",
-			expectedStatusCode: 404,
+			expectedStatusCode: http.StatusNotFound,
 		},
 		{
 			path:               "/a/api/test",
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
 			expectedPath:       "test",
 			expectedHeader:     "/a/api/",
 		},
 		{
 			path:               "/b/api/",
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
 			expectedHeader:     "/b/api/",
 		},
 		{
 			path:               "/b/api/test1",
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
 			expectedPath:       "test1",
 			expectedHeader:     "/b/api/",
 		},
 		{
 			path:               "/b/api2/test2",
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
 			expectedPath:       "test2",
 			expectedHeader:     "/b/api2/",
 		},
 		{
 			path:               "/c/api/123/",
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
 			expectedHeader:     "/c/api/123/",
 		},
 		{
 			path:               "/c/api/123/test3",
-			expectedStatusCode: 200,
+			expectedStatusCode: http.StatusOK,
 			expectedPath:       "test3",
 			expectedHeader:     "/c/api/123/",
 		},
 		{
 			path:               "/c/api/abc/test4",
-			expectedStatusCode: 404,
+			expectedStatusCode: http.StatusNotFound,
 		},
 	}
 
@@ -73,18 +73,17 @@ func TestStripPrefixRegex(t *testing.T) {
 				actualPath = r.URL.Path
 				actualHeader = r.Header.Get(ForwardedPrefixHeader)
 			})
-
 			handler := NewStripPrefixRegex(handlerPath, testPrefixRegex)
-			server := httptest.NewServer(handler)
-			defer server.Close()
 
-			resp, err := http.Get(server.URL + test.path)
+			req, err := http.NewRequest(http.MethodGet, "http://localhost"+test.path, nil)
 			require.NoError(t, err, "%s: unexpected error.", test.path)
 
-			assert.Equal(t, test.expectedStatusCode, resp.StatusCode, "%s: unexpected status code.", test.path)
-			assert.Equal(t, test.expectedPath, actualPath, "%s: unexpected path.", test.path)
-			assert.Equal(t, test.expectedHeader, actualHeader, "%s: unexpected '%s' header.", test.path, ForwardedPrefixHeader)
+			resp := &httptest.ResponseRecorder{Code: http.StatusOK}
+			handler.ServeHTTP(resp, req)
+
+			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
+			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
+			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ForwardedPrefixHeader)
 		})
 	}
-
 }
