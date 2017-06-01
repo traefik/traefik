@@ -419,7 +419,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultBoltDb.Prefix = "/traefik"
 	defaultBoltDb.Constraints = types.Constraints{}
 
-	//default Provider
+	//default Kubernetes
 	var defaultKubernetes kubernetes.Provider
 	defaultKubernetes.Watch = true
 	defaultKubernetes.Endpoint = ""

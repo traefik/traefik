@@ -54,7 +54,7 @@ func (l *Leadership) Participate(pool *safe.Pool) {
 	})
 }
 
-// AddListener adds a leadership listerner
+// AddListener adds a leadership listener
 func (l *Leadership) AddListener(listener LeaderListener) {
 	l.listeners = append(l.listeners, listener)
 }
