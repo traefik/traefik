@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   name: cheeses
   annotations:
-    traefik.frontend.rule.type: pathprefixstrip
+    traefik.frontend.rule.type: PathPrefixStrip
 spec:
   rules:
   - host: cheeses.local

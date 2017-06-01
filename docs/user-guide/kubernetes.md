@@ -471,7 +471,7 @@ metadata:
   name: cheeses
   annotations:
     kubernetes.io/ingress.class: traefik
-    traefik.frontend.rule.type: pathprefixstrip
+    traefik.frontend.rule.type: PathPrefixStrip
 spec:
   rules:
   - host: cheeses.local
