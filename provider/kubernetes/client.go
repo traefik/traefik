@@ -221,7 +221,7 @@ func (c *clientImpl) WatchSecrets(watchCh chan<- interface{}, stopCh <-chan stru
 
 	c.secStore, c.secController = cache.NewInformer(
 		source,
-		&v1.Endpoints{},
+		&v1.Secret{},
 		resyncPeriod,
 		newResourceEventHandlerFuncs(watchCh))
 	go c.secController.Run(stopCh)
