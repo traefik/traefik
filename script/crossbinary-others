@@ -1,0 +1,55 @@
+#!/bin/bash
+set -e
+
+if ! test -e autogen/gen.go; then
+	echo >&2 'error: generate must be run before crossbinary'
+	false
+fi
+
+if [ -z "$VERSION" ]; then
+    VERSION=$(git rev-parse HEAD)
+fi
+
+if [ -z "$CODENAME" ]; then
+    CODENAME=cheddar
+fi
+
+if [ -z "$DATE" ]; then
+    DATE=$(date -u '+%Y-%m-%d_%I:%M:%S%p')
+fi
+
+GIT_REPO_URL='github.com/containous/traefik/version'
+GO_BUILD_CMD="go build -ldflags"
+GO_BUILD_OPT="-s -w -X ${GIT_REPO_URL}.Version=$VERSION -X ${GIT_REPO_URL}.Codename=$CODENAME -X ${GIT_REPO_URL}.BuildDate=$DATE"
+
+# Build arm binaries
+OS_PLATFORM_ARG=(linux windows darwin)
+OS_ARCH_ARG=(386)
+for OS in ${OS_PLATFORM_ARG[@]}; do
+  for ARCH in ${OS_ARCH_ARG[@]}; do
+    echo "Building binary for $OS/$ARCH..."
+    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 $GO_BUILD_CMD "$GO_BUILD_OPT" -o "dist/traefik_$OS-$ARCH" ./cmd/traefik/
+  done
+done
+
+# Build Bsd binaries
+OS_PLATFORM_ARG=(freebsd openbsd)
+OS_ARCH_ARG=(386 amd64)
+for OS in ${OS_PLATFORM_ARG[@]}; do
+  for ARCH in ${OS_ARCH_ARG[@]}; do
+    # Get rid of existing binaries
+    rm -f dist/traefik_$OS-$ARCH
+    echo "Building binary for $OS/$ARCH..."
+    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 $GO_BUILD_CMD "$GO_BUILD_OPT" -o "dist/traefik_$OS-$ARCH" ./cmd/traefik/
+  done
+done
+
+# Build arm binaries
+OS_PLATFORM_ARG=(linux)
+OS_ARCH_ARG=(arm)
+for OS in ${OS_PLATFORM_ARG[@]}; do
+  for ARCH in ${OS_ARCH_ARG[@]}; do
+    echo "Building binary for $OS/$ARCH..."
+    GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 $GO_BUILD_CMD "$GO_BUILD_OPT" -o "dist/traefik_$OS-$ARCH" ./cmd/traefik/
+  done
+done

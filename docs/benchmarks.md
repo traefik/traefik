@@ -117,7 +117,7 @@ server {
 
 Here is the `traefik.toml` file used:
 
-```
+```toml
 MaxIdleConnsPerHost = 100000
 defaultEntryPoints = ["http"]
 
@@ -145,7 +145,7 @@ defaultEntryPoints = ["http"]
 ## Results
 
 ### whoami:
-```
+```shell
 wrk -t20 -c1000 -d60s -H "Host: test.traefik" --latency  http://IP-whoami:80/bench
 Running 1m test @ http://IP-whoami:80/bench
   20 threads and 1000 connections
@@ -164,7 +164,7 @@ Transfer/sec:      6.40MB
 ```
 
 ### nginx:
-```
+```shell
 wrk -t20 -c1000 -d60s -H "Host: test.traefik" --latency  http://IP-nginx:8001/bench
 Running 1m test @ http://IP-nginx:8001/bench
   20 threads and 1000 connections
@@ -183,7 +183,7 @@ Transfer/sec:      4.97MB
 ```
 
 ### traefik:
-```
+```shell
 wrk -t20 -c1000 -d60s -H "Host: test.traefik" --latency  http://IP-traefik:8000/bench
 Running 1m test @ http://IP-traefik:8000/bench
   20 threads and 1000 connections

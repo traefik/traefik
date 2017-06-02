@@ -2,18 +2,21 @@
 
 /** @ngInject */
 function ProvidersController($scope, $interval, $log, Providers) {
-  var vm = this;
+  const vm = this;
 
-  vm.providers = Providers.get();
+  function loadProviders() {
+    Providers
+      .get()
+      .then(providers => vm.providers = providers)
+      .catch(error => {
+        vm.providers = {};
+        $log.error(error);
+      });
+  }
 
-  var intervalId = $interval(function () {
-    Providers.get(function (providers) {
-      vm.providers = providers;
-    }, function (error) {
-      vm.providers = {};
-      $log.error(error);
-    });
-  }, 2000);
+  loadProviders();
+
+  const intervalId = $interval(loadProviders, 2000);
 
   $scope.$on('$destroy', function () {
     $interval.cancel(intervalId);

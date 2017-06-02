@@ -49,7 +49,9 @@ import:
 - package: github.com/streamrail/concurrent-map
 - package: github.com/stretchr/testify
   subpackages:
+  - assert
   - mock
+  - require
 - package: github.com/thoas/stats
   version: 152b5d051953fdb6e45f14b6826962aadc032324
 - package: github.com/unrolled/render
@@ -91,7 +93,7 @@ import:
 - package: k8s.io/client-go
   version: v2.0.0
 - package: github.com/gambol99/go-marathon
-  version: ^0.5.1
+  version: d672c6fbb499596869d95146a26e7d0746c06c54
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
@@ -108,6 +110,8 @@ import:
   - metrics
 - package: github.com/eapache/channels
   version: v1.1.0
+- package: golang.org/x/sys
+  version: 8d1157a435470616f975ff9bb013bea8d0962067
 - package: golang.org/x/net
   version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
   subpackages:

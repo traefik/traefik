@@ -1,12 +1,9 @@
 package main
 
 import (
-	"errors"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -14,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/containous/traefik/integration/utils"
+	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/types"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
@@ -49,7 +46,7 @@ func (s *DynamoDBSuite) SetUpSuite(c *check.C) {
 		Endpoint:    aws.String(dynamoURL),
 	}
 	var sess *session.Session
-	err := utils.Try(60*time.Second, func() error {
+	err := try.Do(60*time.Second, func() error {
 		_, err := session.NewSession(config)
 		if err != nil {
 			return err
@@ -154,24 +151,16 @@ func (s *DynamoDBSuite) TestSimpleConfiguration(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 120*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Host:test.traefik.io") {
-			return errors.New("incorrect traefik config")
-		}
-		return nil
-	})
+
+	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 120*time.Second, try.BodyContains("Host:test.traefik.io"))
 	c.Assert(err, checker.IsNil)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8080", nil)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.traefik.io"
-	response, err := client.Do(req)
+
+	err = try.Request(req, 200*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, 200)
 }
 
 func (s *DynamoDBSuite) TearDownSuite(c *check.C) {

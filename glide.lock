@@ -1,5 +1,5 @@
-hash: 2abed980e61ff7659b181849419aadcb8d9d63594a5ac3215d09df0ea12a1700
-updated: 2017-04-11T17:02:21.540487905+02:00
+hash: e59e8244152a823cd3633fb09cdd583c4e5be78d7b50fb7047ba6b6a9ed5e8ec
+updated: 2017-05-19T23:30:19.890844996+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -95,6 +95,8 @@ imports:
   subpackages:
   - Godeps/_workspace/src/github.com/coreos/go-systemd/journal
   - Godeps/_workspace/src/github.com/coreos/pkg/capnslog
+  - Godeps/_workspace/src/github.com/ugorji/go/codec
+  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/fileutil
   - pkg/pathutil
@@ -199,7 +201,7 @@ imports:
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/gambol99/go-marathon
-  version: 6b00a5b651b1beb2c6821863f7c60df490bd46c8
+  version: 15ea23e360abb8b25071e677aed344f31838e403
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
@@ -389,6 +391,7 @@ imports:
   subpackages:
   - assert
   - mock
+  - require
 - name: github.com/thoas/stats
   version: 152b5d051953fdb6e45f14b6826962aadc032324
 - name: github.com/timewasted/linode
@@ -480,7 +483,7 @@ imports:
   - jws
   - jwt
 - name: golang.org/x/sys
-  version: eb2c74142fd19a79b3f237334c7384d5167b1b46
+  version: 8d1157a435470616f975ff9bb013bea8d0962067
   subpackages:
   - unix
   - windows

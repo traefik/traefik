@@ -1,13 +1,15 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"os/exec"
+	"strings"
 	"time"
 
+	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
-
-	"bytes"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -21,41 +23,45 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 
-	cmd.Start()
-	time.Sleep(500 * time.Millisecond)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-	output := b.Bytes()
 
-	c.Assert(string(output), checker.Contains, "Near line 0 (last key parsed ''): bare keys cannot contain '{'")
+	err = try.Do(500*time.Millisecond, func() error {
+		expected := "Near line 0 (last key parsed ''): bare keys cannot contain '{'"
+		actual := b.String()
+
+		if !strings.Contains(actual, expected) {
+			return fmt.Errorf("Got %s, wanted %s", actual, expected)
+		}
+
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/simple_default.toml")
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	time.Sleep(500 * time.Millisecond)
 	// TODO validate : run on 80
-	resp, err := http.Get("http://127.0.0.1:8000/")
-
 	// Expected a 404 as we did not configure anything
+	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
 }
 
 func (s *SimpleSuite) TestWithWebConfig(c *check.C) {
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/simple_web.toml")
+
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	time.Sleep(500 * time.Millisecond)
-
-	resp, err := http.Get("http://127.0.0.1:8080/api")
-	// Expected a 200
+	err = try.GetRequest("http://127.0.0.1:8080/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 200)
 }
 
 func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
@@ -65,12 +71,21 @@ func (s *SimpleSuite) TestDefaultEntryPoints(c *check.C) {
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 
-	cmd.Start()
-	time.Sleep(500 * time.Millisecond)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-	output := b.Bytes()
 
-	c.Assert(string(output), checker.Contains, "\"DefaultEntryPoints\":[\"http\"]")
+	err = try.Do(500*time.Millisecond, func() error {
+		expected := "\"DefaultEntryPoints\":[\"http\"]"
+		actual := b.String()
+
+		if !strings.Contains(actual, expected) {
+			return fmt.Errorf("Got %s, wanted %s", actual, expected)
+		}
+
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *SimpleSuite) TestPrintHelp(c *check.C) {
@@ -80,11 +95,23 @@ func (s *SimpleSuite) TestPrintHelp(c *check.C) {
 	cmd.Stdout = &b
 	cmd.Stderr = &b
 
-	cmd.Start()
-	time.Sleep(500 * time.Millisecond)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-	output := b.Bytes()
 
-	c.Assert(string(output), checker.Not(checker.Contains), "panic:")
-	c.Assert(string(output), checker.Contains, "Usage:")
+	err = try.Do(500*time.Millisecond, func() error {
+		expected := "Usage:"
+		notExpected := "panic:"
+		actual := b.String()
+
+		if strings.Contains(actual, notExpected) {
+			return fmt.Errorf("Got %s", actual)
+		}
+		if !strings.Contains(actual, expected) {
+			return fmt.Errorf("Got %s, wanted %s", actual, expected)
+		}
+
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
 }

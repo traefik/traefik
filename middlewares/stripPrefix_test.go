@@ -1,0 +1,114 @@
+package middlewares
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestStripPrefix(t *testing.T) {
+	tests := []struct {
+		desc               string
+		prefixes           []string
+		path               string
+		expectedStatusCode int
+		expectedPath       string
+		expectedHeader     string
+	}{
+		{
+			desc:               "no prefixes configured",
+			prefixes:           []string{},
+			path:               "/noprefixes",
+			expectedStatusCode: http.StatusNotFound,
+		},
+		{
+			desc:               "wildcard (.*) requests",
+			prefixes:           []string{"/"},
+			path:               "/",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/",
+			expectedHeader:     "/",
+		},
+		{
+			desc:               "prefix and path matching",
+			prefixes:           []string{"/stat"},
+			path:               "/stat",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/",
+			expectedHeader:     "/stat",
+		},
+		{
+			desc:               "path prefix on exactly matching path",
+			prefixes:           []string{"/stat/"},
+			path:               "/stat/",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/",
+			expectedHeader:     "/stat/",
+		},
+		{
+			desc:               "path prefix on matching longer path",
+			prefixes:           []string{"/stat/"},
+			path:               "/stat/us",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/us",
+			expectedHeader:     "/stat/",
+		},
+		{
+			desc:               "path prefix on mismatching path",
+			prefixes:           []string{"/stat/"},
+			path:               "/status",
+			expectedStatusCode: http.StatusNotFound,
+		},
+		{
+			desc:               "general prefix on matching path",
+			prefixes:           []string{"/stat"},
+			path:               "/stat/",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/",
+			expectedHeader:     "/stat",
+		},
+		{
+			desc:               "earlier prefix matching",
+			prefixes:           []string{"/stat", "/stat/us"},
+			path:               "/stat/us",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/us",
+			expectedHeader:     "/stat",
+		},
+		{
+			desc:               "later prefix matching",
+			prefixes:           []string{"/mismatch", "/stat"},
+			path:               "/stat",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/",
+			expectedHeader:     "/stat",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			var actualPath, actualHeader string
+			server := httptest.NewServer(&StripPrefix{
+				Prefixes: test.prefixes,
+				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					actualPath = r.URL.Path
+					actualHeader = r.Header.Get(ForwardedPrefixHeader)
+				}),
+			})
+			defer server.Close()
+
+			resp, err := http.Get(server.URL + test.path)
+			require.NoError(t, err, "%s: failed to send GET request.", test.desc)
+
+			assert.Equal(t, test.expectedStatusCode, resp.StatusCode, "%s: unexpected status code.", test.desc)
+			assert.Equal(t, test.expectedPath, actualPath, "%s: unexpected path.", test.desc)
+			assert.Equal(t, test.expectedHeader, actualHeader, "%s: unexpected '%s' header.", test.desc, ForwardedPrefixHeader)
+		})
+	}
+}

@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -11,43 +9,42 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/containous/traefik/integration/utils"
+	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 
 	checker "github.com/vdemeester/shakers"
 )
 
 // Eureka test suites (using libcompose)
-type EurekaSuite struct{ BaseSuite }
+type EurekaSuite struct {
+	BaseSuite
+	eurekaIP  string
+	eurekaURL string
+}
 
 func (s *EurekaSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "eureka")
 	s.composeProject.Start(c)
 
+	eureka := s.composeProject.Container(c, "eureka")
+	s.eurekaIP = eureka.NetworkSettings.IPAddress
+	s.eurekaURL = "http://" + s.eurekaIP + ":8761/eureka/apps"
+
+	// wait for eureka
+	err := try.GetRequest(s.eurekaURL, 60*time.Second)
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *EurekaSuite) TestSimpleConfiguration(c *check.C) {
 
-	eurekaHost := s.composeProject.Container(c, "eureka").NetworkSettings.IPAddress
 	whoami1Host := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 
-	file := s.adaptFile(c, "fixtures/eureka/simple.toml", struct{ EurekaHost string }{eurekaHost})
+	file := s.adaptFile(c, "fixtures/eureka/simple.toml", struct{ EurekaHost string }{s.eurekaIP})
 	defer os.Remove(file)
 	cmd := exec.Command(traefikBinary, "--configFile="+file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	eurekaURL := "http://" + eurekaHost + ":8761/eureka/apps"
-
-	// wait for eureka
-	err = utils.TryRequest(eurekaURL, 60*time.Second, func(res *http.Response) error {
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	c.Assert(err, checker.IsNil)
 
 	eurekaTemplate := `
 	{
@@ -66,7 +63,7 @@ func (s *EurekaSuite) TestSimpleConfiguration(c *check.C) {
     }
 	}`
 
-	tmpl, err := template.New("eurekaTemlate").Parse(eurekaTemplate)
+	tmpl, err := template.New("eurekaTemplate").Parse(eurekaTemplate)
 	c.Assert(err, checker.IsNil)
 	buf := new(bytes.Buffer)
 	templateVars := map[string]string{
@@ -76,36 +73,28 @@ func (s *EurekaSuite) TestSimpleConfiguration(c *check.C) {
 	}
 	// add in eureka
 	err = tmpl.Execute(buf, templateVars)
-	resp, err := http.Post(eurekaURL+"/tests-integration-traefik", "application/json", strings.NewReader(buf.String()))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 204)
+
+	req, err := http.NewRequest(http.MethodPost, s.eurekaURL+"/tests-integration-traefik", strings.NewReader(buf.String()))
+	c.Assert(err, checker.IsNil)
+	req.Header.Set("Content-Type", "application/json")
+
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusNoContent))
+	c.Assert(err, checker.IsNil)
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Host:tests-integration-traefik") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Host:tests-integration-traefik"))
 	c.Assert(err, checker.IsNil)
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "tests-integration-traefik"
-	resp, err = client.Do(req)
 
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 200)
 
 	// TODO validate : run on 80
-	resp, err = http.Get("http://127.0.0.1:8000/")
-
 	// Expected a 404 as we did not configure anything
+	err = try.GetRequest("http://127.0.0.1:8000/", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
 }

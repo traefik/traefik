@@ -3,10 +3,11 @@ package safe
 import (
 	"context"
 	"fmt"
-	"github.com/cenk/backoff"
-	"github.com/containous/traefik/log"
 	"runtime/debug"
 	"sync"
+
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/log"
 )
 
 type routine struct {
@@ -107,11 +108,11 @@ func (p *Pool) Start() {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	p.ctx, p.cancel = context.WithCancel(p.baseCtx)
-	for _, routine := range p.routines {
+	for i := range p.routines {
 		p.waitGroup.Add(1)
-		routine.stop = make(chan bool, 1)
+		p.routines[i].stop = make(chan bool, 1)
 		Go(func() {
-			routine.goroutine(routine.stop)
+			p.routines[i].goroutine(p.routines[i].stop)
 			p.waitGroup.Done()
 		})
 	}

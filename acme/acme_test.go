@@ -222,14 +222,14 @@ func TestNoPreCheckOverride(t *testing.T) {
 		t.Errorf("Error in dnsOverrideDelay :%v", err)
 	}
 	if acme.PreCheckDNS != nil {
-		t.Errorf("Unexpected change to acme.PreCheckDNS when leaving DNS verification as is.")
+		t.Error("Unexpected change to acme.PreCheckDNS when leaving DNS verification as is.")
 	}
 }
 
 func TestSillyPreCheckOverride(t *testing.T) {
 	err := dnsOverrideDelay(-5)
 	if err == nil {
-		t.Errorf("Missing expected error in dnsOverrideDelay!")
+		t.Error("Missing expected error in dnsOverrideDelay!")
 	}
 }
 
@@ -240,7 +240,7 @@ func TestPreCheckOverride(t *testing.T) {
 		t.Errorf("Error in dnsOverrideDelay :%v", err)
 	}
 	if acme.PreCheckDNS == nil {
-		t.Errorf("No change to acme.PreCheckDNS when meant to be adding enforcing override function.")
+		t.Error("No change to acme.PreCheckDNS when meant to be adding enforcing override function.")
 	}
 }
 
@@ -271,9 +271,9 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 		t.Errorf("Error in buildACMEClient: %v", err)
 	}
 	if client == nil {
-		t.Errorf("No client from buildACMEClient!")
+		t.Error("No client from buildACMEClient!")
 	}
 	if acme.PreCheckDNS == nil {
-		t.Errorf("No change to acme.PreCheckDNS when meant to be adding enforcing override function.")
+		t.Error("No change to acme.PreCheckDNS when meant to be adding enforcing override function.")
 	}
 }

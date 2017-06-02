@@ -6,7 +6,9 @@ TRAEFIK_ENVS := \
 	-e TESTFLAGS \
 	-e VERBOSE \
 	-e VERSION \
-	-e CODENAME
+	-e CODENAME \
+	-e TESTDIRS \
+	-e CI
 
 SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/' | grep -v '^integration/vendor/')
 
@@ -14,13 +16,16 @@ BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"
 
 GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
-TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(GIT_BRANCH))
+TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"containous/traefik")
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -v "/var/run/docker.sock:/var/run/docker.sock")
 
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
-DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) -it $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
+DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
+DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
+DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
+
 
 print-%: ; @echo $*=$($*)
 
@@ -34,6 +39,24 @@ binary: generate-webui build ## build the linux binary
 
 crossbinary: generate-webui build ## cross build the non-linux binaries
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate crossbinary
+
+crossbinary-parallel:
+	$(MAKE) generate-webui
+	$(MAKE) build crossbinary-default crossbinary-others
+
+crossbinary-default: generate-webui build
+	$(DOCKER_RUN_TRAEFIK_NOTTY) ./script/make.sh generate crossbinary-default
+
+crossbinary-default-parallel:
+	$(MAKE) generate-webui
+	$(MAKE) build crossbinary-default
+
+crossbinary-others: generate-webui build
+	$(DOCKER_RUN_TRAEFIK_NOTTY) ./script/make.sh generate crossbinary-others
+
+crossbinary-others-parallel:
+	$(MAKE) generate-webui
+	$(MAKE) build crossbinary-others
 
 test: build ## run the unit and integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit binary test-integration
@@ -82,5 +105,11 @@ lint:
 
 fmt:
 	gofmt -s -l -w $(SRCS)
+
+pull-images:
+	for f in $(shell find ./integration/resources/compose/ -type f); do \
+		docker-compose -f $$f pull; \
+	done
+
 help: ## this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
