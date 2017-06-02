@@ -260,12 +260,13 @@ func (ep *EntryPoints) Type() string {
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
-	Network  string
-	Address  string
-	TLS      *TLS
-	Redirect *Redirect
-	Auth     *types.Auth
-	Compress bool
+	Network              string
+	Address              string
+	TLS                  *TLS
+	Redirect             *Redirect
+	Auth                 *types.Auth
+	WhitelistSourceRange []string
+	Compress             bool
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL

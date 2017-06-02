@@ -210,6 +210,13 @@ func (server *Server) startHTTPServers() {
 		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
 			serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 		}
+		if len(server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange) > 0 {
+			ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange)
+			if err != nil {
+				log.Fatal("Error starting server: ", err)
+			}
+			serverMiddlewares = append(serverMiddlewares, ipWhitelistMiddleware)
+		}
 		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], serverMiddlewares...)
 		if err != nil {
 			log.Fatal("Error preparing server: ", err)
