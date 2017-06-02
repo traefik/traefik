@@ -279,6 +279,12 @@ To write JSON format logs, specify `json` as the format:
 #   address = ":80"
 #   compress = true
 
+# To enable IP whitelisting at the entrypoint level:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   whiteListSourceRange = ["127.0.0.1/32"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
