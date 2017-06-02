@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/codegangsta/negroni"
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/healthcheck"
@@ -515,4 +516,63 @@ type okHTTPHandler struct{}
 
 func (okHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+}
+
+func TestServerEntrypointWhitelistConfig(t *testing.T) {
+	tests := []struct {
+		desc           string
+		entrypoint     *EntryPoint
+		wantMiddleware bool
+	}{
+		{
+			desc: "no whitelist middleware if no config on entrypoint",
+			entrypoint: &EntryPoint{
+				Address: ":8080",
+			},
+			wantMiddleware: false,
+		},
+		{
+			desc: "whitelist middleware should be added if configured on entrypoint",
+			entrypoint: &EntryPoint{
+				Address: ":8080",
+				WhitelistSourceRange: []string{
+					"127.0.0.1/32",
+				},
+			},
+			wantMiddleware: true,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			srv := Server{
+				globalConfiguration: GlobalConfiguration{
+					EntryPoints: map[string]*EntryPoint{
+						"test": test.entrypoint,
+					},
+				},
+			}
+
+			srv.serverEntryPoints = srv.buildEntryPoints(srv.globalConfiguration)
+			srvEntryPoint := srv.setupServerEntryPoint("test", srv.serverEntryPoints["test"])
+			handler := srvEntryPoint.httpServer.Handler.(*negroni.Negroni)
+			found := false
+			for _, handler := range handler.Handlers() {
+				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhitelister)(nil)) {
+					found = true
+				}
+			}
+
+			if found && !test.wantMiddleware {
+				t.Errorf("ip whitelist middleware was installed even though it should not")
+			}
+
+			if !found && test.wantMiddleware {
+				t.Errorf("ip whitelist middleware was not installed even though it should have")
+			}
+		})
+	}
 }
