@@ -23,6 +23,7 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
+	"github.com/containous/traefik/provider/webapi"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
 )
@@ -71,6 +72,7 @@ type GlobalConfiguration struct {
 	ECS                       *ecs.Provider           `description:"Enable ECS backend"`
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend"`
+	WebAPI                    *webapi.Provider        `description:"Enable WebAPI backend"`
 }
 
 // DefaultEntryPoints holds default entry points

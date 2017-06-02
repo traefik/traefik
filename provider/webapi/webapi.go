@@ -1,4 +1,4 @@
-package provider
+package webapi
 
 import (
 	"encoding/json"
@@ -13,8 +13,8 @@ import (
 	"github.com/containous/traefik/types"
 )
 
-// WebAPI holds configurations of the WebAPI provider.
-type WebAPI struct {
+// Provider holds configurations of the Provider provider.
+type Provider struct {
 	Endpoint      string `description:"Comma sepparated server endpoints"`
 	Cluster       string `description:"Web cluster"`
 	Watch         bool   `description:"Watch provider"`
@@ -24,7 +24,7 @@ type WebAPI struct {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *WebAPI) Provide(configurationChan chan<- types.ConfigMessage, _ *safe.Pool, _ types.Constraints) error {
+func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, _ *safe.Pool, _ types.Constraints) error {
 	if provider.CheckInterval == 0 {
 		provider.CheckInterval = 30
 	}
@@ -49,7 +49,7 @@ func (provider *WebAPI) Provide(configurationChan chan<- types.ConfigMessage, _ 
 	return err
 }
 
-func (provider *WebAPI) loadVersion() (verson int) {
+func (provider *Provider) loadVersion() (verson int) {
 	data, err := provider.request("/traefik/version")
 	if err != nil {
 		log.Errorf("webapi > load version failed: %v", err)
@@ -68,7 +68,7 @@ func (provider *WebAPI) loadVersion() (verson int) {
 	return v.Version
 }
 
-func (provider *WebAPI) loadConfig() (cfg types.ConfigMessage, err error) {
+func (provider *Provider) loadConfig() (cfg types.ConfigMessage, err error) {
 	var data []byte
 	data, err = provider.request("/traefik/config")
 	if err != nil {
@@ -86,7 +86,7 @@ func (provider *WebAPI) loadConfig() (cfg types.ConfigMessage, err error) {
 	return
 }
 
-func (provider *WebAPI) watch(configurationChan chan<- types.ConfigMessage) {
+func (provider *Provider) watch(configurationChan chan<- types.ConfigMessage) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Errorf("webapi > refresh panic: %v", r)
@@ -107,7 +107,7 @@ func (provider *WebAPI) watch(configurationChan chan<- types.ConfigMessage) {
 	}
 }
 
-func (provider *WebAPI) request(path string) (data []byte, err error) {
+func (provider *Provider) request(path string) (data []byte, err error) {
 	servers := strings.Split(provider.Endpoint, ",")
 	if len(servers) == 0 {
 		err = errors.New("webapi > endpoint must be configured")
