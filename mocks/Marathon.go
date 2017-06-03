@@ -1,11 +1,12 @@
 package mocks
 
-import "github.com/gambol99/go-marathon"
-import "github.com/stretchr/testify/mock"
+import (
+	"net/url"
+	"time"
 
-import "net/url"
-
-import "time"
+	"github.com/gambol99/go-marathon"
+	"github.com/stretchr/testify/mock"
+)
 
 // Marathon is a mock of marathon.Marathon
 type Marathon struct {
