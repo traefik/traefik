@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestStripPrefix(t *testing.T) {
@@ -102,10 +102,9 @@ func TestStripPrefix(t *testing.T) {
 				}),
 			}
 
-			req, err := http.NewRequest(http.MethodGet, "http://localhost"+test.path, nil)
-			require.NoError(t, err, "%s: unexpected error.", test.desc)
-
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
 			resp := &httptest.ResponseRecorder{Code: http.StatusOK}
+
 			handler.ServeHTTP(resp, req)
 
 			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
