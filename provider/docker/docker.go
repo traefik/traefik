@@ -260,6 +260,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getMaxConnAmount":            p.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     p.getMaxConnExtractorFunc,
 		"getSticky":                   p.getSticky,
+    "getCookieName":               p.getCookieName,
 		"getIsBackendLBSwarm":         p.getIsBackendLBSwarm,
 		"hasServices":                 p.hasServices,
 		"getServiceNames":             p.getServiceNames,
@@ -634,6 +635,13 @@ func (p *Provider) getSticky(container dockerData) string {
 		return label
 	}
 	return "false"
+}
+
+func (p *Provider) getCookieName(container dockerData) string {
+  if label, err := getLabel(container, "traefik.backend.loadbalancer.cookiename"); err == nil {
+    return label
+  }
+  return "_TRAEFIK_BACKEND"
 }
 
 func (p *Provider) getIsBackendLBSwarm(container dockerData) string {
