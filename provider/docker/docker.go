@@ -260,7 +260,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getMaxConnAmount":            p.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     p.getMaxConnExtractorFunc,
 		"getSticky":                   p.getSticky,
-    "getCookieName":               p.getCookieName,
+		"getCookieName":               p.getCookieName,
 		"getIsBackendLBSwarm":         p.getIsBackendLBSwarm,
 		"hasServices":                 p.hasServices,
 		"getServiceNames":             p.getServiceNames,

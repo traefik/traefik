@@ -30,7 +30,7 @@ type MaxConn struct {
 type LoadBalancer struct {
 	Method     string `json:"method,omitempty"`
 	Sticky     bool   `json:"sticky,omitempty"`
-  CookieName string `json:"cookiename,omitempty"`
+	CookieName string `json:"cookiename,omitempty"`
 }
 
 // CircuitBreaker holds circuit breaker configuration.
