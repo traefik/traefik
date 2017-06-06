@@ -638,10 +638,10 @@ func (p *Provider) getSticky(container dockerData) string {
 }
 
 func (p *Provider) getCookieName(container dockerData) string {
-  if label, err := getLabel(container, "traefik.backend.loadbalancer.cookiename"); err == nil {
-    return label
-  }
-  return "_TRAEFIK_BACKEND"
+	if label, err := getLabel(container, "traefik.backend.loadbalancer.cookiename"); err == nil {
+		return label
+	}
+	return "_TRAEFIK_BACKEND"
 }
 
 func (p *Provider) getIsBackendLBSwarm(container dockerData) string {
