@@ -40,7 +40,7 @@ func (s *StripPrefixRegex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 
 		r.URL.Path = r.URL.Path[len(prefix.Path):]
-		r.Header[forwardedPrefixHeader] = []string{prefix.Path}
+		r.Header.Add(ForwardedPrefixHeader, prefix.Path)
 		r.RequestURI = r.URL.RequestURI()
 		s.Handler.ServeHTTP(w, r)
 		return

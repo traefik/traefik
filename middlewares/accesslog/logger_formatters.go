@@ -12,8 +12,7 @@ import (
 const commonLogTimeFormat = "02/Jan/2006:15:04:05 -0700"
 
 // CommonLogFormatter provides formatting in the Traefik common log format
-type CommonLogFormatter struct {
-}
+type CommonLogFormatter struct{}
 
 //Format formats the log entry in the Traefik common log format
 func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {

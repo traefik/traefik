@@ -18,7 +18,7 @@ for f in "${files[@]}"; do
 done
 
 if [ ${#errors[@]} -eq 0 ]; then
-	echo 'Congratulations!  All Go source files and docs have been checked for common mispellings.'
+	echo 'Congratulations!  All Go source files and docs have been checked for common misspellings.'
 else
 	{
 		echo "Errors from misspell:"
