@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -42,7 +43,8 @@ type GlobalConfiguration struct {
 	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
-	AccessLogsFile            string                  `description:"Access logs file"`
+	AccessLogsFile            string                  `description:"(Deprecated) Access logs file"` // Deprecated
+	AccessLog                 *types.AccessLog        `description:"Access log settings"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
@@ -88,7 +90,7 @@ func (dep *DefaultEntryPoints) String() string {
 func (dep *DefaultEntryPoints) Set(value string) error {
 	entrypoints := strings.Split(value, ",")
 	if len(entrypoints) == 0 {
-		return errors.New("Bad DefaultEntryPoints format: " + value)
+		return fmt.Errorf("bad DefaultEntryPoints format: %s", value)
 	}
 	for _, entrypoint := range entrypoints {
 		*dep = append(*dep, entrypoint)
@@ -127,7 +129,7 @@ func (ep *EntryPoints) Set(value string) error {
 	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?")
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
-		return errors.New("Bad EntryPoints format: " + value)
+		return fmt.Errorf("bad EntryPoints format: %s", value)
 	}
 	matchResult := match[0]
 	result := make(map[string]string)
@@ -269,10 +271,10 @@ func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
 			if errKey == nil {
 				isAPath = true
 			} else {
-				return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
+				return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
 			}
 		} else if errKey == nil {
-			return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
+			return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
 		}
 
 		cert := tls.Certificate{}
@@ -314,7 +316,7 @@ func (certs *Certificates) Set(value string) error {
 	for _, certificate := range certificates {
 		files := strings.Split(certificate, ",")
 		if len(files) != 2 {
-			return errors.New("Bad certificates format: " + value)
+			return fmt.Errorf("bad certificates format: %s", value)
 		}
 		*certs = append(*certs, Certificate{
 			CertFile: files[0],
@@ -456,6 +458,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDynamoDB.TableName = "traefik"
 	defaultDynamoDB.Watch = true
 
+	// default AccessLog
+	defaultAccessLog := types.AccessLog{
+		Format:   accesslog.CommonFormat,
+		FilePath: "",
+	}
+
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
 		File:          &defaultFile,
@@ -473,6 +481,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		DynamoDB:      &defaultDynamoDB,
 		Retry:         &Retry{},
 		HealthCheck:   &HealthCheckConfig{},
+		AccessLog:     &defaultAccessLog,
 	}
 
 	//default Rancher

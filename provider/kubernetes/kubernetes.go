@@ -29,6 +29,10 @@ const (
 	annotationFrontendRuleType = "traefik.frontend.rule.type"
 	ruleTypePathPrefix         = "PathPrefix"
 
+	annotationKubernetesIngressClass         = "kubernetes.io/ingress.class"
+	annotationKubernetesAuthRealm            = "ingress.kubernetes.io/auth-realm"
+	annotationKubernetesAuthType             = "ingress.kubernetes.io/auth-type"
+	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
 	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
 )
 
@@ -127,11 +131,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	ingresses := k8sClient.GetIngresses(p.Namespaces)
 
 	templateObjects := types.Configuration{
-		map[string]*types.Backend{},
-		map[string]*types.Frontend{},
+		Backends:  map[string]*types.Backend{},
+		Frontends: map[string]*types.Frontend{},
 	}
 	for _, i := range ingresses {
-		ingressClass := i.Annotations["kubernetes.io/ingress.class"]
+		ingressClass := i.Annotations[annotationKubernetesIngressClass]
 
 		if !shouldProcessIngress(ingressClass) {
 			continue
@@ -139,7 +143,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
-				log.Warnf("Error in ingress: HTTP is nil")
+				log.Warn("Error in ingress: HTTP is nil")
 				continue
 			}
 			for _, pa := range r.HTTP.Paths {
@@ -166,7 +170,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				default:
 					log.Warnf("Unknown value '%s' for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
 				}
-				if realm := i.Annotations["ingress.kubernetes.io/auth-realm"]; realm != "" && realm != traefikDefaultRealm {
+				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
 					return nil, errors.New("no realm customization supported")
 				}
 
@@ -291,14 +295,14 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
-	authType, exists := i.Annotations["ingress.kubernetes.io/auth-type"]
+	authType, exists := i.Annotations[annotationKubernetesAuthType]
 	if !exists {
 		return nil, nil
 	}
 	if strings.ToLower(authType) != "basic" {
 		return nil, fmt.Errorf("unsupported auth-type: %q", authType)
 	}
-	authSecret := i.Annotations["ingress.kubernetes.io/auth-secret"]
+	authSecret := i.Annotations[annotationKubernetesAuthSecret]
 	if authSecret == "" {
 		return nil, errors.New("auth-secret annotation must be set")
 	}

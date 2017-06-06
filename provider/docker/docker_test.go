@@ -469,7 +469,7 @@ func TestDockerGetLabel(t *testing.T) {
 	}{
 		{
 			container: containerJSON(),
-			expected:  "Label not found:",
+			expected:  "label not found:",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
@@ -507,7 +507,7 @@ func TestDockerGetLabels(t *testing.T) {
 		{
 			container:      containerJSON(),
 			expectedLabels: map[string]string{},
-			expectedError:  "Label not found:",
+			expectedError:  "label not found:",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
@@ -516,7 +516,7 @@ func TestDockerGetLabels(t *testing.T) {
 			expectedLabels: map[string]string{
 				"foo": "fooz",
 			},
-			expectedError: "Label not found: bar",
+			expectedError: "label not found: bar",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
