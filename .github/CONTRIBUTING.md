@@ -12,7 +12,7 @@ You need to run the `binary` target. This will create binaries for Linux platfor
 $ make binary
 docker build -t "traefik-dev:no-more-godep-ever" -f build.Dockerfile .
 Sending build context to Docker daemon 295.3 MB
-Step 0 : FROM golang:1.7
+Step 0 : FROM golang:1.8
  ---> 8c6473912976
 Step 1 : RUN go get github.com/Masterminds/glide
 [...]
@@ -30,10 +30,10 @@ traefik*
 
 ###### Setting up your `go` environment
 
-- You need `go` v1.7+
-- It is recommended you clone Træfɪk into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
+- You need `go` v1.8+
+- It is recommended you clone Træfik into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
 - This will allow your `GOPATH` and `PATH` variable to be set to `~/go` via:
-```
+```bash
 $ export GOPATH=~/go
 $ export PATH=$PATH:$GOPATH/bin
 ```
@@ -64,11 +64,7 @@ $ ( cd integration && ../script/glide.sh get github.com/baz/quuz )
 # generate (Only required to integrate other components such as web dashboard)
 $ go generate
 # Standard go build
-$ go build
-# Using gox to build multiple platform
-$ gox "linux darwin" "386 amd64 arm" \
-    -output="dist/traefik_{{.OS}}-{{.Arch}}" \
-    ./cmd/traefik
+$ go build ./cmd/traefik
 # run other commands like tests
 ```
 
@@ -95,7 +91,7 @@ Test success
 ```
 
 For development purposes, you can specify which tests to run by using:
-```
+```bash
 # Run every tests in the MyTest suite
 TESTFLAGS="-check.f MyTestSuite" make test-integration
 
@@ -124,7 +120,7 @@ The [documentation site](http://docs.traefik.io/) is built with [mkdocs](http://
 
 First make sure you have python and pip installed
 
-```
+```shell
 $ python --version
 Python 2.7.2
 $ pip --version
@@ -133,13 +129,13 @@ pip 1.5.2
 
 Then install mkdocs with pip
 
-```
+```shell
 $ pip install mkdocs
 ```
 
 To test documentation locally run `mkdocs serve` in the root directory, this should start a server locally to preview your changes.
 
-```
+```shell
 $ mkdocs serve
 INFO    -  Building documentation...
 WARNING -  Config value: 'theme'. Warning: The theme 'united' will be removed in an upcoming MkDocs release. See http://www.mkdocs.org/about/release-notes/ for more details

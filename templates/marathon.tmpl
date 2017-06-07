@@ -20,6 +20,11 @@
       [backends."backend{{getFrontendBackend . }}".circuitbreaker]
         expression = "{{getCircuitBreakerExpression . }}"
 {{end}}
+{{ if hasHealthCheckLabels . }}
+      [backends."backend{{getFrontendBackend . }}".healthcheck]
+        path = "{{getHealthCheckPath . }}"
+        interval = "{{getHealthCheckInterval . }}"
+{{end}}
 {{end}}
 
 [frontends]{{range .Applications}}

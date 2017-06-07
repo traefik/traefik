@@ -25,13 +25,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	if err != nil {
 		return fmt.Errorf("Failed to Connect to KV store: %v", err)
 	}
-	p.Kvclient = store
+	p.SetKVClient(store)
 	return p.Provider.Provide(configurationChan, pool, constraints)
 }
 
 // CreateStore creates the KV store
 func (p *Provider) CreateStore() (store.Store, error) {
-	p.StoreType = store.BOLTDB
+	p.SetStoreType(store.BOLTDB)
 	boltdb.Register()
 	return p.Provider.CreateStore()
 }

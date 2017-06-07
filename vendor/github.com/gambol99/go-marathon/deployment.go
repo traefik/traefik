@@ -42,8 +42,9 @@ type DeploymentID struct {
 
 // DeploymentStep is a step in the application deployment plan
 type DeploymentStep struct {
-	Action string `json:"action"`
-	App    string `json:"app"`
+	Action                string                  `json:"action"`
+	App                   string                  `json:"app"`
+	ReadinessCheckResults *[]ReadinessCheckResult `json:"readinessCheckResults,omitempty"`
 }
 
 // StepActions is a series of deployment steps

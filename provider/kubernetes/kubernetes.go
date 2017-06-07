@@ -1,6 +1,9 @@
 package kubernetes
 
 import (
+	"bufio"
+	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -16,6 +19,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
 )
 
@@ -23,11 +27,16 @@ var _ provider.Provider = (*Provider)(nil)
 
 const (
 	annotationFrontendRuleType = "traefik.frontend.rule.type"
-	ruleTypePathPrefixStrip    = "PathPrefixStrip"
-	ruleTypePathStrip          = "PathStrip"
-	ruleTypePath               = "Path"
 	ruleTypePathPrefix         = "PathPrefix"
+
+	annotationKubernetesIngressClass         = "kubernetes.io/ingress.class"
+	annotationKubernetesAuthRealm            = "ingress.kubernetes.io/auth-realm"
+	annotationKubernetesAuthType             = "ingress.kubernetes.io/auth-type"
+	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
+	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
 )
+
+const traefikDefaultRealm = "traefik"
 
 // Provider holds configurations of the provider.
 type Provider struct {
@@ -122,11 +131,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	ingresses := k8sClient.GetIngresses(p.Namespaces)
 
 	templateObjects := types.Configuration{
-		map[string]*types.Backend{},
-		map[string]*types.Frontend{},
+		Backends:  map[string]*types.Backend{},
+		Frontends: map[string]*types.Frontend{},
 	}
 	for _, i := range ingresses {
-		ingressClass := i.Annotations["kubernetes.io/ingress.class"]
+		ingressClass := i.Annotations[annotationKubernetesIngressClass]
 
 		if !shouldProcessIngress(ingressClass) {
 			continue
@@ -134,7 +143,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
-				log.Warnf("Error in ingress: HTTP is nil")
+				log.Warn("Error in ingress: HTTP is nil")
 				continue
 			}
 			for _, pa := range r.HTTP.Paths {
@@ -150,22 +159,36 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				PassHostHeader := p.getPassHostHeader()
 
-				passHostHeaderAnnotation := i.Annotations["traefik.frontend.passHostHeader"]
-				switch passHostHeaderAnnotation {
-				case "true":
-					PassHostHeader = true
-				case "false":
+				passHostHeaderAnnotation, ok := i.Annotations["traefik.frontend.passHostHeader"]
+				switch {
+				case !ok:
+					// No op.
+				case passHostHeaderAnnotation == "false":
 					PassHostHeader = false
+				case passHostHeaderAnnotation == "true":
+					PassHostHeader = true
 				default:
-					log.Warnf("Unknown value of %s for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
+					log.Warnf("Unknown value '%s' for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
+				}
+				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
+					return nil, errors.New("no realm customization supported")
 				}
 
+				witelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
+				whitelistSourceRange := provider.SplitAndTrimString(witelistSourceRangeAnnotation)
+
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
+					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
+					if err != nil {
+						return nil, err
+					}
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
-						Backend:        r.Host + pa.Path,
-						PassHostHeader: PassHostHeader,
-						Routes:         make(map[string]types.Route),
-						Priority:       len(pa.Path),
+						Backend:              r.Host + pa.Path,
+						PassHostHeader:       PassHostHeader,
+						Routes:               make(map[string]types.Route),
+						Priority:             len(pa.Path),
+						BasicAuth:            basicAuthCreds,
+						WhitelistSourceRange: whitelistSourceRange,
 					}
 				}
 				if len(r.Host) > 0 {
@@ -183,12 +206,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				if len(pa.Path) > 0 {
-					ruleType, unknown := getRuleTypeFromAnnotation(i.Annotations)
-					switch {
-					case unknown:
-						log.Warnf("Unknown RuleType '%s' for Ingress %s/%s, falling back to PathPrefix", ruleType, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
-						fallthrough
-					case ruleType == "":
+					ruleType := i.Annotations[annotationFrontendRuleType]
+					if ruleType == "" {
 						ruleType = ruleTypePathPrefix
 					}
 
@@ -243,28 +262,25 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							}
 
 							if !exists {
-								log.Errorf("Endpoints not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-								continue
+								log.Warnf("Endpoints not found for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								break
 							}
 
 							if len(endpoints.Subsets) == 0 {
-								log.Warnf("Service endpoints not found for %s/%s, falling back to Service ClusterIP", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
-								templateObjects.Backends[r.Host+pa.Path].Servers[string(service.UID)] = types.Server{
-									URL:    protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port)),
-									Weight: 1,
-								}
-							} else {
-								for _, subset := range endpoints.Subsets {
-									for _, address := range subset.Addresses {
-										url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
-										name := url
-										if address.TargetRef != nil && address.TargetRef.Name != "" {
-											name = address.TargetRef.Name
-										}
-										templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
-											URL:    url,
-											Weight: 1,
-										}
+								log.Warnf("Endpoints not available for %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								break
+							}
+
+							for _, subset := range endpoints.Subsets {
+								for _, address := range subset.Addresses {
+									url := protocol + "://" + address.IP + ":" + strconv.Itoa(endpointPortNumber(port, subset.Ports))
+									name := url
+									if address.TargetRef != nil && address.TargetRef.Name != "" {
+										name = address.TargetRef.Name
+									}
+									templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+										URL:    url,
+										Weight: 1,
 									}
 								}
 							}
@@ -276,6 +292,56 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 	}
 	return &templateObjects, nil
+}
+
+func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
+	authType, exists := i.Annotations[annotationKubernetesAuthType]
+	if !exists {
+		return nil, nil
+	}
+	if strings.ToLower(authType) != "basic" {
+		return nil, fmt.Errorf("unsupported auth-type: %q", authType)
+	}
+	authSecret := i.Annotations[annotationKubernetesAuthSecret]
+	if authSecret == "" {
+		return nil, errors.New("auth-secret annotation must be set")
+	}
+	basicAuthCreds, err := loadAuthCredentials(i.Namespace, authSecret, k8sClient)
+	if err != nil {
+		return nil, err
+	}
+	if len(basicAuthCreds) == 0 {
+		return nil, errors.New("secret file without credentials")
+	}
+	return basicAuthCreds, nil
+}
+
+func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]string, error) {
+	secret, ok, err := k8sClient.GetSecret(namespace, secretName)
+	switch { // keep order of case conditions
+	case err != nil:
+		return nil, fmt.Errorf("failed to fetch secret %q/%q: %s", namespace, secretName, err)
+	case !ok:
+		return nil, fmt.Errorf("secret %q/%q not found", namespace, secretName)
+	case secret == nil:
+		return nil, errors.New("secret data must not be nil")
+	case len(secret.Data) != 1:
+		return nil, errors.New("secret must contain single element only")
+	default:
+	}
+	var firstSecret []byte
+	for _, v := range secret.Data {
+		firstSecret = v
+		break
+	}
+	creds := make([]string, 0)
+	scanner := bufio.NewScanner(bytes.NewReader(firstSecret))
+	for scanner.Scan() {
+		if cred := scanner.Text(); cred != "" {
+			creds = append(creds, cred)
+		}
+	}
+	return creds, nil
 }
 
 func endpointPortNumber(servicePort v1.ServicePort, endpointPorts []v1.EndpointPort) int {
@@ -325,25 +391,4 @@ func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Config
 		log.Error(err)
 	}
 	return configuration
-}
-
-func getRuleTypeFromAnnotation(annotations map[string]string) (ruleType string, unknown bool) {
-	ruleType = annotations[annotationFrontendRuleType]
-	for _, knownRuleType := range []string{
-		ruleTypePathPrefixStrip,
-		ruleTypePathStrip,
-		ruleTypePath,
-		ruleTypePathPrefix,
-	} {
-		if strings.ToLower(ruleType) == strings.ToLower(knownRuleType) {
-			return knownRuleType, false
-		}
-	}
-
-	if ruleType != "" {
-		// Annotation is set but does not match anything we know.
-		unknown = true
-	}
-
-	return ruleType, unknown
 }

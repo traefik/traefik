@@ -1,20 +1,20 @@
 nginx1:
-  image: nginx
+  image: nginx:alpine
   ports:
     - "8881:80"
 nginx2:
-  image: nginx
+  image: nginx:alpine
   ports:
     - "8882:80"
 nginx3:
-  image: nginx
+  image: nginx:alpine
   ports:
     - "8883:80"
 nginx4:
-  image: nginx
+  image: nginx:alpine
   ports:
     - "8884:80"
 nginx5:
-  image: nginx
+  image: nginx:alpine
   ports:
     - "8885:80"

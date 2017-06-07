@@ -2,7 +2,7 @@ package docker
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"math"
 	"net"
 	"net/http"
@@ -272,6 +272,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServicePassHostHeader":    p.getServicePassHostHeader,
 		"getServicePriority":          p.getServicePriority,
 		"getServiceBackend":           p.getServiceBackend,
+		"getWhitelistSourceRange":     p.getWhitelistSourceRange,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -523,6 +524,11 @@ func (p *Provider) containerFilter(container dockerData) bool {
 		return false
 	}
 
+	if len(p.getFrontendRule(container)) == 0 {
+		log.Debugf("Filtering container with empty frontend rule %s", container.Name)
+		return false
+	}
+
 	return true
 }
 
@@ -540,8 +546,10 @@ func (p *Provider) getFrontendRule(container dockerData) string {
 	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
 		return "Host:" + p.getSubDomain(labels["com.docker.compose.service"]+"."+labels["com.docker.compose.project"]) + "." + p.Domain
 	}
-
-	return "Host:" + p.getSubDomain(container.ServiceName) + "." + p.Domain
+	if len(p.Domain) > 0 {
+		return "Host:" + p.getSubDomain(container.ServiceName) + "." + p.Domain
+	}
+	return ""
 }
 
 func (p *Provider) getBackend(container dockerData) string {
@@ -594,9 +602,23 @@ func (p *Provider) getPort(container dockerData) string {
 	if label, err := getLabel(container, "traefik.port"); err == nil {
 		return label
 	}
-	for key := range container.NetworkSettings.Ports {
-		return key.Port()
+
+	// See iteration order in https://blog.golang.org/go-maps-in-action
+	var ports []nat.Port
+	for p := range container.NetworkSettings.Ports {
+		ports = append(ports, p)
 	}
+
+	less := func(i, j nat.Port) bool {
+		return i.Int() < j.Int()
+	}
+	nat.Sort(ports, less)
+
+	if len(ports) > 0 {
+		min := ports[0]
+		return min.Port()
+	}
+
 	return ""
 }
 
@@ -642,6 +664,15 @@ func (p *Provider) getPassHostHeader(container dockerData) string {
 	return "true"
 }
 
+func (p *Provider) getWhitelistSourceRange(container dockerData) []string {
+	var whitelistSourceRange []string
+
+	if whitelistSourceRangeLabel, err := getLabel(container, "traefik.frontend.whitelistSourceRange"); err == nil {
+		whitelistSourceRange = provider.SplitAndTrimString(whitelistSourceRangeLabel)
+	}
+	return whitelistSourceRange
+}
+
 func (p *Provider) getPriority(container dockerData) string {
 	if priority, err := getLabel(container, "traefik.frontend.priority"); err == nil {
 		return priority
@@ -674,7 +705,7 @@ func getLabel(container dockerData, label string) (string, error) {
 			return value, nil
 		}
 	}
-	return "", errors.New("Label not found:" + label)
+	return "", fmt.Errorf("label not found: %s", label)
 }
 
 func getLabels(container dockerData, labels []string) (map[string]string, error) {
@@ -684,7 +715,7 @@ func getLabels(container dockerData, labels []string) (map[string]string, error)
 		foundLabel, err := getLabel(container, label)
 		// Error out only if one of them is defined.
 		if err != nil {
-			globalErr = errors.New("Label not found: " + label)
+			globalErr = fmt.Errorf("label not found: %s", label)
 			continue
 		}
 		foundLabels[label] = foundLabel

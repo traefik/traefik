@@ -70,15 +70,15 @@ func TestHelperProcess(t *testing.T) {
 		argsStr := strings.Join(args, " ")
 		switch argsStr {
 		case "an exitCode 127":
-			fmt.Fprintf(os.Stderr, "an error has occurred with exitCode 127")
+			fmt.Fprint(os.Stderr, "an error has occurred with exitCode 127")
 			os.Exit(127)
 		case "an error":
-			fmt.Fprintf(os.Stderr, "an error has occurred")
+			fmt.Fprint(os.Stderr, "an error has occurred")
 			os.Exit(1)
 		case "it works":
-			fmt.Fprintf(os.Stdout, "it works")
+			fmt.Fprint(os.Stdout, "it works")
 		default:
-			fmt.Fprintf(os.Stdout, "no arguments")
+			fmt.Fprint(os.Stdout, "no arguments")
 		}
 	default:
 		fmt.Fprintf(os.Stderr, "Command %s not found.", cmd)

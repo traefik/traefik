@@ -13,6 +13,9 @@ defaultEntryPoints = ["https"]
      CertFile = "fixtures/https/snitest.org.cert"
      KeyFile = "fixtures/https/snitest.org.key"
 
+[web]
+  address = ":8080"
+
 [file]
 
 [backends]

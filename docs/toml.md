@@ -42,6 +42,7 @@
 
 # Access logs file
 #
+# Deprecated - see [accessLog] lower down
 # Optional
 #
 # accessLogsFile = "log/access.log"
@@ -105,9 +106,9 @@
 
 ### Constraints
 
-In a micro-service architecture, with a central service discovery, setting constraints limits Træfɪk scope to a smaller number of routes.
+In a micro-service architecture, with a central service discovery, setting constraints limits Træfik scope to a smaller number of routes.
 
-Træfɪk filters services according to service attributes/tags set in your configuration backends.
+Træfik filters services according to service attributes/tags set in your configuration backends.
 
 Supported backends:
 
@@ -117,12 +118,13 @@ Supported backends:
 - Zookeeper
 - Etcd
 - Consul Catalog
+- Rancher
 
 Supported filters:
 
-- ```tag```
+- `tag`
 
-```
+```toml
 # Constraints definition
 #
 # Optional
@@ -148,6 +150,24 @@ Supported filters:
 # [consulCatalog]
 #   endpoint = 127.0.0.1:8500
 #   constraints = ["tag==api", "tag!=v*-beta"]
+```
+
+## Access log definition
+
+The standard access log uses the textual Common Log Format (CLF), extended with additional fields.
+Alternatively logs can be written in JSON. 
+Using the default CLF option is simple, e.g.
+
+```toml
+[accessLog]
+  filePath = "/path/to/access.log"
+```
+
+To write JSON format logs, specify `json` as the format:
+```toml
+[accessLog]
+  filePath   = "/path/to/access.log"
+  format     = "json"
 ```
 
 ## Entrypoints definition
@@ -267,6 +287,27 @@ Supported filters:
 # Default: (number servers in backend) -1
 #
 # attempts = 3
+```
+
+## Health check configuration
+```toml
+# Enable custom health check options.
+#
+# Optional
+#
+[healthcheck]
+
+# Set the default health check interval. Will only be effective if health check
+# paths are defined. Given provider-specific support, the value may be
+# overridden on a per-backend basis.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
+#
+# Optional
+# Default: "30s"
+#
+# interval = "30s"
 ```
 
 ## ACME (Let's Encrypt) configuration
@@ -408,7 +449,7 @@ entryPoint = "https"
 
 ## File backend
 
-Like any other reverse proxy, Træfɪk can be configured with a file. You have two choices:
+Like any other reverse proxy, Træfik can be configured with a file. You have two choices:
 
 - simply add your configuration at the end of the global configuration file `traefik.toml`:
 
@@ -445,7 +486,7 @@ defaultEntryPoints = ["http", "https"]
     url = "http://172.17.0.3:80"
     weight = 1
   [backends.backend2]
-    [backends.backend1.maxconn]
+    [backends.backend2.maxconn]
       amount = 10
       extractorfunc = "request.host"
     [backends.backend2.LoadBalancer]
@@ -466,6 +507,13 @@ defaultEntryPoints = ["http", "https"]
   backend = "backend1"
   passHostHeader = true
   priority = 10
+
+  # restrict access to this frontend to the specified list of IPv4/IPv6 CIDR Nets
+  # an unset or empty list allows all Source-IPs to access
+  # if one of the Net-Specifications are invalid, the whole list is invalid
+  # and allows all Source-IPs to access.
+  whitelistSourceRange = ["10.42.0.0/16", "152.89.1.33/32", "afed:be44::/16"]
+
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host:{subdomain:[a-z]+}.localhost"
@@ -512,7 +560,7 @@ filename = "rules.toml"
     url = "http://172.17.0.3:80"
     weight = 1
   [backends.backend2]
-    [backends.backend1.maxconn]
+    [backends.backend2.maxconn]
       amount = 10
       extractorfunc = "request.host"
     [backends.backend2.LoadBalancer]
@@ -542,7 +590,7 @@ filename = "rules.toml"
     rule = "Path:/test"
 ```
 
-If you want Træfɪk to watch file changes automatically, just add:
+If you want Træfik to watch file changes automatically, just add:
 
 ```toml
 [file]
@@ -607,7 +655,7 @@ address = ":8080"
 
 - `/ping`: `GET` simple endpoint to check for Træfik process liveness.
 
-```sh
+```shell
 $ curl -sv "http://localhost:8080/ping"
 *   Trying ::1...
 * Connected to localhost (::1) port 8080 (#0)
@@ -627,14 +675,14 @@ OK
 
 - `/health`: `GET` json metrics
 
-```sh
+```shell
 $ curl -s "http://localhost:8080/health" | jq .
 {
-  // Træfɪk PID
+  // Træfik PID
   "pid": 2458,
-  // Træfɪk server uptime (formated time)
+  // Træfik server uptime (formated time)
   "uptime": "39m6.885931127s",
-  //  Træfɪk server uptime in seconds
+  //  Træfik server uptime in seconds
   "uptime_sec": 2346.885931127,
   // current server date
   "time": "2015-10-07 18:32:24.362238909 +0200 CEST",
@@ -644,7 +692,7 @@ $ curl -s "http://localhost:8080/health" | jq .
   "status_code_count": {
     "502": 1
   },
-  // count HTTP response status code since Træfɪk started
+  // count HTTP response status code since Træfik started
   "total_status_code_count": {
     "200": 7,
     "404": 21,
@@ -686,7 +734,7 @@ $ curl -s "http://localhost:8080/health" | jq .
 
 - `/api`: `GET` configuration for all providers
 
-```sh
+```shell
 $ curl -s "http://localhost:8080/api" | jq .
 {
   "file": {
@@ -766,7 +814,7 @@ $ traefik --web.metrics.prometheus --web.metrics.prometheus.buckets="0.1,0.3,1.2
 
 ## Docker backend
 
-Træfɪk can be configured to use Docker as a backend configuration:
+Træfik can be configured to use Docker as a backend configuration:
 
 ```toml
 ################################################################
@@ -838,7 +886,7 @@ swarmmode = false
 
 Labels can be used on containers to override default behaviour:
 
-- `traefik.backend=foo`: assign the container to `foo` backend
+- `traefik.backend=foo`: give the name `foo` to the generated backend for this container.
 - `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
 - `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
 - `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
@@ -848,13 +896,13 @@ Labels can be used on containers to override default behaviour:
 - `traefik.port=80`: register this port. Useful when the container exposes multiples ports.
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
-- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.enable=false`: disable this container in Træfik
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}` or `Host:{service}.{project_name}.{domain}` if you are using `docker-compose`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 - `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets a Basic Auth for that frontend with the users test:test and test2:test2
-- `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
+- `traefik.frontend.whitelistSourceRange: "1.2.3.0/24, fe80::/16"`: List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.- `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 
 If several ports need to be exposed from a container, the services labels can be used
 - `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
@@ -867,11 +915,11 @@ If several ports need to be exposed from a container, the services labels can be
 - `traefik.<service-name>.frontend.priority=10`: assign the service frontend priority. Overrides `traefik.frontend.priority`.
 - `traefik.<service-name>.frontend.rule=Path:/foo`: assign the service frontend rule. Overrides `traefik.frontend.rule`.
 
-NB: when running inside a container, Træfɪk will need network access through `docker network connect <network> <traefik-container>`
+NB: when running inside a container, Træfik will need network access through `docker network connect <network> <traefik-container>`
 
 ## Marathon backend
 
-Træfɪk can be configured to use Marathon as a backend configuration:
+Træfik can be configured to use Marathon as a backend configuration:
 
 
 ```toml
@@ -978,6 +1026,16 @@ domain = "marathon.localhost"
 # Default: "10s"
 #
 # keepAlive = "10s"
+
+# By default, a task's IP address (as returned by the Marathon API) is used as 
+# backend server if an IP-per-task configuration can be found; otherwise, the
+# name of the host running the task is used.
+# The latter behavior can be enforced by enabling this switch.
+# 
+# Optional
+# Default: false
+#
+# forceTaskHostname: false 
 ```
 
 Labels can be used on containers to override default behaviour:
@@ -988,11 +1046,13 @@ Labels can be used on containers to override default behaviour:
 - `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
 - `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
 - `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5`: create a [circuit breaker](/basics/#backends) to be used against the backend
+- `traefik.backend.healthcheck.path=/health`: set the Traefik health check path [default: no health checks]
+- `traefik.backend.healthcheck.interval=5s`: sets a custom health check interval in Go-parseable (`time.ParseDuration`) format [default: 30s]
 - `traefik.portIndex=1`: register port by index in the application's ports array. Useful when the application exposes multiple ports.
 - `traefik.port=80`: register the explicit application port value. Cannot be used alongside `traefik.portIndex`.
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the application
-- `traefik.enable=false`: disable this application in Træfɪk
+- `traefik.enable=false`: disable this application in Træfik
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
@@ -1001,7 +1061,7 @@ Labels can be used on containers to override default behaviour:
 
 ## Mesos generic backend
 
-Træfɪk can be configured to use Mesos as a backend configuration:
+Træfik can be configured to use Mesos as a backend configuration:
 
 
 ```toml
@@ -1088,7 +1148,7 @@ domain = "mesos.localhost"
 ## Kubernetes Ingress backend
 
 
-Træfɪk can be configured to use Kubernetes Ingress as a backend configuration:
+Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 
 ```toml
 ################################################################
@@ -1162,9 +1222,32 @@ Additionally, an annotation can be used on Kubernetes services to set the [circu
 
 - `traefik.backend.circuitbreaker: <expression>`: set the circuit breaker expression for the backend (Default: nil).
 
+As known from nginx when used as Kubernetes Ingress Controller, a List of IP-Ranges which are allowed to access can be configured by using an ingress annotation:
+
+- `ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"`
+
+An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.
+
+
+### Authentication
+
+Is possible to add additional authentication annotations in the Ingress rule.
+The source of the authentication is a secret that contains usernames and passwords inside the the key auth.
+
+- `ingress.kubernetes.io/auth-type`: `basic`
+- `ingress.kubernetes.io/auth-secret`: contains the usernames and passwords with access to the paths defined in the Ingress Rule.
+
+The secret must be created in the same namespace as the Ingress rule.
+
+Limitations:
+
+- Basic authentication only.
+- Realm not configurable; only `traefik` default.
+- Secret must contain only single file.
+
 ## Consul backend
 
-Træfɪk can be configured to use Consul as a backend configuration:
+Træfik can be configured to use Consul as a backend configuration:
 
 ```toml
 ################################################################
@@ -1216,7 +1299,7 @@ Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-val
 
 ## Consul catalog backend
 
-Træfɪk can be configured to use service discovery catalog of Consul as a backend configuration:
+Træfik can be configured to use service discovery catalog of Consul as a backend configuration:
 
 ```toml
 ################################################################
@@ -1253,7 +1336,7 @@ used in consul.
 
 Additional settings can be defined using Consul Catalog tags:
 
-- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.enable=false`: disable this container in Træfik
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.backend.weight=10`: assign this weight to the container
 - `traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5`
@@ -1267,7 +1350,7 @@ Additional settings can be defined using Consul Catalog tags:
 
 ## Etcd backend
 
-Træfɪk can be configured to use Etcd as a backend configuration:
+Træfik can be configured to use Etcd as a backend configuration:
 
 ```toml
 ################################################################
@@ -1304,6 +1387,13 @@ prefix = "/traefik"
 #
 # filename = "etcd.tmpl"
 
+# Use etcd user/pass authentication
+#
+# Optional
+#
+# username = foo
+# password = bar
+
 # Enable etcd TLS connection
 #
 # Optional
@@ -1320,7 +1410,7 @@ Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-val
 
 ## Zookeeper backend
 
-Træfɪk can be configured to use Zookeeper as a backend configuration:
+Træfik can be configured to use Zookeeper as a backend configuration:
 
 ```toml
 ################################################################
@@ -1362,7 +1452,7 @@ Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-val
 
 ## BoltDB backend
 
-Træfɪk can be configured to use BoltDB as a backend configuration:
+Træfik can be configured to use BoltDB as a backend configuration:
 
 ```toml
 ################################################################
@@ -1402,7 +1492,7 @@ prefix = "/traefik"
 
 ## Eureka backend
 
-Træfɪk can be configured to use Eureka as a backend configuration:
+Træfik can be configured to use Eureka as a backend configuration:
 
 
 ```toml
@@ -1441,7 +1531,7 @@ Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-val
 
 ## ECS backend
 
-Træfɪk can be configured to use Amazon ECS as a backend configuration:
+Træfik can be configured to use Amazon ECS as a backend configuration:
 
 
 ```toml
@@ -1507,7 +1597,7 @@ Labels can be used on task containers to override default behaviour:
 
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
-- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.enable=false`: disable this container in Træfik
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
@@ -1519,7 +1609,7 @@ If `AccessKeyID`/`SecretAccessKey` is not given credentials will be resolved in 
 - Shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to `default` and `~/.aws/credentials`.
 - EC2 instance role or ECS task role
 
-Træfɪk needs the following policy to read ECS information:
+Træfik needs the following policy to read ECS information:
 
 ```json
 {
@@ -1545,7 +1635,7 @@ Træfɪk needs the following policy to read ECS information:
 
 # Rancher backend
 
-Træfɪk can be configured to use Rancher as a backend configuration:
+Træfik can be configured to use Rancher as a backend configuration:
 
 
 ```toml
@@ -1573,6 +1663,12 @@ domain = "rancher.localhost"
 #
 Watch = true
 
+# Polling interval (in seconds)
+#
+# Optional
+#
+RefreshSeconds = 15
+
 # Expose Rancher services by default in traefik
 #
 # Optional
@@ -1580,33 +1676,39 @@ Watch = true
 #
 ExposedByDefault = false
 
-# Endpoint to use when connecting to Rancher
+# Filter services with unhealthy states and health states
 #
 # Optional
-# Endpoint = "http://rancherserver.example.com"
+# Default: false
+#
+EnableServiceHealthFilter = false
+
+# Endpoint to use when connecting to Rancher
+#
+# Required
+# Endpoint = "http://rancherserver.example.com/v1"
 
 # AccessKey to use when connecting to Rancher
 #
-# Optional
-# AccessKey = "XXXXXXXXX"
+# Required
+# AccessKey = "XXXXXXXXXXXXXXXXXXXX"
 
 # SecretKey to use when connecting to Rancher
 #
-# Optional
-# SecretKey = "XXXXXXXXXXX"
+# Required
+# SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 ```
 
-If you're deploying traefik as a service within rancher, you can alternatively set these labels on the service to let it only fetch data of its current environment. The settings `endpoint`, `accesskey` and `secretkey` can be omitted then.
+As traefik needs access to the rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters. 
 
-- `io.rancher.container.create_agent=true`
-- `io.rancher.container.agent.role=environment`
+To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`. This can be found within the API Key advanced options.
 
 Labels can be used on task containers to override default behaviour:
 
 - `traefik.protocol=https`: override the default `http` protocol
 - `traefik.weight=10`: assign this weight to the container
-- `traefik.enable=false`: disable this container in Træfɪk
+- `traefik.enable=false`: disable this container in Træfik
 - `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
@@ -1616,7 +1718,7 @@ Labels can be used on task containers to override default behaviour:
 
 ## DynamoDB backend
 
-Træfɪk can be configured to use Amazon DynamoDB as a backend configuration:
+Træfik can be configured to use Amazon DynamoDB as a backend configuration:
 
 
 ```toml
@@ -1674,12 +1776,11 @@ RefreshSeconds = 15
 
 ```
 
-Items in the dynamodb table must have three attributes:
+Items in the `dynamodb` table must have three attributes: 
 
-
-- 'id' : string
+- `id` : string
     - The id is the primary key.
-- 'name' : string
+- `name` : string
     - The name is used as the name of the frontend or backend.
-- 'frontend' or 'backend' : map
-    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See types/types.go for details. The presence or absence of this attribute determines its type. So an item should never have both a 'frontend' and a 'backend' attribute.
+- `frontend` or `backend` : map
+    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See `types/types.go` for details. The presence or absence of this attribute determines its type. So an item should never have both a `frontend` and a `backend` attribute. 

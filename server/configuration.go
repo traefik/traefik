@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -27,6 +28,9 @@ import (
 	"github.com/containous/traefik/types"
 )
 
+// DefaultHealthCheckInterval is the default health check interval.
+const DefaultHealthCheckInterval = 30 * time.Second
+
 // TraefikConfiguration holds GlobalConfiguration and other stuff
 type TraefikConfiguration struct {
 	GlobalConfiguration `mapstructure:",squash"`
@@ -39,7 +43,8 @@ type GlobalConfiguration struct {
 	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
-	AccessLogsFile            string                  `description:"Access logs file"`
+	AccessLogsFile            string                  `description:"(Deprecated) Access logs file"` // Deprecated
+	AccessLog                 *types.AccessLog        `description:"Access log settings"`
 	TraefikLogsFile           string                  `description:"Traefik logs file"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
@@ -52,6 +57,7 @@ type GlobalConfiguration struct {
 	IdleTimeout               flaeg.Duration          `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
+	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
 	Docker                    *docker.Provider        `description:"Enable Docker backend"`
 	File                      *file.Provider          `description:"Enable File backend"`
 	Web                       *WebProvider            `description:"Enable Web backend"`
@@ -84,7 +90,7 @@ func (dep *DefaultEntryPoints) String() string {
 func (dep *DefaultEntryPoints) Set(value string) error {
 	entrypoints := strings.Split(value, ",")
 	if len(entrypoints) == 0 {
-		return errors.New("Bad DefaultEntryPoints format: " + value)
+		return fmt.Errorf("bad DefaultEntryPoints format: %s", value)
 	}
 	for _, entrypoint := range entrypoints {
 		*dep = append(*dep, entrypoint)
@@ -123,7 +129,7 @@ func (ep *EntryPoints) Set(value string) error {
 	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?")
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
-		return errors.New("Bad EntryPoints format: " + value)
+		return fmt.Errorf("bad EntryPoints format: %s", value)
 	}
 	matchResult := match[0]
 	result := make(map[string]string)
@@ -265,10 +271,10 @@ func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
 			if errKey == nil {
 				isAPath = true
 			} else {
-				return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
+				return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
 			}
 		} else if errKey == nil {
-			return nil, fmt.Errorf("bad TLS Certificate KeyFile format, expected a path")
+			return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
 		}
 
 		cert := tls.Certificate{}
@@ -310,7 +316,7 @@ func (certs *Certificates) Set(value string) error {
 	for _, certificate := range certificates {
 		files := strings.Split(certificate, ",")
 		if len(files) != 2 {
-			return errors.New("Bad certificates format: " + value)
+			return fmt.Errorf("bad certificates format: %s", value)
 		}
 		*certs = append(*certs, Certificate{
 			CertFile: files[0],
@@ -335,6 +341,11 @@ type Certificate struct {
 // Retry contains request retry config
 type Retry struct {
 	Attempts int `description:"Number of attempts"`
+}
+
+// HealthCheckConfig contains health check configuration parameters.
+type HealthCheckConfig struct {
+	Interval flaeg.Duration `description:"Default periodicity of enabled health checks"`
 }
 
 // NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
@@ -385,6 +396,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultConsulCatalog consul.CatalogProvider
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
 	defaultConsulCatalog.Constraints = types.Constraints{}
+	defaultConsulCatalog.Prefix = "traefik"
 
 	// default Etcd
 	var defaultEtcd etcd.Provider
@@ -436,6 +448,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultRancher rancher.Provider
 	defaultRancher.Watch = true
 	defaultRancher.ExposedByDefault = true
+	defaultRancher.RefreshSeconds = 15
+	defaultRancher.EnableServiceHealthFilter = false
 
 	// default DynamoDB
 	var defaultDynamoDB dynamodb.Provider
@@ -443,6 +457,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDynamoDB.RefreshSeconds = 15
 	defaultDynamoDB.TableName = "traefik"
 	defaultDynamoDB.Watch = true
+
+	// default AccessLog
+	defaultAccessLog := types.AccessLog{
+		Format:   accesslog.CommonFormat,
+		FilePath: "",
+	}
 
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
@@ -460,6 +480,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Rancher:       &defaultRancher,
 		DynamoDB:      &defaultDynamoDB,
 		Retry:         &Retry{},
+		HealthCheck:   &HealthCheckConfig{},
+		AccessLog:     &defaultAccessLog,
 	}
 
 	//default Rancher
@@ -484,7 +506,10 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			ProvidersThrottleDuration: flaeg.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
 			IdleTimeout:               flaeg.Duration(180 * time.Second),
-			CheckNewVersion:           true,
+			HealthCheck: &HealthCheckConfig{
+				Interval: flaeg.Duration(DefaultHealthCheckInterval),
+			},
+			CheckNewVersion: true,
 		},
 		ConfigFile: "",
 	}

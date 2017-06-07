@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 if [ -z "${VALIDATE_UPSTREAM:-}" ]; then
 	# this is kind of an expensive check, so let's not do this twice if we

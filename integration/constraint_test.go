@@ -1,13 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os/exec"
 	"time"
 
+	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 	"github.com/hashicorp/consul/api"
-
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -35,7 +36,16 @@ func (s *ConstraintSuite) SetUpSuite(c *check.C) {
 	s.consulClient = consulClient
 
 	// Wait for consul to elect itself leader
-	time.Sleep(2000 * time.Millisecond)
+	err = try.Do(3*time.Second, func() error {
+		leader, err := consulClient.Status().Leader()
+
+		if err != nil || len(leader) == 0 {
+			return fmt.Errorf("Leader not found. %v", err)
+		}
+
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
 }
 
 func (s *ConstraintSuite) registerService(name string, address string, port int, tags []string) error {
@@ -71,7 +81,12 @@ func (s *ConstraintSuite) deregisterService(name string, address string) error {
 }
 
 func (s *ConstraintSuite) TestMatchConstraintGlobal(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--consulCatalog", "--consulCatalog.endpoint="+s.consulIP+":8500", "--consulCatalog.domain=consul.localhost", "--configFile=fixtures/consul_catalog/simple.toml", "--constraints=tag==api")
+	cmd := exec.Command(traefikBinary,
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost",
+		"--configFile=fixtures/consul_catalog/simple.toml",
+		"--constraints=tag==api")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -82,19 +97,21 @@ func (s *ConstraintSuite) TestMatchConstraintGlobal(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
-	time.Sleep(5000 * time.Millisecond)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.consul.localhost"
-	resp, err := client.Do(req)
 
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 200)
 }
 
 func (s *ConstraintSuite) TestDoesNotMatchConstraintGlobal(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--consulCatalog", "--consulCatalog.endpoint="+s.consulIP+":8500", "--consulCatalog.domain=consul.localhost", "--configFile=fixtures/consul_catalog/simple.toml", "--constraints=tag==api")
+	cmd := exec.Command(traefikBinary,
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost",
+		"--configFile=fixtures/consul_catalog/simple.toml",
+		"--constraints=tag==api")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -105,19 +122,21 @@ func (s *ConstraintSuite) TestDoesNotMatchConstraintGlobal(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
-	time.Sleep(5000 * time.Millisecond)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.consul.localhost"
-	resp, err := client.Do(req)
 
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
 }
 
 func (s *ConstraintSuite) TestMatchConstraintProvider(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--consulCatalog", "--consulCatalog.endpoint="+s.consulIP+":8500", "--consulCatalog.domain=consul.localhost", "--configFile=fixtures/consul_catalog/simple.toml", "--consulCatalog.constraints=tag==api")
+	cmd := exec.Command(traefikBinary,
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost",
+		"--configFile=fixtures/consul_catalog/simple.toml",
+		"--consulCatalog.constraints=tag==api")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -128,19 +147,21 @@ func (s *ConstraintSuite) TestMatchConstraintProvider(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
-	time.Sleep(5000 * time.Millisecond)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.consul.localhost"
-	resp, err := client.Do(req)
 
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 200)
 }
 
 func (s *ConstraintSuite) TestDoesNotMatchConstraintProvider(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--consulCatalog", "--consulCatalog.endpoint="+s.consulIP+":8500", "--consulCatalog.domain=consul.localhost", "--configFile=fixtures/consul_catalog/simple.toml", "--consulCatalog.constraints=tag==api")
+	cmd := exec.Command(traefikBinary,
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost",
+		"--configFile=fixtures/consul_catalog/simple.toml",
+		"--consulCatalog.constraints=tag==api")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -151,19 +172,22 @@ func (s *ConstraintSuite) TestDoesNotMatchConstraintProvider(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
-	time.Sleep(5000 * time.Millisecond)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.consul.localhost"
-	resp, err := client.Do(req)
 
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
 }
 
 func (s *ConstraintSuite) TestMatchMultipleConstraint(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--consulCatalog", "--consulCatalog.endpoint="+s.consulIP+":8500", "--consulCatalog.domain=consul.localhost", "--configFile=fixtures/consul_catalog/simple.toml", "--consulCatalog.constraints=tag==api", "--constraints=tag!=us-*")
+	cmd := exec.Command(traefikBinary,
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost",
+		"--configFile=fixtures/consul_catalog/simple.toml",
+		"--consulCatalog.constraints=tag==api",
+		"--constraints=tag!=us-*")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -174,19 +198,22 @@ func (s *ConstraintSuite) TestMatchMultipleConstraint(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
-	time.Sleep(5000 * time.Millisecond)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.consul.localhost"
-	resp, err := client.Do(req)
 
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 200)
 }
 
 func (s *ConstraintSuite) TestDoesNotMatchMultipleConstraint(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--consulCatalog", "--consulCatalog.endpoint="+s.consulIP+":8500", "--consulCatalog.domain=consul.localhost", "--configFile=fixtures/consul_catalog/simple.toml", "--consulCatalog.constraints=tag==api", "--constraints=tag!=us-*")
+	cmd := exec.Command(traefikBinary,
+		"--consulCatalog",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost",
+		"--configFile=fixtures/consul_catalog/simple.toml",
+		"--consulCatalog.constraints=tag==api",
+		"--constraints=tag!=us-*")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -197,13 +224,10 @@ func (s *ConstraintSuite) TestDoesNotMatchMultipleConstraint(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
-	time.Sleep(5000 * time.Millisecond)
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.consul.localhost"
-	resp, err := client.Do(req)
 
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
 }
