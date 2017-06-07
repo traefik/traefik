@@ -982,6 +982,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						"traefik.backend.maxconn.amount":            "1000",
 						"traefik.backend.maxconn.extractorfunc":     "somethingelse",
 						"traefik.backend.loadbalancer.method":       "drr",
+						"traefik.backend.loadbalancer.cookiename":   "somecookie",
 						"traefik.backend.circuitbreaker.expression": "NetworkErrorRatio() > 0.5",
 					}),
 					ports(nat.PortMap{
@@ -1015,7 +1016,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						Expression: "NetworkErrorRatio() > 0.5",
 					},
 					LoadBalancer: &types.LoadBalancer{
-						Method: "drr",
+						Method:     "drr",
+						CookieName: "somecookie",
 					},
 					MaxConn: &types.MaxConn{
 						Amount:        1000,

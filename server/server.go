@@ -641,7 +641,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					}
 
 					stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
-					cookiename := "_TRAEFIK_BACKEND"
+					cookiename := configuration.Backends[frontend.Backend].LoadBalancer.CookieName
 					var sticky *roundrobin.StickySession
 
 					if stickysession {
