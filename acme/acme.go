@@ -378,7 +378,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		if cert != nil && err == nil {
 			return cert, nil
 		}
-		log.Errorf("On demand certicate retrival failed for %v due to %v", domain, err)
+		log.Errorf("On demand certificate retrieval failed for %v due to %v", domain, err)
 	}
 
 	// Check if we have a wildcard cert into TLSConfig that could be used
@@ -539,7 +539,7 @@ func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.C
 		return certificateResource.tlsCert, nil
 	}
 
-	// Check if our domain is matching our ingoreFilters
+	// Check if our domain is matching our ignoreFilters
 	if a.isDomainFiltered(domain) {
 		return nil, nil
 	}
@@ -604,7 +604,7 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 			return
 		}
 
-		// Check if our domains are matching our ingoreFilters
+		// Check if our domains are matching our ignoreFilters
 		for _, d := range domains {
 			if a.isDomainFiltered(d) {
 				return
