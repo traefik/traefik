@@ -68,11 +68,10 @@ subjects:
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-rbac.yaml
 ```
 
-## Deploy Træfik using a Deployment object
+## Deploy Træfik using a DaemonSet object
 
 We are going to deploy Træfik with a
-[Deployment](http://kubernetes.io/docs/user-guide/deployments/), as this will
-allow you to easily roll out config changes or update the image.
+[DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/), as this will easily keep your traefik controller accessible across nodes.
 
 ```yaml
 ---
@@ -82,7 +81,7 @@ metadata:
   name: traefik-ingress-controller
   namespace: kube-system
 ---
-kind: Deployment
+kind: DaemonSet
 apiVersion: extensions/v1beta1
 metadata:
   name: traefik-ingress-controller
@@ -90,10 +89,6 @@ metadata:
   labels:
     k8s-app: traefik-ingress-lb
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      k8s-app: traefik-ingress-lb
   template:
     metadata:
       labels:
@@ -102,6 +97,7 @@ spec:
     spec:
       serviceAccountName: traefik-ingress-controller
       terminationGracePeriodSeconds: 60
+      hostNetwork: true
       containers:
       - image: traefik
         name: traefik-ingress-lb
@@ -113,18 +109,20 @@ spec:
             cpu: 100m
             memory: 20Mi
         ports:
-        - containerPort: 80
+        - name: http
+          containerPort: 80
           hostPort: 80
-        - containerPort: 8080
+        - name: admin
+          containerPort: 8081
+        securityContext:
+          privileged: true
         args:
+        - -d
         - --web
+        - --web.address=:8081
         - --kubernetes
 ```
 [examples/k8s/traefik.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik.yaml)
-
-> notice that we binding port 80 on the Træfik container to port 80 on the host.
-> With a multi node cluster we might expose Træfik with a NodePort or LoadBalancer service
-> and run more than 1 replica of Træfik for high availability.
 
 To deploy Træfik to your cluster start by submitting the deployment to the cluster with `kubectl`:
 
@@ -134,7 +132,7 @@ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/exa
 
 ### Check the deployment
 
-Now lets check if our deployment was successful.
+Now lets check if our daemonset deployment was successful.
 
 Start by listing the pods in the `kube-system` namespace:
 
@@ -147,11 +145,10 @@ kubernetes-dashboard-s8krj                   1/1       Running   0          4h
 traefik-ingress-controller-678226159-eqseo   1/1       Running   0          7m
 ```
 
-You should see that after submitting the Deployment to Kubernetes it has launched
-a pod, and it is now running. _It might take a few moments for kubernetes to pull
-the Træfik image and start the container._
+You should see that after submitting the DaemonSet to Kubernetes it has launched
+a pod for each node in your cluster, and it is now running. _It might take a few moments for kubernetes to pull the Træfik image and start the container._
 
-> You could also check the deployment with the Kubernetes dashboard, run
+> You could also check the daemonset deployment with the Kubernetes dashboard, run
 > `minikube dashboard` to open it in your browser, then choose the `kube-system`
 > namespace from the menu at the top right of the screen.
 
@@ -191,24 +188,24 @@ spec:
   selector:
     k8s-app: traefik-ingress-lb
   ports:
-  - port: 80
-    targetPort: 8080
+  - name: web
+    port: 80
+    targetPort: 8081
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: traefik-web-ui
   namespace: kube-system
-  annotations:
-    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: traefik-ui.minikube
     http:
       paths:
-      - backend:
+      - path: /
+        backend:
           serviceName: traefik-web-ui
-          servicePort: 80
+          servicePort: web
 ```
 [examples/k8s/ui.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/ui.yaml)
 
@@ -567,7 +564,7 @@ static.otherdomain.com/static and static.otherdomain.com would receive the
 request with the Host header being static.otherdomain.com.
 
 Note: The per ingress annotation overides whatever the global value is set to.
-So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing 
+So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing
 the host header per ingress if you wanted.
 
 ## Excluding an ingress from Træfik
