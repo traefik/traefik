@@ -2,6 +2,8 @@ package middlewares
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,55 +18,37 @@ import (
 )
 
 func TestPrometheus(t *testing.T) {
-	metricsFamily, err := prometheus.DefaultGatherer.Gather()
+	defer resetPrometheusValues()
+
+	metricsFamilies, err := prometheus.DefaultGatherer.Gather()
 	if err != nil {
 		t.Fatalf("could not gather metrics family: %s", err)
 	}
-	initialMetricsFamilyCount := len(metricsFamily)
+	initialMetricsFamilyCount := len(metricsFamilies)
 
 	recorder := httptest.NewRecorder()
 
-	n := negroni.New()
-	metricsMiddlewareBackend := NewMetricsWrapper(NewPrometheus("test", &types.Prometheus{}))
-	n.Use(metricsMiddlewareBackend)
-	r := http.NewServeMux()
-	r.Handle("/metrics", promhttp.Handler())
-	r.HandleFunc(`/ok`, func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "ok")
-	})
-	n.UseHandler(r)
+	req1 := mustNewRequest("GET", "http://localhost:3000/ok", ioutil.NopCloser(nil))
+	req2 := mustNewRequest("GET", "http://localhost:3000/metrics", ioutil.NopCloser(nil))
 
-	req1, err := http.NewRequest("GET", "http://localhost:3000/ok", nil)
-	if err != nil {
-		t.Error(err)
-	}
-	req2, err := http.NewRequest("GET", "http://localhost:3000/metrics", nil)
-	if err != nil {
-		t.Error(err)
-	}
+	httpHandler := setupTestHTTPHandler()
+	httpHandler.ServeHTTP(recorder, req1)
+	httpHandler.ServeHTTP(recorder, req2)
 
-	n.ServeHTTP(recorder, req1)
-	n.ServeHTTP(recorder, req2)
 	body := recorder.Body.String()
-	if !strings.Contains(body, reqsName) {
-		t.Errorf("body does not contain request total entry '%s'", reqsName)
+	if !strings.Contains(body, reqsTotalName) {
+		t.Errorf("body does not contain request total entry '%s'", reqsTotalName)
 	}
-	if !strings.Contains(body, latencyName) {
-		t.Errorf("body does not contain request duration entry '%s'", latencyName)
+	if !strings.Contains(body, reqDurationName) {
+		t.Errorf("body does not contain request duration entry '%s'", reqDurationName)
+	}
+	if !strings.Contains(body, retriesTotalName) {
+		t.Errorf("body does not contain total retries entry '%s'", retriesTotalName)
 	}
 
-	// Register the same metrics again
-	metricsMiddlewareBackend = NewMetricsWrapper(NewPrometheus("test", &types.Prometheus{}))
-	n = negroni.New()
-	n.Use(metricsMiddlewareBackend)
-	n.UseHandler(r)
-
-	n.ServeHTTP(recorder, req2)
-
-	metricsFamily, err = prometheus.DefaultGatherer.Gather()
+	metricsFamilies, err = prometheus.DefaultGatherer.Gather()
 	if err != nil {
-		t.Fatalf("could not gather metrics family: %s", err)
+		t.Fatalf("could not gather metrics families: %s", err)
 	}
 
 	tests := []struct {
@@ -73,7 +57,7 @@ func TestPrometheus(t *testing.T) {
 		assert func(*dto.MetricFamily)
 	}{
 		{
-			name: reqsName,
+			name: reqsTotalName,
 			labels: map[string]string{
 				"code":    "200",
 				"method":  "GET",
@@ -81,29 +65,44 @@ func TestPrometheus(t *testing.T) {
 			},
 			assert: func(family *dto.MetricFamily) {
 				cv := uint(family.Metric[0].Counter.GetValue())
-				if cv != 3 {
-					t.Errorf("gathered metrics do not contain correct value for total requests, got %d", cv)
+				expectedCv := uint(2)
+				if cv != expectedCv {
+					t.Errorf("gathered metrics do not contain correct value for total requests, got %d expected %d", cv, expectedCv)
 				}
 			},
 		},
 		{
-			name: latencyName,
+			name: reqDurationName,
 			labels: map[string]string{
 				"service": "test",
 			},
 			assert: func(family *dto.MetricFamily) {
 				sc := family.Metric[0].Histogram.GetSampleCount()
-				if sc != 3 {
-					t.Errorf("gathered metrics do not contain correct sample count for request duration, got %d", sc)
+				expectedSc := uint64(2)
+				if sc != expectedSc {
+					t.Errorf("gathered metrics do not contain correct sample count for request duration, got %d expected %d", sc, expectedSc)
+				}
+			},
+		},
+		{
+			name: retriesTotalName,
+			labels: map[string]string{
+				"service": "test",
+			},
+			assert: func(family *dto.MetricFamily) {
+				cv := uint(family.Metric[0].Counter.GetValue())
+				expectedCv := uint(1)
+				if cv != expectedCv {
+					t.Errorf("gathered metrics do not contain correct value for total retries, got '%d' expected '%d'", cv, expectedCv)
 				}
 			},
 		},
 	}
 
-	assert.Equal(t, len(tests), len(metricsFamily)-initialMetricsFamilyCount, "gathered traefic metrics count does not match tests count")
+	assert.Equal(t, len(tests), len(metricsFamilies)-initialMetricsFamilyCount, "gathered traefic metrics count does not match tests count")
 
 	for _, test := range tests {
-		family := findMetricFamily(test.name, metricsFamily)
+		family := findMetricFamily(test.name, metricsFamilies)
 		if family == nil {
 			t.Errorf("gathered metrics do not contain '%s'", test.name)
 			continue
@@ -118,6 +117,74 @@ func TestPrometheus(t *testing.T) {
 		}
 		test.assert(family)
 	}
+}
+
+func TestPrometheusRegisterMetricsMultipleTimes(t *testing.T) {
+	defer resetPrometheusValues()
+
+	recorder := httptest.NewRecorder()
+	req1 := mustNewRequest("GET", "http://localhost:3000/ok", ioutil.NopCloser(nil))
+
+	httpHandler := setupTestHTTPHandler()
+	httpHandler.ServeHTTP(recorder, req1)
+
+	httpHandler = setupTestHTTPHandler()
+	httpHandler.ServeHTTP(recorder, req1)
+
+	metricsFamilies, err := prometheus.DefaultGatherer.Gather()
+	if err != nil {
+		t.Fatalf("could not gather metrics families: %s", err)
+	}
+
+	reqsTotalFamily := findMetricFamily(reqsTotalName, metricsFamilies)
+	if reqsTotalFamily == nil {
+		t.Fatalf("gathered metrics do not contain '%s'", reqsTotalName)
+	}
+
+	cv := uint(reqsTotalFamily.Metric[0].Counter.GetValue())
+	expectedCv := uint(2)
+	if cv != expectedCv {
+		t.Errorf("wrong counter value when registering metrics multiple times, got '%d' expected '%d'", cv, expectedCv)
+	}
+}
+
+func setupTestHTTPHandler() http.Handler {
+	serveMux := http.NewServeMux()
+	serveMux.Handle("/metrics", promhttp.Handler())
+	serveMux.Handle("/ok", &networkFailingHTTPHandler{failAtCalls: []int{1}})
+
+	metrics, _ := newPrometheusMetrics()
+
+	n := negroni.New()
+	n.Use(NewMetricsWrapper(metrics))
+	n.UseHandler(NewRetry(2, serveMux, NewMetricsRetryListener(metrics)))
+
+	return n
+}
+
+// mustNewRequest is like http.NewRequest but panics if an error occurs.
+func mustNewRequest(method, urlStr string, body io.Reader) *http.Request {
+	req, err := http.NewRequest(method, urlStr, body)
+	if err != nil {
+		panic(fmt.Sprintf("NewRequest(%s, %s, %+v): %s", method, urlStr, body, err))
+	}
+	return req
+}
+
+func resetPrometheusValues() {
+	_, collectors := newPrometheusMetrics()
+
+	for _, collector := range collectors {
+		prometheus.Unregister(collector)
+	}
+}
+
+func newPrometheusMetrics() (*Prometheus, []prometheus.Collector) {
+	prom, collectors, err := NewPrometheus("test", &types.Prometheus{})
+	if err != nil {
+		panic(fmt.Sprintf("Error creating Prometheus Metrics: %s", err))
+	}
+	return prom, collectors
 }
 
 func findMetricFamily(name string, families []*dto.MetricFamily) *dto.MetricFamily {

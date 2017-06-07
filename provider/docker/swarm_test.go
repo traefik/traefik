@@ -16,11 +16,6 @@ import (
 )
 
 func TestSwarmGetFrontendName(t *testing.T) {
-	provider := &Provider{
-		Domain:    "docker.localhost",
-		SwarmMode: true,
-	}
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -69,6 +64,10 @@ func TestSwarmGetFrontendName(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
+			provider := &Provider{
+				Domain:    "docker.localhost",
+				SwarmMode: true,
+			}
 			actual := provider.getFrontendName(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -78,11 +77,6 @@ func TestSwarmGetFrontendName(t *testing.T) {
 }
 
 func TestSwarmGetFrontendRule(t *testing.T) {
-	provider := &Provider{
-		Domain:    "docker.localhost",
-		SwarmMode: true,
-	}
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -119,6 +113,10 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
+			provider := &Provider{
+				Domain:    "docker.localhost",
+				SwarmMode: true,
+			}
 			actual := provider.getFrontendRule(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -128,10 +126,6 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 }
 
 func TestSwarmGetBackend(t *testing.T) {
-	provider := &Provider{
-		SwarmMode: true,
-	}
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -161,6 +155,9 @@ func TestSwarmGetBackend(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
+			provider := &Provider{
+				SwarmMode: true,
+			}
 			actual := provider.getBackend(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -170,10 +167,6 @@ func TestSwarmGetBackend(t *testing.T) {
 }
 
 func TestSwarmGetIPAddress(t *testing.T) {
-	provider := &Provider{
-		SwarmMode: true,
-	}
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -224,6 +217,9 @@ func TestSwarmGetIPAddress(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
+			provider := &Provider{
+				SwarmMode: true,
+			}
 			actual := provider.getIPAddress(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -233,10 +229,6 @@ func TestSwarmGetIPAddress(t *testing.T) {
 }
 
 func TestSwarmGetPort(t *testing.T) {
-	provider := &Provider{
-		SwarmMode: true,
-	}
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -259,6 +251,9 @@ func TestSwarmGetPort(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
+			provider := &Provider{
+				SwarmMode: true,
+			}
 			actual := provider.getPort(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -268,10 +263,6 @@ func TestSwarmGetPort(t *testing.T) {
 }
 
 func TestSwarmGetWeight(t *testing.T) {
-	provider := &Provider{
-		SwarmMode: true,
-	}
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -296,6 +287,9 @@ func TestSwarmGetWeight(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
+			provider := &Provider{
+				SwarmMode: true,
+			}
 			actual := provider.getWeight(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -305,11 +299,6 @@ func TestSwarmGetWeight(t *testing.T) {
 }
 
 func TestSwarmGetDomain(t *testing.T) {
-	provider := &Provider{
-		Domain:    "docker.localhost",
-		SwarmMode: true,
-	}
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -334,6 +323,10 @@ func TestSwarmGetDomain(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
+			provider := &Provider{
+				Domain:    "docker.localhost",
+				SwarmMode: true,
+			}
 			actual := provider.getDomain(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -343,10 +336,6 @@ func TestSwarmGetDomain(t *testing.T) {
 }
 
 func TestSwarmGetProtocol(t *testing.T) {
-	provider := &Provider{
-		SwarmMode: true,
-	}
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -371,6 +360,9 @@ func TestSwarmGetProtocol(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
+			provider := &Provider{
+				SwarmMode: true,
+			}
 			actual := provider.getProtocol(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -380,10 +372,6 @@ func TestSwarmGetProtocol(t *testing.T) {
 }
 
 func TestSwarmGetPassHostHeader(t *testing.T) {
-	provider := &Provider{
-		SwarmMode: true,
-	}
-
 	services := []struct {
 		service  swarm.Service
 		expected string
@@ -408,6 +396,9 @@ func TestSwarmGetPassHostHeader(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
+			provider := &Provider{
+				SwarmMode: true,
+			}
 			actual := provider.getPassHostHeader(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
@@ -424,7 +415,7 @@ func TestSwarmGetLabel(t *testing.T) {
 	}{
 		{
 			service:  swarmService(),
-			expected: "Label not found:",
+			expected: "label not found:",
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{
@@ -448,7 +439,7 @@ func TestSwarmGetLabel(t *testing.T) {
 				}
 			} else {
 				if label != "bar" {
-					t.Errorf("expected label 'bar', got %s", label)
+					t.Errorf("expected label 'bar', got '%s'", label)
 				}
 			}
 		})
@@ -465,7 +456,7 @@ func TestSwarmGetLabels(t *testing.T) {
 		{
 			service:        swarmService(),
 			expectedLabels: map[string]string{},
-			expectedError:  "Label not found:",
+			expectedError:  "label not found:",
 			networks:       map[string]*docker.NetworkResource{},
 		},
 		{
@@ -475,7 +466,7 @@ func TestSwarmGetLabels(t *testing.T) {
 			expectedLabels: map[string]string{
 				"foo": "fooz",
 			},
-			expectedError: "Label not found: bar",
+			expectedError: "label not found: bar",
 			networks:      map[string]*docker.NetworkResource{},
 		},
 		{
@@ -511,90 +502,123 @@ func TestSwarmGetLabels(t *testing.T) {
 }
 
 func TestSwarmTraefikFilter(t *testing.T) {
-	provider := &Provider{
-		SwarmMode: true,
-	}
 	services := []struct {
-		service          swarm.Service
-		exposedByDefault bool
-		expected         bool
-		networks         map[string]*docker.NetworkResource
+		service  swarm.Service
+		expected bool
+		networks map[string]*docker.NetworkResource
+		provider *Provider
 	}{
 		{
-			service:          swarmService(),
-			exposedByDefault: true,
-			expected:         false,
-			networks:         map[string]*docker.NetworkResource{},
+			service:  swarmService(),
+			expected: false,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.enable": "false",
 				"traefik.port":   "80",
 			})),
-			exposedByDefault: true,
-			expected:         false,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: false,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.frontend.rule": "Host:foo.bar",
 				"traefik.port":          "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.port": "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.enable": "true",
 				"traefik.port":   "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.enable": "anything",
 				"traefik.port":   "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.frontend.rule": "Host:foo.bar",
 				"traefik.port":          "80",
 			})),
-			exposedByDefault: true,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: true,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.port": "80",
 			})),
-			exposedByDefault: false,
-			expected:         false,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: false,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
 				"traefik.enable": "true",
 				"traefik.port":   "80",
 			})),
-			exposedByDefault: false,
-			expected:         true,
-			networks:         map[string]*docker.NetworkResource{},
+			expected: true,
+			networks: map[string]*docker.NetworkResource{},
+			provider: &Provider{
+				SwarmMode:        true,
+				Domain:           "test",
+				ExposedByDefault: false,
+			},
 		},
 	}
 
@@ -603,8 +627,7 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dockerData := parseService(e.service, e.networks)
-			provider.ExposedByDefault = e.exposedByDefault
-			actual := provider.containerFilter(dockerData)
+			actual := e.provider.containerFilter(dockerData)
 			if actual != e.expected {
 				t.Errorf("expected %v for %+v, got %+v", e.expected, e, actual)
 			}
@@ -738,12 +761,6 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 		},
 	}
 
-	provider := &Provider{
-		Domain:           "docker.localhost",
-		ExposedByDefault: true,
-		SwarmMode:        true,
-	}
-
 	for caseID, c := range cases {
 		c := c
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
@@ -754,6 +771,11 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				dockerDataList = append(dockerDataList, dockerData)
 			}
 
+			provider := &Provider{
+				Domain:           "docker.localhost",
+				ExposedByDefault: true,
+				SwarmMode:        true,
+			}
 			actualConfig := provider.loadDockerConfig(dockerDataList)
 			// Compare backends
 			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {

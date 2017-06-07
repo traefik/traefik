@@ -7,6 +7,7 @@ import (
 	fmtlog "log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -18,7 +19,6 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
@@ -179,8 +179,6 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 	if globalConfiguration.InsecureSkipVerify {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
-	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile)
-	defer loggerMiddleware.Close()
 
 	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
 		// no filename, setting to global config file
@@ -207,6 +205,13 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 	}
 	log.SetLevel(level)
 	if len(globalConfiguration.TraefikLogsFile) > 0 {
+		dir := filepath.Dir(globalConfiguration.TraefikLogsFile)
+
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			log.Errorf("Failed to create log path %s: %s", dir, err)
+		}
+
 		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 		defer func() {
 			if err := fi.Close(); err != nil {
@@ -245,22 +250,25 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 	svr := server.NewServer(globalConfiguration)
 	svr.Start()
 	defer svr.Close()
-	sent, err := daemon.SdNotify(true, "READY=1")
+	sent, err := daemon.SdNotify(false, "READY=1")
 	if !sent && err != nil {
 		log.Error("Fail to notify", err)
 	}
-	t, err := daemon.SdWatchdogEnabled(true)
+	t, err := daemon.SdWatchdogEnabled(false)
 	if err != nil {
 		log.Error("Problem with watchdog", err)
 	} else if t != 0 {
 		// Send a ping each half time given
 		t = t / 2
-		go func(interval time.Duration) {
-			tick := time.Tick(interval)
+		log.Info("Watchdog activated with timer each ", t)
+		safe.Go(func() {
+			tick := time.Tick(t)
 			for range tick {
-				daemon.SdNotify(true, "WATCHDOG=1")
+				if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
+					log.Error("Fail to tick watchdog")
+				}
 			}
-		}(t)
+		})
 	}
 	svr.Wait()
 	log.Info("Shutting down")

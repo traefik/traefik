@@ -6,34 +6,28 @@ services:
 
 env:
   global:
-    - secure: btt4r13t09gQlHb6gYrvGC2yGCMMHfnp1Mz1RQedc4Mpf/FfT8aE6xmK2a2i9CCvskjrP0t/BFaS4yxIURjnFRn+ugQIEa0pLspB9UJArW/vgOSpIWM9/OQ/fg8z5XuMxN6Md4DL1/iLypMNSageA1x0TRdt89+D1N1dALpg5XRCXLFbC84TLi0gjlFuib9ibPKzEhLT+anCRJ6iZMzeupDSoaCVbAtJMoDvXw4+4AcRZ1+k4MybBLyCib5boaEOt4pTT88mz4Kk0YaMwPVJyg9Qv36VqyUcPS09Yd95LuyVQ4+tZt8Y1ccbIzULsK+sLM3hLCzxlmlpN3dQBlZJiiRtQde0mgGAKyC0P0A1XjuDTywcsa5edB+fTk1Dsewz9xZ9V0NmMz8t+UNZnaSsAPga9i86jULbXUUwMVSzVRc+Xgx02liB/8qI1xYC9FM6ilStt7rn7mF0k3KbiWhcptgeXjO6Lah9FjEKd5w4MXsdUSTi/86rQaLo+kj+XdaTrXCTulKHyRyQEUj+8V1w0oVz7pcGjePHd7y5oU9ByifVQy6sytuFBfRZvugM5bKHo+i0pcWvixrZS42DrzwxZJsspANOvqSe5ifVbvOkfUppQdCBIwptxV5N1b49XPKU3W/w34QJ8xGmKp3TFA7WwVCztriFHjPgiRpB3EG99Bg=
     - REPO: $TRAVIS_REPO_SLUG
     - VERSION: $TRAVIS_TAG
-    - CODENAME: morbier
+    - CODENAME: raclette
+    - N_MAKE_JOBS: 2
+    - DOCKER_VERSION: 1.12.6
 
-matrix:
-  fast_finish: true
-  include:
-  - env: DOCKER_VERSION=1.10.3
-  - env: DOCKER_VERSION=1.12.6
+script:
+- echo "Skipping tests... (Tests are executed on SemaphoreCI)"
 
-before_install:
-  - sudo -E apt-get -yq update
-  - sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-engine=${DOCKER_VERSION}*
-install:
-  - docker version
-  - pip install --user -r requirements.txt
-  - make pull-images
-before_script:
-  - make validate
-script: travis_retry make test-unit && travis_retry make test-integration
-after_failure:
-  - docker ps
 before_deploy:
-  - make crossbinary
-  - make image
-  - mkdocs build --clean
-  - tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .
+  - >
+    if ! [ "$BEFORE_DEPLOY_RUN" ]; then
+      export BEFORE_DEPLOY_RUN=1;
+      sudo -E apt-get -yq update;
+      sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-engine=${DOCKER_VERSION}*;
+      docker version;
+      pip install --user -r requirements.txt;
+      make -j${N_MAKE_JOBS} crossbinary-parallel;
+      make image;
+      mkdocs build --clean;
+      tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .;
+    fi
 deploy:
   - provider: pages
     edge: true

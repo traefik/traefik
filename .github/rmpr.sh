@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # git config --global alias.rmpr '!sh .github/rmpr.sh'
 
@@ -23,5 +23,5 @@ branch=$(curl -s https://api.github.com/repos/containous/traefik/pulls/$pr | jq 
 
 # clean
 git checkout $initial
-git branch -D $branch
+git branch -D "$pr--$branch"
 git remote remove $remote

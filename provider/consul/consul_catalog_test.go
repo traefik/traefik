@@ -12,6 +12,7 @@ import (
 func TestConsulCatalogGetFrontendRule(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain: "localhost",
+		Prefix: "traefik",
 	}
 
 	services := []struct {
@@ -47,6 +48,7 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 func TestConsulCatalogGetAttribute(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain: "localhost",
+		Prefix: "traefik",
 	}
 
 	services := []struct {
@@ -86,6 +88,7 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 func TestConsulCatalogGetBackendAddress(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain: "localhost",
+		Prefix: "traefik",
 	}
 
 	services := []struct {
@@ -127,6 +130,7 @@ func TestConsulCatalogGetBackendAddress(t *testing.T) {
 func TestConsulCatalogGetBackendName(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain: "localhost",
+		Prefix: "traefik",
 	}
 
 	services := []struct {
@@ -179,6 +183,7 @@ func TestConsulCatalogGetBackendName(t *testing.T) {
 func TestConsulCatalogBuildConfig(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain: "localhost",
+		Prefix: "traefik",
 	}
 
 	cases := []struct {

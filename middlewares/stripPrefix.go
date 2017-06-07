@@ -5,9 +5,8 @@ import (
 	"strings"
 )
 
-const (
-	forwardedPrefixHeader = "X-Forwarded-Prefix"
-)
+// ForwardedPrefixHeader is the default header to set prefix
+const ForwardedPrefixHeader = "X-Forwarded-Prefix"
 
 // StripPrefix is a middleware used to strip prefix from an URL request
 type StripPrefix struct {
@@ -17,15 +16,27 @@ type StripPrefix struct {
 
 func (s *StripPrefix) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, prefix := range s.Prefixes {
-		if p := strings.TrimPrefix(r.URL.Path, strings.TrimSpace(prefix)); len(p) < len(r.URL.Path) {
-			r.URL.Path = p
-			r.Header[forwardedPrefixHeader] = []string{prefix}
-			r.RequestURI = r.URL.RequestURI()
-			s.Handler.ServeHTTP(w, r)
+		origPrefix := strings.TrimSpace(prefix)
+		if origPrefix == r.URL.Path {
+			r.URL.Path = "/"
+			s.serveRequest(w, r, origPrefix)
+			return
+		}
+
+		prefix = strings.TrimSuffix(origPrefix, "/") + "/"
+		if p := strings.TrimPrefix(r.URL.Path, prefix); len(p) < len(r.URL.Path) {
+			r.URL.Path = "/" + strings.TrimPrefix(p, "/")
+			s.serveRequest(w, r, origPrefix)
 			return
 		}
 	}
 	http.NotFound(w, r)
+}
+
+func (s *StripPrefix) serveRequest(w http.ResponseWriter, r *http.Request, prefix string) {
+	r.Header.Add(ForwardedPrefixHeader, prefix)
+	r.RequestURI = r.URL.RequestURI()
+	s.Handler.ServeHTTP(w, r)
 }
 
 // SetHandler sets handler

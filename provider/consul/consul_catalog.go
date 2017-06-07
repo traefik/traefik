@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
-	"github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
@@ -22,8 +21,6 @@ import (
 const (
 	// DefaultWatchWaitTime is the duration to wait when polling consul
 	DefaultWatchWaitTime = 15 * time.Second
-	// DefaultConsulCatalogTagPrefix is a prefix for additional service/node configurations
-	DefaultConsulCatalogTagPrefix = "traefik"
 )
 
 var _ provider.Provider = (*CatalogProvider)(nil)
@@ -33,8 +30,8 @@ type CatalogProvider struct {
 	provider.BaseProvider `mapstructure:",squash"`
 	Endpoint              string `description:"Consul server endpoint"`
 	Domain                string `description:"Default domain used"`
+	Prefix                string `description:"Prefix used for Consul catalog tags"`
 	client                *api.Client
-	Prefix                string
 }
 
 type serviceUpdate struct {
@@ -80,11 +77,14 @@ func (p *CatalogProvider) watchServices(stopCh <-chan struct{}) <-chan map[strin
 	watchCh := make(chan map[string][]string)
 
 	catalog := p.client.Catalog()
+	health := p.client.Health()
+	var lastHealthIndex uint64
 
 	safe.Go(func() {
 		defer close(watchCh)
 
-		opts := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
+		catalogOptions := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
+		healthOptions := &api.QueryOptions{}
 
 		for {
 			select {
@@ -93,18 +93,30 @@ func (p *CatalogProvider) watchServices(stopCh <-chan struct{}) <-chan map[strin
 			default:
 			}
 
-			data, meta, err := catalog.Services(opts)
+			data, catalogMeta, err := catalog.Services(catalogOptions)
 			if err != nil {
-				log.WithError(err).Errorf("Failed to list services")
+				log.WithError(err).Error("Failed to list services")
+				return
+			}
+
+			// Listening to changes that leads to `passing` state or degrades from it.
+			// The call is used just as a trigger for further actions
+			// (intentionally there is no interest in the received data).
+			_, healthMeta, err := health.State("passing", healthOptions)
+			if err != nil {
+				log.WithError(err).Error("Failed to retrieve health checks")
 				return
 			}
 
 			// If LastIndex didn't change then it means `Get` returned
 			// because of the WaitTime and the key didn't changed.
-			if opts.WaitIndex == meta.LastIndex {
+			sameServiceAmount := catalogOptions.WaitIndex == catalogMeta.LastIndex
+			sameServiceHealth := lastHealthIndex == healthMeta.LastIndex
+			if sameServiceAmount && sameServiceHealth {
 				continue
 			}
-			opts.WaitIndex = meta.LastIndex
+			catalogOptions.WaitIndex = catalogMeta.LastIndex
+			lastHealthIndex = healthMeta.LastIndex
 
 			if data != nil {
 				watchCh <- data
@@ -120,7 +132,7 @@ func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
 	opts := &api.QueryOptions{}
 	data, _, err := health.Service(service, "", true, opts)
 	if err != nil {
-		log.WithError(err).Errorf("Failed to fetch details of " + service)
+		log.WithError(err).Errorf("Failed to fetch details of %s", service)
 		return catalogUpdate{}, err
 	}
 
@@ -190,8 +202,8 @@ func (p *CatalogProvider) getBackendName(node *api.ServiceEntry, index int) stri
 
 func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {
 	for _, tag := range tags {
-		if strings.Index(strings.ToLower(tag), DefaultConsulCatalogTagPrefix+".") == 0 {
-			if kv := strings.SplitN(tag[len(DefaultConsulCatalogTagPrefix+"."):], "=", 2); len(kv) == 2 && strings.ToLower(kv[0]) == strings.ToLower(name) {
+		if strings.Index(strings.ToLower(tag), p.Prefix+".") == 0 {
+			if kv := strings.SplitN(tag[len(p.Prefix+"."):], "=", 2); len(kv) == 2 && strings.ToLower(kv[0]) == strings.ToLower(name) {
 				return kv[1]
 			}
 		}
@@ -203,8 +215,8 @@ func (p *CatalogProvider) getContraintTags(tags []string) []string {
 	var list []string
 
 	for _, tag := range tags {
-		if strings.Index(strings.ToLower(tag), DefaultConsulCatalogTagPrefix+".tags=") == 0 {
-			splitedTags := strings.Split(tag[len(DefaultConsulCatalogTagPrefix+".tags="):], ",")
+		if strings.Index(strings.ToLower(tag), p.Prefix+".tags=") == 0 {
+			splitedTags := strings.Split(tag[len(p.Prefix+".tags="):], ",")
 			list = append(list, splitedTags...)
 		}
 	}
@@ -272,9 +284,7 @@ func (p *CatalogProvider) getNodes(index map[string][]string) ([]catalogUpdate, 
 		name := strings.ToLower(service)
 		if !strings.Contains(name, " ") && !visited[name] {
 			visited[name] = true
-			log.WithFields(logrus.Fields{
-				"service": name,
-			}).Debug("Fetching service")
+			log.WithField("service", name).Debug("Fetching service")
 			healthy, err := p.healthyNodes(name)
 			if err != nil {
 				return nil, err

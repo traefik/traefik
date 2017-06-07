@@ -40,7 +40,7 @@ type dynamoClient struct {
 
 // createClient configures aws credentials and creates a dynamoClient
 func (p *Provider) createClient() (*dynamoClient, error) {
-	log.Infof("Creating Provider client...")
+	log.Info("Creating Provider client...")
 	sess := session.New()
 	if p.Region == "" {
 		return nil, errors.New("no Region provided for Provider")
@@ -105,14 +105,14 @@ func (p *Provider) loadDynamoConfig(client *dynamoClient) (*types.Configuration,
 		// verify the type of each item by checking to see if it has
 		// the corresponding type, backend or frontend map
 		if backend, exists := item["backend"]; exists {
-			log.Debugf("Unmarshaling backend from Provider...")
+			log.Debug("Unmarshaling backend from Provider...")
 			tmpBackend := &types.Backend{}
 			err = dynamodbattribute.Unmarshal(backend, tmpBackend)
 			if err != nil {
 				log.Errorf(err.Error())
 			} else {
 				backends[*item["name"].S] = tmpBackend
-				log.Debugf("Backend from Provider unmarshalled successfully")
+				log.Debug("Backend from Provider unmarshalled successfully")
 			}
 		} else if frontend, exists := item["frontend"]; exists {
 			log.Debugf("Unmarshaling frontend from Provider...")
@@ -122,7 +122,7 @@ func (p *Provider) loadDynamoConfig(client *dynamoClient) (*types.Configuration,
 				log.Errorf(err.Error())
 			} else {
 				frontends[*item["name"].S] = tmpFrontend
-				log.Debugf("Frontend from Provider unmarshalled successfully")
+				log.Debug("Frontend from Provider unmarshalled successfully")
 			}
 		} else {
 			log.Warnf("Error in format of Provider Item: %v", item)
@@ -176,7 +176,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				reload := time.NewTicker(time.Second * time.Duration(p.RefreshSeconds))
 				defer reload.Stop()
 				for {
-					log.Debugf("Watching Provider...")
+					log.Debug("Watching Provider...")
 					select {
 					case <-reload.C:
 						configuration, err := p.loadDynamoConfig(aws)

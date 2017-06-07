@@ -92,13 +92,13 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter.Methods("PUT").Path(provider.Path + "api/providers/{provider}").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if provider.ReadOnly {
 			response.WriteHeader(http.StatusForbidden)
-			fmt.Fprintf(response, "REST API is in read-only mode")
+			fmt.Fprint(response, "REST API is in read-only mode")
 			return
 		}
 		vars := mux.Vars(request)
 		if vars["provider"] != "web" {
 			response.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(response, "Only 'web' provider can be updated through the REST API")
+			fmt.Fprint(response, "Only 'web' provider can be updated through the REST API")
 			return
 		}
 
@@ -126,7 +126,8 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter.Methods("GET").Path(provider.Path).HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		http.Redirect(response, request, provider.Path+"dashboard/", 302)
 	})
-	systemRouter.Methods("GET").PathPrefix(provider.Path + "dashboard/").Handler(http.StripPrefix(provider.Path+"dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
+	systemRouter.Methods("GET").PathPrefix(provider.Path + "dashboard/").
+		Handler(http.StripPrefix(provider.Path+"dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
 
 	// expvars
 	if provider.server.globalConfiguration.Debug {
@@ -174,7 +175,7 @@ func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, requ
 }
 
 func (provider *WebProvider) getPingHandler(response http.ResponseWriter, request *http.Request) {
-	fmt.Fprintf(response, "OK")
+	fmt.Fprint(response, "OK")
 }
 
 func (provider *WebProvider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
@@ -319,14 +320,14 @@ func (provider *WebProvider) getRouteHandler(response http.ResponseWriter, reque
 
 func expvarHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	fmt.Fprintf(w, "{\n")
+	fmt.Fprint(w, "{\n")
 	first := true
 	expvar.Do(func(kv expvar.KeyValue) {
 		if !first {
-			fmt.Fprintf(w, ",\n")
+			fmt.Fprint(w, ",\n")
 		}
 		first = false
 		fmt.Fprintf(w, "%q: %s", kv.Key, kv.Value)
 	})
-	fmt.Fprintf(w, "\n}\n")
+	fmt.Fprint(w, "\n}\n")
 }
