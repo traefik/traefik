@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+
+	"github.com/containous/traefik/middlewares"
 )
 
 var (
-	_ http.ResponseWriter = &captureResponseWriter{}
-	_ http.Hijacker       = &captureResponseWriter{}
-	_ http.Flusher        = &captureResponseWriter{}
-	_ http.CloseNotifier  = &captureResponseWriter{}
+	_ middlewares.Stateful = &captureResponseWriter{}
 )
 
 // captureResponseWriter is a wrapper of type http.ResponseWriter
