@@ -1411,8 +1411,6 @@ func TestServiceAnnotations(t *testing.T) {
 	}
 }
 
-
-
 func TestIngressAnnotations(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		{
@@ -1557,11 +1555,11 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 			},
-		},{
+		}, {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"kubernetes.io/ingress.class":     "traefik",
+					"kubernetes.io/ingress.class":          "traefik",
 					"ingress.kubernetes.io/rewrite-target": "/",
 				},
 			},
@@ -1689,10 +1687,10 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
-			"rewrite/api":{
+			"rewrite/api": {
 				Servers: map[string]types.Server{
 					"http://example.com": {
-						URL: "http://example.com",
+						URL:    "http://example.com",
 						Weight: 1,
 					},
 				},
@@ -1761,18 +1759,18 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 			},
-			"rewrite/api":{
-				Backend: "rewrite/api",
+			"rewrite/api": {
+				Backend:        "rewrite/api",
 				PassHostHeader: true,
 				Routes: map[string]types.Route{
-					"/api":{
+					"/api": {
 						Rule: "ReplacePath:/",
 					},
-					"rewrite":{
+					"rewrite": {
 						Rule: "Host:rewrite",
 					},
 				},
-				Priority:       len("/api"),
+				Priority: len("/api"),
 			},
 		},
 	}
