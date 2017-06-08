@@ -6,6 +6,7 @@
 /traefik
 /traefik.toml
 /static/
+/integration/vendor
 .vscode/
 /site/
 *.log
