@@ -28,7 +28,7 @@ var _ provider.Provider = (*Provider)(nil)
 const (
 	annotationFrontendRuleType = "traefik.frontend.rule.type"
 	ruleTypePathPrefix         = "PathPrefix"
-	ruleTypePathPrefixStrip    = "PathPrefixStrip"
+	ruleTypeReplacePath        = "ReplacePath"
 
 	annotationKubernetesIngressClass         = "kubernetes.io/ingress.class"
 	annotationKubernetesAuthRealm            = "ingress.kubernetes.io/auth-realm"
@@ -216,11 +216,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]
 					if len(rewriteTarget) > 0 {
-						ruleType = ruleTypePathPrefixStrip
+						ruleType = ruleTypeReplacePath
 					}
 
 					switch {
-					case ruleType == ruleTypePathPrefixStrip:
+					case ruleType == ruleTypeReplacePath:
 						templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
 							Rule: ruleType + ":" + rewriteTarget,
 						}
