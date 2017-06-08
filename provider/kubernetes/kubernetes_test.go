@@ -1411,6 +1411,8 @@ func TestServiceAnnotations(t *testing.T) {
 	}
 }
 
+
+
 func TestIngressAnnotations(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		{
@@ -1555,6 +1557,34 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 			},
+		},{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"kubernetes.io/ingress.class":     "traefik",
+					"ingress.kubernetes.io/rewrite-target": "/",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "rewrite",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/api",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 	services := []*v1.Service{
@@ -1659,6 +1689,19 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"rewrite/api":{
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL: "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
@@ -1718,6 +1761,19 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 			},
+			"rewrite/api":{
+				Backend: "rewrite/api",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"/api":{
+						Rule: "PathPrefixStrip:/",
+					},
+					"rewrite":{
+						Rule: "Host:rewrite",
+					},
+				},
+				Priority:       len("/api"),
+			},
 		},
 	}
 
@@ -1725,7 +1781,7 @@ func TestIngressAnnotations(t *testing.T) {
 	expectedJSON, _ := json.Marshal(expected)
 
 	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+		t.Fatalf("expected %+v \n got %+v", string(expectedJSON), string(actualJSON))
 	}
 }
 
