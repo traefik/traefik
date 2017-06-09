@@ -2,6 +2,8 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: cheese
+  annotations:
+    kubernetes.io/ingress.class: traefik
 spec:
   rules:
   - host: stilton.minikube
