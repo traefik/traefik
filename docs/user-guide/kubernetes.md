@@ -68,10 +68,10 @@ subjects:
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-rbac.yaml
 ```
 
-## Deploy Træfik using a Deployment object
+## Deploy Træfik using a DaemonSet
 
 We are going to deploy Træfik with a
-[Deployment](http://kubernetes.io/docs/user-guide/deployments/), as this will
+[DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/), as this will
 allow you to easily roll out config changes or update the image.
 
 ```yaml
@@ -82,7 +82,7 @@ metadata:
   name: traefik-ingress-controller
   namespace: kube-system
 ---
-kind: Deployment
+kind: DaemonSet
 apiVersion: extensions/v1beta1
 metadata:
   name: traefik-ingress-controller
@@ -90,10 +90,6 @@ metadata:
   labels:
     k8s-app: traefik-ingress-lb
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      k8s-app: traefik-ingress-lb
   template:
     metadata:
       labels:
@@ -102,6 +98,7 @@ spec:
     spec:
       serviceAccountName: traefik-ingress-controller
       terminationGracePeriodSeconds: 60
+      hostNetwork: true
       containers:
       - image: traefik
         name: traefik-ingress-lb
@@ -113,18 +110,23 @@ spec:
             cpu: 100m
             memory: 20Mi
         ports:
-        - containerPort: 80
+        - name: http
+          containerPort: 80
           hostPort: 80
-        - containerPort: 8080
+        - name: admin
+          containerPort: 8081
+        securityContext:
+          privileged: true
         args:
+        - -d
         - --web
+        - --web.address=:8081
         - --kubernetes
 ```
 [examples/k8s/traefik.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik.yaml)
 
 > notice that we binding port 80 on the Træfik container to port 80 on the host.
-> With a multi node cluster we might expose Træfik with a NodePort or LoadBalancer service
-> and run more than 1 replica of Træfik for high availability.
+> With a multi node cluster we might expose Træfik with a NodePort or LoadBalancer service.
 
 To deploy Træfik to your cluster start by submitting the deployment to the cluster with `kubectl`:
 
