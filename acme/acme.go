@@ -378,7 +378,11 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		if cert != nil && err == nil {
 			return cert, nil
 		}
-		log.Errorf("On demand certificate retrieval failed for %v due to %v", domain, err)
+		if err != nil {
+			log.Errorf("On demand certificate retrieval failed for %v due to %v", domain, err)
+		} else {
+			log.Errorf("On demand certificate for %v didn't return anything.", domain)
+		}
 	}
 
 	// Check if we have a wildcard cert into TLSConfig that could be used
