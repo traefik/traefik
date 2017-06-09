@@ -381,7 +381,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		if err != nil {
 			log.Errorf("On demand certificate retrieval failed for %v due to %v", domain, err)
 		} else {
-			log.Errorf("On demand certificate for %v didn't return anything.", domain)
+			log.Warnf("On demand certificate for %v didn't return anything.", domain)
 		}
 	}
 
