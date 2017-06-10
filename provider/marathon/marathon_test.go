@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/containous/traefik/mocks"
+	"github.com/containous/traefik/provider/marathon/mocks"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
