@@ -37,7 +37,6 @@ spec:
             memory: 20Mi
         args:
         - --web
-        - --web.address=:8081
         - --kubernetes
 ---
 kind: Service
@@ -50,8 +49,6 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 80
     - protocol: TCP
-      port: 8081
-      targetPort: 8081
+      port: 8080
   type: NodePort
