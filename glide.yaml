@@ -120,6 +120,8 @@ import:
   version: 6f3806018612930941127f2a7c6c453ba2c527d2
 - package: github.com/prometheus/procfs
   version: a1dba9ce8baed984a2495b658c82687f8157b98f
+- package: github.com/matttproud/golang_protobuf_extensions
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
 - package: github.com/eapache/channels
   version: v1.1.0
 - package: golang.org/x/sys
