@@ -108,6 +108,16 @@ import:
   version: v0.3.0
   subpackages:
   - metrics
+- package: github.com/prometheus/client_golang
+  version: 08fd2e12372a66e68e30523c7642e0cbc3e4fbde
+  subpackages:
+  - prometheus
+- package: github.com/prometheus/common
+  version: 49fee292b27bfff7f354ee0f64e1bc4850462edf
+- package: github.com/prometheus/client_model
+  version: 6f3806018612930941127f2a7c6c453ba2c527d2
+- package: github.com/prometheus/procfs
+  version: a1dba9ce8baed984a2495b658c82687f8157b98f
 - package: github.com/eapache/channels
   version: v1.1.0
 - package: golang.org/x/sys
