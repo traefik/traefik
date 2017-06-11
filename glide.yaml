@@ -61,6 +61,8 @@ import:
   version: 42492a3a85e294bdbdd1bcabb8c12769a81ea284
   subpackages:
   - plugin/rewrite
+- package: github.com/vulcand/predicate
+  version: 19b9dde14240d94c804ae5736ad0e1de10bf8fe6
 - package: github.com/xenolf/lego
   version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
   subpackages:
