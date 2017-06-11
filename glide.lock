@@ -226,7 +226,7 @@ imports:
   - proto
   - sortkeys
 - name: github.com/golang/glog
-  version: fca8c8854093a154ff1eb580aae10276ad6b1b5f
+  version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/golang/protobuf
   version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
   subpackages:
