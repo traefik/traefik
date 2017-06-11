@@ -270,7 +270,7 @@ imports:
 - name: github.com/juju/ratelimit
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/mailgun/timetools
-  version: fd192d755b00c968d312d23f521eb0cdc6f66bd0
+  version: 7e6055773c5137efbeb3bd2410d705fe10ab6bfd
 - name: github.com/mailru/easyjson
   version: d5b7844b561a7bc640052f1b935f7b800330d7e0
   subpackages:
@@ -539,11 +539,6 @@ imports:
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/ini.v1
   version: e7fea39b01aea8d5671f6858f0532f56e8bff3a5
-- name: gopkg.in/mgo.v2
-  version: 3f83fa5005286a7fe593b055f0d7771a7dce4655
-  subpackages:
-  - bson
-  - internal/json
 - name: gopkg.in/ns1/ns1-go.v2
   version: 2abc76c60bf88ba33b15d1d87a13f624d8dff956
   subpackages:
