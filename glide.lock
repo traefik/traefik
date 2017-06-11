@@ -194,7 +194,7 @@ imports:
 - name: github.com/elazarl/go-bindata-assetfs
   version: 30f82fa23fd844bd5bb1e5f216db87fd77b5eb43
 - name: github.com/emicklei/go-restful
-  version: 892402ba11a2e2fd5e1295dd633481f27365f14d
+  version: 89ef8af493ab468a45a42bb0d89a06fccdd2fb22
   subpackages:
   - log
   - swagger
