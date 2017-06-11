@@ -156,6 +156,8 @@ import:
   version: v0.3
   subpackages:
   - proto
+- package: github.com/golang/protobuf
+  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
 - package: github.com/rancher/go-rancher
   version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
 - package: golang.org/x/oauth2/google
