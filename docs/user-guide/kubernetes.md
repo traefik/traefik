@@ -73,10 +73,11 @@ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/exa
 It is possible to use Træfik with a
 [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
 or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)
-object, whereas both options have their own pros and cons: The scalability os much better when
+object, whereas both options have their own pros and cons: The scalability is much better when
 using a Deployment, because you will have a Single-Pod-per-Node model when using
-the DeaemonSet. On the other hand the DaemonSet allows you to access any Node
-directly on Port 80 and 443, where you have to setup a 
+the DeaemonSet. It is possible to exclusively run a Service on a dedicated
+set of machines using taints and tolerations with a DaemonSet. On the other hand the
+DaemonSet allows you to access any Node directly on Port 80 and 443, where you have to setup a 
 [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object
 with a Deployment.
 
@@ -122,7 +123,6 @@ spec:
             memory: 20Mi
         args:
         - --web
-        - --web.address=:8081
         - --kubernetes
 ---
 kind: Service
@@ -135,10 +135,8 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 80
     - protocol: TCP
-      port: 8081
-      targetPort: 8081
+      port: 8080
   type: NodePort
 ```
 [examples/k8s/traefik-deployment.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-deployment.yaml)
@@ -188,18 +186,17 @@ spec:
           containerPort: 80
           hostPort: 80
         - name: admin
-          containerPort: 8081
+          containerPort: 8080
         securityContext:
           privileged: true
         args:
         - -d
         - --web
-        - --web.address=:8081
         - --kubernetes
 ```
 [examples/k8s/traefik-ds.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-ds.yaml)
 
-To deploy Træfik to your cluster start by submitting one of the yaml files to the cluster with `kubectl`:
+To deploy Træfik to your cluster start by submitting one of the YAML files to the cluster with `kubectl`:
 
 ```shell
 $ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-deployment.yaml
