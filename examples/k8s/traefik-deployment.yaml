@@ -39,3 +39,19 @@ spec:
         - --web
         - --web.address=:8081
         - --kubernetes
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik-ingress-service
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  type: NodePort
