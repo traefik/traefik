@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,12 +28,11 @@ func TestReplacePath(t *testing.T) {
 				}),
 			}
 
-			req, err := http.NewRequest("GET", "http://localhost"+path, nil)
-			assert.NoError(t, err, "%s: unexpected error.", path)
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+path, nil)
 
 			handler.ServeHTTP(nil, req)
-			assert.Equal(t, expectedPath, replacementPath, "%s: unexpected path.", path)
-			assert.Equal(t, path, actualHeader, "%s: unexpected '%s' header.", path, ReplacedPathHeader)
+			assert.Equal(t, expectedPath, replacementPath, "Unexpected path.")
+			assert.Equal(t, path, actualHeader, "Unexpected '%s' header.", ReplacedPathHeader)
 		})
 	}
 }

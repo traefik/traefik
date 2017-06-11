@@ -42,6 +42,7 @@
 
 # Access logs file
 #
+# Deprecated - see [accessLog] lower down
 # Optional
 #
 # accessLogsFile = "log/access.log"
@@ -149,6 +150,24 @@ Supported filters:
 # [consulCatalog]
 #   endpoint = 127.0.0.1:8500
 #   constraints = ["tag==api", "tag!=v*-beta"]
+```
+
+## Access log definition
+
+The standard access log uses the textual Common Log Format (CLF), extended with additional fields.
+Alternatively logs can be written in JSON. 
+Using the default CLF option is simple, e.g.
+
+```toml
+[accessLog]
+  filePath = "/path/to/access.log"
+```
+
+To write JSON format logs, specify `json` as the format:
+```toml
+[accessLog]
+  filePath   = "/path/to/access.log"
+  format     = "json"
 ```
 
 ## Entrypoints definition

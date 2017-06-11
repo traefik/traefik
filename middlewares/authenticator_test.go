@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/codegangsta/negroni"
+	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -88,7 +89,7 @@ func TestBasicAuthFail(t *testing.T) {
 	defer ts.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", ts.URL, nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
@@ -112,7 +113,7 @@ func TestBasicAuthSuccess(t *testing.T) {
 	defer ts.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", ts.URL, nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
@@ -148,7 +149,7 @@ func TestDigestAuthFail(t *testing.T) {
 	defer ts.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", ts.URL, nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
@@ -174,10 +175,11 @@ func TestBasicAuthUserHeader(t *testing.T) {
 	defer ts.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", ts.URL, nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
+
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := ioutil.ReadAll(res.Body)

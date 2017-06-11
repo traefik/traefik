@@ -2,7 +2,6 @@ package healthcheck
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,85 +9,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containous/traefik/testhelpers"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
 const healthCheckInterval = 100 * time.Millisecond
 
-type testLoadBalancer struct {
-	// RWMutex needed due to parallel test execution: Both the system-under-test
-	// and the test assertions reference the counters.
-	*sync.RWMutex
-	numRemovedServers  int
-	numUpsertedServers int
-	servers            []*url.URL
-}
-
-func (lb *testLoadBalancer) RemoveServer(u *url.URL) error {
-	lb.Lock()
-	defer lb.Unlock()
-	lb.numRemovedServers++
-	lb.removeServer(u)
-	return nil
-}
-
-func (lb *testLoadBalancer) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
-	lb.Lock()
-	defer lb.Unlock()
-	lb.numUpsertedServers++
-	lb.servers = append(lb.servers, u)
-	return nil
-}
-
-func (lb *testLoadBalancer) Servers() []*url.URL {
-	return lb.servers
-}
-
-func (lb *testLoadBalancer) removeServer(u *url.URL) {
-	var i int
-	var serverURL *url.URL
-	for i, serverURL = range lb.servers {
-		if *serverURL == *u {
-			break
-		}
-	}
-
-	lb.servers = append(lb.servers[:i], lb.servers[i+1:]...)
-}
-
 type testHandler struct {
 	done           func()
 	healthSequence []bool
-}
-
-func newTestServer(done func(), healthSequence []bool) *httptest.Server {
-	handler := &testHandler{
-		done:           done,
-		healthSequence: healthSequence,
-	}
-	return httptest.NewServer(handler)
-}
-
-// ServeHTTP returns 200 or 503 HTTP response codes depending on whether the
-// current request is marked as healthy or not.
-// It calls the given 'done' function once all request health indicators have
-// been depleted.
-func (th *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if len(th.healthSequence) == 0 {
-		panic("received unexpected request")
-	}
-
-	healthy := th.healthSequence[0]
-	if healthy {
-		w.WriteHeader(http.StatusOK)
-	} else {
-		w.WriteHeader(http.StatusServiceUnavailable)
-	}
-
-	th.healthSequence = th.healthSequence[1:]
-	if len(th.healthSequence) == 0 {
-		th.done()
-	}
 }
 
 func TestSetBackendsConfiguration(t *testing.T) {
@@ -153,20 +82,20 @@ func TestSetBackendsConfiguration(t *testing.T) {
 				Interval: healthCheckInterval,
 				LB:       lb,
 			})
-			serverURL := MustParseURL(ts.URL)
+			serverURL := testhelpers.MustParseURL(ts.URL)
 			if test.startHealthy {
 				lb.servers = append(lb.servers, serverURL)
 			} else {
 				backend.disabledURLs = append(backend.disabledURLs, serverURL)
 			}
 
-			healthCheck := HealthCheck{
+			check := HealthCheck{
 				Backends: make(map[string]*BackendHealthCheck),
 			}
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			go func() {
-				healthCheck.execute(ctx, "id", backend)
+				check.execute(ctx, "id", backend)
 				wg.Done()
 			}()
 
@@ -257,13 +186,75 @@ func TestNewRequest(t *testing.T) {
 			}
 		})
 	}
-
 }
 
-func MustParseURL(rawurl string) *url.URL {
-	u, err := url.Parse(rawurl)
-	if err != nil {
-		panic(fmt.Sprintf("failed to parse URL '%s': %s", rawurl, err))
+type testLoadBalancer struct {
+	// RWMutex needed due to parallel test execution: Both the system-under-test
+	// and the test assertions reference the counters.
+	*sync.RWMutex
+	numRemovedServers  int
+	numUpsertedServers int
+	servers            []*url.URL
+}
+
+func (lb *testLoadBalancer) RemoveServer(u *url.URL) error {
+	lb.Lock()
+	defer lb.Unlock()
+	lb.numRemovedServers++
+	lb.removeServer(u)
+	return nil
+}
+
+func (lb *testLoadBalancer) UpsertServer(u *url.URL, options ...roundrobin.ServerOption) error {
+	lb.Lock()
+	defer lb.Unlock()
+	lb.numUpsertedServers++
+	lb.servers = append(lb.servers, u)
+	return nil
+}
+
+func (lb *testLoadBalancer) Servers() []*url.URL {
+	return lb.servers
+}
+
+func (lb *testLoadBalancer) removeServer(u *url.URL) {
+	var i int
+	var serverURL *url.URL
+	for i, serverURL = range lb.servers {
+		if *serverURL == *u {
+			break
+		}
 	}
-	return u
+
+	lb.servers = append(lb.servers[:i], lb.servers[i+1:]...)
+}
+
+func newTestServer(done func(), healthSequence []bool) *httptest.Server {
+	handler := &testHandler{
+		done:           done,
+		healthSequence: healthSequence,
+	}
+	return httptest.NewServer(handler)
+}
+
+// ServeHTTP returns 200 or 503 HTTP response codes depending on whether the
+// current request is marked as healthy or not.
+// It calls the given 'done' function once all request health indicators have
+// been depleted.
+func (th *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if len(th.healthSequence) == 0 {
+		panic("received unexpected request")
+	}
+
+	healthy := th.healthSequence[0]
+	if healthy {
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}
+
+	th.healthSequence = th.healthSequence[1:]
+	if len(th.healthSequence) == 0 {
+		th.done()
+	}
 }

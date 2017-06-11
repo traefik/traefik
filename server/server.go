@@ -88,10 +88,16 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
 	}
 
-	var err error
-	server.accessLoggerMiddleware, err = accesslog.NewLogHandler(globalConfiguration.AccessLogsFile)
-	if err != nil {
-		log.Warnf("Unable to create log handler: %s", err)
+	if globalConfiguration.AccessLogsFile != "" {
+		globalConfiguration.AccessLog = &types.AccessLog{FilePath: globalConfiguration.AccessLogsFile, Format: accesslog.CommonFormat}
+	}
+
+	if globalConfiguration.AccessLog != nil {
+		var err error
+		server.accessLoggerMiddleware, err = accesslog.NewLogHandler(globalConfiguration.AccessLog)
+		if err != nil {
+			log.Warnf("Unable to create log handler: %s", err)
+		}
 	}
 	return server
 }
@@ -186,11 +192,9 @@ func (server *Server) startHTTPServers() {
 		if server.accessLoggerMiddleware != nil {
 			serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 		}
-		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
-			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
-				serverMiddlewares = append(serverMiddlewares, metricsMiddleware)
-			}
+		metrics := newMetrics(server.globalConfiguration, newServerEntryPointName)
+		if metrics != nil {
+			serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(metrics))
 		}
 		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
 			statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
@@ -414,6 +418,33 @@ func (server *Server) listenSignals() {
 	server.Stop()
 }
 
+func createClientTLSConfig(tlsOption *TLS) (*tls.Config, error) {
+	if tlsOption == nil {
+		return nil, errors.New("no TLS provided")
+	}
+
+	config, err := tlsOption.Certificates.CreateTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(tlsOption.ClientCAFiles) > 0 {
+		pool := x509.NewCertPool()
+		for _, caFile := range tlsOption.ClientCAFiles {
+			data, err := ioutil.ReadFile(caFile)
+			if err != nil {
+				return nil, err
+			}
+			if !pool.AppendCertsFromPEM(data) {
+				return nil, errors.New("invalid certificate(s) in " + caFile)
+			}
+		}
+		config.RootCAs = pool
+	}
+	config.BuildNameToCertificate()
+	return config, nil
+}
+
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI
 func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, router *middlewares.HandlerSwitcher) (*tls.Config, error) {
 	if tlsOption == nil {
@@ -496,6 +527,7 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 			}
 		}
 	}
+
 	return config, nil
 }
 
@@ -545,6 +577,17 @@ func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) 
 	return serverEntryPoints
 }
 
+// clientTLSRoundTripper is used for forwarding client authentication to
+// backend server
+func clientTLSRoundTripper(config *tls.Config) http.RoundTripper {
+	if config == nil {
+		return http.DefaultTransport
+	}
+	return &http.Transport{
+		TLSClientConfig: config,
+	}
+}
+
 // LoadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
 func (server *Server) loadConfig(configurations configs, globalConfiguration GlobalConfiguration) (map[string]*serverEntryPoint, error) {
@@ -561,12 +604,6 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 			log.Debugf("Creating frontend %s", frontendName)
 
-			fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
-			if err != nil {
-				log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
-				log.Errorf("Skipping frontend %s...", frontendName)
-				continue frontend
-			}
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
 				log.Errorf("Skipping frontend %s...", frontendName)
@@ -614,6 +651,31 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				}
 				if backends[entryPointName+frontend.Backend] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
+
+					var (
+						tlsConfig *tls.Config
+						err       error
+						lb        http.Handler
+					)
+
+					if frontend.PassTLSCert {
+						tlsConfig, err = createClientTLSConfig(entryPoint.TLS)
+						if err != nil {
+							log.Errorf("Failed to create TLS config for frontend %s: %v", frontendName, err)
+							continue frontend
+						}
+					}
+
+					// passing nil will use the roundtripper http.DefaultTransport
+					rt := clientTLSRoundTripper(tlsConfig)
+
+					fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader), forward.RoundTripper(rt))
+					if err != nil {
+						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
+
 					var rr *roundrobin.RoundRobin
 					var saveFrontend http.Handler
 					if server.accessLoggerMiddleware != nil {
@@ -623,6 +685,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					} else {
 						rr, _ = roundrobin.New(fwd)
 					}
+
 					if configuration.Backends[frontend.Backend] == nil {
 						log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
 						log.Errorf("Skipping frontend %s...", frontendName)
@@ -637,14 +700,13 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					}
 
 					stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
-					cookiename := "_TRAEFIK_BACKEND"
+					cookiename := "_TRAEFIK_BACKEND_" + frontend.Backend
 					var sticky *roundrobin.StickySession
 
 					if stickysession {
 						sticky = roundrobin.NewStickySession(cookiename)
 					}
 
-					var lb http.Handler
 					switch lbMethod {
 					case types.Drr:
 						log.Debugf("Creating load-balancer drr")
@@ -720,21 +782,15 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							continue frontend
 						}
 					}
-					// retry ?
-					if globalConfiguration.Retry != nil {
-						retries := len(configuration.Backends[frontend.Backend].Servers)
-						if globalConfiguration.Retry.Attempts > 0 {
-							retries = globalConfiguration.Retry.Attempts
-						}
-						lb = middlewares.NewRetry(retries, lb)
-						log.Debugf("Creating retries max attempts %d", retries)
-					}
 
-					if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
-						if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-							metricsMiddlewareBackend := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
-							negroni.Use(metricsMiddlewareBackend)
-						}
+					metrics := newMetrics(server.globalConfiguration, frontend.Backend)
+
+					if globalConfiguration.Retry != nil {
+						retryListener := middlewares.NewMetricsRetryListener(metrics)
+						lb = registerRetryMiddleware(lb, globalConfiguration, configuration, frontend.Backend, retryListener)
+					}
+					if metrics != nil {
+						negroni.Use(middlewares.NewMetricsWrapper(metrics))
 					}
 
 					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
@@ -954,4 +1010,38 @@ func (*Server) configureBackends(backends map[string]*types.Backend) {
 			}
 		}
 	}
+}
+
+// newMetrics instantiates the proper Metrics implementation, depending on the global configuration.
+// Note that given there is no metrics instrumentation configured, it will return nil.
+func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metrics {
+	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
+	if metricsEnabled && globalConfig.Web.Metrics.Prometheus != nil {
+		metrics, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
+		if err != nil {
+			log.Errorf("Error creating Prometheus Metrics implementation: %s", err)
+			return nil
+		}
+		return metrics
+	}
+
+	return nil
+}
+
+func registerRetryMiddleware(
+	httpHandler http.Handler,
+	globalConfig GlobalConfiguration,
+	config *types.Configuration,
+	backend string,
+	listener middlewares.RetryListener,
+) http.Handler {
+	retries := len(config.Backends[backend].Servers)
+	if globalConfig.Retry.Attempts > 0 {
+		retries = globalConfig.Retry.Attempts
+	}
+
+	httpHandler = middlewares.NewRetry(retries, httpHandler, listener)
+	log.Debugf("Creating retries max attempts %d", retries)
+
+	return httpHandler
 }

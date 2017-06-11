@@ -12,7 +12,7 @@ import (
 	"github.com/containous/traefik/types"
 )
 
-type mockDynamoDBCLient struct {
+type mockDynamoDBClient struct {
 	dynamodbiface.DynamoDBAPI
 	testWithError bool
 }
@@ -40,7 +40,7 @@ var frontend = &types.Frontend{
 
 // ScanPages simulates a call to ScanPages (see https://docs.aws.amazon.com/sdk-for-go/api/service/dynamodb/#DynamoDB.ScanPages)
 // by running the fn function twice and returning an item each time.
-func (m *mockDynamoDBCLient) ScanPages(input *dynamodb.ScanInput, fn func(*dynamodb.ScanOutput, bool) bool) error {
+func (m *mockDynamoDBClient) ScanPages(input *dynamodb.ScanInput, fn func(*dynamodb.ScanOutput, bool) bool) error {
 	if m.testWithError {
 		return errors.New("fake error")
 	}
@@ -86,7 +86,7 @@ func (m *mockDynamoDBCLient) ScanPages(input *dynamodb.ScanInput, fn func(*dynam
 
 func TestLoadDynamoConfigSuccessful(t *testing.T) {
 	dbiface := &dynamoClient{
-		db: &mockDynamoDBCLient{
+		db: &mockDynamoDBClient{
 			testWithError: false,
 		},
 	}
@@ -110,7 +110,7 @@ func TestLoadDynamoConfigSuccessful(t *testing.T) {
 
 func TestLoadDynamoConfigFailure(t *testing.T) {
 	dbiface := &dynamoClient{
-		db: &mockDynamoDBCLient{
+		db: &mockDynamoDBClient{
 			testWithError: true,
 		},
 	}

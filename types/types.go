@@ -60,6 +60,7 @@ type Frontend struct {
 	Backend              string           `json:"backend,omitempty"`
 	Routes               map[string]Route `json:"routes,omitempty"`
 	PassHostHeader       bool             `json:"passHostHeader,omitempty"`
+	PassTLSCert          bool             `json:"passTLSCert,omitempty"`
 	Priority             int              `json:"priority"`
 	BasicAuth            []string         `json:"basicAuth"`
 	WhitelistSourceRange []string         `json:"whitelistSourceRange,omitempty"`
@@ -302,4 +303,10 @@ func (b *Buckets) String() string { return fmt.Sprintf("%v", *b) }
 //SetValue sets []float64 into the parser
 func (b *Buckets) SetValue(val interface{}) {
 	*b = Buckets(val.(Buckets))
+}
+
+// AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
+type AccessLog struct {
+	FilePath string `json:"file,omitempty" description:"Access log file path"`
+	Format   string `json:"format,omitempty" description:"Access log format: json | common"`
 }
