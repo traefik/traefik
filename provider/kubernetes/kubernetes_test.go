@@ -9,10 +9,10 @@ import (
 
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadIngresses(t *testing.T) {
