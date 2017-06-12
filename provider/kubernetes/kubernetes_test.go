@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadIngresses(t *testing.T) {
@@ -1559,7 +1560,6 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"kubernetes.io/ingress.class":          "traefik",
 					"ingress.kubernetes.io/rewrite-target": "/",
 				},
 			},
@@ -1775,12 +1775,7 @@ func TestIngressAnnotations(t *testing.T) {
 		},
 	}
 
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v \n got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual, "The rewritten data did not match the expected.")
 }
 
 func TestInvalidPassHostHeaderValue(t *testing.T) {
