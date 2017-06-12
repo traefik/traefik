@@ -208,22 +208,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				if len(pa.Path) > 0 {
-					ruleType := i.Annotations[annotationFrontendRuleType]
-					if ruleType == "" {
-						ruleType = ruleTypePathPrefix
-					}
-
-					rule := ruleType + ":" + pa.Path
-
-					if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
-						rule = ruleTypeReplacePath + ":" + rewriteTarget
-					}
-
-					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-						Rule: rule,
-					}
-				}
+				setPath(pa, i, templateObjects, r)
 
 				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
 				if err != nil {
@@ -304,6 +289,25 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 	}
 	return &templateObjects, nil
+}
+
+func setPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress, templateObjects types.Configuration, r v1beta1.IngressRule) {
+	if len(pa.Path) > 0 {
+		ruleType := i.Annotations[annotationFrontendRuleType]
+		if ruleType == "" {
+			ruleType = ruleTypePathPrefix
+		}
+
+		rule := ruleType + ":" + pa.Path
+
+		if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
+			rule = ruleTypeReplacePath + ":" + rewriteTarget
+		}
+
+		templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
+			Rule: rule,
+		}
+	}
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
