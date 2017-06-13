@@ -1,5 +1,5 @@
-hash: 6535e5faaf0a87d89bb74841d60988f6d13ead827efa02d509fd1914aeb6e4d4
-updated: 2017-06-13T23:30:19.890844996+02:00
+hash: 34ceb7bd979d43efdbf721ccb9d983061c06db527148f90f1784db89f6d089f0
+updated: 2017-05-19T23:30:19.890844996+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -172,7 +172,7 @@ imports:
   - store/etcd
   - store/zookeeper
 - name: github.com/donovanhide/eventsource
-  version: fd1de70867126402be23c306e1ce32828455d85b
+  version: 441a03aa37b3329bbb79f43de81914ea18724718
 - name: github.com/eapache/channels
   version: 47238d5aae8c0fefd518ef2bee46290909cf8263
 - name: github.com/eapache/queue
@@ -195,7 +195,7 @@ imports:
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/gambol99/go-marathon
-  version: 15ea23e360abb8b25071e677aed344f31838e403
+  version: 1b9c2582c26b632fb1fb295776d7ce40b68c36f2
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
