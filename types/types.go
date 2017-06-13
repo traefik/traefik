@@ -54,7 +54,6 @@ type Route struct {
 	Rule string `json:"rule,omitempty"`
 }
 
-
 //ErrorPage holds custom error page configuration
 type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
@@ -125,7 +124,7 @@ type Frontend struct {
 	BasicAuth            []string             `json:"basicAuth"`
 	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
 	Headers              Headers              `json:"headers,omitempty"`
-  Errors               map[string]ErrorPage `json:"errors,omitempty"`
+	Errors               map[string]ErrorPage `json:"errors,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
