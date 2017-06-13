@@ -83,6 +83,9 @@ func (p *Provider) createClient() (*awsClient, error) {
 				&credentials.SharedCredentialsProvider{},
 				defaults.RemoteCredProvider(*(defaults.Config()), defaults.Handlers()),
 			}),
+		Logger: aws.LoggerFunc(func(args ...interface{}) {
+			log.Debug(args...)
+		}),
 	}
 
 	return &awsClient{
