@@ -103,7 +103,8 @@ func (r *marathonClient) registerSubscription() error {
 	case EventsTransportCallback:
 		return r.registerCallbackSubscription()
 	case EventsTransportSSE:
-		return r.registerSSESubscription()
+		r.registerSSESubscription()
+		return nil
 	default:
 		return fmt.Errorf("the events transport: %d is not supported", r.config.EventsTransport)
 	}
@@ -162,40 +163,81 @@ func (r *marathonClient) registerCallbackSubscription() error {
 	return nil
 }
 
-func (r *marathonClient) registerSSESubscription() error {
-	// Prevent multiple SSE subscriptions
+// registerSSESubscription starts a go routine that continously tries to
+// connect to the SSE stream and to process the received events. To establish
+// the connection it tries the active cluster members until no more member is
+// active. When this happens it will retry to get a connection every 5 seconds.
+func (r *marathonClient) registerSSESubscription() {
 	if r.subscribedToSSE {
-		return nil
-	}
-
-	request, _, err := r.buildAPIRequest("GET", marathonAPIEventStream, nil)
-	if err != nil {
-		return err
-	}
-
-	// Try to connect to stream, reusing the http client settings
-	stream, err := eventsource.SubscribeWith("", r.config.HTTPClient, request)
-	if err != nil {
-		return err
+		return
 	}
 
 	go func() {
 		for {
-			select {
-			case ev := <-stream.Events:
-				if err := r.handleEvent(ev.Data()); err != nil {
-					// TODO let the user handle this error instead of logging it here
-					r.debugLog.Printf("registerSSESubscription(): failed to handle event: %v\n", err)
-				}
-			case err := <-stream.Errors:
-				// TODO let the user handle this error instead of logging it here
-				r.debugLog.Printf("registerSSESubscription(): failed to receive event: %v\n", err)
+			stream, err := r.connectToSSE()
+			if err != nil {
+				r.debugLog.Printf("Error connecting SSE subscription: %s", err)
+				<-time.After(5 * time.Second)
+				continue
 			}
+
+			err = r.listenToSSE(stream)
+			stream.Close()
+			r.debugLog.Printf("Error on SSE subscription: %s", err)
 		}
 	}()
 
 	r.subscribedToSSE = true
-	return nil
+}
+
+// connectToSSE tries to establish an *eventsource.Stream to any of the Marathon cluster members, marking the
+// member as down on connection failure, until there is no more active member in the cluster.
+// Given the http request can not be built, it will panic as this case should never happen.
+func (r *marathonClient) connectToSSE() (*eventsource.Stream, error) {
+	for {
+		request, member, err := r.buildAPIRequest("GET", marathonAPIEventStream, nil)
+		if err != nil {
+			switch err.(type) {
+			case newRequestError:
+				panic(fmt.Sprintf("Requests for SSE subscriptions should never fail to be created: %s", err.Error()))
+			default:
+				return nil, err
+			}
+		}
+
+		// The event source library manipulates the HTTPClient. So we create a new one and copy
+		// its underlying fields for performance reasons. See note that at least the Transport
+		// should be reused here: https://golang.org/pkg/net/http/#Client
+		httpClient := &http.Client{
+			Transport:     r.config.HTTPClient.Transport,
+			CheckRedirect: r.config.HTTPClient.CheckRedirect,
+			Jar:           r.config.HTTPClient.Jar,
+			Timeout:       r.config.HTTPClient.Timeout,
+		}
+
+		stream, err := eventsource.SubscribeWith("", httpClient, request)
+		if err != nil {
+			r.debugLog.Printf("Error subscribing to Marathon event stream: %s", err)
+			r.hosts.markDown(member)
+			continue
+		}
+
+		return stream, nil
+	}
+}
+
+func (r *marathonClient) listenToSSE(stream *eventsource.Stream) error {
+	for {
+		select {
+		case ev := <-stream.Events:
+			if err := r.handleEvent(ev.Data()); err != nil {
+				r.debugLog.Printf("listenToSSE(): failed to handle event: %v", err)
+			}
+		case err := <-stream.Errors:
+			return err
+
+		}
+	}
 }
 
 // Subscribe adds a URL to Marathon's callback facility
