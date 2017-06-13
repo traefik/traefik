@@ -54,6 +54,58 @@ type Route struct {
 	Rule string `json:"rule,omitempty"`
 }
 
+// Headers holds the custom header configuration
+type Headers struct {
+	CustomRequestHeaders    map[string]string `json:"customRequestHeaders,omitempty"`
+	CustomResponseHeaders   map[string]string `json:"customResponseHeaders,omitempty"`
+	AllowedHosts            []string          `json:"allowedHosts,omitempty"`
+	HostsProxyHeaders       []string          `json:"hostsProxyHeaders,omitempty"`
+	SSLRedirect             bool              `json:"sslRedirect,omitempty"`
+	SSLTemporaryRedirect    bool              `json:"sslTemporaryRedirect,omitempty"`
+	SSLHost                 string            `json:"sslHost,omitempty"`
+	SSLProxyHeaders         map[string]string `json:"sslProxyHeaders,omitempty"`
+	STSSeconds              int64             `json:"stsSeconds,omitempty"`
+	STSIncludeSubdomains    bool              `json:"stsIncludeSubdomains,omitempty"`
+	STSPreload              bool              `json:"stsPreload,omitempty"`
+	ForceSTSHeader          bool              `json:"forceSTSHeader,omitempty"`
+	FrameDeny               bool              `json:"frameDeny,omitempty"`
+	CustomFrameOptionsValue string            `json:"customFrameOptionsValue,omitempty"`
+	ContentTypeNosniff      bool              `json:"contentTypeNosniff,omitempty"`
+	BrowserXSSFilter        bool              `json:"browserXssFilter,omitempty"`
+	ContentSecurityPolicy   string            `json:"contentSecurityPolicy,omitempty"`
+	PublicKey               string            `json:"publicKey,omitempty"`
+	ReferrerPolicy          string            `json:"referrerPolicy,omitempty"`
+	IsDevelopment           bool              `json:"isDevelopment,omitempty"`
+}
+
+// HasCustomHeadersDefined checks to see if any of the custom header elements have been set
+func (h Headers) HasCustomHeadersDefined() bool {
+	return len(h.CustomResponseHeaders) != 0 ||
+		len(h.CustomRequestHeaders) != 0
+}
+
+// HasSecureHeadersDefined checks to see if any of the secure header elements have been set
+func (h Headers) HasSecureHeadersDefined() bool {
+	return len(h.AllowedHosts) != 0 ||
+		len(h.HostsProxyHeaders) != 0 ||
+		h.SSLRedirect ||
+		h.SSLTemporaryRedirect ||
+		h.SSLHost != "" ||
+		len(h.SSLProxyHeaders) != 0 ||
+		h.STSSeconds != 0 ||
+		h.STSIncludeSubdomains ||
+		h.STSPreload ||
+		h.ForceSTSHeader ||
+		h.FrameDeny ||
+		h.CustomFrameOptionsValue != "" ||
+		h.ContentTypeNosniff ||
+		h.BrowserXSSFilter ||
+		h.ContentSecurityPolicy != "" ||
+		h.PublicKey != "" ||
+		h.ReferrerPolicy != "" ||
+		h.IsDevelopment
+}
+
 // Frontend holds frontend configuration.
 type Frontend struct {
 	EntryPoints          []string         `json:"entryPoints,omitempty"`
@@ -64,6 +116,7 @@ type Frontend struct {
 	Priority             int              `json:"priority"`
 	BasicAuth            []string         `json:"basicAuth"`
 	WhitelistSourceRange []string         `json:"whitelistSourceRange,omitempty"`
+	Headers              Headers          `json:"headers,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
