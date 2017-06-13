@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
@@ -66,7 +67,9 @@ func InitStatsdClient(config *types.Statsd) *time.Ticker {
 
 		report := time.NewTicker(pushInterval)
 
-		go statsdClient.SendLoop(report.C, "udp", address)
+		safe.Go(func() {
+			statsdClient.SendLoop(report.C, "udp", address)
+		})
 
 		statsdTicker = report
 	}

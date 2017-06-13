@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
@@ -73,7 +74,9 @@ func InitDatadogClient(config *types.Datadog) *time.Ticker {
 
 		report := time.NewTicker(pushInterval)
 
-		go datadogClient.SendLoop(report.C, "udp", address)
+		safe.Go(func() {
+			datadogClient.SendLoop(report.C, "udp", address)
+		})
 
 		datadogTicker = report
 	}
