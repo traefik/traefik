@@ -2,7 +2,7 @@ package docker
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"math"
 	"net"
 	"net/http"
@@ -705,7 +705,7 @@ func getLabel(container dockerData, label string) (string, error) {
 			return value, nil
 		}
 	}
-	return "", errors.New("Label not found:" + label)
+	return "", fmt.Errorf("label not found: %s", label)
 }
 
 func getLabels(container dockerData, labels []string) (map[string]string, error) {
@@ -715,7 +715,7 @@ func getLabels(container dockerData, labels []string) (map[string]string, error)
 		foundLabel, err := getLabel(container, label)
 		// Error out only if one of them is defined.
 		if err != nil {
-			globalErr = errors.New("Label not found: " + label)
+			globalErr = fmt.Errorf("label not found: %s", label)
 			continue
 		}
 		foundLabels[label] = foundLabel

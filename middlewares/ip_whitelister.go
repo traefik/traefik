@@ -7,6 +7,7 @@ import (
 
 	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/log"
+	"github.com/pkg/errors"
 )
 
 // IPWhitelister is a middleware that provides Checks of the Requesting IP against a set of Whitelists
@@ -20,7 +21,7 @@ func NewIPWhitelister(whitelistStrings []string) (*IPWhitelister, error) {
 	whitelister := IPWhitelister{}
 
 	if len(whitelistStrings) == 0 {
-		return nil, fmt.Errorf("no whitelists provided")
+		return nil, errors.New("no whitelists provided")
 	}
 
 	for _, whitelistString := range whitelistStrings {

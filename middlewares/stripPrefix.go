@@ -5,9 +5,8 @@ import (
 	"strings"
 )
 
-const (
-	forwardedPrefixHeader = "X-Forwarded-Prefix"
-)
+// ForwardedPrefixHeader is the default header to set prefix
+const ForwardedPrefixHeader = "X-Forwarded-Prefix"
 
 // StripPrefix is a middleware used to strip prefix from an URL request
 type StripPrefix struct {
@@ -35,7 +34,7 @@ func (s *StripPrefix) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *StripPrefix) serveRequest(w http.ResponseWriter, r *http.Request, prefix string) {
-	r.Header[forwardedPrefixHeader] = []string{prefix}
+	r.Header.Add(ForwardedPrefixHeader, prefix)
 	r.RequestURI = r.URL.RequestURI()
 	s.Handler.ServeHTTP(w, r)
 }

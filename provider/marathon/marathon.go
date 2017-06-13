@@ -108,7 +108,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					case <-stop:
 						return
 					case event := <-update:
-						log.Debug("Provider event receveived", event)
+						log.Debug("Provider event received", event)
 						configuration := p.loadMarathonConfig()
 						if configuration != nil {
 							configurationChan <- types.ConfigMessage{
@@ -145,6 +145,7 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		"getPort":                     p.getPort,
 		"getWeight":                   p.getWeight,
 		"getDomain":                   p.getDomain,
+		"getSubDomain":                p.getSubDomain,
 		"getProtocol":                 p.getProtocol,
 		"getPassHostHeader":           p.getPassHostHeader,
 		"getPriority":                 p.getPriority,

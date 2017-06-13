@@ -54,11 +54,64 @@ type Route struct {
 	Rule string `json:"rule,omitempty"`
 }
 
+
 //ErrorPage holds custom error page configuration
 type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Backend string   `json:"backend,omitempty"`
 	Query   string   `json:"query,omitempty"`
+}
+
+// Headers holds the custom header configuration
+type Headers struct {
+	CustomRequestHeaders    map[string]string `json:"customRequestHeaders,omitempty"`
+	CustomResponseHeaders   map[string]string `json:"customResponseHeaders,omitempty"`
+	AllowedHosts            []string          `json:"allowedHosts,omitempty"`
+	HostsProxyHeaders       []string          `json:"hostsProxyHeaders,omitempty"`
+	SSLRedirect             bool              `json:"sslRedirect,omitempty"`
+	SSLTemporaryRedirect    bool              `json:"sslTemporaryRedirect,omitempty"`
+	SSLHost                 string            `json:"sslHost,omitempty"`
+	SSLProxyHeaders         map[string]string `json:"sslProxyHeaders,omitempty"`
+	STSSeconds              int64             `json:"stsSeconds,omitempty"`
+	STSIncludeSubdomains    bool              `json:"stsIncludeSubdomains,omitempty"`
+	STSPreload              bool              `json:"stsPreload,omitempty"`
+	ForceSTSHeader          bool              `json:"forceSTSHeader,omitempty"`
+	FrameDeny               bool              `json:"frameDeny,omitempty"`
+	CustomFrameOptionsValue string            `json:"customFrameOptionsValue,omitempty"`
+	ContentTypeNosniff      bool              `json:"contentTypeNosniff,omitempty"`
+	BrowserXSSFilter        bool              `json:"browserXssFilter,omitempty"`
+	ContentSecurityPolicy   string            `json:"contentSecurityPolicy,omitempty"`
+	PublicKey               string            `json:"publicKey,omitempty"`
+	ReferrerPolicy          string            `json:"referrerPolicy,omitempty"`
+	IsDevelopment           bool              `json:"isDevelopment,omitempty"`
+}
+
+// HasCustomHeadersDefined checks to see if any of the custom header elements have been set
+func (h Headers) HasCustomHeadersDefined() bool {
+	return len(h.CustomResponseHeaders) != 0 ||
+		len(h.CustomRequestHeaders) != 0
+}
+
+// HasSecureHeadersDefined checks to see if any of the secure header elements have been set
+func (h Headers) HasSecureHeadersDefined() bool {
+	return len(h.AllowedHosts) != 0 ||
+		len(h.HostsProxyHeaders) != 0 ||
+		h.SSLRedirect ||
+		h.SSLTemporaryRedirect ||
+		h.SSLHost != "" ||
+		len(h.SSLProxyHeaders) != 0 ||
+		h.STSSeconds != 0 ||
+		h.STSIncludeSubdomains ||
+		h.STSPreload ||
+		h.ForceSTSHeader ||
+		h.FrameDeny ||
+		h.CustomFrameOptionsValue != "" ||
+		h.ContentTypeNosniff ||
+		h.BrowserXSSFilter ||
+		h.ContentSecurityPolicy != "" ||
+		h.PublicKey != "" ||
+		h.ReferrerPolicy != "" ||
+		h.IsDevelopment
 }
 
 // Frontend holds frontend configuration.
@@ -67,10 +120,12 @@ type Frontend struct {
 	Backend              string               `json:"backend,omitempty"`
 	Routes               map[string]Route     `json:"routes,omitempty"`
 	PassHostHeader       bool                 `json:"passHostHeader,omitempty"`
+	PassTLSCert          bool                 `json:"passTLSCert,omitempty"`
 	Priority             int                  `json:"priority"`
 	BasicAuth            []string             `json:"basicAuth"`
 	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
-	Errors               map[string]ErrorPage `json:"errors,omitempty"`
+	Headers              Headers              `json:"headers,omitempty"`
+  Errors               map[string]ErrorPage `json:"errors,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
@@ -310,4 +365,10 @@ func (b *Buckets) String() string { return fmt.Sprintf("%v", *b) }
 //SetValue sets []float64 into the parser
 func (b *Buckets) SetValue(val interface{}) {
 	*b = Buckets(val.(Buckets))
+}
+
+// AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
+type AccessLog struct {
+	FilePath string `json:"file,omitempty" description:"Access log file path"`
+	Format   string `json:"format,omitempty" description:"Access log format: json | common"`
 }

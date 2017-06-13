@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestStripPrefix(t *testing.T) {
@@ -16,6 +16,7 @@ func TestStripPrefix(t *testing.T) {
 		path               string
 		expectedStatusCode int
 		expectedPath       string
+		expectedHeader     string
 	}{
 		{
 			desc:               "no prefixes configured",
@@ -29,6 +30,7 @@ func TestStripPrefix(t *testing.T) {
 			path:               "/",
 			expectedStatusCode: http.StatusOK,
 			expectedPath:       "/",
+			expectedHeader:     "/",
 		},
 		{
 			desc:               "prefix and path matching",
@@ -36,6 +38,7 @@ func TestStripPrefix(t *testing.T) {
 			path:               "/stat",
 			expectedStatusCode: http.StatusOK,
 			expectedPath:       "/",
+			expectedHeader:     "/stat",
 		},
 		{
 			desc:               "path prefix on exactly matching path",
@@ -43,6 +46,7 @@ func TestStripPrefix(t *testing.T) {
 			path:               "/stat/",
 			expectedStatusCode: http.StatusOK,
 			expectedPath:       "/",
+			expectedHeader:     "/stat/",
 		},
 		{
 			desc:               "path prefix on matching longer path",
@@ -50,6 +54,7 @@ func TestStripPrefix(t *testing.T) {
 			path:               "/stat/us",
 			expectedStatusCode: http.StatusOK,
 			expectedPath:       "/us",
+			expectedHeader:     "/stat/",
 		},
 		{
 			desc:               "path prefix on mismatching path",
@@ -63,6 +68,7 @@ func TestStripPrefix(t *testing.T) {
 			path:               "/stat/",
 			expectedStatusCode: http.StatusOK,
 			expectedPath:       "/",
+			expectedHeader:     "/stat",
 		},
 		{
 			desc:               "earlier prefix matching",
@@ -70,6 +76,7 @@ func TestStripPrefix(t *testing.T) {
 			path:               "/stat/us",
 			expectedStatusCode: http.StatusOK,
 			expectedPath:       "/us",
+			expectedHeader:     "/stat",
 		},
 		{
 			desc:               "later prefix matching",
@@ -77,6 +84,7 @@ func TestStripPrefix(t *testing.T) {
 			path:               "/stat",
 			expectedStatusCode: http.StatusOK,
 			expectedPath:       "/",
+			expectedHeader:     "/stat",
 		},
 	}
 
@@ -84,20 +92,24 @@ func TestStripPrefix(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			var gotPath string
-			server := httptest.NewServer(&StripPrefix{
+
+			var actualPath, actualHeader string
+			handler := &StripPrefix{
 				Prefixes: test.prefixes,
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					gotPath = r.URL.Path
+					actualPath = r.URL.Path
+					actualHeader = r.Header.Get(ForwardedPrefixHeader)
 				}),
-			})
-			defer server.Close()
+			}
 
-			resp, err := http.Get(server.URL + test.path)
-			require.NoError(t, err, "Failed to send GET request")
-			assert.Equal(t, test.expectedStatusCode, resp.StatusCode, "Unexpected status code")
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
+			resp := &httptest.ResponseRecorder{Code: http.StatusOK}
 
-			assert.Equal(t, test.expectedPath, gotPath, "Unexpected path")
+			handler.ServeHTTP(resp, req)
+
+			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
+			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
+			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ForwardedPrefixHeader)
 		})
 	}
 }

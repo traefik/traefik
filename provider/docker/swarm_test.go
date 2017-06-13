@@ -415,7 +415,7 @@ func TestSwarmGetLabel(t *testing.T) {
 	}{
 		{
 			service:  swarmService(),
-			expected: "Label not found:",
+			expected: "label not found:",
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{
@@ -439,7 +439,7 @@ func TestSwarmGetLabel(t *testing.T) {
 				}
 			} else {
 				if label != "bar" {
-					t.Errorf("expected label 'bar', got %s", label)
+					t.Errorf("expected label 'bar', got '%s'", label)
 				}
 			}
 		})
@@ -456,7 +456,7 @@ func TestSwarmGetLabels(t *testing.T) {
 		{
 			service:        swarmService(),
 			expectedLabels: map[string]string{},
-			expectedError:  "Label not found:",
+			expectedError:  "label not found:",
 			networks:       map[string]*docker.NetworkResource{},
 		},
 		{
@@ -466,7 +466,7 @@ func TestSwarmGetLabels(t *testing.T) {
 			expectedLabels: map[string]string{
 				"foo": "fooz",
 			},
-			expectedError: "Label not found: bar",
+			expectedError: "label not found: bar",
 			networks:      map[string]*docker.NetworkResource{},
 		},
 		{

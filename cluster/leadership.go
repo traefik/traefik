@@ -54,7 +54,7 @@ func (l *Leadership) Participate(pool *safe.Pool) {
 	})
 }
 
-// AddListener adds a leadership listerner
+// AddListener adds a leadership listener
 func (l *Leadership) AddListener(listener LeaderListener) {
 	l.listeners = append(l.listeners, listener)
 }
@@ -86,7 +86,7 @@ func (l *Leadership) onElection(elected bool) {
 		l.leader.Set(true)
 		l.Start()
 	} else {
-		log.Infof("Node %s elected slave ♝", l.Cluster.Node)
+		log.Infof("Node %s elected worker ♝", l.Cluster.Node)
 		l.leader.Set(false)
 		l.Stop()
 	}

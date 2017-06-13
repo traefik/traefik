@@ -9,6 +9,8 @@ import (
 // PostBuildDeclarationMapFunc can be used to modify the api declaration map.
 type PostBuildDeclarationMapFunc func(apiDeclarationMap *ApiDeclarationList)
 
+type MapSchemaFormatFunc func(typeName string) string
+
 type Config struct {
 	// url where the services are available, e.g. http://localhost:8080
 	// if left empty then the basePath of Swagger is taken from the actual request
@@ -29,4 +31,8 @@ type Config struct {
 	ApiVersion string
 	// If set then call this handler after building the complete ApiDeclaration Map
 	PostBuildHandler PostBuildDeclarationMapFunc
+	// Swagger global info struct
+	Info Info
+	// [optional] If set, model builder should call this handler to get addition typename-to-swagger-format-field convertion.
+	SchemaFormatHandler MapSchemaFormatFunc
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/healthcheck"
+	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
@@ -408,4 +409,110 @@ func TestConfigureBackends(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewMetrics(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		globalConfig GlobalConfiguration
+	}{
+		{
+			desc:         "metrics disabled",
+			globalConfig: GlobalConfiguration{},
+		},
+		{
+			desc: "prometheus metrics",
+			globalConfig: GlobalConfiguration{
+				Web: &WebProvider{
+					Metrics: &types.Metrics{
+						Prometheus: &types.Prometheus{
+							Buckets: types.Buckets{0.1, 0.3, 1.2, 5.0},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			metricsImpl := newMetrics(tc.globalConfig, "test1")
+			if metricsImpl != nil {
+				if _, ok := metricsImpl.(*middlewares.Prometheus); !ok {
+					t.Errorf("invalid metricsImpl type, got %T want %T", metricsImpl, &middlewares.Prometheus{})
+				}
+			}
+		})
+	}
+}
+
+func TestRegisterRetryMiddleware(t *testing.T) {
+	testCases := []struct {
+		name            string
+		globalConfig    GlobalConfiguration
+		countServers    int
+		expectedRetries int
+	}{
+		{
+			name: "configured retry attempts",
+			globalConfig: GlobalConfiguration{
+				Retry: &Retry{
+					Attempts: 3,
+				},
+			},
+			expectedRetries: 3,
+		},
+		{
+			name: "retry attempts defaults to server amount",
+			globalConfig: GlobalConfiguration{
+				Retry: &Retry{},
+			},
+			expectedRetries: 2,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var retryListener middlewares.RetryListener
+			httpHandler := okHTTPHandler{}
+			dynamicConfig := &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend": {
+						Servers: map[string]types.Server{
+							"server": {
+								URL: "http://localhost",
+							},
+							"server2": {
+								URL: "http://localhost",
+							},
+						},
+					},
+				},
+			}
+
+			httpHandlerWithRetry := registerRetryMiddleware(httpHandler, tc.globalConfig, dynamicConfig, "backend", retryListener)
+
+			retry, ok := httpHandlerWithRetry.(*middlewares.Retry)
+			if !ok {
+				t.Fatalf("httpHandler was not decorated with retry httpHandler, got %#v", httpHandlerWithRetry)
+			}
+
+			expectedRetry := middlewares.NewRetry(tc.expectedRetries, httpHandler, retryListener)
+			if !reflect.DeepEqual(retry, expectedRetry) {
+				t.Errorf("retry httpHandler was not instantiated correctly, got %#v want %#v", retry, expectedRetry)
+			}
+		})
+	}
+}
+
+type okHTTPHandler struct{}
+
+func (okHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
 }

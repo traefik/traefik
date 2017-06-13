@@ -141,7 +141,7 @@ func TestGetConfiguration(t *testing.T) {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
 	if configuration == nil {
-		t.Fatalf("Configuration should not be nil, but was")
+		t.Fatal("Configuration should not be nil, but was")
 	}
 }
 
@@ -203,15 +203,15 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
 	if configuration == nil {
-		t.Fatalf("Configuration should not be nil, but was")
+		t.Fatal("Configuration should not be nil, but was")
 	}
 
 	if configuration.Backends["backend1"].MaxConn.Amount != 10 {
-		t.Fatalf("Configuration did not parse MaxConn.Amount properly")
+		t.Fatal("Configuration did not parse MaxConn.Amount properly")
 	}
 
 	if configuration.Backends["backend1"].MaxConn.ExtractorFunc != "request.host" {
-		t.Fatalf("Configuration did not parse MaxConn.ExtractorFunc properly")
+		t.Fatal("Configuration did not parse MaxConn.ExtractorFunc properly")
 	}
 }
 
@@ -224,7 +224,7 @@ func TestNilClientTLS(t *testing.T) {
 	}
 	_, err := provider.TLS.CreateTLSConfig()
 	if err != nil {
-		t.Fatalf("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
+		t.Fatal("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
 	}
 }
 
@@ -371,12 +371,12 @@ func TestDefaultFuncMap(t *testing.T) {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
 	if configuration == nil {
-		t.Fatalf("Configuration should not be nil, but was")
+		t.Fatal("Configuration should not be nil, but was")
 	}
 	if _, ok := configuration.Backends["backend1"]; !ok {
-		t.Fatalf("backend1 should exists, but it not")
+		t.Fatal("backend1 should exists, but it not")
 	}
 	if _, ok := configuration.Frontends["frontend-1"]; !ok {
-		t.Fatalf("Frontend frontend-1 should exists, but it not")
+		t.Fatal("Frontend frontend-1 should exists, but it not")
 	}
 }

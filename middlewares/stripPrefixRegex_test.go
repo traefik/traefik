@@ -1,55 +1,88 @@
 package middlewares
 
 import (
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/containous/traefik/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStripPrefixRegex(t *testing.T) {
 
-	handlerPath := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, r.URL.Path)
-	})
-
-	handler := NewStripPrefixRegex(handlerPath, []string{"/a/api/", "/b/{regex}/", "/c/{category}/{id:[0-9]+}/"})
-	server := httptest.NewServer(handler)
-	defer server.Close()
+	testPrefixRegex := []string{"/a/api/", "/b/{regex}/", "/c/{category}/{id:[0-9]+}/"}
 
 	tests := []struct {
-		expectedCode     int
-		expectedResponse string
-		url              string
+		path               string
+		expectedStatusCode int
+		expectedPath       string
+		expectedHeader     string
 	}{
-		{url: "/a/test", expectedCode: 404, expectedResponse: "404 page not found\n"},
-		{url: "/a/api/test", expectedCode: 200, expectedResponse: "test"},
-
-		{url: "/b/api/", expectedCode: 200, expectedResponse: ""},
-		{url: "/b/api/test1", expectedCode: 200, expectedResponse: "test1"},
-		{url: "/b/api2/test2", expectedCode: 200, expectedResponse: "test2"},
-
-		{url: "/c/api/123/", expectedCode: 200, expectedResponse: ""},
-		{url: "/c/api/123/test3", expectedCode: 200, expectedResponse: "test3"},
-		{url: "/c/api/abc/test4", expectedCode: 404, expectedResponse: "404 page not found\n"},
+		{
+			path:               "/a/test",
+			expectedStatusCode: http.StatusNotFound,
+		},
+		{
+			path:               "/a/api/test",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "test",
+			expectedHeader:     "/a/api/",
+		},
+		{
+			path:               "/b/api/",
+			expectedStatusCode: http.StatusOK,
+			expectedHeader:     "/b/api/",
+		},
+		{
+			path:               "/b/api/test1",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "test1",
+			expectedHeader:     "/b/api/",
+		},
+		{
+			path:               "/b/api2/test2",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "test2",
+			expectedHeader:     "/b/api2/",
+		},
+		{
+			path:               "/c/api/123/",
+			expectedStatusCode: http.StatusOK,
+			expectedHeader:     "/c/api/123/",
+		},
+		{
+			path:               "/c/api/123/test3",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "test3",
+			expectedHeader:     "/c/api/123/",
+		},
+		{
+			path:               "/c/api/abc/test4",
+			expectedStatusCode: http.StatusNotFound,
+		},
 	}
 
 	for _, test := range tests {
-		resp, err := http.Get(server.URL + test.url)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if resp.StatusCode != test.expectedCode {
-			t.Fatalf("Received non-%d response: %d\n", test.expectedCode, resp.StatusCode)
-		}
-		response, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if test.expectedResponse != string(response) {
-			t.Errorf("Expected '%s' :  '%s'\n", test.expectedResponse, response)
-		}
-	}
+		test := test
+		t.Run(test.path, func(t *testing.T) {
+			t.Parallel()
 
+			var actualPath, actualHeader string
+			handlerPath := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				actualPath = r.URL.Path
+				actualHeader = r.Header.Get(ForwardedPrefixHeader)
+			})
+			handler := NewStripPrefixRegex(handlerPath, testPrefixRegex)
+
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
+			resp := &httptest.ResponseRecorder{Code: http.StatusOK}
+
+			handler.ServeHTTP(resp, req)
+
+			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
+			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
+			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ForwardedPrefixHeader)
+		})
+	}
 }
