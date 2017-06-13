@@ -2,12 +2,11 @@ package marathon
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
-	"fmt"
-
-	"github.com/containous/traefik/mocks"
+	"github.com/containous/traefik/provider/marathon/mocks"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"

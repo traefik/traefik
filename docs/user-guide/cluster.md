@@ -15,6 +15,6 @@ Please refer to [this section](/user-guide/kv-config/#store-configuration-in-key
 ## Deploy a Træfik cluster
 
 Once your Træfik configuration is uploaded on your KV store, you can start each Træfik instance.
-A Træfik cluster is based on a master/slave model.
-When starting, Træfik will elect a master. If this instance fails, another master will be automatically elected.
+A Træfik cluster is based on a manager/worker model.
+When starting, Træfik will elect a manager. If this instance fails, another manager will be automatically elected.
  

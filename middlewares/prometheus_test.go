@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -10,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/codegangsta/negroni"
+	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -28,8 +28,8 @@ func TestPrometheus(t *testing.T) {
 
 	recorder := httptest.NewRecorder()
 
-	req1 := mustNewRequest("GET", "http://localhost:3000/ok", ioutil.NopCloser(nil))
-	req2 := mustNewRequest("GET", "http://localhost:3000/metrics", ioutil.NopCloser(nil))
+	req1 := testhelpers.MustNewRequest(http.MethodGet, "http://localhost:3000/ok", ioutil.NopCloser(nil))
+	req2 := testhelpers.MustNewRequest(http.MethodGet, "http://localhost:3000/metrics", ioutil.NopCloser(nil))
 
 	httpHandler := setupTestHTTPHandler()
 	httpHandler.ServeHTTP(recorder, req1)
@@ -60,7 +60,7 @@ func TestPrometheus(t *testing.T) {
 			name: reqsTotalName,
 			labels: map[string]string{
 				"code":    "200",
-				"method":  "GET",
+				"method":  http.MethodGet,
 				"service": "test",
 			},
 			assert: func(family *dto.MetricFamily) {
@@ -99,7 +99,7 @@ func TestPrometheus(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, len(tests), len(metricsFamilies)-initialMetricsFamilyCount, "gathered traefic metrics count does not match tests count")
+	assert.Equal(t, len(tests), len(metricsFamilies)-initialMetricsFamilyCount, "gathered Traefik metrics count does not match tests count")
 
 	for _, test := range tests {
 		family := findMetricFamily(test.name, metricsFamilies)
@@ -123,7 +123,7 @@ func TestPrometheusRegisterMetricsMultipleTimes(t *testing.T) {
 	defer resetPrometheusValues()
 
 	recorder := httptest.NewRecorder()
-	req1 := mustNewRequest("GET", "http://localhost:3000/ok", ioutil.NopCloser(nil))
+	req1 := testhelpers.MustNewRequest(http.MethodGet, "http://localhost:3000/ok", ioutil.NopCloser(nil))
 
 	httpHandler := setupTestHTTPHandler()
 	httpHandler.ServeHTTP(recorder, req1)
@@ -160,15 +160,6 @@ func setupTestHTTPHandler() http.Handler {
 	n.UseHandler(NewRetry(2, serveMux, NewMetricsRetryListener(metrics)))
 
 	return n
-}
-
-// mustNewRequest is like http.NewRequest but panics if an error occurs.
-func mustNewRequest(method, urlStr string, body io.Reader) *http.Request {
-	req, err := http.NewRequest(method, urlStr, body)
-	if err != nil {
-		panic(fmt.Sprintf("NewRequest(%s, %s, %+v): %s", method, urlStr, body, err))
-	}
-	return req
 }
 
 func resetPrometheusValues() {

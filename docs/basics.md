@@ -94,7 +94,7 @@ Separate multiple rule values by `,` (comma) in order to enable ANY semantics (i
 
 Separate multiple rule values by `;` (semicolon) in order to enable ALL semantics (i.e., forward a request if all rules match).
 
-You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
+You can optionally enable `passHostHeader` to forward client `Host` header to the backend. You can also optionally enable `passTLSCert` to forward TLS Client certificates to the backend.
 
 Following is the list of existing matcher rules along with examples:
 
@@ -140,6 +140,7 @@ Here is an example of frontends definition:
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
+  passTLSCert = true
   priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
@@ -161,34 +162,34 @@ As seen in the previous example, you can combine multiple rules.
 In TOML file, you can use multiple routes:
 
 ```toml
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Host:test3.localhost"
-  [frontends.frontend3.routes.test_2]
-  rule = "Path:/test"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host:test3.localhost"
+    [frontends.frontend3.routes.test_2]
+    rule = "Path:/test"
 ```
 
 Here `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched.
 You can also use the notation using a `;` separator, same result:
 
 ```toml
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Host:test3.localhost;Path:/test"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host:test3.localhost;Path:/test"
 ```
 
 Finally, you can create a rule to bind multiple domains or Path to a frontend, using the `,` separator:
 
 ```toml
-[frontends.frontend2]
-   [frontends.frontend2.routes.test_1]
-   rule = "Host:test1.localhost,test2.localhost"
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Path:/test1,/test2"
+ [frontends.frontend2]
+    [frontends.frontend2.routes.test_1]
+    rule = "Host:test1.localhost,test2.localhost"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Path:/test1,/test2"
 ```
 
 ### Rules Order
@@ -208,7 +209,7 @@ The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portio
 3. `PathStripRegex`
 4. `PathPrefixStripRegex`
 5. `AddPrefix`
-6. `ReplacePath` 
+6. `ReplacePath`
 
 ### Priorities
 
@@ -218,22 +219,62 @@ By default, routes will be sorted (in descending order) using rules length (to a
 You can customize priority by frontend:
 
 ```toml
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-  priority = 10
-  passHostHeader = true
-    [frontends.frontend1.routes.test_1]
-    rule = "PathPrefix:/to"
-  [frontends.frontend2]
-  priority = 5
-  backend = "backend2"
-  passHostHeader = true
-    [frontends.frontend2.routes.test_1]
-    rule = "PathPrefix:/toto"
+  [frontends]
+    [frontends.frontend1]
+    backend = "backend1"
+    priority = 10
+    passHostHeader = true
+      [frontends.frontend1.routes.test_1]
+      rule = "PathPrefix:/to"
+    [frontends.frontend2]
+    priority = 5
+    backend = "backend2"
+    passHostHeader = true
+      [frontends.frontend2.routes.test_1]
+      rule = "PathPrefix:/toto"
 ```
 
 Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
+
+### Custom headers
+
+Custom headers can be configured through the frontends, to add headers to either requests or responses that match the frontend's rules. This allows for setting headers such as `X-Script-Name` to be added to the request, or custom headers to be added to the response:
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers.customresponseheaders]
+    X-Custom-Response-Header = "True"
+    [frontends.frontend1.headers.customrequestheaders]
+    X-Script-Name = "test"
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheese"
+```
+
+In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+
+### Security headers
+
+Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured per frontend in a similar manner to the custom headers above. This functionality allows for some easy security features to quickly be set. An example of some of the security headers:
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers]
+    FrameDeny = true
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheddar"
+  [frontends.frontend2]
+  backend = "backend2"
+    [frontends.frontend2.headers]
+    SSLRedirect = true
+    [frontends.frontend2.routes.test_1]
+    rule = "PathPrefixStrip:/stilton"
+```
+
+In this example, traffic routed through the first frontend will have the `X-Frame-Options` header set to `DENY`, and the second will only allow HTTPS request through, otherwise will return a 301 HTTPS redirect.
 
 ## Backends
 

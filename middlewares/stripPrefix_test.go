@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestStripPrefix(t *testing.T) {
@@ -94,21 +94,22 @@ func TestStripPrefix(t *testing.T) {
 			t.Parallel()
 
 			var actualPath, actualHeader string
-			server := httptest.NewServer(&StripPrefix{
+			handler := &StripPrefix{
 				Prefixes: test.prefixes,
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					actualPath = r.URL.Path
 					actualHeader = r.Header.Get(ForwardedPrefixHeader)
 				}),
-			})
-			defer server.Close()
+			}
 
-			resp, err := http.Get(server.URL + test.path)
-			require.NoError(t, err, "%s: failed to send GET request.", test.desc)
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
+			resp := &httptest.ResponseRecorder{Code: http.StatusOK}
 
-			assert.Equal(t, test.expectedStatusCode, resp.StatusCode, "%s: unexpected status code.", test.desc)
-			assert.Equal(t, test.expectedPath, actualPath, "%s: unexpected path.", test.desc)
-			assert.Equal(t, test.expectedHeader, actualHeader, "%s: unexpected '%s' header.", test.desc, ForwardedPrefixHeader)
+			handler.ServeHTTP(resp, req)
+
+			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
+			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
+			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ForwardedPrefixHeader)
 		})
 	}
 }

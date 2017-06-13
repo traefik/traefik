@@ -33,7 +33,7 @@ type ChallengeCert struct {
 	certificate *tls.Certificate
 }
 
-// Init inits acccount struct
+// Init inits account struct
 func (a *Account) Init() error {
 	err := a.DomainsCertificate.Init()
 	if err != nil {

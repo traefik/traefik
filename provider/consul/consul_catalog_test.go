@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+	"text/template"
 
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
@@ -11,9 +12,12 @@ import (
 
 func TestConsulCatalogGetFrontendRule(t *testing.T) {
 	provider := &CatalogProvider{
-		Domain: "localhost",
-		Prefix: "traefik",
+		Domain:               "localhost",
+		Prefix:               "traefik",
+		FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
+		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
 	}
+	provider.setupFrontEndTemplate()
 
 	services := []struct {
 		service  serviceUpdate
@@ -35,12 +39,73 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 			},
 			expected: "Host:*.example.com",
 		},
+		{
+			service: serviceUpdate{
+				ServiceName: "foo",
+				Attributes: []string{
+					"traefik.frontend.rule=Host:{{.ServiceName}}.example.com",
+				},
+			},
+			expected: "Host:foo.example.com",
+		},
+		{
+			service: serviceUpdate{
+				ServiceName: "foo",
+				Attributes: []string{
+					"traefik.frontend.rule=PathPrefix:{{getTag \"contextPath\" .Attributes \"/\"}}",
+					"contextPath=/bar",
+				},
+			},
+			expected: "PathPrefix:/bar",
+		},
 	}
 
 	for _, e := range services {
 		actual := provider.getFrontendRule(e.service)
 		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
+	}
+}
+
+func TestConsulCatalogGetTag(t *testing.T) {
+	provider := &CatalogProvider{
+		Domain: "localhost",
+		Prefix: "traefik",
+	}
+
+	services := []struct {
+		tags         []string
+		key          string
+		defaultValue string
+		expected     string
+	}{
+		{
+			tags: []string{
+				"foo.bar=random",
+				"traefik.backend.weight=42",
+				"management",
+			},
+			key:          "foo.bar",
+			defaultValue: "0",
+			expected:     "random",
+		},
+	}
+
+	actual := provider.hasTag("management", []string{"management"})
+	if !actual {
+		t.Fatalf("expected %v, got %v", true, actual)
+	}
+
+	actual = provider.hasTag("management", []string{"management=yes"})
+	if !actual {
+		t.Fatalf("expected %v, got %v", true, actual)
+	}
+
+	for _, e := range services {
+		actual := provider.getTag(e.key, e.tags, e.defaultValue)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
 		}
 	}
 }
@@ -77,10 +142,71 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 		},
 	}
 
+	expected := provider.Prefix + ".foo"
+	actual := provider.getPrefixedName("foo")
+	if actual != expected {
+		t.Fatalf("expected %s, got %s", expected, actual)
+	}
+
 	for _, e := range services {
 		actual := provider.getAttribute(e.key, e.tags, e.defaultValue)
 		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
+	}
+}
+
+func TestConsulCatalogGetAttributeWithEmptyPrefix(t *testing.T) {
+	provider := &CatalogProvider{
+		Domain: "localhost",
+		Prefix: "",
+	}
+
+	services := []struct {
+		tags         []string
+		key          string
+		defaultValue string
+		expected     string
+	}{
+		{
+			tags: []string{
+				"foo.bar=ramdom",
+				"backend.weight=42",
+			},
+			key:          "backend.weight",
+			defaultValue: "0",
+			expected:     "42",
+		},
+		{
+			tags: []string{
+				"foo.bar=ramdom",
+				"backend.wei=42",
+			},
+			key:          "backend.weight",
+			defaultValue: "0",
+			expected:     "0",
+		},
+		{
+			tags: []string{
+				"foo.bar=ramdom",
+				"backend.wei=42",
+			},
+			key:          "foo.bar",
+			defaultValue: "random",
+			expected:     "ramdom",
+		},
+	}
+
+	expected := "foo"
+	actual := provider.getPrefixedName("foo")
+	if actual != expected {
+		t.Fatalf("expected %s, got %s", expected, actual)
+	}
+
+	for _, e := range services {
+		actual := provider.getAttribute(e.key, e.tags, e.defaultValue)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
 		}
 	}
 }
@@ -122,7 +248,7 @@ func TestConsulCatalogGetBackendAddress(t *testing.T) {
 	for _, e := range services {
 		actual := provider.getBackendAddress(e.node)
 		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+			t.Fatalf("expected %s, got %s", e.expected, actual)
 		}
 	}
 }
@@ -175,15 +301,17 @@ func TestConsulCatalogGetBackendName(t *testing.T) {
 	for i, e := range services {
 		actual := provider.getBackendName(e.node, i)
 		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+			t.Fatalf("expected %s, got %s", e.expected, actual)
 		}
 	}
 }
 
 func TestConsulCatalogBuildConfig(t *testing.T) {
 	provider := &CatalogProvider{
-		Domain: "localhost",
-		Prefix: "traefik",
+		Domain:               "localhost",
+		Prefix:               "traefik",
+		FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
+		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
 	}
 
 	cases := []struct {

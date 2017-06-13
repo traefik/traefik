@@ -1,8 +1,9 @@
 package provider
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSplitAndTrimString(t *testing.T) {
@@ -36,7 +37,7 @@ func TestSplitAndTrimString(t *testing.T) {
 			input:    " foo   ,,  bar     ",
 			expected: []string{"foo", "bar"},
 		}, {
-			desc:     "consecutive commas with witespace",
+			desc:     "consecutive commas with whitespace",
 			input:    " foo   , ,  bar     ",
 			expected: []string{"foo", "bar"},
 		}, {
