@@ -819,6 +819,17 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 					}
 
+					if frontend.Headers.HasCustomHeadersDefined() {
+						headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
+						log.Debugf("Adding header middleware for frontend %s", frontendName)
+						negroni.Use(headerMiddleware)
+					}
+					if frontend.Headers.HasSecureHeadersDefined() {
+						secureMiddleware := middlewares.NewSecure(frontend.Headers)
+						log.Debugf("Adding secure middleware for frontend %s", frontendName)
+						negroni.UseFunc(secureMiddleware.HandlerFuncWithNext)
+					}
+
 					if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", configuration.Backends[frontend.Backend].CircuitBreaker.Expression)
 						cbreaker, err := middlewares.NewCircuitBreaker(lb, configuration.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
