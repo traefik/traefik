@@ -23,7 +23,7 @@ before_deploy:
       docker version;
       pip install --user -r requirements.txt;
       make -j${N_MAKE_JOBS} crossbinary-parallel;
-      make image;
+      make image-dirty;
       mkdocs build --clean;
       tar cfz dist/traefik-${VERSION}.src.tar.gz --exclude-vcs --exclude dist .;
     fi
