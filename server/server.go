@@ -88,9 +88,7 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
 	}
 
-	if globalConfiguration.AccessLogsFile != "" {
-		globalConfiguration.AccessLog = &types.AccessLog{FilePath: globalConfiguration.AccessLogsFile, Format: accesslog.CommonFormat}
-	}
+	normalizeAccessLogConfig(&globalConfiguration)
 
 	if globalConfiguration.AccessLog != nil {
 		var err error
@@ -100,6 +98,15 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 		}
 	}
 	return server
+}
+
+func normalizeAccessLogConfig(globalConfiguration *GlobalConfiguration) {
+	if globalConfiguration.AccessLogsFile != "" {
+		log.Warnf("The config key 'accessLogFile' is deprecated. Please use 'accessLog' instead.")
+		globalConfiguration.AccessLog = &types.AccessLog{FilePath: globalConfiguration.AccessLogsFile, Format: accesslog.CommonFormat}
+	} else if globalConfiguration.AccessLog == nil {
+		globalConfiguration.AccessLog = &types.AccessLog{FilePath: "", Format: accesslog.CommonFormat}
+	}
 }
 
 // Start starts the server.
