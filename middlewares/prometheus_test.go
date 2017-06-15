@@ -75,6 +75,7 @@ func TestPrometheus(t *testing.T) {
 			name: reqDurationName,
 			labels: map[string]string{
 				"service": "test",
+				"code":    "200",
 			},
 			assert: func(family *dto.MetricFamily) {
 				sc := family.Metric[0].Histogram.GetSampleCount()
