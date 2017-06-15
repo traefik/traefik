@@ -12,6 +12,7 @@ import (
 	"github.com/containous/mux"
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
@@ -507,6 +508,57 @@ func TestRegisterRetryMiddleware(t *testing.T) {
 			if !reflect.DeepEqual(retry, expectedRetry) {
 				t.Errorf("retry httpHandler was not instantiated correctly, got %#v want %#v", retry, expectedRetry)
 			}
+		})
+	}
+}
+
+func TestNormalizeAccessLogConfig(t *testing.T) {
+	testCases := []struct {
+		name                             string
+		accessLogsFile                   string
+		accessLog                        *types.AccessLog
+		expectedNormalizedAccessLogsFile string
+		expectedNormalizedAccessLog      *types.AccessLog
+	}{
+		{
+			name:                             "accessLogsFile is present but no accessLog => accessLogsFile is in effect",
+			accessLogsFile:                   "traefik.log",
+			accessLog:                        nil,
+			expectedNormalizedAccessLogsFile: "traefik.log",
+			expectedNormalizedAccessLog:      &types.AccessLog{FilePath: "traefik.log", Format: accesslog.CommonFormat},
+		},
+		{
+			name:                             "both accessLogsFile and accessLog are present => accessLogsFile takes precedence",
+			accessLogsFile:                   "traefik.log",
+			accessLog:                        &types.AccessLog{FilePath: "/var/log/traefik.log", Format: accesslog.CommonFormat},
+			expectedNormalizedAccessLogsFile: "traefik.log",
+			expectedNormalizedAccessLog:      &types.AccessLog{FilePath: "traefik.log", Format: accesslog.CommonFormat},
+		},
+		{
+			name:                             "accessLogsFile is empty => accessLog is in effect",
+			accessLogsFile:                   "",
+			accessLog:                        &types.AccessLog{FilePath: "/var/log/traefik.log", Format: accesslog.CommonFormat},
+			expectedNormalizedAccessLogsFile: "",
+			expectedNormalizedAccessLog:      &types.AccessLog{FilePath: "/var/log/traefik.log", Format: accesslog.CommonFormat},
+		},
+		{
+			name:                             "accessLogsFile is empty and accessLog is nil => accessLog takes the default",
+			accessLogsFile:                   "",
+			accessLog:                        nil,
+			expectedNormalizedAccessLogsFile: "",
+			expectedNormalizedAccessLog:      &types.AccessLog{FilePath: "", Format: accesslog.CommonFormat},
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			gc := GlobalConfiguration{AccessLog: tc.accessLog, AccessLogsFile: tc.accessLogsFile}
+			normalizeAccessLogConfig(&gc)
+			assert.Equal(t, tc.expectedNormalizedAccessLogsFile, gc.AccessLogsFile)
+			assert.Equal(t, *tc.expectedNormalizedAccessLog, *gc.AccessLog)
 		})
 	}
 }
