@@ -20,7 +20,6 @@ func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
-
 	whoami1Host := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 	whoami2Host := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
 

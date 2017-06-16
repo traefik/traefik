@@ -27,6 +27,7 @@ func init() {
 	check.Suite(&HTTPSSuite{})
 	check.Suite(&FileSuite{})
 	check.Suite(&HealthCheckSuite{})
+	check.Suite(&PrometheusSuite{})
 	check.Suite(&DockerSuite{})
 	check.Suite(&ConsulSuite{})
 	check.Suite(&ConsulCatalogSuite{})
