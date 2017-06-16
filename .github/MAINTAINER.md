@@ -2,7 +2,7 @@
 
 ## Labels
 
-If we open/look an issue/PR, we must add a `king/*` and an `area/*`.
+If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
 
 ### Contributor
 
