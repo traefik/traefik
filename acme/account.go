@@ -6,7 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
+	"fmt"
 	"reflect"
 	"sort"
 	"strings"
@@ -33,7 +33,7 @@ type ChallengeCert struct {
 	certificate *tls.Certificate
 }
 
-// Init inits acccount struct
+// Init inits account struct
 func (a *Account) Init() error {
 	err := a.DomainsCertificate.Init()
 	if err != nil {
@@ -178,7 +178,7 @@ func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain D
 			return nil
 		}
 	}
-	return errors.New("Certificate to renew not found for domain " + domain.Main)
+	return fmt.Errorf("Certificate to renew not found for domain %s", domain.Main)
 }
 
 func (dc *DomainsCertificates) addCertificateForDomains(acmeCert *Certificate, domain Domain) (*DomainsCertificate, error) {

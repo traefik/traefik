@@ -2,18 +2,16 @@ package main
 
 import (
 	"context"
-	"errors"
-	"io/ioutil"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
-	"github.com/containous/traefik/integration/utils"
+	"github.com/containous/traefik/integration/try"
 	"github.com/containous/traefik/provider"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
@@ -46,13 +44,7 @@ func (s *ConsulSuite) setupConsul(c *check.C) {
 	s.kv = kv
 
 	// wait for consul
-	err = utils.Try(60*time.Second, func() error {
-		_, err := kv.Exists("test")
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -85,13 +77,7 @@ func (s *ConsulSuite) setupConsulTLS(c *check.C) {
 	s.kv = kv
 
 	// wait for consul
-	err = utils.Try(60*time.Second, func() error {
-		_, err := kv.Exists("test")
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = try.Do(60*time.Second, try.KVExists(kv, "test"))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -109,17 +95,15 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
+
 	cmd := exec.Command(traefikBinary, "--configFile="+file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	time.Sleep(500 * time.Millisecond)
-	resp, err := http.Get("http://127.0.0.1:8000/")
-
 	// Expected a 404 as we did not configure anything
+	err = try.GetRequest("http://127.0.0.1:8000/", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
 }
 
 func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
@@ -127,28 +111,29 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
+
 	cmd := exec.Command(traefikBinary, "--configFile="+file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	whoami1 := s.composeProject.Container(c, "whoami1")
-	whoami2 := s.composeProject.Container(c, "whoami2")
-	whoami3 := s.composeProject.Container(c, "whoami3")
-	whoami4 := s.composeProject.Container(c, "whoami4")
+	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
+	whoami4IP := s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
 
 	backend1 := map[string]string{
 		"traefik/backends/backend1/circuitbreaker/expression": "NetworkErrorRatio() > 0.5",
-		"traefik/backends/backend1/servers/server1/url":       "http://" + whoami1.NetworkSettings.IPAddress + ":80",
+		"traefik/backends/backend1/servers/server1/url":       "http://" + whoami1IP + ":80",
 		"traefik/backends/backend1/servers/server1/weight":    "10",
-		"traefik/backends/backend1/servers/server2/url":       "http://" + whoami2.NetworkSettings.IPAddress + ":80",
+		"traefik/backends/backend1/servers/server2/url":       "http://" + whoami2IP + ":80",
 		"traefik/backends/backend1/servers/server2/weight":    "1",
 	}
 	backend2 := map[string]string{
 		"traefik/backends/backend2/loadbalancer/method":    "drr",
-		"traefik/backends/backend2/servers/server1/url":    "http://" + whoami3.NetworkSettings.IPAddress + ":80",
+		"traefik/backends/backend2/servers/server1/url":    "http://" + whoami3IP + ":80",
 		"traefik/backends/backend2/servers/server1/weight": "1",
-		"traefik/backends/backend2/servers/server2/url":    "http://" + whoami4.NetworkSettings.IPAddress + ":80",
+		"traefik/backends/backend2/servers/server2/url":    "http://" + whoami4IP + ":80",
 		"traefik/backends/backend2/servers/server2/weight": "2",
 	}
 	frontend1 := map[string]string{
@@ -181,68 +166,38 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	}
 
 	// wait for consul
-	err = utils.Try(60*time.Second, func() error {
-		_, err := s.kv.Exists("traefik/frontends/frontend2/routes/test_2/rule")
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = try.Do(60*time.Second, try.KVExists(s.kv, "traefik/frontends/frontend2/routes/test_2/rule"))
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Path:/test") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
-	response, err := client.Do(req)
 
+	err = try.Request(req, 500*time.Millisecond,
+		try.StatusCodeIs(200),
+		try.BodyContainsOr(whoami3IP, whoami4IP))
 	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, 200)
 
-	body, err := ioutil.ReadAll(response.Body)
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/test", nil)
 	c.Assert(err, checker.IsNil)
-	if !strings.Contains(string(body), whoami3.NetworkSettings.IPAddress) &&
-		!strings.Contains(string(body), whoami4.NetworkSettings.IPAddress) {
-		c.Fail()
-	}
 
-	req, err = http.NewRequest("GET", "http://127.0.0.1:8000/test", nil)
+	err = try.Request(req, 500*time.Millisecond,
+		try.StatusCodeIs(200),
+		try.BodyContainsOr(whoami1IP, whoami2IP))
 	c.Assert(err, checker.IsNil)
-	response, err = client.Do(req)
 
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/test2", nil)
+	try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, 200)
 
-	body, err = ioutil.ReadAll(response.Body)
-	c.Assert(err, checker.IsNil)
-	if !strings.Contains(string(body), whoami1.NetworkSettings.IPAddress) &&
-		!strings.Contains(string(body), whoami2.NetworkSettings.IPAddress) {
-		c.Fail()
-	}
-
-	req, err = http.NewRequest("GET", "http://127.0.0.1:8000/test2", nil)
-	resp, err := client.Do(req)
-	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
-
-	req, err = http.NewRequest("GET", "http://127.0.0.1:8000/", nil)
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	req.Host = "test2.localhost"
-	resp, err = client.Do(req)
+	try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-	c.Assert(resp.StatusCode, checker.Equals, 404)
 }
 
 func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
@@ -252,41 +207,33 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// wait for consul
-	err = utils.Try(60*time.Second, func() error {
-		_, err := s.kv.Exists("traefik/entrypoints/http/address")
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = try.Do(60*time.Second, try.KVExists(s.kv, "traefik/entrypoints/http/address"))
 	c.Assert(err, checker.IsNil)
 
 	// start traefik
 	cmd := exec.Command(traefikBinary, "--configFile=fixtures/simple_web.toml", "--consul", "--consul.endpoint="+consulHost+":8500")
-	// cmd.Stdout = os.Stdout
-	// cmd.Stderr = os.Stderr
 
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	whoami1 := s.composeProject.Container(c, "whoami1")
-	whoami2 := s.composeProject.Container(c, "whoami2")
-	whoami3 := s.composeProject.Container(c, "whoami3")
-	whoami4 := s.composeProject.Container(c, "whoami4")
+	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
+	whoami4IP := s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
 
 	backend1 := map[string]string{
 		"traefik/backends/backend1/circuitbreaker/expression": "NetworkErrorRatio() > 0.5",
-		"traefik/backends/backend1/servers/server1/url":       "http://" + whoami1.NetworkSettings.IPAddress + ":80",
+		"traefik/backends/backend1/servers/server1/url":       "http://" + whoami1IP + ":80",
 		"traefik/backends/backend1/servers/server1/weight":    "10",
-		"traefik/backends/backend1/servers/server2/url":       "http://" + whoami2.NetworkSettings.IPAddress + ":80",
+		"traefik/backends/backend1/servers/server2/url":       "http://" + whoami2IP + ":80",
 		"traefik/backends/backend1/servers/server2/weight":    "1",
 	}
 	backend2 := map[string]string{
 		"traefik/backends/backend2/loadbalancer/method":    "drr",
-		"traefik/backends/backend2/servers/server1/url":    "http://" + whoami3.NetworkSettings.IPAddress + ":80",
+		"traefik/backends/backend2/servers/server1/url":    "http://" + whoami3IP + ":80",
 		"traefik/backends/backend2/servers/server1/weight": "1",
-		"traefik/backends/backend2/servers/server2/url":    "http://" + whoami4.NetworkSettings.IPAddress + ":80",
+		"traefik/backends/backend2/servers/server2/url":    "http://" + whoami4IP + ":80",
 		"traefik/backends/backend2/servers/server2/weight": "2",
 	}
 	frontend1 := map[string]string{
@@ -319,37 +266,20 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	}
 
 	// wait for consul
-	err = utils.Try(60*time.Second, func() error {
-		_, err := s.kv.Exists("traefik/frontends/frontend2/routes/test_2/rule")
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = try.Do(60*time.Second, try.KVExists(s.kv, "traefik/frontends/frontend2/routes/test_2/rule"))
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "Path:/test") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
 	//check
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://127.0.0.1:8001/", nil)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8001/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
-	response, err := client.Do(req)
 
+	err = try.Request(req, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
-	c.Assert(response.StatusCode, checker.Equals, 200)
 }
 
 func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
@@ -361,13 +291,7 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// wait for consul
-	err = utils.Try(60*time.Second, func() error {
-		_, err := s.kv.Exists("traefik/web/address")
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = try.Do(60*time.Second, try.KVExists(s.kv, "traefik/web/address"))
 	c.Assert(err, checker.IsNil)
 
 	// start traefik
@@ -377,29 +301,24 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 		"--consul.tls.cert=resources/tls/consul.cert",
 		"--consul.tls.key=resources/tls/consul.key",
 		"--consul.tls.insecureskipverify")
-	// cmd.Stdout = os.Stdout
-	// cmd.Stderr = os.Stderr
 
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, func(res *http.Response) error {
-		_, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
+	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second)
 	c.Assert(err, checker.IsNil)
-
 }
+
 func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 	s.setupConsul(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 
-	cmd := exec.Command(traefikBinary, "storeconfig", "--configFile=fixtures/simple_web.toml", "--consul.endpoint="+consulHost+":8500")
+	cmd := exec.Command(traefikBinary,
+		"storeconfig",
+		"--configFile=fixtures/simple_web.toml",
+		"--consul.endpoint="+consulHost+":8500")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 
@@ -412,22 +331,18 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 		"/traefik/defaultentrypoints/0":     "http",
 		"/traefik/entrypoints/http/address": ":8000",
 		"/traefik/web/address":              ":8080",
-		"/traefik/consul/endpoint":          (consulHost + ":8500"),
+		"/traefik/consul/endpoint":          consulHost + ":8500",
 	}
 
 	for key, value := range checkmap {
 		var p *store.KVPair
-		err = utils.Try(60*time.Second, func() error {
+		err = try.Do(60*time.Second, func() error {
 			p, err = s.kv.Get(key)
-			if err != nil {
-				return err
-			}
-			return nil
+			return err
 		})
 		c.Assert(err, checker.IsNil)
 
 		c.Assert(string(p.Value), checker.Equals, value)
-
 	}
 }
 
@@ -457,12 +372,12 @@ func (s *ConsulSuite) TestDatastore(c *check.C) {
 		Int:    1,
 	})
 	c.Assert(err, checker.IsNil)
-	time.Sleep(2 * time.Second)
-	test1 := datastore1.Get().(*TestStruct)
-	c.Assert(test1.String, checker.Equals, "foo")
 
-	test2 := datastore2.Get().(*TestStruct)
-	c.Assert(test2.String, checker.Equals, "foo")
+	err = try.Do(3*time.Second, datastoreContains(datastore1, "foo"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.Do(3*time.Second, datastoreContains(datastore2, "foo"))
+	c.Assert(err, checker.IsNil)
 
 	setter2, _, err := datastore2.Begin()
 	c.Assert(err, checker.IsNil)
@@ -471,12 +386,12 @@ func (s *ConsulSuite) TestDatastore(c *check.C) {
 		Int:    2,
 	})
 	c.Assert(err, checker.IsNil)
-	time.Sleep(2 * time.Second)
-	test1 = datastore1.Get().(*TestStruct)
-	c.Assert(test1.String, checker.Equals, "bar")
 
-	test2 = datastore2.Get().(*TestStruct)
-	c.Assert(test2.String, checker.Equals, "bar")
+	err = try.Do(3*time.Second, datastoreContains(datastore1, "bar"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.Do(3*time.Second, datastoreContains(datastore2, "bar"))
+	c.Assert(err, checker.IsNil)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(4)
@@ -519,4 +434,14 @@ func (s *ConsulSuite) TestDatastore(c *check.C) {
 		wg.Done()
 	}()
 	wg.Wait()
+}
+
+func datastoreContains(datastore *cluster.Datastore, expectedValue string) func() error {
+	return func() error {
+		kvStruct := datastore.Get().(*TestStruct)
+		if kvStruct.String != expectedValue {
+			return fmt.Errorf("Got %s, wanted %s", kvStruct.String, expectedValue)
+		}
+		return nil
+	}
 }

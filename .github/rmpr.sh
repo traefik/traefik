@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # git config --global alias.rmpr '!sh .github/rmpr.sh'
 

@@ -5,6 +5,7 @@ import:
   subpackages:
   - fun
 - package: github.com/Sirupsen/logrus
+  version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
@@ -49,7 +50,9 @@ import:
 - package: github.com/streamrail/concurrent-map
 - package: github.com/stretchr/testify
   subpackages:
+  - assert
   - mock
+  - require
 - package: github.com/thoas/stats
   version: 152b5d051953fdb6e45f14b6826962aadc032324
 - package: github.com/unrolled/render
@@ -59,6 +62,8 @@ import:
   version: 42492a3a85e294bdbdd1bcabb8c12769a81ea284
   subpackages:
   - plugin/rewrite
+- package: github.com/vulcand/predicate
+  version: 19b9dde14240d94c804ae5736ad0e1de10bf8fe6
 - package: github.com/xenolf/lego
   version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
   subpackages:
@@ -91,7 +96,7 @@ import:
 - package: k8s.io/client-go
   version: v2.0.0
 - package: github.com/gambol99/go-marathon
-  version: d672c6fbb499596869d95146a26e7d0746c06c54
+  version: 1b9c2582c26b632fb1fb295776d7ce40b68c36f2
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
@@ -106,6 +111,18 @@ import:
   version: v0.3.0
   subpackages:
   - metrics
+- package: github.com/prometheus/client_golang
+  version: 08fd2e12372a66e68e30523c7642e0cbc3e4fbde
+  subpackages:
+  - prometheus
+- package: github.com/prometheus/common
+  version: 49fee292b27bfff7f354ee0f64e1bc4850462edf
+- package: github.com/prometheus/client_model
+  version: 6f3806018612930941127f2a7c6c453ba2c527d2
+- package: github.com/prometheus/procfs
+  version: a1dba9ce8baed984a2495b658c82687f8157b98f
+- package: github.com/matttproud/golang_protobuf_extensions
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
 - package: github.com/eapache/channels
   version: v1.1.0
 - package: golang.org/x/sys
@@ -140,11 +157,17 @@ import:
   version: v0.3
   subpackages:
   - proto
+- package: github.com/golang/protobuf
+  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
 - package: github.com/rancher/go-rancher
   version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
-- package: golang.org/x/oauth2/google
+- package: golang.org/x/oauth2
   version: 7fdf09982454086d5570c7db3e11f360194830ca
+  subpackages:
+  - google
 - package: github.com/googleapis/gax-go
   version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
 - package: google.golang.org/grpc
   version: v1.2.0
+- package: github.com/unrolled/secure
+  version: 824e85271811af89640ea25620c67f6c2eed987e

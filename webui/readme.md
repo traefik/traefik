@@ -21,6 +21,9 @@ make generate-webui  # Generate static contents in `traefik/static/` folder.
 
 - prerequisite: [Node 4+](https://nodejs.org) [yarn](https://yarnpkg.com/)
 
+  Note: In case of conflict with the Apache Hadoop Yarn Command Line Interface, use the `yarnpkg`
+  alias.
+
 - Go to the directory `webui`
 
 - To install dependencies, execute the following commands:

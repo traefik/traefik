@@ -26,8 +26,8 @@ type Provider struct {
 	TLS                   *provider.ClientTLS `description:"Enable TLS support"`
 	Username              string              `description:"KV Username"`
 	Password              string              `description:"KV Password"`
-	StoreType             store.Backend
-	Kvclient              store.Store
+	storeType             store.Backend
+	kvclient              store.Store
 }
 
 // CreateStore create the K/V store
@@ -47,15 +47,25 @@ func (p *Provider) CreateStore() (store.Store, error) {
 		}
 	}
 	return libkv.NewStore(
-		p.StoreType,
+		p.storeType,
 		strings.Split(p.Endpoint, ","),
 		storeConfig,
 	)
 }
 
+// SetStoreType storeType setter
+func (p *Provider) SetStoreType(storeType store.Backend) {
+	p.storeType = storeType
+}
+
+// SetKVClient kvclient setter
+func (p *Provider) SetKVClient(kvClient store.Store) {
+	p.kvclient = kvClient
+}
+
 func (p *Provider) watchKv(configurationChan chan<- types.ConfigMessage, prefix string, stop chan bool) error {
 	operation := func() error {
-		events, err := p.Kvclient.WatchTree(p.Prefix, make(chan struct{}))
+		events, err := p.kvclient.WatchTree(p.Prefix, make(chan struct{}))
 		if err != nil {
 			return fmt.Errorf("Failed to KV WatchTree: %v", err)
 		}
@@ -70,7 +80,7 @@ func (p *Provider) watchKv(configurationChan chan<- types.ConfigMessage, prefix 
 				configuration := p.loadConfig()
 				if configuration != nil {
 					configurationChan <- types.ConfigMessage{
-						ProviderName:  string(p.StoreType),
+						ProviderName:  string(p.storeType),
 						Configuration: configuration,
 					}
 				}
@@ -92,7 +102,7 @@ func (p *Provider) watchKv(configurationChan chan<- types.ConfigMessage, prefix 
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	p.Constraints = append(p.Constraints, constraints...)
 	operation := func() error {
-		if _, err := p.Kvclient.Exists("qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"); err != nil {
+		if _, err := p.kvclient.Exists("qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"); err != nil {
 			return fmt.Errorf("Failed to test KV store connection: %v", err)
 		}
 		if p.Watch {
@@ -105,7 +115,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		}
 		configuration := p.loadConfig()
 		configurationChan <- types.ConfigMessage{
-			ProviderName:  string(p.StoreType),
+			ProviderName:  string(p.storeType),
 			Configuration: configuration,
 		}
 		return nil
@@ -152,7 +162,7 @@ func (p *Provider) loadConfig() *types.Configuration {
 
 func (p *Provider) list(keys ...string) []string {
 	joinedKeys := strings.Join(keys, "")
-	keysPairs, err := p.Kvclient.List(joinedKeys)
+	keysPairs, err := p.kvclient.List(joinedKeys)
 	if err != nil {
 		log.Debugf("Cannot get keys %s %s ", joinedKeys, err)
 		return nil
@@ -169,7 +179,7 @@ func (p *Provider) listServers(backend string) []string {
 	serverNames := p.list(backend, "/servers/")
 	return fun.Filter(func(serverName string) bool {
 		key := fmt.Sprint(serverName, "/url")
-		if _, err := p.Kvclient.Get(key); err != nil {
+		if _, err := p.kvclient.Get(key); err != nil {
 			if err != store.ErrKeyNotFound {
 				log.Errorf("Failed to retrieve value for key %s: %s", key, err)
 			}
@@ -181,7 +191,7 @@ func (p *Provider) listServers(backend string) []string {
 
 func (p *Provider) get(defaultValue string, keys ...string) string {
 	joinedKeys := strings.Join(keys, "")
-	keyPair, err := p.Kvclient.Get(strings.TrimPrefix(joinedKeys, "/"))
+	keyPair, err := p.kvclient.Get(strings.TrimPrefix(joinedKeys, "/"))
 	if err != nil {
 		log.Debugf("Cannot get key %s %s, setting default %s", joinedKeys, err, defaultValue)
 		return defaultValue
@@ -194,7 +204,7 @@ func (p *Provider) get(defaultValue string, keys ...string) string {
 
 func (p *Provider) splitGet(keys ...string) []string {
 	joinedKeys := strings.Join(keys, "")
-	keyPair, err := p.Kvclient.Get(joinedKeys)
+	keyPair, err := p.kvclient.Get(joinedKeys)
 	if err != nil {
 		log.Debugf("Cannot get key %s %s, setting default empty", joinedKeys, err)
 		return []string{}
@@ -212,7 +222,7 @@ func (p *Provider) last(key string) string {
 
 func (p *Provider) checkConstraints(keys ...string) bool {
 	joinedKeys := strings.Join(keys, "")
-	keyPair, err := p.Kvclient.Get(joinedKeys)
+	keyPair, err := p.kvclient.Get(joinedKeys)
 
 	value := ""
 	if err == nil && keyPair != nil && keyPair.Value != nil {

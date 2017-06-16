@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/ArthurHlt/go-eureka-client/eureka"
-	log "github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -19,8 +19,8 @@ import (
 // Provider holds configuration of the Provider provider.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
-	Endpoint              string
-	Delay                 string
+	Endpoint              string `description:"Eureka server endpoint"`
+	Delay                 string `description:"Override default configuration time between refresh"`
 }
 
 // Provide allows the eureka provider to provide configurations to traefik

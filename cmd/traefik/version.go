@@ -30,7 +30,7 @@ func newVersionCmd() *flaeg.Command {
 			if err := getVersionPrint(os.Stdout); err != nil {
 				return err
 			}
-			fmt.Printf("\n")
+			fmt.Print("\n")
 			return nil
 
 		},

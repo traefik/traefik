@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -13,7 +14,6 @@ import (
 
 	"github.com/containous/traefik/integration/utils"
 	"github.com/go-check/check"
-
 	compose "github.com/libkermit/compose/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -71,10 +71,32 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	s.composeProject = compose.CreateProject(c, projectName, composeFile)
 }
 
+// Deprecated: unused
 func (s *BaseSuite) traefikCmd(c *check.C, args ...string) (*exec.Cmd, string) {
 	cmd, out, err := utils.RunCommand(traefikBinary, args...)
 	c.Assert(err, checker.IsNil, check.Commentf("Fail to run %s with %v", traefikBinary, args))
 	return cmd, out
+}
+
+func (s *BaseSuite) cmdTraefikWithConfigFile(file string) (*exec.Cmd, *bytes.Buffer) {
+	return s.cmdTraefik("--configFile=" + file)
+}
+
+func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
+	cmd := exec.Command(traefikBinary, args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	return cmd, &out
+}
+
+func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
+	if output == nil || output.Len() == 0 {
+		fmt.Printf("%s: No Traefik logs present.", c.TestName())
+	} else {
+		fmt.Printf("%s: Traefik logs: ", c.TestName())
+		fmt.Println(output.String())
+	}
 }
 
 func (s *BaseSuite) adaptFileForHost(c *check.C, path string) string {

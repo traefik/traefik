@@ -2,7 +2,7 @@ package docker
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"math"
 	"net"
 	"net/http"
@@ -272,6 +272,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServicePassHostHeader":    p.getServicePassHostHeader,
 		"getServicePriority":          p.getServicePriority,
 		"getServiceBackend":           p.getServiceBackend,
+		"getWhitelistSourceRange":     p.getWhitelistSourceRange,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -663,6 +664,15 @@ func (p *Provider) getPassHostHeader(container dockerData) string {
 	return "true"
 }
 
+func (p *Provider) getWhitelistSourceRange(container dockerData) []string {
+	var whitelistSourceRange []string
+
+	if whitelistSourceRangeLabel, err := getLabel(container, "traefik.frontend.whitelistSourceRange"); err == nil {
+		whitelistSourceRange = provider.SplitAndTrimString(whitelistSourceRangeLabel)
+	}
+	return whitelistSourceRange
+}
+
 func (p *Provider) getPriority(container dockerData) string {
 	if priority, err := getLabel(container, "traefik.frontend.priority"); err == nil {
 		return priority
@@ -695,7 +705,7 @@ func getLabel(container dockerData, label string) (string, error) {
 			return value, nil
 		}
 	}
-	return "", errors.New("Label not found:" + label)
+	return "", fmt.Errorf("label not found: %s", label)
 }
 
 func getLabels(container dockerData, labels []string) (map[string]string, error) {
@@ -705,7 +715,7 @@ func getLabels(container dockerData, labels []string) (map[string]string, error)
 		foundLabel, err := getLabel(container, label)
 		// Error out only if one of them is defined.
 		if err != nil {
-			globalErr = errors.New("Label not found: " + label)
+			globalErr = fmt.Errorf("label not found: %s", label)
 			continue
 		}
 		foundLabels[label] = foundLabel

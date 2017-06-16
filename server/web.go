@@ -126,7 +126,8 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter.Methods("GET").Path(provider.Path).HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		http.Redirect(response, request, provider.Path+"dashboard/", 302)
 	})
-	systemRouter.Methods("GET").PathPrefix(provider.Path + "dashboard/").Handler(http.StripPrefix(provider.Path+"dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
+	systemRouter.Methods("GET").PathPrefix(provider.Path + "dashboard/").
+		Handler(http.StripPrefix(provider.Path+"dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
 
 	// expvars
 	if provider.server.globalConfiguration.Debug {

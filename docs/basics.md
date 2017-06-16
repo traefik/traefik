@@ -94,7 +94,7 @@ Separate multiple rule values by `,` (comma) in order to enable ANY semantics (i
 
 Separate multiple rule values by `;` (semicolon) in order to enable ALL semantics (i.e., forward a request if all rules match).
 
-You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
+You can optionally enable `passHostHeader` to forward client `Host` header to the backend. You can also optionally enable `passTLSCert` to forward TLS Client certificates to the backend.
 
 Following is the list of existing matcher rules along with examples:
 
@@ -140,6 +140,7 @@ Here is an example of frontends definition:
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
+  passTLSCert = true
   priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
@@ -161,35 +162,54 @@ As seen in the previous example, you can combine multiple rules.
 In TOML file, you can use multiple routes:
 
 ```toml
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Host:test3.localhost"
-  [frontends.frontend3.routes.test_2]
-  rule = "Path:/test"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host:test3.localhost"
+    [frontends.frontend3.routes.test_2]
+    rule = "Path:/test"
 ```
 
 Here `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched.
 You can also use the notation using a `;` separator, same result:
 
 ```toml
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Host:test3.localhost;Path:/test"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host:test3.localhost;Path:/test"
 ```
 
 Finally, you can create a rule to bind multiple domains or Path to a frontend, using the `,` separator:
 
 ```toml
-[frontends.frontend2]
-   [frontends.frontend2.routes.test_1]
-   rule = "Host:test1.localhost,test2.localhost"
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Path:/test1,/test2"
+ [frontends.frontend2]
+    [frontends.frontend2.routes.test_1]
+    rule = "Host:test1.localhost,test2.localhost"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Path:/test1,/test2"
 ```
+
+### Rules Order
+
+When combining `Modifier` rules with `Matcher` rules, it is important to remember that `Modifier` rules **ALWAYS** apply after the `Matcher` rules.  
+The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portion of the rule will apply first, and the `Modifier` will apply later.
+
+- `PathStrip`
+- `PathStripRegex`
+- `PathPrefixStrip`
+- `PathPrefixStripRegex`
+
+`Modifiers` will be applied in a pre-determined order regardless of their order in the `rule` configuration section.
+
+1. `PathStrip`
+2. `PathPrefixStrip`
+3. `PathStripRegex`
+4. `PathPrefixStripRegex`
+5. `AddPrefix`
+6. `ReplacePath`
 
 ### Priorities
 
@@ -199,22 +219,62 @@ By default, routes will be sorted (in descending order) using rules length (to a
 You can customize priority by frontend:
 
 ```toml
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-  priority = 10
-  passHostHeader = true
-    [frontends.frontend1.routes.test_1]
-    rule = "PathPrefix:/to"
-  [frontends.frontend2]
-  priority = 5
-  backend = "backend2"
-  passHostHeader = true
-    [frontends.frontend2.routes.test_1]
-    rule = "PathPrefix:/toto"
+  [frontends]
+    [frontends.frontend1]
+    backend = "backend1"
+    priority = 10
+    passHostHeader = true
+      [frontends.frontend1.routes.test_1]
+      rule = "PathPrefix:/to"
+    [frontends.frontend2]
+    priority = 5
+    backend = "backend2"
+    passHostHeader = true
+      [frontends.frontend2.routes.test_1]
+      rule = "PathPrefix:/toto"
 ```
 
 Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
+
+### Custom headers
+
+Custom headers can be configured through the frontends, to add headers to either requests or responses that match the frontend's rules. This allows for setting headers such as `X-Script-Name` to be added to the request, or custom headers to be added to the response:
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers.customresponseheaders]
+    X-Custom-Response-Header = "True"
+    [frontends.frontend1.headers.customrequestheaders]
+    X-Script-Name = "test"
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheese"
+```
+
+In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+
+### Security headers
+
+Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured per frontend in a similar manner to the custom headers above. This functionality allows for some easy security features to quickly be set. An example of some of the security headers:
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers]
+    FrameDeny = true
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheddar"
+  [frontends.frontend2]
+  backend = "backend2"
+    [frontends.frontend2.headers]
+    SSLRedirect = true
+    [frontends.frontend2.routes.test_1]
+    rule = "PathPrefixStrip:/stilton"
+```
+
+In this example, traffic routed through the first frontend will have the `X-Frame-Options` header set to `DENY`, and the second will only allow HTTPS request through, otherwise will return a 301 HTTPS redirect.
 
 ## Backends
 
@@ -277,8 +337,9 @@ A health check can be configured in order to remove a backend from LB rotation
 as long as it keeps returning HTTP status codes other than 200 OK to HTTP GET
 requests periodically carried out by Traefik. The check is defined by a path
 appended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how
-often the health check should be executed (the default being 30 seconds). Each
-backend must respond to the health check within 5 seconds.
+often the health check should be executed (the default being 30 seconds).
+Each backend must respond to the health check within 5 seconds.
+By default, the port of the backend server is used, however, this may be overridden.  
 
 A recovering backend returning 200 OK responses again is being returned to the
 LB rotation pool.
@@ -290,6 +351,16 @@ For example:
     [backends.backend1.healthcheck]
       path = "/health"
       interval = "10s"
+```
+
+To use a different port for the healthcheck:
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.healthcheck]
+      path = "/health"
+      interval = "10s"
+      port = 8080
 ```
 
 ## Servers
@@ -327,17 +398,17 @@ Here is an example of backends and servers definition:
 
 # Configuration
 
-Træfik's configuration has two parts: 
+Træfik's configuration has two parts:
 
-- The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning. 
+- The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning.
 - The [dynamic Træfik configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
 
 
 ## Static Træfik configuration
 
-The static configuration is the global configuration which is setting up connections to configuration backends and entrypoints. 
+The static configuration is the global configuration which is setting up connections to configuration backends and entrypoints.
 
-Træfik can be configured using many configuration sources with the following precedence order. 
+Træfik can be configured using many configuration sources with the following precedence order.
 Each item takes precedence over the item below it:
 
 - [Key-value Store](/basics/#key-value-stores)
@@ -379,18 +450,18 @@ Træfik supports several Key-value stores:
 
 - [Consul](https://consul.io)
 - [etcd](https://coreos.com/etcd/)
-- [ZooKeeper](https://zookeeper.apache.org/) 
+- [ZooKeeper](https://zookeeper.apache.org/)
 - [boltdb](https://github.com/boltdb/bolt)
 
 Please refer to the [User Guide Key-value store configuration](/user-guide/kv-config/) section to get documentation on it.
 
 ## Dynamic Træfik configuration
 
-The dynamic configuration concerns : 
+The dynamic configuration concerns :
 
 - [Frontends](/basics/#frontends)
-- [Backends](/basics/#backends) 
-- [Servers](/basics/#servers) 
+- [Backends](/basics/#backends)
+- [Servers](/basics/#servers)
 
 Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
 
@@ -408,7 +479,7 @@ List of Træfik available commands with description :             
 - `version` : Print version 
 - `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
 
-Each command may have related flags. 
+Each command may have related flags.
 All those related flags will be displayed with :
 
 ```bash
@@ -420,4 +491,3 @@ Note that each command is described at the beginning of the help section:
 ```bash
 $ traefik --help
 ```
-

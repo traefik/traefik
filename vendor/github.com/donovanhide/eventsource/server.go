@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 type subscription struct {
@@ -32,6 +33,8 @@ type Server struct {
 	subs          chan *subscription
 	unregister    chan *subscription
 	quit          chan bool
+	isClosed      bool
+	isClosedMutex sync.RWMutex
 }
 
 // Create a new Server ready for handler creation and publishing events
@@ -51,6 +54,7 @@ func NewServer() *Server {
 // Stop handling publishing
 func (srv *Server) Close() {
 	srv.quit <- true
+	srv.markServerClosed()
 }
 
 // Create a new handler for serving a specified channel
@@ -68,6 +72,12 @@ func (srv *Server) Handler(channel string) http.HandlerFunc {
 			h.Set("Content-Encoding", "gzip")
 		}
 		w.WriteHeader(http.StatusOK)
+
+		// If the Handler is still active even though the server is closed, stop here.
+		// Otherwise the Handler will block while publishing to srv.subs indefinitely.
+		if srv.isServerClosed() {
+			return
+		}
 
 		sub := &subscription{
 			channel:     channel,
@@ -164,4 +174,16 @@ func (srv *Server) run() {
 			return
 		}
 	}
+}
+
+func (srv *Server) isServerClosed() bool {
+	srv.isClosedMutex.RLock()
+	defer srv.isClosedMutex.RUnlock()
+	return srv.isClosed
+}
+
+func (srv *Server) markServerClosed() {
+	srv.isClosedMutex.Lock()
+	defer srv.isClosedMutex.Unlock()
+	srv.isClosed = true
 }

@@ -3,7 +3,7 @@
 <img src="docs/img/traefik.logo.png" alt="Træfik" title="Træfik" />
 </p>
 
-[![Build Status](https://travis-ci.org/containous/traefik.svg?branch=master)](https://travis-ci.org/containous/traefik)
+[![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
 [![Go Report Card](https://goreportcard.com/badge/containous/traefik)](http://goreportcard.com/report/containous/traefik)
 [![](https://images.microbadger.com/badges/image/traefik.svg)](https://microbadger.com/images/traefik)
@@ -85,7 +85,7 @@ You can access the simple HTML frontend of Træfik.
 
 ## Plumbing
 
-- [Oxy](https://github.com/vulcand/oxy): an awesome proxy library made by Mailgun guys
+- [Oxy](https://github.com/vulcand/oxy): an awesome proxy library made by Mailgun folks
 - [Gorilla mux](https://github.com/gorilla/mux): famous request router
 - [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
 - [Lego](https://github.com/xenolf/lego): the best [Let's Encrypt](https://letsencrypt.org) library in go
@@ -131,12 +131,11 @@ If you prefer commercial support, please contact [containo.us](https://containo.
 
 - Emile Vauge [@emilevauge](https://github.com/emilevauge)
 - Vincent Demeester [@vdemeester](https://github.com/vdemeester)
-- Russell Clare [@Russell-IO](https://github.com/Russell-IO)
 - Ed Robinson [@errm](https://github.com/errm)
 - Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
 - Manuel Laufenberg [@SantoDE](https://github.com/SantoDE)
-- Thomas Recloux [@trecloux](https://github.com/trecloux)
 - Timo Reimann [@timoreimann](https://github.com/timoreimann)
+- Ludovic Fernandez [@ldez](https://github.com/ldez)
 
 ## Credits
 

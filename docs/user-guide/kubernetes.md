@@ -12,68 +12,15 @@ on your machine, as it is the quickest way to get a local Kubernetes cluster set
 
 2. The `kubectl` binary should be [installed on your workstation](http://kubernetes.io/docs/getting-started-guides/minikube/#download-kubectl).
 
-## Deploy Træfik using a Deployment object
+### Role Based Access Control configuration (Kubernetes 1.6+ only)
 
-We are going to deploy Træfik with a
-[Deployment](http://kubernetes.io/docs/user-guide/deployments/), as this will
-allow you to easily roll out config changes or update the image.
-
-```yaml
-kind: Deployment
-apiVersion: extensions/v1beta1
-metadata:
-  name: traefik-ingress-controller
-  namespace: kube-system
-  labels:
-    k8s-app: traefik-ingress-lb
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      k8s-app: traefik-ingress-lb
-  template:
-    metadata:
-      labels:
-        k8s-app: traefik-ingress-lb
-        name: traefik-ingress-lb
-    spec:
-      terminationGracePeriodSeconds: 60
-      containers:
-      - image: traefik
-        name: traefik-ingress-lb
-        resources:
-          limits:
-            cpu: 200m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-            memory: 20Mi
-        ports:
-        - containerPort: 80
-          hostPort: 80
-        - containerPort: 8080
-        args:
-        - --web
-        - --kubernetes
-```
-[examples/k8s/traefik.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik.yaml)
-
-> notice that we binding port 80 on the Træfik container to port 80 on the host.
-> With a multi node cluster we might expose Træfik with a NodePort or LoadBalancer service
-> and run more than 1 replica of Træfik for high availability.
-
-To deploy Træfik to your cluster start by submitting the deployment to the cluster with `kubectl`:
-
-```sh
-kubectl apply -f examples/k8s/traefik.yaml
-```
-### Role Based Access Control configuration (optional)
-
-Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/) in 1.6+ to allow fine-grained control
+Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control
 of Kubernetes resources and api.
 
-If your cluster is configured with RBAC, you need to authorize Traefik to use
-kubernetes API using ClusterRole, ServiceAccount and ClusterRoleBinding resources:
+If your cluster is configured with RBAC, you may need to authorize Traefik to use
+kubernetes API using ClusterRole and ClusterRoleBinding resources:
+
+_Note: your cluster may have suitable ClusterRoles already setup, but the following should work everywhere_
 
 ```yaml
 ---
@@ -101,12 +48,6 @@ rules:
       - list
       - watch
 ---
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: traefik-ingress-controller
-  namespace: kube-system
----
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
@@ -121,10 +62,75 @@ subjects:
   namespace: kube-system
 ```
 
-Then you add the service account information to Traefik deployment spec:
-  `serviceAccountName: traefik-ingress-controller`
+[examples/k8s/traefik-rbac.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-rbac.yaml)
 
-[examples/k8s/traefik-with-rbac.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-with-rbac.yaml)
+```shell
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-rbac.yaml
+```
+
+## Deploy Træfik using a Deployment object
+
+We are going to deploy Træfik with a
+[Deployment](http://kubernetes.io/docs/user-guide/deployments/), as this will
+allow you to easily roll out config changes or update the image.
+
+```yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik-ingress-controller
+  namespace: kube-system
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: traefik-ingress-controller
+  namespace: kube-system
+  labels:
+    k8s-app: traefik-ingress-lb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: traefik-ingress-lb
+  template:
+    metadata:
+      labels:
+        k8s-app: traefik-ingress-lb
+        name: traefik-ingress-lb
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      terminationGracePeriodSeconds: 60
+      containers:
+      - image: traefik
+        name: traefik-ingress-lb
+        resources:
+          limits:
+            cpu: 200m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        ports:
+        - containerPort: 80
+          hostPort: 80
+        - containerPort: 8080
+        args:
+        - --web
+        - --kubernetes
+```
+[examples/k8s/traefik.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik.yaml)
+
+> notice that we binding port 80 on the Træfik container to port 80 on the host.
+> With a multi node cluster we might expose Træfik with a NodePort or LoadBalancer service
+> and run more than 1 replica of Træfik for high availability.
+
+To deploy Træfik to your cluster start by submitting the deployment to the cluster with `kubectl`:
+
+```shell
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml
+```
 
 ### Check the deployment
 
@@ -132,7 +138,7 @@ Now lets check if our deployment was successful.
 
 Start by listing the pods in the `kube-system` namespace:
 
-```sh
+```shell
 $kubectl --namespace=kube-system get pods
 
 NAME                                         READY     STATUS    RESTARTS   AGE
@@ -197,7 +203,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: traefik-ui.local
+  - host: traefik-ui.minikube
     http:
       paths:
       - backend:
@@ -207,10 +213,10 @@ spec:
 [examples/k8s/ui.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/ui.yaml)
 
 ```shell
-kubectl apply -f examples/k8s/ui.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/ui.yaml
 ```
 
-Now lets setup an entry in our /etc/hosts file to route `traefik-ui.local`
+Now lets setup an entry in our /etc/hosts file to route `traefik-ui.minikube`
 to our cluster.
 
 > In production you would want to set up real dns entries.
@@ -218,10 +224,10 @@ to our cluster.
 > You can get the ip address of your minikube instance by running `minikube ip`
 
 ```shell
-echo "$(minikube ip) traefik-ui.local" | sudo tee -a /etc/hosts
+echo "$(minikube ip) traefik-ui.minikube" | sudo tee -a /etc/hosts
 ```
 
-We should now be able to visit [traefik-ui.local](http://traefik-ui.local) in the browser and view the Træfik Web UI.
+We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube) in the browser and view the Træfik Web UI.
 
 ## Name based routing
 
@@ -334,7 +340,7 @@ spec:
 [examples/k8s/cheese-deployments.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-deployments.yaml)
 
 ```shell
-kubectl apply -f examples/k8s/cheese-deployments.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-deployments.yaml
 ```
 
 Next we need to setup a service for each of the cheese pods.
@@ -390,7 +396,7 @@ spec:
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
 
 ```shell
-kubectl apply -f examples/k8s/cheese-services.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-services.yaml
 ```
 
 Now we can submit an ingress for the cheese websites.
@@ -404,21 +410,21 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: stilton.local
+  - host: stilton.minikube
     http:
       paths:
       - path: /
         backend:
           serviceName: stilton
           servicePort: http
-  - host: cheddar.local
+  - host: cheddar.minikube
     http:
       paths:
       - path: /
         backend:
           serviceName: cheddar
           servicePort: http
-  - host: wensleydale.local
+  - host: wensleydale.minikube
     http:
       paths:
       - path: /
@@ -431,10 +437,10 @@ spec:
 > Notice that we list each hostname, and add a backend service.
 
 ```shell
-kubectl apply -f examples/k8s/cheese-ingress.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml
 ```
 
-Now visit the [Træfik dashboard](http://traefik-ui.local/) and you should
+Now visit the [Træfik dashboard](http://traefik-ui.minikube/) and you should
 see a frontend for each host. Along with a backend listing for each service
 with a Server set up for each pod.
 
@@ -442,12 +448,12 @@ If you edit your `/etc/hosts` again you should be able to access the cheese
 websites in your browser.
 
 ```shell
-echo "$(minikube ip) stilton.local cheddar.local wensleydale.local" | sudo tee -a /etc/hosts
+echo "$(minikube ip) stilton.minikube cheddar.minikube wensleydale.minikube" | sudo tee -a /etc/hosts
 ```
 
-* [Stilton](http://stilton.local/)
-* [Cheddar](http://cheddar.local/)
-* [Wensleydale](http://wensleydale.local/)
+* [Stilton](http://stilton.minikube/)
+* [Cheddar](http://cheddar.minikube/)
+* [Wensleydale](http://wensleydale.minikube/)
 
 ## Path based routing
 
@@ -465,10 +471,10 @@ metadata:
   name: cheeses
   annotations:
     kubernetes.io/ingress.class: traefik
-    traefik.frontend.rule.type: pathprefixstrip
+    traefik.frontend.rule.type: PathPrefixStrip
 spec:
   rules:
-  - host: cheeses.local
+  - host: cheeses.minikube
     http:
       paths:
       - path: /stilton
@@ -491,18 +497,18 @@ spec:
 > the containers from the previous example without modification.
 
 ```shell
-kubectl apply -f examples/k8s/cheeses-ingress.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheeses-ingress.yaml
 ```
 
 ```shell
-echo "$(minikube ip) cheeses.local" | sudo tee -a /etc/hosts
+echo "$(minikube ip) cheeses.minikube" | sudo tee -a /etc/hosts
 ```
 
 You should now be able to visit the websites in your browser.
 
-* [cheeses.local/stilton](http://cheeses.local/stilton/)
-* [cheeses.local/cheddar](http://cheeses.local/cheddar/)
-* [cheeses.local/wensleydale](http://cheeses.local/wensleydale/)
+* [cheeses.minikube/stilton](http://cheeses.minikube/stilton/)
+* [cheeses.minikube/cheddar](http://cheeses.minikube/cheddar/)
+* [cheeses.minikube/wensleydale](http://cheeses.minikube/wensleydale/)
 
 ## Disable passing the Host header
 
