@@ -649,7 +649,7 @@ address = ":8080"
 ![Web UI Providers](img/web.frontend.png)
 ![Web UI Health](img/traefik-health.png)
 
-- `/ping`: `GET` simple endpoint to check for Træfik process liveness.
+- `/ping`: A simple endpoint to check for Træfik process liveness. Supports HTTP `GET` and `HEAD` requests.
 
 ```shell
 $ curl -sv "http://localhost:8080/ping"
