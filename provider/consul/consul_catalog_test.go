@@ -6,6 +6,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 )
@@ -603,6 +604,149 @@ func TestConsulCatalogNodeSorter(t *testing.T) {
 		actual := c.nodes
 		if !reflect.DeepEqual(actual, c.expected) {
 			t.Fatalf("expected %q, got %q", c.expected, actual)
+		}
+	}
+}
+
+func TestConsulCatalogGetChangedKeys(t *testing.T) {
+	type Input struct {
+		currState map[string][]string
+		prevState map[string][]string
+	}
+
+	type Output struct {
+		addedKeys   []string
+		removedKeys []string
+	}
+
+	cases := []struct {
+		input  Input
+		output Output
+	}{
+		{
+			input: Input{
+				currState: map[string][]string{
+					"foo-service":    {"v1"},
+					"bar-service":    {"v1"},
+					"baz-service":    {"v1"},
+					"qux-service":    {"v1"},
+					"quux-service":   {"v1"},
+					"quuz-service":   {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+				prevState: map[string][]string{
+					"foo-service":    {"v1"},
+					"bar-service":    {"v1"},
+					"baz-service":    {"v1"},
+					"qux-service":    {"v1"},
+					"quux-service":   {"v1"},
+					"quuz-service":   {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+			},
+			output: Output{
+				addedKeys:   []string{},
+				removedKeys: []string{},
+			},
+		},
+		{
+			input: Input{
+				currState: map[string][]string{
+					"foo-service":    {"v1"},
+					"bar-service":    {"v1"},
+					"baz-service":    {"v1"},
+					"qux-service":    {"v1"},
+					"quux-service":   {"v1"},
+					"quuz-service":   {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+				prevState: map[string][]string{
+					"foo-service":    {"v1"},
+					"bar-service":    {"v1"},
+					"baz-service":    {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+			},
+			output: Output{
+				addedKeys:   []string{"qux-service", "quux-service", "quuz-service"},
+				removedKeys: []string{},
+			},
+		},
+		{
+			input: Input{
+				currState: map[string][]string{
+					"foo-service":    {"v1"},
+					"qux-service":    {"v1"},
+					"quux-service":   {"v1"},
+					"quuz-service":   {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+				prevState: map[string][]string{
+					"foo-service":   {"v1"},
+					"bar-service":   {"v1"},
+					"baz-service":   {"v1"},
+					"qux-service":   {"v1"},
+					"quux-service":  {"v1"},
+					"quuz-service":  {"v1"},
+					"corge-service": {"v1"},
+					"waldo-service": {"v1"},
+					"fred-service":  {"v1"},
+					"plugh-service": {"v1"},
+					"xyzzy-service": {"v1"},
+					"thud-service":  {"v1"},
+				},
+			},
+			output: Output{
+				addedKeys:   []string{"grault-service", "garply-service"},
+				removedKeys: []string{"bar-service", "baz-service"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		addedKeys, removedKeys := getChangedKeys(c.input.currState, c.input.prevState)
+
+		if !reflect.DeepEqual(fun.Set(addedKeys), fun.Set(c.output.addedKeys)) {
+			t.Fatalf("Added keys comparison results: got %q, want %q", addedKeys, c.output.addedKeys)
+		}
+
+		if !reflect.DeepEqual(fun.Set(removedKeys), fun.Set(c.output.removedKeys)) {
+			t.Fatalf("Removed keys comparison results: got %q, want %q", removedKeys, c.output.removedKeys)
 		}
 	}
 }
