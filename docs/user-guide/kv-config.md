@@ -143,9 +143,15 @@ To specify a Consul ACL token for Traefik, we have to set a System Environment v
 
 If Traefik is launched into a Docker container, the variable `CONSUL_HTTP_TOKEN` can be initialized with the `-e` Docker option : `-e "CONSUL_HTTP_TOKEN=[consul-acl-token-value]"`
 
-## TLS support
+## TLS support 
 
-So far, only [Consul](https://consul.io) and [etcd](https://coreos.com/etcd/) support TLS connections.
+To connect to a Consul endpoint using SSL, simply specify `https://` in the `consul.endpoint` property
+
+- `--consul.endpoint=https://[consul-host]:[consul-ssl-port]`
+
+## TLS support with client certificates
+
+So far, only [Consul](https://consul.io) and [etcd](https://coreos.com/etcd/) support TLS connections with client certificates.
 To set it up, we should enable [consul security](https://www.consul.io/docs/internals/security.html) (or [etcd security](https://coreos.com/etcd/docs/latest/security.html)).
 
 Then, we have to provide CA, Cert and Key to Træfik using `consul` flags :
