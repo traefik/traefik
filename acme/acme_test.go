@@ -1,6 +1,7 @@
 package acme
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/xenolf/lego/acme"
 )
 
@@ -276,4 +278,19 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 	if acme.PreCheckDNS == nil {
 		t.Errorf("No change to acme.PreCheckDNS when meant to be adding enforcing override function.")
 	}
+}
+
+func TestAcme_getProvidedCertificate(t *testing.T) {
+	mm := make(map[string]*tls.Certificate)
+	mm["*.containo.us"] = &tls.Certificate{}
+	mm["traefik.acme.io"] = &tls.Certificate{}
+
+	a := ACME{TLSConfig: &tls.Config{NameToCertificate: mm}}
+
+	domains := []string{"traefik.containo.us", "trae.containo.us"}
+	certificate := a.getProvidedCertificate(domains)
+	assert.NotNil(t, certificate)
+	domains = []string{"traefik.acme.io", "trae.acme.io"}
+	certificate = a.getProvidedCertificate(domains)
+	assert.Nil(t, certificate)
 }
