@@ -1681,33 +1681,68 @@ RefreshSeconds = 15
 #
 ExposedByDefault = false
 
-# Filter services with unhealthy states and health states
+# Filter services with unhealthy states and inactive states
 #
 # Optional
 # Default: false
 #
-EnableServiceHealthFilter = false
-
-# Endpoint to use when connecting to Rancher
-#
-# Required
-# Endpoint = "http://rancherserver.example.com/v1"
-
-# AccessKey to use when connecting to Rancher
-#
-# Required
-# AccessKey = "XXXXXXXXXXXXXXXXXXXX"
-
-# SecretKey to use when connecting to Rancher
-#
-# Required
-# SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
+EnableServiceHealthFilter = true
 ```
 
-As traefik needs access to the rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters. 
+```toml
+# Enable Rancher metadata service configuration backend instead of the API
+# configuration backend
+#
+# Optional
+# Default: false
+#
+[rancher.metadata]
 
-To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`. This can be found within the API Key advanced options.
+# Poll the Rancher metadata service for changes every `rancher.RefreshSeconds`
+# NOTE: this is less accurate than the default long polling technique which
+# will provide near instantaneous updates to Traefik
+#
+# Optional
+# Default: false
+#
+IntervalPoll = true
+
+# Prefix used for accessing the Rancher metadata service
+#
+# Optional
+# Default: "/latest"
+#
+Prefix = "/2016-07-29"
+```
+
+```toml
+# Enable Rancher API configuration backend
+#
+# Optional
+# Default: true
+#
+[rancher.api]
+
+# Endpoint to use when connecting to the Rancher API
+#
+# Required
+Endpoint = "http://rancherserver.example.com/v1"
+
+# AccessKey to use when connecting to the Rancher API
+#
+# Required
+AccessKey = "XXXXXXXXXXXXXXXXXXXX"
+
+# SecretKey to use when connecting to the Rancher API
+#
+# Required
+SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+If Traefik needs access to the Rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters. 
+
+To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`.
+This can be found within the API Key advanced options.
 
 Labels can be used on task containers to override default behaviour:
 

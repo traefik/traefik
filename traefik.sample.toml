@@ -1105,6 +1105,30 @@
 #
 # EnableServiceHealthFilter = true
 
+# Enable Rancher metadata service configuration backend instead of the API
+# configuration backend
+#
+# Optional
+# Default: false
+#
+# [rancher.metadata]
+
+# Poll the Rancher metadata service for changes every `rancher.RefreshSeconds`
+# NOTE: this is less accurate than the default long polling technique which
+# will provide near instantaneous updates to Traefik
+#
+# Optional
+# Default: false
+#
+# IntervalPoll = true
+
+# Prefix used for accessing the Rancher metadata service
+#
+# Optional
+# Default: "/latest"
+#
+# Prefix = "/2016-07-29"
+
 # Enable Rancher API configuration backend
 #
 # Optional
@@ -1126,37 +1150,6 @@
 #
 # Required
 # SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
-# Enable Rancher metadata service configuration backend instead of the API
-# configuration backend
-#
-# Optional
-# Default: false
-#
-# [rancher.metadataservice]
-
-# Poll the Rancher metadata service for changes every `rancher.RefreshSeconds`
-# NOTE: this is less accurate than the default long polling technique which
-# will provide near instantaneous updates to Traefik
-#
-# Optional
-# Default: false
-#
-# IntervalPoll = true
-
-# Prefix used for accessing the Rancher metadata service
-#
-# Optional
-# Default: "/latest"
-#
-# Prefix = "/2016-07-29"
-
-# Constraints
-#
-# Optional
-#
-# constraints = ["tag==api", "tag==chee*e"]
-# Matching with containers having this tag: "traefik.tags=cheese,wine"
 
 ################################################################
 # DynamoDB configuration backend

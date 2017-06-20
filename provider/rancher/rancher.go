@@ -126,7 +126,7 @@ func (p *Provider) getBackend(service rancherData) string {
 	return provider.Normalize(service.Name)
 }
 
-// Generall Application Stuff
+// General Application Stuff
 func (p *Provider) getPort(service rancherData) string {
 	if label, err := getServiceLabel(service, "traefik.port"); err == nil {
 		return label
