@@ -74,16 +74,16 @@ build: dist
 	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
 build-webui:
-	docker build -t traefik-webui -f webui/Dockerfile webui
+	docker build $(DOCKER_BUILD_ARGS) -t traefik-webui -f webui/Dockerfile webui
 
 build-no-cache: dist
-	docker build --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
+	docker build $(DOCKER_BUILD_ARGS) --no-cache -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
 
 shell: build ## start a shell inside the build env
 	$(DOCKER_RUN_TRAEFIK) /bin/bash
 
 image: binary ## build a docker traefik image
-	docker build -t $(TRAEFIK_IMAGE) .
+	docker build $(DOCKER_BUILD_ARGS) -t $(TRAEFIK_IMAGE) .
 
 dist:
 	mkdir dist
