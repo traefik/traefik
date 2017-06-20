@@ -3,6 +3,7 @@ package middlewares
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -42,10 +43,16 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	attempts := 1
 	for {
+		netErrorOccurred := false
+		// We pass in a pointer to netErrorOccurred so that we can set it to true on network errors
+		// when proxying the HTTP requests to the backends. This happens in the custom RecordingErrorHandler.
+		newCtx := context.WithValue(r.Context(), defaultNetErrCtxKey, &netErrorOccurred)
+
 		recorder := newRetryResponseRecorder()
 		recorder.responseWriter = rw
-		retry.next.ServeHTTP(recorder, r)
-		if !isNetworkError(recorder.Code) || attempts >= retry.attempts {
+
+		retry.next.ServeHTTP(recorder, r.WithContext(newCtx))
+		if !netErrorOccurred || attempts >= retry.attempts {
 			utils.CopyHeaders(rw.Header(), recorder.Header())
 			rw.WriteHeader(recorder.Code)
 			rw.Write(recorder.Body.Bytes())
@@ -57,8 +64,29 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func isNetworkError(status int) bool {
-	return status == http.StatusBadGateway || status == http.StatusGatewayTimeout
+// netErrorCtxKey is a custom type that is used as key for the context.
+type netErrorCtxKey string
+
+// defaultNetErrCtxKey is the actual key which value is used to record network errors.
+var defaultNetErrCtxKey netErrorCtxKey = "NetErrCtxKey"
+
+// NetErrorRecorder is an interface to record net errors.
+type NetErrorRecorder interface {
+	// Record can be used to signal the retry middleware that an network error happened
+	// and therefore the request should be retried.
+	Record(ctx context.Context)
+}
+
+// DefaultNetErrorRecorder is the default NetErrorRecorder implementation.
+type DefaultNetErrorRecorder struct{}
+
+// Record is recording network errors by setting the context value for the defaultNetErrCtxKey to true.
+func (DefaultNetErrorRecorder) Record(ctx context.Context) {
+	val := ctx.Value(defaultNetErrCtxKey)
+
+	if netErrorOccurred, isBoolPointer := val.(*bool); isBoolPointer {
+		*netErrorOccurred = true
+	}
 }
 
 // RetryListener is used to inform about retry attempts.
