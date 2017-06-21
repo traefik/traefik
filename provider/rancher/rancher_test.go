@@ -335,7 +335,7 @@ func TestRancherGetWeight(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 			},
-			expected: "0",
+			expected: "1",
 		},
 		{
 			service: rancherData{
@@ -577,7 +577,7 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-0": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					CircuitBreaker: nil,

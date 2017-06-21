@@ -319,12 +319,12 @@ func (p *Provider) getWeight(task marathon.Task, applications []marathon.Applica
 	application, errApp := getApplication(task, applications)
 	if errApp != nil {
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
-		return "0"
+		return "1"
 	}
 	if label, ok := p.getLabel(application, "traefik.weight"); ok {
 		return label
 	}
-	return "0"
+	return "1"
 }
 
 func (p *Provider) getDomain(application marathon.Application) string {

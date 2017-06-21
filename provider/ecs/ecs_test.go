@@ -125,7 +125,7 @@ func TestEcsWeight(t *testing.T) {
 		instanceInfo ecsInstance
 	}{
 		{
-			expected:     "0",
+			expected:     "1",
 			instanceInfo: simpleEcsInstance(map[string]*string{}),
 		},
 		{

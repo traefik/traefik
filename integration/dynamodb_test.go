@@ -94,13 +94,16 @@ func (s *DynamoDBSuite) SetUpSuite(c *check.C) {
 		Backend: types.Backend{
 			Servers: map[string]types.Server{
 				"whoami1": {
-					URL: whoami1,
+					URL:    whoami1,
+					Weight: 1,
 				},
 				"whoami2": {
-					URL: whoami2,
+					URL:    whoami2,
+					Weight: 1,
 				},
 				"whoami3": {
-					URL: whoami3,
+					URL:    whoami3,
+					Weight: 1,
 				},
 			},
 		},
