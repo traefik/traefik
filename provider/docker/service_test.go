@@ -57,7 +57,7 @@ func TestDockerGetServiceWeight(t *testing.T) {
 	}{
 		{
 			container: containerJSON(),
-			expected:  "0",
+			expected:  "1",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
@@ -358,7 +358,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"service": {
 							URL:    "http://127.0.0.1:2503",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					CircuitBreaker: nil,

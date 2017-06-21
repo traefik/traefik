@@ -49,6 +49,34 @@ type Server struct {
 	Weight int    `json:"weight"`
 }
 
+// UnmarshalTOML define how unmarshal in TOML parsing
+func (s *Server) UnmarshalTOML(data interface{}) error {
+	d, ok := data.(map[string]interface{})
+	if !ok {
+		return errors.New("Server UnmarshalTOML want (map[string]interface{})")
+	}
+
+	if u, ok := d["url"]; ok {
+		v, ok := u.(string)
+		if !ok {
+			return errors.New("toml: server url must be string")
+		}
+		s.URL = v
+	}
+
+	if w, ok := d["weight"]; ok {
+		v, ok := w.(int64)
+		if !ok {
+			return errors.New("toml: server weight must be int64")
+		}
+		s.Weight = int(v)
+	} else {
+		s.Weight = 1
+	}
+
+	return nil
+}
+
 // Route holds route configuration.
 type Route struct {
 	Rule string `json:"rule,omitempty"`

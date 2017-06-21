@@ -297,13 +297,13 @@ func (p *Provider) getWeight(task state.Task, applications []state.Task) string 
 	application, errApp := getMesos(task, applications)
 	if errApp != nil {
 		log.Errorf("Unable to get Mesos application from task %s", task.DiscoveryInfo.Name)
-		return "0"
+		return "1"
 	}
 
 	if label, err := p.getLabel(application, "traefik.weight"); err == nil {
 		return label
 	}
-	return "0"
+	return "1"
 }
 
 func (p *Provider) getDomain(task state.Task) string {
