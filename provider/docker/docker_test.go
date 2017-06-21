@@ -281,7 +281,7 @@ func TestDockerGetWeight(t *testing.T) {
 	}{
 		{
 			container: containerJSON(),
-			expected:  "0",
+			expected:  "1",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
@@ -900,7 +900,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					CircuitBreaker: nil,
@@ -961,11 +961,11 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test1": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: 1,
 						},
 						"server-test2": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					CircuitBreaker: nil,
@@ -1008,7 +1008,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test1": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					CircuitBreaker: &types.CircuitBreaker{

@@ -111,7 +111,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-test": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					CircuitBreaker: nil,
@@ -164,7 +164,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-testLoadBalancerAndCircuitBreaker-dot": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					CircuitBreaker: &types.CircuitBreaker{
@@ -222,7 +222,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-testMaxConn": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					MaxConn: &types.MaxConn{
@@ -277,7 +277,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-testMaxConnOnlySpecifyAmount": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					MaxConn: nil,
@@ -329,7 +329,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-testMaxConnOnlyExtractorFunc": {
 							URL:    "http://localhost:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					MaxConn: nil,
@@ -382,7 +382,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-testHealthCheck": {
 							URL:    "http://127.0.0.1:80",
-							Weight: 0,
+							Weight: 1,
 						},
 					},
 					HealthCheck: &types.HealthCheck{
@@ -1162,7 +1162,7 @@ func TestMarathonGetWeight(t *testing.T) {
 		{
 			applications: []marathon.Application{},
 			task:         marathon.Task{},
-			expected:     "0",
+			expected:     "1",
 		},
 		{
 			applications: []marathon.Application{
@@ -1176,7 +1176,7 @@ func TestMarathonGetWeight(t *testing.T) {
 			task: marathon.Task{
 				AppID: "test2",
 			},
-			expected: "0",
+			expected: "1",
 		},
 		{
 			applications: []marathon.Application{
@@ -1190,7 +1190,7 @@ func TestMarathonGetWeight(t *testing.T) {
 			task: marathon.Task{
 				AppID: "test",
 			},
-			expected: "0",
+			expected: "1",
 		},
 		{
 			applications: []marathon.Application{

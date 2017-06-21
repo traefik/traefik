@@ -134,7 +134,7 @@ func (p *Provider) getWeight(instance eureka.InstanceInfo) string {
 	if val, ok := instance.Metadata.Map["traefik.weight"]; ok {
 		return val
 	}
-	return "0"
+	return "1"
 }
 
 func (p *Provider) getInstanceID(instance eureka.InstanceInfo) string {
