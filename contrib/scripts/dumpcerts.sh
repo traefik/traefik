@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright (c) 2017 Brian 'redbeard' Harrington <redbeard@dead-city.org>
 #
 # dumpcerts.sh - A simple utility to explode a Traefik acme.json file into a
@@ -36,58 +36,68 @@
 # 4 - The destination certificate directory does not exist
 # 8 - Missing private key
 
-USAGE="dumpcerts.sh <path to acme> <destination cert directory>"
+set -o errexit
+set -o pipefail
+set -o nounset
+
+USAGE="$(basename "$0") <path to acme> <destination cert directory>"
 
 # Allow us to exit on a missing jq binary
-exitJQ() {
-	echo ""
-	echo "You must have the binary 'jq' to use this."
-	echo "jq is available at: https://stedolan.github.io/jq/download/"
-	echo ""
-	echo ${USAGE}
+exit_jq() {
+	echo "
+You must have the binary 'jq' to use this.
+jq is available at: https://stedolan.github.io/jq/download/
+
+${USAGE}" >&2
 	exit 1
 }
 
+bad_acme() {
+	echo "
+There was a problem parsing your acme.json file.
 
-badACME() {
-	echo ""
-	echo "There was a problem parsing your acme.json file."
-	echo ""
-	echo ${USAGE}
+${USAGE}" >&2
 	exit 2
 }
 
+if [ $# -ne 2 ]; then
+	echo "
+Insufficient number of parameters.
 
-acme="${1}"
-certdir="${2}"
-
-if [ ! -r "${acme}" ]; then
-	echo ""
-	echo "There was a problem reading from '${acme}'"
-	echo "We need to read this file to explode the JSON bundle... exiting."
-	echo ""
-	echo ${USAGE}
+${USAGE}" >&2
 	exit 1
+fi
+
+readonly acmefile="${1}"
+readonly certdir="${2%/}"
+
+if [ ! -r "${acmefile}" ]; then
+	echo "
+There was a problem reading from '${acmefile}'
+We need to read this file to explode the JSON bundle... exiting.
+
+${USAGE}" >&2
+	exit 2
 fi	
 
 
 if [ ! -d "${certdir}" ]; then
-	echo ""
-	echo "Path ${certdir} does not seem to be a directory"
-	echo "We need a directory in which to explode the JSON bundle... exiting."
-	echo ""
-	echo ${USAGE}
+	echo "
+Path ${certdir} does not seem to be a directory
+We need a directory in which to explode the JSON bundle... exiting.
+
+${USAGE}" >&2
 	exit 4
 fi	
 
-jq=$(which jq) || exitJQ
+jq=$(command -v jq) || exit_jq
 
-priv=$(${jq} -r '.PrivateKey' ${acme}) || badACME
+priv=$(${jq} -e -r '.PrivateKey' "${acmefile}") || bad_acme
 
 if [ ! -n "${priv}" ]; then
-	echo ""
-	echo "There didn't seem to be a private key in ${acme}."
-	echo "Please ensure that there is a key in this file and try again."
+	echo "
+There didn't seem to be a private key in ${acmefile}.
+Please ensure that there is a key in this file and try again." >&2
 	exit 8
 fi
 
@@ -95,16 +105,18 @@ fi
 # and place each in a variable for later use, normalizing the path
 mkdir -p "${certdir}"/{certs,private}
 
-pdir=$(realpath "${certdir}/private/")
-cdir=$(realpath "${certdir}/certs/")
+pdir="${certdir}/private/"
+cdir="${certdir}/certs/"
 
 # Save the existing umask, change the default mode to 600, then
 # after writing the private key switch it back to the default
 oldumask=$(umask)
 umask 177
-# For some reason traefik stores the private key in stripped base64 format, but
-# the certificates bundled as a base64 object without stripping headers.  This
-# normalizes the headers and formatting.
+trap 'umask ${oldumask}' EXIT
+
+# traefik stores the private key in stripped base64 format but the certificates
+# bundled as a base64 object without stripping headers.  This normalizes the
+# headers and formatting.
 #
 # In testing this out it was a balance between the following mechanisms:
 # gawk:
@@ -126,16 +138,14 @@ umask 177
 # key if it does not parse out correctly. The other mechanisms were left as
 # comments so that the user can choose the mechanism most appropriate to them.
 echo -e "-----BEGIN RSA PRIVATE KEY-----\n${priv}\n-----END RSA PRIVATE KEY-----" \
-   | openssl rsa -inform pem -out "${pdir}/letsencrypt.key" 
-
-umask ${oldumask}
+   | openssl rsa -inform pem -out "${pdir}/letsencrypt.key"
 
 # Process the certificates for each of the domains in acme.json
 for domain in $(jq -r '.DomainsCertificate.Certs[].Certificate.Domain' acme.json); do
 	# Traefik stores a cert bundle for each domain.  Within this cert 
 	# bundle there is both proper the certificate and the Let's Encrypt CA
 	echo "Extracting cert bundle for ${domain}"
-	cert=$(jq -r --arg domain "$domain" '.DomainsCertificate.Certs[].Certificate |
-         	select (.Domain == $domain )| .Certificate' ${acme}) || badACME
-	echo ${cert} | base64 --decode > "${cdir}/${domain}.pem"
+	cert=$(jq -e -r --arg domain "$domain" '.DomainsCertificate.Certs[].Certificate |
+         	select (.Domain == $domain )| .Certificate' ${acmefile}) || bad_acme
+	echo "${cert}" | base64 --decode > "${cdir}/${domain}.pem"
 done
