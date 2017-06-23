@@ -201,15 +201,15 @@ func (rr *RoundRobin) UpsertServer(u *url.URL, options ...ServerOption) error {
 		return nil
 	}
 
-	srv := &server{url: utils.CopyURL(u)}
+	srv := &server{
+		url:    utils.CopyURL(u),
+		weight: defaultWeight,
+	}
+
 	for _, o := range options {
 		if err := o(srv); err != nil {
 			return err
 		}
-	}
-
-	if srv.weight == 0 {
-		srv.weight = defaultWeight
 	}
 
 	rr.servers = append(rr.servers, srv)
