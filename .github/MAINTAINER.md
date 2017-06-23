@@ -80,7 +80,9 @@ The `status/*` labels represent the desired state in the workflow.
 * `status/2-needs-review`: need a code/documentation review. **(only for PR)**
 * `status/3-needs-merge`: ready to merge. **(only for PR)**
 
-Note:
-* The status `needs-design-review` is only used in complex/heavy PRs.
-* From `1` to `2`: 2 design LGTM needed in comment.
-* From `2` to `3`: PR need 2 approvals.
+## PR review process:
+
+* If needed, a specific maintainer can be required to make a review (according to its knowledge areas)
+* The status `needs-design-review` is only used in complex/heavy/tricky PRs.
+* From `1` to `2`: 1 design LGTM in comment, by a senior maintainer, if needed.
+* From `2` to `3`: 3 LGTM by any maintainer.
