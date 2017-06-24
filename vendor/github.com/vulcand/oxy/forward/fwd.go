@@ -4,6 +4,7 @@
 package forward
 
 import (
+	"bufio"
 	"crypto/tls"
 	"io"
 	"net"
@@ -290,14 +291,26 @@ func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request,
 		ctx.errHandler.ServeHTTP(w, req, err)
 		return
 	}
-	errc := make(chan error, 2)
-	replicate := func(dst io.Writer, src io.Reader) {
-		_, err := io.Copy(dst, src)
-		errc <- err
+
+	br := bufio.NewReader(targetConn)
+	resp, err := http.ReadResponse(br, req)
+	resp.Write(underlyingConn)
+	defer resp.Body.Close()
+
+	// We connect the conn only if the switching protocol has not failed
+	if resp.StatusCode == http.StatusSwitchingProtocols {
+		ctx.log.Infof("Switching protocol success")
+		errc := make(chan error, 2)
+		replicate := func(dst io.Writer, src io.Reader) {
+			_, err := io.Copy(dst, src)
+			errc <- err
+		}
+		go replicate(targetConn, underlyingConn)
+		go replicate(underlyingConn, targetConn)
+		<-errc
+	} else {
+		ctx.log.Infof("Switching protocol failed")
 	}
-	go replicate(targetConn, underlyingConn)
-	go replicate(underlyingConn, targetConn)
-	<-errc
 }
 
 // copyRequest makes a copy of the specified request.
