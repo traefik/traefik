@@ -449,7 +449,7 @@ func (i ecsInstance) Weight() string {
 	if label := i.label("traefik.weight"); label != "" {
 		return label
 	}
-	return "0"
+	return "1"
 }
 
 func (i ecsInstance) PassHostHeader() string {

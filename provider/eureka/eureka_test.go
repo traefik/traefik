@@ -88,7 +88,7 @@ func TestEurekaGetWeight(t *testing.T) {
 		instanceInfo   eureka.InstanceInfo
 	}{
 		{
-			expectedWeight: "0",
+			expectedWeight: "1",
 			instanceInfo: eureka.InstanceInfo{
 				Port: &eureka.Port{
 					Port: 80, Enabled: true,

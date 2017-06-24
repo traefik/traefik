@@ -625,7 +625,7 @@ func (p *Provider) getWeight(container dockerData) string {
 	if label, err := getLabel(container, "traefik.weight"); err == nil {
 		return label
 	}
-	return "0"
+	return "1"
 }
 
 func (p *Provider) getSticky(container dockerData) string {
