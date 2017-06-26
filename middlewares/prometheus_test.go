@@ -75,6 +75,7 @@ func TestPrometheus(t *testing.T) {
 			name: reqDurationName,
 			labels: map[string]string{
 				"service": "test",
+				"code":    "200",
 			},
 			assert: func(family *dto.MetricFamily) {
 				sc := family.Metric[0].Histogram.GetSampleCount()
@@ -151,7 +152,7 @@ func TestPrometheusRegisterMetricsMultipleTimes(t *testing.T) {
 func setupTestHTTPHandler() http.Handler {
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/metrics", promhttp.Handler())
-	serveMux.Handle("/ok", &networkFailingHTTPHandler{failAtCalls: []int{1}})
+	serveMux.Handle("/ok", &networkFailingHTTPHandler{failAtCalls: []int{1}, netErrorRecorder: &DefaultNetErrorRecorder{}})
 
 	metrics, _ := newPrometheusMetrics()
 

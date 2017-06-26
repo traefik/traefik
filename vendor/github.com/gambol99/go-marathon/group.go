@@ -209,7 +209,9 @@ func (r *marathonClient) WaitOnGroup(name string, timeout time.Duration) error {
 func (r *marathonClient) DeleteGroup(name string, force bool) (*DeploymentID, error) {
 	version := new(DeploymentID)
 	path := fmt.Sprintf("%s/%s", marathonAPIGroups, trimRootPath(name))
-	path = buildPathWithForceParam(path, force)
+	if force {
+		path += "?force=true"
+	}
 	if err := r.apiDelete(path, nil, version); err != nil {
 		return nil, err
 	}
@@ -224,7 +226,9 @@ func (r *marathonClient) DeleteGroup(name string, force bool) (*DeploymentID, er
 func (r *marathonClient) UpdateGroup(name string, group *Group, force bool) (*DeploymentID, error) {
 	deploymentID := new(DeploymentID)
 	path := fmt.Sprintf("%s/%s", marathonAPIGroups, trimRootPath(name))
-	path = buildPathWithForceParam(path, force)
+	if force {
+		path += "?force=true"
+	}
 	if err := r.apiPut(path, group, deploymentID); err != nil {
 		return nil, err
 	}

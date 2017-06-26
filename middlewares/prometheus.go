@@ -17,7 +17,7 @@ const (
 
 // Prometheus is an Implementation for Metrics that exposes the following Prometheus metrics:
 // - number of requests partitioned by status code and method
-// - request durations
+// - request durations partitioned by status code
 // - amount of retries happened
 type Prometheus struct {
 	reqsCounter          metrics.Counter
@@ -73,7 +73,7 @@ func NewPrometheus(name string, config *types.Prometheus) (*Prometheus, []stdpro
 			ConstLabels: stdprometheus.Labels{"service": name},
 			Buckets:     buckets,
 		},
-		[]string{},
+		[]string{"code"},
 	)
 	hv, err = registerHistogramVec(hv)
 	if err != nil {
