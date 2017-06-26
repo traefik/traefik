@@ -96,7 +96,7 @@ import:
 - package: k8s.io/client-go
   version: v2.0.0
 - package: github.com/gambol99/go-marathon
-  version: 15ea23e360abb8b25071e677aed344f31838e403
+  version: 1b9c2582c26b632fb1fb295776d7ce40b68c36f2
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
@@ -163,6 +163,8 @@ import:
   version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
 - package: golang.org/x/oauth2
   version: 7fdf09982454086d5570c7db3e11f360194830ca
+- package: github.com/rancher/go-rancher-metadata
+  version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
   subpackages:
   - google
 - package: github.com/googleapis/gax-go

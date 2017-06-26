@@ -154,10 +154,15 @@ Supported filters:
 
 ## Access log definition
 
-The standard access log uses the textual Common Log Format (CLF), extended with additional fields.
-Alternatively logs can be written in JSON. 
-Using the default CLF option is simple, e.g.
+Access logs are written when `[accessLog]` is defined. 
+By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
 
+To enable access logs using the default settings just add the `[accessLog]` entry.
+```toml
+[accessLog]
+```
+
+To write the logs into a logfile specify the `filePath`.
 ```toml
 [accessLog]
   filePath = "/path/to/access.log"
@@ -644,7 +649,7 @@ address = ":8080"
 ![Web UI Providers](img/web.frontend.png)
 ![Web UI Health](img/traefik-health.png)
 
-- `/ping`: `GET` simple endpoint to check for Træfik process liveness.
+- `/ping`: A simple endpoint to check for Træfik process liveness. Supports HTTP `GET` and `HEAD` requests.
 
 ```shell
 $ curl -sv "http://localhost:8080/ping"
@@ -1676,33 +1681,68 @@ RefreshSeconds = 15
 #
 ExposedByDefault = false
 
-# Filter services with unhealthy states and health states
+# Filter services with unhealthy states and inactive states
 #
 # Optional
 # Default: false
 #
-EnableServiceHealthFilter = false
-
-# Endpoint to use when connecting to Rancher
-#
-# Required
-# Endpoint = "http://rancherserver.example.com/v1"
-
-# AccessKey to use when connecting to Rancher
-#
-# Required
-# AccessKey = "XXXXXXXXXXXXXXXXXXXX"
-
-# SecretKey to use when connecting to Rancher
-#
-# Required
-# SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
+EnableServiceHealthFilter = true
 ```
 
-As traefik needs access to the rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters. 
+```toml
+# Enable Rancher metadata service configuration backend instead of the API
+# configuration backend
+#
+# Optional
+# Default: false
+#
+[rancher.metadata]
 
-To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`. This can be found within the API Key advanced options.
+# Poll the Rancher metadata service for changes every `rancher.RefreshSeconds`
+# NOTE: this is less accurate than the default long polling technique which
+# will provide near instantaneous updates to Traefik
+#
+# Optional
+# Default: false
+#
+IntervalPoll = true
+
+# Prefix used for accessing the Rancher metadata service
+#
+# Optional
+# Default: "/latest"
+#
+Prefix = "/2016-07-29"
+```
+
+```toml
+# Enable Rancher API configuration backend
+#
+# Optional
+# Default: true
+#
+[rancher.api]
+
+# Endpoint to use when connecting to the Rancher API
+#
+# Required
+Endpoint = "http://rancherserver.example.com/v1"
+
+# AccessKey to use when connecting to the Rancher API
+#
+# Required
+AccessKey = "XXXXXXXXXXXXXXXXXXXX"
+
+# SecretKey to use when connecting to the Rancher API
+#
+# Required
+SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+If Traefik needs access to the Rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters. 
+
+To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`.
+This can be found within the API Key advanced options.
 
 Labels can be used on task containers to override default behaviour:
 

@@ -167,13 +167,13 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 
 	applications, err := p.marathonClient.Applications(nil)
 	if err != nil {
-		log.Errorf("Failed to create a client for marathon, error: %s", err)
+		log.Errorf("Failed to retrieve applications from Marathon, error: %s", err)
 		return nil
 	}
 
 	tasks, err := p.marathonClient.AllTasks(&marathon.AllTasksOpts{Status: "running"})
 	if err != nil {
-		log.Errorf("Failed to create a client for marathon, error: %s", err)
+		log.Errorf("Failed to retrieve task from Marathon, error: %s", err)
 		return nil
 	}
 
