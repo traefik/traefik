@@ -296,7 +296,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	return &templateObjects, nil
 }
 
-func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) (string) {
+func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
 	if len(pa.Path) > 0 {
 		ruleType := i.Annotations[annotationFrontendRuleType]
 		if ruleType == "" {
