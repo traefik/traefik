@@ -24,4 +24,4 @@ logLevel = "DEBUG"
         [frontends.frontend1.errors.networks]
         status = ["500-502", "503-599"]
         backend = "error"
-        query = ""
+        query = "/50x.html"

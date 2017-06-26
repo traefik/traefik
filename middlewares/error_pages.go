@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -52,12 +53,14 @@ func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request,
 	recorder.responseWriter = w
 	next.ServeHTTP(recorder, req)
 
+	w.WriteHeader(recorder.Code)
 	//check the recorder code against the configured http status code ranges
 	for _, block := range ep.HTTPCodeRanges {
 		if recorder.Code >= block[0] && recorder.Code <= block[1] {
-			log.Debugf("Caught HTTP Status Code %d, returning error page", recorder.Code)
-			w.WriteHeader(recorder.Code)
-			if newReq, err := http.NewRequest(http.MethodGet, ep.BackendURL, nil); err != nil {
+			log.Errorf("Caught HTTP Status Code %d, returning error page", recorder.Code)
+			re := regexp.MustCompile("{status}")
+			finalURL := re.ReplaceAllString(ep.BackendURL, strconv.Itoa(recorder.Code))
+			if newReq, err := http.NewRequest(http.MethodGet, finalURL, nil); err != nil {
 				w.Write([]byte(http.StatusText(recorder.Code)))
 			} else {
 				ep.errorPageForwarder.ServeHTTP(w, newReq)
@@ -68,6 +71,5 @@ func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request,
 
 	//did not catch a configured status code so proceed with the request
 	utils.CopyHeaders(w.Header(), recorder.Header())
-	w.WriteHeader(recorder.Code)
 	w.Write(recorder.Body.Bytes())
 }

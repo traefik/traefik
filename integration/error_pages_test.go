@@ -21,8 +21,8 @@ func (ep *ErrorPagesSuite) SetUpSuite(c *check.C) {
 
 func (ep *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
 
-	errorPageHost := ep.composeProject.Container(c, "apache").NetworkSettings.IPAddress
-	backendHost := ep.composeProject.Container(c, "nginx").NetworkSettings.IPAddress
+	errorPageHost := ep.composeProject.Container(c, "nginx2").NetworkSettings.IPAddress
+	backendHost := ep.composeProject.Container(c, "nginx1").NetworkSettings.IPAddress
 
 	file := ep.adaptFile(c, "fixtures/error_pages/simple.toml", struct {
 		Server1 string
@@ -45,8 +45,8 @@ func (ep *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
 
 func (ep *ErrorPagesSuite) TestErrorPage(c *check.C) {
 
-	errorPageHost := ep.composeProject.Container(c, "apache").NetworkSettings.IPAddress
-	backendHost := ep.composeProject.Container(c, "nginx").NetworkSettings.IPAddress
+	errorPageHost := ep.composeProject.Container(c, "nginx2").NetworkSettings.IPAddress
+	backendHost := ep.composeProject.Container(c, "nginx1").NetworkSettings.IPAddress
 
 	//error.toml contains a mis-configuration of the backend host
 	file := ep.adaptFile(c, "fixtures/error_pages/error.toml", struct {
@@ -64,6 +64,6 @@ func (ep *ErrorPagesSuite) TestErrorPage(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	frontendReq.Host = "test.local"
 
-	err = try.Request(frontendReq, 2*time.Second, try.BodyContains("It works!"))
+	err = try.Request(frontendReq, 2*time.Second, try.BodyContains("An error occurred."))
 	c.Assert(err, checker.IsNil)
 }
