@@ -208,7 +208,12 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				setPath(pa, i, templateObjects, r)
+				rule := getRuleForPath(pa, i)
+				if rule != "" {
+					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
+						Rule: rule,
+					}
+				}
 
 				service, exists, err := k8sClient.GetService(i.ObjectMeta.Namespace, pa.Backend.ServiceName)
 				if err != nil {
@@ -291,7 +296,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	return &templateObjects, nil
 }
 
-func setPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress, templateObjects types.Configuration, r v1beta1.IngressRule) {
+func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) (string) {
 	if len(pa.Path) > 0 {
 		ruleType := i.Annotations[annotationFrontendRuleType]
 		if ruleType == "" {
@@ -304,10 +309,10 @@ func setPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress, templateObjects typ
 			rule = ruleTypeReplacePath + ":" + rewriteTarget
 		}
 
-		templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-			Rule: rule,
-		}
+		return rule
 	}
+
+	return ""
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
