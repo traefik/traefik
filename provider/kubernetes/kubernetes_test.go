@@ -1775,7 +1775,7 @@ func TestIngressAnnotations(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, actual, "The rewritten data did not match the expected.")
+	assert.Equal(t, expected, actual)
 }
 
 func TestInvalidPassHostHeaderValue(t *testing.T) {
