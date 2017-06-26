@@ -31,17 +31,18 @@ var (
 
 // ACME allows to connect to lets encrypt and retrieve certs
 type ACME struct {
-	Email               string   `description:"Email address used for registration"`
-	Domains             []Domain `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
-	Storage             string   `description:"File or key used for certificates storage."`
-	StorageFile         string   // deprecated
-	OnDemand            bool     `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."`
-	OnHostRule          bool     `description:"Enable certificate generation on frontends Host rules."`
-	CAServer            string   `description:"CA server to use."`
-	EntryPoint          string   `description:"Entrypoint to proxy acme challenge to."`
-	DNSProvider         string   `description:"Use a DNS based challenge provider rather than HTTPS."`
-	DelayDontCheckDNS   int      `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
-	ACMELogging         bool     `description:"Enable debug logging of ACME actions."`
+	Email               string        `description:"Email address used for registration"`
+	Domains             []Domain      `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
+	Storage             string        `description:"File or key used for certificates storage."`
+	StorageFile         string        // deprecated
+	OnDemand            bool          `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."`
+	OnHostRule          bool          `description:"Enable certificate generation on frontends Host rules."`
+	IgnoreFilters       IgnoreFilters `description:"Use regexp filters on hosts to ignore certificate request from Let's Encrypt."`
+	CAServer            string        `description:"CA server to use."`
+	EntryPoint          string        `description:"Entrypoint to proxy acme challenge to."`
+	DNSProvider         string        `description:"Use a DNS based challenge provider rather than HTTPS."`
+	DelayDontCheckDNS   int           `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	ACMELogging         bool          `description:"Enable debug logging of ACME actions."`
 	client              *acme.Client
 	defaultCertificate  *tls.Certificate
 	store               cluster.Store
@@ -90,6 +91,32 @@ func (ds *Domains) SetValue(val interface{}) {
 type Domain struct {
 	Main string
 	SANs []string
+}
+
+// IgnoreFilters holds ignore filters
+type IgnoreFilters []string
+
+//Set adds strings elem into the the parser
+//it splits str on , and ;
+func (i *IgnoreFilters) Set(str string) error {
+	fargs := func(c rune) bool {
+		return c == ',' || c == ';'
+	}
+	// get function
+	slice := strings.FieldsFunc(str, fargs)
+	*i = append(*i, slice...)
+	return nil
+}
+
+//Get []string
+func (i *IgnoreFilters) Get() interface{} { return IgnoreFilters(*i) }
+
+//String return slice in a string
+func (i *IgnoreFilters) String() string { return fmt.Sprintf("%v", *i) }
+
+//SetValue sets []string into the parser
+func (i *IgnoreFilters) SetValue(val interface{}) {
+	*i = IgnoreFilters(val.(IgnoreFilters))
 }
 
 func (a *ACME) init() error {
@@ -169,7 +196,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 
 	leadership.AddListener(func(elected bool) error {
 		if elected {
-			object, err := a.store.Load()
+			_, err := a.store.Load()
 			if err != nil {
 				return err
 			}
@@ -328,29 +355,48 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := types.CanonicalDomain(clientHello.ServerName)
 	account := a.store.Get().(*Account)
-	//use regex to test for wildcard certs that might have been added into TLSConfig
-	for k := range a.TLSConfig.NameToCertificate {
-		selector := "^" + strings.Replace(k, "*.", "[^\\.]*\\.?", -1) + "$"
-		match, _ := regexp.MatchString(selector, domain)
-		if match {
-			return a.TLSConfig.NameToCertificate[k], nil
-		}
-	}
+
+	// Check for existing challenge cert
+	log.Debugf("Checking ACME challenge for %s", domain)
 	if challengeCert, ok := a.challengeProvider.getCertificate(domain); ok {
-		log.Debugf("ACME got challenge %s", domain)
+		log.Debugf("Returning ACME challenge cert for %s", domain)
 		return challengeCert, nil
 	}
+
+	// Check for existing ACME domain cert
+	log.Debugf("Checking ACME domain cert for %v", domain)
 	if domainCert, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
-		log.Debugf("ACME got domain cert %s", domain)
+		log.Debugf("Returning ACME domain cert for %s", domain)
 		return domainCert.tlsCert, nil
 	}
+
 	if a.OnDemand {
 		if a.checkOnDemandDomain != nil && !a.checkOnDemandDomain(domain) {
 			return nil, nil
 		}
-		return a.loadCertificateOnDemand(clientHello)
+		cert, err := a.loadCertificateOnDemand(clientHello)
+		if cert != nil && err == nil {
+			return cert, nil
+		}
+		if err != nil {
+			log.Errorf("On demand certificate retrieval failed for %v due to %v", domain, err)
+		} else {
+			log.Warnf("On demand certificate for %v didn't return anything.", domain)
+		}
 	}
-	log.Debugf("ACME got nothing %s", domain)
+
+	// Check if we have a wildcard cert into TLSConfig that could be used
+	log.Debugf("Checking wildcard certificate matching for %v", domain)
+	for k := range a.TLSConfig.NameToCertificate {
+		selector := "^" + strings.Replace(k, "*.", "[^\\.]*\\.?", -1) + "$"
+		match, _ := regexp.MatchString(selector, domain)
+		if match {
+			log.Debugf("Found a wildcard certificate to use as fallback: %v", k)
+			return a.TLSConfig.NameToCertificate[k], nil
+		}
+	}
+
+	log.Debugf("No certificate found to return for %s", domain)
 	return nil, nil
 }
 
@@ -496,11 +542,18 @@ func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.C
 	if certificateResource, ok := account.DomainsCertificate.getCertificateForDomain(domain); ok {
 		return certificateResource.tlsCert, nil
 	}
+
+	// Check if our domain is matching our ignoreFilters
+	if a.isDomainFiltered(domain) {
+		return nil, nil
+	}
+
+	log.Debugf("Will generate a new acme cert on demand for %v", domain)
 	certificate, err := a.getDomainsCertificates([]string{domain})
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Got certificate on demand for domain %s", domain)
+	log.Debugf("Obtained on demand ACME certificate for domain %s", domain)
 
 	transaction, object, err := a.store.Begin()
 	if err != nil {
@@ -520,7 +573,7 @@ func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.C
 // LoadCertificateForDomains loads certificates from ACME for given domains
 func (a *ACME) LoadCertificateForDomains(domains []string) {
 	a.jobs.In() <- func() {
-		log.Debugf("LoadCertificateForDomains %s...", domains)
+		log.Debugf("Load certificates for domains: %s", domains)
 		domains = fun.Map(types.CanonicalDomain, domains).([]string)
 		operation := func() error {
 			if a.client == nil {
@@ -549,16 +602,26 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 		} else {
 			domain = Domain{Main: domains[0]}
 		}
+
 		if _, exists := account.DomainsCertificate.exists(domain); exists {
-			// domain already exists
+			log.Debugf("ACME Certificate for domain %v exists.", domain)
 			return
 		}
+
+		// Check if our domains are matching our ignoreFilters
+		for _, d := range domains {
+			if a.isDomainFiltered(d) {
+				return
+			}
+		}
+
+		log.Debugf("Will generate a new acme cert for %v", domains)
 		certificate, err := a.getDomainsCertificates(domains)
 		if err != nil {
 			log.Errorf("Error getting ACME certificates %+v : %v", domains, err)
 			return
 		}
-		log.Debugf("Got certificate for domains %+v", domains)
+		log.Debugf("Obtained ACME certificate for domains %+v", domains)
 		transaction, object, err := a.store.Begin()
 
 		if err != nil {
@@ -585,7 +648,7 @@ func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
 	certificate, failures := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
 	if len(failures) > 0 {
 		log.Error(failures)
-		return nil, fmt.Errorf("Cannot obtain certificates %s+v", failures)
+		return nil, fmt.Errorf("Cannot obtain certificates %+v", failures)
 	}
 	log.Debugf("Loaded ACME certificates %s", domains)
 	return &Certificate{
@@ -604,4 +667,21 @@ func (a *ACME) runJobs() {
 			function()
 		}
 	})
+}
+
+func (a *ACME) isDomainFiltered(domain string) bool {
+	if len(a.IgnoreFilters) > 0 {
+		for _, filter := range a.IgnoreFilters {
+			regexp, err := regexp.Compile(filter)
+			if err != nil {
+				log.Warnf("The ACME ignore filter %v, is not a valid regular expression and will be skipped.", filter)
+				continue
+			}
+			if regexp.MatchString(domain) {
+				log.Infof("Acme request for domain %v will be ignored as per filter %v", domain, filter)
+				return true
+			}
+		}
+	}
+	return false
 }

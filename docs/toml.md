@@ -408,6 +408,14 @@ entryPoint = "https"
 #
 # OnHostRule = true
 
+# Ignore Filter
+# Define a list of regexp that will be used as an ignore filter for domains that will not be allowed to get a certificate through let's encrypt.
+#
+# Optional
+#
+# Example to ignore certificate generation for domains that are not like *.foo.domain.tld
+# IgnoreFilters = ['.*\.?[^f][^o][^o]\.domain\.tld']
+
 # CA server to use
 # Uncomment the line to run on the staging let's encrypt server
 # Leave comment to go to prod
@@ -421,6 +429,7 @@ entryPoint = "https"
 # All domains must have A/AAAA records pointing to Traefik
 # WARNING, Take note that Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 # Each domain & SANs will lead to a certificate request.
+# This will override the ignore filter (see above) if set.
 #
 # [[acme.domains]]
 #   main = "local1.com"

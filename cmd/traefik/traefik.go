@@ -107,6 +107,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
+	f.AddParser(reflect.TypeOf(acme.IgnoreFilters{}), &acme.IgnoreFilters{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
 	//add commands
