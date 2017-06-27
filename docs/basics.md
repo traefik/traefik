@@ -41,6 +41,10 @@ Here is an example of entrypoints definition:
   address = ":80"
     [entryPoints.http.redirect]
     entryPoint = "https"
+  
+  [entryPoints.httpnoredirect]
+  address = ":80"
+
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -49,10 +53,11 @@ Here is an example of entrypoints definition:
       keyFile = "tests/traefik.key"
 ```
 
-- Two entrypoints are defined `http` and `https`.
-- `http` listens on port `80` and `https` on port `443`.
+- Three entrypoints are defined `http`, `httpnoredirect` and `https`.
+- `http` and `httpnoredirect` both listen on port `80` and `https` on port `443`.
 - We enable SSL on `https` by giving a certificate and a key.
 - We also redirect all the traffic from entrypoint `http` to `https`.
+- Note that traffic on entrypoint `httpnoredirect` is not redirected to `https`.
 
 And here is another example with client certificate authentication:
 
