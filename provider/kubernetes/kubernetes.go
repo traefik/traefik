@@ -110,11 +110,11 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		}
 
 		notify := func(err error, time time.Duration) {
-			log.Errorf("Provider connection error %+v, retrying in %s", err, time)
+			log.Errorf("Provider connection error: %s; retrying in %s", err, time)
 		}
 		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 		if err != nil {
-			log.Errorf("Cannot connect to Provider server %+v", err)
+			log.Errorf("Cannot connect to Provider: %s", err)
 		}
 	})
 
@@ -290,18 +290,15 @@ func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, erro
 		return nil, nil
 	}
 	if strings.ToLower(authType) != "basic" {
-		return nil, fmt.Errorf("unsupported auth-type: %q", authType)
+		return nil, fmt.Errorf("unsupported auth-type on annotation ingress.kubernetes.io/auth-type: %q", authType)
 	}
 	authSecret := i.Annotations["ingress.kubernetes.io/auth-secret"]
 	if authSecret == "" {
-		return nil, errors.New("auth-secret annotation must be set")
+		return nil, errors.New("auth-secret annotation ingress.kubernetes.io/auth-secret must be set")
 	}
 	basicAuthCreds, err := loadAuthCredentials(i.Namespace, authSecret, k8sClient)
 	if err != nil {
-		return nil, err
-	}
-	if len(basicAuthCreds) == 0 {
-		return nil, errors.New("secret file without credentials")
+		return nil, fmt.Errorf("failed to load auth credentials: %s", err)
 	}
 	return basicAuthCreds, nil
 }
@@ -314,9 +311,9 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 	case !ok:
 		return nil, fmt.Errorf("secret %q/%q not found", namespace, secretName)
 	case secret == nil:
-		return nil, errors.New("secret data must not be nil")
+		return nil, fmt.Errorf("data for secret %q/%q must not be nil", namespace, secretName)
 	case len(secret.Data) != 1:
-		return nil, errors.New("secret must contain single element only")
+		return nil, fmt.Errorf("found %d elements for secret %q/%q, must be single element exactly", len(secret.Data), namespace, secretName)
 	default:
 	}
 	var firstSecret []byte
@@ -331,6 +328,10 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 			creds = append(creds, cred)
 		}
 	}
+	if len(creds) == 0 {
+		return nil, fmt.Errorf("secret %q/%q does not contain any credentials", namespace, secretName)
+	}
+
 	return creds, nil
 }
 
