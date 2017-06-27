@@ -133,7 +133,7 @@ If you prefer commercial support, please contact [containo.us](https://containo.
 - Vincent Demeester [@vdemeester](https://github.com/vdemeester)
 - Ed Robinson [@errm](https://github.com/errm)
 - Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
-- Manuel Laufenberg [@SantoDE](https://github.com/SantoDE)
+- Manuel Zapf [@SantoDE](https://github.com/SantoDE)
 - Timo Reimann [@timoreimann](https://github.com/timoreimann)
 - Ludovic Fernandez [@ldez](https://github.com/ldez)
 - Julien Salleyron [@juliens](https://github.com/juliens)
