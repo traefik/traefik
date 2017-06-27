@@ -137,6 +137,7 @@ If you prefer commercial support, please contact [containo.us](https://containo.
 - Timo Reimann [@timoreimann](https://github.com/timoreimann)
 - Ludovic Fernandez [@ldez](https://github.com/ldez)
 - Julien Salleyron [@juliens](https://github.com/juliens)
+- Nicolas Mengin [@nmengin](https://github.com/nmengin)
 
 ## Credits
 
