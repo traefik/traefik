@@ -153,15 +153,18 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			if p.Watch {
 				ctx, cancel := context.WithCancel(ctx)
 				if p.SwarmMode {
+					errChan := make(chan error)
 					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
 					ticker := time.NewTicker(SwarmDefaultWatchTime)
 					pool.Go(func(stop chan bool) {
+						defer close(errChan)
 						for {
 							select {
 							case <-ticker.C:
 								services, err := p.listServices(ctx, dockerClient)
 								if err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
+									errChan <- err
 									return
 								}
 								configuration := p.loadDockerConfig(services)
@@ -179,6 +182,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							}
 						}
 					})
+					if err, ok := <-errChan; ok {
+						return err
+					}
+					// channel closed
 
 				} else {
 					pool.Go(func(stop chan bool) {

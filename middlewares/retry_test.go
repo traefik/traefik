@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -41,7 +42,7 @@ func TestRetry(t *testing.T) {
 			t.Parallel()
 
 			var httpHandler http.Handler
-			httpHandler = &networkFailingHTTPHandler{failAtCalls: tc.failAtCalls}
+			httpHandler = &networkFailingHTTPHandler{failAtCalls: tc.failAtCalls, netErrorRecorder: &DefaultNetErrorRecorder{}}
 			httpHandler = NewRetry(tc.attempts, httpHandler, tc.listener)
 
 			recorder := httptest.NewRecorder()
@@ -62,10 +63,38 @@ func TestRetry(t *testing.T) {
 	}
 }
 
+func TestDefaultNetErrorRecorderSuccess(t *testing.T) {
+	boolNetErrorOccurred := false
+	recorder := DefaultNetErrorRecorder{}
+	recorder.Record(context.WithValue(context.Background(), defaultNetErrCtxKey, &boolNetErrorOccurred))
+	if !boolNetErrorOccurred {
+		t.Errorf("got %v after recording net error, wanted %v", boolNetErrorOccurred, true)
+	}
+}
+
+func TestDefaultNetErrorRecorderInvalidValueType(t *testing.T) {
+	stringNetErrorOccured := "nonsense"
+	recorder := DefaultNetErrorRecorder{}
+	recorder.Record(context.WithValue(context.Background(), defaultNetErrCtxKey, &stringNetErrorOccured))
+	if stringNetErrorOccured != "nonsense" {
+		t.Errorf("got %v after recording net error, wanted %v", stringNetErrorOccured, "nonsense")
+	}
+}
+
+func TestDefaultNetErrorRecorderNilValue(t *testing.T) {
+	nilNetErrorOccured := interface{}(nil)
+	recorder := DefaultNetErrorRecorder{}
+	recorder.Record(context.WithValue(context.Background(), defaultNetErrCtxKey, &nilNetErrorOccured))
+	if nilNetErrorOccured != interface{}(nil) {
+		t.Errorf("got %v after recording net error, wanted %v", nilNetErrorOccured, interface{}(nil))
+	}
+}
+
 // networkFailingHTTPHandler is an http.Handler implementation you can use to test retries.
 type networkFailingHTTPHandler struct {
-	failAtCalls []int
-	callNumber  int
+	netErrorRecorder NetErrorRecorder
+	failAtCalls      []int
+	callNumber       int
 }
 
 func (handler *networkFailingHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -73,6 +102,8 @@ func (handler *networkFailingHTTPHandler) ServeHTTP(w http.ResponseWriter, r *ht
 
 	for _, failAtCall := range handler.failAtCalls {
 		if handler.callNumber == failAtCall {
+			handler.netErrorRecorder.Record(r.Context())
+
 			w.WriteHeader(http.StatusBadGateway)
 			return
 		}

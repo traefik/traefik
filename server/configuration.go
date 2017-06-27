@@ -450,7 +450,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultRancher.Watch = true
 	defaultRancher.ExposedByDefault = true
 	defaultRancher.RefreshSeconds = 15
-	defaultRancher.EnableServiceHealthFilter = false
 
 	// default DynamoDB
 	var defaultDynamoDB dynamodb.Provider
@@ -484,9 +483,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		HealthCheck:   &HealthCheckConfig{},
 		AccessLog:     &defaultAccessLog,
 	}
-
-	//default Rancher
-	//@TODO: ADD
 
 	return &TraefikConfiguration{
 		GlobalConfiguration: defaultConfiguration,
