@@ -28,7 +28,7 @@ RUN mkdir -p /usr/local/bin \
 
 # Download docker
 RUN mkdir -p /usr/local/bin \
-    && curl -fL https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz \
+    && curl -fL https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}-ce.tgz \
     | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
 WORKDIR /go/src/github.com/containous/traefik
