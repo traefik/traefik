@@ -297,22 +297,22 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 }
 
 func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
-	if len(pa.Path) > 0 {
-		ruleType := i.Annotations[annotationFrontendRuleType]
-		if ruleType == "" {
-			ruleType = ruleTypePathPrefix
-		}
-
-		rule := ruleType + ":" + pa.Path
-
-		if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
-			rule = ruleTypeReplacePath + ":" + rewriteTarget
-		}
-
-		return rule
+	if len(pa.Path) == 0 {
+		return ""
 	}
 
-	return ""
+	ruleType := i.Annotations[annotationFrontendRuleType]
+	if ruleType == "" {
+		ruleType = ruleTypePathPrefix
+	}
+
+	rule := ruleType + ":" + pa.Path
+
+	if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
+		rule = ruleTypeReplacePath + ":" + rewriteTarget
+	}
+
+	return rule
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
