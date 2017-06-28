@@ -35,6 +35,9 @@
   entryPoints = [{{range getEntryPoints .}}
     "{{.}}",
   {{end}}]
+  basicAuth = [{{range getBasicAuth .}}
+    "{{.}}",
+  {{end}}]
     [frontends."frontend{{.ID | replace "/" "-"}}".routes."route-host{{.ID | replace "/" "-"}}"]
     rule = "{{getFrontendRule .}}"
 {{end}}

@@ -163,6 +163,7 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		"hasHealthCheckLabels":        p.hasHealthCheckLabels,
 		"getHealthCheckPath":          p.getHealthCheckPath,
 		"getHealthCheckInterval":      p.getHealthCheckInterval,
+		"getBasicAuth":                p.getBasicAuth,
 	}
 
 	applications, err := p.marathonClient.Applications(nil)
@@ -483,6 +484,14 @@ func (p *Provider) getHealthCheckInterval(application marathon.Application) stri
 		return label
 	}
 	return ""
+}
+
+func (p *Provider) getBasicAuth(application marathon.Application) []string {
+	if basicAuth, ok := p.getLabel(application, "traefik.frontend.auth.basic"); ok {
+		return strings.Split(basicAuth, ",")
+	}
+
+	return []string{}
 }
 
 func processPorts(application marathon.Application, task marathon.Task) (int, error) {
