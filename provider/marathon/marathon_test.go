@@ -98,6 +98,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				`frontend-test`: {
 					Backend:        "backend-test",
 					PassHostHeader: true,
+					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
 						`route-host-test`: {
@@ -151,6 +152,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				`frontend-testLoadBalancerAndCircuitBreaker.dot`: {
 					Backend:        "backend-testLoadBalancerAndCircuitBreaker.dot",
 					PassHostHeader: true,
+					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
 						`route-host-testLoadBalancerAndCircuitBreaker.dot`: {
@@ -209,6 +211,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				`frontend-testMaxConn`: {
 					Backend:        "backend-testMaxConn",
 					PassHostHeader: true,
+					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
 						`route-host-testMaxConn`: {
@@ -264,6 +267,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				`frontend-testMaxConnOnlySpecifyAmount`: {
 					Backend:        "backend-testMaxConnOnlySpecifyAmount",
 					PassHostHeader: true,
+					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
 						`route-host-testMaxConnOnlySpecifyAmount`: {
@@ -316,6 +320,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				`frontend-testMaxConnOnlyExtractorFunc`: {
 					Backend:        "backend-testMaxConnOnlyExtractorFunc",
 					PassHostHeader: true,
+					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
 						`route-host-testMaxConnOnlyExtractorFunc`: {
@@ -369,6 +374,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 				"frontend-testHealthCheck": {
 					Backend:        "backend-testHealthCheck",
 					PassHostHeader: true,
+					BasicAuth:      []string{},
 					EntryPoints:    []string{},
 					Routes: map[string]types.Route{
 						"route-host-testHealthCheck": {
@@ -1368,7 +1374,7 @@ func TestMarathonGetEntryPoints(t *testing.T) {
 	for _, a := range applications {
 		actual := provider.getEntryPoints(a.application)
 
-		if !reflect.DeepEqual(actual, a.expected) {
+		if !reflect.DeepEqual(a.expected, actual) {
 			t.Fatalf("expected %#v, got %#v", a.expected, actual)
 		}
 	}
@@ -1796,6 +1802,44 @@ func TestParseIndex(t *testing.T) {
 
 			if test.shouldSucceed && parsed != test.parsed {
 				t.Errorf("got parsed index %d, want %d", parsed, test.parsed)
+			}
+		})
+	}
+}
+
+func TestMarathonGetBasicAuth(t *testing.T) {
+	provider := &Provider{}
+
+	cases := []struct {
+		desc        string
+		application marathon.Application
+		expected    []string
+	}{
+		{
+			desc: "basic auth label is empty",
+			application: marathon.Application{
+				Labels: &map[string]string{}},
+			expected: []string{},
+		},
+		{
+			desc: "basic auth label is set with user:password",
+			application: marathon.Application{
+				Labels: &map[string]string{
+					"traefik.frontend.auth.basic": "user:password",
+				},
+			},
+			expected: []string{"user:password"},
+		},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run(c.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := provider.getBasicAuth(c.application)
+			if !reflect.DeepEqual(c.expected, actual) {
+				t.Errorf("expected %q, got %q", c.expected, actual)
 			}
 		})
 	}
