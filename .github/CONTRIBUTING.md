@@ -55,16 +55,16 @@ traefik*
     ## more go env's will be listed 
     ```
 
-
-
 ###### Build Træfik
-Once your environment is set up and your code cloned you can build Træfik. You need get `go-bindata` once to be able to use `go generate` command as part of the build.  The steps to build are:
+Once your environment is set up and the Træfik repository cloned you can build Træfik. You need get `go-bindata` once to be able to use `go generate` command as part of the build.  The steps to build are:
 
 ```bash
 $ cd ~/go/src/github.com/containous/traefik
 
 # Get go-bindata. Please note, the ellipses are required
 $ go get github.com/jteeuwen/go-bindata/... 
+
+# Start build
 $ go generate
 
 # Standard go build
