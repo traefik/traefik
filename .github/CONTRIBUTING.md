@@ -72,6 +72,8 @@ $ go build ./cmd/traefik
 # run other commands like tests
 ```
 
+You will find the Træfik executable in the ```~/go/src/github.com/containous/traefik``` folder as ```traefik```. 
+
 #### Setting up `glide` and `glide-vc` for dependency management
 
 - Glide is not required for building; however, it is necessary to modify dependencies (i.e., add, update, or remove third-party packages)
