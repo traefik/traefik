@@ -159,7 +159,9 @@ func (f *Forwarder) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // serveHTTP forwards HTTP traffic using the configured transport
 func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx *handlerContext) {
 	start := time.Now().UTC()
+
 	response, err := f.roundTripper.RoundTrip(f.copyRequest(req, req.URL))
+
 	if err != nil {
 		ctx.log.Errorf("Error forwarding to %v, err: %v", req.URL, err)
 		ctx.errHandler.ServeHTTP(w, req, err)
@@ -169,6 +171,16 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx 
 	utils.CopyHeaders(w.Header(), response.Header)
 	// Remove hop-by-hop headers.
 	utils.RemoveHeaders(w.Header(), HopHeaders...)
+
+	announcedTrailerKeyCount := len(response.Trailer)
+	if announcedTrailerKeyCount > 0 {
+		trailerKeys := make([]string, 0, announcedTrailerKeyCount)
+		for k := range response.Trailer {
+			trailerKeys = append(trailerKeys, k)
+		}
+		w.Header().Add("Trailer", strings.Join(trailerKeys, ", "))
+	}
+
 	w.WriteHeader(response.StatusCode)
 
 	stream := f.streamResponse
@@ -179,6 +191,20 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx 
 		}
 	}
 	written, err := io.Copy(newResponseFlusher(w, stream), response.Body)
+	if err != nil {
+		ctx.log.Errorf("Error copying upstream response body: %v", err)
+		ctx.errHandler.ServeHTTP(w, req, err)
+		return
+	}
+
+	defer response.Body.Close()
+
+	forceSetTrailers := len(response.Trailer) != announcedTrailerKeyCount
+	shallowCopyTrailers(w.Header(), response.Trailer, forceSetTrailers)
+
+	if written != 0 {
+		w.Header().Set(ContentLength, strconv.FormatInt(written, 10))
+	}
 
 	if req.TLS != nil {
 		ctx.log.Infof("Round trip: %v, code: %v, duration: %v tls:version: %x, tls:resume:%t, tls:csuite:%x, tls:server:%v",
@@ -192,17 +218,6 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx 
 			req.URL, response.StatusCode, time.Now().UTC().Sub(start))
 	}
 
-	defer response.Body.Close()
-
-	if err != nil {
-		ctx.log.Errorf("Error copying upstream response Body: %v", err)
-		ctx.errHandler.ServeHTTP(w, req, err)
-		return
-	}
-
-	if written != 0 {
-		w.Header().Set(ContentLength, strconv.FormatInt(written, 10))
-	}
 }
 
 // copyRequest makes a copy of the specified request to be sent using the configured
@@ -363,4 +378,13 @@ func isWebsocketRequest(req *http.Request) bool {
 		return false
 	}
 	return containsHeader(Connection, "upgrade") && containsHeader(Upgrade, "websocket")
+}
+
+func shallowCopyTrailers(dstHeader, srcTrailer http.Header, forceSetTrailers bool) {
+	for k, vv := range srcTrailer {
+		if forceSetTrailers {
+			k = http.TrailerPrefix + k
+		}
+		dstHeader[k] = vv
+	}
 }
