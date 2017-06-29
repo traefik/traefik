@@ -34,45 +34,46 @@ traefik*
 - It is recommended you clone Træfik into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
 - Set your `GOPATH` and `PATH` variable to be set to `~/go` via:
 
-    ```bash
-    $ export GOPATH=~/go
-    $ export PATH=$PATH:$GOPATH/bin
-    ```
+```bash
+export GOPATH=~/go
+export PATH=$PATH:$GOPATH/bin
+```
 
-    > Note: You will want to add those 2 export lines to your `.bashrc` or `.bash_profile`
+> Note: You will want to add those 2 export lines to your `.bashrc` or `.bash_profile`
 
 - Verify your environment is setup properly by running `$ go env`.  Depending on your OS and environment you should see output similar to:
 
-    ```bash
-    GOARCH="amd64"
-    GOBIN=""
-    GOEXE=""
-    GOHOSTARCH="amd64"
-    GOHOSTOS="linux"
-    GOOS="linux"
-    GOPATH="/home/<yourusername>/go"
-    GORACE=""
-    ## more go env's will be listed 
-    ```
+```bash
+GOARCH="amd64"
+GOBIN=""
+GOEXE=""
+GOHOSTARCH="amd64"
+GOHOSTOS="linux"
+GOOS="linux"
+GOPATH="/home/<yourusername>/go"
+GORACE=""
+## more go env's will be listed 
+```
 
 ###### Build Træfik
+
 Once your environment is set up and the Træfik repository cloned you can build Træfik. You need get `go-bindata` once to be able to use `go generate` command as part of the build.  The steps to build are:
 
 ```bash
-$ cd ~/go/src/github.com/containous/traefik
+cd ~/go/src/github.com/containous/traefik
 
 # Get go-bindata. Please note, the ellipses are required
-$ go get github.com/jteeuwen/go-bindata/... 
+go get github.com/jteeuwen/go-bindata/... 
 
 # Start build
-$ go generate
+go generate
 
 # Standard go build
-$ go build ./cmd/traefik
+go build ./cmd/traefik
 # run other commands like tests
 ```
 
-You will find the Træfik executable in the ```~/go/src/github.com/containous/traefik``` folder as ```traefik```. 
+You will find the Træfik executable in the `~/go/src/github.com/containous/traefik` folder as `traefik`. 
 
 #### Setting up `glide` and `glide-vc` for dependency management
 
