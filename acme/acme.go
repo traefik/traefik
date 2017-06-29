@@ -320,7 +320,6 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 		for range ticker.C {
 			a.renewCertificates()
 		}
-
 	})
 	return nil
 }
@@ -328,14 +327,11 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := types.CanonicalDomain(clientHello.ServerName)
 	account := a.store.Get().(*Account)
-	//use regex to test for wildcard certs that might have been added into TLSConfig
-	for k := range a.TLSConfig.NameToCertificate {
-		selector := "^" + strings.Replace(k, "*.", "[^\\.]*\\.?", -1) + "$"
-		match, _ := regexp.MatchString(selector, domain)
-		if match {
-			return a.TLSConfig.NameToCertificate[k], nil
-		}
+
+	if providedCertificate := a.getProvidedCertificate([]string{domain}); providedCertificate != nil {
+		return providedCertificate, nil
 	}
+
 	if challengeCert, ok := a.challengeProvider.getCertificate(domain); ok {
 		log.Debugf("ACME got challenge %s", domain)
 		return challengeCert, nil
@@ -520,11 +516,23 @@ func (a *ACME) loadCertificateOnDemand(clientHello *tls.ClientHelloInfo) (*tls.C
 // LoadCertificateForDomains loads certificates from ACME for given domains
 func (a *ACME) LoadCertificateForDomains(domains []string) {
 	a.jobs.In() <- func() {
-		log.Debugf("LoadCertificateForDomains %s...", domains)
+		log.Debugf("LoadCertificateForDomains %v...", domains)
+
+		if len(domains) == 0 {
+			// no domain
+			return
+		}
+
 		domains = fun.Map(types.CanonicalDomain, domains).([]string)
+
+		// Check provided certificates
+		if a.getProvidedCertificate(domains) != nil {
+			return
+		}
+
 		operation := func() error {
 			if a.client == nil {
-				return fmt.Errorf("ACME client still not built")
+				return errors.New("ACME client still not built")
 			}
 			return nil
 		}
@@ -540,11 +548,7 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 		}
 		account := a.store.Get().(*Account)
 		var domain Domain
-		if len(domains) == 0 {
-			// no domain
-			return
-
-		} else if len(domains) > 1 {
+		if len(domains) > 1 {
 			domain = Domain{Main: domains[0], SANs: domains[1:]}
 		} else {
 			domain = Domain{Main: domains[0]}
@@ -576,6 +580,29 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 			return
 		}
 	}
+}
+
+// Get provided certificate which check a domains list (Main and SANs)
+func (a *ACME) getProvidedCertificate(domains []string) *tls.Certificate {
+	// Use regex to test for provided certs that might have been added into TLSConfig
+	providedCertMatch := false
+	log.Debugf("Look for provided certificate to validate %s...", domains)
+	for k := range a.TLSConfig.NameToCertificate {
+		selector := "^" + strings.Replace(k, "*.", "[^\\.]*\\.?", -1) + "$"
+		for _, domainToCheck := range domains {
+			providedCertMatch, _ = regexp.MatchString(selector, domainToCheck)
+			if !providedCertMatch {
+				break
+			}
+		}
+		if providedCertMatch {
+			log.Debugf("Got provided certificate for domains %s", domains)
+			return a.TLSConfig.NameToCertificate[k]
+
+		}
+	}
+	log.Debugf("No provided certificate found for domains %s, get ACME certificate.", domains)
+	return nil
 }
 
 func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
