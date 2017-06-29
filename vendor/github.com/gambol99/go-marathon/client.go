@@ -150,8 +150,6 @@ type Marathon interface {
 }
 
 var (
-	// ErrInvalidResponse is thrown when marathon responds with invalid or error response
-	ErrInvalidResponse = errors.New("invalid response from Marathon")
 	// ErrMarathonDown is thrown when all the marathon endpoints are down
 	ErrMarathonDown = errors.New("all the Marathon hosts are presently down")
 	// ErrTimeoutError is thrown when the operation has timed out
@@ -303,8 +301,7 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 		if response.StatusCode >= 200 && response.StatusCode <= 299 {
 			if result != nil {
 				if err := json.Unmarshal(respBody, result); err != nil {
-					r.debugLog.Printf("apiCall(): failed to unmarshall the response from marathon, error: %s\n", err)
-					return ErrInvalidResponse
+					return fmt.Errorf("failed to unmarshal response from Marathon: %s", err)
 				}
 			}
 			return nil

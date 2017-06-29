@@ -16,10 +16,52 @@ limitations under the License.
 
 package marathon
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
+const UnreachableStrategyAbsenceReasonDisabled = "disabled"
+
 // UnreachableStrategy is the unreachable strategy applied to an application.
 type UnreachableStrategy struct {
+	EnabledUnreachableStrategy
+	AbsenceReason string
+}
+
+// EnabledUnreachableStrategy covers parameters pertaining to present unreachable strategies.
+type EnabledUnreachableStrategy struct {
 	InactiveAfterSeconds *float64 `json:"inactiveAfterSeconds,omitempty"`
 	ExpungeAfterSeconds  *float64 `json:"expungeAfterSeconds,omitempty"`
+}
+
+type unreachableStrategy UnreachableStrategy
+
+// UnmarshalJSON unmarshals the given JSON into an UnreachableStrategy. It
+// populates parameters for present strategies, and otherwise only sets the
+// absence reason.
+func (us *UnreachableStrategy) UnmarshalJSON(b []byte) error {
+	var u unreachableStrategy
+	var errEnabledUS, errNonEnabledUS error
+	if errEnabledUS = json.Unmarshal(b, &u); errEnabledUS == nil {
+		*us = UnreachableStrategy(u)
+		return nil
+	}
+
+	if errNonEnabledUS = json.Unmarshal(b, &us.AbsenceReason); errNonEnabledUS == nil {
+		return nil
+	}
+
+	return fmt.Errorf("failed to unmarshal unreachable strategy: unmarshaling into enabled returned error '%s'; unmarshaling into non-enabled returned error '%s'", errEnabledUS, errNonEnabledUS)
+}
+
+// MarshalJSON marshals the unreachable strategy.
+func (us *UnreachableStrategy) MarshalJSON() ([]byte, error) {
+	if us.AbsenceReason == "" {
+		return json.Marshal(us.EnabledUnreachableStrategy)
+	}
+
+	return json.Marshal(us.AbsenceReason)
 }
 
 // SetInactiveAfterSeconds sets the period after which instance will be marked as inactive.

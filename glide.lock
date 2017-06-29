@@ -1,5 +1,5 @@
-hash: 068db16642eb0249ce973711f4cf44206cc201214b1990e13f89e1ac3c402635
-updated: 2017-06-27T00:25:19.890844996+02:00
+hash: 4e2a6a4fe84b2843ff946fe56deae17f8c7666e2e6567d8a75f4b0bdd7cb0280
+updated: 2017-06-29T16:47:14.848940186+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -195,7 +195,7 @@ imports:
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/gambol99/go-marathon
-  version: 1b9c2582c26b632fb1fb295776d7ce40b68c36f2
+  version: dd6cbd4c2d71294a19fb89158f2a00d427f174ab
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
@@ -409,7 +409,7 @@ imports:
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
-  version: ad5bdb606fa9c64db267f0e43d63834908bdb05e
+  version: 7da864c1d53bd58165435bb78bbf8c01f01c8f4a
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:

@@ -9,7 +9,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
-  version: ad5bdb606fa9c64db267f0e43d63834908bdb05e
+  version: 7da864c1d53bd58165435bb78bbf8c01f01c8f4a
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -96,7 +96,7 @@ import:
 - package: k8s.io/client-go
   version: v2.0.0
 - package: github.com/gambol99/go-marathon
-  version: 1b9c2582c26b632fb1fb295776d7ce40b68c36f2
+  version: dd6cbd4c2d71294a19fb89158f2a00d427f174ab
 - package: github.com/ArthurHlt/go-eureka-client
   subpackages:
   - eureka
@@ -163,10 +163,10 @@ import:
   version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
 - package: golang.org/x/oauth2
   version: 7fdf09982454086d5570c7db3e11f360194830ca
-- package: github.com/rancher/go-rancher-metadata
-  version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
   subpackages:
   - google
+- package: github.com/rancher/go-rancher-metadata
+  version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
 - package: github.com/googleapis/gax-go
   version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
 - package: google.golang.org/grpc
