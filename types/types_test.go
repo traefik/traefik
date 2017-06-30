@@ -78,7 +78,7 @@ func TestServer_UnmarshalTOML(t *testing.T) {
 			err := server.UnmarshalTOML(test.data)
 
 			if err != nil && err.Error() != test.expectedErrorMsg {
-				t.Fatalf("UnmarshalTOML(%#v): unexepected error message, got %q, want %s.", test.data, test.expectedErrorMsg, err)
+				t.Fatalf("UnmarshalTOML(%#v): unexpected error or error message: got error %s, want error message %s.", test.data, err, test.expectedErrorMsg)
 			}
 
 			if server != test.expectedServer {
