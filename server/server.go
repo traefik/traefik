@@ -772,6 +772,22 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
 					}
+
+					if len(frontend.Errors) > 0 {
+						for _, errorPage := range frontend.Errors {
+							if configuration.Backends[errorPage.Backend] != nil && configuration.Backends[errorPage.Backend].Servers["error"].URL != "" {
+								errorPageHandler, err := middlewares.NewErrorPagesHandler(errorPage, configuration.Backends[errorPage.Backend].Servers["error"].URL)
+								if err != nil {
+									log.Errorf("Error creating custom error page middleware, %v", err)
+								} else {
+									negroni.Use(errorPageHandler)
+								}
+							} else {
+								log.Errorf("Error Page is configured for Frontend %s, but either Backend %s is not set or Backend URL is missing", frontendName, errorPage.Backend)
+							}
+						}
+					}
+
 					maxConns := configuration.Backends[frontend.Backend].MaxConn
 					if maxConns != nil && maxConns.Amount != 0 {
 						extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
