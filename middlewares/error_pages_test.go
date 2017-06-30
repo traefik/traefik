@@ -104,3 +104,37 @@ func TestErrorPageQuery(t *testing.T) {
 	assert.NotContains(t, recorder.Body.String(), "oops", "Should not return the oops page")
 
 }
+
+func TestErrorPageSingleCode(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.RequestURI() == "/"+strconv.Itoa(503) {
+			fmt.Fprintln(w, "503 Test Server")
+		} else {
+			fmt.Fprintln(w, "Failed")
+		}
+
+	}))
+	defer ts.Close()
+
+	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503"}}
+	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	assert.Equal(t, nil, err, "Should be no error")
+	assert.Equal(t, testHandler.BackendURL, ts.URL+"/{status}", "Should be equal")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(503)
+		fmt.Fprintln(w, "oops")
+	})
+	recorder := httptest.NewRecorder()
+	req, err := http.NewRequest("GET", ts.URL+"/test", nil)
+	n := negroni.New()
+	n.Use(testHandler)
+	n.UseHandler(handler)
+
+	n.ServeHTTP(recorder, req)
+
+	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code, "HTTP status Service Unavailable")
+	assert.Contains(t, recorder.Body.String(), "503 Test Server")
+	assert.NotContains(t, recorder.Body.String(), "oops", "Should not return the oops page")
+
+}

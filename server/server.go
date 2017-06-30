@@ -782,6 +782,8 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 								} else {
 									negroni.Use(errorPageHandler)
 								}
+							} else {
+								log.Errorf("Error Page is configured for Frontend %s, but either Backend %s is not set or Backend URL is missing", frontendName, errorPage.Backend)
 							}
 						}
 					}

@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -31,6 +30,10 @@ func NewErrorPagesHandler(errorPage types.ErrorPage, backendURL string) (*ErrorP
 	var blocks [][2]int
 	for _, block := range errorPage.Status {
 		codes := strings.Split(block, "-")
+		//if only a single HTTP code was configured, assume the best and create the correct configuration on the user's behalf
+		if len(codes) == 1 {
+			codes = append(codes, codes[0])
+		}
 		lowCode, err := strconv.Atoi(codes[0])
 		if err != nil {
 			return nil, err
@@ -58,8 +61,7 @@ func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request,
 	for _, block := range ep.HTTPCodeRanges {
 		if recorder.Code >= block[0] && recorder.Code <= block[1] {
 			log.Errorf("Caught HTTP Status Code %d, returning error page", recorder.Code)
-			re := regexp.MustCompile("{status}")
-			finalURL := re.ReplaceAllString(ep.BackendURL, strconv.Itoa(recorder.Code))
+			finalURL := strings.Replace(ep.BackendURL, "{status}", strconv.Itoa(recorder.Code), -1)
 			if newReq, err := http.NewRequest(http.MethodGet, finalURL, nil); err != nil {
 				w.Write([]byte(http.StatusText(recorder.Code)))
 			} else {
