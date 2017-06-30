@@ -1,5 +1,5 @@
 hash: 4e2a6a4fe84b2843ff946fe56deae17f8c7666e2e6567d8a75f4b0bdd7cb0280
-updated: 2017-06-29T16:47:14.848940186+02:00
+updated: 2017-06-30T11:03:09.025639582+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -172,7 +172,7 @@ imports:
   - store/etcd
   - store/zookeeper
 - name: github.com/donovanhide/eventsource
-  version: 441a03aa37b3329bbb79f43de81914ea18724718
+  version: b8f31a59085e69dd2678cf51840db2ac625cb741
 - name: github.com/eapache/channels
   version: 47238d5aae8c0fefd518ef2bee46290909cf8263
 - name: github.com/eapache/queue
