@@ -3,8 +3,6 @@ set -e
 
 export REPO='containous/traefik'
 
-export DOCKER_VERSION=1.12.6
-
 if VERSION=$(git describe --exact-match --abbrev=0 --tags);
 then
   export VERSION
