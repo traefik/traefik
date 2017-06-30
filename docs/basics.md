@@ -420,7 +420,7 @@ Custom error pages can be returned, in lieu of the default, according to fronten
     url = "http://2.3.4.5"
 ```
 
-In the above example, the error page rendered was based on the status code.  Instead, the query parameter can also be set to some generic error page like so:  ```query = "/500s.html"```
+In the above example, the error page rendered was based on the status code.  Instead, the query parameter can also be set to some generic error page like so:  `query = "/500s.html"`
 
 Now the 500s.html error page is returned for the configured code range.  The configured status code ranges are inclusive; that is, in the above example, the 500s.html page will be returned for status codes 500 through, and including, 599.
 
