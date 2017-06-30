@@ -65,11 +65,11 @@ func (s *Server) UnmarshalTOML(data interface{}) error {
 	}
 
 	if w, ok := d["weight"]; ok {
-		v, ok := w.(int64)
+		v, ok := w.(int)
 		if !ok {
-			return errors.New("toml: server weight must be int64")
+			return errors.New("toml: server weight must be int")
 		}
-		s.Weight = int(v)
+		s.Weight = v
 	} else {
 		s.Weight = 1
 	}
