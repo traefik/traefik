@@ -35,7 +35,6 @@ func NewDecoder(r io.Reader) *Decoder {
 // Any error occuring mid-event is considered non-graceful and will
 // show up as some other error (most likely io.ErrUnexpectedEOF).
 func (dec *Decoder) Decode() (Event, error) {
-
 	// peek ahead before we start a new event so we can return EOFs
 	_, err := dec.Peek(1)
 	if err == io.ErrUnexpectedEOF {
@@ -45,13 +44,18 @@ func (dec *Decoder) Decode() (Event, error) {
 		return nil, err
 	}
 	pub := new(publication)
+	inDecoding := false
 	for {
 		line, err := dec.ReadString('\n')
 		if err != nil {
 			return nil, err
 		}
-		if line == "\n" {
+		if line == "\n" && inDecoding {
+			// the empty line signals the end of an event
 			break
+		} else if line == "\n" && !inDecoding {
+			// only a newline was sent, so we don't want to publish an empty event but try to read again
+			continue
 		}
 		line = strings.TrimSuffix(line, "\n")
 		if strings.HasPrefix(line, ":") {
@@ -62,6 +66,7 @@ func (dec *Decoder) Decode() (Event, error) {
 		if len(sections) == 2 {
 			value = strings.TrimPrefix(sections[1], " ")
 		}
+		inDecoding = true
 		switch field {
 		case "event":
 			pub.event = value
