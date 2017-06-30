@@ -511,6 +511,7 @@ List of Træfik available commands with description :             
 
 - `version` : Print version 
 - `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
+- `bug`: The easiest way to submit a pre-filled issue.
 
 Each command may have related flags.
 All those related flags will be displayed with :
@@ -524,3 +525,13 @@ Note that each command is described at the beginning of the help section:
 ```bash
 $ traefik --help
 ```
+
+## Command: bug
+
+Here is the easiest way to submit a pre-filled issue on [Træfik GitHub](https://github.com/containous/traefik).
+
+```bash
+$ traefik bug
+```
+
+See https://www.youtube.com/watch?v=Lyz62L8m93I.
