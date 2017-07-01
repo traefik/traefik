@@ -9,13 +9,12 @@ For end-user related support questions, refer to one of the following:
 
 -->
 
+
 ### Do you want to request a *feature* or report a *bug*?
 
-(If you intend to ask a support question: **DO NOT FILE AN ISSUE**.
-Use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik)
-or [Slack](https://traefik.herokuapp.com) instead.)
-
-
+<!--
+If you intend to ask a support question: DO NOT FILE AN ISSUE.
+-->
 
 ### What did you do?
 
@@ -42,6 +41,12 @@ HOW TO WRITE A GOOD ISSUE?
 
 
 ### Output of `traefik version`: (_What version of Traefik are you using?_)
+
+<!--
+For the Traefik Docker image:
+    docker run [IMAGE] version
+    ex: docker run traefik version
+-->
 
 ```
 (paste your output here)

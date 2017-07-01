@@ -83,7 +83,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	systemRouter.Methods("GET").Path(provider.Path + "health").HandlerFunc(provider.getHealthHandler)
 
 	// ping route
-	systemRouter.Methods("GET").Path(provider.Path + "ping").HandlerFunc(provider.getPingHandler)
+	systemRouter.Methods("GET", "HEAD").Path(provider.Path + "ping").HandlerFunc(provider.getPingHandler)
 	// API routes
 	systemRouter.Methods("GET").Path(provider.Path + "api").HandlerFunc(provider.getConfigHandler)
 	systemRouter.Methods("GET").Path(provider.Path + "api/version").HandlerFunc(provider.getVersionHandler)

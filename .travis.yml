@@ -10,7 +10,6 @@ env:
     - VERSION: $TRAVIS_TAG
     - CODENAME: raclette
     - N_MAKE_JOBS: 2
-    - DOCKER_VERSION: 1.12.6
 
 script:
 - echo "Skipping tests... (Tests are executed on SemaphoreCI)"
@@ -20,7 +19,7 @@ before_deploy:
     if ! [ "$BEFORE_DEPLOY_RUN" ]; then
       export BEFORE_DEPLOY_RUN=1;
       sudo -E apt-get -yq update;
-      sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-engine=${DOCKER_VERSION}*;
+      sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install docker-ce=${DOCKER_VERSION}*;
       docker version;
       pip install --user -r requirements.txt;
       make -j${N_MAKE_JOBS} crossbinary-parallel;

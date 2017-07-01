@@ -42,9 +42,12 @@ func (m *MetricsWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next
 	start := time.Now()
 	prw := &responseRecorder{rw, http.StatusOK}
 	next(prw, r)
-	labels := []string{"code", strconv.Itoa(prw.statusCode), "method", r.Method}
-	m.Impl.getReqsCounter().With(labels...).Add(1)
-	m.Impl.getReqDurationHistogram().Observe(float64(time.Since(start).Seconds()))
+
+	reqLabels := []string{"code", strconv.Itoa(prw.statusCode), "method", r.Method}
+	m.Impl.getReqsCounter().With(reqLabels...).Add(1)
+
+	reqDurationLabels := []string{"code", strconv.Itoa(prw.statusCode)}
+	m.Impl.getReqDurationHistogram().With(reqDurationLabels...).Observe(float64(time.Since(start).Seconds()))
 }
 
 // MetricsRetryListener is an implementation of the RetryListener interface to

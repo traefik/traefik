@@ -95,6 +95,13 @@
 #
 # InsecureSkipVerify = true
 
+# Register Certificates in the RootCA. This certificates will be use for backends calls.
+# Note: You can use file path or cert content directly
+# Optional
+# Default: []
+#
+# RootCAs = [ "/mycert.cert" ]
+
 # Entrypoints to be used by frontends that do not specify any entrypoint.
 # Each frontend can specify its own entrypoints.
 #
@@ -154,10 +161,15 @@ Supported filters:
 
 ## Access log definition
 
-The standard access log uses the textual Common Log Format (CLF), extended with additional fields.
-Alternatively logs can be written in JSON. 
-Using the default CLF option is simple, e.g.
+Access logs are written when `[accessLog]` is defined. 
+By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
 
+To enable access logs using the default settings just add the `[accessLog]` entry.
+```toml
+[accessLog]
+```
+
+To write the logs into a logfile specify the `filePath`.
 ```toml
 [accessLog]
   filePath = "/path/to/access.log"
@@ -440,7 +452,7 @@ entryPoint = "https"
 
 ## File backend
 
-Like any other reverse proxy, Træfik can be configured with a file. You have two choices:
+Like any other reverse proxy, Træfik can be configured with a file. You have three choices:
 
 - simply add your configuration at the end of the global configuration file `traefik.toml`:
 
@@ -581,12 +593,20 @@ filename = "rules.toml"
     rule = "Path:/test"
 ```
 
+- or you could have multiple .toml files in a directory:
+ 
+```toml
+[file]
+directory = "/path/to/config/"
+```
+
 If you want Træfik to watch file changes automatically, just add:
 
 ```toml
 [file]
 watch = true
 ```
+
 
 ## API backend
 
@@ -644,7 +664,7 @@ address = ":8080"
 ![Web UI Providers](img/web.frontend.png)
 ![Web UI Health](img/traefik-health.png)
 
-- `/ping`: `GET` simple endpoint to check for Træfik process liveness.
+- `/ping`: A simple endpoint to check for Træfik process liveness. Supports HTTP `GET` and `HEAD` requests.
 
 ```shell
 $ curl -sv "http://localhost:8080/ping"
@@ -1320,6 +1340,15 @@ domain = "consul.localhost"
 # Optional
 #
 prefix = "traefik"
+
+# Default frontEnd Rule for Consul services
+# The format is a Go Template with ".ServiceName", ".Domain" and ".Attributes" available
+# "getTag(name, tags, defaultValue)", "hasTag(name, tags)" and "getAttribute(name, tags, defaultValue)" functions are available
+# "getAttribute(...)" function uses prefixed tag names based on "prefix" value
+#
+# Optional
+#
+frontEndRule = "Host:{{.ServiceName}}.{{Domain}}"
 ```
 
 This backend will create routes matching on hostname based on the service name
@@ -1334,7 +1363,7 @@ Additional settings can be defined using Consul Catalog tags:
 - `traefik.backend.loadbalancer=drr`: override the default load balancing mode
 - `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
 - `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
+- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{{.ServiceName}}.{{.Domain}}`).
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
@@ -1667,33 +1696,68 @@ RefreshSeconds = 15
 #
 ExposedByDefault = false
 
-# Filter services with unhealthy states and health states
+# Filter services with unhealthy states and inactive states
 #
 # Optional
 # Default: false
 #
-EnableServiceHealthFilter = false
-
-# Endpoint to use when connecting to Rancher
-#
-# Required
-# Endpoint = "http://rancherserver.example.com/v1"
-
-# AccessKey to use when connecting to Rancher
-#
-# Required
-# AccessKey = "XXXXXXXXXXXXXXXXXXXX"
-
-# SecretKey to use when connecting to Rancher
-#
-# Required
-# SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-
+EnableServiceHealthFilter = true
 ```
 
-As traefik needs access to the rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters. 
+```toml
+# Enable Rancher metadata service configuration backend instead of the API
+# configuration backend
+#
+# Optional
+# Default: false
+#
+[rancher.metadata]
 
-To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`. This can be found within the API Key advanced options.
+# Poll the Rancher metadata service for changes every `rancher.RefreshSeconds`
+# NOTE: this is less accurate than the default long polling technique which
+# will provide near instantaneous updates to Traefik
+#
+# Optional
+# Default: false
+#
+IntervalPoll = true
+
+# Prefix used for accessing the Rancher metadata service
+#
+# Optional
+# Default: "/latest"
+#
+Prefix = "/2016-07-29"
+```
+
+```toml
+# Enable Rancher API configuration backend
+#
+# Optional
+# Default: true
+#
+[rancher.api]
+
+# Endpoint to use when connecting to the Rancher API
+#
+# Required
+Endpoint = "http://rancherserver.example.com/v1"
+
+# AccessKey to use when connecting to the Rancher API
+#
+# Required
+AccessKey = "XXXXXXXXXXXXXXXXXXXX"
+
+# SecretKey to use when connecting to the Rancher API
+#
+# Required
+SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+If Traefik needs access to the Rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters. 
+
+To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`.
+This can be found within the API Key advanced options.
 
 Labels can be used on task containers to override default behaviour:
 

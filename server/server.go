@@ -595,6 +595,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	redirectHandlers := make(map[string]negroni.Handler)
 	backends := map[string]http.Handler{}
 	backendsHealthcheck := map[string]*healthcheck.BackendHealthCheck{}
+	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
@@ -669,7 +670,12 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					// passing nil will use the roundtripper http.DefaultTransport
 					rt := clientTLSRoundTripper(tlsConfig)
 
-					fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader), forward.RoundTripper(rt))
+					fwd, err := forward.New(
+						forward.Logger(oxyLogger),
+						forward.PassHostHeader(frontend.PassHostHeader),
+						forward.RoundTripper(rt),
+						forward.ErrorHandler(errorHandler),
+					)
 					if err != nil {
 						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
@@ -766,6 +772,22 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
 					}
+
+					if len(frontend.Errors) > 0 {
+						for _, errorPage := range frontend.Errors {
+							if configuration.Backends[errorPage.Backend] != nil && configuration.Backends[errorPage.Backend].Servers["error"].URL != "" {
+								errorPageHandler, err := middlewares.NewErrorPagesHandler(errorPage, configuration.Backends[errorPage.Backend].Servers["error"].URL)
+								if err != nil {
+									log.Errorf("Error creating custom error page middleware, %v", err)
+								} else {
+									negroni.Use(errorPageHandler)
+								}
+							} else {
+								log.Errorf("Error Page is configured for Frontend %s, but either Backend %s is not set or Backend URL is missing", frontendName, errorPage.Backend)
+							}
+						}
+					}
+
 					maxConns := configuration.Backends[frontend.Backend].MaxConn
 					if maxConns != nil && maxConns.Amount != 0 {
 						extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
@@ -817,6 +839,17 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						} else {
 							negroni.Use(authMiddleware)
 						}
+					}
+
+					if frontend.Headers.HasCustomHeadersDefined() {
+						headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
+						log.Debugf("Adding header middleware for frontend %s", frontendName)
+						negroni.Use(headerMiddleware)
+					}
+					if frontend.Headers.HasSecureHeadersDefined() {
+						secureMiddleware := middlewares.NewSecure(frontend.Headers)
+						log.Debugf("Adding secure middleware for frontend %s", frontendName)
+						negroni.UseFunc(secureMiddleware.HandlerFuncWithNext)
 					}
 
 					if configuration.Backends[frontend.Backend].CircuitBreaker != nil {

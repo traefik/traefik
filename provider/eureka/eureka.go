@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/ArthurHlt/go-eureka-client/eureka"
-	log "github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"

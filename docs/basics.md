@@ -209,7 +209,7 @@ The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portio
 3. `PathStripRegex`
 4. `PathPrefixStripRegex`
 5. `AddPrefix`
-6. `ReplacePath` 
+6. `ReplacePath`
 
 ### Priorities
 
@@ -235,6 +235,46 @@ You can customize priority by frontend:
 ```
 
 Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
+
+### Custom headers
+
+Custom headers can be configured through the frontends, to add headers to either requests or responses that match the frontend's rules. This allows for setting headers such as `X-Script-Name` to be added to the request, or custom headers to be added to the response:
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers.customresponseheaders]
+    X-Custom-Response-Header = "True"
+    [frontends.frontend1.headers.customrequestheaders]
+    X-Script-Name = "test"
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheese"
+```
+
+In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+
+### Security headers
+
+Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured per frontend in a similar manner to the custom headers above. This functionality allows for some easy security features to quickly be set. An example of some of the security headers:
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers]
+    FrameDeny = true
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheddar"
+  [frontends.frontend2]
+  backend = "backend2"
+    [frontends.frontend2.headers]
+    SSLRedirect = true
+    [frontends.frontend2.routes.test_1]
+    rule = "PathPrefixStrip:/stilton"
+```
+
+In this example, traffic routed through the first frontend will have the `X-Frame-Options` header set to `DENY`, and the second will only allow HTTPS request through, otherwise will return a 301 HTTPS redirect.
 
 ## Backends
 
@@ -355,6 +395,39 @@ Here is an example of backends and servers definition:
 - `backend1` will forward the traffic to two servers: `http://172.17.0.2:80"` with weight `10` and `http://172.17.0.3:80` with weight `1` using default `wrr` load-balancing strategy.
 - `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
 - a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
+
+## Custom Error pages
+
+Custom error pages can be returned, in lieu of the default, according to frontend-configured ranges of HTTP Status codes.
+In the example below, if a 503 status is returned from the frontend "website", the custom error page at http://2.3.4.5/503.html is returned with the actual status code set in the HTTP header.
+Note, the 503.html page itself is not hosted on traefik, but some other infrastructure.   
+
+```toml
+[frontends]
+  [frontends.website]
+  backend = "website"
+  [errors]
+    [error.network]
+    status = ["500-599"]
+    backend = "error"
+    query = "/{status}.html"
+  [frontends.website.routes.website]
+  rule = "Host: website.mydomain.com"
+
+[backends]
+  [backends.website]
+    [backends.website.servers.website]
+    url = "https://1.2.3.4"
+  [backends.error]
+    [backends.error.servers.error]
+    url = "http://2.3.4.5"
+```
+
+In the above example, the error page rendered was based on the status code.
+Instead, the query parameter can also be set to some generic error page like so: `query = "/500s.html"`
+
+Now the 500s.html error page is returned for the configured code range.
+The configured status code ranges are inclusive; that is, in the above example, the 500s.html page will be returned for status codes 500 through, and including, 599.
 
 # Configuration
 

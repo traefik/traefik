@@ -86,7 +86,7 @@ func (l *Leadership) onElection(elected bool) {
 		l.leader.Set(true)
 		l.Start()
 	} else {
-		log.Infof("Node %s elected slave ♝", l.Cluster.Node)
+		log.Infof("Node %s elected worker ♝", l.Cluster.Node)
 		l.leader.Set(false)
 		l.Stop()
 	}
