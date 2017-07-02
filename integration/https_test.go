@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -269,6 +270,48 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFi
 
 	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
+}
+
+func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend(c *check.C) {
+	backend := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	defer backend.Close()
+
+	file := s.adaptFile(c, "fixtures/https/rootcas/https.toml", struct{ BackendHost string }{backend.URL})
+	defer os.Remove(file)
+	cmd, _ := s.cmdTraefikWithConfigFile(file)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains(backend.URL))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8081/ping", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend(c *check.C) {
+	backend := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	defer backend.Close()
+
+	file := s.adaptFile(c, "fixtures/https/rootcas/https_with_file.toml", struct{ BackendHost string }{backend.URL})
+	defer os.Remove(file)
+	cmd, _ := s.cmdTraefikWithConfigFile(file)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains(backend.URL))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8081/ping", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
 }
 
 func startTestServer(port string, statusCode int) (ts *httptest.Server) {

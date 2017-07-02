@@ -2,8 +2,8 @@ package server
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -56,6 +56,7 @@ type GlobalConfiguration struct {
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
 	IdleTimeout               flaeg.Duration          `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
+	RootCAs                   RootCAs                 `description:"Add cert file for self-signed certicate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
 	Docker                    *docker.Provider        `description:"Enable Docker backend"`
@@ -110,7 +111,69 @@ func (dep *DefaultEntryPoints) SetValue(val interface{}) {
 
 // Type is type of the struct
 func (dep *DefaultEntryPoints) Type() string {
-	return fmt.Sprint("defaultentrypoints")
+	return "defaultentrypoints"
+}
+
+// RootCAs hold the CA we want to have in root
+type RootCAs []FileOrContent
+
+// FileOrContent hold a file path or content
+type FileOrContent string
+
+func (f FileOrContent) String() string {
+	return string(f)
+}
+
+func (f FileOrContent) Read() ([]byte, error) {
+	var content []byte
+	if _, err := os.Stat(f.String()); err == nil {
+		content, err = ioutil.ReadFile(f.String())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		content = []byte(f)
+	}
+	return content, nil
+}
+
+// String is the method to format the flag's value, part of the flag.Value interface.
+// The String method's output will be used in diagnostics.
+func (r *RootCAs) String() string {
+	sliceOfString := make([]string, len([]FileOrContent(*r)))
+	for key, value := range *r {
+		sliceOfString[key] = value.String()
+	}
+	return strings.Join(sliceOfString, ",")
+}
+
+// Set is the method to set the flag value, part of the flag.Value interface.
+// Set's argument is a string to be parsed to set the flag.
+// It's a comma-separated list, so we split it.
+func (r *RootCAs) Set(value string) error {
+	rootCAs := strings.Split(value, ",")
+	if len(rootCAs) == 0 {
+		return fmt.Errorf("bad RootCAs format: %s", value)
+	}
+	for _, rootCA := range rootCAs {
+		*r = append(*r, FileOrContent(rootCA))
+	}
+	return nil
+}
+
+// Get return the EntryPoints map
+func (r *RootCAs) Get() interface{} {
+	return RootCAs(*r)
+}
+
+// SetValue sets the EntryPoints map with val
+func (r *RootCAs) SetValue(val interface{}) {
+	*r = RootCAs(val.(RootCAs))
+}
+
+// Type is type of the struct
+func (r *RootCAs) Type() string {
+	return "rootcas"
 }
 
 // EntryPoints holds entry points configuration of the reverse proxy (ip, port, TLS...)
@@ -192,7 +255,7 @@ func (ep *EntryPoints) SetValue(val interface{}) {
 
 // Type is type of the struct
 func (ep *EntryPoints) Type() string {
-	return fmt.Sprint("entrypoints")
+	return "entrypoints"
 }
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
@@ -264,32 +327,25 @@ func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
 	config.Certificates = []tls.Certificate{}
 	certsSlice := []Certificate(*certs)
 	for _, v := range certsSlice {
-		isAPath := false
-		_, errCert := os.Stat(v.CertFile)
-		_, errKey := os.Stat(v.KeyFile)
-		if errCert == nil {
-			if errKey == nil {
-				isAPath = true
-			} else {
-				return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
-			}
-		} else if errKey == nil {
-			return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
+		cert := tls.Certificate{}
+
+		var err error
+
+		certContent, err := v.CertFile.Read()
+		if err != nil {
+			return nil, err
 		}
 
-		cert := tls.Certificate{}
-		var err error
-		if isAPath {
-			cert, err = tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			cert, err = tls.X509KeyPair([]byte(v.CertFile), []byte(v.KeyFile))
-			if err != nil {
-				return nil, err
-			}
+		keyContent, err := v.KeyFile.Read()
+		if err != nil {
+			return nil, err
 		}
+
+		cert, err = tls.X509KeyPair(certContent, keyContent)
+		if err != nil {
+			return nil, err
+		}
+
 		config.Certificates = append(config.Certificates, cert)
 	}
 	return config, nil
@@ -303,7 +359,7 @@ func (certs *Certificates) String() string {
 	}
 	var result []string
 	for _, certificate := range *certs {
-		result = append(result, certificate.CertFile+","+certificate.KeyFile)
+		result = append(result, certificate.CertFile.String()+","+certificate.KeyFile.String())
 	}
 	return strings.Join(result, ";")
 }
@@ -319,8 +375,8 @@ func (certs *Certificates) Set(value string) error {
 			return fmt.Errorf("bad certificates format: %s", value)
 		}
 		*certs = append(*certs, Certificate{
-			CertFile: files[0],
-			KeyFile:  files[1],
+			CertFile: FileOrContent(files[0]),
+			KeyFile:  FileOrContent(files[1]),
 		})
 	}
 	return nil
@@ -328,14 +384,14 @@ func (certs *Certificates) Set(value string) error {
 
 // Type is type of the struct
 func (certs *Certificates) Type() string {
-	return fmt.Sprint("certificates")
+	return "certificates"
 }
 
 // Certificate holds a SSL cert/key pair
 // Certs and Key could be either a file path, or the file content itself
 type Certificate struct {
-	CertFile string
-	KeyFile  string
+	CertFile FileOrContent
+	KeyFile  FileOrContent
 }
 
 // Retry contains request retry config
