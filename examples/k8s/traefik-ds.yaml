@@ -32,23 +32,15 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+        ports:
+        - name: http
+          containerPort: 80
+          hostPort: 80
+        - name: admin
+          containerPort: 8080
         securityContext:
           privileged: true
         args:
         - -d
         - --web
         - --kubernetes
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: traefik-ingress-service
-spec:
-  selector:
-    k8s-app: traefik-ingress-lb
-  ports:
-    - protocol: TCP
-      port: 80
-    - protocol: TCP
-      port: 8080
-  type: NodePort

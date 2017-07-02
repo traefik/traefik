@@ -143,7 +143,8 @@ spec:
 
 > The Service will expose two NodePorts which allow access to the ingress and the web interface.
 
-The DaemonSet objects looks not much different:
+The DaemonSet objects looks not much different, except that we do not need a Service and expose the
+Ports directly on the host machine:
 
 ```yaml
 ---
@@ -180,26 +181,18 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+        ports:
+        - name: http
+          containerPort: 80
+          hostPort: 80
+        - name: admin
+          containerPort: 8080
         securityContext:
           privileged: true
         args:
         - -d
         - --web
         - --kubernetes
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: traefik-ingress-service
-spec:
-  selector:
-    k8s-app: traefik-ingress-lb
-  ports:
-    - protocol: TCP
-      port: 80
-    - protocol: TCP
-      port: 8080
-  type: NodePort
 ```
 [examples/k8s/traefik-ds.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-ds.yaml)
 
