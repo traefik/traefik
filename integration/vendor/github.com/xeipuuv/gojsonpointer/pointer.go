@@ -52,35 +52,24 @@ type implStruct struct {
 	outError   error
 }
 
-func NewJsonPointer(jsonPointerString string) (JsonPointer, error) {
-
-	var p JsonPointer
-	err := p.parse(jsonPointerString)
-	return p, err
-
-}
-
 type JsonPointer struct {
 	referenceTokens []string
 }
 
-// "Constructor", parses the given string JSON pointer
-func (p *JsonPointer) parse(jsonPointerString string) error {
+// NewJsonPointer parses the given string JSON pointer and returns an object
+func NewJsonPointer(jsonPointerString string) (p JsonPointer, err error) {
 
-	var err error
-
-	if jsonPointerString != const_empty_pointer {
-		if !strings.HasPrefix(jsonPointerString, const_pointer_separator) {
-			err = errors.New(const_invalid_start)
-		} else {
-			referenceTokens := strings.Split(jsonPointerString, const_pointer_separator)
-			for _, referenceToken := range referenceTokens[1:] {
-				p.referenceTokens = append(p.referenceTokens, referenceToken)
-			}
-		}
+	// Pointer to the root of the document
+	if len(jsonPointerString) == 0 {
+		// Keep referenceTokens nil
+		return
+	}
+	if jsonPointerString[0] != '/' {
+		return p, errors.New(const_invalid_start)
 	}
 
-	return err
+	p.referenceTokens = strings.Split(jsonPointerString[1:], const_pointer_separator)
+	return
 }
 
 // Uses the pointer to retrieve a value from a JSON document
@@ -119,64 +108,55 @@ func (p *JsonPointer) implementation(i *implStruct) {
 
 	for ti, token := range p.referenceTokens {
 
-		decodedToken := decodeReferenceToken(token)
 		isLastToken := ti == len(p.referenceTokens)-1
 
-		rValue := reflect.ValueOf(node)
-		kind = rValue.Kind()
+		switch v := node.(type) {
 
-		switch kind {
-
-		case reflect.Map:
-			m := node.(map[string]interface{})
-			if _, ok := m[decodedToken]; ok {
-				node = m[decodedToken]
+		case map[string]interface{}:
+			decodedToken := decodeReferenceToken(token)
+			if _, ok := v[decodedToken]; ok {
+				node = v[decodedToken]
 				if isLastToken && i.mode == "SET" {
-					m[decodedToken] = i.setInValue
+					v[decodedToken] = i.setInValue
 				}
 			} else {
-				i.outError = errors.New(fmt.Sprintf("Object has no key '%s'", token))
-				i.getOutKind = kind
+				i.outError = fmt.Errorf("Object has no key '%s'", decodedToken)
+				i.getOutKind = reflect.Map
 				i.getOutNode = nil
 				return
 			}
 
-		case reflect.Slice:
-			s := node.([]interface{})
+		case []interface{}:
 			tokenIndex, err := strconv.Atoi(token)
 			if err != nil {
-				i.outError = errors.New(fmt.Sprintf("Invalid array index '%s'", token))
-				i.getOutKind = kind
+				i.outError = fmt.Errorf("Invalid array index '%s'", token)
+				i.getOutKind = reflect.Slice
 				i.getOutNode = nil
 				return
 			}
-			sLength := len(s)
-			if tokenIndex < 0 || tokenIndex >= sLength {
-				i.outError = errors.New(fmt.Sprintf("Out of bound array[0,%d] index '%d'", sLength, tokenIndex))
-				i.getOutKind = kind
+			if tokenIndex < 0 || tokenIndex >= len(v) {
+				i.outError = fmt.Errorf("Out of bound array[0,%d] index '%d'", len(v), tokenIndex)
+				i.getOutKind = reflect.Slice
 				i.getOutNode = nil
 				return
 			}
 
-			node = s[tokenIndex]
+			node = v[tokenIndex]
 			if isLastToken && i.mode == "SET" {
-				s[tokenIndex] = i.setInValue
+				v[tokenIndex] = i.setInValue
 			}
 
 		default:
-			i.outError = errors.New(fmt.Sprintf("Invalid token reference '%s'", token))
-			i.getOutKind = kind
+			i.outError = fmt.Errorf("Invalid token reference '%s'", token)
+			i.getOutKind = reflect.ValueOf(node).Kind()
 			i.getOutNode = nil
 			return
 		}
 
 	}
 
-	rValue := reflect.ValueOf(node)
-	kind = rValue.Kind()
-
 	i.getOutNode = node
-	i.getOutKind = kind
+	i.getOutKind = reflect.ValueOf(node).Kind()
 	i.outError = nil
 }
 
@@ -197,21 +177,14 @@ func (p *JsonPointer) String() string {
 // ~1 => /
 // ... and vice versa
 
-const (
-	const_encoded_reference_token_0 = `~0`
-	const_encoded_reference_token_1 = `~1`
-	const_decoded_reference_token_0 = `~`
-	const_decoded_reference_token_1 = `/`
-)
-
 func decodeReferenceToken(token string) string {
-	step1 := strings.Replace(token, const_encoded_reference_token_1, const_decoded_reference_token_1, -1)
-	step2 := strings.Replace(step1, const_encoded_reference_token_0, const_decoded_reference_token_0, -1)
+	step1 := strings.Replace(token, `~1`, `/`, -1)
+	step2 := strings.Replace(step1, `~0`, `~`, -1)
 	return step2
 }
 
 func encodeReferenceToken(token string) string {
-	step1 := strings.Replace(token, const_decoded_reference_token_1, const_encoded_reference_token_1, -1)
-	step2 := strings.Replace(step1, const_decoded_reference_token_0, const_encoded_reference_token_0, -1)
+	step1 := strings.Replace(token, `~`, `~0`, -1)
+	step2 := strings.Replace(step1, `/`, `~1`, -1)
 	return step2
 }

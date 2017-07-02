@@ -3,23 +3,10 @@ package logrus
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
-	"sync"
 	"time"
 )
-
-var bufferPool *sync.Pool
-
-func init() {
-	bufferPool = &sync.Pool{
-		New: func() interface{} {
-			return new(bytes.Buffer)
-		},
-	}
-}
-
-// Defines the key when adding errors using WithError.
-var ErrorKey = "error"
 
 // An entry is the final or intermediate Logrus logging entry. It contains all
 // the fields passed with WithField{,s}. It's finally logged when Debug, Info,
@@ -39,9 +26,6 @@ type Entry struct {
 
 	// Message passed to Debug, Info, Warn, Error, Fatal or Panic
 	Message string
-
-	// When formatter is called in entry.log(), an Buffer may be set to entry
-	Buffer *bytes.Buffer
 }
 
 func NewEntry(logger *Logger) *Entry {
@@ -52,20 +36,21 @@ func NewEntry(logger *Logger) *Entry {
 	}
 }
 
+// Returns a reader for the entry, which is a proxy to the formatter.
+func (entry *Entry) Reader() (*bytes.Buffer, error) {
+	serialized, err := entry.Logger.Formatter.Format(entry)
+	return bytes.NewBuffer(serialized), err
+}
+
 // Returns the string representation from the reader and ultimately the
 // formatter.
 func (entry *Entry) String() (string, error) {
-	serialized, err := entry.Logger.Formatter.Format(entry)
+	reader, err := entry.Reader()
 	if err != nil {
 		return "", err
 	}
-	str := string(serialized)
-	return str, nil
-}
 
-// Add an error as single field (using the key defined in ErrorKey) to the Entry.
-func (entry *Entry) WithError(err error) *Entry {
-	return entry.WithField(ErrorKey, err)
+	return reader.String(), err
 }
 
 // Add a single field to the Entry.
@@ -75,7 +60,7 @@ func (entry *Entry) WithField(key string, value interface{}) *Entry {
 
 // Add a map of fields to the Entry.
 func (entry *Entry) WithFields(fields Fields) *Entry {
-	data := make(Fields, len(entry.Data)+len(fields))
+	data := Fields{}
 	for k, v := range entry.Data {
 		data[k] = v
 	}
@@ -85,43 +70,37 @@ func (entry *Entry) WithFields(fields Fields) *Entry {
 	return &Entry{Logger: entry.Logger, Data: data}
 }
 
-// This function is not declared with a pointer value because otherwise
-// race conditions will occur when using multiple goroutines
-func (entry Entry) log(level Level, msg string) {
-	var buffer *bytes.Buffer
+func (entry *Entry) log(level Level, msg string) {
 	entry.Time = time.Now()
 	entry.Level = level
 	entry.Message = msg
 
-	if err := entry.Logger.Hooks.Fire(level, &entry); err != nil {
+	if err := entry.Logger.Hooks.Fire(level, entry); err != nil {
 		entry.Logger.mu.Lock()
 		fmt.Fprintf(os.Stderr, "Failed to fire hook: %v\n", err)
 		entry.Logger.mu.Unlock()
 	}
-	buffer = bufferPool.Get().(*bytes.Buffer)
-	buffer.Reset()
-	defer bufferPool.Put(buffer)
-	entry.Buffer = buffer
-	serialized, err := entry.Logger.Formatter.Format(&entry)
-	entry.Buffer = nil
+
+	reader, err := entry.Reader()
 	if err != nil {
 		entry.Logger.mu.Lock()
 		fmt.Fprintf(os.Stderr, "Failed to obtain reader, %v\n", err)
 		entry.Logger.mu.Unlock()
-	} else {
-		entry.Logger.mu.Lock()
-		_, err = entry.Logger.Out.Write(serialized)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to write to log, %v\n", err)
-		}
-		entry.Logger.mu.Unlock()
+	}
+
+	entry.Logger.mu.Lock()
+	defer entry.Logger.mu.Unlock()
+
+	_, err = io.Copy(entry.Logger.Out, reader)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to write to log, %v\n", err)
 	}
 
 	// To avoid Entry#log() returning a value that only would make sense for
 	// panic() to use in Entry#Panic(), we avoid the allocation by checking
 	// directly here.
 	if level <= PanicLevel {
-		panic(&entry)
+		panic(entry)
 	}
 }
 
@@ -161,7 +140,7 @@ func (entry *Entry) Fatal(args ...interface{}) {
 	if entry.Logger.Level >= FatalLevel {
 		entry.log(FatalLevel, fmt.Sprint(args...))
 	}
-	Exit(1)
+	os.Exit(1)
 }
 
 func (entry *Entry) Panic(args ...interface{}) {
@@ -209,7 +188,6 @@ func (entry *Entry) Fatalf(format string, args ...interface{}) {
 	if entry.Logger.Level >= FatalLevel {
 		entry.Fatal(fmt.Sprintf(format, args...))
 	}
-	Exit(1)
 }
 
 func (entry *Entry) Panicf(format string, args ...interface{}) {
@@ -256,7 +234,6 @@ func (entry *Entry) Fatalln(args ...interface{}) {
 	if entry.Logger.Level >= FatalLevel {
 		entry.Fatal(entry.sprintlnn(args...))
 	}
-	Exit(1)
 }
 
 func (entry *Entry) Panicln(args ...interface{}) {

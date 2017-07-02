@@ -1,15 +1,8 @@
-// +build !linux
+// +build !linux,!solaris
 
 package main
 
-import (
-	"github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
-)
-
-func getDefaultID() string {
-	return ""
-}
+import "github.com/urfave/cli"
 
 var (
 	checkpointCommand cli.Command
@@ -18,7 +11,3 @@ var (
 	specCommand       cli.Command
 	killCommand       cli.Command
 )
-
-func runAction(*cli.Context) {
-	logrus.Fatal("Current OS is not supported yet")
-}
