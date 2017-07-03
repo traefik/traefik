@@ -34,8 +34,9 @@ is_integration_dir() {
   [[ "$(basename ${CWD})" = 'integration' ]]
 }
 
+GLIDE_ARGS+=('--strip-vendor')
 if ! is_integration_dir; then
-  GLIDE_ARGS+=('--strip-vendor' '--skip-test')
+  GLIDE_ARGS+=('--skip-test')
 fi
 
 if ! type glide > /dev/null 2>&1; then

@@ -69,10 +69,6 @@ import:
   subpackages:
   - acme
 - package: gopkg.in/fsnotify.v1
-- package: github.com/docker/docker
-  version: v1.13.0
-  subpackages:
-  - namesgenerator
 - package: github.com/mattn/go-shellwords
 - package: github.com/ryanuber/go-glob
 - package: github.com/mesos/mesos-go

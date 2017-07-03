@@ -26,7 +26,7 @@
 package gojsonschema
 
 type (
-	// locale is an interface for definining custom error strings
+	// locale is an interface for defining custom error strings
 	locale interface {
 		Required() string
 		InvalidType() string
@@ -73,7 +73,8 @@ type (
 		ReferenceMustBeCanonical() string
 		NotAValidType() string
 		Duplicated() string
-		httpBadStatus() string
+		HttpBadStatus() string
+		ParseError() string
 
 		// ErrorFormat
 		ErrorFormat() string
@@ -84,11 +85,11 @@ type (
 )
 
 func (l DefaultLocale) Required() string {
-	return `%property% is required`
+	return `{{.property}} is required`
 }
 
 func (l DefaultLocale) InvalidType() string {
-	return `Invalid type. Expected: %expected%, given: %given%`
+	return `Invalid type. Expected: {{.expected}}, given: {{.given}}`
 }
 
 func (l DefaultLocale) NumberAnyOf() string {
@@ -108,15 +109,15 @@ func (l DefaultLocale) NumberNot() string {
 }
 
 func (l DefaultLocale) MissingDependency() string {
-	return `Has a dependency on %dependency%`
+	return `Has a dependency on {{.dependency}}`
 }
 
 func (l DefaultLocale) Internal() string {
-	return `Internal Error %error%`
+	return `Internal Error {{.error}}`
 }
 
 func (l DefaultLocale) Enum() string {
-	return `%field% must be one of the following: %allowed%`
+	return `{{.field}} must be one of the following: {{.allowed}}`
 }
 
 func (l DefaultLocale) ArrayNoAdditionalItems() string {
@@ -128,141 +129,146 @@ func (l DefaultLocale) ArrayNotEnoughItems() string {
 }
 
 func (l DefaultLocale) ArrayMinItems() string {
-	return `Array must have at least %min% items`
+	return `Array must have at least {{.min}} items`
 }
 
 func (l DefaultLocale) ArrayMaxItems() string {
-	return `Array must have at most %max% items`
+	return `Array must have at most {{.max}} items`
 }
 
 func (l DefaultLocale) Unique() string {
-	return `%type% items must be unique`
+	return `{{.type}} items must be unique`
 }
 
 func (l DefaultLocale) ArrayMinProperties() string {
-	return `Must have at least %min% properties`
+	return `Must have at least {{.min}} properties`
 }
 
 func (l DefaultLocale) ArrayMaxProperties() string {
-	return `Must have at most %max% properties`
+	return `Must have at most {{.max}} properties`
 }
 
 func (l DefaultLocale) AdditionalPropertyNotAllowed() string {
-	return `Additional property %property% is not allowed`
+	return `Additional property {{.property}} is not allowed`
 }
 
 func (l DefaultLocale) InvalidPropertyPattern() string {
-	return `Property "%property%" does not match pattern %pattern%`
+	return `Property "{{.property}}" does not match pattern {{.pattern}}`
 }
 
 func (l DefaultLocale) StringGTE() string {
-	return `String length must be greater than or equal to %min%`
+	return `String length must be greater than or equal to {{.min}}`
 }
 
 func (l DefaultLocale) StringLTE() string {
-	return `String length must be less than or equal to %max%`
+	return `String length must be less than or equal to {{.max}}`
 }
 
 func (l DefaultLocale) DoesNotMatchPattern() string {
-	return `Does not match pattern '%pattern%'`
+	return `Does not match pattern '{{.pattern}}'`
 }
 
 func (l DefaultLocale) DoesNotMatchFormat() string {
-	return `Does not match format '%format%'`
+	return `Does not match format '{{.format}}'`
 }
 
 func (l DefaultLocale) MultipleOf() string {
-	return `Must be a multiple of %multiple%`
+	return `Must be a multiple of {{.multiple}}`
 }
 
 func (l DefaultLocale) NumberGTE() string {
-	return `Must be greater than or equal to %min%`
+	return `Must be greater than or equal to {{.min}}`
 }
 
 func (l DefaultLocale) NumberGT() string {
-	return `Must be greater than %min%`
+	return `Must be greater than {{.min}}`
 }
 
 func (l DefaultLocale) NumberLTE() string {
-	return `Must be less than or equal to %max%`
+	return `Must be less than or equal to {{.max}}`
 }
 
 func (l DefaultLocale) NumberLT() string {
-	return `Must be less than %max%`
+	return `Must be less than {{.max}}`
 }
 
 // Schema validators
 func (l DefaultLocale) RegexPattern() string {
-	return `Invalid regex pattern '%pattern%'`
+	return `Invalid regex pattern '{{.pattern}}'`
 }
 
 func (l DefaultLocale) GreaterThanZero() string {
-	return `%number% must be strictly greater than 0`
+	return `{{.number}} must be strictly greater than 0`
 }
 
 func (l DefaultLocale) MustBeOfA() string {
-	return `%x% must be of a %y%`
+	return `{{.x}} must be of a {{.y}}`
 }
 
 func (l DefaultLocale) MustBeOfAn() string {
-	return `%x% must be of an %y%`
+	return `{{.x}} must be of an {{.y}}`
 }
 
 func (l DefaultLocale) CannotBeUsedWithout() string {
-	return `%x% cannot be used without %y%`
+	return `{{.x}} cannot be used without {{.y}}`
 }
 
 func (l DefaultLocale) CannotBeGT() string {
-	return `%x% cannot be greater than %y%`
+	return `{{.x}} cannot be greater than {{.y}}`
 }
 
 func (l DefaultLocale) MustBeOfType() string {
-	return `%key% must be of type %type%`
+	return `{{.key}} must be of type {{.type}}`
 }
 
 func (l DefaultLocale) MustBeValidRegex() string {
-	return `%key% must be a valid regex`
+	return `{{.key}} must be a valid regex`
 }
 
 func (l DefaultLocale) MustBeValidFormat() string {
-	return `%key% must be a valid format %given%`
+	return `{{.key}} must be a valid format {{.given}}`
 }
 
 func (l DefaultLocale) MustBeGTEZero() string {
-	return `%key% must be greater than or equal to 0`
+	return `{{.key}} must be greater than or equal to 0`
 }
 
 func (l DefaultLocale) KeyCannotBeGreaterThan() string {
-	return `%key% cannot be greater than %y%`
+	return `{{.key}} cannot be greater than {{.y}}`
 }
 
 func (l DefaultLocale) KeyItemsMustBeOfType() string {
-	return `%key% items must be %type%`
+	return `{{.key}} items must be {{.type}}`
 }
 
 func (l DefaultLocale) KeyItemsMustBeUnique() string {
-	return `%key% items must be unique`
+	return `{{.key}} items must be unique`
 }
 
 func (l DefaultLocale) ReferenceMustBeCanonical() string {
-	return `Reference %reference% must be canonical`
+	return `Reference {{.reference}} must be canonical`
 }
 
 func (l DefaultLocale) NotAValidType() string {
-	return `%type% is not a valid type -- `
+	return `has a primitive type that is NOT VALID -- given: {{.given}} Expected valid values are:{{.expected}}`
 }
 
 func (l DefaultLocale) Duplicated() string {
-	return `%type% type is duplicated`
+	return `{{.type}} type is duplicated`
 }
 
-func (l DefaultLocale) httpBadStatus() string {
-	return `Could not read schema from HTTP, response status is %status%`
+func (l DefaultLocale) HttpBadStatus() string {
+	return `Could not read schema from HTTP, response status is {{.status}}`
 }
 
 // Replacement options: field, description, context, value
 func (l DefaultLocale) ErrorFormat() string {
-	return `%field%: %description%`
+	return `{{.field}}: {{.description}}`
+}
+
+//Parse error
+func (l DefaultLocale) ParseError() string {
+	return `Expected: %expected%, given: Invalid JSON`
 }
 
 const (

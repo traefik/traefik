@@ -52,8 +52,11 @@ type (
 	// http://tools.ietf.org/html/rfc3339#section-5.6
 	DateTimeFormatChecker struct{}
 
-	// URIFormatCheckers validates a URI with a valid Scheme per RFC3986
+	// URIFormatChecker validates a URI with a valid Scheme per RFC3986
 	URIFormatChecker struct{}
+
+	// URIReferenceFormatChecker validates a URI or relative-reference per RFC3986
+	URIReferenceFormatChecker struct{}
 
 	// HostnameFormatChecker validates a hostname is in the correct format
 	HostnameFormatChecker struct{}
@@ -70,14 +73,15 @@ var (
 	// so library users can add custom formatters
 	FormatCheckers = FormatCheckerChain{
 		formatters: map[string]FormatChecker{
-			"date-time": DateTimeFormatChecker{},
-			"hostname":  HostnameFormatChecker{},
-			"email":     EmailFormatChecker{},
-			"ipv4":      IPV4FormatChecker{},
-			"ipv6":      IPV6FormatChecker{},
-			"uri":       URIFormatChecker{},
-			"uuid":      UUIDFormatChecker{},
-			"regex":     UUIDFormatChecker{},
+			"date-time": 	 DateTimeFormatChecker{},
+			"hostname":  	 HostnameFormatChecker{},
+			"email":     	 EmailFormatChecker{},
+			"ipv4":      	 IPV4FormatChecker{},
+			"ipv6":      	 IPV6FormatChecker{},
+			"uri":       	 URIFormatChecker{},
+			"uri-reference": URIReferenceFormatChecker{},
+			"uuid":      	 UUIDFormatChecker{},
+			"regex":     	 RegexFormatChecker{},
 		},
 	}
 
@@ -171,6 +175,11 @@ func (f URIFormatChecker) IsFormat(input string) bool {
 	}
 
 	return true
+}
+
+func (f URIReferenceFormatChecker) IsFormat(input string) bool {
+	_, err := url.Parse(input)
+	return err == nil
 }
 
 func (f HostnameFormatChecker) IsFormat(input string) bool {

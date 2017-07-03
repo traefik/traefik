@@ -568,7 +568,7 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 							result.addError(
 								new(AdditionalPropertyNotAllowedError),
 								context,
-								value,
+								value[pk],
 								ErrorDetails{"property": pk},
 							)
 						}
@@ -579,7 +579,7 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 							result.addError(
 								new(AdditionalPropertyNotAllowedError),
 								context,
-								value,
+								value[pk],
 								ErrorDetails{"property": pk},
 							)
 						}
@@ -631,7 +631,7 @@ func (v *subSchema) validateObject(currentSubSchema *subSchema, value map[string
 				result.addError(
 					new(InvalidPropertyPatternError),
 					context,
-					value,
+					value[pk],
 					ErrorDetails{
 						"property": pk,
 						"pattern":  currentSubSchema.PatternPropertiesString(),
