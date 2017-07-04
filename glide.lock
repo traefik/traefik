@@ -1,4 +1,4 @@
-hash: 4e2a6a4fe84b2843ff946fe56deae17f8c7666e2e6567d8a75f4b0bdd7cb0280
+hash: de681761bddc92dceb0bb7a5ab72be2a898ff2eea4b09a526401f72fe8f20365
 updated: 2017-06-30T11:03:09.025639582+02:00
 imports:
 - name: cloud.google.com/go
@@ -131,10 +131,6 @@ imports:
   subpackages:
   - digest
   - reference
-- name: github.com/docker/docker
-  version: 49bf474f9ed7ce7143a59d1964ff7b7fd9b52178
-  subpackages:
-  - namesgenerator
 - name: github.com/docker/engine-api
   version: 3d1601b9d2436a70b0dfc045a23f6503d19195df
   subpackages:

@@ -43,12 +43,8 @@ func (e *UnsupportedReparsePointError) Error() string {
 // DecodeReparsePoint decodes a Win32 REPARSE_DATA_BUFFER structure containing either a symlink
 // or a mount point.
 func DecodeReparsePoint(b []byte) (*ReparsePoint, error) {
-	tag := binary.LittleEndian.Uint32(b[0:4])
-	return DecodeReparsePointData(tag, b[8:])
-}
-
-func DecodeReparsePointData(tag uint32, b []byte) (*ReparsePoint, error) {
 	isMountPoint := false
+	tag := binary.LittleEndian.Uint32(b[0:4])
 	switch tag {
 	case reparseTagMountPoint:
 		isMountPoint = true
@@ -56,11 +52,11 @@ func DecodeReparsePointData(tag uint32, b []byte) (*ReparsePoint, error) {
 	default:
 		return nil, &UnsupportedReparsePointError{tag}
 	}
-	nameOffset := 8 + binary.LittleEndian.Uint16(b[4:6])
+	nameOffset := 16 + binary.LittleEndian.Uint16(b[12:14])
 	if !isMountPoint {
 		nameOffset += 4
 	}
-	nameLength := binary.LittleEndian.Uint16(b[6:8])
+	nameLength := binary.LittleEndian.Uint16(b[14:16])
 	name := make([]uint16, nameLength/2)
 	err := binary.Read(bytes.NewReader(b[nameOffset:nameOffset+nameLength]), binary.LittleEndian, &name)
 	if err != nil {
@@ -80,7 +76,7 @@ func EncodeReparsePoint(rp *ReparsePoint) []byte {
 	var ntTarget string
 	relative := false
 	if strings.HasPrefix(rp.Target, `\\?\`) {
-		ntTarget = `\??\` + rp.Target[4:]
+		ntTarget = rp.Target
 	} else if strings.HasPrefix(rp.Target, `\\`) {
 		ntTarget = `\??\UNC\` + rp.Target[2:]
 	} else if len(rp.Target) >= 2 && isDriveLetter(rp.Target[0]) && rp.Target[1] == ':' {

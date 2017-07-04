@@ -118,7 +118,7 @@ You can find the complete documentation [here](https://docs.traefik.io).
 
 Please refer to [this section](.github/CONTRIBUTING.md).
 
-## Code Of Conduct
+## Code of Conduct
 
 Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
@@ -126,6 +126,21 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 You can join [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) to get basic support.
 If you prefer commercial support, please contact [containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
+
+## Release cycle
+
+- Release: We try to release a new version every 2 months
+  - i.e.: 1.3.0, 1.4.0, 1.5.0
+- Release candidate: we do RC (1.**x**.0-rc**y**) before the final release (1.**x**.0)
+  - i.e.: 1.1.0-rc1 -> 1.1.0-rc2 -> 1.1.0-rc3 -> 1.1.0-rc4 -> 1.1.0
+- Bug-fixes: For each version we release bug fixes
+  - i.e.: 1.1.1, 1.1.2, 1.1.3
+  - those versions contain only bug-fixes
+  - no additional features are delivered in those versions
+- Each version is supported until the next one is released
+  - i.e.: 1.1.x will be supported until 1.2.0 is out
+- We use [Semantic Versioning](http://semver.org/)
+
 
 ## Maintainers
 
