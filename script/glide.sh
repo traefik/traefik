@@ -6,11 +6,6 @@ set -o nounset
 ####
 ### Helper script for glide[-vc] to handle specifics for the Traefik repo.
 ##
-# In particular, the 'integration/' directory contains its own set of
-# glide-managed dependencies which must not have its nested vendor folder
-# stripped. Depending on where the script is called from, it will do the Right
-# Thing.
-#
 
 CWD="$(pwd)"; readonly CWD
 GLIDE_ARGS=()
@@ -30,14 +25,7 @@ trim:    Trim the vendor folder only, do not install or update dependencies.
 The current working directory must contain a glide.yaml file." >&2
 }
 
-is_integration_dir() {
-  [[ "$(basename ${CWD})" = 'integration' ]]
-}
-
 GLIDE_ARGS+=('--strip-vendor')
-if ! is_integration_dir; then
-  GLIDE_ARGS+=('--skip-test')
-fi
 
 if ! type glide > /dev/null 2>&1; then
   echo "glide not found in PATH." >&2
