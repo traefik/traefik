@@ -20,16 +20,14 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
-	"github.com/docker/engine-api/client"
-	dockertypes "github.com/docker/engine-api/types"
-	dockercontainertypes "github.com/docker/engine-api/types/container"
-	eventtypes "github.com/docker/engine-api/types/events"
-	"github.com/docker/engine-api/types/filters"
-	"github.com/docker/engine-api/types/swarm"
-	swarmtypes "github.com/docker/engine-api/types/swarm"
+	dockertypes "github.com/docker/docker/api/types"
+	dockercontainertypes "github.com/docker/docker/api/types/container"
+	eventtypes "github.com/docker/docker/api/types/events"
+	"github.com/docker/docker/api/types/filters"
+	swarmtypes "github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
-	"github.com/vdemeester/docker-events"
 )
 
 const (
@@ -202,7 +200,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					options := dockertypes.EventsOptions{
 						Filters: f,
 					}
-					eventHandler := events.NewHandler(events.ByAction)
+
 					startStopHandle := func(m eventtypes.Message) {
 						log.Debugf("Provider event received %+v", m)
 						containers, err := listContainers(ctx, dockerClient)
@@ -220,14 +218,16 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							}
 						}
 					}
-					eventHandler.Handle("start", startStopHandle)
-					eventHandler.Handle("die", startStopHandle)
-					eventHandler.Handle("health_status: healthy", startStopHandle)
-					eventHandler.Handle("health_status: unhealthy", startStopHandle)
-					eventHandler.Handle("health_status: starting", startStopHandle)
 
-					errChan := events.MonitorWithHandler(ctx, dockerClient, options, eventHandler)
-					if err := <-errChan; err != nil {
+					eventsc, errc := dockerClient.Events(ctx, options)
+					for event := range eventsc {
+						if event.Action == "start" ||
+							event.Action == "die" ||
+							strings.HasPrefix(event.Action, "health_status") {
+							startStopHandle(event)
+						}
+					}
+					if err := <-errc; err != nil {
 						return err
 					}
 				}
@@ -850,9 +850,9 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 
 	if service.Spec.EndpointSpec != nil {
 		switch service.Spec.EndpointSpec.Mode {
-		case swarm.ResolutionModeDNSRR:
+		case swarmtypes.ResolutionModeDNSRR:
 			log.Debug("Ignored endpoint-mode not supported, service name: %s", dockerData.Name)
-		case swarm.ResolutionModeVIP:
+		case swarmtypes.ResolutionModeVIP:
 			dockerData.NetworkSettings.Networks = make(map[string]*networkData)
 			for _, virtualIP := range service.Endpoint.VirtualIPs {
 				networkService := networkMap[virtualIP.NetworkID]
@@ -878,7 +878,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	serviceIDFilter := filters.NewArgs()
 	serviceIDFilter.Add("service", serviceID)
 	serviceIDFilter.Add("desired-state", "running")
-	taskList, err := dockerClient.TaskList(ctx, dockertypes.TaskListOptions{Filter: serviceIDFilter})
+	taskList, err := dockerClient.TaskList(ctx, dockertypes.TaskListOptions{Filters: serviceIDFilter})
 
 	if err != nil {
 		return []dockerData{}, err
@@ -886,7 +886,7 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	var dockerDataList []dockerData
 
 	for _, task := range taskList {
-		if task.Status.State != swarm.TaskStateRunning {
+		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
 		dockerData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)

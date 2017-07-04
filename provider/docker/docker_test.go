@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/types"
-	docker "github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/container"
+	docker "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 )
 
