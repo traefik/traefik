@@ -72,20 +72,18 @@ func ParseDirent(buf []byte, max int, names []string) (consumed int, count int, 
 	return origlen - len(buf), count, names
 }
 
-//sysnb	pipe(p *[2]_C_int) (n int, err error)
+func pipe() (r uintptr, w uintptr, err uintptr)
 
 func Pipe(p []int) (err error) {
 	if len(p) != 2 {
 		return EINVAL
 	}
-	var pp [2]_C_int
-	n, err := pipe(&pp)
-	if n != 0 {
-		return err
+	r0, w0, e1 := pipe()
+	if e1 != 0 {
+		err = syscall.Errno(e1)
 	}
-	p[0] = int(pp[0])
-	p[1] = int(pp[1])
-	return nil
+	p[0], p[1] = int(r0), int(w0)
+	return
 }
 
 func (sa *SockaddrInet4) sockaddr() (unsafe.Pointer, _Socklen, error) {
@@ -271,34 +269,24 @@ func (w WaitStatus) StopSignal() syscall.Signal {
 
 func (w WaitStatus) TrapCause() int { return -1 }
 
-//sys	wait4(pid int32, statusp *_C_int, options int, rusage *Rusage) (wpid int32, err error)
+func wait4(pid uintptr, wstatus *WaitStatus, options uintptr, rusage *Rusage) (wpid uintptr, err uintptr)
 
-func Wait4(pid int, wstatus *WaitStatus, options int, rusage *Rusage) (int, error) {
-	var status _C_int
-	rpid, err := wait4(int32(pid), &status, options, rusage)
-	wpid := int(rpid)
-	if wpid == -1 {
-		return wpid, err
+func Wait4(pid int, wstatus *WaitStatus, options int, rusage *Rusage) (wpid int, err error) {
+	r0, e1 := wait4(uintptr(pid), wstatus, uintptr(options), rusage)
+	if e1 != 0 {
+		err = syscall.Errno(e1)
 	}
-	if wstatus != nil {
-		*wstatus = WaitStatus(status)
-	}
-	return wpid, nil
+	return int(r0), err
 }
 
-//sys	gethostname(buf []byte) (n int, err error)
+func gethostname() (name string, err uintptr)
 
 func Gethostname() (name string, err error) {
-	var buf [MaxHostNameLen]byte
-	n, err := gethostname(buf[:])
-	if n != 0 {
-		return "", err
+	name, e1 := gethostname()
+	if e1 != 0 {
+		err = syscall.Errno(e1)
 	}
-	n = clen(buf[:])
-	if n < 1 {
-		return "", EFAULT
-	}
-	return string(buf[:n]), nil
+	return name, err
 }
 
 //sys	utimes(path string, times *[2]Timeval) (err error)

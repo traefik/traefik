@@ -1,7 +1,6 @@
 package pflag
 
 import (
-	"bytes"
 	"encoding/csv"
 	"fmt"
 	"strings"
@@ -22,28 +21,10 @@ func newStringSliceValue(val []string, p *[]string) *stringSliceValue {
 	return ssv
 }
 
-func readAsCSV(val string) ([]string, error) {
-	if val == "" {
-		return []string{}, nil
-	}
+func (s *stringSliceValue) Set(val string) error {
 	stringReader := strings.NewReader(val)
 	csvReader := csv.NewReader(stringReader)
-	return csvReader.Read()
-}
-
-func writeAsCSV(vals []string) (string, error) {
-	b := &bytes.Buffer{}
-	w := csv.NewWriter(b)
-	err := w.Write(vals)
-	if err != nil {
-		return "", err
-	}
-	w.Flush()
-	return strings.TrimSuffix(b.String(), fmt.Sprintln()), nil
-}
-
-func (s *stringSliceValue) Set(val string) error {
-	v, err := readAsCSV(val)
+	v, err := csvReader.Read()
 	if err != nil {
 		return err
 	}
@@ -60,18 +41,16 @@ func (s *stringSliceValue) Type() string {
 	return "stringSlice"
 }
 
-func (s *stringSliceValue) String() string {
-	str, _ := writeAsCSV(*s.value)
-	return "[" + str + "]"
-}
+func (s *stringSliceValue) String() string { return "[" + strings.Join(*s.value, ",") + "]" }
 
 func stringSliceConv(sval string) (interface{}, error) {
-	sval = sval[1 : len(sval)-1]
+	sval = strings.Trim(sval, "[]")
 	// An empty string would cause a slice with one (empty) string
 	if len(sval) == 0 {
 		return []string{}, nil
 	}
-	return readAsCSV(sval)
+	v := strings.Split(sval, ",")
+	return v, nil
 }
 
 // GetStringSlice return the []string value of a flag with the given name
