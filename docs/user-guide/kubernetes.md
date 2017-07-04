@@ -114,13 +114,6 @@ spec:
       containers:
       - image: traefik
         name: traefik-ingress-lb
-        resources:
-          limits:
-            cpu: 200m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-            memory: 20Mi
         args:
         - --web
         - --kubernetes
@@ -174,13 +167,6 @@ spec:
       containers:
       - image: traefik
         name: traefik-ingress-lb
-        resources:
-          limits:
-            cpu: 200m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-            memory: 20Mi
         ports:
         - name: http
           containerPort: 80
