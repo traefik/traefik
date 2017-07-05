@@ -1220,9 +1220,13 @@ Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 #
 # namespaces = ["default", "production"]
 
-# See: http://kubernetes.io/docs/user-guide/labels/#list-and-watch-filtering
-# labelselector = "A and not B"
+# Ingress label selector to identify Ingress objects that should be processed.
+# See https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors for details.
 #
+# Optional
+# Default: empty (process all Ingresses)
+#
+# labelselector = "A and not B"
 ```
 
 Annotations can be used on containers to override default behaviour for the whole Ingress resource:

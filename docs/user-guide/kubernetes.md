@@ -510,6 +510,11 @@ You should now be able to visit the websites in your browser.
 * [cheeses.minikube/cheddar](http://cheeses.minikube/cheddar/)
 * [cheeses.minikube/wensleydale](http://cheeses.minikube/wensleydale/)
 
+## Forwarding to ExternalNames
+
+When specifying an [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors),
+Træfik will forward requests to the given host accordingly and use HTTPS when the Service port matches 443. This still requires setting up a proper port mapping on the Service from the Ingress port to the (external) Service port.
+
 ## Disable passing the Host header
 
 By default Træfik will pass the incoming Host header on to the upstream resource.
