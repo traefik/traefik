@@ -97,6 +97,7 @@ func (w *GzipResponseWriter) Write(b []byte) (int, error) {
 	}
 
 	// Save the write into a buffer for later use in GZIP responseWriter (if content is long enough) or at close with regular responseWriter.
+	// On the first write, w.buf changes from nil to a valid slice
 	w.buf = append(w.buf, b...)
 
 	// If the global writes are bigger than the minSize, compression is enable.
@@ -122,7 +123,9 @@ func (w *GzipResponseWriter) startGzip() error {
 	w.Header().Del(contentLength)
 
 	// Write the header to gzip response.
-	w.writeHeader()
+	if w.code != 0 {
+		w.ResponseWriter.WriteHeader(w.code)
+	}
 
 	// Initialize the GZIP response.
 	w.init()
@@ -146,14 +149,6 @@ func (w *GzipResponseWriter) WriteHeader(code int) {
 	w.code = code
 }
 
-// writeHeader uses the saved code to send it to the ResponseWriter.
-func (w *GzipResponseWriter) writeHeader() {
-	if w.code == 0 {
-		w.code = http.StatusOK
-	}
-	w.ResponseWriter.WriteHeader(w.code)
-}
-
 // init graps a new gzip writer from the gzipWriterPool and writes the correct
 // content encoding header.
 func (w *GzipResponseWriter) init() {
@@ -166,19 +161,18 @@ func (w *GzipResponseWriter) init() {
 
 // Close will close the gzip.Writer and will put it back in the gzipWriterPool.
 func (w *GzipResponseWriter) Close() error {
-	// Buffer not nil means the regular response must be returned.
-	if w.buf != nil {
-		w.writeHeader()
-		// Make the write into the regular response.
-		_, writeErr := w.ResponseWriter.Write(w.buf)
-		// Returns the error if any at write.
-		if writeErr != nil {
-			return fmt.Errorf("gziphandler: write to regular responseWriter at close gets error: %q", writeErr.Error())
-		}
-	}
-
-	// If the GZIP responseWriter is not set no needs to close it.
 	if w.gw == nil {
+		// Gzip not trigged yet, write out regular response.
+		if w.code != 0 {
+			w.ResponseWriter.WriteHeader(w.code)
+		}
+		if w.buf != nil {
+			_, writeErr := w.ResponseWriter.Write(w.buf)
+			// Returns the error if any at write.
+			if writeErr != nil {
+				return fmt.Errorf("gziphandler: write to regular responseWriter at close gets error: %q", writeErr.Error())
+			}
+		}
 		return nil
 	}
 
@@ -253,8 +247,6 @@ func NewGzipLevelAndMinSize(level, minSize int) (func(http.Handler) http.Handler
 					ResponseWriter: w,
 					index:          index,
 					minSize:        minSize,
-
-					buf: []byte{},
 				}
 				defer gw.Close()
 

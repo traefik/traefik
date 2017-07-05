@@ -172,8 +172,13 @@ func (s *UsersService) ListAll(ctx context.Context, opt *UserListOptions) ([]*Us
 // authenticated user.
 //
 // GitHub API docs: https://developer.github.com/v3/repos/invitations/#list-a-users-repository-invitations
-func (s *UsersService) ListInvitations(ctx context.Context) ([]*RepositoryInvitation, *Response, error) {
-	req, err := s.client.NewRequest("GET", "user/repository_invitations", nil)
+func (s *UsersService) ListInvitations(ctx context.Context, opt *ListOptions) ([]*RepositoryInvitation, *Response, error) {
+	u, err := addOptions("user/repository_invitations", opt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, nil, err
 	}
