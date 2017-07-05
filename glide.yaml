@@ -1,6 +1,9 @@
 package: github.com/containous/traefik
+ignore:
+- github.com/sirupsen/logrus
 import:
 - package: github.com/BurntSushi/toml
+  version: v0.3.0
 - package: github.com/BurntSushi/ty
   subpackages:
   - fun
@@ -19,6 +22,8 @@ import:
   - roundrobin
   - stream
   - utils
+- name: github.com/codegangsta/negroni
+  version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - package: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - package: github.com/docker/docker
@@ -43,11 +48,6 @@ import:
   subpackages:
   - api
 - package: github.com/streamrail/concurrent-map
-- package: github.com/stretchr/testify
-  subpackages:
-  - assert
-  - mock
-  - require
 - package: github.com/thoas/stats
   version: 152b5d051953fdb6e45f14b6826962aadc032324
 - package: github.com/unrolled/render
@@ -164,7 +164,7 @@ import:
   subpackages:
   - google
 - package: golang.org/x/time
-  version: a4bde12657593d5e90d0533a3e4fd95e635124cb
+  version: 8be79e1e0910c292df4e79c241bb7e8f7e725959
 - package: github.com/rancher/go-rancher-metadata
   version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
 - package: github.com/googleapis/gax-go
@@ -177,6 +177,19 @@ import:
   version: 6018b68f96b839edfbe3fb48668853f5dbad88a3
   repo: https://github.com/ijc25/Gotty
   vcs: git
+- package: github.com/spf13/pflag
+  version: cb88ea77998c3f024757528e3305022ab50b43be
+- package: github.com/stretchr/testify
+  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
+  subpackages:
+  - assert
+  - mock
+  - require
+- package: github.com/davecgh/go-spew
+  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
+  subpackages:
+  - spew
+testImport:
 - package: github.com/docker/libcompose
   version: 0ad950cbeb3d72107613dd220b5e9d7e001b890b
 - package: github.com/go-check/check
@@ -191,7 +204,5 @@ import:
   version: e0695005d6819191cf8969b479c94c40c8d22aa4
 - package: github.com/mattn/go-shellwords
 - package: github.com/vdemeester/shakers
-- package: github.com/spf13/pflag
-  version: cb88ea77998c3f024757528e3305022ab50b43be
 - package: github.com/docker/cli
   version: d95fd2f38cfc23e077530c6181330727d561b6a0
