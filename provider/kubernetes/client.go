@@ -263,7 +263,7 @@ func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan struct{}) (<-c
 // fireEvent checks if all controllers have synced before firing
 // Used after startup or a reconnect
 func (c *clientImpl) fireEvent(event interface{}, eventCh chan interface{}) {
-	if !c.ingController.HasSynced() || !c.svcController.HasSynced() || !c.epController.HasSynced() || !c.secController.HasSynced() {
+	if !c.ingController.HasSynced() || !c.svcController.HasSynced() || !c.epController.HasSynced() {
 		return
 	}
 	eventHandlerFunc(eventCh, event)
