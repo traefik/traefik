@@ -23,7 +23,7 @@ GO_BUILD_CMD="go build -ldflags"
 GO_BUILD_OPT="-s -w -X ${GIT_REPO_URL}.Version=$VERSION -X ${GIT_REPO_URL}.Codename=$CODENAME -X ${GIT_REPO_URL}.BuildDate=$DATE"
 
 # Build 386 amd64 binaries
-OS_PLATFORM_ARG=(linux darwin)
+OS_PLATFORM_ARG=(linux windows darwin)
 OS_ARCH_ARG=(amd64)
 for OS in ${OS_PLATFORM_ARG[@]}; do
   for ARCH in ${OS_ARCH_ARG[@]}; do
@@ -31,9 +31,6 @@ for OS in ${OS_PLATFORM_ARG[@]}; do
     GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 $GO_BUILD_CMD "$GO_BUILD_OPT" -o "dist/traefik_$OS-$ARCH" ./cmd/traefik/
   done
 done
-
-echo "Building binary for windows/amd64"
-env CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CGO_ENABLED=1 GOARCH="amd64" GOOS="windows" $GO_BUILD_CMD "$GO_BUILD_OPT" -o "dist/traefik_$OS-$ARCH" ./cmd/traefik/
 
 # Build arm64 binaries
 OS_PLATFORM_ARG=(linux)

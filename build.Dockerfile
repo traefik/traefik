@@ -5,7 +5,6 @@ FROM golang:1.8
 RUN awk '$1 ~ "^deb" { $3 = $3 "-backports"; print; exit }' /etc/apt/sources.list > /etc/apt/sources.list.d/backports.list && \
   DEBIAN_FRONTEND=noninteractive apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -t jessie-backports --yes --no-install-recommends mercurial=3.9.1-1~bpo8+1 && \
-  DEBIAN_FRONTEND=noninteractive apt-get install --yes gcc-multilib gcc-mingw-w64 && \
   rm -fr /var/lib/apt/lists/
 
 RUN go get github.com/jteeuwen/go-bindata/... \
