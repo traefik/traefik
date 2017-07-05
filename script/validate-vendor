@@ -19,7 +19,7 @@ if [[ ${#files[@]} -gt 0 ]]; then
     diffs="$(git status --porcelain -- ${vendor_dir} 2>/dev/null)"
     if [[ "$diffs" ]]; then
         {
-            echo "The result of 'glide install' for vendor directory '${dir}' differs"
+            echo "The result of 'glide install' for vendor directory '${vendor_dir}' differs"
             echo
             echo "$diffs"
             echo
