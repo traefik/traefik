@@ -1,4 +1,4 @@
-hash: 6ead128f30ec7f2cceedf20084c0ef6aa4020815f4f243f19bc346d4c8002eff
+hash: 990f3638123068fff96d68e14636c3e1bd4a33d74a40b3980c1ebfae078b1c8c
 updated: 2017-07-04T11:03:09.025639582+02:00
 imports:
 - name: cloud.google.com/go
@@ -535,7 +535,7 @@ imports:
   - jws
   - jwt
 - name: golang.org/x/sys
-  version: 8d1157a435470616f975ff9bb013bea8d0962067
+  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
   subpackages:
   - unix
   - windows
@@ -798,10 +798,6 @@ imports:
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
   version: 0c8571ac0ce161a5feb57375a9cdf148c98c0f70
-- name: golang.org/x/sys
-  version: 5eaf0df67e70d6997a9fe0ed24383fa1b01638d3
-  subpackages:
-  - unix
 - name: golang.org/x/time
   version: a4bde12657593d5e90d0533a3e4fd95e635124cb
   subpackages:
