@@ -59,21 +59,21 @@ type GlobalConfiguration struct {
 	RootCAs                   RootCAs                 `description:"Add cert file for self-signed certicate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
-	Docker                    *docker.Provider        `description:"Enable Docker backend"`
-	File                      *file.Provider          `description:"Enable File backend"`
-	Web                       *WebProvider            `description:"Enable Web backend"`
-	Marathon                  *marathon.Provider      `description:"Enable Marathon backend"`
-	Consul                    *consul.Provider        `description:"Enable Consul backend"`
-	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend"`
-	Etcd                      *etcd.Provider          `description:"Enable Etcd backend"`
-	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend"`
-	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend"`
-	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend"`
-	Mesos                     *mesos.Provider         `description:"Enable Mesos backend"`
-	Eureka                    *eureka.Provider        `description:"Enable Eureka backend"`
-	ECS                       *ecs.Provider           `description:"Enable ECS backend"`
-	Rancher                   *rancher.Provider       `description:"Enable Rancher backend"`
-	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend"`
+	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings"`
+	File                      *file.Provider          `description:"Enable File backend with default settings"`
+	Web                       *WebProvider            `description:"Enable Web backend with default settings"`
+	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings"`
+	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings"`
+	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend with default settings"`
+	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings"`
+	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings"`
+	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings"`
+	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend with default settings"`
+	Mesos                     *mesos.Provider         `description:"Enable Mesos backend with default settings"`
+	Eureka                    *eureka.Provider        `description:"Enable Eureka backend with default settings"`
+	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings"`
+	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings"`
+	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings"`
 }
 
 // DefaultEntryPoints holds default entry points

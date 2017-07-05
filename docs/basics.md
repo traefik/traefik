@@ -444,12 +444,14 @@ The static configuration is the global configuration which is setting up connect
 Træfik can be configured using many configuration sources with the following precedence order.
 Each item takes precedence over the item below it:
 
-- [Key-value Store](/basics/#key-value-stores)
+- [Key-value store](/basics/#key-value-stores)
 - [Arguments](/basics/#arguments)
 - [Configuration file](/basics/#configuration-file)
 - Default
 
-It means that arguments override configuration file, and Key-value Store overrides arguments.
+It means that arguments override configuration file, and key-value store overrides arguments.
+
+Note that the provider-enabling argument parameters (e.g., `--docker`) set all default values for the specific provider. It must not be used if a configuration source with less precedence wants to set a non-default provider value.
 
 ### Configuration file
 
