@@ -59,6 +59,9 @@ func (p *Provider) createClient() (*dynamoClient, error) {
 				&credentials.SharedCredentialsProvider{},
 				defaults.RemoteCredProvider(*(defaults.Config()), defaults.Handlers()),
 			}),
+		Logger: aws.LoggerFunc(func(args ...interface{}) {
+			log.Debug(args...)
+		}),
 	}
 
 	if p.Endpoint != "" {
