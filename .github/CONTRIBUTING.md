@@ -16,7 +16,7 @@ Step 0 : FROM golang:1.8
  ---> 8c6473912976
 Step 1 : RUN go get github.com/Masterminds/glide
 [...]
-docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/emile/dev/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
+docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/emile/dev/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./.script/make.sh generate binary
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 
@@ -50,17 +50,14 @@ This can be verified via `$ go env`
 
 If you want to add a dependency, use `$ glide get` to have glide put it into the vendor folder and update the glide manifest/lock files (`glide.yaml` and `glide.lock`, respectively). A following `glide-vc` run should be triggered to trim down the size of the vendor folder. The final result must be committed into VCS.
 
-Dependencies for the integration tests in the `integration` folder are managed in a separate `integration/glide.yaml` file using the same toolset.
 
-Care must be taken to choose the right arguments to `glide` when dealing with either main or integration test dependencies, or otherwise risk ending up with a broken build. For that reason, the helper script `script/glide.sh` encapsulates the gory details and conveniently calls `glide-vc` as well. Call it without parameters for basic usage instructions.
+Care must be taken to choose the right arguments to `glide` when dealing with dependencies, or otherwise risk ending up with a broken build. For that reason, the helper script `.script/glide.sh` encapsulates the gory details and conveniently calls `glide-vc` as well. Call it without parameters for basic usage instructions.
 
 Here's a full example:
 
 ```bash
 # install the new main dependency github.com/foo/bar and minimize vendor size
-$ ./script/glide.sh get github.com/foo/bar
-# install another dependency, this time for the integration tests
-$ ( cd integration && ../script/glide.sh get github.com/baz/quuz )
+$ ./.script/glide.sh get github.com/foo/bar
 # generate (Only required to integrate other components such as web dashboard)
 $ go generate
 # Standard go build
@@ -79,7 +76,7 @@ integration test using the `test-integration` target.
 $ make test-unit
 docker build -t "traefik-dev:your-feature-branch" -f build.Dockerfile .
 # […]
-docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/vincent/src/github/vdemeester/traefik/dist:/go/src/github.com/containous/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate test-unit
+docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/vincent/src/github/vdemeester/traefik/dist:/go/src/github.com/containous/traefik/dist" "traefik-dev:your-feature-branch" ./.script/make.sh generate test-unit
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 

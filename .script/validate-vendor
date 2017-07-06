@@ -23,7 +23,7 @@ if [[ ${#files[@]} -gt 0 ]]; then
             echo
             echo "$diffs"
             echo
-            echo 'Please vendor your package(s) with script/glide.sh.'
+            echo "Please vendor your package(s) with '.script/glide.sh.'"
             echo
         } >&2
         exit 2

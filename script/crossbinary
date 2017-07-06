@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-set -e
-
-./script/crossbinary-default
-./script/crossbinary-others
