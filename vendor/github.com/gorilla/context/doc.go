@@ -5,12 +5,6 @@
 /*
 Package context stores values shared during a request lifetime.
 
-Note: gorilla/context, having been born well before `context.Context` existed,
-does not play well > with the shallow copying of the request that
-[`http.Request.WithContext`](https://golang.org/pkg/net/http/#Request.WithContext)
-(added to net/http Go 1.7 onwards) performs. You should either use *just*
-gorilla/context, or moving forward, the new `http.Request.Context()`.
-
 For example, a router can set variables extracted from the URL and later
 application handlers can access those values, or it can be used to store
 sessions values to be saved at the end of a request. There are several

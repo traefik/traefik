@@ -27,7 +27,7 @@ type HealthCheck struct {
 	GracePeriodSeconds     int      `json:"gracePeriodSeconds,omitempty"`
 	IntervalSeconds        int      `json:"intervalSeconds,omitempty"`
 	TimeoutSeconds         int      `json:"timeoutSeconds,omitempty"`
-	IgnoreHTTP1xx          *bool    `json:"ignoreHttp1xx,ommitempty"`
+	IgnoreHTTP1xx          *bool    `json:"ignoreHttp1xx,omitempty"`
 }
 
 // SetCommand sets the given command on the health check.

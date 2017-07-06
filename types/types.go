@@ -54,6 +54,13 @@ type Route struct {
 	Rule string `json:"rule,omitempty"`
 }
 
+//ErrorPage holds custom error page configuration
+type ErrorPage struct {
+	Status  []string `json:"status,omitempty"`
+	Backend string   `json:"backend,omitempty"`
+	Query   string   `json:"query,omitempty"`
+}
+
 // Headers holds the custom header configuration
 type Headers struct {
 	CustomRequestHeaders    map[string]string `json:"customRequestHeaders,omitempty"`
@@ -108,15 +115,16 @@ func (h Headers) HasSecureHeadersDefined() bool {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
-	EntryPoints          []string         `json:"entryPoints,omitempty"`
-	Backend              string           `json:"backend,omitempty"`
-	Routes               map[string]Route `json:"routes,omitempty"`
-	PassHostHeader       bool             `json:"passHostHeader,omitempty"`
-	PassTLSCert          bool             `json:"passTLSCert,omitempty"`
-	Priority             int              `json:"priority"`
-	BasicAuth            []string         `json:"basicAuth"`
-	WhitelistSourceRange []string         `json:"whitelistSourceRange,omitempty"`
-	Headers              Headers          `json:"headers,omitempty"`
+	EntryPoints          []string             `json:"entryPoints,omitempty"`
+	Backend              string               `json:"backend,omitempty"`
+	Routes               map[string]Route     `json:"routes,omitempty"`
+	PassHostHeader       bool                 `json:"passHostHeader,omitempty"`
+	PassTLSCert          bool                 `json:"passTLSCert,omitempty"`
+	Priority             int                  `json:"priority"`
+	BasicAuth            []string             `json:"basicAuth"`
+	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
+	Headers              Headers              `json:"headers,omitempty"`
+	Errors               map[string]ErrorPage `json:"errors,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.

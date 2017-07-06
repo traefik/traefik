@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	fmtlog "log"
@@ -28,6 +29,7 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
+	"golang.org/x/net/http2"
 )
 
 func main() {
@@ -104,6 +106,7 @@ Complete documentation is available at https://traefik.io`,
 	//add custom parsers
 	f.AddParser(reflect.TypeOf(server.EntryPoints{}), &server.EntryPoints{})
 	f.AddParser(reflect.TypeOf(server.DefaultEntryPoints{}), &server.DefaultEntryPoints{})
+	f.AddParser(reflect.TypeOf(server.RootCAs{}), &server.RootCAs{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
@@ -178,6 +181,23 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = globalConfiguration.MaxIdleConnsPerHost
 	if globalConfiguration.InsecureSkipVerify {
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	if len(globalConfiguration.RootCAs) > 0 {
+		roots := x509.NewCertPool()
+		for _, cert := range globalConfiguration.RootCAs {
+			certContent, err := cert.Read()
+			if err != nil {
+				log.Error("Error while read RootCAs", err)
+				continue
+			}
+			roots.AppendCertsFromPEM(certContent)
+		}
+
+		tr := http.DefaultTransport.(*http.Transport)
+		tr.TLSClientConfig = &tls.Config{RootCAs: roots}
+
+		http2.ConfigureTransport(tr)
 	}
 
 	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {

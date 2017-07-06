@@ -1,5 +1,5 @@
 // This is the main file that sets up integration tests using go-check.
-package main
+package integration
 
 import (
 	"bytes"
@@ -38,6 +38,7 @@ func init() {
 	check.Suite(&EurekaSuite{})
 	check.Suite(&AcmeSuite{})
 	check.Suite(&DynamoDBSuite{})
+	check.Suite(&ErrorPagesSuite{})
 }
 
 var traefikBinary = "../dist/traefik"

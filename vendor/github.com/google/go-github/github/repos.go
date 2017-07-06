@@ -7,6 +7,7 @@ package github
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -25,6 +26,7 @@ type Repository struct {
 	FullName         *string          `json:"full_name,omitempty"`
 	Description      *string          `json:"description,omitempty"`
 	Homepage         *string          `json:"homepage,omitempty"`
+	CodeOfConduct    *CodeOfConduct   `json:"code_of_conduct,omitempty"`
 	DefaultBranch    *string          `json:"default_branch,omitempty"`
 	MasterBranch     *string          `json:"master_branch,omitempty"`
 	CreatedAt        *Timestamp       `json:"created_at,omitempty"`
@@ -293,7 +295,7 @@ func (s *RepositoriesService) Get(ctx context.Context, owner, repo string) (*Rep
 
 	// TODO: remove custom Accept header when the license support fully launches
 	// https://developer.github.com/v3/licenses/#get-a-repositorys-license
-	acceptHeaders := []string{mediaTypeLicensesPreview, mediaTypeSquashPreview}
+	acceptHeaders := []string{mediaTypeLicensesPreview, mediaTypeSquashPreview, mediaTypeCodesOfConductPreview}
 	req.Header.Set("Accept", strings.Join(acceptHeaders, ", "))
 
 	repository := new(Repository)
@@ -303,6 +305,28 @@ func (s *RepositoriesService) Get(ctx context.Context, owner, repo string) (*Rep
 	}
 
 	return repository, resp, nil
+}
+
+// GetCodeOfConduct gets the contents of a repository's code of conduct.
+//
+// GitHub API docs: https://developer.github.com/v3/codes_of_conduct/#get-the-contents-of-a-repositorys-code-of-conduct
+func (s *RepositoriesService) GetCodeOfConduct(ctx context.Context, owner, repo string) (*CodeOfConduct, *Response, error) {
+	u := fmt.Sprintf("repos/%v/%v/community/code_of_conduct", owner, repo)
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches.
+	req.Header.Set("Accept", mediaTypeCodesOfConductPreview)
+
+	coc := new(CodeOfConduct)
+	resp, err := s.client.Do(ctx, req, coc)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return coc, resp, nil
 }
 
 // GetByID fetches a repository.
@@ -509,22 +533,22 @@ type Branch struct {
 
 // Protection represents a repository branch's protection.
 type Protection struct {
-	RequiredStatusChecks       *RequiredStatusChecks       `json:"required_status_checks"`
-	RequiredPullRequestReviews *RequiredPullRequestReviews `json:"required_pull_request_reviews"`
-	Restrictions               *BranchRestrictions         `json:"restrictions"`
+	RequiredStatusChecks       *RequiredStatusChecks          `json:"required_status_checks"`
+	RequiredPullRequestReviews *PullRequestReviewsEnforcement `json:"required_pull_request_reviews"`
+	EnforceAdmins              *AdminEnforcement              `json:"enforce_admins"`
+	Restrictions               *BranchRestrictions            `json:"restrictions"`
 }
 
 // ProtectionRequest represents a request to create/edit a branch's protection.
 type ProtectionRequest struct {
-	RequiredStatusChecks       *RequiredStatusChecks       `json:"required_status_checks"`
-	RequiredPullRequestReviews *RequiredPullRequestReviews `json:"required_pull_request_reviews"`
-	Restrictions               *BranchRestrictionsRequest  `json:"restrictions"`
+	RequiredStatusChecks       *RequiredStatusChecks                 `json:"required_status_checks"`
+	RequiredPullRequestReviews *PullRequestReviewsEnforcementRequest `json:"required_pull_request_reviews"`
+	EnforceAdmins              bool                                  `json:"enforce_admins"`
+	Restrictions               *BranchRestrictionsRequest            `json:"restrictions"`
 }
 
 // RequiredStatusChecks represents the protection status of a individual branch.
 type RequiredStatusChecks struct {
-	// Enforce required status checks for repository administrators. (Required.)
-	IncludeAdmins bool `json:"include_admins"`
 	// Require branches to be up to date before merging. (Required.)
 	Strict bool `json:"strict"`
 	// The list of status checks to require in order to merge into this
@@ -532,10 +556,61 @@ type RequiredStatusChecks struct {
 	Contexts []string `json:"contexts"`
 }
 
-// RequiredPullRequestReviews represents the protection configuration for pull requests.
-type RequiredPullRequestReviews struct {
-	// Enforce pull request reviews for repository administrators. (Required.)
-	IncludeAdmins bool `json:"include_admins"`
+// PullRequestReviewsEnforcement represents the pull request reviews enforcement of a protected branch.
+type PullRequestReviewsEnforcement struct {
+	// Specifies which users and teams can dismiss pull requets reviews.
+	DismissalRestrictions DismissalRestrictions `json:"dismissal_restrictions"`
+	// Specifies if approved reviews are dismissed automatically, when a new commit is pushed.
+	DismissStaleReviews bool `json:"dismiss_stale_reviews"`
+}
+
+// PullRequestReviewsEnforcementRequest represents request to set the pull request review
+// enforcement of a protected branch. It is separate from PullRequestReviewsEnforcement above
+// because the request structure is different from the response structure.
+type PullRequestReviewsEnforcementRequest struct {
+	// Specifies which users and teams should be allowed to dismiss pull requets reviews. Can be nil to disable the restrictions.
+	DismissalRestrictionsRequest *DismissalRestrictionsRequest `json:"dismissal_restrictions"`
+	// Specifies if approved reviews can be dismissed automatically, when a new commit is pushed. (Required)
+	DismissStaleReviews bool `json:"dismiss_stale_reviews"`
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+// Converts nil value of PullRequestReviewsEnforcementRequest.DismissalRestrictionsRequest to empty array
+func (req PullRequestReviewsEnforcementRequest) MarshalJSON() ([]byte, error) {
+	if req.DismissalRestrictionsRequest == nil {
+		newReq := struct {
+			R []interface{} `json:"dismissal_restrictions"`
+			D bool          `json:"dismiss_stale_reviews"`
+		}{
+			R: []interface{}{},
+			D: req.DismissStaleReviews,
+		}
+		return json.Marshal(newReq)
+	}
+	newReq := struct {
+		R *DismissalRestrictionsRequest `json:"dismissal_restrictions"`
+		D bool                          `json:"dismiss_stale_reviews"`
+	}{
+		R: req.DismissalRestrictionsRequest,
+		D: req.DismissStaleReviews,
+	}
+	return json.Marshal(newReq)
+}
+
+// PullRequestReviewsEnforcementUpdate represents request to patch the pull request review
+// enforcement of a protected branch. It is separate from PullRequestReviewsEnforcementRequest above
+// because the patch request does not require all fields to be initialized.
+type PullRequestReviewsEnforcementUpdate struct {
+	// Specifies which users and teams can dismiss pull requets reviews. Can be ommitted.
+	DismissalRestrictionsRequest *DismissalRestrictionsRequest `json:"dismissal_restrictions,omitempty"`
+	// Specifies if approved reviews can be dismissed automatically, when a new commit is pushed. Can be ommited.
+	DismissStaleReviews *bool `json:"dismiss_stale_reviews,omitempty"`
+}
+
+// AdminEnforcement represents the configuration to enforce required status checks for repository administrators.
+type AdminEnforcement struct {
+	URL     *string `json:"url,omitempty"`
+	Enabled bool    `json:"enabled"`
 }
 
 // BranchRestrictions represents the restriction that only certain users or
@@ -555,6 +630,25 @@ type BranchRestrictionsRequest struct {
 	// The list of user logins with push access. (Required; use []string{} instead of nil for empty list.)
 	Users []string `json:"users"`
 	// The list of team slugs with push access. (Required; use []string{} instead of nil for empty list.)
+	Teams []string `json:"teams"`
+}
+
+// DismissalRestrictions specifies which users and teams can dismiss pull request reviews.
+type DismissalRestrictions struct {
+	// The list of users who can dimiss pull request reviews.
+	Users []*User `json:"users"`
+	// The list of teams which can dismiss pull request reviews.
+	Teams []*Team `json:"teams"`
+}
+
+// DismissalRestrictionsRequest represents the request to create/edit the
+// restriction to allows only specific users or teams to dimiss pull request reviews. It is
+// separate from DismissalRestrictions above because the request structure is
+// different from the response structure.
+type DismissalRestrictionsRequest struct {
+	// The list of user logins who can dismiss pull request reviews. (Required; use []string{} instead of nil for empty list.)
+	Users []string `json:"users"`
+	// The list of team slugs which can dismiss pull request reviews. (Required; use []string{} instead of nil for empty list.)
 	Teams []string `json:"teams"`
 }
 
@@ -727,4 +821,154 @@ func (s *RepositoriesService) License(ctx context.Context, owner, repo string) (
 	}
 
 	return r, resp, nil
+}
+
+// GetPullRequestReviewEnforcement gets pull request review enforcement of a protected branch.
+//
+// GitHub API docs: https://developer.github.com/v3/repos/branches/#get-pull-request-review-enforcement-of-protected-branch
+func (s *RepositoriesService) GetPullRequestReviewEnforcement(ctx context.Context, owner, repo, branch string) (*PullRequestReviewsEnforcement, *Response, error) {
+	u := fmt.Sprintf("repos/%v/%v/branches/%v/protection/required_pull_request_reviews", owner, repo, branch)
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches
+	req.Header.Set("Accept", mediaTypeProtectedBranchesPreview)
+
+	r := new(PullRequestReviewsEnforcement)
+	resp, err := s.client.Do(ctx, req, r)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return r, resp, nil
+}
+
+// UpdatePullRequestReviewEnforcement patches pull request review enforcement of a protected branch.
+// It requires admin access and branch protection to be enabled.
+//
+// GitHub API docs: https://developer.github.com/v3/repos/branches/#update-pull-request-review-enforcement-of-protected-branch
+func (s *RepositoriesService) UpdatePullRequestReviewEnforcement(ctx context.Context, owner, repo, branch string, patch *PullRequestReviewsEnforcementUpdate) (*PullRequestReviewsEnforcement, *Response, error) {
+	u := fmt.Sprintf("repos/%v/%v/branches/%v/protection/required_pull_request_reviews", owner, repo, branch)
+	req, err := s.client.NewRequest("PATCH", u, patch)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches
+	req.Header.Set("Accept", mediaTypeProtectedBranchesPreview)
+
+	r := new(PullRequestReviewsEnforcement)
+	resp, err := s.client.Do(ctx, req, r)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return r, resp, err
+}
+
+// DisableDismissalRestrictions disables dismissal restrictions of a protected branch.
+// It requires admin access and branch protection to be enabled.
+//
+// GitHub API docs: https://developer.github.com/v3/repos/branches/#update-pull-request-review-enforcement-of-protected-branch
+func (s *RepositoriesService) DisableDismissalRestrictions(ctx context.Context, owner, repo, branch string) (*PullRequestReviewsEnforcement, *Response, error) {
+	u := fmt.Sprintf("repos/%v/%v/branches/%v/protection/required_pull_request_reviews", owner, repo, branch)
+
+	data := struct {
+		R []interface{} `json:"dismissal_restrictions"`
+	}{[]interface{}{}}
+
+	req, err := s.client.NewRequest("PATCH", u, data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches
+	req.Header.Set("Accept", mediaTypeProtectedBranchesPreview)
+
+	r := new(PullRequestReviewsEnforcement)
+	resp, err := s.client.Do(ctx, req, r)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return r, resp, err
+}
+
+// RemovePullRequestReviewEnforcement removes pull request enforcement of a protected branch.
+//
+// GitHub API docs: https://developer.github.com/v3/repos/branches/#remove-pull-request-review-enforcement-of-protected-branch
+func (s *RepositoriesService) RemovePullRequestReviewEnforcement(ctx context.Context, owner, repo, branch string) (*Response, error) {
+	u := fmt.Sprintf("repos/%v/%v/branches/%v/protection/required_pull_request_reviews", owner, repo, branch)
+	req, err := s.client.NewRequest("DELETE", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches
+	req.Header.Set("Accept", mediaTypeProtectedBranchesPreview)
+
+	return s.client.Do(ctx, req, nil)
+}
+
+// GetAdminEnforcement gets admin enforcement information of a protected branch.
+//
+// GitHub API docs: https://developer.github.com/v3/repos/branches/#get-admin-enforcement-of-protected-branch
+func (s *RepositoriesService) GetAdminEnforcement(ctx context.Context, owner, repo, branch string) (*AdminEnforcement, *Response, error) {
+	u := fmt.Sprintf("repos/%v/%v/branches/%v/protection/enforce_admins", owner, repo, branch)
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches
+	req.Header.Set("Accept", mediaTypeProtectedBranchesPreview)
+
+	r := new(AdminEnforcement)
+	resp, err := s.client.Do(ctx, req, r)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return r, resp, nil
+}
+
+// AddAdminEnforcement adds admin enforcement to a protected branch.
+// It requires admin access and branch protection to be enabled.
+//
+// GitHub API docs: https://developer.github.com/v3/repos/branches/#add-admin-enforcement-of-protected-branch
+func (s *RepositoriesService) AddAdminEnforcement(ctx context.Context, owner, repo, branch string) (*AdminEnforcement, *Response, error) {
+	u := fmt.Sprintf("repos/%v/%v/branches/%v/protection/enforce_admins", owner, repo, branch)
+	req, err := s.client.NewRequest("POST", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches
+	req.Header.Set("Accept", mediaTypeProtectedBranchesPreview)
+
+	r := new(AdminEnforcement)
+	resp, err := s.client.Do(ctx, req, r)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return r, resp, err
+}
+
+// RemoveAdminEnforcement removes admin enforcement from a protected branch.
+//
+// GitHub API docs: https://developer.github.com/v3/repos/branches/#remove-admin-enforcement-of-protected-branch
+func (s *RepositoriesService) RemoveAdminEnforcement(ctx context.Context, owner, repo, branch string) (*Response, error) {
+	u := fmt.Sprintf("repos/%v/%v/branches/%v/protection/enforce_admins", owner, repo, branch)
+	req, err := s.client.NewRequest("DELETE", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches
+	req.Header.Set("Accept", mediaTypeProtectedBranchesPreview)
+
+	return s.client.Do(ctx, req, nil)
 }

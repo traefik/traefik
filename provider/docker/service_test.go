@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/types"
-	docker "github.com/docker/engine-api/types"
+	docker "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 )
 

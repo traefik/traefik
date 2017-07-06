@@ -396,6 +396,39 @@ Here is an example of backends and servers definition:
 - `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
 - a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
 
+## Custom Error pages
+
+Custom error pages can be returned, in lieu of the default, according to frontend-configured ranges of HTTP Status codes.
+In the example below, if a 503 status is returned from the frontend "website", the custom error page at http://2.3.4.5/503.html is returned with the actual status code set in the HTTP header.
+Note, the 503.html page itself is not hosted on traefik, but some other infrastructure.   
+
+```toml
+[frontends]
+  [frontends.website]
+  backend = "website"
+  [errors]
+    [error.network]
+    status = ["500-599"]
+    backend = "error"
+    query = "/{status}.html"
+  [frontends.website.routes.website]
+  rule = "Host: website.mydomain.com"
+
+[backends]
+  [backends.website]
+    [backends.website.servers.website]
+    url = "https://1.2.3.4"
+  [backends.error]
+    [backends.error.servers.error]
+    url = "http://2.3.4.5"
+```
+
+In the above example, the error page rendered was based on the status code.
+Instead, the query parameter can also be set to some generic error page like so: `query = "/500s.html"`
+
+Now the 500s.html error page is returned for the configured code range.
+The configured status code ranges are inclusive; that is, in the above example, the 500s.html page will be returned for status codes 500 through, and including, 599.
+
 # Configuration
 
 Træfik's configuration has two parts:
@@ -411,12 +444,14 @@ The static configuration is the global configuration which is setting up connect
 Træfik can be configured using many configuration sources with the following precedence order.
 Each item takes precedence over the item below it:
 
-- [Key-value Store](/basics/#key-value-stores)
+- [Key-value store](/basics/#key-value-stores)
 - [Arguments](/basics/#arguments)
 - [Configuration file](/basics/#configuration-file)
 - Default
 
-It means that arguments override configuration file, and Key-value Store overrides arguments.
+It means that arguments override configuration file, and key-value store overrides arguments.
+
+Note that the provider-enabling argument parameters (e.g., `--docker`) set all default values for the specific provider. It must not be used if a configuration source with less precedence wants to set a non-default provider value.
 
 ### Configuration file
 
@@ -478,6 +513,7 @@ List of Træfik available commands with description :             
 
 - `version` : Print version 
 - `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
+- `bug`: The easiest way to submit a pre-filled issue.
 
 Each command may have related flags.
 All those related flags will be displayed with :
@@ -491,3 +527,13 @@ Note that each command is described at the beginning of the help section:
 ```bash
 $ traefik --help
 ```
+
+## Command: bug
+
+Here is the easiest way to submit a pre-filled issue on [Træfik GitHub](https://github.com/containous/traefik).
+
+```bash
+$ traefik bug
+```
+
+See https://www.youtube.com/watch?v=Lyz62L8m93I.
