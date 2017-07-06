@@ -79,6 +79,12 @@ type CommitsComparison struct {
 	Commits []RepositoryCommit `json:"commits,omitempty"`
 
 	Files []CommitFile `json:"files,omitempty"`
+
+	HTMLURL      *string `json:"html_url,omitempty"`
+	PermalinkURL *string `json:"permalink_url,omitempty"`
+	DiffURL      *string `json:"diff_url,omitempty"`
+	PatchURL     *string `json:"patch_url,omitempty"`
+	URL          *string `json:"url,omitempty"` // API URL.
 }
 
 func (c CommitsComparison) String() string {

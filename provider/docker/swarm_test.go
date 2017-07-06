@@ -8,10 +8,10 @@ import (
 
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
-	dockerclient "github.com/docker/engine-api/client"
-	docker "github.com/docker/engine-api/types"
-	dockertypes "github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/swarm"
+	docker "github.com/docker/docker/api/types"
+	dockertypes "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/swarm"
+	dockerclient "github.com/docker/docker/client"
 	"golang.org/x/net/context"
 )
 

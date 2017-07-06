@@ -19,7 +19,7 @@ type Label struct {
 }
 
 func (l Label) String() string {
-	return fmt.Sprint(*l.Name)
+	return Stringify(l)
 }
 
 // ListLabels lists all labels for a repository.

@@ -83,6 +83,61 @@ func (c *Client) ListEmojis(ctx context.Context) (map[string]string, *Response, 
 	return emoji, resp, nil
 }
 
+// CodeOfConduct represents a code of conduct.
+type CodeOfConduct struct {
+	Name *string `json:"name,omitempty"`
+	Key  *string `json:"key,omitempty"`
+	URL  *string `json:"url,omitempty"`
+	Body *string `json:"body,omitempty"`
+}
+
+func (c *CodeOfConduct) String() string {
+	return Stringify(c)
+}
+
+// ListCodesOfConduct returns all codes of conduct.
+//
+// GitHub API docs: https://developer.github.com/v3/codes_of_conduct/#list-all-codes-of-conduct
+func (c *Client) ListCodesOfConduct(ctx context.Context) ([]*CodeOfConduct, *Response, error) {
+	req, err := c.NewRequest("GET", "codes_of_conduct", nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches.
+	req.Header.Set("Accept", mediaTypeCodesOfConductPreview)
+
+	var cs []*CodeOfConduct
+	resp, err := c.Do(ctx, req, &cs)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return cs, resp, nil
+}
+
+// GetCodeOfConduct returns an individual code of conduct.
+//
+// https://developer.github.com/v3/codes_of_conduct/#get-an-individual-code-of-conduct
+func (c *Client) GetCodeOfConduct(ctx context.Context, key string) (*CodeOfConduct, *Response, error) {
+	u := fmt.Sprintf("codes_of_conduct/%s", key)
+	req, err := c.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: remove custom Accept header when this API fully launches.
+	req.Header.Set("Accept", mediaTypeCodesOfConductPreview)
+
+	coc := new(CodeOfConduct)
+	resp, err := c.Do(ctx, req, coc)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return coc, resp, nil
+}
+
 // APIMeta represents metadata about the GitHub API.
 type APIMeta struct {
 	// An Array of IP addresses in CIDR format specifying the addresses

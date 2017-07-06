@@ -1,6 +1,9 @@
 package pflag
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 // -- uint Value
 type uintValue uint
@@ -20,7 +23,7 @@ func (i *uintValue) Type() string {
 	return "uint"
 }
 
-func (i *uintValue) String() string { return strconv.FormatUint(uint64(*i), 10) }
+func (i *uintValue) String() string { return fmt.Sprintf("%v", *i) }
 
 func uintConv(sval string) (interface{}, error) {
 	v, err := strconv.ParseUint(sval, 0, 0)

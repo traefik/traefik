@@ -6,19 +6,17 @@ set -o nounset
 ####
 ### Helper script for glide[-vc] to handle specifics for the Traefik repo.
 ##
-# In particular, the 'integration/' directory contains its own set of
-# glide-managed dependencies which must not have its nested vendor folder
-# stripped. Depending on where the script is called from, it will do the Right
-# Thing.
-#
 
-CWD="$(pwd)"; readonly CWD
 GLIDE_ARGS=()
 GLIDE_VC_ARGS=(
   '--use-lock-file'       # `glide list` seems to miss test dependencies, e.g., github.com/mattn/go-shellwords
   '--only-code'
   '--no-tests'
 )
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+readonly SCRIPT_DIR
+readonly GLIDE_DIR="${SCRIPT_DIR}/.."
 
 usage() {
   echo "usage: $(basename "$0") install | update | get <package> | trim
@@ -30,14 +28,7 @@ trim:    Trim the vendor folder only, do not install or update dependencies.
 The current working directory must contain a glide.yaml file." >&2
 }
 
-is_integration_dir() {
-  [[ "$(basename ${CWD})" = 'integration' ]]
-}
-
 GLIDE_ARGS+=('--strip-vendor')
-if ! is_integration_dir; then
-  GLIDE_ARGS+=('--skip-test')
-fi
 
 if ! type glide > /dev/null 2>&1; then
   echo "glide not found in PATH." >&2
@@ -49,7 +40,7 @@ if ! type glide-vc > /dev/null 2>&1; then
   exit 1
 fi
 
-if [[ ! -e "${CWD}/glide.yaml" ]]; then
+if [[ ! -e "${GLIDE_DIR}/glide.yaml" ]]; then
   echo "no glide.yaml file found in the current working directory" >&2
   exit 1
 fi

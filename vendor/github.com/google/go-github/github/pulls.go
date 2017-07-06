@@ -33,6 +33,7 @@ type PullRequest struct {
 	Merged              *bool      `json:"merged,omitempty"`
 	Mergeable           *bool      `json:"mergeable,omitempty"`
 	MergedBy            *User      `json:"merged_by,omitempty"`
+	MergeCommitSHA      *string    `json:"merge_commit_sha,omitempty"`
 	Comments            *int       `json:"comments,omitempty"`
 	Commits             *int       `json:"commits,omitempty"`
 	Additions           *int       `json:"additions,omitempty"`
