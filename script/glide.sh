@@ -7,7 +7,6 @@ set -o nounset
 ### Helper script for glide[-vc] to handle specifics for the Traefik repo.
 ##
 
-CWD="$(pwd)"; readonly CWD
 GLIDE_ARGS=()
 GLIDE_VC_ARGS=(
   '--use-lock-file'       # `glide list` seems to miss test dependencies, e.g., github.com/mattn/go-shellwords
@@ -37,7 +36,7 @@ if ! type glide-vc > /dev/null 2>&1; then
   exit 1
 fi
 
-if [[ ! -e "${CWD}/glide.yaml" ]]; then
+if [[ ! -e "glide.yaml" ]]; then
   echo "no glide.yaml file found in the current working directory" >&2
   exit 1
 fi
