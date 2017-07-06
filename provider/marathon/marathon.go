@@ -459,10 +459,12 @@ func extractServicesLabels(labels *map[string]string) labelServiceProperties {
 				continue
 			}
 
-			// Accordig to the regex, match index 1 is "service_name" and match index 2 is the "property_name"
+			// According to the regex, match index 1 is "service_name" and match index 2 is the "property_name"
 			serviceName := matches[1]
 			propertyName := matches[2]
-			v[serviceName] = make(servicePropertyValues)
+			if _, ok := v[serviceName]; !ok {
+				v[serviceName] = make(servicePropertyValues)
+			}
 			v[serviceName][propertyName] = value
 		}
 	}
