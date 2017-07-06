@@ -36,6 +36,7 @@ const (
 	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
 	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
 	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
+	annotationKubernetesSSLRedirect          = "ingress.kubernetes.io/ssl-redirect"
 )
 
 const traefikDefaultRealm = "traefik"
@@ -179,6 +180,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				default:
 					log.Warnf("Unknown value '%s' for %s, falling back to %s", passHostHeaderAnnotation, types.LabelFrontendPassHostHeader, PassHostHeader)
 				}
+
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
 					return nil, errors.New("no realm customization supported")
 				}
@@ -204,6 +206,19 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						WhitelistSourceRange: whitelistSourceRange,
 					}
 				}
+
+				sslRedirectAnnotation, ok := i.Annotations[annotationKubernetesSSLRedirect]
+				switch {
+				case !ok:
+					// No op.
+				case sslRedirectAnnotation == "false":
+					templateObjects.Frontends[r.Host+pa.Path].Headers.SSLRedirect = false
+				case sslRedirectAnnotation == "true":
+					templateObjects.Frontends[r.Host+pa.Path].Headers.SSLRedirect = true
+				default:
+					log.Warnf("Unknown value '%s' for %s", sslRedirectAnnotation, annotationKubernetesSSLRedirect)
+				}
+
 				if len(r.Host) > 0 {
 					rule := "Host:" + r.Host
 

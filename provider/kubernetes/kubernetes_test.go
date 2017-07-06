@@ -1403,6 +1403,34 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
+					annotationKubernetesSSLRedirect: "true",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "ssl",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/redirect",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
 					"kubernetes.io/ingress.class":     "traefik",
 					types.LabelFrontendPassHostHeader: "true",
 				},
@@ -1605,6 +1633,19 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"ssl/redirect": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
 			"other/stuff": {
 				Servers: map[string]types.Server{
 					"http://example.com": {
@@ -1668,6 +1709,22 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 					"foo": {
 						Rule: "Host:foo",
+					},
+				},
+			},
+			"ssl/redirect": {
+				Backend:        "ssl/redirect",
+				Priority:       len("/redirect"),
+				PassHostHeader: true,
+				Headers: types.Headers{
+					SSLRedirect: true,
+				},
+				Routes: map[string]types.Route{
+					"/redirect": {
+						Rule: "PathPrefix:/redirect",
+					},
+					"ssl": {
+						Rule: "Host:ssl",
 					},
 				},
 			},
