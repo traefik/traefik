@@ -1,5 +1,12 @@
 # Change Log
 
+## [v1.3.3](https://github.com/containous/traefik/tree/v1.3.3) (2017-07-06)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.2...v1.3.3)
+
+**Bug fixes:**
+- **[k8s]** Undo the Secrets controller sync wait. ([#1828](https://github.com/containous/traefik/pull/1828) by [timoreimann](https://github.com/timoreimann))
+- **[k8s]** Tell glog to log everything into STDERR. ([#1817](https://github.com/containous/traefik/pull/1817) by [timoreimann](https://github.com/timoreimann))
+
 ## [v1.3.2](https://github.com/containous/traefik/tree/v1.3.2) (2017-06-29)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.1...v1.3.2)
 
