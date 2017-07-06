@@ -14,6 +14,10 @@ GLIDE_VC_ARGS=(
   '--no-tests'
 )
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+readonly SCRIPT_DIR
+readonly GLIDE_DIR="${SCRIPT_DIR}/.."
+
 usage() {
   echo "usage: $(basename "$0") install | update | get <package> | trim
 install: Install all dependencies and trim the vendor folder afterwards (alternative command: i).
@@ -36,7 +40,7 @@ if ! type glide-vc > /dev/null 2>&1; then
   exit 1
 fi
 
-if [[ ! -e "glide.yaml" ]]; then
+if [[ ! -e "${GLIDE_DIR}/glide.yaml" ]]; then
   echo "no glide.yaml file found in the current working directory" >&2
   exit 1
 fi
