@@ -4,7 +4,7 @@
 
 In our integration ACME tests, we use a simulated Let's Encrypt container based stack named boulder.
 
-The goal of this directory is to provide to developer a Traefik-boulder full stack environment.
+The goal of this directory is to provide to developers a Traefik-boulder full stack environment.
 This environment may be used in order to quickly test developments on ACME certificates management.
 
 The provided Boulder stack is based on the environment used during integration tests.
@@ -19,7 +19,7 @@ The provided Boulder stack is based on the environment used during integration t
 
 ### Description
 
-To work fine, boulder needs domain name, with related IP and storage file. The shell script allows to check the environment before to launch the Docker environment with the rights parameters and to manage this environment.
+To work fine, boulder needs a domain name, with a related IP and storage file. The shell script allows to check the environment before launching the Docker environment with the rights parameters and to managing this environment.
 
 ### Use
 
