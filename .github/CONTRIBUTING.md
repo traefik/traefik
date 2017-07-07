@@ -32,15 +32,48 @@ traefik*
 
 - You need `go` v1.8+
 - It is recommended you clone Træfik into a directory like `~/go/src/github.com/containous/traefik` (This is the official golang workspace hierarchy, and will allow dependencies to resolve properly)
-- This will allow your `GOPATH` and `PATH` variable to be set to `~/go` via:
+- Set your `GOPATH` and `PATH` variable to be set to `~/go` via:
+
 ```bash
-$ export GOPATH=~/go
-$ export PATH=$PATH:$GOPATH/bin
+export GOPATH=~/go
+export PATH=$PATH:$GOPATH/bin
 ```
 
-This can be verified via `$ go env`
-- You will want to add those 2 export lines to your `.bashrc` or `.bash_profile`
-- You need `go-bindata` to be able to use `go generate` command (needed to build) : `$ go get github.com/jteeuwen/go-bindata/...` (Please note, the ellipses are required)
+> Note: You will want to add those 2 export lines to your `.bashrc` or `.bash_profile`
+
+- Verify your environment is setup properly by running `$ go env`.  Depending on your OS and environment you should see output similar to:
+
+```bash
+GOARCH="amd64"
+GOBIN=""
+GOEXE=""
+GOHOSTARCH="amd64"
+GOHOSTOS="linux"
+GOOS="linux"
+GOPATH="/home/<yourusername>/go"
+GORACE=""
+## more go env's will be listed 
+```
+
+###### Build Træfik
+
+Once your environment is set up and the Træfik repository cloned you can build Træfik. You need get `go-bindata` once to be able to use `go generate` command as part of the build.  The steps to build are:
+
+```bash
+cd ~/go/src/github.com/containous/traefik
+
+# Get go-bindata. Please note, the ellipses are required
+go get github.com/jteeuwen/go-bindata/... 
+
+# Start build
+go generate
+
+# Standard go build
+go build ./cmd/traefik
+# run other commands like tests
+```
+
+You will find the Træfik executable in the `~/go/src/github.com/containous/traefik` folder as `traefik`. 
 
 #### Setting up `glide` and `glide-vc` for dependency management
 
@@ -54,7 +87,7 @@ Dependencies for the integration tests in the `integration` folder are managed i
 
 Care must be taken to choose the right arguments to `glide` when dealing with either main or integration test dependencies, or otherwise risk ending up with a broken build. For that reason, the helper script `script/glide.sh` encapsulates the gory details and conveniently calls `glide-vc` as well. Call it without parameters for basic usage instructions.
 
-Here's a full example:
+Here's a full example using glide to add a new dependency:
 
 ```bash
 # install the new main dependency github.com/foo/bar and minimize vendor size
