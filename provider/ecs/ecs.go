@@ -85,6 +85,12 @@ func (p *Provider) createClient() (*awsClient, error) {
 			}),
 	}
 
+	if p.Trace {
+		cfg.WithLogger(aws.LoggerFunc(func(args ...interface{}) {
+			log.Debug(args...)
+		}))
+	}
+
 	return &awsClient{
 		ecs.New(sess, cfg),
 		ec2.New(sess, cfg),
