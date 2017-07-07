@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
+	"github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/job"
@@ -28,6 +29,7 @@ const (
 	labelPortIndex                  = "traefik.portIndex"
 	labelBackendHealthCheckPath     = "traefik.backend.healthcheck.path"
 	labelBackendHealthCheckInterval = "traefik.backend.healthcheck.interval"
+	traceMaxScanTokenSize           = 1024 * 1024
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -68,6 +70,9 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		config := marathon.NewDefaultConfig()
 		config.URL = p.Endpoint
 		config.EventsTransport = marathon.EventsTransportSSE
+		if p.Trace {
+			config.LogOutput = log.CustomWriterLevel(logrus.DebugLevel, traceMaxScanTokenSize)
+		}
 		if p.Basic != nil {
 			config.HTTPBasicAuthUser = p.Basic.HTTPBasicAuthUser
 			config.HTTPBasicPassword = p.Basic.HTTPBasicPassword
