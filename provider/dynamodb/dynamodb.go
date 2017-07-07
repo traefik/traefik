@@ -61,6 +61,12 @@ func (p *Provider) createClient() (*dynamoClient, error) {
 			}),
 	}
 
+	if p.Trace {
+		cfg.WithLogger(aws.LoggerFunc(func(args ...interface{}) {
+			log.Debug(args...)
+		}))
+	}
+
 	if p.Endpoint != "" {
 		cfg.Endpoint = aws.String(p.Endpoint)
 	}
