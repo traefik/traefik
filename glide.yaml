@@ -1,6 +1,9 @@
 package: github.com/containous/traefik
+ignore:
+- github.com/sirupsen/logrus
 import:
 - package: github.com/BurntSushi/toml
+  version: v0.3.0
 - package: github.com/BurntSushi/ty
   subpackages:
   - fun
@@ -19,22 +22,19 @@ import:
   - roundrobin
   - stream
   - utils
+- name: github.com/codegangsta/negroni
+  version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - package: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
-- package: github.com/docker/engine-api
-  version: v0.4.0
-  subpackages:
-  - client
-  - types
-  - types/events
-  - types/filters
+- package: github.com/docker/docker
+  version: 75c7536d2e2e328b644bf69153de879d1d197988
 - package: github.com/docker/go-connections
-  version: v0.2.1
+  version: e15c02316c12de00874640cd76311849de2aeed5
   subpackages:
   - sockets
   - tlsconfig
 - package: github.com/docker/go-units
-  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
+  version: 9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1
 - package: github.com/docker/libkv
   subpackages:
   - store
@@ -48,16 +48,9 @@ import:
   subpackages:
   - api
 - package: github.com/streamrail/concurrent-map
-- package: github.com/stretchr/testify
-  subpackages:
-  - assert
-  - mock
-  - require
 - package: github.com/thoas/stats
   version: 152b5d051953fdb6e45f14b6826962aadc032324
 - package: github.com/unrolled/render
-- package: github.com/vdemeester/docker-events
-  version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - package: github.com/vulcand/vulcand
   version: 42492a3a85e294bdbdd1bcabb8c12769a81ea284
   subpackages:
@@ -122,14 +115,23 @@ import:
 - package: github.com/eapache/channels
   version: v1.1.0
 - package: golang.org/x/sys
-  version: 8d1157a435470616f975ff9bb013bea8d0962067
+  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
 - package: golang.org/x/net
   version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
   subpackages:
   - http2
   - context
 - package: github.com/docker/distribution
-  version: v2.6.0
+  version: b38e5838b7b2f2ad48e06ec4b500011976080621
+- package: github.com/opencontainers/go-digest
+  version: a6d0ee40d4207ea02364bd3b9e8e77b9159ba1eb
+- package: github.com/opencontainers/image-spec
+  version: f03dbe35d449c54915d235f1a3cf8f585a24babe
+  subpackages:
+  - specs-go
+  - specs-go/v1
+- package: github.com/docker/libtrust
+  version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
 - package: github.com/aws/aws-sdk-go
   version: v1.6.18
   subpackages:
@@ -161,6 +163,8 @@ import:
   version: 7fdf09982454086d5570c7db3e11f360194830ca
   subpackages:
   - google
+- package: golang.org/x/time
+  version: 8be79e1e0910c292df4e79c241bb7e8f7e725959
 - package: github.com/rancher/go-rancher-metadata
   version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
 - package: github.com/googleapis/gax-go
@@ -169,3 +173,36 @@ import:
   version: v1.2.0
 - package: github.com/unrolled/secure
   version: 824e85271811af89640ea25620c67f6c2eed987e
+- package: github.com/Nvveen/Gotty
+  version: 6018b68f96b839edfbe3fb48668853f5dbad88a3
+  repo: https://github.com/ijc25/Gotty
+  vcs: git
+- package: github.com/spf13/pflag
+  version: cb88ea77998c3f024757528e3305022ab50b43be
+- package: github.com/stretchr/testify
+  version: 4d4bfba8f1d1027c4fdbe371823030df51419987
+  subpackages:
+  - assert
+  - mock
+  - require
+- package: github.com/davecgh/go-spew
+  version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
+  subpackages:
+  - spew
+testImport:
+- package: github.com/docker/libcompose
+  version: 0ad950cbeb3d72107613dd220b5e9d7e001b890b
+- package: github.com/go-check/check
+  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+- package: github.com/libkermit/compose
+  version: 2048f803f56422a65b455f918d4a61704dc94603
+  subpackages:
+  - check
+- package: github.com/libkermit/docker
+  version: ddede409294e8c5ae66d68ac09edb6b27e8f3e4a
+- package: github.com/libkermit/docker-check
+  version: e0695005d6819191cf8969b479c94c40c8d22aa4
+- package: github.com/mattn/go-shellwords
+- package: github.com/vdemeester/shakers
+- package: github.com/docker/cli
+  version: d95fd2f38cfc23e077530c6181330727d561b6a0

@@ -17,7 +17,6 @@ RUN go get github.com/jteeuwen/go-bindata/... \
 # Which docker version to test on
 ARG DOCKER_VERSION=17.03.2
 
-
 # Which glide version to test on
 ARG GLIDE_VERSION=v0.12.3
 

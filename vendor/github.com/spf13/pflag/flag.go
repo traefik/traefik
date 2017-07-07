@@ -416,39 +416,23 @@ func Set(name, value string) error {
 // otherwise, the default values of all defined flags in the set.
 func (f *FlagSet) PrintDefaults() {
 	usages := f.FlagUsages()
-	fmt.Fprint(f.out(), usages)
+	fmt.Fprintf(f.out(), "%s", usages)
 }
 
-// defaultIsZeroValue returns true if the default value for this flag represents
-// a zero value.
-func (f *Flag) defaultIsZeroValue() bool {
-	switch f.Value.(type) {
-	case boolFlag:
-		return f.DefValue == "false"
-	case *durationValue:
-		// Beginning in Go 1.7, duration zero values are "0s"
-		return f.DefValue == "0" || f.DefValue == "0s"
-	case *intValue, *int8Value, *int32Value, *int64Value, *uintValue, *uint8Value, *uint16Value, *uint32Value, *uint64Value, *countValue, *float32Value, *float64Value:
-		return f.DefValue == "0"
-	case *stringValue:
-		return f.DefValue == ""
-	case *ipValue, *ipMaskValue, *ipNetValue:
-		return f.DefValue == "<nil>"
-	case *intSliceValue, *stringSliceValue, *stringArrayValue:
-		return f.DefValue == "[]"
-	default:
-		switch f.Value.String() {
-		case "false":
-			return true
-		case "<nil>":
-			return true
-		case "":
-			return true
-		case "0":
-			return true
-		}
-		return false
+// isZeroValue guesses whether the string represents the zero
+// value for a flag. It is not accurate but in practice works OK.
+func isZeroValue(value string) bool {
+	switch value {
+	case "false":
+		return true
+	case "<nil>":
+		return true
+	case "":
+		return true
+	case "0":
+		return true
 	}
+	return false
 }
 
 // UnquoteUsage extracts a back-quoted name from the usage
@@ -471,19 +455,22 @@ func UnquoteUsage(flag *Flag) (name string, usage string) {
 			break // Only one back quote; use type name.
 		}
 	}
-
-	name = flag.Value.Type()
-	switch name {
-	case "bool":
+	// No explicit name, so use type if we can find one.
+	name = "value"
+	switch flag.Value.(type) {
+	case boolFlag:
 		name = ""
-	case "float64":
+	case *durationValue:
+		name = "duration"
+	case *float64Value:
 		name = "float"
-	case "int64":
+	case *intValue, *int64Value:
 		name = "int"
-	case "uint64":
+	case *stringValue:
+		name = "string"
+	case *uintValue, *uint64Value:
 		name = "uint"
 	}
-
 	return
 }
 
@@ -514,7 +501,7 @@ func (f *FlagSet) FlagUsages() string {
 		if len(flag.NoOptDefVal) > 0 {
 			switch flag.Value.Type() {
 			case "string":
-				line += fmt.Sprintf("[=\"%s\"]", flag.NoOptDefVal)
+				line += fmt.Sprintf("[=%q]", flag.NoOptDefVal)
 			case "bool":
 				if flag.NoOptDefVal != "true" {
 					line += fmt.Sprintf("[=%s]", flag.NoOptDefVal)
@@ -532,9 +519,9 @@ func (f *FlagSet) FlagUsages() string {
 		}
 
 		line += usage
-		if !flag.defaultIsZeroValue() {
+		if !isZeroValue(flag.DefValue) {
 			if flag.Value.Type() == "string" {
-				line += fmt.Sprintf(" (default \"%s\")", flag.DefValue)
+				line += fmt.Sprintf(" (default %q)", flag.DefValue)
 			} else {
 				line += fmt.Sprintf(" (default %s)", flag.DefValue)
 			}
