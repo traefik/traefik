@@ -30,6 +30,7 @@ type BaseProvider struct {
 	Watch       bool              `description:"Watch provider"`
 	Filename    string            `description:"Override default configuration template. For advanced users :)"`
 	Constraints types.Constraints `description:"Filter services by constraint, matching with Traefik tags."`
+	Trace       bool              `description:"Display additional provider logs (if available)."`
 }
 
 // MatchConstraints must match with EVERY single contraint
