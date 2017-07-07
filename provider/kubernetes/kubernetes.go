@@ -29,11 +29,13 @@ var _ provider.Provider = (*Provider)(nil)
 const (
 	annotationFrontendRuleType = "traefik.frontend.rule.type"
 	ruleTypePathPrefix         = "PathPrefix"
+	ruleTypeReplacePath        = "ReplacePath"
 
 	annotationKubernetesIngressClass         = "kubernetes.io/ingress.class"
 	annotationKubernetesAuthRealm            = "ingress.kubernetes.io/auth-realm"
 	annotationKubernetesAuthType             = "ingress.kubernetes.io/auth-type"
 	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
+	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
 	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
 )
 
@@ -153,6 +155,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				log.Warn("Error in ingress: HTTP is nil")
 				continue
 			}
+
 			for _, pa := range r.HTTP.Paths {
 				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
@@ -213,14 +216,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				if len(pa.Path) > 0 {
-					ruleType := i.Annotations[annotationFrontendRuleType]
-					if ruleType == "" {
-						ruleType = ruleTypePathPrefix
-					}
-
+				rule := getRuleForPath(pa, i)
+				if rule != "" {
 					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-						Rule: ruleType + ":" + pa.Path,
+						Rule: rule,
 					}
 				}
 
@@ -241,9 +240,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Expression: expression,
 					}
 				}
+
 				if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
+
 				if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
 				}
@@ -254,6 +255,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						if port.Port == 443 {
 							protocol = "https"
 						}
+
 						if service.Spec.Type == "ExternalName" {
 							url := protocol + "://" + service.Spec.ExternalName
 							name := url
@@ -300,6 +302,25 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 	}
 	return &templateObjects, nil
+}
+
+func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
+	if len(pa.Path) == 0 {
+		return ""
+	}
+
+	ruleType := i.Annotations[annotationFrontendRuleType]
+	if ruleType == "" {
+		ruleType = ruleTypePathPrefix
+	}
+
+	rule := ruleType + ":" + pa.Path
+
+	if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
+		rule = ruleTypeReplacePath + ":" + rewriteTarget
+	}
+
+	return rule
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
