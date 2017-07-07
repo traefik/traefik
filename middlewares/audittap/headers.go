@@ -1,10 +1,10 @@
 package audittap
 
 import (
-	"bytes"
-	audittypes "github.com/containous/traefik/middlewares/audittap/audittypes"
 	"net/http"
 	"strings"
+
+	"github.com/containous/traefik/middlewares/audittap/audittypes"
 )
 
 // Headers is a map equivalent to http.Header with some transformation methods.
@@ -17,43 +17,6 @@ func NewHeaders(h http.Header) Headers {
 		result[strings.ToLower(k)] = v
 	}
 	return result
-}
-
-// DropHopByHopHeaders eliminates unintersting headers that only serve to mediate hop-by-hop exchanges.
-func (h Headers) DropHopByHopHeaders() Headers {
-	delete(h, "connection")
-	delete(h, "keep-alive")
-	delete(h, "proxy-authenticate")
-	delete(h, "proxy-authorization")
-	delete(h, "te")
-	delete(h, "trailers")
-	delete(h, "transfer-encoding")
-	delete(h, "upgrade")
-	return h
-}
-
-func flattenKey(key string) string {
-	b := bytes.Buffer{}
-	parts := strings.Split(key, "-")
-	for i, p := range parts {
-		p = strings.ToLower(p)
-		if i == 0 || len(p) <= 1 {
-			b.WriteString(p)
-		} else {
-			b.WriteString(strings.ToUpper(p[:1]))
-			b.WriteString(p[1:])
-		}
-	}
-	return b.String()
-}
-
-// CamelCaseKeys transforms all the keys by removing dashes and using camel-case instead.
-func (h Headers) CamelCaseKeys() Headers {
-	result := make(http.Header)
-	for k, v := range h {
-		result[flattenKey(k)] = v
-	}
-	return Headers(result)
 }
 
 func expandCookies(existing interface{}, v []string) []string {
@@ -85,14 +48,72 @@ func (h Headers) SimplifyCookies() Headers {
 
 // Flatten replaces length=1 []string values with a single string.
 // Values with longer length remain unchanged.
-func (h Headers) Flatten(prefix string) audittypes.DataMap {
+func (h Headers) Flatten() audittypes.DataMap {
 	flat := make(audittypes.DataMap)
 	for k, v := range h {
 		if len(v) == 1 {
-			flat[prefix+k] = v[0]
+			flat[k] = v[0]
 		} else {
-			flat[prefix+k] = v
+			flat[k] = v
 		}
 	}
 	return flat
+}
+
+// ClientAndRequestHeaders populates separate data maps for the client and request
+// headers that we want to audit.
+func (h Headers) ClientAndRequestHeaders() (clientHeaders, requestHeaders audittypes.DataMap) {
+	clientHeaders = make(audittypes.DataMap)
+	requestHeaders = make(audittypes.DataMap)
+
+	for k, v := range h {
+		var fv interface{}
+		if len(v) == 1 {
+			fv = v[0]
+		} else {
+			fv = v
+		}
+
+		if headerInSet(k, []string{"x-request-id", "content-type", "true-client-ip", "true-client-port", "x-source", "authorization"}) {
+			// Skip as we've recorded this individually
+		} else if headerInSet(k, []string{"x-", "forwarded-", "if-", "proxy-", "akamai-"}) {
+			requestHeaders[k] = fv
+		} else {
+			clientHeaders[k] = fv
+		}
+	}
+
+	return clientHeaders, requestHeaders
+}
+
+// ResponseHeaders returns the response headers we are interested in
+// as a DataMap
+func (h Headers) ResponseHeaders() audittypes.DataMap {
+	responseHeaders := make(audittypes.DataMap)
+
+	for k, v := range h {
+		var fv interface{}
+		if len(v) == 1 {
+			fv = v[0]
+		} else {
+			fv = v
+		}
+
+		if headerInSet(k, []string{"x-request-id", "content-type"}) {
+			// Skip as we've recorded this individually
+		} else {
+			(responseHeaders)[k] = fv
+		}
+	}
+
+	return responseHeaders
+}
+
+func headerInSet(hdr string, set []string) bool {
+	for _, v := range set {
+		if strings.HasPrefix(hdr, v) {
+			return true
+		}
+	}
+	return false
 }

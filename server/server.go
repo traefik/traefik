@@ -692,12 +692,26 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					var saveFrontend http.Handler
 					if server.accessLoggerMiddleware != nil {
 						saveBackend := accesslog.NewSaveBackend(fwd, frontend.Backend)
-						auditTap, _ := audittap.NewAuditTap(&types.AuditSink{}, server.auditStreams, frontend.Backend, saveBackend)
-						saveFrontend = accesslog.NewSaveFrontend(auditTap, frontendName)
+						if server.globalConfiguration.AuditSink != nil {
+							auditTap, err := audittap.NewAuditTap(server.globalConfiguration.AuditSink, server.auditStreams, frontend.Backend, saveBackend)
+							if err != nil {
+								log.Fatal("Error starting server: ", err)
+							}
+							saveFrontend = accesslog.NewSaveFrontend(auditTap, frontendName)
+						} else {
+							saveFrontend = accesslog.NewSaveFrontend(saveBackend, frontendName)
+						}
 						rr, _ = roundrobin.New(saveFrontend)
 					} else {
-						auditTap, _ := audittap.NewAuditTap(&types.AuditSink{}, server.auditStreams, frontend.Backend, fwd)
-						rr, _ = roundrobin.New(auditTap)
+						if server.globalConfiguration.AuditSink != nil {
+							auditTap, err := audittap.NewAuditTap(server.globalConfiguration.AuditSink, server.auditStreams, frontend.Backend, fwd)
+							if err != nil {
+								log.Fatal("Error starting server: ", err)
+							}
+							rr, _ = roundrobin.New(auditTap)
+						} else {
+							rr, _ = roundrobin.New(fwd)
+						}
 					}
 
 					if configuration.Backends[frontend.Backend] == nil {

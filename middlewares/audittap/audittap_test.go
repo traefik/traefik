@@ -2,12 +2,13 @@ package audittap
 
 import (
 	"fmt"
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
-	"github.com/containous/traefik/types"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/containous/traefik/types"
+	"github.com/stretchr/testify/assert"
 )
 
 type noopAuditStream struct {
@@ -27,10 +28,13 @@ func TestAuditTap_noop(t *testing.T) {
 	audittypes.TheClock = T0
 
 	capture := &noopAuditStream{}
-	cfg := &types.AuditSink{}
+	cfg := &types.AuditSink{
+		AuditSource: "testSource",
+		AuditType:   "testType",
+	}
 	tap, err := NewAuditTap(cfg, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
-	tap.AuditStreams = []audittypes.AuditStream{capture}
 	assert.NoError(t, err)
+	tap.AuditStreams = []audittypes.AuditStream{capture}
 
 	req := httptest.NewRequest("", "/a/b/c?d=1&e=2", nil)
 	req.RemoteAddr = "101.102.103.104:1234"
@@ -41,30 +45,40 @@ func TestAuditTap_noop(t *testing.T) {
 
 	tap.ServeHTTP(res, req)
 
+	capture.events[0].EventID = ""
+	capture.events[0].RequestID = ""
+
 	assert.Equal(t, 1, len(capture.events))
 	assert.Equal(t,
 		audittypes.Summary{
-			"backend1",
-			audittypes.DataMap{
-				audittypes.Host:       "example.co.uk",
-				audittypes.Method:     "GET",
-				audittypes.Path:       "/a/b/c",
-				audittypes.Query:      "d=1&e=2",
-				audittypes.RemoteAddr: "101.102.103.104:1234",
-				"hdr-request-id":      "R123",
-				"hdr-session-id":      "S123",
-				audittypes.BeganAt:    audittypes.TheClock.Now().UTC(),
+			AuditSource:        "testSource",
+			AuditType:          "testType",
+			GeneratedAt:        "2001-09-09T01:46:40.000Z",
+			Version:            "1",
+			RequestID:          "",
+			Method:             "GET",
+			Path:               "/a/b/c",
+			QueryString:        "d=1&e=2",
+			ClientIP:           "",
+			ClientPort:         "",
+			ReceivingIP:        "",
+			AuthorisationToken: "",
+			ResponseStatus:     "404",
+			ResponsePayload: audittypes.DataMap{
+				"type": "text/plain; charset=utf-8",
 			},
-			audittypes.DataMap{
-				audittypes.Status:            404,
-				"hdr-x-content-type-options": "nosniff",
-				"hdr-content-type":           "text/plain; charset=utf-8",
-				audittypes.Size:              19,
-				audittypes.Entity:            []byte("404 page not found\n"),
-				audittypes.CompletedAt:       audittypes.TheClock.Now().UTC(),
+			ClientHeaders: audittypes.DataMap{
+				"session-id": "S123",
+				"request-id": "R123",
 			},
-		},
-		capture.events[0])
+			RequestHeaders: audittypes.DataMap{},
+			RequestPayload: audittypes.DataMap{
+				"type": "",
+			},
+			ResponseHeaders: audittypes.DataMap{
+				"x-content-type-options": "nosniff",
+			},
+		}, capture.events[0])
 }
 
 // simpleHandler replies to the request with the specified error message and HTTP code.

@@ -1,22 +1,13 @@
 package audittap
 
 import (
-	. "github.com/containous/traefik/middlewares/audittap/audittypes"
-	"github.com/stretchr/testify/assert"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	. "github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/stretchr/testify/assert"
 )
-
-func TestAuditResponseWriter_no_body(t *testing.T) {
-	TheClock = T0
-
-	recorder := httptest.NewRecorder()
-	w := NewAuditResponseWriter(recorder, MaximumEntityLength)
-	w.WriteHeader(204)
-	assert.Equal(t, 204, w.SummariseResponse()[Status])
-	assert.Equal(t, 0, w.SummariseResponse()[Size])
-}
 
 func TestAuditResponseWriter_with_body(t *testing.T) {
 	TheClock = T0
@@ -26,8 +17,11 @@ func TestAuditResponseWriter_with_body(t *testing.T) {
 	w.WriteHeader(200)
 	w.Write([]byte("hello"))
 	w.Write([]byte("world"))
-	assert.Equal(t, 200, w.SummariseResponse()[Status])
-	assert.Equal(t, 10, w.SummariseResponse()[Size])
+
+	var s = Summary{}
+	w.SummariseResponse(&s)
+
+	assert.Equal(t, "200", s.ResponseStatus)
 }
 
 func TestAuditResponseWriter_headers(t *testing.T) {
@@ -36,7 +30,7 @@ func TestAuditResponseWriter_headers(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	w := NewAuditResponseWriter(recorder, MaximumEntityLength)
 
-	// hop-by-hop headers should be dropped
+	// hop-by-hop headers should be retained
 	w.Header().Set("Keep-Alive", "true")
 	w.Header().Set("Connection", "1")
 	w.Header().Set("Proxy-Authenticate", "1")
@@ -46,23 +40,52 @@ func TestAuditResponseWriter_headers(t *testing.T) {
 	w.Header().Set("Transfer-Encoding", "1")
 	w.Header().Set("Upgrade", "1")
 
-	// other headers should be retainedd
+	// other headers should be retained
 	w.Header().Set("Content-Length", "123")
 	w.Header().Set("Request-ID", "abc123")
 	w.Header().Add("Cookie", "a=1; b=2")
 	w.Header().Add("Cookie", "c=3")
 
+	// content-type should be set under responsePayload
+	w.Header().Add("Content-Type", "application/json")
+
+	var s = Summary{}
+	w.SummariseResponse(&s)
+
 	assert.Equal(t,
-		DataMap{
-			"hdr-content-length": "123",
-			"hdr-request-id":     "abc123",
-			"hdr-cookie":         []string{"a=1", "b=2", "c=3"},
-			CompletedAt:          T0.Now().UTC(),
-			Status:               0,
-			Size:                 0,
-			Entity:               []byte{},
+		Summary{
+			AuditSource:        "",
+			AuditType:          "",
+			EventID:            "",
+			GeneratedAt:        "",
+			Version:            "",
+			RequestID:          "",
+			Method:             "",
+			Path:               "",
+			QueryString:        "",
+			ClientIP:           "",
+			ClientPort:         "",
+			ReceivingIP:        "",
+			AuthorisationToken: "",
+			ResponseStatus:     "0",
+			ResponsePayload:    DataMap{"type": "application/json"},
+			ClientHeaders:      nil,
+			RequestHeaders:     nil,
+			RequestPayload:     nil,
+			ResponseHeaders: DataMap{
+				"trailers":            "1",
+				"proxy-authenticate":  "1",
+				"cookie":              []string{"a=1", "b=2", "c=3"},
+				"te":                  "1",
+				"request-id":          "abc123",
+				"content-length":      "123",
+				"transfer-encoding":   "1",
+				"proxy-authorization": "1",
+				"connection":          "1",
+				"upgrade":             "1",
+				"keep-alive":          "true"},
 		},
-		w.SummariseResponse())
+		s)
 }
 
 type fixedClock time.Time

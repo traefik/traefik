@@ -13,7 +13,9 @@ logLevel = "DEBUG"
   destination = "audit"
   numProducers = 1
   channelLength = 1
-  DiskStorePath = "/"
+  diskStorePath = "/"
+  auditSource = "testAuditSource"
+  auditType = "testAuditType"
 
 [web]
   address = ":8081"

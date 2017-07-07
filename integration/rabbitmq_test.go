@@ -98,11 +98,6 @@ func (s *RabbitMQSuite) TestSimpleConfiguration(c *check.C) {
 	json.Unmarshal(msg.Body, &dat)
 
 	// Simple check to make sure it's the message we sent
-	c.Assert(dat["auditSource"].(string), checker.Equals, "backend1")
-
-	req := dat["request"].(map[string]interface{})
-	c.Assert(req["host"].(string), checker.Equals, "127.0.0.1:8000")
-	c.Assert(req["method"].(string), checker.Equals, "GET")
-	c.Assert(req["path"].(string), checker.Equals, "/test")
-	c.Assert(req["query"].(string), checker.Equals, "foo=bar")
+	c.Assert(dat["auditSource"].(string), checker.Equals, "testAuditSource")
+	c.Assert(dat["auditType"].(string), checker.Equals, "testAuditType")
 }

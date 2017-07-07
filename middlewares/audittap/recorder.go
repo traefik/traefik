@@ -3,9 +3,11 @@ package audittap
 import (
 	"bufio"
 	"fmt"
-	audittypes "github.com/containous/traefik/middlewares/audittap/audittypes"
 	"net"
 	"net/http"
+	"strconv"
+
+	"github.com/containous/traefik/middlewares/audittap/audittypes"
 )
 
 // Performance tweak: choose a value just big enough to hold most messages.
@@ -70,13 +72,13 @@ func (r *recorderResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	return hijacker.Hijack()
 }
 
-func (r *recorderResponseWriter) SummariseResponse() audittypes.DataMap {
-	rhdr := NewHeaders(r.Header()).DropHopByHopHeaders().SimplifyCookies().Flatten("hdr-")
-	res := audittypes.DataMap{
-		audittypes.Status:      r.status,
-		audittypes.Size:        r.size,
-		audittypes.Entity:      r.entity,
-		audittypes.CompletedAt: audittypes.TheClock.Now().UTC(),
+func (r *recorderResponseWriter) SummariseResponse(summary *audittypes.Summary) {
+	hdr := NewHeaders(r.Header()).SimplifyCookies()
+	flatHdr := hdr.Flatten()
+
+	summary.ResponseStatus = strconv.Itoa(r.status)
+	summary.ResponseHeaders = hdr.ResponseHeaders()
+	summary.ResponsePayload = audittypes.DataMap{
+		"type": flatHdr.GetString("content-type"),
 	}
-	return res.AddAll(audittypes.DataMap(rhdr))
 }

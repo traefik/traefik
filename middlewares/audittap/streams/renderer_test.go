@@ -1,29 +1,45 @@
 package streams
 
 import (
-	. "github.com/containous/traefik/middlewares/audittap/audittypes"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 	"time"
+
+	. "github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/stretchr/testify/assert"
 )
 
 func testSummary(clk Clock) Summary {
 	t := clk.Now().UTC()
 	return Summary{
-		Source: "source1",
-		Request: DataMap{
-			Host:       "host.com",
-			Method:     "GET",
-			Path:       "/a/b/c",
-			Query:      "?z=00",
-			RemoteAddr: "10.11.12.13:12345",
-			BeganAt:    t,
+		AuditSource:        "source1",
+		AuditType:          "type1",
+		EventID:            "1234",
+		GeneratedAt:        t.Format("2006-01-02T15:04:05.000Z07:00"),
+		Version:            "1",
+		RequestID:          "5678",
+		Method:             "GET",
+		Path:               "/a/b/c",
+		QueryString:        "?z=00",
+		ClientIP:           "ip",
+		ClientPort:         "9999",
+		ReceivingIP:        "1.2.3.4",
+		AuthorisationToken: "Basic foo",
+		ResponseStatus:     "200",
+		ResponsePayload: DataMap{
+			"type": "text/plain",
 		},
-		Response: DataMap{
-			Status:      200,
-			Size:        123,
-			CompletedAt: t.Add(time.Millisecond),
+		ClientHeaders: DataMap{
+			"accept": "*/*",
+		},
+		RequestHeaders: DataMap{
+			"x-forwarded-for": "zzz",
+		},
+		ResponseHeaders: DataMap{
+			"content-length": "123",
+		},
+		RequestPayload: DataMap{
+			"type": "text/plain",
 		},
 	}
 }
@@ -35,24 +51,25 @@ func TestDirectJSONRenderer(t *testing.T) {
 	assert.NoError(t, enc.Err)
 
 	str := string(enc.Bytes)
-	assert.True(t, strings.HasPrefix(str, `{"auditSource":"source1","request":{`), str)
-	assert.True(t, strings.HasSuffix(str, `}}`), str)
-	assert.True(t, strings.Contains(str, `,"response":`), str)
-	p := strings.Index(str, `"response":`)
-	request := str[0:p]
-	response := str[p:]
-
-	// the order of the map keys is unspecified, so check each item one by one
-	assert.True(t, strings.Contains(request, `"host":"host.com"`), request)
-	assert.True(t, strings.Contains(request, `"method":"GET"`), request)
-	assert.True(t, strings.Contains(request, `"path":"/a/b/c"`), request)
-	assert.True(t, strings.Contains(request, `"query":"?z=00"`), request)
-	assert.True(t, strings.Contains(request, `"remoteAddr":"10.11.12.13:12345"`), request)
-	assert.True(t, strings.Contains(request, `"beganAt":"2001-09-09T01:46:40Z"`), request)
-
-	assert.True(t, strings.Contains(response, `"status":200`), response)
-	assert.True(t, strings.Contains(response, `"size":123`), response)
-	assert.True(t, strings.Contains(response, `"completedAt":"2001-09-09T01:46:40.001Z"`), response)
+	assert.True(t, strings.Contains(str, `"auditSource":"source1"`), str)
+	assert.True(t, strings.Contains(str, `"auditType":"type1"`), str)
+	assert.True(t, strings.Contains(str, `"eventID":"1234"`), str)
+	assert.True(t, strings.Contains(str, `"generatedAt":"2001-09-09T01:46:40.000Z"`), str)
+	assert.True(t, strings.Contains(str, `"version":"1"`), str)
+	assert.True(t, strings.Contains(str, `"requestID":"5678"`), str)
+	assert.True(t, strings.Contains(str, `"method":"GET"`), str)
+	assert.True(t, strings.Contains(str, `"path":"/a/b/c"`), str)
+	assert.True(t, strings.Contains(str, `"queryString":"?z=00"`), str)
+	assert.True(t, strings.Contains(str, `"clientIP":"ip"`), str)
+	assert.True(t, strings.Contains(str, `"clientPort":"9999"`), str)
+	assert.True(t, strings.Contains(str, `"authorisationToken":"Basic foo"`), str)
+	assert.True(t, strings.Contains(str, `"receivingIP":"1.2.3.4"`), str)
+	assert.True(t, strings.Contains(str, `"responseStatus":"200"`), str)
+	assert.True(t, strings.Contains(str, `"responsePayload":{"type":"text/plain"}`), str)
+	assert.True(t, strings.Contains(str, `"clientHeaders":{"accept":"*/*"}`), str)
+	assert.True(t, strings.Contains(str, `"requestHeaders":{"x-forwarded-for":"zzz"}`), str)
+	assert.True(t, strings.Contains(str, `"requestPayload":{"type":"text/plain"}`), str)
+	assert.True(t, strings.Contains(str, `"responseHeaders":{"content-length":"123"}}`), str)
 }
 
 func noopRenderer(ignored Summary) Encoded {

@@ -2,6 +2,7 @@ package headers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/satori/go.uuid"
 )
@@ -15,7 +16,10 @@ func NewHeaders() *Handler {
 }
 
 func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	u1 := "s" + uuid.NewV4().String()
-	r.Header.Set("X-Request-ID", u1)
+	if strings.EqualFold(r.Header.Get("X-Request-ID-No-S"), "true") {
+		r.Header.Set("X-Request-ID", uuid.NewV4().String())
+	} else {
+		r.Header.Set("X-Request-ID", "s"+uuid.NewV4().String())
+	}
 	next.ServeHTTP(rw, r)
 }
