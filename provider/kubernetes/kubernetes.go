@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"reflect"
@@ -68,6 +69,12 @@ func (p *Provider) newK8sClient() (Client, error) {
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+	// Tell glog (used by client-go) to log into STDERR. Otherwise, we risk
+	// certain kinds of API errors getting logged into a directory not
+	// available in a `FROM scratch` Docker container, causing glog to abort
+	// hard with an exit code > 0.
+	flag.Set("logtostderr", "true")
+
 	k8sClient, err := p.newK8sClient()
 	if err != nil {
 		return err
