@@ -188,36 +188,49 @@ func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
 
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
-		serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler(), metrics}
-		if server.accessLoggerMiddleware != nil {
-			serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
-		}
-		metrics := newMetrics(server.globalConfiguration, newServerEntryPointName)
-		if metrics != nil {
-			serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(metrics))
-		}
-		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
-			statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
-			serverMiddlewares = append(serverMiddlewares, statsRecorder)
-		}
-		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
-			authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
-			if err != nil {
-				log.Fatal("Error starting server: ", err)
-			}
-			serverMiddlewares = append(serverMiddlewares, authMiddleware)
-		}
-		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
-			serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
-		}
-		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], serverMiddlewares...)
-		if err != nil {
-			log.Fatal("Error preparing server: ", err)
-		}
-		serverEntryPoint := server.serverEntryPoints[newServerEntryPointName]
-		serverEntryPoint.httpServer = newsrv
+		serverEntryPoint := server.setupServerEntryPoint(newServerEntryPointName, newServerEntryPoint)
 		go server.startServer(serverEntryPoint.httpServer, server.globalConfiguration)
 	}
+}
+
+func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
+	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler(), metrics}
+	if server.accessLoggerMiddleware != nil {
+		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
+	}
+	metrics := newMetrics(server.globalConfiguration, newServerEntryPointName)
+	if metrics != nil {
+		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(metrics))
+	}
+	if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
+		statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
+		serverMiddlewares = append(serverMiddlewares, statsRecorder)
+	}
+	if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
+		authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
+		if err != nil {
+			log.Fatal("Error starting server: ", err)
+		}
+		serverMiddlewares = append(serverMiddlewares, authMiddleware)
+	}
+	if server.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
+		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
+	}
+	if len(server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange) > 0 {
+		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange)
+		if err != nil {
+			log.Fatal("Error starting server: ", err)
+		}
+		serverMiddlewares = append(serverMiddlewares, ipWhitelistMiddleware)
+	}
+	newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], serverMiddlewares...)
+	if err != nil {
+		log.Fatal("Error preparing server: ", err)
+	}
+	serverEntryPoint := server.serverEntryPoints[newServerEntryPointName]
+	serverEntryPoint.httpServer = newsrv
+
+	return serverEntryPoint
 }
 
 func (server *Server) listenProviders(stop chan bool) {

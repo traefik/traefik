@@ -329,6 +329,12 @@
 #   [entryPoints.http]
 #   address = "10.42.13.37:80"
 
+# To enable IP whitelisting at the entrypoint level:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   whiteListSourceRange = ["127.0.0.1/32"]
+
 # Enable retry sending request if network error
 #
 # Optional
