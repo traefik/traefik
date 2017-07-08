@@ -735,24 +735,14 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
 						}
 						lb = rebalancer
-						for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-							url, err := url.Parse(server.URL)
-							if err != nil {
-								log.Errorf("Error parsing server URL %s: %v", server.URL, err)
-								log.Errorf("Skipping frontend %s...", frontendName)
-								continue frontend
-							}
-							log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-							if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
-								log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
-								log.Errorf("Skipping frontend %s...", frontendName)
-								continue frontend
-							}
-							hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
-							if hcOpts != nil {
-								log.Debugf("Setting up backend health check %s", *hcOpts)
-								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
-							}
+						if err := configureLBServers(rebalancer, configuration, frontend); err != nil {
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
+						}
+						hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
+						if hcOpts != nil {
+							log.Debugf("Setting up backend health check %s", *hcOpts)
+							backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
 					case types.Wrr:
 						log.Debugf("Creating load-balancer wrr")
@@ -765,19 +755,9 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							}
 						}
 						lb = rr
-						for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-							url, err := url.Parse(server.URL)
-							if err != nil {
-								log.Errorf("Error parsing server URL %s: %v", server.URL, err)
-								log.Errorf("Skipping frontend %s...", frontendName)
-								continue frontend
-							}
-							log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-							if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
-								log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
-								log.Errorf("Skipping frontend %s...", frontendName)
-								continue frontend
-							}
+						if err := configureLBServers(rr, configuration, frontend); err != nil {
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
 						}
 						hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
 						if hcOpts != nil {
@@ -899,6 +879,22 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
 	}
 	return serverEntryPoints, nil
+}
+
+func configureLBServers(lb healthcheck.LoadBalancer, config *types.Configuration, frontend *types.Frontend) error {
+	for serverName, server := range config.Backends[frontend.Backend].Servers {
+		u, err := url.Parse(server.URL)
+		if err != nil {
+			log.Errorf("Error parsing server URL %s: %v", server.URL, err)
+			return err
+		}
+		log.Debugf("Creating server %s at %s with weight %d", serverName, u, server.Weight)
+		if err := lb.UpsertServer(u, roundrobin.Weight(server.Weight)); err != nil {
+			log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
+			return err
+		}
+	}
+	return nil
 }
 
 func configureIPWhitelistMiddleware(whitelistSourceRanges []string) (negroni.Handler, error) {
