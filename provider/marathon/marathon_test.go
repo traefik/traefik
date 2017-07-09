@@ -1334,7 +1334,7 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.frontend.passHostHeader": "false",
+					types.LabelFrontendPassHostHeader: "false",
 				},
 			},
 			expected: "false",

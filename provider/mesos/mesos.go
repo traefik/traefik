@@ -326,7 +326,7 @@ func (p *Provider) getProtocol(task state.Task, applications []state.Task) strin
 }
 
 func (p *Provider) getPassHostHeader(task state.Task) string {
-	if passHostHeader, err := p.getLabel(task, "traefik.frontend.passHostHeader"); err == nil {
+	if passHostHeader, err := p.getLabel(task, types.LabelFrontendPassHostHeader); err == nil {
 		return passHostHeader
 	}
 	return "false"

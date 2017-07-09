@@ -472,7 +472,7 @@ func TestRancherGetPassHostHeader(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.passHostHeader": "false",
+					types.LabelFrontendPassHostHeader: "false",
 				},
 			},
 

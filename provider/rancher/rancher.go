@@ -42,7 +42,7 @@ func (r rancherData) String() string {
 
 // Frontend Labels
 func (p *Provider) getPassHostHeader(service rancherData) string {
-	if passHostHeader, err := getServiceLabel(service, "traefik.frontend.passHostHeader"); err == nil {
+	if passHostHeader, err := getServiceLabel(service, types.LabelFrontendPassHostHeader); err == nil {
 		return passHostHeader
 	}
 	return "true"

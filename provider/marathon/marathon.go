@@ -360,7 +360,7 @@ func (p *Provider) getSticky(application marathon.Application) string {
 }
 
 func (p *Provider) getPassHostHeader(application marathon.Application) string {
-	if passHostHeader, ok := p.getLabel(application, "traefik.frontend.passHostHeader"); ok {
+	if passHostHeader, ok := p.getLabel(application, types.LabelFrontendPassHostHeader); ok {
 		return passHostHeader
 	}
 	return "true"

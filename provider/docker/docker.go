@@ -665,7 +665,7 @@ func (p *Provider) getProtocol(container dockerData) string {
 }
 
 func (p *Provider) getPassHostHeader(container dockerData) string {
-	if passHostHeader, err := getLabel(container, "traefik.frontend.passHostHeader"); err == nil {
+	if passHostHeader, err := getLabel(container, types.LabelFrontendPassHostHeader); err == nil {
 		return passHostHeader
 	}
 	return "true"

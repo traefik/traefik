@@ -380,7 +380,7 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.passHostHeader": "false",
+				types.LabelFrontendPassHostHeader: "false",
 			})),
 			expected: "false",
 		},

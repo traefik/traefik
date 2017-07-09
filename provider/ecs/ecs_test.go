@@ -157,7 +157,7 @@ func TestEcsPassHostHeader(t *testing.T) {
 		{
 			expected: "false",
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.frontend.passHostHeader": aws.String("false"),
+				types.LabelFrontendPassHostHeader: aws.String("false"),
 			}),
 		},
 	}

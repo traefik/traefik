@@ -1418,7 +1418,7 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.frontend.passHostHeader": "false",
+					types.LabelFrontendPassHostHeader: "false",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1447,7 +1447,7 @@ func TestIngressAnnotations(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"kubernetes.io/ingress.class":     "traefik",
-					"traefik.frontend.passHostHeader": "true",
+					types.LabelFrontendPassHostHeader: "true",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1784,7 +1784,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.frontend.passHostHeader": "herpderp",
+					types.LabelFrontendPassHostHeader: "herpderp",
 				},
 			},
 			Spec: v1beta1.IngressSpec{

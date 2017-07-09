@@ -384,7 +384,7 @@ func TestSwarmGetPassHostHeader(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.frontend.passHostHeader": "false",
+				types.LabelFrontendPassHostHeader: "false",
 			})),
 			expected: "false",
 			networks: map[string]*docker.NetworkResource{},

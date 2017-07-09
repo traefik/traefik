@@ -459,7 +459,7 @@ func (i ecsInstance) Weight() string {
 }
 
 func (i ecsInstance) PassHostHeader() string {
-	if label := i.label("traefik.frontend.passHostHeader"); label != "" {
+	if label := i.label(types.LabelFrontendPassHostHeader); label != "" {
 		return label
 	}
 	return "true"
