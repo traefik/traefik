@@ -259,7 +259,7 @@ func getMesos(task state.Task, apps []state.Task) (state.Task, error) {
 }
 
 func isMesosApplicationEnabled(task state.Task, exposedByDefault bool) bool {
-	return exposedByDefault && labels(task, "traefik.enable") != "false" || labels(task, "traefik.enable") == "true"
+	return exposedByDefault && labels(task, types.LabelEnable) != "false" || labels(task, types.LabelEnable) == "true"
 }
 
 func (p *Provider) getLabel(task state.Task, label string) (string, error) {

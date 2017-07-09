@@ -703,7 +703,7 @@ func (p *Provider) getBasicAuth(container dockerData) []string {
 }
 
 func isContainerEnabled(container dockerData, exposedByDefault bool) bool {
-	return exposedByDefault && container.Labels["traefik.enable"] != "false" || container.Labels["traefik.enable"] == "true"
+	return exposedByDefault && container.Labels[types.LabelEnable] != "false" || container.Labels[types.LabelEnable] == "true"
 }
 
 func getLabel(container dockerData, label string) (string, error) {

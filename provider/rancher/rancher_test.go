@@ -24,7 +24,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.enable": "true",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -35,7 +35,7 @@ func TestRancherServiceFilter(t *testing.T) {
 			service: rancherData{
 				Labels: map[string]string{
 					"traefik.port":   "80",
-					"traefik.enable": "false",
+					types.LabelEnable: "false",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -46,7 +46,7 @@ func TestRancherServiceFilter(t *testing.T) {
 			service: rancherData{
 				Labels: map[string]string{
 					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelEnable: "true",
 				},
 				Health: "unhealthy",
 				State:  "active",
@@ -58,7 +58,7 @@ func TestRancherServiceFilter(t *testing.T) {
 				Labels: map[string]string{
 					"traefik.tags":   "not-cheesy",
 					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "inactive",
@@ -70,7 +70,7 @@ func TestRancherServiceFilter(t *testing.T) {
 				Labels: map[string]string{
 					"traefik.tags":   "cheese",
 					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -82,7 +82,7 @@ func TestRancherServiceFilter(t *testing.T) {
 				Labels: map[string]string{
 					"traefik.tags":   "cheeeeese",
 					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "upgraded",
@@ -94,7 +94,7 @@ func TestRancherServiceFilter(t *testing.T) {
 				Labels: map[string]string{
 					"traefik.tags":   "chose",
 					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "active",

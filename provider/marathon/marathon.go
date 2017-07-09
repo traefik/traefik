@@ -295,7 +295,7 @@ func getApplication(task marathon.Task, apps []marathon.Application) (marathon.A
 }
 
 func isApplicationEnabled(application marathon.Application, exposedByDefault bool) bool {
-	return exposedByDefault && (*application.Labels)["traefik.enable"] != "false" || (*application.Labels)["traefik.enable"] == "true"
+	return exposedByDefault && (*application.Labels)[types.LabelEnable] != "false" || (*application.Labels)[types.LabelEnable] == "true"
 }
 
 func (p *Provider) getLabel(application marathon.Application, label string) (string, bool) {

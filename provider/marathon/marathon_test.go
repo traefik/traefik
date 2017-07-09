@@ -513,7 +513,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 						ID:    "disable",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.enable": "false",
+							types.LabelEnable: "false",
 						},
 					},
 				},
@@ -667,7 +667,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 						ID:    "disable-default-expose-disable-in-label",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.enable": "false",
+							types.LabelEnable: "false",
 						},
 					},
 				},
@@ -686,7 +686,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 						ID:    "disable-default-expose-enable-in-label",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.enable": "true",
+							types.LabelEnable: "true",
 						},
 					},
 				},

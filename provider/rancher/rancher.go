@@ -311,8 +311,8 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 
 func isServiceEnabled(service rancherData, exposedByDefault bool) bool {
 
-	if service.Labels["traefik.enable"] != "" {
-		var v = service.Labels["traefik.enable"]
+	if service.Labels[types.LabelEnable] != "" {
+		var v = service.Labels[types.LabelEnable]
 		return exposedByDefault && v != "false" || v == "true"
 	}
 	return exposedByDefault

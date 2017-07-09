@@ -520,8 +520,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.enable": "false",
 				"traefik.port":   "80",
+				types.LabelEnable: "false",
 			})),
 			expected: false,
 			networks: map[string]*docker.NetworkResource{},
@@ -558,8 +558,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.enable": "true",
 				"traefik.port":   "80",
+				types.LabelEnable: "true",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},
@@ -571,8 +571,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.enable": "anything",
 				"traefik.port":   "80",
+				types.LabelEnable: "anything",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},
@@ -609,8 +609,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.enable": "true",
 				"traefik.port":   "80",
+				types.LabelEnable: "true",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},

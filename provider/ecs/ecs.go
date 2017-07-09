@@ -390,7 +390,7 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 		return false
 	}
 
-	label := i.label("traefik.enable")
+	label := i.label(types.LabelEnable)
 	enabled := p.ExposedByDefault && label != "false" || label == "true"
 	if !enabled {
 		log.Debugf("Filtering disabled ecs instance %s (%s) (traefik.enabled = '%s')", i.Name, i.ID, label)

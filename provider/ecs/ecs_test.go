@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/containous/traefik/types"
 )
 
 func makeEcsInstance(containerDef *ecs.ContainerDefinition) ecsInstance {
@@ -261,14 +262,14 @@ func TestFilterInstance(t *testing.T) {
 			expected:         false,
 			exposedByDefault: true,
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.enable": aws.String("false"),
+				types.LabelEnable: aws.String("false"),
 			}),
 		},
 		{
 			expected:         true,
 			exposedByDefault: false,
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.enable": aws.String("true"),
+				types.LabelEnable: aws.String("true"),
 			}),
 		},
 		{

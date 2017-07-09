@@ -576,7 +576,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "false",
+						types.LabelEnable: "false",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -690,7 +690,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "true",
+						types.LabelEnable: "true",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -714,7 +714,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "anything",
+						types.LabelEnable: "anything",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -782,7 +782,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "true",
+						types.LabelEnable: "true",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -806,7 +806,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "true",
+						types.LabelEnable: "true",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -829,7 +829,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable":        "true",
+						types.LabelEnable:       "true",
 						types.LabelFrontendRule: "Host:i.love.this.host",
 					},
 				},
