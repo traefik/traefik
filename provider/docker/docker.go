@@ -35,6 +35,11 @@ const (
 	SwarmAPIVersion string = "1.24"
 	// SwarmDefaultWatchTime is the duration of the interval when polling docker
 	SwarmDefaultWatchTime = 15 * time.Second
+
+	labelDockerNetwork            = "traefik.docker.network"
+	labelBackendLoadbalancerSwarm = "traefik.backend.loadbalancer.swarm"
+	labelDockerComposeProject     = "com.docker.compose.project"
+	labelDockerComposeService     = "com.docker.compose.service"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -550,8 +555,8 @@ func (p *Provider) getFrontendRule(container dockerData) string {
 	if label, err := getLabel(container, types.LabelFrontendRule); err == nil {
 		return label
 	}
-	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
-		return "Host:" + p.getSubDomain(labels["com.docker.compose.service"]+"."+labels["com.docker.compose.project"]) + "." + p.Domain
+	if labels, err := getLabels(container, []string{labelDockerComposeProject, labelDockerComposeService}); err == nil {
+		return "Host:" + p.getSubDomain(labels[labelDockerComposeService]+"."+labels[labelDockerComposeProject]) + "." + p.Domain
 	}
 	if len(p.Domain) > 0 {
 		return "Host:" + p.getSubDomain(container.ServiceName) + "." + p.Domain
@@ -563,14 +568,14 @@ func (p *Provider) getBackend(container dockerData) string {
 	if label, err := getLabel(container, types.LabelBackend); err == nil {
 		return provider.Normalize(label)
 	}
-	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
-		return provider.Normalize(labels["com.docker.compose.service"] + "_" + labels["com.docker.compose.project"])
+	if labels, err := getLabels(container, []string{labelDockerComposeProject, labelDockerComposeService}); err == nil {
+		return provider.Normalize(labels[labelDockerComposeService] + "_" + labels[labelDockerComposeProject])
 	}
 	return provider.Normalize(container.ServiceName)
 }
 
 func (p *Provider) getIPAddress(container dockerData) string {
-	if label, err := getLabel(container, "traefik.docker.network"); err == nil && label != "" {
+	if label, err := getLabel(container, labelDockerNetwork); err == nil && label != "" {
 		networkSettings := container.NetworkSettings
 		if networkSettings.Networks != nil {
 			network := networkSettings.Networks[label]
@@ -644,7 +649,7 @@ func (p *Provider) getSticky(container dockerData) string {
 }
 
 func (p *Provider) getIsBackendLBSwarm(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.loadbalancer.swarm"); err == nil {
+	if label, err := getLabel(container, labelBackendLoadbalancerSwarm); err == nil {
 		return label
 	}
 	return "false"

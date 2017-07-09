@@ -173,7 +173,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 		{
 			container: containerJSON(
 				labels(map[string]string{
-					"traefik.docker.network": "testnet",
+					labelDockerNetwork: "testnet",
 				}),
 				withNetwork("testnet", ipv4("10.11.12.13")),
 			),
@@ -182,7 +182,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 		{
 			container: containerJSON(
 				labels(map[string]string{
-					"traefik.docker.network": "testnet2",
+					labelDockerNetwork: "testnet2",
 				}),
 				withNetwork("testnet", ipv4("10.11.12.13")),
 				withNetwork("testnet2", ipv4("10.11.12.14")),

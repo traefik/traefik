@@ -192,7 +192,7 @@ func TestSwarmGetIPAddress(t *testing.T) {
 		{
 			service: swarmService(
 				serviceLabels(map[string]string{
-					"traefik.docker.network": "barnet",
+					labelDockerNetwork: "barnet",
 				}),
 				withEndpointSpec(modeVIP),
 				withEndpoint(
