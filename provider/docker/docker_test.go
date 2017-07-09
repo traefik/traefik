@@ -979,8 +979,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					labels(map[string]string{
 						"traefik.backend":                           "foobar",
 						"traefik.frontend.entryPoints":              "http,https",
-						"traefik.backend.maxconn.amount":            "1000",
 						"traefik.backend.maxconn.extractorfunc":     "somethingelse",
+						types.LabelBackendMaxconnAmount:            "1000",
 						types.LabelBackendLoadbalancerMethod:       "drr",
 						types.LabelBackendCircuitbreakerExpression: "NetworkErrorRatio() > 0.5",
 					}),

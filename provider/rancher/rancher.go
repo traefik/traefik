@@ -156,7 +156,7 @@ func (p *Provider) getDomain(service rancherData) string {
 }
 
 func (p *Provider) hasMaxConnLabels(service rancherData) bool {
-	if _, err := getServiceLabel(service, "traefik.backend.maxconn.amount"); err != nil {
+	if _, err := getServiceLabel(service, types.LabelBackendMaxconnAmount); err != nil {
 		return false
 	}
 	if _, err := getServiceLabel(service, "traefik.backend.maxconn.extractorfunc"); err != nil {
@@ -166,10 +166,10 @@ func (p *Provider) hasMaxConnLabels(service rancherData) bool {
 }
 
 func (p *Provider) getMaxConnAmount(service rancherData) int64 {
-	if label, err := getServiceLabel(service, "traefik.backend.maxconn.amount"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendMaxconnAmount); err == nil {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
-			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
+			log.Errorf("Unable to parse %s %s", types.LabelBackendMaxconnAmount, label)
 			return math.MaxInt64
 		}
 		return i

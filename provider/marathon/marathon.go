@@ -433,7 +433,7 @@ func (p *Provider) hasLoadBalancerLabels(application marathon.Application) bool 
 }
 
 func (p *Provider) hasMaxConnLabels(application marathon.Application) bool {
-	if _, ok := p.getLabel(application, "traefik.backend.maxconn.amount"); !ok {
+	if _, ok := p.getLabel(application, types.LabelBackendMaxconnAmount); !ok {
 		return false
 	}
 	_, ok := p.getLabel(application, "traefik.backend.maxconn.extractorfunc")
@@ -441,7 +441,7 @@ func (p *Provider) hasMaxConnLabels(application marathon.Application) bool {
 }
 
 func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
-	if label, ok := p.getLabel(application, "traefik.backend.maxconn.amount"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendMaxconnAmount); ok {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
 			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)

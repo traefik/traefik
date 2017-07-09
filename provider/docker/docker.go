@@ -464,7 +464,7 @@ func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
 }
 
 func (p *Provider) hasMaxConnLabels(container dockerData) bool {
-	if _, err := getLabel(container, "traefik.backend.maxconn.amount"); err != nil {
+	if _, err := getLabel(container, types.LabelBackendMaxconnAmount); err != nil {
 		return false
 	}
 	if _, err := getLabel(container, "traefik.backend.maxconn.extractorfunc"); err != nil {
@@ -488,7 +488,7 @@ func (p *Provider) getLoadBalancerMethod(container dockerData) string {
 }
 
 func (p *Provider) getMaxConnAmount(container dockerData) int64 {
-	if label, err := getLabel(container, "traefik.backend.maxconn.amount"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendMaxconnAmount); err == nil {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
 			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
