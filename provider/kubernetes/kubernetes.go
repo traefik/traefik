@@ -245,7 +245,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
 
-				if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
+				if service.Annotations[types.LabelBackendLoadbalancerSticky] == "true" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
 				}
 

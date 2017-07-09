@@ -455,8 +455,8 @@ func (p *Provider) getServiceProtocol(container dockerData, serviceName string) 
 }
 
 func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
-	_, errSticky := getLabel(container, "traefik.backend.loadbalancer.sticky")
 	_, errMethod := getLabel(container, types.LabelBackendLoadbalancerMethod)
+	_, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
 	if errMethod != nil && errSticky != nil {
 		return false
 	}
@@ -637,7 +637,7 @@ func (p *Provider) getWeight(container dockerData) string {
 }
 
 func (p *Provider) getSticky(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.loadbalancer.sticky"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendLoadbalancerSticky); err == nil {
 		return label
 	}
 	return "false"

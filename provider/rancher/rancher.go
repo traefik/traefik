@@ -90,8 +90,8 @@ func (p *Provider) getLoadBalancerMethod(service rancherData) string {
 }
 
 func (p *Provider) hasLoadBalancerLabel(service rancherData) bool {
-	_, errSticky := getServiceLabel(service, "traefik.backend.loadbalancer.sticky")
 	_, errMethod := getServiceLabel(service, types.LabelBackendLoadbalancerMethod)
+	_, errSticky := getServiceLabel(service, types.LabelBackendLoadbalancerSticky)
 	if errMethod != nil && errSticky != nil {
 		return false
 	}
@@ -113,7 +113,7 @@ func (p *Provider) getCircuitBreakerExpression(service rancherData) string {
 }
 
 func (p *Provider) getSticky(service rancherData) string {
-	if _, err := getServiceLabel(service, "traefik.backend.loadbalancer.sticky"); err == nil {
+	if _, err := getServiceLabel(service, types.LabelBackendLoadbalancerSticky); err == nil {
 		return "true"
 	}
 	return "false"

@@ -1244,7 +1244,7 @@ func TestServiceAnnotations(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"traefik.backend.circuitbreaker":      "",
-					"traefik.backend.loadbalancer.sticky": "true",
+					types.LabelBackendLoadbalancerSticky:    "true",
 				},
 			},
 			Spec: v1.ServiceSpec{
