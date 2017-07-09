@@ -3,7 +3,6 @@ package integration
 import (
 	"net/http"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -29,8 +28,8 @@ func (ep *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
 		Server2 string
 	}{backendHost, errorPageHost})
 	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
 
+	cmd, _ := s.cmdTraefikWithConfigFile(file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -54,8 +53,8 @@ func (ep *ErrorPagesSuite) TestErrorPage(c *check.C) {
 		Server2 string
 	}{backendHost, errorPageHost})
 	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
 
+	cmd, _ := s.cmdTraefikWithConfigFile(file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

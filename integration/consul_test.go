@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
 	"sync"
 	"time"
 
@@ -96,7 +95,7 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
 
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefikWithConfigFile(file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -112,7 +111,7 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
 
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefikWithConfigFile(file)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -211,7 +210,7 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// start traefik
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/simple_web.toml", "--consul", "--consul.endpoint="+consulHost+":8500")
+	cmd, _ := s.cmdTraefik("--configFile=fixtures/simple_web.toml", "--consul", "--consul.endpoint="+consulHost+":8500")
 
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -295,7 +294,8 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// start traefik
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/simple_web.toml",
+	cmd, _ := s.cmdTraefik(
+		"--configFile=fixtures/simple_web.toml",
 		"--consul", "--consul.endpoint="+consulHost+":8585",
 		"--consul.tls.ca=resources/tls/ca.cert",
 		"--consul.tls.cert=resources/tls/consul.cert",
@@ -315,7 +315,7 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 	s.setupConsul(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 
-	cmd := exec.Command(traefikBinary,
+	cmd, _ := s.cmdTraefik(
 		"storeconfig",
 		"--configFile=fixtures/simple_web.toml",
 		"--consul.endpoint="+consulHost+":8500")

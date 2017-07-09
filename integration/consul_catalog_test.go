@@ -3,7 +3,6 @@ package integration
 import (
 	"fmt"
 	"net/http"
-	"os/exec"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -81,7 +80,7 @@ func (s *ConsulCatalogSuite) deregisterService(name string, address string) erro
 }
 
 func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
-	cmd := exec.Command(traefikBinary,
+	cmd, _ := s.cmdTraefik(
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--configFile=fixtures/consul_catalog/simple.toml")
@@ -96,7 +95,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
-	cmd := exec.Command(traefikBinary,
+	cmd, _ := s.cmdTraefik(
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost",

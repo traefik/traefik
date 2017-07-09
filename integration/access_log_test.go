@@ -7,15 +7,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"os/exec"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
-	shellwords "github.com/mattn/go-shellwords"
-
+	"github.com/mattn/go-shellwords"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -28,7 +26,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	os.Remove("traefik.log")
 
 	// Start Traefik
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/access_log_config.toml")
+	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/access_log_config.toml")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
