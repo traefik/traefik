@@ -25,7 +25,6 @@ import (
 )
 
 const (
-	labelPortIndex                  = "traefik.portIndex"
 	labelBackendHealthCheckPath     = "traefik.backend.healthcheck.path"
 	labelBackendHealthCheckInterval = "traefik.backend.healthcheck.interval"
 	traceMaxScanTokenSize           = 1024 * 1024
@@ -221,7 +220,7 @@ func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applica
 	}
 
 	// Filter illegal port label specification.
-	_, hasPortIndexLabel := p.getLabel(application, labelPortIndex)
+	_, hasPortIndexLabel := p.getLabel(application, types.LabelPortIndex)
 	_, hasPortLabel := p.getLabel(application, types.LabelPort)
 	if hasPortIndexLabel && hasPortLabel {
 		log.Debugf("Filtering Marathon task %s from application %s specifying both traefik.portIndex and traefik.port labels", task.ID, application.ID)
@@ -516,7 +515,7 @@ func processPorts(application marathon.Application, task marathon.Task) (int, er
 	}
 
 	portIndex := 0
-	portIndexLabel, ok := (*application.Labels)[labelPortIndex]
+	portIndexLabel, ok := (*application.Labels)[types.LabelPortIndex]
 	if ok {
 		var err error
 		portIndex, err = parseIndex(portIndexLabel, len(ports))

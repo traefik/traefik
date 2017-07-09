@@ -70,8 +70,8 @@ func TestMesosTaskFilter(t *testing.T) {
 			mesosTask: task(statuses(status(
 				setState("TASK_RUNNING"),
 				setHealthy(true))),
-					"traefik.portIndex", "1",
 				setLabels(types.LabelEnable, "true",
+					types.LabelPortIndex, "1",
 					types.LabelPort, "80"),
 				discovery(setDiscoveryPort("TCP", 80, "WEB")),
 			),
@@ -82,8 +82,8 @@ func TestMesosTaskFilter(t *testing.T) {
 			mesosTask: task(statuses(status(
 				setState("TASK_RUNNING"),
 				setHealthy(true))),
-					"traefik.portIndex", "1"),
 				setLabels(types.LabelEnable, "true",
+					types.LabelPortIndex, "1"),
 				discovery(setDiscoveryPorts("TCP", 80, "WEB HTTP", "TCP", 443, "WEB HTTPS")),
 			),
 			expected:         true,
@@ -103,8 +103,8 @@ func TestMesosTaskFilter(t *testing.T) {
 			mesosTask: task(statuses(status(
 				setState("TASK_RUNNING"),
 				setHealthy(true))),
-					"traefik.portIndex", "1"),
 				setLabels(types.LabelEnable, "true",
+					types.LabelPortIndex, "1"),
 				discovery(setDiscoveryPort("TCP", 80, "WEB")),
 			),
 			expected:         false, // traefik.portIndex and discoveryPorts don't correspond
@@ -113,8 +113,8 @@ func TestMesosTaskFilter(t *testing.T) {
 			mesosTask: task(statuses(status(
 				setState("TASK_RUNNING"),
 				setHealthy(true))),
-					"traefik.portIndex", "0"),
 				setLabels(types.LabelEnable, "true",
+					types.LabelPortIndex, "0"),
 				discovery(setDiscoveryPort("TCP", 80, "WEB")),
 			),
 			expected:         true, // traefik.portIndex and discoveryPorts correspond
