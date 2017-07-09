@@ -171,7 +171,7 @@ func TestRancherGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Headers:User-Agent,bat/0.1.0",
+					types.LabelFrontendRule: "Headers:User-Agent,bat/0.1.0",
 				},
 			},
 
@@ -181,7 +181,7 @@ func TestRancherGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Host:foo.bar",
+					types.LabelFrontendRule: "Host:foo.bar",
 				},
 			},
 
@@ -191,7 +191,7 @@ func TestRancherGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Path:/test",
+					types.LabelFrontendRule: "Path:/test",
 				},
 			},
 
@@ -201,7 +201,7 @@ func TestRancherGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "PathPrefix:/test2",
+					types.LabelFrontendRule: "PathPrefix:/test2",
 				},
 			},
 
@@ -242,7 +242,7 @@ func TestRancherGetFrontendRule(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Host:foo.bar.com",
+					types.LabelFrontendRule: "Host:foo.bar.com",
 				},
 			},
 
@@ -252,7 +252,7 @@ func TestRancherGetFrontendRule(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Path:/test",
+					types.LabelFrontendRule: "Path:/test",
 				},
 			},
 
@@ -262,7 +262,7 @@ func TestRancherGetFrontendRule(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "PathPrefix:/test2",
+					types.LabelFrontendRule: "PathPrefix:/test2",
 				},
 			},
 

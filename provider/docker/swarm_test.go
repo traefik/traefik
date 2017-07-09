@@ -28,21 +28,21 @@ func TestSwarmGetFrontendName(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.frontend.rule": "Headers:User-Agent,bat/0.1.0",
+				types.LabelFrontendRule: "Headers:User-Agent,bat/0.1.0",
 			})),
 			expected: "Headers-User-Agent-bat-0-1-0",
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.frontend.rule": "Host:foo.bar",
+				types.LabelFrontendRule: "Host:foo.bar",
 			})),
 			expected: "Host-foo-bar",
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.frontend.rule": "Path:/test",
+				types.LabelFrontendRule: "Path:/test",
 			})),
 			expected: "Path-test",
 			networks: map[string]*docker.NetworkResource{},
@@ -51,7 +51,7 @@ func TestSwarmGetFrontendName(t *testing.T) {
 			service: swarmService(
 				serviceName("test"),
 				serviceLabels(map[string]string{
-					"traefik.frontend.rule": "PathPrefix:/test2",
+					types.LabelFrontendRule: "PathPrefix:/test2",
 				}),
 			),
 			expected: "PathPrefix-test2",
@@ -94,14 +94,14 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.frontend.rule": "Host:foo.bar",
+				types.LabelFrontendRule: "Host:foo.bar",
 			})),
 			expected: "Host:foo.bar",
 			networks: map[string]*docker.NetworkResource{},
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.frontend.rule": "Path:/test",
+				types.LabelFrontendRule: "Path:/test",
 			})),
 			expected: "Path:/test",
 			networks: map[string]*docker.NetworkResource{},
@@ -533,8 +533,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.frontend.rule": "Host:foo.bar",
 				"traefik.port":          "80",
+				types.LabelFrontendRule: "Host:foo.bar",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},
@@ -584,8 +584,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.frontend.rule": "Host:foo.bar",
 				"traefik.port":          "80",
+				types.LabelFrontendRule: "Host:foo.bar",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},

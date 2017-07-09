@@ -384,7 +384,7 @@ func (p *Provider) getEntryPoints(application marathon.Application) []string {
 // getFrontendRule returns the frontend rule for the specified application, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (p *Provider) getFrontendRule(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.frontend.rule"); ok {
+	if label, ok := p.getLabel(application, types.LabelFrontendRule); ok {
 		return label
 	}
 	if p.MarathonLBCompatibility {

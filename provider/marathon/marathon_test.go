@@ -1405,7 +1405,7 @@ func TestMarathonGetFrontendRule(t *testing.T) {
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.frontend.rule": "Host:foo.bar",
+					types.LabelFrontendRule: "Host:foo.bar",
 					"HAPROXY_0_VHOST":       "notvalid",
 				},
 			},

@@ -414,7 +414,7 @@ func (p *Provider) filterFrontends(instances []ecsInstance) []ecsInstance {
 }
 
 func (p *Provider) getFrontendRule(i ecsInstance) string {
-	if label := i.label("traefik.frontend.rule"); label != "" {
+	if label := i.label(types.LabelFrontendRule); label != "" {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain

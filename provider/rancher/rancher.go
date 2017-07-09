@@ -63,7 +63,7 @@ func (p *Provider) getEntryPoints(service rancherData) []string {
 }
 
 func (p *Provider) getFrontendRule(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.frontend.rule"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelFrontendRule); err == nil {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(service.Name, "/", ".", -1)) + "." + p.Domain

@@ -547,7 +547,7 @@ func (p *Provider) getFrontendName(container dockerData) string {
 // GetFrontendRule returns the frontend rule for the specified container, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (p *Provider) getFrontendRule(container dockerData) string {
-	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
+	if label, err := getLabel(container, types.LabelFrontendRule); err == nil {
 		return label
 	}
 	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {

@@ -137,7 +137,7 @@ func TestDockerGetServiceFrontendRule(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Path:/helloworld",
+				types.LabelFrontendRule: "Path:/helloworld",
 			})),
 			expected: "Path:/helloworld",
 		},

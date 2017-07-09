@@ -349,7 +349,7 @@ func (p *Provider) getEntryPoints(task state.Task) []string {
 // getFrontendRule returns the frontend rule for the specified application, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (p *Provider) getFrontendRule(task state.Task) string {
-	if label, err := p.getLabel(task, "traefik.frontend.rule"); err == nil {
+	if label, err := p.getLabel(task, types.LabelFrontendRule); err == nil {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(p.getSubDomain(task.DiscoveryInfo.Name), "_", "-", -1)) + "." + p.Domain

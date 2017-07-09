@@ -23,7 +23,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Headers:User-Agent,bat/0.1.0",
+				types.LabelFrontendRule: "Headers:User-Agent,bat/0.1.0",
 			})),
 			expected: "Headers-User-Agent-bat-0-1-0",
 		},
@@ -36,19 +36,19 @@ func TestDockerGetFrontendName(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Host:foo.bar",
+				types.LabelFrontendRule: "Host:foo.bar",
 			})),
 			expected: "Host-foo-bar",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Path:/test",
+				types.LabelFrontendRule: "Path:/test",
 			})),
 			expected: "Path-test",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "PathPrefix:/test2",
+				types.LabelFrontendRule: "PathPrefix:/test2",
 			})),
 			expected: "PathPrefix-test2",
 		},
@@ -85,7 +85,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Host:foo.bar",
+				types.LabelFrontendRule: "Host:foo.bar",
 			})),
 			expected: "Host:foo.bar",
 		}, {
@@ -97,7 +97,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Path:/test",
+				types.LabelFrontendRule: "Path:/test",
 			})),
 			expected: "Path:/test",
 		},
@@ -600,7 +600,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.frontend.rule": "Host:foo.bar",
+						types.LabelFrontendRule: "Host:foo.bar",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -738,7 +738,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.frontend.rule": "Host:foo.bar",
+						types.LabelFrontendRule: "Host:foo.bar",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -830,7 +830,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				Config: &container.Config{
 					Labels: map[string]string{
 						"traefik.enable":        "true",
-						"traefik.frontend.rule": "Host:i.love.this.host",
+						types.LabelFrontendRule: "Host:i.love.this.host",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
