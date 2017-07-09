@@ -297,7 +297,7 @@ func TestRancherGetBackend(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.backend": "foobar",
+					types.LabelBackend: "foobar",
 				},
 			},
 

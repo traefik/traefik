@@ -1446,7 +1446,7 @@ func TestMarathonGetBackend(t *testing.T) {
 			application: marathon.Application{
 				ID: "foo",
 				Labels: &map[string]string{
-					"traefik.backend": "bar",
+					types.LabelBackend: "bar",
 				},
 			},
 			expected: "bar",

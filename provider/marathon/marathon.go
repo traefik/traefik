@@ -404,7 +404,7 @@ func (p *Provider) getBackend(task marathon.Task, applications []marathon.Applic
 }
 
 func (p *Provider) getFrontendBackend(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackend); ok {
 		return label
 	}
 	return provider.Replace("/", "-", application.ID)

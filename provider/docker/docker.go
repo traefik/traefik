@@ -560,7 +560,7 @@ func (p *Provider) getFrontendRule(container dockerData) string {
 }
 
 func (p *Provider) getBackend(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend"); err == nil {
+	if label, err := getLabel(container, types.LabelBackend); err == nil {
 		return provider.Normalize(label)
 	}
 	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {

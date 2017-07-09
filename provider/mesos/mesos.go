@@ -365,7 +365,7 @@ func (p *Provider) getBackend(task state.Task, applications []state.Task) string
 }
 
 func (p *Provider) getFrontendBackend(task state.Task) string {
-	if label, err := p.getLabel(task, "traefik.backend"); err == nil {
+	if label, err := p.getLabel(task, types.LabelBackend); err == nil {
 		return label
 	}
 	return "-" + cleanupSpecialChars(task.DiscoveryInfo.Name)

@@ -120,7 +120,7 @@ func (p *Provider) getSticky(service rancherData) string {
 }
 
 func (p *Provider) getBackend(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackend); err == nil {
 		return provider.Normalize(label)
 	}
 	return provider.Normalize(service.Name)

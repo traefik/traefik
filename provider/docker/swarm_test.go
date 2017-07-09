@@ -143,7 +143,7 @@ func TestSwarmGetBackend(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.backend": "foobar",
+				types.LabelBackend: "foobar",
 			})),
 			expected: "foobar",
 			networks: map[string]*docker.NetworkResource{},
@@ -695,10 +695,10 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				swarmService(
 					serviceName("test1"),
 					serviceLabels(map[string]string{
-						"traefik.backend":              "foobar",
 						"traefik.frontend.entryPoints": "http,https",
 						"traefik.frontend.auth.basic":  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						types.LabelPort:                "80",
+						types.LabelBackend:             "foobar",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -706,8 +706,8 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				swarmService(
 					serviceName("test2"),
 					serviceLabels(map[string]string{
-						"traefik.backend": "foobar",
 						types.LabelPort:    "80",
+						types.LabelBackend: "foobar",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),

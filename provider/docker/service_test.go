@@ -175,7 +175,7 @@ func TestDockerGetServiceBackend(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.backend": "another-backend",
+				types.LabelBackend: "another-backend",
 			})),
 			expected: "another-backend-myservice",
 		},
