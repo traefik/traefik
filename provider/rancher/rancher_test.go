@@ -402,7 +402,7 @@ func TestRancherGetDomain(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.domain": "foo.bar",
+					types.LabelDomain: "foo.bar",
 				},
 			},
 

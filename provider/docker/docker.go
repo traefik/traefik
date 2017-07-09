@@ -651,7 +651,7 @@ func (p *Provider) getIsBackendLBSwarm(container dockerData) string {
 }
 
 func (p *Provider) getDomain(container dockerData) string {
-	if label, err := getLabel(container, "traefik.domain"); err == nil {
+	if label, err := getLabel(container, types.LabelDomain); err == nil {
 		return label
 	}
 	return p.Domain

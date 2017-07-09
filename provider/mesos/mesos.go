@@ -307,7 +307,7 @@ func (p *Provider) getWeight(task state.Task, applications []state.Task) string 
 }
 
 func (p *Provider) getDomain(task state.Task) string {
-	if label, err := p.getLabel(task, "traefik.domain"); err == nil {
+	if label, err := p.getLabel(task, types.LabelDomain); err == nil {
 		return label
 	}
 	return p.Domain

@@ -316,7 +316,7 @@ func TestDockerGetDomain(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.domain": "foo.bar",
+				types.LabelDomain: "foo.bar",
 			})),
 			expected: "foo.bar",
 		},

@@ -311,7 +311,7 @@ func TestSwarmGetDomain(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.domain": "foo.bar",
+				types.LabelDomain: "foo.bar",
 			})),
 			expected: "foo.bar",
 			networks: map[string]*docker.NetworkResource{},

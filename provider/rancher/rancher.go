@@ -149,7 +149,7 @@ func (p *Provider) getWeight(service rancherData) string {
 }
 
 func (p *Provider) getDomain(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.domain"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelDomain); err == nil {
 		return label
 	}
 	return p.Domain

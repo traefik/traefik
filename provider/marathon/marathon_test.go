@@ -1239,7 +1239,7 @@ func TestMarathonGetDomain(t *testing.T) {
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.domain": "foo.bar",
+					types.LabelDomain: "foo.bar",
 				},
 			},
 			expected: "foo.bar",

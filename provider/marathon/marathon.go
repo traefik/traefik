@@ -334,7 +334,7 @@ func (p *Provider) getWeight(task marathon.Task, applications []marathon.Applica
 }
 
 func (p *Provider) getDomain(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.domain"); ok {
+	if label, ok := p.getLabel(application, types.LabelDomain); ok {
 		return label
 	}
 	return p.Domain
