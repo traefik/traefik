@@ -10,13 +10,12 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-
 	rancher "github.com/rancher/go-rancher/client"
 )
 
-var (
-	withoutPagination *rancher.ListOpts
-)
+const labelRancheStackServiceName = "io.rancher.stack_service.name"
+
+var withoutPagination *rancher.ListOpts
 
 // APIConfiguration contains configuration properties specific to the Rancher
 // API provider.
@@ -221,7 +220,7 @@ func parseAPISourcedRancherData(environments []*rancher.Project, services []*ran
 			}
 
 			for _, container := range containers {
-				if container.Labels["io.rancher.stack_service.name"] == rancherData.Name &&
+				if container.Labels[labelRancheStackServiceName] == rancherData.Name &&
 					containerFilter(container.Name, container.HealthState, container.State) {
 					rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
 				}
