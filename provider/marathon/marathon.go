@@ -25,9 +25,7 @@ import (
 )
 
 const (
-	labelBackendHealthCheckPath     = "traefik.backend.healthcheck.path"
-	labelBackendHealthCheckInterval = "traefik.backend.healthcheck.interval"
-	traceMaxScanTokenSize           = 1024 * 1024
+	traceMaxScanTokenSize = 1024 * 1024
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -476,14 +474,14 @@ func (p *Provider) hasHealthCheckLabels(application marathon.Application) bool {
 }
 
 func (p *Provider) getHealthCheckPath(application marathon.Application) string {
-	if label, ok := p.getLabel(application, labelBackendHealthCheckPath); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckPath); ok {
 		return label
 	}
 	return ""
 }
 
 func (p *Provider) getHealthCheckInterval(application marathon.Application) string {
-	if label, ok := p.getLabel(application, labelBackendHealthCheckInterval); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckInterval); ok {
 		return label
 	}
 	return ""

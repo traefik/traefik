@@ -348,8 +348,8 @@ func TestMarathonLoadConfig(t *testing.T) {
 						ID:    "/testHealthCheck",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							labelBackendHealthCheckPath:     "/path",
-							labelBackendHealthCheckInterval: "5m",
+							types.LabelBackendHealthcheckPath:     "/path",
+							types.LabelBackendHealthcheckInterval: "5m",
 						},
 					},
 				},
@@ -1522,7 +1522,7 @@ func TestMarathonHasHealthCheckLabels(t *testing.T) {
 				Labels: &map[string]string{},
 			}
 			if test.value != nil {
-				app.AddLabel(labelBackendHealthCheckPath, *test.value)
+				app.AddLabel(types.LabelBackendHealthcheckPath, *test.value)
 			}
 			prov := &Provider{}
 			got := prov.hasHealthCheckLabels(app)
@@ -1558,7 +1558,7 @@ func TestMarathonGetHealthCheckPath(t *testing.T) {
 			app := marathon.Application{}
 			app.EmptyLabels()
 			if test.value != nil {
-				app.AddLabel(labelBackendHealthCheckPath, *test.value)
+				app.AddLabel(types.LabelBackendHealthcheckPath, *test.value)
 			}
 			prov := &Provider{}
 			got := prov.getHealthCheckPath(app)
@@ -1595,7 +1595,7 @@ func TestMarathonGetHealthCheckInterval(t *testing.T) {
 				Labels: &map[string]string{},
 			}
 			if test.value != nil {
-				app.AddLabel(labelBackendHealthCheckInterval, *test.value)
+				app.AddLabel(types.LabelBackendHealthcheckInterval, *test.value)
 			}
 			prov := &Provider{}
 			got := prov.getHealthCheckInterval(app)
