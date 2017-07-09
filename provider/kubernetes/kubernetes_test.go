@@ -383,7 +383,7 @@ func TestRuleType(t *testing.T) {
 
 			if test.ingressRuleType != "" {
 				ingress.ObjectMeta.Annotations = map[string]string{
-					annotationFrontendRuleType: test.ingressRuleType,
+					types.LabelFrontendRuleType: test.ingressRuleType,
 				}
 			}
 

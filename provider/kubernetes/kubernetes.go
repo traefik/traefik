@@ -27,7 +27,6 @@ import (
 var _ provider.Provider = (*Provider)(nil)
 
 const (
-	annotationFrontendRuleType = "traefik.frontend.rule.type"
 	ruleTypePathPrefix         = "PathPrefix"
 	ruleTypeReplacePath        = "ReplacePath"
 
@@ -309,7 +308,7 @@ func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
 		return ""
 	}
 
-	ruleType := i.Annotations[annotationFrontendRuleType]
+	ruleType := i.Annotations[types.LabelFrontendRuleType]
 	if ruleType == "" {
 		ruleType = ruleTypePathPrefix
 	}
