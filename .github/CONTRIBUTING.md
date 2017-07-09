@@ -83,17 +83,13 @@ You will find the Træfik executable in the `~/go/src/github.com/containous/trae
 
 If you want to add a dependency, use `$ glide get` to have glide put it into the vendor folder and update the glide manifest/lock files (`glide.yaml` and `glide.lock`, respectively). A following `glide-vc` run should be triggered to trim down the size of the vendor folder. The final result must be committed into VCS.
 
-Dependencies for the integration tests in the `integration` folder are managed in a separate `integration/glide.yaml` file using the same toolset.
-
-Care must be taken to choose the right arguments to `glide` when dealing with either main or integration test dependencies, or otherwise risk ending up with a broken build. For that reason, the helper script `script/glide.sh` encapsulates the gory details and conveniently calls `glide-vc` as well. Call it without parameters for basic usage instructions.
+Care must be taken to choose the right arguments to `glide` when dealing with dependencies, or otherwise risk ending up with a broken build. For that reason, the helper script `script/glide.sh` encapsulates the gory details and conveniently calls `glide-vc` as well. Call it without parameters for basic usage instructions.
 
 Here's a full example using glide to add a new dependency:
 
 ```bash
 # install the new main dependency github.com/foo/bar and minimize vendor size
 $ ./script/glide.sh get github.com/foo/bar
-# install another dependency, this time for the integration tests
-$ ( cd integration && ../script/glide.sh get github.com/baz/quuz )
 # generate (Only required to integrate other components such as web dashboard)
 $ go generate
 # Standard go build
