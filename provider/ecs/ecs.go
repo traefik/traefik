@@ -466,7 +466,7 @@ func (i ecsInstance) PassHostHeader() string {
 }
 
 func (i ecsInstance) Priority() string {
-	if label := i.label("traefik.frontend.priority"); label != "" {
+	if label := i.label(types.LabelFrontendPriority); label != "" {
 		return label
 	}
 	return "0"

@@ -367,7 +367,7 @@ func (p *Provider) getPassHostHeader(application marathon.Application) string {
 }
 
 func (p *Provider) getPriority(application marathon.Application) string {
-	if priority, ok := p.getLabel(application, "traefik.frontend.priority"); ok {
+	if priority, ok := p.getLabel(application, types.LabelFrontendPriority); ok {
 		return priority
 	}
 	return "0"

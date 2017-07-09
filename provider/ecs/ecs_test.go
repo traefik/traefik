@@ -182,7 +182,7 @@ func TestEcsPriority(t *testing.T) {
 		{
 			expected: "10",
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.frontend.priority": aws.String("10"),
+				types.LabelFrontendPriority: aws.String("10"),
 			}),
 		},
 	}

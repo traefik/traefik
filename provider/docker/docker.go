@@ -681,7 +681,7 @@ func (p *Provider) getWhitelistSourceRange(container dockerData) []string {
 }
 
 func (p *Provider) getPriority(container dockerData) string {
-	if priority, err := getLabel(container, "traefik.frontend.priority"); err == nil {
+	if priority, err := getLabel(container, types.LabelFrontendPriority); err == nil {
 		return priority
 	}
 	return "0"

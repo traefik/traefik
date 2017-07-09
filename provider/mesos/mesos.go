@@ -333,7 +333,7 @@ func (p *Provider) getPassHostHeader(task state.Task) string {
 }
 
 func (p *Provider) getPriority(task state.Task) string {
-	if priority, err := p.getLabel(task, "traefik.frontend.priority"); err == nil {
+	if priority, err := p.getLabel(task, types.LabelFrontendPriority); err == nil {
 		return priority
 	}
 	return "0"

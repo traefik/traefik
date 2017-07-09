@@ -213,7 +213,7 @@ func TestDockerGetServicePriority(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.priority": "33",
+				types.LabelFrontendPriority: "33",
 			})),
 			expected: "33",
 		},

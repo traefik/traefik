@@ -49,7 +49,7 @@ func (p *Provider) getPassHostHeader(service rancherData) string {
 }
 
 func (p *Provider) getPriority(service rancherData) string {
-	if priority, err := getServiceLabel(service, "traefik.frontend.priority"); err == nil {
+	if priority, err := getServiceLabel(service, types.LabelFrontendPriority); err == nil {
 		return priority
 	}
 	return "0"
