@@ -18,11 +18,12 @@ type IPWhitelister struct {
 
 // NewIPWhitelister builds a new IPWhitelister given a list of CIDR-Strings to whitelist
 func NewIPWhitelister(whitelistStrings []string) (*IPWhitelister, error) {
-	whitelister := IPWhitelister{}
 
 	if len(whitelistStrings) == 0 {
 		return nil, errors.New("no whitelists provided")
 	}
+
+	whitelister := IPWhitelister{}
 
 	for _, whitelistString := range whitelistStrings {
 		_, whitelist, err := net.ParseCIDR(whitelistString)
@@ -65,6 +66,7 @@ func reject(w http.ResponseWriter) {
 	w.WriteHeader(statusCode)
 	w.Write([]byte(http.StatusText(statusCode)))
 }
+
 func ipFromRemoteAddr(addr string) (*net.IP, error) {
 	ip, _, err := net.SplitHostPort(addr)
 	if err != nil {
