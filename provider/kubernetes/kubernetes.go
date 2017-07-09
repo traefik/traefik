@@ -27,8 +27,8 @@ import (
 var _ provider.Provider = (*Provider)(nil)
 
 const (
-	ruleTypePathPrefix         = "PathPrefix"
-	ruleTypeReplacePath        = "ReplacePath"
+	ruleTypePathPrefix  = "PathPrefix"
+	ruleTypeReplacePath = "ReplacePath"
 
 	annotationKubernetesIngressClass         = "kubernetes.io/ingress.class"
 	annotationKubernetesAuthRealm            = "ingress.kubernetes.io/auth-realm"
