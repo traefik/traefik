@@ -229,7 +229,7 @@ func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applica
 	}
 
 	// Filter by constraints.
-	label, _ := p.getLabel(application, "traefik.tags")
+	label, _ := p.getLabel(application, types.LabelTags)
 	constraintTags := strings.Split(label, ",")
 	if p.MarathonLBCompatibility {
 		if label, ok := p.getLabel(application, "HAPROXY_GROUP"); ok {
@@ -265,7 +265,7 @@ func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applica
 }
 
 func (p *Provider) applicationFilter(app marathon.Application, filteredTasks []marathon.Task) bool {
-	label, _ := p.getLabel(app, "traefik.tags")
+	label, _ := p.getLabel(app, types.LabelTags)
 	constraintTags := strings.Split(label, ",")
 	if p.MarathonLBCompatibility {
 		if label, ok := p.getLabel(app, "HAPROXY_GROUP"); ok {

@@ -284,7 +284,7 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 		return false
 	}
 
-	constraintTags := strings.Split(service.Labels["traefik.tags"], ",")
+	constraintTags := strings.Split(service.Labels[types.LabelTags], ",")
 	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Filtering service %s with constraint %s", service.Name, failingConstraint.String())

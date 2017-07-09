@@ -518,7 +518,7 @@ func (p *Provider) containerFilter(container dockerData) bool {
 		return false
 	}
 
-	constraintTags := strings.Split(container.Labels["traefik.tags"], ",")
+	constraintTags := strings.Split(container.Labels[types.LabelTags], ",")
 	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Container %v pruned by '%v' constraint", container.Name, failingConstraint.String())

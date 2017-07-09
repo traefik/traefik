@@ -56,7 +56,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.tags":   "not-cheesy",
+					types.LabelTags:   "not-cheesy",
 					types.LabelPort:   "80",
 					types.LabelEnable: "true",
 				},
@@ -68,7 +68,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.tags":   "cheese",
+					types.LabelTags:   "cheese",
 					types.LabelPort:   "80",
 					types.LabelEnable: "true",
 				},
@@ -80,7 +80,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.tags":   "cheeeeese",
+					types.LabelTags:   "cheeeeese",
 					types.LabelPort:   "80",
 					types.LabelEnable: "true",
 				},
@@ -92,7 +92,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.tags":   "chose",
+					types.LabelTags:   "chose",
 					types.LabelPort:   "80",
 					types.LabelEnable: "true",
 				},

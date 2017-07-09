@@ -729,7 +729,7 @@ func TestMarathonAppConstraints(t *testing.T) {
 			application: marathon.Application{
 				ID: "foo2",
 				Labels: &map[string]string{
-					"traefik.tags": "valid",
+					types.LabelTags: "valid",
 				},
 			},
 			filteredTasks: []marathon.Task{
@@ -745,7 +745,7 @@ func TestMarathonAppConstraints(t *testing.T) {
 				ID: "foo3",
 				Labels: &map[string]string{
 					"HAPROXY_GROUP": "valid",
-					"traefik.tags":  "notvalid",
+					types.LabelTags: "notvalid",
 				},
 			},
 			filteredTasks: []marathon.Task{
@@ -786,7 +786,7 @@ func TestMarathonTaskConstraints(t *testing.T) {
 				}, {
 					ID: "foo1",
 					Labels: &map[string]string{
-						"traefik.tags": "other",
+						types.LabelTags: "other",
 					},
 				},
 			},
@@ -802,7 +802,7 @@ func TestMarathonTaskConstraints(t *testing.T) {
 				{
 					ID: "foo2",
 					Labels: &map[string]string{
-						"traefik.tags": "valid",
+						types.LabelTags: "valid",
 					},
 				},
 			},
@@ -819,13 +819,13 @@ func TestMarathonTaskConstraints(t *testing.T) {
 					ID: "foo3",
 					Labels: &map[string]string{
 						"HAPROXY_GROUP": "valid",
-						"traefik.tags":  "notvalid",
+						types.LabelTags: "notvalid",
 					},
 				}, {
 					ID: "foo4",
 					Labels: &map[string]string{
 						"HAPROXY_GROUP": "notvalid",
-						"traefik.tags":  "valid",
+						types.LabelTags: "valid",
 					},
 				},
 			},
