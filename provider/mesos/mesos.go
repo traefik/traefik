@@ -340,7 +340,7 @@ func (p *Provider) getPriority(task state.Task) string {
 }
 
 func (p *Provider) getEntryPoints(task state.Task) []string {
-	if entryPoints, err := p.getLabel(task, "traefik.frontend.entryPoints"); err == nil {
+	if entryPoints, err := p.getLabel(task, types.LabelFrontendEntryPoints); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}

@@ -289,7 +289,7 @@ func TestDockerGetServiceEntryPoints(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.entryPoints": "http,https",
+				types.LabelFrontendEntryPoints: "http,https",
 			})),
 			expected: []string{"http", "https"},
 		},

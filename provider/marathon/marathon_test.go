@@ -1364,7 +1364,7 @@ func TestMarathonGetEntryPoints(t *testing.T) {
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.frontend.entryPoints": "http,https",
+					types.LabelFrontendEntryPoints: "http,https",
 				},
 			},
 			expected: []string{"http", "https"},

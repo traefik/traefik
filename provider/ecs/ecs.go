@@ -473,7 +473,7 @@ func (i ecsInstance) Priority() string {
 }
 
 func (i ecsInstance) EntryPoints() []string {
-	if label := i.label("traefik.frontend.entryPoints"); label != "" {
+	if label := i.label(types.LabelFrontendEntryPoints); label != "" {
 		return strings.Split(label, ",")
 	}
 	return []string{}

@@ -207,13 +207,13 @@ func TestEcsEntryPoints(t *testing.T) {
 		{
 			expected: []string{"http"},
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.frontend.entryPoints": aws.String("http"),
+				types.LabelFrontendEntryPoints: aws.String("http"),
 			}),
 		},
 		{
 			expected: []string{"http", "https"},
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.frontend.entryPoints": aws.String("http,https"),
+				types.LabelFrontendEntryPoints: aws.String("http,https"),
 			}),
 		},
 	}

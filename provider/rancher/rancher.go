@@ -56,7 +56,7 @@ func (p *Provider) getPriority(service rancherData) string {
 }
 
 func (p *Provider) getEntryPoints(service rancherData) []string {
-	if entryPoints, err := getServiceLabel(service, "traefik.frontend.entryPoints"); err == nil {
+	if entryPoints, err := getServiceLabel(service, types.LabelFrontendEntryPoints); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}

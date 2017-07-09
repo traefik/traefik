@@ -374,7 +374,7 @@ func (p *Provider) getPriority(application marathon.Application) string {
 }
 
 func (p *Provider) getEntryPoints(application marathon.Application) []string {
-	if entryPoints, ok := p.getLabel(application, "traefik.frontend.entryPoints"); ok {
+	if entryPoints, ok := p.getLabel(application, types.LabelFrontendEntryPoints); ok {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}

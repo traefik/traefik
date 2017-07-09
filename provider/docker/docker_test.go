@@ -912,9 +912,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				containerJSON(
 					name("test1"),
 					labels(map[string]string{
-						"traefik.frontend.entryPoints": "http,https",
 						"traefik.frontend.auth.basic":  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						types.LabelBackend:             "foobar",
+						types.LabelFrontendEntryPoints: "http,https",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -977,8 +977,8 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				containerJSON(
 					name("test1"),
 					labels(map[string]string{
-						"traefik.frontend.entryPoints":              "http,https",
 						types.LabelBackend:                         "foobar",
+						types.LabelFrontendEntryPoints:             "http,https",
 						types.LabelBackendMaxconnAmount:            "1000",
 						types.LabelBackendMaxconnExtractorfunc:     "somethingelse",
 						types.LabelBackendLoadbalancerMethod:       "drr",

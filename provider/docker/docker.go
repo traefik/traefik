@@ -688,7 +688,7 @@ func (p *Provider) getPriority(container dockerData) string {
 }
 
 func (p *Provider) getEntryPoints(container dockerData) []string {
-	if entryPoints, err := getLabel(container, "traefik.frontend.entryPoints"); err == nil {
+	if entryPoints, err := getLabel(container, types.LabelFrontendEntryPoints); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
