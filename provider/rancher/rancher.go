@@ -128,7 +128,7 @@ func (p *Provider) getBackend(service rancherData) string {
 
 // General Application Stuff
 func (p *Provider) getPort(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.port"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelPort); err == nil {
 		return label
 	}
 	return ""
@@ -274,7 +274,7 @@ func containerFilter(name, healthState, state string) bool {
 
 func (p *Provider) serviceFilter(service rancherData) bool {
 
-	if service.Labels["traefik.port"] == "" {
+	if service.Labels[types.LabelPort] == "" {
 		log.Debugf("Filtering service %s without traefik.port label", service.Name)
 		return false
 	}

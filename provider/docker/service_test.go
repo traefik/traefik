@@ -99,7 +99,7 @@ func TestDockerGetServicePort(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.port": "2500",
+				types.LabelPort: "2500",
 			})),
 			expected: "2500",
 		},

@@ -237,7 +237,7 @@ func TestSwarmGetPort(t *testing.T) {
 		{
 			service: swarmService(
 				serviceLabels(map[string]string{
-					"traefik.port": "8080",
+					types.LabelPort: "8080",
 				}),
 				withEndpointSpec(modeDNSSR),
 			),
@@ -520,8 +520,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.port":   "80",
 				types.LabelEnable: "false",
+				types.LabelPort:   "80",
 			})),
 			expected: false,
 			networks: map[string]*docker.NetworkResource{},
@@ -533,8 +533,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.port":          "80",
 				types.LabelFrontendRule: "Host:foo.bar",
+				types.LabelPort:         "80",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},
@@ -546,7 +546,7 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.port": "80",
+				types.LabelPort: "80",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},
@@ -558,8 +558,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.port":   "80",
 				types.LabelEnable: "true",
+				types.LabelPort:   "80",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},
@@ -571,8 +571,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.port":   "80",
 				types.LabelEnable: "anything",
+				types.LabelPort:   "80",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},
@@ -584,8 +584,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.port":          "80",
 				types.LabelFrontendRule: "Host:foo.bar",
+				types.LabelPort:         "80",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},
@@ -597,7 +597,7 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.port": "80",
+				types.LabelPort: "80",
 			})),
 			expected: false,
 			networks: map[string]*docker.NetworkResource{},
@@ -609,8 +609,8 @@ func TestSwarmTraefikFilter(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.port":   "80",
 				types.LabelEnable: "true",
+				types.LabelPort:   "80",
 			})),
 			expected: true,
 			networks: map[string]*docker.NetworkResource{},
@@ -653,7 +653,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				swarmService(
 					serviceName("test"),
 					serviceLabels(map[string]string{
-						"traefik.port": "80",
+						types.LabelPort: "80",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -695,10 +695,10 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				swarmService(
 					serviceName("test1"),
 					serviceLabels(map[string]string{
-						"traefik.port":                 "80",
 						"traefik.backend":              "foobar",
 						"traefik.frontend.entryPoints": "http,https",
 						"traefik.frontend.auth.basic":  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						types.LabelPort:                "80",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -706,8 +706,8 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				swarmService(
 					serviceName("test2"),
 					serviceLabels(map[string]string{
-						"traefik.port":    "80",
 						"traefik.backend": "foobar",
+						types.LabelPort:    "80",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),

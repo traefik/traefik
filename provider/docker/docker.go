@@ -507,7 +507,7 @@ func (p *Provider) getMaxConnExtractorFunc(container dockerData) string {
 }
 
 func (p *Provider) containerFilter(container dockerData) bool {
-	_, err := strconv.Atoi(container.Labels["traefik.port"])
+	_, err := strconv.Atoi(container.Labels[types.LabelPort])
 	if len(container.NetworkSettings.Ports) == 0 && err != nil {
 		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
 		return false
@@ -606,7 +606,7 @@ func (p *Provider) getIPAddress(container dockerData) string {
 }
 
 func (p *Provider) getPort(container dockerData) string {
-	if label, err := getLabel(container, "traefik.port"); err == nil {
+	if label, err := getLabel(container, types.LabelPort); err == nil {
 		return label
 	}
 

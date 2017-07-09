@@ -207,7 +207,7 @@ func mesosTaskFilter(task state.Task, exposedByDefaultFlag bool) bool {
 
 	//filter indeterminable task port
 	portIndexLabel := labels(task, "traefik.portIndex")
-	portValueLabel := labels(task, "traefik.port")
+	portValueLabel := labels(task, types.LabelPort)
 	if portIndexLabel != "" && portValueLabel != "" {
 		log.Debugf("Filtering Mesos task %s specifying both traefik.portIndex and traefik.port labels", task.Name)
 		return false
@@ -220,7 +220,7 @@ func mesosTaskFilter(task state.Task, exposedByDefaultFlag bool) bool {
 		}
 	}
 	if portValueLabel != "" {
-		port, err := strconv.Atoi(labels(task, "traefik.port"))
+		port, err := strconv.Atoi(labels(task, types.LabelPort))
 		if err != nil {
 			log.Debugf("Filtering Mesos task %s with unexpected value for traefik.port label", task.Name)
 			return false
@@ -283,7 +283,7 @@ func (p *Provider) getPort(task state.Task, applications []state.Task) string {
 			return strconv.Itoa(task.DiscoveryInfo.Ports.DiscoveryPorts[index].Number)
 		}
 	}
-	if portValueLabel, err := p.getLabel(application, "traefik.port"); err == nil {
+	if portValueLabel, err := p.getLabel(application, types.LabelPort); err == nil {
 		return portValueLabel
 	}
 

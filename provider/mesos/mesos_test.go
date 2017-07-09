@@ -71,8 +71,8 @@ func TestMesosTaskFilter(t *testing.T) {
 				setState("TASK_RUNNING"),
 				setHealthy(true))),
 					"traefik.portIndex", "1",
-					"traefik.port", "80"),
 				setLabels(types.LabelEnable, "true",
+					types.LabelPort, "80"),
 				discovery(setDiscoveryPort("TCP", 80, "WEB")),
 			),
 			expected:         false, // traefik.portIndex & traefik.port cannot be set both
@@ -123,8 +123,8 @@ func TestMesosTaskFilter(t *testing.T) {
 			mesosTask: task(statuses(status(
 				setState("TASK_RUNNING"),
 				setHealthy(true))),
-					"traefik.port", "TRAEFIK"),
 				setLabels(types.LabelEnable, "true",
+					types.LabelPort, "TRAEFIK"),
 				discovery(setDiscoveryPort("TCP", 80, "WEB")),
 			),
 			expected:         false, // traefik.port is not an integer
@@ -133,8 +133,8 @@ func TestMesosTaskFilter(t *testing.T) {
 			mesosTask: task(statuses(status(
 				setState("TASK_RUNNING"),
 				setHealthy(true))),
-					"traefik.port", "443"),
 				setLabels(types.LabelEnable, "true",
+					types.LabelPort, "443"),
 				discovery(setDiscoveryPort("TCP", 80, "WEB")),
 			),
 			expected:         false, // traefik.port is not the same as discovery.port
@@ -143,8 +143,8 @@ func TestMesosTaskFilter(t *testing.T) {
 			mesosTask: task(statuses(status(
 				setState("TASK_RUNNING"),
 				setHealthy(true))),
-					"traefik.port", "80"),
 				setLabels(types.LabelEnable, "true",
+					types.LabelPort, "80"),
 				discovery(setDiscoveryPort("TCP", 80, "WEB")),
 			),
 			expected:         true, // traefik.port is the same as discovery.port
@@ -152,8 +152,8 @@ func TestMesosTaskFilter(t *testing.T) {
 		}, {
 			mesosTask: task(statuses(status(
 				setState("TASK_RUNNING"))),
-					"traefik.port", "80"),
 				setLabels(types.LabelEnable, "true",
+					types.LabelPort, "80"),
 				discovery(setDiscoveryPort("TCP", 80, "WEB")),
 			),
 			expected:         true, // No healthCheck
@@ -162,8 +162,8 @@ func TestMesosTaskFilter(t *testing.T) {
 			mesosTask: task(statuses(status(
 				setState("TASK_RUNNING"),
 				setHealthy(false))),
-					"traefik.port", "80"),
 				setLabels(types.LabelEnable, "true",
+					types.LabelPort, "80"),
 				discovery(setDiscoveryPort("TCP", 80, "WEB")),
 			),
 			expected:         false, // HealthCheck at false

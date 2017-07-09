@@ -25,7 +25,6 @@ import (
 )
 
 const (
-	labelPort                       = "traefik.port"
 	labelPortIndex                  = "traefik.portIndex"
 	labelBackendHealthCheckPath     = "traefik.backend.healthcheck.path"
 	labelBackendHealthCheckInterval = "traefik.backend.healthcheck.interval"
@@ -223,7 +222,7 @@ func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applica
 
 	// Filter illegal port label specification.
 	_, hasPortIndexLabel := p.getLabel(application, labelPortIndex)
-	_, hasPortLabel := p.getLabel(application, labelPort)
+	_, hasPortLabel := p.getLabel(application, types.LabelPort)
 	if hasPortIndexLabel && hasPortLabel {
 		log.Debugf("Filtering Marathon task %s from application %s specifying both traefik.portIndex and traefik.port labels", task.ID, application.ID)
 		return false
@@ -500,7 +499,7 @@ func (p *Provider) getBasicAuth(application marathon.Application) []string {
 }
 
 func processPorts(application marathon.Application, task marathon.Task) (int, error) {
-	if portLabel, ok := (*application.Labels)[labelPort]; ok {
+	if portLabel, ok := (*application.Labels)[types.LabelPort]; ok {
 		port, err := strconv.Atoi(portLabel)
 		switch {
 		case err != nil:

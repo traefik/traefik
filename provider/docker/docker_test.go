@@ -237,13 +237,13 @@ func TestDockerGetPort(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.port": "8080",
+				types.LabelPort: "8080",
 			})),
 			expected: "8080",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.port": "8080",
+				types.LabelPort: "8080",
 			}), ports(nat.PortMap{
 				"80/tcp": {},
 			})),
@@ -251,7 +251,7 @@ func TestDockerGetPort(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.port": "8080",
+				types.LabelPort: "8080",
 			}), ports(nat.PortMap{
 				"8080/tcp": {},
 				"80/tcp":   {},
@@ -665,7 +665,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.port": "80",
+						types.LabelPort: "80",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{

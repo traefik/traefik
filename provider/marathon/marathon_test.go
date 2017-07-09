@@ -532,8 +532,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 						ID:    "specify-both-port-index-and-number",
 						Ports: []int{80, 443},
 						Labels: &map[string]string{
-							"traefik.port":      "443",
 							"traefik.portIndex": "1",
+							types.LabelPort:      "443",
 						},
 					},
 				},
@@ -961,7 +961,7 @@ func TestMarathonGetPort(t *testing.T) {
 				{
 					ID: "app",
 					Labels: &map[string]string{
-						"traefik.port": "80",
+						types.LabelPort: "80",
 					},
 				},
 			},
@@ -977,7 +977,7 @@ func TestMarathonGetPort(t *testing.T) {
 				{
 					ID: "app",
 					Labels: &map[string]string{
-						"traefik.port": "foobar",
+						types.LabelPort: "foobar",
 					},
 				},
 			},
@@ -993,7 +993,7 @@ func TestMarathonGetPort(t *testing.T) {
 				{
 					ID: "app",
 					Labels: &map[string]string{
-						"traefik.port": "-1",
+						types.LabelPort: "-1",
 					},
 				},
 			},
@@ -1102,7 +1102,7 @@ func TestMarathonGetPort(t *testing.T) {
 				{
 					ID: "app",
 					Labels: &map[string]string{
-						"traefik.portIndex": "1",
+						types.LabelPortIndex: "1",
 					},
 				},
 			},

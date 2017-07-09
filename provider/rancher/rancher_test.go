@@ -34,7 +34,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.port":   "80",
+					types.LabelPort:   "80",
 					types.LabelEnable: "false",
 				},
 				Health: "healthy",
@@ -45,7 +45,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.port":   "80",
+					types.LabelPort:   "80",
 					types.LabelEnable: "true",
 				},
 				Health: "unhealthy",
@@ -57,7 +57,7 @@ func TestRancherServiceFilter(t *testing.T) {
 			service: rancherData{
 				Labels: map[string]string{
 					"traefik.tags":   "not-cheesy",
-					"traefik.port":   "80",
+					types.LabelPort:   "80",
 					types.LabelEnable: "true",
 				},
 				Health: "healthy",
@@ -69,7 +69,7 @@ func TestRancherServiceFilter(t *testing.T) {
 			service: rancherData{
 				Labels: map[string]string{
 					"traefik.tags":   "cheese",
-					"traefik.port":   "80",
+					types.LabelPort:   "80",
 					types.LabelEnable: "true",
 				},
 				Health: "healthy",
@@ -81,7 +81,7 @@ func TestRancherServiceFilter(t *testing.T) {
 			service: rancherData{
 				Labels: map[string]string{
 					"traefik.tags":   "cheeeeese",
-					"traefik.port":   "80",
+					types.LabelPort:   "80",
 					types.LabelEnable: "true",
 				},
 				Health: "healthy",
@@ -93,7 +93,7 @@ func TestRancherServiceFilter(t *testing.T) {
 			service: rancherData{
 				Labels: map[string]string{
 					"traefik.tags":   "chose",
-					"traefik.port":   "80",
+					types.LabelPort:   "80",
 					types.LabelEnable: "true",
 				},
 				Health: "healthy",
@@ -367,7 +367,7 @@ func TestRancherGetPort(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.port": "1337",
+					types.LabelPort: "1337",
 				},
 			},
 
@@ -541,8 +541,8 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 				{
 					Name: "test/service",
 					Labels: map[string]string{
-						"traefik.port":                "80",
 						"traefik.frontend.auth.basic": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						types.LabelPort:              "80",
 					},
 					Health:     "healthy",
 					Containers: []string{"127.0.0.1"},
