@@ -1225,7 +1225,7 @@ func TestServiceAnnotations(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"traefik.backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
-					"traefik.backend.loadbalancer.method": "drr",
+					types.LabelBackendLoadbalancerMethod:    "drr",
 				},
 			},
 			Spec: v1.ServiceSpec{

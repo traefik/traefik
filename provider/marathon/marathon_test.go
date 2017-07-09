@@ -126,7 +126,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 						ID:    "/testLoadBalancerAndCircuitBreaker.dot",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.backend.loadbalancer.method":       "drr",
+							types.LabelBackendLoadbalancerMethod:       "drr",
 							types.LabelBackendCircuitbreakerExpression: "NetworkErrorRatio() > 0.5",
 						},
 					},

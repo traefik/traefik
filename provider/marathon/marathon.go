@@ -427,8 +427,8 @@ func (p *Provider) hasCircuitBreakerLabels(application marathon.Application) boo
 }
 
 func (p *Provider) hasLoadBalancerLabels(application marathon.Application) bool {
-	_, errMethod := p.getLabel(application, "traefik.backend.loadbalancer.method")
 	_, errSticky := p.getLabel(application, "traefik.backend.loadbalancer.sticky")
+	_, errMethod := p.getLabel(application, types.LabelBackendLoadbalancerMethod)
 	return errMethod || errSticky
 }
 
@@ -460,7 +460,7 @@ func (p *Provider) getMaxConnExtractorFunc(application marathon.Application) str
 }
 
 func (p *Provider) getLoadBalancerMethod(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend.loadbalancer.method"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendLoadbalancerMethod); ok {
 		return label
 	}
 	return "wrr"

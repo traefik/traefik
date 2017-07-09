@@ -455,8 +455,8 @@ func (p *Provider) getServiceProtocol(container dockerData, serviceName string) 
 }
 
 func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
-	_, errMethod := getLabel(container, "traefik.backend.loadbalancer.method")
 	_, errSticky := getLabel(container, "traefik.backend.loadbalancer.sticky")
+	_, errMethod := getLabel(container, types.LabelBackendLoadbalancerMethod)
 	if errMethod != nil && errSticky != nil {
 		return false
 	}
@@ -481,7 +481,7 @@ func (p *Provider) getCircuitBreakerExpression(container dockerData) string {
 }
 
 func (p *Provider) getLoadBalancerMethod(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.loadbalancer.method"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendLoadbalancerMethod); err == nil {
 		return label
 	}
 	return "wrr"

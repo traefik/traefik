@@ -241,7 +241,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
+				if service.Annotations[types.LabelBackendLoadbalancerMethod] == "drr" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
 

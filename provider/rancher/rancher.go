@@ -83,15 +83,15 @@ func (p *Provider) getFrontendName(service rancherData) string {
 
 // Backend Labels
 func (p *Provider) getLoadBalancerMethod(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend.loadbalancer.method"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendLoadbalancerMethod); err == nil {
 		return label
 	}
 	return "wrr"
 }
 
 func (p *Provider) hasLoadBalancerLabel(service rancherData) bool {
-	_, errMethod := getServiceLabel(service, "traefik.backend.loadbalancer.method")
 	_, errSticky := getServiceLabel(service, "traefik.backend.loadbalancer.sticky")
+	_, errMethod := getServiceLabel(service, types.LabelBackendLoadbalancerMethod)
 	if errMethod != nil && errSticky != nil {
 		return false
 	}
