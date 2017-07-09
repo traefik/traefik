@@ -452,7 +452,7 @@ func (i ecsInstance) Port() string {
 }
 
 func (i ecsInstance) Weight() string {
-	if label := i.label("traefik.weight"); label != "" {
+	if label := i.label(types.LabelWeight); label != "" {
 		return label
 	}
 	return "0"

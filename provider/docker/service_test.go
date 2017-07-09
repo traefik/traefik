@@ -61,7 +61,7 @@ func TestDockerGetServiceWeight(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.weight": "200",
+				types.LabelWeight: "200",
 			})),
 			expected: "200",
 		},

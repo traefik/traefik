@@ -132,7 +132,7 @@ func TestEcsWeight(t *testing.T) {
 		{
 			expected: "10",
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.weight": aws.String("10"),
+				types.LabelWeight: aws.String("10"),
 			}),
 		},
 	}

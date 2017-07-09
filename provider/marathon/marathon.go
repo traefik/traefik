@@ -327,7 +327,7 @@ func (p *Provider) getWeight(task marathon.Task, applications []marathon.Applica
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
 		return "0"
 	}
-	if label, ok := p.getLabel(application, "traefik.weight"); ok {
+	if label, ok := p.getLabel(application, types.LabelWeight); ok {
 		return label
 	}
 	return "0"

@@ -275,7 +275,7 @@ func TestSwarmGetWeight(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.weight": "10",
+				types.LabelWeight: "10",
 			})),
 			expected: "10",
 			networks: map[string]*docker.NetworkResource{},

@@ -332,7 +332,7 @@ func TestRancherGetWeight(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.weight": "5",
+					types.LabelWeight: "5",
 				},
 			},
 

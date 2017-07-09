@@ -131,7 +131,7 @@ func (p *Provider) getProtocol(instance eureka.InstanceInfo) string {
 }
 
 func (p *Provider) getWeight(instance eureka.InstanceInfo) string {
-	if val, ok := instance.Metadata.Map["traefik.weight"]; ok {
+	if val, ok := instance.Metadata.Map[types.LabelWeight]; ok {
 		return val
 	}
 	return "0"

@@ -142,7 +142,7 @@ func (p *Provider) getProtocol(service rancherData) string {
 }
 
 func (p *Provider) getWeight(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.weight"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelWeight); err == nil {
 		return label
 	}
 	return "0"

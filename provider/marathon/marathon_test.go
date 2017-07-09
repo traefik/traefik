@@ -1175,7 +1175,7 @@ func TestMarathonGetWeight(t *testing.T) {
 				{
 					ID: "test1",
 					Labels: &map[string]string{
-						"traefik.weight": "10",
+						types.LabelWeight: "10",
 					},
 				},
 			},
@@ -1203,7 +1203,7 @@ func TestMarathonGetWeight(t *testing.T) {
 				{
 					ID: "test",
 					Labels: &map[string]string{
-						"traefik.weight": "10",
+						types.LabelWeight: "10",
 					},
 				},
 			},

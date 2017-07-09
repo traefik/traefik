@@ -300,7 +300,7 @@ func (p *Provider) getWeight(task state.Task, applications []state.Task) string 
 		return "0"
 	}
 
-	if label, err := p.getLabel(application, "traefik.weight"); err == nil {
+	if label, err := p.getLabel(application, types.LabelWeight); err == nil {
 		return label
 	}
 	return "0"
