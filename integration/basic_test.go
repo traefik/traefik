@@ -15,7 +15,7 @@ import (
 type SimpleSuite struct{ BaseSuite }
 
 func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
-	cmd, output := s.cmdTraefikWithConfigFile("fixtures/invalid_configuration.toml")
+	cmd, output := s.cmdTraefik(withConfigFile("fixtures/invalid_configuration.toml"))
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -35,7 +35,7 @@ func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 }
 
 func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/simple_default.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/simple_default.toml"))
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -48,7 +48,7 @@ func (s *SimpleSuite) TestSimpleDefaultConfig(c *check.C) {
 }
 
 func (s *SimpleSuite) TestWithWebConfig(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/simple_web.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/simple_web.toml"))
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)

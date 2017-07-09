@@ -95,7 +95,7 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefikWithConfigFile(file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -111,7 +111,7 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefikWithConfigFile(file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -210,7 +210,10 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// start traefik
-	cmd, _ := s.cmdTraefik("--configFile=fixtures/simple_web.toml", "--consul", "--consul.endpoint="+consulHost+":8500")
+	cmd, _ := s.cmdTraefik(
+		withConfigFile("fixtures/simple_web.toml"),
+		"--consul",
+		"--consul.endpoint="+consulHost+":8500")
 
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -295,8 +298,9 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 
 	// start traefik
 	cmd, _ := s.cmdTraefik(
-		"--configFile=fixtures/simple_web.toml",
-		"--consul", "--consul.endpoint="+consulHost+":8585",
+		withConfigFile("fixtures/simple_web.toml"),
+		"--consul",
+		"--consul.endpoint="+consulHost+":8585",
 		"--consul.tls.ca=resources/tls/ca.cert",
 		"--consul.tls.cert=resources/tls/consul.cert",
 		"--consul.tls.key=resources/tls/consul.key",
@@ -317,7 +321,7 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 
 	cmd, _ := s.cmdTraefik(
 		"storeconfig",
-		"--configFile=fixtures/simple_web.toml",
+		withConfigFile("fixtures/simple_web.toml"),
 		"--consul.endpoint="+consulHost+":8500")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)

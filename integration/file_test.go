@@ -19,7 +19,7 @@ func (s *FileSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/file/simple.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/file/simple.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -31,7 +31,7 @@ func (s *FileSuite) TestSimpleConfiguration(c *check.C) {
 
 // #56 regression test, make sure it does not fail
 func (s *FileSuite) TestSimpleConfigurationNoPanic(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/file/56-simple-panic.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/file/56-simple-panic.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -42,7 +42,7 @@ func (s *FileSuite) TestSimpleConfigurationNoPanic(c *check.C) {
 }
 
 func (s *FileSuite) TestDirectoryConfiguration(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/file/directory.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/file/directory.toml"))
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)

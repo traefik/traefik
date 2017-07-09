@@ -71,8 +71,8 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	s.composeProject = compose.CreateProject(c, projectName, composeFile)
 }
 
-func (s *BaseSuite) cmdTraefikWithConfigFile(file string) (*exec.Cmd, *bytes.Buffer) {
-	return s.cmdTraefik("--configFile=" + file)
+func withConfigFile(file string) string {
+	return "--configFile=" + file
 }
 
 func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {

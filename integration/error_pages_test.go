@@ -33,7 +33,7 @@ func (s *ErrorPagesSuite) TestSimpleConfiguration(c *check.C) {
 	}{s.BackendIP, s.ErrorPageIP})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefikWithConfigFile(file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -55,7 +55,7 @@ func (s *ErrorPagesSuite) TestErrorPage(c *check.C) {
 	}{s.BackendIP, s.ErrorPageIP})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefikWithConfigFile(file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

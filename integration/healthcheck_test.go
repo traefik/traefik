@@ -30,7 +30,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	}{whoami1Host, whoami2Host})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefikWithConfigFile(file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
