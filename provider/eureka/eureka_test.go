@@ -140,7 +140,7 @@ func TestEurekaGetInstanceId(t *testing.T) {
 				},
 				Metadata: &eureka.MetaData{
 					Map: map[string]string{
-						types.LabelBackendId: "MyInstanceId",
+						types.LabelBackendID: "MyInstanceId",
 					},
 				},
 			},
