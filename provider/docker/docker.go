@@ -319,7 +319,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 }
 
 func (p *Provider) hasCircuitBreakerLabel(container dockerData) bool {
-	if _, err := getLabel(container, "traefik.backend.circuitbreaker.expression"); err != nil {
+	if _, err := getLabel(container, types.LabelBackendCircuitbreakerExpression); err != nil {
 		return false
 	}
 	return true
@@ -474,7 +474,7 @@ func (p *Provider) hasMaxConnLabels(container dockerData) bool {
 }
 
 func (p *Provider) getCircuitBreakerExpression(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.circuitbreaker.expression"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendCircuitbreakerExpression); err == nil {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"

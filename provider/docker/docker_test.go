@@ -982,7 +982,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 						"traefik.backend.maxconn.amount":            "1000",
 						"traefik.backend.maxconn.extractorfunc":     "somethingelse",
 						"traefik.backend.loadbalancer.method":       "drr",
-						"traefik.backend.circuitbreaker.expression": "NetworkErrorRatio() > 0.5",
+						types.LabelBackendCircuitbreakerExpression: "NetworkErrorRatio() > 0.5",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},

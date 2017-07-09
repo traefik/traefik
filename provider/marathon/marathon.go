@@ -422,7 +422,7 @@ func (p *Provider) getSubDomain(name string) string {
 }
 
 func (p *Provider) hasCircuitBreakerLabels(application marathon.Application) bool {
-	_, ok := p.getLabel(application, "traefik.backend.circuitbreaker.expression")
+	_, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression)
 	return ok
 }
 
@@ -467,7 +467,7 @@ func (p *Provider) getLoadBalancerMethod(application marathon.Application) strin
 }
 
 func (p *Provider) getCircuitBreakerExpression(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend.circuitbreaker.expression"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression); ok {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"

@@ -99,14 +99,14 @@ func (p *Provider) hasLoadBalancerLabel(service rancherData) bool {
 }
 
 func (p *Provider) hasCircuitBreakerLabel(service rancherData) bool {
-	if _, err := getServiceLabel(service, "traefik.backend.circuitbreaker.expression"); err != nil {
+	if _, err := getServiceLabel(service, types.LabelBackendCircuitbreakerExpression); err != nil {
 		return false
 	}
 	return true
 }
 
 func (p *Provider) getCircuitBreakerExpression(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend.circuitbreaker.expression"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendCircuitbreakerExpression); err == nil {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"

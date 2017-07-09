@@ -127,7 +127,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 						Ports: []int{80},
 						Labels: &map[string]string{
 							"traefik.backend.loadbalancer.method":       "drr",
-							"traefik.backend.circuitbreaker.expression": "NetworkErrorRatio() > 0.5",
+							types.LabelBackendCircuitbreakerExpression: "NetworkErrorRatio() > 0.5",
 						},
 					},
 				},
