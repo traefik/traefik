@@ -319,7 +319,7 @@ func (p *Provider) getProtocol(task state.Task, applications []state.Task) strin
 		log.Errorf("Unable to get Mesos application from task %s", task.DiscoveryInfo.Name)
 		return "http"
 	}
-	if label, err := p.getLabel(application, "traefik.protocol"); err == nil {
+	if label, err := p.getLabel(application, types.LabelProtocol); err == nil {
 		return label
 	}
 	return "http"

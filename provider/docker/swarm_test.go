@@ -348,7 +348,7 @@ func TestSwarmGetProtocol(t *testing.T) {
 		},
 		{
 			service: swarmService(serviceLabels(map[string]string{
-				"traefik.protocol": "https",
+				types.LabelProtocol: "https",
 			})),
 			expected: "https",
 			networks: map[string]*docker.NetworkResource{},

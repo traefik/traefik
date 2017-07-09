@@ -135,7 +135,7 @@ func (p *Provider) getPort(service rancherData) string {
 }
 
 func (p *Provider) getProtocol(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.protocol"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelProtocol); err == nil {
 		return label
 	}
 	return "http"

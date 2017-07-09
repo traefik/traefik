@@ -1272,7 +1272,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 				{
 					ID: "test1",
 					Labels: &map[string]string{
-						"traefik.protocol": "https",
+						types.LabelProtocol: "https",
 					},
 				},
 			},
@@ -1300,7 +1300,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 				{
 					ID: "test",
 					Labels: &map[string]string{
-						"traefik.protocol": "https",
+						types.LabelProtocol: "https",
 					},
 				},
 			},

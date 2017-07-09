@@ -437,7 +437,7 @@ func (p *Provider) chunkedTaskArns(tasks []*string) [][]*string {
 }
 
 func (i ecsInstance) Protocol() string {
-	if label := i.label("traefik.protocol"); label != "" {
+	if label := i.label(types.LabelProtocol); label != "" {
 		return label
 	}
 	return "http"

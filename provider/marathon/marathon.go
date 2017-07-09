@@ -346,7 +346,7 @@ func (p *Provider) getProtocol(task marathon.Task, applications []marathon.Appli
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
 		return "http"
 	}
-	if label, ok := p.getLabel(application, "traefik.protocol"); ok {
+	if label, ok := p.getLabel(application, types.LabelProtocol); ok {
 		return label
 	}
 	return "http"

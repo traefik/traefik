@@ -658,7 +658,7 @@ func (p *Provider) getDomain(container dockerData) string {
 }
 
 func (p *Provider) getProtocol(container dockerData) string {
-	if label, err := getLabel(container, "traefik.protocol"); err == nil {
+	if label, err := getLabel(container, types.LabelProtocol); err == nil {
 		return label
 	}
 	return "http"

@@ -437,7 +437,7 @@ func TestRancherGetProtocol(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.protocol": "https",
+					types.LabelProtocol: "https",
 				},
 			},
 

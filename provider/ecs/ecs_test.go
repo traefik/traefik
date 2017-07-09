@@ -69,7 +69,7 @@ func TestEcsProtocol(t *testing.T) {
 		{
 			expected: "https",
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.protocol": aws.String("https"),
+				types.LabelProtocol: aws.String("https"),
 			}),
 		},
 	}

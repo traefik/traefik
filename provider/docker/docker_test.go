@@ -349,7 +349,7 @@ func TestDockerGetProtocol(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.protocol": "https",
+				types.LabelProtocol: "https",
 			})),
 			expected: "https",
 		},
