@@ -491,7 +491,7 @@ func (p *Provider) getHealthCheckInterval(application marathon.Application) stri
 }
 
 func (p *Provider) getBasicAuth(application marathon.Application) []string {
-	if basicAuth, ok := p.getLabel(application, "traefik.frontend.auth.basic"); ok {
+	if basicAuth, ok := p.getLabel(application, types.LabelFrontendAuthBasic); ok {
 		return strings.Split(basicAuth, ",")
 	}
 

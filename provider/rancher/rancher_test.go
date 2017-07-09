@@ -541,8 +541,8 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 				{
 					Name: "test/service",
 					Labels: map[string]string{
-						"traefik.frontend.auth.basic": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						types.LabelPort:              "80",
+						types.LabelFrontendAuthBasic: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					},
 					Health:     "healthy",
 					Containers: []string{"127.0.0.1"},

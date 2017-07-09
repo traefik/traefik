@@ -695,7 +695,7 @@ func (p *Provider) getEntryPoints(container dockerData) []string {
 }
 
 func (p *Provider) getBasicAuth(container dockerData) []string {
-	if basicAuth, err := getLabel(container, "traefik.frontend.auth.basic"); err == nil {
+	if basicAuth, err := getLabel(container, types.LabelFrontendAuthBasic); err == nil {
 		return strings.Split(basicAuth, ",")
 	}
 

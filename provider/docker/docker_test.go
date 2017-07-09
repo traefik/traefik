@@ -912,9 +912,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				containerJSON(
 					name("test1"),
 					labels(map[string]string{
-						"traefik.frontend.auth.basic":  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						types.LabelBackend:             "foobar",
 						types.LabelFrontendEntryPoints: "http,https",
+						types.LabelFrontendAuthBasic:   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},

@@ -70,7 +70,7 @@ func (p *Provider) getFrontendRule(service rancherData) string {
 }
 
 func (p *Provider) getBasicAuth(service rancherData) []string {
-	if basicAuth, err := getServiceLabel(service, "traefik.frontend.auth.basic"); err == nil {
+	if basicAuth, err := getServiceLabel(service, types.LabelFrontendAuthBasic); err == nil {
 		return strings.Split(basicAuth, ",")
 	}
 	return []string{}

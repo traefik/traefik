@@ -1825,7 +1825,7 @@ func TestMarathonGetBasicAuth(t *testing.T) {
 			desc: "basic auth label is set with user:password",
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.frontend.auth.basic": "user:password",
+					types.LabelFrontendAuthBasic: "user:password",
 				},
 			},
 			expected: []string{"user:password"},

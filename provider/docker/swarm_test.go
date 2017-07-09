@@ -695,10 +695,10 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				swarmService(
 					serviceName("test1"),
 					serviceLabels(map[string]string{
-						"traefik.frontend.auth.basic":  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						types.LabelPort:                "80",
 						types.LabelBackend:             "foobar",
 						types.LabelFrontendEntryPoints: "http,https",
+						types.LabelFrontendAuthBasic:   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
