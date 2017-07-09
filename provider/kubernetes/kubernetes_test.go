@@ -1224,7 +1224,7 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "1",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
+					types.LabelTraefikBackendCircuitbreaker: "NetworkErrorRatio() > 0.5",
 					types.LabelBackendLoadbalancerMethod:    "drr",
 				},
 			},
@@ -1243,7 +1243,7 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "2",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.backend.circuitbreaker":      "",
+					types.LabelTraefikBackendCircuitbreaker: "",
 					types.LabelBackendLoadbalancerSticky:    "true",
 				},
 			},

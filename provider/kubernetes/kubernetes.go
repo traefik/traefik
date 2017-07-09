@@ -235,7 +235,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					continue
 				}
 
-				if expression := service.Annotations["traefik.backend.circuitbreaker"]; expression != "" {
+				if expression := service.Annotations[types.LabelTraefikBackendCircuitbreaker]; expression != "" {
 					templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
 						Expression: expression,
 					}
