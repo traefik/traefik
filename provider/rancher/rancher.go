@@ -159,7 +159,7 @@ func (p *Provider) hasMaxConnLabels(service rancherData) bool {
 	if _, err := getServiceLabel(service, types.LabelBackendMaxconnAmount); err != nil {
 		return false
 	}
-	if _, err := getServiceLabel(service, "traefik.backend.maxconn.extractorfunc"); err != nil {
+	if _, err := getServiceLabel(service, types.LabelBackendMaxconnExtractorfunc); err != nil {
 		return false
 	}
 	return true
@@ -178,7 +178,7 @@ func (p *Provider) getMaxConnAmount(service rancherData) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend.maxconn.extractorfunc"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendMaxconnExtractorfunc); err == nil {
 		return label
 	}
 	return "request.host"

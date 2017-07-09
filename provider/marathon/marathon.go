@@ -436,7 +436,7 @@ func (p *Provider) hasMaxConnLabels(application marathon.Application) bool {
 	if _, ok := p.getLabel(application, types.LabelBackendMaxconnAmount); !ok {
 		return false
 	}
-	_, ok := p.getLabel(application, "traefik.backend.maxconn.extractorfunc")
+	_, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc)
 	return ok
 }
 
@@ -453,7 +453,7 @@ func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend.maxconn.extractorfunc"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc); ok {
 		return label
 	}
 	return "request.host"

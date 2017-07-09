@@ -467,7 +467,7 @@ func (p *Provider) hasMaxConnLabels(container dockerData) bool {
 	if _, err := getLabel(container, types.LabelBackendMaxconnAmount); err != nil {
 		return false
 	}
-	if _, err := getLabel(container, "traefik.backend.maxconn.extractorfunc"); err != nil {
+	if _, err := getLabel(container, types.LabelBackendMaxconnExtractorfunc); err != nil {
 		return false
 	}
 	return true
@@ -500,7 +500,7 @@ func (p *Provider) getMaxConnAmount(container dockerData) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.maxconn.extractorfunc"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendMaxconnExtractorfunc); err == nil {
 		return label
 	}
 	return "request.host"

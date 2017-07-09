@@ -185,8 +185,8 @@ func TestMarathonLoadConfig(t *testing.T) {
 						ID:    "/testMaxConn",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.backend.maxconn.extractorfunc": "client.ip",
 							types.LabelBackendMaxconnAmount:        "1000",
+							types.LabelBackendMaxconnExtractorfunc: "client.ip",
 						},
 					},
 				},
@@ -295,7 +295,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 						ID:    "/testMaxConnOnlyExtractorFunc",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.backend.maxconn.extractorfunc": "client.ip",
+							types.LabelBackendMaxconnExtractorfunc: "client.ip",
 						},
 					},
 				},
