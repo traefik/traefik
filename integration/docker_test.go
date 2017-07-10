@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -80,7 +79,7 @@ func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
 	defer os.Remove(file)
 
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -97,7 +96,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	name := s.startContainer(c, "swarm:1.0.0", "manage", "token://blablabla")
 
 	// Start traefik
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -129,7 +128,7 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
 	// Start traefik
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -161,7 +160,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
 	// Start traefik
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

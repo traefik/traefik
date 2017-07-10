@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"net/http"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -30,8 +29,8 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 		Server2 string
 	}{whoami1Host, whoami2Host})
 	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
 
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

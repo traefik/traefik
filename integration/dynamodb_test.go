@@ -3,7 +3,6 @@ package integration
 import (
 	"net/http"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -147,7 +146,7 @@ func (s *DynamoDBSuite) TestSimpleConfiguration(c *check.C) {
 	dynamoURL := "http://" + s.composeProject.Container(c, "dynamo").NetworkSettings.IPAddress + ":8000"
 	file := s.adaptFile(c, "fixtures/dynamodb/simple.toml", struct{ DynamoURL string }{dynamoURL})
 	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

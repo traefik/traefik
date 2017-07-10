@@ -102,7 +102,7 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 		OnHostRule:  !testCase.onDemand,
 	})
 
-	cmd, output := s.cmdTraefikWithConfigFile(file)
+	cmd, output := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

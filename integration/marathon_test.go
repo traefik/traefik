@@ -2,7 +2,6 @@ package integration
 
 import (
 	"net/http"
-	"os/exec"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -41,7 +40,7 @@ func (s *MarathonSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *MarathonSuite) TestSimpleConfiguration(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/marathon/simple.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/marathon/simple.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

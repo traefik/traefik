@@ -7,15 +7,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"os/exec"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
-	shellwords "github.com/mattn/go-shellwords"
-
+	"github.com/mattn/go-shellwords"
 	checker "github.com/vdemeester/shakers"
 )
 
@@ -28,7 +25,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	os.Remove("traefik.log")
 
 	// Start Traefik
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/access_log_config.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/access_log_config.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -49,7 +46,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	if len(traefikLog) > 0 {
 		fmt.Printf("%s\n", string(traefikLog))
-		c.Assert(len(traefikLog), checker.Equals, 0)
+		c.Assert(traefikLog, checker.HasLen, 0)
 	}
 
 	// Start test servers
@@ -78,12 +75,12 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 			count++
 			tokens, err := shellwords.Parse(line)
 			c.Assert(err, checker.IsNil)
-			c.Assert(len(tokens), checker.Equals, 14)
-			c.Assert(regexp.MustCompile(`^\d{3}$`).MatchString(tokens[6]), checker.True)
+			c.Assert(tokens, checker.HasLen, 14)
+			c.Assert(tokens[6], checker.Matches, `^\d{3}$`)
 			c.Assert(tokens[10], checker.Equals, fmt.Sprintf("%d", i+1))
-			c.Assert(strings.HasPrefix(tokens[11], "frontend"), checker.True)
-			c.Assert(strings.HasPrefix(tokens[12], "http://127.0.0.1:808"), checker.True)
-			c.Assert(regexp.MustCompile(`^\d+ms$`).MatchString(tokens[13]), checker.True)
+			c.Assert(tokens[11], checker.HasPrefix, "frontend")
+			c.Assert(tokens[12], checker.HasPrefix, "http://127.0.0.1:808")
+			c.Assert(tokens[13], checker.Matches, `^\d+ms$`)
 		}
 	}
 	c.Assert(count, checker.GreaterOrEqualThan, 3)
@@ -93,7 +90,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	if len(traefikLog) > 0 {
 		fmt.Printf("%s\n", string(traefikLog))
-		c.Assert(len(traefikLog), checker.Equals, 0)
+		c.Assert(traefikLog, checker.HasLen, 0)
 	}
 }
 

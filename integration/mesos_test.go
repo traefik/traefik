@@ -2,7 +2,6 @@ package integration
 
 import (
 	"net/http"
-	"os/exec"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -18,7 +17,7 @@ func (s *MesosSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *MesosSuite) TestSimpleConfiguration(c *check.C) {
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/mesos/simple.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/mesos/simple.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
