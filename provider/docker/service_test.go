@@ -23,7 +23,7 @@ func TestDockerGetServiceProtocol(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.protocol": "https",
+				types.LabelProtocol: "https",
 			})),
 			expected: "https",
 		},
@@ -61,7 +61,7 @@ func TestDockerGetServiceWeight(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.weight": "200",
+				types.LabelWeight: "200",
 			})),
 			expected: "200",
 		},
@@ -99,7 +99,7 @@ func TestDockerGetServicePort(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.port": "2500",
+				types.LabelPort: "2500",
 			})),
 			expected: "2500",
 		},
@@ -137,7 +137,7 @@ func TestDockerGetServiceFrontendRule(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Path:/helloworld",
+				types.LabelFrontendRule: "Path:/helloworld",
 			})),
 			expected: "Path:/helloworld",
 		},
@@ -175,7 +175,7 @@ func TestDockerGetServiceBackend(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.backend": "another-backend",
+				types.LabelBackend: "another-backend",
 			})),
 			expected: "another-backend-myservice",
 		},
@@ -213,7 +213,7 @@ func TestDockerGetServicePriority(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.priority": "33",
+				types.LabelFrontendPriority: "33",
 			})),
 			expected: "33",
 		},
@@ -251,7 +251,7 @@ func TestDockerGetServicePassHostHeader(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.passHostHeader": "false",
+				types.LabelFrontendPassHostHeader: "false",
 			})),
 			expected: "false",
 		},
@@ -289,7 +289,7 @@ func TestDockerGetServiceEntryPoints(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.entryPoints": "http,https",
+				types.LabelFrontendEntryPoints: "http,https",
 			})),
 			expected: []string{"http", "https"},
 		},

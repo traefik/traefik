@@ -24,7 +24,7 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.enable": "true",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -34,8 +34,8 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.port":   "80",
-					"traefik.enable": "false",
+					types.LabelPort:   "80",
+					types.LabelEnable: "false",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -45,8 +45,8 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelPort:   "80",
+					types.LabelEnable: "true",
 				},
 				Health: "unhealthy",
 				State:  "active",
@@ -56,9 +56,9 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.tags":   "not-cheesy",
-					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelTags:   "not-cheesy",
+					types.LabelPort:   "80",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "inactive",
@@ -68,9 +68,9 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.tags":   "cheese",
-					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelTags:   "cheese",
+					types.LabelPort:   "80",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -80,9 +80,9 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.tags":   "cheeeeese",
-					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelTags:   "cheeeeese",
+					types.LabelPort:   "80",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "upgraded",
@@ -92,9 +92,9 @@ func TestRancherServiceFilter(t *testing.T) {
 		{
 			service: rancherData{
 				Labels: map[string]string{
-					"traefik.tags":   "chose",
-					"traefik.port":   "80",
-					"traefik.enable": "true",
+					types.LabelTags:   "chose",
+					types.LabelPort:   "80",
+					types.LabelEnable: "true",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -171,7 +171,7 @@ func TestRancherGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Headers:User-Agent,bat/0.1.0",
+					types.LabelFrontendRule: "Headers:User-Agent,bat/0.1.0",
 				},
 			},
 
@@ -181,7 +181,7 @@ func TestRancherGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Host:foo.bar",
+					types.LabelFrontendRule: "Host:foo.bar",
 				},
 			},
 
@@ -191,7 +191,7 @@ func TestRancherGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Path:/test",
+					types.LabelFrontendRule: "Path:/test",
 				},
 			},
 
@@ -201,7 +201,7 @@ func TestRancherGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "PathPrefix:/test2",
+					types.LabelFrontendRule: "PathPrefix:/test2",
 				},
 			},
 
@@ -242,7 +242,7 @@ func TestRancherGetFrontendRule(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Host:foo.bar.com",
+					types.LabelFrontendRule: "Host:foo.bar.com",
 				},
 			},
 
@@ -252,7 +252,7 @@ func TestRancherGetFrontendRule(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "Path:/test",
+					types.LabelFrontendRule: "Path:/test",
 				},
 			},
 
@@ -262,7 +262,7 @@ func TestRancherGetFrontendRule(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.rule": "PathPrefix:/test2",
+					types.LabelFrontendRule: "PathPrefix:/test2",
 				},
 			},
 
@@ -297,7 +297,7 @@ func TestRancherGetBackend(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.backend": "foobar",
+					types.LabelBackend: "foobar",
 				},
 			},
 
@@ -332,7 +332,7 @@ func TestRancherGetWeight(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.weight": "5",
+					types.LabelWeight: "5",
 				},
 			},
 
@@ -367,7 +367,7 @@ func TestRancherGetPort(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.port": "1337",
+					types.LabelPort: "1337",
 				},
 			},
 
@@ -402,7 +402,7 @@ func TestRancherGetDomain(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.domain": "foo.bar",
+					types.LabelDomain: "foo.bar",
 				},
 			},
 
@@ -437,7 +437,7 @@ func TestRancherGetProtocol(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.protocol": "https",
+					types.LabelProtocol: "https",
 				},
 			},
 
@@ -472,7 +472,7 @@ func TestRancherGetPassHostHeader(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					"traefik.frontend.passHostHeader": "false",
+					types.LabelFrontendPassHostHeader: "false",
 				},
 			},
 
@@ -541,8 +541,8 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 				{
 					Name: "test/service",
 					Labels: map[string]string{
-						"traefik.port":                "80",
-						"traefik.frontend.auth.basic": "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						types.LabelPort:              "80",
+						types.LabelFrontendAuthBasic: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					},
 					Health:     "healthy",
 					Containers: []string{"127.0.0.1"},

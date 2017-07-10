@@ -383,7 +383,7 @@ func TestRuleType(t *testing.T) {
 
 			if test.ingressRuleType != "" {
 				ingress.ObjectMeta.Annotations = map[string]string{
-					annotationFrontendRuleType: test.ingressRuleType,
+					types.LabelFrontendRuleType: test.ingressRuleType,
 				}
 			}
 
@@ -1224,8 +1224,8 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "1",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
-					"traefik.backend.loadbalancer.method": "drr",
+					types.LabelTraefikBackendCircuitbreaker: "NetworkErrorRatio() > 0.5",
+					types.LabelBackendLoadbalancerMethod:    "drr",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1243,8 +1243,8 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "2",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.backend.circuitbreaker":      "",
-					"traefik.backend.loadbalancer.sticky": "true",
+					types.LabelTraefikBackendCircuitbreaker: "",
+					types.LabelBackendLoadbalancerSticky:    "true",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1418,7 +1418,7 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.frontend.passHostHeader": "false",
+					types.LabelFrontendPassHostHeader: "false",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1447,7 +1447,7 @@ func TestIngressAnnotations(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"kubernetes.io/ingress.class":     "traefik",
-					"traefik.frontend.passHostHeader": "true",
+					types.LabelFrontendPassHostHeader: "true",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1784,7 +1784,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.frontend.passHostHeader": "herpderp",
+					types.LabelFrontendPassHostHeader: "herpderp",
 				},
 			},
 			Spec: v1beta1.IngressSpec{

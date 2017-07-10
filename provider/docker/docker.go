@@ -35,6 +35,11 @@ const (
 	SwarmAPIVersion string = "1.24"
 	// SwarmDefaultWatchTime is the duration of the interval when polling docker
 	SwarmDefaultWatchTime = 15 * time.Second
+
+	labelDockerNetwork            = "traefik.docker.network"
+	labelBackendLoadbalancerSwarm = "traefik.backend.loadbalancer.swarm"
+	labelDockerComposeProject     = "com.docker.compose.project"
+	labelDockerComposeService     = "com.docker.compose.service"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -319,7 +324,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 }
 
 func (p *Provider) hasCircuitBreakerLabel(container dockerData) bool {
-	if _, err := getLabel(container, "traefik.backend.circuitbreaker.expression"); err != nil {
+	if _, err := getLabel(container, types.LabelBackendCircuitbreakerExpression); err != nil {
 		return false
 	}
 	return true
@@ -455,8 +460,8 @@ func (p *Provider) getServiceProtocol(container dockerData, serviceName string) 
 }
 
 func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
-	_, errMethod := getLabel(container, "traefik.backend.loadbalancer.method")
-	_, errSticky := getLabel(container, "traefik.backend.loadbalancer.sticky")
+	_, errMethod := getLabel(container, types.LabelBackendLoadbalancerMethod)
+	_, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
 	if errMethod != nil && errSticky != nil {
 		return false
 	}
@@ -464,31 +469,31 @@ func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
 }
 
 func (p *Provider) hasMaxConnLabels(container dockerData) bool {
-	if _, err := getLabel(container, "traefik.backend.maxconn.amount"); err != nil {
+	if _, err := getLabel(container, types.LabelBackendMaxconnAmount); err != nil {
 		return false
 	}
-	if _, err := getLabel(container, "traefik.backend.maxconn.extractorfunc"); err != nil {
+	if _, err := getLabel(container, types.LabelBackendMaxconnExtractorfunc); err != nil {
 		return false
 	}
 	return true
 }
 
 func (p *Provider) getCircuitBreakerExpression(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.circuitbreaker.expression"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendCircuitbreakerExpression); err == nil {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"
 }
 
 func (p *Provider) getLoadBalancerMethod(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.loadbalancer.method"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendLoadbalancerMethod); err == nil {
 		return label
 	}
 	return "wrr"
 }
 
 func (p *Provider) getMaxConnAmount(container dockerData) int64 {
-	if label, err := getLabel(container, "traefik.backend.maxconn.amount"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendMaxconnAmount); err == nil {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
 			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
@@ -500,14 +505,14 @@ func (p *Provider) getMaxConnAmount(container dockerData) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.maxconn.extractorfunc"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendMaxconnExtractorfunc); err == nil {
 		return label
 	}
 	return "request.host"
 }
 
 func (p *Provider) containerFilter(container dockerData) bool {
-	_, err := strconv.Atoi(container.Labels["traefik.port"])
+	_, err := strconv.Atoi(container.Labels[types.LabelPort])
 	if len(container.NetworkSettings.Ports) == 0 && err != nil {
 		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
 		return false
@@ -518,7 +523,7 @@ func (p *Provider) containerFilter(container dockerData) bool {
 		return false
 	}
 
-	constraintTags := strings.Split(container.Labels["traefik.tags"], ",")
+	constraintTags := strings.Split(container.Labels[types.LabelTags], ",")
 	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Container %v pruned by '%v' constraint", container.Name, failingConstraint.String())
@@ -547,11 +552,11 @@ func (p *Provider) getFrontendName(container dockerData) string {
 // GetFrontendRule returns the frontend rule for the specified container, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (p *Provider) getFrontendRule(container dockerData) string {
-	if label, err := getLabel(container, "traefik.frontend.rule"); err == nil {
+	if label, err := getLabel(container, types.LabelFrontendRule); err == nil {
 		return label
 	}
-	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
-		return "Host:" + p.getSubDomain(labels["com.docker.compose.service"]+"."+labels["com.docker.compose.project"]) + "." + p.Domain
+	if labels, err := getLabels(container, []string{labelDockerComposeProject, labelDockerComposeService}); err == nil {
+		return "Host:" + p.getSubDomain(labels[labelDockerComposeService]+"."+labels[labelDockerComposeProject]) + "." + p.Domain
 	}
 	if len(p.Domain) > 0 {
 		return "Host:" + p.getSubDomain(container.ServiceName) + "." + p.Domain
@@ -560,17 +565,17 @@ func (p *Provider) getFrontendRule(container dockerData) string {
 }
 
 func (p *Provider) getBackend(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend"); err == nil {
+	if label, err := getLabel(container, types.LabelBackend); err == nil {
 		return provider.Normalize(label)
 	}
-	if labels, err := getLabels(container, []string{"com.docker.compose.project", "com.docker.compose.service"}); err == nil {
-		return provider.Normalize(labels["com.docker.compose.service"] + "_" + labels["com.docker.compose.project"])
+	if labels, err := getLabels(container, []string{labelDockerComposeProject, labelDockerComposeService}); err == nil {
+		return provider.Normalize(labels[labelDockerComposeService] + "_" + labels[labelDockerComposeProject])
 	}
 	return provider.Normalize(container.ServiceName)
 }
 
 func (p *Provider) getIPAddress(container dockerData) string {
-	if label, err := getLabel(container, "traefik.docker.network"); err == nil && label != "" {
+	if label, err := getLabel(container, labelDockerNetwork); err == nil && label != "" {
 		networkSettings := container.NetworkSettings
 		if networkSettings.Networks != nil {
 			network := networkSettings.Networks[label]
@@ -606,7 +611,7 @@ func (p *Provider) getIPAddress(container dockerData) string {
 }
 
 func (p *Provider) getPort(container dockerData) string {
-	if label, err := getLabel(container, "traefik.port"); err == nil {
+	if label, err := getLabel(container, types.LabelPort); err == nil {
 		return label
 	}
 
@@ -630,42 +635,42 @@ func (p *Provider) getPort(container dockerData) string {
 }
 
 func (p *Provider) getWeight(container dockerData) string {
-	if label, err := getLabel(container, "traefik.weight"); err == nil {
+	if label, err := getLabel(container, types.LabelWeight); err == nil {
 		return label
 	}
 	return "0"
 }
 
 func (p *Provider) getSticky(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.loadbalancer.sticky"); err == nil {
+	if label, err := getLabel(container, types.LabelBackendLoadbalancerSticky); err == nil {
 		return label
 	}
 	return "false"
 }
 
 func (p *Provider) getIsBackendLBSwarm(container dockerData) string {
-	if label, err := getLabel(container, "traefik.backend.loadbalancer.swarm"); err == nil {
+	if label, err := getLabel(container, labelBackendLoadbalancerSwarm); err == nil {
 		return label
 	}
 	return "false"
 }
 
 func (p *Provider) getDomain(container dockerData) string {
-	if label, err := getLabel(container, "traefik.domain"); err == nil {
+	if label, err := getLabel(container, types.LabelDomain); err == nil {
 		return label
 	}
 	return p.Domain
 }
 
 func (p *Provider) getProtocol(container dockerData) string {
-	if label, err := getLabel(container, "traefik.protocol"); err == nil {
+	if label, err := getLabel(container, types.LabelProtocol); err == nil {
 		return label
 	}
 	return "http"
 }
 
 func (p *Provider) getPassHostHeader(container dockerData) string {
-	if passHostHeader, err := getLabel(container, "traefik.frontend.passHostHeader"); err == nil {
+	if passHostHeader, err := getLabel(container, types.LabelFrontendPassHostHeader); err == nil {
 		return passHostHeader
 	}
 	return "true"
@@ -674,28 +679,28 @@ func (p *Provider) getPassHostHeader(container dockerData) string {
 func (p *Provider) getWhitelistSourceRange(container dockerData) []string {
 	var whitelistSourceRange []string
 
-	if whitelistSourceRangeLabel, err := getLabel(container, "traefik.frontend.whitelistSourceRange"); err == nil {
+	if whitelistSourceRangeLabel, err := getLabel(container, types.LabelTraefikFrontendWhitelistSourceRange); err == nil {
 		whitelistSourceRange = provider.SplitAndTrimString(whitelistSourceRangeLabel)
 	}
 	return whitelistSourceRange
 }
 
 func (p *Provider) getPriority(container dockerData) string {
-	if priority, err := getLabel(container, "traefik.frontend.priority"); err == nil {
+	if priority, err := getLabel(container, types.LabelFrontendPriority); err == nil {
 		return priority
 	}
 	return "0"
 }
 
 func (p *Provider) getEntryPoints(container dockerData) []string {
-	if entryPoints, err := getLabel(container, "traefik.frontend.entryPoints"); err == nil {
+	if entryPoints, err := getLabel(container, types.LabelFrontendEntryPoints); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
 }
 
 func (p *Provider) getBasicAuth(container dockerData) []string {
-	if basicAuth, err := getLabel(container, "traefik.frontend.auth.basic"); err == nil {
+	if basicAuth, err := getLabel(container, types.LabelFrontendAuthBasic); err == nil {
 		return strings.Split(basicAuth, ",")
 	}
 
@@ -703,7 +708,7 @@ func (p *Provider) getBasicAuth(container dockerData) []string {
 }
 
 func isContainerEnabled(container dockerData, exposedByDefault bool) bool {
-	return exposedByDefault && container.Labels["traefik.enable"] != "false" || container.Labels["traefik.enable"] == "true"
+	return exposedByDefault && container.Labels[types.LabelEnable] != "false" || container.Labels[types.LabelEnable] == "true"
 }
 
 func getLabel(container dockerData, label string) (string, error) {

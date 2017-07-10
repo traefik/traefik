@@ -390,7 +390,7 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 		return false
 	}
 
-	label := i.label("traefik.enable")
+	label := i.label(types.LabelEnable)
 	enabled := p.ExposedByDefault && label != "false" || label == "true"
 	if !enabled {
 		log.Debugf("Filtering disabled ecs instance %s (%s) (traefik.enabled = '%s')", i.Name, i.ID, label)
@@ -414,7 +414,7 @@ func (p *Provider) filterFrontends(instances []ecsInstance) []ecsInstance {
 }
 
 func (p *Provider) getFrontendRule(i ecsInstance) string {
-	if label := i.label("traefik.frontend.rule"); label != "" {
+	if label := i.label(types.LabelFrontendRule); label != "" {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain
@@ -437,7 +437,7 @@ func (p *Provider) chunkedTaskArns(tasks []*string) [][]*string {
 }
 
 func (i ecsInstance) Protocol() string {
-	if label := i.label("traefik.protocol"); label != "" {
+	if label := i.label(types.LabelProtocol); label != "" {
 		return label
 	}
 	return "http"
@@ -452,28 +452,28 @@ func (i ecsInstance) Port() string {
 }
 
 func (i ecsInstance) Weight() string {
-	if label := i.label("traefik.weight"); label != "" {
+	if label := i.label(types.LabelWeight); label != "" {
 		return label
 	}
 	return "0"
 }
 
 func (i ecsInstance) PassHostHeader() string {
-	if label := i.label("traefik.frontend.passHostHeader"); label != "" {
+	if label := i.label(types.LabelFrontendPassHostHeader); label != "" {
 		return label
 	}
 	return "true"
 }
 
 func (i ecsInstance) Priority() string {
-	if label := i.label("traefik.frontend.priority"); label != "" {
+	if label := i.label(types.LabelFrontendPriority); label != "" {
 		return label
 	}
 	return "0"
 }
 
 func (i ecsInstance) EntryPoints() []string {
-	if label := i.label("traefik.frontend.entryPoints"); label != "" {
+	if label := i.label(types.LabelFrontendEntryPoints); label != "" {
 		return strings.Split(label, ",")
 	}
 	return []string{}

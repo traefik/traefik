@@ -126,8 +126,8 @@ func TestMarathonLoadConfig(t *testing.T) {
 						ID:    "/testLoadBalancerAndCircuitBreaker.dot",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.backend.loadbalancer.method":       "drr",
-							"traefik.backend.circuitbreaker.expression": "NetworkErrorRatio() > 0.5",
+							types.LabelBackendLoadbalancerMethod:       "drr",
+							types.LabelBackendCircuitbreakerExpression: "NetworkErrorRatio() > 0.5",
 						},
 					},
 				},
@@ -185,8 +185,8 @@ func TestMarathonLoadConfig(t *testing.T) {
 						ID:    "/testMaxConn",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.backend.maxconn.amount":        "1000",
-							"traefik.backend.maxconn.extractorfunc": "client.ip",
+							types.LabelBackendMaxconnAmount:        "1000",
+							types.LabelBackendMaxconnExtractorfunc: "client.ip",
 						},
 					},
 				},
@@ -242,7 +242,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 						ID:    "/testMaxConnOnlySpecifyAmount",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.backend.maxconn.amount": "1000",
+							types.LabelBackendMaxconnAmount: "1000",
 						},
 					},
 				},
@@ -295,7 +295,7 @@ func TestMarathonLoadConfig(t *testing.T) {
 						ID:    "/testMaxConnOnlyExtractorFunc",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.backend.maxconn.extractorfunc": "client.ip",
+							types.LabelBackendMaxconnExtractorfunc: "client.ip",
 						},
 					},
 				},
@@ -348,8 +348,8 @@ func TestMarathonLoadConfig(t *testing.T) {
 						ID:    "/testHealthCheck",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							labelBackendHealthCheckPath:     "/path",
-							labelBackendHealthCheckInterval: "5m",
+							types.LabelBackendHealthcheckPath:     "/path",
+							types.LabelBackendHealthcheckInterval: "5m",
 						},
 					},
 				},
@@ -513,7 +513,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 						ID:    "disable",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.enable": "false",
+							types.LabelEnable: "false",
 						},
 					},
 				},
@@ -532,8 +532,8 @@ func TestMarathonTaskFilter(t *testing.T) {
 						ID:    "specify-both-port-index-and-number",
 						Ports: []int{80, 443},
 						Labels: &map[string]string{
-							"traefik.port":      "443",
-							"traefik.portIndex": "1",
+							types.LabelPort:      "443",
+							types.LabelPortIndex: "1",
 						},
 					},
 				},
@@ -667,7 +667,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 						ID:    "disable-default-expose-disable-in-label",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.enable": "false",
+							types.LabelEnable: "false",
 						},
 					},
 				},
@@ -686,7 +686,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 						ID:    "disable-default-expose-enable-in-label",
 						Ports: []int{80},
 						Labels: &map[string]string{
-							"traefik.enable": "true",
+							types.LabelEnable: "true",
 						},
 					},
 				},
@@ -729,7 +729,7 @@ func TestMarathonAppConstraints(t *testing.T) {
 			application: marathon.Application{
 				ID: "foo2",
 				Labels: &map[string]string{
-					"traefik.tags": "valid",
+					types.LabelTags: "valid",
 				},
 			},
 			filteredTasks: []marathon.Task{
@@ -745,7 +745,7 @@ func TestMarathonAppConstraints(t *testing.T) {
 				ID: "foo3",
 				Labels: &map[string]string{
 					"HAPROXY_GROUP": "valid",
-					"traefik.tags":  "notvalid",
+					types.LabelTags: "notvalid",
 				},
 			},
 			filteredTasks: []marathon.Task{
@@ -786,7 +786,7 @@ func TestMarathonTaskConstraints(t *testing.T) {
 				}, {
 					ID: "foo1",
 					Labels: &map[string]string{
-						"traefik.tags": "other",
+						types.LabelTags: "other",
 					},
 				},
 			},
@@ -802,7 +802,7 @@ func TestMarathonTaskConstraints(t *testing.T) {
 				{
 					ID: "foo2",
 					Labels: &map[string]string{
-						"traefik.tags": "valid",
+						types.LabelTags: "valid",
 					},
 				},
 			},
@@ -819,13 +819,13 @@ func TestMarathonTaskConstraints(t *testing.T) {
 					ID: "foo3",
 					Labels: &map[string]string{
 						"HAPROXY_GROUP": "valid",
-						"traefik.tags":  "notvalid",
+						types.LabelTags: "notvalid",
 					},
 				}, {
 					ID: "foo4",
 					Labels: &map[string]string{
 						"HAPROXY_GROUP": "notvalid",
-						"traefik.tags":  "valid",
+						types.LabelTags: "valid",
 					},
 				},
 			},
@@ -961,7 +961,7 @@ func TestMarathonGetPort(t *testing.T) {
 				{
 					ID: "app",
 					Labels: &map[string]string{
-						"traefik.port": "80",
+						types.LabelPort: "80",
 					},
 				},
 			},
@@ -977,7 +977,7 @@ func TestMarathonGetPort(t *testing.T) {
 				{
 					ID: "app",
 					Labels: &map[string]string{
-						"traefik.port": "foobar",
+						types.LabelPort: "foobar",
 					},
 				},
 			},
@@ -993,7 +993,7 @@ func TestMarathonGetPort(t *testing.T) {
 				{
 					ID: "app",
 					Labels: &map[string]string{
-						"traefik.port": "-1",
+						types.LabelPort: "-1",
 					},
 				},
 			},
@@ -1102,7 +1102,7 @@ func TestMarathonGetPort(t *testing.T) {
 				{
 					ID: "app",
 					Labels: &map[string]string{
-						"traefik.portIndex": "1",
+						types.LabelPortIndex: "1",
 					},
 				},
 			},
@@ -1118,7 +1118,7 @@ func TestMarathonGetPort(t *testing.T) {
 				{
 					ID: "app",
 					Labels: &map[string]string{
-						"traefik.portIndex": "foobar",
+						types.LabelPortIndex: "foobar",
 					},
 				},
 			},
@@ -1175,7 +1175,7 @@ func TestMarathonGetWeight(t *testing.T) {
 				{
 					ID: "test1",
 					Labels: &map[string]string{
-						"traefik.weight": "10",
+						types.LabelWeight: "10",
 					},
 				},
 			},
@@ -1203,7 +1203,7 @@ func TestMarathonGetWeight(t *testing.T) {
 				{
 					ID: "test",
 					Labels: &map[string]string{
-						"traefik.weight": "10",
+						types.LabelWeight: "10",
 					},
 				},
 			},
@@ -1239,7 +1239,7 @@ func TestMarathonGetDomain(t *testing.T) {
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.domain": "foo.bar",
+					types.LabelDomain: "foo.bar",
 				},
 			},
 			expected: "foo.bar",
@@ -1272,7 +1272,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 				{
 					ID: "test1",
 					Labels: &map[string]string{
-						"traefik.protocol": "https",
+						types.LabelProtocol: "https",
 					},
 				},
 			},
@@ -1300,7 +1300,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 				{
 					ID: "test",
 					Labels: &map[string]string{
-						"traefik.protocol": "https",
+						types.LabelProtocol: "https",
 					},
 				},
 			},
@@ -1334,7 +1334,7 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.frontend.passHostHeader": "false",
+					types.LabelFrontendPassHostHeader: "false",
 				},
 			},
 			expected: "false",
@@ -1364,7 +1364,7 @@ func TestMarathonGetEntryPoints(t *testing.T) {
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.frontend.entryPoints": "http,https",
+					types.LabelFrontendEntryPoints: "http,https",
 				},
 			},
 			expected: []string{"http", "https"},
@@ -1405,7 +1405,7 @@ func TestMarathonGetFrontendRule(t *testing.T) {
 		{
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.frontend.rule": "Host:foo.bar",
+					types.LabelFrontendRule: "Host:foo.bar",
 					"HAPROXY_0_VHOST":       "notvalid",
 				},
 			},
@@ -1446,7 +1446,7 @@ func TestMarathonGetBackend(t *testing.T) {
 			application: marathon.Application{
 				ID: "foo",
 				Labels: &map[string]string{
-					"traefik.backend": "bar",
+					types.LabelBackend: "bar",
 				},
 			},
 			expected: "bar",
@@ -1522,7 +1522,7 @@ func TestMarathonHasHealthCheckLabels(t *testing.T) {
 				Labels: &map[string]string{},
 			}
 			if test.value != nil {
-				app.AddLabel(labelBackendHealthCheckPath, *test.value)
+				app.AddLabel(types.LabelBackendHealthcheckPath, *test.value)
 			}
 			prov := &Provider{}
 			got := prov.hasHealthCheckLabels(app)
@@ -1558,7 +1558,7 @@ func TestMarathonGetHealthCheckPath(t *testing.T) {
 			app := marathon.Application{}
 			app.EmptyLabels()
 			if test.value != nil {
-				app.AddLabel(labelBackendHealthCheckPath, *test.value)
+				app.AddLabel(types.LabelBackendHealthcheckPath, *test.value)
 			}
 			prov := &Provider{}
 			got := prov.getHealthCheckPath(app)
@@ -1595,7 +1595,7 @@ func TestMarathonGetHealthCheckInterval(t *testing.T) {
 				Labels: &map[string]string{},
 			}
 			if test.value != nil {
-				app.AddLabel(labelBackendHealthCheckInterval, *test.value)
+				app.AddLabel(types.LabelBackendHealthcheckInterval, *test.value)
 			}
 			prov := &Provider{}
 			got := prov.getHealthCheckInterval(app)
@@ -1825,7 +1825,7 @@ func TestMarathonGetBasicAuth(t *testing.T) {
 			desc: "basic auth label is set with user:password",
 			application: marathon.Application{
 				Labels: &map[string]string{
-					"traefik.frontend.auth.basic": "user:password",
+					types.LabelFrontendAuthBasic: "user:password",
 				},
 			},
 			expected: []string{"user:password"},

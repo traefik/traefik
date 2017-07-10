@@ -25,11 +25,7 @@ import (
 )
 
 const (
-	labelPort                       = "traefik.port"
-	labelPortIndex                  = "traefik.portIndex"
-	labelBackendHealthCheckPath     = "traefik.backend.healthcheck.path"
-	labelBackendHealthCheckInterval = "traefik.backend.healthcheck.interval"
-	traceMaxScanTokenSize           = 1024 * 1024
+	traceMaxScanTokenSize = 1024 * 1024
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -222,15 +218,15 @@ func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applica
 	}
 
 	// Filter illegal port label specification.
-	_, hasPortIndexLabel := p.getLabel(application, labelPortIndex)
-	_, hasPortLabel := p.getLabel(application, labelPort)
+	_, hasPortIndexLabel := p.getLabel(application, types.LabelPortIndex)
+	_, hasPortLabel := p.getLabel(application, types.LabelPort)
 	if hasPortIndexLabel && hasPortLabel {
 		log.Debugf("Filtering Marathon task %s from application %s specifying both traefik.portIndex and traefik.port labels", task.ID, application.ID)
 		return false
 	}
 
 	// Filter by constraints.
-	label, _ := p.getLabel(application, "traefik.tags")
+	label, _ := p.getLabel(application, types.LabelTags)
 	constraintTags := strings.Split(label, ",")
 	if p.MarathonLBCompatibility {
 		if label, ok := p.getLabel(application, "HAPROXY_GROUP"); ok {
@@ -266,7 +262,7 @@ func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applica
 }
 
 func (p *Provider) applicationFilter(app marathon.Application, filteredTasks []marathon.Task) bool {
-	label, _ := p.getLabel(app, "traefik.tags")
+	label, _ := p.getLabel(app, types.LabelTags)
 	constraintTags := strings.Split(label, ",")
 	if p.MarathonLBCompatibility {
 		if label, ok := p.getLabel(app, "HAPROXY_GROUP"); ok {
@@ -295,7 +291,7 @@ func getApplication(task marathon.Task, apps []marathon.Application) (marathon.A
 }
 
 func isApplicationEnabled(application marathon.Application, exposedByDefault bool) bool {
-	return exposedByDefault && (*application.Labels)["traefik.enable"] != "false" || (*application.Labels)["traefik.enable"] == "true"
+	return exposedByDefault && (*application.Labels)[types.LabelEnable] != "false" || (*application.Labels)[types.LabelEnable] == "true"
 }
 
 func (p *Provider) getLabel(application marathon.Application, label string) (string, bool) {
@@ -328,14 +324,14 @@ func (p *Provider) getWeight(task marathon.Task, applications []marathon.Applica
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
 		return "0"
 	}
-	if label, ok := p.getLabel(application, "traefik.weight"); ok {
+	if label, ok := p.getLabel(application, types.LabelWeight); ok {
 		return label
 	}
 	return "0"
 }
 
 func (p *Provider) getDomain(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.domain"); ok {
+	if label, ok := p.getLabel(application, types.LabelDomain); ok {
 		return label
 	}
 	return p.Domain
@@ -347,35 +343,35 @@ func (p *Provider) getProtocol(task marathon.Task, applications []marathon.Appli
 		log.Errorf("Unable to get marathon application from task %s", task.AppID)
 		return "http"
 	}
-	if label, ok := p.getLabel(application, "traefik.protocol"); ok {
+	if label, ok := p.getLabel(application, types.LabelProtocol); ok {
 		return label
 	}
 	return "http"
 }
 
 func (p *Provider) getSticky(application marathon.Application) string {
-	if sticky, ok := p.getLabel(application, "traefik.backend.loadbalancer.sticky"); ok {
+	if sticky, ok := p.getLabel(application, types.LabelBackendLoadbalancerSticky); ok {
 		return sticky
 	}
 	return "false"
 }
 
 func (p *Provider) getPassHostHeader(application marathon.Application) string {
-	if passHostHeader, ok := p.getLabel(application, "traefik.frontend.passHostHeader"); ok {
+	if passHostHeader, ok := p.getLabel(application, types.LabelFrontendPassHostHeader); ok {
 		return passHostHeader
 	}
 	return "true"
 }
 
 func (p *Provider) getPriority(application marathon.Application) string {
-	if priority, ok := p.getLabel(application, "traefik.frontend.priority"); ok {
+	if priority, ok := p.getLabel(application, types.LabelFrontendPriority); ok {
 		return priority
 	}
 	return "0"
 }
 
 func (p *Provider) getEntryPoints(application marathon.Application) []string {
-	if entryPoints, ok := p.getLabel(application, "traefik.frontend.entryPoints"); ok {
+	if entryPoints, ok := p.getLabel(application, types.LabelFrontendEntryPoints); ok {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
@@ -384,7 +380,7 @@ func (p *Provider) getEntryPoints(application marathon.Application) []string {
 // getFrontendRule returns the frontend rule for the specified application, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (p *Provider) getFrontendRule(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.frontend.rule"); ok {
+	if label, ok := p.getLabel(application, types.LabelFrontendRule); ok {
 		return label
 	}
 	if p.MarathonLBCompatibility {
@@ -405,7 +401,7 @@ func (p *Provider) getBackend(task marathon.Task, applications []marathon.Applic
 }
 
 func (p *Provider) getFrontendBackend(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackend); ok {
 		return label
 	}
 	return provider.Replace("/", "-", application.ID)
@@ -422,26 +418,26 @@ func (p *Provider) getSubDomain(name string) string {
 }
 
 func (p *Provider) hasCircuitBreakerLabels(application marathon.Application) bool {
-	_, ok := p.getLabel(application, "traefik.backend.circuitbreaker.expression")
+	_, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression)
 	return ok
 }
 
 func (p *Provider) hasLoadBalancerLabels(application marathon.Application) bool {
-	_, errMethod := p.getLabel(application, "traefik.backend.loadbalancer.method")
-	_, errSticky := p.getLabel(application, "traefik.backend.loadbalancer.sticky")
+	_, errMethod := p.getLabel(application, types.LabelBackendLoadbalancerMethod)
+	_, errSticky := p.getLabel(application, types.LabelBackendLoadbalancerSticky)
 	return errMethod || errSticky
 }
 
 func (p *Provider) hasMaxConnLabels(application marathon.Application) bool {
-	if _, ok := p.getLabel(application, "traefik.backend.maxconn.amount"); !ok {
+	if _, ok := p.getLabel(application, types.LabelBackendMaxconnAmount); !ok {
 		return false
 	}
-	_, ok := p.getLabel(application, "traefik.backend.maxconn.extractorfunc")
+	_, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc)
 	return ok
 }
 
 func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
-	if label, ok := p.getLabel(application, "traefik.backend.maxconn.amount"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendMaxconnAmount); ok {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
 			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
@@ -453,21 +449,21 @@ func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend.maxconn.extractorfunc"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc); ok {
 		return label
 	}
 	return "request.host"
 }
 
 func (p *Provider) getLoadBalancerMethod(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend.loadbalancer.method"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendLoadbalancerMethod); ok {
 		return label
 	}
 	return "wrr"
 }
 
 func (p *Provider) getCircuitBreakerExpression(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend.circuitbreaker.expression"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression); ok {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"
@@ -478,21 +474,21 @@ func (p *Provider) hasHealthCheckLabels(application marathon.Application) bool {
 }
 
 func (p *Provider) getHealthCheckPath(application marathon.Application) string {
-	if label, ok := p.getLabel(application, labelBackendHealthCheckPath); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckPath); ok {
 		return label
 	}
 	return ""
 }
 
 func (p *Provider) getHealthCheckInterval(application marathon.Application) string {
-	if label, ok := p.getLabel(application, labelBackendHealthCheckInterval); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckInterval); ok {
 		return label
 	}
 	return ""
 }
 
 func (p *Provider) getBasicAuth(application marathon.Application) []string {
-	if basicAuth, ok := p.getLabel(application, "traefik.frontend.auth.basic"); ok {
+	if basicAuth, ok := p.getLabel(application, types.LabelFrontendAuthBasic); ok {
 		return strings.Split(basicAuth, ",")
 	}
 
@@ -500,7 +496,7 @@ func (p *Provider) getBasicAuth(application marathon.Application) []string {
 }
 
 func processPorts(application marathon.Application, task marathon.Task) (int, error) {
-	if portLabel, ok := (*application.Labels)[labelPort]; ok {
+	if portLabel, ok := (*application.Labels)[types.LabelPort]; ok {
 		port, err := strconv.Atoi(portLabel)
 		switch {
 		case err != nil:
@@ -517,7 +513,7 @@ func processPorts(application marathon.Application, task marathon.Task) (int, er
 	}
 
 	portIndex := 0
-	portIndexLabel, ok := (*application.Labels)[labelPortIndex]
+	portIndexLabel, ok := (*application.Labels)[types.LabelPortIndex]
 	if ok {
 		var err error
 		portIndex, err = parseIndex(portIndexLabel, len(ports))

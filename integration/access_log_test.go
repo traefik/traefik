@@ -16,13 +16,18 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
+const (
+	traefikTestLogFile       = "traefik.log"
+	traefikTestAccessLogFile = "access.log"
+)
+
 // AccessLogSuite
 type AccessLogSuite struct{ BaseSuite }
 
 func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	// Ensure working directory is clean
-	os.Remove("access.log")
-	os.Remove("traefik.log")
+	os.Remove(traefikTestAccessLogFile)
+	os.Remove(traefikTestLogFile)
 
 	// Start Traefik
 	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/access_log_config.toml"))
@@ -30,11 +35,11 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	defer os.Remove("access.log")
-	defer os.Remove("traefik.log")
+	defer os.Remove(traefikTestAccessLogFile)
+	defer os.Remove(traefikTestLogFile)
 
 	err = try.Do(1*time.Second, func() error {
-		if _, err := os.Stat("traefik.log"); err != nil {
+		if _, err := os.Stat(traefikTestLogFile); err != nil {
 			return fmt.Errorf("could not get stats for log file: %s", err)
 		}
 		return nil
@@ -42,7 +47,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify Traefik started OK
-	traefikLog, err := ioutil.ReadFile("traefik.log")
+	traefikLog, err := ioutil.ReadFile(traefikTestLogFile)
 	c.Assert(err, checker.IsNil)
 	if len(traefikLog) > 0 {
 		fmt.Printf("%s\n", string(traefikLog))
@@ -66,7 +71,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log output as expected
-	accessLog, err := ioutil.ReadFile("access.log")
+	accessLog, err := ioutil.ReadFile(traefikTestAccessLogFile)
 	c.Assert(err, checker.IsNil)
 	lines := strings.Split(string(accessLog), "\n")
 	count := 0
@@ -86,7 +91,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	c.Assert(count, checker.GreaterOrEqualThan, 3)
 
 	// Verify no other Traefik problems
-	traefikLog, err = ioutil.ReadFile("traefik.log")
+	traefikLog, err = ioutil.ReadFile(traefikTestLogFile)
 	c.Assert(err, checker.IsNil)
 	if len(traefikLog) > 0 {
 		fmt.Printf("%s\n", string(traefikLog))
