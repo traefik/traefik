@@ -59,8 +59,8 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	// Waiting for Traefik healthcheck
 	try.Sleep(2 * time.Second)
 
-	// Verify frontend health : 500
-	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusInternalServerError))
+	// Verify no backend service is available due to failing health checks
+	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
 	c.Assert(err, checker.IsNil)
 
 	// Change one whoami health to 200
@@ -77,7 +77,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	frontendReq.Host = "test.localhost"
 
-	// Check if whoami1 respond
+	// Check if whoami1 responds
 	err = try.Request(frontendReq, 500*time.Millisecond, try.BodyContains(whoami1Host))
 	c.Assert(err, checker.IsNil)
 
