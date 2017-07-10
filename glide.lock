@@ -1,4 +1,4 @@
-hash: b0b29ccc1d46dcfb5a689d225fdd35ea3ffebb9e149bf0081229033cb515ad45
+hash: a2fcd3a2a1472cde2a2703cc3e54ba8d293546b800c7ff19a9c71d2e4657d471
 updated: 2017-08-10T19:56:04.346751095+02:00
 imports:
 - name: cloud.google.com/go
@@ -752,7 +752,7 @@ testImports:
   - cli/config
   - cli/config/configfile
 - name: github.com/docker/libcompose
-  version: 0ad950cbeb3d72107613dd220b5e9d7e001b890b
+  version: 1b708aac26a4fc6f9bff31728a8e3a252ef57dbd
   subpackages:
   - config
   - docker
