@@ -49,6 +49,7 @@ type Provider struct {
 	ForceTaskHostname       bool                `description:"Force to use the task's hostname."`
 	Basic                   *Basic              `description:"Enable basic authentication"`
 	marathonClient          marathon.Marathon
+	taskMap                 map[string]marathon.Application
 }
 
 // Basic holds basic authentication specific configurations
@@ -171,27 +172,34 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		"getBasicAuth":                p.getBasicAuth,
 	}
 
-	applications, err := p.marathonClient.Applications(nil)
+	vals := url.Values{}
+	vals.Set("embed", "apps.tasks")
+	applications, err := p.marathonClient.Applications(vals)
 	if err != nil {
 		log.Errorf("Failed to retrieve applications from Marathon, error: %s", err)
 		return nil
 	}
 
-	tasks, err := p.marathonClient.AllTasks(&marathon.AllTasksOpts{Status: "running"})
-	if err != nil {
-		log.Errorf("Failed to retrieve task from Marathon, error: %s", err)
-		return nil
-	}
-
-	//filter tasks
-	filteredTasks := fun.Filter(func(task marathon.Task) bool {
-		return p.taskFilter(task, applications, p.ExposedByDefault)
-	}, tasks.Tasks).([]marathon.Task)
-
 	//filter apps
 	filteredApps := fun.Filter(func(app marathon.Application) bool {
-		return p.applicationFilter(app, filteredTasks)
+		return p.applicationFilter(app)
 	}, applications.Apps).([]marathon.Application)
+
+	var filteredTasks []marathon.Task
+
+	p.taskMap = make(map[string]marathon.Application)
+
+	for appIdx := range filteredApps {
+		app := filteredApps[appIdx]
+		for taskIdx := range app.Tasks {
+			task := app.Tasks[taskIdx]
+			p.taskMap[task.ID] = app
+			if p.taskFilter(*task) {
+				filteredTasks = append(filteredTasks, *task)
+			}
+		}
+
+	}
 
 	templateObjects := struct {
 		Applications []marathon.Application
@@ -210,13 +218,13 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 	return configuration
 }
 
-func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applications, exposedByDefaultFlag bool) bool {
-	application, err := getApplication(task, applications.Apps)
-	if err != nil {
-		log.Errorf("Unable to get Marathon application %s for task %s", task.AppID, task.ID)
-		return false
-	}
-	if _, err = processPorts(application, task); err != nil {
+func (p *Provider) appForTask(task marathon.Task) marathon.Application {
+	return p.taskMap[task.ID]
+}
+
+func (p *Provider) taskFilter(task marathon.Task) bool {
+	application := p.appForTask(task)
+	if _, err := processPorts(application, task); err != nil {
 		log.Errorf("Filtering Marathon task %s from application %s without port: %s", task.ID, application.ID, err)
 		return false
 	}
@@ -226,27 +234,6 @@ func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applica
 	_, hasPortLabel := p.getLabel(application, labelPort)
 	if hasPortIndexLabel && hasPortLabel {
 		log.Debugf("Filtering Marathon task %s from application %s specifying both traefik.portIndex and traefik.port labels", task.ID, application.ID)
-		return false
-	}
-
-	// Filter by constraints.
-	label, _ := p.getLabel(application, "traefik.tags")
-	constraintTags := strings.Split(label, ",")
-	if p.MarathonLBCompatibility {
-		if label, ok := p.getLabel(application, "HAPROXY_GROUP"); ok {
-			constraintTags = append(constraintTags, label)
-		}
-	}
-	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
-		if failingConstraint != nil {
-			log.Debugf("Filtering Marathon task %s from application %s pruned by '%v' constraint", task.ID, application.ID, failingConstraint.String())
-		}
-		return false
-	}
-
-	// Filter disabled application.
-	if !isApplicationEnabled(application, exposedByDefaultFlag) {
-		log.Debugf("Filtering disabled Marathon task %s from application %s", task.ID, application.ID)
 		return false
 	}
 
@@ -265,7 +252,7 @@ func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applica
 	return true
 }
 
-func (p *Provider) applicationFilter(app marathon.Application, filteredTasks []marathon.Task) bool {
+func (p *Provider) applicationFilter(app marathon.Application) bool {
 	label, _ := p.getLabel(app, "traefik.tags")
 	constraintTags := strings.Split(label, ",")
 	if p.MarathonLBCompatibility {
@@ -273,6 +260,7 @@ func (p *Provider) applicationFilter(app marathon.Application, filteredTasks []m
 			constraintTags = append(constraintTags, label)
 		}
 	}
+
 	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Application %v pruned by '%v' constraint", app.ID, failingConstraint.String())
@@ -280,9 +268,13 @@ func (p *Provider) applicationFilter(app marathon.Application, filteredTasks []m
 		return false
 	}
 
-	return fun.Exists(func(task marathon.Task) bool {
-		return task.AppID == app.ID
-	}, filteredTasks)
+	// Filter disabled application.
+	if !isApplicationEnabled(app, p.ExposedByDefault) {
+		log.Debugf("Filtering disabled Marathon application %s", app.ID)
+		return false
+	}
+
+	return true
 }
 
 func getApplication(task marathon.Task, apps []marathon.Application) (marathon.Application, error) {
