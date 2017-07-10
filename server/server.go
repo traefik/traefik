@@ -744,6 +744,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
+						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
 					case types.Wrr:
 						log.Debugf("Creating load-balancer wrr")
 						if stickysession {
@@ -764,6 +765,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
+						lb = middlewares.NewEmptyBackendHandler(rr, lb)
 					}
 
 					if len(frontend.Errors) > 0 {

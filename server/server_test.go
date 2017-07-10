@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"testing"
@@ -574,5 +575,173 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 				t.Errorf("ip whitelist middleware was not installed even though it should have")
 			}
 		})
+	}
+}
+
+func TestServerResponseEmptyBackend(t *testing.T) {
+	const requestPath = "/path"
+	const routeRule = "Path:" + requestPath
+
+	testCases := []struct {
+		desc           string
+		dynamicConfig  func(testServerURL string) *types.Configuration
+		wantStatusCode int
+	}{
+		{
+			desc: "Ok",
+			dynamicConfig: func(testServerURL string) *types.Configuration {
+				return buildDynamicConfig(
+					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
+					withBackend("backend", buildBackend(withServer("testServer", testServerURL))),
+				)
+			},
+			wantStatusCode: http.StatusOK,
+		},
+		{
+			desc: "No Frontend",
+			dynamicConfig: func(testServerURL string) *types.Configuration {
+				return buildDynamicConfig()
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			desc: "Empty Backend LB-Drr",
+			dynamicConfig: func(testServerURL string) *types.Configuration {
+				return buildDynamicConfig(
+					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
+					withBackend("backend", buildBackend(withLoadBalancer("Drr", false))),
+				)
+			},
+			wantStatusCode: http.StatusServiceUnavailable,
+		},
+		{
+			desc: "Empty Backend LB-Drr Sticky",
+			dynamicConfig: func(testServerURL string) *types.Configuration {
+				return buildDynamicConfig(
+					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
+					withBackend("backend", buildBackend(withLoadBalancer("Drr", true))),
+				)
+			},
+			wantStatusCode: http.StatusServiceUnavailable,
+		},
+		{
+			desc: "Empty Backend LB-Wrr",
+			dynamicConfig: func(testServerURL string) *types.Configuration {
+				return buildDynamicConfig(
+					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
+					withBackend("backend", buildBackend(withLoadBalancer("Wrr", false))),
+				)
+			},
+			wantStatusCode: http.StatusServiceUnavailable,
+		},
+		{
+			desc: "Empty Backend LB-Wrr Sticky",
+			dynamicConfig: func(testServerURL string) *types.Configuration {
+				return buildDynamicConfig(
+					withFrontend("frontend", buildFrontend(withRoute(requestPath, routeRule))),
+					withBackend("backend", buildBackend(withLoadBalancer("Wrr", true))),
+				)
+			},
+			wantStatusCode: http.StatusServiceUnavailable,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			testServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+				rw.WriteHeader(http.StatusOK)
+			}))
+			defer testServer.Close()
+
+			globalConfig := GlobalConfiguration{
+				EntryPoints: EntryPoints{
+					"http": &EntryPoint{},
+				},
+			}
+			dynamicConfigs := configs{"config": test.dynamicConfig(testServer.URL)}
+
+			srv := NewServer(globalConfig)
+			entryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig)
+			if err != nil {
+				t.Fatalf("error loading config: %s", err)
+			}
+
+			responseRecorder := &httptest.ResponseRecorder{}
+			request := httptest.NewRequest(http.MethodGet, testServer.URL+requestPath, nil)
+
+			entryPoints["http"].httpRouter.ServeHTTP(responseRecorder, request)
+
+			if responseRecorder.Result().StatusCode != test.wantStatusCode {
+				t.Errorf("got status code %d, want %d", responseRecorder.Result().StatusCode, test.wantStatusCode)
+			}
+		})
+	}
+}
+
+func buildDynamicConfig(dynamicConfigBuilders ...func(*types.Configuration)) *types.Configuration {
+	config := &types.Configuration{
+		Frontends: make(map[string]*types.Frontend),
+		Backends:  make(map[string]*types.Backend),
+	}
+	for _, build := range dynamicConfigBuilders {
+		build(config)
+	}
+	return config
+}
+
+func withFrontend(frontendName string, frontend *types.Frontend) func(*types.Configuration) {
+	return func(config *types.Configuration) {
+		config.Frontends[frontendName] = frontend
+	}
+}
+
+func withBackend(backendName string, backend *types.Backend) func(*types.Configuration) {
+	return func(config *types.Configuration) {
+		config.Backends[backendName] = backend
+	}
+}
+
+func buildFrontend(frontendBuilders ...func(*types.Frontend)) *types.Frontend {
+	fe := &types.Frontend{
+		EntryPoints: []string{"http"},
+		Backend:     "backend",
+		Routes:      make(map[string]types.Route),
+	}
+	for _, build := range frontendBuilders {
+		build(fe)
+	}
+	return fe
+}
+
+func withRoute(routeName, rule string) func(*types.Frontend) {
+	return func(fe *types.Frontend) {
+		fe.Routes[routeName] = types.Route{Rule: rule}
+	}
+}
+
+func buildBackend(backendBuilders ...func(*types.Backend)) *types.Backend {
+	be := &types.Backend{
+		Servers:      make(map[string]types.Server),
+		LoadBalancer: &types.LoadBalancer{Method: "Wrr"},
+	}
+	for _, build := range backendBuilders {
+		build(be)
+	}
+	return be
+}
+
+func withServer(name, url string) func(backend *types.Backend) {
+	return func(be *types.Backend) {
+		be.Servers[name] = types.Server{URL: url}
+	}
+}
+
+func withLoadBalancer(method string, sticky bool) func(*types.Backend) {
+	return func(be *types.Backend) {
+		be.LoadBalancer = &types.LoadBalancer{Method: method, Sticky: sticky}
 	}
 }
