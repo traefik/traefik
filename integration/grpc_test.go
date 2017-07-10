@@ -55,15 +55,9 @@ type myserver struct{}
 
 func (s *myserver) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*helloworld.HelloReply, error) {
 	return &helloworld.HelloReply{Message: "Hello " + in.Name}, nil
-
 }
 
-func startGrpcServer() error {
-	lis, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		return err
-	}
-
+func startGrpcServer(lis net.Listener) error {
 	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
 	if err != nil {
 		return err
@@ -88,7 +82,7 @@ func callHelloClientGrpc() (string, error) {
 		return "", err
 	}
 
-	//defer conn.Close()
+	defer conn.Close()
 	client := helloworld.NewGreeterClient(conn)
 
 	name := "World"
@@ -100,29 +94,42 @@ func callHelloClientGrpc() (string, error) {
 }
 
 func (suite *GrpcSuite) TestGrpc(c *check.C) {
+	lis, err := net.Listen("tcp", ":0")
+	_, port, err := net.SplitHostPort(lis.Addr().String())
+	c.Assert(err, check.IsNil)
+
 	go func() {
-		err := startGrpcServer()
+		err := startGrpcServer(lis)
 		c.Assert(err, check.IsNil)
 	}()
 
 	file := suite.adaptFile(c, "fixtures/grpc/config.toml", struct {
-		CertContent string
-		KeyContent  string
+		CertContent    string
+		KeyContent     string
+		GrpcServerPort string
 	}{
-		CertContent: string(LocalhostCert), KeyContent: string(LocalhostKey),
+		CertContent:    string(LocalhostCert),
+		KeyContent:     string(LocalhostKey),
+		GrpcServerPort: port,
 	})
+
 	defer os.Remove(file)
 	cmd := exec.Command(traefikBinary, "--configFile="+file)
 
-	err := cmd.Start()
+	err = cmd.Start()
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
 	// wait for Traefik
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains("Host:127.0.0.1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
 	c.Assert(err, check.IsNil)
 
-	response, err := callHelloClientGrpc()
+	var response string
+	err = try.Do(1*time.Second, func() error {
+		response, err = callHelloClientGrpc()
+		return err
+	})
+
 	c.Assert(err, check.IsNil)
 	c.Assert(response, check.Equals, "Hello World")
 }

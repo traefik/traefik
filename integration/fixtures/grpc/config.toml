@@ -1,5 +1,3 @@
-logLevel = "DEBUG"
-
 defaultEntryPoints = ["https"]
 
 RootCAs = [ """{{ .CertContent }}""" ]
@@ -21,7 +19,7 @@ RootCAs = [ """{{ .CertContent }}""" ]
 [backends]
   [backends.backend1]
     [backends.backend1.servers.server1]
-    url = "https://127.0.0.1:50051"
+    url = "https://127.0.0.1:{{ .GrpcServerPort }}"
 
 
 [frontends]
