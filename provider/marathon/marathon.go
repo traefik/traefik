@@ -180,7 +180,6 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		return nil
 	}
 
-
 	//filter apps
 	filteredApps := fun.Filter(func(app marathon.Application) bool {
 		return p.applicationFilter(app)
