@@ -198,6 +198,7 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 	if server.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 	}
+	initializeMetricsClients(server.globalConfiguration)
 	metrics := newMetrics(server.globalConfiguration, newServerEntryPointName)
 	if metrics != nil {
 		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(metrics))
@@ -1073,13 +1074,11 @@ func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metri
 			metrics = append(metrics, metric)
 		}
 		if globalConfig.Web.Metrics.Datadog != nil {
-			middlewares.InitDatadogClient(globalConfig.Web.Metrics.Datadog)
 			metric := middlewares.NewDataDog(name)
 			log.Debugf("Configured DataDog Metrics pushing to %s once every %s", globalConfig.Web.Metrics.Datadog.Address, globalConfig.Web.Metrics.Datadog.PushInterval)
 			metrics = append(metrics, metric)
 		}
 		if globalConfig.Web.Metrics.StatsD != nil {
-			middlewares.InitStatsdClient(globalConfig.Web.Metrics.StatsD)
 			metric := middlewares.NewStatsD(name)
 			log.Debugf("Configured StatsD Metrics pushing to %s once every %s", globalConfig.Web.Metrics.StatsD.Address, globalConfig.Web.Metrics.StatsD.PushInterval)
 			metrics = append(metrics, metric)
@@ -1089,6 +1088,18 @@ func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metri
 	}
 
 	return nil
+}
+
+func initializeMetricsClients(globalConfig GlobalConfiguration) {
+	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
+	if metricsEnabled {
+		if globalConfig.Web.Metrics.Datadog != nil {
+			middlewares.InitDatadogClient(globalConfig.Web.Metrics.Datadog)
+		}
+		if globalConfig.Web.Metrics.StatsD != nil {
+			middlewares.InitStatsdClient(globalConfig.Web.Metrics.StatsD)
+		}
+	}
 }
 
 func registerRetryMiddleware(
