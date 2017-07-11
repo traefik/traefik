@@ -298,7 +298,7 @@ func (server *Server) listenConfigurations(stop chan bool) {
 			}
 			currentConfigurations := server.currentConfigurations.Get().(configs)
 
-		// Copy configurations to new map so we don't change current if LoadConfig fails
+			// Copy configurations to new map so we don't change current if LoadConfig fails
 			newConfigurations := make(configs)
 			for k, v := range currentConfigurations {
 				newConfigurations[k] = v
@@ -615,7 +615,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
-		frontend:
+	frontend:
 		for _, frontendName := range frontendNames {
 			frontend := configuration.Frontends[frontendName]
 
@@ -1074,11 +1074,11 @@ func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metri
 }
 
 func registerRetryMiddleware(
-httpHandler http.Handler,
-globalConfig GlobalConfiguration,
-config *types.Configuration,
-backend string,
-listener middlewares.RetryListener,
+	httpHandler http.Handler,
+	globalConfig GlobalConfiguration,
+	config *types.Configuration,
+	backend string,
+	listener middlewares.RetryListener,
 ) http.Handler {
 	retries := len(config.Backends[backend].Servers)
 	if globalConfig.Retry.Attempts > 0 {

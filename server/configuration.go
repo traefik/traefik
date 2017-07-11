@@ -16,7 +16,6 @@ import (
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/dynamodb"
-	"github.com/containous/traefik/provider/postgres"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/etcd"
 	"github.com/containous/traefik/provider/eureka"
@@ -24,6 +23,7 @@ import (
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
+	"github.com/containous/traefik/provider/postgres"
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
@@ -529,7 +529,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultPostgres.RefreshSeconds = 15
 	defaultPostgres.TableName = "traefik"
 	defaultPostgres.Watch = true
-
 
 	// default AccessLog
 	defaultAccessLog := types.AccessLog{
