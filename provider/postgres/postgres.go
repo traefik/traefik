@@ -2,17 +2,17 @@ package postgres
 
 import (
 	"context"
-	"errors"
-	"time"
-	"strconv"
 	"database/sql"
-	_ "github.com/lib/pq"
+	"errors"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	_ "github.com/lib/pq"
+	"strconv"
+	"time"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -20,9 +20,9 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider holds configuration for provider.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
-	RefreshSeconds  int    `description:"Polling interval (in seconds)"`
-	Endpoint        string `description:"The endpoint of a postgres RDS. Used for testing with a local postgres"`
-	TableName       string `description:"The AWS postgres table that stores configuration for traefik"`
+	RefreshSeconds        int    `description:"Polling interval (in seconds)"`
+	Endpoint              string `description:"The endpoint of a postgres RDS. Used for testing with a local postgres"`
+	TableName             string `description:"The AWS postgres table that stores configuration for traefik"`
 }
 
 type postgresClient struct {
@@ -50,7 +50,7 @@ func (p *Provider) createClient() (*postgresClient, error) {
 }
 
 // queryTable queries the given table and returns slice of all items in the table
-func (p *Provider) queryTable(client *postgresClient) (map[string][]string) {
+func (p *Provider) queryTable(client *postgresClient) map[string][]string {
 	log.Debugf("Scanning Provider table: %s ...", p.TableName)
 
 	querystring := "select * from " + p.TableName
@@ -66,7 +66,7 @@ func (p *Provider) queryTable(client *postgresClient) (map[string][]string) {
 	config := make(map[string][]string)
 
 	var (
-		id int
+		id          int
 		uri, ipport string
 	)
 
@@ -103,15 +103,15 @@ func (p *Provider) loadPostgresConfig(client *postgresClient) (*types.Configurat
 		log.Println("backendName %s ", backendName)
 
 		for index, ipport := range v {
-			backendServerName := "backends"+ backendName +"servers.server" + strconv.Itoa(index)
+			backendServerName := "backends" + backendName + "servers.server" + strconv.Itoa(index)
 			log.Println("backendServerName %s ", backendServerName)
 			url := ipport
 			wght := 1
-			server := types.Server{URL:url, Weight: wght}
+			server := types.Server{URL: url, Weight: wght}
 			servers[backendServerName] = server
 		}
 
-		tmpBackend := types.Backend{Servers:servers}
+		tmpBackend := types.Backend{Servers: servers}
 		backends[backendName] = &tmpBackend
 
 		frontendName := "frontend" + strconv.Itoa(frontendCounter)
@@ -119,14 +119,14 @@ func (p *Provider) loadPostgresConfig(client *postgresClient) (*types.Configurat
 
 		frontendRouteName := "frontend." + frontendName + "routes"
 		route := make(map[string]types.Route)
-		rule := "Path: /"+k
-		route[frontendRouteName] = types.Route{Rule:rule}
+		rule := "Path: /" + k
+		route[frontendRouteName] = types.Route{Rule: rule}
 
-		tmpFrontend := types.Frontend{Backend:backendName, Routes:route}
+		tmpFrontend := types.Frontend{Backend: backendName, Routes: route}
 		frontends[frontendName] = &tmpFrontend
 
-		backendCounter ++
-		frontendCounter ++
+		backendCounter++
+		frontendCounter++
 	}
 
 	return &types.Configuration{
