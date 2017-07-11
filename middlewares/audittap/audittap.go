@@ -59,8 +59,12 @@ func (s *AuditTap) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	clientHeaders, requestHeaders := hdr.ClientAndRequestHeaders()
 	flatHdr := hdr.Flatten()
 
-	requestPayload := audittypes.DataMap{
-		"type": flatHdr.GetString("content-type"),
+	requestPayload := audittypes.DataMap{}
+
+	var requestContentType = flatHdr.GetString("content-type")
+
+	if requestContentType != "" {
+		requestPayload["type"] = requestContentType
 	}
 
 	// Create the summary and populate with all the request info we need

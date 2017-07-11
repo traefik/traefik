@@ -48,11 +48,11 @@ type Summary struct {
 	ReceivingIP        string  `json:"receivingIP,omitempty"`
 	AuthorisationToken string  `json:"authorisationToken,omitempty"`
 	ResponseStatus     string  `json:"responseStatus,omitempty"`
-	ResponsePayload    DataMap `json:"responsePayload"`
-	ClientHeaders      DataMap `json:"clientHeaders"`
-	RequestHeaders     DataMap `json:"requestHeaders"`
-	RequestPayload     DataMap `json:"requestPayload"`
-	ResponseHeaders    DataMap `json:"responseHeaders"`
+	ResponsePayload    DataMap `json:"responsePayload,omitempty"`
+	ClientHeaders      DataMap `json:"clientHeaders,omitempty"`
+	RequestHeaders     DataMap `json:"requestHeaders,omitempty"`
+	RequestPayload     DataMap `json:"requestPayload,omitempty"`
+	ResponseHeaders    DataMap `json:"responseHeaders,omitempty"`
 }
 
 // AuditResponseWriter is an extended ResponseWriter that also provides a summary of the request and response.

@@ -72,9 +72,7 @@ func TestAuditTap_noop(t *testing.T) {
 				"request-id": "R123",
 			},
 			RequestHeaders: audittypes.DataMap{},
-			RequestPayload: audittypes.DataMap{
-				"type": "",
-			},
+			RequestPayload: audittypes.DataMap{},
 			ResponseHeaders: audittypes.DataMap{
 				"x-content-type-options": "nosniff",
 			},

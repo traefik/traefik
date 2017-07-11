@@ -78,7 +78,11 @@ func (r *recorderResponseWriter) SummariseResponse(summary *audittypes.Summary) 
 
 	summary.ResponseStatus = strconv.Itoa(r.status)
 	summary.ResponseHeaders = hdr.ResponseHeaders()
-	summary.ResponsePayload = audittypes.DataMap{
-		"type": flatHdr.GetString("content-type"),
+	summary.ResponsePayload = audittypes.DataMap{}
+
+	var responseContentType = flatHdr.GetString("content-type")
+
+	if responseContentType != "" {
+		summary.ResponsePayload["type"] = responseContentType
 	}
 }
