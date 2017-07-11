@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+// Blank import from pq package is needed for sql driver to initialize
+
 var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configuration for provider.
