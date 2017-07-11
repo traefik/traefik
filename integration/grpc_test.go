@@ -48,8 +48,8 @@ qyUBnu3X9ps8ZfjLZO7BAkEAlT4R5Yl6cGhaJQYZHOde3JEMhNRcVFMO8dJDaFeo
 f9Oeos0UUothgiDktdQHxdNEwLjQf7lJJBzV+5OtwswCWA==
 -----END RSA PRIVATE KEY-----`)
 
-// GrpcSuite
-type GrpcSuite struct{ BaseSuite }
+// GRPCSuite
+type GRPCSuite struct{ BaseSuite }
 
 type myserver struct{}
 
@@ -93,7 +93,7 @@ func callHelloClientGrpc() (string, error) {
 	return r.Message, nil
 }
 
-func (suite *GrpcSuite) TestGrpc(c *check.C) {
+func (suite *GRPCSuite) TestGRPC(c *check.C) {
 	lis, err := net.Listen("tcp", ":0")
 	_, port, err := net.SplitHostPort(lis.Addr().String())
 	c.Assert(err, check.IsNil)
@@ -114,7 +114,7 @@ func (suite *GrpcSuite) TestGrpc(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := suite.cmdTraefik(withConfigFile(file))
 
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
