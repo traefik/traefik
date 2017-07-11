@@ -645,7 +645,8 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 				entryPoint := globalConfiguration.EntryPoints[entryPointName]
 				negroni := negroni.New()
-				if entryPoint.Redirect != nil {
+
+				if entryPoint.Redirect != nil && frontend.HTTPRedirect == true {
 					if redirectHandlers[entryPointName] != nil {
 						negroni.Use(redirectHandlers[entryPointName])
 					} else if handler, err := server.loadEntryPointConfig(entryPointName, entryPoint); err != nil {

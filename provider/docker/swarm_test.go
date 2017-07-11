@@ -662,6 +662,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-Host-test-docker-localhost": {
 					Backend:        "backend-test",
+					HTTPRedirect:   true,
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
@@ -716,6 +717,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-Host-test1-docker-localhost": {
 					Backend:        "backend-foobar",
+					HTTPRedirect:   true,
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
@@ -727,6 +729,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				},
 				"frontend-Host-test2-docker-localhost": {
 					Backend:        "backend-foobar",
+					HTTPRedirect:   true,
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},

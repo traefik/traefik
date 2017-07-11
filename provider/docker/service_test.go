@@ -343,6 +343,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-foo-service": {
 					Backend:        "backend-foo-service",
+					HTTPRedirect:   true,
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
@@ -401,6 +402,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-foobar": {
 					Backend:        "backend-foobar",
+					HTTPRedirect:   true,
 					PassHostHeader: false,
 					Priority:       5000,
 					EntryPoints:    []string{"http", "https", "ws"},
@@ -413,6 +415,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 				},
 				"frontend-test2-anotherservice": {
 					Backend:        "backend-test2-anotherservice",
+					HTTPRedirect:   true,
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
