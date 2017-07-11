@@ -1,0 +1,19 @@
+traefikLogsFile = "log/traefik.log"
+[entryPoints]
+[entryPoints.http]
+address = ":8081"
+
+################################################################
+# Web configuration backend
+################################################################
+[web]
+address = ":8080"
+################################################################
+# postgres configuration backend
+################################################################
+[postgres]
+Endpoint = "postgresql://postgres:password@0.0.0.0:5432/postgres?sslmode=disable"
+TableName = "traefik"
+
+
+
