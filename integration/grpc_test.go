@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"net"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/containous/traefik/integration/helloworld"
@@ -57,7 +56,7 @@ func (s *myserver) SayHello(ctx context.Context, in *helloworld.HelloRequest) (*
 	return &helloworld.HelloReply{Message: "Hello " + in.Name}, nil
 }
 
-func startGrpcServer(lis net.Listener) error {
+func startGRPCServer(lis net.Listener) error {
 	cert, err := tls.X509KeyPair(LocalhostCert, LocalhostKey)
 	if err != nil {
 		return err
@@ -73,7 +72,7 @@ func startGrpcServer(lis net.Listener) error {
 	return s.Serve(lis)
 }
 
-func callHelloClientGrpc() (string, error) {
+func callHelloClientGRPC() (string, error) {
 	roots := x509.NewCertPool()
 	roots.AppendCertsFromPEM(LocalhostCert)
 	credsClient := credentials.NewClientTLSFromCert(roots, "")
@@ -99,18 +98,18 @@ func (suite *GRPCSuite) TestGRPC(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	go func() {
-		err := startGrpcServer(lis)
+		err := startGRPCServer(lis)
 		c.Assert(err, check.IsNil)
 	}()
 
 	file := suite.adaptFile(c, "fixtures/grpc/config.toml", struct {
 		CertContent    string
 		KeyContent     string
-		GrpcServerPort string
+		GRPCServerPort string
 	}{
 		CertContent:    string(LocalhostCert),
 		KeyContent:     string(LocalhostKey),
-		GrpcServerPort: port,
+		GRPCServerPort: port,
 	})
 
 	defer os.Remove(file)
@@ -126,7 +125,7 @@ func (suite *GRPCSuite) TestGRPC(c *check.C) {
 
 	var response string
 	err = try.Do(1*time.Second, func() error {
-		response, err = callHelloClientGrpc()
+		response, err = callHelloClientGRPC()
 		return err
 	})
 
