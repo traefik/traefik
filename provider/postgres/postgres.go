@@ -10,12 +10,12 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	// Blank import from pq package is needed for sql driver to initialize based on driver type passed as an
+	//argument to sql open function
 	_ "github.com/lib/pq"
 	"strconv"
 	"time"
 )
-
-// Blank import from pq package is needed for sql driver to initialize
 
 var _ provider.Provider = (*Provider)(nil)
 
