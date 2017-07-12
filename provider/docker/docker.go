@@ -261,6 +261,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getProtocol":                 p.getProtocol,
 		"getPassHostHeader":           p.getPassHostHeader,
 		"getPriority":                 p.getPriority,
+		"getHTTPRedirect":             p.getHTTPRedirect,
 		"getEntryPoints":              p.getEntryPoints,
 		"getBasicAuth":                p.getBasicAuth,
 		"getFrontendRule":             p.getFrontendRule,
@@ -283,6 +284,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServiceFrontendRule":      p.getServiceFrontendRule,
 		"getServicePassHostHeader":    p.getServicePassHostHeader,
 		"getServicePriority":          p.getServicePriority,
+		"getServiceHTTPRedirect":      p.getServiceHTTPRedirect,
 		"getServiceBackend":           p.getServiceBackend,
 		"getWhitelistSourceRange":     p.getWhitelistSourceRange,
 	}
@@ -415,6 +417,15 @@ func (p *Provider) getServicePriority(container dockerData, serviceName string) 
 		return value
 	}
 	return p.getPriority(container)
+
+}
+
+// Extract http redirect (allow to disable per-frontend https redirection) from labels for a given service and a given docker container
+func (p *Provider) getServiceHTTPRedirect(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, types.LabelHTTPRedirect); ok {
+		return value
+	}
+	return p.getHTTPRedirect(container)
 
 }
 
@@ -690,6 +701,13 @@ func (p *Provider) getPriority(container dockerData) string {
 		return priority
 	}
 	return "0"
+}
+
+func (p *Provider) getHTTPRedirect(container dockerData) string {
+	if redirect, err := getLabel(container, types.LabelHTTPRedirect); err == nil {
+		return redirect
+	}
+	return "true"
 }
 
 func (p *Provider) getEntryPoints(container dockerData) []string {

@@ -52,6 +52,7 @@
   entryPoints = [{{range getServiceEntryPoints $container $serviceName}}
     "{{.}}",
   {{end}}]
+  httpRedirect = {{getServiceHTTPRedirect $container $serviceName}}
   basicAuth = [{{range getServiceBasicAuth $container $serviceName}}
     "{{.}}",
   {{end}}]
@@ -71,6 +72,7 @@
   entryPoints = [{{range getEntryPoints $container}}
     "{{.}}",
   {{end}}]
+  httpRedirect = {{getHTTPRedirect $container}}
   basicAuth = [{{range getBasicAuth $container}}
     "{{.}}",
   {{end}}]

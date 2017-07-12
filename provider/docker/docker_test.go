@@ -885,6 +885,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-Host-test-docker-localhost": {
 					Backend:        "backend-test",
+					HTTPRedirect:   true,
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
@@ -935,6 +936,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-Host-test1-docker-localhost": {
 					Backend:        "backend-foobar",
+					HTTPRedirect:   true,
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
@@ -946,6 +948,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				},
 				"frontend-Host-test2-docker-localhost": {
 					Backend:        "backend-foobar",
+					HTTPRedirect:   true,
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
@@ -993,6 +996,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-Host-test1-docker-localhost": {
 					Backend:        "backend-foobar",
+					HTTPRedirect:   true,
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{},
@@ -1047,6 +1051,37 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 			}
 			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
 				t.Errorf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
+			}
+		})
+	}
+}
+
+func TestDockerGetHTTPRedirect(t *testing.T) {
+	containers := []struct {
+		container docker.ContainerJSON
+		expected  string
+	}{
+		{
+			container: containerJSON(),
+			expected:  "true",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				types.LabelHTTPRedirect: "false",
+			})),
+			expected: "false",
+		},
+	}
+
+	for containerID, e := range containers {
+		e := e
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			provider := &Provider{}
+			actual := provider.getHTTPRedirect(dockerData)
+			if actual != e.expected {
+				t.Errorf("expected %q, got %q", e.expected, actual)
 			}
 		})
 	}

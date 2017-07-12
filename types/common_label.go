@@ -31,6 +31,8 @@ const (
 	LabelTraefikFrontendValue = "traefik.frontend.value"
 	// LabelTraefikFrontendWhitelistSourceRange Traefik label
 	LabelTraefikFrontendWhitelistSourceRange = "traefik.frontend.whitelistSourceRange"
+	// LabelHTTPRedirect Traefik label
+	LabelHTTPRedirect = "traefik.http.redirect"
 	// LabelBackend Traefik label
 	LabelBackend = "traefik.backend"
 	// LabelBackendID Traefik label

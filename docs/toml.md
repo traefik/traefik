@@ -920,6 +920,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets basic authentication for that frontend with the usernames and passwords test:test and test2:test2, respectively
 - `traefik.frontend.whitelistSourceRange: "1.2.3.0/24, fe80::/16"`: List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.
 - `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
+- `traefik.http.redirect=false`: When used with endpoints setup in HTTP + HTTPS configuration, set this flag to false to prevent https redirection for a given frontend.
 
 If several ports need to be exposed from a container, the services labels can be used
 - `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
