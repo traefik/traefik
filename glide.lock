@@ -304,6 +304,10 @@ imports:
   version: 72f9bd7c4e0c2a40055ab3d0f09654f730cce982
 - name: github.com/juju/ratelimit
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
+- name: github.com/lib/pq
+  version: dd1fe2071026ce53f36a39112e645b4d4f5793a4
+  subpackages:
+  - oid
 - name: github.com/mailgun/timetools
   version: 7e6055773c5137efbeb3bd2410d705fe10ab6bfd
 - name: github.com/mailru/easyjson
