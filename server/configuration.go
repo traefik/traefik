@@ -28,8 +28,15 @@ import (
 	"github.com/containous/traefik/types"
 )
 
-// DefaultHealthCheckInterval is the default health check interval.
-const DefaultHealthCheckInterval = 30 * time.Second
+const (
+	// DefaultHealthCheckInterval is the default health check interval.
+	DefaultHealthCheckInterval = 30 * time.Second
+
+	// DefaultDialTimeout when connecting to a backend server.
+	DefaultDialTimeout = 30 * time.Second
+	// DefaultIdleTimeout before closing an idle connection.
+	DefaultIdleTimeout = 180 * time.Second
+)
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff
 type TraefikConfiguration struct {
@@ -54,11 +61,13 @@ type GlobalConfiguration struct {
 	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
 	ProvidersThrottleDuration flaeg.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
-	IdleTimeout               flaeg.Duration          `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
+	IdleTimeout               flaeg.Duration          `description:"(Deprecated) maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."` // Deprecated
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
 	RootCAs                   RootCAs                 `description:"Add cert file for self-signed certicate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
+	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance"`
+	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers"`
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings"`
 	File                      *file.Provider          `description:"Enable File backend with default settings"`
 	Web                       *WebProvider            `description:"Enable Web backend with default settings"`
@@ -411,6 +420,19 @@ type HealthCheckConfig struct {
 	Interval flaeg.Duration `description:"Default periodicity of enabled health checks"`
 }
 
+// RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
+type RespondingTimeouts struct {
+	ReadTimeout  flaeg.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set"`
+	WriteTimeout flaeg.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set"`
+	IdleTimeout  flaeg.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. Defaults to 180 seconds. If zero, no timeout is set"`
+}
+
+// ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
+type ForwardingTimeouts struct {
+	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists"`
+	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists"`
+}
+
 // NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
 func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	//default Docker
@@ -573,9 +595,15 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			DefaultEntryPoints:        []string{},
 			ProvidersThrottleDuration: flaeg.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
-			IdleTimeout:               flaeg.Duration(180 * time.Second),
+			IdleTimeout:               flaeg.Duration(0),
 			HealthCheck: &HealthCheckConfig{
 				Interval: flaeg.Duration(DefaultHealthCheckInterval),
+			},
+			RespondingTimeouts: &RespondingTimeouts{
+				IdleTimeout: flaeg.Duration(DefaultIdleTimeout),
+			},
+			ForwardingTimeouts: &ForwardingTimeouts{
+				DialTimeout: flaeg.Duration(DefaultDialTimeout),
 			},
 			CheckNewVersion: true,
 		},
