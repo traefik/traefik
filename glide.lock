@@ -1,5 +1,5 @@
-hash: 00a95d73c58e56b7f3c295f8c58efa786b234c96ea245bf213118f95de2c3ec0
-updated: 2017-07-05T21:00:31.241672481+02:00
+hash: 61dae796d71e48c988433d0655e9c6ae64a1954a6a54b9b00a5db7e759dbca0e
+updated: 2017-07-11T23:50:31.241672481+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -84,6 +84,8 @@ imports:
   version: bf4a526f48af7badd25d2cb02d587e1b01be3b50
 - name: github.com/codegangsta/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
+  repo: https://github.com/urfave/negroni.git
+  vcs: git
 - name: github.com/containous/flaeg
   version: b5d2dc5878df07c2d74413348186982e7b865871
 - name: github.com/containous/mux
@@ -93,8 +95,6 @@ imports:
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
-  - Godeps/_workspace/src/github.com/ugorji/go/codec
-  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/pathutil
   - pkg/types
@@ -356,7 +356,7 @@ imports:
   version: db96455566f05ffe42bd6ac671f05eeb1152b45d
 - name: github.com/Nvveen/Gotty
   version: 6018b68f96b839edfbe3fb48668853f5dbad88a3
-  repo: https://github.com/ijc25/Gotty
+  repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
   version: 56545f4a5d46df9a6648819d1664c3a03a13ffdb

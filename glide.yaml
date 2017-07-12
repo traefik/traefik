@@ -24,6 +24,8 @@ import:
   - utils
 - name: github.com/codegangsta/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
+  repo: https://github.com/urfave/negroni.git
+  vcs: git
 - package: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - package: github.com/docker/docker
@@ -175,7 +177,7 @@ import:
   version: 824e85271811af89640ea25620c67f6c2eed987e
 - package: github.com/Nvveen/Gotty
   version: 6018b68f96b839edfbe3fb48668853f5dbad88a3
-  repo: https://github.com/ijc25/Gotty
+  repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - package: github.com/spf13/pflag
   version: cb88ea77998c3f024757528e3305022ab50b43be
