@@ -254,7 +254,7 @@ func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
 	if customFrontendRule == "" || customFrontendRule == nil {
 		customFrontendRule = p.FrontEndRule
 	} else {
-		customFrontendRule = translateRuleSeparators ( customFrontendRule )
+		customFrontendRule = translateRuleSeparators(customFrontendRule)
 	}
 
 	t := p.frontEndRuleTemplate
@@ -285,16 +285,14 @@ func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
 }
 
 func translateRuleSeparators(customRule string) string {
-	rule := replaceAll ( customRule, "||", ",")
-	rule = replaceAll ( customRule, "&&", ";")
+	rule := replaceAll(customRule, "||", ",")
+	rule = replaceAll(customRule, "&&", ";")
 	return rule
 }
 
 func replaceAll(source string, what string, with string) string {
-	return strings.Replace( source, what, with, -1 )
+	return strings.Replace(source, what, with, -1)
 }
-
-
 
 func (p *CatalogProvider) getBackendAddress(node *api.ServiceEntry) string {
 	if node.Service.Address != "" {
