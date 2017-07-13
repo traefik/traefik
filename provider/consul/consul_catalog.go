@@ -251,7 +251,7 @@ func (p *CatalogProvider) getBackend(node *api.ServiceEntry) string {
 
 func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
 	customFrontendRule := p.getAttribute("frontend.rule", service.Attributes, "")
-	if customFrontendRule == "" || customFrontendRule == nil {
+	if customFrontendRule == "" {
 		customFrontendRule = p.FrontEndRule
 	} else {
 		customFrontendRule = translateRuleSeparators(customFrontendRule)
