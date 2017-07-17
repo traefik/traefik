@@ -72,7 +72,7 @@ type ResponseRecorder struct {
 
 	responseWriter http.ResponseWriter
 	err            error
-	stream    bool
+	stream         bool
 }
 
 // NewRecorder returns an initialized ResponseRecorder.
