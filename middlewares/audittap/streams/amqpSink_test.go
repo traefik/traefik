@@ -10,10 +10,24 @@ import (
 	"github.com/beeker1121/goque"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/containous/traefik/middlewares/audittap/encryption"
 	"github.com/containous/traefik/types"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 )
+
+var anAuditEvent = `
+	{
+		"eventId": "ev123",
+		"auditSource": "foo",
+		"auditType": "bar",
+		"field1": "field1value"
+	}
+	`
+
+var anAuditEventEncoded = audittypes.Encoded{[]byte(anAuditEvent), nil}
+var aesKeyBase64 = "RDFXVxTgrrT9IseypJrwDLzk/nTVeTjbjaUR3RVyv94="
+var crypt, _ = encryption.NewEncrypter(aesKeyBase64)
 
 type ConyClientTestImpl struct {
 	Endpoint     string
@@ -175,6 +189,7 @@ func TestAmqpSinkFull(t *testing.T) {
 		Endpoint:      "foo",
 		Destination:   "bar",
 		DiskStorePath: "/",
+		EncryptSecret: aesKeyBase64,
 	}
 
 	q, _ := goque.OpenQueue(config.DiskStorePath)
@@ -187,9 +202,9 @@ func TestAmqpSinkFull(t *testing.T) {
 	sink, err := NewAmqpSink(&config, messages)
 	assert.NoError(t, err)
 
-	newAmqpProducer(testClientImpl, "bar", messages, q)
+	newAmqpProducer(testClientImpl, "bar", messages, q, crypt)
 
-	err = sink.Audit(encodedJSONSample)
+	err = sink.Audit(anAuditEventEncoded)
 	assert.NoError(t, err)
 
 	err = sink.Close()
@@ -197,7 +212,13 @@ func TestAmqpSinkFull(t *testing.T) {
 
 	assert.Equal(t, testPublisherImpl.CallCount, 0)
 
-	bufStr := buf.String()
+	assert.True(t, strings.Contains(buf.String(), `level=error msg="Message not delivered to MQ because channel full eventId=ev123 auditSource=foo auditType=bar body: {`))
+}
 
-	assert.True(t, strings.Contains(bufStr, `level=error msg="Message not delivered to MQ because channel full body: [1,2,3]"`))
+func TestMinimallyDescribeAudit(t *testing.T) {
+	res, _ := minimallyDescribeAudit(anAuditEventEncoded)
+
+	assert.Equal(t, "ev123", res.EventId)
+	assert.Equal(t, "foo", res.AuditSource)
+	assert.Equal(t, "bar", res.AuditType)
 }

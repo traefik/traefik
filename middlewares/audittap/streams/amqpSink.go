@@ -1,6 +1,7 @@
 package streams
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/containous/traefik/middlewares/audittap/encryption"
 	"github.com/containous/traefik/types"
 	"github.com/streadway/amqp"
 )
@@ -20,6 +22,13 @@ type amqpAuditSink struct {
 	messages  chan audittypes.Encoded
 	producers []*amqpProducer
 	q         *goque.Queue
+	enc       encryption.Encrypter
+}
+
+type auditDescription struct {
+	EventId string `json:"eventId"`
+	AuditSource string `json:"auditSource"`
+	AuditType string `json:"auditType"`
 }
 
 type amqpConyPublisher interface {
@@ -118,12 +127,17 @@ func NewAmqpSink(config *types.AuditSink, messageChan chan audittypes.Encoded) (
 	if err != nil {
 		return nil, err
 	}
+
+	enc, err := encryption.NewEncrypter(config.EncryptSecret)
+	if err != nil {
+		return nil, err
+	}
 	for i := 0; i < config.NumProducers; i++ {
-		p, _ := newAmqpProducer(cli, config.Destination, messageChan, q)
+		p, _ := newAmqpProducer(cli, config.Destination, messageChan, q, enc)
 		producers = append(producers, p)
 	}
 
-	aas := &amqpAuditSink{cli: cli, producers: producers, messages: messageChan, q: q}
+	aas := &amqpAuditSink{cli: cli, producers: producers, messages: messageChan, q: q, enc: enc}
 
 	go func() {
 		for cli.Loop() {
@@ -143,7 +157,7 @@ func (aas *amqpAuditSink) Audit(encoded audittypes.Encoded) error {
 	select {
 	case aas.messages <- encoded:
 	default:
-		handleFailedMessage(encoded, "channel full")
+		handleFailedMessage(encoded, "channel full", aas.enc)
 	}
 	return nil
 }
@@ -164,14 +178,15 @@ type amqpProducer struct {
 	messages  chan audittypes.Encoded
 	q         *goque.Queue
 	stop      chan bool
+	enc       encryption.Encrypter
 }
 
-func newAmqpProducer(cli amqpConyClient, exchange string, messages chan audittypes.Encoded, q *goque.Queue) (*amqpProducer, error) {
+func newAmqpProducer(cli amqpConyClient, exchange string, messages chan audittypes.Encoded, q *goque.Queue, enc encryption.Encrypter) (*amqpProducer, error) {
 	publisher := NewConyPublisher(exchange)
 	cli.Publish(publisher)
 
 	stop := make(chan bool)
-	producer := &amqpProducer{cli: cli, exchange: exchange, messages: messages, publisher: publisher, q: q, stop: stop}
+	producer := &amqpProducer{cli: cli, exchange: exchange, messages: messages, publisher: publisher, q: q, stop: stop, enc: enc}
 	go producer.audit()
 	go producer.publish()
 	return producer, nil
@@ -182,13 +197,31 @@ func (p *amqpProducer) audit() {
 		encoded := <-p.messages
 		_, err := p.q.EnqueueObject(encoded)
 		if err != nil {
-			handleFailedMessage(encoded, "enqueue failed")
+			handleFailedMessage(encoded, "enqueue failed", p.enc)
 		}
 	}
 }
 
-func handleFailedMessage(encoded audittypes.Encoded, reason string) {
-	log.Error(fmt.Sprintf("%s %s body: %s", undeliveredMessagePrefix, reason, string(encoded.Bytes)))
+func minimallyDescribeAudit(encoded audittypes.Encoded) (auditDescription, error) {
+	var data auditDescription
+	err := json.Unmarshal(encoded.Bytes, &data)
+	return data, err
+}
+
+func handleFailedMessage(encoded audittypes.Encoded, reason string, crypter encryption.Encrypter) {
+	// Assume an indescribable event would be rejected by Datastream
+  if desc, err := minimallyDescribeAudit(encoded); err == nil {
+    if msgBody, err := crypter.Encrypt(encoded.Bytes); err == nil {
+      log.Error(fmt.Sprintf("%s %s eventId=%s auditSource=%s auditType=%s body: {%s}",
+        	undeliveredMessagePrefix, reason, desc.EventId, desc.AuditSource, desc.AuditType, msgBody))
+    } else {
+			// Datastream would drop for an encryption failure
+			log.Error(fmt.Sprintf("Dropping unencrypted event. eventId=%s auditSource=%s auditType=%s",
+        	desc.EventId, desc.AuditSource, desc.AuditType))
+  	}
+	} else {
+     log.Error(fmt.Sprintf("Dropping invalid audit event. %s", err.Error()))
+	}
 }
 
 func (p *amqpProducer) Close() error {
