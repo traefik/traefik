@@ -31,6 +31,7 @@ func TestAuditTap_noop(t *testing.T) {
 	cfg := &types.AuditSink{
 		AuditSource: "testSource",
 		AuditType:   "testType",
+		EncryptSecret: "",
 	}
 	tap, err := NewAuditTap(cfg, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
 	assert.NoError(t, err)

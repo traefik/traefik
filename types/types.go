@@ -376,4 +376,5 @@ type AuditSink struct {
 	DiskStorePath   string `json:"diskStorePath,omitempty" description:"Directory path for disk-backed persistent audit message queue"`
 	AuditSource     string `json:"auditSource,omitempty" description:"Value to use for auditSource in audit message"`
 	AuditType       string `json:"auditType,omitempty" description:"Value to use for auditType in audit message"`
+	EncryptSecret 	string `json:"encryptSecret,omitempty" description:"Key for encrypting failed events. If present events will be AES encrypted"`
 }
