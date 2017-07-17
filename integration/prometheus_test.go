@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -29,7 +28,7 @@ func (s *PrometheusSuite) TestSimpleConfiguration(c *check.C) {
 		Server string
 	}{whoamiHost})
 	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
