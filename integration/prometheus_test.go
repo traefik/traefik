@@ -119,7 +119,7 @@ func (s *PrometheusSuite) verifyMetricsOutput(c *check.C, responseBody io.ReadCl
 			labels: map[string]string{
 				"backend": "backend1",
 			},
-			assert: buildCounterAssert(c, "traefik_backend_retries_total", 2),
+			assert: buildGreaterThanCounterAssert(c, "traefik_backend_retries_total", 1),
 		},
 	}
 
@@ -157,6 +157,14 @@ func buildCounterAssert(c *check.C, metricName string, expectedValue int) func(f
 	return func(family *dto.MetricFamily) {
 		if cv := int(family.Metric[0].Counter.GetValue()); cv != expectedValue {
 			c.Errorf("metric %s has value %d, want %d", metricName, cv, expectedValue)
+		}
+	}
+}
+
+func buildGreaterThanCounterAssert(c *check.C, metricName string, expectedMinValue int) func(family *dto.MetricFamily) {
+	return func(family *dto.MetricFamily) {
+		if cv := int(family.Metric[0].Counter.GetValue()); cv < expectedMinValue {
+			c.Errorf("metric %s has value %d, want at least %d", metricName, cv, expectedMinValue)
 		}
 	}
 }
