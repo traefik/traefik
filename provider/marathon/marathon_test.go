@@ -298,10 +298,11 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 
 func TestMarathonTaskFilter(t *testing.T) {
 	cases := []struct {
-		desc        string
-		task        marathon.Task
-		application marathon.Application
-		expected    bool
+		desc         string
+		task         marathon.Task
+		application  marathon.Application
+		readyChecker *readinessChecker
+		expected     bool
 	}{
 		{
 			desc:        "missing port",
@@ -379,13 +380,25 @@ func TestMarathonTaskFilter(t *testing.T) {
 			),
 			expected: true,
 		},
+		{
+			desc: "readiness check false",
+			task: createTask(taskPorts(80)),
+			application: createApplication(
+				appPorts(80),
+				deployments("deploymentId"),
+				readinessCheck(0),
+				readinessCheckResult(testTaskName, false),
+			),
+			readyChecker: testReadinessChecker(),
+			expected:     false,
+		},
 	}
 
 	for _, c := range cases {
 		c := c
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
-			provider := &Provider{}
+			provider := &Provider{readyChecker: c.readyChecker}
 			actual := provider.taskFilter(c.task, c.application)
 			if actual != c.expected {
 				t.Errorf("actual %v, expected %v", actual, c.expected)
