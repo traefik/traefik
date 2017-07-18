@@ -374,7 +374,7 @@ entryPoint = "https"
 # and provide environment variables with access keys to enable setting it:
 #  - cloudflare: CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY
 #  - digitalocean: DO_AUTH_TOKEN
-#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_API_KEY
+#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_OAUTH_TOKEN
 #  - dnsmadeeasy: DNSMADEEASY_API_KEY, DNSMADEEASY_API_SECRET
 #  - exoscale: EXOSCALE_API_KEY, EXOSCALE_API_SECRET
 #  - gandi: GANDI_API_KEY
