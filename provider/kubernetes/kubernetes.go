@@ -335,7 +335,7 @@ func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress)
 		if err == nil {
 			priority = priorityParsed
 		} else{
-			log.Errorf("Error in ingress: failed to parse 'traefik.frontend.priority' value '%s'.", priorityRaw)
+			log.Errorf("Error in ingress: failed to parse '%q' value '%q'.", types.LabelFrontendPriority, priorityRaw)
 		}
 	}
 
