@@ -157,6 +157,7 @@ func (server *Server) Close() {
 			os.Exit(1)
 		}
 	}(ctx)
+	stopMetricsClients(server.globalConfiguration)
 	server.stopLeadership()
 	server.routinesPool.Cleanup()
 	close(server.configurationChan)
@@ -1098,6 +1099,18 @@ func initializeMetricsClients(globalConfig GlobalConfiguration) {
 		}
 		if globalConfig.Web.Metrics.StatsD != nil {
 			middlewares.InitStatsdClient(globalConfig.Web.Metrics.StatsD)
+		}
+	}
+}
+
+func stopMetricsClients(globalConfig GlobalConfiguration) {
+	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
+	if metricsEnabled {
+		if globalConfig.Web.Metrics.Datadog != nil {
+			middlewares.StopDatadogClient()
+		}
+		if globalConfig.Web.Metrics.StatsD != nil {
+			middlewares.StopStatsdClient()
 		}
 	}
 }

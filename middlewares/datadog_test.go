@@ -22,7 +22,7 @@ func TestDatadog(t *testing.T) {
 
 	n := negroni.New()
 	dd := NewDataDog("test")
-	defer dd.Stop()
+	defer StopDatadogClient()
 	metricsMiddlewareBackend := NewMetricsWrapper(dd)
 
 	n.Use(metricsMiddlewareBackend)

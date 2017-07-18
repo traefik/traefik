@@ -22,7 +22,7 @@ func TestStatsD(t *testing.T) {
 
 	n := negroni.New()
 	c := NewStatsD("test")
-	defer c.Stop()
+	defer StopStatsdClient()
 	metricsMiddlewareBackend := NewMetricsWrapper(c)
 
 	n.Use(metricsMiddlewareBackend)
