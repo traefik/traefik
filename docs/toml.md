@@ -9,10 +9,10 @@
 # Global configuration
 ################################################################
 
-# Duration to give active requests a chance to finish during hot-reloads.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming
-# seconds.
+# Duration to give active requests a chance to finish before Traefik stops.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+# If no units are provided, the value is parsed assuming seconds.
+# Note: in this time frame no new requests are accepted.
 #
 # Optional
 # Default: "10s"
