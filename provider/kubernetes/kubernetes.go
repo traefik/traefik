@@ -334,12 +334,12 @@ func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress)
 
 		if err == nil {
 			priority = priorityParsed
-		} else{
+		} else {
 			log.Errorf("Error in ingress: failed to parse '%q' value '%q'.", types.LabelFrontendPriority, priorityRaw)
 		}
 	}
 
-	return priority;
+	return priority
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
