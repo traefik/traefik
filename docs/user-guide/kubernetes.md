@@ -613,7 +613,7 @@ This can be done by adding annotation ```traefik.frontend.priority```, i.e.:
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: cheeses
+  name: wildcard-cheeses
   annotations:
     traefik.frontend.priority: 1
 spec:
@@ -621,14 +621,14 @@ spec:
   - host: *.minikube
     http:
       paths:
-      - path: /stilton
+      - path: /
         backend:
           serviceName: stilton
           servicePort: http
 
 kind: Ingress
 metadata:
-  name: cheeses
+  name: specific-cheeses
   annotations:
     traefik.frontend.priority: 2
 spec:
@@ -636,7 +636,7 @@ spec:
   - host: specific.minikube
     http:
       paths:
-      - path: /stilton
+      - path: /
         backend:
           serviceName: stilton
           servicePort: http
