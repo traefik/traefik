@@ -186,23 +186,15 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				witelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
 				whitelistSourceRange := provider.SplitAndTrimString(witelistSourceRangeAnnotation)
 
-				priority := len(pa.Path)
-
-				priorityString, ok := i.Annotations[types.LabelFrontendPriority]
-				if ok {
-					priorityParsed, err := strconv.Atoi(priorityString)
-
-					if err == nil {
-						priority = priorityParsed;
-					}
-				}
-
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
 					if err != nil {
 						log.Errorf("Failed to retrieve basic auth configuration for ingress %s/%s: %s", i.ObjectMeta.Namespace, i.ObjectMeta.Name, err)
 						continue
 					}
+
+					priority := p.getPriority(pa, i)
+
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:              r.Host + pa.Path,
 						PassHostHeader:       PassHostHeader,
@@ -331,6 +323,23 @@ func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
 	}
 
 	return rule
+}
+
+func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress) int {
+	priority := len(path.Path)
+
+	priorityRaw, ok := i.Annotations[types.LabelFrontendPriority]
+	if ok {
+		priorityParsed, err := strconv.Atoi(priorityRaw)
+
+		if err == nil {
+			priority = priorityParsed
+		} else{
+			log.Errorf("Error in ingress: failed to parse 'traefik.frontend.priority' value '%s'.", priorityRaw)
+		}
+	}
+
+	return priority;
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
