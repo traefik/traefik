@@ -663,7 +663,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 					}
 				}
-				if backends[entryPointName+frontend.Backend] == nil {
+				if backends[frontend.Backend] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
 
 					var (
@@ -859,14 +859,14 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					} else {
 						negroni.UseHandler(lb)
 					}
-					backends[entryPointName+frontend.Backend] = negroni
+					backends[frontend.Backend] = negroni
 				} else {
 					log.Debugf("Reusing backend %s", frontend.Backend)
 				}
 				if frontend.Priority > 0 {
 					newServerRoute.route.Priority(frontend.Priority)
 				}
-				server.wireFrontendBackend(newServerRoute, backends[entryPointName+frontend.Backend])
+				server.wireFrontendBackend(newServerRoute, backends[frontend.Backend])
 
 				err := newServerRoute.route.GetError()
 				if err != nil {
