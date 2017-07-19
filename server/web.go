@@ -134,7 +134,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		systemRouter.Methods("GET").Path(provider.Path + "debug/vars").HandlerFunc(expvarHandler)
 	}
 
-	go func() {
+	safe.Go(func() {
 		var err error
 		var negroni = negroni.New()
 		if provider.Auth != nil {
@@ -155,7 +155,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		if err != nil {
 			log.Fatal("Error creating server: ", err)
 		}
-	}()
+	})
 	return nil
 }
 

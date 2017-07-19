@@ -112,12 +112,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 	pool.Go(func(stop chan bool) {
 		ctx, cancel := context.WithCancel(context.Background())
-		go func() {
+		safe.Go(func() {
 			select {
 			case <-stop:
 				cancel()
 			}
-		}()
+		})
 
 		operation := func() error {
 			aws, err := p.createClient()

@@ -112,7 +112,9 @@ func (p *Provider) longPoll(client rancher.Client, updateConfiguration func(stri
 	// Holds the connection until there is either a change in the metadata
 	// repository or `p.RefreshSeconds` has elapsed. Long polling should be
 	// favoured for the most accurate configuration updates.
-	go client.OnChange(p.RefreshSeconds, updateConfiguration)
+	safe.Go(func() {
+		client.OnChange(p.RefreshSeconds, updateConfiguration)
+	})
 	<-stop
 }
 

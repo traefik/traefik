@@ -52,7 +52,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		}
 
 		ticker := time.NewTicker(delay)
-		go func() {
+		safe.Go(func() {
 			for t := range ticker.C {
 
 				log.Debug("Refreshing Provider " + t.String())
@@ -68,7 +68,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					Configuration: configuration,
 				}
 			}
-		}()
+		})
 		return nil
 	}
 
