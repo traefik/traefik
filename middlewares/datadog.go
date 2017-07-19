@@ -83,7 +83,7 @@ func InitDatadogClient(config *types.Datadog) *time.Ticker {
 	return datadogTicker
 }
 
-// Stop stops internal datadogTicker which controls the pushing of metrics to DD Agent and resets it to `nil`
+// StopDatadogClient stops internal datadogTicker which controls the pushing of metrics to DD Agent and resets it to `nil`
 func StopDatadogClient() {
 	if datadogTicker != nil {
 		datadogTicker.Stop()

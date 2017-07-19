@@ -76,7 +76,7 @@ func InitStatsdClient(config *types.Statsd) *time.Ticker {
 	return statsdTicker
 }
 
-// Stop stops internal statsdTicker which controls the pushing of metrics to StatsD Agent and resets it to `nil`
+// StopStatsdClient stops internal statsdTicker which controls the pushing of metrics to StatsD Agent and resets it to `nil`
 func StopStatsdClient() {
 	if statsdTicker != nil {
 		statsdTicker.Stop()
