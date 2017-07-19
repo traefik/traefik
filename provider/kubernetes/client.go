@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/containous/traefik/safe"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/v1"
@@ -125,7 +126,9 @@ func (c *clientImpl) WatchIngresses(labelSelector labels.Selector, watchCh chan<
 		&v1beta1.Ingress{},
 		resyncPeriod,
 		newResourceEventHandlerFuncs(watchCh))
-	go c.ingController.Run(stopCh)
+	safe.Go(func() {
+		c.ingController.Run(stopCh)
+	})
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it
@@ -180,7 +183,9 @@ func (c *clientImpl) WatchServices(watchCh chan<- interface{}, stopCh <-chan str
 		&v1.Service{},
 		resyncPeriod,
 		newResourceEventHandlerFuncs(watchCh))
-	go c.svcController.Run(stopCh)
+	safe.Go(func() {
+		c.svcController.Run(stopCh)
+	})
 }
 
 // GetEndpoints returns the named Endpoints
@@ -209,7 +214,9 @@ func (c *clientImpl) WatchEndpoints(watchCh chan<- interface{}, stopCh <-chan st
 		&v1.Endpoints{},
 		resyncPeriod,
 		newResourceEventHandlerFuncs(watchCh))
-	go c.epController.Run(stopCh)
+	safe.Go(func() {
+		c.epController.Run(stopCh)
+	})
 }
 
 func (c *clientImpl) WatchSecrets(watchCh chan<- interface{}, stopCh <-chan struct{}) {
@@ -224,7 +231,9 @@ func (c *clientImpl) WatchSecrets(watchCh chan<- interface{}, stopCh <-chan stru
 		&v1.Secret{},
 		resyncPeriod,
 		newResourceEventHandlerFuncs(watchCh))
-	go c.secController.Run(stopCh)
+	safe.Go(func() {
+		c.secController.Run(stopCh)
+	})
 }
 
 // WatchAll returns events in the cluster and updates the stores via informer
@@ -243,7 +252,7 @@ func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan struct{}) (<-c
 	c.WatchEndpoints(eventCh, stopCh)
 	c.WatchSecrets(eventCh, stopCh)
 
-	go func() {
+	safe.Go(func() {
 		defer close(watchCh)
 		defer close(eventCh)
 
@@ -255,7 +264,7 @@ func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan struct{}) (<-c
 				c.fireEvent(event, watchCh)
 			}
 		}
-	}()
+	})
 
 	return watchCh, nil
 }
