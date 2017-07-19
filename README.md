@@ -87,7 +87,7 @@ You can access the simple HTML frontend of Træfik.
 
 - [Oxy](https://github.com/vulcand/oxy): an awesome proxy library made by Mailgun folks
 - [Gorilla mux](https://github.com/gorilla/mux): famous request router
-- [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
+- [Negroni](https://github.com/urfave/negroni): web middlewares made simple
 - [Lego](https://github.com/xenolf/lego): the best [Let's Encrypt](https://letsencrypt.org) library in go
 
 ## Test it

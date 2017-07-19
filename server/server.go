@@ -18,7 +18,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/healthcheck"
@@ -29,6 +28,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/streamrail/concurrent-map"
+	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/cbreaker"
 	"github.com/vulcand/oxy/connlimit"
 	"github.com/vulcand/oxy/forward"
