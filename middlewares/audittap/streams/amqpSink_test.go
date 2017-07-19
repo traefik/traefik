@@ -14,7 +14,21 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
+	"os"
 )
+
+var anAuditEvent = `
+	{
+		"eventId": "ev123",
+		"auditSource": "foo",
+		"auditType": "bar",
+		"field1": "field1value"
+	}
+	`
+
+var anAuditEventEncoded = audittypes.Encoded{[]byte(anAuditEvent), nil}
+var aesKeyBase64 = "RDFXVxTgrrT9IseypJrwDLzk/nTVeTjbjaUR3RVyv94="
+var crypt = &encrypter{[]byte(aesKeyBase64)}
 
 var anAuditEvent = `
 	{
