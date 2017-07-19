@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/urfave/negroni"
 )
 
 func TestErrorPage(t *testing.T) {

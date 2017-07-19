@@ -1,4 +1,4 @@
-hash: 61dae796d71e48c988433d0655e9c6ae64a1954a6a54b9b00a5db7e759dbca0e
+hash: 6aff4c6177ddc3247530d141a93f5bb044ee72acaa63b5667ceb205828c8ad03
 updated: 2017-07-11T23:50:31.241672481+02:00
 imports:
 - name: cloud.google.com/go
@@ -82,10 +82,8 @@ imports:
   version: 9208b142303c12d8899bae836fd524ac9338b4fd
 - name: github.com/codegangsta/cli
   version: bf4a526f48af7badd25d2cb02d587e1b01be3b50
-- name: github.com/codegangsta/negroni
+- name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
-  repo: https://github.com/urfave/negroni.git
-  vcs: git
 - name: github.com/containous/flaeg
   version: b5d2dc5878df07c2d74413348186982e7b865871
 - name: github.com/containous/mux

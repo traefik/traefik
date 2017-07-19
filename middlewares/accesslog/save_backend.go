@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/negroni"
+	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/utils"
 )
 

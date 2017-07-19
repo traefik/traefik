@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/healthcheck"
@@ -19,6 +18,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/roundrobin"
 )
 

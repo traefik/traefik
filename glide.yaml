@@ -22,10 +22,8 @@ import:
   - roundrobin
   - stream
   - utils
-- name: github.com/codegangsta/negroni
+- name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
-  repo: https://github.com/urfave/negroni.git
-  vcs: git
 - package: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - package: github.com/docker/docker
