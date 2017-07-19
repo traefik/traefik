@@ -1250,6 +1250,13 @@ As known from nginx when used as Kubernetes Ingress Controller, a List of IP-Ran
 
 An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.
 
+- `ingress.kubernetes.io/service-upstream: "true"`
+
+Use the service's clusterIP as the backend rather than resolve the pod IPs via the endpoints API and use them as individual backends. 
+As this results in only a single backend, some features are lost:
+ - Prevents sticky session
+ - Specific load balancer algorithms
+ - Retries will not work (`proxy_next_upstream` directive will have no effect)
 
 ### Authentication
 

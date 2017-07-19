@@ -36,6 +36,7 @@ const (
 	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
 	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
 	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
+	annotationKubernetesServiceUpstream      = "ingress.kubernetes.io/service-upstream"
 )
 
 const traefikDefaultRealm = "traefik"
@@ -259,6 +260,17 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 							url := protocol + "://" + service.Spec.ExternalName
 							name := url
 
+							templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
+								URL:    url,
+								Weight: 1,
+							}
+						} else if i.Annotations[annotationKubernetesServiceUpstream] == "true" {
+							if service.Spec.ClusterIP == "" {
+								log.Warnf("No ClusterIP found for service %s/%s", service.ObjectMeta.Namespace, service.ObjectMeta.Name)
+								break
+							}
+							url := protocol + "://" + service.Spec.ClusterIP + ":" + strconv.Itoa(int(port.Port))
+							name := url
 							templateObjects.Backends[r.Host+pa.Path].Servers[name] = types.Server{
 								URL:    url,
 								Weight: 1,
