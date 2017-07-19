@@ -1556,7 +1556,8 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 			},
-		}, {
+		},
+		{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
@@ -1584,6 +1585,33 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 			},
 		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"ingress.kubernetes.io/service-upstream": "true",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "clusterip",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service2",
+											ServicePort: intstr.FromInt(802),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	services := []*v1.Service{
 		{
@@ -1600,6 +1628,21 @@ func TestIngressAnnotations(t *testing.T) {
 					{
 						Name: "http",
 						Port: 80,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service2",
+				UID:       "2",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.2",
+				Ports: []v1.ServicePort{
+					{
+						Port: 802,
 					},
 				},
 			},
@@ -1700,6 +1743,19 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"clusterip": {
+				Servers: map[string]types.Server{
+					"http://10.0.0.2:802": {
+						URL:    "http://10.0.0.2:802",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
@@ -1771,6 +1827,15 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 				Priority: len("/api"),
+			},
+			"clusterip": {
+				Backend:        "clusterip",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"clusterip": {
+						Rule: "Host:clusterip",
+					},
+				},
 			},
 		},
 	}
