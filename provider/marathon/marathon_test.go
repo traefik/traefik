@@ -91,6 +91,31 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 			},
 		},
 		{
+			desc: "filtered task",
+			application: marathon.Application{
+				Ports:  []int{80},
+				Labels: &map[string]string{},
+			},
+			task: marathon.Task{
+				Ports: []int{80},
+				State: "TASK_STAGING",
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app": {
+					Backend:        "backend-app",
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+					EntryPoints:    []string{},
+					Routes: map[string]types.Route{
+						"route-host-app": {
+							Rule: "Host:app.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: nil,
+		},
+		{
 			desc: "load balancer / circuit breaker labels",
 			application: marathon.Application{
 
@@ -328,6 +353,9 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 			t.Parallel()
 			c.application.ID = "/app"
 			c.task.ID = "task"
+			if c.task.State == "" {
+				c.task.State = "TASK_RUNNING"
+			}
 			c.application.Tasks = []*marathon.Task{&c.task}
 			fakeClient := newFakeClient(false,
 				marathon.Applications{Apps: []marathon.Application{c.application}})

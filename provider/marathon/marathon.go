@@ -175,8 +175,8 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 	}
 
 	filteredApps := fun.Filter(p.applicationFilter, applications.Apps).([]marathon.Application)
-	for _, app := range filteredApps {
-		app.Tasks = fun.Filter(func(task *marathon.Task) bool {
+	for i, app := range filteredApps {
+		filteredApps[i].Tasks = fun.Filter(func(task *marathon.Task) bool {
 			return p.taskFilter(*task, app)
 		}, app.Tasks).([]*marathon.Task)
 	}
