@@ -16,5 +16,6 @@ const ReplacedPathHeader = "X-Replaced-Path"
 func (s *ReplacePath) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.Header.Add(ReplacedPathHeader, r.URL.Path)
 	r.URL.Path = s.Path
+	r.RequestURI = r.URL.RequestURI()
 	s.Handler.ServeHTTP(w, r)
 }
