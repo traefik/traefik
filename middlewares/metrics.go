@@ -56,6 +56,6 @@ type MetricsRetryListener struct {
 }
 
 // Retried tracks the retry in the RequestMetrics implementation.
-func (m *MetricsRetryListener) Retried(attempt int) {
+func (m *MetricsRetryListener) Retried(req *http.Request, attempt int) {
 	m.retryMetrics.RetriesCounter().With("backend", m.backendName).Add(1)
 }
