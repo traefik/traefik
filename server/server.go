@@ -1104,15 +1104,8 @@ func initializeMetricsClients(globalConfig GlobalConfiguration) {
 }
 
 func stopMetricsClients(globalConfig GlobalConfiguration) {
-	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
-	if metricsEnabled {
-		if globalConfig.Web.Metrics.Datadog != nil {
-			middlewares.StopDatadogClient()
-		}
-		if globalConfig.Web.Metrics.StatsD != nil {
-			middlewares.StopStatsdClient()
-		}
-	}
+	middlewares.StopDatadogClient()
+	middlewares.StopStatsdClient()
 }
 
 func registerRetryMiddleware(
