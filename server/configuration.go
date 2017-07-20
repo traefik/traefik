@@ -23,6 +23,7 @@ import (
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
+	"github.com/containous/traefik/provider/postgres"
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
@@ -74,6 +75,7 @@ type GlobalConfiguration struct {
 	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings"`
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings"`
+	Postgres                  *postgres.Provider      `description:"Enable Postgres backend with default settings"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -521,6 +523,13 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDynamoDB.TableName = "traefik"
 	defaultDynamoDB.Watch = true
 
+	// default Postgres
+	var defaultPostgres postgres.Provider
+	defaultPostgres.Constraints = types.Constraints{}
+	defaultPostgres.RefreshSeconds = 15
+	defaultPostgres.TableName = "traefik"
+	defaultPostgres.Watch = true
+
 	// default AccessLog
 	defaultAccessLog := types.AccessLog{
 		Format:   accesslog.CommonFormat,
@@ -542,6 +551,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		ECS:           &defaultECS,
 		Rancher:       &defaultRancher,
 		DynamoDB:      &defaultDynamoDB,
+		Postgres:      &defaultPostgres,
 		Retry:         &Retry{},
 		HealthCheck:   &HealthCheckConfig{},
 		AccessLog:     &defaultAccessLog,
@@ -559,7 +569,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			GraceTimeOut:              flaeg.Duration(10 * time.Second),
 			AccessLogsFile:            "",
 			TraefikLogsFile:           "",
-			LogLevel:                  "ERROR",
+			LogLevel:                  "DEBUG",
 			EntryPoints:               map[string]*EntryPoint{},
 			Constraints:               types.Constraints{},
 			DefaultEntryPoints:        []string{},

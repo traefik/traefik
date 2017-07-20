@@ -206,5 +206,6 @@ testImport:
   version: e0695005d6819191cf8969b479c94c40c8d22aa4
 - package: github.com/mattn/go-shellwords
 - package: github.com/vdemeester/shakers
+- package: github.com/lib/pq
 - package: github.com/docker/cli
   version: d95fd2f38cfc23e077530c6181330727d561b6a0

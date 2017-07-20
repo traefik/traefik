@@ -406,6 +406,9 @@ func (server *Server) configureProviders() {
 	if server.globalConfiguration.DynamoDB != nil {
 		server.providers = append(server.providers, server.globalConfiguration.DynamoDB)
 	}
+	if server.globalConfiguration.Postgres != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Postgres)
+	}
 }
 
 func (server *Server) startProviders() {
