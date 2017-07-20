@@ -1069,19 +1069,19 @@ func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metri
 		if globalConfig.Web.Metrics.Prometheus != nil {
 			metric, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
 			if err != nil {
-				log.Errorf("Error creating Prometheus Metrics implementation: %s", err)
+				log.Errorf("Error creating Prometheus metrics implementation: %s", err)
 			}
-			log.Debug("Configured Prometheus Metrics")
+			log.Debug("Configured Prometheus metrics")
 			metrics = append(metrics, metric)
 		}
 		if globalConfig.Web.Metrics.Datadog != nil {
 			metric := middlewares.NewDataDog(name)
-			log.Debugf("Configured DataDog Metrics pushing to %s once every %s", globalConfig.Web.Metrics.Datadog.Address, globalConfig.Web.Metrics.Datadog.PushInterval)
+			log.Debugf("Configured DataDog metrics pushing to %s once every %s", globalConfig.Web.Metrics.Datadog.Address, globalConfig.Web.Metrics.Datadog.PushInterval)
 			metrics = append(metrics, metric)
 		}
 		if globalConfig.Web.Metrics.StatsD != nil {
 			metric := middlewares.NewStatsD(name)
-			log.Debugf("Configured StatsD Metrics pushing to %s once every %s", globalConfig.Web.Metrics.StatsD.Address, globalConfig.Web.Metrics.StatsD.PushInterval)
+			log.Debugf("Configured StatsD metrics pushing to %s once every %s", globalConfig.Web.Metrics.StatsD.Address, globalConfig.Web.Metrics.StatsD.PushInterval)
 			metrics = append(metrics, metric)
 		}
 
