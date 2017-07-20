@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stvp/go-udp-testing"
+	"github.com/urfave/negroni"
 )
 
 func TestDatadog(t *testing.T) {

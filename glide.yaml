@@ -22,7 +22,7 @@ import:
   - roundrobin
   - stream
   - utils
-- name: github.com/urfave/negroni
+- package: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - package: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
@@ -99,7 +99,13 @@ import:
 - package: github.com/go-kit/kit
   version: v0.3.0
   subpackages:
+  - log
   - metrics
+  - metrics/dogstatsd
+  - metrics/multi
+  - metrics/prometheus
+  - metrics/statsd
+  - util/conn
 - package: github.com/prometheus/client_golang
   version: 08fd2e12372a66e68e30523c7642e0cbc3e4fbde
   subpackages:
@@ -190,6 +196,7 @@ import:
   subpackages:
   - spew
 testImport:
+- package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose
   version: 0ad950cbeb3d72107613dd220b5e9d7e001b890b
 - package: github.com/go-check/check
