@@ -443,8 +443,8 @@ func TestNewMetrics(t *testing.T) {
 
 			metricsImpl := newMetrics(tc.globalConfig, "test1")
 			if metricsImpl != nil {
-				if _, ok := metricsImpl.(*middlewares.Prometheus); !ok {
-					t.Errorf("invalid metricsImpl type, got %T want %T", metricsImpl, &middlewares.Prometheus{})
+				if _, ok := metricsImpl.(*middlewares.MultiMetrics); !ok {
+					t.Errorf("invalid metricsImpl type, got %T want %T", metricsImpl, &middlewares.MultiMetrics{})
 				}
 			}
 		})
