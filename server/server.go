@@ -23,6 +23,7 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/provider"
@@ -51,6 +52,8 @@ type Server struct {
 	accessLoggerMiddleware     *accesslog.LogHandler
 	routinesPool               *safe.Pool
 	leadership                 *cluster.Leadership
+	metricsRegistry            metrics.Registry
+	metricsEnabled             bool
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -83,6 +86,14 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server.currentConfigurations.Set(currentConfigurations)
 	server.globalConfiguration = globalConfiguration
 	server.routinesPool = safe.NewPool(context.Background())
+
+	server.metricsRegistry = metrics.NewVoidRegistry()
+	if globalConfiguration.Web != nil && globalConfiguration.Web.Metrics != nil && globalConfiguration.Web.Metrics.Prometheus != nil {
+		server.metricsEnabled = true
+		server.metricsRegistry = metrics.RegisterPrometheusMetrics(globalConfiguration.Web.Metrics.Prometheus)
+		log.Debugf("Registered Prometheus metrics")
+	}
+
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
@@ -194,13 +205,12 @@ func (server *Server) startHTTPServers() {
 }
 
 func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
-	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler(), metrics}
+	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler(), stats}
 	if server.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 	}
-	metrics := newMetrics(server.globalConfiguration, newServerEntryPointName)
-	if metrics != nil {
-		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(metrics))
+	if server.metricsEnabled {
+		serverMiddlewares = append(serverMiddlewares, middlewares.NewEntryPointMetricsMiddleware(server.metricsRegistry, newServerEntryPointName))
 	}
 	if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
 		statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
@@ -305,8 +315,10 @@ func (server *Server) listenConfigurations(stop chan bool) {
 			}
 			newConfigurations[configMsg.ProviderName] = configMsg.Configuration
 
+			server.metricsRegistry.ConfigReloadsCounter().Add(1)
 			newServerEntryPoints, err := server.loadConfig(newConfigurations, server.globalConfiguration)
 			if err == nil {
+				server.metricsRegistry.LastConfigReloadSuccessGauge().Set(float64(time.Now().Unix()))
 				for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 					server.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
 					log.Infof("Server configuration reloaded on %s", server.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
@@ -314,6 +326,7 @@ func (server *Server) listenConfigurations(stop chan bool) {
 				server.currentConfigurations.Set(newConfigurations)
 				server.postLoadConfig()
 			} else {
+				server.metricsRegistry.ConfigReloadFailuresCounter().Add(1)
 				log.Error("Error loading new configuration, aborted ", err)
 			}
 		}
@@ -800,14 +813,12 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 					}
 
-					metrics := newMetrics(server.globalConfiguration, frontend.Backend)
-
 					if globalConfiguration.Retry != nil {
-						retryListener := middlewares.NewMetricsRetryListener(metrics)
+						retryListener := middlewares.NewMetricsRetryListener(server.metricsRegistry, frontend.Backend)
 						lb = registerRetryMiddleware(lb, globalConfiguration, configuration, frontend.Backend, retryListener)
 					}
-					if metrics != nil {
-						negroni.Use(middlewares.NewMetricsWrapper(metrics))
+					if server.metricsEnabled {
+						negroni.Use(middlewares.NewBackendMetricsMiddleware(server.metricsRegistry, frontend.Backend))
 					}
 
 					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
@@ -1054,22 +1065,6 @@ func (*Server) configureBackends(backends map[string]*types.Backend) {
 			}
 		}
 	}
-}
-
-// newMetrics instantiates the proper Metrics implementation, depending on the global configuration.
-// Note that given there is no metrics instrumentation configured, it will return nil.
-func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metrics {
-	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
-	if metricsEnabled && globalConfig.Web.Metrics.Prometheus != nil {
-		metrics, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
-		if err != nil {
-			log.Errorf("Error creating Prometheus Metrics implementation: %s", err)
-			return nil
-		}
-		return metrics
-	}
-
-	return nil
 }
 
 func registerRetryMiddleware(

@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	metrics       = thoas_stats.New()
+	stats         = thoas_stats.New()
 	statsRecorder *middlewares.StatsRecorder
 )
 
@@ -167,7 +167,7 @@ type healthResponse struct {
 }
 
 func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, request *http.Request) {
-	health := &healthResponse{Data: metrics.Data()}
+	health := &healthResponse{Data: stats.Data()}
 	if statsRecorder != nil {
 		health.Stats = statsRecorder.Data()
 	}
