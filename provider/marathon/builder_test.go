@@ -10,7 +10,7 @@ const testTaskName string = "taskID"
 
 // Functions related to building applications.
 
-func createApplication(ops ...func(*marathon.Application)) marathon.Application {
+func application(ops ...func(*marathon.Application)) marathon.Application {
 	app := marathon.Application{}
 	app.EmptyLabels()
 	app.Deployments = []map[string]string{}
@@ -104,7 +104,7 @@ func readinessCheckResult(taskID string, ready bool) func(*marathon.Application)
 
 // Functions related to building tasks.
 
-func createTask(ops ...func(*marathon.Task)) marathon.Task {
+func task(ops ...func(*marathon.Task)) marathon.Task {
 	t := marathon.Task{
 		ID: testTaskName,
 		// The vast majority of tests expect the task state to be TASK_RUNNING.
@@ -118,8 +118,8 @@ func createTask(ops ...func(*marathon.Task)) marathon.Task {
 	return t
 }
 
-func createLocalhostTask(ops ...func(*marathon.Task)) marathon.Task {
-	t := createTask(
+func localhostTask(ops ...func(*marathon.Task)) marathon.Task {
+	t := task(
 		host("localhost"),
 		ipAddresses("127.0.0.1"),
 	)

@@ -13,14 +13,14 @@ func testReadinessChecker() *readinessChecker {
 
 func TestDisabledReadinessChecker(t *testing.T) {
 	var rc *readinessChecker
-	task := createTask()
-	app := createApplication(
+	tsk := task()
+	app := application(
 		deployments("deploymentId"),
 		readinessCheck(0),
 		readinessCheckResult(testTaskName, false),
 	)
 
-	if ready := rc.Do(task, app); ready == false {
+	if ready := rc.Do(tsk, app); ready == false {
 		t.Error("expected ready = true")
 	}
 }
@@ -35,20 +35,20 @@ func TestEnabledReadinessChecker(t *testing.T) {
 	}{
 		{
 			desc:          "no deployment running",
-			task:          createTask(),
-			app:           createApplication(),
+			task:          task(),
+			app:           application(),
 			expectedReady: true,
 		},
 		{
 			desc:          "no readiness checks defined",
-			task:          createTask(),
-			app:           createApplication(deployments("deploymentId")),
+			task:          task(),
+			app:           application(deployments("deploymentId")),
 			expectedReady: true,
 		},
 		{
 			desc: "readiness check result negative",
-			task: createTask(),
-			app: createApplication(
+			task: task(),
+			app: application(
 				deployments("deploymentId"),
 				readinessCheck(0),
 				readinessCheckResult("otherTaskID", true),
@@ -58,8 +58,8 @@ func TestEnabledReadinessChecker(t *testing.T) {
 		},
 		{
 			desc: "readiness check result positive",
-			task: createTask(),
-			app: createApplication(
+			task: task(),
+			app: application(
 				deployments("deploymentId"),
 				readinessCheck(0),
 				readinessCheckResult("otherTaskID", false),
@@ -69,8 +69,8 @@ func TestEnabledReadinessChecker(t *testing.T) {
 		},
 		{
 			desc: "no readiness check result with default timeout",
-			task: createTask(startedAtFromNow(3 * time.Minute)),
-			app: createApplication(
+			task: task(startedAtFromNow(3 * time.Minute)),
+			app: application(
 				deployments("deploymentId"),
 				readinessCheck(0),
 			),
@@ -81,8 +81,8 @@ func TestEnabledReadinessChecker(t *testing.T) {
 		},
 		{
 			desc: "no readiness check result with readiness check timeout",
-			task: createTask(startedAtFromNow(4 * time.Minute)),
-			app: createApplication(
+			task: task(startedAtFromNow(4 * time.Minute)),
+			app: application(
 				deployments("deploymentId"),
 				readinessCheck(3*time.Minute),
 			),
@@ -93,8 +93,8 @@ func TestEnabledReadinessChecker(t *testing.T) {
 		},
 		{
 			desc: "invalid task start time",
-			task: createTask(startedAt("invalid")),
-			app: createApplication(
+			task: task(startedAt("invalid")),
+			app: application(
 				deployments("deploymentId"),
 				readinessCheck(0),
 			),
@@ -102,8 +102,8 @@ func TestEnabledReadinessChecker(t *testing.T) {
 		},
 		{
 			desc: "task not involved in deployment",
-			task: createTask(startedAtFromNow(1 * time.Hour)),
-			app: createApplication(
+			task: task(startedAtFromNow(1 * time.Hour)),
+			app: application(
 				deployments("deploymentId"),
 				readinessCheck(0),
 			),
