@@ -1877,12 +1877,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 		},
 	}
 
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestInvalidPassHostHeaderValue(t *testing.T) {
