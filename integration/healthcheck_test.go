@@ -92,3 +92,89 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
+
+func (s *HealthCheckSuite) TestMultipleEntrypoints(c *check.C) {
+	whoami1Host := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	whoami2Host := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+
+	file := s.adaptFile(c, "fixtures/healthcheck/multiple-entrypoints.toml", struct {
+		Server1 string
+		Server2 string
+	}{whoami1Host, whoami2Host})
+	defer os.Remove(file)
+
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Wait for traefik
+	err = try.GetRequest("http://localhost:8080/api/providers", 60*time.Second, try.BodyContains("Host:test.localhost"))
+	c.Assert(err, checker.IsNil)
+
+	// Check entrypoint http1
+	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
+	c.Assert(err, checker.IsNil)
+	frontendHealthReq.Host = "test.localhost"
+
+	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	// Check entrypoint http2
+	frontendHealthReq, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:9000/health", nil)
+	c.Assert(err, checker.IsNil)
+	frontendHealthReq.Host = "test.localhost"
+
+	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	// Set one whoami health to 500
+	client := &http.Client{}
+	statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami1Host+"/health", bytes.NewBuffer([]byte("500")))
+	c.Assert(err, checker.IsNil)
+	_, err = client.Do(statusInternalServerErrorReq)
+	c.Assert(err, checker.IsNil)
+
+	// Waiting for Traefik healthcheck
+	try.Sleep(2 * time.Second)
+
+	// Test http2 is healthy and only whoami2 responds
+	// Looping to give traefik the chance to forward to a broken server
+	for i := 0; i < 4; i++ {
+		frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:9000/", nil)
+		c.Assert(err, checker.IsNil)
+		frontendReq.Host = "test.localhost"
+
+		// Check if only whoami2 respond
+		// Not able to use try.Request here, because it retries and because of this
+		// always hits a healthy backend.
+		resp, err := client.Do(frontendReq)
+		c.Assert(resp, checker.Not(checker.IsNil))
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
+		c.Assert(err, checker.IsNil)
+
+		err = try.BodyContains(whoami2Host)(resp)
+		c.Assert(err, checker.IsNil)
+	}
+	// Test http1 is healthy and only whoami2 responds
+	for i := 0; i < 4; i++ {
+		frontendReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+		c.Assert(err, checker.IsNil)
+		frontendReq.Host = "test.localhost"
+
+		// Check if only whoami2 respond
+		// Not able to use try.Request here, because it retries and because of this
+		// always hits a healthy backend.
+		resp, err := client.Do(frontendReq)
+		c.Assert(resp, checker.Not(checker.IsNil))
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
+		c.Assert(err, checker.IsNil)
+
+		err = try.BodyContains(whoami2Host)(resp)
+		c.Assert(err, checker.IsNil)
+	}
+}
