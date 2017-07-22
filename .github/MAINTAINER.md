@@ -1,5 +1,17 @@
 # Maintainers
 
+## The team
+
+- Emile Vauge [@emilevauge](https://github.com/emilevauge)
+- Vincent Demeester [@vdemeester](https://github.com/vdemeester)
+- Ed Robinson [@errm](https://github.com/errm)
+- Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
+- Manuel Zapf [@SantoDE](https://github.com/SantoDE)
+- Timo Reimann [@timoreimann](https://github.com/timoreimann)
+- Ludovic Fernandez [@ldez](https://github.com/ldez)
+- Julien Salleyron [@juliens](https://github.com/juliens)
+- Nicolas Mengin [@nmengin](https://github.com/nmengin)
+
 ## Labels
 
 If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
