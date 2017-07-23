@@ -64,7 +64,7 @@ Run it and forget it!
 
 ## Quickstart
 
-You can have a quick look at Træfik in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
+You can have a quick look at Træfik in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers. If you are looking for a more comprehensive and real use-case example, you can also check [Play-With-Docker](http://training.play-with-docker.com/traefik-load-balancing/) to see how to load balance between multiple nodes.
 
 Here is a talk given by [Ed Robinson](https://github.com/errm) at the [ContainerCamp UK](https://container.camp) conference.
 You will learn fundamental Træfik features and see some demos with Kubernetes.
@@ -87,7 +87,7 @@ You can access the simple HTML frontend of Træfik.
 
 - [Oxy](https://github.com/vulcand/oxy): an awesome proxy library made by Mailgun folks
 - [Gorilla mux](https://github.com/gorilla/mux): famous request router
-- [Negroni](https://github.com/codegangsta/negroni): web middlewares made simple
+- [Negroni](https://github.com/urfave/negroni): web middlewares made simple
 - [Lego](https://github.com/xenolf/lego): the best [Let's Encrypt](https://letsencrypt.org) library in go
 
 ## Test it
@@ -118,7 +118,7 @@ You can find the complete documentation [here](https://docs.traefik.io).
 
 Please refer to [this section](.github/CONTRIBUTING.md).
 
-## Code Of Conduct
+## Code of Conduct
 
 Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
@@ -126,6 +126,21 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 You can join [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) to get basic support.
 If you prefer commercial support, please contact [containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
+
+## Release cycle
+
+- Release: We try to release a new version every 2 months
+  - i.e.: 1.3.0, 1.4.0, 1.5.0
+- Release candidate: we do RC (1.**x**.0-rc**y**) before the final release (1.**x**.0)
+  - i.e.: 1.1.0-rc1 -> 1.1.0-rc2 -> 1.1.0-rc3 -> 1.1.0-rc4 -> 1.1.0
+- Bug-fixes: For each version we release bug fixes
+  - i.e.: 1.1.1, 1.1.2, 1.1.3
+  - those versions contain only bug-fixes
+  - no additional features are delivered in those versions
+- Each version is supported until the next one is released
+  - i.e.: 1.1.x will be supported until 1.2.0 is out
+- We use [Semantic Versioning](http://semver.org/)
+
 
 ## Maintainers
 

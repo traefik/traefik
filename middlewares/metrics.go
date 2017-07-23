@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-kit/kit/metrics"
+	"github.com/go-kit/kit/metrics/multi"
 )
 
 // Metrics is an Interface that must be satisfied by any system that
@@ -20,6 +21,52 @@ type Metrics interface {
 // expose retry specific Metrics.
 type RetryMetrics interface {
 	getRetryCounter() metrics.Counter
+}
+
+// MultiMetrics is a struct that provides a wrapper container for multiple Metrics, if they are configured
+type MultiMetrics struct {
+	wrappedMetrics       *[]Metrics
+	reqsCounter          metrics.Counter
+	reqDurationHistogram metrics.Histogram
+	retryCounter         metrics.Counter
+}
+
+// NewMultiMetrics creates a new instance of MultiMetrics
+func NewMultiMetrics(manyMetrics []Metrics) *MultiMetrics {
+	counters := []metrics.Counter{}
+	histograms := []metrics.Histogram{}
+	retryCounters := []metrics.Counter{}
+
+	for _, m := range manyMetrics {
+		counters = append(counters, m.getReqsCounter())
+		histograms = append(histograms, m.getReqDurationHistogram())
+		retryCounters = append(retryCounters, m.getRetryCounter())
+	}
+
+	var mm MultiMetrics
+
+	mm.wrappedMetrics = &manyMetrics
+	mm.reqsCounter = multi.NewCounter(counters...)
+	mm.reqDurationHistogram = multi.NewHistogram(histograms...)
+	mm.retryCounter = multi.NewCounter(retryCounters...)
+
+	return &mm
+}
+
+func (mm *MultiMetrics) getReqsCounter() metrics.Counter {
+	return mm.reqsCounter
+}
+
+func (mm *MultiMetrics) getReqDurationHistogram() metrics.Histogram {
+	return mm.reqDurationHistogram
+}
+
+func (mm *MultiMetrics) getRetryCounter() metrics.Counter {
+	return mm.retryCounter
+}
+
+func (mm *MultiMetrics) getWrappedMetrics() *[]Metrics {
+	return mm.wrappedMetrics
 }
 
 // MetricsWrapper is a Negroni compatible Handler which relies on a

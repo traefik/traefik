@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"reflect"
@@ -26,13 +27,14 @@ import (
 var _ provider.Provider = (*Provider)(nil)
 
 const (
-	annotationFrontendRuleType = "traefik.frontend.rule.type"
-	ruleTypePathPrefix         = "PathPrefix"
+	ruleTypePathPrefix  = "PathPrefix"
+	ruleTypeReplacePath = "ReplacePath"
 
 	annotationKubernetesIngressClass         = "kubernetes.io/ingress.class"
 	annotationKubernetesAuthRealm            = "ingress.kubernetes.io/auth-realm"
 	annotationKubernetesAuthType             = "ingress.kubernetes.io/auth-type"
 	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
+	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
 	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
 )
 
@@ -68,6 +70,12 @@ func (p *Provider) newK8sClient() (Client, error) {
 // Provide allows the k8s provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+	// Tell glog (used by client-go) to log into STDERR. Otherwise, we risk
+	// certain kinds of API errors getting logged into a directory not
+	// available in a `FROM scratch` Docker container, causing glog to abort
+	// hard with an exit code > 0.
+	flag.Set("logtostderr", "true")
+
 	k8sClient, err := p.newK8sClient()
 	if err != nil {
 		return err
@@ -146,6 +154,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				log.Warn("Error in ingress: HTTP is nil")
 				continue
 			}
+
 			for _, pa := range r.HTTP.Paths {
 				if _, exists := templateObjects.Backends[r.Host+pa.Path]; !exists {
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
@@ -159,7 +168,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				PassHostHeader := p.getPassHostHeader()
 
-				passHostHeaderAnnotation, ok := i.Annotations["traefik.frontend.passHostHeader"]
+				passHostHeaderAnnotation, ok := i.Annotations[types.LabelFrontendPassHostHeader]
 				switch {
 				case !ok:
 					// No op.
@@ -168,7 +177,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				case passHostHeaderAnnotation == "true":
 					PassHostHeader = true
 				default:
-					log.Warnf("Unknown value '%s' for traefik.frontend.passHostHeader, falling back to %s", passHostHeaderAnnotation, PassHostHeader)
+					log.Warnf("Unknown value '%s' for %s, falling back to %s", passHostHeaderAnnotation, types.LabelFrontendPassHostHeader, PassHostHeader)
 				}
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
 					return nil, errors.New("no realm customization supported")
@@ -206,14 +215,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				if len(pa.Path) > 0 {
-					ruleType := i.Annotations[annotationFrontendRuleType]
-					if ruleType == "" {
-						ruleType = ruleTypePathPrefix
-					}
-
+				rule := getRuleForPath(pa, i)
+				if rule != "" {
 					templateObjects.Frontends[r.Host+pa.Path].Routes[pa.Path] = types.Route{
-						Rule: ruleType + ":" + pa.Path,
+						Rule: rule,
 					}
 				}
 
@@ -229,15 +234,17 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					continue
 				}
 
-				if expression := service.Annotations["traefik.backend.circuitbreaker"]; expression != "" {
+				if expression := service.Annotations[types.LabelTraefikBackendCircuitbreaker]; expression != "" {
 					templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
 						Expression: expression,
 					}
 				}
-				if service.Annotations["traefik.backend.loadbalancer.method"] == "drr" {
+
+				if service.Annotations[types.LabelBackendLoadbalancerMethod] == "drr" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
-				if service.Annotations["traefik.backend.loadbalancer.sticky"] == "true" {
+
+				if service.Annotations[types.LabelBackendLoadbalancerSticky] == "true" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
 				}
 
@@ -247,6 +254,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						if port.Port == 443 {
 							protocol = "https"
 						}
+
 						if service.Spec.Type == "ExternalName" {
 							url := protocol + "://" + service.Spec.ExternalName
 							name := url
@@ -293,6 +301,25 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 	}
 	return &templateObjects, nil
+}
+
+func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
+	if len(pa.Path) == 0 {
+		return ""
+	}
+
+	ruleType := i.Annotations[types.LabelFrontendRuleType]
+	if ruleType == "" {
+		ruleType = ruleTypePathPrefix
+	}
+
+	rule := ruleType + ":" + pa.Path
+
+	if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
+		rule = ruleTypeReplacePath + ":" + rewriteTarget
+	}
+
+	return rule
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {

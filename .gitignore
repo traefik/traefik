@@ -11,3 +11,4 @@
 *.log
 *.exe
 .DS_Store
+/example/acme/acme.json

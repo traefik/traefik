@@ -444,12 +444,14 @@ The static configuration is the global configuration which is setting up connect
 Træfik can be configured using many configuration sources with the following precedence order.
 Each item takes precedence over the item below it:
 
-- [Key-value Store](/basics/#key-value-stores)
+- [Key-value store](/basics/#key-value-stores)
 - [Arguments](/basics/#arguments)
 - [Configuration file](/basics/#configuration-file)
 - Default
 
-It means that arguments override configuration file, and Key-value Store overrides arguments.
+It means that arguments override configuration file, and key-value store overrides arguments.
+
+Note that the provider-enabling argument parameters (e.g., `--docker`) set all default values for the specific provider. It must not be used if a configuration source with less precedence wants to set a non-default provider value.
 
 ### Configuration file
 
@@ -511,6 +513,7 @@ List of Træfik available commands with description :             
 
 - `version` : Print version 
 - `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
+- `bug`: The easiest way to submit a pre-filled issue.
 
 Each command may have related flags.
 All those related flags will be displayed with :
@@ -524,3 +527,13 @@ Note that each command is described at the beginning of the help section:
 ```bash
 $ traefik --help
 ```
+
+## Command: bug
+
+Here is the easiest way to submit a pre-filled issue on [Træfik GitHub](https://github.com/containous/traefik).
+
+```bash
+$ traefik bug
+```
+
+See https://www.youtube.com/watch?v=Lyz62L8m93I.

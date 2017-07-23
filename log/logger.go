@@ -1,7 +1,9 @@
 package log
 
 import (
+	"bufio"
 	"io"
+	"runtime"
 
 	"github.com/Sirupsen/logrus"
 )
@@ -186,4 +188,67 @@ func Panicln(args ...interface{}) {
 // Fatalln logs a message at level Fatal on the standard logger.
 func Fatalln(args ...interface{}) {
 	logger.Fatalln(args...)
+}
+
+// Writer logs writer (Level Info)
+func Writer() *io.PipeWriter {
+	return WriterLevel(logrus.InfoLevel)
+}
+
+// WriterLevel logs writer for a specific level.
+func WriterLevel(level logrus.Level) *io.PipeWriter {
+	return logger.WriterLevel(level)
+}
+
+// CustomWriterLevel logs writer for a specific level. (with a custom scanner buffer size.)
+// adapted from github.com/Sirupsen/logrus/writer.go
+func CustomWriterLevel(level logrus.Level, maxScanTokenSize int) *io.PipeWriter {
+	reader, writer := io.Pipe()
+
+	var printFunc func(args ...interface{})
+
+	switch level {
+	case logrus.DebugLevel:
+		printFunc = Debug
+	case logrus.InfoLevel:
+		printFunc = Info
+	case logrus.WarnLevel:
+		printFunc = Warn
+	case logrus.ErrorLevel:
+		printFunc = Error
+	case logrus.FatalLevel:
+		printFunc = Fatal
+	case logrus.PanicLevel:
+		printFunc = Panic
+	default:
+		printFunc = Print
+	}
+
+	go writerScanner(reader, maxScanTokenSize, printFunc)
+	runtime.SetFinalizer(writer, writerFinalizer)
+
+	return writer
+}
+
+// extract from github.com/Sirupsen/logrus/writer.go
+// Hack the buffer size
+func writerScanner(reader *io.PipeReader, scanTokenSize int, printFunc func(args ...interface{})) {
+	scanner := bufio.NewScanner(reader)
+
+	if scanTokenSize > bufio.MaxScanTokenSize {
+		buf := make([]byte, bufio.MaxScanTokenSize)
+		scanner.Buffer(buf, scanTokenSize)
+	}
+
+	for scanner.Scan() {
+		printFunc(scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		Errorf("Error while reading from Writer: %s", err)
+	}
+	reader.Close()
+}
+
+func writerFinalizer(writer *io.PipeWriter) {
+	writer.Close()
 }

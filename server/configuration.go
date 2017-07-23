@@ -40,7 +40,7 @@ type TraefikConfiguration struct {
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
+	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish before Traefik stops"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
 	AccessLogsFile            string                  `description:"(Deprecated) Access logs file"` // Deprecated
@@ -59,21 +59,21 @@ type GlobalConfiguration struct {
 	RootCAs                   RootCAs                 `description:"Add cert file for self-signed certicate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
-	Docker                    *docker.Provider        `description:"Enable Docker backend"`
-	File                      *file.Provider          `description:"Enable File backend"`
-	Web                       *WebProvider            `description:"Enable Web backend"`
-	Marathon                  *marathon.Provider      `description:"Enable Marathon backend"`
-	Consul                    *consul.Provider        `description:"Enable Consul backend"`
-	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend"`
-	Etcd                      *etcd.Provider          `description:"Enable Etcd backend"`
-	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend"`
-	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend"`
-	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend"`
-	Mesos                     *mesos.Provider         `description:"Enable Mesos backend"`
-	Eureka                    *eureka.Provider        `description:"Enable Eureka backend"`
-	ECS                       *ecs.Provider           `description:"Enable ECS backend"`
-	Rancher                   *rancher.Provider       `description:"Enable Rancher backend"`
-	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend"`
+	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings"`
+	File                      *file.Provider          `description:"Enable File backend with default settings"`
+	Web                       *WebProvider            `description:"Enable Web backend with default settings"`
+	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings"`
+	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings"`
+	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend with default settings"`
+	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings"`
+	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings"`
+	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings"`
+	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend with default settings"`
+	Mesos                     *mesos.Provider         `description:"Enable Mesos backend with default settings"`
+	Eureka                    *eureka.Provider        `description:"Enable Eureka backend with default settings"`
+	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings"`
+	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings"`
+	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings"`
 }
 
 // DefaultEntryPoints holds default entry points
@@ -189,7 +189,7 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?")
+	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?\\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\\S*))?")
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
 		return fmt.Errorf("bad EntryPoints format: %s", value)
@@ -233,11 +233,17 @@ func (ep *EntryPoints) Set(value string) error {
 		compress = strings.EqualFold(result["Compress"], "enable") || strings.EqualFold(result["Compress"], "on")
 	}
 
+	whiteListSourceRange := []string{}
+	if len(result["WhiteListSourceRange"]) > 0 {
+		whiteListSourceRange = strings.Split(result["WhiteListSourceRange"], ",")
+	}
+
 	(*ep)[result["Name"]] = &EntryPoint{
-		Address:  result["Address"],
-		TLS:      tls,
-		Redirect: redirect,
-		Compress: compress,
+		Address:              result["Address"],
+		TLS:                  tls,
+		Redirect:             redirect,
+		Compress:             compress,
+		WhitelistSourceRange: whiteListSourceRange,
 	}
 
 	return nil
@@ -260,12 +266,13 @@ func (ep *EntryPoints) Type() string {
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
-	Network  string
-	Address  string
-	TLS      *TLS
-	Redirect *Redirect
-	Auth     *types.Auth
-	Compress bool
+	Network              string
+	Address              string
+	TLS                  *TLS
+	Redirect             *Redirect
+	Auth                 *types.Auth
+	WhitelistSourceRange []string
+	Compress             bool
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
@@ -429,6 +436,14 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultWeb.Metrics = &types.Metrics{
 		Prometheus: &types.Prometheus{
 			Buckets: types.Buckets{0.1, 0.3, 1.2, 5},
+		},
+		Datadog: &types.Datadog{
+			Address:      "localhost:8125",
+			PushInterval: "10s",
+		},
+		StatsD: &types.Statsd{
+			Address:      "localhost:8125",
+			PushInterval: "10s",
 		},
 	}
 

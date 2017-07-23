@@ -42,35 +42,35 @@ func (r rancherData) String() string {
 
 // Frontend Labels
 func (p *Provider) getPassHostHeader(service rancherData) string {
-	if passHostHeader, err := getServiceLabel(service, "traefik.frontend.passHostHeader"); err == nil {
+	if passHostHeader, err := getServiceLabel(service, types.LabelFrontendPassHostHeader); err == nil {
 		return passHostHeader
 	}
 	return "true"
 }
 
 func (p *Provider) getPriority(service rancherData) string {
-	if priority, err := getServiceLabel(service, "traefik.frontend.priority"); err == nil {
+	if priority, err := getServiceLabel(service, types.LabelFrontendPriority); err == nil {
 		return priority
 	}
 	return "0"
 }
 
 func (p *Provider) getEntryPoints(service rancherData) []string {
-	if entryPoints, err := getServiceLabel(service, "traefik.frontend.entryPoints"); err == nil {
+	if entryPoints, err := getServiceLabel(service, types.LabelFrontendEntryPoints); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
 }
 
 func (p *Provider) getFrontendRule(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.frontend.rule"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelFrontendRule); err == nil {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(service.Name, "/", ".", -1)) + "." + p.Domain
 }
 
 func (p *Provider) getBasicAuth(service rancherData) []string {
-	if basicAuth, err := getServiceLabel(service, "traefik.frontend.auth.basic"); err == nil {
+	if basicAuth, err := getServiceLabel(service, types.LabelFrontendAuthBasic); err == nil {
 		return strings.Split(basicAuth, ",")
 	}
 	return []string{}
@@ -83,15 +83,15 @@ func (p *Provider) getFrontendName(service rancherData) string {
 
 // Backend Labels
 func (p *Provider) getLoadBalancerMethod(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend.loadbalancer.method"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendLoadbalancerMethod); err == nil {
 		return label
 	}
 	return "wrr"
 }
 
 func (p *Provider) hasLoadBalancerLabel(service rancherData) bool {
-	_, errMethod := getServiceLabel(service, "traefik.backend.loadbalancer.method")
-	_, errSticky := getServiceLabel(service, "traefik.backend.loadbalancer.sticky")
+	_, errMethod := getServiceLabel(service, types.LabelBackendLoadbalancerMethod)
+	_, errSticky := getServiceLabel(service, types.LabelBackendLoadbalancerSticky)
 	if errMethod != nil && errSticky != nil {
 		return false
 	}
@@ -99,28 +99,28 @@ func (p *Provider) hasLoadBalancerLabel(service rancherData) bool {
 }
 
 func (p *Provider) hasCircuitBreakerLabel(service rancherData) bool {
-	if _, err := getServiceLabel(service, "traefik.backend.circuitbreaker.expression"); err != nil {
+	if _, err := getServiceLabel(service, types.LabelBackendCircuitbreakerExpression); err != nil {
 		return false
 	}
 	return true
 }
 
 func (p *Provider) getCircuitBreakerExpression(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend.circuitbreaker.expression"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendCircuitbreakerExpression); err == nil {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"
 }
 
 func (p *Provider) getSticky(service rancherData) string {
-	if _, err := getServiceLabel(service, "traefik.backend.loadbalancer.sticky"); err == nil {
+	if _, err := getServiceLabel(service, types.LabelBackendLoadbalancerSticky); err == nil {
 		return "true"
 	}
 	return "false"
 }
 
 func (p *Provider) getBackend(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackend); err == nil {
 		return provider.Normalize(label)
 	}
 	return provider.Normalize(service.Name)
@@ -128,48 +128,48 @@ func (p *Provider) getBackend(service rancherData) string {
 
 // General Application Stuff
 func (p *Provider) getPort(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.port"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelPort); err == nil {
 		return label
 	}
 	return ""
 }
 
 func (p *Provider) getProtocol(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.protocol"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelProtocol); err == nil {
 		return label
 	}
 	return "http"
 }
 
 func (p *Provider) getWeight(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.weight"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelWeight); err == nil {
 		return label
 	}
 	return "0"
 }
 
 func (p *Provider) getDomain(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.domain"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelDomain); err == nil {
 		return label
 	}
 	return p.Domain
 }
 
 func (p *Provider) hasMaxConnLabels(service rancherData) bool {
-	if _, err := getServiceLabel(service, "traefik.backend.maxconn.amount"); err != nil {
+	if _, err := getServiceLabel(service, types.LabelBackendMaxconnAmount); err != nil {
 		return false
 	}
-	if _, err := getServiceLabel(service, "traefik.backend.maxconn.extractorfunc"); err != nil {
+	if _, err := getServiceLabel(service, types.LabelBackendMaxconnExtractorfunc); err != nil {
 		return false
 	}
 	return true
 }
 
 func (p *Provider) getMaxConnAmount(service rancherData) int64 {
-	if label, err := getServiceLabel(service, "traefik.backend.maxconn.amount"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendMaxconnAmount); err == nil {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
-			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
+			log.Errorf("Unable to parse %s %s", types.LabelBackendMaxconnAmount, label)
 			return math.MaxInt64
 		}
 		return i
@@ -178,7 +178,7 @@ func (p *Provider) getMaxConnAmount(service rancherData) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend.maxconn.extractorfunc"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendMaxconnExtractorfunc); err == nil {
 		return label
 	}
 	return "request.host"
@@ -274,7 +274,7 @@ func containerFilter(name, healthState, state string) bool {
 
 func (p *Provider) serviceFilter(service rancherData) bool {
 
-	if service.Labels["traefik.port"] == "" {
+	if service.Labels[types.LabelPort] == "" {
 		log.Debugf("Filtering service %s without traefik.port label", service.Name)
 		return false
 	}
@@ -284,7 +284,7 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 		return false
 	}
 
-	constraintTags := strings.Split(service.Labels["traefik.tags"], ",")
+	constraintTags := strings.Split(service.Labels[types.LabelTags], ",")
 	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Filtering service %s with constraint %s", service.Name, failingConstraint.String())
@@ -311,8 +311,8 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 
 func isServiceEnabled(service rancherData, exposedByDefault bool) bool {
 
-	if service.Labels["traefik.enable"] != "" {
-		var v = service.Labels["traefik.enable"]
+	if service.Labels[types.LabelEnable] != "" {
+		var v = service.Labels[types.LabelEnable]
 		return exposedByDefault && v != "false" || v == "true"
 	}
 	return exposedByDefault

@@ -9,10 +9,10 @@
 # Global configuration
 ################################################################
 
-# Duration to give active requests a chance to finish during hot-reloads.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming
-# seconds.
+# Duration to give active requests a chance to finish before Traefik stops.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+# If no units are provided, the value is parsed assuming seconds.
+# Note: in this time frame no new requests are accepted.
 #
 # Optional
 # Default: "10s"
@@ -279,6 +279,12 @@ To write JSON format logs, specify `json` as the format:
 #   address = ":80"
 #   compress = true
 
+# To enable IP whitelisting at the entrypoint level:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   whiteListSourceRange = ["127.0.0.1/32"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
@@ -368,7 +374,7 @@ entryPoint = "https"
 # and provide environment variables with access keys to enable setting it:
 #  - cloudflare: CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY
 #  - digitalocean: DO_AUTH_TOKEN
-#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_API_KEY
+#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_OAUTH_TOKEN
 #  - dnsmadeeasy: DNSMADEEASY_API_KEY, DNSMADEEASY_API_SECRET
 #  - exoscale: EXOSCALE_API_KEY, EXOSCALE_API_SECRET
 #  - gandi: GANDI_API_KEY
@@ -607,7 +613,6 @@ If you want Træfik to watch file changes automatically, just add:
 watch = true
 ```
 
-
 ## API backend
 
 Træfik can be configured using a RESTful api.
@@ -642,6 +647,16 @@ address = ":8080"
 # To enable Traefik to export internal metrics to Prometheus
 # [web.metrics.prometheus]
 #   Buckets=[0.1,0.3,1.2,5.0]
+#
+# To enable Traefik to export internal metics to DataDog
+# [web.metrics.datadog]
+#   Address = localhost:8125
+#   PushInterval = "10s"
+#
+# To enable Traefik to export internal metics to StatsD
+# [web.metrics.statsd]
+#   Address = localhost:8125
+#   PushInterval = "10s"
 #
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
@@ -912,8 +927,9 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
-- `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets a Basic Auth for that frontend with the users test:test and test2:test2
-- `traefik.frontend.whitelistSourceRange: "1.2.3.0/24, fe80::/16"`: List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.- `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
+- `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets basic authentication for that frontend with the usernames and passwords test:test and test2:test2, respectively
+- `traefik.frontend.whitelistSourceRange: "1.2.3.0/24, fe80::/16"`: List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.
+- `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 
 If several ports need to be exposed from a container, the services labels can be used
 - `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
@@ -1068,6 +1084,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
+- `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets basic authentication for that frontend with the usernames and passwords test:test and test2:test2, respectively
 
 
 ## Mesos generic backend
@@ -1213,9 +1230,13 @@ Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 #
 # namespaces = ["default", "production"]
 
-# See: http://kubernetes.io/docs/user-guide/labels/#list-and-watch-filtering
-# labelselector = "A and not B"
+# Ingress label selector to identify Ingress objects that should be processed.
+# See https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors for details.
 #
+# Optional
+# Default: empty (process all Ingresses)
+#
+# labelselector = "A and not B"
 ```
 
 Annotations can be used on containers to override default behaviour for the whole Ingress resource:
@@ -1768,7 +1789,7 @@ Labels can be used on task containers to override default behaviour:
 - `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
 - `traefik.frontend.priority=10`: override default frontend priority
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
-- `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets a Basic Auth for that frontend with the users test:test and test2:test2
+- `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets basic authentication for that frontend with the usernames and passwords test:test and test2:test2, respectively
 
 
 ## DynamoDB backend

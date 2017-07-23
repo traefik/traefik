@@ -343,8 +343,13 @@ func (s *AuthorizationsService) Revoke(ctx context.Context, clientID string, tok
 // tokens an application has generated for the user.
 //
 // GitHub API docs: https://developer.github.com/v3/oauth_authorizations/#list-your-grants
-func (s *AuthorizationsService) ListGrants(ctx context.Context) ([]*Grant, *Response, error) {
-	req, err := s.client.NewRequest("GET", "applications/grants", nil)
+func (s *AuthorizationsService) ListGrants(ctx context.Context, opt *ListOptions) ([]*Grant, *Response, error) {
+	u, err := addOptions("applications/grants", opt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, nil, err
 	}

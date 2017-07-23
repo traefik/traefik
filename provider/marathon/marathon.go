@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/ty/fun"
+	"github.com/Sirupsen/logrus"
 	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/job"
@@ -24,10 +25,15 @@ import (
 )
 
 const (
-	labelPort                       = "traefik.port"
-	labelPortIndex                  = "traefik.portIndex"
-	labelBackendHealthCheckPath     = "traefik.backend.healthcheck.path"
-	labelBackendHealthCheckInterval = "traefik.backend.healthcheck.interval"
+	traceMaxScanTokenSize = 1024 * 1024
+)
+
+// TaskState denotes the Mesos state a task can have.
+type TaskState string
+
+const (
+	taskStateRunning TaskState = "TASK_RUNNING"
+	taskStateStaging TaskState = "TASK_STAGING"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -56,7 +62,6 @@ type Basic struct {
 }
 
 type lightMarathonClient interface {
-	AllTasks(v url.Values) (*marathon.Tasks, error)
 	Applications(url.Values) (*marathon.Applications, error)
 }
 
@@ -68,6 +73,9 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		config := marathon.NewDefaultConfig()
 		config.URL = p.Endpoint
 		config.EventsTransport = marathon.EventsTransportSSE
+		if p.Trace {
+			config.LogOutput = log.CustomWriterLevel(logrus.DebugLevel, traceMaxScanTokenSize)
+		}
 		if p.Basic != nil {
 			config.HTTPBasicAuthUser = p.Basic.HTTPBasicAuthUser
 			config.HTTPBasicPassword = p.Basic.HTTPBasicPassword
@@ -151,7 +159,6 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		"getPriority":                 p.getPriority,
 		"getEntryPoints":              p.getEntryPoints,
 		"getFrontendRule":             p.getFrontendRule,
-		"getFrontendBackend":          p.getFrontendBackend,
 		"hasCircuitBreakerLabels":     p.hasCircuitBreakerLabels,
 		"hasLoadBalancerLabels":       p.hasLoadBalancerLabels,
 		"hasMaxConnLabels":            p.hasMaxConnLabels,
@@ -163,84 +170,79 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		"hasHealthCheckLabels":        p.hasHealthCheckLabels,
 		"getHealthCheckPath":          p.getHealthCheckPath,
 		"getHealthCheckInterval":      p.getHealthCheckInterval,
+		"getBasicAuth":                p.getBasicAuth,
 	}
 
-	applications, err := p.marathonClient.Applications(nil)
+	v := url.Values{}
+	v.Add("embed", "apps.tasks")
+	applications, err := p.marathonClient.Applications(v)
 	if err != nil {
-		log.Errorf("Failed to retrieve applications from Marathon, error: %s", err)
+		log.Errorf("Failed to retrieve Marathon applications: %s", err)
 		return nil
 	}
 
-	tasks, err := p.marathonClient.AllTasks(&marathon.AllTasksOpts{Status: "running"})
-	if err != nil {
-		log.Errorf("Failed to retrieve task from Marathon, error: %s", err)
-		return nil
+	filteredApps := fun.Filter(p.applicationFilter, applications.Apps).([]marathon.Application)
+	for i, app := range filteredApps {
+		filteredApps[i].Tasks = fun.Filter(func(task *marathon.Task) bool {
+			return p.taskFilter(*task, app)
+		}, app.Tasks).([]*marathon.Task)
 	}
-
-	//filter tasks
-	filteredTasks := fun.Filter(func(task marathon.Task) bool {
-		return p.taskFilter(task, applications, p.ExposedByDefault)
-	}, tasks.Tasks).([]marathon.Task)
-
-	//filter apps
-	filteredApps := fun.Filter(func(app marathon.Application) bool {
-		return p.applicationFilter(app, filteredTasks)
-	}, applications.Apps).([]marathon.Application)
 
 	templateObjects := struct {
 		Applications []marathon.Application
-		Tasks        []marathon.Task
 		Domain       string
 	}{
 		filteredApps,
-		filteredTasks,
 		p.Domain,
 	}
 
 	configuration, err := p.GetConfiguration("templates/marathon.tmpl", MarathonFuncMap, templateObjects)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed to render Marathon configuration template: %s", err)
 	}
 	return configuration
 }
 
-func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applications, exposedByDefaultFlag bool) bool {
-	application, err := getApplication(task, applications.Apps)
-	if err != nil {
-		log.Errorf("Unable to get Marathon application %s for task %s", task.AppID, task.ID)
-		return false
-	}
-	if _, err = processPorts(application, task); err != nil {
-		log.Errorf("Filtering Marathon task %s from application %s without port: %s", task.ID, application.ID, err)
-		return false
-	}
-
-	// Filter illegal port label specification.
-	_, hasPortIndexLabel := p.getLabel(application, labelPortIndex)
-	_, hasPortLabel := p.getLabel(application, labelPort)
-	if hasPortIndexLabel && hasPortLabel {
-		log.Debugf("Filtering Marathon task %s from application %s specifying both traefik.portIndex and traefik.port labels", task.ID, application.ID)
+func (p *Provider) applicationFilter(app marathon.Application) bool {
+	// Filter disabled application.
+	if !isApplicationEnabled(app, p.ExposedByDefault) {
+		log.Debugf("Filtering disabled Marathon application %s", app.ID)
 		return false
 	}
 
 	// Filter by constraints.
-	label, _ := p.getLabel(application, "traefik.tags")
+	label, _ := p.getLabel(app, types.LabelTags)
 	constraintTags := strings.Split(label, ",")
 	if p.MarathonLBCompatibility {
-		if label, ok := p.getLabel(application, "HAPROXY_GROUP"); ok {
+		if label, ok := p.getLabel(app, "HAPROXY_GROUP"); ok {
 			constraintTags = append(constraintTags, label)
 		}
 	}
 	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
-			log.Debugf("Filtering Marathon task %s from application %s pruned by '%v' constraint", task.ID, application.ID, failingConstraint.String())
+			log.Debugf("Filtering Marathon application %v pruned by '%v' constraint", app.ID, failingConstraint.String())
 		}
 		return false
 	}
 
-	// Filter disabled application.
-	if !isApplicationEnabled(application, exposedByDefaultFlag) {
-		log.Debugf("Filtering disabled Marathon task %s from application %s", task.ID, application.ID)
+	return true
+}
+
+func (p *Provider) taskFilter(task marathon.Task, application marathon.Application) bool {
+	if task.State != string(taskStateRunning) {
+		return false
+	}
+
+	if _, err := processPorts(application, task); err != nil {
+		log.Errorf("Filtering Marathon task %s from application %s without port: %s", task.ID, application.ID, err)
+		return false
+	}
+
+	// Filter illegal port label specification.
+	_, hasPortIndexLabel := p.getLabel(application, types.LabelPortIndex)
+	_, hasPortLabel := p.getLabel(application, types.LabelPort)
+	if hasPortIndexLabel && hasPortLabel {
+		log.Debugf("Filtering Marathon task %s from application %s specifying both traefik.portIndex and traefik.port labels", task.ID, application.ID)
 		return false
 	}
 
@@ -259,37 +261,8 @@ func (p *Provider) taskFilter(task marathon.Task, applications *marathon.Applica
 	return true
 }
 
-func (p *Provider) applicationFilter(app marathon.Application, filteredTasks []marathon.Task) bool {
-	label, _ := p.getLabel(app, "traefik.tags")
-	constraintTags := strings.Split(label, ",")
-	if p.MarathonLBCompatibility {
-		if label, ok := p.getLabel(app, "HAPROXY_GROUP"); ok {
-			constraintTags = append(constraintTags, label)
-		}
-	}
-	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
-		if failingConstraint != nil {
-			log.Debugf("Application %v pruned by '%v' constraint", app.ID, failingConstraint.String())
-		}
-		return false
-	}
-
-	return fun.Exists(func(task marathon.Task) bool {
-		return task.AppID == app.ID
-	}, filteredTasks)
-}
-
-func getApplication(task marathon.Task, apps []marathon.Application) (marathon.Application, error) {
-	for _, application := range apps {
-		if application.ID == task.AppID {
-			return application, nil
-		}
-	}
-	return marathon.Application{}, errors.New("Application not found: " + task.AppID)
-}
-
 func isApplicationEnabled(application marathon.Application, exposedByDefault bool) bool {
-	return exposedByDefault && (*application.Labels)["traefik.enable"] != "false" || (*application.Labels)["traefik.enable"] == "true"
+	return exposedByDefault && (*application.Labels)[types.LabelEnable] != "false" || (*application.Labels)[types.LabelEnable] == "true"
 }
 
 func (p *Provider) getLabel(application marathon.Application, label string) (string, bool) {
@@ -301,12 +274,7 @@ func (p *Provider) getLabel(application marathon.Application, label string) (str
 	return "", false
 }
 
-func (p *Provider) getPort(task marathon.Task, applications []marathon.Application) string {
-	application, err := getApplication(task, applications)
-	if err != nil {
-		log.Errorf("Unable to get Marathon application %s for task %s", application.ID, task.ID)
-		return ""
-	}
+func (p *Provider) getPort(task marathon.Task, application marathon.Application) string {
 	port, err := processPorts(application, task)
 	if err != nil {
 		log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
@@ -316,60 +284,50 @@ func (p *Provider) getPort(task marathon.Task, applications []marathon.Applicati
 	return strconv.Itoa(port)
 }
 
-func (p *Provider) getWeight(task marathon.Task, applications []marathon.Application) string {
-	application, errApp := getApplication(task, applications)
-	if errApp != nil {
-		log.Errorf("Unable to get marathon application from task %s", task.AppID)
-		return "0"
-	}
-	if label, ok := p.getLabel(application, "traefik.weight"); ok {
+func (p *Provider) getWeight(application marathon.Application) string {
+	if label, ok := p.getLabel(application, types.LabelWeight); ok {
 		return label
 	}
 	return "0"
 }
 
 func (p *Provider) getDomain(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.domain"); ok {
+	if label, ok := p.getLabel(application, types.LabelDomain); ok {
 		return label
 	}
 	return p.Domain
 }
 
-func (p *Provider) getProtocol(task marathon.Task, applications []marathon.Application) string {
-	application, errApp := getApplication(task, applications)
-	if errApp != nil {
-		log.Errorf("Unable to get marathon application from task %s", task.AppID)
-		return "http"
-	}
-	if label, ok := p.getLabel(application, "traefik.protocol"); ok {
+func (p *Provider) getProtocol(application marathon.Application) string {
+	if label, ok := p.getLabel(application, types.LabelProtocol); ok {
 		return label
 	}
 	return "http"
 }
 
 func (p *Provider) getSticky(application marathon.Application) string {
-	if sticky, ok := p.getLabel(application, "traefik.backend.loadbalancer.sticky"); ok {
+	if sticky, ok := p.getLabel(application, types.LabelBackendLoadbalancerSticky); ok {
 		return sticky
 	}
 	return "false"
 }
 
 func (p *Provider) getPassHostHeader(application marathon.Application) string {
-	if passHostHeader, ok := p.getLabel(application, "traefik.frontend.passHostHeader"); ok {
+	if passHostHeader, ok := p.getLabel(application, types.LabelFrontendPassHostHeader); ok {
 		return passHostHeader
 	}
 	return "true"
 }
 
 func (p *Provider) getPriority(application marathon.Application) string {
-	if priority, ok := p.getLabel(application, "traefik.frontend.priority"); ok {
+	if priority, ok := p.getLabel(application, types.LabelFrontendPriority); ok {
 		return priority
 	}
 	return "0"
 }
 
 func (p *Provider) getEntryPoints(application marathon.Application) []string {
-	if entryPoints, ok := p.getLabel(application, "traefik.frontend.entryPoints"); ok {
+	if entryPoints, ok := p.getLabel(application, types.LabelFrontendEntryPoints); ok {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
@@ -378,7 +336,7 @@ func (p *Provider) getEntryPoints(application marathon.Application) []string {
 // getFrontendRule returns the frontend rule for the specified application, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (p *Provider) getFrontendRule(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.frontend.rule"); ok {
+	if label, ok := p.getLabel(application, types.LabelFrontendRule); ok {
 		return label
 	}
 	if p.MarathonLBCompatibility {
@@ -389,17 +347,8 @@ func (p *Provider) getFrontendRule(application marathon.Application) string {
 	return "Host:" + p.getSubDomain(application.ID) + "." + p.Domain
 }
 
-func (p *Provider) getBackend(task marathon.Task, applications []marathon.Application) string {
-	application, errApp := getApplication(task, applications)
-	if errApp != nil {
-		log.Errorf("Unable to get marathon application from task %s", task.AppID)
-		return ""
-	}
-	return p.getFrontendBackend(application)
-}
-
-func (p *Provider) getFrontendBackend(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend"); ok {
+func (p *Provider) getBackend(application marathon.Application) string {
+	if label, ok := p.getLabel(application, types.LabelBackend); ok {
 		return label
 	}
 	return provider.Replace("/", "-", application.ID)
@@ -416,26 +365,26 @@ func (p *Provider) getSubDomain(name string) string {
 }
 
 func (p *Provider) hasCircuitBreakerLabels(application marathon.Application) bool {
-	_, ok := p.getLabel(application, "traefik.backend.circuitbreaker.expression")
+	_, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression)
 	return ok
 }
 
 func (p *Provider) hasLoadBalancerLabels(application marathon.Application) bool {
-	_, errMethod := p.getLabel(application, "traefik.backend.loadbalancer.method")
-	_, errSticky := p.getLabel(application, "traefik.backend.loadbalancer.sticky")
+	_, errMethod := p.getLabel(application, types.LabelBackendLoadbalancerMethod)
+	_, errSticky := p.getLabel(application, types.LabelBackendLoadbalancerSticky)
 	return errMethod || errSticky
 }
 
 func (p *Provider) hasMaxConnLabels(application marathon.Application) bool {
-	if _, ok := p.getLabel(application, "traefik.backend.maxconn.amount"); !ok {
+	if _, ok := p.getLabel(application, types.LabelBackendMaxconnAmount); !ok {
 		return false
 	}
-	_, ok := p.getLabel(application, "traefik.backend.maxconn.extractorfunc")
+	_, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc)
 	return ok
 }
 
 func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
-	if label, ok := p.getLabel(application, "traefik.backend.maxconn.amount"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendMaxconnAmount); ok {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
 			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
@@ -447,21 +396,21 @@ func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend.maxconn.extractorfunc"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc); ok {
 		return label
 	}
 	return "request.host"
 }
 
 func (p *Provider) getLoadBalancerMethod(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend.loadbalancer.method"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendLoadbalancerMethod); ok {
 		return label
 	}
 	return "wrr"
 }
 
 func (p *Provider) getCircuitBreakerExpression(application marathon.Application) string {
-	if label, ok := p.getLabel(application, "traefik.backend.circuitbreaker.expression"); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression); ok {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"
@@ -472,21 +421,29 @@ func (p *Provider) hasHealthCheckLabels(application marathon.Application) bool {
 }
 
 func (p *Provider) getHealthCheckPath(application marathon.Application) string {
-	if label, ok := p.getLabel(application, labelBackendHealthCheckPath); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckPath); ok {
 		return label
 	}
 	return ""
 }
 
 func (p *Provider) getHealthCheckInterval(application marathon.Application) string {
-	if label, ok := p.getLabel(application, labelBackendHealthCheckInterval); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckInterval); ok {
 		return label
 	}
 	return ""
 }
 
+func (p *Provider) getBasicAuth(application marathon.Application) []string {
+	if basicAuth, ok := p.getLabel(application, types.LabelFrontendAuthBasic); ok {
+		return strings.Split(basicAuth, ",")
+	}
+
+	return []string{}
+}
+
 func processPorts(application marathon.Application, task marathon.Task) (int, error) {
-	if portLabel, ok := (*application.Labels)[labelPort]; ok {
+	if portLabel, ok := (*application.Labels)[types.LabelPort]; ok {
 		port, err := strconv.Atoi(portLabel)
 		switch {
 		case err != nil:
@@ -503,7 +460,7 @@ func processPorts(application marathon.Application, task marathon.Task) (int, er
 	}
 
 	portIndex := 0
-	portIndexLabel, ok := (*application.Labels)[labelPortIndex]
+	portIndexLabel, ok := (*application.Labels)[types.LabelPortIndex]
 	if ok {
 		var err error
 		portIndex, err = parseIndex(portIndexLabel, len(ports))
@@ -542,13 +499,7 @@ func retrieveAvailablePorts(application marathon.Application, task marathon.Task
 	return []int{}
 }
 
-func (p *Provider) getBackendServer(task marathon.Task, applications []marathon.Application) string {
-	application, err := getApplication(task, applications)
-	if err != nil {
-		log.Errorf("Unable to get marathon application from task %s", task.AppID)
-		return ""
-	}
-
+func (p *Provider) getBackendServer(task marathon.Task, application marathon.Application) string {
 	numTaskIPAddresses := len(task.IPAddresses)
 	switch {
 	case application.IPAddressPerTask == nil || p.ForceTaskHostname:

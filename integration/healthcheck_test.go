@@ -1,10 +1,9 @@
-package main
+package integration
 
 import (
 	"bytes"
 	"net/http"
 	"os"
-	"os/exec"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -30,8 +29,8 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 		Server2 string
 	}{whoami1Host, whoami2Host})
 	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
 
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -60,8 +59,8 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	// Waiting for Traefik healthcheck
 	try.Sleep(2 * time.Second)
 
-	// Verify frontend health : 500
-	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusInternalServerError))
+	// Verify no backend service is available due to failing health checks
+	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
 	c.Assert(err, checker.IsNil)
 
 	// Change one whoami health to 200
@@ -78,7 +77,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	frontendReq.Host = "test.localhost"
 
-	// Check if whoami1 respond
+	// Check if whoami1 responds
 	err = try.Request(frontendReq, 500*time.Millisecond, try.BodyContains(whoami1Host))
 	c.Assert(err, checker.IsNil)
 

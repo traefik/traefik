@@ -9,6 +9,7 @@ import (
 
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
@@ -382,7 +383,7 @@ func TestRuleType(t *testing.T) {
 
 			if test.ingressRuleType != "" {
 				ingress.ObjectMeta.Annotations = map[string]string{
-					annotationFrontendRuleType: test.ingressRuleType,
+					types.LabelFrontendRuleType: test.ingressRuleType,
 				}
 			}
 
@@ -1223,8 +1224,8 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "1",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
-					"traefik.backend.loadbalancer.method": "drr",
+					types.LabelTraefikBackendCircuitbreaker: "NetworkErrorRatio() > 0.5",
+					types.LabelBackendLoadbalancerMethod:    "drr",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1242,8 +1243,8 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "2",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.backend.circuitbreaker":      "",
-					"traefik.backend.loadbalancer.sticky": "true",
+					types.LabelTraefikBackendCircuitbreaker: "",
+					types.LabelBackendLoadbalancerSticky:    "true",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1417,7 +1418,7 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.frontend.passHostHeader": "false",
+					types.LabelFrontendPassHostHeader: "false",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1446,7 +1447,7 @@ func TestIngressAnnotations(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"kubernetes.io/ingress.class":     "traefik",
-					"traefik.frontend.passHostHeader": "true",
+					types.LabelFrontendPassHostHeader: "true",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1544,6 +1545,33 @@ func TestIngressAnnotations(t *testing.T) {
 								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/whitelist-source-range",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}, {
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"ingress.kubernetes.io/rewrite-target": "/",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "rewrite",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/api",
 										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
 											ServicePort: intstr.FromInt(80),
@@ -1659,6 +1687,19 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"rewrite/api": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
@@ -1718,15 +1759,23 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 			},
+			"rewrite/api": {
+				Backend:        "rewrite/api",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"/api": {
+						Rule: "ReplacePath:/",
+					},
+					"rewrite": {
+						Rule: "Host:rewrite",
+					},
+				},
+				Priority: len("/api"),
+			},
 		},
 	}
 
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestInvalidPassHostHeaderValue(t *testing.T) {
@@ -1735,7 +1784,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.frontend.passHostHeader": "herpderp",
+					types.LabelFrontendPassHostHeader: "herpderp",
 				},
 			},
 			Spec: v1beta1.IngressSpec{

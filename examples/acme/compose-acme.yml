@@ -1,0 +1,89 @@
+version: "2"
+
+# IP_HOST : Docker host IP (not 127.0.0.1)
+
+services :
+  boulder:
+      image: containous/boulder:release
+      environment:
+          FAKE_DNS: $IP_HOST
+          PKCS11_PROXY_SOCKET: tcp://boulder-hsm:5657
+      extra_hosts:
+        - le.wtf:127.0.0.1
+        - boulder:127.0.0.1
+      ports:
+        - 4000:4000 # ACME
+        - 4002:4002 # OCSP
+        - 4003:4003 # OCSP
+        - 4500:4500 # ct-test-srv
+        - 8000:8000 # debug ports
+        - 8001:8001
+        - 8002:8002
+        - 8003:8003
+        - 8004:8004
+        - 8055:8055 # dns-test-srv updates
+        - 9380:9380 # mail-test-srv
+        - 9381:9381 # mail-test-srv
+      restart: unless-stopped
+      depends_on:
+        - bhsm
+        - bmysql
+        - brabbitmq
+
+  bhsm:
+      image: letsencrypt/boulder-tools:2016-11-02
+      hostname: boulder-hsm
+      networks:
+          default:
+              aliases:
+                - boulder-hsm
+      environment:
+          PKCS11_DAEMON_SOCKET: tcp://0.0.0.0:5657
+      command: /usr/local/bin/pkcs11-daemon /usr/lib/softhsm/libsofthsm.so
+      expose:
+        - 5657
+  bmysql:
+      image: mariadb:10.1
+      hostname: boulder-mysql
+      networks:
+          default:
+              aliases:
+                - boulder-mysql
+      environment:
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+
+  brabbitmq:
+      image: rabbitmq:3-alpine
+      hostname: boulder-rabbitmq
+      networks:
+          default:
+              aliases:
+                - boulder-rabbitmq
+      environment:
+          RABBITMQ_NODE_IP_ADDRESS: "0.0.0.0"
+
+  traefik:
+      build:
+        context: ../..
+      image: containous/traefik:latest
+      command: --configFile=/etc/traefik/conf/acme.toml
+      restart: unless-stopped
+      extra_hosts:
+        - traefik.localhost.com:$IP_HOST
+      volumes:
+        - "./acme.toml:/etc/traefik/conf/acme.toml:ro"
+        - "/var/run/docker.sock:/var/run/docker.sock:ro"
+        - "./acme.json:/etc/traefik/conf/acme.json:rw"
+      ports:
+        - "80:80"
+        - "443:443"
+        - "5001:443" # Needed for SNI challenge
+      expose:
+        - "8080"
+      labels:
+        - "traefik.port=8080"
+        - "traefik.backend=traefikception"
+        - "traefik.frontend.rule=Host:traefik.localhost.com"
+        - "traefik.enable=true"
+      depends_on:
+        - boulder

@@ -164,7 +164,7 @@ func (s *RepositoriesService) GetContents(ctx context.Context, owner, repo, path
 	if directoryUnmarshalError == nil {
 		return nil, directoryContent, resp, nil
 	}
-	return nil, nil, resp, fmt.Errorf("unmarshalling failed for both file and directory content: %s and %s ", fileUnmarshalError, directoryUnmarshalError)
+	return nil, nil, resp, fmt.Errorf("unmarshalling failed for both file and directory content: %s and %s", fileUnmarshalError, directoryUnmarshalError)
 }
 
 // CreateFile creates a new file in a repository at the given path and returns

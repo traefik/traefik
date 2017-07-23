@@ -1,0 +1,4 @@
+provider/kubernetes/*   @containous/kubernetes
+provider/rancher/*      @containous/rancher
+provider/marathon/*     @containous/marathon
+provider/docker/*     @containous/docker

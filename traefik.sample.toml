@@ -2,10 +2,10 @@
 # Global configuration
 ################################################################
 
-# Duration to give active requests a chance to finish during hot-reloads.
-# Can be provided in a format supported by Go's time.ParseDuration function or
-# as raw values (digits). If no units are provided, the value is parsed assuming
-# seconds.
+# Duration to give active requests a chance to finish before Traefik stops.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+# If no units are provided, the value is parsed assuming seconds.
+# Note: in this time frame no new requests are accepted.
 #
 # Optional
 # Default: "10s"
@@ -154,7 +154,7 @@
 # and provide environment variables with access keys to enable setting it:
 #  - cloudflare: CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY
 #  - digitalocean: DO_AUTH_TOKEN
-#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_API_KEY
+#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_OAUTH_TOKEN
 #  - dnsmadeeasy: DNSMADEEASY_API_KEY, DNSMADEEASY_API_SECRET
 #  - exoscale: EXOSCALE_API_KEY, EXOSCALE_API_SECRET
 #  - gandi: GANDI_API_KEY
@@ -328,6 +328,12 @@
 # [entryPoints]
 #   [entryPoints.http]
 #   address = "10.42.13.37:80"
+
+# To enable IP whitelisting at the entrypoint level:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   whiteListSourceRange = ["127.0.0.1/32"]
 
 # Enable retry sending request if network error
 #

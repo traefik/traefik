@@ -82,8 +82,14 @@ build-no-cache: dist
 shell: build ## start a shell inside the build env
 	$(DOCKER_RUN_TRAEFIK) /bin/bash
 
-image: binary ## build a docker traefik image
+image-dirty: binary ## build a docker traefik image
 	docker build -t $(TRAEFIK_IMAGE) .
+
+image: clear-static binary ## clean up static directory and build a docker traefik image
+	docker build -t $(TRAEFIK_IMAGE) .
+
+clear-static:
+	rm -rf static
 
 dist:
 	mkdir dist
