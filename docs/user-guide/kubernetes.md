@@ -136,8 +136,7 @@ spec:
 
 > The Service will expose two NodePorts which allow access to the ingress and the web interface.
 
-The DaemonSet objects looks not much different, except that we do not need a Service and expose the
-Ports directly on the host machine:
+The DaemonSet objects looks not much different:
 
 ```yaml
 ---
@@ -179,7 +178,22 @@ spec:
         - -d
         - --web
         - --kubernetes
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik-ingress-service
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 8080
+  type: NodePort
 ```
+
 [examples/k8s/traefik-ds.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-ds.yaml)
 
 To deploy Træfik to your cluster start by submitting one of the YAML files to the cluster with `kubectl`:
@@ -191,6 +205,12 @@ $ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/e
 ```shell
 $ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-ds.yaml
 ```
+
+There are some significant differences between using Deployments and DaemonSets. The Deployment has easier
+up and down scaling possibilities. It can implement full pod lifecycle and supports rolling updates from
+Kubernetes 1.2. At least one Pod is needed to run the Deployment. The DaemonSet automatically scales to all nodes that
+meets a specific selector and guarantees to fill nodes one at a time. Rolling updates are supported from Kubernetes 1.6
+for DaemonSets as well.
 
 ### Check the Pods
 
