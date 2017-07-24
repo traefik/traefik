@@ -11,12 +11,12 @@ This section explains how to deploy Træfik as a Docker service with Let's encry
 
 ```bash
 touch ${ACME_DIR}/acme.json && \
-chmod 600 ${ACME_DIR}/acme.json  # With ${ACME_DIR} the directory wich will contains the acme.json file on the Docker Host.
+chmod 600 ${ACME_DIR}/acme.json  # With ${ACME_DIR} the directory which will contains the acme.json file on the Docker Host.
 ```
 
 ## Create the Træfik configuration file
 
-Create the ${ACME_DIR}/traefik-acme.toml, with ${ACME_DIR} the directory wich contains the `traefik-acme.toml` file on the Docker Host. This file will be mounted on the Træfik container to configure the Træfik instance.
+Create the ${ACME_DIR}/traefik-acme.toml, with ${ACME_DIR} the directory which contains the `traefik-acme.toml` file on the Docker Host. This file will be mounted on the Træfik container to configure the Træfik instance.
 
 ```toml
 defaultEntryPoints = ["http", "https"]
@@ -60,7 +60,7 @@ This configuration will allow initializing a Træfik instance with Let's Encrypt
 
 ## Create a docker-compose file
 
-Create the ${ACME_DIR}/docker-compose.yml file, with ${ACME_DIR} the directory wich contains the `docker-compose.yml` file on the Docker Host. This file describes the Træfik Docker service to create.
+Create the ${ACME_DIR}/docker-compose.yml file, with ${ACME_DIR} the directory which contains the `docker-compose.yml` file on the Docker Host. This file describes the Træfik Docker service to create.
 
 ```yaml
 version: "2"
@@ -105,7 +105,7 @@ Let's explain this configuration:
 Let's deploy Træfik as a docker service.
 
 ```shell
-docker-compose -p traefik -f ${ACME_DIR}/docker-compose.yml up -d # With ${ACME_DIR} the directory wich will contains the `docker-compose.yml` file.
+docker-compose -p traefik -f ${ACME_DIR}/docker-compose.yml up -d # With ${ACME_DIR} the directory which will contains the `docker-compose.yml` file.
 ```
 
 ## Test Træfik
