@@ -209,8 +209,9 @@ $ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/e
 There are some significant differences between using Deployments and DaemonSets. The Deployment has easier
 up and down scaling possibilities. It can implement full pod lifecycle and supports rolling updates from
 Kubernetes 1.2. At least one Pod is needed to run the Deployment. The DaemonSet automatically scales to all nodes that
-meets a specific selector and guarantees to fill nodes one at a time. Rolling updates are supported from Kubernetes 1.6
-for DaemonSets as well.
+meets a specific selector and guarantees to fill nodes one at a time. Rolling updates are fully supported from Kubernetes 1.7 for DaemonSets as well.
+
+
 
 ### Check the Pods
 
