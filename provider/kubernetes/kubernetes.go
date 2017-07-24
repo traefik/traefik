@@ -104,13 +104,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					case <-stop:
 						return nil
 					case event := <-eventsChan:
-						log.Debugf("Received event from kubernetes %+v", event)
+						log.Debugf("Received Kubernetes event kind %T", event)
 						templateObjects, err := p.loadIngresses(k8sClient)
 						if err != nil {
 							return err
 						}
 						if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
-							log.Debugf("Skipping event from kubernetes %+v", event)
+							log.Debugf("Skipping Kubernetes event kind %T", event)
 						} else {
 							p.lastConfiguration.Set(templateObjects)
 							configurationChan <- types.ConfigMessage{
