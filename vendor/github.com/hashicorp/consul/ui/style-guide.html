@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Consul Web UI Style Guide</title>
+  <link rel="stylesheet" href="static/bootstrap.min.css">
+  <link rel="stylesheet" href="static/base.css">
+</head>
+<body>
+  <div class="container">
+    <div class="col-md-10 col-md-offset-1">
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Consul Web UI Style Guide</h2>
+          <p>This is style guide for the <a href="https://www.consul.io">Consul</a> Web UI. When possible,
+            it's best to follow this guide modifying the UI.</p>
+          <p>Some reasoning behind choices:
+            <ul>
+              <li>Colors. Bright colors were chosen to allow for easy
+                "scanning" of information.</li>
+              <li>Icons will accompany most "actions", those are still
+                pending</li>
+              <li>Layout. The layout will be primarily 2 columns with the
+                header at the top for navigation.</li>
+          </p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+              <h2>Header</h2>
+              <hr>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="col-md-12">
+
+        <div class="row">
+          <div class="col-md-12 col-sm-12 topbar">
+
+            <div class="col-md-1 col-sm-2">
+              <a href="#"><div class="top-brand"></div></a>
+            </div>
+
+            <div class="col-md-2 col-sm-3">
+                <a class="btn btn-primary" href="#">Services</a>
+            </div>
+            <div class="col-md-2 col-sm-3">
+              <a class="btn btn-default" href="#">Nodes</a>
+            </div>
+            <div class="col-md-2 col-sm-3">
+                <a class="btn btn-default" href="#">Key/Value</a>
+            </div>
+
+            <div class="col-md-2 col-md-offset-1 col-sm-3 col-sm-offset-0">
+                <a class="btn btn-warning" href="#">5 checks failing</a>
+            </div>
+
+            <div class="col-md-2 col-sm-3">
+                <a class="btn btn-dropdown btn-default" href="#">
+                  us-east-1
+                  <span class="caret"></span>
+                </a>
+            </div>
+          </div>
+        </div>
+
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="col-md-10 col-md-offset-1">
+
+      <div class="row">
+        <div class="col-md-6">
+          <h2>Colors</h2>
+          <hr>
+          <ul class="list-unstyled">
+            <li>
+              <div style="width: 75px; height: 75px; display:inline-block;" class="bg-purple"></div>
+              <div style="width: 75px; height: 75px; display:inline-block" class="bg-light-purple"></div>
+            </li>
+            <li>
+              <div style="width: 75px; height: 75px; display:inline-block" class="bg-red"></div>
+            </li>
+            <li>
+              <div style="width: 75px; height: 75px; display:inline-block" class="bg-orange"></div>
+            </li>
+            <li>
+              <div style="width: 75px; height: 75px; display:inline-block" class="bg-dark-green"></div>
+              <div style="width: 75px; height: 75px; display:inline-block" class="bg-green"></div>
+            </li>
+            <li>
+              <div style="width: 75px; height: 75px; display:inline-block" class="bg-gray"></div>
+              <div style="width: 75px; height: 75px; display:inline-block" class="bg-light-gray"></div>
+            </li>
+          </ul>
+        </div>
+
+
+        <div class="col-md-6">
+          <h2>Headings</h2>
+          <hr>
+          <h1>Heading 1</h1>
+          <h2>Heading 2</h2>
+          <h3>Heading 3</h3>
+          <h4>Heading 4</h4>
+          <h5>Heading 5</h5>
+          <p>Paragraph text. Consul makes it simple for services to
+            register themselves and to discover other services via a
+            DNS or HTTP interface. Register external services such as
+            SaaS providers as well.</p>
+          <small>Small note text, if you need to include anything extra.</small>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Panels</h2>
+          <hr>
+          <p>Panels are for displaying data in the 2nd (right) column.
+            They show extensive information and are flexible, but also
+            use the highlight colors to allow for scanning.</p>
+          <hr>
+
+          <div class="panel panel-danger">
+            <div class="panel-bar"></div>
+            <div class="panel-heading">
+              <h3 class="panel-title">
+                HTTP Server Accessible
+                <small>httpAccess</small>
+                <span class="panel-note">critical</span>
+              </h3>
+            </div>
+
+            <div class="panel-body">
+              <p>Sends an HTTP request to the HTTP routers /health endpoint.
+              This should return 200 OK. If it returns anything else,
+              the headers are dumped.</p>
+              <h5>OUTPUT</h5>
+              <pre>
+HTTP/1.1 503 SERVICE UNAVAILABLE
+Content-Type: text/html; charset=utf-8
+Date: Sun, 20 Apr 2014 15:40:03 GMT
+Server: gunicorn/0.17.4
+Content-Length: 0
+Connection: keep-alive
+</pre>
+
+            </div>
+
+          </div>
+
+
+          <div class="panel panel-success">
+            <div class="panel-bar"></div>
+            <div class="panel-heading">
+              <h3 class="panel-title">
+                Mux Accessible
+                <small>muxAccess</small>
+                <span class="panel-note">passing</span>
+              </h3>
+            </div>
+
+            <div class="panel-body">
+              <p>Makes a TCP connection to the muxer, dumps a relevant error if the connection fails.</p>
+
+              <h5>OUTPUT</h5>
+              <pre>
+Socket connect Successful
+</pre>
+            </div>
+          </div>
+
+
+          <div class="panel panel-warning">
+            <div class="panel-bar"></div>
+            <div class="panel-heading">
+              <h3 class="panel-title">
+                Router Accessible
+                <small>routerAccess</small>
+                <span class="panel-note">warning</span>
+              </h3>
+            </div>
+
+            <div class="panel-body">
+              <p>Makes a TCP connection to the router, dumps a relevant error if the connection fails.</p>
+
+              <h5>OUTPUT</h5>
+              <pre>
+Socket connect timed out
+</pre>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <h2>Loaders</h2>
+          <hr>
+          <p>Pending...</p>
+        </div>
+
+        <div class="col-md-6">
+          <h2>Icons</h2>
+          <hr>
+          <p>Pending...</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Buttons</h2>
+          <hr>
+          <a href="#" class="btn btn-default">Default button</a>
+          <a href="#" class="btn btn-primary">Primary button</a>
+          <a href="#" class="btn btn-success">Success button</a>
+          <a href="#" class="btn btn-warning">Warning button</a>
+          <a href="#" class="btn btn-danger">Danger button</a>
+        </div>
+      </div>
+
+      <div class="row">
+
+        <div class="col-md-12">
+          <h2>Lists</h2>
+          <hr>
+          <p>Lists are used primarily for the first (left) column
+            view. They are designed as a quick summary, with links
+            embedded for the top-level item as well as sub-items (
+            such as a list of nodes, as below).</p>
+          <hr>
+
+          <div class="list-group">
+              <div class="list-group-item">
+                <div class="list-bar bg-green"></div>
+                <h4 class="list-group-item-heading">
+                  <a href="#" class="subtle">vagrant-cloud-http</a>
+                  <small>vagrant-cloud-http</small>
+                  <div class="heading-helper">
+                    <a class="subtle" href="#">5 passing</a>
+                  </div>
+                </h4>
+                <ul class="list-inline">
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                </ul>
+              </div>
+
+              <div class="list-group-item">
+                <div class="list-bar bg-green"></div>
+                <h4 class="list-group-item-heading">
+                  <a href="#" class="subtle">vagrant-cloud-http</a>
+                  <small>vagrant-cloud-http</small>
+                  <div class="heading-helper">
+                    <a class="subtle" href="#">5 passing</a>
+                  </div>
+                </h4>
+                <ul class="list-inline">
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                </ul>
+              </div>
+
+              <div class="list-group-item">
+                <div class="list-bar bg-orange"></div>
+                <h4 class="list-group-item-heading">
+                  <a href="#" class="subtle">vagrant-cloud-http</a>
+                  <small>vagrant-cloud-http</small>
+                  <div class="heading-helper">
+                    <a class="subtle" href="#">1 failing</a>
+                  </div>
+                </h4>
+                <ul class="list-inline">
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                </ul>
+              </div>
+
+              <div class="list-group-item">
+                <div class="list-bar bg-red"></div>
+                <h4 class="list-group-item-heading">
+                  <a href="#" class="subtle">vagrant-cloud-http</a>
+                  <small>vagrant-cloud-http</small>
+                  <div class="heading-helper">
+                    <a class="subtle" href="#">2 failing</a>
+                  </div>
+                </h4>
+                <ul class="list-inline">
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                  <li><a class="subtle" href="#">node-10-0-109</a></li>
+                </ul>
+              </div>
+          </div>
+
+
+
+        </div>
+
+      </div>
+
+
+    </div>
+  </div>
+</body>
+</html>

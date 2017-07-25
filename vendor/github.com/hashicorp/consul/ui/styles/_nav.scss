@@ -1,0 +1,47 @@
+
+.top-brand {
+    margin-top: 20px;
+    background: transparent url('consul-logo.png') 0 no-repeat;
+    background-size: 30px 30px;
+    width: 30px;
+    height: 30px;
+}
+
+
+.topbar {
+    padding: 30px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    min-height: 95px;
+    border-bottom: 1px #eee solid;
+
+    .btn {
+        margin-top: 20px;
+        min-width: 100px;
+    }
+
+    .btn-dropdown {
+        width: auto;
+    }
+
+    ul.dropdown-menu {
+        li {
+
+            a {
+                text-transform: uppercase;
+                font-weight: 600;
+                font-size: 12px;
+                color: $gray;
+                @include transition(background-color .1s ease-in-out);
+
+                &:hover {
+                    color: darken($gray, 10%);
+                    background-color: lighten($gray-background, 5%);
+                }
+
+            }
+        }
+    }
+
+}

@@ -1,0 +1,23 @@
+version: "2"
+
+services:
+  web:
+    image: busybox
+    command: top
+    networks:
+     static_test:
+        ipv4_address: 172.16.100.100
+        ipv6_address: fe80::1001:100
+
+networks:
+  static_test:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.100.0/24
+        gateway: 172.16.100.1
+      - subnet: fe80::/64
+        gateway: fe80::1001:1

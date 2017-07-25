@@ -1,0 +1,8 @@
+---
+# Playbook for mesos-dns clients
+- name: Configuring dhclient for mesos-dns
+  sudo: yes
+  lineinfile: dest=/etc/dhcp/dhclient.conf regexp='^prepend domain-name-servers ' line='prepend domain-name-servers {{ hostvars[item]['mesos_master'] }};'
+  notify:
+    - restart dhclient
+  with_random_choice: groups['masters']

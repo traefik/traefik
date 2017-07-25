@@ -1,0 +1,9 @@
+language: go
+
+script: go test -race -v ./...
+
+go:
+    - 1.5.4
+    - 1.6.3
+    - 1.7.1
+    - tip

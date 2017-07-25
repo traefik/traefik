@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -eu
+
+DIFF_PATH=$1
+
+if [ "`git status --porcelain -- $DIFF_PATH 2>/dev/null`" ]; then
+    echo
+    echo "These files were changed:"
+    echo
+    git status --porcelain -- $DIFF_PATH 2>/dev/null
+    echo
+    exit 1
+else
+    echo "$DIFF_PATH is correct"
+fi;

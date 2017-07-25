@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Wed, 05 Oct 2016 09:27:02 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2397
+X-RateLimit-Reset: 1475662531
+ETag: W/"4a6291c6424d22726fb7087cfdf99ab9"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 8a2279ac-709e-42ac-8964-95a5534acfb9
+X-Runtime: 0.271719
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":[{"id":1,"zone_id":"example.com","parent_id":null,"name":"","content":"ns1.dnsimple.com admin.dnsimple.com 1458642070 86400 7200 604800 300","ttl":3600,"priority":null,"type":"SOA","regions":["global"],"system_record":true,"created_at":"2016-03-22T10:20:53Z","updated_at":"2016-10-05T09:26:38Z"},{"id":69061,"zone_id":"example.com","parent_id":null,"name":"","content":"ns1.dnsimple.com","ttl":3600,"priority":null,"type":"NS","regions":["global"],"system_record":true,"created_at":"2016-03-22T10:20:53Z","updated_at":"2016-03-22T10:20:53Z"},{"id":2,"zone_id":"example.com","parent_id":null,"name":"","content":"ns2.dnsimple.com","ttl":3600,"priority":null,"type":"NS","regions":["global"],"system_record":true,"created_at":"2016-03-22T10:20:53Z","updated_at":"2016-03-22T10:20:53Z"},{"id":3,"zone_id":"example.com","parent_id":null,"name":"","content":"ns3.dnsimple.com","ttl":3600,"priority":null,"type":"NS","regions":["global"],"system_record":true,"created_at":"2016-03-22T10:20:53Z","updated_at":"2016-03-22T10:20:53Z"},{"id":4,"zone_id":"example.com","parent_id":null,"name":"","content":"ns4.dnsimple.com","ttl":3600,"priority":null,"type":"NS","regions":["global"],"system_record":true,"created_at":"2016-03-22T10:20:53Z","updated_at":"2016-03-22T10:20:53Z"}],"pagination":{"current_page":1,"per_page":30,"total_entries":5,"total_pages":1}}

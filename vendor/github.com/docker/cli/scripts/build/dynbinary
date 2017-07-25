@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+#
+# Build a dynamically linked binary for the host OS/ARCH
+#
+
+set -eu -o pipefail
+
+source ./scripts/build/.variables
+
+echo "Building dynamically linked $TARGET"
+export CGO_ENABLED=1
+go build -o "${TARGET}" -tags pkcs11 --ldflags "${LDFLAGS}" "${SOURCE}"
+
+ln -sf "$(basename ${TARGET})" build/docker

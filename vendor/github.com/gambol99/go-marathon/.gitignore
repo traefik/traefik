@@ -1,0 +1,39 @@
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+go-marathon.iml
+.idea/
+Gemfile.lock
+thin.*
+examples/applications/applications
+examples/events_callback_transport/events_callback_transport
+examples/events_sse_transport/events_sse_transport
+examples/glog/glog
+examples/groups/groups
+examples/multiple_endpoints/multiple_endpoints
+examples/queue/queue
+examples/tasks/tasks
+coverage
+
+# Folders
+_obj
+_test
+
+# Architecture specific extensions/prefixes
+*.[568vq]
+[568vq].out
+
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+_testmain.go
+
+*.exe
+*.test
+*.prof
+
+tests/rest-api/rest-api

@@ -1,0 +1,12 @@
+{
+"cmd": "chmod +x mesos-dns && sudo ./mesos-dns -v -config=./mesos-dns-config.json",
+"cpus": 1.0, 
+"mem": 1024,
+"id": "mesos-dns",
+"instances": 1,
+"constraints": [["hostname", "CLUSTER", "{{selected_slave.stdout}}"]],
+"uris": [
+  "hdfs:///mesos-dns-config.json",
+  "hdfs:///mesos-dns"
+]
+}

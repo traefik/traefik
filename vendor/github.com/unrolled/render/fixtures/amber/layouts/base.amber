@@ -1,0 +1,11 @@
+html
+    head
+        title Page Title
+    body
+        div#header
+            ul
+                li Home
+                li Menu
+                li About
+                li #{VarOne}
+        block content

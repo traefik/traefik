@@ -1,0 +1,12 @@
+codecov:
+  token: 10dac41d-7f5c-49be-9145-4feb3ea97e41
+comment:
+  layout: header, changes, diff, sunburst
+coverage:
+  status:
+    patch: false
+    project:
+      default:
+        enabled: yes
+        target: 0
+    changes: false

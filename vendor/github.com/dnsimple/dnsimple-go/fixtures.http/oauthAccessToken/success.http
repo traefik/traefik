@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 08 Feb 2016 21:24:19 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 200 OK
+X-RateLimit-Limit: 30
+X-RateLimit-Remaining: 29
+X-RateLimit-Reset: 1454970259
+ETag: W/"def417b4ade951f8148bb6a4fa3fcf5a"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: e8c544cf-fcc3-4762-a200-60c0320a2575
+X-Runtime: 0.105600
+Strict-Transport-Security: max-age=31536000
+
+{"access_token":"zKQ7OLqF5N1gylcJweA9WodA000BUNJD","token_type":"Bearer","scope":null,"account_id":1}

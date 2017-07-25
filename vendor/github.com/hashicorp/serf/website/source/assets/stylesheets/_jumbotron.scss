@@ -1,0 +1,61 @@
+//
+// Jumbotron
+// --------------------------------------------------
+
+
+#jumbotron {
+  position: relative;
+  height: $jumbotron-height;
+  color: $jumbotron-color;
+  background-color:  $serf-gray-light;
+  padding-top: 0;
+  padding-bottom: 0;
+  overflow: hidden;
+
+  &.mobile-hero{
+    background:  transparent image-url("node-hero-pattern.jpg") center center;
+    background-size: 320px 320px;
+    background: -webkit-image-set(image-url("node-hero-pattern.jpg") 1x, image-url("node-hero-pattern@2x.jpg") 2x);
+  }
+
+  .container{
+      position: relative;
+      height: 100%;
+
+      .jumbo-logo{
+          position: absolute;
+          bottom: 0;
+          right: -150px;
+          width: 726px;
+          height: 454px;
+          background:  transparent image-url("logo-circle-logo@2x.png") 0 0 no-repeat;
+          background-size: 726px 454px;
+          z-index: 20;
+          pointer-events: none;
+      }
+
+      .col-lg-5{
+          z-index: 20;
+          pointer-events: none;
+      }
+
+      h2{
+          margin-top: 140px;
+          font-size: 28px;
+          line-height: 38px;
+          letter-spacing: 2px;
+      }
+  }
+}
+
+@media (min-width: 992px) {
+    .jumbotron .container .jumbo-logo{
+        right: -150px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .jumbotron .container .jumbo-logo{
+        right: -120px;
+    }
+}

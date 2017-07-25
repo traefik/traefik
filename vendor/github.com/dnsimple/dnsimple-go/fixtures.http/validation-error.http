@@ -1,0 +1,19 @@
+HTTP/1.1 400 Bad Request
+Server: nginx
+Date: Wed, 23 Nov 2016 08:12:57 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2396
+X-RateLimit-Reset: 1479892333
+Cache-Control: no-cache
+X-Request-Id: 91dcf81b-5df4-4d45-b37e-446f0c422a27
+X-Runtime: 0.062556
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{"message":"Validation failed","errors":{"address1":["can't be blank"],"city":["can't be blank"],"country":["can't be blank"],"email":["can't be blank","is an invalid email address"],"first_name":["can't be blank"],"last_name":["can't be blank"],"phone":["can't be blank","is probably not a phone number"],"postal_code":["can't be blank"],"state_province":["can't be blank"]}}

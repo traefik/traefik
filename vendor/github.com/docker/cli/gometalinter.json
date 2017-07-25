@@ -1,0 +1,22 @@
+{
+  "Vendor": true,
+  "Deadline": "2m",
+  "Sort": ["linter", "severity", "path"],
+  "Exclude": ["cli/compose/schema/bindata.go"],
+
+  "DisableAll": true,
+  "Enable": [
+    "deadcode",
+    "gocyclo",
+    "gofmt",
+    "goimports",
+    "golint",
+    "ineffassign",
+    "interfacer",
+    "lll",
+    "vet"
+  ],
+
+  "Cyclo": 19,
+  "LineLength": 200
+}

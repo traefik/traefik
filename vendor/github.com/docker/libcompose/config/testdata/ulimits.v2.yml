@@ -1,0 +1,9 @@
+version: "2"
+services:
+  simple1:
+    image: myimage
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000

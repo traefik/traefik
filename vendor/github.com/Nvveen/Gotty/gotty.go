@@ -8,7 +8,6 @@ package gotty
 // TODO add more concurrency to name lookup, look for more opportunities.
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -111,7 +110,7 @@ func (term *TermInfo) GetAttributeName(name string) (stacker, error) {
 	return term.GetAttribute(tc)
 }
 
-// A utility function that finds and returns the termcap equivalent of a
+// A utility function that finds and returns the termcap equivalent of a 
 // variable name.
 func GetTermcapName(name string) string {
 	// Termcap name
@@ -193,9 +192,7 @@ func readTermInfo(path string) (*TermInfo, error) {
 		}
 	}
 	// If the number of bytes read is not even, a byte for alignment is added
-	// We know the header is an even number of bytes so only need to check the
-	// total of the names and booleans.
-	if (header[1]+header[2])%2 != 0 {
+	if len(byteArray)%2 != 0 {
 		err = binary.Read(file, binary.LittleEndian, make([]byte, 1))
 		if err != nil {
 			return nil, err
@@ -231,14 +228,9 @@ func readTermInfo(path string) (*TermInfo, error) {
 	// We get an offset, and then iterate until the string is null-terminated
 	for i, offset := range shArray {
 		if offset > -1 {
-			if int(offset) >= len(byteArray) {
-				return nil, errors.New("array out of bounds reading string section")
+			r := offset
+			for ; byteArray[r] != 0; r++ {
 			}
-			r := bytes.IndexByte(byteArray[offset:], 0)
-			if r == -1 {
-				return nil, errors.New("missing nul byte reading string section")
-			}
-			r += int(offset)
 			term.strAttributes[StrAttr[i*2+1]] = string(byteArray[offset:r])
 		}
 	}

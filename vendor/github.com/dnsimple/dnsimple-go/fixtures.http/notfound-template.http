@@ -1,0 +1,12 @@
+HTTP/1.1 404 Not Found
+Server: nginx
+Date: Wed, 04 May 2016 09:35:45 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 404 Not Found
+Cache-Control: no-cache
+X-Request-Id: 8d380d93-b974-4d51-82a3-5b10bce4167a
+X-Runtime: 0.071884
+
+{"message":"Template `beta` not found"}

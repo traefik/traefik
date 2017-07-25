@@ -1,0 +1,10 @@
+version: "2"
+services:
+  simple:
+    image: busybox:latest
+    command: top
+    links:
+      - another
+  another:
+    image: busybox:latest
+    command: top

@@ -1,0 +1,48 @@
+{
+  "id": "/my-app",
+  "args": [
+    "/usr/sbin/apache2ctl",
+    "-D",
+    "FOREGROUND"
+  ],
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "quay.io/gambol99/apache-php:latest",
+      "network": "BRIDGE",
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 0,
+          "protocol": "tcp"
+        },
+        {
+          "containerPort": 443,
+          "hostPort": 0,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  },
+  "cpus": 0.1,
+  "disk": 0,
+  "env": {
+    "NAME": "frontend_http",
+    "SERVICE_80_NAME": "test_http"
+  },
+  "healthChecks": [
+    {
+      "portIndex": 0,
+      "path": "/health",
+      "maxConsecutiveFailures": 3,
+      "protocol": "HTTP",
+      "gracePeriodSeconds": 30,
+      "intervalSeconds": 5,
+      "timeoutSeconds": 5
+    }
+  ],
+  "instances": 2,
+  "mem": 64,
+  "ports": null,
+  "dependencies": null
+}

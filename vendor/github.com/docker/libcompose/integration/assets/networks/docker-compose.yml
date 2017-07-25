@@ -1,0 +1,21 @@
+version: "2"
+
+services:
+  web:
+    image: busybox
+    command: top
+    networks: ["front"]
+  app:
+    image: busybox
+    command: top
+    networks: ["front", "back"]
+    links:
+      - "db:database"
+  db:
+    image: busybox
+    command: top
+    networks: ["back"]
+
+networks:
+  front: {}
+  back: {}

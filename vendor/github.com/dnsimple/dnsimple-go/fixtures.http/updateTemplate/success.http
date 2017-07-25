@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Thu, 24 Mar 2016 11:04:55 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 200 OK
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2398
+X-RateLimit-Reset: 1458821048
+ETag: W/"6a2c0c6789d853473765a5fc5662da2e"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 3a7993e7-8b1e-47ce-a7a8-cc86b02904de
+X-Runtime: 0.324954
+Strict-Transport-Security: max-age=31536000
+
+{"data":{"id":1,"account_id":1010,"name":"Alpha","sid":"alpha","description":"An alpha template.","created_at":"2016-03-22T11:08:58Z","updated_at":"2016-03-22T11:08:58Z"}}

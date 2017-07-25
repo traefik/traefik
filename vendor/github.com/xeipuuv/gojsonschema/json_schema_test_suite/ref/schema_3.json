@@ -1,0 +1,1 @@
+{"percent%field":{"type":"integer"},"properties":{"percent":{"$ref":"#/percent%25field"},"slash":{"$ref":"#/slash~1field"},"tilda":{"$ref":"#/tilda~0field"}},"slash/field":{"type":"integer"},"tilda~field":{"type":"integer"}}

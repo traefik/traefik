@@ -1,0 +1,17 @@
+<svg viewBox="0 0 130 170" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <rect id="path-1" x="0" y="0" width="130" height="170" rx="7"></rect>
+    <mask id="mask-2" maskContentUnits="userSpaceOnUse" maskUnits="objectBoundingBox" x="0" y="0" width="130" height="170" fill="white">
+      <use xlink:href="#path-1"></use>
+    </mask>
+  </defs>
+  <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+    <g id="Group">
+      <use id="Rectangle-4" stroke="#FFFFFF" mask="url(#mask-2)" stroke-width="10" xlink:href="#path-1"></use>
+      <rect id="Rectangle" fill="#FFFFFF" x="22" y="22" width="85" height="8"></rect>
+      <rect id="Rectangle" fill="#FFFFFF" x="22" y="39" width="85" height="8"></rect>
+      <rect id="Rectangle" fill="#FFFFFF" x="22" y="56" width="85" height="8"></rect>
+      <rect id="Rectangle" fill="#FFFFFF" x="22" y="73" width="85" height="8"></rect>
+    </g>
+  </g>
+</svg>

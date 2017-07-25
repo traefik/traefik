@@ -1,0 +1,61 @@
+package: github.com/libkermit/compose
+
+import:
+- package: github.com/libkermit/docker
+  version: ddede409294e8c5ae66d68ac09edb6b27e8f3e4a
+- package: github.com/docker/docker
+  version: 75c7536d2e2e328b644bf69153de879d1d197988 # 17.06
+- package: github.com/docker/distribution
+  version: b38e5838b7b2f2ad48e06ec4b500011976080621
+- package: github.com/docker/go-connections
+  version: e15c02316c12de00874640cd76311849de2aeed5
+- package: github.com/docker/go-units
+  version: 9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1
+- package: golang.org/x/net
+  version: c427ad74c6d7a814201695e9ffde0c5d400a7674
+- package: github.com/Sirupsen/logrus
+  version: v0.11.0
+- package: github.com/pkg/errors
+  version: 839d9e913e063e28dfd0e6c7b7512793e0a48be9
+- package: github.com/docker/libtrust
+  version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
+- package: github.com/opencontainers/go-digest
+  version: a6d0ee40d4207ea02364bd3b9e8e77b9159ba1eb
+- package: github.com/opencontainers/image-spec
+  version: f03dbe35d449c54915d235f1a3cf8f585a24babe
+
+- package: github.com/docker/libcompose
+  version: 0ad950cbeb3d72107613dd220b5e9d7e001b890b
+- package: github.com/Azure/go-ansiterm
+  version: 388960b655244e76e24c75f48631564eaefade62
+- package: gopkg.in/yaml.v2
+  version: 4c78c975fe7c825c6d1466c42be594d1d6f3aba6
+- package: github.com/flynn/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff
+- package: github.com/gorilla/context
+  version: v1.1
+- package: github.com/gorilla/mux
+  version: v1.1
+- package: github.com/Microsoft/go-winio
+  version: v0.3.8
+- package: github.com/xeipuuv/gojsonpointer
+  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
+- package: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- package: github.com/xeipuuv/gojsonschema
+  version: 93e72a773fade158921402d6a24c819b48aba29d
+- package: golang.org/x/sys
+  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
+- package: github.com/go-check/check
+  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+- package: github.com/Nvveen/Gotty
+  version: 6018b68f96b839edfbe3fb48668853f5dbad88a3
+  repo:    https://github.com/ijc25/Gotty
+- package: github.com/opencontainers/runc
+  version: 51371867a01c467f08af739783b8beafc15
+- package: github.com/spf13/pflag
+  version: cb88ea77998c3f024757528e3305022ab50b43be
+- package: golang.org/x/time
+  version: a4bde12657593d5e90d0533a3e4fd95e635124cb
+- package: github.com/docker/cli
+  version: d95fd2f38cfc23e077530c6181330727d561b6a0

@@ -1,0 +1,10 @@
+#
+# Replace the node address listed here with those from your infrastructure
+#
+[masters]
+146.148.51.28
+
+[slaves]
+104.154.74.166
+23.251.159.19
+104.154.89.191

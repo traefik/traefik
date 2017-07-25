@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# The MIT License (MIT)
+# 
+# Copyright (c) 2016 Jan Broer <jan@festplatte.eu.org>
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# validates that the project is clean of formatting and vet errors.
+# symlink as .git/hooks/pre-commit to use as a pre-commit check.
+#
+
+gofiles=$(find . ! -path "./vendor/*" ! -path "*/_*" -name "*.go")
+[ -z "$gofiles" ] && exit 0
+
+function checkfmt() {
+  unformatted=$(gofmt -l $*)
+  [ -z "$unformatted" ] && return 0
+
+  echo >&2 "Go files must be formatted with gofmt. Please run:"
+  for fn in $unformatted; do
+    echo >&2 "  gofmt -w $PWD/$fn"
+  done
+
+  return 1
+}
+
+function checkvet() {
+  unvetted=$(go vet ./... 2>&1 | grep -v vendor | grep -v "exit status")
+  [ -z "$unvetted" ] && return 0
+
+  echo >&2 "Go files must be vetted. Check these problems:"
+  IFS=$'\n'
+  for line in $unvetted; do
+    echo >&2 "  $line"
+  done
+  unset IFS
+
+  return 1
+}
+
+checkfmt $gofiles || fail=yes
+checkvet $gofiles || fail=yes
+
+[ -z "$fail" ] || exit 1

@@ -1,0 +1,21 @@
+version: "2"
+networks:
+  default:
+    driver: custom-driver
+  network1:
+    driver: bridge
+    driver_opts:
+      com.docker.network.enable_ipv6: "true"
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.238.0/24
+        gateway: 172.16.238.1
+      - subnet: 2001:3984:3989::/64
+        gateway: 2001:3984:3989::1
+  network2:
+    external: true
+  network3:
+    external:
+      name: name-of-network
+  network3: {}

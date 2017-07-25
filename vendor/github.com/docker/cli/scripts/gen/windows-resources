@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# Compile the Windows resources into the sources
+#
+
+set -eu -o pipefail
+
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $SCRIPTDIR/../build/.variables
+
+RESOURCES=$SCRIPTDIR/../winresources
+
+TEMPDIR=$(mktemp -d)
+trap 'rm -rf $TEMPDIR' EXIT
+
+if [ "$(go env GOHOSTOS)" == "windows" ]; then
+	WINDRES=windres
+	WINDMC=windmc
+else
+	# Cross compiling
+	WINDRES=x86_64-w64-mingw32-windres
+	WINDMC=x86_64-w64-mingw32-windmc
+fi
+
+# Generate a Windows file version of the form major,minor,patch,build (with any part optional)
+VERSION_QUAD=$(echo -n $VERSION | sed -re 's/^([0-9.]*).*$/\1/' | tr . ,)
+
+# Pass version and commit information into the resource compiler
+defs=
+[ ! -z $VERSION ]      && defs="$defs -D DOCKER_VERSION=\"$VERSION\""
+[ ! -z $VERSION_QUAD ] && defs="$defs -D DOCKER_VERSION_QUAD=$VERSION_QUAD"
+[ ! -z $GITCOMMIT ]    && defs="$defs -D DOCKER_COMMIT=\"$GITCOMMIT\""
+
+function makeres {
+	$WINDRES \
+		-i $RESOURCES/$1 \
+		-o $3 \
+		-F $2 \
+		--use-temp-file \
+		-I $TEMPDIR \
+		$defs
+}
+
+makeres docker.rc pe-x86-64 rsrc_amd64.syso
+makeres docker.rc pe-i386   rsrc_386.syso

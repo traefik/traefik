@@ -1,0 +1,19 @@
+HTTP/1.1 428 Precondition Required
+Server: nginx
+Date: Fri, 03 Mar 2017 10:00:36 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2396
+X-RateLimit-Reset: 1488538622
+Cache-Control: no-cache
+X-Request-Id: 8e6cfeba-61f3-4449-9d95-dceaa1be30b0
+X-Runtime: 0.033649
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{"message":"DNSSEC cannot be disabled because it is not enabled"}

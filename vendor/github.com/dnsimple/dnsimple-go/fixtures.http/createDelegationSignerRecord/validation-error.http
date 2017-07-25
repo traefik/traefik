@@ -1,0 +1,19 @@
+HTTP/1.1 400 Bad Request
+Server: nginx
+Date: Fri, 03 Mar 2017 15:20:28 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2395
+X-RateLimit-Reset: 1488554574
+Cache-Control: no-cache
+X-Request-Id: bf652af9-54cd-42c7-8fd3-2f52e2baea4b
+X-Runtime: 0.350846
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{"message":"Validation failed","errors":{"algorithm":["can't be blank"],"digest":["can't be blank"],"digest_type":["can't be blank"],"keytag":["can't be blank"]}}

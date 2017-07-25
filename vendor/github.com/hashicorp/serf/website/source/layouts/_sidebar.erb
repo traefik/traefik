@@ -1,0 +1,27 @@
+<!-- Overlay for fixed sidebar -->
+<div class="sidebar-overlay"></div>
+
+<!-- Material sidebar -->
+<aside id="sidebar" class="sidebar sidebar-default sidebar-fixed-right" role="navigation">
+    <!-- Sidebar header -->
+    <div class="sidebar-header header-cover">
+        <!-- Sidebar brand image -->
+        <div class="sidebar-image">
+            <img src="<%= image_path('logo-type-medium.png') %>" width="36px" height="47px">
+        </div>
+    </div>
+
+    <!-- Sidebar navigation -->
+    <ul class="main nav sidebar-nav">
+        <li class="first"><a href="/intro/index.html">Intro</a></li>
+        <li class=""><a href="/docs/index.html">Docs</a></li>
+        <li class=""><a href="/community.html">Community</a></li>
+        <li class=""><a href="http://demo.consul.io/">Demo</a></li>
+    </ul>
+    <div class="divider"></div>
+    <!-- Sidebar navigation 2-->
+    <ul class="external nav sidebar-nav">
+        <li class="first"><a class="v-btn gray sml" href="/downloads.html"><%= partial "layouts/svg/svg-download" %>Download</a></li>
+        <li class=""><a class="v-btn gray sml" href="https://github.com/hashicorp/consul"><%= partial "layouts/svg/svg-github" %>GitHub</a></li>
+    </ul>
+</aside>

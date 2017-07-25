@@ -1,0 +1,15 @@
+HTTP/1.1 400 Bad Request
+Server: nginx
+Date: Mon, 15 Feb 2016 15:06:35 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 400 Bad Request
+X-RateLimit-Limit: 4000
+X-RateLimit-Remaining: 3998
+X-RateLimit-Reset: 1455552316
+Cache-Control: no-cache
+X-Request-Id: 0c1507d3-4c03-4ba3-b2bd-b0cabf021ed8
+X-Runtime: 0.256476
+
+{"message":"example.com may not be renewed at this time","errors":{}}

@@ -1,0 +1,10 @@
+multiple:
+  image: tianon/true
+  environment:
+    - KEY1=VAL1
+simple:
+  image: busybox:latest
+  command: top
+another:
+  image: busybox:latest
+  command: top

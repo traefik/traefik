@@ -1,0 +1,28 @@
+package: github.com/Azure/go-autorest
+import:
+- package: github.com/dgrijalva/jwt-go
+  subpackages:
+  - .
+- package: golang.org/x/crypto
+  vcs: git
+  repo: https://github.com/golang/crypto.git
+  subpackages:
+  - /pkcs12
+- package: golang.org/x/net
+  vcs: git
+  repo: https://github.com/golang/net.git
+  subpackages:
+  - .
+- package: golang.org/x/text
+  vcs: git
+  repo: https://github.com/golang/text.git
+  subpackages:
+  - .
+testImports:
+- package: github.com/stretchr/testify
+  vcs: git
+  repo: https://github.com/stretchr/testify.git
+  subpackages:
+  - /require
+- package: github.com/Masterminds/semver
+  version: ~1.2.2

@@ -1,0 +1,17 @@
+HTTP/1.1 201 Created
+Server: nginx
+Date: Tue, 03 May 2016 07:51:33 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 201 Created
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2398
+X-RateLimit-Reset: 1462265481
+ETag: W/"a8518ecf2fd31e6c22b0acccb5cef797"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: b2d51e79-b3d2-4abe-9184-155fb5546617
+X-Runtime: 0.190813
+Strict-Transport-Security: max-age=31536000
+
+{"data":{"id":300,"template_id":268,"name":"","content":"mx.example.com","ttl":600,"priority":10,"type":"MX","created_at":"2016-05-03T07:51:33Z","updated_at":"2016-05-03T07:51:33Z"}}

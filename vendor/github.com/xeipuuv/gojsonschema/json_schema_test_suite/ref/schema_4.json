@@ -1,0 +1,1 @@
+{"$ref":"#/definitions/c","definitions":{"a":{"type":"integer"},"b":{"$ref":"#/definitions/a"},"c":{"$ref":"#/definitions/b"}}}

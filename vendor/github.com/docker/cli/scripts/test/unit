@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -eu -o pipefail
+
+go test -tags daemon -v $@

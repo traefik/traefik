@@ -1,0 +1,47 @@
+---
+layout: "docs"
+page_title: "Commands: Snapshot Inspect"
+sidebar_current: "docs-commands-snapshot-inspect"
+---
+
+# Consul Snapshot Inspect
+
+Command: `consul snapshot inspect`
+
+The `snapshot inspect` command is used to inspect an atomic, point-in-time
+snapshot of the state of the Consul servers which includes key/value entries,
+service catalog, prepared queries, sessions, and ACLs. The snapshot is read
+from the given file.
+
+The following fields are displayed when inspecting a snapshot:
+
+* `ID` - A unique ID for the snapshot, only used for differentiation purposes.
+
+* `Size` - The size of the snapshot, in bytes.
+
+* `Index` - The Raft index of the latest log entry in the snapshot.
+
+* `Term` - The Raft term of the latest log entry in the snapshot.
+
+* `Version` - The snapshot format version. This only refers to the structure of
+ the snapshot, not the data contained within.
+
+## Usage
+
+Usage: `consul snapshot inspect [options] FILE`
+
+## Examples
+
+To inspect a snapshot from the file "backup.snap":
+
+```text
+$ consul snapshot inspect backup.snap
+ID           2-5-1477944140022
+Size         667
+Index        5
+Term         2
+Version      1
+```
+
+Please see the [HTTP API](/api/snapshot.html) documentation for
+more details about snapshot internals.

@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Sat, 10 Dec 2016 22:37:13 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2399
+X-RateLimit-Reset: 1481413033
+ETag: W/"65425ab4559f111f28bc952f3b672d48"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 9a5dadcb-8e90-4fe9-ad60-be13ba3d3970
+X-Runtime: 0.263229
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":[{"id":1,"name":"Service 1","sid":"service1","description":"First service example.","setup_description":null,"requires_setup":false,"default_subdomain":null,"created_at":"2014-02-14T19:15:19Z","updated_at":"2016-03-04T09:23:27Z","settings":[]},{"id":2,"name":"Service 2","sid":"service2","description":"Second service example.","setup_description":null,"requires_setup":true,"default_subdomain":null,"created_at":"2014-02-14T19:15:19Z","updated_at":"2016-03-04T09:23:27Z","settings":[{"name":"username","label":"Service 2 Account Username","append":".service2.com","description":"Your Service2 username is used to connect services to your account.","example":"username","password":false}]}],"pagination":{"current_page":1,"per_page":30,"total_entries":2,"total_pages":1}}

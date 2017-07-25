@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Fri, 08 Jul 2016 15:38:52 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2394
+X-RateLimit-Reset: 1467993483
+ETag: W/"69a9ce919d99cc8f27183b74a5eb22a9"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 8936089b-f44a-4303-bb65-b39e835f9973
+X-Runtime: 0.036570
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":[{"id":1,"domain_id":10,"name":"www","common_name":"www.weppos.net","years":1,"csr":"-----BEGIN CERTIFICATE REQUEST-----\nMIICljCCAX4CAQAwGTEXMBUGA1UEAwwOd3d3LndlcHBvcy5uZXQwggEiMA0GCSqG\nSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC3MJwx9ahBG3kAwRjQdRvYZqtovUaxY6jp\nhd09975gO+2eYPDbc1yhNftVJ4KBT0zdEqzX0CwIlxE1MsnZ2YOsC7IJO531hMBp\ndBxM4tSG07xPz70AVUi9rY6YCUoJHmxoFbclpHFbtXZocR393WyzUK8047uM2mlz\n03AZKcMdyfeuo2/9TcxpTSCkklGqwqS9wtTogckaDHJDoBunAkMioGfOSMe7Yi6E\nYRtG4yPJYsDaq2yPJWV8+i0PFR1Wi5RCnPt0YdQWstHuZrxABi45+XVkzKtz3TUc\nYxrvPBucVa6uzd953u8CixNFkiOefvb/dajsv1GIwH6/Cvc1ftz1AgMBAAGgODA2\nBgkqhkiG9w0BCQ4xKTAnMCUGA1UdEQQeMByCDnd3dy53ZXBwb3MubmV0ggp3ZXBw\nb3MubmV0MA0GCSqGSIb3DQEBCwUAA4IBAQCDnVBO9RdJX0eFeZzlv5c8yG8duhKP\n0000000000000/cbNj9qFPkKTK0vTXmS2XUFBChKPtLucp8+Z754UswX+QCsdc7U\nTTSG0CkyilcSubdZUERGej1XfrVQhrokk7Fu0Jh3BdT6REP0SIDTpA8ku/aRQiAp\np+h19M37S7+w/DMGDAq2LSX8jOpJ1yIokRDyLZpmwyLxutC21DXMGoJ3xZeUFrUT\nqRNwzkn2dJzgTrPkzhaXalUBqv+nfXHqHaWljZa/O0NVCFrHCdTdd53/6EE2Yabv\nq5SFTkRCpaxrvM/7a8Tr4ixD1/VKD6rw3+WCvyS4GWK7knhiI1nZH3PI\n-----END CERTIFICATE REQUEST-----\n","state":"issued","authority_identifier":"letsencrypt","created_at":"2016-06-11T18:47:08Z","updated_at":"2016-06-11T18:47:37Z","expires_on":"2016-09-09"},{"id":2,"domain_id":10,"name":"www","common_name":"www.weppos.net","years":1,"csr":"-----BEGIN CERTIFICATE REQUEST-----\nMIICljCCAX4CAQAwGTEXMBUGA1UEAwwOd3d3LndlcHBvcy5uZXQwggEiMA0GCSqG\nSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDEhv18Sz4nQtjCDseXREuFIZW88yK7M5gM\nw2WuVmxTfn3MGprPtIevPJ0gzR4foMpnOKjR/wW8DpbvvNPNo5FAsYf+mr84rMft\nUjOQWfqcraWWHmss/Ytq45uTie8M1/C4Pr+FFfbOwwWz/DqVao5RQ34q+LIPpV62\nwRkg0m14FqT8gjNNM0XAsrfT7M+kvfsS+FbyJ7G9K0tj3wgqaEuKAQtJn7MPflM8\nfG0TqLJ+NSuI/Zfmtol3XzBD/AoViu0F8Sqp5OR8Ej4ZdmbKR+om+U+MX9LwF8MD\nwCtMAIaGF4JkgrpiGrbAKIpXwkuxJ8wWrkwhxu18z/OhJEBW+wFjAgMBAAGgODA2\nBgkqhkiG9w0BCQ4xKTAnMCUGA1UdEQQeMByCDnd3dy53ZXBwb3MubmV0ggp3ZXBw\nb3MubmV0MA0GCSqGSIb3DQEBCwUAA4IBAQBuDDwhTjU7pAGHU1dUthfznvFqjY2I\n7CNEaUSxlXdxyZs34cwx28F7iMDE8Gh7B3QkuS3c2CTtAQsxnWKebgLYJ8w8XLN1\n9mZtNhT8yXKzLDfC9KuzKw467sbxYf8bLsuyFdQ8sBNp+8es9OwVgYsPwZ4NBtOn\nQlwtBBBdxrF5zCQgQXZsFmymf/o4nLU66ouW1MVjoG608dthoBYiIIiPRx3c+Rjd\ni8JHn2qIKF7AJfJy/H8TLgtE1bt08tfDA9ztuX2zb/lvXrVu4aLBjOF+Fn3b+EqX\n6gR0m+Id0b3t3ORN1QU0SBiyrXXJbo6E+cpYKeWlnkf0000000000000\n-----END CERTIFICATE REQUEST-----\n","state":"issued","authority_identifier":"letsencrypt","created_at":"2016-05-25T15:56:06Z","updated_at":"2016-05-25T17:10:39Z","expires_on":null}],"pagination":{"current_page":1,"per_page":30,"total_entries":2,"total_pages":1}}

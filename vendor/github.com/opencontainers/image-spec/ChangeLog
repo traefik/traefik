@@ -1,0 +1,19 @@
+Open Container Initiative Image Format Specification
+
+Changes with v0.4.0:
+
+	Additions:
+
+	* Go package added for types
+	https://godoc.org/github.com/opencontainers/image-spec/specs-go/v1 (#172)
+	* oci-image-tool: man page docs added
+	https://github.com/opencontainers/image-spec/tree/master/cmd/oci-image-tool/man
+	(#180)
+
+	Minor fixes and documentation:
+
+	* oci-image-tool: replace colon with hyphen to be windows friendly (#177)
+	* oci-image-tool: fix various bugs in extraction of images (#177)
+	* manifest: size as int64 allowing for huge containers (#153)
+	* manifest: move duplicate descriptions to reference descriptor doc (#167)
+	* serialization: explain opaques and their role (#171)

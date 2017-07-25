@@ -1,0 +1,4 @@
+*.test
+flymake_*
+*.swp
+*.go~

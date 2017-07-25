@@ -1,0 +1,57 @@
+---
+layout: "docs"
+page_title: "Commands: Snapshot Save"
+sidebar_current: "docs-commands-snapshot-save"
+---
+
+# Consul Snapshot Save
+
+Command: `consul snapshot save`
+
+The `snapshot save` command is used to retrieve an atomic, point-in-time snapshot
+of the state of the Consul servers which includes key/value entries,
+service catalog, prepared queries, sessions, and ACLs. The snapshot is saved to
+the given file.
+
+If ACLs are enabled, a management token must be supplied in order to perform
+snapshot a snapshot save.
+
+## Usage
+
+Usage: `consul snapshot save [options] FILE`
+
+#### API Options
+
+<%= partial "docs/commands/http_api_options_client" %>
+<%= partial "docs/commands/http_api_options_server" %>
+
+## Examples
+
+To create a snapshot from the leader server and save it to "backup.snap":
+
+```text
+$ consul snapshot save backup.snap
+Saved and verified snapshot to index 8419
+```
+
+By default, snapshots are taken using a consistent mode that forwards requests
+to the leader and the leader verifies it is still in power before taking the
+snapshot.
+
+After the snapshot is written to the given file it is read back and verified for
+integrity.
+
+To create a potentially stale snapshot from any available server, use the stale
+consistency mode:
+
+```text
+$ consul snapshot save -stale backup.snap
+# ...
+```
+
+This is useful for situations where a cluster is in a degraded state and no
+leader is available. To target a specific server for a snapshot, you can run
+the `consul snapshot save` command on that specific server.
+
+Please see the [HTTP API](/api/snapshot.html) documentation for
+more details about snapshot internals.

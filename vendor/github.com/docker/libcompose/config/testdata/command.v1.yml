@@ -1,0 +1,6 @@
+simple1:
+  image: myimage
+  command: bundle exec thi-p 3000
+simple2:
+  image: myimage
+  command: [bundle, exec, thin, -p, "3000"]

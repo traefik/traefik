@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package grpc.lb.v1;
+
+message Duration {
+  // Signed seconds of the span of time. Must be from -315,576,000,000
+  // to +315,576,000,000 inclusive.
+  int64 seconds = 1;
+
+  // Signed fractions of a second at nanosecond resolution of the span
+  // of time. Durations less than one second are represented with a 0
+  // `seconds` field and a positive or negative `nanos` field. For durations
+  // of one second or more, a non-zero value for the `nanos` field must be
+  // of the same sign as the `seconds` field. Must be from -999,999,999
+  // to +999,999,999 inclusive.
+  int32 nanos = 2;
+}
+
+service LoadBalancer {
+  // Bidirectional rpc to get a list of servers.
+  rpc BalanceLoad(stream LoadBalanceRequest)
+      returns (stream LoadBalanceResponse);
+}
+
+message LoadBalanceRequest {
+  oneof load_balance_request_type {
+    // This message should be sent on the first request to the load balancer.
+    InitialLoadBalanceRequest initial_request = 1;
+
+    // The client stats should be periodically reported to the load balancer
+    // based on the duration defined in the InitialLoadBalanceResponse.
+    ClientStats client_stats = 2;
+  }
+}
+
+message InitialLoadBalanceRequest {
+  // Name of load balanced service (IE, service.grpc.gslb.google.com)
+  string name = 1;
+}
+
+// Contains client level statistics that are useful to load balancing. Each
+// count should be reset to zero after reporting the stats.
+message ClientStats {
+  // The total number of requests sent by the client since the last report.
+  int64 total_requests = 1;
+
+  // The number of client rpc errors since the last report.
+  int64 client_rpc_errors = 2;
+
+  // The number of dropped requests since the last report.
+  int64 dropped_requests = 3;
+}
+
+message LoadBalanceResponse {
+  oneof load_balance_response_type {
+    // This message should be sent on the first response to the client.
+    InitialLoadBalanceResponse initial_response = 1;
+
+    // Contains the list of servers selected by the load balancer. The client
+    // should send requests to these servers in the specified order.
+    ServerList server_list = 2;
+  }
+}
+
+message InitialLoadBalanceResponse {
+  // This is an application layer redirect that indicates the client should use
+  // the specified server for load balancing. When this field is non-empty in
+  // the response, the client should open a separate connection to the
+  // load_balancer_delegate and call the BalanceLoad method.
+  string load_balancer_delegate = 1;
+
+  // This interval defines how often the client should send the client stats
+  // to the load balancer. Stats should only be reported when the duration is
+  // positive.
+  Duration client_stats_report_interval = 3;
+}
+
+message ServerList {
+  // Contains a list of servers selected by the load balancer. The list will
+  // be updated when server resolutions change or as needed to balance load
+  // across more servers. The client should consume the server list in order
+  // unless instructed otherwise via the client_config.
+  repeated Server servers = 1;
+
+  // Indicates the amount of time that the client should consider this server
+  // list as valid. It may be considered stale after waiting this interval of
+  // time after receiving the list. If the interval is not positive, the
+  // client can assume the list is valid until the next list is received.
+  Duration expiration_interval = 3;
+}
+
+message Server {
+  // A resolved address for the server, serialized in network-byte-order. It may
+  // either be an IPv4 or IPv6 address.
+  bytes ip_address = 1;
+
+  // A resolved port number for the server.
+  int32 port = 2;
+
+  // An opaque but printable token given to the frontend for each pick. All
+  // frontend requests for that pick must include the token in its initial
+  // metadata. The token is used by the backend to verify the request and to
+  // allow the backend to report load to the gRPC LB system.
+  string load_balance_token = 3;
+
+  // Indicates whether this particular request should be dropped by the client
+  // when this server is chosen from the list.
+  bool drop_request = 4;
+}

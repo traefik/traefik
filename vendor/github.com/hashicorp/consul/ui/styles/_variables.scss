@@ -1,0 +1,26 @@
+// Colors
+
+$gray-light:                lighten(gray, 50%);
+$black:                     #242424;
+$gray-darker:               #555;
+$gray:                      #777;
+$gray-light:                #939393;
+$gray-background:           #E6E6E6;
+$red:                       #dd4e58;
+$red-dark:                  #c5454e;
+$red-darker:                #b03c44;
+$tan:                       #f0f0e5;
+$consul-gray:               #909090;
+$consul-footer-gray:        #d7d4d7;
+$purple-dark:               #69499a;
+$purple:                    lighten($purple-dark, 20%);
+$light-purple:              #f7f3f9;
+
+$green-faded:               #BBF085;
+$green-dark:                #86B457;
+$red-faded:                 $red;
+$white-faded:               darken(white, 2%);
+$orange-faded:              #FFAC5E;
+
+// Type
+$text-color:                #555;

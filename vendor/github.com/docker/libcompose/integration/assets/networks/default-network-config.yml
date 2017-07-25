@@ -1,0 +1,13 @@
+version: "2"
+services:
+  simple:
+    image: busybox:latest
+    command: top
+  another:
+    image: busybox:latest
+    command: top
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      "com.docker.network.bridge.enable_icc": "false"

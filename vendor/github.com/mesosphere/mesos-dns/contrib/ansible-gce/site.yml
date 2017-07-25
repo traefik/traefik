@@ -1,0 +1,14 @@
+---
+- name: configure mesos-dns on Mesos masters
+  hosts: masters
+  user: jclouds
+
+  roles:
+    - mesos-dns-server
+
+- name: configure DNS client on Mesos slaves for mesos-dns
+  hosts: slaves
+  user: jclouds
+
+  roles:
+    - mesos-dns-client

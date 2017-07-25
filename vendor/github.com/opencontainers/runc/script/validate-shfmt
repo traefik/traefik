@@ -1,0 +1,21 @@
+#!/bin/bash
+
+badFiles=()
+while read f; do
+	badFiles+=("$f")
+done < <(shfmt -l . | grep -v vendor/)
+
+if [ ${#badFiles[@]} -eq 0 ]; then
+	echo 'Congratulations!  All shell source files are properly formatted.'
+else
+	{
+		echo "These files are not properly shfmt'd:"
+		for f in "${badFiles[@]}"; do
+			echo " - $f"
+		done
+		echo
+		echo 'Please reformat the above files using "shfmt -w" and commit the result.'
+		echo
+	} >&2
+	false
+fi

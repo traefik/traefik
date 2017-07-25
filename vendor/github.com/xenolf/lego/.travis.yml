@@ -1,0 +1,16 @@
+language: go
+go:
+- 1.6.3
+- 1.7
+- tip
+services:
+  - memcached
+env:
+  - MEMCACHED_HOSTS=localhost:11211
+install:
+- go get -t ./...
+script:
+- go vet ./...
+- go test -v ./...
+before_install:
+- '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && openssl aes-256-cbc -K $encrypted_26c593b079d9_key -iv $encrypted_26c593b079d9_iv -in .gitcookies.enc -out .gitcookies -d || true'

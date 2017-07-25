@@ -1,0 +1,7 @@
+language: go
+go:
+  - 1.3
+before_install:
+  - go get github.com/sigu-399/gojsonreference
+  - go get github.com/sigu-399/gojsonpointer
+  - go get github.com/stretchr/testify/assert

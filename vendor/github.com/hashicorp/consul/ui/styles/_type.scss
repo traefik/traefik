@@ -1,0 +1,71 @@
+body {
+    -webkit-font-smoothing:antialiased;
+    font-size: 16px;
+    color: $text-color;
+}
+
+a {
+    color: $purple;
+    font-weight: 600;
+    @include transition(color .2s ease-in-out);
+
+    &:hover {
+        text-decoration: none;
+        color: darken($purple, 10%);
+    }
+
+    &.subtle {
+        color: inherit;
+
+        &:hover {
+            color: $purple;
+        }
+    }
+}
+
+code {
+    color: $purple-dark;
+    background-color: $gray-background;
+}
+
+.help-block {
+    font-size: 14px;
+    color: $gray-light;
+}
+
+small {
+    color: $gray;
+}
+
+h1, h2, h3, h4, h5 {
+    color: $gray-darker;
+}
+
+h5 {
+    text-transform: uppercase;
+    font-weight: 700;
+    color: $gray-light;
+}
+
+h4.breadcrumbs {
+    padding-bottom: 5px;
+    text-transform: uppercase;
+    a {
+        color: $gray-light;
+    }
+}
+
+pre {
+    background-color: $gray;
+    color: white;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.bold {
+    font-weight: 700;
+}
+
+.light {
+    color: $gray;
+}

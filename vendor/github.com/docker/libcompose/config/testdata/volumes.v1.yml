@@ -1,0 +1,14 @@
+simple1:
+  image: myimage
+  volumes:
+    - /var/lib/mysql
+    - /opt/data:/var/lib/mysql
+    - ./cache:/tmp/cache
+    - ~configs:/etc/configs/:ro
+    - datavolume:/var/lib/mysql
+  volume_driver: mydriver
+  volumes_from:
+    - service_name
+    - service_name:ro
+    - container_name
+    - container_name:rw

@@ -1,0 +1,15 @@
+HTTP/1.1 400 Bad Request
+Server: nginx
+Date: Sun, 21 Feb 2016 13:11:11 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 400 Bad Request
+X-RateLimit-Limit: 4000
+X-RateLimit-Remaining: 3997
+X-RateLimit-Reset: 1456063540
+Cache-Control: no-cache
+X-Request-Id: d7a0eb63-77eb-4488-bc55-c129ed8fe192
+X-Runtime: 11.912567
+
+{"message":"Validation failed","errors":{"base":["You must provide an authorization code for the domain"]}}

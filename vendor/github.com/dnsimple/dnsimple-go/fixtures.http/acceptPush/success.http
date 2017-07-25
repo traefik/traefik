@@ -1,0 +1,17 @@
+HTTP/1.1 204 No Content
+Server: nginx
+Date: Thu, 11 Aug 2016 10:23:46 GMT
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2392
+X-RateLimit-Reset: 1470913058
+Cache-Control: no-cache
+X-Request-Id: 5867ab50-6237-4cf8-b220-51f5ef57debd
+X-Runtime: 0.582482
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+

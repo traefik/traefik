@@ -1,0 +1,4 @@
+{{if $.schemaMap}}{{range $resourceId, $resourceData := .schemaMap}}{{range $link, $val := $resourceData.Resource.Links}}{{if eq $link "showResource"}}
+      {{range $collectionMethodsKey, $collectionMethodsValue := $resourceData.CollectionMethods}}{{if eq $collectionMethodsValue "POST"}}{{- $resourceId}}-create:{{end}}{{end}}
+      {{range $resourceMethodsKey, $resourceMethodsValue := $resourceData.ResourceMethods}}{{if eq $resourceMethodsValue "PUT"}}{{- $resourceId}}-update:{{end}}
+      {{if eq $resourceMethodsValue "DELETE"}}{{- $resourceId}}-delete:{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}

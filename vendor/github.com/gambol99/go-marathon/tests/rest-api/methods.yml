@@ -1,0 +1,1408 @@
+- uri: /ping
+  method: GET
+  content: |
+    pong
+- uri: /v2/apps/fake-app/versions
+  method: GET
+  content: |
+    {
+        "versions": [
+            "2014-04-04T06:25:31.399Z"
+        ]
+    }
+- uri: /v2/apps
+  method: POST
+  content: |
+    {
+      "args": null,
+      "backoffFactor": 1.15,
+      "backoffSeconds": 1,
+      "maxLaunchDelaySeconds": 3600,
+      "cmd": "env && python3 -m http.server $PORT0",
+      "constraints": [
+          [
+              "hostname",
+              "UNIQUE"
+          ]
+      ],
+      "container": {
+          "docker": {
+              "image": "python:3"
+          },
+          "type": "DOCKER",
+          "volumes": []
+      },
+      "cpus": 0.25,
+      "dependencies": [],
+      "deployments": [
+          {
+              "id": "f44fd4fc-4330-4600-a68b-99c7bd33014a"
+          }
+      ],
+      "disk": 0.0,
+      "env": {},
+      "executor": "",
+      "healthChecks": [
+          {
+              "command": null,
+              "gracePeriodSeconds": 3,
+              "intervalSeconds": 10,
+              "maxConsecutiveFailures": 3,
+              "path": "/",
+              "portIndex": 0,
+              "protocol": "HTTP",
+              "timeoutSeconds": 5
+          }
+      ],
+      "id": "/fake-app",
+      "instances": 2,
+      "mem": 50.0,
+      "ports": [
+          0
+      ],
+      "requirePorts": false,
+      "storeUrls": [],
+      "upgradeStrategy": {
+          "minimumHealthCapacity": 0.5,
+          "maximumOverCapacity": 0.5
+      },
+      "uris": [],
+      "user": null,
+      "version": "2014-08-18T22:36:41.451Z"
+    }
+- uri: /v2/apps
+  method: GET
+  content: |
+    {
+    "apps": [
+        {
+            "args": null,
+            "backoffFactor": 1.15,
+            "backoffSeconds": 1,
+            "cmd": "python3 -m http.server 8080",
+            "constraints": [],
+            "container": {
+                "docker": {
+                    "image": "python:3",
+                    "network": "BRIDGE",
+                    "portMappings": [
+                        {
+                            "containerPort": 8080,
+                            "hostPort": 0,
+                            "servicePort": 9000,
+                            "protocol": "tcp"
+                        },
+                        {
+                            "containerPort": 161,
+                            "hostPort": 0,
+                            "protocol": "udp"
+                        }
+                    ]
+                },
+                "type": "DOCKER",
+                "volumes": []
+            },
+            "cpus": 0.5,
+            "dependencies": [],
+            "deployments": [],
+            "disk": 0.0,
+            "env": {},
+            "executor": "",
+            "healthChecks": [
+                {
+                    "command": null,
+                    "gracePeriodSeconds": 5,
+                    "intervalSeconds": 20,
+                    "maxConsecutiveFailures": 3,
+                    "path": "/",
+                    "portIndex": 0,
+                    "protocol": "HTTP",
+                    "timeoutSeconds": 20
+                }
+            ],
+            "id": "/fake-app",
+            "instances": 2,
+            "mem": 64.0,
+            "ports": [
+                10000,
+                10001
+            ],
+            "requirePorts": false,
+            "storeUrls": [],
+            "tasksRunning": 2,
+            "tasksStaged": 0,
+            "upgradeStrategy": {
+                "minimumHealthCapacity": 1.0
+            },
+            "uris": [],
+            "user": null,
+            "version": "2014-09-25T02:26:59.256Z"
+        },
+        {
+            "args": null,
+            "backoffFactor": 1.15,
+            "backoffSeconds": 1,
+            "cmd": "python3 -m http.server 8080",
+            "constraints": [],
+            "container": {
+                "docker": {
+                    "image": "python:3",
+                    "network": "BRIDGE",
+                    "portMappings": [
+                        {
+                            "containerPort": 8080,
+                            "hostPort": 0,
+                            "servicePort": 9000,
+                            "protocol": "tcp"
+                        },
+                        {
+                            "containerPort": 161,
+                            "hostPort": 0,
+                            "protocol": "udp"
+                        }
+                    ]
+                },
+                "type": "DOCKER",
+                "volumes": []
+            },
+            "cpus": 0.5,
+            "dependencies": [],
+            "deployments": [],
+            "disk": 0.0,
+            "env": {},
+            "executor": "",
+            "healthChecks": [
+                {
+                    "command": null,
+                    "gracePeriodSeconds": 5,
+                    "intervalSeconds": 20,
+                    "maxConsecutiveFailures": 3,
+                    "path": "/",
+                    "portIndex": 0,
+                    "protocol": "HTTP",
+                    "timeoutSeconds": 20
+                }
+            ],
+            "id": "/fake-app-broken",
+            "instances": 2,
+            "mem": 64.0,
+            "ports": [
+                10000,
+                10001
+            ],
+            "requirePorts": false,
+            "storeUrls": [],
+            "tasksRunning": 2,
+            "tasksStaged": 0,
+            "upgradeStrategy": {
+                "minimumHealthCapacity": 1.0
+            },
+            "uris": [],
+            "user": null,
+            "version": "2014-09-25T02:26:59.256Z"
+        }
+    ]
+    }
+- uri: /v2/apps?embed=apps.taskStats
+  method: GET
+  content: |
+    {
+    "apps": [
+        {
+            "taskStats": {
+                "startedAfterLastScaling": {
+                    "stats": {
+                        "counts": {
+                            "staged": 0,
+                            "running": 1,
+                            "healthy": 1,
+                            "unhealthy": 0
+                        },
+                        "lifeTime": {
+                            "averageSeconds": 17024.575,
+                            "medianSeconds": 17024.575
+                        }
+                    }
+                }
+            }
+        }
+    ]
+    }
+- uri: /v2/apps?cmd=nginx
+  method: GET
+  content: |
+    {
+    "apps": [
+        {
+            "args": null,
+            "cmd": "nginx"
+        }
+    ]
+    }
+- uri: /v2/apps/fake-app/restart
+  method: POST
+  content: |
+    {
+      "deploymentId": "83b215a6-4e26-4e44-9333-5c385eda6438",
+      "version": "2014-08-26T07:37:50.462Z"
+    }
+- uri: /v2/apps/fake-app
+  method: DELETE
+  content: |
+    {
+      "deploymentId": "83b215a6-4e26-4e44-9333-5c385eda6438",
+      "version": "2014-08-26T07:37:50.462Z"
+    }
+- uri: /v2/apps/fake-app?force=true
+  method: DELETE
+  content: |
+    {
+      "deploymentId": "83b215a6-4e26-4e44-9333-5c385eda6438",
+      "version": "2014-08-26T07:37:50.462Z"
+    }
+- uri: /v2/apps/fake-app/tasks
+  method: GET
+  content: |
+    {
+        "tasks": [{"id": "1"},{"id": "2"}]
+    }
+- uri: /v2/apps/fake-app/tasks
+  method: DELETE
+  content: |
+    {
+        "tasks": []
+    }
+- uri: /v2/apps/fake-app/tasks/fake-app.fake-task
+  method: DELETE
+  content: |
+    {
+        "task": {"id": "fake-app.fake-task"}
+    }
+- uri: /v2/apps/fake-group/fake-app/tasks/fake-group_fake-app.fake-task
+  method: DELETE
+  content: |
+    {
+        "task": {"id": "fake-group_fake-app.fake-task"}
+    }
+- uri: /v2/apps/fake-app/versions/2014-09-12T23:28:21.737Z
+  method: GET
+  content: |
+    {
+        "args": null,
+        "backoffFactor": 1.15,
+        "backoffSeconds": 1,
+        "cmd": "python toggle.py $PORT0",
+        "constraints": [],
+        "container": {
+            "docker": {
+                "image": "python:3",
+                "network": "BRIDGE",
+                "portMappings": [
+                    {
+                        "containerPort": 8080,
+                        "hostPort": 0,
+                        "servicePort": 9000,
+                        "protocol": "tcp"
+                    }
+                ]
+            },
+            "type": "DOCKER",
+            "volumes": []
+        },
+        "cpus": 0.2,
+        "dependencies": [],
+        "deployments": [],
+        "disk": 0.0,
+        "env": {},
+        "executor": "",
+        "healthChecks": [
+            {
+                "command": null,
+                "gracePeriodSeconds": 5,
+                "intervalSeconds": 10,
+                "maxConsecutiveFailures": 3,
+                "path": "/health",
+                "portIndex": 0,
+                "protocol": "HTTP",
+                "timeoutSeconds": 10
+            }
+        ],
+        "id": "/fake-app",
+        "instances": 2,
+        "lastTaskFailure": {
+            "appId": "/toggle",
+            "host": "10.141.141.10",
+            "message": "Abnormal executor termination",
+            "state": "TASK_FAILED",
+            "taskId": "toggle.cc427e60-5046-11e4-9e34-56847afe9799",
+            "timestamp": "2014-09-12T23:23:41.711Z",
+            "version": "2014-09-12T23:28:21.737Z"
+        },
+        "mem": 32.0,
+        "ports": [
+            10000
+        ],
+        "requirePorts": false,
+        "storeUrls": [],
+        "tasks": [
+            {
+                "appId": "/toggle",
+                "healthCheckResults": [
+                    {
+                        "alive": true,
+                        "consecutiveFailures": 0,
+                        "firstSuccess": "2014-09-13T00:20:28.101Z",
+                        "lastFailure": null,
+                        "lastSuccess": "2014-09-13T00:25:07.506Z",
+                        "taskId": "toggle.802df2ae-3ad4-11e4-a400-56847afe9799"
+                    }
+                ],
+                "host": "10.141.141.10",
+                "id": "toggle.802df2ae-3ad4-11e4-a400-56847afe9799",
+                "ports": [
+                    31045
+                ],
+                "stagedAt": "2014-09-12T23:28:28.594Z",
+                "startedAt": "2014-09-13T00:24:46.959Z",
+                "version": "2014-09-12T23:28:21.737Z"
+            },
+            {
+                "appId": "/toggle",
+                "healthCheckResults": [
+                    {
+                        "alive": true,
+                        "consecutiveFailures": 0,
+                        "firstSuccess": "2014-09-13T00:20:28.101Z",
+                        "lastFailure": null,
+                        "lastSuccess": "2014-09-13T00:25:07.508Z",
+                        "taskId": "toggle.7c99814d-3ad4-11e4-a400-56847afe9799"
+                    }
+                ],
+                "host": "10.141.141.10",
+                "id": "toggle.7c99814d-3ad4-11e4-a400-56847afe9799",
+                "ports": [
+                    31234
+                ],
+                "stagedAt": "2014-09-12T23:28:22.587Z",
+                "startedAt": "2014-09-13T00:24:46.965Z",
+                "version": "2014-09-12T23:28:21.737Z"
+            }
+        ],
+        "tasksRunning": 2,
+        "tasksStaged": 0,
+        "upgradeStrategy": {
+            "minimumHealthCapacity": 1.0
+        },
+        "uris": [
+            "http://downloads.mesosphere.com/misc/toggle.tgz"
+        ],
+        "user": null,
+        "version": "2014-09-12T23:28:21.737Z"
+    }
+- uri: /v2/apps/fake-app
+  method: GET
+  content: |
+    {
+    "app": {
+        "args": null,
+        "backoffFactor": 1.15,
+        "backoffSeconds": 1,
+        "cmd": "python toggle.py $PORT0",
+        "constraints": [],
+        "container": {
+            "docker": {
+                "image": "python:3",
+                "network": "BRIDGE",
+                "portMappings": [
+                    {
+                        "containerPort": 8080,
+                        "hostPort": 0,
+                        "servicePort": 9000,
+                        "protocol": "tcp"
+                    }
+                ]
+            },
+            "type": "DOCKER",
+            "volumes": []
+        },
+        "cpus": 0.2,
+        "dependencies": [],
+        "deployments": [],
+        "disk": 0.0,
+        "env": {},
+        "executor": "",
+        "healthChecks": [
+            {
+                "command": null,
+                "gracePeriodSeconds": 5,
+                "intervalSeconds": 10,
+                "maxConsecutiveFailures": 3,
+                "path": "/health",
+                "portIndex": 0,
+                "protocol": "HTTP",
+                "timeoutSeconds": 10
+            }
+        ],
+        "id": "/fake-app",
+        "instances": 2,
+        "lastTaskFailure": {
+            "appId": "/toggle",
+            "host": "10.141.141.10",
+            "message": "Abnormal executor termination",
+            "state": "TASK_FAILED",
+            "taskId": "toggle.cc427e60-5046-11e4-9e34-56847afe9799",
+            "timestamp": "2014-09-12T23:23:41.711Z",
+            "version": "2014-09-12T23:28:21.737Z"
+        },
+        "mem": 32.0,
+        "ports": [
+            10000
+        ],
+        "requirePorts": false,
+        "storeUrls": [],
+        "tasks": [
+            {
+                "appId": "/toggle",
+                "healthCheckResults": [
+                    {
+                        "alive": true,
+                        "consecutiveFailures": 0,
+                        "firstSuccess": "2014-09-13T00:20:28.101Z",
+                        "lastFailure": null,
+                        "lastSuccess": "2014-09-13T00:25:07.506Z",
+                        "taskId": "toggle.802df2ae-3ad4-11e4-a400-56847afe9799"
+                    }
+                ],
+                "host": "10.141.141.10",
+                "id": "toggle.802df2ae-3ad4-11e4-a400-56847afe9799",
+                "ports": [
+                    31045
+                ],
+                "stagedAt": "2014-09-12T23:28:28.594Z",
+                "startedAt": "2014-09-13T00:24:46.959Z",
+                "version": "2014-09-12T23:28:21.737Z"
+            },
+            {
+                "appId": "/toggle",
+                "healthCheckResults": [
+                    {
+                        "alive": true,
+                        "consecutiveFailures": 0,
+                        "firstSuccess": "2014-09-13T00:20:28.101Z",
+                        "lastFailure": null,
+                        "lastSuccess": "2014-09-13T00:25:07.508Z",
+                        "taskId": "toggle.7c99814d-3ad4-11e4-a400-56847afe9799"
+                    }
+                ],
+                "host": "10.141.141.10",
+                "id": "toggle.7c99814d-3ad4-11e4-a400-56847afe9799",
+                "ports": [
+                    31234
+                ],
+                "stagedAt": "2014-09-12T23:28:22.587Z",
+                "startedAt": "2014-09-13T00:24:46.965Z",
+                "version": "2014-09-12T23:28:21.737Z"
+            }
+        ],
+        "tasksRunning": 2,
+        "tasksStaged": 0,
+        "upgradeStrategy": {
+            "minimumHealthCapacity": 1.0
+        },
+        "uris": [
+            "http://downloads.mesosphere.com/misc/toggle.tgz"
+        ],
+        "user": null,
+        "version": "2014-09-12T23:28:21.737Z"
+    }
+    }
+
+- uri: /v2/apps/fake-app
+  method: GET
+  scope: wait-on-app
+  contentSequence:
+    - index: 1
+      content: |
+        {
+        "app": {
+        }
+        }
+
+- uri: /v2/apps/fake-app-broken
+  method: GET
+  content: |
+    {
+    "app": {
+        "args": null,
+        "backoffFactor": 1.15,
+        "backoffSeconds": 1,
+        "cmd": "python toggle.py $PORT0",
+        "constraints": [],
+        "container": {
+            "docker": {
+                "image": "python:3",
+                "network": "BRIDGE",
+                "portMappings": [
+                    {
+                        "containerPort": 8080,
+                        "hostPort": 0,
+                        "servicePort": 9000,
+                        "protocol": "tcp"
+                    }
+                ]
+            },
+            "type": "DOCKER",
+            "volumes": []
+        },
+        "cpus": 0.2,
+        "dependencies": [],
+        "deployments": [],
+        "disk": 0.0,
+        "env": {},
+        "executor": "",
+        "healthChecks": [
+            {
+                "command": null,
+                "gracePeriodSeconds": 5,
+                "intervalSeconds": 10,
+                "maxConsecutiveFailures": 3,
+                "path": "/health",
+                "portIndex": 0,
+                "protocol": "HTTP",
+                "timeoutSeconds": 10
+            }
+        ],
+        "id": "/fake-app-broken",
+        "instances": 2,
+        "lastTaskFailure": {
+            "appId": "/toggle",
+            "host": "10.141.141.10",
+            "message": "Abnormal executor termination",
+            "state": "TASK_FAILED",
+            "taskId": "toggle.cc427e60-5046-11e4-9e34-56847afe9799",
+            "timestamp": "2014-09-12T23:23:41.711Z",
+            "version": "2014-09-12T23:28:21.737Z"
+        },
+        "mem": 32.0,
+        "ports": [
+            10000
+        ],
+        "requirePorts": false,
+        "storeUrls": [],
+        "tasks": [
+            {
+                "appId": "/toggle",
+                "healthCheckResults": [
+                    {
+                        "alive": true,
+                        "consecutiveFailures": 0,
+                        "firstSuccess": "2014-09-13T00:20:28.101Z",
+                        "lastFailure": null,
+                        "lastSuccess": "2014-09-13T00:25:07.506Z",
+                        "taskId": "toggle.802df2ae-3ad4-11e4-a400-56847afe9799"
+                    }
+                ],
+                "host": "10.141.141.10",
+                "id": "toggle.802df2ae-3ad4-11e4-a400-56847afe9799",
+                "ports": [
+                    31045
+                ],
+                "stagedAt": "2014-09-12T23:28:28.594Z",
+                "startedAt": "2014-09-13T00:24:46.959Z",
+                "version": "2014-09-12T23:28:21.737Z"
+            },
+            {
+                "appId": "/toggle",
+                "healthCheckResults": [
+                    {
+                        "alive": false,
+                        "consecutiveFailures": 0,
+                        "firstSuccess": "2014-09-13T00:20:28.101Z",
+                        "lastFailure": null,
+                        "lastSuccess": "2014-09-13T00:25:07.508Z",
+                        "taskId": "toggle.7c99814d-3ad4-11e4-a400-56847afe9799"
+                    }
+                ],
+                "host": "10.141.141.10",
+                "id": "toggle.7c99814d-3ad4-11e4-a400-56847afe9799",
+                "ports": [
+                    31234
+                ],
+                "stagedAt": "2014-09-12T23:28:22.587Z",
+                "startedAt": "2014-09-13T00:24:46.965Z",
+                "version": "2014-09-12T23:28:21.737Z"
+            }
+        ],
+        "tasksRunning": 2,
+        "tasksStaged": 0,
+        "upgradeStrategy": {
+            "minimumHealthCapacity": 1.0
+        },
+        "uris": [
+            "http://downloads.mesosphere.com/misc/toggle.tgz"
+        ],
+        "user": null,
+        "version": "2014-09-12T23:28:21.737Z"
+    }
+    }
+- uri: /v2/apps/fake-app/versions
+  method: GET
+  content: |
+    {
+        "versions": [
+            "2014-04-04T06:25:31.399Z"
+        ]
+    }
+- uri: /v2/apps/fake-app
+  method: PUT
+  content: |
+    {
+      "deploymentId": "83b215a6-4e26-4e44-9333-5c385eda6438",
+      "version": "2014-08-26T07:37:50.462Z"
+    }
+- uri: /v2/apps/fake-app?force=true
+  method: PUT
+  content: |
+    {
+      "deploymentId": "83b215a6-4e26-4e44-9333-5c385eda6438",
+      "version": "2014-08-26T07:37:50.462Z"
+    }
+- uri: /v2/groups
+  method: GET
+  content: |
+    {
+        "apps": [],
+        "dependencies": [],
+        "groups": [
+            {
+                "apps": [
+                    {
+                        "args": null,
+                        "backoffFactor": 1.15,
+                        "backoffSeconds": 1,
+                        "maxLaunchDelaySeconds": 3600,
+                        "cmd": "sleep 30",
+                        "constraints": [],
+                        "container": null,
+                        "cpus": 1.0,
+                        "dependencies": [],
+                        "disk": 0.0,
+                        "env": {},
+                        "executor": "",
+                        "healthChecks": [],
+                        "id": "/test/app",
+                        "instances": 1,
+                        "mem": 128.0,
+                        "ports": [
+                            10000
+                        ],
+                        "requirePorts": false,
+                        "storeUrls": [],
+                        "upgradeStrategy": {
+                            "minimumHealthCapacity": 1.0
+                        },
+                        "uris": [],
+                        "user": null,
+                        "version": "2014-08-28T01:05:40.586Z"
+                    }
+                ],
+                "dependencies": [],
+                "groups": [],
+                "id": "/test",
+                "version": "2014-08-28T01:09:46.212Z"
+            }
+        ],
+        "id": "/",
+        "version": "2014-08-28T01:09:46.212Z"
+    }
+- uri: /v2/groups/test
+  method: GET
+  content: |
+    {
+        "apps": [
+            {
+                "args": null,
+                "backoffFactor": 1.15,
+                "backoffSeconds": 1,
+                "maxLaunchDelaySeconds": 3600,
+                "cmd": "sleep 30",
+                "constraints": [],
+                "container": null,
+                "cpus": 1.0,
+                "dependencies": [],
+                "disk": 0.0,
+                "env": {},
+                "executor": "",
+                "healthChecks": [],
+                "id": "/test/app",
+                "instances": 1,
+                "mem": 128.0,
+                "ports": [
+                    10000
+                ],
+                "requirePorts": false,
+                "storeUrls": [],
+                "upgradeStrategy": {
+                    "minimumHealthCapacity": 1.0
+                },
+                "uris": [],
+                "user": null,
+                "version": "2014-08-28T01:05:40.586Z"
+            }
+        ],
+        "dependencies": [],
+        "groups": [],
+        "id": "/test",
+        "version": "2014-08-28T01:09:46.212Z"
+    }
+- uri: /v2/groups/qa/product/1
+  method: GET
+  content: |
+    {
+      "id": "/qa/product/1",
+      "groups": [
+        {
+          "id": "frontend",
+          "apps": [
+            {
+              "cmd": "",
+              "container": {
+                "type": "DOCKER",
+                "docker": {
+                  "image": "quay.io/gambol99/apache-php:latest",
+                  "network": "BRIDGE",
+                  "portMappings": [
+                    {
+                      "containerPort": 80,
+                      "hostPort": 0,
+                      "protocol": "tcp"
+                    },
+                    {
+                      "containerPort": 443,
+                      "hostPort": 0,
+                      "protocol": "tcp"
+                    }
+                  ]
+                }
+              },
+              "healthChecks": [
+                {
+                  "protocol": "HTTP",
+                  "path": "/hostname.php",
+                  "gracePeriodSeconds": 3,
+                  "intervalSeconds": 10,
+                  "portIndex": 0,
+                  "timeoutSeconds": 10,
+                  "maxConsecutiveFailures": 3
+                }
+              ],
+              "id": "apache",
+              "mem": 64,
+              "args": [],
+              "env": {
+                "ENVIRONMENT": "qa",
+                "SERVICE_80_NAME": "apache_http-qa-1",
+                "SERVICE_443_NAME": "apache_https-qa-1",
+                "NAME": "frontend",
+                "BACKEND_MYSQL_MASTER": "mysql-qa-1;3306",
+                "BACKEND_CACHE": "redis-qa-1;6379"
+              },
+              "dependencies": [
+                "/qa/product/1/database",
+                "/qa/product/1/caching"
+              ]
+            },{
+              "id": "database",
+              "container": {
+                "type": "DOCKER",
+                "docker": {
+                  "image": "tutum/mysql",
+                  "network": "BRIDGE",
+                  "portMappings": [
+                    { "containerPort": 3306, "hostPort": 0, "protocol": "tcp" }
+                  ]
+                }
+              },
+              "healthChecks": [
+                {
+                  "portIndex": 0,
+                  "protocol": "TCP",
+                  "gracePeriodSeconds": 10,
+                  "intervalSeconds": 10,
+                  "timeoutSeconds": 5,
+                  "maxConsecutiveFailures": 2
+                }
+              ],
+              "id": "mysql",
+              "mem": 1024,
+              "cmd": "",
+              "env": {
+                "ENVIRONMENT": "qa",
+                "SERVICE_NAME": "dbmaster",
+                "SERVICE_3306_NAME": "mysql-qa-1",
+                "MYSQL_PASS": "mysql",
+                "REPLICATION_MASTER": "true",
+                "REPLICATION_USER": "replication",
+                "REPLICATION_PASS": "8d67as9f7sjhsdfsd"
+              }
+            },{
+              "container": {
+                "type": "DOCKER",
+                "docker": {
+                  "image": "redis",
+                  "network": "BRIDGE",
+                  "portMappings": [
+                    {
+                      "containerPort": 6379,
+                      "hostPort": 0,
+                      "protocol": "tcp"
+                    }
+                  ]
+                }
+              },
+              "healthChecks": [
+                {
+                  "portIndex": 0,
+                  "protocol": "TCP",
+                  "gracePeriodSeconds": 10,
+                  "intervalSeconds": 10,
+                  "timeoutSeconds": 5,
+                  "maxConsecutiveFailures": 2
+                }
+              ],
+              "id": "caching",
+              "cmd": "",
+              "mem": 128,
+              "env": {
+                "ENVIRONMENT": "qa",
+                "SERVICE_6379_NAME": "redis-qa-1"
+              }
+            }
+          ]
+        }
+      ]
+    }
+- uri: /v2/groups/:groupId
+  method: PUT
+  content: |
+    {
+        "deploymentId": "c0e7434c-df47-4d23-99f1-78bd78662231",
+        "version": "2014-08-28T16:45:41.063Z"
+    }
+- uri: /v2/groups/:groupId
+  method: DELETE
+  content: |
+    {"version":"2014-07-01T10:20:50.196Z"}
+- uri: /v2/tasks
+  method: GET
+  content: |
+    {
+        "tasks": [
+            {
+                "appId": "/bridged-webapp",
+                "healthCheckResults": [
+                    {
+                        "alive": true,
+                        "consecutiveFailures": 0,
+                        "firstSuccess": "2014-10-03T22:57:02.246Z",
+                        "lastFailure": null,
+                        "lastSuccess": "2014-10-03T22:57:41.643Z",
+                        "taskId": "bridged-webapp.eb76c51f-4b4a-11e4-ae49-56847afe9799"
+                    }
+                ],
+                "host": "10.141.141.10",
+                "id": "bridged-webapp.eb76c51f-4b4a-11e4-ae49-56847afe9799",
+                "ports": [
+                    31000
+                ],
+                "servicePorts": [
+                    9000
+                ],
+                "stagedAt": "2014-10-03T22:16:27.811Z",
+                "startedAt": "2014-10-03T22:57:41.587Z",
+                "version": "2014-10-03T22:16:23.634Z"
+            },
+            {
+                "appId": "/bridged-webapp",
+                "healthCheckResults": [
+                    {
+                        "alive": true,
+                        "consecutiveFailures": 0,
+                        "firstSuccess": "2014-10-03T22:57:02.246Z",
+                        "lastFailure": null,
+                        "lastSuccess": "2014-10-03T22:57:41.649Z",
+                        "taskId": "bridged-webapp.ef0b5d91-4b4a-11e4-ae49-56847afe9799"
+                    }
+                ],
+                "host": "10.141.141.10",
+                "id": "bridged-webapp.ef0b5d91-4b4a-11e4-ae49-56847afe9799",
+                "ports": [
+                    31001
+                ],
+                "servicePorts": [
+                    9000
+                ],
+                "stagedAt": "2014-10-03T22:16:33.814Z",
+                "startedAt": "2014-10-03T22:57:41.593Z",
+                "version": "2014-10-03T22:16:23.634Z"
+            }
+        ]
+    }
+- uri: /v2/tasks?status=staging
+  method: GET
+  content: |
+    {"tasks":[]}
+- uri: /v2/tasks/delete
+  method: POST
+- uri: /v2/deployments
+  method: GET
+  content: |
+    [
+        {
+            "affectedApps": [
+                "/test"
+            ],
+            "id": "867ed450-f6a8-4d33-9b0e-e11c5513990b",
+            "steps": [
+                [
+                    {
+                        "action": "ScaleApplication",
+                        "app": "/test"
+                    }
+                ]
+            ],
+            "currentActions": [
+              {
+                "action": "ScaleApplication",
+                "app": "/test"
+              }
+            ],
+            "version": "2014-08-26T08:18:03.595Z",
+            "currentStep": 1,
+            "totalSteps": 1
+        }
+    ]
+- uri: /v2/deployments
+  method: GET
+  scope: v1.1.1
+  content: |
+    [
+      {
+        "id": "2620aa06-1001-4eea-8861-a51957d4fd80",
+        "version": "2016-06-06T16:06:11.612Z",
+        "affectedApps": [
+          "/test-app-v1"
+        ],
+        "steps": [
+          {
+            "actions": [
+              {
+                "type": "StartApplication",
+                "app": "/test-app-v1"
+              }
+            ]
+          },
+          {
+            "actions": [
+              {
+                "type": "ScaleApplication",
+                "app": "/test-app-v1"
+              }
+            ]
+          }
+        ],
+        "currentActions": [
+          {
+            "action": "ScaleApplication",
+            "app": "/test-app-v1",
+            "readinessCheckResults": [
+              {
+                "name": "myReadyCheck",
+                "taskId": "test_frontend_app1.c9de6033",
+                "ready": false,
+                "lastResponse": {
+                  "body": "{}",
+                  "contentType": "application/json",
+                  "status": 500
+                }
+              }
+            ]
+          }
+        ],
+        "currentStep": 2,
+        "totalSteps": 2
+      }
+    ]
+
+- uri: /v2/deployments/867ed450-f6a8-4d33-9b0e-e11c5513990b
+  method: DELETE
+  content: |
+    {
+        "deploymentId": "0b1467fc-d5cd-4bbc-bac2-2805351cee1e",
+        "version": "2014-08-26T08:20:26.171Z"
+    }
+- uri: /v2/eventSubscriptions?callbackUrl=http://localhost:9292/callback
+  method: POST
+  content: |
+    {
+            "callbackUrl": "http://localhost:9292/callback",
+            "clientIp": "0:0:0:0:0:0:0:1",
+            "eventType": "subscribe_event"
+        }
+- uri: /v2/eventSubscriptions
+  method: POST
+  content: |
+    {
+        "callbackUrl": "http://localhost:9292/callback",
+        "clientIp": "0:0:0:0:0:0:0:1",
+        "eventType": "subscribe_event"
+    }
+- uri: /v2/eventSubscriptions
+  method: GET
+  content: |
+    {
+        "callbackUrls": [
+            "http://localhost:9292/callback"
+        ]
+    }
+- uri: /v2/eventSubscriptions?callbackUrl=http://localhost:9292/callback
+  method: DELETE
+  content: |
+    {
+        "callbackUrl": "http://localhost:9292/callback",
+        "clientIp": "0:0:0:0:0:0:0:1",
+        "eventType": "unsubscribe_event"
+    }
+- uri: /v2/queue
+  method: GET
+  content: |
+    {
+        "queue": [
+            {
+                "count": 10,
+                "delay": {
+                  "overdue": true,
+                  "timeLeftSeconds": 784
+                },
+                "app": {
+                    "args": null,
+                    "backoffFactor": 1.15,
+                    "backoffSeconds": 1,
+                    "cmd": "python toggle.py $PORT0",
+                    "constraints": [],
+                    "container": null,
+                    "cpus": 0.2,
+                    "dependencies": [],
+                    "disk": 0.0,
+                    "env": {},
+                    "executor": "",
+                    "healthChecks": [],
+                    "id": "/test",
+                    "instances": 3,
+                    "mem": 32.0,
+                    "ports": [10000],
+                    "requirePorts": false,
+                    "storeUrls": [],
+                    "upgradeStrategy": {
+                        "minimumHealthCapacity": 1.0
+                    },
+                    "uris": [
+                        "http://downloads.mesosphere.com/misc/toggle.tgz"
+                    ],
+                    "user": null,
+                    "version": "2014-08-26T05:04:49.766Z"
+                }
+            }
+        ]
+    }
+
+- uri: /v2/queue/fake-app/delay
+  method: DELETE
+
+- uri: /v2/leader
+  method: GET
+  content: |
+    {
+       "leader": "127.0.0.1:8080"
+    }
+- uri: /v2/leader
+  method: DELETE
+  content: |
+    {
+      "message": "Leadership abdicted"
+    }
+- uri: /v2/info
+  method: GET
+  content: |
+    {
+        "frameworkId": "20140730-222531-1863654316-5050-10422-0000",
+        "leader": "127.0.0.1:8080",
+        "http_config": {
+            "assets_path": null,
+            "http_port": 8080,
+            "https_port": 8443
+        },
+        "event_subscriber": {
+            "type": "http_callback",
+            "http_endpoints": [
+                "localhost:9999/events"
+            ]
+        },
+        "marathon_config": {
+            "checkpoint": false,
+            "executor": "//cmd",
+            "failover_timeout": 604800,
+            "ha": true,
+            "hostname": "127.0.0.1",
+            "local_port_max": 49151,
+            "local_port_min": 32767,
+            "master": "zk://localhost:2181/mesos",
+            "mesos_role": null,
+            "mesos_user": "root",
+            "reconciliation_initial_delay": 30000,
+            "reconciliation_interval": 30000,
+            "task_launch_timeout": 60000
+        },
+        "name": "marathon",
+        "version": "0.7.0-SNAPSHOT",
+        "zookeeper_config": {
+            "zk": "zk://localhost:2181/marathon",
+            "zk_future_timeout": {
+                "duration": 10
+            },
+            "zk_hosts": "localhost:2181",
+            "zk_path": "/marathon",
+            "zk_state": "/marathon",
+            "zk_timeout": 10
+        }
+    }
+- uri: /ping
+  method: GET
+  content: |
+    pong
+- uri: /marathon/v2/apps
+  method: GET
+  content: |
+    {
+    "apps": [
+        {
+            "args": null,
+            "backoffFactor": 1.15,
+            "backoffSeconds": 1,
+            "cmd": "python3 -m http.server 8080",
+            "constraints": [],
+            "container": {
+                "docker": {
+                    "image": "python:3",
+                    "network": "BRIDGE",
+                    "portMappings": [
+                        {
+                            "containerPort": 8080,
+                            "hostPort": 0,
+                            "servicePort": 9000,
+                            "protocol": "tcp"
+                        },
+                        {
+                            "containerPort": 161,
+                            "hostPort": 0,
+                            "protocol": "udp"
+                        }
+                    ]
+                },
+                "type": "DOCKER",
+                "volumes": []
+            },
+            "cpus": 0.5,
+            "dependencies": [],
+            "deployments": [],
+            "disk": 0.0,
+            "env": {},
+            "executor": "",
+            "healthChecks": [
+                {
+                    "command": null,
+                    "gracePeriodSeconds": 5,
+                    "intervalSeconds": 20,
+                    "maxConsecutiveFailures": 3,
+                    "path": "/",
+                    "portIndex": 0,
+                    "protocol": "HTTP",
+                    "timeoutSeconds": 20
+                }
+            ],
+            "id": "/fake-app",
+            "instances": 2,
+            "mem": 64.0,
+            "ports": [
+                10000,
+                10001
+            ],
+            "requirePorts": false,
+            "storeUrls": [],
+            "tasksRunning": 2,
+            "tasksStaged": 0,
+            "upgradeStrategy": {
+                "minimumHealthCapacity": 1.0
+            },
+            "uris": [],
+            "user": null,
+            "version": "2014-09-25T02:26:59.256Z"
+        },
+        {
+            "args": null,
+            "backoffFactor": 1.15,
+            "backoffSeconds": 1,
+            "cmd": "python3 -m http.server 8080",
+            "constraints": [],
+            "container": {
+                "docker": {
+                    "image": "python:3",
+                    "network": "BRIDGE",
+                    "portMappings": [
+                        {
+                            "containerPort": 8080,
+                            "hostPort": 0,
+                            "servicePort": 9000,
+                            "protocol": "tcp"
+                        },
+                        {
+                            "containerPort": 161,
+                            "hostPort": 0,
+                            "protocol": "udp"
+                        }
+                    ]
+                },
+                "type": "DOCKER",
+                "volumes": []
+            },
+            "cpus": 0.5,
+            "dependencies": [],
+            "deployments": [],
+            "disk": 0.0,
+            "env": {},
+            "executor": "",
+            "healthChecks": [
+                {
+                    "command": null,
+                    "gracePeriodSeconds": 5,
+                    "intervalSeconds": 20,
+                    "maxConsecutiveFailures": 3,
+                    "path": "/",
+                    "portIndex": 0,
+                    "protocol": "HTTP",
+                    "timeoutSeconds": 20
+                }
+            ],
+            "id": "/fake-app-broken",
+            "instances": 2,
+            "mem": 64.0,
+            "ports": [
+                10000,
+                10001
+            ],
+            "requirePorts": false,
+            "storeUrls": [],
+            "tasksRunning": 2,
+            "tasksStaged": 0,
+            "upgradeStrategy": {
+                "minimumHealthCapacity": 1.0
+            },
+            "uris": [],
+            "user": null,
+            "version": "2014-09-25T02:26:59.256Z"
+        }
+    ]
+    }
+- uri: /v2/apps/no-health-check-results-app
+  method: GET
+  content: |
+    {
+    "app": {
+        "healthChecks": [
+            {
+                "command": null,
+                "gracePeriodSeconds": 5,
+                "intervalSeconds": 10,
+                "maxConsecutiveFailures": 3,
+                "path": "/health",
+                "portIndex": 0,
+                "protocol": "HTTP",
+                "timeoutSeconds": 10
+            }
+        ],
+        "id": "/no-health-check-results-app",
+        "instances": 2,
+        "mem": 32.0,
+        "ports": [
+            10000
+        ],
+        "tasks": [
+            {
+                "appId": "/no-health-check-results-app",
+                "healthCheckResults": [
+                    {
+                        "alive": true,
+                        "consecutiveFailures": 0,
+                        "firstSuccess": "2014-09-13T00:20:28.101Z",
+                        "lastFailure": null,
+                        "lastSuccess": "2014-09-13T00:25:07.506Z",
+                        "taskId": "toggle.802df2ae-3ad4-11e4-a400-56847afe9799"
+                    }
+                ],
+                "id": "task1.802df2ae-3ad4-11e4-a400-56847afe9799"
+            },
+            {
+                "appId": "/no-health-check-results-app",
+                "id": "task2.7c99814d-3ad4-11e4-a400-56847afe9799"
+            }
+        ],
+        "tasksRunning": 2,
+        "tasksStaged": 0,
+        "version": "2014-09-12T23:28:21.737Z"
+    }
+    }
+- uri: /v2/apps?embed=apps.readiness
+  method: GET
+  content: |
+    {
+    "apps": [
+      {
+        "id": "/fake-app",
+        "readinessCheckResults": [
+          {
+            "name": "myReadyCheck",
+            "taskId": "test_frontend_app1.c9de6033",
+            "ready": false,
+            "lastResponse": {
+              "body": "{}",
+              "contentType": "application/json",
+              "status": 500
+            }
+          }
+        ]
+      }
+    ]
+    }
+- uri: /v2/apps/fake-app
+  method: GET
+  scope: unreachablestrategy-present
+  content: |
+    {
+    "app": {
+          "id": "/fake-app",
+          "unreachableStrategy": {
+            "inactiveAfterSeconds": 3.0,
+            "expungeAfterSeconds": 4.0
+          }
+      }
+    }
+- uri: /v2/apps/fake-app
+  method: GET
+  scope: unreachablestrategy-absent
+  content: |
+    {
+    "app": {
+          "id": "/fake-app",
+          "unreachableStrategy": "disabled"
+      }
+    }

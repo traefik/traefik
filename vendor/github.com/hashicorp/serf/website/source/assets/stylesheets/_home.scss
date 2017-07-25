@@ -1,0 +1,49 @@
+//
+// Home
+// --------------------------------------------------
+
+#features{
+	@include anti-alias();
+	padding: 90px 0 0 0;
+
+	.row{
+		padding: 0 0 90px 0;
+	}
+
+	h2{
+		font-size: 32px;
+		letter-spacing: 2px;
+		color: $serf-gray;
+		text-transform: uppercase;
+		font-family: $font-family-rales;
+		font-weight: $font-weight-rales-sb;
+	}
+	p{
+		font-size: 18px;
+		letter-spacing: 1px;
+        line-height: 1.5em;
+		color: $serf-gray-darker;
+		font-family: $font-family-source-sans;
+		font-weight: $font-weight-open;
+	}
+
+	.icn{
+		display: block;
+		width: 286px;
+		height: 286px;
+		margin: 0 auto;
+		background-size: 286px 286px;
+		background-position: 0 0;
+		background-repeat: no-repeat;
+	}
+
+	.icn1{
+		background-image: image-url("gossip-proto-icon@2x.png");
+	}
+	.icn2{
+		background-image: image-url("failure-detect-icon@2x.png");
+	}
+	.icn3{
+		background-image: image-url("custom-event-icon@2x.png");
+	}
+}

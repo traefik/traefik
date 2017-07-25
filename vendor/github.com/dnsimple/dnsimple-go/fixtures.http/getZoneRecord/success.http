@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Wed, 05 Oct 2016 09:53:54 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2394
+X-RateLimit-Reset: 1475662530
+ETag: W/"d4d22097268cd23fab63ef3e9982b5c1"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 8a07b24d-6f59-4012-9f53-6cae893f0372
+X-Runtime: 0.051822
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":{"id":5,"zone_id":"example.com","parent_id":null,"name":"","content":"mxa.example.com","ttl":600,"priority":10,"type":"MX","regions":["SV1", "IAD"],"system_record":false,"created_at":"2016-10-05T09:51:35Z","updated_at":"2016-10-05T09:51:35Z"}}

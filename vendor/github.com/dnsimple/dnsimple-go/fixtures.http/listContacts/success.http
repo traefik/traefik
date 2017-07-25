@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Tue, 19 Jan 2016 18:35:01 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 200 OK
+X-RateLimit-Limit: 4000
+X-RateLimit-Remaining: 3998
+X-RateLimit-Reset: 1453232080
+ETag: W/"42b9dd8efe7dec210d55855cdf2debae"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 7871da61-ecf1-4771-8560-efbcf7f4b961
+X-Runtime: 0.067822
+Strict-Transport-Security: max-age=31536000
+
+{"data":[{"id":1,"account_id":1010,"label":"Default","first_name":"First","last_name":"User","job_title":"CEO","organization_name":"Awesome Company","email":"first@example.com","phone":"+18001234567","fax":"+18011234567","address1":"Italian Street, 10","address2":"","city":"Roma","state_province":"RM","postal_code":"00100","country":"IT","created_at":"2013-11-08T17:23:15Z","updated_at":"2015-01-08T21:30:50Z"},{"id":2,"account_id":1010,"label":"","first_name":"Second","last_name":"User","job_title":"","organization_name":"","email":"second@example.com","phone":"+18881234567","fax":"","address1":"French Street","address2":"c/o Someone","city":"Paris","state_province":"XY","postal_code":"00200","country":"FR","created_at":"2014-12-06T15:46:18Z","updated_at":"2014-12-06T15:46:18Z"}],"pagination":{"current_page":1,"per_page":30,"total_entries":2,"total_pages":1}}

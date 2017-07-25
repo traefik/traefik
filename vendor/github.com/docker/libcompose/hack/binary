@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+
+# Get rid of existing binary
+rm -f libcompose-cli
+
+go generate
+
+BUILDTIME=$(date --rfc-3339 ns | sed -e 's/ /T/') &> /dev/null
+GITCOMMIT=$(git rev-parse --short HEAD)
+
+# Build binaries
+go build \
+   -ldflags="-w -X github.com/docker/libcompose/version.GITCOMMIT=${GITCOMMIT} -X github.com/docker/libcompose/version.BUILDTIME=${BUILDTIME} -X github.com/docker/libcompose/version.SHOWWARNING=${SHOWWARNING}" \
+   -o bundles/libcompose-cli \
+   ./cli/main

@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 22 Dec 2014 14:16:12 GMT
+Content-Type: text/html
+Connection: close
+
+<html>
+<head><title>200 OK</title></head>
+<body bgcolor="white">
+<center><h1>200 OK</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>

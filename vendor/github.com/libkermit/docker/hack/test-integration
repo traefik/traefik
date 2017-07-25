@@ -1,0 +1,16 @@
+#!/bin/bash
+set -e
+
+run_integration_test() {
+    echo "Running integration test against ${DOCKER_DAEMON_VERSION}"
+    bundle .integration-daemon-start
+    
+    TESTFLAGS="$TESTFLAGS"
+    go_test_dir ./integration
+    go_test_dir ./integration/testing
+
+    bundle .integration-daemon-stop
+    echo
+}
+
+run_integration_test

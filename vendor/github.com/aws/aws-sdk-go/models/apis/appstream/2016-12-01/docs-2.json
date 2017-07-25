@@ -1,0 +1,565 @@
+{
+  "version": "2.0",
+  "service": "<fullname>Amazon AppStream 2.0</fullname> <p>API documentation for Amazon AppStream 2.0.</p>",
+  "operations": {
+    "AssociateFleet": "<p>Associate a fleet to a stack.</p>",
+    "CreateFleet": "<p>Creates a new fleet.</p>",
+    "CreateStack": "<p>Create a new stack.</p>",
+    "CreateStreamingURL": "<p>Creates a URL to start an AppStream 2.0 streaming session for a user. By default, the URL is valid only for 1 minute from the time that it is generated.</p>",
+    "DeleteFleet": "<p>Deletes a fleet.</p>",
+    "DeleteStack": "<p>Deletes the stack. After this operation completes, the environment can no longer be activated, and any reservations made for the stack are released.</p>",
+    "DescribeFleets": "<p>If fleet names are provided, this operation describes the specified fleets; otherwise, all the fleets in the account are described.</p>",
+    "DescribeImages": "<p>Describes the images. If a list of names is not provided, all images in your account are returned. This operation does not return a paginated result.</p>",
+    "DescribeSessions": "<p>Describes the streaming sessions for a stack and a fleet. If a user ID is provided, this operation returns streaming sessions for only that user. Pass this value for the <code>nextToken</code> parameter in a subsequent call to this operation to retrieve the next set of items.</p>",
+    "DescribeStacks": "<p>If stack names are not provided, this operation describes the specified stacks; otherwise, all stacks in the account are described. Pass the <code>nextToken</code> value in a subsequent call to this operation to retrieve the next set of items.</p>",
+    "DisassociateFleet": "<p>Disassociates a fleet from a stack.</p>",
+    "ExpireSession": "<p>This operation immediately stops a streaming session.</p>",
+    "ListAssociatedFleets": "<p>Lists all fleets associated with the stack.</p>",
+    "ListAssociatedStacks": "<p>Lists all stacks to which the specified fleet is associated.</p>",
+    "StartFleet": "<p>Starts a fleet.</p>",
+    "StopFleet": "<p>Stops a fleet.</p>",
+    "UpdateFleet": "<p>Updates an existing fleet. All the attributes except the fleet name can be updated in the <b>STOPPED</b> state. Only <b>ComputeCapacity</b> and <b>ImageName</b> can be updated in any other state. </p>",
+    "UpdateStack": "<p>Updates the specified fields in the stack with the specified name.</p>"
+  },
+  "shapes": {
+    "Application": {
+      "base": "<p>An entry for a single application in the application catalog.</p>",
+      "refs": {
+        "Applications$member": null
+      }
+    },
+    "Applications": {
+      "base": null,
+      "refs": {
+        "Image$Applications": "<p>The applications associated with an image.</p>"
+      }
+    },
+    "Arn": {
+      "base": null,
+      "refs": {
+        "Fleet$Arn": "<p>The ARN for the fleet.</p>",
+        "Image$Arn": "<p>The ARN for the image.</p>",
+        "Image$BaseImageArn": "<p>The source image ARN from which this image was created.</p>",
+        "Stack$Arn": "<p>The ARN of the stack.</p>"
+      }
+    },
+    "AssociateFleetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AssociateFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Boolean": {
+      "base": null,
+      "refs": {
+        "Application$Enabled": "<p>An application can be disabled after image creation if there is a problem.</p>",
+        "UpdateFleetRequest$DeleteVpcConfig": "<p>Delete the VPC association for the specified fleet.</p>"
+      }
+    },
+    "ComputeCapacity": {
+      "base": "<p>The capacity configuration for the fleet.</p>",
+      "refs": {
+        "CreateFleetRequest$ComputeCapacity": "<p>The parameters for the capacity allocated to the fleet.</p>",
+        "UpdateFleetRequest$ComputeCapacity": "<p>The parameters for the capacity allocated to the fleet. </p>"
+      }
+    },
+    "ComputeCapacityStatus": {
+      "base": "<p>The capacity information for the fleet.</p>",
+      "refs": {
+        "Fleet$ComputeCapacityStatus": "<p>The capacity information for the fleet.</p>"
+      }
+    },
+    "CreateFleetRequest": {
+      "base": "<p>Contains the parameters for the new fleet to create.</p>",
+      "refs": {
+      }
+    },
+    "CreateFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateStackRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateStackResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateStreamingURLRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateStreamingURLResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteFleetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteStackRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteStackResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeFleetsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeFleetsResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeImagesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeImagesResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeSessionsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeSessionsResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeStacksRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeStacksResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Description": {
+      "base": null,
+      "refs": {
+        "CreateFleetRequest$Description": "<p>The description of the fleet.</p>",
+        "CreateStackRequest$Description": "<p>The description displayed to end users on the AppStream 2.0 portal.</p>",
+        "UpdateFleetRequest$Description": "<p>The description displayed to end users on the AppStream 2.0 portal.</p>",
+        "UpdateStackRequest$Description": "<p>The description displayed to end users on the AppStream 2.0 portal.</p>"
+      }
+    },
+    "DisassociateFleetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DisassociateFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DisplayName": {
+      "base": null,
+      "refs": {
+        "CreateFleetRequest$DisplayName": "<p>The display name of the fleet.</p>",
+        "CreateStackRequest$DisplayName": "<p>The name displayed to end users on the AppStream 2.0 portal.</p>",
+        "UpdateFleetRequest$DisplayName": "<p>The name displayed to end users on the AppStream 2.0 portal.</p>",
+        "UpdateStackRequest$DisplayName": "<p>The name displayed to end users on the AppStream 2.0 portal.</p>"
+      }
+    },
+    "ErrorMessage": {
+      "base": null,
+      "refs": {
+        "InvalidRoleException$Message": null,
+        "LimitExceededException$Message": null,
+        "OperationNotPermittedException$Message": null,
+        "ResourceAlreadyExistsException$Message": null,
+        "ResourceInUseException$Message": null,
+        "ResourceNotAvailableException$Message": null,
+        "ResourceNotFoundException$Message": null
+      }
+    },
+    "ExpireSessionRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ExpireSessionResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Fleet": {
+      "base": "<p>Contains the parameters for a fleet.</p>",
+      "refs": {
+        "CreateFleetResult$Fleet": "<p>The details for the created fleet.</p>",
+        "FleetList$member": null,
+        "UpdateFleetResult$Fleet": "<p>A list of fleet details.</p>"
+      }
+    },
+    "FleetError": {
+      "base": "<p>The details of the fleet error.</p>",
+      "refs": {
+        "FleetErrors$member": null
+      }
+    },
+    "FleetErrorCode": {
+      "base": null,
+      "refs": {
+        "FleetError$ErrorCode": "<p>The error code for the fleet error.</p>"
+      }
+    },
+    "FleetErrors": {
+      "base": null,
+      "refs": {
+        "Fleet$FleetErrors": "<p>The list of fleet errors is appended to this list.</p>"
+      }
+    },
+    "FleetList": {
+      "base": "<p>A list of fleets.</p>",
+      "refs": {
+        "DescribeFleetsResult$Fleets": "<p>The list of fleet details.</p>"
+      }
+    },
+    "FleetState": {
+      "base": null,
+      "refs": {
+        "Fleet$State": "<p>The current state for the fleet.</p>"
+      }
+    },
+    "Image": {
+      "base": "<p>New streaming instances are booted from images. The image stores the application catalog and is connected to fleets.</p>",
+      "refs": {
+        "ImageList$member": null
+      }
+    },
+    "ImageList": {
+      "base": null,
+      "refs": {
+        "DescribeImagesResult$Images": "<p>The list of images.</p>"
+      }
+    },
+    "ImageState": {
+      "base": null,
+      "refs": {
+        "Image$State": "<p>The image starts in the <b>PENDING</b> state, and then moves to <b>AVAILABLE</b> if image creation succeeds and <b>FAILED</b> if image creation has failed.</p>"
+      }
+    },
+    "ImageStateChangeReason": {
+      "base": "<p>The reason why the last state change occurred.</p>",
+      "refs": {
+        "Image$StateChangeReason": "<p>The reason why the last state change occurred.</p>"
+      }
+    },
+    "ImageStateChangeReasonCode": {
+      "base": null,
+      "refs": {
+        "ImageStateChangeReason$Code": "<p>The state change reason code of the image.</p>"
+      }
+    },
+    "Integer": {
+      "base": null,
+      "refs": {
+        "ComputeCapacity$DesiredInstances": "<p>The desired number of streaming instances.</p>",
+        "ComputeCapacityStatus$Desired": "<p>The desired number of streaming instances.</p>",
+        "ComputeCapacityStatus$Running": "<p>The total number of simultaneous streaming instances that are running.</p>",
+        "ComputeCapacityStatus$InUse": "<p>The number of instances that are being used for streaming.</p>",
+        "ComputeCapacityStatus$Available": "<p>The number of currently available instances that can be used to stream sessions.</p>",
+        "CreateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time up to which a streaming session can run.</p>",
+        "CreateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. If a user who got disconnected reconnects within this timeout interval, the user is connected back to his/her previous session. </p>",
+        "DescribeSessionsRequest$Limit": "<p>The size of each page of results. The default value is 20 and the maximum supported value is 50.</p>",
+        "Fleet$MaxUserDurationInSeconds": "<p>The maximum time during which a streaming session can run.</p>",
+        "Fleet$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. When a user reconnects after a disconnection, the user is connected to the same session and instance within this time interval.</p>",
+        "UpdateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time during which a streaming session can run.</p>",
+        "UpdateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. When the user reconnects after a disconnection, the user is connected to the same instance within this time interval.</p>"
+      }
+    },
+    "InvalidRoleException": {
+      "base": "<p>The specified role is invalid.</p>",
+      "refs": {
+      }
+    },
+    "LimitExceededException": {
+      "base": "<p>The requested limit exceeds the permitted limit for an account.</p>",
+      "refs": {
+      }
+    },
+    "ListAssociatedFleetsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListAssociatedFleetsResult": {
+      "base": "<p>The response from a successful operation.</p>",
+      "refs": {
+      }
+    },
+    "ListAssociatedStacksRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListAssociatedStacksResult": {
+      "base": "<p>The response from a successful operation.</p>",
+      "refs": {
+      }
+    },
+    "Long": {
+      "base": null,
+      "refs": {
+        "CreateStreamingURLRequest$Validity": "<p>The validity duration of the URL in seconds. After this duration, the URL returned by this operation becomes invalid.</p>"
+      }
+    },
+    "Metadata": {
+      "base": null,
+      "refs": {
+        "Application$Metadata": "<p>Additional attributes that describes the application.</p>"
+      }
+    },
+    "Name": {
+      "base": null,
+      "refs": {
+        "CreateFleetRequest$Name": "<p>A unique identifier for the fleet.</p>"
+      }
+    },
+    "OperationNotPermittedException": {
+      "base": "<p>The attempted operation is not permitted.</p>",
+      "refs": {
+      }
+    },
+    "PlatformType": {
+      "base": null,
+      "refs": {
+        "Image$Platform": "<p>The operating system platform of the image.</p>"
+      }
+    },
+    "ResourceAlreadyExistsException": {
+      "base": "<p>The specified resource already exists.</p>",
+      "refs": {
+      }
+    },
+    "ResourceInUseException": {
+      "base": "<p>The specified resource is in use.</p>",
+      "refs": {
+      }
+    },
+    "ResourceNotAvailableException": {
+      "base": "<p>The specified resource exists and is not in use, but isn't available.</p>",
+      "refs": {
+      }
+    },
+    "ResourceNotFoundException": {
+      "base": "<p>The specified resource was not found.</p>",
+      "refs": {
+      }
+    },
+    "Session": {
+      "base": "<p>Contains the parameters for a streaming session.</p>",
+      "refs": {
+        "SessionList$member": null
+      }
+    },
+    "SessionList": {
+      "base": "<p>List of sessions.</p>",
+      "refs": {
+        "DescribeSessionsResult$Sessions": "<p>The list of streaming sessions.</p>"
+      }
+    },
+    "SessionState": {
+      "base": "<p>Possible values for the state of a streaming session.</p>",
+      "refs": {
+        "Session$State": "<p>The current state of the streaming session.</p>"
+      }
+    },
+    "Stack": {
+      "base": "<p>Details about a stack.</p>",
+      "refs": {
+        "CreateStackResult$Stack": "<p>The details for the created stack.</p>",
+        "StackList$member": null,
+        "UpdateStackResult$Stack": "<p>A list of stack details.</p>"
+      }
+    },
+    "StackList": {
+      "base": "<p>A list of stacks.</p>",
+      "refs": {
+        "DescribeStacksResult$Stacks": "<p>The list of stack details.</p>"
+      }
+    },
+    "StartFleetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StartFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StopFleetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StopFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "String": {
+      "base": null,
+      "refs": {
+        "Application$Name": "<p>The unique identifier for the application.</p>",
+        "Application$DisplayName": "<p>The name of the application shown to the end users.</p>",
+        "Application$IconURL": "<p>The URL for the application icon. This URL may be time-limited.</p>",
+        "Application$LaunchPath": "<p>The path to the application executable in the instance.</p>",
+        "Application$LaunchParameters": "<p>A list of arguments that are passed to the application at launch.</p>",
+        "AssociateFleetRequest$FleetName": "<p>The name of the fleet to associate.</p>",
+        "AssociateFleetRequest$StackName": "<p>The name of the stack to which the fleet is associated.</p>",
+        "CreateFleetRequest$ImageName": "<p>Unique name of the image used by the fleet.</p>",
+        "CreateFleetRequest$InstanceType": "<p>The instance type of compute resources for the fleet. Fleet instances are launched from this instance type.</p>",
+        "CreateStackRequest$Name": "<p>The unique identifier for this stack.</p>",
+        "CreateStreamingURLRequest$StackName": "<p>The stack for which the URL is generated.</p>",
+        "CreateStreamingURLRequest$FleetName": "<p>The fleet for which the URL is generated.</p>",
+        "CreateStreamingURLRequest$ApplicationId": "<p>The ID of the application that must be launched after the session starts.</p>",
+        "CreateStreamingURLRequest$SessionContext": "<p>The sessionContext of the streaming URL.</p>",
+        "CreateStreamingURLResult$StreamingURL": "<p>The URL to start the AppStream 2.0 streaming session.</p>",
+        "DeleteFleetRequest$Name": "<p>The name of the fleet to be deleted.</p>",
+        "DeleteStackRequest$Name": "<p>The name of the stack to delete.</p>",
+        "DescribeFleetsRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
+        "DescribeFleetsResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
+        "DescribeSessionsRequest$StackName": "<p>The name of the stack for which to list sessions.</p>",
+        "DescribeSessionsRequest$FleetName": "<p>The name of the fleet for which to list sessions.</p>",
+        "DescribeSessionsRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
+        "DescribeSessionsResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
+        "DescribeStacksRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
+        "DescribeStacksResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
+        "DisassociateFleetRequest$FleetName": "<p>The name of the fleet to disassociate.</p>",
+        "DisassociateFleetRequest$StackName": "<p>The name of the stack with which the fleet is associated.</p>",
+        "ExpireSessionRequest$SessionId": "<p>The unique identifier of the streaming session to be stopped.</p>",
+        "Fleet$Name": "<p>The name of the fleet.</p>",
+        "Fleet$DisplayName": "<p>The name displayed to end users on the AppStream 2.0 portal.</p>",
+        "Fleet$Description": "<p>The description displayed to end users on the AppStream 2.0 portal.</p>",
+        "Fleet$ImageName": "<p>The image used by the fleet.</p>",
+        "Fleet$InstanceType": "<p>The instance type of compute resources for the fleet. The fleet instances are launched from this instance type. </p>",
+        "FleetError$ErrorMessage": "<p>The error message generated when the fleet has errors.</p>",
+        "Image$Name": "<p>The unique identifier for the image.</p>",
+        "Image$DisplayName": "<p>The display name for the image.</p>",
+        "Image$Description": "<p>A meaningful description for the image.</p>",
+        "ImageStateChangeReason$Message": "<p>The state change reason message to the end user.</p>",
+        "ListAssociatedFleetsRequest$StackName": "<p>The name of the stack whose associated fleets are listed.</p>",
+        "ListAssociatedFleetsRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
+        "ListAssociatedFleetsResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
+        "ListAssociatedStacksRequest$FleetName": "<p>The name of the fleet whose associated stacks are listed.</p>",
+        "ListAssociatedStacksRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
+        "ListAssociatedStacksResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
+        "Metadata$key": null,
+        "Metadata$value": null,
+        "Session$Id": "<p>The unique ID for a streaming session.</p>",
+        "Session$StackName": "<p>The name of the stack for which the streaming session was created.</p>",
+        "Session$FleetName": "<p>The name of the fleet for which the streaming session was created.</p>",
+        "Stack$Name": "<p>The unique identifier of the stack.</p>",
+        "Stack$Description": "<p>A meaningful description for the stack.</p>",
+        "Stack$DisplayName": "<p>A display name for the stack.</p>",
+        "StartFleetRequest$Name": "<p>The name of the fleet to start.</p>",
+        "StopFleetRequest$Name": "<p>The name of the fleet to stop.</p>",
+        "StringList$member": null,
+        "SubnetIdList$member": null,
+        "UpdateFleetRequest$ImageName": "<p>The image name from which a fleet is created.</p>",
+        "UpdateFleetRequest$Name": "<p>The name of the fleet.</p>",
+        "UpdateFleetRequest$InstanceType": "<p>The instance type of compute resources for the fleet. Fleet instances are launched from this instance type.</p>",
+        "UpdateStackRequest$Name": "<p>The name of the stack to update.</p>"
+      }
+    },
+    "StringList": {
+      "base": null,
+      "refs": {
+        "DescribeFleetsRequest$Names": "<p>The fleet names to describe. Use null to describe all the fleets for the AWS account.</p>",
+        "DescribeImagesRequest$Names": "<p>A specific list of images to describe.</p>",
+        "DescribeStacksRequest$Names": "<p>The stack names to describe. Use null to describe all the stacks for the AWS account.</p>",
+        "ListAssociatedFleetsResult$Names": "<p>The names of associated fleets.</p>",
+        "ListAssociatedStacksResult$Names": "<p>The names of associated stacks.</p>"
+      }
+    },
+    "SubnetIdList": {
+      "base": "<p>A list of subnet IDs.</p>",
+      "refs": {
+        "VpcConfig$SubnetIds": "<p>The list of subnets to which a network interface is established from the fleet instance.</p>"
+      }
+    },
+    "Timestamp": {
+      "base": null,
+      "refs": {
+        "CreateStreamingURLResult$Expires": "<p>Elapsed seconds after the Unix epoch, at which time this URL expires.</p>",
+        "Fleet$CreatedTime": "<p>The time at which the fleet was created.</p>",
+        "Image$CreatedTime": "<p>The timestamp when the image was created.</p>",
+        "Stack$CreatedTime": "<p>The timestamp when the stack was created.</p>"
+      }
+    },
+    "UpdateFleetRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateStackRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateStackResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UserId": {
+      "base": null,
+      "refs": {
+        "CreateStreamingURLRequest$UserId": "<p>A unique user ID for whom the URL is generated.</p>",
+        "DescribeSessionsRequest$UserId": "<p>The user for whom to list sessions. Use null to describe all the sessions for the stack and fleet.</p>",
+        "Session$UserId": "<p>The identifier of the user for whom the session was created.</p>"
+      }
+    },
+    "VisibilityType": {
+      "base": null,
+      "refs": {
+        "Image$Visibility": "<p>The visibility of an image to the user; images can be public or private.</p>"
+      }
+    },
+    "VpcConfig": {
+      "base": "<p>The VPC in which the fleet is launched.</p>",
+      "refs": {
+        "CreateFleetRequest$VpcConfig": "<p>The VPC configuration for the fleet.</p>",
+        "Fleet$VpcConfig": "<p>The VPC configuration for the fleet.</p>",
+        "UpdateFleetRequest$VpcConfig": "<p>The VPC configuration for the fleet.</p>"
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+---
+layout: "docs"
+page_title: "Commands: Monitor"
+sidebar_current: "docs-commands-monitor"
+description: |-
+  The `monitor` command is used to connect and follow the logs of a running Consul agent. Monitor will show the recent logs and then continue to follow the logs, not exiting until interrupted or until the remote agent quits.
+---
+
+# Consul Monitor
+
+Command: `consul monitor`
+
+The `monitor` command is used to connect and follow the logs of a running
+Consul agent. Monitor will show the recent logs and then continue to follow
+the logs, not exiting until interrupted or until the remote agent quits.
+
+The power of the monitor command is that it allows you to log the agent
+at a relatively high log level (such as "warn"), but still access debug
+logs and watch the debug logs if necessary.
+
+## Usage
+
+Usage: `consul monitor [options]`
+
+#### API Options
+
+<%= partial "docs/commands/http_api_options_client" %>
+
+#### Command Options
+
+* `-log-level` - The log level of the messages to show. By default this
+  is "info". This log level can be more verbose than what the agent is
+  configured to run at. Available log levels are "trace", "debug", "info",
+  "warn", and "err".

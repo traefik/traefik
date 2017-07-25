@@ -1,0 +1,16 @@
+HTTP/1.1 404 Not Found
+Server: nginx
+Date: Tue, 19 Jul 2016 08:56:34 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Cache-Control: no-cache
+X-Request-Id: 9a51fa7e-cc9b-498b-bf8d-ee3b2819c0c6
+X-Runtime: 0.040469
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{"message":"Certificate `0` not found"}

@@ -1,0 +1,32 @@
+---
+layout: "docs"
+page_title: "Commands: KV Export"
+sidebar_current: "docs-commands-kv-export"
+---
+
+# Consul KV Export
+
+Command: `consul kv export`
+
+The `kv export` command is used to retrieve KV pairs for the given
+prefix from Consul's KV store, and write a JSON representation to
+stdout. This can be used with the command "consul kv import" to move entire
+trees between Consul clusters.
+
+## Usage
+
+Usage: `consul kv export [PREFIX]`
+
+#### API Options
+
+<%= partial "docs/commands/http_api_options_client" %>
+<%= partial "docs/commands/http_api_options_server" %>
+
+## Examples
+
+To export the tree at "vault/" in the key value store:
+
+```
+$ consul kv export vault/
+# JSON output
+```

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#
+# Build an osx binary from linux
+#
+
+set -eu -o pipefail
+
+source ./scripts/build/.variables
+
+export CGO_ENABLED=1
+export GOOS=darwin
+export GOARCH=amd64
+export CC=o64-clang
+export LDFLAGS="$LDFLAGS -linkmode external -s"
+export LDFLAGS_STATIC_DOCKER='-extld='${CC}
+
+# Override TARGET
+TARGET="build/docker-$GOOS-$GOARCH"
+
+echo "Building $TARGET"
+go build -o "${TARGET}" -tags pkcs11 --ldflags "${LDFLAGS}" "${SOURCE}"

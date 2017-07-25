@@ -1,0 +1,206 @@
+# general cluster availability
+
+# alert if another failed member will result in an unavailable cluster
+ALERT InsufficientMembers
+IF count(up{job="etcd"} == 0) > (count(up{job="etcd"}) / 2 - 1)
+FOR 3m
+LABELS {
+  severity = "critical"
+}
+ANNOTATIONS {
+  summary = "etcd cluster insufficient members",
+  description = "If one more etcd member goes down the cluster will be unavailable",
+}
+
+# etcd leader alerts
+# ==================
+
+# alert if any etcd instance has no leader
+ALERT NoLeader
+IF etcd_server_has_leader{job="etcd"} == 0
+FOR 1m
+LABELS {
+  severity = "critical"
+}
+ANNOTATIONS {
+  summary = "etcd member has no leader",
+  description = "etcd member {{ $labels.instance }} has no leader",
+}
+
+# alert if there are lots of leader changes
+ALERT HighNumberOfLeaderChanges
+IF increase(etcd_server_leader_changes_seen_total{job="etcd"}[1h]) > 3
+LABELS {
+  severity = "warning"
+}
+ANNOTATIONS {
+  summary = "a high number of leader changes within the etcd cluster are happening",
+  description = "etcd instance {{ $labels.instance }} has seen {{ $value }} leader changes within the last hour",
+}
+
+# gRPC request alerts
+# ===================
+
+# alert if more than 1% of gRPC method calls have failed within the last 5 minutes
+ALERT HighNumberOfFailedGRPCRequests
+IF sum by(grpc_method) (rate(etcd_grpc_requests_failed_total{job="etcd"}[5m]))
+  / sum by(grpc_method) (rate(etcd_grpc_total{job="etcd"}[5m])) > 0.01
+FOR 10m
+LABELS {
+  severity = "warning"
+}
+ANNOTATIONS {
+  summary = "a high number of gRPC requests are failing",
+  description = "{{ $value }}% of requests for {{ $labels.grpc_method }} failed on etcd instance {{ $labels.instance }}",
+}
+
+# alert if more than 5% of gRPC method calls have failed within the last 5 minutes
+ALERT HighNumberOfFailedGRPCRequests
+IF sum by(grpc_method) (rate(etcd_grpc_requests_failed_total{job="etcd"}[5m]))
+  / sum by(grpc_method) (rate(etcd_grpc_total{job="etcd"}[5m])) > 0.05
+FOR 5m
+LABELS {
+  severity = "critical"
+}
+ANNOTATIONS {
+  summary = "a high number of gRPC requests are failing",
+  description = "{{ $value }}% of requests for {{ $labels.grpc_method }} failed on etcd instance {{ $labels.instance }}",
+}
+
+# alert if the 99th percentile of gRPC method calls take more than 150ms
+ALERT GRPCRequestsSlow
+IF histogram_quantile(0.99, rate(etcd_grpc_unary_requests_duration_seconds_bucket[5m])) > 0.15
+FOR 10m
+LABELS {
+  severity = "critical"
+}
+ANNOTATIONS {
+  summary = "slow gRPC requests",
+  description = "on etcd instance {{ $labels.instance }} gRPC requests to {{ $label.grpc_method }} are slow",
+}
+
+# HTTP requests alerts
+# ====================
+
+# alert if more than 1% of requests to an HTTP endpoint have failed within the last 5 minutes
+ALERT HighNumberOfFailedHTTPRequests
+IF sum by(method) (rate(etcd_http_failed_total{job="etcd"}[5m]))
+  / sum by(method) (rate(etcd_http_received_total{job="etcd"}[5m])) > 0.01
+FOR 10m
+LABELS {
+  severity = "warning"
+}
+ANNOTATIONS {
+  summary = "a high number of HTTP requests are failing",
+  description = "{{ $value }}% of requests for {{ $labels.method }} failed on etcd instance {{ $labels.instance }}",
+}
+
+# alert if more than 5% of requests to an HTTP endpoint have failed within the last 5 minutes
+ALERT HighNumberOfFailedHTTPRequests
+IF sum by(method) (rate(etcd_http_failed_total{job="etcd"}[5m])) 
+  / sum by(method) (rate(etcd_http_received_total{job="etcd"}[5m])) > 0.05
+FOR 5m
+LABELS {
+  severity = "critical"
+}
+ANNOTATIONS {
+  summary = "a high number of HTTP requests are failing",
+  description = "{{ $value }}% of requests for {{ $labels.method }} failed on etcd instance {{ $labels.instance }}",
+}
+
+# alert if the 99th percentile of HTTP requests take more than 150ms
+ALERT HTTPRequestsSlow
+IF histogram_quantile(0.99, rate(etcd_http_successful_duration_seconds_bucket[5m])) > 0.15
+FOR 10m
+LABELS {
+  severity = "warning"
+}
+ANNOTATIONS {
+  summary = "slow HTTP requests",
+  description = "on etcd instance {{ $labels.instance }} HTTP requests to {{ $label.method }} are slow",
+}
+
+# file descriptor alerts
+# ======================
+
+instance:fd_utilization = process_open_fds / process_max_fds
+
+# alert if file descriptors are likely to exhaust within the next 4 hours
+ALERT FdExhaustionClose
+IF predict_linear(instance:fd_utilization[1h], 3600 * 4) > 1
+FOR 10m
+LABELS {
+  severity = "warning"
+}
+ANNOTATIONS {
+  summary = "file descriptors soon exhausted",
+  description = "{{ $labels.job }} instance {{ $labels.instance }} will exhaust its file descriptors soon",
+}
+
+# alert if file descriptors are likely to exhaust within the next hour
+ALERT FdExhaustionClose
+IF predict_linear(instance:fd_utilization[10m], 3600) > 1
+FOR 10m
+LABELS {
+  severity = "critical"
+}
+ANNOTATIONS {
+  summary = "file descriptors soon exhausted",
+  description = "{{ $labels.job }} instance {{ $labels.instance }} will exhaust its file descriptors soon",
+}
+
+# etcd member communication alerts
+# ================================
+
+# alert if 99th percentile of round trips take 150ms
+ALERT EtcdMemberCommunicationSlow
+IF histogram_quantile(0.99, rate(etcd_network_member_round_trip_time_seconds_bucket[5m])) > 0.15
+FOR 10m
+LABELS {
+  severity = "warning"
+}
+ANNOTATIONS {
+  summary = "etcd member communication is slow",
+  description = "etcd instance {{ $labels.instance }} member communication with {{ $label.To }} is slow",
+}
+
+# etcd proposal alerts
+# ====================
+
+# alert if there are several failed proposals within an hour
+ALERT HighNumberOfFailedProposals
+IF increase(etcd_server_proposals_failed_total{job="etcd"}[1h]) > 5
+LABELS {
+  severity = "warning"
+}
+ANNOTATIONS {
+  summary = "a high number of proposals within the etcd cluster are failing",
+  description = "etcd instance {{ $labels.instance }} has seen {{ $value }} proposal failures within the last hour",
+}
+
+# etcd disk io latency alerts
+# ===========================
+
+# alert if 99th percentile of fsync durations is higher than 500ms
+ALERT HighFsyncDurations
+IF histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[5m])) > 0.5
+FOR 10m
+LABELS {
+  severity = "warning"
+}
+ANNOTATIONS {
+  summary = "high fsync durations",
+  description = "etcd instance {{ $labels.instance }} fync durations are high",
+}
+
+# alert if 99th percentile of commit durations is higher than 250ms
+ALERT HighCommitDurations
+IF histogram_quantile(0.99, rate(etcd_disk_backend_commit_duration_seconds_bucket[5m])) > 0.25
+FOR 10m
+LABELS {
+  severity = "warning"
+}
+ANNOTATIONS {
+  summary = "high commit durations",
+  description = "etcd instance {{ $labels.instance }} commit durations are high",
+}

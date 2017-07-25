@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Fri, 23 Sep 2016 09:06:13 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2396
+X-RateLimit-Reset: 1474622397
+ETag: W/"8e3d87c11204e76362765aea4c0916e0"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 426d0884-2583-45d8-8ab6-0e36050ba6dc
+X-Runtime: 0.011580
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":{"tld":"com","tld_type":1,"whois_privacy":true,"auto_renew_only":false,"idn":true,"minimum_registration":1,"registration_enabled":true,"renewal_enabled":true,"transfer_enabled":true}}

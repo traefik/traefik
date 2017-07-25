@@ -1,0 +1,37 @@
+{
+  "variables": {
+    "aws_access_key_id": "{{ env `AWS_ACCESS_KEY_ID` }}",
+    "aws_secret_access_key": "{{ env `AWS_SECRET_ACCESS_KEY` }}",
+    "aws_region": "{{ env `AWS_REGION` }}",
+    "fastly_api_key": "{{ env `FASTLY_API_KEY` }}"
+  },
+  "builders": [
+    {
+      "type": "docker",
+      "image": "hashicorp/middleman-hashicorp:0.3.22",
+      "discard": "true",
+      "run_command": ["-d", "-i", "-t", "{{ .Image }}", "/bin/sh"]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": ".",
+      "destination": "/website"
+    },
+    {
+      "type": "shell",
+      "environment_vars": [
+        "AWS_ACCESS_KEY_ID={{ user `aws_access_key_id` }}",
+        "AWS_SECRET_ACCESS_KEY={{ user `aws_secret_access_key` }}",
+        "AWS_REGION={{ user `aws_region` }}",
+        "FASTLY_API_KEY={{ user `fastly_api_key` }}"
+      ],
+      "inline": [
+        "bundle check || bundle install",
+        "bundle exec middleman build",
+        "/bin/sh ./scripts/deploy.sh"
+      ]
+    }
+  ]
+}

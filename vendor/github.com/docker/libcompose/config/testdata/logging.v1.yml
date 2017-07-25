@@ -1,0 +1,8 @@
+simple1:
+  image: myimage
+  log_driver: syslog
+  log_opt:
+    syslog-address: "tcp://192.168.0.42:123"
+simple2:
+  image: myimage
+  log_driver: "none"

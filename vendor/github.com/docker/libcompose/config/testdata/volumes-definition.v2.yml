@@ -1,0 +1,14 @@
+version: "2"
+volumes:
+  volume1:
+    driver: foo
+  volume2:
+    driver: bar
+    driver_opts:
+      foo: "bar"
+      baz: ""
+  volume3:
+    external: true
+  volume4:
+    external:
+      name: name-of-volume

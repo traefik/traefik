@@ -1,0 +1,8 @@
+ID: configID
+Name: configName
+Labels:
+	- lbl1=value1
+Created at: 0001-01-01 00:00:00+0000 utc
+Updated at: 0001-01-01 00:00:00+0000 utc
+Data:
+payload here

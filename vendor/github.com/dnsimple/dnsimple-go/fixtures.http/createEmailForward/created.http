@@ -1,0 +1,17 @@
+HTTP/1.1 201 Created
+Server: nginx
+Date: Thu, 04 Feb 2016 14:26:51 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 201 Created
+X-RateLimit-Limit: 4000
+X-RateLimit-Remaining: 3991
+X-RateLimit-Reset: 1454596042
+ETag: W/"10dd958c5a3a43eec0af1d8da655cab0"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: fca523a2-aad9-49e6-a828-a0e7711a8501
+X-Runtime: 1.711621
+Strict-Transport-Security: max-age=31536000
+
+{"data":{"id":17706,"domain_id":228963,"from":"jim@a-domain.com","to":"jim@another.com","created_at":"2016-02-04T14:26:50Z","updated_at":"2016-02-04T14:26:50Z"}}

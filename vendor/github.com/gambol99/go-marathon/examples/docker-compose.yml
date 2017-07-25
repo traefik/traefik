@@ -1,0 +1,47 @@
+# Based on https://github.com/meltwater/docker-mesos
+
+zookeeper:
+  image: mesoscloud/zookeeper:3.4.6-centos-7
+  ports:
+    - "2181:2181"
+    - "2888:2888"
+    - "3888:3888"
+  environment:
+    SERVERS: server.1=127.0.0.1
+    MYID: 1
+
+mesosmaster:
+  image: mesoscloud/mesos-master:0.24.1-centos-7
+  net: host
+  environment:
+    MESOS_ZK: zk://localhost:2181/mesos
+    MESOS_QUORUM: 1
+    MESOS_CLUSTER: local
+    MESOS_HOSTNAME: localhost
+
+mesosslave:
+  image: mesoscloud/mesos-slave:0.24.1-centos-7
+  net: host
+  privileged: true
+  volumes:
+    - /sys:/sys
+# /cgroup is needed on some older Linux versions
+#    - /cgroup:/cgroup
+# /usr/bin/docker is needed if you're running an older docker version
+#    - /usr/local/bin/docker:/usr/bin/docker:r
+    - /var/run/docker.sock:/var/run/docker.sock:rw
+  environment:
+    MESOS_MASTER: zk://localhost:2181/mesos
+    MESOS_EXECUTOR_SHUTDOWN_GRACE_PERIOD: 90secs
+    MESOS_DOCKER_STOP_TIMEOUT: 60secs
+# If your workstation doesn't have a resolvable hostname/FQDN then $MESOS_HOSTNAME needs to be set to its IP-address
+#    MESOS_HOSTNAME: 192.168.178.39
+
+marathon:
+  image: mesoscloud/marathon:0.11.0-centos-7
+  net: host
+  environment:
+    MARATHON_ZK: zk://localhost:2181/marathon
+    MARATHON_MASTER: zk://localhost:2181/mesos
+    MARATHON_EVENT_SUBSCRIBER: http_callback
+    MARATHON_TASK_LAUNCH_TIMEOUT: 300000

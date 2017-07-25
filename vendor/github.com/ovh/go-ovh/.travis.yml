@@ -1,0 +1,24 @@
+language: go
+
+go:
+- 1.6
+- 1.7
+
+before_install:
+- go get github.com/axw/gocov/gocov
+- go get github.com/mattn/goveralls
+- go get github.com/golang/lint/golint
+- if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+
+script:
+# Test Code quality
+- go vet ./...
+- $HOME/gopath/bin/golint ./...
+- go test -covermode=count -coverprofile=profile.cov ./...
+
+# Test buildable on most common platforms, beyond Linux
+- GOOS=darwin go build ./...
+- GOOS=windows go build ./...
+
+# Best effort: notify coveralls. It's too unstable, ignore errors.
+- $HOME/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci || exit 0

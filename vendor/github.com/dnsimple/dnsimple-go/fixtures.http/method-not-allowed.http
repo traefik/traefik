@@ -1,0 +1,11 @@
+HTTP/1.1 405 Method Not Allowed
+Server: nginx
+Date: Fri, 15 Apr 2016 14:15:04 GMT
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 405 Method Not Allowed
+Allow: DELETE, GET, HEAD, PATCH, POST
+Cache-Control: no-cache
+X-Request-Id: 64c0a5e1-4cbb-4287-98a7-93085a77ac55
+X-Runtime: 0.050104
+

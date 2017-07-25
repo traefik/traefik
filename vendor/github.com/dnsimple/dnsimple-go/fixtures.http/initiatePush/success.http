@@ -1,0 +1,21 @@
+HTTP/1.1 201 Created
+Server: nginx
+Date: Thu, 11 Aug 2016 10:16:03 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2395
+X-RateLimit-Reset: 1470913058
+ETag: W/"fbbdec6f757e014f6f0b2159090aed80"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 3c3f4bee-3e06-4998-8946-02d4fae26fa4
+X-Runtime: 0.601397
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":{"id":1,"domain_id":100,"contact_id":null,"account_id":2020,"created_at":"2016-08-11T10:16:03Z","updated_at":"2016-08-11T10:16:03Z","accepted_at":null}}

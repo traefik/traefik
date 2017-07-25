@@ -1,0 +1,10 @@
+#!/bin/sh
+set -e
+
+if [ ! -e virtualenv/ok ]; then
+    python -m virtualenv virtualenv
+    ./virtualenv/bin/pip install zbase32
+    touch virtualenv/ok
+fi
+
+PATH="$PWD/virtualenv/bin:$PATH" go test -python -test.run=Python "$@"

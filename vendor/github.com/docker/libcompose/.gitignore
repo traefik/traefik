@@ -1,0 +1,9 @@
+.DS_Store
+/main/main
+/docker-compose*
+/libcompose-cli*
+*.log
+*.swp
+bundles
+.gopath
+.idea

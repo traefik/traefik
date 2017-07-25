@@ -1,0 +1,78 @@
+<% wrap_layout :inner do %>
+  <% content_for :sidebar do %>
+    <ul class="nav docs-sidenav">
+      <li<%= sidebar_current("api-overview") %>>
+        <a href="/api/index.html">API Overview</a>
+      </li>
+      <li<%= sidebar_current("api-libraries-and-sdks") %>>
+        <a href="/api/libraries-and-sdks.html">Libraries &amp; SDKs</a>
+      </li>
+
+      <hr>
+
+      <li<%= sidebar_current("api-acls") %>>
+        <a href="/api/acl.html">ACLs</a>
+      </li>
+      <li<%= sidebar_current("api-agent") %>>
+        <a href="/api/agent.html">Agent</a>
+        <ul class="nav">
+          <li<%= sidebar_current("api-agent-check") %>>
+            <a href="/api/agent/check.html">Checks</a>
+          </li>
+          <li<%= sidebar_current("api-agent-service") %>>
+            <a href="/api/agent/service.html">Services</a>
+          </li>
+        </ul>
+      </li>
+      <li<%= sidebar_current("api-catalog") %>>
+        <a href="/api/catalog.html">Catalog</a>
+      </li>
+      <li<%= sidebar_current("api-coordinate") %>>
+        <a href="/api/coordinate.html">Coordinates</a>
+      </li>
+      <li<%= sidebar_current("api-event") %>>
+        <a href="/api/event.html">Events</a>
+      </li>
+      <li<%= sidebar_current("api-health") %>>
+        <a href="/api/health.html">Health</a>
+      </li>
+      <li<%= sidebar_current("api-kv-store") %>>
+        <a href="/api/kv.html">KV Store</a>
+      </li>
+      <li<%= sidebar_current("api-operator") %>>
+        <a href="/api/operator.html">Operator</a>
+        <ul class="nav">
+          <li<%= sidebar_current("api-operator-area") %>>
+            <a href="/api/operator/area.html">Area</a>
+          </li>
+          <li<%= sidebar_current("api-operator-autopilot") %>>
+            <a href="/api/operator/autopilot.html">Autopilot</a>
+          </li>
+          <li<%= sidebar_current("api-operator-keyring") %>>
+            <a href="/api/operator/keyring.html">Keyring</a>
+          </li>
+          <li<%= sidebar_current("api-operator-raft") %>>
+            <a href="/api/operator/raft.html">Raft</a>
+          </li>
+        </ul>
+      </li>
+      <li<%= sidebar_current("api-query") %>>
+        <a href="/api/query.html">Prepared Queries</a>
+      </li>
+      <li<%= sidebar_current("api-session") %>>
+        <a href="/api/session.html">Sessions</a>
+      </li>
+      <li<%= sidebar_current("api-snapshot") %>>
+        <a href="/api/snapshot.html">Snapshots</a>
+      </li>
+      <li<%= sidebar_current("api-status") %>>
+        <a href="/api/status.html">Status</a>
+      </li>
+      <li<%= sidebar_current("api-txn") %>>
+        <a href="/api/txn.html">Transactions</a>
+      </li>
+    </ul>
+  <% end %>
+
+  <%= yield %>
+<% end %>

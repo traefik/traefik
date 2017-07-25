@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Fri, 22 Jan 2016 16:54:24 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 200 OK
+X-RateLimit-Limit: 4000
+X-RateLimit-Remaining: 3994
+X-RateLimit-Reset: 1453484045
+ETag: W/"485e03204e1853519bd637be743f2b25"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 01be9fa5-3a00-4d51-a927-f17587cb67ec
+X-Runtime: 0.037083
+Strict-Transport-Security: max-age=31536000
+
+{"data":[{"id":1,"account_id":1010,"name":"example-alpha.com","reverse":false,"created_at":"2015-04-23T07:40:03Z","updated_at":"2015-04-23T07:40:03Z"},{"id":2,"account_id":1010,"name":"example-beta.com","reverse":true,"created_at":"2015-04-23T07:40:03Z","updated_at":"2015-04-23T07:40:03Z"}],"pagination":{"current_page":1,"per_page":30,"total_entries":2,"total_pages":1}}

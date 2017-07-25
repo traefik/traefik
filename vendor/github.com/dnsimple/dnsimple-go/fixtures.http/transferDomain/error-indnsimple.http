@@ -1,0 +1,15 @@
+HTTP/1.1 400 Bad Request
+Server: nginx
+Date: Sun, 21 Feb 2016 13:11:54 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 400 Bad Request
+X-RateLimit-Limit: 4000
+X-RateLimit-Remaining: 3996
+X-RateLimit-Reset: 1456063541
+Cache-Control: no-cache
+X-Request-Id: 15d2e302-e835-4dda-9652-03d8962280ae
+X-Runtime: 0.994068
+
+{"message":"The domain google.com is already in DNSimple and cannot be added"}

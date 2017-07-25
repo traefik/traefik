@@ -1,0 +1,16 @@
+HTTP/1.1 404 Not Found
+Server: nginx
+Date: Mon, 21 Nov 2016 09:32:48 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Cache-Control: no-cache
+X-Request-Id: 3e76b10b-412c-42ef-87d1-f8ff327df997
+X-Runtime: 0.030250
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{"message":"Membership `0` not found"}

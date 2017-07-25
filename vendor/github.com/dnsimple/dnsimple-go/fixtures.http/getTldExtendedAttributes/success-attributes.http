@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Sun, 28 Feb 2016 13:19:01 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 200 OK
+X-RateLimit-Limit: 4000
+X-RateLimit-Remaining: 3997
+X-RateLimit-Reset: 1456669059
+ETag: W/"8fbf2767d4a37fb8a504dff8709c9f2a"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 46f26f07-a46e-40d6-8d74-f41e75069b8a
+X-Runtime: 0.527156
+Strict-Transport-Security: max-age=31536000
+
+{"data":[{"name":"uk_legal_type","description":"Legal type of registrant contact","required":false,"options":[{"title":"UK Individual","value":"IND","description":"UK Individual (our default value)"},{"title":"Non-UK Individual (representing self)","value":"FIND","description":"Non-UK Individual (representing self)"},{"title":"UK Limited Company","value":"LTD","description":"UK Limited Company"},{"title":"UK Public Limited Company","value":"PLC","description":"UK Public Limited Company"},{"title":"UK Partnership","value":"PTNR","description":"UK Partnership"},{"title":"UK LLP","value":"LLP","description":"UK Limited Liability Partnership"},{"title":"UK Sole Trader","value":"STRA","description":"UK Sole Trader"},{"title":"UK Registered Charity","value":"RCHAR","description":"UK Registered Charity"},{"title":"UK Industrial/Provident Registered Company","value":"IP","description":"UK Industrial/Provident Registered Company"},{"title":"UK School","value":"SCH","description":"UK School"},{"title":"Other Foreign","value":"FOTHER","description":"Other foreign organizations"},{"title":"UK Government Body","value":"GOV","description":"UK Government Body"},{"title":"UK Corporation by Royal Charter","value":"CRC","description":"UK Corporation by Royal Charter"},{"title":"UK Statutory Body","value":"STAT","description":"UK Statutory Body"},{"title":"UK Entity (other)","value":"OTHER","description":"UK Entity (other)"},{"title":"Non-UK Corporation","value":"FCORP","description":"Non-UK Corporation"},{"title":"Non-UK Organization (other)","value":"FOTHER","description":"Non-UK Organization"}]},{"name":"uk_reg_co_no","description":"Company identification number","required":false,"options":[]},{"name":"registered_for","description":"Company or person domain is registered for (this must be accurate and CANNOT BE CHANGED)","required":true,"options":[]},{"name":"uk_reg_opt_out","description":"Hide registrant data in Nominet WHOIS","required":false,"options":[{"title":"No","value":"n","description":"Do not hide the registrant contact information in Nominet's WHOIS."},{"title":"Yes","value":"y","description":"Hide the registrant contact information in Nominet's WHOIS (only available to individuals)."}]}]}

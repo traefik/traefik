@@ -1,0 +1,77 @@
+//
+// Global Site
+// --------------------------------------------------
+
+/*html{
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}*/
+
+body {
+    font-size: 15px;
+}
+
+h1{
+	font-size: 42px;
+	line-height: 42px;
+	font-family: $font-family-rales;
+	font-weight: $font-weight-rales-sb;
+	margin-bottom: 24px;
+}
+
+h3{
+	font-size: 28px;
+	line-height: 28px;
+	font-family: $font-family-rales;
+	font-weight: $font-weight-rales-sb;
+}
+
+//an alternative color for buttons in the doc body
+.btn-serf{
+	color: $white !important;
+	background-color: $btn-color;
+	border-radius: $btn-border-radius;
+	//.box-shadow( $shadow );
+}
+
+.highlight{
+	margin-bottom: 18px;
+}
+
+pre {
+	background-color: $black;
+	color: $white;
+	font-size: 14px;
+	font-weight: normal;
+	font-family: "Courier New", Monaco, Menlo, Consolas, monospace;
+	border: none;
+	padding: 20px;
+	margin-bottom: 0;
+}
+
+
+//fixed grid below 992 to prevent smaller responsive sizes
+@media (max-width: 992px) {
+	.container{
+		max-width: 970px;
+	}
+}
+
+//all below styles are overriding corrections for below (min-width: 992px)
+//below (min-width: 992px) these styles change
+.navbar-nav {
+	margin: 0;
+}
+
+.navbar-right {
+	float: right !important;
+}
+
+.navbar-nav > li {
+	float: left;
+}
+
+.navbar-nav > li > a {
+	padding-top: 15px;
+	padding-bottom: 15px;
+}

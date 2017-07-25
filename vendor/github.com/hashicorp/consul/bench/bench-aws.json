@@ -1,0 +1,93 @@
+{
+    "variables": {
+        "aws_access_key": "",
+        "aws_secret_key": "",
+        "source_ami": "ami-018c9568"
+    },
+    "builders": [
+        {
+        "type": "amazon-ebs",
+        "access_key": "{{ user `aws_access_key` }}",
+        "secret_key": "{{ user `aws_secret_key` }}",
+        "region": "us-east-1",
+        "instance_type": "m1.small",
+        "source_ami": "{{ user `source_ami` }}",
+        "ssh_username": "ubuntu",
+        "ami_name": "bench-bootstrap-{{ timestamp }}",
+        "name": "bootstrap"
+    },
+    {
+        "type": "amazon-ebs",
+        "access_key": "{{ user `aws_access_key` }}",
+        "secret_key": "{{ user `aws_secret_key` }}",
+        "region": "us-east-1",
+        "instance_type": "m1.small",
+        "source_ami": "{{ user `source_ami` }}",
+        "ami_name": "bench-server-{{ timestamp }}",
+        "ssh_username": "ubuntu",
+        "name": "server"
+    },
+    {
+        "type": "amazon-ebs",
+        "access_key": "{{ user `aws_access_key` }}",
+        "secret_key": "{{ user `aws_secret_key` }}",
+        "region": "us-east-1",
+        "instance_type": "m1.small",
+        "source_ami": "{{ user `source_ami` }}",
+        "ami_name": "bench-worker-{{ timestamp }}",
+        "ssh_username": "ubuntu",
+        "name": "worker"
+    }
+    ],
+    "provisioners":[
+    {
+        "type": "file",
+        "source": "conf/upstart.conf",
+        "destination": "/tmp/upstart-consul.conf"
+    },
+    {
+        "type": "shell",
+        "inline": [
+            "sudo mv /tmp/upstart-consul.conf /etc/init/consul.conf",
+            "mkdir /tmp/consul.d",
+            "sudo mkdir /etc/consul.d",
+            "sudo apt-get update",
+            "sudo apt-get install unzip make",
+            "wget https://releases.hashicorp.com/consul/0.5.2/consul_0.5.2_linux_amd64.zip",
+            "unzip 0.5.2_linux_amd64.zip",
+            "sudo mv consul /usr/local/bin/consul",
+            "chmod +x /usr/local/bin/consul"
+        ]
+    },
+    {
+        "type": "file",
+        "source": "conf/common.json",
+        "destination": "/tmp/consul.d/common-aws.json"
+    },
+    {
+        "type": "file",
+        "source": "conf/bootstrap.json",
+        "destination": "/tmp/consul.d/bootstrap.json",
+        "only": ["bootstrap"]
+    },
+    {
+        "type": "file",
+        "source": "conf/server.json",
+        "destination": "/tmp/consul.d/server.json",
+        "only": ["server"]
+    },
+    {
+        "type": "file",
+        "source": "Makefile",
+        "destination": "/tmp/Makefile"
+    },
+    {
+        "type": "shell",
+        "inline": [
+            "sudo curl https://s3.amazonaws.com/hc-ops/boom_linux_amd64 -o /usr/local/bin/boom",
+            "sudo chmod +x /usr/local/bin/boom",
+            "sudo mv /tmp/consul.d /etc/consul.d"
+        ]
+    }
+    ]
+}

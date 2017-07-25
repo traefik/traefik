@@ -1,0 +1,21 @@
+HTTP/1.1 201 Created
+Server: nginx
+Date: Fri, 07 Oct 2016 08:51:12 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2398
+X-RateLimit-Reset: 1475833772
+ETag: W/"3e59e2eafbf1d4b626413a5703309b57"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 9f27e164-2448-4d23-ad67-4ecedaec063e
+X-Runtime: 0.387144
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":{"id":101,"domain_id":1,"domain_name":"example.com","user_id":null,"user_email":"invited-user@example.com","invitation":true,"created_at":"2016-10-07T08:51:12Z","updated_at":"2016-10-07T08:51:12Z","accepted_at":null}}

@@ -1,0 +1,146 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "etcdserver/api/v3lock/v3lockpb/v3lock.proto",
+    "version": "version not set"
+  },
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v3alpha/lock/lock": {
+      "post": {
+        "summary": "Lock acquires a distributed shared lock on a given named lock.\nOn success, it will return a unique key that exists so long as the\nlock is held by the caller. This key can be used in conjunction with\ntransactions to safely ensure updates to etcd only occur while holding\nlock ownership. The lock is held until Unlock is called on the key or the\nlease associate with the owner expires.",
+        "operationId": "Lock",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v3lockpbLockResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v3lockpbLockRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Lock"
+        ]
+      }
+    },
+    "/v3alpha/lock/unlock": {
+      "post": {
+        "summary": "Unlock takes a key returned by Lock and releases the hold on lock. The\nnext Lock caller waiting for the lock will then be woken up and given\nownership of the lock.",
+        "operationId": "Unlock",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/v3lockpbUnlockResponse"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v3lockpbUnlockRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Lock"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "etcdserverpbResponseHeader": {
+      "type": "object",
+      "properties": {
+        "cluster_id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "cluster_id is the ID of the cluster which sent the response."
+        },
+        "member_id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "member_id is the ID of the member which sent the response."
+        },
+        "revision": {
+          "type": "string",
+          "format": "int64",
+          "description": "revision is the key-value store revision when the request was applied."
+        },
+        "raft_term": {
+          "type": "string",
+          "format": "uint64",
+          "description": "raft_term is the raft term when the request was applied."
+        }
+      }
+    },
+    "v3lockpbLockRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "format": "byte",
+          "description": "name is the identifier for the distributed shared lock to be acquired."
+        },
+        "lease": {
+          "type": "string",
+          "format": "int64",
+          "description": "lease is the ID of the lease that will be attached to ownership of the\nlock. If the lease expires or is revoked and currently holds the lock,\nthe lock is automatically released. Calls to Lock with the same lease will\nbe treated as a single acquistion; locking twice with the same lease is a\nno-op."
+        }
+      }
+    },
+    "v3lockpbLockResponse": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "$ref": "#/definitions/etcdserverpbResponseHeader"
+        },
+        "key": {
+          "type": "string",
+          "format": "byte",
+          "description": "key is a key that will exist on etcd for the duration that the Lock caller\nowns the lock. Users should not modify this key or the lock may exhibit\nundefined behavior."
+        }
+      }
+    },
+    "v3lockpbUnlockRequest": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "format": "byte",
+          "description": "key is the lock ownership key granted by Lock."
+        }
+      }
+    },
+    "v3lockpbUnlockResponse": {
+      "type": "object",
+      "properties": {
+        "header": {
+          "$ref": "#/definitions/etcdserverpbResponseHeader"
+        }
+      }
+    }
+  }
+}

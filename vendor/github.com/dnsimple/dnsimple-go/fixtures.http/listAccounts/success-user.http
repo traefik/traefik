@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Tue, 14 Jun 2016 12:05:38 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2390
+X-RateLimit-Reset: 1465908577
+ETag: W/"b8dc5b6e94652da599d15d4668b723b5"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 745455ba-3871-440d-b703-1448b9708c14
+X-Runtime: 0.014727
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":[{"id":123,"email":"john@example.com","plan_identifier":"dnsimple-personal","created_at":"2011-09-11T17:15:58Z","updated_at":"2016-06-03T15:02:26Z"},{"id":456,"email":"ops@company.com","plan_identifier":"dnsimple-professional","created_at":"2012-03-16T16:02:54Z","updated_at":"2016-06-14T11:23:16Z"}]}

@@ -1,0 +1,6 @@
+/zbase32-encode
+/zbase32-decode
+*.test
+/virtualenv/
+/fuzz/
+/zbase32-fuzz.zip

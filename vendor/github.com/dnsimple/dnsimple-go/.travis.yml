@@ -1,0 +1,28 @@
+language: go
+
+go:
+  - 1.2
+  - 1.3
+  - 1.4
+  - 1.5
+  - 1.6
+  - 1.7
+  - 1.8
+  - tip
+
+before_install:
+  - go get github.com/axw/gocov/gocov
+  - go get github.com/mattn/goveralls
+  - if ! go get code.google.com/p/go.tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+
+script:
+  - cd $TRAVIS_BUILD_DIR/dnsimple
+  - "$HOME/gopath/bin/goveralls -v -service=travis-ci"
+
+matrix:
+  allow_failures:
+    - go: tip
+
+notifications:
+  slack:
+    secure: Dtb0Bf3AlAxeycfJuli46P8kG4B1at89vtMKbLKKGMwgimAWAKayNjJyuM+CaXtSiqeXOZqypKo9ScAjitQk/UTiE/NkScEZgT9wY+E0Cr+OZKBbIOLfKmFBi6+sjJUdJlVpA8aLqINOoeRH0sc6P5NE+g4StXl0C/M4PLBBfkI=

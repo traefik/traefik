@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Wed, 15 Jun 2016 11:09:44 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2398
+X-RateLimit-Reset: 1465992405
+ETag: W/"f3fb525524e0a0eab452025850afb062"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 03bcc2ff-d1f1-4fc2-bb3f-9218a21c04b7
+X-Runtime: 0.065526
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":[{"id":1,"name":"WordPress","sid":"wordpress","description":"Share with the world, your community, or your closest friends.","setup_description":null,"requires_setup":true,"default_subdomain":"blog","created_at":"2013-11-05T18:06:50Z","updated_at":"2016-03-04T09:23:27Z","settings":[{"name":"site","label":"Site","append":null,"description":"Your Wordpress.com subdomain","example":null,"password":false}]}],"pagination":{"current_page":1,"per_page":30,"total_entries":1,"total_pages":1}}

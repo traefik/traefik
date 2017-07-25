@@ -1,0 +1,628 @@
+{
+    "activated_slaves": 3,
+    "build_date": "2014-07-18 18:52:23",
+    "build_time": 1405709543,
+    "build_user": "root",
+    "completed_frameworks": [],
+    "deactivated_slaves": 2,
+    "elected_time": 1414913536.12863,
+    "failed_tasks": 24,
+    "finished_tasks": 286,
+    "flags": {
+        "allocation_interval": "1secs",
+        "authenticate": "false",
+        "authenticate_slaves": "false",
+        "framework_sorter": "drf",
+        "help": "false",
+        "hostname": "localhost",
+        "log_auto_initialize": "true",
+        "log_dir": "/var/log/mesos",
+        "logbufsecs": "0",
+        "logging_level": "INFO",
+        "port": "5050",
+        "quiet": "false",
+        "quorum": "2",
+        "recovery_slave_removal_limit": "100%",
+        "registry": "replicated_log",
+        "registry_fetch_timeout": "1mins",
+        "registry_store_timeout": "5secs",
+        "registry_strict": "false",
+        "root_submissions": "true",
+        "slave_reregister_timeout": "10mins",
+        "user_sorter": "drf",
+        "version": "false",
+        "webui_dir": "/usr/local/share/mesos/webui",
+        "whitelist": "*",
+        "work_dir": "/var/lib/mesos",
+        "zk": "zk://1.2.3.4:2181,1.2.3.5:2181,1.2.3.6:2181/mesos",
+        "zk_session_timeout": "10secs"
+    },
+    "frameworks": [
+        {
+            "active": true,
+            "checkpoint": false,
+            "completed_tasks": [
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0001",
+                    "id": "ct:1413913764000:0:Core Open Source Weekly Report",
+                    "name": "ChronosTask:Core Open Source Weekly Report",
+                    "resources": {
+                        "cpus": 0.1,
+                        "disk": 256,
+                        "mem": 256
+                    },
+                    "slave_id": "20140827-000744-3041283216-5050-2116-1",
+                    "state": "TASK_FINISHED",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1413913766.43122
+                        },
+                        {
+                            "state": "TASK_FINISHED",
+                            "timestamp": 1413913775.43281
+                        }
+                    ]
+                },
+               {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0001",
+                    "id": "ct:1415649600000:0:Elastic Mesos Stats",
+                    "name": "ChronosTask:Elastic Mesos Stats",
+                    "resources": {
+                        "cpus": 0.1,
+                        "disk": 256,
+                        "mem": 256
+                    },
+                    "slave_id": "20140827-000744-3041283216-5050-2116-1",
+                    "state": "TASK_FINISHED",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1415649600.78275
+                        },
+                        {
+                            "state": "TASK_FINISHED",
+                            "timestamp": 1415649629.78773
+                        }
+                    ]
+                }
+            ],
+            "failover_timeout": 1200,
+            "hostname": "localhost",
+            "pid": "scheduler(2)@1.2.3.12:25501",
+            "id": "20140703-014514-3041283216-5050-5348-0001",
+            "name": "chronos with a space AND MIXED CASE-2.0.1",
+            "offers": [],
+            "registered_time": 1414913537.10742,
+            "reregistered_time": 1414913537.10744,
+            "resources": {
+                "cpus": 0,
+                "disk": 0,
+                "mem": 0
+            },
+            "role": "*",
+            "tasks": [
+              {
+                  "executor_id": "",
+                  "framework_id": "20140703-014514-3041283216-5050-5348-000",
+                  "id": "some-box.b8db9f73-562f-11e4-a088-c20493233aa5",
+                  "name": "some-box",
+                  "resources": {
+                      "cpus": 1,
+                      "disk": 0,
+                      "mem": 1024,
+                      "ports": "[31354-31354]"
+                  },
+                  "slave_id": "20140803-125133-3041283216-5050-2410-0",
+                  "state": "TASK_RUNNING",
+                  "statuses": [
+                      {
+                          "state": "TASK_RUNNING",
+                          "timestamp": 1413572390.09275
+                      }
+                  ]
+              }
+            ],
+            "unregistered_time": 0,
+            "user": "root"
+        },
+        {
+            "active": true,
+            "checkpoint": false,
+            "completed_tasks": [],
+            "failover_timeout": 1200,
+            "hostname": "localhost",
+            "id": "20140703-014514-3041283216-5050-5348-0002",
+            "name": "no pid",
+            "offers": [],
+            "registered_time": 1414913537.10742,
+            "reregistered_time": 1414913537.10744,
+            "resources": {
+                "cpus": 0,
+                 "disk": 0,
+                 "mem": 0
+             },
+             "role": "*",
+             "tasks": [],
+             "unregistered_time": 0,
+             "user": "root"
+        },
+        {
+            "active": true,
+            "checkpoint": true,
+            "completed_tasks": [
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0000",
+                    "id": "box01.a50a19f2-2d7a-11e4-b8df-d43d7edb01cd",
+                    "name": "box01.a50a19f2-2d7a-11e4-b8df-d43d7edb01cd",
+                    "resources": {
+                        "cpus": 1,
+                        "disk": 0,
+                        "mem": 1024,
+                        "ports": "[31328-31328]"
+                    },
+                    "slave_id": "20140803-125133-3041283216-5050-2410-0",
+                    "state": "TASK_KILLED",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1409096558.66511
+                        },
+                        {
+                            "state": "TASK_KILLED",
+                            "timestamp": 1415151766.0307
+                        }
+                    ]
+                }
+            ],
+            "failover_timeout": 604800,
+            "hostname": "google.com",
+            "id": "20140703-014514-3041283216-5050-5348-0000",
+            "pid": "scheduler(1)@1.2.3.11:25501",
+            "name": "marathon",
+            "offers": [],
+            "registered_time": 1414913536.83611,
+            "reregistered_time": 1414913536.83618,
+            "resources": {
+                "cpus": 3.2,
+                "disk": 0,
+                "mem": 3585
+            },
+            "role": "*",
+            "tasks": [
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0000",
+                    "id": "poseidon.bc4e3796-2d7a-11e4-b8df-d43d7edb01cd",
+                    "name": "poseidon.bc4e3796-2d7a-11e4-b8df-d43d7edb01cd",
+                    "resources": {
+                        "cpus": 1,
+                        "disk": 0,
+                        "mem": 1024,
+                        "ports": "[31112-31112]"
+                    },
+                    "slave_id": "20140803-125133-3041283216-5050-2410-0",
+                    "state": "TASK_KILLED",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1409096598.68885,
+                            "labels": [
+                                {
+                                    "key": "foo",
+                                    "value": "bar"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0000",
+                    "id": "liquor-store.b8db9f73-562f-11e4-a088-c20493233aa5",
+                    "name": "liquor.store",
+                    "resources": {
+                        "cpus": 1,
+                        "disk": 0,
+                        "mem": 1024,
+                        "ports": "[31354-31354, 31355-31355]"
+                    },
+                    "slave_id": "20140803-125133-3041283216-5050-2410-0",
+                    "state": "TASK_RUNNING",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1413572371.04321,
+                            "labels": [
+                                {
+                                    "key": "foo",
+                                    "value": "bar"
+                                },
+                                {
+                                    "key": "Docker.NetworkSettings.IPAddress",
+                                    "value": "10.3.0.4"
+                                }
+                            ]
+                        },
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1413572390.09275,
+                            "labels": [
+                                {
+                                    "key": "foo",
+                                    "value": "bar"
+                                },
+                                {
+                                    "key": "Docker.NetworkSettings.IPAddress",
+                                    "value": "10.3.0.1"
+                                }
+                            ]
+                        },
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1413572381.0123,
+                            "labels": [
+                                {
+                                    "key": "foo",
+                                    "value": "bar"
+                                },
+                                {
+                                    "key": "container-ip",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        {
+                            "state": "TASK_STARTING",
+                            "timestamp": 1413572380.01234
+                        }
+                    ],
+                    "discovery" : {
+                        "version" : "1.0",
+                        "visibility" : "CLUSTER",
+                        "name" : "liquor.store",
+                        "ports" : {
+                            "ports" : [
+                                {
+                                    "number" : 80,
+                                    "protocol" : "tcp",
+                                    "name" : "http"
+                                },
+                                {
+                                    "number" : 443,
+                                    "protocol" : "tcp",
+                                    "name" : "https"
+                                }
+                            ]
+                        },
+                        "location" : "europe",
+                        "labels" : {
+                            "labels" : [
+                                {
+                                    "key" : "dc",
+                                    "value" : "de1"
+                                },
+                                {
+                                    "key" : "canary",
+                                    "value" : "Teneriffa"
+                                }
+                            ]
+                        },
+                        "environment" : "prod"
+                    }
+                },
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0000",
+                    "id": "liquor-store.b8db9f73-562f-11e4-a088-c20493233aa5",
+                    "name": "big.dog2",
+                    "resources": {
+                        "cpus": 1,
+                        "disk": 0,
+                        "mem": 1024,
+                        "ports": "[31354-31354, 31355-31355]"
+                    },
+                    "slave_id": "20140803-125133-3041283216-5050-2410-0",
+                    "state": "TASK_RUNNING",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1413572371.04321,
+                            "labels": [
+                                {
+                                    "key": "foo",
+                                    "value": "bar"
+                                },
+                                {
+                                    "key": "Docker.NetworkSettings.IPAddress",
+                                    "value": "10.3.0.4"
+                                }
+                            ]
+                        },
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1413572390.09275,
+                            "labels": [
+                                {
+                                    "key": "foo",
+                                    "value": "bar"
+                                },
+                                {
+                                    "key": "Docker.NetworkSettings.IPAddress",
+                                    "value": "10.3.0.1"
+                                }
+                            ]
+                        },
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1413572381.0123,
+                            "labels": [
+                                {
+                                    "key": "foo",
+                                    "value": "bar"
+                                },
+                                {
+                                    "key": "container-ip",
+                                    "value": ""
+                                }
+                            ]
+                        },
+                        {
+                            "state": "TASK_STARTING",
+                            "timestamp": 1413572380.01234
+                        }
+                    ],
+                    "discovery" : {
+                        "version" : "1.0",
+                        "visibility" : "CLUSTER",
+                        "name" : "big.dog",
+                        "ports" : {
+                            "ports" : [
+                                {
+                                    "number" : 80,
+                                    "protocol" : "tcp",
+                                    "name" : "http"
+                                },
+                                {
+                                    "number" : 443,
+                                    "protocol" : "tcp",
+                                    "name" : "https"
+                                }
+                            ]
+                        },
+                        "location" : "europe",
+                        "labels" : {
+                            "labels" : [
+                                {
+                                    "key" : "dc",
+                                    "value" : "de1"
+                                },
+                                {
+                                    "key" : "canary",
+                                    "value" : "Teneriffa"
+                                }
+                            ]
+                        },
+                        "environment" : "prod"
+                    }
+                },
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0000",
+                    "id": "liquor-store.b71166c1-562f-11e4-a088-c20493233aa5",
+                    "name": "non-human-readable-liquor-store",
+                    "resources": {
+                        "cpus": 1,
+                        "disk": 0,
+                        "mem": 1024,
+                        "ports": "[31737-31738]"
+                    },
+                    "slave_id": "20140827-000744-3041283216-5050-2116-1",
+                    "state": "TASK_RUNNING",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1413572383.04559,
+                            "labels": [
+                                {
+                                    "key": "foo",
+                                    "value": "bar"
+                                },
+                                {
+                                    "key": "Docker.NetworkSettings.IPAddress",
+                                    "value": "10.3.0.2"
+                                }
+                            ]
+                        }
+                    ],
+                    "discovery" : {
+                        "version" : "1.0",
+                        "visibility" : "CLUSTER",
+                        "name" : "liquor.store",
+                        "ports" : {
+                            "ports" : [
+                                {
+                                    "number" : 80,
+                                    "protocol" : "tcp",
+                                    "name" : "http"
+                                },
+                                {
+                                    "number" : 443,
+                                    "protocol" : "tcp",
+                                    "name" : "https"
+                                }
+                            ]
+                        },
+                        "location" : "europe",
+                        "labels" : {
+                            "labels" : [
+                                {
+                                    "key" : "dc",
+                                    "value" : "de1"
+                                },
+                                {
+                                    "key" : "canary",
+                                    "value" : "Lanzarote"
+                                }
+                            ]
+                        },
+                        "environment" : "prod"
+                    }
+                },
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0000",
+                    "id": "car-store.43758382-562f-11e4-a088-c20493233aa5",
+                    "name": "car.store",
+                    "resources": {
+                        "cpus": 1,
+                        "disk": 0,
+                        "mem": 1024,
+                        "ports": "[31364-31364, 31365-31365]"
+                    },
+                    "slave_id": "20140803-125133-3041283216-5050-2410-0",
+                    "state": "TASK_RUNNING",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1413572123.04321
+                        }
+                    ]
+                },
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0000",
+                    "id": "chronos.49b91a9a-3dda-11e4-a088-c20493233aa5",
+                    "name": "chronos",
+                    "resources": {
+                        "cpus": 0.1,
+                        "disk": 0,
+                        "mem": 385,
+                        "ports": "[31332-31332]"
+                    },
+                    "slave_id": "20140803-125133-3041283216-5050-2410-0",
+                    "state": "TASK_RUNNING",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1410896855.5742
+                        }
+                    ]
+                },
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0000",
+                    "id": "nginx.1bc32344-3dda-11e4-a088-c20493233aa5",
+                    "name": "nginx",
+                    "resources": {
+                        "cpus": 0.1,
+                        "disk": 0,
+                        "mem": 128,
+                        "ports": "[]"
+                    },
+                    "slave_id": "20140803-125133-3041283216-5050-2410-0",
+                    "state": "TASK_RUNNING",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1410896855.5742,
+                            "labels": [
+                                {
+                                    "key": "MesosContainerizer.NetworkSettings.IPAddress",
+                                    "value": "10.3.0.3"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "executor_id": "",
+                    "framework_id": "20140703-014514-3041283216-5050-5348-0000",
+                    "id": "reviewbot.8c9b3434-615a-11e4-a088-c20493233aa5",
+                    "name": "reviewbot",
+                    "resources": {
+                        "cpus": 0.1,
+                        "disk": 0,
+                        "mem": 128,
+                        "ports": "[31744-31744]"
+                    },
+                    "slave_id": "20140827-000744-3041283216-5050-2116-1",
+                    "state": "TASK_RUNNING",
+                    "statuses": [
+                        {
+                            "state": "TASK_RUNNING",
+                            "timestamp": 1414800227.3456
+                        }
+                    ]
+                }
+            ],
+            "unregistered_time": 0,
+            "user": "root"
+        }
+    ],
+    "git_sha": "dc0b7bf2a1a7981079b33a16b689892f9cda0d8d",
+    "git_tag": "0.19.1",
+    "hostname": "localhost",
+    "id": "20140916-194712-631065744-5050-4798",
+    "killed_tasks": 1,
+    "leader": "master@1.2.3.4:5050",
+    "log_dir": "/var/log/mesos",
+    "lost_tasks": 0,
+    "pid": "master@1.2.3.4:5050",
+    "slaves": [
+        {
+            "attributes": {
+                "host": "dev-123-1d.c.mesos.internal"
+            },
+            "hostname": "1.2.3.10",
+            "id": "20140916-194712-631065744-5050-4798-2",
+            "pid": "slave(1)@1.2.3.10:5051",
+            "registered_time": 1415029403.65675,
+            "resources": {
+                "cpus": 8,
+                "disk": 1035066,
+                "mem": 30844,
+                "ports": "[31000-32000]"
+            }
+        },
+        {
+            "attributes": {
+                "host": "dev-123-1e.c.mesos.internal"
+            },
+            "hostname": "1.2.3.11",
+            "id": "20140803-125133-3041283216-5050-2410-0",
+            "pid": "slave(1)@1.2.3.11:5051",
+            "registered_time": 1414913537.33691,
+            "reregistered_time": 1414913537.33692,
+            "resources": {
+                "cpus": 8,
+                "disk": 1870557,
+                "mem": 31016,
+                "ports": "[31000-32000]"
+            }
+        },
+        {
+            "attributes": {
+                "host": "dev-123-1f.c.mesos.internal"
+            },
+            "hostname": "1.2.3.12",
+            "id": "20140827-000744-3041283216-5050-2116-1",
+            "pid": "slave(1)@1.2.3.12:5051",
+            "registered_time": 1414913537.19731,
+            "reregistered_time": 1414913537.19735,
+            "resources": {
+                "cpus": 8,
+                "disk": 1855784,
+                "mem": 31016,
+                "ports": "[31000-32000]"
+            }
+        }
+    ],
+    "staged_tasks": 310,
+    "start_time": 1410896832.93425,
+    "started_tasks": 0,
+    "version": "0.19.1"
+}

@@ -1,0 +1,7 @@
+---
+# Handlers for mesos-dns clients
+
+#TODO(jdef) don't hardcode eth0
+- name: restart dhclient
+  sudo: yes
+  shell: dhclient -r -pf /run/dhclient.eth0.pid && service networking restart

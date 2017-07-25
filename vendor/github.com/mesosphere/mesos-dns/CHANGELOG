@@ -1,0 +1,50 @@
+2016-03-04: v0.5.2
+  Add EnforceRFC952 to sample config
+  Improve performance of record generation
+  Fix bug in DiscoveryInfo to use the same scheme for record creation
+    as normal records (#377)
+  Add enumeration API (#402)
+  Generate additional SRV records if DiscoveryInfo port name is specified
+
+2015-11-25: v0.5.1
+  Add code signing to CI portion of repo
+  documentation: Try to alleviate issues around IPSources
+  resolver: Fix errant NXDOMAIN errors 
+  
+2015-11-19: v0.5.0
+  Move repo, CI, and build tools to use Go 1.5
+  resolver: Remove answers to fit 512 byte when truncating (#237, #326)
+  generator: Add Timeout when fetching state.json (#243)
+  generator: Fix hashString to introduce a sha1 hash (#157)
+  Add support for Mesos 0.26 "NetworkInfo"
+    -If you use NetworkInfo, in order to upgrade from Mesos 0.25->Mesos 0.26
+     you must use Mesos-DNS 0.5.0
+
+2015-10-09: v0.4.0
+  Smarter leading Mesos master detection timeout logic (#284, #306, #320)
+  resolver: Fix data races to RNG and SOASerial (#317)
+  Remove bogus "NS request" error log line (#316)
+  Transparent forwarding as per RFC5625 (#301, #307)
+  Idiomatic struct definitions (#232, #312)
+  exchanger: Improve error logging (#303)
+  Generate correct SOA and NS records (#295, #296)
+  detect: Extract address from MasterInfo.Address (#289, #290)
+  state: Call given src only once per statusIPs call (#285)
+
+2015-09-23: v0.3.0
+  Add support for Mesos 0.25 "NetworkInfo" as an IPSource (#266, #267, #268)
+  Find home directory with environment variables (#275, #277, #278)
+
+2015-09-15: v0.2.0
+  Mesos 0.24.0 compatibility (#263, #228)
+  Configurable ZooKeeper detection timeout (#260)
+  Configurable "IPSources" for A and SRV records (#226)
+  Mesos framework A and SRV records (#209)
+  Mesos slave A and SRV records (#208)
+  Mesos task container A records (#204)
+  Default to RFC1123 labels (#177)
+  Compress all DNS replies (#173)
+  Mesos master A and SRV records (#169)
+  Resolver and masters configuration validation (#158)
+  Fix buggy character range used for RFC952 label conversion (#155)
+  Patch up slave address resolution (#153, #151)

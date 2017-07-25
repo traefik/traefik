@@ -1,0 +1,12 @@
+HTTP/1.1 404 Not Found
+Server: nginx
+Date: Fri, 22 Jan 2016 16:46:02 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 404 Not Found
+Cache-Control: no-cache
+X-Request-Id: 9c19bef5-6902-421c-9f91-dec3bae26102
+X-Runtime: 0.014705
+
+{"message":"Zone `0` not found"}

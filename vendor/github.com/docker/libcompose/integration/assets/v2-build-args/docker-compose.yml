@@ -1,0 +1,9 @@
+
+version: "2"
+
+services:
+  simple:
+    build:
+      context: .
+      args:
+        buildno: 1

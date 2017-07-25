@@ -1,0 +1,55 @@
+hash: 5a5e74f8be7a721d3ea9c2e36d994d2754f15087f89ba8342c4ec9ed4cbedf7b
+updated: 2017-03-01T16:08:43.5505724-08:00
+imports:
+- name: github.com/Azure/go-autorest
+  version: ec5f4903f77ed9927ac95b19ab8e44ada64c1356
+  subpackages:
+  - autorest
+  - autorest/azure
+  - autorest/date
+  - autorest/to
+  - autorest/validation
+- name: github.com/dgrijalva/jwt-go
+  version: 2268707a8f0843315e2004ee4f1d021dc08baedf
+- name: github.com/howeyc/gopass
+  version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
+- name: github.com/mattn/go-colorable
+  version: d898aa9fb31c91f35dd28ca75db377eff023c076
+- name: github.com/mattn/go-isatty
+  version: dda3de49cbfcec471bd7a70e6cc01fcc3ff90109
+- name: github.com/mgutz/ansi
+  version: 9520e82c474b0a04dd04f8a40959027271bab992
+- name: github.com/mgutz/minimist
+  version: 39eb8cf573ca29344bd7d7e6ba4d7febdebd37a9
+- name: github.com/mgutz/str
+  version: 968bf66e3da857419e4f6e71b2d5c9ae95682dc4
+- name: github.com/mgutz/to
+  version: 00c06406c2dd2e011f153a6502a21473676db33f
+- name: github.com/MichaelTJones/walk
+  version: 4748e29d5718c2df4028a6543edf86fd8cc0f881
+- name: github.com/nozzle/throttler
+  version: d9b45f19996c645d38c9266d1f5cf1990e930119
+- name: github.com/satori/uuid
+  version: b061729afc07e77a8aa4fad0a2fd840958f1942a
+- name: github.com/shopspring/decimal
+  version: 3526cd0bdb7f64e1178943b7dee81a0cc3d86a69
+- name: golang.org/x/crypto
+  version: 453249f01cfeb54c3d549ddb75ff152ca243f9d8
+  subpackages:
+  - pkcs12
+  - pkcs12/internal/rc2
+  - ssh/terminal
+- name: golang.org/x/sys
+  version: 76cc09b634294339fa19ec41b5f2a0b3932cea8b
+  subpackages:
+  - unix
+- name: gopkg.in/check.v1
+  version: 20d25e2804050c1cd24a7eea1e7a6447dd0e74ec
+- name: gopkg.in/godo.v2
+  version: b5fd2f0bef1ebe832e628cfad18ab1cc707f65a1
+  subpackages:
+  - glob
+  - util
+  - watcher
+  - watcher/fswatch
+testImports: []

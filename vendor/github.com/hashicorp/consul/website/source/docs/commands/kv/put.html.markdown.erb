@@ -1,0 +1,140 @@
+---
+layout: "docs"
+page_title: "Commands: KV Put"
+sidebar_current: "docs-commands-kv-put"
+---
+
+# Consul KV Put
+
+Command: `consul kv put`
+
+The `kv put` command writes the data to the given path in the KV store.
+
+## Usage
+
+Usage: `consul kv put [options] KEY [DATA]`
+
+#### API Options
+
+<%= partial "docs/commands/http_api_options_client" %>
+<%= partial "docs/commands/http_api_options_server" %>
+
+#### KV Put Options
+
+* `-acquire` - Obtain a lock on the key. If the key does not exist, this
+  operation will create the key and obtain the lock. The session must already
+  exist and be specified via the -session flag. The default value is false.
+
+* `-base64` - Treat the data as base 64 encoded. The default value is false.
+
+* `-cas` - Perform a Check-And-Set operation. Specifying this value also
+  requires the -modify-index flag to be set. The default value is false.
+
+* `-flags=<int>` - Unsigned integer value to assign to this KV pair. This
+  value is not read by Consul, so clients can use this value however makes sense
+  for their use case. The default value is 0 (no flags).
+
+* `-modify-index=<int>` - Unsigned integer representing the ModifyIndex of the
+  key. This is used in combination with the -cas flag.
+
+* `-release` - Forfeit the lock on the key at the given path. This requires the
+  -session flag to be set. The key must be held by the session in order to be
+  unlocked. The default value is false.
+
+* `-session=<string>` - User-defined identifer for this session as a string.
+  This is commonly used with the -acquire and -release operations to build
+  robust locking, but it can be set on any key. The default value is empty (no
+  session).
+
+## Examples
+
+To insert a value of "5" for the key named "redis/config/connections" in the
+KV store:
+
+```
+$ consul kv put redis/config/connections 5
+Success! Data written to: redis/config/connections
+```
+
+If no data is specified, the key will be created with empty data:
+
+```
+$ consul kv put redis/config/connections
+Success! Data written to: redis/config/connections
+```
+
+If the `-base64` flag is set, the data will be decoded before writing:
+
+```
+$ consul kv put -base64 foo/encoded aGVsbG8gd29ybGQK
+Success! Data written to: foo/encoded
+```
+
+!> **Be careful when overwriting data!** The above operation would overwrite
+the value at the key to the empty value.
+
+For longer or sensitive values, it is possible to read from a file by prefixing
+with the `@` symbol:
+
+```
+$ consul kv put redis/config/password @password.txt
+Success! Data written to: redis/config/connections
+```
+
+Or read values from stdin by specifying the `-` symbol:
+
+```
+$ echo "5" | consul kv put redis/config/password -
+Success! Data written to: redis/config/connections
+
+$ consul kv put redis/config/password -
+5
+<CTRL+D>
+Success! Data written to: redis/config/connections
+```
+
+~> For secret and sensitive values, you should consider using a secret
+management solution like **[HashiCorp's Vault](https://www.vaultproject.io/)**.
+While it is possible to secure values in Consul's KV store, Vault provides a
+more robust interface for secret management.
+
+To only update a key if it has not been modified since a given index, specify
+the `-cas` and `-modify-index` flags:
+
+```
+$ consul kv get -detailed redis/config/connections | grep ModifyIndex
+ModifyIndex      456
+
+$ consul kv put -cas -modify-index=123 redis/config/connections 10
+Error! Did not write to redis/config/connections: CAS failed
+
+$ consul kv put -cas -modify-index=456 redis/config/connections 10
+Success! Data written to: redis/config/connections
+```
+
+To specify flags on the key, use the `-flags` option. These flags are completely
+controlled by the user:
+
+```
+$ consul kv put -flags=42 redis/config/password s3cr3t
+Success! Data written to: redis/config/password
+```
+
+To create or tune a lock, use the `-acquire` and `-session` flags. The session must already exist (this command will not create it or manage it):
+
+```
+$ consul kv put -acquire -session=abc123 redis/lock/update
+Success! Lock acquired on: redis/lock/update
+```
+
+When you are finished, release the lock:
+
+```
+$ consul kv put -release -session=acb123 redis/lock/update
+Success! Lock released on: redis/lock/update
+```
+
+~> **Warning!** If you are trying to build a locking mechanism with these
+low-level primitives, you may want to look at the [<tt>consul
+lock</tt>](/docs/commands/lock.html) command. It provides higher-level
+functionality without exposing the internal APIs of Consul.

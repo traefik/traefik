@@ -1,0 +1,5 @@
+To generate bad certs
+
+1. Manually set system time back to past
+2. Run ./gencerts.sh
+

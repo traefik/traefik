@@ -1,0 +1,23 @@
+//
+// Sidebar
+// - Project Specific
+// - Make sidebar edits here
+// --------------------------------------------------
+
+.sidebar {
+  .sidebar-nav {
+    // Links
+    //----------------
+    li {
+      a {
+        color: $black;
+
+        svg{
+          path{
+            fill: $black;
+          }
+        }
+      }
+    }
+  }
+}

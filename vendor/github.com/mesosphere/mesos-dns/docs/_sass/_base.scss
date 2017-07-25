@@ -1,0 +1,67 @@
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Montserrat-Regular'), url(https://themes.googleusercontent.com/static/fonts/montserrat/v4/zhcz-_WihjSQC0oHJ9TCYL3hpw3pgy2gAi-Ip7WPMi0.woff) format('woff');
+}
+
+h1, .h1,
+h2, .h2,
+h3, .h3,
+h4, .h4 {
+  font-family: Montserrat, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: #f6f6f6;
+  color: #323539;
+  line-height: 1.7;
+  padding-top: 20px;
+}
+
+footer {
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+hr {
+  border-color: #ddd;
+}
+
+pre {
+  background-color: #fff;
+}
+
+.jumbotron {
+  background-color: #323539;
+  color: #f6f6f6;
+}
+
+.jumbotron .btn-link {
+  color: #00b482;
+}
+
+.navbar {
+  border: none;
+}
+
+.navbar-inverse {
+  background-color: #2a2d2f;
+  border-color: transparent;
+}
+
+.navbar-inverse .navbar-brand,
+.navbar-inverse .nav > li > a {
+  color: #fff;
+}
+
+.navbar-inverse .navbar-nav > li > a:hover {
+  background-color: #3e4146;
+}
+
+.navbar-inverse .navbar-nav > .active > a,
+.navbar-inverse .navbar-nav > .active > a:hover,
+.navbar-inverse .navbar-nav > .active > a:focus {
+  border-bottom: 3px solid #00b482;
+  padding-bottom: 12px;
+}

@@ -1,0 +1,25 @@
+defaults:
+  -
+    scope:
+      path: ""
+    values:
+      layout: default
+  -
+    scope:
+      path: "docs"
+    values:
+      layout: docs
+      tab: docs
+
+sass:
+  sass_dir: _sass
+  style: :compressed
+
+baseurl: "/mesos-dns"
+highlighter: pygments
+lsi: false
+markdown: redcarpet
+redcarpet:
+  extensions: [with_toc_data, tables]
+safe: true
+source: .

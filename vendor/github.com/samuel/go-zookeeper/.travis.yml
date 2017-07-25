@@ -1,0 +1,27 @@
+language: go
+go:
+  - 1.7
+
+sudo: false
+
+branches:
+  only:
+    - master
+
+before_install:
+  - wget http://apache.claz.org/zookeeper/zookeeper-3.4.6/zookeeper-3.4.6.tar.gz
+  - tar -zxvf zookeeper*tar.gz
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
+
+script:
+  - go build ./...
+  - go fmt ./...
+  - go vet ./...
+  - go test -i -race ./...
+  - go test -race -covermode atomic -coverprofile=profile.cov ./zk
+  - goveralls -coverprofile=profile.cov -service=travis-ci
+
+env:
+  global:
+    secure: Coha3DDcXmsekrHCZlKvRAc+pMBaQU1QS/3++3YCCUXVDBWgVsC1ZIc9df4RLdZ/ncGd86eoRq/S+zyn1XbnqK5+ePqwJoUnJ59BE8ZyHLWI9ajVn3fND1MTduu/ksGsS79+IYbdVI5wgjSgjD3Ktp6Y5uPl+BPosjYBGdNcHS4=

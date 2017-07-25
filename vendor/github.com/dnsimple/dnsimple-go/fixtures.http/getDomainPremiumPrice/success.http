@@ -1,0 +1,21 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Tue, 22 Nov 2016 10:46:17 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+X-RateLimit-Limit: 2400
+X-RateLimit-Remaining: 2399
+X-RateLimit-Reset: 1479815177
+ETag: W/"7ed6ab997deeafd985a5782df2d86b04"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 54731b91-cd76-4d08-9481-c0f55f47996d
+X-Runtime: 1.013083
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+{"data":{"premium_price":"109.00","action":"registration"}}

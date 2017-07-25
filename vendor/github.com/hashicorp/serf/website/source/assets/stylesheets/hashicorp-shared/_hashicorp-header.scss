@@ -1,0 +1,326 @@
+//
+// Hashicorp header
+// - Shared throughout projects
+// - Edits should not be made here
+// --------------------------------------------------
+
+#header{
+  position: relative;
+  margin-bottom: 0;
+}
+
+.navigation {
+  color: black;
+  text-rendering: optimizeLegibility;
+  transition: all 1s ease;
+
+  &.white{
+    .navbar-brand {
+      .logo {
+        color: white;
+      }
+    }
+
+    .main-links,
+    .external-links {
+      li > a {
+        &:hover{
+          opacity: 1;
+        }
+      }
+    }
+  }
+
+  &.black{
+    .navbar-brand {
+      .logo {
+        color: black;
+      }
+    }
+
+    .main-links,
+    .external-links {
+      li > a {
+        color: black;
+      }
+    }
+  }
+
+  .navbar-toggle{
+    height: $header-height;
+    margin: 0;
+    border-radius: 0;
+    .icon-bar{
+      border: 1px solid $black;
+      border-radius: 0;
+    }
+  }
+
+  .external-links {
+    &.white{
+      svg path{
+        fill: $white;
+      }
+    }
+
+    li {
+      position: relative;
+
+      svg path{
+        @include transition( all 300ms ease-in );
+      }
+
+      &:hover{
+        svg path{
+          @include transition( all 300ms ease-in );
+        }
+      }
+
+      @include project-svg-external-links-style();
+
+      &.download{
+        margin-right: 10px;
+      }
+
+      > a {
+        padding-left: 12px !important;
+        svg{
+          position: absolute;
+          left: -12px;
+          top: 50%;
+          margin-top: -7px;
+          width: 14px;
+          height: 14px;
+        }
+      }
+    }
+  }
+
+  .main-links{
+    margin-right: $nav-margin-right * 2;
+  }
+
+  .main-links,
+  .external-links {
+    &.white{
+      li > a {
+        color: white;
+      }
+    }
+    li > a {
+      @include hashi-a-style();
+      margin: 0 10px;
+      padding-top: 1px;
+      line-height: $header-height;
+      @include project-a-style();
+    }
+  }
+
+  .nav > li > a:hover, .nav > li > a:focus {
+    background-color: transparent;
+    @include transition( all 300ms ease-in );
+  }
+}
+
+.navbar-brand {
+  display: block;
+  height: $header-height;
+  padding: 0;
+  margin: 0 10px 0 0;
+
+  .logo{
+    display: inline-block;
+    height: $header-height;
+    vertical-align:top;
+    padding: 0;
+    line-height: $header-height;
+    padding-left: $project-logo-width + $project-logo-pad-left;
+    background-position: 0 center;
+    @include transition(all 300ms ease-in);
+
+    &:hover{
+      @include transition(all 300ms ease-in);
+      text-decoration: none;
+    }
+  }
+}
+
+.navbar-toggle{
+  &.white{
+    .icon-bar{
+      border: 1px solid white;
+    }
+  }
+}
+
+.by-hashicorp{
+  display: inline-block;
+  vertical-align:top;
+  height: $header-height;
+  margin-left: 3px;
+  padding-top: 2px;
+  color: black;
+  line-height: $header-height;
+  font-family: $header-font-family;
+  font-weight: 600;
+  font-size: 0;
+  text-decoration: none;
+
+  &.white{
+    color: white;
+    font-weight: 300;
+    svg{
+      path,
+      polygon,
+      rect{
+        fill: white;
+      }
+    }
+
+    &:focus,
+    &:hover{
+      text-decoration: none;
+      color: white;
+    }
+  }
+
+  &:focus,
+  &:hover{
+    text-decoration: none;
+  }
+
+  .svg-wrap{
+    font-size: 13px;
+  }
+
+  svg{
+    &.svg-by{
+      width: $by-hashicorp-width;
+      height: $by-hashicorp-height;
+      margin-bottom: -4px;
+      margin-left: 4px;
+    }
+
+    &.svg-logo{
+      width: 16px;
+      height: 16px;
+      margin-bottom: -3px;
+      margin-left: 4px;
+    }
+
+    .svg-bg-line{
+      @include transition(all 300ms ease-in);
+
+      &:hover{
+        @include transition(all 300ms ease-in);
+      }
+    }
+  }
+}
+
+.hashicorp-project{
+  display: inline-block;
+  height: 30px;
+  line-height: 30px;
+  text-decoration: none;
+  font-size: 14px;
+  color: $black;
+  font-weight: 600;
+
+  &.white{
+    color: white;
+    svg{
+      path,
+      polygon,
+      rect{
+        fill: white;
+      }
+    }
+  }
+
+  &:focus,
+  &:hover{
+    text-decoration: none;
+  }
+
+  span{
+    margin-right: 4px;
+    font-family: $header-font-family;
+    font-weight: 500;
+  }
+
+  span,
+  svg{
+    display: inline-block;
+  }
+
+  svg{
+    &.svg-by{
+      width: $by-hashicorp-width;
+      height: $by-hashicorp-height;
+      margin-bottom: -4px;
+      margin-left: -3px;
+    }
+
+    &.svg-logo{
+      width: 30px;
+      height: 30px;
+      margin-bottom: -10px;
+      margin-left: -1px;
+    }
+
+    path,
+    line{
+      fill: $black;
+      @include transition(all 300ms ease-in);
+
+      &:hover{
+        @include transition(all 300ms ease-in);
+      }
+    }
+    .svg-bg-line{
+      @include transition(all 300ms ease-in);
+
+      &:hover{
+        @include transition(all 300ms ease-in);
+      }
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .navigation {
+    .main-links{
+      margin-right: 0;
+    }
+  }
+}
+
+@media (max-width: 414px) {
+  #header {
+    .navbar-toggle{
+      padding-top: 10px;
+      height: $header-mobile-height;
+    }
+
+    .navbar-brand {
+      height: $header-mobile-height;
+
+      .logo{
+        height: $header-mobile-height;
+        line-height: $header-mobile-height;
+      }
+      .by-hashicorp{
+        height: $header-mobile-height;
+        line-height: $header-mobile-height;
+        padding-top: 0;
+      }
+    }
+    .main-links,
+    .external-links {
+      li > a {
+        line-height: $header-mobile-height;
+      }
+    }
+  }
+}

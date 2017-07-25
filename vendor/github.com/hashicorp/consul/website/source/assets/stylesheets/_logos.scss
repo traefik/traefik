@@ -1,0 +1,51 @@
+svg.logo {
+  &.color {
+    opacity: 1.0;
+
+    path.text {
+      fill: $black;
+      opacity: 1.0;
+    }
+
+    path.center-c {
+      fill: $consul-pink-dark;
+      opacity: 1.0;
+    }
+
+    path.circles {
+      fill: $consul-pink;
+      opacity: 1.0;
+    }
+
+    path.c {
+      fill: $consul-pink;
+      opacity: 1.0;
+    }
+  }
+
+  // The default logo class is the colored version
+  @extend .color;
+
+  &.white {
+    opacity: 1.0;
+
+    path.text {
+      fill: $white;
+    }
+
+    path.center-c {
+      fill: $white;
+      opacity: 0.7;
+    }
+
+    path.circles {
+      fill: $white;
+      opacity: 1.0;
+    }
+
+    path.c {
+      fill: $white;
+      opacity: 1.0;
+    }
+  }
+}

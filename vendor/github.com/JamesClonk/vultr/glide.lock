@@ -1,0 +1,21 @@
+hash: e276dbbb454fe69f1f1cf0189c77c484c16ef6348623cf7670bdc1f39d770017
+updated: 2016-11-26T19:07:10.98008698+01:00
+imports:
+- name: github.com/jawher/mow.cli
+  version: 33e2f99c7beda006afee6bb2e39e31e4ba4e9946
+- name: github.com/juju/ratelimit
+  version: 77ed1c8a01217656d2080ad51981f6e99adaa177
+- name: github.com/stretchr/objx
+  version: 1a9d0bb9f541897e62256577b352fdbc1fb4fd94
+- name: github.com/stretchr/testify
+  version: dab07ac62d4905d3e48d17dc549c684ac3b7c15a
+  subpackages:
+  - assert
+- name: golang.org/x/crypto
+  version: 1f22c0103821b9390939b6776727195525381532
+  subpackages:
+  - curve25519
+  - ssh
+  - ssh/agent
+  - ssh/terminal
+testImports: []

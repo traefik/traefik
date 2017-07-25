@@ -1,0 +1,17 @@
+HTTP/1.1 200 OK
+Server: nginx
+Date: Tue, 19 Jan 2016 20:57:38 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Status: 200 OK
+X-RateLimit-Limit: 4000
+X-RateLimit-Remaining: 3996
+X-RateLimit-Reset: 1453239045
+ETag: W/"165299b0ea3e5c1c80f1ae622146626f"
+Cache-Control: max-age=0, private, must-revalidate
+X-Request-Id: 4c0679ed-5c79-41bf-84cb-0dc2250a07ce
+X-Runtime: 0.127802
+Strict-Transport-Security: max-age=31536000
+
+{"data":{"id":1,"account_id":1010,"label":"Default","first_name":"First","last_name":"User","job_title":"CEO","organization_name":"Awesome Company","email":"first@example.com","phone":"+18001234567","fax":"+18011234567","address1":"Italian Street, 10","address2":"","city":"Roma","state_province":"RM","postal_code":"00100","country":"IT","created_at":"2016-01-19T20:50:26Z","updated_at":"2016-01-19T20:50:26Z"}}

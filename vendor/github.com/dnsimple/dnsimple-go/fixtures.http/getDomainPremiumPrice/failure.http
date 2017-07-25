@@ -1,0 +1,16 @@
+HTTP/1.1 400 Bad Request
+Server: nginx
+Date: Tue, 22 Nov 2016 10:48:27 GMT
+Content-Type: application/json; charset=utf-8
+Transfer-Encoding: chunked
+Connection: keep-alive
+Cache-Control: no-cache
+X-Request-Id: 1304138f-0fc7-4845-b9ed-e3803409cb5a
+X-Runtime: 1.421413
+X-Content-Type-Options: nosniff
+X-Download-Options: noopen
+X-Frame-Options: DENY
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 1; mode=block
+
+{"message":"`example.com` is not a premium domain for registration"}

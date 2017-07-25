@@ -1,0 +1,16 @@
+version: "2"
+
+services:
+  web:
+    image: busybox
+    command: top
+    networks:
+      - networks_foo
+      - bar
+
+networks:
+  networks_foo:
+    external: true
+  bar:
+    external:
+      name: networks_bar

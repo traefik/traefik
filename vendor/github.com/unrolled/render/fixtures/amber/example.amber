@@ -1,0 +1,8 @@
+extends layouts/base
+    
+block content
+    p This is the page content!
+    ul
+        li This is
+        li Some more
+        li #{VarTwo}

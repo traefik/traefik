@@ -1,0 +1,9 @@
+first:
+  image: busybox
+  volumes:
+    - /bundle
+second:
+  image: busybox
+  volumes_from:
+    - first
+
