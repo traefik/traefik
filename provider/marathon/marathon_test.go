@@ -257,6 +257,124 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "multiple ports",
+			application: marathon.Application{
+				Ports:  []int{80, 81},
+				Labels: &map[string]string{},
+			},
+			task: marathon.Task{
+				Host:  "localhost",
+				Ports: []int{80, 81},
+				IPAddresses: []*marathon.IPAddress{
+					{
+						IPAddress: "127.0.0.1",
+						Protocol:  "tcp",
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app": {
+					Backend:        "backend-app",
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+					EntryPoints:    []string{},
+					Routes: map[string]types.Route{
+						`route-host-app`: {
+							Rule: "Host:app.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-app": {
+					Servers: map[string]types.Server{
+						"server-task": {
+							URL:    "http://localhost:80",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "multiple ports with services",
+			application: marathon.Application{
+				Ports: []int{80, 81},
+				Labels: &map[string]string{
+					types.LabelBackendMaxconnAmount:        "1000",
+					types.LabelBackendMaxconnExtractorfunc: "client.ip",
+					"traefik.web.port":                     "80",
+					"traefik.admin.port":                   "81",
+					"traefik..port":                        "82", // This should be ignored, as it fails to match the servicesPropertiesRegexp regex.
+					"traefik.web.frontend.rule":            "Host:web.app.docker.localhost",
+					"traefik.admin.frontend.rule":          "Host:admin.app.docker.localhost",
+				},
+			},
+			task: marathon.Task{
+				Host:  "localhost",
+				Ports: []int{80, 81},
+				IPAddresses: []*marathon.IPAddress{
+					{
+						IPAddress: "127.0.0.1",
+						Protocol:  "tcp",
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app-service-web": {
+					Backend:        "backend-app-service-web",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Routes: map[string]types.Route{
+						`route-host-app-service-web`: {
+							Rule: "Host:web.app.docker.localhost",
+						},
+					},
+				},
+				"frontend-app-service-admin": {
+					Backend:        "backend-app-service-admin",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Routes: map[string]types.Route{
+						`route-host-app-service-admin`: {
+							Rule: "Host:admin.app.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-app-service-web": {
+					Servers: map[string]types.Server{
+						"server-task-service-web": {
+							URL:    "http://localhost:80",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: nil,
+					MaxConn: &types.MaxConn{
+						Amount:        1000,
+						ExtractorFunc: "client.ip",
+					},
+				},
+				"backend-app-service-admin": {
+					Servers: map[string]types.Server{
+						"server-task-service-admin": {
+							URL:    "http://localhost:81",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: nil,
+					MaxConn: &types.MaxConn{
+						Amount:        1000,
+						ExtractorFunc: "client.ip",
+					},
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -266,6 +384,7 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 
 			c.application.ID = "/app"
 			c.task.ID = "task"
+			c.task.AppID = c.application.ID
 			if c.task.State == "" {
 				c.task.State = "TASK_RUNNING"
 			}
