@@ -1,5 +1,0 @@
-key_path = "~/.ssh/id_rsa"
-ssh_key_ID = "my_ssh_key_ID_or_fingerprint_NOT_SSH_KEY_NAME"
-do_token = "ASDFQWERTYDERP"
-num_instances = "3"
-region = "tor1"

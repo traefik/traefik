@@ -1,1 +1,0 @@
-{"additionalProperties":{"type":"integer"},"patternProperties":{"f.o":{"minItems":2}},"properties":{"bar":{"type":"array"},"foo":{"maxItems":3,"type":"array"}}}

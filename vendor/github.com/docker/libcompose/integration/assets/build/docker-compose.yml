@@ -1,6 +1,0 @@
-one:
-    build: one
-two:
-    build: .
-    links:
-    - one

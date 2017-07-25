@@ -1,5 +1,0 @@
-simple1:
-  build: .
-simple2:
-  build: .
-  dockerfile: alternate

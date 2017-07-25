@@ -1,3 +1,0 @@
-yetanother:
-  image: busybox:latest
-  command: top

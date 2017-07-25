@@ -1,3 +1,0 @@
-base:
-  image: busybox
-  ports: invalid_type

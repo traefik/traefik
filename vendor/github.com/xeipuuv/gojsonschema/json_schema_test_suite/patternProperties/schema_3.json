@@ -1,8 +1,0 @@
-{
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "object",
-    "patternProperties": {
-        "^[a-zA-Z0-9]{1,10}$": { "type": "string" }
-    },
-    "additionalProperties": false
-}

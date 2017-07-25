@@ -1,4 +1,0 @@
-package engine
-
-func Hello() {
-}

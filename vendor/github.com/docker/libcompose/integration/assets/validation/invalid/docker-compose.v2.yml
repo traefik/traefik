@@ -1,5 +1,0 @@
-version: '2'
-services:
-  base:
-    image: busybox
-    ports: invalid_type

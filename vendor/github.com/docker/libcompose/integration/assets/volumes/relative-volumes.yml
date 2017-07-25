@@ -1,4 +1,0 @@
-server:
-    image: busybox
-    volumes:
-    - .:/path

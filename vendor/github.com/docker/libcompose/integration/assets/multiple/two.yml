@@ -1,8 +1,0 @@
-multiple:
-  image: busybox
-  command: echo two
-  environment:
-    - KEY2=VAL2
-yetanother:
-  image: busybox:latest
-  command: top

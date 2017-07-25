@@ -1,7 +1,0 @@
-#!/bin/bash
-set -e
-
-for BINARY in docker-compose_*; do
-    sha256sum $BINARY > $BINARY.sha256
-    md5sum $BINARY >> $BINARY.md5
-done

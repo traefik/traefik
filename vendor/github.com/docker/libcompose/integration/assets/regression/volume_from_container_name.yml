@@ -1,9 +1,0 @@
-first:
-  image: busybox
-  container_name: first_container_name
-  volumes:
-    - /bundle
-second:
-  image: busybox
-  volumes_from:
-    - first

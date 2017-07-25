@@ -1,7 +1,0 @@
-{
-  "snapshot_agent": {
-    "snapshot": {
-      "interval": "1h"
-    }
-  }
-}

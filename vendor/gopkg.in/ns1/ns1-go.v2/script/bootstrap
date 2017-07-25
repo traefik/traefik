@@ -1,6 +1,0 @@
-#!/bin/sh
-
-set -e
-go get -u github.com/stretchr/testify/assert
-go get -u github.com/golang/lint/golint
-go get ./...
