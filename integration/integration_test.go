@@ -14,6 +14,8 @@ import (
 	"github.com/containous/traefik/integration/utils"
 	"github.com/go-check/check"
 
+	"bytes"
+
 	compose "github.com/libkermit/compose/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -38,6 +40,7 @@ func init() {
 	check.Suite(&EurekaSuite{})
 	check.Suite(&AcmeSuite{})
 	check.Suite(&DynamoDBSuite{})
+	check.Suite(&WebsocketSuite{})
 }
 
 var traefikBinary = "../dist/traefik"
@@ -69,6 +72,18 @@ func (s *BaseSuite) createComposeProject(c *check.C, name string) {
 	}
 
 	s.composeProject = compose.CreateProject(c, projectName, composeFile)
+}
+
+func withConfigFile(file string) string {
+	return "--configFile=" + file
+}
+
+func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
+	cmd := exec.Command(traefikBinary, args...)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	return cmd, &out
 }
 
 func (s *BaseSuite) traefikCmd(c *check.C, args ...string) (*exec.Cmd, string) {

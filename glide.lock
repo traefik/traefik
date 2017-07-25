@@ -1,4 +1,4 @@
-hash: df3bba260c0e5c3183741ab4aca2ae551a5c6d9ba11f4e05b90554a9ffad96ad
+hash: bfc5801ed56be5f703a0924d8832dcccc42bf02f9e2b035ef77eab62c0cb4884
 updated: 2017-06-29T16:47:14.848940186+02:00
 imports:
 - name: cloud.google.com/go
@@ -411,7 +411,7 @@ imports:
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
-  version: 7da864c1d53bd58165435bb78bbf8c01f01c8f4a
+  version: 49f1894c20d972f5c73ff44b859f87deb83f0076
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
