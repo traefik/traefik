@@ -607,7 +607,7 @@ You should now be able to visit the websites in your browser.
 ## Specifying priority for routing
 
 Sometimes you need to specify priority for ingress route, especially when handling wildcard routes.
-This can be done by adding annotation ```traefik.frontend.priority```, i.e.:
+This can be done by adding annotation `traefik.frontend.priority`, i.e.:
 
 ```yaml
 apiVersion: extensions/v1beta1
