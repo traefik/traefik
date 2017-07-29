@@ -604,6 +604,45 @@ You should now be able to visit the websites in your browser.
 * [cheeses.minikube/cheddar](http://cheeses.minikube/cheddar/)
 * [cheeses.minikube/wensleydale](http://cheeses.minikube/wensleydale/)
 
+## Specifying priority for routing
+
+Sometimes you need to specify priority for ingress route, especially when handling wildcard routes.
+This can be done by adding annotation `traefik.frontend.priority`, i.e.:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: wildcard-cheeses
+  annotations:
+    traefik.frontend.priority: 1
+spec:
+  rules:
+  - host: *.minikube
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: stilton
+          servicePort: http
+
+kind: Ingress
+metadata:
+  name: specific-cheeses
+  annotations:
+    traefik.frontend.priority: 2
+spec:
+  rules:
+  - host: specific.minikube
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: stilton
+          servicePort: http
+```
+
+
 ## Forwarding to ExternalNames
 
 When specifying an [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors),

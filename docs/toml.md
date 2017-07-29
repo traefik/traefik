@@ -1242,6 +1242,7 @@ Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 Annotations can be used on containers to override default behaviour for the whole Ingress resource:
 
 - `traefik.frontend.rule.type: PathPrefixStrip`: override the default frontend rule type (Default: `PathPrefix`).
+- `traefik.frontend.priority: 3`: override the default frontend rule priority (Default: `len(Path)`).
 
 Annotations can be used on the Kubernetes service to override default behaviour:
 
