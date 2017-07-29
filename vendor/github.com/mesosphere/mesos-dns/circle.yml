@@ -1,0 +1,43 @@
+machine:
+  pre:
+    - wget https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz
+    - tar zxvf go1.5.1.linux-amd64.tar.gz
+  environment:
+    GOROOT: ${HOME}/go
+    PATH: ${GOROOT}/bin:${PATH}
+  post:
+    - go version
+
+dependencies:
+  pre:
+    - go version
+    - go get github.com/mitchellh/gox
+    - go get github.com/tools/godep
+    - go get github.com/alecthomas/gometalinter
+    - go get github.com/axw/gocov/gocov # https://github.com/golang/go/issues/6909
+    - go get github.com/mattn/goveralls
+    - go get github.com/jstemmer/go-junit-report
+    - git describe --tags |tee VERSION
+    - gpg --yes --batch --import build/private.key
+    - sudo service mongodb stop
+    - sudo service rabbitmq-server stop
+    - sudo service couchdb stop
+    - sudo service zookeeper stop
+    - sudo service mysql stop
+    - sudo service postgresql stop
+    - sudo service redis-server stop
+  post:
+    - go install ./...
+    - go test -i ./...
+    - gometalinter --install
+    - gox -arch=amd64 -os="linux darwin windows" -output="${CIRCLE_ARTIFACTS}/{{.Dir}}-$(<VERSION)-{{.OS}}-{{.Arch}}" -ldflags="-X main.Version=$(<VERSION)"
+    - if [ -n "$PASSPHRASE" ]; then for i in ${CIRCLE_ARTIFACTS}/*; do gpg --detach-sig --no-use-agent --yes --batch --passphrase=$PASSPHRASE -u mesos-dns --sign --armor $i; done; fi
+
+test:
+  override:
+    - gometalinter --concurrency=6 --cyclo-over=12 --tests --deadline=300s ./...
+    - gocov test ./... -short -timeout=10m > cov.json
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit && godep go test -v -timeout=10m ./... | go-junit-report > $CIRCLE_TEST_REPORTS/junit/alltests.xml
+    - godep go test -v -short -race -timeout=10m ./...
+  post:
+    - goveralls -service=circleci -gocovdata=cov.json -repotoken=$COVERALLS_REPO_TOKEN || true

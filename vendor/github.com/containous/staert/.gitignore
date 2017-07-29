@@ -1,0 +1,5 @@
+.vscode
+debug.test
+coverage.out
+kv_local_test.go
+scripts

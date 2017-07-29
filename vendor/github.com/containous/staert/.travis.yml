@@ -1,0 +1,16 @@
+language: go
+
+go:
+    - 1.6.2
+
+sudo: false
+
+install:
+    - go get -d -v ./...
+    - go get github.com/mattn/goveralls
+
+script:
+    - GOOS=darwin go build
+    - GOOS=windows go build
+    - GOOS=linux go build
+    - $HOME/gopath/bin/goveralls -service=travis-ci

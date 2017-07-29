@@ -1,0 +1,12 @@
+language: go
+
+go: 1.7
+
+before_script:
+  - git config --global user.email "e@mail.com"
+  - git config --global user.name "Travis-CI"
+
+script:
+  - make deps
+  - make build
+  - make test

@@ -1,4 +1,4 @@
-// Copyright 2015 CoreOS, Inc.
+// Copyright 2015 The etcd Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ type KeysAPI interface {
 
 	// Set assigns a new value to a Node identified by a given key. The caller
 	// may define a set of conditions in the SetOptions. If SetOptions.Dir=true
-	// than value is ignored.
+	// then value is ignored.
 	Set(ctx context.Context, key, value string, opts *SetOptions) (*Response, error)
 
 	// Delete removes a Node identified by the given key, optionally destroying
@@ -184,8 +184,17 @@ type SetOptions struct {
 	// a TTL of 0.
 	TTL time.Duration
 
+	// Refresh set to true means a TTL value can be updated
+	// without firing a watch or changing the node value. A
+	// value must not be provided when refreshing a key.
+	Refresh bool
+
 	// Dir specifies whether or not this Node should be created as a directory.
 	Dir bool
+
+	// NoValueOnSuccess specifies whether the response contains the current value of the Node.
+	// If set, the response will only contain the current value when the request fails.
+	NoValueOnSuccess bool
 }
 
 type GetOptions struct {
@@ -234,7 +243,7 @@ type DeleteOptions struct {
 
 type Watcher interface {
 	// Next blocks until an etcd event occurs, then returns a Response
-	// represeting that event. The behavior of Next depends on the
+	// representing that event. The behavior of Next depends on the
 	// WatcherOptions used to construct the Watcher. Next is designed to
 	// be called repeatedly, each time blocking until a subsequent event
 	// is available.
@@ -263,6 +272,10 @@ type Response struct {
 	// Index holds the cluster-level index at the time the Response was generated.
 	// This index is not tied to the Node(s) contained in this Response.
 	Index uint64 `json:"-"`
+
+	// ClusterID holds the cluster-level ID reported by the server.  This
+	// should be different for different etcd clusters.
+	ClusterID string `json:"-"`
 }
 
 type Node struct {
@@ -306,6 +319,7 @@ func (n *Node) TTLDuration() time.Duration {
 type Nodes []*Node
 
 // interfaces for sorting
+
 func (ns Nodes) Len() int           { return len(ns) }
 func (ns Nodes) Less(i, j int) bool { return ns[i].Key < ns[j].Key }
 func (ns Nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
@@ -327,10 +341,16 @@ func (k *httpKeysAPI) Set(ctx context.Context, key, val string, opts *SetOptions
 		act.PrevIndex = opts.PrevIndex
 		act.PrevExist = opts.PrevExist
 		act.TTL = opts.TTL
+		act.Refresh = opts.Refresh
 		act.Dir = opts.Dir
+		act.NoValueOnSuccess = opts.NoValueOnSuccess
 	}
 
-	resp, body, err := k.client.Do(ctx, act)
+	doCtx := ctx
+	if act.PrevExist == PrevNoExist {
+		doCtx = context.WithValue(doCtx, &oneShotCtxValue, &oneShotCtxValue)
+	}
+	resp, body, err := k.client.Do(doCtx, act)
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +398,8 @@ func (k *httpKeysAPI) Delete(ctx context.Context, key string, opts *DeleteOption
 		act.Recursive = opts.Recursive
 	}
 
-	resp, body, err := k.client.Do(ctx, act)
+	doCtx := context.WithValue(ctx, &oneShotCtxValue, &oneShotCtxValue)
+	resp, body, err := k.client.Do(doCtx, act)
 	if err != nil {
 		return nil, err
 	}
@@ -511,14 +532,16 @@ func (w *waitAction) HTTPRequest(ep url.URL) *http.Request {
 }
 
 type setAction struct {
-	Prefix    string
-	Key       string
-	Value     string
-	PrevValue string
-	PrevIndex uint64
-	PrevExist PrevExistType
-	TTL       time.Duration
-	Dir       bool
+	Prefix           string
+	Key              string
+	Value            string
+	PrevValue        string
+	PrevIndex        uint64
+	PrevExist        PrevExistType
+	TTL              time.Duration
+	Refresh          bool
+	Dir              bool
+	NoValueOnSuccess bool
 }
 
 func (a *setAction) HTTPRequest(ep url.URL) *http.Request {
@@ -547,6 +570,13 @@ func (a *setAction) HTTPRequest(ep url.URL) *http.Request {
 	}
 	if a.TTL > 0 {
 		form.Add("ttl", strconv.FormatUint(uint64(a.TTL.Seconds()), 10))
+	}
+
+	if a.Refresh {
+		form.Add("refresh", "true")
+	}
+	if a.NoValueOnSuccess {
+		params.Set("noValueOnSuccess", strconv.FormatBool(a.NoValueOnSuccess))
 	}
 
 	u.RawQuery = params.Encode()
@@ -639,6 +669,7 @@ func unmarshalSuccessfulKeysResponse(header http.Header, body []byte) (*Response
 			return nil, err
 		}
 	}
+	res.ClusterID = header.Get("X-Etcd-Cluster-ID")
 	return &res, nil
 }
 

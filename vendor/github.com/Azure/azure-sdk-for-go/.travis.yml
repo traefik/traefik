@@ -1,0 +1,29 @@
+sudo: false
+
+language: go
+
+go:
+  - 1.7
+  - 1.8
+
+install:
+  - go get -u github.com/golang/lint/golint
+  - go get -u github.com/Masterminds/glide
+  - go get -u golang.org/x/net/context
+  - go get -u gopkg.in/godo.v2/cmd/godo
+  - export GO15VENDOREXPERIMENT=1
+  - glide install
+
+script:
+  - bash rungas.sh
+  - test -z "$(gofmt -s -l $(find ./arm/* -type d -print) | tee /dev/stderr)"
+  - test -z "$(gofmt -s -l -w management | tee /dev/stderr)"
+  - test -z "$(gofmt -s -l -w Gododir | tee /dev/stderr)"
+  - test -z "$(go build $(find ./* -type d -print | grep -v '^./vendor$' | grep -v '^./storage$') | tee /dev/stderr)"
+  - test -z "$(go vet $(find ./arm/* -type d -print) | tee /dev/stderr)"
+  - test -z "$(golint ./arm/... | tee /dev/stderr)"
+  - go test -v ./management/...
+  - test -z "$(golint ./management/... |  grep -v 'should have comment' | grep -v 'stutters' | tee /dev/stderr)"
+  - go vet ./management/...
+  - test -z "$(golint ./Gododir/... | tee /dev/stderr)"
+  - go vet ./Gododir/...

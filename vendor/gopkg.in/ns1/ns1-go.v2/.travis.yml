@@ -1,0 +1,8 @@
+language: go
+go:
+- 1.6.2
+go_import_path: gopkg.in/ns1/ns1-go.v2
+script: script/test
+notifications:
+  slack: 
+    secure: kXWHt2FwGzohgwmwDH262R3B359iRmsjPE/wF90ur6/TOfTvxuZicpPOVWsglgDgVP92zMklwgOs941IJmg4VVvqjuvDYeaMB+KLHvxb4Vl0pOg7mLpOXmIVt3NwL3+miSwoQ24XHJb6vGzubeHAjSXpD0N1tVxb792DvHztDTo=

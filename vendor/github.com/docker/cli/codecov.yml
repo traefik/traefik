@@ -1,0 +1,19 @@
+comment:
+  layout: header, changes, diff, sunburst
+coverage:
+  status:
+    patch:
+      default:
+        target: 50%
+        only_pulls: true
+    # project will give us the diff in the total code coverage between a commit
+    # and its parent
+    project:
+      default:
+        target: auto
+        threshold: "0.05%"
+    changes: false
+ignore:
+  - "**/internal/test"
+  - "vendor/*"
+  - "cli/compose/schema/bindata.go"

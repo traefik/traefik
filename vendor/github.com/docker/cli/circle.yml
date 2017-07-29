@@ -1,0 +1,52 @@
+version: 2
+jobs:
+  build:
+    working_directory: /work
+    docker:
+      - image: docker:17.05
+    parallelism: 4
+    steps:
+      - run:
+          name: "Install Git and SSH"
+          command: apk add -U git openssh
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: "Lint"
+          command: |
+            if [ "$CIRCLE_NODE_INDEX" != "0" ]; then exit; fi
+            dockerfile=dockerfiles/Dockerfile.lint
+            echo "COPY . ." >> $dockerfile
+            docker build -f $dockerfile --tag cli-linter .
+            docker run cli-linter
+      - run:
+          name: "Cross"
+          command: |
+            if [ "$CIRCLE_NODE_INDEX" != "1" ]; then exit; fi
+            dockerfile=dockerfiles/Dockerfile.cross
+            echo "COPY . ." >> $dockerfile
+            docker build -f $dockerfile --tag cli-builder .
+            docker run --name cross cli-builder make cross
+            docker cp cross:/go/src/github.com/docker/cli/build /work/build
+      - run:
+          name: "Unit Test with Coverage"
+          command: |
+            if [ "$CIRCLE_NODE_INDEX" != "2" ]; then exit; fi
+            dockerfile=dockerfiles/Dockerfile.dev
+            echo "COPY . ." >> $dockerfile
+            docker build -f $dockerfile --tag cli-builder .
+            docker run --name test cli-builder make test-coverage
+            docker cp test:/go/src/github.com/docker/cli/coverage.txt coverage.txt
+            apk add -U bash curl
+            curl -s https://codecov.io/bash | bash
+      - run:
+          name: "Validate Vendor and Code Generation"
+          command: |
+            if [ "$CIRCLE_NODE_INDEX" != "3" ]; then exit; fi
+            dockerfile=dockerfiles/Dockerfile.dev
+            echo "COPY . ." >> $dockerfile
+            docker build -f $dockerfile --tag cli-builder .
+            docker run cli-builder make -B vendor compose-jsonschema
+
+      - store_artifacts:
+          path: /work/build

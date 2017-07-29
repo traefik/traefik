@@ -1,0 +1,8 @@
+language: go
+go:
+  - 1.6
+  - 1.7
+  - tip
+install:
+  - go get -t ./...
+script: GOMAXPROCS=4 GORACE="halt_on_error=1" go test -race -v ./...

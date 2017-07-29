@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+go-fuzz-build github.com/tv42/zbase32
+install -d fuzz
+# kludge to extract corpus from tests
+perl -ne 'print "$1\n" if /"([ybndrfg8ejkmcpqxot1uwisza345h769]+)"/' zbase32_test.go \
+     | while read f; do printf '%s\n' "$f" >"fuzz/$f.input"; done
+exec go-fuzz -bin=zbase32-fuzz.zip -workdir=fuzz

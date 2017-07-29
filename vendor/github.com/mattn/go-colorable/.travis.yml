@@ -1,0 +1,8 @@
+language: go
+go:
+  - tip
+
+sudo: false
+
+script:
+ - go test -v

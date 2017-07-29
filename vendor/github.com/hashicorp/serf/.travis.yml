@@ -1,0 +1,15 @@
+language: go
+
+go:
+  - 1.8
+
+branches:
+  only:
+    - master
+
+install:
+  - make bin
+  - make get-tools
+
+script:
+  - make test

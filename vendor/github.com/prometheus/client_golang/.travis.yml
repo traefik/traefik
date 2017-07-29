@@ -1,0 +1,9 @@
+sudo: false
+language: go
+
+go:
+ - 1.6.3
+ - 1.7
+
+script:
+ - go test -short ./... 

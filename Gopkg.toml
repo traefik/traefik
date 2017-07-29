@@ -1,0 +1,237 @@
+
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+ignored = ["github.com/sirupsen/logrus"]
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/ArthurHlt/go-eureka-client"
+
+[[constraint]]
+  name = "github.com/BurntSushi/toml"
+  version = "0.3.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/BurntSushi/ty"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/NYTimes/gziphandler"
+
+[[constraint]]
+  name = "github.com/Sirupsen/logrus"
+  revision = "10f801ebc38b33738c9d17d50860f484a0988ff5"
+
+[[constraint]]
+  name = "github.com/abbot/go-http-auth"
+  version = "=0.4.0"
+
+[[constraint]]
+  name = "github.com/aws/aws-sdk-go"
+  version = "1.6.18"
+
+[[constraint]]
+  name = "github.com/cenk/backoff"
+  version = "=1.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/containous/flaeg"
+
+[[constraint]]
+  name = "github.com/containous/mux"
+  version = "=1.1.0"
+
+[[constraint]]
+  name = "github.com/containous/staert"
+  revision = "1e26a71803e428fd933f5f9c8e50a26878f53147"
+
+[[constraint]]
+  name = "github.com/coreos/go-systemd"
+  version = "14.0.0"
+
+[[constraint]]
+  name = "github.com/davecgh/go-spew"
+  revision = "04cdfd42973bb9c8589fd6a731800cf222fde1a9"
+
+[[constraint]]
+  name = "github.com/docker/docker"
+  revision = "75c7536d2e2e328b644bf69153de879d1d197988"
+
+[[constraint]]
+  name = "github.com/docker/go-connections"
+  revision = "e15c02316c12de00874640cd76311849de2aeed5"
+
+[[constraint]]
+  name = "github.com/docker/leadership"
+  version = "=0.1.0"
+
+[[constraint]]
+  name = "github.com/docker/libkv"
+  version = "=0.2.1"
+
+[[constraint]]
+  name = "github.com/eapache/channels"
+  version = "1.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/elazarl/go-bindata-assetfs"
+
+[[constraint]]
+  name = "github.com/gambol99/go-marathon"
+  revision = "dd6cbd4c2d71294a19fb89158f2a00d427f174ab"
+
+[[constraint]]
+  name = "github.com/go-check/check"
+  revision = "11d3bc7aa68e238947792f30573146a3231fc0f1"
+
+[[constraint]]
+  name = "github.com/go-kit/kit"
+  version = "0.3.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/google/go-github"
+
+[[constraint]]
+  name = "github.com/hashicorp/consul"
+  version = "=0.9.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/hashicorp/go-version"
+
+[[constraint]]
+  name = "github.com/libkermit/compose"
+  revision = "2048f803f56422a65b455f918d4a61704dc94603"
+
+[[constraint]]
+  name = "github.com/libkermit/docker"
+  revision = "ddede409294e8c5ae66d68ac09edb6b27e8f3e4a"
+
+[[constraint]]
+  name = "github.com/libkermit/docker-check"
+  revision = "e0695005d6819191cf8969b479c94c40c8d22aa4"
+
+[[constraint]]
+  name = "github.com/mattn/go-shellwords"
+  version = "=1.0.3"
+
+[[constraint]]
+  name = "github.com/mesos/mesos-go"
+  version = "=0.0.3"
+
+[[constraint]]
+  name = "github.com/mesosphere/mesos-dns"
+  revision = "b47dc4c19f215e98da687b15b4c64e70f629bea5"
+  source = "https://github.com/containous/mesos-dns.git"
+
+[[constraint]]
+  name = "github.com/mvdan/xurls"
+  version = "=1.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/pkg/errors"
+
+[[constraint]]
+  name = "github.com/prometheus/client_golang"
+  revision = "08fd2e12372a66e68e30523c7642e0cbc3e4fbde"
+
+[[constraint]]
+  name = "github.com/prometheus/client_model"
+  revision = "6f3806018612930941127f2a7c6c453ba2c527d2"
+
+[[constraint]]
+  name = "github.com/rancher/go-rancher"
+  revision = "5b8f6cc26b355ba03d7611fce3844155b7baf05b"
+
+[[constraint]]
+  name = "github.com/rancher/go-rancher-metadata"
+  revision = "95d4962a8f0420be24fb49c2cb4f5491284c62f1"
+
+[[constraint]]
+  name = "github.com/ryanuber/go-glob"
+  version = "=0.1.0"
+
+[[constraint]]
+  name = "github.com/satori/go.uuid"
+  version = "1.1.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/streamrail/concurrent-map"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  revision = "4d4bfba8f1d1027c4fdbe371823030df51419987"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/stvp/go-udp-testing"
+
+[[constraint]]
+  name = "github.com/thoas/stats"
+  revision = "152b5d051953fdb6e45f14b6826962aadc032324"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/unrolled/render"
+
+[[constraint]]
+  name = "github.com/unrolled/secure"
+  revision = "824e85271811af89640ea25620c67f6c2eed987e"
+
+[[constraint]]
+  name = "github.com/urfave/negroni"
+  revision = "490e6a555d47ca891a89a150d0c1ef3922dfffe9"
+
+[[constraint]]
+  name = "github.com/vdemeester/shakers"
+  version = "=0.1.0"
+
+[[constraint]]
+  name = "github.com/vulcand/oxy"
+  revision = "7da864c1d53bd58165435bb78bbf8c01f01c8f4a"
+  source = "https://github.com/containous/oxy.git"
+
+[[constraint]]
+  name = "github.com/vulcand/vulcand"
+  revision = "42492a3a85e294bdbdd1bcabb8c12769a81ea284"
+
+[[constraint]]
+  name = "github.com/xenolf/lego"
+  revision = "5dfe609afb1ebe9da97c9846d97a55415e5a5ccd"
+
+[[constraint]]
+  name = "golang.org/x/net"
+  revision = "242b6b35177ec3909636b6cf6a47e8c2c6324b5d"
+
+[[constraint]]
+  name = "gopkg.in/fsnotify.v1"
+  version = "=1.4.2"
+
+[[constraint]]
+  name = "k8s.io/client-go"
+  version = "2.0.0"

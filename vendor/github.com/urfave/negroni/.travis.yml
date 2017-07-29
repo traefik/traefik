@@ -1,0 +1,26 @@
+language: go
+
+sudo: false
+dist: trusty
+
+go:
+- 1.x
+- 1.2.x
+- 1.3.x
+- 1.4.x
+- 1.5.x
+- 1.6.x
+- 1.7.x
+- master
+
+before_install:
+- find "${GOPATH%%:*}" -name '*.a' -delete
+- rm -rf "${GOPATH%%:*}/src/golang.org"
+- go get golang.org/x/tools/cover
+- go get golang.org/x/tools/cmd/cover
+
+script:
+- go test -race -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+- bash <(curl -s "https://codecov.io/bash")
