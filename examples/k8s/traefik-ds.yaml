@@ -25,23 +25,32 @@ spec:
       containers:
       - image: traefik
         name: traefik-ingress-lb
-        resources:
-          limits:
-            cpu: 200m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-            memory: 20Mi
         ports:
         - name: http
           containerPort: 80
           hostPort: 80
         - name: admin
-          containerPort: 8081
+          containerPort: 8080
         securityContext:
           privileged: true
         args:
         - -d
         - --web
-        - --web.address=:8081
         - --kubernetes
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik-ingress-service
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+    - protocol: TCP
+      port: 80
+      name: web
+    - protocol: TCP
+      port: 8080
+      name: admin
+  namespace: kube-system
+  type: NodePort

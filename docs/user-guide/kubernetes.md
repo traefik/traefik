@@ -17,8 +17,8 @@ on your machine, as it is the quickest way to get a local Kubernetes cluster set
 Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control
 of Kubernetes resources and api.
 
-If your cluster is configured with RBAC, you may need to authorize Traefik to use
-kubernetes API using ClusterRole and ClusterRoleBinding resources:
+If your cluster is configured with RBAC, you may need to authorize Træfik to use the
+Kubernetes API using ClusterRole and ClusterRoleBinding resources:
 
 _Note: your cluster may have suitable ClusterRoles already setup, but the following should work everywhere_
 
@@ -69,11 +69,20 @@ subjects:
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-rbac.yaml
 ```
 
-## Deploy Træfik using a Deployment object
+## Deploy Træfik using a Deployment or DaemonSet
 
-We are going to deploy Træfik with a
-[Deployment](http://kubernetes.io/docs/user-guide/deployments/), as this will
-allow you to easily roll out config changes or update the image.
+It is possible to use Træfik with a
+[Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/)
+or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/)
+object, whereas both options have their own pros and cons: The scalability is much better when
+using a Deployment, because you will have a Single-Pod-per-Node model when using
+the DeaemonSet. It is possible to exclusively run a Service on a dedicated
+set of machines using taints and tolerations with a DaemonSet. On the other hand the
+DaemonSet allows you to access any Node directly on Port 80 and 443, where you have to setup a 
+[Service](https://kubernetes.io/docs/concepts/services-networking/service/) object
+with a Deployment.
+
+The Deployment objects looks like this:
 
 ```yaml
 ---
@@ -106,41 +115,113 @@ spec:
       containers:
       - image: traefik
         name: traefik-ingress-lb
-        resources:
-          limits:
-            cpu: 200m
-            memory: 30Mi
-          requests:
-            cpu: 100m
-            memory: 20Mi
-        ports:
-        - containerPort: 80
-          hostPort: 80
-        - containerPort: 8080
         args:
         - --web
         - --kubernetes
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik-ingress-service
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 8080
+  type: NodePort
 ```
-[examples/k8s/traefik.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik.yaml)
+[examples/k8s/traefik-deployment.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-deployment.yaml)
 
-> notice that we binding port 80 on the Træfik container to port 80 on the host.
-> With a multi node cluster we might expose Træfik with a NodePort or LoadBalancer service
-> and run more than 1 replica of Træfik for high availability.
+> The Service will expose two NodePorts which allow access to the ingress and the web interface.
 
-To deploy Træfik to your cluster start by submitting the deployment to the cluster with `kubectl`:
+The DaemonSet objects looks not much different:
+
+```yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik-ingress-controller
+  namespace: kube-system
+---
+kind: DaemonSet
+apiVersion: extensions/v1beta1
+metadata:
+  name: traefik-ingress-controller
+  namespace: kube-system
+  labels:
+    k8s-app: traefik-ingress-lb
+spec:
+  template:
+    metadata:
+      labels:
+        k8s-app: traefik-ingress-lb
+        name: traefik-ingress-lb
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      terminationGracePeriodSeconds: 60
+      hostNetwork: true
+      containers:
+      - image: traefik
+        name: traefik-ingress-lb
+        ports:
+        - name: http
+          containerPort: 80
+          hostPort: 80
+        - name: admin
+          containerPort: 8080
+        securityContext:
+          privileged: true
+        args:
+        - -d
+        - --web
+        - --kubernetes
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik-ingress-service
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 8080
+  type: NodePort
+```
+
+[examples/k8s/traefik-ds.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-ds.yaml)
+
+To deploy Træfik to your cluster start by submitting one of the YAML files to the cluster with `kubectl`:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-deployment.yaml
 ```
 
-### Check the deployment
+```shell
+$ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-ds.yaml
+```
 
-Now lets check if our deployment was successful.
+There are some significant differences between using Deployments and DaemonSets. The Deployment has easier
+up and down scaling possibilities. It can implement full pod lifecycle and supports rolling updates from
+Kubernetes 1.2. At least one Pod is needed to run the Deployment. The DaemonSet automatically scales to all nodes that
+meets a specific selector and guarantees to fill nodes one at a time. Rolling updates are fully supported from Kubernetes 1.7 for DaemonSets as well.
+
+
+
+### Check the Pods
+
+Now lets check if our command was successful.
 
 Start by listing the pods in the `kube-system` namespace:
 
 ```shell
-$kubectl --namespace=kube-system get pods
+$ kubectl --namespace=kube-system get pods
 
 NAME                                         READY     STATUS    RESTARTS   AGE
 kube-addon-manager-minikubevm                1/1       Running   0          4h
@@ -148,18 +229,27 @@ kubernetes-dashboard-s8krj                   1/1       Running   0          4h
 traefik-ingress-controller-678226159-eqseo   1/1       Running   0          7m
 ```
 
-You should see that after submitting the Deployment to Kubernetes it has launched
-a pod, and it is now running. _It might take a few moments for kubernetes to pull
+You should see that after submitting the Deployment or DaemonSet to Kubernetes it has launched
+a Pod, and it is now running. _It might take a few moments for kubernetes to pull
 the Træfik image and start the container._
 
 > You could also check the deployment with the Kubernetes dashboard, run
 > `minikube dashboard` to open it in your browser, then choose the `kube-system`
 > namespace from the menu at the top right of the screen.
 
-You should now be able to access Træfik on port 80 of your minikube instance.
+You should now be able to access Træfik on port 80 of your Minikube instance when using
+the DaemonSet:
 
 ```sh
 curl $(minikube ip)
+404 page not found
+```
+
+If you decided to use the deployment, then you need to target the correct NodePort, which can
+be seen then you execute `kubectl get services --namespace=kube-system`.
+
+```sh
+curl $(minikube ip):<NODEPORT>
 404 page not found
 ```
 
@@ -167,12 +257,15 @@ curl $(minikube ip)
 
 ## Deploy Træfik using Helm Chart
 
-Instead of installing Træfik via a Deployment object, you can also use the Træfik Helm chart.
+Instead of installing Træfik via an own object, you can also use the Træfik Helm chart. This
+allows more complex configuration via Kubernetes
+[ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configmap/) and enabled
+TLS certificates.
 
 Install Træfik chart by:
 
-```sh
-helm install stable/traefik
+```shell
+$ helm install stable/traefik
 ```
 
 For more information, check out [the doc](https://github.com/kubernetes/charts/tree/master/stable/traefik).
