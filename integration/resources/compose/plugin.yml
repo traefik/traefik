@@ -1,0 +1,47 @@
+#binary:
+#  image: golang:1.8
+#  command: go build -o dist/traefik-plugin ./cmd/traefik
+#  working_dir: /go/src/github.com/containous/traefik
+#  volumes:
+#    - ../../../:/go/src/github.com/containous/traefik
+
+middleware:
+  image: golang:1.8
+  command: go build -buildmode=plugin -o /plugin-test/middleware/middleware.so /plugin-test/middleware/middleware.go
+  volumes:
+    - ../plugin:/plugin-test
+    - ../../../:/go/src/github.com/containous/traefik
+
+no-interface:
+  image: golang:1.8
+  command: go build -buildmode=plugin -o /plugin-test/no-interface/no-interface.so /plugin-test/no-interface/no-interface.go
+  volumes:
+    - ../plugin:/plugin-test
+    - ../../../:/go/src/github.com/containous/traefik
+
+no-load:
+  image: golang:1.8
+  command: go build -buildmode=plugin -o /plugin-test/no-load/no-load.so /plugin-test/no-load/no-load.go
+  volumes:
+    - ../plugin:/plugin-test
+    - ../../../:/go/src/github.com/containous/traefik
+
+
+bad-load:
+  image: golang:1.8
+  command: go build -buildmode=plugin -o /plugin-test/bad-load/bad-load.so /plugin-test/bad-load/bad-load.go
+  volumes:
+    - ../plugin:/plugin-test
+    - ../../../:/go/src/github.com/containous/traefik
+
+whoami:
+  image: emilevauge/whoami
+  labels:
+    traefik.frontend.rule: Host:test.localhost
+
+clean:
+  image: golang:1.8
+  command: /plugin-test/clean_plugins.sh /plugin-test/middleware/middleware.so /plugin-test/no-load/no-load.so /plugin-test/no-load/no-panic.so /plugin-test/no-interface/no-interface.so /plugin-test/bad-load/bad-load.so
+  volumes:
+    - ../plugin:/plugin-test
+    - ../../../:/go/src/github.com/containous/traefik

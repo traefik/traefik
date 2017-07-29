@@ -20,6 +20,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/plugin"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/safe"
@@ -111,6 +112,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
+	f.AddParser(reflect.TypeOf(plugin.Plugins{}), &plugin.Plugins{})
 
 	//add commands
 	f.AddCommand(newVersionCmd())
@@ -289,7 +291,8 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 		log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
 	}
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
-	svr := server.NewServer(globalConfiguration)
+	pluginManager := loadPlugins(globalConfiguration)
+	svr := server.NewServer(globalConfiguration, pluginManager)
 	svr.Start()
 	defer svr.Close()
 	sent, err := daemon.SdNotify(false, "READY=1")
@@ -350,4 +353,16 @@ func CreateKvSource(traefikConfiguration *server.TraefikConfiguration) (*staert.
 		}
 	}
 	return kv, err
+}
+
+func loadPlugins(globalConfiguration server.GlobalConfiguration) *plugin.Manager {
+	manager := plugin.NewManager()
+	for _, pluginConfiguration := range globalConfiguration.Plugins {
+		if err := manager.Load(pluginConfiguration); err != nil {
+			log.Errorf("Error loading plugin: %s", err)
+			continue
+		}
+		log.Infof("Plugin loaded %+v", pluginConfiguration)
+	}
+	return manager
 }

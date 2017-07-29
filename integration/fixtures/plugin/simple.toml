@@ -1,0 +1,28 @@
+defaultEntryPoints = ["http"]
+
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+[web]
+  address = ":8081"
+
+[[plugins]]
+path = "{{.PluginPath}}"
+
+[file]
+[backends]
+  [backends.backend1]
+    [backends.backend1.healthcheck]
+    path = "/health"
+    interval = "1s"
+    [backends.backend1.servers.server1]
+    url = "http://{{.Server1}}:80"
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host:test.localhost"

@@ -25,6 +25,16 @@ func Sleep(d time.Duration) {
 	time.Sleep(d)
 }
 
+// FileExists tries if the file exists until timeout
+func FileExists(file string, timeout time.Duration) error {
+	return Do(timeout, func() error {
+		if _, err := os.Stat(file); os.IsNotExist(err) {
+			return err
+		}
+		return nil
+	})
+}
+
 // Response is like Request, but returns the response for further
 // processing at the call site.
 // Conditions are not allowed since it would complicate signaling if the
