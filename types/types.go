@@ -327,11 +327,25 @@ type Statistics struct {
 // Metrics provides options to expose and send Traefik metrics to different third party monitoring systems
 type Metrics struct {
 	Prometheus *Prometheus `description:"Prometheus metrics exporter type"`
+	Datadog    *Datadog    `description:"DataDog metrics exporter type"`
+	StatsD     *Statsd     `description:"StatsD metrics exporter type"`
 }
 
 // Prometheus can contain specific configuration used by the Prometheus Metrics exporter
 type Prometheus struct {
 	Buckets Buckets `description:"Buckets for latency metrics"`
+}
+
+// Datadog contains address and metrics pushing interval configuration
+type Datadog struct {
+	Address      string `description:"DataDog's Dogstatsd address"`
+	PushInterval string `description:"DataDog push interval"`
+}
+
+// Statsd contains address and metrics pushing interval configuration
+type Statsd struct {
+	Address      string `description:"StatsD address"`
+	PushInterval string `description:"DataDog push interval"`
 }
 
 // Buckets holds Prometheus Buckets

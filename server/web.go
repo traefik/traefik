@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/log"
@@ -20,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/unrolled/render"
+	"github.com/urfave/negroni"
 )
 
 var (
@@ -134,7 +134,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		systemRouter.Methods("GET").Path(provider.Path + "debug/vars").HandlerFunc(expvarHandler)
 	}
 
-	go func() {
+	safe.Go(func() {
 		var err error
 		var negroni = negroni.New()
 		if provider.Auth != nil {
@@ -155,7 +155,7 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		if err != nil {
 			log.Fatal("Error creating server: ", err)
 		}
-	}()
+	})
 	return nil
 }
 

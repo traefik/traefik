@@ -9,10 +9,10 @@
 # Global configuration
 ################################################################
 
-# Duration to give active requests a chance to finish during hot-reloads.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming
-# seconds.
+# Duration to give active requests a chance to finish before Traefik stops.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+# If no units are provided, the value is parsed assuming seconds.
+# Note: in this time frame no new requests are accepted.
 #
 # Optional
 # Default: "10s"
@@ -374,7 +374,7 @@ entryPoint = "https"
 # and provide environment variables with access keys to enable setting it:
 #  - cloudflare: CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY
 #  - digitalocean: DO_AUTH_TOKEN
-#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_API_KEY
+#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_OAUTH_TOKEN
 #  - dnsmadeeasy: DNSMADEEASY_API_KEY, DNSMADEEASY_API_SECRET
 #  - exoscale: EXOSCALE_API_KEY, EXOSCALE_API_SECRET
 #  - gandi: GANDI_API_KEY
@@ -647,6 +647,16 @@ address = ":8080"
 # To enable Traefik to export internal metrics to Prometheus
 # [web.metrics.prometheus]
 #   Buckets=[0.1,0.3,1.2,5.0]
+#
+# To enable Traefik to export internal metics to DataDog
+# [web.metrics.datadog]
+#   Address = localhost:8125
+#   PushInterval = "10s"
+#
+# To enable Traefik to export internal metics to StatsD
+# [web.metrics.statsd]
+#   Address = localhost:8125
+#   PushInterval = "10s"
 #
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
@@ -1232,6 +1242,7 @@ Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 Annotations can be used on containers to override default behaviour for the whole Ingress resource:
 
 - `traefik.frontend.rule.type: PathPrefixStrip`: override the default frontend rule type (Default: `PathPrefix`).
+- `traefik.frontend.priority: 3`: override the default frontend rule priority (Default: `len(Path)`).
 
 Annotations can be used on the Kubernetes service to override default behaviour:
 

@@ -192,11 +192,14 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						log.Errorf("Failed to retrieve basic auth configuration for ingress %s/%s: %s", i.ObjectMeta.Namespace, i.ObjectMeta.Name, err)
 						continue
 					}
+
+					priority := p.getPriority(pa, i)
+
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:              r.Host + pa.Path,
 						PassHostHeader:       PassHostHeader,
 						Routes:               make(map[string]types.Route),
-						Priority:             len(pa.Path),
+						Priority:             priority,
 						BasicAuth:            basicAuthCreds,
 						WhitelistSourceRange: whitelistSourceRange,
 					}
@@ -320,6 +323,23 @@ func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
 	}
 
 	return rule
+}
+
+func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress) int {
+	priority := len(path.Path)
+
+	priorityRaw, ok := i.Annotations[types.LabelFrontendPriority]
+	if ok {
+		priorityParsed, err := strconv.Atoi(priorityRaw)
+
+		if err == nil {
+			priority = priorityParsed
+		} else {
+			log.Errorf("Error in ingress: failed to parse %q value %q.", types.LabelFrontendPriority, priorityRaw)
+		}
+	}
+
+	return priority
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {

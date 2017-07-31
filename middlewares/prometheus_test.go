@@ -8,13 +8,13 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
+	"github.com/urfave/negroni"
 )
 
 func TestPrometheus(t *testing.T) {

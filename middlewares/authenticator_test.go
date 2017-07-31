@@ -8,10 +8,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/urfave/negroni"
 )
 
 func TestAuthUsersFromFile(t *testing.T) {

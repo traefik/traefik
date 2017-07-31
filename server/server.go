@@ -18,7 +18,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/healthcheck"
@@ -29,6 +28,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/streamrail/concurrent-map"
+	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/cbreaker"
 	"github.com/vulcand/oxy/connlimit"
 	"github.com/vulcand/oxy/forward"
@@ -157,6 +157,7 @@ func (server *Server) Close() {
 			os.Exit(1)
 		}
 	}(ctx)
+	stopMetricsClients(server.globalConfiguration)
 	server.stopLeadership()
 	server.routinesPool.Cleanup()
 	close(server.configurationChan)
@@ -198,6 +199,7 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 	if server.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 	}
+	initializeMetricsClients(server.globalConfiguration)
 	metrics := newMetrics(server.globalConfiguration, newServerEntryPointName)
 	if metrics != nil {
 		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(metrics))
@@ -744,6 +746,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							backendsHealthcheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
+						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
 					case types.Wrr:
 						log.Debugf("Creating load-balancer wrr")
 						if stickysession {
@@ -764,6 +767,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							backendsHealthcheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
+						lb = middlewares.NewEmptyBackendHandler(rr, lb)
 					}
 
 					if len(frontend.Errors) > 0 {
@@ -1058,16 +1062,50 @@ func (*Server) configureBackends(backends map[string]*types.Backend) {
 // Note that given there is no metrics instrumentation configured, it will return nil.
 func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metrics {
 	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
-	if metricsEnabled && globalConfig.Web.Metrics.Prometheus != nil {
-		metrics, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
-		if err != nil {
-			log.Errorf("Error creating Prometheus Metrics implementation: %s", err)
-			return nil
+	if metricsEnabled {
+		// Create MultiMetric
+		metrics := []middlewares.Metrics{}
+
+		if globalConfig.Web.Metrics.Prometheus != nil {
+			metric, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
+			if err != nil {
+				log.Errorf("Error creating Prometheus metrics implementation: %s", err)
+			}
+			log.Debug("Configured Prometheus metrics")
+			metrics = append(metrics, metric)
 		}
-		return metrics
+		if globalConfig.Web.Metrics.Datadog != nil {
+			metric := middlewares.NewDataDog(name)
+			log.Debugf("Configured DataDog metrics pushing to %s once every %s", globalConfig.Web.Metrics.Datadog.Address, globalConfig.Web.Metrics.Datadog.PushInterval)
+			metrics = append(metrics, metric)
+		}
+		if globalConfig.Web.Metrics.StatsD != nil {
+			metric := middlewares.NewStatsD(name)
+			log.Debugf("Configured StatsD metrics pushing to %s once every %s", globalConfig.Web.Metrics.StatsD.Address, globalConfig.Web.Metrics.StatsD.PushInterval)
+			metrics = append(metrics, metric)
+		}
+
+		return middlewares.NewMultiMetrics(metrics)
 	}
 
 	return nil
+}
+
+func initializeMetricsClients(globalConfig GlobalConfiguration) {
+	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
+	if metricsEnabled {
+		if globalConfig.Web.Metrics.Datadog != nil {
+			middlewares.InitDatadogClient(globalConfig.Web.Metrics.Datadog)
+		}
+		if globalConfig.Web.Metrics.StatsD != nil {
+			middlewares.InitStatsdClient(globalConfig.Web.Metrics.StatsD)
+		}
+	}
+}
+
+func stopMetricsClients(globalConfig GlobalConfiguration) {
+	middlewares.StopDatadogClient()
+	middlewares.StopStatsdClient()
 }
 
 func registerRetryMiddleware(

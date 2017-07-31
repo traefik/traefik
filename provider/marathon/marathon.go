@@ -26,7 +26,14 @@ import (
 
 const (
 	traceMaxScanTokenSize = 1024 * 1024
-	taskStateRunning      = "TASK_RUNNING"
+)
+
+// TaskState denotes the Mesos state a task can have.
+type TaskState string
+
+const (
+	taskStateRunning TaskState = "TASK_RUNNING"
+	taskStateStaging TaskState = "TASK_STAGING"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -175,8 +182,8 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 	}
 
 	filteredApps := fun.Filter(p.applicationFilter, applications.Apps).([]marathon.Application)
-	for _, app := range filteredApps {
-		app.Tasks = fun.Filter(func(task *marathon.Task) bool {
+	for i, app := range filteredApps {
+		filteredApps[i].Tasks = fun.Filter(func(task *marathon.Task) bool {
 			return p.taskFilter(*task, app)
 		}, app.Tasks).([]*marathon.Task)
 	}
@@ -222,7 +229,7 @@ func (p *Provider) applicationFilter(app marathon.Application) bool {
 }
 
 func (p *Provider) taskFilter(task marathon.Task, application marathon.Application) bool {
-	if task.State != taskStateRunning {
+	if task.State != string(taskStateRunning) {
 		return false
 	}
 
@@ -252,15 +259,6 @@ func (p *Provider) taskFilter(task marathon.Task, application marathon.Applicati
 	}
 
 	return true
-}
-
-func getApplication(task marathon.Task, apps []marathon.Application) (marathon.Application, error) {
-	for _, application := range apps {
-		if application.ID == task.AppID {
-			return application, nil
-		}
-	}
-	return marathon.Application{}, errors.New("Application not found: " + task.AppID)
 }
 
 func isApplicationEnabled(application marathon.Application, exposedByDefault bool) bool {

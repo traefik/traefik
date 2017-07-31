@@ -5,9 +5,9 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/log"
 	"github.com/pkg/errors"
+	"github.com/urfave/negroni"
 )
 
 // IPWhitelister is a middleware that provides Checks of the Requesting IP against a set of Whitelists
