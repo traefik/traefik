@@ -1,4 +1,4 @@
-hash: bfc5801ed56be5f703a0924d8832dcccc42bf02f9e2b035ef77eab62c0cb4884
+hash: eddc889b1c0fc19ad91d886268e46ebdf85cd9e376e78b96b0d6661cc5842aca
 updated: 2017-06-29T16:47:14.848940186+02:00
 imports:
 - name: cloud.google.com/go
@@ -246,7 +246,7 @@ imports:
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/websocket
-  version: a91eba7f97777409bc2c443f5534d41dd20c5720
+  version: a69d9f6de432e2c6b296a947d8a5ee88f68522cf
 - name: github.com/hashicorp/consul
   version: 3f92cc70e8163df866873c16c6d89889b5c95fc4
   subpackages:
@@ -411,7 +411,7 @@ imports:
 - name: github.com/vdemeester/docker-events
   version: be74d4929ec1ad118df54349fda4b0cba60f849b
 - name: github.com/vulcand/oxy
-  version: 49f1894c20d972f5c73ff44b859f87deb83f0076
+  version: 05a57556d820dc5c56721ebdefbafc15f36fac98
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:

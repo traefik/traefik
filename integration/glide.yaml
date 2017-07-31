@@ -29,5 +29,6 @@ testImport:
 - package: golang.org/x/net
   subpackages:
   - context
+  - websocket
 - package: github.com/spf13/pflag
   version: 5644820622454e71517561946e3d94b9f9db6842

@@ -265,7 +265,12 @@ func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request,
 		ctx.errHandler.ServeHTTP(w, req, err)
 		return
 	}
-	upgrader := websocket.Upgrader{}
+
+	//Only the targetConn choose to CheckOrigin or not
+	upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
+		return true
+	}}
+
 	utils.RemoveHeaders(resp.Header, WebsocketUpgradeHeaders...)
 	underlyingConn, err := upgrader.Upgrade(w, req, resp.Header)
 	if err != nil {
@@ -318,6 +323,8 @@ func (f *websocketForwarder) copyRequest(req *http.Request, u *url.URL) (outReq 
 	outReq.URL.RawQuery = ""
 
 	outReq.Header = make(http.Header)
+	//gorilla websocket use this header to set the request.Host tested in checkSameOrigin
+	outReq.Header.Set("Host", outReq.Host)
 	utils.CopyHeaders(outReq.Header, req.Header)
 	utils.RemoveHeaders(outReq.Header, WebsocketDialHeaders...)
 
