@@ -326,7 +326,7 @@ func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
 }
 
 func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress) int {
-	priority := len(path.Path)
+	priority := 0
 
 	priorityRaw, ok := i.Annotations[types.LabelFrontendPriority]
 	if ok {
