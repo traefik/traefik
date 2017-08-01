@@ -1,5 +1,19 @@
 # Change Log
 
+## [v1.3.5](https://github.com/containous/traefik/tree/v1.3.5) (2017-08-01)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.4...v1.3.5)
+
+**Bug fixes:**
+- **[websocket]** Oxy with fixes on websocket + integration tests ([#1905](https://github.com/containous/traefik/pull/1905) by [Juliens](https://github.com/Juliens))
+
+## [v1.3.4](https://github.com/containous/traefik/tree/v1.3.4) (2017-07-27)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.3...v1.3.4)
+
+**Bug fixes:**
+- **[middleware]** Double compression. ([#1863](https://github.com/containous/traefik/pull/1863) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix replace path rule ([#1859](https://github.com/containous/traefik/pull/1859) by [dedalusj](https://github.com/dedalusj))
+- **[websocket]** New oxy with gorilla for websocket with integration tests ([#1896](https://github.com/containous/traefik/pull/1896) by [Juliens](https://github.com/Juliens))
+
 ## [v1.3.3](https://github.com/containous/traefik/tree/v1.3.3) (2017-07-06)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.2...v1.3.3)
 

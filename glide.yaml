@@ -12,7 +12,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
-  version: 7da864c1d53bd58165435bb78bbf8c01f01c8f4a
+  version: 05a57556d820dc5c56721ebdefbafc15f36fac98
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -79,6 +79,8 @@ import:
   vcs: git
 - package: github.com/abbot/go-http-auth
 - package: github.com/NYTimes/gziphandler
+  repo: https://github.com/containous/gziphandler.git
+  vcs: git
 - package: github.com/docker/leadership
 - package: github.com/satori/go.uuid
   version: ^1.1.0
@@ -127,6 +129,7 @@ import:
   subpackages:
   - http2
   - context
+  - websocket
 - package: github.com/docker/distribution
   version: b38e5838b7b2f2ad48e06ec4b500011976080621
 - package: github.com/opencontainers/go-digest

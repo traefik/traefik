@@ -1,5 +1,5 @@
-hash: 4d24f4a986de7e07c32b63abc3c8bf365d205df0a6f65ba4a6ca3d7ac7ae2256
-updated: 2017-07-20T23:54:09.638352893+02:00
+hash: 1cb8a7bc9dcca526370e84514c3f0c76b342e25d40ba584826d22f7e93be584c
+updated: 2017-08-01T19:11:22.221029923+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -287,7 +287,7 @@ imports:
 - name: github.com/gorilla/context
   version: 215affda49addc4c8ef7e2534915df2c8c35c6cd
 - name: github.com/gorilla/websocket
-  version: ea4d1f681babbce9545c9c5f3d5194a789c89f5b
+  version: a69d9f6de432e2c6b296a947d8a5ee88f68522cf
 - name: github.com/hashicorp/consul
   version: 3f92cc70e8163df866873c16c6d89889b5c95fc4
   subpackages:
@@ -367,7 +367,9 @@ imports:
   repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
-  version: 56545f4a5d46df9a6648819d1664c3a03a13ffdb
+  version: 316adfc72ed3b0157975917adf62ba2dc31842ce
+  repo: https://github.com/containous/gziphandler.git
+  vcs: git
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/go-digest
@@ -446,8 +448,6 @@ imports:
   - assert
   - mock
   - require
-- name: github.com/stvp/go-udp-testing
-  version: 06eb4f886d9f8242b0c176cf0d3ce5ec2cedda05
 - name: github.com/thoas/stats
   version: 152b5d051953fdb6e45f14b6826962aadc032324
 - name: github.com/timewasted/linode
@@ -467,7 +467,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: 7da864c1d53bd58165435bb78bbf8c01f01c8f4a
+  version: 05a57556d820dc5c56721ebdefbafc15f36fac98
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -533,6 +533,7 @@ imports:
   - proxy
   - publicsuffix
   - trace
+  - websocket
 - name: golang.org/x/oauth2
   version: 7fdf09982454086d5570c7db3e11f360194830ca
   subpackages:
@@ -780,6 +781,8 @@ testImports:
   subpackages:
   - libcontainer/system
   - libcontainer/user
+- name: github.com/stvp/go-udp-testing
+  version: 06eb4f886d9f8242b0c176cf0d3ce5ec2cedda05
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/xeipuuv/gojsonpointer

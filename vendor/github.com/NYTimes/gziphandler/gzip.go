@@ -3,6 +3,7 @@ package gziphandler
 import (
 	"bufio"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -230,12 +231,22 @@ func NewGzipLevelHandler(level int) (func(http.Handler) http.Handler, error) {
 // NewGzipLevelAndMinSize behave as NewGzipLevelHandler except it let the caller
 // specify the minimum size before compression.
 func NewGzipLevelAndMinSize(level, minSize int) (func(http.Handler) http.Handler, error) {
+	return NewGzipHandler(level, minSize, &GzipResponseWriter{})
+}
+
+// NewGzipHandler behave as NewGzipLevelHandler except it let the caller
+// specify the minimum size before compression and a GzipWriter.
+func NewGzipHandler(level, minSize int, gw GzipWriter) (func(http.Handler) http.Handler, error) {
 	if level != gzip.DefaultCompression && (level < gzip.BestSpeed || level > gzip.BestCompression) {
 		return nil, fmt.Errorf("invalid compression level requested: %d", level)
 	}
 	if minSize < 0 {
-		return nil, fmt.Errorf("minimum size must be more than zero")
+		return nil, errors.New("minimum size must be more than zero")
 	}
+	if gw == nil {
+		return nil, errors.New("the GzipWriter must be defined")
+	}
+
 	return func(h http.Handler) http.Handler {
 		index := poolIndex(level)
 
@@ -243,11 +254,9 @@ func NewGzipLevelAndMinSize(level, minSize int) (func(http.Handler) http.Handler
 			w.Header().Add(vary, acceptEncoding)
 
 			if acceptsGzip(r) {
-				gw := &GzipResponseWriter{
-					ResponseWriter: w,
-					index:          index,
-					minSize:        minSize,
-				}
+				gw.SetResponseWriter(w)
+				gw.setIndex(index)
+				gw.setMinSize(minSize)
 				defer gw.Close()
 
 				h.ServeHTTP(gw, r)
