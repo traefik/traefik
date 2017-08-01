@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.3.5](https://github.com/containous/traefik/tree/v1.3.5) (2017-08-01)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.4...v1.3.5)
+
+**Bug fixes:**
+- **[websocket]** Oxy with fixes on websocket + integration tests ([#1905](https://github.com/containous/traefik/pull/1905) by [Juliens](https://github.com/Juliens))
+
 ## [v1.3.4](https://github.com/containous/traefik/tree/v1.3.4) (2017-07-27)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.3...v1.3.4)
 
