@@ -1,23 +1,23 @@
 package streams
 
 import (
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	"bufio"
+	"os"
 	"testing"
 
-	"bufio"
+	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
-	"os"
 )
 
 const tmpFile = "/tmp/testFileSink"
 
-var encodedJSONSample = audittypes.Encoded{
+var encodedJSONSample = types.Encoded{
 	Bytes: []byte("[1,2,3]"),
 	Err:   nil,
 }
 
 func TestFileSink(t *testing.T) {
-	w, err := NewFileSink(tmpFile, "foo", noopRenderer)
+	w, err := NewFileSink(tmpFile, "foo")
 	assert.NoError(t, err)
 
 	defer func() {

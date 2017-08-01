@@ -3,24 +3,32 @@ package audittap
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"github.com/containous/traefik/types"
-	"github.com/satori/go.uuid"
 )
 
 // MaximumEntityLength sets the upper limit for request and response entities. This will
 // probably be removed in future versions.
 const MaximumEntityLength = 32 * 1024
 
+const (
+	RATE = "rate"
+	API  = "api"
+)
+
+type AuditConfig struct {
+	AuditSource string
+	AuditType   string
+	ProxyingFor string
+}
+
 // AuditTap writes an event to the audit streams for every request.
 type AuditTap struct {
-	AuditSource     string
-	AuditType       string
+	AuditConfig
 	AuditStreams    []audittypes.AuditStream
 	Backend         string
 	MaxEntityLength int
@@ -38,66 +46,44 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		}
 	}
 
-	if config.AuditSource == "" {
-		return nil, fmt.Errorf("AuditSource not set in configuration")
+	pf := strings.ToLower(config.ProxyingFor)
+	if pf != API && pf != RATE {
+		return nil, fmt.Errorf(fmt.Sprintf("ProxyingFor value '%s' is invalid", config.ProxyingFor))
 	}
 
-	if config.AuditType == "" {
-		return nil, fmt.Errorf("AuditType not set in configuration")
+	// RATE values are either constant or chosen dynamically
+	if pf != RATE {
+		if config.AuditSource == "" {
+			return nil, fmt.Errorf("AuditSource not set in configuration")
+		}
+
+		if config.AuditType == "" {
+			return nil, fmt.Errorf("AuditType not set in configuration")
+		}
 	}
 
-	return &AuditTap{config.AuditSource, config.AuditType, streams, backend, int(th), next}, nil
+	ac := AuditConfig{AuditSource: config.AuditSource, AuditType: config.AuditType, ProxyingFor: config.ProxyingFor}
+	return &AuditTap{ac, streams, backend, int(th), next}, nil
 }
 
-func (s *AuditTap) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	hdr := NewHeaders(r.Header).SimplifyCookies()
+func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
-	// Need to create a URL from the RequestURI, because the URL in the request is overwritten
-	// by oxy's RoundRobin and loses Path and RawQuery
-	u, _ := url.ParseRequestURI(r.RequestURI)
+	var auditer audittypes.Auditer
 
-	clientHeaders, requestHeaders := hdr.ClientAndRequestHeaders()
-	flatHdr := hdr.Flatten()
-
-	requestPayload := audittypes.DataMap{}
-
-	var requestContentType = flatHdr.GetString("content-type")
-
-	if requestContentType != "" {
-		requestPayload["type"] = requestContentType
+	switch strings.ToLower(tap.ProxyingFor) {
+	case "api":
+		auditer = audittypes.NewApiAuditEvent(tap.AuditSource, tap.AuditType)
+	case "rate":
+		auditer = audittypes.NewRateAuditEvent()
 	}
 
-	// Create the summary and populate with all the request info we need
-	summary := audittypes.Summary{
-		AuditSource:        s.AuditSource,
-		AuditType:          s.AuditType,
-		EventID:            uuid.NewV4().String(),
-		GeneratedAt:        audittypes.TheClock.Now().UTC().Format("2006-01-02T15:04:05.000Z07:00"),
-		Version:            "1",
-		RequestID:          flatHdr.GetString("x-request-id"),
-		Method:             r.Method,
-		Path:               u.Path,
-		QueryString:        u.RawQuery,
-		ClientIP:           flatHdr.GetString("true-client-ip"),
-		ClientPort:         flatHdr.GetString("true-client-port"),
-		ReceivingIP:        flatHdr.GetString("x-source"),
-		AuthorisationToken: flatHdr.GetString("authorization"),
-		ClientHeaders:      clientHeaders,
-		RequestHeaders:     requestHeaders,
-		RequestPayload:     requestPayload,
-		ResponseHeaders:    nil,
-		ResponseStatus:     "",
-		ResponsePayload:    nil,
-	}
+	auditer.AppendRequest(req)
+	ww := NewAuditResponseWriter(rw, tap.MaxEntityLength)
+	tap.next.ServeHTTP(ww, req)
+	auditer.AppendResponse(ww.Header(), ww.GetResponseInfo())
 
-	ww := NewAuditResponseWriter(rw, s.MaxEntityLength)
-	s.next.ServeHTTP(ww, r)
-
-	// Now add in the response info
-	ww.SummariseResponse(&summary)
-
-	for _, sink := range s.AuditStreams {
-		sink.Audit(summary)
+	for _, sink := range tap.AuditStreams {
+		sink.Audit(auditer)
 	}
 }
 

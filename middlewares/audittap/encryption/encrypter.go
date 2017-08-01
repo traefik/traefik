@@ -4,8 +4,8 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"io"
 	"encoding/base64"
+	"io"
 
 	"github.com/containous/traefik/log"
 )
@@ -14,7 +14,7 @@ type aesEncrypter struct {
 	key []byte
 }
 
-type noopEncrypter struct {}
+type noopEncrypter struct{}
 
 type Encrypter interface {
 	Encrypt(plain []byte) (string, error)
@@ -46,7 +46,7 @@ func (e *aesEncrypter) Encrypt(plain []byte) (string, error) {
 		return "", err
 	}
 
-	ciphertext := make([]byte, aes.BlockSize + len(plain))
+	ciphertext := make([]byte, aes.BlockSize+len(plain))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
 		return "", err
@@ -57,7 +57,6 @@ func (e *aesEncrypter) Encrypt(plain []byte) (string, error) {
 
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
-
 
 // Returns the supplied data as string
 func (e *noopEncrypter) Encrypt(plain []byte) (string, error) {

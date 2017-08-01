@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strconv"
 
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/containous/traefik/middlewares/audittap/types"
 )
 
 // Performance tweak: choose a value just big enough to hold most messages.
@@ -16,21 +15,22 @@ const initialBufferSize = 2048
 
 type recorderResponseWriter struct {
 	http.ResponseWriter
-	status          int
-	size            int
-	entity          []byte
-	maxEntityLength int
+	types.ResponseInfo
 }
 
 // NewAuditResponseWriter creates a ResponseWriter that captures extra information.
-func NewAuditResponseWriter(w http.ResponseWriter, maxEntityLength int) audittypes.AuditResponseWriter {
+func NewAuditResponseWriter(w http.ResponseWriter, maxEntityLength int) types.AuditResponseWriter {
 	entity := make([]byte, 0, initialBufferSize)
-	return &recorderResponseWriter{w, 0, 0, entity, maxEntityLength}
+	return &recorderResponseWriter{w, types.ResponseInfo{0, 0, entity, maxEntityLength}}
+}
+
+func (r *recorderResponseWriter) GetResponseInfo() types.ResponseInfo {
+	return r.ResponseInfo
 }
 
 func (r *recorderResponseWriter) WriteHeader(code int) {
 	r.ResponseWriter.WriteHeader(code)
-	r.status = code
+	r.Status = code
 }
 
 func (r *recorderResponseWriter) Flush() {
@@ -41,20 +41,20 @@ func (r *recorderResponseWriter) Flush() {
 }
 
 func (r *recorderResponseWriter) Write(b []byte) (int, error) {
-	if r.status == 0 {
+	if r.Status == 0 {
 		// The status will be StatusOK if WriteHeader has not been called yet
 		r.WriteHeader(http.StatusOK)
 	}
 
 	size, err := r.ResponseWriter.Write(b)
-	r.size += size
+	r.Size += size
 
-	if len(r.entity) < r.maxEntityLength {
-		n := len(r.entity) + len(b) - r.maxEntityLength
+	if len(r.Entity) < r.MaxEntityLength {
+		n := len(r.Entity) + len(b) - r.MaxEntityLength
 		if n > 0 {
 			b = b[:n]
 		}
-		r.entity = append(r.entity, b...)
+		r.Entity = append(r.Entity, b...)
 	}
 
 	return size, err
@@ -70,19 +70,4 @@ func (r *recorderResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 		return nil, nil, fmt.Errorf("the ResponseWriter doesn't support the Hijacker interface")
 	}
 	return hijacker.Hijack()
-}
-
-func (r *recorderResponseWriter) SummariseResponse(summary *audittypes.Summary) {
-	hdr := NewHeaders(r.Header()).SimplifyCookies()
-	flatHdr := hdr.Flatten()
-
-	summary.ResponseStatus = strconv.Itoa(r.status)
-	summary.ResponseHeaders = hdr.ResponseHeaders()
-	summary.ResponsePayload = audittypes.DataMap{}
-
-	var responseContentType = flatHdr.GetString("content-type")
-
-	if responseContentType != "" {
-		summary.ResponsePayload["type"] = responseContentType
-	}
 }

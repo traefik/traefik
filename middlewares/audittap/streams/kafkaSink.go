@@ -1,10 +1,11 @@
 package streams
 
 import (
-	"github.com/Shopify/sarama"
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"log"
 	"sync"
+
+	"github.com/Shopify/sarama"
+	"github.com/containous/traefik/middlewares/audittap/types"
 )
 
 type kafkaAsyncProducer interface {
@@ -50,7 +51,7 @@ func (kas *kafkaAuditSink) logErrors() {
 	}()
 }
 
-func (kas *kafkaAuditSink) Audit(encoded audittypes.Encoded) error {
+func (kas *kafkaAuditSink) Audit(encoded types.Encoded) error {
 	message := &sarama.ProducerMessage{Topic: kas.topic, Value: encoded}
 	kas.producer.Input() <- message
 	return nil

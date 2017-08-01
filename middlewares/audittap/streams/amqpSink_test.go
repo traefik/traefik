@@ -9,8 +9,8 @@ import (
 	"github.com/assembla/cony"
 	"github.com/beeker1121/goque"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"github.com/containous/traefik/middlewares/audittap/encryption"
+	atypes "github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/containous/traefik/types"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
@@ -25,7 +25,7 @@ var anAuditEvent = `
 	}
 	`
 
-var anAuditEventEncoded = audittypes.Encoded{[]byte(anAuditEvent), nil}
+var anAuditEventEncoded = atypes.Encoded{[]byte(anAuditEvent), nil}
 var aesKeyBase64 = "RDFXVxTgrrT9IseypJrwDLzk/nTVeTjbjaUR3RVyv94="
 var crypt, _ = encryption.NewEncrypter(aesKeyBase64)
 
@@ -138,7 +138,7 @@ func TestAmqpSink(t *testing.T) {
 		return q, err
 	}
 
-	messages := make(chan audittypes.Encoded, 1)
+	messages := make(chan atypes.Encoded, 1)
 	sink, err := NewAmqpSink(&config, messages)
 	assert.NoError(t, err)
 
@@ -198,7 +198,7 @@ func TestAmqpSinkFull(t *testing.T) {
 		return q, nil
 	}
 
-	messages := make(chan audittypes.Encoded, 0)
+	messages := make(chan atypes.Encoded, 0)
 	sink, err := NewAmqpSink(&config, messages)
 	assert.NoError(t, err)
 

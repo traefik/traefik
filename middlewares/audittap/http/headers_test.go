@@ -1,10 +1,10 @@
-package audittap
+package http
 
 import (
 	"net/http"
 	"testing"
 
-	. "github.com/containous/traefik/middlewares/audittap/audittypes"
+	. "github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
 )
 

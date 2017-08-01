@@ -3,18 +3,18 @@ package streams
 import (
 	"bytes"
 	"fmt"
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"net/http"
 	"net/url"
+
+	"github.com/containous/traefik/middlewares/audittap/types"
 )
 
 type httpSink struct {
 	method, endpoint string
-	render           Renderer
 }
 
 // NewHTTPSink creates a new HTTP sink
-func NewHTTPSink(method, endpoint string, renderer Renderer) (AuditSink, error) {
+func NewHTTPSink(method, endpoint string) (AuditSink, error) {
 	if method == "" {
 		method = http.MethodPost
 	}
@@ -22,10 +22,10 @@ func NewHTTPSink(method, endpoint string, renderer Renderer) (AuditSink, error) 
 	if err != nil {
 		return nil, fmt.Errorf("Cannot access endpoint '%s': %v", endpoint, err)
 	}
-	return &httpSink{method, endpoint, renderer}, nil
+	return &httpSink{method, endpoint}, nil
 }
 
-func (has *httpSink) Audit(encoded audittypes.Encoded) error {
+func (has *httpSink) Audit(encoded types.Encoded) error {
 	request, err := http.NewRequest(has.method, has.endpoint, bytes.NewBuffer(encoded.Bytes))
 	if err != nil {
 		return err

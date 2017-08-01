@@ -9,8 +9,8 @@ import (
 	"github.com/beeker1121/goque"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"github.com/containous/traefik/middlewares/audittap/encryption"
+	atypes "github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/containous/traefik/types"
 	"github.com/streadway/amqp"
 )
@@ -19,16 +19,16 @@ const undeliveredMessagePrefix = "Message not delivered to MQ because"
 
 type amqpAuditSink struct {
 	cli       amqpConyClient
-	messages  chan audittypes.Encoded
+	messages  chan atypes.Encoded
 	producers []*amqpProducer
 	q         *goque.Queue
 	enc       encryption.Encrypter
 }
 
 type auditDescription struct {
-	EventId string `json:"eventId"`
+	EventId     string `json:"eventId"`
 	AuditSource string `json:"auditSource"`
-	AuditType string `json:"auditType"`
+	AuditType   string `json:"auditType"`
 }
 
 type amqpConyPublisher interface {
@@ -108,7 +108,7 @@ var NewQueue = func(queueLocation string) (*goque.Queue, error) {
 // NewAmqpSink returns an AuditSink for sending messages to an AMQP service.
 // A connection is made to the specified endpoint and a number of Producers
 // each backed by an AMQP channel are created, ready to send messages.
-func NewAmqpSink(config *types.AuditSink, messageChan chan audittypes.Encoded) (sink AuditSink, err error) {
+func NewAmqpSink(config *types.AuditSink, messageChan chan atypes.Encoded) (sink AuditSink, err error) {
 	cli := NewConyClient(config.Endpoint)
 
 	exc := cony.Exchange{
@@ -153,7 +153,7 @@ func NewAmqpSink(config *types.AuditSink, messageChan chan audittypes.Encoded) (
 	return aas, nil
 }
 
-func (aas *amqpAuditSink) Audit(encoded audittypes.Encoded) error {
+func (aas *amqpAuditSink) Audit(encoded atypes.Encoded) error {
 	select {
 	case aas.messages <- encoded:
 	default:
@@ -175,13 +175,13 @@ type amqpProducer struct {
 	cli       amqpConyClient
 	exchange  string
 	publisher amqpConyPublisher
-	messages  chan audittypes.Encoded
+	messages  chan atypes.Encoded
 	q         *goque.Queue
 	stop      chan bool
 	enc       encryption.Encrypter
 }
 
-func newAmqpProducer(cli amqpConyClient, exchange string, messages chan audittypes.Encoded, q *goque.Queue, enc encryption.Encrypter) (*amqpProducer, error) {
+func newAmqpProducer(cli amqpConyClient, exchange string, messages chan atypes.Encoded, q *goque.Queue, enc encryption.Encrypter) (*amqpProducer, error) {
 	publisher := NewConyPublisher(exchange)
 	cli.Publish(publisher)
 
@@ -202,25 +202,25 @@ func (p *amqpProducer) audit() {
 	}
 }
 
-func minimallyDescribeAudit(encoded audittypes.Encoded) (auditDescription, error) {
+func minimallyDescribeAudit(encoded atypes.Encoded) (auditDescription, error) {
 	var data auditDescription
 	err := json.Unmarshal(encoded.Bytes, &data)
 	return data, err
 }
 
-func handleFailedMessage(encoded audittypes.Encoded, reason string, crypter encryption.Encrypter) {
+func handleFailedMessage(encoded atypes.Encoded, reason string, crypter encryption.Encrypter) {
 	// Assume an indescribable event would be rejected by Datastream
-  if desc, err := minimallyDescribeAudit(encoded); err == nil {
-    if msgBody, err := crypter.Encrypt(encoded.Bytes); err == nil {
-      log.Error(fmt.Sprintf("%s %s eventId=%s auditSource=%s auditType=%s body: {%s}",
-        	undeliveredMessagePrefix, reason, desc.EventId, desc.AuditSource, desc.AuditType, msgBody))
-    } else {
+	if desc, err := minimallyDescribeAudit(encoded); err == nil {
+		if msgBody, err := crypter.Encrypt(encoded.Bytes); err == nil {
+			log.Error(fmt.Sprintf("%s %s eventId=%s auditSource=%s auditType=%s body: {%s}",
+				undeliveredMessagePrefix, reason, desc.EventId, desc.AuditSource, desc.AuditType, msgBody))
+		} else {
 			// Datastream would drop for an encryption failure
 			log.Error(fmt.Sprintf("Dropping unencrypted event. eventId=%s auditSource=%s auditType=%s",
-        	desc.EventId, desc.AuditSource, desc.AuditType))
-  	}
+				desc.EventId, desc.AuditSource, desc.AuditType))
+		}
 	} else {
-     log.Error(fmt.Sprintf("Dropping invalid audit event. %s", err.Error()))
+		log.Error(fmt.Sprintf("Dropping invalid audit event. %s", err.Error()))
 	}
 }
 
@@ -246,7 +246,7 @@ func (p *amqpProducer) publish() {
 				log.Error(err)
 				continue
 			}
-			var encoded audittypes.Encoded
+			var encoded atypes.Encoded
 			if err = item.ToObject(&encoded); err != nil {
 				// well, that didn't work
 				log.Error(err)

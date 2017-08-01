@@ -1,4 +1,4 @@
-package audittypes
+package types
 
 import "time"
 

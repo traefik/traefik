@@ -183,3 +183,5 @@ import:
 - package: github.com/syndtr/goleveldb
   subpackages:
   - leveldb
+- package: gopkg.in/beevik/etree.v0
+  version: v0

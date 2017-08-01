@@ -1,10 +1,10 @@
-package audittap
+package http
 
 import (
 	"net/http"
 	"strings"
 
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/containous/traefik/middlewares/audittap/types"
 )
 
 // Headers is a map equivalent to http.Header with some transformation methods.
@@ -48,8 +48,8 @@ func (h Headers) SimplifyCookies() Headers {
 
 // Flatten replaces length=1 []string values with a single string.
 // Values with longer length remain unchanged.
-func (h Headers) Flatten() audittypes.DataMap {
-	flat := make(audittypes.DataMap)
+func (h Headers) Flatten() types.DataMap {
+	flat := make(types.DataMap)
 	for k, v := range h {
 		if len(v) == 1 {
 			flat[k] = v[0]
@@ -62,9 +62,9 @@ func (h Headers) Flatten() audittypes.DataMap {
 
 // ClientAndRequestHeaders populates separate data maps for the client and request
 // headers that we want to audit.
-func (h Headers) ClientAndRequestHeaders() (clientHeaders, requestHeaders audittypes.DataMap) {
-	clientHeaders = make(audittypes.DataMap)
-	requestHeaders = make(audittypes.DataMap)
+func (h Headers) ClientAndRequestHeaders() (clientHeaders, requestHeaders types.DataMap) {
+	clientHeaders = make(types.DataMap)
+	requestHeaders = make(types.DataMap)
 
 	for k, v := range h {
 		var fv interface{}
@@ -88,8 +88,8 @@ func (h Headers) ClientAndRequestHeaders() (clientHeaders, requestHeaders auditt
 
 // ResponseHeaders returns the response headers we are interested in
 // as a DataMap
-func (h Headers) ResponseHeaders() audittypes.DataMap {
-	responseHeaders := make(audittypes.DataMap)
+func (h Headers) ResponseHeaders() types.DataMap {
+	responseHeaders := make(types.DataMap)
 
 	for k, v := range h {
 		var fv interface{}

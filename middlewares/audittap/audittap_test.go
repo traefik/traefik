@@ -7,16 +7,17 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	atypes "github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
 
 type noopAuditStream struct {
-	events []audittypes.Summary
+	events []interface{}
 }
 
-func (as *noopAuditStream) Audit(summary audittypes.Summary) error {
-	as.events = append(as.events, summary)
+func (as *noopAuditStream) Audit(event atypes.Encodeable) error {
+	as.events = append(as.events, event)
 	return nil
 }
 
@@ -25,12 +26,13 @@ func (as *noopAuditStream) Close() error {
 }
 
 func TestAuditTap_noop(t *testing.T) {
-	audittypes.TheClock = T0
+	atypes.TheClock = T0
 
 	capture := &noopAuditStream{}
 	cfg := &types.AuditSink{
-		AuditSource: "testSource",
-		AuditType:   "testType",
+		ProxyingFor:   "API",
+		AuditSource:   "testSource",
+		AuditType:     "testType",
 		EncryptSecret: "",
 	}
 	tap, err := NewAuditTap(cfg, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
@@ -38,46 +40,46 @@ func TestAuditTap_noop(t *testing.T) {
 	tap.AuditStreams = []audittypes.AuditStream{capture}
 
 	req := httptest.NewRequest("", "/a/b/c?d=1&e=2", nil)
-	req.RemoteAddr = "101.102.103.104:1234"
-	req.Host = "example.co.uk"
-	req.Header.Set("Request-ID", "R123")
-	req.Header.Set("Session-ID", "S123")
+	req.Header.Set("Authorization", "auth789")
+
 	res := httptest.NewRecorder()
 
 	tap.ServeHTTP(res, req)
 
-	capture.events[0].EventID = ""
-	capture.events[0].RequestID = ""
-
 	assert.Equal(t, 1, len(capture.events))
-	assert.Equal(t,
-		audittypes.Summary{
-			AuditSource:        "testSource",
-			AuditType:          "testType",
-			GeneratedAt:        "2001-09-09T01:46:40.000Z",
-			Version:            "1",
-			RequestID:          "",
-			Method:             "GET",
-			Path:               "/a/b/c",
-			QueryString:        "d=1&e=2",
-			ClientIP:           "",
-			ClientPort:         "",
-			ReceivingIP:        "",
-			AuthorisationToken: "",
-			ResponseStatus:     "404",
-			ResponsePayload: audittypes.DataMap{
-				"type": "text/plain; charset=utf-8",
-			},
-			ClientHeaders: audittypes.DataMap{
-				"session-id": "S123",
-				"request-id": "R123",
-			},
-			RequestHeaders: audittypes.DataMap{},
-			RequestPayload: audittypes.DataMap{},
-			ResponseHeaders: audittypes.DataMap{
-				"x-content-type-options": "nosniff",
-			},
-		}, capture.events[0])
+	if apiAudit, ok := capture.events[0].(*audittypes.ApiAuditEvent); ok {
+		assert.Equal(t, "testSource", apiAudit.AuditSource)
+		assert.Equal(t, "testType", apiAudit.AuditType)
+		assert.Equal(t, "auth789", apiAudit.AuthorisationToken)
+	} else {
+		assert.Fail(t, "Audit is not an Api Audit")
+	}
+}
+
+func TestInvalidProxyingForRequired(t *testing.T) {
+	capture := &noopAuditStream{}
+	_, err := NewAuditTap(&types.AuditSink{}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.Error(t, err)
+	_, err = NewAuditTap(&types.AuditSink{ProxyingFor: "IPA"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.Error(t, err)
+}
+
+func TestRateProxyingFor(t *testing.T) {
+	capture := &noopAuditStream{}
+	_, err := NewAuditTap(&types.AuditSink{ProxyingFor: "Rate"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.NoError(t, err)
+}
+
+func TestApiProxyingFor(t *testing.T) {
+
+	capture := &noopAuditStream{}
+	cfg := &types.AuditSink{
+		ProxyingFor: "API",
+		AuditSource: "testSource",
+		AuditType:   "testType",
+	}
+	_, err := NewAuditTap(cfg, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.NoError(t, err)
 }
 
 // simpleHandler replies to the request with the specified error message and HTTP code.

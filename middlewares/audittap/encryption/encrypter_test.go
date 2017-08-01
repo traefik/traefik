@@ -2,11 +2,11 @@ package encryption
 
 import (
 	"crypto/aes"
-	"testing"
 	"encoding/base64"
+	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"crypto/cipher"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAesEncrypterEncrypt(t *testing.T) {
@@ -26,7 +26,7 @@ func TestAesEncrypterEncrypt(t *testing.T) {
 	decoded, err := base64.StdEncoding.DecodeString(result)
 
 	if assert.NoError(t, err) {
-		assert.Equal(t, len(decoded), len(audit) + aes.BlockSize)
+		assert.Equal(t, len(decoded), len(audit)+aes.BlockSize)
 	}
 
 	key, _ := base64.StdEncoding.DecodeString(aesKey)

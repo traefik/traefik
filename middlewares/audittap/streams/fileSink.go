@@ -2,10 +2,11 @@ package streams
 
 import (
 	"fmt"
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"io"
 	"os"
 	"strings"
+
+	"github.com/containous/traefik/middlewares/audittap/types"
 )
 
 var opener = []byte{'['}
@@ -16,11 +17,10 @@ var newline = []byte{'\n'}
 type fileSink struct {
 	w       io.WriteCloser
 	lineEnd []byte
-	render  Renderer
 }
 
 // NewFileSink creates a new file sink
-func NewFileSink(file, backend string, renderer Renderer) (AuditSink, error) {
+func NewFileSink(file, backend string) (AuditSink, error) {
 	flag := os.O_RDWR | os.O_CREATE
 	if strings.HasPrefix(file, ">>") {
 		file = strings.TrimSpace(file[2:])
@@ -33,7 +33,7 @@ func NewFileSink(file, backend string, renderer Renderer) (AuditSink, error) {
 		return nil, err
 	}
 	f.Write(opener)
-	return &fileSink{f, newline, renderer}, nil
+	return &fileSink{f, newline}, nil
 }
 
 func determineFilename(file, backend string) string {
@@ -49,7 +49,7 @@ func determineFilename(file, backend string) string {
 	return name
 }
 
-func (fas *fileSink) Audit(encoded audittypes.Encoded) error {
+func (fas *fileSink) Audit(encoded types.Encoded) error {
 	fas.w.Write(fas.lineEnd)
 	_, err := fas.w.Write(encoded.Bytes)
 	fas.lineEnd = commaNewline

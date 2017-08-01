@@ -1,7 +1,7 @@
 package streams
 
 import (
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
+	"github.com/containous/traefik/middlewares/audittap/types"
 	"io"
 )
 
@@ -10,16 +10,16 @@ import (
 // AuditSink interface
 type AuditSink interface {
 	io.Closer
-	Audit(encoded audittypes.Encoded) error
+	Audit(encoded types.Encoded) error
 }
 
 type noopAuditSink struct {
-	audittypes.Encoded
+	types.Encoded
 }
 
 var _ AuditSink = &noopAuditSink{} // prove type conformance
 
-func (fs *noopAuditSink) Audit(encoded audittypes.Encoded) error {
+func (fs *noopAuditSink) Audit(encoded types.Encoded) error {
 	fs.Encoded = encoded
 	return nil
 }

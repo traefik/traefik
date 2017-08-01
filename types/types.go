@@ -374,7 +374,8 @@ type AuditSink struct {
 	NumProducers    int    `json:"numProducers,omitempty" description:"The number of concurrent producers which can send messages to the endpoint"`
 	ChannelLength   int    `json:"channelLength,omitempty" description:"Size of the in-memory message channel.  Used as a buffer in case of Producer failure"`
 	DiskStorePath   string `json:"diskStorePath,omitempty" description:"Directory path for disk-backed persistent audit message queue"`
+	ProxyingFor		string `json:"ProxyingFor,omitempty" description:"Defines the style of auditing event required. e.g API, RATE"`
 	AuditSource     string `json:"auditSource,omitempty" description:"Value to use for auditSource in audit message"`
 	AuditType       string `json:"auditType,omitempty" description:"Value to use for auditType in audit message"`
-	EncryptSecret 	string `json:"encryptSecret,omitempty" description:"Key for encrypting failed events. If present events will be AES encrypted"`
+	EncryptSecret   string `json:"encryptSecret,omitempty" description:"Key for encrypting failed events. If present events will be AES encrypted"`
 }
