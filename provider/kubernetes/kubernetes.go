@@ -204,19 +204,20 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Priority:             priority,
 						BasicAuth:            basicAuthCreds,
 						WhitelistSourceRange: whitelistSourceRange,
+						Headers:              types.Headers{},
 					}
-				}
 
-				sslRedirectAnnotation, ok := i.Annotations[annotationKubernetesSSLRedirect]
-				switch {
-				case !ok:
-					// No op.
-				case sslRedirectAnnotation == "false":
-					templateObjects.Frontends[r.Host+pa.Path].Headers.SSLRedirect = false
-				case sslRedirectAnnotation == "true":
-					templateObjects.Frontends[r.Host+pa.Path].Headers.SSLRedirect = true
-				default:
-					log.Warnf("Unknown value '%s' for %s", sslRedirectAnnotation, annotationKubernetesSSLRedirect)
+					sslRedirectAnnotation, ok := i.Annotations[annotationKubernetesSSLRedirect]
+					switch {
+					case !ok:
+						// No op.
+					case sslRedirectAnnotation == "false":
+						templateObjects.Frontends[r.Host+pa.Path].Headers.SSLRedirect = false
+					case sslRedirectAnnotation == "true":
+						templateObjects.Frontends[r.Host+pa.Path].Headers.SSLRedirect = true
+					default:
+						log.Warnf("Unknown value '%s' for %s", sslRedirectAnnotation, annotationKubernetesSSLRedirect)
+					}
 				}
 
 				if len(r.Host) > 0 {

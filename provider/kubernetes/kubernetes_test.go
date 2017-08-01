@@ -2397,6 +2397,79 @@ func TestBasicAuthInTemplate(t *testing.T) {
 	}
 }
 
+func TestSSLRedirectInTemplate(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"ingress.kubernetes.io/ssl-redirect": "true",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "ssl",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/redirect",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP:    "10.0.0.1",
+				Type:         "ExternalName",
+				ExternalName: "example.com",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	actual = provider.loadConfig(*actual)
+	got := actual.Frontends["ssl/redirect"].Headers.SSLRedirect
+	if !got {
+		t.Fatalf("expected SSLRedirect to be true got: %+v", got)
+	}
+}
+
 type clientMock struct {
 	ingresses []*v1beta1.Ingress
 	services  []*v1.Service
