@@ -1,4 +1,4 @@
-hash: c53f57a45247b08a91f127ece494d49f1b7fee8c5f75be87ab12e27aa92d065f
+hash: afc00e3aa064550eed7ff6a98b4eced543fe41e84894f1ac0ec25adf06354ec7
 updated: 2016-11-17T16:23:56.727970904Z
 imports:
 - name: github.com/cenk/backoff
@@ -286,6 +286,7 @@ testImports:
   - context
   - proxy
   - publicsuffix
+  - websocket
 - name: golang.org/x/sys
   version: 9c60d1c508f5134d1ca726b4641db998f2523357
   subpackages:
