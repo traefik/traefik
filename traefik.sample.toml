@@ -1093,12 +1093,12 @@
 #
 # [ecs]
 
-# ECS Cluster Name
+# ECS Clusters Name
 #
 # Optional
-# Default: "default"
+# Default: ["default"]
 #
-# Cluster = "default"
+# Clusters = ["default"]
 
 # Enable watch ECS changes
 #
