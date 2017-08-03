@@ -1093,6 +1093,12 @@
 #
 # [ecs]
 
+# ECS Cluster Name
+#
+# Deprecated - Please use Clusters
+#
+# Cluster = "default"
+
 # ECS Clusters Name
 #
 # Optional

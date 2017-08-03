@@ -1706,6 +1706,12 @@ Træfik can be configured to use Amazon ECS as a backend configuration:
 #
 [ecs]
 
+# ECS Cluster Name
+#
+# Deprecated - Please use Clusters
+#
+# Cluster = "default"
+
 # ECS Clusters Name
 #
 # Optional
@@ -1723,9 +1729,9 @@ Watch = true
 # Enable auto discover ECS clusters
 #
 # Optional
-# Default: true
+# Default: false
 #
-AutoDiscoverClusters = true
+AutoDiscoverClusters = false
 
 # Polling interval (in seconds)
 #

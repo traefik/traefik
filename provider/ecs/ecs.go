@@ -37,6 +37,7 @@ type Provider struct {
 
 	// Provider lookup parameters
 	Clusters             Clusters 	    `description:"ECS Clusters name"`
+	Cluster              string 	    `description:"deprecated - ECS Cluster name"`
 	AutoDiscoverClusters bool 		    `description:"Auto discover cluster"`
 	Region               string 		`description:"The AWS region to use for requests"`
 	AccessKeyID          string 		`description:"The AWS credentials access key to use for making requests"`
@@ -218,6 +219,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 		for _, carns := range clustersArn {
 			clusters = append(clusters, *carns)
 		}
+	} else if p.Cluster != "" {
+		clusters = Clusters{p.Cluster}
 	} else {
 		clusters = p.Clusters
 	}
