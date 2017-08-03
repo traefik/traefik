@@ -8,12 +8,12 @@ else
   exit 0
 fi
 
-# create docker image containous/traefik
-echo "Updating docker containous/traefik image..."
+# create docker image joshdvir/traefik
+echo "Updating docker joshdvir/traefik image..."
 docker login -u $DOCKER_USER -p $DOCKER_PASS
-docker tag containous/traefik containous/traefik:${TRAVIS_COMMIT}
-docker push containous/traefik:${TRAVIS_COMMIT}
-docker tag containous/traefik containous/traefik:experimental
-docker push containous/traefik:experimental
+docker tag joshdvir/traefik joshdvir/traefik:${TRAVIS_COMMIT}
+docker push joshdvir/traefik:${TRAVIS_COMMIT}
+docker tag joshdvir/traefik joshdvir/traefik:experimental
+docker push joshdvir/traefik:experimental
 
 echo "Deployed"
