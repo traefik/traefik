@@ -23,6 +23,7 @@
     <span data-ng-repeat="whitelistSourceRange in frontendCtrl.frontend.whitelistSourceRange">
       <span class="label label-warning">Whitelist {{ whitelistSourceRange }}</span>
     </span>
+    <span data-ng-show="frontendCtrl.frontend.whitelistCheckHeaders" class="label label-warning">WhitelistCheckHeaders</span>
     <span data-ng-show="frontendCtrl.frontend.priority" class="label label-warning">Priority:{{frontendCtrl.frontend.priority}}</span>
   </div>
 </div>

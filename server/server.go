@@ -15,6 +15,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -294,7 +295,7 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
 	if len(server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange) > 0 {
-		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange)
+		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange, server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistCheckHeaders)
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
@@ -927,12 +928,13 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						n.Use(middlewares.NewMetricsWrapper(server.metricsRegistry, frontend.Backend))
 					}
 
-					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
+					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange, frontend.WhitelistCheckHeaders)
 					if err != nil {
 						log.Fatalf("Error creating IP Whitelister: %s", err)
 					} else if ipWhitelistMiddleware != nil {
 						n.Use(ipWhitelistMiddleware)
 						log.Infof("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
+						log.Infof("Check headers for source address: %s", strconv.FormatBool(frontend.WhitelistCheckHeaders))
 					}
 
 					if len(frontend.BasicAuth) > 0 {
@@ -1016,10 +1018,10 @@ func configureLBServers(lb healthcheck.LoadBalancer, config *types.Configuration
 	return nil
 }
 
-func configureIPWhitelistMiddleware(whitelistSourceRanges []string) (negroni.Handler, error) {
+func configureIPWhitelistMiddleware(whitelistSourceRanges []string, whitelistCheckHeaders bool) (negroni.Handler, error) {
 	if len(whitelistSourceRanges) > 0 {
 		ipSourceRanges := whitelistSourceRanges
-		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(ipSourceRanges)
+		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(ipSourceRanges, whitelistCheckHeaders)
 
 		if err != nil {
 			return nil, err

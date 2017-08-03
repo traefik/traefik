@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/containous/traefik/log"
 	"github.com/pkg/errors"
@@ -12,18 +13,19 @@ import (
 
 // IPWhitelister is a middleware that provides Checks of the Requesting IP against a set of Whitelists
 type IPWhitelister struct {
-	handler    negroni.Handler
-	whitelists []*net.IPNet
+	handler      negroni.Handler
+	whitelists   []*net.IPNet
+	checkHeaders bool
 }
 
 // NewIPWhitelister builds a new IPWhitelister given a list of CIDR-Strings to whitelist
-func NewIPWhitelister(whitelistStrings []string) (*IPWhitelister, error) {
+func NewIPWhitelister(whitelistStrings []string, whitelistCheckHeaders bool) (*IPWhitelister, error) {
 
 	if len(whitelistStrings) == 0 {
 		return nil, errors.New("no whitelists provided")
 	}
 
-	whitelister := IPWhitelister{}
+	whitelister := IPWhitelister{checkHeaders: whitelistCheckHeaders}
 
 	for _, whitelistString := range whitelistStrings {
 		_, whitelist, err := net.ParseCIDR(whitelistString)
@@ -40,7 +42,7 @@ func NewIPWhitelister(whitelistStrings []string) (*IPWhitelister, error) {
 }
 
 func (whitelister *IPWhitelister) handle(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	remoteIP, err := ipFromRemoteAddr(r.RemoteAddr)
+	remoteIP, err := ipFromRemoteAddr(r, whitelister.checkHeaders)
 	if err != nil {
 		log.Warnf("unable to parse remote-address from header: %s - rejecting", r.RemoteAddr)
 		reject(w)
@@ -66,12 +68,41 @@ func reject(w http.ResponseWriter) {
 	w.Write([]byte(http.StatusText(statusCode)))
 }
 
-func ipFromRemoteAddr(addr string) (*net.IP, error) {
-	ip, _, err := net.SplitHostPort(addr)
-	if err != nil {
-		return nil, fmt.Errorf("can't extract IP/Port from address %s: %s", addr, err)
+func ipFromRemoteAddr(req *http.Request, checkHeaders bool) (*net.IP, error) {
+	if checkHeaders == true {
+		hdr := req.Header
+		// First check the X-Forwarded-For header for requests via proxy.
+		hdrForwardedFor := hdr.Get("X-Forwarded-For")
+		if hdrForwardedFor != "" {
+			// X-Forwarded-For can be a csv of IPs in case of multiple proxies.
+			// Use the first valid one.
+			parts := strings.Split(hdrForwardedFor, ",")
+			for _, part := range parts {
+				ip := net.ParseIP(strings.TrimSpace(part))
+				if ip != nil {
+					return &ip, nil
+				}
+			}
+		}
+
+		// Try the X-Real-Ip header.
+		hdrRealIP := hdr.Get("X-Real-Ip")
+		if hdrRealIP != "" {
+			ip := net.ParseIP(hdrRealIP)
+			if ip != nil {
+				return &ip, nil
+			}
+		}
 	}
 
+	// Fallback to Remote Address in request, which will give the correct client IP when there is no proxy.
+	// Remote Address in Go's HTTP server is in the form host:port so we need to split that first.
+	ip, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		return nil, fmt.Errorf("can't extract IP/Port from address %s: %s", req.RemoteAddr, err)
+	}
+
+	// Fallback if Remote Address was just IP.
 	userIP := net.ParseIP(ip)
 	if userIP == nil {
 		return nil, fmt.Errorf("can't parse IP from address %s", ip)
