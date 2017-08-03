@@ -41,7 +41,7 @@ func NewIPWhitelister(whitelistStrings []string) (*IPWhitelister, error) {
 }
 
 func (whitelister *IPWhitelister) handle(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	remoteIP, err := ipFromRemoteAddr(r.RemoteAddr)
+	remoteIP, err := ipFromRemoteAddr(r)
 	if err != nil {
 		log.Warnf("unable to parse remote-address from header: %s - rejecting", r.RemoteAddr)
 		reject(w)
@@ -79,7 +79,7 @@ func ipFromRemoteAddr(req http.Request) (*net.IP, error) {
 		for _, part := range parts {
 			ip := net.ParseIP(strings.TrimSpace(part))
 			if ip != nil {
-				return ip, nil
+				return &ip, nil
 			}
 		}
 	}
@@ -89,7 +89,7 @@ func ipFromRemoteAddr(req http.Request) (*net.IP, error) {
 	if hdrRealIP != "" {
 		ip := net.ParseIP(hdrRealIP)
 		if ip != nil {
-			return ip, nil
+			return &ip, nil
 		}
 	}
 
