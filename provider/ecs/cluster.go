@@ -8,25 +8,25 @@ import (
 // Clusters holds ecs clusters name
 type Clusters []string
 
-//Set adds strings elem into the the parser
-//it splits str on , and ;
-func (ns *Clusters) Set(str string) error {
+// Set adds strings elem into the the parser
+// it splits str on , and ;
+func (c *Clusters) Set(str string) error {
 	fargs := func(c rune) bool {
 		return c == ',' || c == ';'
 	}
 	// get function
 	slice := strings.FieldsFunc(str, fargs)
-	*ns = append(*ns, slice...)
+	*c = append(*c, slice...)
 	return nil
 }
 
-//Get []string
-func (ns *Clusters) Get() interface{} { return Clusters(*ns) }
+// Get []string
+func (c *Clusters) Get() interface{} { return []string(*c) }
 
-//String return slice in a string
-func (ns *Clusters) String() string { return fmt.Sprintf("%v", *ns) }
+// String return slice in a string
+func (c *Clusters) String() string { return fmt.Sprintf("%v", *c) }
 
-//SetValue sets []string into the parser
-func (ns *Clusters) SetValue(val interface{}) {
-	*ns = Clusters(val.(Clusters))
+// SetValue sets []string into the parser
+func (c *Clusters) SetValue(val interface{}) {
+	*c = Clusters(val.([]string))
 }
