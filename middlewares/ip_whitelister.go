@@ -68,7 +68,7 @@ func reject(w http.ResponseWriter) {
 	w.Write([]byte(http.StatusText(statusCode)))
 }
 
-func ipFromRemoteAddr(req http.Request) (*net.IP, error) {
+func ipFromRemoteAddr(req *http.Request) (*net.IP, error) {
 	hdr := req.Header
 	// First check the X-Forwarded-For header for requests via proxy.
 	hdrForwardedFor := hdr.Get("X-Forwarded-For")
