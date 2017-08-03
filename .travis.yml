@@ -54,4 +54,4 @@ deploy:
     script: sh script/deploy-docker.sh
     skip_cleanup: true
     on:
-      repo: joshdvir/traefik
+      repo: containous/traefik
