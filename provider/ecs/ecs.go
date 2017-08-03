@@ -36,12 +36,12 @@ type Provider struct {
 	RefreshSeconds   int    `description:"Polling interval (in seconds)"`
 
 	// Provider lookup parameters
-	Clusters             Clusters 	    `description:"ECS Clusters name"`
-	Cluster              string 	    `description:"deprecated - ECS Cluster name"`
-	AutoDiscoverClusters bool 		    `description:"Auto discover cluster"`
-	Region               string 		`description:"The AWS region to use for requests"`
-	AccessKeyID          string 		`description:"The AWS credentials access key to use for making requests"`
-	SecretAccessKey      string 		`description:"The AWS credentials access key to use for making requests"`
+	Clusters             Clusters `description:"ECS Clusters name"`
+	Cluster              string   `description:"deprecated - ECS Cluster name"`
+	AutoDiscoverClusters bool     `description:"Auto discover cluster"`
+	Region               string   `description:"The AWS region to use for requests"`
+	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
+	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests"`
 }
 
 type ecsInstance struct {
