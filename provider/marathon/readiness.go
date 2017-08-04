@@ -42,13 +42,13 @@ func (rc *readinessChecker) Do(task marathon.Task, app marathon.Application) boo
 	case len(app.Deployments) == 0:
 		// We only care about readiness during deployments; post-deployment readiness
 		// can be covered by a periodic post-deployment probe (i.e., Traefik health checks).
-		rc.logf("task %s app %s: ready = true [no deployment ongoing]", task.ID, app.ID)
+		rc.tracef("task %s app %s: ready = true [no deployment ongoing]", task.ID, app.ID)
 		return true
 
 	case app.ReadinessChecks == nil || len(*app.ReadinessChecks) == 0:
 		// Applications without configured readiness checks are always considered
 		// ready.
-		rc.logf("task %s app %s: ready = true [no readiness checks on app]", task.ID, app.ID)
+		rc.tracef("task %s app %s: ready = true [no readiness checks on app]", task.ID, app.ID)
 		return true
 	}
 
@@ -57,7 +57,7 @@ func (rc *readinessChecker) Do(task marathon.Task, app marathon.Application) boo
 	if app.ReadinessCheckResults != nil {
 		for _, readinessCheckResult := range *app.ReadinessCheckResults {
 			if readinessCheckResult.TaskID == task.ID {
-				rc.logf("task %s app %s: ready = %t [evaluating readiness check ready state]", task.ID, app.ID, readinessCheckResult.Ready)
+				rc.tracef("task %s app %s: ready = %t [evaluating readiness check ready state]", task.ID, app.ID, readinessCheckResult.Ready)
 				return readinessCheckResult.Ready
 			}
 		}
@@ -87,7 +87,7 @@ func (rc *readinessChecker) Do(task marathon.Task, app marathon.Application) boo
 	readinessCheckTimeoutSecs := (*app.ReadinessChecks)[0].TimeoutSeconds
 	readinessCheckTimeout := time.Duration(readinessCheckTimeoutSecs) * time.Second
 	if readinessCheckTimeout == 0 {
-		rc.logf("task %s app %s: readiness check timeout not set, using default value %s", task.ID, app.ID, rc.checkDefaultTimeout)
+		rc.tracef("task %s app %s: readiness check timeout not set, using default value %s", task.ID, app.ID, rc.checkDefaultTimeout)
 		readinessCheckTimeout = rc.checkDefaultTimeout
 	} else {
 		readinessCheckTimeout += rc.checkSafetyMargin
@@ -104,18 +104,18 @@ func (rc *readinessChecker) Do(task marathon.Task, app marathon.Application) boo
 
 	since := time.Since(startTime)
 	if since < readinessCheckTimeout {
-		rc.logf("task %s app %s: ready = false [task with start-time %s not within assumed check timeout window of %s (elapsed time since task start: %s)]", task.ID, app.ID, startTime.Format(time.RFC3339), readinessCheckTimeout, since)
+		rc.tracef("task %s app %s: ready = false [task with start-time %s not within assumed check timeout window of %s (elapsed time since task start: %s)]", task.ID, app.ID, startTime.Format(time.RFC3339), readinessCheckTimeout, since)
 		return false
 	}
 
 	// Finally, we can be certain this task is not part of the deployment (i.e.,
 	// it's an old task that's going to transition into the TASK_KILLING and/or
 	// TASK_KILLED state as new tasks' readiness checks gradually turn green.)
-	rc.logf("task %s app %s: ready = true [task with start-time %s not involved in deployment (elapsed time since task start: %s)]", task.ID, app.ID, startTime.Format(time.RFC3339), since)
+	rc.tracef("task %s app %s: ready = true [task with start-time %s not involved in deployment (elapsed time since task start: %s)]", task.ID, app.ID, startTime.Format(time.RFC3339), since)
 	return true
 }
 
-func (rc *readinessChecker) logf(format string, args ...interface{}) {
+func (rc *readinessChecker) tracef(format string, args ...interface{}) {
 	if rc.traceLogging {
 		log.Debugf(readinessLogHeader+format, args...)
 	}
