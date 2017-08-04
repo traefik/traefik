@@ -26,7 +26,7 @@ func TestDisabledReadinessChecker(t *testing.T) {
 }
 
 func TestEnabledReadinessChecker(t *testing.T) {
-	cases := []struct {
+	tests := []struct {
 		desc          string
 		task          marathon.Task
 		app           marathon.Application
@@ -114,20 +114,20 @@ func TestEnabledReadinessChecker(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			rc := testReadinessChecker()
-			if c.rc.checkDefaultTimeout > 0 {
-				rc.checkDefaultTimeout = c.rc.checkDefaultTimeout
+			if test.rc.checkDefaultTimeout > 0 {
+				rc.checkDefaultTimeout = test.rc.checkDefaultTimeout
 			}
-			if c.rc.checkSafetyMargin > 0 {
-				rc.checkSafetyMargin = c.rc.checkSafetyMargin
+			if test.rc.checkSafetyMargin > 0 {
+				rc.checkSafetyMargin = test.rc.checkSafetyMargin
 			}
-			actualReady := c.rc.Do(c.task, c.app)
-			if actualReady != c.expectedReady {
-				t.Errorf("actual ready = %t, expected ready = %t", actualReady, c.expectedReady)
+			actualReady := test.rc.Do(test.task, test.app)
+			if actualReady != test.expectedReady {
+				t.Errorf("actual ready = %t, expected ready = %t", actualReady, test.expectedReady)
 			}
 		})
 	}
