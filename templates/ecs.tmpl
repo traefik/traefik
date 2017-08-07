@@ -2,6 +2,9 @@
     [backends.backend-{{ .Name }}.servers.server-{{ .Name }}{{ .ID }}]
     url = "{{ .Protocol }}://{{ .Host }}:{{ .Port }}"
     weight = {{ .Weight }}
+    [backends.backend-{{ .Name }}.servers.server-{{ .Name }}{{ .ID }}.loadbalancer]
+        sticky = {{getLabelLoadBalancerSticky .}}
+        method = "{{getLabelLoadBalancerMethod .}}"
 {{end}}
 
 [frontends]{{range filterFrontends .Instances}}

@@ -457,6 +457,20 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain
 }
 
+func (p *Provider) getLabelLoadBalancerSticky(i ecsInstance) string {
+	if label := i.label(types.LabelBackendLoadbalancerSticky); label != "" {
+		return label
+	}
+	return "false"
+}
+
+func (p *Provider) getLabelLoadBalancerMethod(i ecsInstance) string {
+	if label := i.label(types.LabelBackendLoadbalancerMethod); label != "" {
+		return label
+	}
+	return "wrr"
+}
+
 // Provider expects no more than 100 parameters be passed to a DescribeTask call; thus, pack
 // each string into an array capped at 100 elements
 func (p *Provider) chunkedTaskArns(tasks []*string) [][]*string {
