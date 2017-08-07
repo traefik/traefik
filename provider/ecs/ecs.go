@@ -180,8 +180,10 @@ func wrapAws(ctx context.Context, req *request.Request) error {
 
 func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
 	var ecsFuncMap = template.FuncMap{
-		"filterFrontends": p.filterFrontends,
-		"getFrontendRule": p.getFrontendRule,
+		"filterFrontends":    p.filterFrontends,
+		"getFrontendRule":    p.getFrontendRule,
+		"LoadBalancerSticky": p.LoadBalancerSticky,
+		"LoadBalancerMethod": p.LoadBalancerMethod,
 	}
 
 	instances, err := p.listInstances(ctx, client)
@@ -191,10 +193,20 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 
 	instances = fun.Filter(p.filterInstance, instances).([]ecsInstance)
 
+	services := make(map[string][]ecsInstance)
+
+	for _, i := range instances {
+		if serviceInstances, ok := services[i.Name]; ok {
+			services[i.Name] = append(serviceInstances, i)
+		} else {
+			services[i.Name] = []ecsInstance{i}
+		}
+	}
+
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
-		Instances []ecsInstance
+		Services map[string][]ecsInstance
 	}{
-		instances,
+		services,
 	})
 }
 
@@ -457,16 +469,20 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain
 }
 
-func (p *Provider) getLabelLoadBalancerSticky(i ecsInstance) string {
-	if label := i.label(types.LabelBackendLoadbalancerSticky); label != "" {
-		return label
+func (p *Provider) LoadBalancerSticky(instances []ecsInstance) string {
+	for instances != nil && len(instances) > 0 {
+		if label := instances[0].label(types.LabelBackendLoadbalancerSticky); label != "" {
+			return label
+		}
 	}
 	return "false"
 }
 
-func (p *Provider) getLabelLoadBalancerMethod(i ecsInstance) string {
-	if label := i.label(types.LabelBackendLoadbalancerMethod); label != "" {
-		return label
+func (p *Provider) LoadBalancerMethod(instances []ecsInstance) string {
+	for instances != nil && len(instances) > 0 {
+		if label := instances[0].label(types.LabelBackendLoadbalancerMethod); label != "" {
+			return label
+		}
 	}
 	return "wrr"
 }
