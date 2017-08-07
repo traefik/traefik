@@ -1,25 +1,25 @@
 [backends]{{range $serviceName, $instances := .Services}}
-    [backends.backend-{{ $serviceName }}.loadbalancer]
-        sticky = {{ LoadBalancerSticky $instances}}
-        method = "{{ LoadBalancerMethod $instances}}"
+  [backends.backend-{{ $serviceName }}.loadbalancer]
+    sticky = {{ LoadBalancerSticky $instances}}
+    method = "{{ LoadBalancerMethod $instances}}"
 
-    {{range $index, $i := $instances}}
-        [backends.backend-{{ $i.Name }}.servers.server-{{ $i.Name }}{{ $i.ID }}]
-            url = "{{ $i.Protocol }}://{{ $i.Host }}:{{ $i.Port }}"
-            weight = {{ $i.Weight }}
-    {{end}}
+  {{range $index, $i := $instances}}
+    [backends.backend-{{ $i.Name }}.servers.server-{{ $i.Name }}{{ $i.ID }}]
+      url = "{{ $i.Protocol }}://{{ $i.Host }}:{{ $i.Port }}"
+      weight = {{ $i.Weight }}
+  {{end}}
 {{end}}
 
 [frontends]{{range $serviceName, $instances := .Services}}
-    {{range filterFrontends $instances}}
-        [frontends.frontend-{{ $serviceName }}]
-            backend = "backend-{{ $serviceName }}"
-            passHostHeader = {{ .PassHostHeader }}
-            priority = {{ .Priority }}
-            entryPoints = [{{range  .EntryPoints }}
-                "{{.}}",
-            {{end}}]
-        [frontends.frontend-{{ $serviceName }}.routes.route-frontend-{{ $serviceName }}]
-        rule = "{{getFrontendRule .}}"
-    {{end}}
+  {{range filterFrontends $instances}}
+    [frontends.frontend-{{ $serviceName }}]
+      backend = "backend-{{ $serviceName }}"
+      passHostHeader = {{ .PassHostHeader }}
+      priority = {{ .Priority }}
+      entryPoints = [{{range  .EntryPoints }}
+      "{{.}}",
+    {{end}}]
+    [frontends.frontend-{{ $serviceName }}.routes.route-frontend-{{ $serviceName }}]
+      rule = "{{getFrontendRule .}}"
+  {{end}}
 {{end}}
