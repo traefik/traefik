@@ -29,7 +29,7 @@ func TestClustersGet(t *testing.T) {
 		{"cluster1", "cluster2"},
 		{"cluster1", "cluster2", "cluster3"},
 	}
-	check := [][]string{
+	check := []Clusters{
 		{"cluster"},
 		{"cluster1", "cluster2"},
 		{"cluster1", "cluster2", "cluster3"},
@@ -65,7 +65,7 @@ func TestClustersSetValue(t *testing.T) {
 		{"cluster1", "cluster2"},
 		{"cluster1", "cluster2", "cluster3"},
 	}
-	slices := [][]string{
+	slices := []Clusters{
 		{"cluster"},
 		{"cluster1", "cluster2"},
 		{"cluster1", "cluster2", "cluster3"},

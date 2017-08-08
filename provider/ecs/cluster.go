@@ -20,13 +20,13 @@ func (c *Clusters) Set(str string) error {
 	return nil
 }
 
-// Get []string
-func (c *Clusters) Get() interface{} { return []string(*c) }
+// Get Clusters
+func (c *Clusters) Get() interface{} { return Clusters(*c) }
 
 // String return slice in a string
 func (c *Clusters) String() string { return fmt.Sprintf("%v", *c) }
 
-// SetValue sets []string into the parser
+// SetValue sets Clusters into the parser
 func (c *Clusters) SetValue(val interface{}) {
-	*c = Clusters(val.([]string))
+	*c = Clusters(val.(Clusters))
 }
