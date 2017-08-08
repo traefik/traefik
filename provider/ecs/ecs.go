@@ -180,10 +180,10 @@ func wrapAws(ctx context.Context, req *request.Request) error {
 
 func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
 	var ecsFuncMap = template.FuncMap{
-		"filterFrontends":    p.filterFrontends,
-		"getFrontendRule":    p.getFrontendRule,
-		"LoadBalancerSticky": p.LoadBalancerSticky,
-		"LoadBalancerMethod": p.LoadBalancerMethod,
+		"filterFrontends":       p.filterFrontends,
+		"getFrontendRule":       p.getFrontendRule,
+		"getLoadBalancerSticky": p.getLoadBalancerSticky,
+		"getLoadBalancerMethod": p.getLoadBalancerMethod,
 	}
 
 	instances, err := p.listInstances(ctx, client)
@@ -469,7 +469,7 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain
 }
 
-func (p *Provider) LoadBalancerSticky(instances []ecsInstance) string {
+func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
 	for instances != nil && len(instances) > 0 {
 		if label := instances[0].label(types.LabelBackendLoadbalancerSticky); label != "" {
 			return label
@@ -478,7 +478,7 @@ func (p *Provider) LoadBalancerSticky(instances []ecsInstance) string {
 	return "false"
 }
 
-func (p *Provider) LoadBalancerMethod(instances []ecsInstance) string {
+func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {
 	for instances != nil && len(instances) > 0 {
 		if label := instances[0].label(types.LabelBackendLoadbalancerMethod); label != "" {
 			return label

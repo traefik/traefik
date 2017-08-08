@@ -1,7 +1,7 @@
 [backends]{{range $serviceName, $instances := .Services}}
   [backends.backend-{{ $serviceName }}.loadbalancer]
-    sticky = {{ LoadBalancerSticky $instances}}
-    method = "{{ LoadBalancerMethod $instances}}"
+    sticky = {{ getLoadBalancerSticky $instances}}
+    method = "{{ getLoadBalancerMethod $instances}}"
 
   {{range $index, $i := $instances}}
     [backends.backend-{{ $i.Name }}.servers.server-{{ $i.Name }}{{ $i.ID }}]
