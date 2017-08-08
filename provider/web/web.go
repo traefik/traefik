@@ -1,4 +1,4 @@
-package server
+package web
 
 import (
 	"encoding/json"
@@ -22,23 +22,20 @@ import (
 	"github.com/urfave/negroni"
 )
 
-var (
-	stats         = thoas_stats.New()
-	statsRecorder *middlewares.StatsRecorder
-)
-
-// WebProvider is a provider.Provider implementation that provides the UI.
-// FIXME to be handled another way.
-type WebProvider struct {
-	Address    string            `description:"Web administration port"`
-	CertFile   string            `description:"SSL certificate"`
-	KeyFile    string            `description:"SSL certificate"`
-	ReadOnly   bool              `description:"Enable read only API"`
-	Statistics *types.Statistics `description:"Enable more detailed statistics"`
-	Metrics    *types.Metrics    `description:"Enable a metrics exporter"`
-	Path       string            `description:"Root path for dashboard and API"`
-	server     *Server
-	Auth       *types.Auth
+// Provider is a provider.Provider implementation that provides the UI
+type Provider struct {
+	Address               string            `description:"Web administration port"`
+	CertFile              string            `description:"SSL certificate"`
+	KeyFile               string            `description:"SSL certificate"`
+	ReadOnly              bool              `description:"Enable read only API"`
+	Statistics            *types.Statistics `description:"Enable more detailed statistics"`
+	Metrics               *types.Metrics    `description:"Enable a metrics exporter"`
+	Path                  string            `description:"Root path for dashboard and API"`
+	Auth                  *types.Auth
+	Debug                 bool
+	CurrentConfigurations *safe.Safe
+	Stats                 *thoas_stats.Stats
+	StatsRecorder         *middlewares.StatsRecorder
 }
 
 var (
@@ -57,7 +54,7 @@ func goroutines() interface{} {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
+func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
 
 	systemRouter := mux.NewRouter()
 
@@ -130,8 +127,8 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		Handler(http.StripPrefix(provider.Path+"dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
 
 	// expvars
-	if provider.server.globalConfiguration.Debug {
-		systemRouter.Methods("GET").Path(provider.Path + "debug/vars").HandlerFunc(expvarHandler)
+	if provider.Debug {
+		systemRouter.Methods("GET").Path(provider.Path + "debug/vars").HandlerFunc(expVarHandler)
 	}
 
 	safe.Go(func() {
@@ -173,24 +170,24 @@ type healthResponse struct {
 	*middlewares.Stats
 }
 
-func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, request *http.Request) {
-	health := &healthResponse{Data: stats.Data()}
-	if statsRecorder != nil {
-		health.Stats = statsRecorder.Data()
+func (provider *Provider) getHealthHandler(response http.ResponseWriter, request *http.Request) {
+	health := &healthResponse{Data: provider.Stats.Data()}
+	if provider.StatsRecorder != nil {
+		health.Stats = provider.StatsRecorder.Data()
 	}
 	templatesRenderer.JSON(response, http.StatusOK, health)
 }
 
-func (provider *WebProvider) getPingHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getPingHandler(response http.ResponseWriter, request *http.Request) {
 	fmt.Fprint(response, "OK")
 }
 
-func (provider *WebProvider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+func (provider *Provider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
 }
 
-func (provider *WebProvider) getVersionHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getVersionHandler(response http.ResponseWriter, request *http.Request) {
 	v := struct {
 		Version  string
 		Codename string
@@ -201,10 +198,10 @@ func (provider *WebProvider) getVersionHandler(response http.ResponseWriter, req
 	templatesRenderer.JSON(response, http.StatusOK, v)
 }
 
-func (provider *WebProvider) getProviderHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getProviderHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		templatesRenderer.JSON(response, http.StatusOK, provider)
 	} else {
@@ -212,10 +209,10 @@ func (provider *WebProvider) getProviderHandler(response http.ResponseWriter, re
 	}
 }
 
-func (provider *WebProvider) getBackendsHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getBackendsHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		templatesRenderer.JSON(response, http.StatusOK, provider.Backends)
 	} else {
@@ -223,11 +220,11 @@ func (provider *WebProvider) getBackendsHandler(response http.ResponseWriter, re
 	}
 }
 
-func (provider *WebProvider) getBackendHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getBackendHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	backendID := vars["backend"]
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, backend)
@@ -237,11 +234,11 @@ func (provider *WebProvider) getBackendHandler(response http.ResponseWriter, req
 	http.NotFound(response, request)
 }
 
-func (provider *WebProvider) getServersHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getServersHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	backendID := vars["backend"]
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, backend.Servers)
@@ -251,12 +248,12 @@ func (provider *WebProvider) getServersHandler(response http.ResponseWriter, req
 	http.NotFound(response, request)
 }
 
-func (provider *WebProvider) getServerHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getServerHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	backendID := vars["backend"]
 	serverID := vars["server"]
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			if server, ok := backend.Servers[serverID]; ok {
@@ -268,10 +265,10 @@ func (provider *WebProvider) getServerHandler(response http.ResponseWriter, requ
 	http.NotFound(response, request)
 }
 
-func (provider *WebProvider) getFrontendsHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getFrontendsHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		templatesRenderer.JSON(response, http.StatusOK, provider.Frontends)
 	} else {
@@ -279,11 +276,11 @@ func (provider *WebProvider) getFrontendsHandler(response http.ResponseWriter, r
 	}
 }
 
-func (provider *WebProvider) getFrontendHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getFrontendHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, frontend)
@@ -293,11 +290,11 @@ func (provider *WebProvider) getFrontendHandler(response http.ResponseWriter, re
 	http.NotFound(response, request)
 }
 
-func (provider *WebProvider) getRoutesHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getRoutesHandler(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			templatesRenderer.JSON(response, http.StatusOK, frontend.Routes)
@@ -307,13 +304,13 @@ func (provider *WebProvider) getRoutesHandler(response http.ResponseWriter, requ
 	http.NotFound(response, request)
 }
 
-func (provider *WebProvider) getRouteHandler(response http.ResponseWriter, request *http.Request) {
+func (provider *Provider) getRouteHandler(response http.ResponseWriter, request *http.Request) {
 
 	vars := mux.Vars(request)
 	providerID := vars["provider"]
 	frontendID := vars["frontend"]
 	routeID := vars["route"]
-	currentConfigurations := provider.server.currentConfigurations.Get().(configs)
+	currentConfigurations := provider.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			if route, ok := frontend.Routes[routeID]; ok {
@@ -325,7 +322,7 @@ func (provider *WebProvider) getRouteHandler(response http.ResponseWriter, reque
 	http.NotFound(response, request)
 }
 
-func expvarHandler(w http.ResponseWriter, r *http.Request) {
+func expVarHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	fmt.Fprint(w, "{\n")
 	first := true

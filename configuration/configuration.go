@@ -1,4 +1,4 @@
-package server
+package configuration
 
 import (
 	"crypto/tls"
@@ -11,7 +11,6 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
-	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -24,6 +23,7 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
+	"github.com/containous/traefik/provider/web"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
 )
@@ -34,15 +34,10 @@ const (
 
 	// DefaultDialTimeout when connecting to a backend server.
 	DefaultDialTimeout = 30 * time.Second
+
 	// DefaultIdleTimeout before closing an idle connection.
 	DefaultIdleTimeout = 180 * time.Second
 )
-
-// TraefikConfiguration holds GlobalConfiguration and other stuff
-type TraefikConfiguration struct {
-	GlobalConfiguration `mapstructure:",squash"`
-	ConfigFile          string `short:"c" description:"Configuration file to use (TOML)."`
-}
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
@@ -70,7 +65,7 @@ type GlobalConfiguration struct {
 	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers"`
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings"`
 	File                      *file.Provider          `description:"Enable File backend with default settings"`
-	Web                       *WebProvider            `description:"Enable Web backend with default settings"`
+	Web                       *web.Provider           `description:"Enable Web backend with default settings"`
 	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings"`
 	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings"`
 	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend with default settings"`
@@ -210,23 +205,23 @@ func (ep *EntryPoints) Set(value string) error {
 			result[name] = matchResult[i]
 		}
 	}
-	var tls *TLS
+	var configTLS *TLS
 	if len(result["TLS"]) > 0 {
 		certs := Certificates{}
 		if err := certs.Set(result["TLS"]); err != nil {
 			return err
 		}
-		tls = &TLS{
+		configTLS = &TLS{
 			Certificates: certs,
 		}
 	} else if len(result["TLSACME"]) > 0 {
-		tls = &TLS{
+		configTLS = &TLS{
 			Certificates: Certificates{},
 		}
 	}
 	if len(result["CA"]) > 0 {
 		files := strings.Split(result["CA"], ",")
-		tls.ClientCAFiles = files
+		configTLS.ClientCAFiles = files
 	}
 	var redirect *Redirect
 	if len(result["RedirectEntryPoint"]) > 0 || len(result["RedirectRegex"]) > 0 || len(result["RedirectReplacement"]) > 0 {
@@ -249,7 +244,7 @@ func (ep *EntryPoints) Set(value string) error {
 
 	(*ep)[result["Name"]] = &EntryPoint{
 		Address:              result["Address"],
-		TLS:                  tls,
+		TLS:                  configTLS,
 		Redirect:             redirect,
 		Compress:             compress,
 		WhitelistSourceRange: whiteListSourceRange,
@@ -299,16 +294,16 @@ type TLS struct {
 	ClientCAFiles []string
 }
 
-// Map of allowed TLS minimum versions
-var minVersion = map[string]uint16{
+// MinVersion Map of allowed TLS minimum versions
+var MinVersion = map[string]uint16{
 	`VersionTLS10`: tls.VersionTLS10,
 	`VersionTLS11`: tls.VersionTLS11,
 	`VersionTLS12`: tls.VersionTLS12,
 }
 
-// Map of TLS CipherSuites from crypto/tls
+// CipherSuites Map of TLS CipherSuites from crypto/tls
 // Available CipherSuites defined at https://golang.org/pkg/crypto/tls/#pkg-constants
-var cipherSuites = map[string]uint16{
+var CipherSuites = map[string]uint16{
 	`TLS_RSA_WITH_RC4_128_SHA`:                tls.TLS_RSA_WITH_RC4_128_SHA,
 	`TLS_RSA_WITH_3DES_EDE_CBC_SHA`:           tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
 	`TLS_RSA_WITH_AES_128_CBC_SHA`:            tls.TLS_RSA_WITH_AES_128_CBC_SHA,
@@ -432,184 +427,3 @@ type ForwardingTimeouts struct {
 	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists"`
 	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists"`
 }
-
-// NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
-func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
-	//default Docker
-	var defaultDocker docker.Provider
-	defaultDocker.Watch = true
-	defaultDocker.ExposedByDefault = true
-	defaultDocker.Endpoint = "unix:///var/run/docker.sock"
-	defaultDocker.SwarmMode = false
-
-	// default File
-	var defaultFile file.Provider
-	defaultFile.Watch = true
-	defaultFile.Filename = "" //needs equivalent to  viper.ConfigFileUsed()
-
-	// default Web
-	var defaultWeb WebProvider
-	defaultWeb.Address = ":8080"
-	defaultWeb.Statistics = &types.Statistics{
-		RecentErrors: 10,
-	}
-
-	// default Metrics
-	defaultWeb.Metrics = &types.Metrics{
-		Prometheus: &types.Prometheus{
-			Buckets: types.Buckets{0.1, 0.3, 1.2, 5},
-		},
-		Datadog: &types.Datadog{
-			Address:      "localhost:8125",
-			PushInterval: "10s",
-		},
-		StatsD: &types.Statsd{
-			Address:      "localhost:8125",
-			PushInterval: "10s",
-		},
-	}
-
-	// default Marathon
-	var defaultMarathon marathon.Provider
-	defaultMarathon.Watch = true
-	defaultMarathon.Endpoint = "http://127.0.0.1:8080"
-	defaultMarathon.ExposedByDefault = true
-	defaultMarathon.Constraints = types.Constraints{}
-	defaultMarathon.DialerTimeout = flaeg.Duration(60 * time.Second)
-	defaultMarathon.KeepAlive = flaeg.Duration(10 * time.Second)
-
-	// default Consul
-	var defaultConsul consul.Provider
-	defaultConsul.Watch = true
-	defaultConsul.Endpoint = "127.0.0.1:8500"
-	defaultConsul.Prefix = "traefik"
-	defaultConsul.Constraints = types.Constraints{}
-
-	// default CatalogProvider
-	var defaultConsulCatalog consul.CatalogProvider
-	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
-	defaultConsulCatalog.Constraints = types.Constraints{}
-	defaultConsulCatalog.Prefix = "traefik"
-	defaultConsulCatalog.FrontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"
-
-	// default Etcd
-	var defaultEtcd etcd.Provider
-	defaultEtcd.Watch = true
-	defaultEtcd.Endpoint = "127.0.0.1:2379"
-	defaultEtcd.Prefix = "/traefik"
-	defaultEtcd.Constraints = types.Constraints{}
-
-	//default Zookeeper
-	var defaultZookeeper zk.Provider
-	defaultZookeeper.Watch = true
-	defaultZookeeper.Endpoint = "127.0.0.1:2181"
-	defaultZookeeper.Prefix = "/traefik"
-	defaultZookeeper.Constraints = types.Constraints{}
-
-	//default Boltdb
-	var defaultBoltDb boltdb.Provider
-	defaultBoltDb.Watch = true
-	defaultBoltDb.Endpoint = "127.0.0.1:4001"
-	defaultBoltDb.Prefix = "/traefik"
-	defaultBoltDb.Constraints = types.Constraints{}
-
-	//default Kubernetes
-	var defaultKubernetes kubernetes.Provider
-	defaultKubernetes.Watch = true
-	defaultKubernetes.Endpoint = ""
-	defaultKubernetes.LabelSelector = ""
-	defaultKubernetes.Constraints = types.Constraints{}
-
-	// default Mesos
-	var defaultMesos mesos.Provider
-	defaultMesos.Watch = true
-	defaultMesos.Endpoint = "http://127.0.0.1:5050"
-	defaultMesos.ExposedByDefault = true
-	defaultMesos.Constraints = types.Constraints{}
-	defaultMesos.RefreshSeconds = 30
-	defaultMesos.ZkDetectionTimeout = 30
-	defaultMesos.StateTimeoutSecond = 30
-
-	//default ECS
-	var defaultECS ecs.Provider
-	defaultECS.Watch = true
-	defaultECS.ExposedByDefault = true
-	defaultECS.AutoDiscoverClusters = false
-	defaultECS.Clusters = ecs.Clusters{"default"}
-	defaultECS.RefreshSeconds = 15
-	defaultECS.Constraints = types.Constraints{}
-
-	//default Rancher
-	var defaultRancher rancher.Provider
-	defaultRancher.Watch = true
-	defaultRancher.ExposedByDefault = true
-	defaultRancher.RefreshSeconds = 15
-
-	// default DynamoDB
-	var defaultDynamoDB dynamodb.Provider
-	defaultDynamoDB.Constraints = types.Constraints{}
-	defaultDynamoDB.RefreshSeconds = 15
-	defaultDynamoDB.TableName = "traefik"
-	defaultDynamoDB.Watch = true
-
-	// default AccessLog
-	defaultAccessLog := types.AccessLog{
-		Format:   accesslog.CommonFormat,
-		FilePath: "",
-	}
-
-	defaultConfiguration := GlobalConfiguration{
-		Docker:        &defaultDocker,
-		File:          &defaultFile,
-		Web:           &defaultWeb,
-		Marathon:      &defaultMarathon,
-		Consul:        &defaultConsul,
-		ConsulCatalog: &defaultConsulCatalog,
-		Etcd:          &defaultEtcd,
-		Zookeeper:     &defaultZookeeper,
-		Boltdb:        &defaultBoltDb,
-		Kubernetes:    &defaultKubernetes,
-		Mesos:         &defaultMesos,
-		ECS:           &defaultECS,
-		Rancher:       &defaultRancher,
-		DynamoDB:      &defaultDynamoDB,
-		Retry:         &Retry{},
-		HealthCheck:   &HealthCheckConfig{},
-		AccessLog:     &defaultAccessLog,
-	}
-
-	return &TraefikConfiguration{
-		GlobalConfiguration: defaultConfiguration,
-	}
-}
-
-// NewTraefikConfiguration creates a TraefikConfiguration with default values
-func NewTraefikConfiguration() *TraefikConfiguration {
-	return &TraefikConfiguration{
-		GlobalConfiguration: GlobalConfiguration{
-			GraceTimeOut:              flaeg.Duration(10 * time.Second),
-			AccessLogsFile:            "",
-			TraefikLogsFile:           "",
-			LogLevel:                  "ERROR",
-			EntryPoints:               map[string]*EntryPoint{},
-			Constraints:               types.Constraints{},
-			DefaultEntryPoints:        []string{},
-			ProvidersThrottleDuration: flaeg.Duration(2 * time.Second),
-			MaxIdleConnsPerHost:       200,
-			IdleTimeout:               flaeg.Duration(0),
-			HealthCheck: &HealthCheckConfig{
-				Interval: flaeg.Duration(DefaultHealthCheckInterval),
-			},
-			RespondingTimeouts: &RespondingTimeouts{
-				IdleTimeout: flaeg.Duration(DefaultIdleTimeout),
-			},
-			ForwardingTimeouts: &ForwardingTimeouts{
-				DialTimeout: flaeg.Duration(DefaultDialTimeout),
-			},
-			CheckNewVersion: true,
-		},
-		ConfigFile: "",
-	}
-}
-
-type configs map[string]*types.Configuration

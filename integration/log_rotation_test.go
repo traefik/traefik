@@ -102,7 +102,7 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 
 	// GreaterOrEqualThan used to ensure test doesn't break
 	// If more log entries are output on startup
-	c.Assert(lineCount, checker.GreaterOrEqualThan, 6)
+	c.Assert(lineCount, checker.GreaterOrEqualThan, 5)
 
 	//Verify traefik.log output as expected
 	lineCount = verifyLogLines(c, traefikTestLogFile, lineCount, false)
