@@ -195,11 +195,11 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 
 	services := make(map[string][]ecsInstance)
 
-	for _, i := range instances {
-		if serviceInstances, ok := services[i.Name]; ok {
-			services[i.Name] = append(serviceInstances, i)
+	for _, instance := range instances {
+		if serviceInstances, ok := services[instance.Name]; ok {
+			services[instance.Name] = append(serviceInstances, instance)
 		} else {
-			services[i.Name] = []ecsInstance{i}
+			services[instance.Name] = []ecsInstance{instance}
 		}
 	}
 
@@ -470,8 +470,9 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 }
 
 func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
-	for instances != nil && len(instances) > 0 {
-		if label := instances[0].label(types.LabelBackendLoadbalancerSticky); label != "" {
+	for len(instances) > 0 {
+		label := instances[0].label(types.LabelBackendLoadbalancerSticky)
+		if label != "" {
 			return label
 		}
 	}
@@ -479,8 +480,9 @@ func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
 }
 
 func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {
-	for instances != nil && len(instances) > 0 {
-		if label := instances[0].label(types.LabelBackendLoadbalancerMethod); label != "" {
+	for len(instances) > 0 {
+		label := instances[0].label(types.LabelBackendLoadbalancerMethod)
+		if label != "" {
 			return label
 		}
 	}
