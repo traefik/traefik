@@ -26,8 +26,9 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/middlewares/audittap"
-	at "github.com/containous/traefik/middlewares/audittap/types"
+	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"github.com/containous/traefik/middlewares/audittap/streams"
+	at "github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/containous/traefik/middlewares/headers"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
@@ -38,7 +39,6 @@ import (
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
-	"github.com/containous/traefik/middlewares/audittap/audittypes"
 )
 
 var oxyLogger = &OxyLogger{}

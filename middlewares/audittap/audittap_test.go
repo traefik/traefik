@@ -47,7 +47,7 @@ func TestAuditTap_noop(t *testing.T) {
 	tap.ServeHTTP(res, req)
 
 	assert.Equal(t, 1, len(capture.events))
-	if apiAudit, ok := capture.events[0].(*audittypes.ApiAuditEvent); ok {
+	if apiAudit, ok := capture.events[0].(*audittypes.APIAuditEvent); ok {
 		assert.Equal(t, "testSource", apiAudit.AuditSource)
 		assert.Equal(t, "testType", apiAudit.AuditType)
 		assert.Equal(t, "auth789", apiAudit.AuthorisationToken)

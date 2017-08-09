@@ -11,7 +11,8 @@ import (
 	"gopkg.in/beevik/etree.v0"
 )
 
-type RateAuditDetail struct {
+// RATEAuditDetail is the detail section of the event
+type RATEAuditDetail struct {
 	CorrelationID   string `json:"correlationID,omitempty"`
 	Email           string `json:"email,omitempty"`
 	RequestType     string `json:"requestType,omitempty"`
@@ -23,23 +24,25 @@ type RateAuditDetail struct {
 	UserType        string `json:"userType,omitempty"`
 }
 
-type RateAuditEvent struct {
+// RATEAuditEvent is the audit event created for RATE calls
+type RATEAuditEvent struct {
 	AuditEvent
-	Detail      RateAuditDetail `json:"detail,omitempty"`
+	Detail      RATEAuditDetail `json:"detail,omitempty"`
 	Identifiers types.DataMap   `json:"identifiers,omitempty"`
 	Enrolments  types.DataMap   `json:"enrolments,omitempty"`
 }
 
-type XMLFragment struct {
+type xmlFragment struct {
 	InnerXML []byte `xml:",innerxml"`
 }
 
-type PartialGovTalkMessage struct {
+type partialGovTalkMessage struct {
 	Header  *etree.Document
 	Details *etree.Document
 }
 
-func (ev *RateAuditEvent) AppendRequest(req *http.Request) {
+// AppendRequest appends information about the request to the audit event
+func (ev *RATEAuditEvent) AppendRequest(req *http.Request) {
 	appendCommonRequestFields(&ev.AuditEvent, req)
 	if partialMsg, err := getMessageParts(req.Body); err == nil {
 		extractIfPresent(partialMsg.Header, xpClass, &ev.AuditType)
@@ -49,24 +52,27 @@ func (ev *RateAuditEvent) AppendRequest(req *http.Request) {
 	}
 }
 
-func (ev *RateAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo) {
+// AppendResponse appends information about the response to the audit event
+func (ev *RATEAuditEvent) AppendResponse(responseHeaders http.Header, respInfo types.ResponseInfo) {
 	appendCommonResponseFields(&ev.AuditEvent, responseHeaders, respInfo)
 }
 
-func (ra *RateAuditEvent) ToEncoded() types.Encoded {
-	return EncodeToJSON(ra)
+// ToEncoded transforms the event into an Encoded
+func (ev *RATEAuditEvent) ToEncoded() types.Encoded {
+	return EncodeToJSON(ev)
 }
 
-func NewRateAuditEvent() Auditer {
-	ev := RateAuditEvent{}
+// NewRATEAuditEvent creates a new APIAuditEvent with the provided auditSource and auditType
+func NewRATEAuditEvent() Auditer {
+	ev := RATEAuditEvent{}
 	ev.AuditEvent = AuditEvent{AuditSource: "transaction-engine-frontend"}
 	return &ev
 }
 
-func getMessageParts(body io.Reader) (*PartialGovTalkMessage, error) {
+func getMessageParts(body io.Reader) (*partialGovTalkMessage, error) {
 	decoder := xml.NewDecoder(body)
-	var header XMLFragment
-	var details XMLFragment
+	var header xmlFragment
+	var details xmlFragment
 	haveHeader := false
 	haveDetails := false
 
@@ -90,7 +96,7 @@ func getMessageParts(body io.Reader) (*PartialGovTalkMessage, error) {
 
 		// Stop parsing when required data is obtained
 		if haveHeader && haveDetails {
-			partial := PartialGovTalkMessage{}
+			partial := partialGovTalkMessage{}
 			headerDoc := etree.NewDocument()
 			if err := headerDoc.ReadFromBytes(header.InnerXML); err != nil {
 				return nil, err
@@ -126,7 +132,7 @@ var xpIdentifiers = etree.MustCompilePath("./Keys/Key")
 var xpRole = etree.MustCompilePath("./GatewayAdditions/Submitter/SubmitterDetails/CredentialRole")
 var xpUserType = etree.MustCompilePath("./GatewayAdditions/Submitter/SubmitterDetails/RegistrationCategory")
 
-func (ev *RateAuditEvent) populateDetail(partial *PartialGovTalkMessage) {
+func (ev *RATEAuditEvent) populateDetail(partial *partialGovTalkMessage) {
 	extractIfPresent(partial.Header, xpCorrelationID, &ev.Detail.CorrelationID)
 	extractIfPresent(partial.Header, xpTransactionID, &ev.Detail.TransactionID)
 	extractIfPresent(partial.Header, xpSenderID, &ev.Detail.SenderID)
@@ -140,7 +146,7 @@ func (ev *RateAuditEvent) populateDetail(partial *PartialGovTalkMessage) {
 
 }
 
-func (ev *RateAuditEvent) populateIdentifiers(partial *PartialGovTalkMessage) {
+func (ev *RATEAuditEvent) populateIdentifiers(partial *partialGovTalkMessage) {
 
 	ev.Identifiers = types.DataMap{}
 
@@ -160,7 +166,7 @@ func (ev *RateAuditEvent) populateIdentifiers(partial *PartialGovTalkMessage) {
 
 }
 
-func (ev *RateAuditEvent) populateEnrolments(partial *PartialGovTalkMessage) {
+func (ev *RATEAuditEvent) populateEnrolments(partial *partialGovTalkMessage) {
 
 	if nodes := partial.Details.FindElementsPath(xpAgentEnrolments); len(nodes) > 0 {
 		ev.Enrolments = types.DataMap{}
@@ -184,7 +190,7 @@ func extractIfPresent(doc *etree.Document, path etree.Path, dest *string) {
 var pathFunction = etree.MustCompilePath("./MessageDetails/Function")
 var pathQualifier = etree.MustCompilePath("./MessageDetails/Qualifier")
 
-func translateRequestType(partial *PartialGovTalkMessage) string {
+func translateRequestType(partial *partialGovTalkMessage) string {
 	var function string
 	var qualifier string
 	extractIfPresent(partial.Header, pathFunction, &function)

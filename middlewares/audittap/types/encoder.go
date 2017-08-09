@@ -15,6 +15,7 @@ type Encoded struct {
 	Err   error
 }
 
+// Encodeable specifies a type that can be transform itself to Encoded
 type Encodeable interface {
 	ToEncoded() Encoded
 }

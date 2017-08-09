@@ -29,6 +29,7 @@ const (
 // DataMap holds headers in which the values are all either string or []string.
 type DataMap map[string]interface{}
 
+// ResponseInfo is a summary of an HTTP response
 type ResponseInfo struct {
 	Status          int
 	Size            int

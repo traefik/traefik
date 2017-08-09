@@ -191,7 +191,7 @@ func TestRateAuditEvent(t *testing.T) {
 	respHdrs := http.Header{}
 	respInfo := types.ResponseInfo{}
 
-	event := &RateAuditEvent{}
+	event := &RATEAuditEvent{}
 	event.AppendRequest(req)
 	event.AppendResponse(respHdrs, respInfo)
 
@@ -272,10 +272,10 @@ func TestXmlMissingDetails(t *testing.T) {
 }
 
 func TestNewRateAudit(t *testing.T) {
-	auditer := NewRateAuditEvent()
-	if rate, ok := auditer.(*RateAuditEvent); ok {
+	auditer := NewRATEAuditEvent()
+	if rate, ok := auditer.(*RATEAuditEvent); ok {
 		rate.AuditSource = "transaction-engine-frontend"
 	} else {
-		assert.Fail(t, "Was not a RateAuditEvent")
+		assert.Fail(t, "Was not a RATEAuditEvent")
 	}
 }

@@ -15,11 +15,13 @@ import (
 // probably be removed in future versions.
 const MaximumEntityLength = 32 * 1024
 
+// Possible ProxyingFor types
 const (
 	RATE = "rate"
 	API  = "api"
 )
 
+// AuditConfig specifies audit construction characteristics
 type AuditConfig struct {
 	AuditSource string
 	AuditType   string
@@ -72,9 +74,9 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	switch strings.ToLower(tap.ProxyingFor) {
 	case "api":
-		auditer = audittypes.NewApiAuditEvent(tap.AuditSource, tap.AuditType)
+		auditer = audittypes.NewAPIAuditEvent(tap.AuditSource, tap.AuditType)
 	case "rate":
-		auditer = audittypes.NewRateAuditEvent()
+		auditer = audittypes.NewRATEAuditEvent()
 	}
 
 	auditer.AppendRequest(req)

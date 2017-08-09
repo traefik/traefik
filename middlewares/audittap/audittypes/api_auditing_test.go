@@ -10,7 +10,7 @@ import (
 
 func TestApiAuditEvent(t *testing.T) {
 
-	ev := ApiAuditEvent{}
+	ev := APIAuditEvent{}
 	req := httptest.NewRequest("GET", "/some/api/resource?p1=v1", nil)
 	req.Header.Set("Authorization", "auth456")
 
@@ -31,11 +31,11 @@ func TestApiAuditEvent(t *testing.T) {
 }
 
 func TestNewApiAudit(t *testing.T) {
-	auditer := NewApiAuditEvent("ping", "pong")
-	if api, ok := auditer.(*ApiAuditEvent); ok {
+	auditer := NewAPIAuditEvent("ping", "pong")
+	if api, ok := auditer.(*APIAuditEvent); ok {
 		assert.Equal(t, "ping", api.AuditSource)
 		assert.Equal(t, "pong", api.AuditType)
 	} else {
-		assert.Fail(t, "Was not an ApiAuditEvent")
+		assert.Fail(t, "Was not an APIAuditEvent")
 	}
 }

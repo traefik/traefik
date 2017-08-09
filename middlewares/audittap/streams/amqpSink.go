@@ -26,7 +26,7 @@ type amqpAuditSink struct {
 }
 
 type auditDescription struct {
-	EventId     string `json:"eventId"`
+	EventID     string `json:"eventId"`
 	AuditSource string `json:"auditSource"`
 	AuditType   string `json:"auditType"`
 }
@@ -213,11 +213,11 @@ func handleFailedMessage(encoded atypes.Encoded, reason string, crypter encrypti
 	if desc, err := minimallyDescribeAudit(encoded); err == nil {
 		if msgBody, err := crypter.Encrypt(encoded.Bytes); err == nil {
 			log.Error(fmt.Sprintf("%s %s eventId=%s auditSource=%s auditType=%s body: {%s}",
-				undeliveredMessagePrefix, reason, desc.EventId, desc.AuditSource, desc.AuditType, msgBody))
+				undeliveredMessagePrefix, reason, desc.EventID, desc.AuditSource, desc.AuditType, msgBody))
 		} else {
 			// Datastream would drop for an encryption failure
 			log.Error(fmt.Sprintf("Dropping unencrypted event. eventId=%s auditSource=%s auditType=%s",
-				desc.EventId, desc.AuditSource, desc.AuditType))
+				desc.EventID, desc.AuditSource, desc.AuditType))
 		}
 	} else {
 		log.Error(fmt.Sprintf("Dropping invalid audit event. %s", err.Error()))

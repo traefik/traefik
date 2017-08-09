@@ -218,7 +218,7 @@ func TestAmqpSinkFull(t *testing.T) {
 func TestMinimallyDescribeAudit(t *testing.T) {
 	res, _ := minimallyDescribeAudit(anAuditEventEncoded)
 
-	assert.Equal(t, "ev123", res.EventId)
+	assert.Equal(t, "ev123", res.EventID)
 	assert.Equal(t, "foo", res.AuditSource)
 	assert.Equal(t, "bar", res.AuditType)
 }

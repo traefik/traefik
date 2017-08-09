@@ -41,6 +41,7 @@ type AuditStream interface {
 	Audit(encoder types.Encodeable) error
 }
 
+// Auditer is a type that audits information from a HTTP request and response
 type Auditer interface {
 	AppendRequest(req *http.Request)
 	AppendResponse(responseHeaders http.Header, resp types.ResponseInfo)
@@ -102,7 +103,7 @@ func appendCommonResponseFields(ev *AuditEvent, responseHeaders http.Header, inf
 
 //-------------------------------------------------------------------------------------------------
 
-// Encode event to JSON and then to bytes
+// EncodeToJSON transforms event event to JSON and then to bytes
 func EncodeToJSON(event interface{}) types.Encoded {
 	buffer := new(bytes.Buffer)
 	encoder := json.NewEncoder(buffer)
