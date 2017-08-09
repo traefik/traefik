@@ -197,6 +197,24 @@ func TestNilClientTLS(t *testing.T) {
 	}
 }
 
+func TestInsecureSkipVerifyClientTLS(t *testing.T) {
+	provider := &myProvider{
+		BaseProvider{
+			Filename: "",
+		},
+		&ClientTLS{
+			InsecureSkipVerify: true,
+		},
+	}
+	config, err := provider.TLS.CreateTLSConfig()
+	if err != nil {
+		t.Fatal("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
+	}
+	if !config.InsecureSkipVerify {
+		t.Fatal("CreateTLSConfig should support setting only InsecureSkipVerify property")
+	}
+}
+
 func TestMatchingConstraints(t *testing.T) {
 	cases := []struct {
 		constraints types.Constraints

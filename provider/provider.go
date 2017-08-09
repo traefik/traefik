@@ -157,24 +157,26 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 	cert := tls.Certificate{}
 	_, errKeyIsFile := os.Stat(clientTLS.Key)
 
-	if _, errCertIsFile := os.Stat(clientTLS.Cert); errCertIsFile == nil {
-		if errKeyIsFile == nil {
-			cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
-			if err != nil {
-				return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
+	if len(clientTLS.Cert) > 0 && len(clientTLS.Key) > 0 {
+		if _, errCertIsFile := os.Stat(clientTLS.Cert); errCertIsFile == nil {
+			if errKeyIsFile == nil {
+				cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
+				}
+			} else {
+				return nil, fmt.Errorf("tls cert is a file, but tls key is not")
 			}
 		} else {
-			return nil, fmt.Errorf("tls cert is a file, but tls key is not")
-		}
-	} else {
-		if errKeyIsFile != nil {
-			cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
-			if err != nil {
-				return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
+			if errKeyIsFile != nil {
+				cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
+				if err != nil {
+					return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
 
+				}
+			} else {
+				return nil, fmt.Errorf("tls key is a file, but tls cert is not")
 			}
-		} else {
-			return nil, fmt.Errorf("tls key is a file, but tls cert is not")
 		}
 	}
 
