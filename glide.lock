@@ -97,6 +97,8 @@ imports:
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
+  - Godeps/_workspace/src/github.com/ugorji/go/codec
+  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/pathutil
   - pkg/types
@@ -205,7 +207,7 @@ imports:
 - name: github.com/fatih/color
   version: 9131ab34cf20d2f6d83fdc67168a5430d1c7dc23
 - name: github.com/gambol99/go-marathon
-  version: 1b9c2582c26b632fb1fb295776d7ce40b68c36f2
+  version: 7f2f00c9b7489218c4d5dd2eba9afbd0f71021ca
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini

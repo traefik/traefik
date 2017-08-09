@@ -190,11 +190,6 @@ type httpClient struct {
 	config Config
 }
 
-// newRequestError signals that creating a new http.Request failed
-type newRequestError struct {
-	error
-}
-
 // NewClient creates a new marathon client
 //		config:			the configuration to use
 func NewClient(config Config) (Marathon, error) {
@@ -322,8 +317,7 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 	}
 }
 
-// buildAPIRequest creates a default API request.
-// It fails when there is no available member in the cluster anymore or when the request can not be built.
+// buildAPIRequest creates a default API request
 func (r *marathonClient) buildAPIRequest(method, path string, reader io.Reader) (request *http.Request, member string, err error) {
 	// Grab a member from the cluster
 	member, err = r.hosts.getMember()
@@ -334,7 +328,7 @@ func (r *marathonClient) buildAPIRequest(method, path string, reader io.Reader) 
 	// Build the HTTP request to Marathon
 	request, err = r.client.buildMarathonRequest(method, member, path, reader)
 	if err != nil {
-		return nil, member, newRequestError{err}
+		return nil, member, err
 	}
 	return request, member, nil
 }
