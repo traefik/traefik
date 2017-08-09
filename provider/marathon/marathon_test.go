@@ -718,7 +718,7 @@ func TestMarathonGetPort(t *testing.T) {
 		c := c
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := provider.getPort(c.task, c.application)
+			actual := provider.getPort(c.task, c.application, "")
 			if actual != c.expected {
 				t.Errorf("actual %q, expected %q", c.expected, actual)
 			}
@@ -749,7 +749,7 @@ func TestMarathonGetWeight(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			actual := provider.getWeight(c.application)
+			actual := provider.getWeight(c.application, "")
 			if actual != c.expected {
 				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
@@ -813,7 +813,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			actual := provider.getProtocol(c.application)
+			actual := provider.getProtocol(c.application, "")
 			if actual != c.expected {
 				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
@@ -875,7 +875,7 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			actual := provider.getPassHostHeader(c.application)
+			actual := provider.getPassHostHeader(c.application, "")
 			if actual != c.expected {
 				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
@@ -1035,7 +1035,7 @@ func TestMarathonGetEntryPoints(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			actual := provider.getEntryPoints(c.application)
+			actual := provider.getEntryPoints(c.application, "")
 			if !reflect.DeepEqual(actual, c.expected) {
 				t.Errorf("actual %#v, expected %#v", actual, c.expected)
 			}
@@ -1091,7 +1091,7 @@ func TestMarathonGetFrontendRule(t *testing.T) {
 				Domain:                  "docker.localhost",
 				MarathonLBCompatibility: c.marathonLBCompatibility,
 			}
-			actual := provider.getFrontendRule(c.application)
+			actual := provider.getFrontendRule(c.application, "")
 			if actual != c.expected {
 				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
@@ -1122,7 +1122,7 @@ func TestMarathonGetBackend(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			actual := provider.getBackend(c.application)
+			actual := provider.getBackend(c.application, "")
 			if actual != c.expected {
 				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
@@ -1422,7 +1422,7 @@ func TestMarathonGetBasicAuth(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			actual := provider.getBasicAuth(c.application)
+			actual := provider.getBasicAuth(c.application, "")
 			if !reflect.DeepEqual(actual, c.expected) {
 				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}

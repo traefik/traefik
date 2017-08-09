@@ -76,7 +76,6 @@ type Basic struct {
 }
 
 type lightMarathonClient interface {
-	AllTasks(v url.Values) (*marathon.Tasks, error)
 	Applications(url.Values) (*marathon.Applications, error)
 }
 
@@ -239,10 +238,10 @@ func (p *Provider) applicationFilter(app marathon.Application) bool {
 	}
 
 	// Filter by constraints.
-	label, _ := p.getLabel(app, types.LabelTags)
+	label, _ := p.getLabel(app, types.LabelTags, "")
 	constraintTags := strings.Split(label, ",")
 	if p.MarathonLBCompatibility {
-		if label, ok := p.getLabel(app, "HAPROXY_GROUP"); ok {
+		if label, ok := p.getLabel(app, "HAPROXY_GROUP", ""); ok {
 			constraintTags = append(constraintTags, label)
 		}
 	}
@@ -267,8 +266,8 @@ func (p *Provider) taskFilter(task marathon.Task, application marathon.Applicati
 	}
 
 	// Filter illegal port label specification.
-	_, hasPortIndexLabel := p.getLabel(application, types.LabelPortIndex)
-	_, hasPortLabel := p.getLabel(application, types.LabelPort)
+	_, hasPortIndexLabel := p.getLabel(application, types.LabelPortIndex, "")
+	_, hasPortLabel := p.getLabel(application, types.LabelPort, "")
 	if hasPortIndexLabel && hasPortLabel {
 		log.Debugf("Filtering Marathon task %s from application %s specifying both traefik.portIndex and traefik.port labels", task.ID, application.ID)
 		return false
@@ -298,194 +297,21 @@ func isApplicationEnabled(application marathon.Application, exposedByDefault boo
 	return exposedByDefault && (*application.Labels)[types.LabelEnable] != "false" || (*application.Labels)[types.LabelEnable] == "true"
 }
 
-func (p *Provider) getLabel(application marathon.Application, label string) (string, bool) {
-	for key, value := range *application.Labels {
-		if key == label {
-			return value, true
-		}
-	}
-	return "", false
-}
-
-// Extract port from labels for a given service and a given marathon application
-func (p *Provider) getPort(task marathon.Task, application marathon.Application, vargs ...string) string {
-	serviceName := extractServiceName(vargs...)
-
-	if value, ok := getApplicationServiceLabel(application, serviceName, "port"); ok {
-		return value
-	}
-	if value, ok := getApplicationServiceLabel(application, serviceName, "portIndex"); ok {
-		if parsed, err := strconv.Atoi(value); err == nil {
-			port, err := processPorts(application, task, parsed)
-			if err != nil {
-				log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
-				return ""
-			}
-
-			return strconv.Itoa(port)
-		}
-	}
-
-	port, err := processPorts(application, task, 0)
-	if err != nil {
-		log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
-		return ""
-	}
-
-	return strconv.Itoa(port)
-}
-
-// Extract weight from labels for a given service and a given marathon application
-func (p *Provider) getWeight(application marathon.Application, varg ...string) string {
-	serviceName := extractServiceName(varg...)
-	if value, ok := getApplicationServiceLabel(application, serviceName, "weight"); ok {
-		return value
-	}
-
-	if label, ok := p.getLabel(application, types.LabelWeight); ok {
-		return label
-	}
-	return "0"
-}
-
-func (p *Provider) getDomain(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelDomain); ok {
-		return label
-	}
-	return p.Domain
-}
-
-// Extract protocol from labels for a given service and a given marathon application
-func (p *Provider) getProtocol(application marathon.Application, varg ...string) string {
-	serviceName := extractServiceName(varg...)
-	if value, ok := getApplicationServiceLabel(application, serviceName, "protocol"); ok {
-		return value
-	}
-	if label, ok := p.getLabel(application, types.LabelProtocol); ok {
-		return label
-	}
-	return "http"
-}
-
-func (p *Provider) getSticky(application marathon.Application) string {
-	if sticky, ok := p.getLabel(application, types.LabelBackendLoadbalancerSticky); ok {
-		return sticky
-	}
-	return "false"
-}
-
-func (p *Provider) getPassHostHeader(application marathon.Application, varg ...string) string {
-	serviceName := extractServiceName(varg...)
-	if servicePassHostHeader, ok := getApplicationServiceLabel(application, serviceName, "frontend.passHostHeader"); ok {
-		return servicePassHostHeader
-	}
-	if passHostHeader, ok := p.getLabel(application, types.LabelFrontendPassHostHeader); ok {
-		return passHostHeader
-	}
-	return "true"
-}
-
-func (p *Provider) getPriority(application marathon.Application, varg ...string) string {
-	serviceName := extractServiceName(varg...)
-	if value, ok := getApplicationServiceLabel(application, serviceName, "frontend.priority"); ok {
-		return value
-	}
-	if priority, ok := p.getLabel(application, types.LabelFrontendPriority); ok {
-		return priority
-	}
-	return "0"
-}
-
-// Extract entrypoints from labels for a given service and a given marathon application
-func (p *Provider) getEntryPoints(application marathon.Application, varg ...string) []string {
-	serviceName := extractServiceName(varg...)
-	if entryPoints, ok := getApplicationServiceLabel(application, serviceName, "frontend.entryPoints"); ok {
-		return strings.Split(entryPoints, ",")
-	}
-	if entryPoints, ok := p.getLabel(application, types.LabelFrontendEntryPoints); ok {
-		return strings.Split(entryPoints, ",")
-	}
-	return []string{}
-}
-
-// getFrontendRule returns the frontend rule for the specified application, using
-// it's label. If service is provided, it will look for serviceName label before generic one.
-// It returns a default one (Host) if the label is not present.
-func (p *Provider) getFrontendRule(application marathon.Application, varg ...string) string {
-	serviceName := extractServiceName(varg...)
-	if value, ok := getApplicationServiceLabel(application, serviceName, "frontend.rule"); ok {
-		return value
-	}
-
-	if label, ok := p.getLabel(application, types.LabelFrontendRule); ok {
-		return label
-	}
-	if p.MarathonLBCompatibility {
-		if label, ok := p.getLabel(application, "HAPROXY_0_VHOST"); ok {
-			return "Host:" + label
-		}
-	}
-	if len(serviceName) > 0 {
-		return "Host:" + strings.ToLower(provider.Normalize(serviceName)) + "." + p.getSubDomain(application.ID) + "." + p.Domain
-	}
-	return "Host:" + p.getSubDomain(application.ID) + "." + p.Domain
-}
-
-func (p *Provider) getBackend(application marathon.Application, varg ...string) string {
-	serviceName := extractServiceName(varg...)
-	if value, ok := getApplicationServiceLabel(application, serviceName, "frontend.backend"); ok {
-		return value
-	}
-	if label, ok := p.getLabel(application, types.LabelBackend); ok {
-		return label
-	}
-	return provider.Replace("/", "-", application.ID) + p.getServiceNameSuffix(serviceName)
-}
-
-func (p *Provider) getFrontendName(application marathon.Application, varg ...string) string {
-	appName := provider.Replace("/", "-", application.ID)
-	serviceName := extractServiceName(varg...)
-	return "frontend" + appName + p.getServiceNameSuffix(serviceName)
-}
-
-func (p *Provider) getServiceNameSuffix(serviceName string) string {
-	if len(serviceName) > 0 {
-		serviceName = provider.Replace("/", "-", serviceName)
-		serviceName = provider.Replace(".", "-", serviceName)
-		return "-service-" + serviceName
-	}
-	return ""
-}
-
-func (p *Provider) getSubDomain(name string) string {
-	if p.GroupsAsSubDomains {
-		splitedName := strings.Split(strings.TrimPrefix(name, "/"), "/")
-		provider.ReverseStringSlice(&splitedName)
-		reverseName := strings.Join(splitedName, ".")
-		return reverseName
-	}
-	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
-}
-
-func (p *Provider) hasCircuitBreakerLabels(application marathon.Application) bool {
-	_, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression)
-	return ok
-}
-
-// Map of services properties
-// we can get it with label[serviceName][propertyName] and we got the propertyValue
+//servicePropertyValues is a map of services properties
+//example values are: weight=42
 type servicePropertyValues map[string]string
 
-type labelServiceProperties map[string]servicePropertyValues
+//serviceProperties is a map of service properties per service, which we can get with label[serviceName][propertyName] and we got the propertyValue
+type serviceProperties map[string]servicePropertyValues
 
 // Check if for the given application, we find labels that are defining services
 func (p *Provider) hasServices(application marathon.Application) bool {
-	return len(extractServicesLabels(application.Labels)) > 0
+	return len(extractServiceProperties(application.Labels)) > 0
 }
 
 // Extract the service labels from application labels of Application struct
-func extractServicesLabels(labels *map[string]string) labelServiceProperties {
-	v := make(labelServiceProperties)
+func extractServiceProperties(labels *map[string]string) serviceProperties {
+	v := make(serviceProperties)
 
 	if labels != nil {
 		for label, value := range *labels {
@@ -507,43 +333,192 @@ func extractServicesLabels(labels *map[string]string) labelServiceProperties {
 	return v
 }
 
-// Gets the entry for a service label searching in all labels of the given application
-func getApplicationServiceLabel(application marathon.Application, serviceName string, entry string) (string, bool) {
-	value, ok := extractServicesLabels(application.Labels)[serviceName][entry]
+//getServiceProperty returns the entry for a service label searching in all labels of the given application
+func getServiceProperty(application marathon.Application, serviceName string, property string) (string, bool) {
+	value, ok := extractServiceProperties(application.Labels)[serviceName][property]
 	return value, ok
 }
 
-// Gets array of service names for a given application
+//getServiceNames returns array of service names for a given application
+//An empty name "" will be added if no service specific properties exist, as an indication that there are no sub-services, but only main Application
 func (p *Provider) getServiceNames(application marathon.Application) []string {
-	labelServiceProperties := extractServicesLabels(application.Labels)
+	labelServiceProperties := extractServiceProperties(application.Labels)
 	var names []string
 
 	for k := range labelServiceProperties {
 		names = append(names, k)
 	}
-	// Adding an empty name, as an indication that there are no sub-services, but only main Application
 	if len(names) == 0 {
 		names = append(names, "")
 	}
 	return names
 }
 
+func (p *Provider) getServiceNameSuffix(serviceName string) string {
+	if len(serviceName) > 0 {
+		serviceName = provider.Replace("/", "-", serviceName)
+		serviceName = provider.Replace(".", "-", serviceName)
+		return "-service-" + serviceName
+	}
+	return ""
+}
+
+//getLabel returns a string value of a corresponding `label` argument
+//  if 'serviceName' value is present, the 'label' value gets stripped of
+func (p *Provider) getLabel(application marathon.Application, label string, serviceName string) (string, bool) {
+	if len(serviceName) > 0 {
+		property := strings.TrimPrefix(label, types.LabelPrefix)
+		if value, ok := getServiceProperty(application, serviceName, property); ok {
+			return value, true
+		}
+	}
+	for key, value := range *application.Labels {
+		if key == label {
+			return value, true
+		}
+	}
+	return "", false
+}
+
+// Extract port from labels for a given service and a given marathon application
+func (p *Provider) getPort(task marathon.Task, application marathon.Application, serviceName string) string {
+	if value, ok := getServiceProperty(application, serviceName, "port"); ok {
+		return value
+	}
+	if value, ok := getServiceProperty(application, serviceName, "portIndex"); ok {
+		if parsed, err := strconv.Atoi(value); err == nil {
+			port, err := processPorts(application, task, parsed)
+			if err != nil {
+				log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
+				return ""
+			}
+
+			return strconv.Itoa(port)
+		}
+	}
+
+	port, err := processPorts(application, task, 0)
+	if err != nil {
+		log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
+		return ""
+	}
+
+	return strconv.Itoa(port)
+}
+
+// Extract weight from labels for a given service and a given marathon application
+func (p *Provider) getWeight(application marathon.Application, serviceName string) string {
+	if label, ok := p.getLabel(application, types.LabelWeight, serviceName); ok {
+		return label
+	}
+	return "0"
+}
+
+func (p *Provider) getDomain(application marathon.Application) string {
+	if label, ok := p.getLabel(application, types.LabelDomain, ""); ok {
+		return label
+	}
+	return p.Domain
+}
+
+// Extract protocol from labels for a given service and a given marathon application
+func (p *Provider) getProtocol(application marathon.Application, serviceName string) string {
+	if label, ok := p.getLabel(application, types.LabelProtocol, serviceName); ok {
+		return label
+	}
+	return "http"
+}
+
+func (p *Provider) getSticky(application marathon.Application) string {
+	if sticky, ok := p.getLabel(application, types.LabelBackendLoadbalancerSticky, ""); ok {
+		return sticky
+	}
+	return "false"
+}
+
+func (p *Provider) getPassHostHeader(application marathon.Application, serviceName string) string {
+	if passHostHeader, ok := p.getLabel(application, types.LabelFrontendPassHostHeader, serviceName); ok {
+		return passHostHeader
+	}
+	return "true"
+}
+
+func (p *Provider) getPriority(application marathon.Application, serviceName string) string {
+	if priority, ok := p.getLabel(application, types.LabelFrontendPriority, serviceName); ok {
+		return priority
+	}
+	return "0"
+}
+
+// Extract entrypoints from labels for a given service and a given marathon application
+func (p *Provider) getEntryPoints(application marathon.Application, serviceName string) []string {
+	if entryPoints, ok := p.getLabel(application, types.LabelFrontendEntryPoints, serviceName); ok {
+		return strings.Split(entryPoints, ",")
+	}
+	return []string{}
+}
+
+// getFrontendRule returns the frontend rule for the specified application, using
+// it's label. If service is provided, it will look for serviceName label before generic one.
+// It returns a default one (Host) if the label is not present.
+func (p *Provider) getFrontendRule(application marathon.Application, serviceName string) string {
+	if label, ok := p.getLabel(application, types.LabelFrontendRule, serviceName); ok {
+		return label
+	}
+	if p.MarathonLBCompatibility {
+		if label, ok := p.getLabel(application, "HAPROXY_0_VHOST", ""); ok {
+			return "Host:" + label
+		}
+	}
+	if len(serviceName) > 0 {
+		return "Host:" + strings.ToLower(provider.Normalize(serviceName)) + "." + p.getSubDomain(application.ID) + "." + p.Domain
+	}
+	return "Host:" + p.getSubDomain(application.ID) + "." + p.Domain
+}
+
+func (p *Provider) getBackend(application marathon.Application, serviceName string) string {
+	if label, ok := p.getLabel(application, types.LabelBackend, serviceName); ok {
+		return label
+	}
+	return provider.Replace("/", "-", application.ID) + p.getServiceNameSuffix(serviceName)
+}
+
+func (p *Provider) getFrontendName(application marathon.Application, serviceName string) string {
+	appName := provider.Replace("/", "-", application.ID)
+	return "frontend" + appName + p.getServiceNameSuffix(serviceName)
+}
+
+func (p *Provider) getSubDomain(name string) string {
+	if p.GroupsAsSubDomains {
+		splitedName := strings.Split(strings.TrimPrefix(name, "/"), "/")
+		provider.ReverseStringSlice(&splitedName)
+		reverseName := strings.Join(splitedName, ".")
+		return reverseName
+	}
+	return strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1)
+}
+
+func (p *Provider) hasCircuitBreakerLabels(application marathon.Application) bool {
+	_, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression, "")
+	return ok
+}
+
 func (p *Provider) hasLoadBalancerLabels(application marathon.Application) bool {
-	_, errMethod := p.getLabel(application, types.LabelBackendLoadbalancerMethod)
-	_, errSticky := p.getLabel(application, types.LabelBackendLoadbalancerSticky)
+	_, errMethod := p.getLabel(application, types.LabelBackendLoadbalancerMethod, "")
+	_, errSticky := p.getLabel(application, types.LabelBackendLoadbalancerSticky, "")
 	return errMethod || errSticky
 }
 
 func (p *Provider) hasMaxConnLabels(application marathon.Application) bool {
-	if _, ok := p.getLabel(application, types.LabelBackendMaxconnAmount); !ok {
+	if _, ok := p.getLabel(application, types.LabelBackendMaxconnAmount, ""); !ok {
 		return false
 	}
-	_, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc)
+	_, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc, "")
 	return ok
 }
 
 func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
-	if label, ok := p.getLabel(application, types.LabelBackendMaxconnAmount); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendMaxconnAmount, ""); ok {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
 			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
@@ -555,21 +530,21 @@ func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc, ""); ok {
 		return label
 	}
 	return "request.host"
 }
 
 func (p *Provider) getLoadBalancerMethod(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendLoadbalancerMethod); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendLoadbalancerMethod, ""); ok {
 		return label
 	}
 	return "wrr"
 }
 
 func (p *Provider) getCircuitBreakerExpression(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression, ""); ok {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"
@@ -580,25 +555,21 @@ func (p *Provider) hasHealthCheckLabels(application marathon.Application) bool {
 }
 
 func (p *Provider) getHealthCheckPath(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckPath); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckPath, ""); ok {
 		return label
 	}
 	return ""
 }
 
 func (p *Provider) getHealthCheckInterval(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckInterval); ok {
+	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckInterval, ""); ok {
 		return label
 	}
 	return ""
 }
 
-func (p *Provider) getBasicAuth(application marathon.Application, varg ...string) []string {
-	serviceName := extractServiceName(varg...)
-	if value, ok := getApplicationServiceLabel(application, serviceName, "frontend.auth.basic"); ok {
-		return strings.Split(value, ",")
-	}
-	if basicAuth, ok := p.getLabel(application, types.LabelFrontendAuthBasic); ok {
+func (p *Provider) getBasicAuth(application marathon.Application, serviceName string) []string {
+	if basicAuth, ok := p.getLabel(application, types.LabelFrontendAuthBasic, serviceName); ok {
 		return strings.Split(basicAuth, ",")
 	}
 
@@ -672,7 +643,7 @@ func (p *Provider) getBackendServer(task marathon.Task, application marathon.App
 	case numTaskIPAddresses == 1:
 		return task.IPAddresses[0].IPAddress
 	default:
-		ipAddressIdxStr, ok := p.getLabel(application, "traefik.ipAddressIdx")
+		ipAddressIdxStr, ok := p.getLabel(application, "traefik.ipAddressIdx", "")
 		if !ok {
 			log.Errorf("Found %d task IP addresses but missing IP address index for Marathon application %s on task %s", numTaskIPAddresses, application.ID, task.ID)
 			return ""
@@ -698,13 +669,4 @@ func parseIndex(index string, length int) (int, error) {
 	}
 
 	return parsed, nil
-}
-
-func extractServiceName(varg ...string) string {
-	switch {
-	case len(varg) == 1:
-		return varg[0]
-	default:
-		return ""
-	}
 }

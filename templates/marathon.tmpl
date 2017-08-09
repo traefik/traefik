@@ -1,8 +1,7 @@
 {{$apps := .Applications}}
 
 {{range $app := $apps}}
-{{range $app.Tasks}}
-{{$task := . }}
+{{range $task := $app.Tasks}}
 {{range $serviceIndex, $serviceName := getServiceNames $app}}
     [backends."backend{{getBackend $app $serviceName}}".servers."server-{{$task.ID | replace "." "-"}}{{getServiceNameSuffix $serviceName }}"]
     url = "{{getProtocol $app $serviceName}}://{{getBackendServer $task $app}}:{{getPort $task $app $serviceName}}"
@@ -11,8 +10,7 @@
 {{end}}
 {{end}}
 
-{{range $apps}}
-{{$app := . }}
+{{range $app := $apps}}
 {{range $serviceIndex, $serviceName := getServiceNames $app}}
 {{ if hasMaxConnLabels $app }}
       [backends."backend{{getBackend $app $serviceName }}".maxconn]
@@ -36,7 +34,7 @@
 {{end}}
 {{end}}
 
-[frontends]{{range $apps}}{{$app := . }}{{range $serviceIndex, $serviceName := getServiceNames .}}
+[frontends]{{range $app := $apps}}{{range $serviceIndex, $serviceName := getServiceNames .}}
   [frontends."{{ getFrontendName $app $serviceName }}"]
   backend = "backend{{getBackend $app $serviceName}}"
   passHostHeader = {{getPassHostHeader $app $serviceName}}
