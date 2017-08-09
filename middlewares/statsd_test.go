@@ -40,9 +40,15 @@ func TestStatsD(t *testing.T) {
 	req1 := testhelpers.MustNewRequest(http.MethodGet, "http://localhost:3000/ok", nil)
 	req2 := testhelpers.MustNewRequest(http.MethodGet, "http://localhost:3000/not-found", nil)
 
+	retryListener := NewMetricsRetryListener(c)
+	retryListener.Retried(1)
+	retryListener.Retried(2)
+
 	expected := []string{
 		// We are only validating counts, as it is nearly impossible to validate latency, since it varies every run
 		"traefik.requests.total:2.000000|c\n",
+		"traefik.backend.retries.total:2.000000|c\n",
+		"traefik.request.duration",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
