@@ -613,6 +613,24 @@ If you want Træfik to watch file changes automatically, just add:
 watch = true
 ```
 
+The configuration files can be also templates written using functions provided by [go template](https://golang.org/pkg/text/template/) as well as functions provided by the [sprig library](http://masterminds.github.io/sprig/), like this:
+
+```tmpl
+[backends]
+  [backends.backend1]
+  url = "http://firstserver"
+  [backends.backend2]
+  url = "http://secondserver"
+
+{{$frontends := dict "frontend1" "backend1" "frontend2" "backend2"}}
+[frontends]
+{{range $frontend, $backend := $frontends}}
+  [frontends.{{$frontend}}]
+  backend = "{{$backend}}"
+{{end}}
+```
+
+
 ## API backend
 
 Træfik can be configured using a RESTful api.

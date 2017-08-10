@@ -351,7 +351,7 @@ func (p *Provider) getBackend(application marathon.Application) string {
 	if label, ok := p.getLabel(application, types.LabelBackend); ok {
 		return label
 	}
-	return provider.Replace("/", "-", application.ID)
+	return strings.Replace(application.ID, "/", "-", -1)
 }
 
 func (p *Provider) getSubDomain(name string) string {
