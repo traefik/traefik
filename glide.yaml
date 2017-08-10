@@ -199,7 +199,7 @@ import:
   subpackages:
   - spew
 - package: github.com/Masterminds/sprig
-  version: 2.12.0
+  version: e039e20e500c2c025d9145be375e27cf42a94174
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose
