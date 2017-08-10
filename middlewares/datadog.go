@@ -11,7 +11,8 @@ import (
 	"github.com/go-kit/kit/metrics/dogstatsd"
 )
 
-var _ Metrics = (Metrics)(nil)
+var _ Metrics = (*Datadog)(nil)
+var _ RetryMetrics = (*Datadog)(nil)
 
 var datadogClient = dogstatsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
 	log.Info(keyvals)
@@ -24,6 +25,7 @@ var datadogTicker *time.Ticker
 const (
 	ddMetricsReqsName    = "requests.total"
 	ddMetricsLatencyName = "request.duration"
+	ddRetriesTotalName   = "backend.retries.total"
 )
 
 // Datadog is an Implementation for Metrics that exposes datadog metrics for the latency
@@ -55,6 +57,7 @@ func NewDataDog(name string) *Datadog {
 
 	m.reqsCounter = datadogClient.NewCounter(ddMetricsReqsName, 1.0).With("service", name)
 	m.reqDurationHistogram = datadogClient.NewHistogram(ddMetricsLatencyName, 1.0).With("service", name)
+	m.retryCounter = datadogClient.NewCounter(ddRetriesTotalName, 1.0).With("service", name)
 
 	return &m
 }
