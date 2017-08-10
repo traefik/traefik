@@ -40,10 +40,16 @@ func TestDatadog(t *testing.T) {
 	req1 := testhelpers.MustNewRequest(http.MethodGet, "http://localhost:3000/ok", nil)
 	req2 := testhelpers.MustNewRequest(http.MethodGet, "http://localhost:3000/not-found", nil)
 
+	retryListener := NewMetricsRetryListener(dd)
+	retryListener.Retried(1)
+	retryListener.Retried(2)
+
 	expected := []string{
 		// We are only validating counts, as it is nearly impossible to validate latency, since it varies every run
 		"traefik.requests.total:1.000000|c|#service:test,code:404,method:GET\n",
 		"traefik.requests.total:1.000000|c|#service:test,code:200,method:GET\n",
+		"traefik.backend.retries.total:2.000000|c|#service:test\n",
+		"traefik.request.duration",
 	}
 
 	udp.ShouldReceiveAll(t, expected, func() {
