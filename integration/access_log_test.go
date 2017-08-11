@@ -78,14 +78,7 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	for i, line := range lines {
 		if len(line) > 0 {
 			count++
-			tokens, err := shellwords.Parse(line)
-			c.Assert(err, checker.IsNil)
-			c.Assert(tokens, checker.HasLen, 14)
-			c.Assert(tokens[6], checker.Matches, `^\d{3}$`)
-			c.Assert(tokens[10], checker.Equals, fmt.Sprintf("%d", i+1))
-			c.Assert(tokens[11], checker.HasPrefix, "frontend")
-			c.Assert(tokens[12], checker.HasPrefix, "http://127.0.0.1:808")
-			c.Assert(tokens[13], checker.Matches, `^\d+ms$`)
+			CheckAccessLogFormat(c, line, i)
 		}
 	}
 	c.Assert(count, checker.GreaterOrEqualThan, 3)
@@ -97,6 +90,17 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 		fmt.Printf("%s\n", string(traefikLog))
 		c.Assert(traefikLog, checker.HasLen, 0)
 	}
+}
+
+func CheckAccessLogFormat(c *check.C, line string, i int) {
+	tokens, err := shellwords.Parse(line)
+	c.Assert(err, checker.IsNil)
+	c.Assert(tokens, checker.HasLen, 14)
+	c.Assert(tokens[6], checker.Matches, `^\d{3}$`)
+	c.Assert(tokens[10], checker.Equals, fmt.Sprintf("%d", i+1))
+	c.Assert(tokens[11], checker.HasPrefix, "frontend")
+	c.Assert(tokens[12], checker.HasPrefix, "http://127.0.0.1:808")
+	c.Assert(tokens[13], checker.Matches, `^\d+ms$`)
 }
 
 func startAccessLogServer(port int) (ts *httptest.Server) {
