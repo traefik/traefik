@@ -440,6 +440,8 @@ func (server *Server) postLoadConfig() {
 }
 
 func (server *Server) configureProviders() {
+	server.providers = append(server.providers, server.globalConfiguration.ServiceFabric)
+
 	// configure providers
 	if server.globalConfiguration.Docker != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Docker)
