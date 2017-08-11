@@ -47,8 +47,8 @@ const (
 var _ provider.Provider = (*Provider)(nil)
 
 // Regexp used to extract the name of the service and the name of the property for this service
-// All properties are under the format traefik.<servicename>.frontend.*= except the port/portIndex/weight/protocol directly after traefik.<servicename>.
-var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|frontend\.(.*))$`)
+// All properties are under the format traefik.<servicename>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<servicename>.
+var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|auth.basic|frontend\.(.*))$`)
 
 // Provider holds configuration of the provider.
 type Provider struct {
@@ -260,9 +260,16 @@ func (p *Provider) taskFilter(task marathon.Task, application marathon.Applicati
 		return false
 	}
 
-	if _, err := processPorts(application, task, 0); err != nil {
-		log.Errorf("Filtering Marathon task %s from application %s without port: %s", task.ID, application.ID, err)
-		return false
+	for _, serviceName := range p.getServiceNames(application) {
+		foundPort := false
+		if port := p.getPort(task, application, serviceName); len(port) > 0 {
+			foundPort = true
+		}
+
+		if !foundPort {
+			log.Errorf("Filtering Marathon task %s from application %s without port", task.ID, application.ID)
+			return false
+		}
 	}
 
 	// Filter illegal port label specification.
@@ -298,18 +305,18 @@ func isApplicationEnabled(application marathon.Application, exposedByDefault boo
 }
 
 //servicePropertyValues is a map of services properties
-//example values are: weight=42
+//an example value is: weight=42
 type servicePropertyValues map[string]string
 
-//serviceProperties is a map of service properties per service, which we can get with label[serviceName][propertyName] and we got the propertyValue
+//serviceProperties is a map of service properties per service, which we can get with label[serviceName][propertyName]. It yields a property value.
 type serviceProperties map[string]servicePropertyValues
 
-// Check if for the given application, we find labels that are defining services
+//hasServices checks if there are service-defining labels for the given application
 func (p *Provider) hasServices(application marathon.Application) bool {
 	return len(extractServiceProperties(application.Labels)) > 0
 }
 
-// Extract the service labels from application labels of Application struct
+//extractServiceProperties extracts the service labels for the given application
 func extractServiceProperties(labels *map[string]string) serviceProperties {
 	v := make(serviceProperties)
 
@@ -333,14 +340,14 @@ func extractServiceProperties(labels *map[string]string) serviceProperties {
 	return v
 }
 
-//getServiceProperty returns the entry for a service label searching in all labels of the given application
+//getServiceProperty returns the property for a service label searching in all labels of the given application
 func getServiceProperty(application marathon.Application, serviceName string, property string) (string, bool) {
 	value, ok := extractServiceProperties(application.Labels)[serviceName][property]
 	return value, ok
 }
 
-//getServiceNames returns array of service names for a given application
-//An empty name "" will be added if no service specific properties exist, as an indication that there are no sub-services, but only main Application
+//getServiceNames returns a list of service names for a given application
+//An empty name "" will be added if no service specific properties exist, as an indication that there are no sub-services, but only main application
 func (p *Provider) getServiceNames(application marathon.Application) []string {
 	labelServiceProperties := extractServiceProperties(application.Labels)
 	var names []string
@@ -356,15 +363,21 @@ func (p *Provider) getServiceNames(application marathon.Application) []string {
 
 func (p *Provider) getServiceNameSuffix(serviceName string) string {
 	if len(serviceName) > 0 {
-		serviceName = provider.Replace("/", "-", serviceName)
-		serviceName = provider.Replace(".", "-", serviceName)
+		serviceName = strings.Replace(serviceName, "/", "-", -1)
+		serviceName = strings.Replace(serviceName, ".", "-", -1)
 		return "-service-" + serviceName
 	}
 	return ""
 }
 
+//getAppLabel is a convenience function to get application label, when no serviceName is available
+//it is identical in calling getLabel(application, label, "")
+func (p *Provider) getAppLabel(application marathon.Application, label string) (string, bool) {
+	return p.getLabel(application, label, "")
+}
+
 //getLabel returns a string value of a corresponding `label` argument
-//  if 'serviceName' value is present, the 'label' value gets stripped of
+//  If serviceName is non-empty, we look for a service label. If none exists or serviceName is empty, we look for an application label.
 func (p *Provider) getLabel(application marathon.Application, label string, serviceName string) (string, bool) {
 	if len(serviceName) > 0 {
 		property := strings.TrimPrefix(label, types.LabelPrefix)
@@ -380,24 +393,27 @@ func (p *Provider) getLabel(application marathon.Application, label string, serv
 	return "", false
 }
 
-// Extract port from labels for a given service and a given marathon application
 func (p *Provider) getPort(task marathon.Task, application marathon.Application, serviceName string) string {
-	if value, ok := getServiceProperty(application, serviceName, "port"); ok {
-		return value
-	}
-	if value, ok := getServiceProperty(application, serviceName, "portIndex"); ok {
-		if parsed, err := strconv.Atoi(value); err == nil {
-			port, err := processPorts(application, task, parsed)
-			if err != nil {
-				log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
-				return ""
-			}
-
-			return strconv.Itoa(port)
+	if value, ok := p.getLabel(application, types.LabelPort, serviceName); ok {
+		port, err := processPorts(application, task, value, "")
+		if err != nil {
+			log.Errorf("Unable to process port value %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
+			return ""
 		}
+
+		return strconv.Itoa(port)
+	}
+	if value, ok := p.getLabel(application, types.LabelPortIndex, serviceName); ok {
+		port, err := processPorts(application, task, "", value)
+		if err != nil {
+			log.Errorf("Unable to process port index %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
+			return ""
+		}
+
+		return strconv.Itoa(port)
 	}
 
-	port, err := processPorts(application, task, 0)
+	port, err := processPorts(application, task, "", "0")
 	if err != nil {
 		log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
 		return ""
@@ -406,7 +422,6 @@ func (p *Provider) getPort(task marathon.Task, application marathon.Application,
 	return strconv.Itoa(port)
 }
 
-// Extract weight from labels for a given service and a given marathon application
 func (p *Provider) getWeight(application marathon.Application, serviceName string) string {
 	if label, ok := p.getLabel(application, types.LabelWeight, serviceName); ok {
 		return label
@@ -421,7 +436,6 @@ func (p *Provider) getDomain(application marathon.Application) string {
 	return p.Domain
 }
 
-// Extract protocol from labels for a given service and a given marathon application
 func (p *Provider) getProtocol(application marathon.Application, serviceName string) string {
 	if label, ok := p.getLabel(application, types.LabelProtocol, serviceName); ok {
 		return label
@@ -450,7 +464,6 @@ func (p *Provider) getPriority(application marathon.Application, serviceName str
 	return "0"
 }
 
-// Extract entrypoints from labels for a given service and a given marathon application
 func (p *Provider) getEntryPoints(application marathon.Application, serviceName string) []string {
 	if entryPoints, ok := p.getLabel(application, types.LabelFrontendEntryPoints, serviceName); ok {
 		return strings.Split(entryPoints, ",")
@@ -480,11 +493,11 @@ func (p *Provider) getBackend(application marathon.Application, serviceName stri
 	if label, ok := p.getLabel(application, types.LabelBackend, serviceName); ok {
 		return label
 	}
-	return provider.Replace("/", "-", application.ID) + p.getServiceNameSuffix(serviceName)
+	return strings.Replace(application.ID, "/", "-", -1) + p.getServiceNameSuffix(serviceName)
 }
 
 func (p *Provider) getFrontendName(application marathon.Application, serviceName string) string {
-	appName := provider.Replace("/", "-", application.ID)
+	appName := strings.Replace(application.ID, "/", "-", -1)
 	return "frontend" + appName + p.getServiceNameSuffix(serviceName)
 }
 
@@ -576,12 +589,15 @@ func (p *Provider) getBasicAuth(application marathon.Application, serviceName st
 	return []string{}
 }
 
-func processPorts(application marathon.Application, task marathon.Task, portIndex int) (int, error) {
-	if portLabel, ok := (*application.Labels)[types.LabelPort]; ok {
-		port, err := strconv.Atoi(portLabel)
+//processPorts validates `portValue` to be valid numeric port,
+// if its empty, proceeds to extract all ports and attempt to retrieve a port specified by the 'portIndexValue', given that its a valid integer
+// if all fails, returns first port (at index 0) from the list.
+func processPorts(application marathon.Application, task marathon.Task, portValue string, portIndexValue string) (int, error) {
+	if len(portValue) > 0 {
+		port, err := strconv.Atoi(portValue)
 		switch {
 		case err != nil:
-			return 0, fmt.Errorf("failed to parse port label: %s", err)
+			return 0, fmt.Errorf("failed to parse port value (%s): %s", portValue, err)
 		case port <= 0:
 			return 0, fmt.Errorf("explicitly specified port %d must be larger than zero", port)
 		}
@@ -593,15 +609,17 @@ func processPorts(application marathon.Application, task marathon.Task, portInde
 		return 0, errors.New("no port found")
 	}
 
-	portIndexLabel, ok := (*application.Labels)[types.LabelPortIndex]
-	if ok {
-		var err error
-		portIndex, err = parseIndex(portIndexLabel, len(ports))
-		if err != nil {
-			return 0, fmt.Errorf("cannot use port index to select from %d ports: %s", len(ports), err)
+	if len(portIndexValue) > 0 {
+		portIndex, err := strconv.Atoi(portIndexValue)
+		switch {
+		case err != nil:
+			return 0, fmt.Errorf("failed to parse port index value (%s): %s", portIndexValue, err)
+		case portIndex < 0:
+			return 0, fmt.Errorf("explicitly specified port index %d must be larger or equal to zero", portIndex)
 		}
+		return ports[portIndex], nil
 	}
-	return ports[portIndex], nil
+	return ports[0], nil
 }
 
 func retrieveAvailablePorts(application marathon.Application, task marathon.Task) []int {
