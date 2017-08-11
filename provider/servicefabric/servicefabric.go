@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 )
@@ -74,6 +75,8 @@ type replicasData []struct {
 	ReplicaStatus                int64  `json:"ReplicaStatus"`
 	ServiceKind                  int64  `json:"ServiceKind"`
 }
+
+var _ provider.Provider = (*Provider)(nil)
 
 // CatalogProvider holds configurations of the Consul catalog provider.
 type Provider struct {
@@ -166,23 +169,6 @@ func (p *Provider) getReplicas(appName, serviceName, parition string) (replicasD
 }
 
 //http://10.0.1.109:19080/Applications/Application1/$/GetServices/Application1%2FWeb1/$/GetPartitions/097d54f7-634a-4d16-a814-47d1642af308/$/GetReplicas?api-version=1.0&_cacheToken=1502467318900
-
-// func (p *Provider) getPartitions(appName string) (servicesData, error) {
-// 	body, err := getHttp(p.ClusterManagementUrl + "/Application/" + appName + "/$/GetServices?api-version=3.0")
-
-// 	if err != nil {
-// 		return servicesData{}, err
-// 	}
-
-// 	sfResponse := servicesData{}
-// 	err = json.Unmarshal(body, &sfResponse)
-
-// 	if err != nil {
-// 		log.Errorf("Could not deserialise response from servicefabric server %+v", err)
-// 	}
-
-// 	return sfResponse, nil
-// }
 
 // Provide allows the consul catalog provider to provide configurations to traefik
 // using the given configuration channel.
