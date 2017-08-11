@@ -83,15 +83,15 @@ Run it and forget it!
 
 You can have a quick look at Træfik in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers. If you are looking for a more comprehensive and real use-case example, you can also check [Play-With-Docker](http://training.play-with-docker.com/traefik-load-balancing/) to see how to load balance between multiple nodes.
 
-Here is a talk given by [Ed Robinson](https://github.com/errm) at the [ContainerCamp UK](https://container.camp) conference.
+Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at [GopherCon 2017](https://gophercon.com/).
+You will learn Træfik basics in less than 10 minutes. 
+
+[![Traefik GopherCon 2017](http://img.youtube.com/vi/RgudiksfL-k/0.jpg)](http://www.youtube.com/watch?v=RgudiksfL-k)
+
+Here is a talk given by [Ed Robinson](https://github.com/errm) at [ContainerCamp UK](https://container.camp) conference.
 You will learn fundamental Træfik features and see some demos with Kubernetes.
 
 [![Traefik ContainerCamp UK](http://img.youtube.com/vi/aFtpIShV60I/0.jpg)](https://www.youtube.com/watch?v=aFtpIShV60I)
-
-Here is a talk (in French) given by [Emile Vauge](https://github.com/emilevauge) at the [Devoxx France 2016](http://www.devoxx.fr) conference. 
-You will learn fundamental Træfik features and see some demos with Docker, Mesos/Marathon and Let's Encrypt. 
-
-[![Traefik Devoxx France](http://img.youtube.com/vi/QvAz9mVx5TI/0.jpg)](http://www.youtube.com/watch?v=QvAz9mVx5TI)
 
 
 ## Web UI
