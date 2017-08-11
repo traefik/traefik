@@ -127,6 +127,10 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
 	core[ClientUsername] = usernameIfPresent(req.URL)
 
+	if forwardedFor := req.Header.Get("X-Forwarded-For"); forwardedFor != "" {
+		core[ClientHost] = forwardedFor
+	}
+
 	crw := &captureResponseWriter{rw: rw}
 
 	next.ServeHTTP(crw, reqWithDataTable)
