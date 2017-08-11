@@ -1,5 +1,7 @@
 package types
 
+import "strings"
+
 const (
 	// LabelPrefix Traefik label
 	LabelPrefix = "traefik."
@@ -54,3 +56,13 @@ const (
 	// LabelBackendMaxconnExtractorfunc Traefik label
 	LabelBackendMaxconnExtractorfunc = LabelPrefix + "backend.maxconn.extractorfunc"
 )
+
+//ServiceLabel converts a key value of Label*, given a serviceName, into a pattern <LabelPrefix>.<serviceName>.<property>
+//    i.e. For LabelFrontendRule and serviceName=app it will return "traefik.app.frontend.rule"
+func ServiceLabel(key, serviceName string) string {
+	if len(serviceName) > 0 {
+		property := strings.TrimPrefix(key, LabelPrefix)
+		return LabelPrefix + serviceName + "." + property
+	}
+	return key
+}

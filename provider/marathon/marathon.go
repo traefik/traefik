@@ -48,7 +48,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Regexp used to extract the name of the service and the name of the property for this service
 // All properties are under the format traefik.<servicename>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<servicename>.
-var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|auth.basic|frontend\.(.*))$`)
+var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.*))$`)
 
 // Provider holds configuration of the provider.
 type Provider struct {
