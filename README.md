@@ -154,7 +154,7 @@ If you prefer commercial support, please contact [containo.us](https://containo.
 
 ## Contributing
 
-Please refer to [contributing documentation](.github/CONTRIBUTING.md).
+Please refer to [contributing documentation](CONTRIBUTING.md).
 
 
 ### Code of Conduct
@@ -165,7 +165,7 @@ By participating in this project you agree to abide by its terms.
 
 ## Maintainers
 
-[Information about process and maintainers](.github/MAINTAINER.md)
+[Information about process and maintainers](MAINTAINER.md)
 
 
 ## Plumbing
