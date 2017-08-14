@@ -2,36 +2,41 @@ package servicefabric
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 	"time"
 
+	"github.com/cenk/backoff"
+	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 )
 
+type ApplicationItem struct {
+	HealthState string `json:"HealthState"`
+	ID          string `json:"Id"`
+	Name        string `json:"Name"`
+	Parameters  []*struct {
+		Key   string `json:"Key"`
+		Value string `json:"Value"`
+	} `json:"Parameters"`
+	Status      string `json:"Status"`
+	TypeName    string `json:"TypeName"`
+	TypeVersion string `json:"TypeVersion"`
+}
+
 type applicationsData struct {
-	ContinuationToken string `json:"ContinuationToken"`
-	Items             []struct {
-		HealthState string `json:"HealthState"`
-		ID          string `json:"Id"`
-		Name        string `json:"Name"`
-		Parameters  []struct {
-			Key   string `json:"Key"`
-			Value string `json:"Value"`
-		} `json:"Parameters"`
-		Status      string `json:"Status"`
-		TypeName    string `json:"TypeName"`
-		TypeVersion string `json:"TypeVersion"`
-	} `json:"Items"`
+	ContinuationToken *string           `json:"ContinuationToken"`
+	Items             []ApplicationItem `json:"Items"`
 }
 
 type servicesData struct {
-	ContinuationToken string `json:"ContinuationToken"`
-	Items             []struct {
+	ContinuationToken *string `json:"ContinuationToken"`
+	Items             []*struct {
 		HasPersistedState bool   `json:"HasPersistedState"`
 		HealthState       string `json:"HealthState"`
 		ID                string `json:"Id"`
@@ -45,8 +50,8 @@ type servicesData struct {
 }
 
 type partitionsData struct {
-	ContinuationToken string `json:"ContinuationToken"`
-	Items             []struct {
+	ContinuationToken *string `json:"ContinuationToken"`
+	Items             []*struct {
 		CurrentConfigurationEpoch struct {
 			ConfigurationVersion string `json:"ConfigurationVersion"`
 			DataLossVersion      string `json:"DataLossVersion"`
@@ -65,15 +70,18 @@ type partitionsData struct {
 	} `json:"Items"`
 }
 
-type replicasData []struct {
-	Address                      string `json:"Address"`
-	HealthState                  int64  `json:"HealthState"`
-	LastInBuildDurationInSeconds string `json:"LastInBuildDurationInSeconds"`
-	NodeName                     string `json:"NodeName"`
-	ReplicaID                    string `json:"ReplicaId"`
-	ReplicaRole                  int64  `json:"ReplicaRole"`
-	ReplicaStatus                int64  `json:"ReplicaStatus"`
-	ServiceKind                  int64  `json:"ServiceKind"`
+type replicasData struct {
+	ContinuationToken *string `json:"ContinuationToken"`
+	Items             []*struct {
+		Address                      string `json:"Address"`
+		HealthState                  string `json:"HealthState"`
+		LastInBuildDurationInSeconds string `json:"LastInBuildDurationInSeconds"`
+		NodeName                     string `json:"NodeName"`
+		ReplicaID                    string `json:"ReplicaId"`
+		ReplicaRole                  string `json:"ReplicaRole"`
+		ReplicaStatus                string `json:"ReplicaStatus"`
+		ServiceKind                  string `json:"ServiceKind"`
+	} `json:"Items"`
 }
 
 var _ provider.Provider = (*Provider)(nil)
@@ -87,16 +95,21 @@ func getHttp(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 
 	if err != nil {
-		log.Errorf("Cannot connect to servicefabric server %+v", err)
+		log.Errorf("Cannot connect to servicefabric server %+v on %s", err, url)
 		return nil, err
 	}
 
 	body, errB := ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		log.Errorf("Service fabric responded with error code %s to request %s with body %s", resp.Status, url, body)
+		return nil, errors.New("Servicefabric returned error code")
+	}
+
 	if errB != nil {
 		log.Errorf("Could not get response body from servicefabric server %+v", err)
 	}
 
-	return body, errB
+	return body, nil
 }
 
 func (p *Provider) getApplications() (applicationsData, error) {
@@ -106,7 +119,7 @@ func (p *Provider) getApplications() (applicationsData, error) {
 		return applicationsData{}, err
 	}
 
-	sfResponse := applicationsData{}
+	var sfResponse applicationsData
 	err = json.Unmarshal(body, &sfResponse)
 
 	if err != nil {
@@ -117,7 +130,7 @@ func (p *Provider) getApplications() (applicationsData, error) {
 }
 
 func (p *Provider) getServices(appName string) (servicesData, error) {
-	body, err := getHttp(p.ClusterManagementUrl + "/Application/" + appName + "/$/GetServices?api-version=3.0")
+	body, err := getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices?api-version=3.0")
 
 	if err != nil {
 		return servicesData{}, err
@@ -127,14 +140,14 @@ func (p *Provider) getServices(appName string) (servicesData, error) {
 	err = json.Unmarshal(body, &sfResponse)
 
 	if err != nil {
-		log.Errorf("Could not deserialise response from servicefabric server %+v", err)
+		log.Errorf("Could not deserialise response from servicefabric server %+v on body %s", err, body)
 	}
 
 	return sfResponse, nil
 }
 
 func (p *Provider) getPatitions(appName, serviceName string) (partitionsData, error) {
-	body, err := getHttp(p.ClusterManagementUrl + "/Application/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=3.0")
+	body, err := getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=3.0")
 
 	if err != nil {
 		return partitionsData{}, err
@@ -151,7 +164,7 @@ func (p *Provider) getPatitions(appName, serviceName string) (partitionsData, er
 }
 
 func (p *Provider) getReplicas(appName, serviceName, parition string) (replicasData, error) {
-	body, err := getHttp(p.ClusterManagementUrl + "/Application/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + parition + "/$GetReplicas?api-version=3.0")
+	body, err := getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + parition + "/$/GetReplicas?api-version=3.0")
 
 	if err != nil {
 		return replicasData{}, err
@@ -173,66 +186,93 @@ func (p *Provider) getReplicas(appName, serviceName, parition string) (replicasD
 // using the given configuration channel.
 func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 
-	ticker := time.NewTicker(time.Second * 2)
 	pool.Go(func(stop chan bool) {
+		operation := func() error {
+			var lastConfigUpdate types.ConfigMessage
 
-		for t := range ticker.C {
-			log.Info(t)
-			select {
-			case shouldStop := <-stop:
-				if shouldStop {
-					ticker.Stop()
-					break
+			ticker := time.NewTicker(time.Second * 10)
+			for t := range ticker.C {
+				log.Info(t)
+				select {
+				case shouldStop := <-stop:
+					if shouldStop {
+						ticker.Stop()
+						return nil
+					}
+				default:
+					log.Info("Checking service fabric config")
 				}
-			default:
-				fmt.Println("Checking service fabric config")
-			}
 
-			backends := make(map[string]*types.Backend)
+				backends := make(map[string]*types.Backend)
 
-			backends["wensleydale"] = &types.Backend{
-				Servers: map[string]types.Server{
-					"server1": types.Server{
-						URL: "http://bing.com",
-					},
-				},
-			}
+				//Todo: Investigate paging requests
+				appData, err := provider.getApplications()
+				if err != nil {
+					log.Error(err)
+					return err
+				}
 
-			//Todo: Investigate paging requests
-			appData, _ := provider.getApplications()
+				for _, a := range appData.Items {
 
-			for _, a := range appData.Items {
-				services, _ := provider.getServices(a.Name)
-
-				for _, s := range services.Items {
-					backend := &types.Backend{
-						Servers: map[string]types.Server{},
+					services, err := provider.getServices(a.ID)
+					if err != nil {
+						log.Error(err)
+						return err
 					}
 
-					partitions, _ := provider.getPatitions(a.Name, s.Name)
-					for _, p := range partitions.Items {
-						replicas, _ := provider.getReplicas(a.Name, s.Name, p.PartitionInformation.ID)
-						for _, r := range replicas {
-							backend.Servers[r.ReplicaID] = types.Server{
-								URL: r.Address,
-							}
+					for _, s := range services.Items {
 
-							log.Info(r.Address)
+						backend := &types.Backend{
+							Servers: map[string]types.Server{},
 						}
+
+						partitions, err := provider.getPatitions(a.ID, s.ID)
+						if err != nil {
+							log.Error(err)
+							return err
+						}
+						for _, p := range partitions.Items {
+
+							replicas, err := provider.getReplicas(a.ID, s.ID, p.PartitionInformation.ID)
+							if err != nil {
+								log.Error(err)
+
+								return err
+							}
+							for _, r := range replicas.Items {
+
+								backend.Servers[r.ReplicaID] = types.Server{
+									URL: r.Address,
+								}
+							}
+						}
+						backends[a.Name+"/"+s.Name] = backend
 					}
-					backends[a.Name+"/"+s.Name] = backend
+				}
+
+				configMessage := types.ConfigMessage{
+					ProviderName: "servicefabric",
+					Configuration: &types.Configuration{
+						Backends: backends,
+					},
+				}
+
+				if !reflect.DeepEqual(lastConfigUpdate, configMessage) {
+					log.Info("New configuration for service fabric:", configMessage)
+					configurationChan <- configMessage
 				}
 			}
 
-			configurationChan <- types.ConfigMessage{
-				ProviderName: "servicefabric",
-				Configuration: &types.Configuration{
-					Backends: backends,
-				},
-			}
+			return nil
+		}
 
+		notify := func(err error, time time.Duration) {
+			log.Errorf("Provider connection error: %s; retrying in %s", err, time)
+		}
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		if err != nil {
+			log.Errorf("Cannot connect to Provider: %s", err)
 		}
 	})
-
 	return nil
 }
