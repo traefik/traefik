@@ -947,7 +947,7 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 	regex := entryPoint.Redirect.Regex
 	replacement := entryPoint.Redirect.Replacement
 	if len(entryPoint.Redirect.EntryPoint) > 0 {
-		regex = "^(?:https?:\\/\\/)?([\\w\\._-]+)(?::\\d+)?(.*)$"
+		regex = `^(?:https?:\/\/)?([\w\._-]+)(?::\d+)?(.*)$`
 		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint] == nil {
 			return nil, errors.New("Unknown entrypoint " + entryPoint.Redirect.EntryPoint)
 		}
@@ -955,7 +955,7 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *En
 		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].TLS != nil {
 			protocol = "https"
 		}
-		r, _ := regexp.Compile("(:\\d+)")
+		r, _ := regexp.Compile(`(:\d+)`)
 		match := r.FindStringSubmatch(server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].Address)
 		if len(match) == 0 {
 			return nil, errors.New("Bad Address format: " + server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].Address)

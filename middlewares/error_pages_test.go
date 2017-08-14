@@ -9,6 +9,7 @@ import (
 
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/negroni"
 )
 
@@ -19,13 +20,15 @@ func TestErrorPage(t *testing.T) {
 	defer ts.Close()
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/test", Status: []string{"500-501", "503-599"}}
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
 
-	assert.Equal(t, nil, err, "Should be no error")
+	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	require.NoError(t, err)
+
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/test", "Should be equal")
 
 	recorder := httptest.NewRecorder()
 	req, err := http.NewRequest("GET", ts.URL+"/test", nil)
+	require.NoError(t, err)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "traefik")
@@ -68,7 +71,6 @@ func TestErrorPage(t *testing.T) {
 	assert.Equal(t, http.StatusBadGateway, recorder502.Code, "HTTP status Bad Gateway")
 	assert.Contains(t, recorder502.Body.String(), "oops")
 	assert.NotContains(t, recorder502.Body.String(), "Test Server", "Should return the oops page since we have not configured the 502 code")
-
 }
 
 func TestErrorPageQuery(t *testing.T) {
@@ -83,16 +85,22 @@ func TestErrorPageQuery(t *testing.T) {
 	defer ts.Close()
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503-503"}}
+
 	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
-	assert.Equal(t, nil, err, "Should be no error")
+	require.NoError(t, err)
+
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/{status}", "Should be equal")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(503)
 		fmt.Fprintln(w, "oops")
 	})
+
 	recorder := httptest.NewRecorder()
+
 	req, err := http.NewRequest("GET", ts.URL+"/test", nil)
+	require.NoError(t, err)
+
 	n := negroni.New()
 	n.Use(testHandler)
 	n.UseHandler(handler)
@@ -102,7 +110,6 @@ func TestErrorPageQuery(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code, "HTTP status Service Unavailable")
 	assert.Contains(t, recorder.Body.String(), "503 Test Server")
 	assert.NotContains(t, recorder.Body.String(), "oops", "Should not return the oops page")
-
 }
 
 func TestErrorPageSingleCode(t *testing.T) {
@@ -117,16 +124,22 @@ func TestErrorPageSingleCode(t *testing.T) {
 	defer ts.Close()
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503"}}
+
 	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
-	assert.Equal(t, nil, err, "Should be no error")
+	require.NoError(t, err)
+
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/{status}", "Should be equal")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(503)
 		fmt.Fprintln(w, "oops")
 	})
+
 	recorder := httptest.NewRecorder()
+
 	req, err := http.NewRequest("GET", ts.URL+"/test", nil)
+	require.NoError(t, err)
+
 	n := negroni.New()
 	n.Use(testHandler)
 	n.UseHandler(handler)
@@ -136,5 +149,4 @@ func TestErrorPageSingleCode(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, recorder.Code, "HTTP status Service Unavailable")
 	assert.Contains(t, recorder.Body.String(), "503 Test Server")
 	assert.NotContains(t, recorder.Body.String(), "oops", "Should not return the oops page")
-
 }

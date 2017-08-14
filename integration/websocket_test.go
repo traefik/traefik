@@ -48,7 +48,6 @@ func (suite *WebsocketSuite) TestBase(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
@@ -57,15 +56,14 @@ func (suite *WebsocketSuite) TestBase(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
-
 	c.Assert(err, checker.IsNil)
-	conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+
+	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+	c.Assert(err, checker.IsNil)
 
 	_, msg, err := conn.ReadMessage()
 	c.Assert(err, checker.IsNil)
-
 	c.Assert(string(msg), checker.Equals, "OK")
-
 }
 
 func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
@@ -99,7 +97,6 @@ func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
@@ -111,14 +108,15 @@ func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, checker.IsNil)
 	_, err = websocket.NewClient(config, conn)
 	c.Assert(err, checker.NotNil)
 	c.Assert(err, checker.ErrorMatches, "bad status")
-
 }
 
 func (suite *WebsocketSuite) TestOrigin(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	// use default options
+	var upgrader = gorillawebsocket.Upgrader{}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -148,7 +146,6 @@ func (suite *WebsocketSuite) TestOrigin(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
@@ -160,6 +157,7 @@ func (suite *WebsocketSuite) TestOrigin(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, check.IsNil)
 	client, err := websocket.NewClient(config, conn)
 	c.Assert(err, checker.IsNil)
 
@@ -208,7 +206,6 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
@@ -220,6 +217,7 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, checker.IsNil)
 	client, err := websocket.NewClient(config, conn)
 	c.Assert(err, checker.IsNil)
 
