@@ -1,10 +1,11 @@
-package main
+package integration
 
 import (
 	"crypto/tls"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
@@ -19,7 +20,7 @@ type HTTPSSuite struct{ BaseSuite }
 // "snitest.com", which happens to match the CN of 'snitest.com.crt'. The test
 // verifies that traefik presents the correct certificate.
 func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/https_sni.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/https_sni.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -52,7 +53,7 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik routes the requests to the expected backends.
 func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/https_sni.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/https_sni.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -110,7 +111,7 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 // TestWithClientCertificateAuthentication
 // The client has to send a certificate signed by a CA trusted by the server
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/clientca/https_1ca1config.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/clientca/https_1ca1config.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -156,7 +157,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 // TestWithClientCertificateAuthentication
 // Use two CA:s and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/clientca/https_2ca1config.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/clientca/https_2ca1config.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -215,7 +216,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 // TestWithClientCertificateAuthentication
 // Use two CA:s in two different files and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFiles(c *check.C) {
-	cmd, _ := s.cmdTraefikWithConfigFile("fixtures/https/clientca/https_2ca2config.toml")
+	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/clientca/https_2ca2config.toml"))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -269,6 +270,48 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFi
 
 	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
+}
+
+func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend(c *check.C) {
+	backend := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	defer backend.Close()
+
+	file := s.adaptFile(c, "fixtures/https/rootcas/https.toml", struct{ BackendHost string }{backend.URL})
+	defer os.Remove(file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains(backend.URL))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8081/ping", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend(c *check.C) {
+	backend := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	defer backend.Close()
+
+	file := s.adaptFile(c, "fixtures/https/rootcas/https_with_file.toml", struct{ BackendHost string }{backend.URL})
+	defer os.Remove(file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1000*time.Millisecond, try.BodyContains(backend.URL))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8081/ping", 1000*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
 }
 
 func startTestServer(port string, statusCode int) (ts *httptest.Server) {

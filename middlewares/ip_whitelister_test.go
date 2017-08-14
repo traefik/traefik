@@ -7,9 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/codegangsta/negroni"
+	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/urfave/negroni"
 )
 
 func TestNewIPWhitelister(t *testing.T) {
@@ -281,8 +282,7 @@ func TestIPWhitelisterHandle(t *testing.T) {
 			n.UseHandler(handler)
 
 			for _, testIP := range test.passIPs {
-				req, err := http.NewRequest("GET", "/", nil)
-				require.NoError(t, err)
+				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
 
 				req.RemoteAddr = testIP + ":2342"
 				recorder := httptest.NewRecorder()
@@ -293,8 +293,7 @@ func TestIPWhitelisterHandle(t *testing.T) {
 			}
 
 			for _, testIP := range test.rejectIPs {
-				req, err := http.NewRequest("GET", "/", nil)
-				require.NoError(t, err)
+				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
 
 				req.RemoteAddr = testIP + ":2342"
 				recorder := httptest.NewRecorder()

@@ -1,6 +1,9 @@
 package pflag
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 // -- int64 Value
 type int64Value int64
@@ -20,7 +23,7 @@ func (i *int64Value) Type() string {
 	return "int64"
 }
 
-func (i *int64Value) String() string { return strconv.FormatInt(int64(*i), 10) }
+func (i *int64Value) String() string { return fmt.Sprintf("%v", *i) }
 
 func int64Conv(sval string) (interface{}, error) {
 	return strconv.ParseInt(sval, 0, 64)

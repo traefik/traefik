@@ -1,22 +1,72 @@
 package middlewares
 
 import (
-	"github.com/go-kit/kit/metrics"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/go-kit/kit/metrics"
+	"github.com/go-kit/kit/metrics/multi"
 )
 
 // Metrics is an Interface that must be satisfied by any system that
-// wants to expose and monitor metrics
+// wants to expose and monitor Metrics.
 type Metrics interface {
 	getReqsCounter() metrics.Counter
-	getLatencyHistogram() metrics.Histogram
-	handler() http.Handler
+	getReqDurationHistogram() metrics.Histogram
+	RetryMetrics
+}
+
+// RetryMetrics must be satisfied by any system that wants to collect and
+// expose retry specific Metrics.
+type RetryMetrics interface {
+	getRetryCounter() metrics.Counter
+}
+
+// MultiMetrics is a struct that provides a wrapper container for multiple Metrics, if they are configured
+type MultiMetrics struct {
+	wrappedMetrics       *[]Metrics
+	reqsCounter          metrics.Counter
+	reqDurationHistogram metrics.Histogram
+	retryCounter         metrics.Counter
+}
+
+// NewMultiMetrics creates a new instance of MultiMetrics
+func NewMultiMetrics(manyMetrics []Metrics) *MultiMetrics {
+	counters := []metrics.Counter{}
+	histograms := []metrics.Histogram{}
+	retryCounters := []metrics.Counter{}
+
+	for _, m := range manyMetrics {
+		counters = append(counters, m.getReqsCounter())
+		histograms = append(histograms, m.getReqDurationHistogram())
+		retryCounters = append(retryCounters, m.getRetryCounter())
+	}
+
+	var mm MultiMetrics
+
+	mm.wrappedMetrics = &manyMetrics
+	mm.reqsCounter = multi.NewCounter(counters...)
+	mm.reqDurationHistogram = multi.NewHistogram(histograms...)
+	mm.retryCounter = multi.NewCounter(retryCounters...)
+
+	return &mm
+}
+
+func (mm *MultiMetrics) getReqsCounter() metrics.Counter {
+	return mm.reqsCounter
+}
+
+func (mm *MultiMetrics) getReqDurationHistogram() metrics.Histogram {
+	return mm.reqDurationHistogram
+}
+
+func (mm *MultiMetrics) getRetryCounter() metrics.Counter {
+	return mm.retryCounter
 }
 
 // MetricsWrapper is a Negroni compatible Handler which relies on a
-// given Metrics implementation to expose and monitor Traefik metrics
+// given Metrics implementation to expose and monitor Traefik Metrics.
 type MetricsWrapper struct {
 	Impl Metrics
 }
@@ -35,17 +85,28 @@ func (m *MetricsWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next
 	start := time.Now()
 	prw := &responseRecorder{rw, http.StatusOK}
 	next(prw, r)
-	labels := []string{"code", strconv.Itoa(prw.StatusCode()), "method", r.Method}
-	m.Impl.getReqsCounter().With(labels...).Add(1)
-	m.Impl.getLatencyHistogram().Observe(float64(time.Since(start).Seconds()))
+
+	reqLabels := []string{"code", strconv.Itoa(prw.statusCode), "method", r.Method}
+	m.Impl.getReqsCounter().With(reqLabels...).Add(1)
+
+	reqDurationLabels := []string{"code", strconv.Itoa(prw.statusCode)}
+	m.Impl.getReqDurationHistogram().With(reqDurationLabels...).Observe(float64(time.Since(start).Seconds()))
 }
 
-func (rw *responseRecorder) StatusCode() int {
-	return rw.statusCode
+// MetricsRetryListener is an implementation of the RetryListener interface to
+// record Metrics about retry attempts.
+type MetricsRetryListener struct {
+	retryMetrics RetryMetrics
 }
 
-// Handler is the chance for the Metrics implementation
-// to expose its metrics on a server endpoint
-func (m *MetricsWrapper) Handler() http.Handler {
-	return m.Impl.handler()
+// Retried tracks the retry in the Metrics implementation.
+func (m *MetricsRetryListener) Retried(attempt int) {
+	if m.retryMetrics != nil {
+		m.retryMetrics.getRetryCounter().Add(1)
+	}
+}
+
+// NewMetricsRetryListener instantiates a MetricsRetryListener with the given RetryMetrics.
+func NewMetricsRetryListener(retryMetrics RetryMetrics) RetryListener {
+	return &MetricsRetryListener{retryMetrics: retryMetrics}
 }

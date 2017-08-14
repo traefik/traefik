@@ -94,7 +94,7 @@ Separate multiple rule values by `,` (comma) in order to enable ANY semantics (i
 
 Separate multiple rule values by `;` (semicolon) in order to enable ALL semantics (i.e., forward a request if all rules match).
 
-You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
+You can optionally enable `passHostHeader` to forward client `Host` header to the backend. You can also optionally enable `passTLSCert` to forward TLS Client certificates to the backend.
 
 Following is the list of existing matcher rules along with examples:
 
@@ -140,6 +140,7 @@ Here is an example of frontends definition:
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
+  passTLSCert = true
   priority = 10
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
@@ -161,34 +162,34 @@ As seen in the previous example, you can combine multiple rules.
 In TOML file, you can use multiple routes:
 
 ```toml
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Host:test3.localhost"
-  [frontends.frontend3.routes.test_2]
-  rule = "Path:/test"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host:test3.localhost"
+    [frontends.frontend3.routes.test_2]
+    rule = "Path:/test"
 ```
 
 Here `frontend3` will forward the traffic to the `backend2` if the rules `Host:test3.localhost` **AND** `Path:/test` are matched.
 You can also use the notation using a `;` separator, same result:
 
 ```toml
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Host:test3.localhost;Path:/test"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Host:test3.localhost;Path:/test"
 ```
 
 Finally, you can create a rule to bind multiple domains or Path to a frontend, using the `,` separator:
 
 ```toml
-[frontends.frontend2]
-   [frontends.frontend2.routes.test_1]
-   rule = "Host:test1.localhost,test2.localhost"
-[frontends.frontend3]
-backend = "backend2"
-  [frontends.frontend3.routes.test_1]
-  rule = "Path:/test1,/test2"
+ [frontends.frontend2]
+    [frontends.frontend2.routes.test_1]
+    rule = "Host:test1.localhost,test2.localhost"
+  [frontends.frontend3]
+  backend = "backend2"
+    [frontends.frontend3.routes.test_1]
+    rule = "Path:/test1,/test2"
 ```
 
 ### Rules Order
@@ -208,7 +209,7 @@ The following rules are both `Matchers` and `Modifiers`, so the `Matcher` portio
 3. `PathStripRegex`
 4. `PathPrefixStripRegex`
 5. `AddPrefix`
-6. `ReplacePath` 
+6. `ReplacePath`
 
 ### Priorities
 
@@ -218,22 +219,62 @@ By default, routes will be sorted (in descending order) using rules length (to a
 You can customize priority by frontend:
 
 ```toml
-[frontends]
-  [frontends.frontend1]
-  backend = "backend1"
-  priority = 10
-  passHostHeader = true
-    [frontends.frontend1.routes.test_1]
-    rule = "PathPrefix:/to"
-  [frontends.frontend2]
-  priority = 5
-  backend = "backend2"
-  passHostHeader = true
-    [frontends.frontend2.routes.test_1]
-    rule = "PathPrefix:/toto"
+  [frontends]
+    [frontends.frontend1]
+    backend = "backend1"
+    priority = 10
+    passHostHeader = true
+      [frontends.frontend1.routes.test_1]
+      rule = "PathPrefix:/to"
+    [frontends.frontend2]
+    priority = 5
+    backend = "backend2"
+    passHostHeader = true
+      [frontends.frontend2.routes.test_1]
+      rule = "PathPrefix:/toto"
 ```
 
 Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
+
+### Custom headers
+
+Custom headers can be configured through the frontends, to add headers to either requests or responses that match the frontend's rules. This allows for setting headers such as `X-Script-Name` to be added to the request, or custom headers to be added to the response:
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers.customresponseheaders]
+    X-Custom-Response-Header = "True"
+    [frontends.frontend1.headers.customrequestheaders]
+    X-Script-Name = "test"
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheese"
+```
+
+In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+
+### Security headers
+
+Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc) can be added and configured per frontend in a similar manner to the custom headers above. This functionality allows for some easy security features to quickly be set. An example of some of the security headers:
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers]
+    FrameDeny = true
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheddar"
+  [frontends.frontend2]
+  backend = "backend2"
+    [frontends.frontend2.headers]
+    SSLRedirect = true
+    [frontends.frontend2.routes.test_1]
+    rule = "PathPrefixStrip:/stilton"
+```
+
+In this example, traffic routed through the first frontend will have the `X-Frame-Options` header set to `DENY`, and the second will only allow HTTPS request through, otherwise will return a 301 HTTPS redirect.
 
 ## Backends
 
@@ -355,6 +396,39 @@ Here is an example of backends and servers definition:
 - `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
 - a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
 
+## Custom Error pages
+
+Custom error pages can be returned, in lieu of the default, according to frontend-configured ranges of HTTP Status codes.
+In the example below, if a 503 status is returned from the frontend "website", the custom error page at http://2.3.4.5/503.html is returned with the actual status code set in the HTTP header.
+Note, the 503.html page itself is not hosted on traefik, but some other infrastructure.   
+
+```toml
+[frontends]
+  [frontends.website]
+  backend = "website"
+  [errors]
+    [error.network]
+    status = ["500-599"]
+    backend = "error"
+    query = "/{status}.html"
+  [frontends.website.routes.website]
+  rule = "Host: website.mydomain.com"
+
+[backends]
+  [backends.website]
+    [backends.website.servers.website]
+    url = "https://1.2.3.4"
+  [backends.error]
+    [backends.error.servers.error]
+    url = "http://2.3.4.5"
+```
+
+In the above example, the error page rendered was based on the status code.
+Instead, the query parameter can also be set to some generic error page like so: `query = "/500s.html"`
+
+Now the 500s.html error page is returned for the configured code range.
+The configured status code ranges are inclusive; that is, in the above example, the 500s.html page will be returned for status codes 500 through, and including, 599.
+
 # Configuration
 
 Træfik's configuration has two parts:
@@ -370,12 +444,14 @@ The static configuration is the global configuration which is setting up connect
 Træfik can be configured using many configuration sources with the following precedence order.
 Each item takes precedence over the item below it:
 
-- [Key-value Store](/basics/#key-value-stores)
+- [Key-value store](/basics/#key-value-stores)
 - [Arguments](/basics/#arguments)
 - [Configuration file](/basics/#configuration-file)
 - Default
 
-It means that arguments override configuration file, and Key-value Store overrides arguments.
+It means that arguments override configuration file, and key-value store overrides arguments.
+
+Note that the provider-enabling argument parameters (e.g., `--docker`) set all default values for the specific provider. It must not be used if a configuration source with less precedence wants to set a non-default provider value.
 
 ### Configuration file
 
@@ -437,6 +513,7 @@ List of Træfik available commands with description :             
 
 - `version` : Print version 
 - `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
+- `bug`: The easiest way to submit a pre-filled issue.
 
 Each command may have related flags.
 All those related flags will be displayed with :
@@ -450,3 +527,21 @@ Note that each command is described at the beginning of the help section:
 ```bash
 $ traefik --help
 ```
+
+## Command: bug
+
+Here is the easiest way to submit a pre-filled issue on [Træfik GitHub](https://github.com/containous/traefik).
+
+```bash
+$ traefik bug
+```
+
+See https://www.youtube.com/watch?v=Lyz62L8m93I.
+
+# Log Rotation
+
+Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.  This allows the logs
+to be rotated and processed by an external program, such as `logrotate`.
+
+Note that this does not work on Windows due to the lack of USR signals.
+

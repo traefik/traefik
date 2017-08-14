@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/containous/mux"
+	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,7 @@ func TestParseOneRule(t *testing.T) {
 	routeResult, err := rules.Parse(expression)
 	require.NoError(t, err, "Error while building route for %s", expression)
 
-	request, err := http.NewRequest("GET", "http://foo.bar", nil)
+	request := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar", nil)
 	routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
 
 	assert.True(t, routeMatch, "Rule %s don't match.", expression)
@@ -37,12 +38,12 @@ func TestParseTwoRules(t *testing.T) {
 
 	require.NoError(t, err, "Error while building route for %s.", expression)
 
-	request, _ := http.NewRequest("GET", "http://foo.bar/foobar", nil)
+	request := testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/foobar", nil)
 	routeMatch := routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
 
 	assert.False(t, routeMatch, "Rule %s don't match.", expression)
 
-	request, _ = http.NewRequest("GET", "http://foo.bar/FOObar", nil)
+	request = testhelpers.MustNewRequest(http.MethodGet, "http://foo.bar/FOObar", nil)
 	routeMatch = routeResult.Match(request, &mux.RouteMatch{Route: routeResult})
 
 	assert.True(t, routeMatch, "Rule %s don't match.", expression)

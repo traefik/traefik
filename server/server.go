@@ -15,10 +15,8 @@ import (
 	"regexp"
 	"sort"
 	"sync"
-	"syscall"
 	"time"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/healthcheck"
@@ -29,6 +27,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/streamrail/concurrent-map"
+	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/cbreaker"
 	"github.com/vulcand/oxy/connlimit"
 	"github.com/vulcand/oxy/forward"
@@ -78,7 +77,7 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server.signals = make(chan os.Signal, 1)
 	server.stopChan = make(chan bool, 1)
 	server.providers = []provider.Provider{}
-	signal.Notify(server.signals, syscall.SIGINT, syscall.SIGTERM)
+	server.configureSignals()
 	currentConfigurations := make(configs)
 	server.currentConfigurations.Set(currentConfigurations)
 	server.globalConfiguration = globalConfiguration
@@ -88,10 +87,16 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 		server.leadership = cluster.NewLeadership(server.routinesPool.Ctx(), globalConfiguration.Cluster)
 	}
 
-	var err error
-	server.accessLoggerMiddleware, err = accesslog.NewLogHandler(globalConfiguration.AccessLogsFile)
-	if err != nil {
-		log.Warnf("Unable to create log handler: %s", err)
+	if globalConfiguration.AccessLogsFile != "" {
+		globalConfiguration.AccessLog = &types.AccessLog{FilePath: globalConfiguration.AccessLogsFile, Format: accesslog.CommonFormat}
+	}
+
+	if globalConfiguration.AccessLog != nil {
+		var err error
+		server.accessLoggerMiddleware, err = accesslog.NewLogHandler(globalConfiguration.AccessLog)
+		if err != nil {
+			log.Warnf("Unable to create log handler: %s", err)
+		}
 	}
 	return server
 }
@@ -151,6 +156,7 @@ func (server *Server) Close() {
 			os.Exit(1)
 		}
 	}(ctx)
+	stopMetricsClients(server.globalConfiguration)
 	server.stopLeadership()
 	server.routinesPool.Cleanup()
 	close(server.configurationChan)
@@ -182,38 +188,50 @@ func (server *Server) startHTTPServers() {
 	server.serverEntryPoints = server.buildEntryPoints(server.globalConfiguration)
 
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
-		serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler(), metrics}
-		if server.accessLoggerMiddleware != nil {
-			serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
-		}
-		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
-			if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-				metricsMiddleware := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(newServerEntryPointName, server.globalConfiguration.Web.Metrics.Prometheus))
-				serverMiddlewares = append(serverMiddlewares, metricsMiddleware)
-			}
-		}
-		if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
-			statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
-			serverMiddlewares = append(serverMiddlewares, statsRecorder)
-		}
-		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
-			authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
-			if err != nil {
-				log.Fatal("Error starting server: ", err)
-			}
-			serverMiddlewares = append(serverMiddlewares, authMiddleware)
-		}
-		if server.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
-			serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
-		}
-		newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], serverMiddlewares...)
-		if err != nil {
-			log.Fatal("Error preparing server: ", err)
-		}
-		serverEntryPoint := server.serverEntryPoints[newServerEntryPointName]
-		serverEntryPoint.httpServer = newsrv
+		serverEntryPoint := server.setupServerEntryPoint(newServerEntryPointName, newServerEntryPoint)
 		go server.startServer(serverEntryPoint.httpServer, server.globalConfiguration)
 	}
+}
+
+func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
+	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler(), metrics}
+	if server.accessLoggerMiddleware != nil {
+		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
+	}
+	initializeMetricsClients(server.globalConfiguration)
+	metrics := newMetrics(server.globalConfiguration, newServerEntryPointName)
+	if metrics != nil {
+		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(metrics))
+	}
+	if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
+		statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
+		serverMiddlewares = append(serverMiddlewares, statsRecorder)
+	}
+	if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
+		authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
+		if err != nil {
+			log.Fatal("Error starting server: ", err)
+		}
+		serverMiddlewares = append(serverMiddlewares, authMiddleware)
+	}
+	if server.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
+		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
+	}
+	if len(server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange) > 0 {
+		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(server.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange)
+		if err != nil {
+			log.Fatal("Error starting server: ", err)
+		}
+		serverMiddlewares = append(serverMiddlewares, ipWhitelistMiddleware)
+	}
+	newsrv, err := server.prepareServer(newServerEntryPointName, newServerEntryPoint.httpRouter, server.globalConfiguration.EntryPoints[newServerEntryPointName], serverMiddlewares...)
+	if err != nil {
+		log.Fatal("Error preparing server: ", err)
+	}
+	serverEntryPoint := server.serverEntryPoints[newServerEntryPointName]
+	serverEntryPoint.httpServer = newsrv
+
+	return serverEntryPoint
 }
 
 func (server *Server) listenProviders(stop chan bool) {
@@ -410,11 +428,31 @@ func (server *Server) startProviders() {
 	}
 }
 
-func (server *Server) listenSignals() {
-	sig := <-server.signals
-	log.Infof("I have to go... %+v", sig)
-	log.Info("Stopping server")
-	server.Stop()
+func createClientTLSConfig(tlsOption *TLS) (*tls.Config, error) {
+	if tlsOption == nil {
+		return nil, errors.New("no TLS provided")
+	}
+
+	config, err := tlsOption.Certificates.CreateTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(tlsOption.ClientCAFiles) > 0 {
+		pool := x509.NewCertPool()
+		for _, caFile := range tlsOption.ClientCAFiles {
+			data, err := ioutil.ReadFile(caFile)
+			if err != nil {
+				return nil, err
+			}
+			if !pool.AppendCertsFromPEM(data) {
+				return nil, errors.New("invalid certificate(s) in " + caFile)
+			}
+		}
+		config.RootCAs = pool
+	}
+	config.BuildNameToCertificate()
+	return config, nil
 }
 
 // creates a TLS config that allows terminating HTTPS for multiple domains using SNI
@@ -499,6 +537,7 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *TLS, rou
 			}
 		}
 	}
+
 	return config, nil
 }
 
@@ -548,6 +587,17 @@ func (server *Server) buildEntryPoints(globalConfiguration GlobalConfiguration) 
 	return serverEntryPoints
 }
 
+// clientTLSRoundTripper is used for forwarding client authentication to
+// backend server
+func clientTLSRoundTripper(config *tls.Config) http.RoundTripper {
+	if config == nil {
+		return http.DefaultTransport
+	}
+	return &http.Transport{
+		TLSClientConfig: config,
+	}
+}
+
 // LoadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
 func (server *Server) loadConfig(configurations configs, globalConfiguration GlobalConfiguration) (map[string]*serverEntryPoint, error) {
@@ -555,6 +605,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 	redirectHandlers := make(map[string]negroni.Handler)
 	backends := map[string]http.Handler{}
 	backendsHealthcheck := map[string]*healthcheck.BackendHealthCheck{}
+	errorHandler := NewRecordingErrorHandler(middlewares.DefaultNetErrorRecorder{})
 
 	for _, configuration := range configurations {
 		frontendNames := sortedFrontendNamesForConfig(configuration)
@@ -564,12 +615,6 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 
 			log.Debugf("Creating frontend %s", frontendName)
 
-			fwd, err := forward.New(forward.Logger(oxyLogger), forward.PassHostHeader(frontend.PassHostHeader))
-			if err != nil {
-				log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
-				log.Errorf("Skipping frontend %s...", frontendName)
-				continue frontend
-			}
 			if len(frontend.EntryPoints) == 0 {
 				log.Errorf("No entrypoint defined for frontend %s, defaultEntryPoints:%s", frontendName, globalConfiguration.DefaultEntryPoints)
 				log.Errorf("Skipping frontend %s...", frontendName)
@@ -617,6 +662,36 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 				}
 				if backends[entryPointName+frontend.Backend] == nil {
 					log.Debugf("Creating backend %s", frontend.Backend)
+
+					var (
+						tlsConfig *tls.Config
+						err       error
+						lb        http.Handler
+					)
+
+					if frontend.PassTLSCert {
+						tlsConfig, err = createClientTLSConfig(entryPoint.TLS)
+						if err != nil {
+							log.Errorf("Failed to create TLS config for frontend %s: %v", frontendName, err)
+							continue frontend
+						}
+					}
+
+					// passing nil will use the roundtripper http.DefaultTransport
+					rt := clientTLSRoundTripper(tlsConfig)
+
+					fwd, err := forward.New(
+						forward.Logger(oxyLogger),
+						forward.PassHostHeader(frontend.PassHostHeader),
+						forward.RoundTripper(rt),
+						forward.ErrorHandler(errorHandler),
+					)
+					if err != nil {
+						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
+
 					var rr *roundrobin.RoundRobin
 					var saveFrontend http.Handler
 					if server.accessLoggerMiddleware != nil {
@@ -626,6 +701,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					} else {
 						rr, _ = roundrobin.New(fwd)
 					}
+
 					if configuration.Backends[frontend.Backend] == nil {
 						log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
 						log.Errorf("Skipping frontend %s...", frontendName)
@@ -640,14 +716,13 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 					}
 
 					stickysession := configuration.Backends[frontend.Backend].LoadBalancer.Sticky
-					cookiename := "_TRAEFIK_BACKEND"
+					cookiename := "_TRAEFIK_BACKEND_" + frontend.Backend
 					var sticky *roundrobin.StickySession
 
 					if stickysession {
 						sticky = roundrobin.NewStickySession(cookiename)
 					}
 
-					var lb http.Handler
 					switch lbMethod {
 					case types.Drr:
 						log.Debugf("Creating load-balancer drr")
@@ -657,25 +732,16 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
 						}
 						lb = rebalancer
-						for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-							url, err := url.Parse(server.URL)
-							if err != nil {
-								log.Errorf("Error parsing server URL %s: %v", server.URL, err)
-								log.Errorf("Skipping frontend %s...", frontendName)
-								continue frontend
-							}
-							log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-							if err := rebalancer.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
-								log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
-								log.Errorf("Skipping frontend %s...", frontendName)
-								continue frontend
-							}
-							hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
-							if hcOpts != nil {
-								log.Debugf("Setting up backend health check %s", *hcOpts)
-								backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
-							}
+						if err := configureLBServers(rebalancer, configuration, frontend); err != nil {
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
 						}
+						hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
+						if hcOpts != nil {
+							log.Debugf("Setting up backend health check %s", *hcOpts)
+							backendsHealthcheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
+						}
+						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
 					case types.Wrr:
 						log.Debugf("Creating load-balancer wrr")
 						if stickysession {
@@ -687,26 +753,33 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							}
 						}
 						lb = rr
-						for serverName, server := range configuration.Backends[frontend.Backend].Servers {
-							url, err := url.Parse(server.URL)
-							if err != nil {
-								log.Errorf("Error parsing server URL %s: %v", server.URL, err)
-								log.Errorf("Skipping frontend %s...", frontendName)
-								continue frontend
-							}
-							log.Debugf("Creating server %s at %s with weight %d", serverName, url.String(), server.Weight)
-							if err := rr.UpsertServer(url, roundrobin.Weight(server.Weight)); err != nil {
-								log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
-								log.Errorf("Skipping frontend %s...", frontendName)
-								continue frontend
-							}
+						if err := configureLBServers(rr, configuration, frontend); err != nil {
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
 						}
 						hcOpts := parseHealthCheckOptions(rr, frontend.Backend, configuration.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
-							backendsHealthcheck[frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
+							backendsHealthcheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
+						}
+						lb = middlewares.NewEmptyBackendHandler(rr, lb)
+					}
+
+					if len(frontend.Errors) > 0 {
+						for _, errorPage := range frontend.Errors {
+							if configuration.Backends[errorPage.Backend] != nil && configuration.Backends[errorPage.Backend].Servers["error"].URL != "" {
+								errorPageHandler, err := middlewares.NewErrorPagesHandler(errorPage, configuration.Backends[errorPage.Backend].Servers["error"].URL)
+								if err != nil {
+									log.Errorf("Error creating custom error page middleware, %v", err)
+								} else {
+									negroni.Use(errorPageHandler)
+								}
+							} else {
+								log.Errorf("Error Page is configured for Frontend %s, but either Backend %s is not set or Backend URL is missing", frontendName, errorPage.Backend)
+							}
 						}
 					}
+
 					maxConns := configuration.Backends[frontend.Backend].MaxConn
 					if maxConns != nil && maxConns.Amount != 0 {
 						extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
@@ -723,21 +796,15 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 							continue frontend
 						}
 					}
-					// retry ?
-					if globalConfiguration.Retry != nil {
-						retries := len(configuration.Backends[frontend.Backend].Servers)
-						if globalConfiguration.Retry.Attempts > 0 {
-							retries = globalConfiguration.Retry.Attempts
-						}
-						lb = middlewares.NewRetry(retries, lb)
-						log.Debugf("Creating retries max attempts %d", retries)
-					}
 
-					if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Metrics != nil {
-						if server.globalConfiguration.Web.Metrics.Prometheus != nil {
-							metricsMiddlewareBackend := middlewares.NewMetricsWrapper(middlewares.NewPrometheus(frontend.Backend, server.globalConfiguration.Web.Metrics.Prometheus))
-							negroni.Use(metricsMiddlewareBackend)
-						}
+					metrics := newMetrics(server.globalConfiguration, frontend.Backend)
+
+					if globalConfiguration.Retry != nil {
+						retryListener := middlewares.NewMetricsRetryListener(metrics)
+						lb = registerRetryMiddleware(lb, globalConfiguration, configuration, frontend.Backend, retryListener)
+					}
+					if metrics != nil {
+						negroni.Use(middlewares.NewMetricsWrapper(metrics))
 					}
 
 					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
@@ -764,6 +831,17 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						} else {
 							negroni.Use(authMiddleware)
 						}
+					}
+
+					if frontend.Headers.HasCustomHeadersDefined() {
+						headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
+						log.Debugf("Adding header middleware for frontend %s", frontendName)
+						negroni.Use(headerMiddleware)
+					}
+					if frontend.Headers.HasSecureHeadersDefined() {
+						secureMiddleware := middlewares.NewSecure(frontend.Headers)
+						log.Debugf("Adding secure middleware for frontend %s", frontendName)
+						negroni.UseFunc(secureMiddleware.HandlerFuncWithNext)
 					}
 
 					if configuration.Backends[frontend.Backend].CircuitBreaker != nil {
@@ -800,6 +878,22 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
 	}
 	return serverEntryPoints, nil
+}
+
+func configureLBServers(lb healthcheck.LoadBalancer, config *types.Configuration, frontend *types.Frontend) error {
+	for serverName, server := range config.Backends[frontend.Backend].Servers {
+		u, err := url.Parse(server.URL)
+		if err != nil {
+			log.Errorf("Error parsing server URL %s: %v", server.URL, err)
+			return err
+		}
+		log.Debugf("Creating server %s at %s with weight %d", serverName, u, server.Weight)
+		if err := lb.UpsertServer(u, roundrobin.Weight(server.Weight)); err != nil {
+			log.Errorf("Error adding server %s to load balancer: %v", server.URL, err)
+			return err
+		}
+	}
+	return nil
 }
 
 func configureIPWhitelistMiddleware(whitelistSourceRanges []string) (negroni.Handler, error) {
@@ -957,4 +1051,72 @@ func (*Server) configureBackends(backends map[string]*types.Backend) {
 			}
 		}
 	}
+}
+
+// newMetrics instantiates the proper Metrics implementation, depending on the global configuration.
+// Note that given there is no metrics instrumentation configured, it will return nil.
+func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metrics {
+	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
+	if metricsEnabled {
+		// Create MultiMetric
+		metrics := []middlewares.Metrics{}
+
+		if globalConfig.Web.Metrics.Prometheus != nil {
+			metric, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
+			if err != nil {
+				log.Errorf("Error creating Prometheus metrics implementation: %s", err)
+			}
+			log.Debug("Configured Prometheus metrics")
+			metrics = append(metrics, metric)
+		}
+		if globalConfig.Web.Metrics.Datadog != nil {
+			metric := middlewares.NewDataDog(name)
+			log.Debugf("Configured DataDog metrics pushing to %s once every %s", globalConfig.Web.Metrics.Datadog.Address, globalConfig.Web.Metrics.Datadog.PushInterval)
+			metrics = append(metrics, metric)
+		}
+		if globalConfig.Web.Metrics.StatsD != nil {
+			metric := middlewares.NewStatsD(name)
+			log.Debugf("Configured StatsD metrics pushing to %s once every %s", globalConfig.Web.Metrics.StatsD.Address, globalConfig.Web.Metrics.StatsD.PushInterval)
+			metrics = append(metrics, metric)
+		}
+
+		return middlewares.NewMultiMetrics(metrics)
+	}
+
+	return nil
+}
+
+func initializeMetricsClients(globalConfig GlobalConfiguration) {
+	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
+	if metricsEnabled {
+		if globalConfig.Web.Metrics.Datadog != nil {
+			middlewares.InitDatadogClient(globalConfig.Web.Metrics.Datadog)
+		}
+		if globalConfig.Web.Metrics.StatsD != nil {
+			middlewares.InitStatsdClient(globalConfig.Web.Metrics.StatsD)
+		}
+	}
+}
+
+func stopMetricsClients(globalConfig GlobalConfiguration) {
+	middlewares.StopDatadogClient()
+	middlewares.StopStatsdClient()
+}
+
+func registerRetryMiddleware(
+	httpHandler http.Handler,
+	globalConfig GlobalConfiguration,
+	config *types.Configuration,
+	backend string,
+	listener middlewares.RetryListener,
+) http.Handler {
+	retries := len(config.Backends[backend].Servers)
+	if globalConfig.Retry.Attempts > 0 {
+		retries = globalConfig.Retry.Attempts
+	}
+
+	httpHandler = middlewares.NewRetry(retries, httpHandler, listener)
+	log.Debugf("Creating retries max attempts %d", retries)
+
+	return httpHandler
 }

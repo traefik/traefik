@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	"github.com/BurntSushi/toml"
+	"github.com/Masterminds/sprig"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
@@ -30,6 +31,7 @@ type BaseProvider struct {
 	Watch       bool              `description:"Watch provider"`
 	Filename    string            `description:"Override default configuration template. For advanced users :)"`
 	Constraints types.Constraints `description:"Filter services by constraint, matching with Traefik tags."`
+	Trace       bool              `description:"Display additional provider logs (if available)."`
 }
 
 // MatchConstraints must match with EVERY single contraint
@@ -58,14 +60,12 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 		err error
 	)
 	configuration := new(types.Configuration)
-	var defaultFuncMap = template.FuncMap{
-		"replace":   Replace,
-		"tolower":   strings.ToLower,
-		"normalize": Normalize,
-		"split":     split,
-		"contains":  contains,
-	}
 
+	var defaultFuncMap = sprig.TxtFuncMap()
+	// tolower is deprecated in favor of sprig's lower function
+	defaultFuncMap["tolower"] = strings.ToLower
+	defaultFuncMap["normalize"] = Normalize
+	defaultFuncMap["split"] = split
 	for funcID, funcElement := range funcMap {
 		defaultFuncMap[funcID] = funcElement
 	}
@@ -99,15 +99,6 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 		return nil, err
 	}
 	return configuration, nil
-}
-
-// Replace is an alias for strings.Replace
-func Replace(s1 string, s2 string, s3 string) string {
-	return strings.Replace(s3, s1, s2, -1)
-}
-
-func contains(substr, s string) bool {
-	return strings.Contains(s, substr)
 }
 
 func split(sep, s string) []string {

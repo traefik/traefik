@@ -4,16 +4,21 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+	"text/template"
 
+	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 )
 
 func TestConsulCatalogGetFrontendRule(t *testing.T) {
 	provider := &CatalogProvider{
-		Domain: "localhost",
-		Prefix: "traefik",
+		Domain:               "localhost",
+		Prefix:               "traefik",
+		FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
+		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
 	}
+	provider.setupFrontEndTemplate()
 
 	services := []struct {
 		service  serviceUpdate
@@ -35,12 +40,73 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 			},
 			expected: "Host:*.example.com",
 		},
+		{
+			service: serviceUpdate{
+				ServiceName: "foo",
+				Attributes: []string{
+					"traefik.frontend.rule=Host:{{.ServiceName}}.example.com",
+				},
+			},
+			expected: "Host:foo.example.com",
+		},
+		{
+			service: serviceUpdate{
+				ServiceName: "foo",
+				Attributes: []string{
+					"traefik.frontend.rule=PathPrefix:{{getTag \"contextPath\" .Attributes \"/\"}}",
+					"contextPath=/bar",
+				},
+			},
+			expected: "PathPrefix:/bar",
+		},
 	}
 
 	for _, e := range services {
 		actual := provider.getFrontendRule(e.service)
 		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
+	}
+}
+
+func TestConsulCatalogGetTag(t *testing.T) {
+	provider := &CatalogProvider{
+		Domain: "localhost",
+		Prefix: "traefik",
+	}
+
+	services := []struct {
+		tags         []string
+		key          string
+		defaultValue string
+		expected     string
+	}{
+		{
+			tags: []string{
+				"foo.bar=random",
+				"traefik.backend.weight=42",
+				"management",
+			},
+			key:          "foo.bar",
+			defaultValue: "0",
+			expected:     "random",
+		},
+	}
+
+	actual := provider.hasTag("management", []string{"management"})
+	if !actual {
+		t.Fatalf("expected %v, got %v", true, actual)
+	}
+
+	actual = provider.hasTag("management", []string{"management=yes"})
+	if !actual {
+		t.Fatalf("expected %v, got %v", true, actual)
+	}
+
+	for _, e := range services {
+		actual := provider.getTag(e.key, e.tags, e.defaultValue)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
 		}
 	}
 }
@@ -77,10 +143,71 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 		},
 	}
 
+	expected := provider.Prefix + ".foo"
+	actual := provider.getPrefixedName("foo")
+	if actual != expected {
+		t.Fatalf("expected %s, got %s", expected, actual)
+	}
+
 	for _, e := range services {
 		actual := provider.getAttribute(e.key, e.tags, e.defaultValue)
 		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
+	}
+}
+
+func TestConsulCatalogGetAttributeWithEmptyPrefix(t *testing.T) {
+	provider := &CatalogProvider{
+		Domain: "localhost",
+		Prefix: "",
+	}
+
+	services := []struct {
+		tags         []string
+		key          string
+		defaultValue string
+		expected     string
+	}{
+		{
+			tags: []string{
+				"foo.bar=ramdom",
+				"backend.weight=42",
+			},
+			key:          "backend.weight",
+			defaultValue: "0",
+			expected:     "42",
+		},
+		{
+			tags: []string{
+				"foo.bar=ramdom",
+				"backend.wei=42",
+			},
+			key:          "backend.weight",
+			defaultValue: "0",
+			expected:     "0",
+		},
+		{
+			tags: []string{
+				"foo.bar=ramdom",
+				"backend.wei=42",
+			},
+			key:          "foo.bar",
+			defaultValue: "random",
+			expected:     "ramdom",
+		},
+	}
+
+	expected := "foo"
+	actual := provider.getPrefixedName("foo")
+	if actual != expected {
+		t.Fatalf("expected %s, got %s", expected, actual)
+	}
+
+	for _, e := range services {
+		actual := provider.getAttribute(e.key, e.tags, e.defaultValue)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
 		}
 	}
 }
@@ -122,7 +249,7 @@ func TestConsulCatalogGetBackendAddress(t *testing.T) {
 	for _, e := range services {
 		actual := provider.getBackendAddress(e.node)
 		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+			t.Fatalf("expected %s, got %s", e.expected, actual)
 		}
 	}
 }
@@ -175,15 +302,17 @@ func TestConsulCatalogGetBackendName(t *testing.T) {
 	for i, e := range services {
 		actual := provider.getBackendName(e.node, i)
 		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+			t.Fatalf("expected %s, got %s", e.expected, actual)
 		}
 	}
 }
 
 func TestConsulCatalogBuildConfig(t *testing.T) {
 	provider := &CatalogProvider{
-		Domain: "localhost",
-		Prefix: "traefik",
+		Domain:               "localhost",
+		Prefix:               "traefik",
+		FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
+		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
 	}
 
 	cases := []struct {
@@ -475,6 +604,149 @@ func TestConsulCatalogNodeSorter(t *testing.T) {
 		actual := c.nodes
 		if !reflect.DeepEqual(actual, c.expected) {
 			t.Fatalf("expected %q, got %q", c.expected, actual)
+		}
+	}
+}
+
+func TestConsulCatalogGetChangedKeys(t *testing.T) {
+	type Input struct {
+		currState map[string][]string
+		prevState map[string][]string
+	}
+
+	type Output struct {
+		addedKeys   []string
+		removedKeys []string
+	}
+
+	cases := []struct {
+		input  Input
+		output Output
+	}{
+		{
+			input: Input{
+				currState: map[string][]string{
+					"foo-service":    {"v1"},
+					"bar-service":    {"v1"},
+					"baz-service":    {"v1"},
+					"qux-service":    {"v1"},
+					"quux-service":   {"v1"},
+					"quuz-service":   {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+				prevState: map[string][]string{
+					"foo-service":    {"v1"},
+					"bar-service":    {"v1"},
+					"baz-service":    {"v1"},
+					"qux-service":    {"v1"},
+					"quux-service":   {"v1"},
+					"quuz-service":   {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+			},
+			output: Output{
+				addedKeys:   []string{},
+				removedKeys: []string{},
+			},
+		},
+		{
+			input: Input{
+				currState: map[string][]string{
+					"foo-service":    {"v1"},
+					"bar-service":    {"v1"},
+					"baz-service":    {"v1"},
+					"qux-service":    {"v1"},
+					"quux-service":   {"v1"},
+					"quuz-service":   {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+				prevState: map[string][]string{
+					"foo-service":    {"v1"},
+					"bar-service":    {"v1"},
+					"baz-service":    {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+			},
+			output: Output{
+				addedKeys:   []string{"qux-service", "quux-service", "quuz-service"},
+				removedKeys: []string{},
+			},
+		},
+		{
+			input: Input{
+				currState: map[string][]string{
+					"foo-service":    {"v1"},
+					"qux-service":    {"v1"},
+					"quux-service":   {"v1"},
+					"quuz-service":   {"v1"},
+					"corge-service":  {"v1"},
+					"grault-service": {"v1"},
+					"garply-service": {"v1"},
+					"waldo-service":  {"v1"},
+					"fred-service":   {"v1"},
+					"plugh-service":  {"v1"},
+					"xyzzy-service":  {"v1"},
+					"thud-service":   {"v1"},
+				},
+				prevState: map[string][]string{
+					"foo-service":   {"v1"},
+					"bar-service":   {"v1"},
+					"baz-service":   {"v1"},
+					"qux-service":   {"v1"},
+					"quux-service":  {"v1"},
+					"quuz-service":  {"v1"},
+					"corge-service": {"v1"},
+					"waldo-service": {"v1"},
+					"fred-service":  {"v1"},
+					"plugh-service": {"v1"},
+					"xyzzy-service": {"v1"},
+					"thud-service":  {"v1"},
+				},
+			},
+			output: Output{
+				addedKeys:   []string{"grault-service", "garply-service"},
+				removedKeys: []string{"bar-service", "baz-service"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		addedKeys, removedKeys := getChangedKeys(c.input.currState, c.input.prevState)
+
+		if !reflect.DeepEqual(fun.Set(addedKeys), fun.Set(c.output.addedKeys)) {
+			t.Fatalf("Added keys comparison results: got %q, want %q", addedKeys, c.output.addedKeys)
+		}
+
+		if !reflect.DeepEqual(fun.Set(removedKeys), fun.Set(c.output.removedKeys)) {
+			t.Fatalf("Removed keys comparison results: got %q, want %q", removedKeys, c.output.removedKeys)
 		}
 	}
 }

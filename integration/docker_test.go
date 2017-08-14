@@ -1,4 +1,4 @@
-package main
+package integration
 
 import (
 	"encoding/json"
@@ -6,14 +6,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/types"
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/go-check/check"
-
 	d "github.com/libkermit/docker"
 	docker "github.com/libkermit/docker-check"
 	checker "github.com/vdemeester/shakers"
@@ -80,7 +79,7 @@ func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
 	defer os.Remove(file)
 
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -97,7 +96,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	name := s.startContainer(c, "swarm:1.0.0", "manage", "token://blablabla")
 
 	// Start traefik
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -124,12 +123,12 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	defer os.Remove(file)
 	// Start a container with some labels
 	labels := map[string]string{
-		"traefik.frontend.rule": "Host:my.super.host",
+		types.LabelFrontendRule: "Host:my.super.host",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
 	// Start traefik
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -156,12 +155,12 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	defer os.Remove(file)
 	// Start a container with some labels
 	labels := map[string]string{
-		"traefik.frontend.value": "my.super.host",
+		types.LabelTraefikFrontendValue: "my.super.host",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
 	// Start traefik
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

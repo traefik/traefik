@@ -2,7 +2,6 @@ package accesslog
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/containous/traefik/types"
 )
 
 type key string
@@ -21,20 +21,53 @@ const (
 	// DataTableKey is the key within the request context used to
 	// store the Log Data Table
 	DataTableKey key = "LogDataTable"
+
+	// CommonFormat is the common logging format (CLF)
+	CommonFormat = "common"
+
+	// JSONFormat is the JSON logging format
+	JSONFormat = "json"
 )
 
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
-	logger *logrus.Logger
-	file   *os.File
+	logger   *logrus.Logger
+	file     *os.File
+	filePath string
 }
 
 // NewLogHandler creates a new LogHandler
-func NewLogHandler(filePath string) (*LogHandler, error) {
-	if len(filePath) == 0 {
-		return nil, errors.New("Empty file name specified for accessLogsFile")
+func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
+	file := os.Stdout
+	if len(config.FilePath) > 0 {
+		f, err := openAccessLogFile(config.FilePath)
+		if err != nil {
+			return nil, fmt.Errorf("error opening access log file: %s", err)
+		}
+		file = f
 	}
 
+	var formatter logrus.Formatter
+
+	switch config.Format {
+	case CommonFormat:
+		formatter = new(CommonLogFormatter)
+	case JSONFormat:
+		formatter = new(logrus.JSONFormatter)
+	default:
+		return nil, fmt.Errorf("unsupported access log format: %s", config.Format)
+	}
+
+	logger := &logrus.Logger{
+		Out:       file,
+		Formatter: formatter,
+		Hooks:     make(logrus.LevelHooks),
+		Level:     logrus.InfoLevel,
+	}
+	return &LogHandler{logger: logger, file: file, filePath: config.FilePath}, nil
+}
+
+func openAccessLogFile(filePath string) (*os.File, error) {
 	dir := filepath.Dir(filePath)
 
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -43,16 +76,10 @@ func NewLogHandler(filePath string) (*LogHandler, error) {
 
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
-		return nil, fmt.Errorf("error opening file: %s %s", dir, err)
+		return nil, fmt.Errorf("error opening file %s: %s", filePath, err)
 	}
 
-	logger := &logrus.Logger{
-		Out:       file,
-		Formatter: new(CommonLogFormatter),
-		Hooks:     make(logrus.LevelHooks),
-		Level:     logrus.InfoLevel,
-	}
-	return &LogHandler{logger: logger, file: file}, nil
+	return file, nil
 }
 
 // GetLogDataTable gets the request context object that contains logging data. This accretes
@@ -111,6 +138,22 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 // Close closes the Logger (i.e. the file etc).
 func (l *LogHandler) Close() error {
 	return l.file.Close()
+}
+
+// Rotate closes and reopens the log file to allow for rotation
+// by an external source.
+func (l *LogHandler) Rotate() error {
+	var err error
+	if err = l.Close(); err != nil {
+		return err
+	}
+
+	l.file, err = os.OpenFile(l.filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	if err != nil {
+		return err
+	}
+	l.logger.Out = l.file
+	return nil
 }
 
 func silentSplitHostPort(value string) (host string, port string) {

@@ -32,9 +32,9 @@ function HealthController($scope, $interval, $log, Health) {
       valueFormat: function (d) {
         return d3.format('d')(d);
       },
-      transitionDuration: 50,
       yAxis: {
-        axisLabelDistance: 30
+        axisLabelDistance: 30,
+        tickFormat: d3.format('d')
       }
     },
     "title": {
@@ -95,7 +95,6 @@ function HealthController($scope, $interval, $log, Health) {
         bottom: 40,
         left: 55
       },
-      transitionDuration: 50,
       x: function (d) {
         return d.x;
       },
@@ -112,7 +111,10 @@ function HealthController($scope, $interval, $log, Health) {
         tickFormat: function (d) {
           return d3.format(',.1f')(d);
         }
-      }
+      },
+      forceY: [0., 1.], // This prevents the chart from showing -1 on Oy when all the input data points
+                        // have y = 0. It won't disable the automatic adjustment of the max value.
+      duration: 0 // Bug: Markers will not be drawn if you set this to some other value...
     },
     "title": {
       "enable": true,

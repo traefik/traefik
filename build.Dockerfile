@@ -15,8 +15,7 @@ RUN go get github.com/jteeuwen/go-bindata/... \
 && go get github.com/sgotti/glide-vc
 
 # Which docker version to test on
-ARG DOCKER_VERSION=1.10.3
-
+ARG DOCKER_VERSION=17.03.2
 
 # Which glide version to test on
 ARG GLIDE_VERSION=v0.12.3
@@ -28,7 +27,7 @@ RUN mkdir -p /usr/local/bin \
 
 # Download docker
 RUN mkdir -p /usr/local/bin \
-    && curl -fL https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz \
+    && curl -fL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}-ce.tgz \
     | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
 WORKDIR /go/src/github.com/containous/traefik

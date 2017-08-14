@@ -80,7 +80,7 @@ using the runc checkpoint command.`,
 		},
 		cli.StringSliceFlag{
 			Name:  "empty-ns",
-			Usage: "create a namespace, but don't restore its properies",
+			Usage: "create a namespace, but don't restore its properties",
 		},
 	},
 	Action: func(context *cli.Context) error {

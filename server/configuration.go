@@ -2,8 +2,8 @@ package server
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -40,11 +41,12 @@ type TraefikConfiguration struct {
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish during hot-reload"`
+	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish before Traefik stops"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
-	AccessLogsFile            string                  `description:"Access logs file"`
-	TraefikLogsFile           string                  `description:"Traefik logs file"`
+	AccessLogsFile            string                  `description:"(Deprecated) Access logs file"` // Deprecated
+	AccessLog                 *types.AccessLog        `description:"Access log settings"`
+	TraefikLogsFile           string                  `description:"Traefik logs file. Stdout is used when omitted or empty"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
 	Cluster                   *types.Cluster          `description:"Enable clustering"`
@@ -55,23 +57,24 @@ type GlobalConfiguration struct {
 	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
 	IdleTimeout               flaeg.Duration          `description:"maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."`
 	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
+	RootCAs                   RootCAs                 `description:"Add cert file for self-signed certicate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
-	Docker                    *docker.Provider        `description:"Enable Docker backend"`
-	File                      *file.Provider          `description:"Enable File backend"`
-	Web                       *WebProvider            `description:"Enable Web backend"`
-	Marathon                  *marathon.Provider      `description:"Enable Marathon backend"`
-	Consul                    *consul.Provider        `description:"Enable Consul backend"`
-	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend"`
-	Etcd                      *etcd.Provider          `description:"Enable Etcd backend"`
-	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend"`
-	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend"`
-	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend"`
-	Mesos                     *mesos.Provider         `description:"Enable Mesos backend"`
-	Eureka                    *eureka.Provider        `description:"Enable Eureka backend"`
-	ECS                       *ecs.Provider           `description:"Enable ECS backend"`
-	Rancher                   *rancher.Provider       `description:"Enable Rancher backend"`
-	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend"`
+	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings"`
+	File                      *file.Provider          `description:"Enable File backend with default settings"`
+	Web                       *WebProvider            `description:"Enable Web backend with default settings"`
+	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings"`
+	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings"`
+	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend with default settings"`
+	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings"`
+	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings"`
+	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings"`
+	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend with default settings"`
+	Mesos                     *mesos.Provider         `description:"Enable Mesos backend with default settings"`
+	Eureka                    *eureka.Provider        `description:"Enable Eureka backend with default settings"`
+	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings"`
+	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings"`
+	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings"`
 	WebAPI                    *webapi.Provider        `description:"Enable WebAPI backend"`
 }
 
@@ -110,7 +113,69 @@ func (dep *DefaultEntryPoints) SetValue(val interface{}) {
 
 // Type is type of the struct
 func (dep *DefaultEntryPoints) Type() string {
-	return fmt.Sprint("defaultentrypoints")
+	return "defaultentrypoints"
+}
+
+// RootCAs hold the CA we want to have in root
+type RootCAs []FileOrContent
+
+// FileOrContent hold a file path or content
+type FileOrContent string
+
+func (f FileOrContent) String() string {
+	return string(f)
+}
+
+func (f FileOrContent) Read() ([]byte, error) {
+	var content []byte
+	if _, err := os.Stat(f.String()); err == nil {
+		content, err = ioutil.ReadFile(f.String())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		content = []byte(f)
+	}
+	return content, nil
+}
+
+// String is the method to format the flag's value, part of the flag.Value interface.
+// The String method's output will be used in diagnostics.
+func (r *RootCAs) String() string {
+	sliceOfString := make([]string, len([]FileOrContent(*r)))
+	for key, value := range *r {
+		sliceOfString[key] = value.String()
+	}
+	return strings.Join(sliceOfString, ",")
+}
+
+// Set is the method to set the flag value, part of the flag.Value interface.
+// Set's argument is a string to be parsed to set the flag.
+// It's a comma-separated list, so we split it.
+func (r *RootCAs) Set(value string) error {
+	rootCAs := strings.Split(value, ",")
+	if len(rootCAs) == 0 {
+		return fmt.Errorf("bad RootCAs format: %s", value)
+	}
+	for _, rootCA := range rootCAs {
+		*r = append(*r, FileOrContent(rootCA))
+	}
+	return nil
+}
+
+// Get return the EntryPoints map
+func (r *RootCAs) Get() interface{} {
+	return RootCAs(*r)
+}
+
+// SetValue sets the EntryPoints map with val
+func (r *RootCAs) SetValue(val interface{}) {
+	*r = RootCAs(val.(RootCAs))
+}
+
+// Type is type of the struct
+func (r *RootCAs) Type() string {
+	return "rootcas"
 }
 
 // EntryPoints holds entry points configuration of the reverse proxy (ip, port, TLS...)
@@ -126,7 +191,7 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?")
+	regex := regexp.MustCompile("(?:Name:(?P<Name>\\S*))\\s*(?:Address:(?P<Address>\\S*))?\\s*(?:TLS:(?P<TLS>\\S*))?\\s*((?P<TLSACME>TLS))?\\s*(?:CA:(?P<CA>\\S*))?\\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\\S*))?\\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\\S*))?\\s*(?:Compress:(?P<Compress>\\S*))?\\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\\S*))?")
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
 		return fmt.Errorf("bad EntryPoints format: %s", value)
@@ -170,11 +235,17 @@ func (ep *EntryPoints) Set(value string) error {
 		compress = strings.EqualFold(result["Compress"], "enable") || strings.EqualFold(result["Compress"], "on")
 	}
 
+	whiteListSourceRange := []string{}
+	if len(result["WhiteListSourceRange"]) > 0 {
+		whiteListSourceRange = strings.Split(result["WhiteListSourceRange"], ",")
+	}
+
 	(*ep)[result["Name"]] = &EntryPoint{
-		Address:  result["Address"],
-		TLS:      tls,
-		Redirect: redirect,
-		Compress: compress,
+		Address:              result["Address"],
+		TLS:                  tls,
+		Redirect:             redirect,
+		Compress:             compress,
+		WhitelistSourceRange: whiteListSourceRange,
 	}
 
 	return nil
@@ -192,17 +263,18 @@ func (ep *EntryPoints) SetValue(val interface{}) {
 
 // Type is type of the struct
 func (ep *EntryPoints) Type() string {
-	return fmt.Sprint("entrypoints")
+	return "entrypoints"
 }
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
-	Network  string
-	Address  string
-	TLS      *TLS
-	Redirect *Redirect
-	Auth     *types.Auth
-	Compress bool
+	Network              string
+	Address              string
+	TLS                  *TLS
+	Redirect             *Redirect
+	Auth                 *types.Auth
+	WhitelistSourceRange []string
+	Compress             bool
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
@@ -264,32 +336,25 @@ func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
 	config.Certificates = []tls.Certificate{}
 	certsSlice := []Certificate(*certs)
 	for _, v := range certsSlice {
-		isAPath := false
-		_, errCert := os.Stat(v.CertFile)
-		_, errKey := os.Stat(v.KeyFile)
-		if errCert == nil {
-			if errKey == nil {
-				isAPath = true
-			} else {
-				return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
-			}
-		} else if errKey == nil {
-			return nil, errors.New("bad TLS Certificate KeyFile format, expected a path")
+		cert := tls.Certificate{}
+
+		var err error
+
+		certContent, err := v.CertFile.Read()
+		if err != nil {
+			return nil, err
 		}
 
-		cert := tls.Certificate{}
-		var err error
-		if isAPath {
-			cert, err = tls.LoadX509KeyPair(v.CertFile, v.KeyFile)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			cert, err = tls.X509KeyPair([]byte(v.CertFile), []byte(v.KeyFile))
-			if err != nil {
-				return nil, err
-			}
+		keyContent, err := v.KeyFile.Read()
+		if err != nil {
+			return nil, err
 		}
+
+		cert, err = tls.X509KeyPair(certContent, keyContent)
+		if err != nil {
+			return nil, err
+		}
+
 		config.Certificates = append(config.Certificates, cert)
 	}
 	return config, nil
@@ -303,7 +368,7 @@ func (certs *Certificates) String() string {
 	}
 	var result []string
 	for _, certificate := range *certs {
-		result = append(result, certificate.CertFile+","+certificate.KeyFile)
+		result = append(result, certificate.CertFile.String()+","+certificate.KeyFile.String())
 	}
 	return strings.Join(result, ";")
 }
@@ -319,8 +384,8 @@ func (certs *Certificates) Set(value string) error {
 			return fmt.Errorf("bad certificates format: %s", value)
 		}
 		*certs = append(*certs, Certificate{
-			CertFile: files[0],
-			KeyFile:  files[1],
+			CertFile: FileOrContent(files[0]),
+			KeyFile:  FileOrContent(files[1]),
 		})
 	}
 	return nil
@@ -328,14 +393,14 @@ func (certs *Certificates) Set(value string) error {
 
 // Type is type of the struct
 func (certs *Certificates) Type() string {
-	return fmt.Sprint("certificates")
+	return "certificates"
 }
 
 // Certificate holds a SSL cert/key pair
 // Certs and Key could be either a file path, or the file content itself
 type Certificate struct {
-	CertFile string
-	KeyFile  string
+	CertFile FileOrContent
+	KeyFile  FileOrContent
 }
 
 // Retry contains request retry config
@@ -374,6 +439,14 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Prometheus: &types.Prometheus{
 			Buckets: types.Buckets{0.1, 0.3, 1.2, 5},
 		},
+		Datadog: &types.Datadog{
+			Address:      "localhost:8125",
+			PushInterval: "10s",
+		},
+		StatsD: &types.Statsd{
+			Address:      "localhost:8125",
+			PushInterval: "10s",
+		},
 	}
 
 	// default Marathon
@@ -397,6 +470,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
 	defaultConsulCatalog.Constraints = types.Constraints{}
 	defaultConsulCatalog.Prefix = "traefik"
+	defaultConsulCatalog.FrontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"
 
 	// default Etcd
 	var defaultEtcd etcd.Provider
@@ -419,7 +493,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultBoltDb.Prefix = "/traefik"
 	defaultBoltDb.Constraints = types.Constraints{}
 
-	//default Provider
+	//default Kubernetes
 	var defaultKubernetes kubernetes.Provider
 	defaultKubernetes.Watch = true
 	defaultKubernetes.Endpoint = ""
@@ -449,7 +523,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultRancher.Watch = true
 	defaultRancher.ExposedByDefault = true
 	defaultRancher.RefreshSeconds = 15
-	defaultRancher.EnableServiceHealthFilter = false
 
 	// default DynamoDB
 	var defaultDynamoDB dynamodb.Provider
@@ -457,6 +530,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDynamoDB.RefreshSeconds = 15
 	defaultDynamoDB.TableName = "traefik"
 	defaultDynamoDB.Watch = true
+
+	// default AccessLog
+	defaultAccessLog := types.AccessLog{
+		Format:   accesslog.CommonFormat,
+		FilePath: "",
+	}
 
 	defaultConfiguration := GlobalConfiguration{
 		Docker:        &defaultDocker,
@@ -475,10 +554,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		DynamoDB:      &defaultDynamoDB,
 		Retry:         &Retry{},
 		HealthCheck:   &HealthCheckConfig{},
+		AccessLog:     &defaultAccessLog,
 	}
-
-	//default Rancher
-	//@TODO: ADD
 
 	return &TraefikConfiguration{
 		GlobalConfiguration: defaultConfiguration,

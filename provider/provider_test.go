@@ -145,37 +145,6 @@ func TestGetConfiguration(t *testing.T) {
 	}
 }
 
-func TestReplace(t *testing.T) {
-	cases := []struct {
-		str      string
-		expected string
-	}{
-		{
-			str:      "",
-			expected: "",
-		},
-		{
-			str:      "foo",
-			expected: "bar",
-		},
-		{
-			str:      "foo foo",
-			expected: "bar bar",
-		},
-		{
-			str:      "somethingfoo",
-			expected: "somethingbar",
-		},
-	}
-
-	for _, c := range cases {
-		actual := Replace("foo", "bar", c.str)
-		if actual != c.expected {
-			t.Fatalf("expected %q, got %q, for %q", c.expected, actual, c.str)
-		}
-	}
-}
-
 func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 	templateFile, err := ioutil.TempFile("", "provider-configuration")
 	if err != nil {
@@ -375,6 +344,54 @@ func TestDefaultFuncMap(t *testing.T) {
 	}
 	if _, ok := configuration.Backends["backend1"]; !ok {
 		t.Fatal("backend1 should exists, but it not")
+	}
+	if _, ok := configuration.Frontends["frontend-1"]; !ok {
+		t.Fatal("Frontend frontend-1 should exists, but it not")
+	}
+}
+
+func TestSprigFunctions(t *testing.T) {
+	templateFile, err := ioutil.TempFile("", "provider-configuration")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(templateFile.Name())
+	data := []byte(`
+  {{$backend_name := trimAll "-" uuidv4}}
+  [backends]
+  [backends.{{$backend_name}}]
+    [backends.{{$backend_name}}.circuitbreaker]
+    [backends.{{$backend_name}}.servers.server2]
+    url = "http://172.17.0.3:80"
+    weight = 1
+
+[frontends]
+  [frontends.{{normalize "frontend/1"}}]
+  backend = "{{$backend_name}}"
+  passHostHeader = true
+    [frontends.frontend-1.routes.test_2]
+    rule = "Path"
+    value = "/test"`)
+	err = ioutil.WriteFile(templateFile.Name(), data, 0700)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider := &myProvider{
+		BaseProvider{
+			Filename: templateFile.Name(),
+		},
+		nil,
+	}
+	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
+	if err != nil {
+		t.Fatalf("Shouldn't have error out, got %v", err)
+	}
+	if configuration == nil {
+		t.Fatal("Configuration should not be nil, but was")
+	}
+	if len(configuration.Backends) != 1 {
+		t.Fatal("one backend should be defined, but it's not")
 	}
 	if _, ok := configuration.Frontends["frontend-1"]; !ok {
 		t.Fatal("Frontend frontend-1 should exists, but it not")

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ArthurHlt/go-eureka-client/eureka"
+	"github.com/containous/traefik/types"
 )
 
 func TestEurekaGetPort(t *testing.T) {
@@ -106,7 +107,7 @@ func TestEurekaGetWeight(t *testing.T) {
 				},
 				Metadata: &eureka.MetaData{
 					Map: map[string]string{
-						"traefik.weight": "10",
+						types.LabelWeight: "10",
 					},
 				},
 			},
@@ -139,7 +140,7 @@ func TestEurekaGetInstanceId(t *testing.T) {
 				},
 				Metadata: &eureka.MetaData{
 					Map: map[string]string{
-						"traefik.backend.id": "MyInstanceId",
+						types.LabelBackendID: "MyInstanceId",
 					},
 				},
 			},
