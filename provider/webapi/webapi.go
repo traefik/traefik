@@ -29,7 +29,7 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 		provider.CheckInterval = 30
 	}
 
-	log.Infof("webapi > {Endpoint: %s, Watch: %v, Cluster: %s, Checkinterval: %s}",
+	log.Infof("webapi > {Endpoint: %s, Watch: %v, Cluster: %s, Checkinterval: %d}",
 		provider.Endpoint, provider.Watch, provider.Cluster, provider.CheckInterval)
 
 	if provider.Watch {
@@ -114,31 +114,38 @@ func (provider *Provider) request(path string) (data []byte, err error) {
 		return
 	}
 
-	var resp *http.Response
 	for _, server := range servers {
-		u := server + path
-		if provider.Cluster != "" {
-			u = u + "?cluster=" + provider.Cluster
+		data, err = provider.requestServer(path, server)
+		if err == nil {
+			return
 		}
-
-		client := http.Client{Timeout: time.Second * 5}
-		resp, err = client.Get(u)
-		if err != nil {
-			continue
-		}
-		defer resp.Body.Close()
-
-		data, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			continue
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			err = errors.New(string(data))
-			continue
-		}
-
-		return data, nil
 	}
 	return
+}
+
+func (provider *Provider) requestServer(path, server string) (data []byte, err error) {
+	u := server + path
+	if provider.Cluster != "" {
+		u = u + "?cluster=" + provider.Cluster
+	}
+
+	var resp *http.Response
+	client := http.Client{Timeout: time.Second * 5}
+	resp, err = client.Get(u)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	data, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		err = errors.New(string(data))
+		return
+	}
+
+	return data, nil
 }
