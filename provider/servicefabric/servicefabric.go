@@ -80,8 +80,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 // CatalogProvider holds configurations of the Consul catalog provider.
 type Provider struct {
-	ClusterName          string
-	ClusterManagementUrl string
+	ClusterManagementUrl string `description:"ServiceFabric cluster management endpoint"`
 }
 
 func getHttp(url string) ([]byte, error) {
