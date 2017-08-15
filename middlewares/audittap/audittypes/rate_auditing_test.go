@@ -9,6 +9,7 @@ import (
 
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 )
 
 func TestRateAuditEvent(t *testing.T) {
@@ -240,7 +241,7 @@ func TestGetMessageParts(t *testing.T) {
 		</Root>
 	`
 
-	parts, _ := getMessageParts(strings.NewReader(xml))
+	parts, _ := getMessageParts(ioutil.NopCloser(strings.NewReader(xml)))
 	assert.NotEmpty(t, parts.Header)
 	assert.NotEmpty(t, parts.Details)
 }
@@ -254,7 +255,7 @@ func TestXmlMissingHeader(t *testing.T) {
 		</Root>
 	`
 
-	_, err := getMessageParts(strings.NewReader(xml))
+	_, err := getMessageParts(ioutil.NopCloser(strings.NewReader(xml)))
 	assert.Error(t, err)
 }
 
@@ -267,7 +268,7 @@ func TestXmlMissingDetails(t *testing.T) {
 		</Root>
 	`
 
-	_, err := getMessageParts(strings.NewReader(xml))
+	_, err := getMessageParts(ioutil.NopCloser(strings.NewReader(xml)))
 	assert.Error(t, err)
 }
 

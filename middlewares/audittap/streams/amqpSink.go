@@ -100,7 +100,7 @@ var NewConyPublisher = func(exchange string) amqpConyPublisher {
 	return &conyPublisherImpl{publisher: cony.NewPublisher(exchange, "")}
 }
 
-// NewQueue is a wrapper for calling cony.NewPublisher
+// NewQueue is a wrapper for calling cony.NewPublishelr
 var NewQueue = func(queueLocation string) (*goque.Queue, error) {
 	return goque.OpenQueue(queueLocation)
 }

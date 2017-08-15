@@ -1,12 +1,15 @@
 package audittypes
 
 import (
+	"bytes"
 	"encoding/xml"
 	"errors"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"gopkg.in/beevik/etree.v0"
 )
@@ -43,12 +46,22 @@ type partialGovTalkMessage struct {
 
 // AppendRequest appends information about the request to the audit event
 func (ev *RATEAuditEvent) AppendRequest(req *http.Request) {
+
+	body, err := copyBody(req)
+
+	if err != nil {
+		log.Errorf("Error reading request body: %v", err)
+	}
+
 	appendCommonRequestFields(&ev.AuditEvent, req)
-	if partialMsg, err := getMessageParts(req.Body); err == nil {
+
+	if partialMsg, err := getMessageParts(body); err == nil {
 		extractIfPresent(partialMsg.Header, xpClass, &ev.AuditType)
 		ev.populateDetail(partialMsg)
 		ev.populateIdentifiers(partialMsg)
 		ev.populateEnrolments(partialMsg)
+	} else {
+		log.Errorf("Error processing RATE message: %v", err)
 	}
 }
 
@@ -69,7 +82,17 @@ func NewRATEAuditEvent() Auditer {
 	return &ev
 }
 
-func getMessageParts(body io.Reader) (*partialGovTalkMessage, error) {
+// Need to take a copy of the body contents so a fresh reader for body is available to subsequent handlers
+func copyBody(req *http.Request) (io.ReadCloser, error) {
+	buf, err := ioutil.ReadAll(req.Body)
+	if err == nil {
+		req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
+		return ioutil.NopCloser(bytes.NewBuffer(buf)), nil
+	}
+	return nil, err
+}
+
+func getMessageParts(body io.ReadCloser) (*partialGovTalkMessage, error) {
 	decoder := xml.NewDecoder(body)
 	var header xmlFragment
 	var details xmlFragment
