@@ -30,10 +30,13 @@ func newFakeClient(applicationsError bool, applications marathon.Applications) *
 	return fakeClient
 }
 
-func assertWithServices(serviceNames []string, expected string, getActual func(string) string) (string, bool) {
+func compareValuesWithServices(serviceNames []string, expected string, getActual func(string) string) (string, bool) {
 	actual := ""
 	for _, serviceName := range serviceNames {
-		actual = getActual(serviceName)
+		value := getActual(serviceName)
+		if len(value) > 0 {
+			actual = value
+		}
 	}
 	return actual, actual == expected
 }
@@ -275,12 +278,9 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 			),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app": {
-					Backend:        "backend-app",
-					PassHostHeader: true,
-					BasicAuth:      []string{},
-					EntryPoints:    []string{},
+					Backend: "backend-app",
 					Routes: map[string]types.Route{
-						`route-host-app`: {
+						"route-host-app": {
 							Rule: "Host:app.docker.localhost",
 						},
 					},
@@ -294,7 +294,6 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 							Weight: 0,
 						},
 					},
-					CircuitBreaker: nil,
 				},
 			},
 		},
@@ -315,10 +314,7 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 			),
 			expectedFrontends: map[string]*types.Frontend{
 				"frontend-app-service-web": {
-					Backend:        "backend-app-service-web",
-					PassHostHeader: true,
-					EntryPoints:    []string{},
-					BasicAuth:      []string{},
+					Backend: "backend-app-service-web",
 					Routes: map[string]types.Route{
 						`route-host-app-service-web`: {
 							Rule: "Host:web.app.docker.localhost",
@@ -326,10 +322,7 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 					},
 				},
 				"frontend-app-service-admin": {
-					Backend:        "backend-app-service-admin",
-					PassHostHeader: true,
-					EntryPoints:    []string{},
-					BasicAuth:      []string{},
+					Backend: "backend-app-service-admin",
 					Routes: map[string]types.Route{
 						`route-host-app-service-admin`: {
 							Rule: "Host:admin.app.docker.localhost",
@@ -345,7 +338,6 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 							Weight: 0,
 						},
 					},
-					CircuitBreaker: nil,
 					MaxConn: &types.MaxConn{
 						Amount:        1000,
 						ExtractorFunc: "client.ip",
@@ -358,7 +350,6 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 							Weight: 0,
 						},
 					},
-					CircuitBreaker: nil,
 					MaxConn: &types.MaxConn{
 						Amount:        1000,
 						ExtractorFunc: "client.ip",
@@ -726,7 +717,7 @@ func TestMarathonGetPort(t *testing.T) {
 		c := c
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
-			if actual, ok := assertWithServices(provider.getServiceNames(c.application), c.expected,
+			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
 				func(serviceName string) string {
 					if value := provider.getPort(c.task, c.application, serviceName); len(value) > 0 {
 						return value
@@ -767,7 +758,7 @@ func TestMarathonGetWeight(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			if actual, ok := assertWithServices(provider.getServiceNames(c.application), c.expected,
+			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
 				func(serviceName string) string {
 					if value := provider.getWeight(c.application, serviceName); len(value) > 0 {
 						return value
@@ -841,7 +832,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			if actual, ok := assertWithServices(provider.getServiceNames(c.application), c.expected,
+			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
 				func(serviceName string) string {
 					if value := provider.getProtocol(c.application, serviceName); len(value) > 0 {
 						return value
@@ -913,7 +904,7 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			if actual, ok := assertWithServices(provider.getServiceNames(c.application), c.expected,
+			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
 				func(serviceName string) string {
 					if value := provider.getPassHostHeader(c.application, serviceName); len(value) > 0 {
 						return value
@@ -1140,7 +1131,7 @@ func TestMarathonGetFrontendRule(t *testing.T) {
 				Domain:                  "docker.localhost",
 				MarathonLBCompatibility: c.marathonLBCompatibility,
 			}
-			if actual, ok := assertWithServices(provider.getServiceNames(c.application), c.expected,
+			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
 				func(serviceName string) string {
 					if value := provider.getFrontendRule(c.application, serviceName); len(value) > 0 {
 						return value
@@ -1181,7 +1172,7 @@ func TestMarathonGetBackend(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			if actual, ok := assertWithServices(provider.getServiceNames(c.application), c.expected,
+			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
 				func(serviceName string) string {
 					if value := provider.getBackend(c.application, serviceName); len(value) > 0 {
 						return value

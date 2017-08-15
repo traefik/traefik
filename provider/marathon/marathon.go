@@ -238,10 +238,10 @@ func (p *Provider) applicationFilter(app marathon.Application) bool {
 	}
 
 	// Filter by constraints.
-	label, _ := p.getLabel(app, types.LabelTags, "")
+	label, _ := p.getAppLabel(app, types.LabelTags)
 	constraintTags := strings.Split(label, ",")
 	if p.MarathonLBCompatibility {
-		if label, ok := p.getLabel(app, "HAPROXY_GROUP", ""); ok {
+		if label, ok := p.getAppLabel(app, "HAPROXY_GROUP"); ok {
 			constraintTags = append(constraintTags, label)
 		}
 	}
@@ -260,21 +260,20 @@ func (p *Provider) taskFilter(task marathon.Task, application marathon.Applicati
 		return false
 	}
 
+	foundPort := false
 	for _, serviceName := range p.getServiceNames(application) {
-		foundPort := false
-		if port := p.getPort(task, application, serviceName); len(port) > 0 {
+		if port, err := p.mustGetPort(task, application, serviceName); len(port) > 0 && err == nil {
 			foundPort = true
 		}
-
-		if !foundPort {
-			log.Errorf("Filtering Marathon task %s from application %s without port", task.ID, application.ID)
-			return false
-		}
+	}
+	if !foundPort {
+		log.Errorf("Filtering Marathon task %s from application %s without port", task.ID, application.ID)
+		return false
 	}
 
 	// Filter illegal port label specification.
-	_, hasPortIndexLabel := p.getLabel(application, types.LabelPortIndex, "")
-	_, hasPortLabel := p.getLabel(application, types.LabelPort, "")
+	_, hasPortIndexLabel := p.getAppLabel(application, types.LabelPortIndex)
+	_, hasPortLabel := p.getAppLabel(application, types.LabelPort)
 	if hasPortIndexLabel && hasPortLabel {
 		log.Debugf("Filtering Marathon task %s from application %s specifying both traefik.portIndex and traefik.port labels", task.ID, application.ID)
 		return false
@@ -371,7 +370,7 @@ func (p *Provider) getServiceNameSuffix(serviceName string) string {
 }
 
 //getAppLabel is a convenience function to get application label, when no serviceName is available
-//it is identical in calling getLabel(application, label, "")
+//it is identical to calling getLabel(application, label, "")
 func (p *Provider) getAppLabel(application marathon.Application, label string) (string, bool) {
 	return p.getLabel(application, label, "")
 }
@@ -394,32 +393,34 @@ func (p *Provider) getLabel(application marathon.Application, label string, serv
 }
 
 func (p *Provider) getPort(task marathon.Task, application marathon.Application, serviceName string) string {
+	port, _ := p.mustGetPort(task, application, serviceName)
+	return port
+}
+
+func (p *Provider) mustGetPort(task marathon.Task, application marathon.Application, serviceName string) (string, error) {
 	if value, ok := p.getLabel(application, types.LabelPort, serviceName); ok {
 		port, err := processPorts(application, task, value, "")
 		if err != nil {
-			log.Errorf("Unable to process port value %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
-			return ""
+			return "", fmt.Errorf("Unable to process port value %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
 		}
 
-		return strconv.Itoa(port)
+		return strconv.Itoa(port), nil
 	}
 	if value, ok := p.getLabel(application, types.LabelPortIndex, serviceName); ok {
 		port, err := processPorts(application, task, "", value)
 		if err != nil {
-			log.Errorf("Unable to process port index %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
-			return ""
+			return "", fmt.Errorf("Unable to process port index %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
 		}
 
-		return strconv.Itoa(port)
+		return strconv.Itoa(port), nil
 	}
 
 	port, err := processPorts(application, task, "", "0")
 	if err != nil {
-		log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
-		return ""
+		return "", fmt.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
 	}
 
-	return strconv.Itoa(port)
+	return strconv.Itoa(port), nil
 }
 
 func (p *Provider) getWeight(application marathon.Application, serviceName string) string {
@@ -430,7 +431,7 @@ func (p *Provider) getWeight(application marathon.Application, serviceName strin
 }
 
 func (p *Provider) getDomain(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelDomain, ""); ok {
+	if label, ok := p.getAppLabel(application, types.LabelDomain); ok {
 		return label
 	}
 	return p.Domain
@@ -444,7 +445,7 @@ func (p *Provider) getProtocol(application marathon.Application, serviceName str
 }
 
 func (p *Provider) getSticky(application marathon.Application) string {
-	if sticky, ok := p.getLabel(application, types.LabelBackendLoadbalancerSticky, ""); ok {
+	if sticky, ok := p.getAppLabel(application, types.LabelBackendLoadbalancerSticky); ok {
 		return sticky
 	}
 	return "false"
@@ -472,14 +473,14 @@ func (p *Provider) getEntryPoints(application marathon.Application, serviceName 
 }
 
 // getFrontendRule returns the frontend rule for the specified application, using
-// it's label. If service is provided, it will look for serviceName label before generic one.
+// its label. If service is provided, it will look for serviceName label before generic one.
 // It returns a default one (Host) if the label is not present.
 func (p *Provider) getFrontendRule(application marathon.Application, serviceName string) string {
 	if label, ok := p.getLabel(application, types.LabelFrontendRule, serviceName); ok {
 		return label
 	}
 	if p.MarathonLBCompatibility {
-		if label, ok := p.getLabel(application, "HAPROXY_0_VHOST", ""); ok {
+		if label, ok := p.getAppLabel(application, "HAPROXY_0_VHOST"); ok {
 			return "Host:" + label
 		}
 	}
@@ -512,26 +513,26 @@ func (p *Provider) getSubDomain(name string) string {
 }
 
 func (p *Provider) hasCircuitBreakerLabels(application marathon.Application) bool {
-	_, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression, "")
+	_, ok := p.getAppLabel(application, types.LabelBackendCircuitbreakerExpression)
 	return ok
 }
 
 func (p *Provider) hasLoadBalancerLabels(application marathon.Application) bool {
-	_, errMethod := p.getLabel(application, types.LabelBackendLoadbalancerMethod, "")
-	_, errSticky := p.getLabel(application, types.LabelBackendLoadbalancerSticky, "")
+	_, errMethod := p.getAppLabel(application, types.LabelBackendLoadbalancerMethod)
+	_, errSticky := p.getAppLabel(application, types.LabelBackendLoadbalancerSticky)
 	return errMethod || errSticky
 }
 
 func (p *Provider) hasMaxConnLabels(application marathon.Application) bool {
-	if _, ok := p.getLabel(application, types.LabelBackendMaxconnAmount, ""); !ok {
+	if _, ok := p.getAppLabel(application, types.LabelBackendMaxconnAmount); !ok {
 		return false
 	}
-	_, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc, "")
+	_, ok := p.getAppLabel(application, types.LabelBackendMaxconnExtractorfunc)
 	return ok
 }
 
 func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
-	if label, ok := p.getLabel(application, types.LabelBackendMaxconnAmount, ""); ok {
+	if label, ok := p.getAppLabel(application, types.LabelBackendMaxconnAmount); ok {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
 			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
@@ -543,21 +544,21 @@ func (p *Provider) getMaxConnAmount(application marathon.Application) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendMaxconnExtractorfunc, ""); ok {
+	if label, ok := p.getAppLabel(application, types.LabelBackendMaxconnExtractorfunc); ok {
 		return label
 	}
 	return "request.host"
 }
 
 func (p *Provider) getLoadBalancerMethod(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendLoadbalancerMethod, ""); ok {
+	if label, ok := p.getAppLabel(application, types.LabelBackendLoadbalancerMethod); ok {
 		return label
 	}
 	return "wrr"
 }
 
 func (p *Provider) getCircuitBreakerExpression(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendCircuitbreakerExpression, ""); ok {
+	if label, ok := p.getAppLabel(application, types.LabelBackendCircuitbreakerExpression); ok {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"
@@ -568,14 +569,14 @@ func (p *Provider) hasHealthCheckLabels(application marathon.Application) bool {
 }
 
 func (p *Provider) getHealthCheckPath(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckPath, ""); ok {
+	if label, ok := p.getAppLabel(application, types.LabelBackendHealthcheckPath); ok {
 		return label
 	}
 	return ""
 }
 
 func (p *Provider) getHealthCheckInterval(application marathon.Application) string {
-	if label, ok := p.getLabel(application, types.LabelBackendHealthcheckInterval, ""); ok {
+	if label, ok := p.getAppLabel(application, types.LabelBackendHealthcheckInterval); ok {
 		return label
 	}
 	return ""
@@ -589,15 +590,15 @@ func (p *Provider) getBasicAuth(application marathon.Application, serviceName st
 	return []string{}
 }
 
-//processPorts validates `portValue` to be valid numeric port,
-// if its empty, proceeds to extract all ports and attempt to retrieve a port specified by the 'portIndexValue', given that its a valid integer
+//processPorts validates `portValue` to be valid numeric port.
+// if it is empty, proceeds to extract all ports and attempts to retrieve a port specified by the 'portIndexValue', given that it is a valid integer.
 // if all fails, returns first port (at index 0) from the list.
 func processPorts(application marathon.Application, task marathon.Task, portValue string, portIndexValue string) (int, error) {
 	if len(portValue) > 0 {
 		port, err := strconv.Atoi(portValue)
 		switch {
 		case err != nil:
-			return 0, fmt.Errorf("failed to parse port value (%s): %s", portValue, err)
+			return 0, fmt.Errorf("failed to parse port value %s: %s", portValue, err)
 		case port <= 0:
 			return 0, fmt.Errorf("explicitly specified port %d must be larger than zero", port)
 		}
@@ -610,12 +611,9 @@ func processPorts(application marathon.Application, task marathon.Task, portValu
 	}
 
 	if len(portIndexValue) > 0 {
-		portIndex, err := strconv.Atoi(portIndexValue)
-		switch {
-		case err != nil:
-			return 0, fmt.Errorf("failed to parse port index value (%s): %s", portIndexValue, err)
-		case portIndex < 0:
-			return 0, fmt.Errorf("explicitly specified port index %d must be larger or equal to zero", portIndex)
+		portIndex, err := parseIndex(portIndexValue, len(ports))
+		if err != nil {
+			return 0, fmt.Errorf("cannot use port index to select from %d ports: %s", len(ports), err)
 		}
 		return ports[portIndex], nil
 	}
@@ -661,7 +659,7 @@ func (p *Provider) getBackendServer(task marathon.Task, application marathon.App
 	case numTaskIPAddresses == 1:
 		return task.IPAddresses[0].IPAddress
 	default:
-		ipAddressIdxStr, ok := p.getLabel(application, "traefik.ipAddressIdx", "")
+		ipAddressIdxStr, ok := p.getAppLabel(application, "traefik.ipAddressIdx")
 		if !ok {
 			log.Errorf("Found %d task IP addresses but missing IP address index for Marathon application %s on task %s", numTaskIPAddresses, application.ID, task.ID)
 			return ""
