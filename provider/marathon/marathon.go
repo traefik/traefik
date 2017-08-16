@@ -260,15 +260,11 @@ func (p *Provider) taskFilter(task marathon.Task, application marathon.Applicati
 		return false
 	}
 
-	foundPort := false
 	for _, serviceName := range p.getServiceNames(application) {
-		if port, err := p.mustGetPort(task, application, serviceName); len(port) > 0 && err == nil {
-			foundPort = true
+		if _, err := p.processPorts(application, task, serviceName); err != nil {
+			log.Errorf("Filtering Marathon task %s from application %s without port", task.ID, application.ID)
+			return false
 		}
-	}
-	if !foundPort {
-		log.Errorf("Filtering Marathon task %s from application %s without port", task.ID, application.ID)
-		return false
 	}
 
 	// Filter illegal port label specification.
@@ -393,34 +389,13 @@ func (p *Provider) getLabel(application marathon.Application, label string, serv
 }
 
 func (p *Provider) getPort(task marathon.Task, application marathon.Application, serviceName string) string {
-	port, _ := p.mustGetPort(task, application, serviceName)
-	return port
-}
-
-func (p *Provider) mustGetPort(task marathon.Task, application marathon.Application, serviceName string) (string, error) {
-	if value, ok := p.getLabel(application, types.LabelPort, serviceName); ok {
-		port, err := processPorts(application, task, value, "")
-		if err != nil {
-			return "", fmt.Errorf("unable to process port value %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
-		}
-
-		return strconv.Itoa(port), nil
-	}
-	if value, ok := p.getLabel(application, types.LabelPortIndex, serviceName); ok {
-		port, err := processPorts(application, task, "", value)
-		if err != nil {
-			return "", fmt.Errorf("unable to process port index %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
-		}
-
-		return strconv.Itoa(port), nil
-	}
-
-	port, err := processPorts(application, task, "", "0")
+	port, err := p.processPorts(application, task, serviceName)
 	if err != nil {
-		return "", fmt.Errorf("unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
+		log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
+		return ""
 	}
 
-	return strconv.Itoa(port), nil
+	return strconv.Itoa(port)
 }
 
 func (p *Provider) getWeight(application marathon.Application, serviceName string) string {
@@ -590,15 +565,16 @@ func (p *Provider) getBasicAuth(application marathon.Application, serviceName st
 	return []string{}
 }
 
-//processPorts validates `portValue` to be valid numeric port.
-// if it is empty, proceeds to extract all ports and attempts to retrieve a port specified by the 'portIndexValue', given that it is a valid integer.
-// if all fails, returns first port (at index 0) from the list.
-func processPorts(application marathon.Application, task marathon.Task, portValue, portIndexValue string) (int, error) {
-	if len(portValue) > 0 {
-		port, err := strconv.Atoi(portValue)
+// processPorts returns the configured port.
+// An explicitly specified port is preferred. If none is specified, it selects
+// one of the available port. The first such found port is returned unless an
+// optional index is provided.
+func (p *Provider) processPorts(application marathon.Application, task marathon.Task, serviceName string) (int, error) {
+	if portLabel, ok := p.getLabel(application, types.LabelPort, serviceName); ok {
+		port, err := strconv.Atoi(portLabel)
 		switch {
 		case err != nil:
-			return 0, fmt.Errorf("failed to parse port value %s: %s", portValue, err)
+			return 0, fmt.Errorf("failed to parse port label %q: %s", portLabel, err)
 		case port <= 0:
 			return 0, fmt.Errorf("explicitly specified port %d must be larger than zero", port)
 		}
@@ -610,14 +586,15 @@ func processPorts(application marathon.Application, task marathon.Task, portValu
 		return 0, errors.New("no port found")
 	}
 
-	if len(portIndexValue) > 0 {
-		portIndex, err := parseIndex(portIndexValue, len(ports))
+	portIndex := 0
+	if portIndexLabel, ok := p.getLabel(application, types.LabelPortIndex, serviceName); ok {
+		var err error
+		portIndex, err = parseIndex(portIndexLabel, len(ports))
 		if err != nil {
 			return 0, fmt.Errorf("cannot use port index to select from %d ports: %s", len(ports), err)
 		}
-		return ports[portIndex], nil
 	}
-	return ports[0], nil
+	return ports[portIndex], nil
 }
 
 func retrieveAvailablePorts(application marathon.Application, task marathon.Task) []int {
@@ -679,7 +656,7 @@ func parseIndex(index string, length int) (int, error) {
 	parsed, err := strconv.Atoi(index)
 	switch {
 	case err != nil:
-		return 0, fmt.Errorf("failed to parse index '%s': %s", index, err)
+		return 0, fmt.Errorf("failed to parse index %q: %s", index, err)
 	case parsed < 0, parsed > length-1:
 		return 0, fmt.Errorf("index %d must be within range (0, %d)", parsed, length-1)
 	}
