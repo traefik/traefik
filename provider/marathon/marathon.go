@@ -211,7 +211,11 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 	filteredApps := fun.Filter(p.applicationFilter, applications.Apps).([]marathon.Application)
 	for i, app := range filteredApps {
 		filteredApps[i].Tasks = fun.Filter(func(task *marathon.Task) bool {
-			return p.taskFilter(*task, app)
+			filtered := p.taskFilter(*task, app)
+			if filtered {
+				p.logIllegalServices(*task, app)
+			}
+			return filtered
 		}, app.Tasks).([]*marathon.Task)
 	}
 
@@ -260,21 +264,6 @@ func (p *Provider) taskFilter(task marathon.Task, application marathon.Applicati
 		return false
 	}
 
-	for _, serviceName := range p.getServiceNames(application) {
-		if _, err := p.processPorts(application, task, serviceName); err != nil {
-			log.Errorf("Filtering Marathon task %s from application %s without port", task.ID, application.ID)
-			return false
-		}
-	}
-
-	// Filter illegal port label specification.
-	_, hasPortIndexLabel := p.getAppLabel(application, types.LabelPortIndex)
-	_, hasPortLabel := p.getAppLabel(application, types.LabelPort)
-	if hasPortIndexLabel && hasPortLabel {
-		log.Debugf("Filtering Marathon task %s from application %s specifying both traefik.portIndex and traefik.port labels", task.ID, application.ID)
-		return false
-	}
-
 	// Filter task with existing, bad health check results.
 	if application.HasHealthChecks() {
 		if task.HasHealthCheckResults() {
@@ -297,6 +286,26 @@ func (p *Provider) taskFilter(task marathon.Task, application marathon.Applicati
 
 func isApplicationEnabled(application marathon.Application, exposedByDefault bool) bool {
 	return exposedByDefault && (*application.Labels)[types.LabelEnable] != "false" || (*application.Labels)[types.LabelEnable] == "true"
+}
+
+// logIllegalServices logs illegal service configurations.
+// While we cannot filter on the service level, they will eventually get
+// rejected once the server configuration is rendered.
+func (p *Provider) logIllegalServices(task marathon.Task, application marathon.Application) {
+	for _, serviceName := range p.getServiceNames(application) {
+		// Check for illegal/missing ports.
+		if _, err := p.processPorts(application, task, serviceName); err != nil {
+			log.Warnf("%s has an illegal configuration: no proper port available", identifier(application, task, serviceName))
+			continue
+		}
+
+		// Check for illegal port label combinations.
+		_, hasPortLabel := p.getLabel(application, types.LabelPort, serviceName)
+		_, hasPortIndexLabel := p.getLabel(application, types.LabelPortIndex, serviceName)
+		if hasPortLabel && hasPortIndexLabel {
+			log.Warnf("%s has both port and port index specified; port will take precedence", identifier(application, task, serviceName))
+		}
+	}
 }
 
 //servicePropertyValues is a map of services properties
@@ -391,7 +400,7 @@ func (p *Provider) getLabel(application marathon.Application, label string, serv
 func (p *Provider) getPort(task marathon.Task, application marathon.Application, serviceName string) string {
 	port, err := p.processPorts(application, task, serviceName)
 	if err != nil {
-		log.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
+		log.Errorf("Unable to process ports for %s: %s", identifier(application, task, serviceName), err)
 		return ""
 	}
 
@@ -662,4 +671,12 @@ func parseIndex(index string, length int) (int, error) {
 	}
 
 	return parsed, nil
+}
+
+func identifier(app marathon.Application, task marathon.Task, serviceName string) string {
+	id := fmt.Sprintf("Marathon task %s from application %s", task.ID, app.ID)
+	if serviceName != "" {
+		id += fmt.Sprintf(" (service: %s)", serviceName)
+	}
+	return id
 }
