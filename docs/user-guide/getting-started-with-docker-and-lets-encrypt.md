@@ -2,7 +2,7 @@
 In this use case, we want to use Traefik as a *layer-7* load balancer with SSL termination for a set of microservices used to run a webapplication. We also want to automatically *discover any services* on the Docker host and let Traefik reconfigure itself automatically when containers get created (or shut down) so HTTP traffic can be routed accordingly. In addition, we want to use Let's Encrypt to automatically generate and renew SSL certificates per hostname.
 
 ## Setting up
-In order for this to work, you'll need a server with a public IP address, with Docker installed on it. In this example, we're using the fictitious domain *my-awesome-app.org". In real-life, you'll want to use your own domain and have the DNS configured accordingly so the hostname records you'll want to use point to the aforementioned public IP address.
+In order for this to work, you'll need a server with a public IP address, with Docker installed on it. In this example, we're using the fictitious domain *my-awesome-app.org*. In real-life, you'll want to use your own domain and have the DNS configured accordingly so the hostname records you'll want to use point to the aforementioned public IP address.
 
 ## Networking
 Docker containers can only communicate with each other over TCP when they share at least one network. This makes sense from a topological point of view in the context of networking, since Docker under the hood creates IPTable rules so containers can't reach other containers *unless you'd want to*. In this example, we're going to use a single network called `web` where all containers that are handling HTTP traffic (including Traefik) will reside in.
@@ -19,7 +19,7 @@ Within this directory, we're going to create 3 empty files:
 
 ```sh
 $ touch /opt/traefik/docker-compose.yml
-$ touch /opt/traefik/acme.json
+$ touch /opt/traefik/acme.json && chmod 600 /opt/traefik/acme.json
 $ touch /opt/traefik/traefik.toml
 ```
 
@@ -88,7 +88,7 @@ This is the minimum configuration required to do the following:
 - Log `ERROR`-level messages (or more severe) to the console, but silence `DEBUG`-level messagse
 - Check for new versions of Traefik periodically
 - Create two entrypoints, namely an `HTTP` endpoint on port `80`, and an `HTTPS` endpoint on port `443` where all incoming traffic on port `80` will immediately get redirected to `HTTPS`.
-- Enable the Docker configuration backend and listen for container events on the Docker unix socket we've mounted earlier. However, **new containers will not be exposed by Traefik by default, we'll get into this in a bit!*
+- Enable the Docker configuration backend and listen for container events on the Docker unix socket we've mounted earlier. However, **new containers will not be exposed by Traefik by default, we'll get into this in a bit!**
 - Enable automatic request and configuration of SSL certificates using Let's Encrypt. These certificates will be stored in the `acme.json` file, which you can back-up yourself and store off-premises.
 
 Alright, let's boot the container. From the `/opt/traefik` directory, run `$ docker-compose up -d` which will create and start the Traefik container.
