@@ -401,7 +401,7 @@ func (p *Provider) mustGetPort(task marathon.Task, application marathon.Applicat
 	if value, ok := p.getLabel(application, types.LabelPort, serviceName); ok {
 		port, err := processPorts(application, task, value, "")
 		if err != nil {
-			return "", fmt.Errorf("Unable to process port value %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
+			return "", fmt.Errorf("unable to process port value %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
 		}
 
 		return strconv.Itoa(port), nil
@@ -409,7 +409,7 @@ func (p *Provider) mustGetPort(task marathon.Task, application marathon.Applicat
 	if value, ok := p.getLabel(application, types.LabelPortIndex, serviceName); ok {
 		port, err := processPorts(application, task, "", value)
 		if err != nil {
-			return "", fmt.Errorf("Unable to process port index %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
+			return "", fmt.Errorf("unable to process port index %s for Marathon application %s and task %s: %s", value, application.ID, task.ID, err)
 		}
 
 		return strconv.Itoa(port), nil
@@ -417,7 +417,7 @@ func (p *Provider) mustGetPort(task marathon.Task, application marathon.Applicat
 
 	port, err := processPorts(application, task, "", "0")
 	if err != nil {
-		return "", fmt.Errorf("Unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
+		return "", fmt.Errorf("unable to process ports for Marathon application %s and task %s: %s", application.ID, task.ID, err)
 	}
 
 	return strconv.Itoa(port), nil
@@ -593,7 +593,7 @@ func (p *Provider) getBasicAuth(application marathon.Application, serviceName st
 //processPorts validates `portValue` to be valid numeric port.
 // if it is empty, proceeds to extract all ports and attempts to retrieve a port specified by the 'portIndexValue', given that it is a valid integer.
 // if all fails, returns first port (at index 0) from the list.
-func processPorts(application marathon.Application, task marathon.Task, portValue string, portIndexValue string) (int, error) {
+func processPorts(application marathon.Application, task marathon.Task, portValue, portIndexValue string) (int, error) {
 	if len(portValue) > 0 {
 		port, err := strconv.Atoi(portValue)
 		switch {

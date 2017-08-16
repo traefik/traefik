@@ -45,13 +45,14 @@ func label(key, value string) func(*marathon.Application) {
 }
 
 func labelWithService(key, value string, serviceName string) func(*marathon.Application) {
-	if len(serviceName) > 0 {
-		property := strings.TrimPrefix(key, types.LabelPrefix)
-		return func(app *marathon.Application) {
-			app.AddLabel(types.LabelPrefix+serviceName+"."+property, value)
-		}
+	if len(serviceName) == 0 {
+		panic("serviceName can not be empty")
 	}
-	return label(key, value)
+
+	property := strings.TrimPrefix(key, types.LabelPrefix)
+	return func(app *marathon.Application) {
+		app.AddLabel(types.LabelPrefix+serviceName+"."+property, value)
+	}
 }
 
 func healthChecks(checks ...*marathon.HealthCheck) func(*marathon.Application) {

@@ -30,17 +30,6 @@ func newFakeClient(applicationsError bool, applications marathon.Applications) *
 	return fakeClient
 }
 
-func compareValuesWithServices(serviceNames []string, expected string, getActual func(string) string) (string, bool) {
-	actual := ""
-	for _, serviceName := range serviceNames {
-		value := getActual(serviceName)
-		if len(value) > 0 {
-			actual = value
-		}
-	}
-	return actual, actual == expected
-}
-
 func TestMarathonLoadConfigAPIErrors(t *testing.T) {
 	fakeClient := newFakeClient(true, marathon.Applications{})
 	provider := &Provider{
@@ -623,6 +612,7 @@ func TestMarathonGetPort(t *testing.T) {
 		desc        string
 		application marathon.Application
 		task        marathon.Task
+		serviceName string
 		expected    string
 	}{
 		{
@@ -697,18 +687,21 @@ func TestMarathonGetPort(t *testing.T) {
 			desc:        "multiple task ports with service index available",
 			application: createApplication(label(types.LabelPrefix+"http.portIndex", "0")),
 			task:        createTask(taskPorts(80, 443)),
+			serviceName: "http",
 			expected:    "80",
 		},
 		{
 			desc:        "multiple task ports with service port available",
 			application: createApplication(label(types.LabelPrefix+"https.port", "443")),
 			task:        createTask(taskPorts(80, 443)),
+			serviceName: "https",
 			expected:    "443",
 		},
 		{
 			desc:        "multiple task ports with services but default port available",
 			application: createApplication(label(types.LabelPrefix+"http.weight", "100")),
 			task:        createTask(taskPorts(80, 443)),
+			serviceName: "http",
 			expected:    "80",
 		},
 	}
@@ -717,13 +710,8 @@ func TestMarathonGetPort(t *testing.T) {
 		c := c
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
-			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
-				func(serviceName string) string {
-					if value := provider.getPort(c.task, c.application, serviceName); len(value) > 0 {
-						return value
-					}
-					return ""
-				}); !ok {
+			actual := provider.getPort(c.task, c.application, c.serviceName)
+			if actual != c.expected {
 				t.Errorf("actual %q, expected %q", c.expected, actual)
 			}
 		})
@@ -734,6 +722,7 @@ func TestMarathonGetWeight(t *testing.T) {
 	cases := []struct {
 		desc        string
 		application marathon.Application
+		serviceName string
 		expected    string
 	}{
 		{
@@ -749,6 +738,7 @@ func TestMarathonGetWeight(t *testing.T) {
 		{
 			desc:        "service label existing",
 			application: createApplication(labelWithService(types.LabelWeight, "10", "app")),
+			serviceName: "app",
 			expected:    "10",
 		},
 	}
@@ -758,14 +748,9 @@ func TestMarathonGetWeight(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
-				func(serviceName string) string {
-					if value := provider.getWeight(c.application, serviceName); len(value) > 0 {
-						return value
-					}
-					return ""
-				}); !ok {
-				t.Errorf("actual %q, expected %q", c.expected, actual)
+			actual := provider.getWeight(c.application, c.serviceName)
+			if actual != c.expected {
+				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
 		})
 	}
@@ -808,6 +793,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 	cases := []struct {
 		desc        string
 		application marathon.Application
+		serviceName string
 		expected    string
 	}{
 		{
@@ -823,6 +809,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 		{
 			desc:        "service label existing",
 			application: createApplication(labelWithService(types.LabelProtocol, "https", "app")),
+			serviceName: "app",
 			expected:    "https",
 		},
 	}
@@ -832,14 +819,9 @@ func TestMarathonGetProtocol(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
-				func(serviceName string) string {
-					if value := provider.getProtocol(c.application, serviceName); len(value) > 0 {
-						return value
-					}
-					return ""
-				}); !ok {
-				t.Errorf("actual %q, expected %q", c.expected, actual)
+			actual := provider.getProtocol(c.application, c.serviceName)
+			if actual != c.expected {
+				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
 		})
 	}
@@ -880,6 +862,7 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 	cases := []struct {
 		desc        string
 		application marathon.Application
+		serviceName string
 		expected    string
 	}{
 		{
@@ -895,6 +878,7 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 		{
 			desc:        "label existing",
 			application: createApplication(labelWithService(types.LabelFrontendPassHostHeader, "false", "app")),
+			serviceName: "app",
 			expected:    "false",
 		},
 	}
@@ -904,14 +888,9 @@ func TestMarathonGetPassHostHeader(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
-				func(serviceName string) string {
-					if value := provider.getPassHostHeader(c.application, serviceName); len(value) > 0 {
-						return value
-					}
-					return ""
-				}); !ok {
-				t.Errorf("actual %q, expected %q", c.expected, actual)
+			actual := provider.getPassHostHeader(c.application, c.serviceName)
+			if actual != c.expected {
+				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
 		})
 	}
@@ -1081,6 +1060,7 @@ func TestMarathonGetFrontendRule(t *testing.T) {
 	cases := []struct {
 		desc                    string
 		application             marathon.Application
+		serviceName             string
 		expected                string
 		marathonLBCompatibility bool
 	}{
@@ -1118,6 +1098,7 @@ func TestMarathonGetFrontendRule(t *testing.T) {
 		{
 			desc:                    "service label existing",
 			application:             createApplication(labelWithService(types.LabelFrontendRule, "Host:foo.bar", "app")),
+			serviceName:             "app",
 			marathonLBCompatibility: true,
 			expected:                "Host:foo.bar",
 		},
@@ -1131,14 +1112,9 @@ func TestMarathonGetFrontendRule(t *testing.T) {
 				Domain:                  "docker.localhost",
 				MarathonLBCompatibility: c.marathonLBCompatibility,
 			}
-			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
-				func(serviceName string) string {
-					if value := provider.getFrontendRule(c.application, serviceName); len(value) > 0 {
-						return value
-					}
-					return ""
-				}); !ok {
-				t.Errorf("actual %q, expected %q", c.expected, actual)
+			actual := provider.getFrontendRule(c.application, c.serviceName)
+			if actual != c.expected {
+				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
 		})
 	}
@@ -1148,6 +1124,7 @@ func TestMarathonGetBackend(t *testing.T) {
 	cases := []struct {
 		desc        string
 		application marathon.Application
+		serviceName string
 		expected    string
 	}{
 		{
@@ -1163,6 +1140,7 @@ func TestMarathonGetBackend(t *testing.T) {
 		{
 			desc:        "service label existing",
 			application: createApplication(labelWithService(types.LabelBackend, "bar", "app")),
+			serviceName: "app",
 			expected:    "bar",
 		},
 	}
@@ -1172,14 +1150,9 @@ func TestMarathonGetBackend(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			if actual, ok := compareValuesWithServices(provider.getServiceNames(c.application), c.expected,
-				func(serviceName string) string {
-					if value := provider.getBackend(c.application, serviceName); len(value) > 0 {
-						return value
-					}
-					return ""
-				}); !ok {
-				t.Errorf("actual %q, expected %q", c.expected, actual)
+			actual := provider.getBackend(c.application, c.serviceName)
+			if actual != c.expected {
+				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
 		})
 	}
