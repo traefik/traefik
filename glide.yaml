@@ -12,7 +12,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
-  version: d40fb60c9a1620892a6fc146dcdc891fb02bd488
+  version: 3772a8e4408fb033d00a947d340475e116854b1a
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
