@@ -435,6 +435,15 @@ func TestMarathonTaskFilter(t *testing.T) {
 			expected: false,
 		},
 		{
+			desc: "single service missing port",
+			task: createTask(taskPorts(80, 81)),
+			application: createApplication(
+				appPorts(80, 81),
+				labelWithService(types.LabelPort, "81", "admin"),
+			),
+			expected: true,
+		},
+		{
 			desc: "healthcheck available",
 			task: task(taskPorts(80)),
 			application: application(
