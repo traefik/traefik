@@ -126,6 +126,8 @@ Supported backends:
 - Etcd
 - Consul Catalog
 - Rancher
+- Marathon
+- Kubernetes (using a provider-specific mechanism based on label selectors)
 
 Supported filters:
 
