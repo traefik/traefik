@@ -54,6 +54,8 @@ type Server struct {
 	routinesPool                  *safe.Pool
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
+	metricsRegistry            metrics.Registry
+	metricsEnabled             bool
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -87,6 +89,11 @@ func NewServer(globalConfiguration GlobalConfiguration) *Server {
 	server.globalConfiguration = globalConfiguration
 	server.routinesPool = safe.NewPool(context.Background())
 	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
+
+	server.metricsRegistry = metrics.NewVoidRegistry()
+	if globalConfiguration.Web != nil && globalConfiguration.Web.Metrics != nil {
+		server.registerMetricClients(globalConfiguration.Web.Metrics)
+	}
 
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
@@ -216,7 +223,7 @@ func (server *Server) Close() {
 			os.Exit(1)
 		}
 	}(ctx)
-	stopMetricsClients(server.globalConfiguration)
+	stopMetricsClients()
 	server.stopLeadership()
 	server.routinesPool.Cleanup()
 	close(server.configurationChan)
@@ -258,10 +265,8 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 	if server.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 	}
-	initializeMetricsClients(server.globalConfiguration)
-	metrics := newMetrics(server.globalConfiguration, newServerEntryPointName)
-	if metrics != nil {
-		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(metrics))
+	if server.metricsEnabled {
+		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(server.metricsRegistry, newServerEntryPointName))
 	}
 	if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
 		statsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Web.Statistics.RecentErrors)
@@ -880,14 +885,12 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						}
 					}
 
-					metrics := newMetrics(server.globalConfiguration, frontend.Backend)
-
 					if globalConfiguration.Retry != nil {
-						retryListener := middlewares.NewMetricsRetryListener(metrics)
+						retryListener := middlewares.NewMetricsRetryListener(server.metricsRegistry, frontend.Backend)
 						lb = registerRetryMiddleware(lb, globalConfiguration, configuration, frontend.Backend, retryListener)
 					}
-					if metrics != nil {
-						negroni.Use(middlewares.NewMetricsWrapper(metrics))
+					if server.metricsEnabled {
+						negroni.Use(middlewares.NewMetricsWrapper(server.metricsRegistry, frontend.Backend))
 					}
 
 					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
@@ -1136,54 +1139,31 @@ func (*Server) configureBackends(backends map[string]*types.Backend) {
 	}
 }
 
-// newMetrics instantiates the proper Metrics implementation, depending on the global configuration.
-// Note that given there is no metrics instrumentation configured, it will return nil.
-func newMetrics(globalConfig GlobalConfiguration, name string) middlewares.Metrics {
-	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
-	if metricsEnabled {
-		// Create MultiMetric
-		metrics := []middlewares.Metrics{}
+func (server *Server) registerMetricClients(metricsConfig *types.Metrics) {
+	registries := []metrics.Registry{}
 
-		if globalConfig.Web.Metrics.Prometheus != nil {
-			metric, _, err := middlewares.NewPrometheus(name, globalConfig.Web.Metrics.Prometheus)
-			if err != nil {
-				log.Errorf("Error creating Prometheus metrics implementation: %s", err)
-			}
-			log.Debug("Configured Prometheus metrics")
-			metrics = append(metrics, metric)
-		}
-		if globalConfig.Web.Metrics.Datadog != nil {
-			metric := middlewares.NewDataDog(name)
-			log.Debugf("Configured DataDog metrics pushing to %s once every %s", globalConfig.Web.Metrics.Datadog.Address, globalConfig.Web.Metrics.Datadog.PushInterval)
-			metrics = append(metrics, metric)
-		}
-		if globalConfig.Web.Metrics.StatsD != nil {
-			metric := middlewares.NewStatsD(name)
-			log.Debugf("Configured StatsD metrics pushing to %s once every %s", globalConfig.Web.Metrics.StatsD.Address, globalConfig.Web.Metrics.StatsD.PushInterval)
-			metrics = append(metrics, metric)
-		}
-
-		return middlewares.NewMultiMetrics(metrics)
+	if metricsConfig.Prometheus != nil {
+		registries = append(registries, metrics.RegisterPrometheus(metricsConfig.Prometheus))
+		log.Debug("Configured Prometheus metrics")
+	}
+	if metricsConfig.Datadog != nil {
+		registries = append(registries, metrics.RegisterDatadog(metricsConfig.Datadog))
+		log.Debugf("Configured DataDog metrics pushing to %s once every %s", metricsConfig.Datadog.Address, metricsConfig.Datadog.PushInterval)
+	}
+	if metricsConfig.StatsD != nil {
+		registries = append(registries, metrics.RegisterStatsd(metricsConfig.StatsD))
+		log.Debugf("Configured StatsD metrics pushing to %s once every %s", metricsConfig.StatsD.Address, metricsConfig.StatsD.PushInterval)
 	}
 
-	return nil
-}
-
-func initializeMetricsClients(globalConfig GlobalConfiguration) {
-	metricsEnabled := globalConfig.Web != nil && globalConfig.Web.Metrics != nil
-	if metricsEnabled {
-		if globalConfig.Web.Metrics.Datadog != nil {
-			middlewares.InitDatadogClient(globalConfig.Web.Metrics.Datadog)
-		}
-		if globalConfig.Web.Metrics.StatsD != nil {
-			middlewares.InitStatsdClient(globalConfig.Web.Metrics.StatsD)
-		}
+	if len(registries) > 0 {
+		server.metricsEnabled = true
+		server.metricsRegistry = metrics.NewMultiRegistry(registries)
 	}
 }
 
-func stopMetricsClients(globalConfig GlobalConfiguration) {
-	middlewares.StopDatadogClient()
-	middlewares.StopStatsdClient()
+func stopMetricsClients() {
+	metrics.StopDatadog()
+	metrics.StopStatsd()
 }
 
 func registerRetryMiddleware(
