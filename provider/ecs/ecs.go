@@ -470,7 +470,7 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 }
 
 func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
-	for len(instances) > 0 {
+	if len(instances) > 0 {
 		label := instances[0].label(types.LabelBackendLoadbalancerSticky)
 		if label != "" {
 			return label
@@ -480,7 +480,7 @@ func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
 }
 
 func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {
-	for len(instances) > 0 {
+	if len(instances) > 0 {
 		label := instances[0].label(types.LabelBackendLoadbalancerMethod)
 		if label != "" {
 			return label
