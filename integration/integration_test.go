@@ -40,6 +40,7 @@ func init() {
 	check.Suite(&ErrorPagesSuite{})
 	check.Suite(&WebsocketSuite{})
 	check.Suite(&GRPCSuite{})
+	check.Suite(&LogRotationSuite{})
 }
 
 var traefikBinary = "../dist/traefik"

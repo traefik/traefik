@@ -12,7 +12,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
-  version: 05a57556d820dc5c56721ebdefbafc15f36fac98
+  version: d40fb60c9a1620892a6fc146dcdc891fb02bd488
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -198,10 +198,12 @@ import:
   version: 04cdfd42973bb9c8589fd6a731800cf222fde1a9
   subpackages:
   - spew
+- package: github.com/Masterminds/sprig
+  version: e039e20e500c2c025d9145be375e27cf42a94174
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose
-  version: 0ad950cbeb3d72107613dd220b5e9d7e001b890b
+  version: 1b708aac26a4fc6f9bff31728a8e3a252ef57dbd
 - package: github.com/go-check/check
   version: 11d3bc7aa68e238947792f30573146a3231fc0f1
 - package: github.com/libkermit/compose

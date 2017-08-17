@@ -31,8 +31,9 @@ const (
 
 // LogHandler will write each request and its response to the access log.
 type LogHandler struct {
-	logger *logrus.Logger
-	file   *os.File
+	logger   *logrus.Logger
+	file     *os.File
+	filePath string
 }
 
 // NewLogHandler creates a new LogHandler
@@ -63,7 +64,7 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		Hooks:     make(logrus.LevelHooks),
 		Level:     logrus.InfoLevel,
 	}
-	return &LogHandler{logger: logger, file: file}, nil
+	return &LogHandler{logger: logger, file: file, filePath: config.FilePath}, nil
 }
 
 func openAccessLogFile(filePath string) (*os.File, error) {
@@ -137,6 +138,22 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 // Close closes the Logger (i.e. the file etc).
 func (l *LogHandler) Close() error {
 	return l.file.Close()
+}
+
+// Rotate closes and reopens the log file to allow for rotation
+// by an external source.
+func (l *LogHandler) Rotate() error {
+	var err error
+	if err = l.Close(); err != nil {
+		return err
+	}
+
+	l.file, err = os.OpenFile(l.filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
+	if err != nil {
+		return err
+	}
+	l.logger.Out = l.file
+	return nil
 }
 
 func silentSplitHostPort(value string) (host string, port string) {

@@ -12,22 +12,26 @@ import (
 )
 
 // HealthCheck test suites (using libcompose)
-type HealthCheckSuite struct{ BaseSuite }
+type HealthCheckSuite struct {
+	BaseSuite
+	whoami1IP string
+	whoami2IP string
+}
 
 func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "healthcheck")
 	s.composeProject.Start(c)
+
+	s.whoami1IP = s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	s.whoami2IP = s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
 }
 
 func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 
-	whoami1Host := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	whoami2Host := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
-
 	file := s.adaptFile(c, "fixtures/healthcheck/simple.toml", struct {
 		Server1 string
 		Server2 string
-	}{whoami1Host, whoami2Host})
+	}{s.whoami1IP, s.whoami2IP})
 	defer os.Remove(file)
 
 	cmd, _ := s.cmdTraefik(withConfigFile(file))
@@ -48,7 +52,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 
 	// Fix all whoami health to 500
 	client := &http.Client{}
-	whoamiHosts := []string{whoami1Host, whoami2Host}
+	whoamiHosts := []string{s.whoami1IP, s.whoami2IP}
 	for _, whoami := range whoamiHosts {
 		statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+whoami+"/health", bytes.NewBuffer([]byte("500")))
 		c.Assert(err, checker.IsNil)
@@ -64,7 +68,7 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Change one whoami health to 200
-	statusOKReq1, err := http.NewRequest(http.MethodPost, "http://"+whoami1Host+"/health", bytes.NewBuffer([]byte("200")))
+	statusOKReq1, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("200")))
 	c.Assert(err, checker.IsNil)
 	_, err = client.Do(statusOKReq1)
 	c.Assert(err, checker.IsNil)
@@ -78,11 +82,11 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	frontendReq.Host = "test.localhost"
 
 	// Check if whoami1 responds
-	err = try.Request(frontendReq, 500*time.Millisecond, try.BodyContains(whoami1Host))
+	err = try.Request(frontendReq, 500*time.Millisecond, try.BodyContains(s.whoami1IP))
 	c.Assert(err, checker.IsNil)
 
 	// Check if the service with bad health check (whoami2) never respond.
-	err = try.Request(frontendReq, 2*time.Second, try.BodyContains(whoami2Host))
+	err = try.Request(frontendReq, 2*time.Second, try.BodyContains(s.whoami2IP))
 	c.Assert(err, checker.Not(checker.IsNil))
 
 	// TODO validate : run on 80
@@ -91,4 +95,71 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	// Expected a 404 as we did not configure anything
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
+}
+
+func (s *HealthCheckSuite) TestMultipleEntrypointsWrr(c *check.C) {
+	s.doTestMultipleEntrypoints(c, "fixtures/healthcheck/multiple-entrypoints-wrr.toml")
+}
+
+func (s *HealthCheckSuite) TestMultipleEntrypointsDrr(c *check.C) {
+	s.doTestMultipleEntrypoints(c, "fixtures/healthcheck/multiple-entrypoints-drr.toml")
+}
+
+func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string) {
+	file := s.adaptFile(c, fixture, struct {
+		Server1 string
+		Server2 string
+	}{s.whoami1IP, s.whoami2IP})
+	defer os.Remove(file)
+
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Wait for traefik
+	err = try.GetRequest("http://localhost:8080/api/providers", 60*time.Second, try.BodyContains("Host:test.localhost"))
+	c.Assert(err, checker.IsNil)
+
+	// Check entrypoint http1
+	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
+	c.Assert(err, checker.IsNil)
+	frontendHealthReq.Host = "test.localhost"
+
+	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	// Check entrypoint http2
+	frontendHealthReq, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:9000/health", nil)
+	c.Assert(err, checker.IsNil)
+	frontendHealthReq.Host = "test.localhost"
+
+	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	// Set one whoami health to 500
+	client := &http.Client{}
+	statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("500")))
+	c.Assert(err, checker.IsNil)
+	_, err = client.Do(statusInternalServerErrorReq)
+	c.Assert(err, checker.IsNil)
+
+	// Waiting for Traefik healthcheck
+	try.Sleep(2 * time.Second)
+
+	frontend1Req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	frontend1Req.Host = "test.localhost"
+
+	frontend2Req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:9000/", nil)
+	c.Assert(err, checker.IsNil)
+	frontend2Req.Host = "test.localhost"
+
+	// Check if whoami1 never responds
+	err = try.Request(frontend2Req, 2*time.Second, try.BodyContains(s.whoami1IP))
+	c.Assert(err, checker.Not(checker.IsNil))
+
+	// Check if whoami1 never responds
+	err = try.Request(frontend1Req, 2*time.Second, try.BodyContains(s.whoami1IP))
+	c.Assert(err, checker.Not(checker.IsNil))
 }

@@ -1,0 +1,34 @@
+################################################################
+# Global configuration
+################################################################
+traefikLogsFile = "traefik.log"
+accessLogsFile = "access.log"
+logLevel = "ERROR"
+defaultEntryPoints = ["http"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+################################################################
+# Web configuration backend
+################################################################
+[web]
+address = ":7888"
+
+################################################################
+# File configuration backend
+################################################################
+[file]
+
+################################################################
+# rules
+################################################################
+ [backends]
+   [backends.backend1]
+     [backends.backend1.servers.server1]
+       url = "http://127.0.0.1:8081"
+  [frontends]
+   [frontends.frontend1]
+   backend = "backend1"
+     [frontends.frontend1.routes.test_1]
+     rule = "Path: /test1"

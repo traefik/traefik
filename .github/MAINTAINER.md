@@ -1,5 +1,17 @@
 # Maintainers
 
+## The team
+
+- Emile Vauge [@emilevauge](https://github.com/emilevauge)
+- Vincent Demeester [@vdemeester](https://github.com/vdemeester)
+- Ed Robinson [@errm](https://github.com/errm)
+- Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
+- Manuel Zapf [@SantoDE](https://github.com/SantoDE)
+- Timo Reimann [@timoreimann](https://github.com/timoreimann)
+- Ludovic Fernandez [@ldez](https://github.com/ldez)
+- Julien Salleyron [@juliens](https://github.com/juliens)
+- Nicolas Mengin [@nmengin](https://github.com/nmengin)
+
 ## Labels
 
 If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
@@ -7,6 +19,7 @@ If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
 ### Contributor
 
 * `contributor/need-more-information`: we need more information from the contributor in order to analyze a problem.
+* `contributor/waiting-for-feedback`: we need the contributor to give us feedback.
 * `contributor/waiting-for-corrections`: we need the contributor to take actions in order to move forward with a PR. **(only for PR)**
 * `contributor/needs-resolve-conflicts`: use it only when there is some conflicts (and an automatic rebase is not possible). **(only for PR)** _[bot, humans]_
 
@@ -34,6 +47,17 @@ If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
 
 ### Area
 
+* `area/acme`: ACME related.
+* `area/api`: Traefik API related.
+* `area/authentication`: Authentication related.
+* `area/cluster`: Traefik clustering related.
+* `area/documentation`: regards improving/adding documentation.
+* `area/infrastructure`: related to CI or Traefik building scripts.
+* `area/healthcheck`: Health-check related.
+* `area/logs`: Traefik logs related.
+* `area/middleware`: Middleware related.
+* `area/middleware/metrics`: Metrics related. (Prometheus, StatsD, ...)
+* `area/oxy`: Oxy related.
 * `area/provider`: related to all providers.
 * `area/provider/boltdb`: Boltd DB related.
 * `area/provider/consul`: Consul related.
@@ -46,17 +70,10 @@ If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
 * `area/provider/mesos`: Mesos related.
 * `area/provider/rancher`: Rancher related.
 * `area/provider/zk`: Zoo Keeper related.
-* `area/middleware`: Middleware related.
-* `area/acme`: ACME related.
-* `area/authentication`: Authentication related.
-* `area/api`: Traefik API related.
-* `area/logs`: Traefik logs related.
 * `area/sticky-session`: Sticky session related.
+* `area/tls`: TLS related.
 * `area/websocket`: WebSocket related.
 * `area/webui`: Web UI related.
-* `area/infrastructure`: related to CI or Traefik building scripts.
-* `area/documentation`: regards improving/adding documentation.
-* `area/cluster`: Traefik clustering related.
 
 ### Priority
 

@@ -1,5 +1,5 @@
-hash: 1cb8a7bc9dcca526370e84514c3f0c76b342e25d40ba584826d22f7e93be584c
-updated: 2017-08-01T19:11:22.221029923+02:00
+hash: c7f74f8b5eac556a531d2cb3bae212e32785c1128d416c75fabedc31d27f0e03
+updated: 2017-08-12T14:15:06.346751095+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -8,6 +8,8 @@ imports:
   - internal
 - name: github.com/abbot/go-http-auth
   version: 0ddd408d5d60ea76e320503cc7dd091992dee608
+- name: github.com/aokoli/goutils
+  version: 3391d3790d23d03408670993e957e8f408993c34
 - name: github.com/ArthurHlt/go-eureka-client
   version: 9d0a49cbd39aa3634ae1977e9f519a262b10adaf
   subpackages:
@@ -300,6 +302,10 @@ imports:
   version: 19f2c401e122352c047a84d6584dd51e2fb8fcc4
   subpackages:
   - coordinate
+- name: github.com/huandu/xstrings
+  version: 3959339b333561bf62a38b424fd41517c2c90f40
+- name: github.com/imdario/mergo
+  version: 3e95a51e0639b4cf372f2ccf74c86749d747fbdc
 - name: github.com/JamesClonk/vultr
   version: 0f156dd232bc4ebf8a32ba83fec57c0e4c9db69f
   subpackages:
@@ -320,6 +326,10 @@ imports:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/Masterminds/semver
+  version: 59c29afe1a994eacb71c833025ca7acf874bb1da
+- name: github.com/Masterminds/sprig
+  version: 9526be0327b26ad31aa70296a7b10704883976d5
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
@@ -467,7 +477,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: 05a57556d820dc5c56721ebdefbafc15f36fac98
+  version: d40fb60c9a1620892a6fc146dcdc891fb02bd488
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -520,6 +530,8 @@ imports:
   - bcrypt
   - blowfish
   - ocsp
+  - pbkdf2
+  - scrypt
 - name: golang.org/x/net
   version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
   subpackages:
@@ -740,7 +752,7 @@ testImports:
   - cli/config
   - cli/config/configfile
 - name: github.com/docker/libcompose
-  version: 0ad950cbeb3d72107613dd220b5e9d7e001b890b
+  version: 1b708aac26a4fc6f9bff31728a8e3a252ef57dbd
   subpackages:
   - config
   - docker

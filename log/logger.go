@@ -2,14 +2,18 @@ package log
 
 import (
 	"bufio"
+	"fmt"
 	"io"
+	"os"
 	"runtime"
 
 	"github.com/Sirupsen/logrus"
 )
 
 var (
-	logger *logrus.Entry
+	logger      *logrus.Entry
+	logFilePath string
+	logFile     *os.File
 )
 
 func init() {
@@ -188,6 +192,49 @@ func Panicln(args ...interface{}) {
 // Fatalln logs a message at level Fatal on the standard logger.
 func Fatalln(args ...interface{}) {
 	logger.Fatalln(args...)
+}
+
+// OpenFile opens the log file using the specified path
+func OpenFile(path string) error {
+	logFilePath = path
+	var err error
+	logFile, err = os.OpenFile(logFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
+	if err == nil {
+		SetOutput(logFile)
+	}
+
+	return err
+}
+
+// CloseFile closes the log and sets the Output to stdout
+func CloseFile() error {
+	logrus.SetOutput(os.Stdout)
+
+	if logFile != nil {
+		return logFile.Close()
+	}
+	return nil
+}
+
+// RotateFile closes and reopens the log file to allow for rotation
+// by an external source.  If the log isn't backed by a file then
+// it does nothing.
+func RotateFile() error {
+	if logFile == nil && logFilePath == "" {
+		Debug("Traefik log is not writing to a file, ignoring rotate request")
+		return nil
+	}
+
+	if err := CloseFile(); err != nil {
+		return fmt.Errorf("error closing log file: %s", err)
+	}
+
+	if err := OpenFile(logFilePath); err != nil {
+		return fmt.Errorf("error opening log file: %s", err)
+	}
+
+	return nil
 }
 
 // Writer logs writer (Level Info)
