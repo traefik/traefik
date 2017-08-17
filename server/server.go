@@ -22,6 +22,7 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	"github.com/containous/traefik/provider"
@@ -253,7 +254,7 @@ func (server *Server) startHTTPServers() {
 }
 
 func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
-	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler(), metrics}
+	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler(), stats}
 	if server.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 	}
