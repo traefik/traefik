@@ -1332,7 +1332,7 @@ Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 # Array of namespaces to watch.
 #
 # Optional
-# Default: ["default"].
+# Default: all namespaces (empty array).
 #
 # namespaces = ["default", "production"]
 

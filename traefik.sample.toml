@@ -861,7 +861,7 @@
 # Array of namespaces to watch.
 #
 # Optional
-# Default: ["default"].
+# Default: all namespaces (empty array).
 #
 # namespaces = ["default"]
 
