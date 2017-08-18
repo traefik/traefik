@@ -68,7 +68,12 @@
 #
 # ProvidersThrottleDuration = "2s"
 
-# IdleTimeout: maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
+# IdleTimeout
+# 
+# Deprecated - see [respondingTimeouts] section. In the case both settings are configured, the deprecated option will
+# be overwritten.
+#
+# IdleTimeout is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
 # This is set to enforce closing of stale client connections.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
 # values (digits). If no units are provided, the value is parsed assuming seconds.
@@ -328,6 +333,76 @@ To write JSON format logs, specify `json` as the format:
 # Default: "30s"
 #
 # interval = "30s"
+```
+
+## Responding timeouts
+```
+# respondingTimeouts are timeouts for incoming requests to the Traefik instance.
+#
+# Optional
+# 
+[respondingTimeouts]
+
+# readTimeout is the maximum duration for reading the entire request, including the body.
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+# 
+# Optional
+# Default: "0s"
+# 
+# readTimeout = "5s"
+
+# writeTimeout is the maximum duration before timing out writes of the response. It covers the time from the end of 
+# the request header read to the end of the response write.
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+#
+# Optional
+# Default: "0s"
+# 
+# writeTimeout = "5s"
+
+# idleTimeout is the maximum duration an idle (keep-alive) connection will remain idle before closing itself.
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+#
+# Optional
+# Default: "180s"
+#
+# idleTimeout = "360s"
+
+```
+
+## Forwarding timeouts
+```
+# forwardingTimeouts are timeouts for requests forwarded to the backend servers.
+#
+# Optional
+# 
+[forwardingTimeouts]
+
+# dialTimeout is the amount of time to wait until a connection to a backend server can be established. 
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+# 
+# Optional
+# Default: "30s"
+# 
+# dialTimeout = "30s"
+
+# responseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any). 
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+#
+# Optional
+# Default: "0s"
+# 
+# responseHeaderTimeout = "0s"
 ```
 
 ## ACME (Let's Encrypt) configuration

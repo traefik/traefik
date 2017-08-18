@@ -366,6 +366,58 @@
 #
 # interval = "30s"
 
+# Timeout settings for the http servers Traefik starts
+#
+# Optional
+#
+# [respondingTimeouts]
+
+# ReadTimeout is the maximum duration for reading the entire request, including the body.
+# If zero, no timeout exists.
+#
+# Optional
+# Default: "0s"
+#
+# readTimeout = "5s"
+
+# WriteTimeout is the maximum duration before timing out writes of the response.
+# If zero, no timeout exists.
+#
+# Optional
+# Default: "0s"
+#
+# writeTimeout = "5s"
+
+# IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself.
+# Defaults to 180 seconds.
+# If zero, no timeout exists.
+#
+# Optional
+# Default: "180s"
+#
+# idleTimeout = "360s"
+
+# Timeout settings for requests forwarded to the Backend Servers
+#
+# Optional
+#
+# [forwardingTimeouts]
+
+# The amount of time to wait until a connection to a Backend Server can be established.
+# If zero, no timeout exists.
+#
+# Optional
+# Default: "30s"
+#
+# dialTimeout = "30s"
+
+# The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists
+#
+# Optional
+# Default: "0s"
+#
+# responseHeaderTimeout = "0s"
+
 ################################################################
 # Web configuration backend
 ################################################################
