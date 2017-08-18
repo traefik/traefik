@@ -1083,6 +1083,17 @@ domain = "marathon.localhost"
 # Default: false
 #
 # forceTaskHostname: false 
+
+# Applications may define readiness checks which are probed by Marathon during
+# deployments periodically and the results exposed via the API. Enabling the
+# following parameter causes Traefik to filter out tasks whose readiness checks
+# have not succeeded.
+# Note that the checks are only valid at deployment times. See the Marathon
+# guide for details.
+#
+# Optional
+# Default: false
+# respectReadinessChecks: false
 ```
 
 Labels can be used on containers to override default behaviour:

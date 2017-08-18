@@ -26,6 +26,13 @@ import (
 
 const (
 	traceMaxScanTokenSize = 1024 * 1024
+	marathonEventIDs      = marathon.EventIDApplications |
+		marathon.EventIDAddHealthCheck |
+		marathon.EventIDDeploymentSuccess |
+		marathon.EventIDDeploymentFailed |
+		marathon.EventIDDeploymentInfo |
+		marathon.EventIDDeploymentStepSuccess |
+		marathon.EventIDDeploymentStepFailed
 )
 
 // TaskState denotes the Mesos state a task can have.
@@ -52,6 +59,8 @@ type Provider struct {
 	KeepAlive               flaeg.Duration      `description:"Set a non-default TCP Keep Alive time in seconds"`
 	ForceTaskHostname       bool                `description:"Force to use the task's hostname."`
 	Basic                   *Basic              `description:"Enable basic authentication"`
+	RespectReadinessChecks  bool                `description:"Filter out tasks with non-successful readiness checks during deployments"`
+	readyChecker            *readinessChecker
 	marathonClient          marathon.Marathon
 }
 
@@ -80,6 +89,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			config.HTTPBasicAuthUser = p.Basic.HTTPBasicAuthUser
 			config.HTTPBasicPassword = p.Basic.HTTPBasicPassword
 		}
+		var rc *readinessChecker
+		if p.RespectReadinessChecks {
+			log.Debug("Enabling Marathon readiness checker")
+			rc = defaultReadinessChecker(p.Trace)
+		}
+		p.readyChecker = rc
+
 		if len(p.DCOSToken) > 0 {
 			config.DCOSToken = p.DCOSToken
 		}
@@ -104,7 +120,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		p.marathonClient = client
 
 		if p.Watch {
-			update, err := client.AddEventsListener(marathon.EventIDApplications)
+			update, err := client.AddEventsListener(marathonEventIDs)
 			if err != nil {
 				log.Errorf("Failed to register for events, %s", err)
 				return err
@@ -116,7 +132,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					case <-stop:
 						return
 					case event := <-update:
-						log.Debug("Provider event received", event)
+						log.Debugf("Received provider event %s", event)
 						configuration := p.loadMarathonConfig()
 						if configuration != nil {
 							configurationChan <- types.ConfigMessage{
@@ -175,6 +191,8 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 
 	v := url.Values{}
 	v.Add("embed", "apps.tasks")
+	v.Add("embed", "apps.deployments")
+	v.Add("embed", "apps.readiness")
 	applications, err := p.marathonClient.Applications(v)
 	if err != nil {
 		log.Errorf("Failed to retrieve Marathon applications: %s", err)
@@ -256,6 +274,11 @@ func (p *Provider) taskFilter(task marathon.Task, application marathon.Applicati
 				}
 			}
 		}
+	}
+
+	if ready := p.readyChecker.Do(task, application); !ready {
+		log.Infof("Filtering unready task %s from application %s", task.ID, application.ID)
+		return false
 	}
 
 	return true
