@@ -11,7 +11,8 @@ import (
 	"github.com/go-kit/kit/metrics/statsd"
 )
 
-var _ Metrics = (Metrics)(nil)
+var _ Metrics = (*Statsd)(nil)
+var _ RetryMetrics = (*Statsd)(nil)
 
 var statsdClient = statsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...interface{}) error {
 	log.Info(keyvals)
@@ -48,6 +49,7 @@ func NewStatsD(name string) *Statsd {
 
 	m.reqsCounter = statsdClient.NewCounter(ddMetricsReqsName, 1.0).With("service", name)
 	m.reqDurationHistogram = statsdClient.NewTiming(ddMetricsLatencyName, 1.0).With("service", name)
+	m.retryCounter = statsdClient.NewCounter(ddRetriesTotalName, 1.0).With("service", name)
 
 	return &m
 }

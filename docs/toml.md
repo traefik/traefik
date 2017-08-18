@@ -126,6 +126,8 @@ Supported backends:
 - Etcd
 - Consul Catalog
 - Rancher
+- Marathon
+- Kubernetes (using a provider-specific mechanism based on label selectors)
 
 Supported filters:
 
@@ -613,6 +615,24 @@ If you want Træfik to watch file changes automatically, just add:
 watch = true
 ```
 
+The configuration files can be also templates written using functions provided by [go template](https://golang.org/pkg/text/template/) as well as functions provided by the [sprig library](http://masterminds.github.io/sprig/), like this:
+
+```tmpl
+[backends]
+  [backends.backend1]
+  url = "http://firstserver"
+  [backends.backend2]
+  url = "http://secondserver"
+
+{{$frontends := dict "frontend1" "backend1" "frontend2" "backend2"}}
+[frontends]
+{{range $frontend, $backend := $frontends}}
+  [frontends.{{$frontend}}]
+  backend = "{{$backend}}"
+{{end}}
+```
+
+
 ## API backend
 
 Træfik can be configured using a RESTful api.
@@ -1063,6 +1083,17 @@ domain = "marathon.localhost"
 # Default: false
 #
 # forceTaskHostname: false 
+
+# Applications may define readiness checks which are probed by Marathon during
+# deployments periodically and the results exposed via the API. Enabling the
+# following parameter causes Traefik to filter out tasks whose readiness checks
+# have not succeeded.
+# Note that the checks are only valid at deployment times. See the Marathon
+# guide for details.
+#
+# Optional
+# Default: false
+# respectReadinessChecks: false
 ```
 
 Labels can be used on containers to override default behaviour:

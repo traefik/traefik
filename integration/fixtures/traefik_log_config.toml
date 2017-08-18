@@ -1,0 +1,11 @@
+################################################################
+# Global configuration
+################################################################
+traefikLogsFile = "traefik.log"
+accessLogsFile = "access.log"
+logLevel = "DEBUG"
+checkNewVersion = false
+defaultEntryPoints = ["http"]
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"

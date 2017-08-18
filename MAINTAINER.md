@@ -1,5 +1,60 @@
 # Maintainers
 
+## The team
+
+* Emile Vauge [@emilevauge](https://github.com/emilevauge)
+* Vincent Demeester [@vdemeester](https://github.com/vdemeester)
+* Ed Robinson [@errm](https://github.com/errm)
+* Daniel Tomcej [@dtomcej](https://github.com/dtomcej)
+* Manuel Zapf [@SantoDE](https://github.com/SantoDE)
+* Timo Reimann [@timoreimann](https://github.com/timoreimann)
+* Ludovic Fernandez [@ldez](https://github.com/ldez)
+* Julien Salleyron [@juliens](https://github.com/juliens)
+* Nicolas Mengin [@nmengin](https://github.com/nmengin)
+
+
+## PR review process:
+
+* The status `needs-design-review` is only used in complex/heavy/tricky PRs.
+* From `1` to `2`: 1 design LGTM in comment, by a senior maintainer, if needed.
+* From `2` to `3`: 3 LGTM by any maintainer.
+* If needed, a specific maintainer familiar with a particular domain can be requested for the review.
+
+We use [PRM](https://github.com/ldez/prm) to manage locally pull requests.
+
+
+## Bots
+
+### [Myrmica Lobicornis](https://github.com/containous/lobicornis/)
+
+**Update and Merge Pull Request**
+
+The maintainer giving the final LGTM must add the `status/3-needs-merge` label to trigger the merge bot.
+
+By default, a squash-rebase merge will be carried out.
+If you want to preserve commits you must add `bot/merge-method-rebase` before `status/3-needs-merge`.
+
+The status `status/4-merge-in-progress` is only for the bot.
+
+If the bot is not able to perform the merge, the label `bot/need-human-merge` is added. 
+In this case you must solve conflicts/CI/... and after you only need to remove `bot/need-human-merge`.
+
+
+### [Myrmica Bibikoffi](https://github.com/containous/bibikoffi/)
+
+* closes stale issues [cron]
+    * use some criterion as number of days between creation, last update, labels, ...
+
+
+### [Myrmica Aloba](https://github.com/containous/aloba)
+
+**Manage GitHub labels**
+
+* Add labels on new PR [GitHub WebHook]
+* Add and remove `contributor/waiting-for-corrections` label when a review request changes [GitHub WebHook]
+* Weekly report of PR status on Slack (CaptainPR) [cron]
+
+
 ## Labels
 
 If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
@@ -7,6 +62,7 @@ If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
 ### Contributor
 
 * `contributor/need-more-information`: we need more information from the contributor in order to analyze a problem.
+* `contributor/waiting-for-feedback`: we need the contributor to give us feedback.
 * `contributor/waiting-for-corrections`: we need the contributor to take actions in order to move forward with a PR. **(only for PR)**
 * `contributor/needs-resolve-conflicts`: use it only when there is some conflicts (and an automatic rebase is not possible). **(only for PR)** _[bot, humans]_
 
@@ -34,6 +90,17 @@ If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
 
 ### Area
 
+* `area/acme`: ACME related.
+* `area/api`: Traefik API related.
+* `area/authentication`: Authentication related.
+* `area/cluster`: Traefik clustering related.
+* `area/documentation`: regards improving/adding documentation.
+* `area/infrastructure`: related to CI or Traefik building scripts.
+* `area/healthcheck`: Health-check related.
+* `area/logs`: Traefik logs related.
+* `area/middleware`: Middleware related.
+* `area/middleware/metrics`: Metrics related. (Prometheus, StatsD, ...)
+* `area/oxy`: Oxy related.
 * `area/provider`: related to all providers.
 * `area/provider/boltdb`: Boltd DB related.
 * `area/provider/consul`: Consul related.
@@ -41,22 +108,16 @@ If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
 * `area/provider/ecs`: ECS related.
 * `area/provider/etcd`: Etcd related.
 * `area/provider/eureka`: Eureka related.
+* `area/provider/file`: file provider related.
 * `area/provider/k8s`: Kubernetes related.
 * `area/provider/marathon`: Marathon related.
 * `area/provider/mesos`: Mesos related.
 * `area/provider/rancher`: Rancher related.
 * `area/provider/zk`: Zoo Keeper related.
-* `area/middleware`: Middleware related.
-* `area/acme`: ACME related.
-* `area/authentication`: Authentication related.
-* `area/api`: Traefik API related.
-* `area/logs`: Traefik logs related.
 * `area/sticky-session`: Sticky session related.
+* `area/tls`: TLS related.
 * `area/websocket`: WebSocket related.
 * `area/webui`: Web UI related.
-* `area/infrastructure`: related to CI or Traefik building scripts.
-* `area/documentation`: regards improving/adding documentation.
-* `area/cluster`: Traefik clustering related.
 
 ### Priority
 
@@ -79,10 +140,4 @@ The `status/*` labels represent the desired state in the workflow.
 * `status/1-needs-design-review`: need a design review. **(only for PR)**
 * `status/2-needs-review`: need a code/documentation review. **(only for PR)**
 * `status/3-needs-merge`: ready to merge. **(only for PR)**
-
-## PR review process:
-
-* If needed, a specific maintainer can be required to make a review (according to its knowledge areas)
-* The status `needs-design-review` is only used in complex/heavy/tricky PRs.
-* From `1` to `2`: 1 design LGTM in comment, by a senior maintainer, if needed.
-* From `2` to `3`: 3 LGTM by any maintainer.
+* `status/4-merge-in-progress`: merge in progress. _[bot only]_

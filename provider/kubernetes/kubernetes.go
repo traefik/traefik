@@ -427,10 +427,7 @@ func shouldProcessIngress(ingressClass string) bool {
 }
 
 func (p *Provider) getPassHostHeader() bool {
-	if p.DisablePassHostHeaders {
-		return false
-	}
-	return true
+	return !p.DisablePassHostHeaders
 }
 
 func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {

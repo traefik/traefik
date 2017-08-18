@@ -65,10 +65,6 @@ func (mm *MultiMetrics) getRetryCounter() metrics.Counter {
 	return mm.retryCounter
 }
 
-func (mm *MultiMetrics) getWrappedMetrics() *[]Metrics {
-	return mm.wrappedMetrics
-}
-
 // MetricsWrapper is a Negroni compatible Handler which relies on a
 // given Metrics implementation to expose and monitor Traefik Metrics.
 type MetricsWrapper struct {

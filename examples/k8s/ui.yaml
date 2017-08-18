@@ -10,7 +10,7 @@ spec:
   ports:
   - name: web
     port: 80
-    targetPort: 8081
+    targetPort: 8080
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress

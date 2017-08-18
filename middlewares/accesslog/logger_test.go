@@ -218,8 +218,8 @@ func createTempDir(t *testing.T, prefix string) string {
 
 func doLogging(t *testing.T, config *types.AccessLog) {
 	logger, err := NewLogHandler(config)
-	defer logger.Close()
 	require.NoError(t, err)
+	defer logger.Close()
 
 	if config.FilePath != "" {
 		_, err = os.Stat(config.FilePath)

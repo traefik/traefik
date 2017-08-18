@@ -40,11 +40,11 @@ The following sub-sections describe how to resolve or mitigate each scenario.
 
 ### Startup
 
-In general, it is possible to define [readiness checks](https://mesosphere.github.io/marathon/docs/readiness-checks.html) (available since Marathon version 1.1) per application and have Marathon take these into account during the startup phase. The idea is that each application provides an HTTP endpoint that Marathon queries periodically during an ongoing deployment in order to mark the associated readiness check result as successful if and only if the endpoint returns a response within the configured HTTP code range. As long as the check keeps failing, Marathon will not proceed with the deployment (within the configured upgrade stategy bounds).
+It is possible to define [readiness checks](https://mesosphere.github.io/marathon/docs/readiness-checks.html) (available since Marathon version 1.1) per application and have Marathon take these into account during the startup phase. The idea is that each application provides an HTTP endpoint that Marathon queries periodically during an ongoing deployment in order to mark the associated readiness check result as successful if and only if the endpoint returns a response within the configured HTTP code range. As long as the check keeps failing, Marathon will not proceed with the deployment (within the configured upgrade stategy bounds).
 
-Unfortunately, Traefik does not respect the result of the readiness check yet. Support is expected to land in a not-too-distant future release of Traefik, however, as being tracked by [issue 1559](https://github.com/containous/traefik/issues/1559).
+Beginning with version 1.4, Traefik respects readiness check results if the Traefik option is set and checks are configured on the applications accordingly. Note that due to the way readiness check results are currently exposed by the Marathon API, ready tasks may be taken into rotation with a small delay. It is on the order of one readiness check timeout interval (as configured on the application specifiation) and guarantees that non-ready tasks do not receive traffic prematurely.
 
-A current mitigation strategy is to enable [retries](http://docs.traefik.io/toml/#retry-configuration) and make sure that a sufficient number of healthy application tasks exist so that one retry will likely hit one of those. Apart from its probabilistic nature, the workaround comes at the price of increased latency.
+If readiness checks are not possible, a current mitigation strategy is to enable [retries](http://docs.traefik.io/toml/#retry-configuration) and make sure that a sufficient number of healthy application tasks exist so that one retry will likely hit one of those. Apart from its probabilistic nature, the workaround comes at the price of increased latency.
 
 ### Shutdown
 
@@ -81,11 +81,11 @@ There are a few alternatives of varying quality that are frequently asked for. T
 
 It may seem obvious to reuse the Marathon health checks as a signal to Traefik whether an application should be taken into load-balancing rotation or not.
 
-Apart from the increased latency a failing health check may have, a major problem with this is is that Marathon does not persist the health check results. Consequently, if a master re-election occurs in the Marathon clusters, all health check results will revert to the _unknown_ state, effectively causing all applications inside the cluster to become unavailable and leading to a complete cluster failure. Re-elections do not only happen during regular maintenance work (often requiring rolling upgrades of the Marathon nodes) but also when the Marathon leader fails spontaneously). As such, there is no way to handle this situation deterministically.
+Apart from the increased latency a failing health check may have, a major problem with this is is that Marathon does not persist the health check results. Consequently, if a master re-election occurs in the Marathon clusters, all health check results will revert to the _unknown_ state, effectively causing all applications inside the cluster to become unavailable and leading to a complete cluster failure. Re-elections do not only happen during regular maintenance work (often requiring rolling upgrades of the Marathon nodes) but also when the Marathon leader fails spontaneously. As such, there is no way to handle this situation deterministically.
 
 Finally, Marathon health checks are not mandatory (the default is to use the task state as reported by Mesos), so requiring them for Traefik would raise the entry barrier for Marathon users.
 
-Traefik used to use the health check results but moved away from it as [users reported the dramatic consequences](https://github.com/containous/traefik/issues/653).
+Traefik used to use the health check results as a strict requirement but moved away from it as [users reported the dramatic consequences](https://github.com/containous/traefik/issues/653). If health check results are known to exist, however, they will be used to signal task availability.
 
 ### Draining
 

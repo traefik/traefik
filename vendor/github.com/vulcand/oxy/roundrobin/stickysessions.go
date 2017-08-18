@@ -38,7 +38,7 @@ func (s *StickySession) GetBackend(req *http.Request, servers []*url.URL) (*url.
 }
 
 func (s *StickySession) StickBackend(backend *url.URL, w *http.ResponseWriter) {
-	c := &http.Cookie{Name: s.cookiename, Value: backend.String()}
+	c := &http.Cookie{Name: s.cookiename, Value: backend.String(), Path: "/"}
 	http.SetCookie(*w, c)
 	return
 }

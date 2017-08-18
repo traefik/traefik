@@ -152,7 +152,7 @@ func (p *Provider) loadConfig() *types.Configuration {
 	}
 
 	for key, frontend := range configuration.Frontends {
-		if _, ok := configuration.Backends[frontend.Backend]; ok == false {
+		if _, ok := configuration.Backends[frontend.Backend]; !ok {
 			delete(configuration.Frontends, key)
 		}
 	}
@@ -231,7 +231,7 @@ func (p *Provider) checkConstraints(keys ...string) bool {
 
 	constraintTags := strings.Split(value, ",")
 	ok, failingConstraint := p.MatchConstraints(constraintTags)
-	if ok == false {
+	if !ok {
 		if failingConstraint != nil {
 			log.Debugf("Constraint %v not matching with following tags: %v", failingConstraint.String(), value)
 		}
