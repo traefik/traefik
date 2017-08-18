@@ -1,0 +1,21 @@
+defaultEntryPoints = ["http"]
+
+reqAcceptGraceTimeOut = "10s"
+
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+[file]
+[backends]
+  [backends.backend]
+    [backends.backend.servers.server]
+    url = "{{.Server}}"
+
+[frontends]
+  [frontends.frontend]
+  backend = "backend"
+    [frontends.frontend.routes.service]
+    rule = "Path:/service"

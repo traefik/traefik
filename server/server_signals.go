@@ -5,6 +5,7 @@ package server
 import (
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/containous/traefik/log"
 )
@@ -31,7 +32,12 @@ func (server *Server) listenSignals() {
 			}
 		default:
 			log.Infof("I have to go... %+v", sig)
-			log.Info("Stopping server")
+			reqTermGraceTimeOut := time.Duration(server.globalConfiguration.ReqAcceptGraceTimeOut)
+			if reqTermGraceTimeOut > 0 && sig == syscall.SIGTERM {
+				log.Infof("Waiting %s for incoming requests to cease", reqTermGraceTimeOut)
+				time.Sleep(reqTermGraceTimeOut)
+			}
+			log.Info("Stopping server gracefully")
 			server.Stop()
 		}
 	}

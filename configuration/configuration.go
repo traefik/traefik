@@ -42,6 +42,7 @@ const (
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
+	ReqAcceptGraceTimeOut     flaeg.Duration          `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
 	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish before Traefik stops"`
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
