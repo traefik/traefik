@@ -208,14 +208,17 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 
 	if p.AutoDiscoverClusters {
 		input := &ecs.ListClustersInput{}
-		result, _ := client.ecs.ListClusters(input)
-		for result.NextToken != nil {
-			clustersArn = append(clustersArn, result.ClusterArns...)
-
-			input.NextToken = result.NextToken
-			result, _ = client.ecs.ListClusters(input)
+		for {
+			if result, _ := client.ecs.ListClusters(input); result != nil {
+				clustersArn = append(clustersArn, result.ClusterArns...)
+				input.NextToken = result.NextToken
+				if result.NextToken == nil {
+					break
+				}
+			} else {
+				break
+			}
 		}
-		clustersArn = append(clustersArn, result.ClusterArns...)
 		for _, carns := range clustersArn {
 			clusters = append(clusters, *carns)
 		}
