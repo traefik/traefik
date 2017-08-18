@@ -126,7 +126,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 		Certificates:       []tls.Certificate{},
 	}
 	// Connection without client certificate should fail
-	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
 
 	// Connect with client certificate signed by ca1
@@ -134,7 +134,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
 
 	conn.Close()
@@ -149,7 +149,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
 
 }
@@ -172,7 +172,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 		Certificates:       []tls.Certificate{},
 	}
 	// Connection without client certificate should fail
-	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
 
 	// Connect with client signed by ca1
@@ -180,7 +180,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
 
 	conn.Close()
@@ -197,6 +197,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 
 	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
+
 	conn.Close()
 
 	// Connect with client signed by ca3 should fail
@@ -209,7 +210,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
 }
 
@@ -231,7 +232,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFi
 		Certificates:       []tls.Certificate{},
 	}
 	// Connection without client certificate should fail
-	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
 
 	// Connect with client signed by ca1
@@ -239,7 +240,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFi
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	conn, err := tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.IsNil, check.Commentf("failed to connect to server"))
 
 	conn.Close()
@@ -268,7 +269,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFi
 	c.Assert(err, checker.IsNil, check.Commentf("unable to load client certificate and key"))
 	tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
 
-	conn, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
+	_, err = tls.Dial("tcp", "127.0.0.1:4443", tlsConfig)
 	c.Assert(err, checker.NotNil, check.Commentf("should not be allowed to connect to server"))
 }
 

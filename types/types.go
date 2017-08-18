@@ -277,7 +277,7 @@ func (cs *Constraints) SetValue(val interface{}) {
 
 // Type exports the Constraints type as a string
 func (cs *Constraints) Type() string {
-	return fmt.Sprint("constraint")
+	return "constraint"
 }
 
 // Store holds KV store cluster config

@@ -176,6 +176,7 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	}
 
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/test2", nil)
+	c.Assert(err, checker.IsNil)
 	req.Host = "test2.localhost"
 	resp, err := client.Do(req)
 	c.Assert(err, checker.IsNil)
