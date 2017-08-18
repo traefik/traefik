@@ -53,11 +53,12 @@ type Client interface {
 }
 
 type clientImpl struct {
-	clientset *kubernetes.Clientset
-	ingStores []cache.Store
-	svcStores map[string]cache.Store
-	epStores  map[string]cache.Store
-	secStores map[string]cache.Store
+	clientset      *kubernetes.Clientset
+	ingStores      []cache.Store
+	svcStores      map[string]cache.Store
+	epStores       map[string]cache.Store
+	secStores      map[string]cache.Store
+	isNamespaceAll bool
 }
 
 func newClientImpl(clientset *kubernetes.Clientset) Client {
@@ -129,7 +130,8 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 	}
 
 	if len(namespaces) == 0 {
-		namespaces = append(namespaces, api.NamespaceDefault)
+		namespaces = Namespaces{api.NamespaceAll}
+		c.isNamespaceAll = true
 	}
 
 	var ctrlManager controllerManager
@@ -258,7 +260,7 @@ func (c *clientImpl) GetIngresses() []*v1beta1.Ingress {
 // GetService returns the named service from the given namespace.
 func (c *clientImpl) GetService(namespace, name string) (*v1.Service, bool, error) {
 	var service *v1.Service
-	item, exists, err := c.svcStores[namespace].GetByKey(namespace + "/" + name)
+	item, exists, err := c.svcStores[c.lookupNamespace(namespace)].GetByKey(namespace + "/" + name)
 	if item != nil {
 		service = item.(*v1.Service)
 	}
@@ -269,7 +271,7 @@ func (c *clientImpl) GetService(namespace, name string) (*v1.Service, bool, erro
 // GetEndpoints returns the named endpoints from the given namespace.
 func (c *clientImpl) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
 	var endpoint *v1.Endpoints
-	item, exists, err := c.epStores[namespace].GetByKey(namespace + "/" + name)
+	item, exists, err := c.epStores[c.lookupNamespace(namespace)].GetByKey(namespace + "/" + name)
 
 	if item != nil {
 		endpoint = item.(*v1.Endpoints)
@@ -281,12 +283,25 @@ func (c *clientImpl) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, 
 // GetSecret returns the named secret from the given namespace.
 func (c *clientImpl) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
 	var secret *v1.Secret
-	item, exists, err := c.secStores[namespace].GetByKey(namespace + "/" + name)
+	item, exists, err := c.secStores[c.lookupNamespace(namespace)].GetByKey(namespace + "/" + name)
 	if err == nil && item != nil {
 		secret = item.(*v1.Secret)
 	}
 
 	return secret, exists, err
+}
+
+// lookupNamespace returns the lookup namespace key for the given namespace.
+// When listening on all namespaces, it returns the client-go identifier ("")
+// for all-namespaces. Otherwise, it returns the given namespace.
+// The distinction is necessary because we index all informers on the special
+// identifier iff all-namespaces are requested but receive specific namespace
+// identifiers from the Kubernetes API, so we have to bridge this gap.
+func (c *clientImpl) lookupNamespace(ns string) string {
+	if c.isNamespaceAll {
+		return api.NamespaceAll
+	}
+	return ns
 }
 
 // newListWatchFromClientWithLabelSelector creates a new ListWatch from the given parameters.
