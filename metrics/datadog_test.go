@@ -2,10 +2,9 @@ package metrics
 
 import (
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
-
-	"strconv"
 
 	"github.com/containous/traefik/types"
 	"github.com/stvp/go-udp-testing"
