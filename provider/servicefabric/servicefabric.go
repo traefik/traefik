@@ -1,8 +1,11 @@
 package servicefabric
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -88,11 +91,46 @@ var _ provider.Provider = (*Provider)(nil)
 
 // CatalogProvider holds configurations of the Consul catalog provider.
 type Provider struct {
-	ClusterManagementUrl string `description:"ServiceFabric cluster management endpoint"`
+	ClusterManagementUrl  string `description:"ServiceFabric cluster management endpoint"`
+	UseCertificateAuth    bool   `description:"User certificate auth"`
+	ClientCertFilePath    string `description:"Path to cert file"`
+	ClientCertKeyFilePath string `description:"Path to cert key file"`
+	CACertFilePath        string `description:"Path to CA cert file"`
 }
 
-func getHttp(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+func (p *Provider) getHttp(url string) ([]byte, error) {
+
+	var client http.Client
+	if !p.UseCertificateAuth {
+		client = http.Client{}
+	} else {
+		// Load client cert
+		cert, err := tls.LoadX509KeyPair(p.ClientCertFilePath, p.ClientCertKeyFilePath)
+		if err != nil {
+			log.Error(err)
+			return nil, err
+		}
+
+		// Load CA cert
+		caCert, err := ioutil.ReadFile(p.CACertFilePath)
+		if err != nil {
+			log.Error(err)
+			return nil, err
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		// Setup HTTPS client
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      caCertPool,
+		}
+		tlsConfig.BuildNameToCertificate()
+		transport := &http.Transport{TLSClientConfig: tlsConfig}
+		client = http.Client{Transport: transport}
+	}
+
+	resp, err := client.Get(url)
 
 	if err != nil {
 		log.Errorf("Cannot connect to servicefabric server %+v on %s", err, url)
@@ -113,7 +151,7 @@ func getHttp(url string) ([]byte, error) {
 }
 
 func (p *Provider) getApplications() (applicationsData, error) {
-	body, err := getHttp(p.ClusterManagementUrl + "/Applications/?api-version=3.0")
+	body, err := p.getHttp(p.ClusterManagementUrl + "/Applications/?api-version=3.0")
 
 	if err != nil {
 		return applicationsData{}, err
@@ -130,7 +168,7 @@ func (p *Provider) getApplications() (applicationsData, error) {
 }
 
 func (p *Provider) getServices(appName string) (servicesData, error) {
-	body, err := getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices?api-version=3.0")
+	body, err := p.getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices?api-version=3.0")
 
 	if err != nil {
 		return servicesData{}, err
@@ -147,7 +185,7 @@ func (p *Provider) getServices(appName string) (servicesData, error) {
 }
 
 func (p *Provider) getPatitions(appName, serviceName string) (partitionsData, error) {
-	body, err := getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=3.0")
+	body, err := p.getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=3.0")
 
 	if err != nil {
 		return partitionsData{}, err
@@ -164,7 +202,7 @@ func (p *Provider) getPatitions(appName, serviceName string) (partitionsData, er
 }
 
 func (p *Provider) getReplicas(appName, serviceName, parition string) (replicasData, error) {
-	body, err := getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + parition + "/$/GetReplicas?api-version=3.0")
+	body, err := p.getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + parition + "/$/GetReplicas?api-version=3.0")
 
 	if err != nil {
 		return replicasData{}, err
@@ -178,6 +216,28 @@ func (p *Provider) getReplicas(appName, serviceName, parition string) (replicasD
 	}
 
 	return sfResponse, nil
+}
+
+func getDefaultEndpoint(endpointData string) (string, error) {
+	var endpointsMap map[string]map[string]string
+	var emptyString string
+	err := json.Unmarshal([]byte(endpointData), &endpointsMap)
+	if err != nil {
+		log.Error(err)
+		return emptyString, errors.New("Failed to deserialize endpoints")
+	}
+
+	endpoints, endpointsExist := endpointsMap["Endpoints"]
+	if !endpointsExist {
+		return emptyString, fmt.Errorf("No endpoints")
+	}
+
+	defaultEndpoint, defaultExists := endpoints[""]
+
+	if !defaultExists {
+		return emptyString, fmt.Errorf("No default endpoint")
+	}
+	return defaultEndpoint, nil
 }
 
 //http://10.0.1.109:19080/Applications/Application1/$/GetServices/Application1%2FWeb1/$/GetPartitions/097d54f7-634a-4d16-a814-47d1642af308/$/GetReplicas?api-version=1.0&_cacheToken=1502467318900
@@ -241,12 +301,20 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 							}
 							for _, r := range replicas.Items {
 
-								backend.Servers[r.ReplicaID] = types.Server{
-									URL: r.Address,
+								defaultEndpoint, err := getDefaultEndpoint(r.Address)
+
+								if err != nil {
+									log.Errorf("%s for replica %s in service %s", err, r.ReplicaID, s.Name)
+									continue
 								}
+
+								backend.Servers[r.ReplicaID] = types.Server{
+									URL: defaultEndpoint,
+								}
+
 							}
 						}
-						backends[a.Name+"/"+s.Name] = backend
+						backends[s.Name] = backend
 					}
 				}
 
@@ -260,6 +328,7 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 				if !reflect.DeepEqual(lastConfigUpdate, configMessage) {
 					log.Info("New configuration for service fabric:", configMessage)
 					configurationChan <- configMessage
+					lastConfigUpdate = configMessage
 				}
 			}
 
