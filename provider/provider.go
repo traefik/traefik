@@ -157,6 +157,10 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 	cert := tls.Certificate{}
 	_, errKeyIsFile := os.Stat(clientTLS.Key)
 
+	if !clientTLS.InsecureSkipVerify && (len(clientTLS.Cert) == 0 || len(clientTLS.Key) == 0) {
+		return nil, fmt.Errorf("TLS Certificate or Key file must be set when TLS configuration is created")
+	}
+
 	if len(clientTLS.Cert) > 0 && len(clientTLS.Key) > 0 {
 		if _, errCertIsFile := os.Stat(clientTLS.Cert); errCertIsFile == nil {
 			if errKeyIsFile == nil {
