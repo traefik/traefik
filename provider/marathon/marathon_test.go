@@ -397,7 +397,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 			desc:        "missing port",
 			task:        task(),
 			application: application(),
-			expected:    false,
+			expected:    true,
 		},
 		{
 			desc: "task not running",
@@ -422,7 +422,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 				label(types.LabelPort, "443"),
 				label(types.LabelPortIndex, "1"),
 			),
-			expected: false,
+			expected: true,
 		},
 		{
 			desc: "single service without port",
@@ -432,7 +432,7 @@ func TestMarathonTaskFilter(t *testing.T) {
 				labelWithService(types.LabelPort, "80", "web"),
 				labelWithService(types.LabelPort, "illegal", "admin"),
 			),
-			expected: false,
+			expected: true,
 		},
 		{
 			desc: "single service missing port",
