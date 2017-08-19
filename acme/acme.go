@@ -169,7 +169,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 
 	leadership.AddListener(func(elected bool) error {
 		if elected {
-			object, err := a.store.Load()
+			_, err := a.store.Load()
 			if err != nil {
 				return err
 			}

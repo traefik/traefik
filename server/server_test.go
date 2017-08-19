@@ -36,6 +36,86 @@ func (lb *testLoadBalancer) Servers() []*url.URL {
 	return []*url.URL{}
 }
 
+func TestPrepareServerTimeouts(t *testing.T) {
+	tests := []struct {
+		desc             string
+		globalConfig     GlobalConfiguration
+		wantIdleTimeout  time.Duration
+		wantReadTimeout  time.Duration
+		wantWriteTimeout time.Duration
+	}{
+		{
+			desc: "full configuration",
+			globalConfig: GlobalConfiguration{
+				RespondingTimeouts: &RespondingTimeouts{
+					IdleTimeout:  flaeg.Duration(10 * time.Second),
+					ReadTimeout:  flaeg.Duration(12 * time.Second),
+					WriteTimeout: flaeg.Duration(14 * time.Second),
+				},
+			},
+			wantIdleTimeout:  time.Duration(10 * time.Second),
+			wantReadTimeout:  time.Duration(12 * time.Second),
+			wantWriteTimeout: time.Duration(14 * time.Second),
+		},
+		{
+			desc:             "using defaults",
+			globalConfig:     GlobalConfiguration{},
+			wantIdleTimeout:  time.Duration(180 * time.Second),
+			wantReadTimeout:  time.Duration(0 * time.Second),
+			wantWriteTimeout: time.Duration(0 * time.Second),
+		},
+		{
+			desc: "deprecated IdleTimeout configured",
+			globalConfig: GlobalConfiguration{
+				IdleTimeout: flaeg.Duration(45 * time.Second),
+			},
+			wantIdleTimeout:  time.Duration(45 * time.Second),
+			wantReadTimeout:  time.Duration(0 * time.Second),
+			wantWriteTimeout: time.Duration(0 * time.Second),
+		},
+		{
+			desc: "deprecated and new IdleTimeout configured",
+			globalConfig: GlobalConfiguration{
+				IdleTimeout: flaeg.Duration(45 * time.Second),
+				RespondingTimeouts: &RespondingTimeouts{
+					IdleTimeout: flaeg.Duration(80 * time.Second),
+				},
+			},
+			wantIdleTimeout:  time.Duration(80 * time.Second),
+			wantReadTimeout:  time.Duration(0 * time.Second),
+			wantWriteTimeout: time.Duration(0 * time.Second),
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			entryPointName := "http"
+			entryPoint := &EntryPoint{Address: "localhost:8080"}
+			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
+
+			srv := NewServer(test.globalConfig)
+			httpServer, err := srv.prepareServer(entryPointName, entryPoint, router)
+			if err != nil {
+				t.Fatalf("Unexpected error when preparing srv: %s", err)
+			}
+
+			if httpServer.IdleTimeout != test.wantIdleTimeout {
+				t.Errorf("Got %s as IdleTimeout, want %s", httpServer.IdleTimeout, test.wantIdleTimeout)
+			}
+			if httpServer.ReadTimeout != test.wantReadTimeout {
+				t.Errorf("Got %s as ReadTimeout, want %s", httpServer.ReadTimeout, test.wantReadTimeout)
+			}
+			if httpServer.WriteTimeout != test.wantWriteTimeout {
+				t.Errorf("Got %s as WriteTimeout, want %s", httpServer.WriteTimeout, test.wantWriteTimeout)
+			}
+		})
+	}
+}
+
 func TestServerMultipleFrontendRules(t *testing.T) {
 	cases := []struct {
 		expression  string

@@ -132,6 +132,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 			ctx := context.Background()
 			version, err := dockerClient.ServerVersion(ctx)
+			if err != nil {
+				log.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
+				return err
+			}
 			log.Debugf("Provider connection established with docker %s (API %s)", version.Version, version.APIVersion)
 			var dockerDataList []dockerData
 			if p.SwarmMode {
@@ -908,7 +912,7 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 		NetworkSettings: networkSettings{},
 	}
 
-	if isGlobalSvc == true {
+	if isGlobalSvc {
 		dockerData.Name = serviceDockerData.Name + "." + task.ID
 	}
 

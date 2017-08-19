@@ -1,14 +1,12 @@
 package kubernetes
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/containous/traefik/types"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
@@ -284,7 +282,6 @@ func TestLoadIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -297,7 +294,6 @@ func TestLoadIngresses(t *testing.T) {
 			"foo/namedthing": {
 				Backend:        "foo/namedthing",
 				PassHostHeader: true,
-				Priority:       len("/namedthing"),
 				Routes: map[string]types.Route{
 					"/namedthing": {
 						Rule: "PathPrefix:/namedthing",
@@ -318,12 +314,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestRuleType(t *testing.T) {
@@ -418,8 +410,7 @@ func TestRuleType(t *testing.T) {
 			actual := actualConfig.Frontends
 			expected := map[string]*types.Frontend{
 				"host/path": {
-					Backend:  "host/path",
-					Priority: len("/path"),
+					Backend: "host/path",
 					Routes: map[string]types.Route{
 						"/path": {
 							Rule: fmt.Sprintf("%s:/path", test.frontendRuleType),
@@ -431,11 +422,7 @@ func TestRuleType(t *testing.T) {
 				},
 			}
 
-			if !reflect.DeepEqual(expected, actual) {
-				expectedJSON, _ := json.Marshal(expected)
-				actualJSON, _ := json.Marshal(actual)
-				t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-			}
+			assert.Equal(t, expected, actual)
 		})
 	}
 }
@@ -509,8 +496,7 @@ func TestGetPassHostHeader(t *testing.T) {
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
-				Backend:  "foo/bar",
-				Priority: len("/bar"),
+				Backend: "foo/bar",
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -522,12 +508,8 @@ func TestGetPassHostHeader(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
@@ -626,12 +608,8 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestLoadNamespacedIngresses(t *testing.T) {
@@ -810,7 +788,6 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -831,12 +808,8 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestLoadMultipleNamespacedIngresses(t *testing.T) {
@@ -1048,7 +1021,6 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1070,7 +1042,6 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			"awesome/quix": {
 				Backend:        "awesome/quix",
 				PassHostHeader: true,
-				Priority:       len("/quix"),
 				Routes: map[string]types.Route{
 					"/quix": {
 						Rule: "PathPrefix:/quix",
@@ -1082,12 +1053,8 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestHostlessIngress(t *testing.T) {
@@ -1158,8 +1125,7 @@ func TestHostlessIngress(t *testing.T) {
 		},
 		Frontends: map[string]*types.Frontend{
 			"/bar": {
-				Backend:  "/bar",
-				Priority: len("/bar"),
+				Backend: "/bar",
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1168,12 +1134,8 @@ func TestHostlessIngress(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestServiceAnnotations(t *testing.T) {
@@ -1383,7 +1345,6 @@ func TestServiceAnnotations(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1404,12 +1365,8 @@ func TestServiceAnnotations(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestIngressAnnotations(t *testing.T) {
@@ -1705,7 +1662,6 @@ func TestIngressAnnotations(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: false,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1718,7 +1674,6 @@ func TestIngressAnnotations(t *testing.T) {
 			"other/stuff": {
 				Backend:        "other/stuff",
 				PassHostHeader: true,
-				Priority:       len("/stuff"),
 				Routes: map[string]types.Route{
 					"/stuff": {
 						Rule: "PathPrefix:/stuff",
@@ -1731,7 +1686,6 @@ func TestIngressAnnotations(t *testing.T) {
 			"basic/auth": {
 				Backend:        "basic/auth",
 				PassHostHeader: true,
-				Priority:       len("/auth"),
 				Routes: map[string]types.Route{
 					"/auth": {
 						Rule: "PathPrefix:/auth",
@@ -1749,7 +1703,6 @@ func TestIngressAnnotations(t *testing.T) {
 					"1.1.1.1/24",
 					"1234:abcd::42/32",
 				},
-				Priority: len("/whitelist-source-range"),
 				Routes: map[string]types.Route{
 					"/whitelist-source-range": {
 						Rule: "PathPrefix:/whitelist-source-range",
@@ -1770,7 +1723,6 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:rewrite",
 					},
 				},
-				Priority: len("/api"),
 			},
 		},
 	}
@@ -1966,7 +1918,6 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1979,12 +1930,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 		},
 	}
 
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestKubeAPIErrors(t *testing.T) {
@@ -2304,9 +2250,7 @@ func TestMissingResources(t *testing.T) {
 		},
 	}
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected\n%v\ngot\n\n%v", spew.Sdump(expected), spew.Sdump(actual))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestBasicAuthInTemplate(t *testing.T) {

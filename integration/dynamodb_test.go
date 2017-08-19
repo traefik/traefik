@@ -53,6 +53,7 @@ func (s *DynamoDBSuite) SetUpSuite(c *check.C) {
 		sess = session.New(config)
 		return nil
 	})
+	c.Assert(err, checker.IsNil)
 	svc := dynamodb.New(sess)
 
 	// create dynamodb table
