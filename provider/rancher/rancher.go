@@ -231,7 +231,7 @@ func getenv(key, fallback string) string {
 	return value
 }
 
-func getHostIpAddress(endpoints []interface{}) string {
+func getHostIPAddress(endpoints []interface{}) string {
 
 	if len(endpoints) == 0 {
 		return ""
@@ -408,7 +408,7 @@ func parseRancherData(environments []*rancher.Environment, services []*rancher.S
 				if container.Labels["io.rancher.stack_service.name"] == rancherData.Name && containerFilter(container) {
 					// If no IP address is provided use the host IP address
 					if container.PrimaryIpAddress == "" {
-						rancherData.Containers = append(rancherData.Containers, getHostIpAddress(service.PublicEndpoints))
+						rancherData.Containers = append(rancherData.Containers, getHostIPAddress(service.PublicEndpoints))
 					} else {
 						rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
 					}
