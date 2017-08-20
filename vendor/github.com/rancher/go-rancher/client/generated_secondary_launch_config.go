@@ -115,6 +115,8 @@ type SecondaryLaunchConfig struct {
 
 	Privileged bool `json:"privileged,omitempty" yaml:"privileged,omitempty"`
 
+	PublicEndpoints map[string]interface{} `json:"publicEndpoints,omitempty" yaml:"public_endpoints,omitempty"`
+
 	PublishAllPorts bool `json:"publishAllPorts,omitempty" yaml:"publish_all_ports,omitempty"`
 
 	ReadOnly bool `json:"readOnly,omitempty" yaml:"read_only,omitempty"`

@@ -231,6 +231,14 @@ func getenv(key, fallback string) string {
 	return value
 }
 
+func getHostIPAddress(endpoints []interface{}) string {
+
+	if len(endpoints) == 0 {
+		return ""
+	}
+	return endpoints[0].(map[string]interface{})["ipAddress"].(string)
+}
+
 // Provide allows the rancher provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
@@ -398,7 +406,12 @@ func parseRancherData(environments []*rancher.Environment, services []*rancher.S
 
 			for _, container := range containers {
 				if container.Labels["io.rancher.stack_service.name"] == rancherData.Name && containerFilter(container) {
-					rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
+					// If no IP address is provided use the host IP address
+					if container.PrimaryIpAddress == "" {
+						rancherData.Containers = append(rancherData.Containers, getHostIPAddress(service.PublicEndpoints))
+					} else {
+						rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
+					}
 				}
 			}
 			rancherDataList = append(rancherDataList, rancherData)
