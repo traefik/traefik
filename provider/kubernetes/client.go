@@ -29,15 +29,31 @@ const (
 	kindSecrets   = "secrets"
 )
 
-type controllerManager struct {
-	controllers []cache.ControllerInterface
-	syncFuncs   []cache.InformerSynced
+type resourceEventHandler struct {
+	ev chan<- interface{}
 }
 
-func (cm *controllerManager) extend(ctrl cache.ControllerInterface, withSyncFunc bool) {
-	cm.controllers = append(cm.controllers, ctrl)
+func (reh *resourceEventHandler) OnAdd(obj interface{}) {
+	eventHandlerFunc(reh.ev, obj)
+}
+
+func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
+	eventHandlerFunc(reh.ev, newObj)
+}
+
+func (reh *resourceEventHandler) OnDelete(obj interface{}) {
+	eventHandlerFunc(reh.ev, obj)
+}
+
+type informerManager struct {
+	informers []cache.SharedInformer
+	syncFuncs []cache.InformerSynced
+}
+
+func (im *informerManager) extend(informer cache.SharedInformer, withSyncFunc bool) {
+	im.informers = append(im.informers, informer)
 	if withSyncFunc {
-		cm.syncFuncs = append(cm.syncFuncs, ctrl.HasSynced)
+		im.syncFuncs = append(im.syncFuncs, informer.HasSynced)
 	}
 }
 
@@ -134,30 +150,30 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 		c.isNamespaceAll = true
 	}
 
-	var ctrlManager controllerManager
+	var informManager informerManager
 	for _, ns := range namespaces {
 		ns := ns
-		ctrlManager.extend(c.WatchIngresses(ns, kubeLabelSelector, eventCh), true)
-		ctrlManager.extend(c.WatchServices(ns, eventCh), true)
-		ctrlManager.extend(c.WatchEndpoints(ns, eventCh), true)
+		informManager.extend(c.WatchIngresses(ns, kubeLabelSelector, eventCh), true)
+		informManager.extend(c.WatchObjects(ns, kindServices, &v1.Service{}, c.svcStores, eventCh), true)
+		informManager.extend(c.WatchObjects(ns, kindEndpoints, &v1.Endpoints{}, c.epStores, eventCh), true)
 		// Do not wait for the Secrets store to get synced since we cannot rely on
 		// users having granted RBAC permissions for this object.
 		// https://github.com/containous/traefik/issues/1784 should improve the
 		// situation here in the future.
-		ctrlManager.extend(c.WatchSecrets(ns, eventCh), false)
+		informManager.extend(c.WatchObjects(ns, kindSecrets, &v1.Secret{}, c.secStores, eventCh), false)
 	}
 
 	var wg sync.WaitGroup
-	for _, ctrl := range ctrlManager.controllers {
-		ctrl := ctrl
+	for _, informer := range informManager.informers {
+		informer := informer
 		safe.Go(func() {
 			wg.Add(1)
-			ctrl.Run(stopCh)
+			informer.Run(stopCh)
 			wg.Done()
 		})
 	}
 
-	if !cache.WaitForCacheSync(stopCh, ctrlManager.syncFuncs...) {
+	if !cache.WaitForCacheSync(stopCh, informManager.syncFuncs...) {
 		return nil, fmt.Errorf("timed out waiting for controller caches to sync")
 	}
 
@@ -170,77 +186,47 @@ func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopC
 	return eventCh, nil
 }
 
-// WatchIngresses sets up a watch on Ingress objects and returns a corresponding controller.
-func (c *clientImpl) WatchIngresses(namespace string, labelSelector labels.Selector, watchCh chan<- interface{}) cache.ControllerInterface {
-	source := newListWatchFromClientWithLabelSelector(
+// WatchIngresses sets up a watch on Ingress objects and returns a corresponding shared informer.
+func (c *clientImpl) WatchIngresses(namespace string, labelSelector labels.Selector, watchCh chan<- interface{}) cache.SharedInformer {
+	listWatch := newListWatchFromClientWithLabelSelector(
 		c.clientset.ExtensionsV1beta1().RESTClient(),
 		kindIngresses,
 		namespace,
 		fields.Everything(),
 		labelSelector)
 
-	store, controller := cache.NewInformer(
-		source,
-		&v1beta1.Ingress{},
-		resyncPeriod,
-		newResourceEventHandlerFuncs(watchCh))
-	c.ingStores = append(c.ingStores, store)
-
-	return controller
+	informer := loadInformer(listWatch, &v1beta1.Ingress{}, watchCh)
+	c.ingStores = append(c.ingStores, informer.GetStore())
+	return informer
 }
 
-// WatchServices sets up a watch on Service objects and returns a related controller.
-func (c *clientImpl) WatchServices(namespace string, watchCh chan<- interface{}) cache.ControllerInterface {
-	source := cache.NewListWatchFromClient(
+// WatchObjects sets up a watch on objects and returns a corresponding shared informer.
+func (c *clientImpl) WatchObjects(namespace, kind string, object runtime.Object, storeMap map[string]cache.Store, watchCh chan<- interface{}) cache.SharedInformer {
+	listWatch := cache.NewListWatchFromClient(
 		c.clientset.CoreV1().RESTClient(),
-		kindServices,
+		kind,
 		namespace,
 		fields.Everything())
 
-	store, controller := cache.NewInformer(
-		source,
-		&v1.Service{},
-		resyncPeriod,
-		newResourceEventHandlerFuncs(watchCh))
-	c.svcStores[namespace] = store
-
-	return controller
+	informer := loadInformer(listWatch, object, watchCh)
+	storeMap[namespace] = informer.GetStore()
+	return informer
 }
 
-// WatchEndpoints sets up a watch on Endpoints objects and returns a corresponding controller.
-func (c *clientImpl) WatchEndpoints(namespace string, watchCh chan<- interface{}) cache.ControllerInterface {
-	source := cache.NewListWatchFromClient(
-		c.clientset.CoreV1().RESTClient(),
-		kindEndpoints,
-		namespace,
-		fields.Everything())
-
-	store, controller := cache.NewInformer(
-		source,
-		&v1.Endpoints{},
+func loadInformer(listWatch *cache.ListWatch, object runtime.Object, watchCh chan<- interface{}) cache.SharedInformer {
+	informer := cache.NewSharedInformer(
+		listWatch,
+		object,
 		resyncPeriod,
-		newResourceEventHandlerFuncs(watchCh))
-	c.epStores[namespace] = store
+	)
 
-	return controller
-}
+	if err := informer.AddEventHandler(newResourceEventHandler(watchCh)); err != nil {
+		// This should only ever fail if we add an event handler after the
+		// informer has been started already, which would be a programming bug.
+		panic(err)
+	}
 
-// WatchSecrets sets up a watch on Secrets objects and returns a corresponding controller.
-func (c *clientImpl) WatchSecrets(namespace string, watchCh chan<- interface{}) cache.ControllerInterface {
-	source := cache.NewListWatchFromClient(
-		c.clientset.CoreV1().RESTClient(),
-		kindSecrets,
-		namespace,
-		fields.Everything())
-
-	store, controller := cache.NewInformer(
-		source,
-		&v1.Secret{},
-		resyncPeriod,
-		newResourceEventHandlerFuncs(watchCh))
-	c.secStores[namespace] = store
-
-	return controller
+	return informer
 }
 
 // GetIngresses returns all Ingresses for observed namespaces in the cluster.
@@ -330,12 +316,8 @@ func newListWatchFromClientWithLabelSelector(c cache.Getter, resource string, na
 	return &cache.ListWatch{ListFunc: listFunc, WatchFunc: watchFunc}
 }
 
-func newResourceEventHandlerFuncs(events chan<- interface{}) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj interface{}) { eventHandlerFunc(events, obj) },
-		UpdateFunc: func(old, new interface{}) { eventHandlerFunc(events, new) },
-		DeleteFunc: func(obj interface{}) { eventHandlerFunc(events, obj) },
-	}
+func newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
+	return &resourceEventHandler{events}
 }
 
 // eventHandlerFunc will pass the obj on to the events channel or drop it.
