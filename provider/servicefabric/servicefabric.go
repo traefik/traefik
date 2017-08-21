@@ -107,6 +107,12 @@ type serviceType struct {
 	IsServiceGroup         bool   `json:"IsServiceGroup"`
 }
 
+type routeMap struct {
+	Routes []struct {
+		Rule string `json:"rule"`
+	} `json:"routes"`
+}
+
 type serviceManifest struct {
 	XMLName     xml.Name `xml:"ServiceManifest"`
 	Description string   `xml:"Description"`
@@ -265,14 +271,12 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 	return defaultEndpoint, nil
 }
 
-func (p *Provider) getFrontend(appTypeName, appTypeVersion, manifestName string) (types.Frontend, error) {
+func (p *Provider) getRoutes(appTypeName, appTypeVersion, manifestName string) (routeMap, error) {
 	body, err := p.getHttp(p.ClusterManagementUrl + "/ApplicationTypes/" + appTypeName + "/$/GetServiceManifest/?api-version=3.0&ApplicationTypeVersion=" + appTypeVersion + "&ServiceManifestName=" + manifestName)
 
 	if err != nil {
 		panic(err)
 	}
-
-	log.Debug(string(body))
 
 	var payload map[string]string
 	err = json.Unmarshal(body, &payload)
@@ -288,14 +292,16 @@ func (p *Provider) getFrontend(appTypeName, appTypeVersion, manifestName string)
 		panic(err)
 	}
 
-	var frontend types.Frontend
-	err = json.Unmarshal([]byte(manifest.Description), &frontend)
+	log.Debugf("Manifest: %s", string(manifest.Description))
+
+	var routes routeMap
+	err = json.Unmarshal([]byte(manifest.Description), &routes)
 
 	if err != nil {
-		return frontend, err
+		return routes, err
 	}
 
-	return frontend, nil
+	return routes, nil
 }
 
 func (p *Provider) getManifestName(appType, appTypeVer, serviceName string) string {
@@ -326,8 +332,6 @@ func (p *Provider) getManifestName(appType, appTypeVer, serviceName string) stri
 
 	return serviceManifestName
 }
-
-//http://10.0.1.109:19080/Applications/Application1/$/GetServices/Application1%2FWeb1/$/GetPartitions/097d54f7-634a-4d16-a814-47d1642af308/$/GetReplicas?api-version=1.0&_cacheToken=1502467318900
 
 // Provide allows the consul catalog provider to provide configurations to traefik
 // using the given configuration channel.
@@ -404,12 +408,24 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 						backends[s.Name] = backend
 
 						manifestName := provider.getManifestName(a.TypeName, a.TypeVersion, s.TypeName)
-						frontend, err := provider.getFrontend(a.TypeName, a.TypeVersion, manifestName)
+						routeMap, err := provider.getRoutes(a.TypeName, a.TypeVersion, manifestName)
 
 						if err != nil {
 							continue
 						}
 
+						routes := make(map[string]types.Route)
+						for i, r := range routeMap.Routes {
+							routeName := "route" + fmt.Sprint(i)
+							route := types.Route{
+								Rule: r.Rule,
+							}
+							routes[routeName] = route
+						}
+
+						frontend := types.Frontend{
+							Routes: routes,
+						}
 						frontend.Backend = s.Name
 						frontends[s.Name] = &frontend
 					}
