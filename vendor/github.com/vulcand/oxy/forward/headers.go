@@ -4,6 +4,7 @@ const (
 	XForwardedProto        = "X-Forwarded-Proto"
 	XForwardedFor          = "X-Forwarded-For"
 	XForwardedHost         = "X-Forwarded-Host"
+	XForwardedPort         = "X-Forwarded-Port"
 	XForwardedServer       = "X-Forwarded-Server"
 	Connection             = "Connection"
 	KeepAlive              = "Keep-Alive"
