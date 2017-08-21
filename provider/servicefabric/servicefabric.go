@@ -107,7 +107,7 @@ type serviceType struct {
 	IsServiceGroup         bool   `json:"IsServiceGroup"`
 }
 
-type ServiceManifest struct {
+type serviceManifest struct {
 	XMLName     xml.Name `xml:"ServiceManifest"`
 	Description string   `xml:"Description"`
 }
@@ -281,7 +281,7 @@ func (p *Provider) getFrontend(appTypeName, appTypeVersion, manifestName string)
 		panic(err)
 	}
 
-	var manifest ServiceManifest
+	var manifest serviceManifest
 	err = xml.Unmarshal([]byte(payload["Manifest"]), &manifest)
 
 	if err != nil {
@@ -338,8 +338,7 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 			var lastConfigUpdate types.ConfigMessage
 
 			ticker := time.NewTicker(time.Second * 10)
-			for t := range ticker.C {
-				log.Info(t)
+			for _ = range ticker.C {
 				select {
 				case shouldStop := <-stop:
 					if shouldStop {
