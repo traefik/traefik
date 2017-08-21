@@ -1,8 +1,10 @@
 package marathon
 
 import (
+	"strings"
 	"time"
 
+	"github.com/containous/traefik/types"
 	"github.com/gambol99/go-marathon"
 )
 
@@ -39,6 +41,17 @@ func appPorts(ports ...int) func(*marathon.Application) {
 func label(key, value string) func(*marathon.Application) {
 	return func(app *marathon.Application) {
 		app.AddLabel(key, value)
+	}
+}
+
+func labelWithService(key, value string, serviceName string) func(*marathon.Application) {
+	if len(serviceName) == 0 {
+		panic("serviceName can not be empty")
+	}
+
+	property := strings.TrimPrefix(key, types.LabelPrefix)
+	return func(app *marathon.Application) {
+		app.AddLabel(types.LabelPrefix+serviceName+"."+property, value)
 	}
 }
 
