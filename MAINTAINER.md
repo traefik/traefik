@@ -11,6 +11,7 @@
 * Ludovic Fernandez [@ldez](https://github.com/ldez)
 * Julien Salleyron [@juliens](https://github.com/juliens)
 * Nicolas Mengin [@nmengin](https://github.com/nmengin)
+* Marco Jantke [@marco-jantke](https://github.com/marco-jantke)
 
 
 ## PR review process:
