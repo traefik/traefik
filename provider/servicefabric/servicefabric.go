@@ -120,7 +120,6 @@ type serviceManifest struct {
 
 var _ provider.Provider = (*Provider)(nil)
 
-// CatalogProvider holds configurations of the Consul catalog provider.
 type Provider struct {
 	ClusterManagementUrl  string `description:"ServiceFabric cluster management endpoint"`
 	UseCertificateAuth    bool   `description:"User certificate auth"`
@@ -129,20 +128,24 @@ type Provider struct {
 	CACertFilePath        string `description:"Path to CA cert file"`
 }
 
+// Method for invoking generic HTTP GET requests against the Service Fabric REST API
 func (p *Provider) getHttp(url string) ([]byte, error) {
 	log.Debugf("GET: %s", url)
 	var client http.Client
+
 	if !p.UseCertificateAuth {
 		client = http.Client{}
 	} else {
-		// Load client cert
+		// Handle client authentication
+
+		// Load client cert from file
 		cert, err := tls.LoadX509KeyPair(p.ClientCertFilePath, p.ClientCertKeyFilePath)
 		if err != nil {
 			log.Error(err)
 			return nil, err
 		}
 
-		// Load CA cert
+		// Load CA cert from file
 		caCert, err := ioutil.ReadFile(p.CACertFilePath)
 		if err != nil {
 			log.Error(err)
@@ -181,6 +184,7 @@ func (p *Provider) getHttp(url string) ([]byte, error) {
 	return body, nil
 }
 
+// Retrieve a list of the registered applications
 func (p *Provider) getApplications() (applicationsData, error) {
 	body, err := p.getHttp(p.ClusterManagementUrl + "/Applications/?api-version=3.0")
 
@@ -198,6 +202,7 @@ func (p *Provider) getApplications() (applicationsData, error) {
 	return sfResponse, nil
 }
 
+// Retrieve a list of the registered services for a given application
 func (p *Provider) getServices(appName string) (servicesData, error) {
 	body, err := p.getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices?api-version=3.0")
 
@@ -215,6 +220,7 @@ func (p *Provider) getServices(appName string) (servicesData, error) {
 	return sfResponse, nil
 }
 
+// Retrieve a list of partitions for a given service
 func (p *Provider) getPatitions(appName, serviceName string) (partitionsData, error) {
 	body, err := p.getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=3.0")
 
@@ -232,6 +238,7 @@ func (p *Provider) getPatitions(appName, serviceName string) (partitionsData, er
 	return sfResponse, nil
 }
 
+// Retrieve a list of replicas for a given partiton
 func (p *Provider) getReplicas(appName, serviceName, parition string) (replicasData, error) {
 	body, err := p.getHttp(p.ClusterManagementUrl + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + parition + "/$/GetReplicas?api-version=3.0")
 
@@ -249,6 +256,7 @@ func (p *Provider) getReplicas(appName, serviceName, parition string) (replicasD
 	return sfResponse, nil
 }
 
+// Gets the default endpont for a given set of endpoints
 func getDefaultEndpoint(endpointData string) (string, error) {
 	var endpointsMap map[string]map[string]string
 	var emptyString string
@@ -271,7 +279,8 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 	return defaultEndpoint, nil
 }
 
-func (p *Provider) getRoutes(appTypeName, appTypeVersion, manifestName string) (routeMap, error) {
+// Gets the routing information for a given service
+func (p *Provider) getServiceRoutes(appTypeName, appTypeVersion, manifestName string) (routeMap, error) {
 	body, err := p.getHttp(p.ClusterManagementUrl + "/ApplicationTypes/" + appTypeName + "/$/GetServiceManifest/?api-version=3.0&ApplicationTypeVersion=" + appTypeVersion + "&ServiceManifestName=" + manifestName)
 
 	if err != nil {
@@ -304,7 +313,8 @@ func (p *Provider) getRoutes(appTypeName, appTypeVersion, manifestName string) (
 	return routes, nil
 }
 
-func (p *Provider) getManifestName(appType, appTypeVer, serviceName string) string {
+// Gets the manifest file name associated with a given service
+func (p *Provider) getServiceManifestName(appType, appTypeVer, serviceName string) string {
 	body, err := p.getHttp(p.ClusterManagementUrl + "/ApplicationTypes/" + appType + "/$/GetServiceTypes?ApplicationTypeVersion=" + appTypeVer + "&api-version=1.0")
 
 	if err != nil {
@@ -333,7 +343,7 @@ func (p *Provider) getManifestName(appType, appTypeVer, serviceName string) stri
 	return serviceManifestName
 }
 
-// Provide allows the consul catalog provider to provide configurations to traefik
+// Provide allows the servicefabric provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 
@@ -407,8 +417,8 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 						}
 						backends[s.Name] = backend
 
-						manifestName := provider.getManifestName(a.TypeName, a.TypeVersion, s.TypeName)
-						routeMap, err := provider.getRoutes(a.TypeName, a.TypeVersion, manifestName)
+						manifestName := provider.getServiceManifestName(a.TypeName, a.TypeVersion, s.TypeName)
+						routeMap, err := provider.getServiceRoutes(a.TypeName, a.TypeVersion, manifestName)
 
 						if err != nil {
 							continue
