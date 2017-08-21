@@ -15,7 +15,7 @@ func TestNewVoidRegistry(t *testing.T) {
 	registry.RetriesCounter().With("some", "value").Add(1)
 }
 
-func TestNewMutliRegistry(t *testing.T) {
+func TestNewMultiRegistry(t *testing.T) {
 	registries := []Registry{newCollectingRetryMetrics(), newCollectingRetryMetrics()}
 	registry := NewMultiRegistry(registries)
 
@@ -24,18 +24,21 @@ func TestNewMutliRegistry(t *testing.T) {
 	registry.RetriesCounter().With("key", "retries").Add(3)
 
 	for _, collectingRegistry := range registries {
-		cReqsCounter := collectingRegistry.ReqsCounter().(*collectingCounter)
-		cReqDurationHistogram := collectingRegistry.ReqDurationHistogram().(*collectingHistogram)
-		cRetriesCounter := collectingRegistry.RetriesCounter().(*collectingCounter)
+		cReqsCounter := collectingRegistry.ReqsCounter().(*counterMock)
+		cReqDurationHistogram := collectingRegistry.ReqDurationHistogram().(*histogramMock)
+		cRetriesCounter := collectingRegistry.RetriesCounter().(*counterMock)
 
-		if cReqsCounter.counterValue != 1 {
-			t.Errorf("Got value %v for ReqsCounter, want %v", cReqsCounter.counterValue, 1)
+		wantCounterValue := float64(1)
+		if cReqsCounter.counterValue != wantCounterValue {
+			t.Errorf("Got value %f for ReqsCounter, want %f", cReqsCounter.counterValue, wantCounterValue)
 		}
-		if cReqDurationHistogram.lastHistogramValue != 2 {
-			t.Errorf("Got last observation %v for ReqDurationHistogram, want %v", cReqDurationHistogram.lastHistogramValue, 2)
+		wantHistogramValue := float64(2)
+		if cReqDurationHistogram.lastHistogramValue != wantHistogramValue {
+			t.Errorf("Got last observation %f for ReqDurationHistogram, want %f", cReqDurationHistogram.lastHistogramValue, wantHistogramValue)
 		}
-		if cRetriesCounter.counterValue != 3 {
-			t.Errorf("Got value %v for RetriesCounter, want %v", cRetriesCounter.counterValue, 3)
+		wantCounterValue = float64(3)
+		if cRetriesCounter.counterValue != wantCounterValue {
+			t.Errorf("Got value %f for RetriesCounter, want %f", cRetriesCounter.counterValue, wantCounterValue)
 		}
 
 		assert.Equal(t, []string{"key", "requests"}, cReqsCounter.lastLabelValues)
@@ -44,57 +47,38 @@ func TestNewMutliRegistry(t *testing.T) {
 	}
 }
 
-// collectingRegistry is an implementation of themetrics.Registry interface that can be used inside tests.
-type collectingRegistry struct {
-	reqsCounter          *collectingCounter
-	reqDurationHistogram *collectingHistogram
-	retriesCounter       *collectingCounter
-}
-
-func newCollectingRetryMetrics() *collectingRegistry {
-	return &collectingRegistry{
-		reqsCounter:          &collectingCounter{},
-		reqDurationHistogram: &collectingHistogram{},
-		retriesCounter:       &collectingCounter{},
+func newCollectingRetryMetrics() Registry {
+	return &standardRegistry{
+		reqsCounter:          &counterMock{},
+		reqDurationHistogram: &histogramMock{},
+		retriesCounter:       &counterMock{},
 	}
 }
 
-func (r *collectingRegistry) ReqsCounter() metrics.Counter {
-	return r.reqsCounter
-}
-
-func (r *collectingRegistry) ReqDurationHistogram() metrics.Histogram {
-	return r.reqDurationHistogram
-}
-
-func (r *collectingRegistry) RetriesCounter() metrics.Counter {
-	return r.retriesCounter
-}
-
-type collectingCounter struct {
+type counterMock struct {
 	counterValue    float64
 	lastLabelValues []string
 }
 
-func (c *collectingCounter) With(labelValues ...string) metrics.Counter {
+func (c *counterMock) With(labelValues ...string) metrics.Counter {
 	c.lastLabelValues = labelValues
 	return c
 }
 
-func (c *collectingCounter) Add(delta float64) {
+func (c *counterMock) Add(delta float64) {
 	c.counterValue += delta
 }
 
-type collectingHistogram struct {
+type histogramMock struct {
 	lastHistogramValue float64
 	lastLabelValues    []string
 }
 
-func (c *collectingHistogram) With(labelValues ...string) metrics.Histogram {
+func (c *histogramMock) With(labelValues ...string) metrics.Histogram {
 	c.lastLabelValues = labelValues
 	return c
 }
 
-func (c *collectingHistogram) Observe(value float64) {
+func (c *histogramMock) Observe(value float64) {
 	c.lastHistogramValue = value
 }

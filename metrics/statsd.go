@@ -7,7 +7,6 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	kitlog "github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/statsd"
 )
 
@@ -24,29 +23,11 @@ func RegisterStatsd(config *types.Statsd) Registry {
 		statsdTicker = initStatsdTicker(config)
 	}
 
-	return &statsdRegistry{
+	return &standardRegistry{
 		reqsCounter:          statsdClient.NewCounter(ddMetricsReqsName, 1.0),
 		reqDurationHistogram: statsdClient.NewTiming(ddMetricsLatencyName, 1.0),
 		retriesCounter:       statsdClient.NewCounter(ddRetriesTotalName, 1.0),
 	}
-}
-
-type statsdRegistry struct {
-	reqsCounter          metrics.Counter
-	reqDurationHistogram metrics.Histogram
-	retriesCounter       metrics.Counter
-}
-
-func (s *statsdRegistry) ReqsCounter() metrics.Counter {
-	return s.reqsCounter
-}
-
-func (s *statsdRegistry) ReqDurationHistogram() metrics.Histogram {
-	return s.reqDurationHistogram
-}
-
-func (s *statsdRegistry) RetriesCounter() metrics.Counter {
-	return s.retriesCounter
 }
 
 // initStatsdTicker initializes metrics pusher and creates a statsdClient if not created already

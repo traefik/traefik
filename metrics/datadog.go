@@ -7,7 +7,6 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	kitlog "github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/dogstatsd"
 )
 
@@ -31,31 +30,13 @@ func RegisterDatadog(config *types.Datadog) Registry {
 		datadogTicker = initDatadogClient(config)
 	}
 
-	registry := &datadogRegistry{
+	registry := &standardRegistry{
 		reqsCounter:          datadogClient.NewCounter(ddMetricsReqsName, 1.0),
 		reqDurationHistogram: datadogClient.NewHistogram(ddMetricsLatencyName, 1.0),
 		retriesCounter:       datadogClient.NewCounter(ddRetriesTotalName, 1.0),
 	}
 
 	return registry
-}
-
-type datadogRegistry struct {
-	reqsCounter          metrics.Counter
-	reqDurationHistogram metrics.Histogram
-	retriesCounter       metrics.Counter
-}
-
-func (dd *datadogRegistry) ReqsCounter() metrics.Counter {
-	return dd.reqsCounter
-}
-
-func (dd *datadogRegistry) ReqDurationHistogram() metrics.Histogram {
-	return dd.reqDurationHistogram
-}
-
-func (dd *datadogRegistry) RetriesCounter() metrics.Counter {
-	return dd.retriesCounter
 }
 
 func initDatadogClient(config *types.Datadog) *time.Ticker {

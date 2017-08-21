@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"github.com/containous/traefik/types"
-	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/prometheus"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
@@ -37,27 +36,9 @@ func RegisterPrometheus(config *types.Prometheus) Registry {
 		Help: "How many request retries happened in total.",
 	}, []string{"service"})
 
-	return &prometheusRegistry{
-		reqCounter:           reqCounter,
+	return &standardRegistry{
+		reqsCounter:          reqCounter,
 		reqDurationHistogram: reqDurationHistogram,
-		retryCounter:         retryCounter,
+		retriesCounter:       retryCounter,
 	}
-}
-
-type prometheusRegistry struct {
-	reqCounter           metrics.Counter
-	reqDurationHistogram metrics.Histogram
-	retryCounter         metrics.Counter
-}
-
-func (r *prometheusRegistry) ReqsCounter() metrics.Counter {
-	return r.reqCounter
-}
-
-func (r *prometheusRegistry) ReqDurationHistogram() metrics.Histogram {
-	return r.reqDurationHistogram
-}
-
-func (r *prometheusRegistry) RetriesCounter() metrics.Counter {
-	return r.retryCounter
 }

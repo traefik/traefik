@@ -12,7 +12,7 @@ type Registry interface {
 	RetriesCounter() metrics.Counter
 }
 
-// NewMultiRegistry creates a new multiRegistry that wraps multiple Registries.
+// NewMultiRegistry creates a new standardRegistry that wraps multiple Registries.
 func NewMultiRegistry(registries []Registry) Registry {
 	reqsCounters := []metrics.Counter{}
 	reqDurationHistograms := []metrics.Histogram{}
@@ -24,50 +24,41 @@ func NewMultiRegistry(registries []Registry) Registry {
 		retriesCounters = append(retriesCounters, r.RetriesCounter())
 	}
 
-	return &multiRegistry{
+	return &standardRegistry{
 		reqsCounter:          multi.NewCounter(reqsCounters...),
 		reqDurationHistogram: multi.NewHistogram(reqDurationHistograms...),
 		retriesCounter:       multi.NewCounter(retriesCounters...),
 	}
 }
 
-// multiRegistry is a Registry that wraps multiple Registries and calls each of them when a Metric is tracked.
-type multiRegistry struct {
+// standardRegistry is a Registry that wraps multiple Registries and calls each of them when a Metric is tracked.
+type standardRegistry struct {
 	reqsCounter          metrics.Counter
 	reqDurationHistogram metrics.Histogram
 	retriesCounter       metrics.Counter
 }
 
-func (r *multiRegistry) ReqsCounter() metrics.Counter {
+func (r *standardRegistry) ReqsCounter() metrics.Counter {
 	return r.reqsCounter
 }
 
-// ReqsCounter
-func (r *multiRegistry) ReqDurationHistogram() metrics.Histogram {
+func (r *standardRegistry) ReqDurationHistogram() metrics.Histogram {
 	return r.reqDurationHistogram
 }
 
-func (r *multiRegistry) RetriesCounter() metrics.Counter {
+func (r *standardRegistry) RetriesCounter() metrics.Counter {
 	return r.retriesCounter
 }
 
 // NewVoidRegistry is a noop implementation of metrics.Registry.
 // It is used to avoid nil checking in components that do metric collections.
 func NewVoidRegistry() Registry {
-	return &voidRegistry{
-		c: &voidCounter{},
-		h: &voidHistogram{},
+	return &standardRegistry{
+		reqsCounter:          &voidCounter{},
+		reqDurationHistogram: &voidHistogram{},
+		retriesCounter:       &voidCounter{},
 	}
 }
-
-type voidRegistry struct {
-	c metrics.Counter
-	h metrics.Histogram
-}
-
-func (r *voidRegistry) ReqsCounter() metrics.Counter            { return r.c }
-func (r *voidRegistry) ReqDurationHistogram() metrics.Histogram { return r.h }
-func (r *voidRegistry) RetriesCounter() metrics.Counter         { return r.c }
 
 type voidCounter struct{}
 

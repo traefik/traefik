@@ -75,15 +75,15 @@ func TestPrometheus(t *testing.T) {
 	for _, test := range tests {
 		family := findMetricFamily(test.name, metricsFamilies)
 		if family == nil {
-			t.Errorf("gathered metrics do not contain '%s'", test.name)
+			t.Errorf("gathered metrics do not contain %q", test.name)
 			continue
 		}
 		for _, label := range family.Metric[0].Label {
 			val, ok := test.labels[*label.Name]
 			if !ok {
-				t.Errorf("'%s' metric contains unexpected label '%s'", test.name, label)
+				t.Errorf("%q metric contains unexpected label %q", test.name, *label.Name)
 			} else if val != *label.Value {
-				t.Errorf("label '%s' in metric '%s' has wrong value '%s'", label, test.name, *label.Value)
+				t.Errorf("label %q in metric %q has wrong value %q, expected %q", *label.Name, test.name, *label.Value, val)
 			}
 		}
 		test.assert(family)
