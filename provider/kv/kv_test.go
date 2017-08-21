@@ -282,7 +282,7 @@ func TestKvWatchTree(t *testing.T) {
 	}
 
 	select {
-	case _ = <-configChan:
+	case <-configChan:
 		t.Fatalf("configChan should be empty")
 	default:
 	}
@@ -371,9 +371,7 @@ func (s *Mock) AtomicDelete(key string, previous *store.KVPair) (bool, error) {
 }
 
 // Close mock
-func (s *Mock) Close() {
-	return
-}
+func (s *Mock) Close() {}
 
 func TestKVLoadConfig(t *testing.T) {
 	provider := &Provider{

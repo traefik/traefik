@@ -1,0 +1,7 @@
+timeoutEndpoint:
+  image: yaman/timeout
+  environment:
+    - PROTO=http
+    - PORT=9000
+  ports:
+    - "9000:9000"

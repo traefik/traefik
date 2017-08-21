@@ -132,6 +132,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 			ctx := context.Background()
 			version, err := dockerClient.ServerVersion(ctx)
+			if err != nil {
+				log.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
+				return err
+			}
 			log.Debugf("Provider connection established with docker %s (API %s)", version.Version, version.APIVersion)
 			var dockerDataList []dockerData
 			if p.SwarmMode {
@@ -332,7 +336,7 @@ func (p *Provider) hasCircuitBreakerLabel(container dockerData) bool {
 
 // Regexp used to extract the name of the service and the name of the property for this service
 // All properties are under the format traefik.<servicename>.frontent.*= except the port/weight/protocol directly after traefik.<servicename>.
-var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.*?)\.(?P<property_name>port|weight|protocol|frontend\.(.*))$`)
+var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|weight|protocol|frontend\.(.*))$`)
 
 // Map of services properties
 // we can get it with label[serviceName][propertyName] and we got the propertyValue
@@ -908,7 +912,7 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 		NetworkSettings: networkSettings{},
 	}
 
-	if isGlobalSvc == true {
+	if isGlobalSvc {
 		dockerData.Name = serviceDockerData.Name + "." + task.ID
 	}
 

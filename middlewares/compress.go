@@ -17,7 +17,10 @@ func (c *Compress) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.
 }
 
 func gzipHandler(h http.Handler) http.Handler {
-	wrapper, err := gziphandler.NewGzipHandler(gzip.DefaultCompression, gziphandler.DefaultMinSize, &gziphandler.GzipResponseWriterWrapper{})
+	wrapper, err := gziphandler.GzipHandlerWithOpts(
+		&gziphandler.GzipResponseWriterWrapper{},
+		gziphandler.CompressionLevel(gzip.DefaultCompression),
+		gziphandler.MinSize(gziphandler.DefaultMinSize))
 	if err != nil {
 		log.Error(err)
 	}

@@ -1,12 +1,9 @@
 package main
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	fmtlog "log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -29,7 +26,6 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
-	"golang.org/x/net/http2"
 )
 
 func main() {
@@ -177,28 +173,6 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 
 	// load global configuration
 	globalConfiguration := traefikConfiguration.GlobalConfiguration
-
-	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = globalConfiguration.MaxIdleConnsPerHost
-	if globalConfiguration.InsecureSkipVerify {
-		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-
-	if len(globalConfiguration.RootCAs) > 0 {
-		roots := x509.NewCertPool()
-		for _, cert := range globalConfiguration.RootCAs {
-			certContent, err := cert.Read()
-			if err != nil {
-				log.Error("Error while read RootCAs", err)
-				continue
-			}
-			roots.AppendCertsFromPEM(certContent)
-		}
-
-		tr := http.DefaultTransport.(*http.Transport)
-		tr.TLSClientConfig = &tls.Config{RootCAs: roots}
-
-		http2.ConfigureTransport(tr)
-	}
 
 	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
 		// no filename, setting to global config file

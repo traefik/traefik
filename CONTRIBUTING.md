@@ -189,7 +189,7 @@ The title must be short and descriptive. (~60 characters)
 
 ### Description
 
-- Respect the issue template as more as possible. [template](ISSUE_TEMPLATE.md)
+- Respect the issue template as much as possible. [template](.github/ISSUE_TEMPLATE.md)
 - If it's possible use the command `traefik bug`. See https://www.youtube.com/watch?v=Lyz62L8m93I. 
 - Explain the conditions which led you to write this issue: the context.
 - The context should lead to something, an idea or a problem that you’re facing.
@@ -205,7 +205,7 @@ The title must be short and descriptive. (~60 characters)
 
 ### Description
 
-- Respect the pull request template as more as possible. [template](PULL_REQUEST_TEMPLATE.md)
+- Respect the pull request template as much as possible. [template](.github/PULL_REQUEST_TEMPLATE.md)
 - Explain the conditions which led you to write this PR: the context.
 - The context should lead to something, an idea or a problem that you’re facing.
 - Remain clear and concise.
@@ -222,5 +222,7 @@ The title must be short and descriptive. (~60 characters)
 - Add tests.
 - Address review comments in terms of additional commits.
 - Do not amend/squash existing ones unless the PR is trivial.
+- If a PR involves changes to third-party dependencies, the commits pertaining to the vendor folder and the manifest/lock file(s) should be committed separated.
+
 
 Read [10 tips for better pull requests](http://blog.ploeh.dk/2015/01/15/10-tips-for-better-pull-requests/).
