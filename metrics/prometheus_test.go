@@ -36,10 +36,10 @@ func TestPrometheus(t *testing.T) {
 				"service": "test",
 			},
 			assert: func(family *dto.MetricFamily) {
-				cv := uint(family.Metric[0].Counter.GetValue())
-				expectedCv := uint(2)
+				cv := family.Metric[0].Counter.GetValue()
+				expectedCv := float64(2)
 				if cv != expectedCv {
-					t.Errorf("gathered metrics do not contain correct value for total requests, got %d expected %d", cv, expectedCv)
+					t.Errorf("gathered metrics do not contain correct value for total requests, got %f expected %f", cv, expectedCv)
 				}
 			},
 		},
@@ -63,10 +63,10 @@ func TestPrometheus(t *testing.T) {
 				"service": "test",
 			},
 			assert: func(family *dto.MetricFamily) {
-				cv := uint(family.Metric[0].Counter.GetValue())
-				expectedCv := uint(1)
+				cv := family.Metric[0].Counter.GetValue()
+				expectedCv := float64(1)
 				if cv != expectedCv {
-					t.Errorf("gathered metrics do not contain correct value for total retries, got '%d' expected '%d'", cv, expectedCv)
+					t.Errorf("gathered metrics do not contain correct value for total retries, got %f expected %f", cv, expectedCv)
 				}
 			},
 		},
