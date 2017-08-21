@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -87,6 +88,30 @@ type replicasData struct {
 	} `json:"Items"`
 }
 
+type serviceType struct {
+	ServiceTypeDescription struct {
+		IsStateful           bool   `json:"IsStateful"`
+		ServiceTypeName      string `json:"ServiceTypeName"`
+		PlacementConstraints string `json:"PlacementConstraints"`
+		HasPersistedState    bool   `json:"HasPersistedState"`
+		Kind                 string `json:"Kind"`
+		Extensions           []struct {
+			Key   string `json:"Key"`
+			Value string `json:"Value"`
+		} `json:"Extensions"`
+		LoadMetrics              []interface{} `json:"LoadMetrics"`
+		ServicePlacementPolicies []interface{} `json:"ServicePlacementPolicies"`
+	} `json:"ServiceTypeDescription"`
+	ServiceManifestVersion string `json:"ServiceManifestVersion"`
+	ServiceManifestName    string `json:"ServiceManifestName"`
+	IsServiceGroup         bool   `json:"IsServiceGroup"`
+}
+
+type ServiceManifest struct {
+	XMLName     xml.Name `xml:"ServiceManifest"`
+	Description string   `xml:"Description"`
+}
+
 var _ provider.Provider = (*Provider)(nil)
 
 // CatalogProvider holds configurations of the Consul catalog provider.
@@ -99,7 +124,7 @@ type Provider struct {
 }
 
 func (p *Provider) getHttp(url string) ([]byte, error) {
-
+	log.Debugf("GET: %s", url)
 	var client http.Client
 	if !p.UseCertificateAuth {
 		client = http.Client{}
@@ -240,6 +265,68 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 	return defaultEndpoint, nil
 }
 
+func (p *Provider) getFrontend(appTypeName, appTypeVersion, manifestName string) (types.Frontend, error) {
+	body, err := p.getHttp(p.ClusterManagementUrl + "/ApplicationTypes/" + appTypeName + "/$/GetServiceManifest/?api-version=3.0&ApplicationTypeVersion=" + appTypeVersion + "&ServiceManifestName=" + manifestName)
+
+	if err != nil {
+		panic(err)
+	}
+
+	log.Debug(string(body))
+
+	var payload map[string]string
+	err = json.Unmarshal(body, &payload)
+
+	if err != nil {
+		panic(err)
+	}
+
+	var manifest ServiceManifest
+	err = xml.Unmarshal([]byte(payload["Manifest"]), &manifest)
+
+	if err != nil {
+		panic(err)
+	}
+
+	var frontend types.Frontend
+	err = json.Unmarshal([]byte(manifest.Description), &frontend)
+
+	if err != nil {
+		return frontend, err
+	}
+
+	return frontend, nil
+}
+
+func (p *Provider) getManifestName(appType, appTypeVer, serviceName string) string {
+	body, err := p.getHttp(p.ClusterManagementUrl + "/ApplicationTypes/" + appType + "/$/GetServiceTypes?ApplicationTypeVersion=" + appTypeVer + "&api-version=1.0")
+
+	if err != nil {
+		panic(err)
+	}
+
+	var serviceTypes []serviceType
+	err = json.Unmarshal([]byte(body), &serviceTypes)
+
+	if err != nil {
+		panic(err)
+	}
+
+	var serviceManifestName string
+	for _, s := range serviceTypes {
+		if s.ServiceTypeDescription.ServiceTypeName == serviceName {
+			serviceManifestName = s.ServiceManifestName
+			break
+		}
+	}
+
+	if len(serviceManifestName) <= 0 {
+		panic("Service name does not exist!")
+	}
+
+	return serviceManifestName
+}
+
 //http://10.0.1.109:19080/Applications/Application1/$/GetServices/Application1%2FWeb1/$/GetPartitions/097d54f7-634a-4d16-a814-47d1642af308/$/GetReplicas?api-version=1.0&_cacheToken=1502467318900
 
 // Provide allows the consul catalog provider to provide configurations to traefik
@@ -264,6 +351,7 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 				}
 
 				backends := make(map[string]*types.Backend)
+				frontends := make(map[string]*types.Frontend)
 
 				//Todo: Investigate paging requests
 				appData, err := provider.getApplications()
@@ -315,13 +403,24 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 							}
 						}
 						backends[s.Name] = backend
+
+						manifestName := provider.getManifestName(a.TypeName, a.TypeVersion, s.TypeName)
+						frontend, err := provider.getFrontend(a.TypeName, a.TypeVersion, manifestName)
+
+						if err != nil {
+							continue
+						}
+
+						frontend.Backend = s.Name
+						frontends[s.Name] = &frontend
 					}
 				}
 
 				configMessage := types.ConfigMessage{
 					ProviderName: "servicefabric",
 					Configuration: &types.Configuration{
-						Backends: backends,
+						Backends:  backends,
+						Frontends: frontends,
 					},
 				}
 
