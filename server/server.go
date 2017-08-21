@@ -54,8 +54,8 @@ type Server struct {
 	routinesPool                  *safe.Pool
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
-	metricsRegistry            metrics.Registry
-	metricsEnabled             bool
+	metricsRegistry               metrics.Registry
+	metricsEnabled                bool
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
