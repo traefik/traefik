@@ -35,7 +35,7 @@ import:
   - tlsconfig
 - package: github.com/docker/go-units
   version: 9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1
-- package: github.com/docker/libkv
+- package: github.com/abronan/libkv
   subpackages:
   - store
   - store/boltdb
