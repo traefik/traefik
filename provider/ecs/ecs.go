@@ -37,7 +37,7 @@ type Provider struct {
 
 	// Provider lookup parameters
 	Clusters             Clusters `description:"ECS Clusters name"`
-	Cluster              string   `description:"deprecated - ECS Cluster name"`
+	Cluster              string   `description:"deprecated - ECS Cluster name"` // deprecated
 	AutoDiscoverClusters bool     `description:"Auto discover cluster"`
 	Region               string   `description:"The AWS region to use for requests"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
@@ -209,7 +209,11 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 	if p.AutoDiscoverClusters {
 		input := &ecs.ListClustersInput{}
 		for {
-			if result, _ := client.ecs.ListClusters(input); result != nil {
+			result, err := client.ecs.ListClusters(input)
+			if err != nil {
+				return nil, err
+			}
+			if result != nil {
 				clustersArn = append(clustersArn, result.ClusterArns...)
 				input.NextToken = result.NextToken
 				if result.NextToken == nil {
@@ -223,7 +227,10 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			clusters = append(clusters, *carns)
 		}
 	} else if p.Cluster != "" {
+		// TODO: Deprecated configuration - Need to be removed in the future
 		clusters = Clusters{p.Cluster}
+		log.Warn("Deprecated configuration found: ecs.cluster " +
+			"Please use ecs.clusters instead.")
 	} else {
 		clusters = p.Clusters
 	}
