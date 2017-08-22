@@ -722,7 +722,7 @@
 # Optional
 # Default: false
 #
-# forceTaskHostname: false 
+# forceTaskHostname = false
 
 # Applications may define readiness checks which are probed by Marathon during
 # deployments periodically and the results exposed via the API. Enabling the
@@ -733,7 +733,8 @@
 #
 # Optional
 # Default: false
-# respectReadinessChecks: false
+#
+# respectReadinessChecks = false
 
 ################################################################
 # Mesos configuration backend

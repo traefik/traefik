@@ -1158,7 +1158,7 @@ domain = "marathon.localhost"
 # Optional
 # Default: false
 #
-# forceTaskHostname: false 
+# forceTaskHostname = false
 
 # Applications may define readiness checks which are probed by Marathon during
 # deployments periodically and the results exposed via the API. Enabling the
@@ -1169,7 +1169,8 @@ domain = "marathon.localhost"
 #
 # Optional
 # Default: false
-# respectReadinessChecks: false
+#
+# respectReadinessChecks = false
 ```
 
 Labels can be used on containers to override default behaviour:
