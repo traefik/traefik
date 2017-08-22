@@ -534,8 +534,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultECS ecs.Provider
 	defaultECS.Watch = true
 	defaultECS.ExposedByDefault = true
+	defaultECS.AutoDiscoverClusters = false
+	defaultECS.Clusters = ecs.Clusters{"default"}
 	defaultECS.RefreshSeconds = 15
-	defaultECS.Cluster = "default"
 	defaultECS.Constraints = types.Constraints{}
 
 	//default Rancher

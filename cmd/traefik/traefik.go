@@ -19,6 +19,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/safe"
@@ -144,6 +145,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(server.RootCAs{}), &server.RootCAs{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
+	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 

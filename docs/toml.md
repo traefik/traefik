@@ -1708,10 +1708,16 @@ Træfik can be configured to use Amazon ECS as a backend configuration:
 
 # ECS Cluster Name
 #
-# Optional
-# Default: "default"
+# Deprecated - Please use Clusters
 #
-Cluster = "default"
+# Cluster = "default"
+
+# ECS Clusters Name
+#
+# Optional
+# Default: ["default"]
+#
+Clusters = ["default"]
 
 # Enable watch ECS changes
 #
@@ -1719,6 +1725,13 @@ Cluster = "default"
 # Default: true
 #
 Watch = true
+
+# Enable auto discover ECS clusters
+#
+# Optional
+# Default: false
+#
+AutoDiscoverClusters = false
 
 # Polling interval (in seconds)
 #
@@ -1780,6 +1793,8 @@ Træfik needs the following policy to read ECS information:
             "Sid": "Traefik ECS read access",
             "Effect": "Allow",
             "Action": [
+                "ecs:ListClusters",
+                "ecs:DescribeClusters",
                 "ecs:ListTasks",
                 "ecs:DescribeTasks",
                 "ecs:DescribeContainerInstances",
