@@ -1,3 +1,22 @@
+body {
+    font-size: 15px;
+    line-height: 24px
+}
+
+code {
+    font-size: 90%;
+    padding: 3px 7px;
+    background: #f4f4f8;
+    border: solid 1px #ccc;
+    color: #333;
+    border-radius: 2px;
+}
+
+
+li {
+    padding-bottom: 0.7em;
+}
+
 a {
     color: #37ABC8;
     text-decoration: none;
@@ -58,18 +77,4 @@ blockquote p {
     text-decoration: none;
     background-color: #25606F;
     outline: 0;
-}
-
-code {
-    font-size: 90%;
-    padding: 3px 7px;
-    background: #f4f4f8;
-    border: solid 1px #ccc;
-    color: #333;
-    border-radius: 2px;
-}
-
-body {
-    font-size: 15px;
-    line-height: 24px
 }
