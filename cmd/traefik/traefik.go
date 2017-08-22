@@ -1,9 +1,11 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	fmtlog "log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -97,6 +99,43 @@ Complete documentation is available at https://traefik.io`,
 		},
 	}
 
+	healthcheckCmd := &flaeg.Command{
+		Name:                  "healthcheck",
+		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
+		Config:                traefikConfiguration,
+		DefaultPointersConfig: traefikPointersConfiguration,
+		Run: func() error {
+			if traefikConfiguration.Web == nil {
+				fmt.Println("Please enable the web provider to use healtcheck.")
+				os.Exit(1)
+			}
+			client := &http.Client{Timeout: 5 * time.Second}
+			protocol := "http"
+			if len(traefikConfiguration.Web.CertFile) > 0 {
+				protocol = "https"
+				tr := &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				}
+				client.Transport = tr
+			}
+			resp, err := client.Head(protocol + "://" + traefikConfiguration.Web.Address + "/ping")
+			if err != nil {
+				fmt.Printf("Error calling healthcheck: %s\n", err)
+				os.Exit(1)
+			}
+			if resp.StatusCode != http.StatusOK {
+				fmt.Printf("Bad healthcheck status: %s\n", resp.Status)
+				os.Exit(1)
+			}
+			fmt.Printf("OK: %s\n", resp.Request.URL)
+			os.Exit(0)
+			return nil
+		},
+		Metadata: map[string]string{
+			"parseAllSources": "true",
+		},
+	}
+
 	//init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
 	//add custom parsers
@@ -112,6 +151,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddCommand(newVersionCmd())
 	f.AddCommand(newBugCmd(traefikConfiguration, traefikPointersConfiguration))
 	f.AddCommand(storeconfigCmd)
+	f.AddCommand(healthcheckCmd)
 
 	usedCmd, err := f.GetCommand()
 	if err != nil {

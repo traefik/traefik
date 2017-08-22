@@ -514,6 +514,7 @@ List of Træfik available commands with description :             
 - `version` : Print version 
 - `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
 - `bug`: The easiest way to submit a pre-filled issue.
+- `healthcheck`: Calls traefik `/ping` to check health.
 
 Each command may have related flags.
 All those related flags will be displayed with :
@@ -537,6 +538,18 @@ $ traefik bug
 ```
 
 See https://www.youtube.com/watch?v=Lyz62L8m93I.
+
+## Command: healthcheck
+
+This command allows to check the health of Traefik. Its exit status is `0` if Traefik is healthy and `1` if it is unhealthy.
+This can be used with Docker [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction or any other health check orchestration mechanism.
+
+Note: the `web` provider must be enabled to allow `/ping` calls by the `healthcheck` command.
+
+```bash
+$ traefik healthcheck
+OK: http://:8082/ping
+```
 
 # Log Rotation
 
