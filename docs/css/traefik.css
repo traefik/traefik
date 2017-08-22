@@ -59,3 +59,17 @@ blockquote p {
     background-color: #25606F;
     outline: 0;
 }
+
+code {
+    font-size: 90%;
+    padding: 3px 7px;
+    background: #f4f4f8;
+    border: solid 1px #ccc;
+    color: #333;
+    border-radius: 2px;
+}
+
+body {
+    font-size: 15px;
+    line-height: 24px
+}
