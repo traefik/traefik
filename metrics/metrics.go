@@ -31,7 +31,6 @@ func NewMultiRegistry(registries []Registry) Registry {
 	}
 }
 
-// standardRegistry is a Registry that wraps multiple Registries and calls each of them when a Metric is tracked.
 type standardRegistry struct {
 	reqsCounter          metrics.Counter
 	reqDurationHistogram metrics.Histogram
