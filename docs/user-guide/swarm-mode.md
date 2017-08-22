@@ -131,7 +131,8 @@ docker-machine ssh manager "docker service create \
 ```
 
 Note that we set whoami1 to use sticky sessions (`--label traefik.backend.loadbalancer.sticky=true`).  We'll demonstrate that later.
-If using `docker stack deploy`, there is [a specific way that the labels must be defined in the docker-compose file](https://github.com/containous/traefik/issues/994#issuecomment-269095109).
+
+**Note**: If using `docker stack deploy`, there is [a specific way that the labels must be defined in the docker-compose file](https://github.com/containous/traefik/issues/994#issuecomment-269095109).
 
 Check that everything is scheduled and started:
 

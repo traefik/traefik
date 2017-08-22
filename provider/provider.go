@@ -28,10 +28,11 @@ type Provider interface {
 
 // BaseProvider should be inherited by providers
 type BaseProvider struct {
-	Watch       bool              `description:"Watch provider"`
-	Filename    string            `description:"Override default configuration template. For advanced users :)"`
-	Constraints types.Constraints `description:"Filter services by constraint, matching with Traefik tags."`
-	Trace       bool              `description:"Display additional provider logs (if available)."`
+	Watch                     bool              `description:"Watch provider"`
+	Filename                  string            `description:"Override default configuration template. For advanced users :)"`
+	Constraints               types.Constraints `description:"Filter services by constraint, matching with Traefik tags."`
+	Trace                     bool              `description:"Display additional provider logs (if available)."`
+	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template."`
 }
 
 // MatchConstraints must match with EVERY single contraint
@@ -94,7 +95,9 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 	}
 
 	var renderedTemplate = buffer.String()
-	//	log.Debugf("Rendering results of %s:\n%s", defaultTemplateFile, renderedTemplate)
+	if p.DebugLogGeneratedTemplate {
+		log.Debugf("Rendering results of %s:\n%s", defaultTemplateFile, renderedTemplate)
+	}
 	if _, err := toml.Decode(renderedTemplate, configuration); err != nil {
 		return nil, err
 	}

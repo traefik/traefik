@@ -336,7 +336,7 @@ func (p *Provider) hasCircuitBreakerLabel(container dockerData) bool {
 
 // Regexp used to extract the name of the service and the name of the property for this service
 // All properties are under the format traefik.<servicename>.frontent.*= except the port/weight/protocol directly after traefik.<servicename>.
-var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.*?)\.(?P<property_name>port|weight|protocol|frontend\.(.*))$`)
+var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|weight|protocol|frontend\.(.*))$`)
 
 // Map of services properties
 // we can get it with label[serviceName][propertyName] and we got the propertyValue

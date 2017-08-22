@@ -1027,6 +1027,7 @@ Labels can be used on containers to override default behaviour:
 - `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
 
 If several ports need to be exposed from a container, the services labels can be used
+
 - `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
 - `traefik.<service-name>.protocol=https`: assign `https` protocol. Overrides `traefik.protocol`.
 - `traefik.<service-name>.weight=10`: assign this service weight. Overrides `traefik.weight`.
@@ -1192,6 +1193,18 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 - `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets basic authentication for that frontend with the usernames and passwords test:test and test2:test2, respectively
 
+If several ports need to be exposed from a container, the services labels can be used
+
+- `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
+- `traefik.<service-name>.portIndex=1`: create a service binding with frontend/backend using this port index. Overrides `traefik.portIndex`.
+- `traefik.<service-name>.protocol=https`: assign `https` protocol. Overrides `traefik.protocol`.
+- `traefik.<service-name>.weight=10`: assign this service weight. Overrides `traefik.weight`.
+- `traefik.<service-name>.frontend.backend=fooBackend`: assign this service frontend to `foobackend`. Default is to assign to the service backend.
+- `traefik.<service-name>.frontend.entryPoints=http`: assign this service entrypoints. Overrides `traefik.frontend.entrypoints`.
+- `traefik.<service-name>.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` Sets a Basic Auth for that frontend with the users test:test and test2:test2.
+- `traefik.<service-name>.frontend.passHostHeader=true`: Forward client `Host` header to the backend. Overrides `traefik.frontend.passHostHeader`.
+- `traefik.<service-name>.frontend.priority=10`: assign the service frontend priority. Overrides `traefik.frontend.priority`.
+- `traefik.<service-name>.frontend.rule=Path:/foo`: assign the service frontend rule. Overrides `traefik.frontend.rule`.
 
 ## Mesos generic backend
 
@@ -1695,10 +1708,16 @@ Træfik can be configured to use Amazon ECS as a backend configuration:
 
 # ECS Cluster Name
 #
-# Optional
-# Default: "default"
+# Deprecated - Please use Clusters
 #
-Cluster = "default"
+# Cluster = "default"
+
+# ECS Clusters Name
+#
+# Optional
+# Default: ["default"]
+#
+Clusters = ["default"]
 
 # Enable watch ECS changes
 #
@@ -1706,6 +1725,13 @@ Cluster = "default"
 # Default: true
 #
 Watch = true
+
+# Enable auto discover ECS clusters
+#
+# Optional
+# Default: false
+#
+AutoDiscoverClusters = false
 
 # Polling interval (in seconds)
 #
@@ -1767,6 +1793,8 @@ Træfik needs the following policy to read ECS information:
             "Sid": "Traefik ECS read access",
             "Effect": "Allow",
             "Action": [
+                "ecs:ListClusters",
+                "ecs:DescribeClusters",
                 "ecs:ListTasks",
                 "ecs:DescribeTasks",
                 "ecs:DescribeContainerInstances",

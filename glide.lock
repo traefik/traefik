@@ -1,5 +1,5 @@
-hash: c7f74f8b5eac556a531d2cb3bae212e32785c1128d416c75fabedc31d27f0e03
-updated: 2017-08-12T14:15:06.346751095+02:00
+hash: b970da88f72aebed9ac07a31db3f40045de0cd63190a2aae8ce18b55ec3f434a
+updated: 2017-08-21T14:15:06.346751095+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -87,7 +87,7 @@ imports:
 - name: github.com/containous/flaeg
   version: b5d2dc5878df07c2d74413348186982e7b865871
 - name: github.com/containous/mux
-  version: a819b77bba13f0c0cbe36e437bc2e948411b3996
+  version: af6ea922f7683d9706834157e6b0610e22ccb2db
 - name: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - name: github.com/coreos/etcd
@@ -377,7 +377,7 @@ imports:
   repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
-  version: 316adfc72ed3b0157975917adf62ba2dc31842ce
+  version: 824b33f2a7457025697878c865c323f801118043
   repo: https://github.com/containous/gziphandler.git
   vcs: git
 - name: github.com/ogier/pflag
@@ -477,7 +477,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: d40fb60c9a1620892a6fc146dcdc891fb02bd488
+  version: 3772a8e4408fb033d00a947d340475e116854b1a
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:

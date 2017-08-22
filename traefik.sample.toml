@@ -1095,10 +1095,16 @@
 
 # ECS Cluster Name
 #
-# Optional
-# Default: "default"
+# Deprecated - Please use Clusters
 #
 # Cluster = "default"
+
+# ECS Clusters Name
+#
+# Optional
+# Default: ["default"]
+#
+# Clusters = ["default"]
 
 # Enable watch ECS changes
 #
