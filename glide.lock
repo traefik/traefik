@@ -1,4 +1,4 @@
-hash: b970da88f72aebed9ac07a31db3f40045de0cd63190a2aae8ce18b55ec3f434a
+hash: 3d5a06016b7b56be08120ed653406a1e8d4ade7e69b4fbc37b31683cb4e9a519
 updated: 2017-08-21T14:15:06.346751095+02:00
 imports:
 - name: cloud.google.com/go
@@ -477,7 +477,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: 3772a8e4408fb033d00a947d340475e116854b1a
+  version: 321ed9ffd102941c736731b8e7bae811820d267d
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
