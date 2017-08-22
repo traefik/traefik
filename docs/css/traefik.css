@@ -1,8 +1,3 @@
-body {
-    font-size: 15px;
-    line-height: 24px
-}
-
 code {
     font-size: 90%;
     padding: 3px 7px;
@@ -10,11 +5,6 @@ code {
     border: solid 1px #ccc;
     color: #333;
     border-radius: 2px;
-}
-
-
-li {
-    padding-bottom: 0.7em;
 }
 
 a {
@@ -29,6 +19,19 @@ a:hover, a:focus {
 
 h1, h2, h3, H4 {
     color: #37ABC8;
+}
+
+.container {
+    font-size: 1.05em;
+    line-height: 1.5em;
+}
+
+.container li {
+    padding-bottom: 0.7em;
+}
+
+.nav li {
+    padding-bottom: 0;
 }
 
 .navbar-default {
