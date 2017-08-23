@@ -1005,38 +1005,42 @@ swarmmode = false
 #  insecureskipverify = true
 ```
 
-Labels can be used on containers to override default behaviour:
+### Labels can be used on containers to override default behaviour
 
-- `traefik.backend=foo`: give the name `foo` to the generated backend for this container.
-- `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
-- `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
-- `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
-- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
-- `traefik.backend.loadbalancer.swarm=true `: use Swarm's inbuilt load balancer (only relevant under Swarm Mode).
-- `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5`: create a [circuit breaker](/basics/#backends) to be used against the backend
-- `traefik.port=80`: register this port. Useful when the container exposes multiples ports.
-- `traefik.protocol=https`: override the default `http` protocol
-- `traefik.weight=10`: assign this weight to the container
-- `traefik.enable=false`: disable this container in Træfik
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}` or `Host:{service}.{project_name}.{domain}` if you are using `docker-compose`).
-- `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
-- `traefik.frontend.priority=10`: override default frontend priority
-- `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
-- `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets basic authentication for that frontend with the usernames and passwords test:test and test2:test2, respectively
-- `traefik.frontend.whitelistSourceRange: "1.2.3.0/24, fe80::/16"`: List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.
-- `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
+| Label                                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `traefik.backend=foo`                             | Give the name `foo` to the generated backend for this container.                                                                                                                                                                                                                                                                                                                                                              |
+| `traefik.backend.maxconn.amount=10`               | Set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.                                                                                                                                                                                                                                                                                                          |
+| `traefik.backend.maxconn.extractorfunc=client.ip` | Set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.                                                                                                                                                                                                                                            |
+| `traefik.backend.loadbalancer.method=drr`         | Override the default `wrr` load balancer algorithm                                                                                                                                                                                                                                                                                                                                                                            |
+| `traefik.backend.loadbalancer.sticky=true`        | Enable backend sticky sessions                                                                                                                                                                                                                                                                                                                                                                                                |
+| `traefik.backend.loadbalancer.swarm=true`         | Use Swarm's inbuilt load balancer (only relevant under Swarm Mode).                                                                                                                                                                                                                                                                                                                                                           |
+| `traefik.backend.circuitbreaker.expression=EXPR`  | Create a [circuit breaker](/basics/#backends) to be used against the backend                                                                                                                                                                                                                                                                                                                                                  |
+| `traefik.port=80`                                 | Register this port. Useful when the container exposes multiples ports.                                                                                                                                                                                                                                                                                                                                                        |
+| `traefik.protocol=https`                          | Override the default `http` protocol                                                                                                                                                                                                                                                                                                                                                                                          |
+| `traefik.weight=10`                               | Assign this weight to the container                                                                                                                                                                                                                                                                                                                                                                                           |
+| `traefik.enable=false`                            | Disable this container in Træfik                                                                                                                                                                                                                                                                                                                                                                                              |
+| `traefik.frontend.rule=EXPR`                      | Override the default frontend rule. Default: `Host:{containerName}.{domain}` or `Host:{service}.{project_name}.{domain}` if you are using `docker-compose`.                                                                                                                                                                                                                                                                   |
+| `traefik.frontend.passHostHeader=true`            | Forward client `Host` header to the backend.                                                                                                                                                                                                                                                                                                                                                                                  |
+| `traefik.frontend.priority=10`                    | Override default frontend priority                                                                                                                                                                                                                                                                                                                                                                                            |
+| `traefik.frontend.entryPoints=http,https`         | Assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`                                                                                                                                                                                                                                                                                                                                       |
+| `traefik.frontend.auth.basic=EXPR`                | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`                                                                                                                                                                                                                                                                                                                                              |
+| `traefik.frontend.whitelistSourceRange:RANGE`     | List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.                                                                                                                                                                                                           |
+| `traefik.docker.network`                          | Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name. |
 
-If several ports need to be exposed from a container, the services labels can be used
+### Services labels can be used for overriding default behaviour
 
-- `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
-- `traefik.<service-name>.protocol=https`: assign `https` protocol. Overrides `traefik.protocol`.
-- `traefik.<service-name>.weight=10`: assign this service weight. Overrides `traefik.weight`.
-- `traefik.<service-name>.frontend.backend=fooBackend`: assign this service frontend to `foobackend`. Default is to assign to the service backend.
-- `traefik.<service-name>.frontend.entryPoints=http`: assign this service entrypoints. Overrides `traefik.frontend.entrypoints`.
-- `traefik.<service-name>.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` Sets a Basic Auth for that frontend with the users test:test and test2:test2.
-- `traefik.<service-name>.frontend.passHostHeader=true`: Forward client `Host` header to the backend. Overrides `traefik.frontend.passHostHeader`.
-- `traefik.<service-name>.frontend.priority=10`: assign the service frontend priority. Overrides `traefik.frontend.priority`.
-- `traefik.<service-name>.frontend.rule=Path:/foo`: assign the service frontend rule. Overrides `traefik.frontend.rule`.
+| Label                                             | Description                                                                                      |
+|---------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| `traefik.<service-name>.port=PORT`                | Overrides `traefik.port`. If several ports need to be exposed, the service labels could be used. |
+| `traefik.<service-name>.protocol`                 | Overrides `traefik.protocol`.                                                                    |
+| `traefik.<service-name>.weight`                   | Assign this service weight. Overrides `traefik.weight`.                                          |
+| `traefik.<service-name>.frontend.backend=BACKEND` | Assign this service frontend to `BACKEND`. Default is to assign to the service backend.          |
+| `traefik.<service-name>.frontend.entryPoints`     | Overrides `traefik.frontend.entrypoints`                                                         |
+| `traefik.<service-name>.frontend.auth.basic`      | Sets a Basic Auth for that frontend                                                              |
+| `traefik.<service-name>.frontend.passHostHeader`  | Overrides `traefik.frontend.passHostHeader`.                                                     |
+| `traefik.<service-name>.frontend.priority`        | Overrides `traefik.frontend.priority`.                                                           |
+| `traefik.<service-name>.frontend.rule`            | Overrides `traefik.frontend.rule`.                                                               |
 
 NB: when running inside a container, Træfik will need network access through `docker network connect <network> <traefik-container>`
 
@@ -1098,7 +1102,7 @@ domain = "marathon.localhost"
 #
 # groupsAsSubDomains = true
 
-# Enable compatibility with marathon-lb labels
+# Enable compatibility with marathon-lb labels
 #
 # Optional
 # Default: false
