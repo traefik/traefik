@@ -37,7 +37,7 @@ func RegisterPrometheus(config *types.Prometheus) Registry {
 	}, []string{"service"})
 
 	return &standardRegistry{
-		isEnabled:            true,
+		enabled:              true,
 		reqsCounter:          reqCounter,
 		reqDurationHistogram: reqDurationHistogram,
 		retriesCounter:       retryCounter,

@@ -27,7 +27,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 	}
 
 	return &standardRegistry{
-		isEnabled:            true,
+		enabled:              true,
 		reqsCounter:          multi.NewCounter(reqsCounters...),
 		reqDurationHistogram: multi.NewHistogram(reqDurationHistograms...),
 		retriesCounter:       multi.NewCounter(retriesCounters...),
@@ -35,14 +35,14 @@ func NewMultiRegistry(registries []Registry) Registry {
 }
 
 type standardRegistry struct {
-	isEnabled            bool
+	enabled              bool
 	reqsCounter          metrics.Counter
 	reqDurationHistogram metrics.Histogram
 	retriesCounter       metrics.Counter
 }
 
 func (r *standardRegistry) IsEnabled() bool {
-	return r.isEnabled
+	return r.enabled
 }
 
 func (r *standardRegistry) ReqsCounter() metrics.Counter {
@@ -61,7 +61,7 @@ func (r *standardRegistry) RetriesCounter() metrics.Counter {
 // It is used to avoid nil checking in components that do metric collections.
 func NewVoidRegistry() Registry {
 	return &standardRegistry{
-		isEnabled:            false,
+		enabled:              false,
 		reqsCounter:          &voidCounter{},
 		reqDurationHistogram: &voidHistogram{},
 		retriesCounter:       &voidCounter{},
