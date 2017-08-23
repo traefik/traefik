@@ -7,6 +7,8 @@ import (
 
 // Registry has to implemented by any system that wants to monitor and expose metrics.
 type Registry interface {
+	// IsEnabled shows whether metrics instrumentation is enabled.
+	IsEnabled() bool
 	ReqsCounter() metrics.Counter
 	ReqDurationHistogram() metrics.Histogram
 	RetriesCounter() metrics.Counter
@@ -25,6 +27,7 @@ func NewMultiRegistry(registries []Registry) Registry {
 	}
 
 	return &standardRegistry{
+		isEnabled:            true,
 		reqsCounter:          multi.NewCounter(reqsCounters...),
 		reqDurationHistogram: multi.NewHistogram(reqDurationHistograms...),
 		retriesCounter:       multi.NewCounter(retriesCounters...),
@@ -32,9 +35,14 @@ func NewMultiRegistry(registries []Registry) Registry {
 }
 
 type standardRegistry struct {
+	isEnabled            bool
 	reqsCounter          metrics.Counter
 	reqDurationHistogram metrics.Histogram
 	retriesCounter       metrics.Counter
+}
+
+func (r *standardRegistry) IsEnabled() bool {
+	return r.isEnabled
 }
 
 func (r *standardRegistry) ReqsCounter() metrics.Counter {
@@ -53,6 +61,7 @@ func (r *standardRegistry) RetriesCounter() metrics.Counter {
 // It is used to avoid nil checking in components that do metric collections.
 func NewVoidRegistry() Registry {
 	return &standardRegistry{
+		isEnabled:            false,
 		reqsCounter:          &voidCounter{},
 		reqDurationHistogram: &voidHistogram{},
 		retriesCounter:       &voidCounter{},

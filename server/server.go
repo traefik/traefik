@@ -55,7 +55,6 @@ type Server struct {
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
 	metricsRegistry               metrics.Registry
-	metricsEnabled                bool
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -265,7 +264,7 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 	if server.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 	}
-	if server.metricsEnabled {
+	if server.metricsRegistry.IsEnabled() {
 		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(server.metricsRegistry, newServerEntryPointName))
 	}
 	if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Statistics != nil {
@@ -889,7 +888,7 @@ func (server *Server) loadConfig(configurations configs, globalConfiguration Glo
 						retryListener := middlewares.NewMetricsRetryListener(server.metricsRegistry, frontend.Backend)
 						lb = registerRetryMiddleware(lb, globalConfiguration, configuration, frontend.Backend, retryListener)
 					}
-					if server.metricsEnabled {
+					if server.metricsRegistry.IsEnabled() {
 						negroni.Use(middlewares.NewMetricsWrapper(server.metricsRegistry, frontend.Backend))
 					}
 
@@ -1156,7 +1155,6 @@ func (server *Server) registerMetricClients(metricsConfig *types.Metrics) {
 	}
 
 	if len(registries) > 0 {
-		server.metricsEnabled = true
 		server.metricsRegistry = metrics.NewMultiRegistry(registries)
 	}
 }

@@ -12,6 +12,10 @@ import (
 
 func TestPrometheus(t *testing.T) {
 	prometheusRegistry := RegisterPrometheus(&types.Prometheus{})
+
+	if !prometheusRegistry.IsEnabled() {
+		t.Errorf("PrometheusRegistry should return true for IsEnabled()")
+	}
 	prometheusRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	prometheusRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 	prometheusRegistry.ReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)

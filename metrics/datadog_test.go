@@ -18,6 +18,10 @@ func TestDatadog(t *testing.T) {
 	datadogRegistry := RegisterDatadog(&types.Datadog{Address: ":18125", PushInterval: "1s"})
 	defer StopDatadog()
 
+	if !datadogRegistry.IsEnabled() {
+		t.Errorf("DatadogRegistry should return true for IsEnabled()")
+	}
+
 	expected := []string{
 		// We are only validating counts, as it is nearly impossible to validate latency, since it varies every run
 		"traefik.requests.total:1.000000|c|#service:test,code:404,method:GET\n",

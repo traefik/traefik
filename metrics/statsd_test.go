@@ -17,6 +17,10 @@ func TestStatsD(t *testing.T) {
 	statsdRegistry := RegisterStatsd(&types.Statsd{Address: ":18125", PushInterval: "1s"})
 	defer StopStatsd()
 
+	if !statsdRegistry.IsEnabled() {
+		t.Errorf("PrometheusRegistry should return true for IsEnabled()")
+	}
+
 	expected := []string{
 		// We are only validating counts, as it is nearly impossible to validate latency, since it varies every run
 		"traefik.requests.total:2.000000|c\n",

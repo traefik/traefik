@@ -10,6 +10,9 @@ import (
 func TestNewVoidRegistry(t *testing.T) {
 	registry := NewVoidRegistry()
 
+	if registry.IsEnabled() {
+		t.Errorf("VoidRegistry should not return true for IsEnabled()")
+	}
 	registry.ReqsCounter().With("some", "value").Add(1)
 	registry.ReqDurationHistogram().With("some", "value").Observe(1)
 	registry.RetriesCounter().With("some", "value").Add(1)

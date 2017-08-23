@@ -12,6 +12,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/healthcheck"
+	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
@@ -597,6 +598,7 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 						"test": test.entrypoint,
 					},
 				},
+				metricsRegistry: metrics.NewVoidRegistry(),
 			}
 
 			srv.serverEntryPoints = srv.buildEntryPoints(srv.globalConfiguration)
