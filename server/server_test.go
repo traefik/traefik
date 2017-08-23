@@ -12,6 +12,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/healthcheck"
+	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
@@ -493,44 +494,6 @@ func TestConfigureBackends(t *testing.T) {
 	}
 }
 
-func TestNewMetrics(t *testing.T) {
-	testCases := []struct {
-		desc         string
-		globalConfig GlobalConfiguration
-	}{
-		{
-			desc:         "metrics disabled",
-			globalConfig: GlobalConfiguration{},
-		},
-		{
-			desc: "prometheus metrics",
-			globalConfig: GlobalConfiguration{
-				Web: &WebProvider{
-					Metrics: &types.Metrics{
-						Prometheus: &types.Prometheus{
-							Buckets: types.Buckets{0.1, 0.3, 1.2, 5.0},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.desc, func(t *testing.T) {
-			t.Parallel()
-
-			metricsImpl := newMetrics(tc.globalConfig, "test1")
-			if metricsImpl != nil {
-				if _, ok := metricsImpl.(*middlewares.MultiMetrics); !ok {
-					t.Errorf("invalid metricsImpl type, got %T want %T", metricsImpl, &middlewares.MultiMetrics{})
-				}
-			}
-		})
-	}
-}
-
 func TestRegisterRetryMiddleware(t *testing.T) {
 	testCases := []struct {
 		name            string
@@ -635,6 +598,7 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 						"test": test.entrypoint,
 					},
 				},
+				metricsRegistry: metrics.NewVoidRegistry(),
 			}
 
 			srv.serverEntryPoints = srv.buildEntryPoints(srv.globalConfiguration)
