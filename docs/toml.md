@@ -737,6 +737,21 @@ address = ":8080"
 #
 # path = "/mypath"
 #
+# Enable readiness endpoint
+#
+# The readiness endpoint can be registered with downstream loadbalancers to automatically indicate on shutdown
+# that Traefik should be removed from rotation. Advisable to be used in combination with reqAcceptGraceTimeOut
+# to implement a zero downtime LB rotation.
+#
+# If enabled the readiness endpoint will listen on /ready (prefixed by the web root path) and return a 200 OK
+# on GET requests. Once a terminating signal is received the endpoint returns 503 Service Unavailable.
+# If disabled no endpoint will be installed at all.
+#
+# Optional
+# Default: false
+#
+# enableReadiness = true
+#
 # SSL certificate and key used
 #
 # Optional

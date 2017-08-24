@@ -19,3 +19,7 @@ logLevel = "DEBUG"
   backend = "backend"
     [frontends.frontend.routes.service]
     rule = "Path:/service"
+
+[web]
+address = ":8080"
+enableReadiness = true

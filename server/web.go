@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"runtime"
 
+	"sync"
+
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/log"
@@ -30,15 +32,17 @@ var (
 // WebProvider is a provider.Provider implementation that provides the UI.
 // FIXME to be handled another way.
 type WebProvider struct {
-	Address    string            `description:"Web administration port"`
-	CertFile   string            `description:"SSL certificate"`
-	KeyFile    string            `description:"SSL certificate"`
-	ReadOnly   bool              `description:"Enable read only API"`
-	Statistics *types.Statistics `description:"Enable more detailed statistics"`
-	Metrics    *types.Metrics    `description:"Enable a metrics exporter"`
-	Path       string            `description:"Root path for dashboard and API"`
-	server     *Server
-	Auth       *types.Auth
+	Address         string            `description:"Web administration port"`
+	CertFile        string            `description:"SSL certificate"`
+	KeyFile         string            `description:"SSL certificate"`
+	ReadOnly        bool              `description:"Enable read only API"`
+	Statistics      *types.Statistics `description:"Enable more detailed statistics"`
+	Metrics         *types.Metrics    `description:"Enable a metrics exporter"`
+	Path            string            `description:"Root path for dashboard and API"`
+	EnableReadiness bool              `description:"Enable readiness endpoint"`
+	readinessMutex  sync.RWMutex
+	server          *Server
+	Auth            *types.Auth
 }
 
 var (
@@ -84,6 +88,12 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 
 	// ping route
 	systemRouter.Methods("GET", "HEAD").Path(provider.Path + "ping").HandlerFunc(provider.getPingHandler)
+
+	// ready route
+	if provider.EnableReadiness {
+		systemRouter.Methods(http.MethodGet).Path(provider.Path + "ready").HandlerFunc(provider.getReadyHandler)
+	}
+
 	// API routes
 	systemRouter.Methods("GET").Path(provider.Path + "api").HandlerFunc(provider.getConfigHandler)
 	systemRouter.Methods("GET").Path(provider.Path + "api/version").HandlerFunc(provider.getVersionHandler)
@@ -166,6 +176,17 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 	return nil
 }
 
+// DisableReadiness causes the readiness endpoint to serve non 200 responses.
+func (provider *WebProvider) DisableReadiness() {
+	provider.readinessMutex.Lock()
+	defer provider.readinessMutex.Unlock()
+
+	if provider.EnableReadiness {
+		log.Infof("Disabling readiness endpoint")
+		provider.EnableReadiness = false
+	}
+}
+
 // healthResponse combines data returned by thoas/stats with statistics (if
 // they are enabled).
 type healthResponse struct {
@@ -183,6 +204,19 @@ func (provider *WebProvider) getHealthHandler(response http.ResponseWriter, requ
 
 func (provider *WebProvider) getPingHandler(response http.ResponseWriter, request *http.Request) {
 	fmt.Fprint(response, "OK")
+}
+
+func (provider *WebProvider) getReadyHandler(response http.ResponseWriter, request *http.Request) {
+	provider.readinessMutex.RLock()
+	defer provider.readinessMutex.RUnlock()
+
+	statusCode := http.StatusOK
+	if !provider.EnableReadiness {
+		statusCode = http.StatusServiceUnavailable
+	}
+
+	response.WriteHeader(statusCode)
+	fmt.Fprint(response, http.StatusText(statusCode))
 }
 
 func (provider *WebProvider) getConfigHandler(response http.ResponseWriter, request *http.Request) {

@@ -104,13 +104,13 @@ func (s *SimpleSuite) TestPrintHelp(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *SimpleSuite) TestReqAcceptGraceTimeout(c *check.C) {
-	s.createComposeProject(c, "reqacceptgrace")
+func (s *SimpleSuite) TestGracefulTermination(c *check.C) {
+	s.createComposeProject(c, "gracefulterm")
 	s.composeProject.Start(c)
 
 	whoami := "http://" + s.composeProject.Container(c, "whoami").NetworkSettings.IPAddress + ":80"
 
-	file := s.adaptFile(c, "fixtures/reqacceptgrace.toml", struct {
+	file := s.adaptFile(c, "fixtures/gracefulterm.toml", struct {
 		Server string
 	}{whoami})
 	defer os.Remove(file)
@@ -137,6 +137,10 @@ func (s *SimpleSuite) TestReqAcceptGraceTimeout(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8000/service", 3*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 
+	// Check that readiness endpoint is responding with 200.
+	err = try.GetRequest("http://127.0.0.1:8080/ready", 3*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
 	// Send SIGTERM to Traefik.
 	proc, err := os.FindProcess(cmd.Process.Pid)
 	c.Assert(err, checker.IsNil)
@@ -147,10 +151,18 @@ func (s *SimpleSuite) TestReqAcceptGraceTimeout(c *check.C) {
 	// into the request accepting grace period, by which requests should
 	// still get served.
 	time.Sleep(5 * time.Second)
+
+	// Request to backend should still be served.
 	resp, err := http.Get("http://127.0.0.1:8000/service")
 	c.Assert(err, checker.IsNil)
 	defer resp.Body.Close()
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusOK)
+
+	// Readiness endpoint should now return a Service Unavailable.
+	resp, err = http.Get("http://127.0.0.1:8080/ready")
+	c.Assert(err, checker.IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusServiceUnavailable)
 
 	// Expect Traefik to shut down gracefully once the request accepting grace
 	// period has elapsed.
