@@ -33,7 +33,7 @@ func (server *Server) listenSignals() {
 		default:
 			log.Infof("I have to go... %+v", sig)
 			reqAcceptGraceTimeOut := time.Duration(server.globalConfiguration.ReqAcceptGraceTimeOut)
-			if reqAcceptGraceTimeOut > 0 && sig == syscall.SIGTERM {
+			if reqAcceptGraceTimeOut > 0 {
 				log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
 				time.Sleep(reqAcceptGraceTimeOut)
 			}
