@@ -1,18 +1,15 @@
 package middlewares
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/go-kit/kit/metrics"
 )
 
 func TestMetricsRetryListener(t *testing.T) {
-	// nil implementation, nothing should fail
-	retryListener := NewMetricsRetryListener(nil)
-	retryListener.Retried(1)
-
-	retryMetrics := newCollectingMetrics()
-	retryListener = NewMetricsRetryListener(retryMetrics)
+	retryMetrics := newCollectingRetryMetrics()
+	retryListener := NewMetricsRetryListener(retryMetrics, "backendName")
 	retryListener.Retried(1)
 	retryListener.Retried(2)
 
@@ -20,27 +17,34 @@ func TestMetricsRetryListener(t *testing.T) {
 	if retryMetrics.retryCounter.counterValue != wantCounterValue {
 		t.Errorf("got counter value of %d, want %d", retryMetrics.retryCounter.counterValue, wantCounterValue)
 	}
+
+	wantLabelValues := []string{"backend", "backendName"}
+	if !reflect.DeepEqual(retryMetrics.retryCounter.lastLabelValues, wantLabelValues) {
+		t.Errorf("wrong label values %v used, want %v", retryMetrics.retryCounter.lastLabelValues, wantLabelValues)
+	}
 }
 
-// collectingRetryMetrics is an implementation of the RetryMetrics interface that can be used inside tests to collect the times Add() was called.
+// collectingRetryMetrics is an implementation of the retryMetrics interface that can be used inside tests to collect the times Add() was called.
 type collectingRetryMetrics struct {
 	retryCounter *collectingCounter
 }
 
-func newCollectingMetrics() collectingRetryMetrics {
+func newCollectingRetryMetrics() collectingRetryMetrics {
 	return collectingRetryMetrics{retryCounter: &collectingCounter{}}
 }
 
-func (metrics collectingRetryMetrics) getRetryCounter() metrics.Counter {
+func (metrics collectingRetryMetrics) RetriesCounter() metrics.Counter {
 	return metrics.retryCounter
 }
 
 type collectingCounter struct {
-	counterValue float64
+	counterValue    float64
+	lastLabelValues []string
 }
 
 func (c *collectingCounter) With(labelValues ...string) metrics.Counter {
-	panic("collectingCounter.With not implemented!")
+	c.lastLabelValues = labelValues
+	return c
 }
 
 func (c *collectingCounter) Add(delta float64) {

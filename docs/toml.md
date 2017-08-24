@@ -68,7 +68,12 @@
 #
 # ProvidersThrottleDuration = "2s"
 
-# IdleTimeout: maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
+# IdleTimeout
+# 
+# Deprecated - see [respondingTimeouts] section. In the case both settings are configured, the deprecated option will
+# be overwritten.
+#
+# IdleTimeout is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
 # This is set to enforce closing of stale client connections.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
 # values (digits). If no units are provided, the value is parsed assuming seconds.
@@ -328,6 +333,76 @@ To write JSON format logs, specify `json` as the format:
 # Default: "30s"
 #
 # interval = "30s"
+```
+
+## Responding timeouts
+```
+# respondingTimeouts are timeouts for incoming requests to the Traefik instance.
+#
+# Optional
+# 
+[respondingTimeouts]
+
+# readTimeout is the maximum duration for reading the entire request, including the body.
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+# 
+# Optional
+# Default: "0s"
+# 
+# readTimeout = "5s"
+
+# writeTimeout is the maximum duration before timing out writes of the response. It covers the time from the end of 
+# the request header read to the end of the response write.
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+#
+# Optional
+# Default: "0s"
+# 
+# writeTimeout = "5s"
+
+# idleTimeout is the maximum duration an idle (keep-alive) connection will remain idle before closing itself.
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+#
+# Optional
+# Default: "180s"
+#
+# idleTimeout = "360s"
+
+```
+
+## Forwarding timeouts
+```
+# forwardingTimeouts are timeouts for requests forwarded to the backend servers.
+#
+# Optional
+# 
+[forwardingTimeouts]
+
+# dialTimeout is the amount of time to wait until a connection to a backend server can be established. 
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+# 
+# Optional
+# Default: "30s"
+# 
+# dialTimeout = "30s"
+
+# responseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any). 
+# If zero, no timeout exists.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming seconds.
+#
+# Optional
+# Default: "0s"
+# 
+# responseHeaderTimeout = "0s"
 ```
 
 ## ACME (Let's Encrypt) configuration
@@ -930,37 +1005,42 @@ swarmmode = false
 #  insecureskipverify = true
 ```
 
-Labels can be used on containers to override default behaviour:
+### Labels can be used on containers to override default behaviour
 
-- `traefik.backend=foo`: give the name `foo` to the generated backend for this container.
-- `traefik.backend.maxconn.amount=10`: set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.
-- `traefik.backend.maxconn.extractorfunc=client.ip`: set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.
-- `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
-- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
-- `traefik.backend.loadbalancer.swarm=true `: use Swarm's inbuilt load balancer (only relevant under Swarm Mode).
-- `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5`: create a [circuit breaker](/basics/#backends) to be used against the backend
-- `traefik.port=80`: register this port. Useful when the container exposes multiples ports.
-- `traefik.protocol=https`: override the default `http` protocol
-- `traefik.weight=10`: assign this weight to the container
-- `traefik.enable=false`: disable this container in Træfik
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}` or `Host:{service}.{project_name}.{domain}` if you are using `docker-compose`).
-- `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
-- `traefik.frontend.priority=10`: override default frontend priority
-- `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
-- `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets basic authentication for that frontend with the usernames and passwords test:test and test2:test2, respectively
-- `traefik.frontend.whitelistSourceRange: "1.2.3.0/24, fe80::/16"`: List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.
-- `traefik.docker.network`: Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name.
+| Label                                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `traefik.backend=foo`                             | Give the name `foo` to the generated backend for this container.                                                                                                                                                                                                                                                                                                                                                              |
+| `traefik.backend.maxconn.amount=10`               | Set a maximum number of connections to the backend. Must be used in conjunction with the below label to take effect.                                                                                                                                                                                                                                                                                                          |
+| `traefik.backend.maxconn.extractorfunc=client.ip` | Set the function to be used against the request to determine what to limit maximum connections to the backend by. Must be used in conjunction with the above label to take effect.                                                                                                                                                                                                                                            |
+| `traefik.backend.loadbalancer.method=drr`         | Override the default `wrr` load balancer algorithm                                                                                                                                                                                                                                                                                                                                                                            |
+| `traefik.backend.loadbalancer.sticky=true`        | Enable backend sticky sessions                                                                                                                                                                                                                                                                                                                                                                                                |
+| `traefik.backend.loadbalancer.swarm=true`         | Use Swarm's inbuilt load balancer (only relevant under Swarm Mode).                                                                                                                                                                                                                                                                                                                                                           |
+| `traefik.backend.circuitbreaker.expression=EXPR`  | Create a [circuit breaker](/basics/#backends) to be used against the backend                                                                                                                                                                                                                                                                                                                                                  |
+| `traefik.port=80`                                 | Register this port. Useful when the container exposes multiples ports.                                                                                                                                                                                                                                                                                                                                                        |
+| `traefik.protocol=https`                          | Override the default `http` protocol                                                                                                                                                                                                                                                                                                                                                                                          |
+| `traefik.weight=10`                               | Assign this weight to the container                                                                                                                                                                                                                                                                                                                                                                                           |
+| `traefik.enable=false`                            | Disable this container in Træfik                                                                                                                                                                                                                                                                                                                                                                                              |
+| `traefik.frontend.rule=EXPR`                      | Override the default frontend rule. Default: `Host:{containerName}.{domain}` or `Host:{service}.{project_name}.{domain}` if you are using `docker-compose`.                                                                                                                                                                                                                                                                   |
+| `traefik.frontend.passHostHeader=true`            | Forward client `Host` header to the backend.                                                                                                                                                                                                                                                                                                                                                                                  |
+| `traefik.frontend.priority=10`                    | Override default frontend priority                                                                                                                                                                                                                                                                                                                                                                                            |
+| `traefik.frontend.entryPoints=http,https`         | Assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`                                                                                                                                                                                                                                                                                                                                       |
+| `traefik.frontend.auth.basic=EXPR`                | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`                                                                                                                                                                                                                                                                                                                                              |
+| `traefik.frontend.whitelistSourceRange:RANGE`     | List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.                                                                                                                                                                                                           |
+| `traefik.docker.network`                          | Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name. |
 
-If several ports need to be exposed from a container, the services labels can be used
-- `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
-- `traefik.<service-name>.protocol=https`: assign `https` protocol. Overrides `traefik.protocol`.
-- `traefik.<service-name>.weight=10`: assign this service weight. Overrides `traefik.weight`.
-- `traefik.<service-name>.frontend.backend=fooBackend`: assign this service frontend to `foobackend`. Default is to assign to the service backend.
-- `traefik.<service-name>.frontend.entryPoints=http`: assign this service entrypoints. Overrides `traefik.frontend.entrypoints`.
-- `traefik.<service-name>.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` Sets a Basic Auth for that frontend with the users test:test and test2:test2.
-- `traefik.<service-name>.frontend.passHostHeader=true`: Forward client `Host` header to the backend. Overrides `traefik.frontend.passHostHeader`.
-- `traefik.<service-name>.frontend.priority=10`: assign the service frontend priority. Overrides `traefik.frontend.priority`.
-- `traefik.<service-name>.frontend.rule=Path:/foo`: assign the service frontend rule. Overrides `traefik.frontend.rule`.
+### Services labels can be used for overriding default behaviour
+
+| Label                                             | Description                                                                                      |
+|---------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| `traefik.<service-name>.port=PORT`                | Overrides `traefik.port`. If several ports need to be exposed, the service labels could be used. |
+| `traefik.<service-name>.protocol`                 | Overrides `traefik.protocol`.                                                                    |
+| `traefik.<service-name>.weight`                   | Assign this service weight. Overrides `traefik.weight`.                                          |
+| `traefik.<service-name>.frontend.backend=BACKEND` | Assign this service frontend to `BACKEND`. Default is to assign to the service backend.          |
+| `traefik.<service-name>.frontend.entryPoints`     | Overrides `traefik.frontend.entrypoints`                                                         |
+| `traefik.<service-name>.frontend.auth.basic`      | Sets a Basic Auth for that frontend                                                              |
+| `traefik.<service-name>.frontend.passHostHeader`  | Overrides `traefik.frontend.passHostHeader`.                                                     |
+| `traefik.<service-name>.frontend.priority`        | Overrides `traefik.frontend.priority`.                                                           |
+| `traefik.<service-name>.frontend.rule`            | Overrides `traefik.frontend.rule`.                                                               |
 
 NB: when running inside a container, Træfik will need network access through `docker network connect <network> <traefik-container>`
 
@@ -1022,7 +1102,7 @@ domain = "marathon.localhost"
 #
 # groupsAsSubDomains = true
 
-# Enable compatibility with marathon-lb labels
+# Enable compatibility with marathon-lb labels
 #
 # Optional
 # Default: false
@@ -1082,7 +1162,7 @@ domain = "marathon.localhost"
 # Optional
 # Default: false
 #
-# forceTaskHostname: false 
+# forceTaskHostname = false
 
 # Applications may define readiness checks which are probed by Marathon during
 # deployments periodically and the results exposed via the API. Enabling the
@@ -1093,7 +1173,8 @@ domain = "marathon.localhost"
 #
 # Optional
 # Default: false
-# respectReadinessChecks: false
+#
+# respectReadinessChecks = false
 ```
 
 Labels can be used on containers to override default behaviour:
@@ -1117,6 +1198,18 @@ Labels can be used on containers to override default behaviour:
 - `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
 - `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0`: Sets basic authentication for that frontend with the usernames and passwords test:test and test2:test2, respectively
 
+If several ports need to be exposed from a container, the services labels can be used
+
+- `traefik.<service-name>.port=443`: create a service binding with frontend/backend using this port. Overrides `traefik.port`.
+- `traefik.<service-name>.portIndex=1`: create a service binding with frontend/backend using this port index. Overrides `traefik.portIndex`.
+- `traefik.<service-name>.protocol=https`: assign `https` protocol. Overrides `traefik.protocol`.
+- `traefik.<service-name>.weight=10`: assign this service weight. Overrides `traefik.weight`.
+- `traefik.<service-name>.frontend.backend=fooBackend`: assign this service frontend to `foobackend`. Default is to assign to the service backend.
+- `traefik.<service-name>.frontend.entryPoints=http`: assign this service entrypoints. Overrides `traefik.frontend.entrypoints`.
+- `traefik.<service-name>.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` Sets a Basic Auth for that frontend with the users test:test and test2:test2.
+- `traefik.<service-name>.frontend.passHostHeader=true`: Forward client `Host` header to the backend. Overrides `traefik.frontend.passHostHeader`.
+- `traefik.<service-name>.frontend.priority=10`: assign the service frontend priority. Overrides `traefik.frontend.priority`.
+- `traefik.<service-name>.frontend.rule=Path:/foo`: assign the service frontend rule. Overrides `traefik.frontend.rule`.
 
 ## Mesos generic backend
 
@@ -1257,7 +1350,7 @@ Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 # Array of namespaces to watch.
 #
 # Optional
-# Default: ["default"].
+# Default: all namespaces (empty array).
 #
 # namespaces = ["default", "production"]
 
@@ -1620,10 +1713,16 @@ Træfik can be configured to use Amazon ECS as a backend configuration:
 
 # ECS Cluster Name
 #
-# Optional
-# Default: "default"
+# Deprecated - Please use Clusters
 #
-Cluster = "default"
+# Cluster = "default"
+
+# ECS Clusters Name
+#
+# Optional
+# Default: ["default"]
+#
+Clusters = ["default"]
 
 # Enable watch ECS changes
 #
@@ -1631,6 +1730,13 @@ Cluster = "default"
 # Default: true
 #
 Watch = true
+
+# Enable auto discover ECS clusters
+#
+# Optional
+# Default: false
+#
+AutoDiscoverClusters = false
 
 # Polling interval (in seconds)
 #
@@ -1692,6 +1798,8 @@ Træfik needs the following policy to read ECS information:
             "Sid": "Traefik ECS read access",
             "Effect": "Allow",
             "Action": [
+                "ecs:ListClusters",
+                "ecs:DescribeClusters",
                 "ecs:ListTasks",
                 "ecs:DescribeTasks",
                 "ecs:DescribeContainerInstances",

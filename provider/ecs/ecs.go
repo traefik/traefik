@@ -36,10 +36,12 @@ type Provider struct {
 	RefreshSeconds   int    `description:"Polling interval (in seconds)"`
 
 	// Provider lookup parameters
-	Cluster         string `description:"ECS Cluster Name"`
-	Region          string `description:"The AWS region to use for requests"`
-	AccessKeyID     string `description:"The AWS credentials access key to use for making requests"`
-	SecretAccessKey string `description:"The AWS credentials access key to use for making requests"`
+	Clusters             Clusters `description:"ECS Clusters name"`
+	Cluster              string   `description:"deprecated - ECS Cluster name"` // deprecated
+	AutoDiscoverClusters bool     `description:"Auto discover cluster"`
+	Region               string   `description:"The AWS region to use for requests"`
+	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
+	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests"`
 }
 
 type ecsInstance struct {
@@ -200,103 +202,138 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 // and the EC2 instance data
 func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsInstance, error) {
 	var taskArns []*string
-	req, _ := client.ecs.ListTasksRequest(&ecs.ListTasksInput{
-		Cluster:       &p.Cluster,
-		DesiredStatus: aws.String(ecs.DesiredStatusRunning),
-	})
-
-	for ; req != nil; req = req.NextPage() {
-		if err := wrapAws(ctx, req); err != nil {
-			return nil, err
-		}
-
-		taskArns = append(taskArns, req.Data.(*ecs.ListTasksOutput).TaskArns...)
-	}
-
-	// Early return: if we can't list tasks we have nothing to
-	// describe below - likely empty cluster/permissions are bad.  This
-	// stops the AWS API from returning a 401 when you DescribeTasks
-	// with no input.
-	if len(taskArns) == 0 {
-		return []ecsInstance{}, nil
-	}
-
-	chunkedTaskArns := p.chunkedTaskArns(taskArns)
-	var tasks []*ecs.Task
-
-	for _, arns := range chunkedTaskArns {
-		req, taskResp := client.ecs.DescribeTasksRequest(&ecs.DescribeTasksInput{
-			Tasks:   arns,
-			Cluster: &p.Cluster,
-		})
-
-		if err := wrapAws(ctx, req); err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, taskResp.Tasks...)
-
-	}
-
-	containerInstanceArns := make([]*string, 0)
-	byContainerInstance := make(map[string]int)
-
-	taskDefinitionArns := make([]*string, 0)
-	byTaskDefinition := make(map[string]int)
-
-	for _, task := range tasks {
-		if _, found := byContainerInstance[*task.ContainerInstanceArn]; !found {
-			byContainerInstance[*task.ContainerInstanceArn] = len(containerInstanceArns)
-			containerInstanceArns = append(containerInstanceArns, task.ContainerInstanceArn)
-		}
-		if _, found := byTaskDefinition[*task.TaskDefinitionArn]; !found {
-			byTaskDefinition[*task.TaskDefinitionArn] = len(taskDefinitionArns)
-			taskDefinitionArns = append(taskDefinitionArns, task.TaskDefinitionArn)
-		}
-	}
-
-	machines, err := p.lookupEc2Instances(ctx, client, containerInstanceArns)
-	if err != nil {
-		return nil, err
-	}
-
-	taskDefinitions, err := p.lookupTaskDefinitions(ctx, client, taskDefinitionArns)
-	if err != nil {
-		return nil, err
-	}
-
 	var instances []ecsInstance
-	for _, task := range tasks {
+	var clustersArn []*string
+	var clusters Clusters
 
-		machineIdx := byContainerInstance[*task.ContainerInstanceArn]
-		taskDefIdx := byTaskDefinition[*task.TaskDefinitionArn]
-
-		for _, container := range task.Containers {
-
-			taskDefinition := taskDefinitions[taskDefIdx]
-			var containerDefinition *ecs.ContainerDefinition
-			for _, def := range taskDefinition.ContainerDefinitions {
-				if *container.Name == *def.Name {
-					containerDefinition = def
+	if p.AutoDiscoverClusters {
+		input := &ecs.ListClustersInput{}
+		for {
+			result, err := client.ecs.ListClusters(input)
+			if err != nil {
+				return nil, err
+			}
+			if result != nil {
+				clustersArn = append(clustersArn, result.ClusterArns...)
+				input.NextToken = result.NextToken
+				if result.NextToken == nil {
 					break
 				}
+			} else {
+				break
+			}
+		}
+		for _, carns := range clustersArn {
+			clusters = append(clusters, *carns)
+		}
+	} else if p.Cluster != "" {
+		// TODO: Deprecated configuration - Need to be removed in the future
+		clusters = Clusters{p.Cluster}
+		log.Warn("Deprecated configuration found: ecs.cluster " +
+			"Please use ecs.clusters instead.")
+	} else {
+		clusters = p.Clusters
+	}
+	log.Debugf("ECS Clusters: %s", clusters)
+	for _, c := range clusters {
+
+		req, _ := client.ecs.ListTasksRequest(&ecs.ListTasksInput{
+			Cluster:       &c,
+			DesiredStatus: aws.String(ecs.DesiredStatusRunning),
+		})
+
+		for ; req != nil; req = req.NextPage() {
+			if err := wrapAws(ctx, req); err != nil {
+				return nil, err
 			}
 
-			instances = append(instances, ecsInstance{
-				fmt.Sprintf("%s-%s", strings.Replace(*task.Group, ":", "-", 1), *container.Name),
-				(*task.TaskArn)[len(*task.TaskArn)-12:],
-				task,
-				taskDefinition,
-				container,
-				containerDefinition,
-				machines[machineIdx],
+			taskArns = append(taskArns, req.Data.(*ecs.ListTasksOutput).TaskArns...)
+		}
+
+		// Early return: if we can't list tasks we have nothing to
+		// describe below - likely empty cluster/permissions are bad.  This
+		// stops the AWS API from returning a 401 when you DescribeTasks
+		// with no input.
+		if len(taskArns) == 0 {
+			return []ecsInstance{}, nil
+		}
+
+		chunkedTaskArns := p.chunkedTaskArns(taskArns)
+		var tasks []*ecs.Task
+
+		for _, arns := range chunkedTaskArns {
+			req, taskResp := client.ecs.DescribeTasksRequest(&ecs.DescribeTasksInput{
+				Tasks:   arns,
+				Cluster: &c,
 			})
+
+			if err := wrapAws(ctx, req); err != nil {
+				return nil, err
+			}
+			tasks = append(tasks, taskResp.Tasks...)
+
+		}
+
+		containerInstanceArns := make([]*string, 0)
+		byContainerInstance := make(map[string]int)
+
+		taskDefinitionArns := make([]*string, 0)
+		byTaskDefinition := make(map[string]int)
+
+		for _, task := range tasks {
+			if _, found := byContainerInstance[*task.ContainerInstanceArn]; !found {
+				byContainerInstance[*task.ContainerInstanceArn] = len(containerInstanceArns)
+				containerInstanceArns = append(containerInstanceArns, task.ContainerInstanceArn)
+			}
+			if _, found := byTaskDefinition[*task.TaskDefinitionArn]; !found {
+				byTaskDefinition[*task.TaskDefinitionArn] = len(taskDefinitionArns)
+				taskDefinitionArns = append(taskDefinitionArns, task.TaskDefinitionArn)
+			}
+		}
+
+		machines, err := p.lookupEc2Instances(ctx, client, &c, containerInstanceArns)
+		if err != nil {
+			return nil, err
+		}
+
+		taskDefinitions, err := p.lookupTaskDefinitions(ctx, client, taskDefinitionArns)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, task := range tasks {
+
+			machineIdx := byContainerInstance[*task.ContainerInstanceArn]
+			taskDefIdx := byTaskDefinition[*task.TaskDefinitionArn]
+
+			for _, container := range task.Containers {
+
+				taskDefinition := taskDefinitions[taskDefIdx]
+				var containerDefinition *ecs.ContainerDefinition
+				for _, def := range taskDefinition.ContainerDefinitions {
+					if *container.Name == *def.Name {
+						containerDefinition = def
+						break
+					}
+				}
+
+				instances = append(instances, ecsInstance{
+					fmt.Sprintf("%s-%s", strings.Replace(*task.Group, ":", "-", 1), *container.Name),
+					(*task.TaskArn)[len(*task.TaskArn)-12:],
+					task,
+					taskDefinition,
+					container,
+					containerDefinition,
+					machines[machineIdx],
+				})
+			}
 		}
 	}
 
 	return instances, nil
 }
 
-func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, containerArns []*string) ([]*ec2.Instance, error) {
+func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, clusterName *string, containerArns []*string) ([]*ec2.Instance, error) {
 
 	order := make(map[string]int)
 	instanceIds := make([]*string, len(containerArns))
@@ -307,7 +344,7 @@ func (p *Provider) lookupEc2Instances(ctx context.Context, client *awsClient, co
 
 	req, _ := client.ecs.DescribeContainerInstancesRequest(&ecs.DescribeContainerInstancesInput{
 		ContainerInstances: containerArns,
-		Cluster:            &p.Cluster,
+		Cluster:            clusterName,
 	})
 
 	for ; req != nil; req = req.NextPage() {

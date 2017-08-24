@@ -1,0 +1,38 @@
+logLevel = "DEBUG"
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+[accessLog]
+format = "json"
+
+[web]
+address = ":8080"
+
+[forwardingTimeouts]
+dialTimeout = "300ms"
+responseHeaderTimeout = "300ms"
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    # Non-routable IP address that should always deliver a dial timeout.
+    # See: https://stackoverflow.com/questions/100841/artificially-create-a-connection-timeout-error#answer-904609
+    url = "http://10.255.255.1"
+  [backends.backend2]
+    [backends.backend2.servers.server2]
+    url = "http://{{.TimeoutEndpoint}}:9000"
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Path:/dialTimeout"
+  [frontends.frontend2]
+  backend = "backend2"
+    [frontends.frontend2.routes.test_2]
+    rule = "Path:/responseHeaderTimeout"

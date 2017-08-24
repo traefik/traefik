@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	fmtlog "log"
@@ -20,6 +19,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/safe"
@@ -29,7 +29,6 @@ import (
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/docker/libkv/store"
 	"github.com/satori/go.uuid"
-	"golang.org/x/net/http2"
 )
 
 func main() {
@@ -101,6 +100,43 @@ Complete documentation is available at https://traefik.io`,
 		},
 	}
 
+	healthcheckCmd := &flaeg.Command{
+		Name:                  "healthcheck",
+		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
+		Config:                traefikConfiguration,
+		DefaultPointersConfig: traefikPointersConfiguration,
+		Run: func() error {
+			if traefikConfiguration.Web == nil {
+				fmt.Println("Please enable the web provider to use healtcheck.")
+				os.Exit(1)
+			}
+			client := &http.Client{Timeout: 5 * time.Second}
+			protocol := "http"
+			if len(traefikConfiguration.Web.CertFile) > 0 {
+				protocol = "https"
+				tr := &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				}
+				client.Transport = tr
+			}
+			resp, err := client.Head(protocol + "://" + traefikConfiguration.Web.Address + "/ping")
+			if err != nil {
+				fmt.Printf("Error calling healthcheck: %s\n", err)
+				os.Exit(1)
+			}
+			if resp.StatusCode != http.StatusOK {
+				fmt.Printf("Bad healthcheck status: %s\n", resp.Status)
+				os.Exit(1)
+			}
+			fmt.Printf("OK: %s\n", resp.Request.URL)
+			os.Exit(0)
+			return nil
+		},
+		Metadata: map[string]string{
+			"parseAllSources": "true",
+		},
+	}
+
 	//init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
 	//add custom parsers
@@ -109,6 +145,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(server.RootCAs{}), &server.RootCAs{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
+	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
@@ -116,6 +153,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddCommand(newVersionCmd())
 	f.AddCommand(newBugCmd(traefikConfiguration, traefikPointersConfiguration))
 	f.AddCommand(storeconfigCmd)
+	f.AddCommand(healthcheckCmd)
 
 	usedCmd, err := f.GetCommand()
 	if err != nil {
@@ -177,28 +215,6 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 
 	// load global configuration
 	globalConfiguration := traefikConfiguration.GlobalConfiguration
-
-	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = globalConfiguration.MaxIdleConnsPerHost
-	if globalConfiguration.InsecureSkipVerify {
-		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-
-	if len(globalConfiguration.RootCAs) > 0 {
-		roots := x509.NewCertPool()
-		for _, cert := range globalConfiguration.RootCAs {
-			certContent, err := cert.Read()
-			if err != nil {
-				log.Error("Error while read RootCAs", err)
-				continue
-			}
-			roots.AppendCertsFromPEM(certContent)
-		}
-
-		tr := http.DefaultTransport.(*http.Transport)
-		tr.TLSClientConfig = &tls.Config{RootCAs: roots}
-
-		http2.ConfigureTransport(tr)
-	}
 
 	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
 		// no filename, setting to global config file
