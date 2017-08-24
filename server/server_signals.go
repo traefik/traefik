@@ -32,10 +32,10 @@ func (server *Server) listenSignals() {
 			}
 		default:
 			log.Infof("I have to go... %+v", sig)
-			reqTermGraceTimeOut := time.Duration(server.globalConfiguration.ReqAcceptGraceTimeOut)
-			if reqTermGraceTimeOut > 0 && sig == syscall.SIGTERM {
-				log.Infof("Waiting %s for incoming requests to cease", reqTermGraceTimeOut)
-				time.Sleep(reqTermGraceTimeOut)
+			reqAcceptGraceTimeOut := time.Duration(server.globalConfiguration.ReqAcceptGraceTimeOut)
+			if reqAcceptGraceTimeOut > 0 && sig == syscall.SIGTERM {
+				log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
+				time.Sleep(reqAcceptGraceTimeOut)
 			}
 			log.Info("Stopping server gracefully")
 			server.Stop()
