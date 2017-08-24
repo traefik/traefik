@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/armon/go-proxyproto"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
@@ -65,6 +66,7 @@ type serverEntryPoints map[string]*serverEntryPoint
 
 type serverEntryPoint struct {
 	httpServer *http.Server
+	listener   net.Listener
 	httpRouter *middlewares.HandlerSwitcher
 }
 
@@ -259,7 +261,7 @@ func (server *Server) startHTTPServers() {
 
 	for newServerEntryPointName, newServerEntryPoint := range server.serverEntryPoints {
 		serverEntryPoint := server.setupServerEntryPoint(newServerEntryPointName, newServerEntryPoint)
-		go server.startServer(serverEntryPoint.httpServer, server.globalConfiguration)
+		go server.startServer(serverEntryPoint, server.globalConfiguration)
 	}
 }
 
@@ -296,12 +298,13 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 		}
 		serverMiddlewares = append(serverMiddlewares, ipWhitelistMiddleware)
 	}
-	newSrv, err := server.prepareServer(newServerEntryPointName, server.globalConfiguration.EntryPoints[newServerEntryPointName], newServerEntryPoint.httpRouter, serverMiddlewares...)
+	newSrv, listener, err := server.prepareServer(newServerEntryPointName, server.globalConfiguration.EntryPoints[newServerEntryPointName], newServerEntryPoint.httpRouter, serverMiddlewares...)
 	if err != nil {
 		log.Fatal("Error preparing server: ", err)
 	}
 	serverEntryPoint := server.serverEntryPoints[newServerEntryPointName]
 	serverEntryPoint.httpServer = newSrv
+	serverEntryPoint.listener = listener
 
 	return serverEntryPoint
 }
@@ -611,20 +614,20 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *configur
 	return config, nil
 }
 
-func (server *Server) startServer(srv *http.Server, globalConfiguration configuration.GlobalConfiguration) {
-	log.Infof("Starting server on %s", srv.Addr)
+func (server *Server) startServer(serverEntryPoint *serverEntryPoint, globalConfiguration configuration.GlobalConfiguration) {
+	log.Infof("Starting server on %s", serverEntryPoint.httpServer.Addr)
 	var err error
-	if srv.TLSConfig != nil {
-		err = srv.ListenAndServeTLS("", "")
+	if serverEntryPoint.httpServer.TLSConfig != nil {
+		err = serverEntryPoint.httpServer.ServeTLS(serverEntryPoint.listener, "", "")
 	} else {
-		err = srv.ListenAndServe()
+		err = serverEntryPoint.httpServer.Serve(serverEntryPoint.listener)
 	}
 	if err != nil {
 		log.Error("Error creating server: ", err)
 	}
 }
 
-func (server *Server) prepareServer(entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher, middlewares ...negroni.Handler) (*http.Server, error) {
+func (server *Server) prepareServer(entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher, middlewares ...negroni.Handler) (*http.Server, net.Listener, error) {
 	readTimeout, writeTimeout, idleTimeout := buildServerTimeouts(server.globalConfiguration)
 	log.Infof("Preparing server %s %+v with readTimeout=%s writeTimeout=%s idleTimeout=%s", entryPointName, entryPoint, readTimeout, writeTimeout, idleTimeout)
 
@@ -638,17 +641,28 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	tlsConfig, err := server.createTLSConfig(entryPointName, entryPoint.TLS, router)
 	if err != nil {
 		log.Errorf("Error creating TLS config: %s", err)
-		return nil, err
+		return nil, nil, err
+	}
+
+	listener, err := net.Listen("tcp", entryPoint.Address)
+	if err != nil {
+		log.Error("Error opening listener ", err)
+	}
+
+	if entryPoint.ProxyProtocol {
+		listener = &proxyproto.Listener{Listener: listener}
 	}
 
 	return &http.Server{
-		Addr:         entryPoint.Address,
-		Handler:      n,
-		TLSConfig:    tlsConfig,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
-		IdleTimeout:  idleTimeout,
-	}, nil
+			Addr:         entryPoint.Address,
+			Handler:      n,
+			TLSConfig:    tlsConfig,
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+			IdleTimeout:  idleTimeout,
+		},
+		listener,
+		nil
 }
 
 func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTimeout, writeTimeout, idleTimeout time.Duration) {
