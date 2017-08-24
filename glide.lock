@@ -1,5 +1,5 @@
-hash: 3d5a06016b7b56be08120ed653406a1e8d4ade7e69b4fbc37b31683cb4e9a519
-updated: 2017-08-21T14:15:06.346751095+02:00
+hash: 2b042ce06e9c4aed4606f2b8ced5d6c3de537d1254316e8c6611e78d934a024a
+updated: 2017-08-24T14:24:42.04425168+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -10,6 +10,8 @@ imports:
   version: 0ddd408d5d60ea76e320503cc7dd091992dee608
 - name: github.com/aokoli/goutils
   version: 3391d3790d23d03408670993e957e8f408993c34
+- name: github.com/armon/go-proxyproto
+  version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - name: github.com/ArthurHlt/go-eureka-client
   version: 9d0a49cbd39aa3634ae1977e9f519a262b10adaf
   subpackages:
