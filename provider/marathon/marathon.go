@@ -53,18 +53,18 @@ var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+
 // Provider holds configuration of the provider.
 type Provider struct {
 	provider.BaseProvider
-	Endpoint                string              `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
-	Domain                  string              `description:"Default domain used"`
-	ExposedByDefault        bool                `description:"Expose Marathon apps by default"`
-	GroupsAsSubDomains      bool                `description:"Convert Marathon groups to subdomains"`
-	DCOSToken               string              `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
-	MarathonLBCompatibility bool                `description:"Add compatibility with marathon-lb labels"`
-	TLS                     *provider.ClientTLS `description:"Enable Docker TLS support"`
-	DialerTimeout           flaeg.Duration      `description:"Set a non-default connection timeout for Marathon"`
-	KeepAlive               flaeg.Duration      `description:"Set a non-default TCP Keep Alive time in seconds"`
-	ForceTaskHostname       bool                `description:"Force to use the task's hostname."`
-	Basic                   *Basic              `description:"Enable basic authentication"`
-	RespectReadinessChecks  bool                `description:"Filter out tasks with non-successful readiness checks during deployments"`
+	Endpoint                string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
+	Domain                  string           `description:"Default domain used"`
+	ExposedByDefault        bool             `description:"Expose Marathon apps by default"`
+	GroupsAsSubDomains      bool             `description:"Convert Marathon groups to subdomains"`
+	DCOSToken               string           `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
+	MarathonLBCompatibility bool             `description:"Add compatibility with marathon-lb labels"`
+	TLS                     *types.ClientTLS `description:"Enable Docker TLS support"`
+	DialerTimeout           flaeg.Duration   `description:"Set a non-default connection timeout for Marathon"`
+	KeepAlive               flaeg.Duration   `description:"Set a non-default TCP Keep Alive time in seconds"`
+	ForceTaskHostname       bool             `description:"Force to use the task's hostname."`
+	Basic                   *Basic           `description:"Enable basic authentication"`
+	RespectReadinessChecks  bool             `description:"Filter out tasks with non-successful readiness checks during deployments"`
 	readyChecker            *readinessChecker
 	marathonClient          marathon.Marathon
 }
