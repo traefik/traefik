@@ -234,7 +234,9 @@ func (ep *EntryPoints) Set(value string) error {
 
 	compress := false
 	if len(result["Compress"]) > 0 {
-		compress = strings.EqualFold(result["Compress"], "enable") || strings.EqualFold(result["Compress"], "on")
+		compress = strings.EqualFold(result["Compress"], "true") ||
+			strings.EqualFold(result["Compress"], "enable") ||
+			strings.EqualFold(result["Compress"], "on")
 	}
 
 	whiteListSourceRange := []string{}
@@ -244,7 +246,9 @@ func (ep *EntryPoints) Set(value string) error {
 
 	proxyprotocol := false
 	if len(result["ProxyProtocol"]) > 0 {
-		proxyprotocol = strings.EqualFold(result["ProxyProtocol"], "enable") || strings.EqualFold(result["ProxyProtocol"], "on")
+		proxyprotocol = strings.EqualFold(result["ProxyProtocol"], "true") ||
+			strings.EqualFold(result["ProxyProtocol"], "enable") ||
+			strings.EqualFold(result["ProxyProtocol"], "on")
 	}
 
 	(*ep)[result["Name"]] = &EntryPoint{
