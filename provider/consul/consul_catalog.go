@@ -232,7 +232,7 @@ func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
 
 func (p *CatalogProvider) nodeFilter(service string, node *api.ServiceEntry) bool {
 	// Filter disabled application.
-	if !p.isApplicationEnabled(node) {
+	if !p.isServiceEnabled(node) {
 		log.Debugf("Filtering disabled Consul service %s", service)
 		return false
 	}
@@ -247,13 +247,13 @@ func (p *CatalogProvider) nodeFilter(service string, node *api.ServiceEntry) boo
 	return true
 }
 
-func (p *CatalogProvider) isApplicationEnabled(node *api.ServiceEntry) bool {
-	bool, err := strconv.ParseBool(p.getAttribute("enable", node.Service.Tags, strconv.FormatBool(p.ExposedByDefault)))
+func (p *CatalogProvider) isServiceEnabled(node *api.ServiceEntry) bool {
+	enable, err := strconv.ParseBool(p.getAttribute("enable", node.Service.Tags, strconv.FormatBool(p.ExposedByDefault)))
 	if err != nil {
 		log.Debugf("Invalid value for enable, set to %b", p.ExposedByDefault)
 		return p.ExposedByDefault
 	}
-	return bool
+	return enable
 }
 
 func (p *CatalogProvider) getPrefixedName(name string) string {
