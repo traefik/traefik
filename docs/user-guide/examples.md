@@ -44,8 +44,8 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      certFile = "tests/traefik.crt"
-      keyFile = "tests/traefik.key"
+      CertFile = "examples/traefik.crt"
+      KeyFile = "examples/traefik.key"
 ```
 
 ## Let's Encrypt support
@@ -174,8 +174,8 @@ These variables has described [in this section](toml/#acme-lets-encrypt-configur
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "/etc/pki/tls/certs/mycert.crt"
-      KeyFile = "/etc/pki/tls/private/mycert.key"
+      CertFile = "examples/traefik.crt"
+      KeyFile = "examples/traefik.key"
 
 [acme]
 email = "test@traefik.io"
