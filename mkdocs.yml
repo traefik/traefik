@@ -45,7 +45,23 @@ extra_css:
 pages:
   - Getting Started: index.md
   - Basics: basics.md
-  - traefik.toml: toml.md
+  - Configration:
+    - 'traefik.toml': 'configuration/toml.md'
+    - 'Let''s Encrypt': 'configuration/acme.md'
+  - Backends:
+    - 'API backend': 'backends/api.md'
+    - 'BoltDB backend': 'backends/boltdb.md'
+    - 'Consul backend': 'backends/consul.md'
+    - 'Docker backend': 'backends/docker.md'
+    - 'DynamoDB backend': 'backends/dynamodb.md'
+    - 'ECS backend': 'backends/ecs.md'
+    - 'Etcd backend': 'backends/etcd.md'
+    - 'Eureka backend': 'backends/eureka.md'
+    - 'File backend': 'backends/file.md'
+    - 'Kubernetes Ingress backend': 'backends/kubernetes.md'
+    - 'Marathon backend': 'backends/marathon.md'
+    - 'Rancher backend': 'backends/rancher.md'
+    - 'Zookeeper backend': 'backends/zookeeper.md'
   - User Guide:
       - 'Configuration examples': 'user-guide/examples.md'
       - 'Swarm cluster': 'user-guide/swarm.md'
