@@ -19,7 +19,6 @@ const (
 	SecWebsocketKey        = "Sec-Websocket-Key"
 	SecWebsocketVersion    = "Sec-Websocket-Version"
 	SecWebsocketExtensions = "Sec-Websocket-Extensions"
-	SecWebsocketProtocol   = "Sec-Websocket-Protocol"
 	SecWebsocketAccept     = "Sec-Websocket-Accept"
 )
 
@@ -43,7 +42,6 @@ var WebsocketDialHeaders = []string{
 	SecWebsocketKey,
 	SecWebsocketVersion,
 	SecWebsocketExtensions,
-	SecWebsocketProtocol,
 	SecWebsocketAccept,
 }
 

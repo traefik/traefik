@@ -18,11 +18,9 @@
     expression = "{{$circuitBreaker}}"
   {{end}}
 
-  {{$loadBalancer := getAttribute "backend.loadbalancer" .Attributes ""}}
-  {{with $loadBalancer}}
   [backends."backend-{{$service}}".loadbalancer]
-    method = "{{$loadBalancer}}"
-  {{end}}
+    sticky = {{getAttribute "backend.loadbalancer.sticky" .Attributes "false"}}
+    method = "{{getAttribute "backend.loadbalancer" .Attributes "wrr"}}"
 
   {{if hasMaxconnAttributes .Attributes}}
   [backends."backend-{{$service}}".maxconn]

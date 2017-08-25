@@ -68,7 +68,7 @@ HOW TO WRITE A GOOD ISSUE?
 
 ### What is your environment & configuration (arguments, toml, provider, platform, ...)?
 
-` + "```" + `toml
+` + "```" + `json
 {{.Configuration}}
 ` + "```" + `
 
@@ -154,7 +154,7 @@ func openBrowser(URL string) error {
 }
 
 func anonymize(input string) string {
-	replace := "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+	replace := "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx\""
 	mailExp := regexp.MustCompile(`\w[-._\w]*\w@\w[-._\w]*\w\.\w{2,3}"`)
 	return xurls.Relaxed.ReplaceAllString(mailExp.ReplaceAllString(input, replace), replace)
 }
