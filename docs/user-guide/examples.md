@@ -44,25 +44,23 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      certFile = "tests/traefik.crt"
-      keyFile = "tests/traefik.key"
+      CertFile = "examples/traefik.crt"
+      KeyFile = "examples/traefik.key"
 ```
 
 ## Let's Encrypt support
+
+### Basic example
 
 ```toml
 [entryPoints]
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
-      # certs used as default certs
-      [[entryPoints.https.tls.certificates]]
-      certFile = "tests/traefik.crt"
-      keyFile = "tests/traefik.key"
+
 [acme]
 email = "test@traefik.io"
-storageFile = "acme.json"
-onDemand = true
+storage = "acme.json"
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
 
@@ -77,6 +75,161 @@ entryPoint = "https"
 [[acme.domains]]
   main = "local4.com"
 ```
+
+This configuration allows generating Let's Encrypt certificates for the four domains `local[1-4].com` with described SANs.
+Traefik generates these certificates when it starts and it needs to be restart if new domains are added.
+
+### OnHostRule option
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+[acme]
+email = "test@traefik.io"
+storage = "acme.json"
+onHostRule = true
+caServer = "http://172.18.0.1:4000/directory"
+entryPoint = "https"
+
+[[acme.domains]]
+  main = "local1.com"
+  sans = ["test1.local1.com", "test2.local1.com"]
+[[acme.domains]]
+  main = "local2.com"
+  sans = ["test1.local2.com", "test2x.local2.com"]
+[[acme.domains]]
+  main = "local3.com"
+[[acme.domains]]
+  main = "local4.com"
+```
+
+This configuration allows generating Let's Encrypt certificates for the four domains `local[1-4].com`.
+Traefik generates these certificates when it starts.
+
+If a backend is added with a `onHost` rule, Traefik will automatically generate the Let's Encrypt certificate for the new domain.
+
+### OnDemand option
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+[acme]
+email = "test@traefik.io"
+storage = "acme.json"
+OnDemand = true
+caServer = "http://172.18.0.1:4000/directory"
+entryPoint = "https"
+
+```
+
+This configuration allows generating a Let's Encrypt certificate during the first HTTPS request on a new domain.
+
+**Note** : This option simplifies the configuration but :
+* TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DDoS attacks.
+* Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
+That's why, it's better to use the `onHostRule` optin if possible.
+
+### DNS challenge
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+[acme]
+email = "test@traefik.io"
+storage = "acme.json"
+dnsProvider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)
+delayDontCheckDNS = 0
+caServer = "http://172.18.0.1:4000/directory"
+entryPoint = "https"
+
+[[acme.domains]]
+  main = "local1.com"
+  sans = ["test1.local1.com", "test2.local1.com"]
+[[acme.domains]]
+  main = "local2.com"
+  sans = ["test1.local2.com", "test2x.local2.com"]
+[[acme.domains]]
+  main = "local3.com"
+[[acme.domains]]
+  main = "local4.com"
+```
+
+DNS challenge needs environment variables to be executed. This variables have to be set on the machine/container which host Traefik.
+These variables has described [in this section](toml/#acme-lets-encrypt-configuration).
+
+### OnHostRule option and provided certificates
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "examples/traefik.crt"
+      KeyFile = "examples/traefik.key"
+
+[acme]
+email = "test@traefik.io"
+storage = "acme.json"
+onHostRule = true
+caServer = "http://172.18.0.1:4000/directory"
+entryPoint = "https"
+
+```
+
+Traefik will only try to generate a Let's encrypt certificate if the domain cannot be checked by the provided certificates.
+
+### Cluster mode
+
+#### Prerequisites
+
+Before to use Let's Encrypt in a Traefik cluster, take a look to [the key-value store explanations](/user-guide/kv-config) and more precisely to [this section](/user-guide/kv-config/#store-configuration-in-key-value-store) in the way to know how to migrate from a acme local storage *(acme.json file)* to a key-value store configuration.
+
+#### Configuration
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+[acme]
+email = "test@traefik.io"
+storage = "traefik/acme/account"
+caServer = "http://172.18.0.1:4000/directory"
+entryPoint = "https"
+
+[[acme.domains]]
+  main = "local1.com"
+  sans = ["test1.local1.com", "test2.local1.com"]
+[[acme.domains]]
+  main = "local2.com"
+  sans = ["test1.local2.com", "test2x.local2.com"]
+[[acme.domains]]
+  main = "local3.com"
+[[acme.domains]]
+  main = "local4.com"
+
+[consul]
+  endpoint = "127.0.0.1:8500"
+  watch = true
+  prefix = "traefik"
+
+```
+
+This configuration allows to use the key `traefik/acme/account` to get/set Let's Encrypt certificates content.
+The `consul` provider contains the configuration.
+
+**Note** : It's possible to use others key-value store providers as described [here](/user-guide/kv-config/#key-value-store-configuration).
 
 ## Override entrypoints in frontends
 
