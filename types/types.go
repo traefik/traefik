@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/containous/traefik/provider"
 	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
 )
@@ -320,7 +321,8 @@ type Digest struct {
 
 // Forward authentication
 type Forward struct {
-	Address string
+	Address string              `description:"Authentication server address"`
+	TLS     *provider.ClientTLS `description:"Enable TLS support"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space
