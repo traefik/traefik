@@ -21,24 +21,26 @@ type Rules struct {
 }
 
 func (r *Rules) host(hosts ...string) *mux.Route {
-	return r.route.route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
-		reqHost, _, err := net.SplitHostPort(req.Host)
-		if err != nil {
-			reqHost = req.Host
-		}
-		for _, host := range hosts {
-			if types.CanonicalDomain(reqHost) == types.CanonicalDomain(host) {
-				return true
+	router := r.route.route.Subrouter()
+	for _, host := range hosts {
+		route := router.NewRoute()
+		route.Priority(len(host))
+		route.MatcherFunc(func(req *http.Request, route *mux.RouteMatch) bool {
+			reqHost, _, err := net.SplitHostPort(req.Host)
+			if err != nil {
+				reqHost = req.Host
 			}
-		}
-		return false
-	})
+			return types.CanonicalDomain(reqHost) == types.CanonicalDomain(host)
+		})
+	}
+	return r.route.route
 }
 
 func (r *Rules) hostRegexp(hosts ...string) *mux.Route {
 	router := r.route.route.Subrouter()
 	for _, host := range hosts {
-		router.Host(types.CanonicalDomain(host))
+		route := router.Host(types.CanonicalDomain(host))
+		route.Priority(len(host))
 	}
 	return r.route.route
 }
@@ -46,7 +48,8 @@ func (r *Rules) hostRegexp(hosts ...string) *mux.Route {
 func (r *Rules) path(paths ...string) *mux.Route {
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.Path(strings.TrimSpace(path))
+		route := router.Path(strings.TrimSpace(path))
+		route.Priority(len(path))
 	}
 	return r.route.route
 }
@@ -54,7 +57,8 @@ func (r *Rules) path(paths ...string) *mux.Route {
 func (r *Rules) pathPrefix(paths ...string) *mux.Route {
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(strings.TrimSpace(path))
+		route := router.PathPrefix(strings.TrimSpace(path))
+		route.Priority(len(path))
 	}
 	return r.route.route
 }
@@ -70,7 +74,8 @@ func (r *Rules) pathStrip(paths ...string) *mux.Route {
 	r.route.stripPrefixes = paths
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.Path(strings.TrimSpace(path))
+		route := router.Path(strings.TrimSpace(path))
+		route.Priority(len(path))
 	}
 	return r.route.route
 }
@@ -80,7 +85,8 @@ func (r *Rules) pathStripRegex(paths ...string) *mux.Route {
 	r.route.stripPrefixesRegex = paths
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.Path(strings.TrimSpace(path))
+		route := router.Path(strings.TrimSpace(path))
+		route.Priority(len(path))
 	}
 	return r.route.route
 }
@@ -104,7 +110,8 @@ func (r *Rules) pathPrefixStrip(paths ...string) *mux.Route {
 	r.route.stripPrefixes = paths
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(strings.TrimSpace(path))
+		route := router.PathPrefix(strings.TrimSpace(path))
+		route.Priority(len(path))
 	}
 	return r.route.route
 }
@@ -114,7 +121,8 @@ func (r *Rules) pathPrefixStripRegex(paths ...string) *mux.Route {
 	r.route.stripPrefixesRegex = paths
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(strings.TrimSpace(path))
+		route := router.PathPrefix(strings.TrimSpace(path))
+		route.Priority(len(path))
 	}
 	return r.route.route
 }
