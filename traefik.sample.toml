@@ -304,6 +304,15 @@
 #   users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 #   usersFile = "/path/to/.htdigest"
 #
+# To enable forward auth on an entrypoint
+# This configuration will first forward the request to http://authserver.com/auth. If the response code is 2XX,
+# access is granted and the original request is performed. Otherwise, the response from the auth server is returned.
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#     [entryPoints.http.auth.forward]
+#     address = "http://authserver.com/auth"
+#
 # To specify an https entrypoint with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls):
 # [entryPoints]
 #   [entryPoints.https]
@@ -714,11 +723,11 @@
 #
 # keepAlive = "10s"
 
-# By default, a task's IP address (as returned by the Marathon API) is used as 
+# By default, a task's IP address (as returned by the Marathon API) is used as
 # backend server if an IP-per-task configuration can be found; otherwise, the
 # name of the host running the task is used.
 # The latter behavior can be enforced by enabling this switch.
-# 
+#
 # Optional
 # Default: false
 #

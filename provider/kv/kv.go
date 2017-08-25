@@ -21,11 +21,11 @@ import (
 // Provider holds common configurations of key-value providers.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
-	Endpoint              string              `description:"Comma separated server endpoints"`
-	Prefix                string              `description:"Prefix used for KV store"`
-	TLS                   *provider.ClientTLS `description:"Enable TLS support"`
-	Username              string              `description:"KV Username"`
-	Password              string              `description:"KV Password"`
+	Endpoint              string           `description:"Comma separated server endpoints"`
+	Prefix                string           `description:"Prefix used for KV store"`
+	TLS                   *types.ClientTLS `description:"Enable TLS support"`
+	Username              string           `description:"KV Username"`
+	Password              string           `description:"KV Password"`
 	storeType             store.Backend
 	kvclient              store.Store
 }

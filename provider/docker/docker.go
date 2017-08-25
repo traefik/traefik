@@ -47,12 +47,12 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider holds configurations of the provider.
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
-	Endpoint              string              `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
-	Domain                string              `description:"Default domain used"`
-	TLS                   *provider.ClientTLS `description:"Enable Docker TLS support"`
-	ExposedByDefault      bool                `description:"Expose containers by default"`
-	UseBindPortIP         bool                `description:"Use the ip address from the bound port, rather than from the inner network"`
-	SwarmMode             bool                `description:"Use Docker on Swarm Mode"`
+	Endpoint              string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
+	Domain                string           `description:"Default domain used"`
+	TLS                   *types.ClientTLS `description:"Enable Docker TLS support"`
+	ExposedByDefault      bool             `description:"Expose containers by default"`
+	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network"`
+	SwarmMode             bool             `description:"Use Docker on Swarm Mode"`
 }
 
 // dockerData holds the need data to the Provider p

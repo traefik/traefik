@@ -12,7 +12,7 @@ import (
 
 type myProvider struct {
 	BaseProvider
-	TLS *ClientTLS
+	TLS *types.ClientTLS
 }
 
 func (p *myProvider) Foo() string {
@@ -202,7 +202,7 @@ func TestInsecureSkipVerifyClientTLS(t *testing.T) {
 		BaseProvider{
 			Filename: "",
 		},
-		&ClientTLS{
+		&types.ClientTLS{
 			InsecureSkipVerify: true,
 		},
 	}
@@ -220,7 +220,7 @@ func TestInsecureSkipVerifyFalseClientTLS(t *testing.T) {
 		BaseProvider{
 			Filename: "",
 		},
-		&ClientTLS{
+		&types.ClientTLS{
 			InsecureSkipVerify: false,
 		},
 	}
