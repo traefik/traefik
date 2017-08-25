@@ -11,7 +11,7 @@
 
 
 Træfik (pronounced like [traffic](https://speak-ipa.bearbin.net/speak.cgi?speak=%CB%88tr%C3%A6f%C9%AAk)) is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
-It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Mesos/Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), [Amazon ECS](https://aws.amazon.com/ecs/), [Amazon DynamoDB](https://aws.amazon.com/dynamodb/), Rest API, file...) to manage its configuration automatically and dynamically.
+It supports several backends ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](http://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), and a lot more) to manage its configuration automatically and dynamically.
 
 ## Overview
 
@@ -34,6 +34,36 @@ Træfik can listen to your service registry/orchestrator API, and knows each tim
 Routes to your services will be created instantly.
 
 Run it and forget it!
+
+## Features
+
+- [It's fast](http://docs.traefik.io/benchmarks)
+- No dependency hell, single binary made with go
+- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) official docker image
+- Rest API
+- Hot-reloading of configuration. No need to restart the process
+- Circuit breakers, retry
+- Round Robin, rebalancer load-balancers
+- Metrics (Rest, Prometheus, Datadog, Statd)
+- Clean AngularJS Web UI
+- Websocket, HTTP/2, GRPC ready
+- Access Logs (JSON, CLF)
+- [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS with renewal)
+- High Availability with cluster mode
+
+
+## Supported backends
+
+- [Docker](https://www.docker.com/) / [Swarm mode](https://docs.docker.com/engine/swarm/)
+- [Kubernetes](http://kubernetes.io)
+- [Mesos](https://github.com/apache/mesos) / [Marathon](https://mesosphere.github.io/marathon/)
+- [Rancher](https://rancher.com) (API, Metadata)
+- [Consul](https://www.consul.io/) / [Etcd](https://coreos.com/etcd/) / [Zookeeper](https://zookeeper.apache.org) / [BoltDB](https://github.com/boltdb/bolt)
+- [Eureka](https://github.com/Netflix/eureka)
+- [Amazon ECS](https://aws.amazon.com/ecs)
+- [Amazon DynamoDB](https://aws.amazon.com/dynamodb)
+- File
+- Rest API
 
 
 ## Quickstart

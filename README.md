@@ -13,12 +13,13 @@
 
 
 Træfik (pronounced like [traffic](https://speak-ipa.bearbin.net/speak.cgi?speak=%CB%88tr%C3%A6f%C9%AAk)) is a modern HTTP reverse proxy and load balancer made to deploy microservices with ease.
-It supports several backends ([Docker](https://www.docker.com/), [Swarm](https://docs.docker.com/swarm), [Kubernetes](http://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Mesos](https://github.com/apache/mesos), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Zookeeper](https://zookeeper.apache.org), [BoltDB](https://github.com/boltdb/bolt), [Eureka](https://github.com/Netflix/eureka), [Amazon DynamoDB](https://aws.amazon.com/dynamodb/), Rest API, file...) to manage its configuration automatically and dynamically.
+It supports several backends ([Docker](https://www.docker.com/), [Swarm mode](https://docs.docker.com/engine/swarm/), [Kubernetes](http://kubernetes.io), [Marathon](https://mesosphere.github.io/marathon/), [Consul](https://www.consul.io/), [Etcd](https://coreos.com/etcd/), [Rancher](https://rancher.com), [Amazon ECS](https://aws.amazon.com/ecs), and a lot more) to manage its configuration automatically and dynamically.
 
 ---
 
 | **[Overview](#overview)** |
 **[Features](#features)** |
+**[Supported backends](#supported-backends)** |
 **[Quickstart](#quickstart)** |
 **[Web UI](#web-ui)** |
 **[Test it](#test-it)** |
@@ -60,24 +61,30 @@ Run it and forget it!
 
 - [It's fast](http://docs.traefik.io/benchmarks)
 - No dependency hell, single binary made with go
+- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) official docker image
 - Rest API
-- Multiple backends supported: Docker, Swarm, Kubernetes, Marathon, Mesos, Consul, Etcd, and more to come
-- Watchers for backends, can listen for changes in backends to apply a new configuration automatically
 - Hot-reloading of configuration. No need to restart the process
-- Graceful shutdown http connections
-- Circuit breakers on backends
+- Circuit breakers, retry
 - Round Robin, rebalancer load-balancers
-- Rest Metrics
-- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image included
-- SSL backends support
-- SSL frontend support (with SNI)
+- Metrics (Rest, Prometheus, Datadog, Statd)
 - Clean AngularJS Web UI
-- Websocket support
-- HTTP/2 support
-- Retry request if network error
+- Websocket, HTTP/2, GRPC ready
+- Access Logs (JSON, CLF)
 - [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS with renewal)
 - High Availability with cluster mode
 
+## Supported backends
+
+- [Docker](https://www.docker.com/) / [Swarm mode](https://docs.docker.com/engine/swarm/)
+- [Kubernetes](http://kubernetes.io)
+- [Mesos](https://github.com/apache/mesos) / [Marathon](https://mesosphere.github.io/marathon/)
+- [Rancher](https://rancher.com) (API, Metadata)
+- [Consul](https://www.consul.io/) / [Etcd](https://coreos.com/etcd/) / [Zookeeper](https://zookeeper.apache.org) / [BoltDB](https://github.com/boltdb/bolt)
+- [Eureka](https://github.com/Netflix/eureka)
+- [Amazon ECS](https://aws.amazon.com/ecs)
+- [Amazon DynamoDB](https://aws.amazon.com/dynamodb)
+- File
+- Rest API
 
 ## Quickstart
 
@@ -125,13 +132,14 @@ git clone https://github.com/containous/traefik
 
 ## Documentation
 
-You can find the complete documentation [here](https://docs.traefik.io).
+You can find the complete documentation at [https://docs.traefik.io](https://docs.traefik.io).
+A collection of contributions around Træfik can be found at [https://awesome.traefik.io](https://awesome.traefik.io). 
 
 
 ## Support
 
 To get basic support, you can:
-- join the Traefik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) 
+- join the Træfik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) 
 - use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
 If you prefer commercial support, please contact [containo.us](https://containo.us) by mail: <mailto:support@containo.us>.
