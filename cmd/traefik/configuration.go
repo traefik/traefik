@@ -83,6 +83,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default CatalogProvider
 	var defaultConsulCatalog consul.CatalogProvider
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
+	defaultConsulCatalog.ExposedByDefault = true
 	defaultConsulCatalog.Constraints = types.Constraints{}
 	defaultConsulCatalog.Prefix = "traefik"
 	defaultConsulCatalog.FrontEndRule = "Host:{{.ServiceName}}.{{.Domain}}"

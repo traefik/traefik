@@ -935,6 +935,12 @@
 #
 # domain = "consul.localhost"
 
+# Expose Consul catalog services by default in traefik
+#
+# Optional
+#
+# exposedByDefault = true
+
 # Prefix for Consul catalog tags
 #
 # Optional

@@ -31,6 +31,7 @@ type CatalogProvider struct {
 	provider.BaseProvider `mapstructure:",squash"`
 	Endpoint              string `description:"Consul server endpoint"`
 	Domain                string `description:"Default domain used"`
+	ExposedByDefault      bool   `description:"Expose Consul services by default"`
 	Prefix                string `description:"Prefix used for Consul catalog tags"`
 	FrontEndRule          string `description:"Frontend rule used for Consul services"`
 	client                *api.Client
@@ -209,12 +210,7 @@ func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
 	}
 
 	nodes := fun.Filter(func(node *api.ServiceEntry) bool {
-		constraintTags := p.getConstraintTags(node.Service.Tags)
-		ok, failingConstraint := p.MatchConstraints(constraintTags)
-		if !ok && failingConstraint != nil {
-			log.Debugf("Service %v pruned by '%v' constraint", service, failingConstraint.String())
-		}
-		return ok
+		return p.nodeFilter(service, node)
 	}, data).([]*api.ServiceEntry)
 
 	//Merge tags of nodes matching constraints, in a single slice.
@@ -232,6 +228,32 @@ func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
 		},
 		Nodes: nodes,
 	}, nil
+}
+
+func (p *CatalogProvider) nodeFilter(service string, node *api.ServiceEntry) bool {
+	// Filter disabled application.
+	if !p.isServiceEnabled(node) {
+		log.Debugf("Filtering disabled Consul service %s", service)
+		return false
+	}
+
+	// Filter by constraints.
+	constraintTags := p.getConstraintTags(node.Service.Tags)
+	ok, failingConstraint := p.MatchConstraints(constraintTags)
+	if !ok && failingConstraint != nil {
+		log.Debugf("Service %v pruned by '%v' constraint", service, failingConstraint.String())
+		return false
+	}
+	return true
+}
+
+func (p *CatalogProvider) isServiceEnabled(node *api.ServiceEntry) bool {
+	enable, err := strconv.ParseBool(p.getAttribute("enable", node.Service.Tags, strconv.FormatBool(p.ExposedByDefault)))
+	if err != nil {
+		log.Debugf("Invalid value for enable, set to %b", p.ExposedByDefault)
+		return p.ExposedByDefault
+	}
+	return enable
 }
 
 func (p *CatalogProvider) getPrefixedName(name string) string {
@@ -364,14 +386,9 @@ func (p *CatalogProvider) buildConfig(catalog []catalogUpdate) *types.Configurat
 	allNodes := []*api.ServiceEntry{}
 	services := []*serviceUpdate{}
 	for _, info := range catalog {
-		for _, node := range info.Nodes {
-			isEnabled := p.getAttribute("enable", node.Service.Tags, "true")
-			if isEnabled != "false" && len(info.Nodes) > 0 {
-				services = append(services, info.Service)
-				allNodes = append(allNodes, info.Nodes...)
-				break
-			}
-
+		if len(info.Nodes) > 0 {
+			services = append(services, info.Service)
+			allNodes = append(allNodes, info.Nodes...)
 		}
 	}
 	// Ensure a stable ordering of nodes so that identical configurations may be detected
