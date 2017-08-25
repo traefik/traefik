@@ -299,6 +299,7 @@ type Cluster struct {
 type Auth struct {
 	Basic       *Basic
 	Digest      *Digest
+	Forward     *Forward
 	HeaderField string
 }
 
@@ -315,6 +316,11 @@ type Basic struct {
 type Digest struct {
 	Users     `mapstructure:","`
 	UsersFile string
+}
+
+// Forward authentication
+type Forward struct {
+	Address string
 }
 
 // CanonicalDomain returns a lower case domain with trim space
