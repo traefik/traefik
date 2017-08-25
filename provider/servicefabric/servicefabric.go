@@ -30,7 +30,9 @@ type Provider struct {
 // Provide allows the servicefabric provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-
+	if provider.APIVersion == "" {
+		provider.APIVersion = "3.0"
+	}
 	sfClient, err := NewClient(provider.ClusterManagementUrl,
 		provider.APIVersion,
 		provider.ClientCertFilePath,
