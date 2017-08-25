@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.3.7](https://github.com/containous/traefik/tree/v1.3.7) (2017-08-25)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.6...v1.3.7)
+
+**Bug fixes:**
+- **[oxy]** Only forward X-Forwarded-Port. ([#2007](https://github.com/containous/traefik/pull/2007) by [ldez](https://github.com/ldez))
+
 ## [v1.3.6](https://github.com/containous/traefik/tree/v1.3.6) (2017-08-20)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.5...v1.3.6)
 
