@@ -100,7 +100,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
 			srv := NewServer(test.globalConfig)
-			httpServer, err := srv.prepareServer(entryPointName, entryPoint, router)
+			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router)
 			if err != nil {
 				t.Fatalf("Unexpected error when preparing srv: %s", err)
 			}

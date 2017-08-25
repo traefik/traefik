@@ -71,7 +71,8 @@ Run it and forget it!
 - Websocket, HTTP/2, GRPC ready
 - Access Logs (JSON, CLF)
 - [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS with renewal)
-- High Availability with cluster mode
+- [Proxy Protocol](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt) support
+- High Availability with cluster mode (beta)
 
 ## Supported backends
 

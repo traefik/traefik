@@ -292,6 +292,12 @@ To write JSON format logs, specify `json` as the format:
 #   address = ":80"
 #   whiteListSourceRange = ["127.0.0.1/32"]
 
+# To enable ProxyProtocol support (https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt):
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   proxyprotocol = true
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"

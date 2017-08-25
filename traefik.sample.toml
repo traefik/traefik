@@ -344,6 +344,12 @@
 #   address = ":80"
 #   whiteListSourceRange = ["127.0.0.1/32"]
 
+# To enable ProxyProtocol support (https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt):
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   proxyprotocol = true
+
 # Enable retry sending request if network error
 #
 # Optional
