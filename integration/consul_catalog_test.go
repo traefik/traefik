@@ -143,5 +143,62 @@ func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSingleService(c *check.C) 
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSimpleServiceMultipleNode(c *check.C) {
+	cmd, _ := s.cmdTraefik(
+		withConfigFile("fixtures/consul_catalog/simple.toml"),
+		"--consulCatalog",
+		"--consulCatalog.exposedByDefault=false",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost")
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	nginx := s.composeProject.Container(c, "nginx")
+	nginx2 := s.composeProject.Container(c, "nginx2")
+
+	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
+
+	err = s.registerService("test", nginx2.NetworkSettings.IPAddress, 80, []string{"traefik.enable=true"})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+	defer s.deregisterService("test", nginx2.NetworkSettings.IPAddress)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.consul.localhost"
+
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
 }
 
+func (s *ConsulCatalogSuite) TestExposedByDefaultTrueSimpleServiceMultipleNode(c *check.C) {
+	cmd, _ := s.cmdTraefik(
+		withConfigFile("fixtures/consul_catalog/simple.toml"),
+		"--consulCatalog",
+		"--consulCatalog.exposedByDefault=true",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost")
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	nginx := s.composeProject.Container(c, "nginx")
+	nginx2 := s.composeProject.Container(c, "nginx2")
+
+	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
+
+	err = s.registerService("test", nginx2.NetworkSettings.IPAddress, 80, []string{})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+	defer s.deregisterService("test", nginx2.NetworkSettings.IPAddress)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.consul.localhost"
+
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+}

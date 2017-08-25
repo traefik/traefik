@@ -13,3 +13,5 @@ consul:
     - "8302/udp"
 nginx:
   image: nginx:alpine
+nginx2:
+  image: nginx:alpine
