@@ -5,6 +5,7 @@ package server
 import (
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/containous/traefik/log"
 )
@@ -30,8 +31,19 @@ func (server *Server) listenSignals() {
 				log.Errorf("Error rotating error log: %s", err)
 			}
 		default:
-			log.Infof("I have to go... %+v", sig)
-			log.Info("Stopping server")
+			log.Infof("I have to go... %s", sig.String())
+
+			if server.globalConfiguration.Web != nil {
+				server.globalConfiguration.Web.DisableReadiness()
+			}
+
+			reqAcceptGraceTimeOut := time.Duration(server.globalConfiguration.ReqAcceptGraceTimeOut)
+			if reqAcceptGraceTimeOut > 0 {
+				log.Infof("Waiting %s for incoming requests to cease", reqAcceptGraceTimeOut)
+				time.Sleep(reqAcceptGraceTimeOut)
+			}
+
+			log.Info("Stopping server gracefully")
 			server.Stop()
 		}
 	}

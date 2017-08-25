@@ -9,6 +9,20 @@
 # Global configuration
 ################################################################
 
+# Duration to keep accepting requests prior to initiating the graceful
+# termination period (as defined by the `graceTimeOut` option). This
+# option is meant to give downstream load-balancer sufficient time to
+# take Traefik out of rotation.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+# If no units are provided, the value is parsed assuming seconds.
+# The zero duration disables the request accepting grace period, i.e.,
+# Traefik will immediately proceed to the grace period.
+#
+# Optional
+# Default: 0
+#
+# reqAcceptGraceTimeOut = "10s"
+
 # Duration to give active requests a chance to finish before Traefik stops.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 # If no units are provided, the value is parsed assuming seconds.
@@ -722,6 +736,21 @@ address = ":8080"
 # Optional
 #
 # path = "/mypath"
+#
+# Enable readiness endpoint
+#
+# The readiness endpoint can be registered with downstream loadbalancers to automatically indicate on shutdown
+# that Traefik should be removed from rotation. Advisable to be used in combination with reqAcceptGraceTimeOut
+# to implement a zero downtime LB rotation.
+#
+# If enabled the readiness endpoint will listen on /ready (prefixed by the web root path) and return a 200 OK
+# on GET requests. Once a terminating signal is received the endpoint returns 503 Service Unavailable.
+# If disabled no endpoint will be installed at all.
+#
+# Optional
+# Default: false
+#
+# enableReadiness = true
 #
 # SSL certificate and key used
 #
