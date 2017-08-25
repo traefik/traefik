@@ -18,7 +18,7 @@ type ConsulCatalogSuite struct {
 	consulClient *api.Client
 }
 
-func (s *ConsulCatalogSuite) setupConsulCatalog(c *check.C) {
+func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 
 	s.createComposeProject(c, "consul_catalog")
 	s.composeProject.Start(c)
@@ -80,7 +80,6 @@ func (s *ConsulCatalogSuite) deregisterService(name string, address string) erro
 }
 
 func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
-	s.setupConsulCatalog(c)
 	cmd, _ := s.cmdTraefik(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
@@ -96,7 +95,6 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
-	s.setupConsulCatalog(c)
 	cmd, _ := s.cmdTraefik(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
@@ -121,7 +119,6 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSingleService(c *check.C) {
-	s.setupConsulCatalog(c)
 	cmd, _ := s.cmdTraefik(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
@@ -146,11 +143,5 @@ func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSingleService(c *check.C) 
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *ConsulCatalogSuite) TearDownTest(c *check.C) {
-	// shutdown and delete compose project
-	if s.composeProject != nil {
-		s.composeProject.Stop(c)
-	}
 }
 
-func (s *ConsulCatalogSuite) TearDownSuite(c *check.C) {}
