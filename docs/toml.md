@@ -1481,6 +1481,13 @@ endpoint = "127.0.0.1:8500"
 #
 domain = "consul.localhost"
 
+# Expose Consul catalog services by default in traefik
+#
+# Optional
+# Default: true
+#
+exposedByDefault = false
+
 # Prefix for Consul catalog tags
 #
 # Optional

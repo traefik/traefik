@@ -311,6 +311,7 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain:               "localhost",
 		Prefix:               "traefik",
+		ExposedByDefault:     false,
 		FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
 		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
 	}
@@ -330,7 +331,6 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 				{
 					Service: &serviceUpdate{
 						ServiceName: "test",
-						Attributes:  []string{},
 					},
 				},
 			},
@@ -748,5 +748,108 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 		if !reflect.DeepEqual(fun.Set(removedKeys), fun.Set(c.output.removedKeys)) {
 			t.Fatalf("Removed keys comparison results: got %q, want %q", removedKeys, c.output.removedKeys)
 		}
+	}
+}
+
+func TestConsulCatalogFilterEnabled(t *testing.T) {
+	cases := []struct {
+		desc             string
+		exposedByDefault bool
+		node             *api.ServiceEntry
+		expected         bool
+	}{
+		{
+			desc:             "exposed",
+			exposedByDefault: true,
+			node: &api.ServiceEntry{
+				Service: &api.AgentService{
+					Service: "api",
+					Address: "10.0.0.1",
+					Port:    80,
+					Tags:    []string{""},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc:             "exposed and tolerated by valid label value",
+			exposedByDefault: true,
+			node: &api.ServiceEntry{
+				Service: &api.AgentService{
+					Service: "api",
+					Address: "10.0.0.1",
+					Port:    80,
+					Tags:    []string{"", "traefik.enable=true"},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc:             "exposed and tolerated by invalid label value",
+			exposedByDefault: true,
+			node: &api.ServiceEntry{
+				Service: &api.AgentService{
+					Service: "api",
+					Address: "10.0.0.1",
+					Port:    80,
+					Tags:    []string{"", "traefik.enable=bad"},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc:             "exposed but overridden by label",
+			exposedByDefault: true,
+			node: &api.ServiceEntry{
+				Service: &api.AgentService{
+					Service: "api",
+					Address: "10.0.0.1",
+					Port:    80,
+					Tags:    []string{"", "traefik.enable=false"},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc:             "non-exposed",
+			exposedByDefault: false,
+			node: &api.ServiceEntry{
+				Service: &api.AgentService{
+					Service: "api",
+					Address: "10.0.0.1",
+					Port:    80,
+					Tags:    []string{""},
+				},
+			},
+			expected: false,
+		},
+		{
+			desc:             "non-exposed but overridden by label",
+			exposedByDefault: false,
+			node: &api.ServiceEntry{
+				Service: &api.AgentService{
+					Service: "api",
+					Address: "10.0.0.1",
+					Port:    80,
+					Tags:    []string{"", "traefik.enable=true"},
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run(c.desc, func(t *testing.T) {
+			t.Parallel()
+			provider := &CatalogProvider{
+				Domain:           "localhost",
+				Prefix:           "traefik",
+				ExposedByDefault: c.exposedByDefault,
+			}
+			if provider.nodeFilter("test", c.node) != c.expected {
+				t.Errorf("got unexpected filtering = %t", !c.expected)
+			}
+		})
 	}
 }
