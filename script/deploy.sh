@@ -8,15 +8,15 @@ else
   exit 0
 fi
 
-git config --global user.email "emile@vauge.com"
-git config --global user.name "Emile Vauge"
+git config --global user.email "$TRAEFIKER_EMAIL"
+git config --global user.name "Traefiker"
 
 # load ssh key
 echo "Loading key..."
-openssl aes-256-cbc -d -k "$pass" -in .travis/traefik.id_rsa.enc -out ~/.ssh/traefik.id_rsa
+openssl aes-256-cbc -K $encrypted_f9e835a425bc_key -iv $encrypted_f9e835a425bc_iv -in .travis/traefiker_rsa.enc -out ~/.ssh/traefiker_rsa -d
 eval "$(ssh-agent -s)"
-chmod 600 ~/.ssh/traefik.id_rsa
-ssh-add ~/.ssh/traefik.id_rsa
+chmod 600 ~/.ssh/traefiker_rsa
+ssh-add ~/.ssh/traefiker_rsa
 
 # update traefik-library-image repo (official Docker image)
 echo "Updating traefik-library-imag repo..."
