@@ -156,6 +156,9 @@ func NewLoadBalancerMethod(loadBalancer *LoadBalancer) (LoadBalancerMethod, erro
 	return Wrr, fmt.Errorf("invalid load-balancing method '%s'", method)
 }
 
+// Configurations is for currentConfigurations Map
+type Configurations map[string]*Configuration
+
 // Configuration of a provider.
 type Configuration struct {
 	Backends  map[string]*Backend  `json:"backends,omitempty"`

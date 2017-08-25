@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/mux"
+	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/healthcheck"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
@@ -40,15 +41,15 @@ func (lb *testLoadBalancer) Servers() []*url.URL {
 func TestPrepareServerTimeouts(t *testing.T) {
 	tests := []struct {
 		desc             string
-		globalConfig     GlobalConfiguration
+		globalConfig     configuration.GlobalConfiguration
 		wantIdleTimeout  time.Duration
 		wantReadTimeout  time.Duration
 		wantWriteTimeout time.Duration
 	}{
 		{
 			desc: "full configuration",
-			globalConfig: GlobalConfiguration{
-				RespondingTimeouts: &RespondingTimeouts{
+			globalConfig: configuration.GlobalConfiguration{
+				RespondingTimeouts: &configuration.RespondingTimeouts{
 					IdleTimeout:  flaeg.Duration(10 * time.Second),
 					ReadTimeout:  flaeg.Duration(12 * time.Second),
 					WriteTimeout: flaeg.Duration(14 * time.Second),
@@ -60,14 +61,14 @@ func TestPrepareServerTimeouts(t *testing.T) {
 		},
 		{
 			desc:             "using defaults",
-			globalConfig:     GlobalConfiguration{},
+			globalConfig:     configuration.GlobalConfiguration{},
 			wantIdleTimeout:  time.Duration(180 * time.Second),
 			wantReadTimeout:  time.Duration(0 * time.Second),
 			wantWriteTimeout: time.Duration(0 * time.Second),
 		},
 		{
 			desc: "deprecated IdleTimeout configured",
-			globalConfig: GlobalConfiguration{
+			globalConfig: configuration.GlobalConfiguration{
 				IdleTimeout: flaeg.Duration(45 * time.Second),
 			},
 			wantIdleTimeout:  time.Duration(45 * time.Second),
@@ -76,9 +77,9 @@ func TestPrepareServerTimeouts(t *testing.T) {
 		},
 		{
 			desc: "deprecated and new IdleTimeout configured",
-			globalConfig: GlobalConfiguration{
+			globalConfig: configuration.GlobalConfiguration{
 				IdleTimeout: flaeg.Duration(45 * time.Second),
-				RespondingTimeouts: &RespondingTimeouts{
+				RespondingTimeouts: &configuration.RespondingTimeouts{
 					IdleTimeout: flaeg.Duration(80 * time.Second),
 				},
 			},
@@ -95,7 +96,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			t.Parallel()
 
 			entryPointName := "http"
-			entryPoint := &EntryPoint{Address: "localhost:8080"}
+			entryPoint := &configuration.EntryPoint{Address: "localhost:8080"}
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
 			srv := NewServer(test.globalConfig)
@@ -207,14 +208,14 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 	for _, lbMethod := range []string{"Wrr", "Drr"} {
 		for _, healthCheck := range healthChecks {
 			t.Run(fmt.Sprintf("%s/hc=%t", lbMethod, healthCheck != nil), func(t *testing.T) {
-				globalConfig := GlobalConfiguration{
-					EntryPoints: EntryPoints{
-						"http": &EntryPoint{},
+				globalConfig := configuration.GlobalConfiguration{
+					EntryPoints: configuration.EntryPoints{
+						"http": &configuration.EntryPoint{},
 					},
-					HealthCheck: &HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
+					HealthCheck: &configuration.HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
 				}
 
-				dynamicConfigs := configs{
+				dynamicConfigs := types.Configurations{
 					"config": &types.Configuration{
 						Frontends: map[string]*types.Frontend{
 							"frontend": {
@@ -320,7 +321,7 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			gotOpts := parseHealthCheckOptions(lb, "backend", test.hc, &HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
+			gotOpts := parseHealthCheckOptions(lb, "backend", test.hc, &configuration.HealthCheckConfig{Interval: flaeg.Duration(globalInterval)})
 			if !reflect.DeepEqual(gotOpts, test.wantOpts) {
 				t.Errorf("got health check options %+v, want %+v", gotOpts, test.wantOpts)
 			}
@@ -380,13 +381,13 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 }
 
 func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
-	globalConfig := GlobalConfiguration{
-		EntryPoints: EntryPoints{
-			"http": &EntryPoint{},
+	globalConfig := configuration.GlobalConfiguration{
+		EntryPoints: configuration.EntryPoints{
+			"http": &configuration.EntryPoint{},
 		},
 	}
 
-	dynamicConfigs := configs{
+	dynamicConfigs := types.Configurations{
 		"config": &types.Configuration{
 			Frontends: map[string]*types.Frontend{
 				"frontend": {
@@ -497,14 +498,14 @@ func TestConfigureBackends(t *testing.T) {
 func TestRegisterRetryMiddleware(t *testing.T) {
 	testCases := []struct {
 		name            string
-		globalConfig    GlobalConfiguration
+		globalConfig    configuration.GlobalConfiguration
 		countServers    int
 		expectedRetries int
 	}{
 		{
 			name: "configured retry attempts",
-			globalConfig: GlobalConfiguration{
-				Retry: &Retry{
+			globalConfig: configuration.GlobalConfiguration{
+				Retry: &configuration.Retry{
 					Attempts: 3,
 				},
 			},
@@ -512,8 +513,8 @@ func TestRegisterRetryMiddleware(t *testing.T) {
 		},
 		{
 			name: "retry attempts defaults to server amount",
-			globalConfig: GlobalConfiguration{
-				Retry: &Retry{},
+			globalConfig: configuration.GlobalConfiguration{
+				Retry: &configuration.Retry{},
 			},
 			expectedRetries: 2,
 		},
@@ -565,19 +566,19 @@ func (okHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func TestServerEntrypointWhitelistConfig(t *testing.T) {
 	tests := []struct {
 		desc           string
-		entrypoint     *EntryPoint
+		entrypoint     *configuration.EntryPoint
 		wantMiddleware bool
 	}{
 		{
 			desc: "no whitelist middleware if no config on entrypoint",
-			entrypoint: &EntryPoint{
+			entrypoint: &configuration.EntryPoint{
 				Address: ":8080",
 			},
 			wantMiddleware: false,
 		},
 		{
 			desc: "whitelist middleware should be added if configured on entrypoint",
-			entrypoint: &EntryPoint{
+			entrypoint: &configuration.EntryPoint{
 				Address: ":8080",
 				WhitelistSourceRange: []string{
 					"127.0.0.1/32",
@@ -593,8 +594,8 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 			t.Parallel()
 
 			srv := Server{
-				globalConfiguration: GlobalConfiguration{
-					EntryPoints: map[string]*EntryPoint{
+				globalConfiguration: configuration.GlobalConfiguration{
+					EntryPoints: map[string]*configuration.EntryPoint{
 						"test": test.entrypoint,
 					},
 				},
@@ -701,12 +702,12 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			}))
 			defer testServer.Close()
 
-			globalConfig := GlobalConfiguration{
-				EntryPoints: EntryPoints{
-					"http": &EntryPoint{},
+			globalConfig := configuration.GlobalConfiguration{
+				EntryPoints: configuration.EntryPoints{
+					"http": &configuration.EntryPoint{},
 				},
 			}
-			dynamicConfigs := configs{"config": test.dynamicConfig(testServer.URL)}
+			dynamicConfigs := types.Configurations{"config": test.dynamicConfig(testServer.URL)}
 
 			srv := NewServer(globalConfig)
 			entryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig)
