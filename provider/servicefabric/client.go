@@ -64,6 +64,7 @@ func NewClient(endpoint, apiVersion, clientCertFilePath, clientCertKeyFilePath, 
 			Certificates:       []tls.Certificate{cert},
 			RootCAs:            caCertPool,
 			InsecureSkipVerify: true,
+			Renegotiation:      tls.RenegotiateFreelyAsClient,
 		}
 		tlsConfig.BuildNameToCertificate()
 		transport := &http.Transport{TLSClientConfig: tlsConfig}
