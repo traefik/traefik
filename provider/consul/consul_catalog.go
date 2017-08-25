@@ -389,8 +389,6 @@ func (p *CatalogProvider) buildConfig(catalog []catalogUpdate) *types.Configurat
 		if len(info.Nodes) > 0 {
 			services = append(services, info.Service)
 			allNodes = append(allNodes, info.Nodes...)
-			break
-
 		}
 	}
 	// Ensure a stable ordering of nodes so that identical configurations may be detected
