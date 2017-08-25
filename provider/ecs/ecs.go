@@ -180,8 +180,10 @@ func wrapAws(ctx context.Context, req *request.Request) error {
 
 func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
 	var ecsFuncMap = template.FuncMap{
-		"filterFrontends": p.filterFrontends,
-		"getFrontendRule": p.getFrontendRule,
+		"filterFrontends":       p.filterFrontends,
+		"getFrontendRule":       p.getFrontendRule,
+		"getLoadBalancerSticky": p.getLoadBalancerSticky,
+		"getLoadBalancerMethod": p.getLoadBalancerMethod,
 	}
 
 	instances, err := p.listInstances(ctx, client)
@@ -191,10 +193,20 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 
 	instances = fun.Filter(p.filterInstance, instances).([]ecsInstance)
 
+	services := make(map[string][]ecsInstance)
+
+	for _, instance := range instances {
+		if serviceInstances, ok := services[instance.Name]; ok {
+			services[instance.Name] = append(serviceInstances, instance)
+		} else {
+			services[instance.Name] = []ecsInstance{instance}
+		}
+	}
+
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
-		Instances []ecsInstance
+		Services map[string][]ecsInstance
 	}{
-		instances,
+		services,
 	})
 }
 
@@ -455,6 +467,26 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain
+}
+
+func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
+	if len(instances) > 0 {
+		label := instances[0].label(types.LabelBackendLoadbalancerSticky)
+		if label != "" {
+			return label
+		}
+	}
+	return "false"
+}
+
+func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {
+	if len(instances) > 0 {
+		label := instances[0].label(types.LabelBackendLoadbalancerMethod)
+		if label != "" {
+			return label
+		}
+	}
+	return "wrr"
 }
 
 // Provider expects no more than 100 parameters be passed to a DescribeTask call; thus, pack
