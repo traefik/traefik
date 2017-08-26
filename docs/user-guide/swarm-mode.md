@@ -73,11 +73,9 @@ docker-machine ssh manager "docker network create --driver=overlay traefik-net"
 
 ## Deploy Træfik
 
-Let's deploy Træfik as a docker service in our cluster. The only
-requirement for Træfik to work with swarm mode is that it needs to run
-on a manager node — we are going to use a
-[constraint](https://docs.docker.com/engine/reference/commandline/service_create/#/specify-service-constraints-constraint) for
-that.
+Let's deploy Træfik as a docker service in our cluster.
+The only requirement for Træfik to work with swarm mode is that it needs to run on a manager node — we are going to use a
+[constraint](https://docs.docker.com/engine/reference/commandline/service_create/#/specify-service-constraints-constraint) for that.
 
 ```shell
 docker-machine ssh manager "docker service create \
@@ -96,24 +94,17 @@ docker-machine ssh manager "docker service create \
 
 Let's explain this command:
 
-- `--publish 80:80 --publish 8080:8080`: we publish port `80` and
-  `8080` on the cluster.
-- `--constraint=node.role==manager`: we ask docker to schedule Træfik
-  on a manager node.
+- `--publish 80:80 --publish 8080:8080`: we publish port `80` and `8080` on the cluster.
+- `--constraint=node.role==manager`: we ask docker to schedule Træfik on a manager node.
 - `--mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock`:
-  we bind mount the docker socket where Træfik is scheduled to be able
-  to speak to the daemon.
-- `--network traefik-net`: we attach the Træfik service (and thus
-  the underlying container) to the `traefik-net` network.
-- `--docker`: enable docker backend, and `--docker.swarmmode` to
-  enable the swarm mode on Træfik.
+  we bind mount the docker socket where Træfik is scheduled to be able to speak to the daemon.
+- `--network traefik-net`: we attach the Træfik service (and thus the underlying container) to the `traefik-net` network.
+- `--docker`: enable docker backend, and `--docker.swarmmode` to enable the swarm mode on Træfik.
 - `--web`: activate the webUI on port 8080
 
 ## Deploy your apps
 
-We can now deploy our app on the cluster,
-here [whoami](https://github.com/emilevauge/whoami), a simple web
-server in Go. We start 2 services, on the `traefik-net` network.
+We can now deploy our app on the cluster, here [whoami](https://github.com/emilevauge/whoami), a simple web server in Go. We start 2 services, on the `traefik-net` network.
 
 ```shell
 docker-machine ssh manager "docker service create \
@@ -184,8 +175,7 @@ X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
 ```
 
-Note that as Træfik is published, you can access it from any machine
-and not only the manager.
+Note that as Træfik is published, you can access it from any machine and not only the manager.
 
 ```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip worker1)
@@ -245,7 +235,8 @@ dtpl249tfghc  traefik  1/1       traefik            --docker --docker.swarmmode 
 ```
 ## Access to your whoami0 through Træfik multiple times.
 
-Repeat the following command multiple times and note that the Hostname changes each time as Traefik load balances each request against the 5 tasks.
+Repeat the following command multiple times and note that the Hostname changes each time as Traefik load balances each request against the 5 tasks:
+
 ```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip manager)
 Hostname: 8147a7746e7a
@@ -266,7 +257,8 @@ X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
 ```
 
-Do the same against whoami1.  
+Do the same against whoami1:
+
 ```shell
 curl -H Host:whoami1.traefik http://$(docker-machine ip manager)
 Hostname: ba2c21488299
@@ -289,6 +281,7 @@ X-Forwarded-Server: 8fbc39271b4c
 Wait, I thought we added the sticky flag to whoami1?  Traefik relies on a cookie to maintain stickyness so you'll need to test this with a browser.
 
 First you need to add whoami1.traefik to your hosts file:
+
 ```ssh
 if [ -n "$(grep whoami1.traefik /etc/hosts)" ];  
 then 

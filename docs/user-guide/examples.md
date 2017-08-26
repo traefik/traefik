@@ -1,4 +1,3 @@
-
 # Examples
 
 You will find here some configuration examples of Træfik.

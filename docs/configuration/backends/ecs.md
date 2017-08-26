@@ -1,7 +1,6 @@
-# ECS backend
+# ECS Backend
 
 Træfik can be configured to use Amazon ECS as a backend configuration:
-
 
 ```toml
 ################################################################
@@ -9,14 +8,11 @@ Træfik can be configured to use Amazon ECS as a backend configuration:
 ################################################################
 
 # Enable ECS configuration backend
-#
-# Optional
-#
 [ecs]
 
 # ECS Cluster Name
 #
-# Deprecated - Please use Clusters
+# DEPRECATED - Please use Clusters
 #
 Cluster = "default"
 
@@ -73,19 +69,26 @@ AccessKeyID = "abc"
 #
 SecretAccessKey = "123"
 
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "ecs.tmpl"
 ```
 
 Labels can be used on task containers to override default behaviour:
 
-- `traefik.protocol=https`: override the default `http` protocol
-- `traefik.weight=10`: assign this weight to the container
-- `traefik.enable=false`: disable this container in Træfik
-- `traefik.backend.loadbalancer.method=drr`: override the default `wrr` load balancer algorithm
-- `traefik.backend.loadbalancer.sticky=true`: enable backend sticky sessions
-- `traefik.frontend.rule=Host:test.traefik.io`: override the default frontend rule (Default: `Host:{containerName}.{domain}`).
-- `traefik.frontend.passHostHeader=true`: forward client `Host` header to the backend.
-- `traefik.frontend.priority=10`: override default frontend priority
-- `traefik.frontend.entryPoints=http,https`: assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.
+| Label                                        | Description                                                                              |
+|----------------------------------------------|------------------------------------------------------------------------------------------|
+| `traefik.protocol=https`                     | override the default `http` protocol                                                     |
+| `traefik.weight=10`                          | assign this weight to the container                                                      |
+| `traefik.enable=false`                       | disable this container in Træfik                                                         |
+| `traefik.backend.loadbalancer.method=drr`    | override the default `wrr` load balancer algorithm                                       |
+| `traefik.backend.loadbalancer.sticky=true`   | enable backend sticky sessions                                                           |
+| `traefik.frontend.rule=Host:test.traefik.io` | override the default frontend rule (Default: `Host:{containerName}.{domain}`).           |
+| `traefik.frontend.passHostHeader=true`       | forward client `Host` header to the backend.                                             |
+| `traefik.frontend.priority=10`               | override default frontend priority                                                       |
+| `traefik.frontend.entryPoints=http,https`    | assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`. |
 
 If `AccessKeyID`/`SecretAccessKey` is not given credentials will be resolved in the following order:
 

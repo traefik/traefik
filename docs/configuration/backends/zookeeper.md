@@ -1,4 +1,4 @@
-# Zookeeper backend
+# Zookeeper Backend
 
 Træfik can be configured to use Zookeeper as a backend configuration:
 
@@ -8,9 +8,6 @@ Træfik can be configured to use Zookeeper as a backend configuration:
 ################################################################
 
 # Enable Zookeeperconfiguration backend
-#
-# Optional
-#
 [zookeeper]
 
 # Zookeeper server endpoint

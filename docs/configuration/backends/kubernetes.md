@@ -1,5 +1,4 @@
-# Kubernetes Ingress backend
-
+# Kubernetes Ingress Backend
 
 Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 
@@ -8,9 +7,6 @@ Træfik can be configured to use Kubernetes Ingress as a backend configuration:
 # Kubernetes Ingress configuration backend
 ################################################################
 # Enable Kubernetes Ingress configuration backend
-#
-# Optional
-#
 [kubernetes]
 
 # Kubernetes server endpoint

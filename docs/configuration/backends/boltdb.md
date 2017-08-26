@@ -1,4 +1,4 @@
-# BoltDB backend
+# BoltDB Backend
 
 Træfik can be configured to use BoltDB as a backend configuration:
 
@@ -8,9 +8,6 @@ Træfik can be configured to use BoltDB as a backend configuration:
 ################################################################
 
 # Enable BoltDB configuration backend
-#
-# Optional
-#
 [boltdb]
 
 # BoltDB file
@@ -35,5 +32,5 @@ prefix = "/traefik"
 #
 # Optional
 #
-# filename = "boltdb.tmpl"
+filename = "boltdb.tmpl"
 ```

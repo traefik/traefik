@@ -359,7 +359,7 @@ func (p *CatalogProvider) getConstraintTags(tags []string) []string {
 	var list []string
 
 	for _, tag := range tags {
-		// If 'AllTagsConstraintFiltering' is disabled, we look for a Consul tag named 'traefik.tags' (unless different 'prefix' is configured)
+		// We look for a Consul tag named 'traefik.tags' (unless different 'prefix' is configured)
 		if strings.Index(strings.ToLower(tag), p.getPrefixedName("tags=")) == 0 {
 			// If 'traefik.tags=' tag is found, take the tag value and split by ',' adding the result to the list to be returned
 			splitedTags := strings.Split(tag[len(p.getPrefixedName("tags=")):], ",")

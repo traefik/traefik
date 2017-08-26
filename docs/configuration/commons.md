@@ -1,10 +1,8 @@
+# Global Configuration
 
-# Global configuration
-
-## Main section
+## Main Section
 
 ```toml
-# traefik.toml
 ################################################################
 # Global configuration
 ################################################################
@@ -42,7 +40,7 @@
 
 # Access logs file
 #
-# Deprecated - see [accessLog] lower down
+# DEPRECATED - see [accessLog] lower down
 # Optional
 #
 # accessLogsFile = "log/access.log"
@@ -70,7 +68,7 @@
 
 # IdleTimeout
 # 
-# Deprecated - see [respondingTimeouts] section. In the case both settings are configured, the deprecated option will
+# DEPRECATED - see [respondingTimeouts] section. In the case both settings are configured, the deprecated option will
 # be overwritten.
 #
 # IdleTimeout is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
@@ -145,28 +143,29 @@ Supported filters:
 #
 # Simple matching constraint
 # constraints = ["tag==api"]
-#
+
 # Simple mismatching constraint
 # constraints = ["tag!=api"]
-#
+
 # Globbing
 # constraints = ["tag==us-*"]
-#
-# Backend-specific constraint
-# [consulCatalog]
-#   endpoint = 127.0.0.1:8500
-#   constraints = ["tag==api"]
-#
+
 # Multiple constraints
 #   - "tag==" must match with at least one tag
 #   - "tag!=" must match with none of tags
 # constraints = ["tag!=us-*", "tag!=asia-*"]
+
+# Backend-specific constraint
+# [consulCatalog]
+#   endpoint = 127.0.0.1:8500
+#   constraints = ["tag==api"]
+
 # [consulCatalog]
 #   endpoint = 127.0.0.1:8500
 #   constraints = ["tag==api", "tag!=v*-beta"]
 ```
 
-## Access log definition
+## Access Log Definition
 
 Access logs are written when `[accessLog]` is defined. 
 By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
@@ -189,41 +188,57 @@ To write JSON format logs, specify `json` as the format:
   format     = "json"
 ```
 
-## Entrypoints definition
+## Entry Points Definition
 
 ```toml
 # Entrypoints definition
 #
-# Optional
 # Default:
 # [entryPoints]
 #   [entryPoints.http]
 #   address = ":80"
 #
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+```
+
+### Redirect HTTP to HTTPS
+
+```toml
 # To redirect an http entrypoint to an https entrypoint (with SNI support):
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#     [entryPoints.http.redirect]
-#       entryPoint = "https"
-#   [entryPoints.https]
-#   address = ":443"
-#     [entryPoints.https.tls]
-#       [[entryPoints.https.tls.certificates]]
-#       CertFile = "integration/fixtures/https/snitest.com.cert"
-#       KeyFile = "integration/fixtures/https/snitest.com.key"
-#       [[entryPoints.https.tls.certificates]]
-#       CertFile = "integration/fixtures/https/snitest.org.cert"
-#       KeyFile = "integration/fixtures/https/snitest.org.key"
 #
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+      entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.com.cert"
+      KeyFile = "integration/fixtures/https/snitest.com.key"
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.org.cert"
+      KeyFile = "integration/fixtures/https/snitest.org.key"
+```
+
+### Rewriting URL
+
+```toml
 # To redirect an entrypoint rewriting the URL:
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#     [entryPoints.http.redirect]
-#       regex = "^http://localhost/(.*)"
-#       replacement = "http://mydomain/$1"
-#
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+      regex = "^http://localhost/(.*)"
+      replacement = "http://mydomain/$1"
+```
+
+### TLS Mutual Authentication
+
+```toml
 # Only accept clients that present a certificate signed by a specified
 # Certificate Authority (CA)
 # ClientCAFiles can be configured with multiple CA:s in the same file or
@@ -232,78 +247,101 @@ To write JSON format logs, specify `json` as the format:
 # The requirement will apply to all server certs in the entrypoint
 # In the example below both snitest.com and snitest.org will require client certs
 #
-# [entryPoints]
-#   [entryPoints.https]
-#   address = ":443"
-#   [entryPoints.https.tls]
-#   ClientCAFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
-#     [[entryPoints.https.tls.certificates]]
-#     CertFile = "integration/fixtures/https/snitest.com.cert"
-#     KeyFile = "integration/fixtures/https/snitest.com.key"
-#     [[entryPoints.https.tls.certificates]]
-#     CertFile = "integration/fixtures/https/snitest.org.cert"
-#     KeyFile = "integration/fixtures/https/snitest.org.key"
-#
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+  [entryPoints.https.tls]
+  ClientCAFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
+    [[entryPoints.https.tls.certificates]]
+    CertFile = "integration/fixtures/https/snitest.com.cert"
+    KeyFile = "integration/fixtures/https/snitest.com.key"
+    [[entryPoints.https.tls.certificates]]
+    CertFile = "integration/fixtures/https/snitest.org.cert"
+    KeyFile = "integration/fixtures/https/snitest.org.key"
+```
+
+### Basic & Digest Authentication
+
+```toml
 # To enable basic auth on an entrypoint
+#
 # with 2 user/pass: test:test and test2:test2
-# Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate those ones
-# Users can be specified directly in the toml file, or indirectly by referencing an external file; if both are provided, the two are merged, with external file contents having precedence
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#   [entryPoints.http.auth.basic]
-#   users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-#   usersFile = "/path/to/.htpasswd"
-#
-# To enable digest auth on an entrypoint
-# with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
-# You can use htdigest to generate those ones
-# Users can be specified directly in the toml file, or indirectly by referencing an external file; if both are provided, the two are merged, with external file contents having precedence
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#   [entryPoints.http.auth.basic]
-#   users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
-#   usersFile = "/path/to/.htdigest"
-#
-# To specify an https entrypoint with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls):
-# [entryPoints]
-#   [entryPoints.https]
-#   address = ":443"
-#     [entryPoints.https.tls]
-#     MinVersion = "VersionTLS12"
-#     CipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
-#       [[entryPoints.https.tls.certificates]]
-#       CertFile = "integration/fixtures/https/snitest.com.cert"
-#       KeyFile = "integration/fixtures/https/snitest.com.key"
-#       [[entryPoints.https.tls.certificates]]
-#       CertFile = "integration/fixtures/https/snitest.org.cert"
-#       KeyFile = "integration/fixtures/https/snitest.org.key"
-
-# To enable compression support using gzip format:
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#   compress = true
-
-# To enable IP whitelisting at the entrypoint level:
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#   whiteListSourceRange = ["127.0.0.1/32"]
-
-# To enable ProxyProtocol support (https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt):
-# [entryPoints]
-#   [entryPoints.http]
-#   address = ":80"
-#   proxyprotocol = true
-
+# Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate those ones.
+# Users can be specified directly in the toml file, or indirectly by referencing an external file;
+# if both are provided, the two are merged, with external file contents having precedence.
 [entryPoints]
   [entryPoints.http]
   address = ":80"
+  [entryPoints.http.auth.basic]
+  users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+  usersFile = "/path/to/.htpasswd"
 ```
 
-## Retry configuration
+```toml
+# To enable digest auth on an entrypoint
+#
+# with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
+# You can use htdigest to generate those ones
+# Users can be specified directly in the toml file, or indirectly by referencing an external file;
+# if both are provided, the two are merged, with external file contents having precedence
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth.basic]
+  users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+  usersFile = "/path/to/.htdigest"
+```
+
+### Specify Minimum TLS Version
+
+```toml
+# To specify an https entrypoint with a minimum TLS version, 
+# and specifying an array of cipher suites (from crypto/tls):
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+    MinVersion = "VersionTLS12"
+    CipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.com.cert"
+      KeyFile = "integration/fixtures/https/snitest.com.key"
+      [[entryPoints.https.tls.certificates]]
+      CertFile = "integration/fixtures/https/snitest.org.cert"
+      KeyFile = "integration/fixtures/https/snitest.org.key"
+```
+
+### Compression
+
+```toml
+# To enable compression support using gzip format:
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  compress = true
+```
+
+### Whitelisting
+
+```toml
+# To enable IP whitelisting at the entrypoint level:
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  whiteListSourceRange = ["127.0.0.1/32"]
+```
+
+### ProxyProtocol Support
+
+```toml
+# To enable ProxyProtocol support (https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt):
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  proxyprotocol = true
+```
+
+## Retry Configuration
 
 ```toml
 # Enable retry sending request if network error
@@ -320,7 +358,8 @@ To write JSON format logs, specify `json` as the format:
 # attempts = 3
 ```
 
-## Health check configuration
+## Health Check Configuration
+
 ```toml
 # Enable custom health check options.
 #
@@ -341,8 +380,9 @@ To write JSON format logs, specify `json` as the format:
 # interval = "30s"
 ```
 
-## Responding timeouts
-```
+## Responding Timeouts
+
+```toml
 # respondingTimeouts are timeouts for incoming requests to the Traefik instance.
 #
 # Optional
@@ -382,8 +422,9 @@ To write JSON format logs, specify `json` as the format:
 
 ```
 
-## Forwarding timeouts
-```
+## Forwarding Timeouts
+
+```toml
 # forwardingTimeouts are timeouts for requests forwarded to the backend servers.
 #
 # Optional

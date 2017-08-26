@@ -354,7 +354,7 @@ type Prometheus struct {
 
 // Datadog contains address and metrics pushing interval configuration
 type Datadog struct {
-	Address      string `description:"DataDog's Dogstatsd address"`
+	Address      string `description:"DataDog's address"`
 	PushInterval string `description:"DataDog push interval"`
 }
 

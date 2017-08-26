@@ -1,7 +1,6 @@
-# Eureka backend
+# Eureka Backend
 
 Træfik can be configured to use Eureka as a backend configuration:
-
 
 ```toml
 ################################################################
@@ -9,9 +8,6 @@ Træfik can be configured to use Eureka as a backend configuration:
 ################################################################
 
 # Enable Eureka configuration backend
-#
-# Optional
-#
 [eureka]
 
 # Eureka server endpoint.

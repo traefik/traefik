@@ -1,4 +1,3 @@
-
 # Key-value store configuration
 
 Both [static global configuration](/user-guide/kv-config/#static-configuration-in-key-value-store) and [dynamic](/user-guide/kv-config/#dynamic-configuration-in-key-value-store) configuration can be sorted in a Key-value store.
@@ -12,7 +11,7 @@ Træfik supports several Key-value stores:
 - [ZooKeeper](https://zookeeper.apache.org/)
 - [boltdb](https://github.com/boltdb/bolt)
 
-# Static configuration in Key-value store
+## Static configuration in Key-value store
 
 We will see the steps to set it up with an easy example.
 Note that we could do the same with any other Key-value Store.

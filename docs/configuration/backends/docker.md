@@ -1,6 +1,8 @@
-# Docker backend
+# Docker Backend
 
-Træfik can be configured to use Docker as a backend configuration:
+Træfik can be configured to use Docker as a backend configuration.
+
+## Docker
 
 ```toml
 ################################################################
@@ -8,9 +10,6 @@ Træfik can be configured to use Docker as a backend configuration:
 ################################################################
 
 # Enable Docker configuration backend
-#
-# Optional
-#
 [docker]
 
 # Docker server endpoint. Can be a tcp or a unix socket endpoint.
@@ -47,12 +46,12 @@ watch = true
 exposedbydefault = true
 
 # Use the IP address from the binded port instead of the inner network one. For specific use-case :)
-
 #
 # Optional
 # Default: false
 #
 usebindportip = true
+
 # Use Swarm Mode services as data provider
 #
 # Optional
@@ -60,8 +59,9 @@ usebindportip = true
 #
 swarmmode = false
 
-
 # Enable docker TLS connection
+#
+# Optional
 #
 #  [docker.tls]
 #  ca = "/etc/ssl/ca.crt"
@@ -70,7 +70,65 @@ swarmmode = false
 #  insecureskipverify = true
 ```
 
-### Labels can be used on containers to override default behaviour
+## Docker Swarm Mode
+
+```toml
+################################################################
+# Docker Swarmmode configuration backend
+################################################################
+
+# Enable Docker configuration backend
+[docker]
+
+# Docker server endpoint. Can be a tcp or a unix socket endpoint.
+#
+# Required
+# Default: "unix:///var/run/docker.sock"
+#
+endpoint = "tcp://127.0.0.1:2375"
+
+# Default domain used.
+# Can be overridden by setting the "traefik.domain" label on a services.
+#
+# Optional
+# Default: ""
+#
+domain = "docker.localhost"
+
+# Enable watch docker changes
+#
+# Optional
+#
+watch = true
+
+# Use Docker Swarm Mode as data provider
+swarmmode = true
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "docker.tmpl"
+
+# Expose services by default in traefik
+#
+# Optional
+# Default: true
+#
+exposedbydefault = false
+
+# Enable docker TLS connection
+#
+# Optional
+#
+#  [swarm.tls]
+#  ca = "/etc/ssl/ca.crt"
+#  cert = "/etc/ssl/docker.crt"
+#  key = "/etc/ssl/docker.key"
+#  insecureskipverify = true
+```
+
+## Labels can be used on containers to override default behaviour
 
 | Label                                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                   |
 |---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

@@ -2,7 +2,7 @@
 <img src="img/traefik.logo.png" alt="Træfik" title="Træfik" />
 </p>
 
-[![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/add-ldez-maintainers/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
+[![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
 [![Go Report Card](https://goreportcard.com/badge/kubernetes/helm)](http://goreportcard.com/report/containous/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
