@@ -1,4 +1,4 @@
-# Etcd backend
+# Etcd Backend
 
 Træfik can be configured to use Etcd as a backend configuration:
 
@@ -8,9 +8,6 @@ Træfik can be configured to use Etcd as a backend configuration:
 ################################################################
 
 # Enable Etcd configuration backend
-#
-# Optional
-#
 [etcd]
 
 # Etcd server endpoint

@@ -1,7 +1,6 @@
-# Mesos generic backend
+# Mesos Generic Backend
 
 Træfik can be configured to use Mesos as a backend configuration:
-
 
 ```toml
 ################################################################
@@ -9,9 +8,6 @@ Træfik can be configured to use Mesos as a backend configuration:
 ################################################################
 
 # Enable Mesos configuration backend
-#
-# Optional
-#
 [mesos]
 
 # Mesos server endpoint.

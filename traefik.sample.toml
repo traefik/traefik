@@ -36,7 +36,7 @@
 # Access logs file
 #
 # Optional
-# Deprecated - see [accessLog] lower down
+# DEPRECATED - see [accessLog] lower down
 #
 # accessLogsFile = "log/access.log"
 
@@ -433,6 +433,7 @@
 #
 # responseHeaderTimeout = "0s"
 
+
 ################################################################
 # Web configuration backend
 ################################################################
@@ -455,20 +456,30 @@
 #
 # CertFile = "traefik.crt"
 # KeyFile = "traefik.key"
-#
+
 # Set REST API to read-only mode
 #
 # Optional
 # ReadOnly = false
-#
+
 # Enable more detailed statistics
 # [web.statistics]
 #   RecentErrors = 10
-#
+
 # To enable Traefik to export internal metrics to Prometheus
 # [web.metrics.prometheus]
 #   Buckets=[0.1,0.3,1.2,5.0]
 #
+
+# DataDog metrics exporter type
+# [web.metrics.datadog]
+#   Address = "localhost:8125"
+#   Pushinterval = "10s"
+
+# StatsD metrics exporter type
+# [web.metrics.statsd]
+#   Address = "localhost:8125"
+#   Pushinterval = "10s"
 
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
@@ -510,7 +521,6 @@
 # Optional
 #
 # directory = "/path/to/config/"
-
 
 # Enable watch file changes
 #
@@ -570,7 +580,6 @@
 #  cert = "/etc/ssl/docker.crt"
 #  key = "/etc/ssl/docker.key"
 #  insecureskipverify = true
-
 
 
 ################################################################
@@ -693,16 +702,12 @@
 #
 # groupsAsSubDomains = true
 
-# Override DialerTimeout
-# Amount of time to allow the Marathon provider to wait to open a TCP connection
-# to a Marathon master.
-# Can be provided in a format supported by Go's time.ParseDuration function or
-# as raw values (digits). If no units are provided, the value is parsed assuming
-# seconds.
+# Enable compatibility with marathon-lb labels
 #
 # Optional
-# Default: "60s"
-# dialerTimeout = "60s"
+# Default: false
+#
+# marathonLBCompatibility = true
 
 # Enable Marathon basic authentication
 #
@@ -712,16 +717,36 @@
 #  httpBasicAuthUser = "foo"
 #  httpBasicPassword = "bar"
 
+# TLS client configuration. https://golang.org/pkg/crypto/tls/#Config
+#
+# Optional
+#
+# [marathon.TLS]
+# CA = "/etc/ssl/ca.crt"
+# Cert = "/etc/ssl/marathon.cert"
+# Key = "/etc/ssl/marathon.key"
+# InsecureSkipVerify = true
+
 # DCOSToken for DCOS environment, This will override the Authorization header
 #
 # Optional
 #
 # dcosToken = "xxxxxx"
 
+# Override DialerTimeout
+# Amount of time to allow the Marathon provider to wait to open a TCP connection
+# to a Marathon master.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
+# seconds.
+#
+# Optional
+# Default: "60s"
+# dialerTimeout = "60s"
 
 # Set the TCP Keep Alive interval for the Marathon HTTP Client.
-# Can be provided in a format supported by Go's time.ParseDuration function or
-# as raw values (digits). If no units are provided, the value is parsed assuming
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
+# values (digits). If no units are provided, the value is parsed assuming
 # seconds.
 #
 # Optional
@@ -750,6 +775,7 @@
 # Default: false
 #
 # respectReadinessChecks = false
+
 
 ################################################################
 # Mesos configuration backend
@@ -830,6 +856,7 @@
 #
 # StateTimeoutSecond = "30"
 
+
 ################################################################
 # Kubernetes Ingress configuration backend
 ################################################################
@@ -881,8 +908,14 @@
 #
 # namespaces = ["default"]
 
-# See: http://kubernetes.io/docs/user-guide/labels/#list-and-watch-filtering
+# Ingress label selector to identify Ingress objects that should be processed.
+# See https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors for details.
+#
+# Optional
+# Default: empty (process all Ingresses)
+#
 # labelselector = "A and not B"
+
 
 ################################################################
 # Consul KV configuration backend
@@ -928,6 +961,7 @@
 # key = "/etc/ssl/consul.key"
 # insecureskipverify = true
 
+
 ################################################################
 # Consul Catalog configuration backend
 ################################################################
@@ -963,19 +997,15 @@
 # prefix = "traefik"
 
 # Default frontEnd Rule for Consul services
-#  - The format is a Go Template with ".ServiceName", ".Domain" and ".Attributes" available
-#  -- "getTag(name, tags, defaultValue)", "hasTag(name, tags)" and "getAttribute(name, tags, defaultValue)" functions are available
-#  --- "getAttribute(...)" function uses prefixed tag names based on "prefix" value
+#
+# The format is a Go Template with:
+# - ".ServiceName", ".Domain" and ".Attributes" available
+# - "getTag(name, tags, defaultValue)", "hasTag(name, tags)" and "getAttribute(name, tags, defaultValue)" functions are available
+# - "getAttribute(...)" function uses prefixed tag names based on "prefix" value
 #
 # Optional
 #
 #frontEndRule = "Host:{{.ServiceName}}.{{Domain}}"
-
-# Should use all Consul catalog tags for constraint filtering
-#
-# Optional
-#
-#allTagsConstraintFiltering = false
 
 # Constraints
 #
@@ -983,6 +1013,7 @@
 #
 # constraints = ["tag==api", "tag==he*ld"]
 # Matching with containers having this tag: "traefik.tags=api,helloworld"
+
 
 ################################################################
 # Etcd configuration backend
@@ -1034,6 +1065,37 @@
 # cert = "/etc/ssl/etcd.crt"
 # key = "/etc/ssl/etcd.key"
 # insecureskipverify = true
+
+
+################################################################
+# Eureka configuration backend
+################################################################
+
+# Enable Eureka configuration backend
+#
+# Optional
+#
+# [eureka]
+
+# Eureka server endpoint.
+# endpoint := "http://my.eureka.server/eureka"
+#
+# Required
+#
+# endpoint = "http://my.eureka.server/eureka"
+
+# Override default configuration time between refresh
+#
+# Optional
+# default 30s
+# delay = "1m"
+
+# Override default configuration template. For advanced users :)
+#
+# Optional
+#
+# filename = "eureka.tmpl"
+
 
 ################################################################
 # Zookeeper configuration backend
@@ -1117,7 +1179,7 @@
 
 # ECS Cluster Name
 #
-# Deprecated - Please use Clusters
+# DEPRECATED - Please use Clusters
 #
 # Cluster = "default"
 
@@ -1134,6 +1196,13 @@
 # Default: true
 #
 # Watch = true
+
+# Enable auto discover ECS clusters
+#
+# Optional
+# Default: false
+#
+# AutoDiscoverClusters = false
 
 # Polling interval (in seconds)
 #
@@ -1172,6 +1241,7 @@
 # Optional
 #
 # filename = "ecs.tmpl"
+
 
 ################################################################
 # Rancher configuration backend
@@ -1262,6 +1332,7 @@
 #
 # Required
 # SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
 
 ################################################################
 # DynamoDB configuration backend

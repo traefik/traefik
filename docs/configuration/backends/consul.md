@@ -1,4 +1,5 @@
-# Consul backend
+# Consul Backend
+
 ## Consul Key-Value backend
 
 Træfik can be configured to use Consul as a backend configuration:
@@ -9,9 +10,6 @@ Træfik can be configured to use Consul as a backend configuration:
 ################################################################
 
 # Enable Consul KV configuration backend
-#
-# Optional
-#
 [consul]
 
 # Consul server endpoint
@@ -61,9 +59,6 @@ Træfik can be configured to use service discovery catalog of Consul as a backen
 ################################################################
 
 # Enable Consul Catalog configuration backend
-#
-# Optional
-#
 [consulCatalog]
 
 # Consul server endpoint
@@ -81,7 +76,6 @@ domain = "consul.localhost"
 # Expose Consul catalog services by default in traefik
 #
 # Optional
-# Default: true
 #
 exposedByDefault = false
 
@@ -92,17 +86,18 @@ exposedByDefault = false
 prefix = "traefik"
 
 # Default frontEnd Rule for Consul services
-# The format is a Go Template with ".ServiceName", ".Domain" and ".Attributes" available
-# "getTag(name, tags, defaultValue)", "hasTag(name, tags)" and "getAttribute(name, tags, defaultValue)" functions are available
-# "getAttribute(...)" function uses prefixed tag names based on "prefix" value
+#
+# The format is a Go Template with:
+# - ".ServiceName", ".Domain" and ".Attributes" available
+# - "getTag(name, tags, defaultValue)", "hasTag(name, tags)" and "getAttribute(name, tags, defaultValue)" functions are available
+# - "getAttribute(...)" function uses prefixed tag names based on "prefix" value
 #
 # Optional
 #
-frontEndRule = "Host:{{.ServiceName}}.{{Domain}}"
+#frontEndRule = "Host:{{.ServiceName}}.{{Domain}}"
 ```
 
-This backend will create routes matching on hostname based on the service name
-used in consul.
+This backend will create routes matching on hostname based on the service name used in consul.
 
 Additional settings can be defined using Consul Catalog tags:
 

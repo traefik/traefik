@@ -1,66 +1,38 @@
-# API backend
+# Web Backend
 
-Træfik can be configured using a RESTful api.
+Træfik can be configured:
+
+- using a RESTful api.
+- to use a metric system (like Prometheus, DataDog or StatD, ...).
+- to expose a Web Dashboard.
 
 ## Configuration
-### CLI
-
-| Flag                               | Description                      | Default             |
-|------------------------------------|----------------------------------|---------------------|
-| `--web`                            | Enable Web backend               | `"true"`            |
-| `--web.address`                    | Web administration port          | `":8080"`           |
-| `--web.certfile`                   | SSL certificate                  |                     |
-| `--web.keyfile`                    | SSL key                          |                     |
-| `--web.metrics`                    | Enable a metrics exporter        | `"true"`            |
-| `--web.metrics.prometheus`         | Prometheus metrics exporter type | `"true"`            |
-| `--web.metrics.prometheus.buckets` | Buckets for latency metrics      | `"[0.1 0.3 1.2 5]"` |
-| `--web.path`                       | Root path for dashboard and API  |                     |
-| `--web.readonly`                   | Enable read only API             | `"false"`           |
-| `--web.statistics`                 | Enable more detailed statistics  | `"false"`           |
-| `--web.statistics.recenterrors`    | Number of recent errors logged   | `"10"`              |
-
-### traefik.toml:
 
 ```toml
 [web]
+
+# Web administration port
+#
+# Required
+#
 address = ":8080"
 
-# Set the root path for webui and API
-#
-# Optional
-#
-# path = "/mypath"
-#
 # SSL certificate and key used
 #
 # Optional
 #
 # CertFile = "traefik.crt"
 # KeyFile = "traefik.key"
-#
+
 # Set REST API to read-only mode
 #
 # Optional
 # ReadOnly = false
-#
-# To enable more detailed statistics
+
+# Enable more detailed statistics
 # [web.statistics]
 #   RecentErrors = 10
-#
-# To enable Traefik to export internal metrics to Prometheus
-# [web.metrics.prometheus]
-#   Buckets=[0.1,0.3,1.2,5.0]
-#
-# To enable Traefik to export internal metics to DataDog
-# [web.metrics.datadog]
-#   Address = localhost:8125
-#   PushInterval = "10s"
-#
-# To enable Traefik to export internal metics to StatsD
-# [web.metrics.statsd]
-#   Address = localhost:8125
-#   PushInterval = "10s"
-#
+
 # To enable basic auth on the webui
 # with 2 user/pass: test:test and test2:test2
 # Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate those ones
@@ -78,9 +50,30 @@ address = ":8080"
 ```
 
 ## Web UI
+
 ![Web UI Providers](/img/web.frontend.png)
 
 ![Web UI Health](/img/traefik-health.png)
+
+## Metrics
+
+You can enable Traefik to export internal metrics to different monitoring systems.
+
+```toml
+# To enable Traefik to export internal metrics to Prometheus
+# [web.metrics.prometheus]
+#   Buckets=[0.1,0.3,1.2,5.0]
+
+# DataDog metrics exporter type 
+# [web.metrics.datadog]
+#   Address = "localhost:8125"
+#   Pushinterval = "10s"
+
+# StatsD metrics exporter type
+# [web.metrics.statsd]
+#   Address = "localhost:8125"
+#   Pushinterval = "10s"
+```
 
 ## API
 
@@ -102,16 +95,14 @@ address = ":8080"
 | `/api/providers/{provider}/frontends/{frontend}/routes/{route}` |     `GET`     | Get a route in a frontend                                                                          |
 | `/metrics`                                                      |     `GET`     | Export internal metrics                                                                            |
 
-> You can enable Traefik to export internal metrics to different monitoring systems (Only Prometheus is supported at the moment).
-
->```bash
->$ traefik --web.metrics.prometheus --web.metrics.prometheus.buckets="0.1,0.3,1.2,5.0"
->```
-
 ### Example
+
 #### Ping
+
 ```shell
 $ curl -sv "http://localhost:8080/ping"
+```
+```shell
 *   Trying ::1...
 * Connected to localhost (::1) port 8080 (#0)
 > GET /ping HTTP/1.1
@@ -129,8 +120,11 @@ OK
 ```
 
 #### Health
+
 ```shell
 $ curl -s "http://localhost:8080/health" | jq .
+```
+```json
 {
   // Træfik PID
   "pid": 2458,
@@ -187,8 +181,11 @@ $ curl -s "http://localhost:8080/health" | jq .
 ```
 
 #### Provider configurations
+
 ```shell
 $ curl -s "http://localhost:8080/api" | jq .
+```
+```json
 {
   "file": {
     "frontends": {

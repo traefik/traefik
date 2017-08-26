@@ -1,8 +1,10 @@
-# File backends
+# File Backends
 
 Like any other reverse proxy, Træfik can be configured with a file. You have three choices:
 
-- simply add your configuration at the end of the global configuration file `traefik.toml`:
+## Simple
+
+Add your configuration at the end of the global configuration file `traefik.toml`:
 
 ```toml
 # traefik.toml
@@ -74,7 +76,9 @@ defaultEntryPoints = ["http", "https"]
     rule = "Path:/test"
 ```
 
-- or put your rules in a separate file, for example `rules.toml`:
+## Rules in a Separate File
+
+Put your rules in a separate file, for example `rules.toml`:
 
 ```toml
 # traefik.toml
@@ -141,7 +145,9 @@ filename = "rules.toml"
     rule = "Path:/test"
 ```
 
-- or you could have multiple .toml files in a directory:
+## Multiple .toml Files
+
+You could have multiple `.toml` files in a directory:
  
 ```toml
 [file]

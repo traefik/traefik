@@ -1,7 +1,6 @@
-# DynamoDB backend
+# DynamoDB Backend
 
 Træfik can be configured to use Amazon DynamoDB as a backend configuration:
-
 
 ```toml
 ################################################################
@@ -9,9 +8,6 @@ Træfik can be configured to use Amazon DynamoDB as a backend configuration:
 ################################################################
 
 # Enable DynamoDB configuration backend
-#
-# Optional
-#
 [dynamodb]
 
 # DyanmoDB Table Name
@@ -55,14 +51,13 @@ SecretAccessKey = "123"
 # Optional
 #
 Endpoint = "http://localhost:8080"
-
 ```
 
 Items in the `dynamodb` table must have three attributes: 
 
-- `id` : string
-    - The id is the primary key.
-- `name` : string
-    - The name is used as the name of the frontend or backend.
-- `frontend` or `backend` : map
-    - This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik. See `types/types.go` for details. The presence or absence of this attribute determines its type. So an item should never have both a `frontend` and a `backend` attribute. 
+- `id` (string): The id is the primary key.
+- `name`(string): The name is used as the name of the frontend or backend.
+- `frontend` or `backend` (map): This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik.
+    See `types/types.go` for details.
+    The presence or absence of this attribute determines its type.
+    So an item should never have both a `frontend` and a `backend` attribute.

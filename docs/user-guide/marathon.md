@@ -1,4 +1,3 @@
-
 # Marathon
 
 This guide explains how to integrate Marathon and operate the cluster in a reliable way from Traefik's standpoint.
