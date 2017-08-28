@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 
@@ -8,10 +10,11 @@ import (
 )
 
 func TestMetricsRetryListener(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	retryMetrics := newCollectingRetryMetrics()
 	retryListener := NewMetricsRetryListener(retryMetrics, "backendName")
-	retryListener.Retried(1)
-	retryListener.Retried(2)
+	retryListener.Retried(req, 1)
+	retryListener.Retried(req, 2)
 
 	wantCounterValue := float64(2)
 	if retryMetrics.retryCounter.counterValue != wantCounterValue {

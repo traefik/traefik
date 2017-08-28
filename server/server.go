@@ -908,9 +908,10 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 					}
 
 					if globalConfiguration.Retry != nil {
-						retryListener := middlewares.NewMetricsRetryListener(server.metricsRegistry, frontend.Backend)
-						lb = registerRetryMiddleware(lb, globalConfiguration, config, frontend.Backend, retryListener)
+						countServers := len(config.Backends[frontend.Backend].Servers)
+						lb = server.buildRetryMiddleware(lb, globalConfiguration, countServers, frontend.Backend)
 					}
+
 					if server.metricsRegistry.IsEnabled() {
 						n.Use(middlewares.NewMetricsWrapper(server.metricsRegistry, frontend.Backend))
 					}
@@ -1187,20 +1188,21 @@ func stopMetricsClients() {
 	metrics.StopStatsd()
 }
 
-func registerRetryMiddleware(
-	httpHandler http.Handler,
-	globalConfig configuration.GlobalConfiguration,
-	config *types.Configuration,
-	backend string,
-	listener middlewares.RetryListener,
-) http.Handler {
-	retries := len(config.Backends[backend].Servers)
-	if globalConfig.Retry.Attempts > 0 {
-		retries = globalConfig.Retry.Attempts
+func (server *Server) buildRetryMiddleware(handler http.Handler, globalConfig configuration.GlobalConfiguration, countServers int, backendName string) http.Handler {
+	retryListeners := middlewares.RetryListeners{}
+	if server.metricsRegistry.IsEnabled() {
+		retryListeners = append(retryListeners, middlewares.NewMetricsRetryListener(server.metricsRegistry, backendName))
+	}
+	if server.accessLoggerMiddleware != nil {
+		retryListeners = append(retryListeners, &accesslog.SaveRetries{})
 	}
 
-	httpHandler = middlewares.NewRetry(retries, httpHandler, listener)
-	log.Debugf("Creating retries max attempts %d", retries)
+	retryAttempts := countServers
+	if globalConfig.Retry.Attempts > 0 {
+		retryAttempts = globalConfig.Retry.Attempts
+	}
 
-	return httpHandler
+	log.Debugf("Creating retries max attempts %d", retryAttempts)
+
+	return middlewares.NewRetry(retryAttempts, handler, retryListeners)
 }

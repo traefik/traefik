@@ -33,6 +33,7 @@ var (
 	testMethod              = "POST"
 	testReferer             = "testReferer"
 	testUserAgent           = "testUserAgent"
+	testRetryAttempts       = 2
 )
 
 func TestLoggerCLF(t *testing.T) {
@@ -91,6 +92,7 @@ func TestLoggerJSON(t *testing.T) {
 		RequestCount,
 		Duration,
 		Overhead,
+		RetryAttempts,
 		"time",
 		"StartLocal",
 		"StartUTC",
@@ -149,6 +151,8 @@ func TestLoggerJSON(t *testing.T) {
 	assert.NotZero(t, jsonData[Duration].(float64))
 	assertCount++
 	assert.NotZero(t, jsonData[Overhead].(float64))
+	assertCount++
+	assert.Equal(t, float64(testRetryAttempts), jsonData[RetryAttempts].(float64))
 	assertCount++
 	assert.NotEqual(t, "", jsonData["time"].(string))
 	assertCount++
@@ -275,4 +279,5 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	logDataTable.Core[BackendURL] = testBackendName
 	logDataTable.Core[OriginStatus] = testStatus
 	logDataTable.Core[OriginContentSize] = testContentSize
+	logDataTable.Core[RetryAttempts] = testRetryAttempts
 }

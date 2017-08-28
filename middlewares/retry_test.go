@@ -89,6 +89,21 @@ func TestDefaultNetErrorRecorderNilValue(t *testing.T) {
 	}
 }
 
+func TestRetryListeners(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	retryListeners := RetryListeners{&countingRetryListener{}, &countingRetryListener{}}
+
+	retryListeners.Retried(req, 1)
+	retryListeners.Retried(req, 1)
+
+	for _, retryListener := range retryListeners {
+		listener := retryListener.(*countingRetryListener)
+		if listener.timesCalled != 2 {
+			t.Errorf("retry listener was called %d times, want %d", listener.timesCalled, 2)
+		}
+	}
+}
+
 // networkFailingHTTPHandler is an http.Handler implementation you can use to test retries.
 type networkFailingHTTPHandler struct {
 	netErrorRecorder NetErrorRecorder
@@ -116,6 +131,6 @@ type countingRetryListener struct {
 	timesCalled int
 }
 
-func (l *countingRetryListener) Retried(attempt int) {
+func (l *countingRetryListener) Retried(req *http.Request, attempt int) {
 	l.timesCalled++
 }
