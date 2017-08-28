@@ -8,9 +8,9 @@ repo_url: 'https://github.com/containous/traefik'
 
 # Documentation and theme
 docs_dir: 'docs'
-theme: united
+#theme: united
 # theme: readthedocs
-# theme: 'material'
+theme: 'material'
 # theme: bootstrap
 
 site_favicon: 'img/traefik.icon.png'
@@ -20,27 +20,35 @@ copyright: "Copyright &copy; 2016-2017 Containous SAS"
 
 # Options
 extra:
-#   version: 0.2.2
   logo: img/traefik.logo.png
-  # author:
-  #   twitter: traefikproxy
   palette:
     primary: 'blue'
     accent: 'light blue'
+  feature:
+    tabs: false
+  palette:
+    primary: 'cyan'
+    accent: 'cyan'
   i18n:
     prev: 'Previous'
-    next: 'Next'  
-  
-markdown_extensions:
-#   - codehilite(css_class=code)
-  - admonition
-#   - toc:
-#       permalink: '##'
-  # - fenced_code
-      
+    next: 'Next'
+# version: 0.2.2
+# author:
+#   twitter: traefikproxy
+
 extra_css:
-    - css/traefik.css
-      
+    - styles/extra.css
+    - styles/atom-one-light.css
+
+extra_javascript:
+  - js/hljs/highlight.pack.js
+  - js/extra.js
+
+markdown_extensions:
+  - admonition
+#  - codehilite(guess_lang=false)
+  - toc(permalink=true)
+
 # Page tree
 pages:
   - Getting Started: index.md

@@ -18,7 +18,8 @@ Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/d
 
 If your cluster is configured with RBAC, you may need to authorize Træfik to use the Kubernetes API using ClusterRole and ClusterRoleBinding resources:
 
-_Note: your cluster may have suitable ClusterRoles already setup, but the following should work everywhere_
+!!! note
+    your cluster may have suitable ClusterRoles already setup, but the following should work everywhere
 
 ```yaml
 ---
@@ -683,9 +684,10 @@ spec:
 
 If you were to visit `example.com/static` the request would then be passed onto `static.otherdomain.com/static` and s`tatic.otherdomain.com` would receive the request with the Host header being `static.otherdomain.com`.
 
-Note: The per ingress annotation overides whatever the global value is set to.
-So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing 
-the host header per ingress if you wanted.
+!!! note
+    The per ingress annotation overides whatever the global value is set to.
+    So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing 
+    the host header per ingress if you wanted.
 
 ## Excluding an ingress from Træfik
 

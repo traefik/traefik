@@ -134,7 +134,8 @@ traefik:
     - "8080:8080"
 ```
 
-NB : Be careful to give the correct IP address and port in the flag `--consul.endpoint`.
+!!! warning
+    Be careful to give the correct IP address and port in the flag `--consul.endpoint`.
 
 ## Consul ACL Token support
 

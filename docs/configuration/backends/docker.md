@@ -165,4 +165,7 @@ exposedbydefault = false
 | `traefik.<service-name>.frontend.priority`        | Overrides `traefik.frontend.priority`.                                                           |
 | `traefik.<service-name>.frontend.rule`            | Overrides `traefik.frontend.rule`.                                                               |
 
-NB: when running inside a container, Træfik will need network access through `docker network connect <network> <traefik-container>`
+!!! warning
+    when running inside a container, Træfik will need network access through:
+
+    `docker network connect <network> <traefik-container>`
