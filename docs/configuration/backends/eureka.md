@@ -29,6 +29,3 @@ delay = "1m"
 #
 # filename = "eureka.tmpl"
 ```
-
-Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-value-storage-structure) section to get documentation on traefik KV structure.
-

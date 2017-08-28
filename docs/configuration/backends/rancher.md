@@ -99,12 +99,11 @@ AccessKey = "XXXXXXXXXXXXXXXXXXXX"
 SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
-## Notes
-
-If Traefik needs access to the Rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters. 
-
-To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`.
-This can be found within the API Key advanced options.
+!!! note
+    If Traefik needs access to the Rancher API, you need to set the `endpoint`, `accesskey` and `secretkey` parameters.
+ 
+    To enable traefik to fetch information about the Environment it's deployed in only, you need to create an `Environment API Key`.
+    This can be found within the API Key advanced options.
 
 ## Labels
 

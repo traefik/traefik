@@ -129,10 +129,14 @@ entryPoint = "https"
 
 This configuration allows generating a Let's Encrypt certificate during the first HTTPS request on a new domain.
 
-**Note** : This option simplifies the configuration but :
-* TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DDoS attacks.
-* Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
-That's why, it's better to use the `onHostRule` optin if possible.
+
+!!! note
+    This option simplifies the configuration but :
+
+    * TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DDoS attacks.
+    * Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
+
+    That's why, it's better to use the `onHostRule` optin if possible.
 
 ### DNS challenge
 
@@ -228,7 +232,8 @@ entryPoint = "https"
 This configuration allows to use the key `traefik/acme/account` to get/set Let's Encrypt certificates content.
 The `consul` provider contains the configuration.
 
-**Note** : It's possible to use others key-value store providers as described [here](/user-guide/kv-config/#key-value-store-configuration).
+!!! note
+    It's possible to use others key-value store providers as described [here](/user-guide/kv-config/#key-value-store-configuration).
 
 ## Override entrypoints in frontends
 
