@@ -175,6 +175,7 @@ Complete documentation is available at https://traefik.io`,
 	}
 
 	if _, err := f.Parse(usedCmd); err != nil {
+		fmtlog.Printf("Error parsing command: %s\n", err)
 		os.Exit(-1)
 	}
 
