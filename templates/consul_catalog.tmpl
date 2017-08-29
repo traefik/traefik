@@ -40,6 +40,9 @@
       "{{.}}",
     {{end}}]
   {{end}}
+  basicAuth = [{{range getBasicAuth .Attributes}}
+  "{{.}}",
+  {{end}}]
   [frontends."frontend-{{.ServiceName}}".routes."route-host-{{.ServiceName}}"]
     rule = "{{getFrontendRule .}}"
 {{end}}

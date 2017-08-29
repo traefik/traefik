@@ -348,6 +348,7 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 							"random.foo=bar",
 							"traefik.backend.maxconn.amount=1000",
 							"traefik.backend.maxconn.extractorfunc=client.ip",
+							"traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						},
 					},
 					Nodes: []*api.ServiceEntry{
@@ -380,6 +381,7 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 							Rule: "Host:test.localhost",
 						},
 					},
+					BasicAuth: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
@@ -411,6 +413,7 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 			t.Fatalf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
 		}
 		if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
+			t.Fatalf("expected %#v, got %#v", c.expectedFrontends["frontend-test"].BasicAuth, actualConfig.Frontends["frontend-test"].BasicAuth)
 			t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
 		}
 	}
@@ -849,6 +852,41 @@ func TestConsulCatalogFilterEnabled(t *testing.T) {
 			}
 			if provider.nodeFilter("test", c.node) != c.expected {
 				t.Errorf("got unexpected filtering = %t", !c.expected)
+			}
+		})
+	}
+}
+
+func TestConsulCatalogGetBasicAuth(t *testing.T) {
+	cases := []struct {
+		desc     string
+		tags     []string
+		expected []string
+	}{
+		{
+			desc:     "label missing",
+			tags:     []string{},
+			expected: []string{},
+		},
+		{
+			desc: "label existing",
+			tags: []string{
+				"traefik.frontend.auth.basic=user:password",
+			},
+			expected: []string{"user:password"},
+		},
+	}
+
+	for _, c := range cases {
+		c := c
+		t.Run(c.desc, func(t *testing.T) {
+			t.Parallel()
+			provider := &CatalogProvider{
+				Prefix: "traefik",
+			}
+			actual := provider.getBasicAuth(c.tags)
+			if !reflect.DeepEqual(actual, c.expected) {
+				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
 		})
 	}

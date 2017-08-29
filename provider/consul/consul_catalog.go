@@ -330,6 +330,14 @@ func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue 
 	return p.getTag(p.getPrefixedName(name), tags, defaultValue)
 }
 
+func (p *CatalogProvider) getBasicAuth(tags []string) []string {
+	list := p.getAttribute("frontend.auth.basic", tags, "")
+	if list != "" {
+		return strings.Split(list, ",")
+	}
+	return []string{}
+}
+
 func (p *CatalogProvider) hasTag(name string, tags []string) bool {
 	// Very-very unlikely that a Consul tag would ever start with '=!='
 	tag := p.getTag(name, tags, "=!=")
@@ -377,6 +385,7 @@ func (p *CatalogProvider) buildConfig(catalog []catalogUpdate) *types.Configurat
 		"getBackendName":       p.getBackendName,
 		"getBackendAddress":    p.getBackendAddress,
 		"getAttribute":         p.getAttribute,
+		"getBasicAuth":         p.getBasicAuth,
 		"getTag":               p.getTag,
 		"hasTag":               p.hasTag,
 		"getEntryPoints":       p.getEntryPoints,
