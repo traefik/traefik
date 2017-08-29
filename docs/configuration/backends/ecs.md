@@ -78,17 +78,18 @@ SecretAccessKey = "123"
 
 Labels can be used on task containers to override default behaviour:
 
-| Label                                        | Description                                                                              |
-|----------------------------------------------|------------------------------------------------------------------------------------------|
-| `traefik.protocol=https`                     | override the default `http` protocol                                                     |
-| `traefik.weight=10`                          | assign this weight to the container                                                      |
-| `traefik.enable=false`                       | disable this container in Træfik                                                         |
-| `traefik.backend.loadbalancer.method=drr`    | override the default `wrr` load balancer algorithm                                       |
-| `traefik.backend.loadbalancer.sticky=true`   | enable backend sticky sessions                                                           |
-| `traefik.frontend.rule=Host:test.traefik.io` | override the default frontend rule (Default: `Host:{containerName}.{domain}`).           |
-| `traefik.frontend.passHostHeader=true`       | forward client `Host` header to the backend.                                             |
-| `traefik.frontend.priority=10`               | override default frontend priority                                                       |
-| `traefik.frontend.entryPoints=http,https`    | assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`. |
+| Label                                             | Description                                                                              |
+|---------------------------------------------------|------------------------------------------------------------------------------------------|
+| `traefik.protocol=https`                          | override the default `http` protocol                                                     |
+| `traefik.weight=10`                               | assign this weight to the container                                                      |
+| `traefik.enable=false`                            | disable this container in Træfik                                                         |
+| `traefik.backend.loadbalancer.method=drr`         | override the default `wrr` load balancer algorithm                                       |
+| `traefik.backend.loadbalancer.sticky=true`        | enable backend sticky sessions                                                           |
+| `traefik.frontend.rule=Host:test.traefik.io`      | override the default frontend rule (Default: `Host:{containerName}.{domain}`).           |
+| `traefik.frontend.passHostHeader=true`            | forward client `Host` header to the backend.                                             |
+| `traefik.frontend.priority=10`                    | override default frontend priority                                                       |
+| `traefik.frontend.entryPoints=http,https`         | assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`. |
+| `traefik.frontend.auth.basic=EXPR`                | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`         |
 
 If `AccessKeyID`/`SecretAccessKey` is not given credentials will be resolved in the following order:
 

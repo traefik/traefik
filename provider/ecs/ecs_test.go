@@ -74,10 +74,10 @@ func TestEcsProtocol(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
-		value := c.instanceInfo.Protocol()
-		if value != c.expected {
-			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+	for i, test := range cases {
+		value := test.instanceInfo.Protocol()
+		if value != test.expected {
+			t.Fatalf("Should have been %v, got %v (case %d)", test.expected, value, i)
 		}
 	}
 }
@@ -93,10 +93,10 @@ func TestEcsHost(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
-		value := c.instanceInfo.Host()
-		if value != c.expected {
-			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+	for i, test := range cases {
+		value := test.instanceInfo.Host()
+		if value != test.expected {
+			t.Fatalf("Should have been %v, got %v (case %d)", test.expected, value, i)
 		}
 	}
 }
@@ -112,10 +112,10 @@ func TestEcsPort(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
-		value := c.instanceInfo.Port()
-		if value != c.expected {
-			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+	for i, test := range cases {
+		value := test.instanceInfo.Port()
+		if value != test.expected {
+			t.Fatalf("Should have been %v, got %v (case %d)", test.expected, value, i)
 		}
 	}
 }
@@ -137,10 +137,10 @@ func TestEcsWeight(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
-		value := c.instanceInfo.Weight()
-		if value != c.expected {
-			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+	for i, test := range cases {
+		value := test.instanceInfo.Weight()
+		if value != test.expected {
+			t.Fatalf("Should have been %v, got %v (case %d)", test.expected, value, i)
 		}
 	}
 }
@@ -162,10 +162,10 @@ func TestEcsPassHostHeader(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
-		value := c.instanceInfo.PassHostHeader()
-		if value != c.expected {
-			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+	for i, test := range cases {
+		value := test.instanceInfo.PassHostHeader()
+		if value != test.expected {
+			t.Fatalf("Should have been %v, got %v (case %d)", test.expected, value, i)
 		}
 	}
 }
@@ -187,10 +187,10 @@ func TestEcsPriority(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
-		value := c.instanceInfo.Priority()
-		if value != c.expected {
-			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+	for i, test := range cases {
+		value := test.instanceInfo.Priority()
+		if value != test.expected {
+			t.Fatalf("Should have been %v, got %v (case %d)", test.expected, value, i)
 		}
 	}
 }
@@ -218,10 +218,10 @@ func TestEcsEntryPoints(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
-		value := c.instanceInfo.EntryPoints()
-		if !reflect.DeepEqual(value, c.expected) {
-			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+	for i, test := range cases {
+		value := test.instanceInfo.EntryPoints()
+		if !reflect.DeepEqual(value, test.expected) {
+			t.Fatalf("Should have been %v, got %v (case %d)", test.expected, value, i)
 		}
 	}
 }
@@ -299,13 +299,13 @@ func TestFilterInstance(t *testing.T) {
 		},
 	}
 
-	for i, c := range cases {
+	for i, test := range cases {
 		provider := &Provider{
-			ExposedByDefault: c.exposedByDefault,
+			ExposedByDefault: test.exposedByDefault,
 		}
-		value := provider.filterInstance(c.instanceInfo)
-		if value != c.expected {
-			t.Fatalf("Should have been %v, got %v (case %d)", c.expected, value, i)
+		value := provider.filterInstance(test.instanceInfo)
+		if value != test.expected {
+			t.Fatalf("Should have been %v, got %v (case %d)", test.expected, value, i)
 		}
 	}
 }
@@ -330,9 +330,9 @@ func TestTaskChunking(t *testing.T) {
 		{1001, []int{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 1}},
 	}
 
-	for _, c := range cases {
+	for _, test := range cases {
 		var tasks []*string
-		for v := 0; v < c.count; v++ {
+		for v := 0; v < test.count; v++ {
 			tasks = append(tasks, &testval)
 		}
 
@@ -343,8 +343,41 @@ func TestTaskChunking(t *testing.T) {
 			outCount = append(outCount, len(el))
 		}
 
-		if !reflect.DeepEqual(outCount, c.expectedLengths) {
-			t.Errorf("Chunking %d elements, expected %#v, got %#v", c.count, c.expectedLengths, outCount)
+		if !reflect.DeepEqual(outCount, test.expectedLengths) {
+			t.Errorf("Chunking %d elements, expected %#v, got %#v", test.count, test.expectedLengths, outCount)
 		}
+	}
+}
+
+func TestEcsGetBasicAuth(t *testing.T) {
+	cases := []struct {
+		desc     string
+		instance ecsInstance
+		expected []string
+	}{
+		{
+			desc:     "label missing",
+			instance: simpleEcsInstance(map[string]*string{}),
+			expected: []string{},
+		},
+		{
+			desc: "label existing",
+			instance: simpleEcsInstance(map[string]*string{
+				types.LabelFrontendAuthBasic: aws.String("user:password"),
+			}),
+			expected: []string{"user:password"},
+		},
+	}
+
+	for _, test := range cases {
+		c := test
+		t.Run(c.desc, func(t *testing.T) {
+			t.Parallel()
+			provider := &Provider{}
+			actual := provider.getBasicAuth(c.instance)
+			if !reflect.DeepEqual(actual, c.expected) {
+				t.Errorf("actual %q, expected %q", actual, c.expected)
+			}
+		})
 	}
 }
