@@ -365,17 +365,27 @@ type AccessLog struct {
 	Format   string `json:"format,omitempty" description:"Access log format: json | common"`
 }
 
+// Exclusion excludes a request from auditing if the http header contains any of the specified values
+type Exclusion struct {
+	HeaderName string   `json:"headerName,omitempty" description:"Request header name to evaluate"`
+	Contains   []string `json:"contains,omitempty" description:"Values to exclude"`
+}
+
+// Exclusions is a container type for Exclusion
+type Exclusions map[string]*Exclusion
+
 // AuditSink holds AuditSink configuration
 type AuditSink struct {
-	Type            string `json:"type,omitempty" description:"The type of sink: File/HTTP/Kafka/AMQP"`
-	Endpoint        string `json:"endpoint,omitempty" description:"Endpoint for audit tap. e.g. url for HTTP/Kafka/AMQP or filename for File"`
-	Destination     string `json:"destination,omitempty" description:"For Kafka the topic, AMQP the exchange etc."`
-	MaxEntityLength string `json:"maxEntityLength,omitempty" description:"MaxEntityLength truncates entities (bodies) longer than this (units are allowed, eg. 32KiB)"`
-	NumProducers    int    `json:"numProducers,omitempty" description:"The number of concurrent producers which can send messages to the endpoint"`
-	ChannelLength   int    `json:"channelLength,omitempty" description:"Size of the in-memory message channel.  Used as a buffer in case of Producer failure"`
-	DiskStorePath   string `json:"diskStorePath,omitempty" description:"Directory path for disk-backed persistent audit message queue"`
-	ProxyingFor     string `json:"ProxyingFor,omitempty" description:"Defines the style of auditing event required. e.g API, RATE"`
-	AuditSource     string `json:"auditSource,omitempty" description:"Value to use for auditSource in audit message"`
-	AuditType       string `json:"auditType,omitempty" description:"Value to use for auditType in audit message"`
-	EncryptSecret   string `json:"encryptSecret,omitempty" description:"Key for encrypting failed events. If present events will be AES encrypted"`
+	Exclusions      Exclusions `json:"exclusions,omitempty"`
+	Type            string     `json:"type,omitempty" description:"The type of sink: File/HTTP/Kafka/AMQP"`
+	Endpoint        string     `json:"endpoint,omitempty" description:"Endpoint for audit tap. e.g. url for HTTP/Kafka/AMQP or filename for File"`
+	Destination     string     `json:"destination,omitempty" description:"For Kafka the topic, AMQP the exchange etc."`
+	MaxEntityLength string     `json:"maxEntityLength,omitempty" description:"MaxEntityLength truncates entities (bodies) longer than this (units are allowed, eg. 32KiB)"`
+	NumProducers    int        `json:"numProducers,omitempty" description:"The number of concurrent producers which can send messages to the endpoint"`
+	ChannelLength   int        `json:"channelLength,omitempty" description:"Size of the in-memory message channel.  Used as a buffer in case of Producer failure"`
+	DiskStorePath   string     `json:"diskStorePath,omitempty" description:"Directory path for disk-backed persistent audit message queue"`
+	ProxyingFor     string     `json:"proxyingFor,omitempty" description:"Defines the style of auditing event required. e.g API, RATE"`
+	AuditSource     string     `json:"auditSource,omitempty" description:"Value to use for auditSource in audit message"`
+	AuditType       string     `json:"auditType,omitempty" description:"Value to use for auditType in audit message"`
+	EncryptSecret   string     `json:"encryptSecret,omitempty" description:"Key for encrypting failed events. If present events will be AES encrypted"`
 }

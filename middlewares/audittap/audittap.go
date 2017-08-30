@@ -26,6 +26,7 @@ type AuditConfig struct {
 	AuditSource string
 	AuditType   string
 	ProxyingFor string
+	Exclusions  []*types.Exclusion
 }
 
 // AuditTap writes an event to the audit streams for every request.
@@ -64,29 +65,71 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		}
 	}
 
-	ac := AuditConfig{AuditSource: config.AuditSource, AuditType: config.AuditType, ProxyingFor: config.ProxyingFor}
+	exclusions := []*types.Exclusion{}
+	for _, exc := range config.Exclusions {
+		if len(exc.Contains) > 0 {
+			exclusions = append(exclusions, exc)
+		}
+	}
+
+	ac := AuditConfig{AuditSource: config.AuditSource, AuditType: config.AuditType, ProxyingFor: config.ProxyingFor, Exclusions: exclusions}
 	return &AuditTap{ac, streams, backend, int(th), next}, nil
 }
 
 func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var auditer audittypes.Auditer
+	excludeAudit := isExcluded(tap.Exclusions, req)
 
-	switch strings.ToLower(tap.ProxyingFor) {
-	case "api":
-		auditer = audittypes.NewAPIAuditEvent(tap.AuditSource, tap.AuditType)
-	case "rate":
-		auditer = audittypes.NewRATEAuditEvent()
+	if !excludeAudit {
+		switch strings.ToLower(tap.ProxyingFor) {
+		case "api":
+			auditer = audittypes.NewAPIAuditEvent(tap.AuditSource, tap.AuditType)
+		case "rate":
+			auditer = audittypes.NewRATEAuditEvent()
+		}
+		auditer.AppendRequest(req)
 	}
 
-	auditer.AppendRequest(req)
 	ww := NewAuditResponseWriter(rw, tap.MaxEntityLength)
 	tap.next.ServeHTTP(ww, req)
-	auditer.AppendResponse(ww.Header(), ww.GetResponseInfo())
 
-	for _, sink := range tap.AuditStreams {
-		sink.Audit(auditer)
+	if !excludeAudit {
+		auditer.AppendResponse(ww.Header(), ww.GetResponseInfo())
+		for _, sink := range tap.AuditStreams {
+			sink.Audit(auditer)
+		}
 	}
+}
+
+// isExcluded asserts if request metadata matches specified exclusions from config
+func isExcluded(exclusions []*types.Exclusion, req *http.Request) bool {
+
+	for _, exc := range exclusions {
+		lcHdr := strings.ToLower(exc.HeaderName)
+		// Get host or path direct from request
+		if (lcHdr == "host" || lcHdr == "requesthost") && shouldExclude(req.URL.Host, exc.Contains) {
+			return true
+		} else if (lcHdr == "path" || lcHdr == "requestpath") && shouldExclude(req.URL.Path, exc.Contains) {
+			return true
+		} else if shouldExclude(req.Header.Get(exc.HeaderName), exc.Contains) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func shouldExclude(v string, exclusions []string) bool {
+	if v != "" {
+		for _, x := range exclusions {
+			if strings.Contains(v, x) {
+				return true
+			}
+		}
+
+	}
+	return false
 }
 
 // asSI parses a string for its number. Suffixes are allowed that loosely follow SI rules: K, Ki, M, Mi.

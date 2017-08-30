@@ -82,6 +82,59 @@ func TestApiProxyingFor(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestAuditExclusion(t *testing.T) {
+
+	atypes.TheClock = T0
+	capture := &noopAuditStream{}
+	excludes := make(types.Exclusions)
+
+	excludes["Ex1"] = &types.Exclusion{"Host", []string{"aaaignorehost1bbb", "hostignore"}}
+	excludes["Ex2"] = &types.Exclusion{"Path", []string{"excludeme", "someotherpath"}}
+
+	excludes["Ex3"] = &types.Exclusion{"Hdr1", []string{"abcdefg", "drv1"}}
+	excludes["Ex4"] = &types.Exclusion{"Hdr2", []string{"tauditm"}}
+
+	cfg := &types.AuditSink{
+		ProxyingFor: "api",
+		AuditSource: "as1",
+		AuditType:   "at1",
+		Exclusions:  excludes,
+	}
+
+	tap, err := NewAuditTap(cfg, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.NoError(t, err)
+	tap.AuditStreams = []audittypes.AuditStream{capture}
+
+	excHost := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
+	excHost.URL.Host = "abchostignoredef.somedomain"
+	tap.ServeHTTP(httptest.NewRecorder(), excHost)
+
+	excPath := httptest.NewRequest("", "/excludeme?d=1&e=2", nil)
+	tap.ServeHTTP(httptest.NewRecorder(), excPath)
+
+	excHdr1 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
+	excHdr1.Header.Set("Hdr1", "xdrv1z")
+	tap.ServeHTTP(httptest.NewRecorder(), excHdr1)
+
+	excHdr2 := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
+	excHdr2.Header.Set("Hdr2", "don'tauditme")
+	tap.ServeHTTP(httptest.NewRecorder(), excHdr2)
+
+	incReq := httptest.NewRequest("", "/includeme?d=1&e=2", nil)
+	incReq.Header.Set("Hdr1", "bcdef")
+	tap.ServeHTTP(httptest.NewRecorder(), incReq)
+
+	assert.Equal(t, 1, len(capture.events))
+	if apiAudit, ok := capture.events[0].(*audittypes.APIAuditEvent); ok {
+		assert.Equal(t, "as1", apiAudit.AuditSource)
+		assert.Equal(t, "at1", apiAudit.AuditType)
+		assert.Equal(t, "/includeme", apiAudit.Path)
+	} else {
+		assert.Fail(t, "Audit is not an Api Audit")
+	}
+
+}
+
 // simpleHandler replies to the request with the specified error message and HTTP code.
 // It does not otherwise end the request; the caller should ensure no further
 // writes are done to w.

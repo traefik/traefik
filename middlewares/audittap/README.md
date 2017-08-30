@@ -17,6 +17,13 @@ An example follows
   auditSource = "localSource"
   auditType = "localType"
   encryptSecret = "RDFXVxTgrrT9IseypJrwDLzk/nTVeTjbjaUR3RVyv94="
+  [auditSink.exclusions]
+    [auditSink.exclusions.exc1]
+    headerName = "RequestHost"
+    contains = ["captain", "docktor"]
+    [auditSink.exclusions.exc2]
+    headerName = "RequestPath"
+    contains = ["/ping/ping"]
 ```
 
 The properties are as follow:
@@ -26,3 +33,4 @@ The properties are as follow:
 * auditSource (mandatory for API): the auditSource value to be included in API audit events
 * auditType (mandatory for API): the auditType value to be included in API audit events
 * encryptSecret (optional): base64 encoded AES-256 key, if provided logged audit events will be encrypted
+* auditSink.exclusions.excname (optional): excludes a request from auditing based on the header name when the header contains any of the specified values

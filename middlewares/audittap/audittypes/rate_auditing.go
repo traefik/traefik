@@ -61,7 +61,7 @@ func (ev *RATEAuditEvent) AppendRequest(req *http.Request) {
 		ev.populateIdentifiers(partialMsg)
 		ev.populateEnrolments(partialMsg)
 	} else {
-		log.Errorf("Error processing RATE message: %v", err)
+		log.Debugf("Error processing RATE message: %v", err)
 	}
 }
 
