@@ -1,5 +1,5 @@
-hash: c5a62552734b2e283ebedf94e6b711e7efa47d2b1b80f3dda6ca923317fef3c2
-updated: 2017-08-25T11:52:16.848940186+02:00
+hash: 857714f15cc10657ae2f15f3ab6592734a1ebc524d32b5353948258ce3043b6a
+updated: 2017-09-09T11:52:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -320,8 +320,12 @@ imports:
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
+- name: github.com/mailgun/minheap
+  version: 7c28d80e2ada649fc8ab1a37b86d30a2633bd47c
 - name: github.com/mailgun/timetools
   version: 7e6055773c5137efbeb3bd2410d705fe10ab6bfd
+- name: github.com/mailgun/ttlmap
+  version: c1c17f74874f2a5ea48bfb06b5459d4ef2689749
 - name: github.com/mailru/easyjson
   version: d5b7844b561a7bc640052f1b935f7b800330d7e0
   subpackages:
@@ -487,6 +491,7 @@ imports:
   - connlimit
   - forward
   - memmetrics
+  - ratelimit
   - roundrobin
   - stream
   - utils
