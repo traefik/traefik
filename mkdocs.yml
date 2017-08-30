@@ -67,6 +67,7 @@ pages:
     - 'File Backend': 'configuration/backends/file.md'
     - 'Kubernetes Ingress Backend': 'configuration/backends/kubernetes.md'
     - 'Marathon Backend': 'configuration/backends/marathon.md'
+    - 'Mesos Backend': 'configuration/backends/mesos.md'
     - 'Rancher Backend': 'configuration/backends/rancher.md'
     - 'Zookeeper Backend': 'configuration/backends/zookeeper.md'
   - User Guide:
