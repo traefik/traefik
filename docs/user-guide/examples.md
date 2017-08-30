@@ -121,7 +121,7 @@ If a backend is added with a `onHost` rule, Traefik will automatically generate 
 [acme]
 email = "test@traefik.io"
 storage = "acme.json"
-OnDemand = true
+onDemand = true
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
 
