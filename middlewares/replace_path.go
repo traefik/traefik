@@ -32,11 +32,11 @@ func (s *ReplacePath) ReplacePath(source string) string {
 	}
 	t, err := template.New("replace_path").Funcs(f).Parse(s.Path)
 	if err != nil {
-		log.Error("execution: ", err)
+		log.Error("parsing: ", err)
 	} else {
 		var buffer bytes.Buffer
 		if err = t.Execute(&buffer, source); err != nil {
-			log.Error("parsing: ", err)
+			log.Error("execution: ", err)
 		} else {
 			r := buffer.String()
 			log.Debugf("ReplactPath: %s -> %s", source, r)
