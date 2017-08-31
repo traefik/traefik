@@ -27,5 +27,4 @@ func (oxylogger *OxyLogger) Errorf(format string, args ...interface{}) {
 
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
-	//templatesRenderer.HTML(w, http.StatusNotFound, "notFound", nil)
 }

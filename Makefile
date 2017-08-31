@@ -7,7 +7,9 @@ TRAEFIK_ENVS := \
 	-e VERBOSE \
 	-e VERSION \
 	-e CODENAME \
-	-e TESTDIRS
+	-e TESTDIRS \
+	-e CI \
+	-e CONTAINER=DOCKER		# Indicator for integration tests that we are running inside a container.
 
 SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/' | grep -v '^integration/vendor/')
 
@@ -15,7 +17,7 @@ BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"
 
 GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null))
-TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(GIT_BRANCH))
+TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"containous/traefik")
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -v "/var/run/docker.sock:/var/run/docker.sock")
@@ -81,8 +83,14 @@ build-no-cache: dist
 shell: build ## start a shell inside the build env
 	$(DOCKER_RUN_TRAEFIK) /bin/bash
 
-image: binary ## build a docker traefik image
+image-dirty: binary ## build a docker traefik image
 	docker build -t $(TRAEFIK_IMAGE) .
+
+image: clear-static binary ## clean up static directory and build a docker traefik image
+	docker build -t $(TRAEFIK_IMAGE) .
+
+clear-static:
+	rm -rf static
 
 dist:
 	mkdir dist

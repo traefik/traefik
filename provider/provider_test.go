@@ -12,7 +12,7 @@ import (
 
 type myProvider struct {
 	BaseProvider
-	TLS *ClientTLS
+	TLS *types.ClientTLS
 }
 
 func (p *myProvider) Foo() string {
@@ -141,38 +141,7 @@ func TestGetConfiguration(t *testing.T) {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
 	if configuration == nil {
-		t.Fatalf("Configuration should not be nil, but was")
-	}
-}
-
-func TestReplace(t *testing.T) {
-	cases := []struct {
-		str      string
-		expected string
-	}{
-		{
-			str:      "",
-			expected: "",
-		},
-		{
-			str:      "foo",
-			expected: "bar",
-		},
-		{
-			str:      "foo foo",
-			expected: "bar bar",
-		},
-		{
-			str:      "somethingfoo",
-			expected: "somethingbar",
-		},
-	}
-
-	for _, c := range cases {
-		actual := Replace("foo", "bar", c.str)
-		if actual != c.expected {
-			t.Fatalf("expected %q, got %q, for %q", c.expected, actual, c.str)
-		}
+		t.Fatal("Configuration should not be nil, but was")
 	}
 }
 
@@ -203,15 +172,15 @@ func TestGetConfigurationReturnsCorrectMaxConnConfiguration(t *testing.T) {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
 	if configuration == nil {
-		t.Fatalf("Configuration should not be nil, but was")
+		t.Fatal("Configuration should not be nil, but was")
 	}
 
 	if configuration.Backends["backend1"].MaxConn.Amount != 10 {
-		t.Fatalf("Configuration did not parse MaxConn.Amount properly")
+		t.Fatal("Configuration did not parse MaxConn.Amount properly")
 	}
 
 	if configuration.Backends["backend1"].MaxConn.ExtractorFunc != "request.host" {
-		t.Fatalf("Configuration did not parse MaxConn.ExtractorFunc properly")
+		t.Fatal("Configuration did not parse MaxConn.ExtractorFunc properly")
 	}
 }
 
@@ -224,8 +193,42 @@ func TestNilClientTLS(t *testing.T) {
 	}
 	_, err := provider.TLS.CreateTLSConfig()
 	if err != nil {
-		t.Fatalf("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
+		t.Fatal("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
 	}
+}
+
+func TestInsecureSkipVerifyClientTLS(t *testing.T) {
+	provider := &myProvider{
+		BaseProvider{
+			Filename: "",
+		},
+		&types.ClientTLS{
+			InsecureSkipVerify: true,
+		},
+	}
+	config, err := provider.TLS.CreateTLSConfig()
+	if err != nil {
+		t.Fatal("CreateTLSConfig should assume that consumer does not want a TLS configuration if input is nil")
+	}
+	if !config.InsecureSkipVerify {
+		t.Fatal("CreateTLSConfig should support setting only InsecureSkipVerify property")
+	}
+}
+
+func TestInsecureSkipVerifyFalseClientTLS(t *testing.T) {
+	provider := &myProvider{
+		BaseProvider{
+			Filename: "",
+		},
+		&types.ClientTLS{
+			InsecureSkipVerify: false,
+		},
+	}
+	_, err := provider.TLS.CreateTLSConfig()
+	if err == nil {
+		t.Fatal("CreateTLSConfig should error if consumer does not set a TLS cert or key configuration and not chooses InsecureSkipVerify to be true")
+	}
+	t.Log(err)
 }
 
 func TestMatchingConstraints(t *testing.T) {
@@ -371,12 +374,60 @@ func TestDefaultFuncMap(t *testing.T) {
 		t.Fatalf("Shouldn't have error out, got %v", err)
 	}
 	if configuration == nil {
-		t.Fatalf("Configuration should not be nil, but was")
+		t.Fatal("Configuration should not be nil, but was")
 	}
 	if _, ok := configuration.Backends["backend1"]; !ok {
-		t.Fatalf("backend1 should exists, but it not")
+		t.Fatal("backend1 should exists, but it not")
 	}
 	if _, ok := configuration.Frontends["frontend-1"]; !ok {
-		t.Fatalf("Frontend frontend-1 should exists, but it not")
+		t.Fatal("Frontend frontend-1 should exists, but it not")
+	}
+}
+
+func TestSprigFunctions(t *testing.T) {
+	templateFile, err := ioutil.TempFile("", "provider-configuration")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(templateFile.Name())
+	data := []byte(`
+  {{$backend_name := trimAll "-" uuidv4}}
+  [backends]
+  [backends.{{$backend_name}}]
+    [backends.{{$backend_name}}.circuitbreaker]
+    [backends.{{$backend_name}}.servers.server2]
+    url = "http://172.17.0.3:80"
+    weight = 1
+
+[frontends]
+  [frontends.{{normalize "frontend/1"}}]
+  backend = "{{$backend_name}}"
+  passHostHeader = true
+    [frontends.frontend-1.routes.test_2]
+    rule = "Path"
+    value = "/test"`)
+	err = ioutil.WriteFile(templateFile.Name(), data, 0700)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	provider := &myProvider{
+		BaseProvider{
+			Filename: templateFile.Name(),
+		},
+		nil,
+	}
+	configuration, err := provider.GetConfiguration(templateFile.Name(), nil, nil)
+	if err != nil {
+		t.Fatalf("Shouldn't have error out, got %v", err)
+	}
+	if configuration == nil {
+		t.Fatal("Configuration should not be nil, but was")
+	}
+	if len(configuration.Backends) != 1 {
+		t.Fatal("one backend should be defined, but it's not")
+	}
+	if _, ok := configuration.Frontends["frontend-1"]; !ok {
+		t.Fatal("Frontend frontend-1 should exists, but it not")
 	}
 }

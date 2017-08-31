@@ -1,31 +1,27 @@
 package middlewares
 
 import (
-	"github.com/go-kit/kit/metrics"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/containous/traefik/metrics"
+	gokitmetrics "github.com/go-kit/kit/metrics"
 )
 
-// Metrics is an Interface that must be satisfied by any system that
-// wants to expose and monitor metrics
-type Metrics interface {
-	getReqsCounter() metrics.Counter
-	getLatencyHistogram() metrics.Histogram
-	handler() http.Handler
-}
-
 // MetricsWrapper is a Negroni compatible Handler which relies on a
-// given Metrics implementation to expose and monitor Traefik metrics
+// given Metrics implementation to expose and monitor Traefik Metrics.
 type MetricsWrapper struct {
-	Impl Metrics
+	registry    metrics.Registry
+	serviceName string
 }
 
 // NewMetricsWrapper return a MetricsWrapper struct with
 // a given Metrics implementation e.g Prometheuss
-func NewMetricsWrapper(impl Metrics) *MetricsWrapper {
+func NewMetricsWrapper(registry metrics.Registry, service string) *MetricsWrapper {
 	var metricsWrapper = MetricsWrapper{
-		Impl: impl,
+		registry:    registry,
+		serviceName: service,
 	}
 
 	return &metricsWrapper
@@ -35,17 +31,31 @@ func (m *MetricsWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next
 	start := time.Now()
 	prw := &responseRecorder{rw, http.StatusOK}
 	next(prw, r)
-	labels := []string{"code", strconv.Itoa(prw.StatusCode()), "method", r.Method}
-	m.Impl.getReqsCounter().With(labels...).Add(1)
-	m.Impl.getLatencyHistogram().Observe(float64(time.Since(start).Seconds()))
+
+	reqLabels := []string{"service", m.serviceName, "code", strconv.Itoa(prw.statusCode), "method", r.Method}
+	m.registry.ReqsCounter().With(reqLabels...).Add(1)
+
+	reqDurationLabels := []string{"service", m.serviceName, "code", strconv.Itoa(prw.statusCode)}
+	m.registry.ReqDurationHistogram().With(reqDurationLabels...).Observe(float64(time.Since(start).Seconds()))
 }
 
-func (rw *responseRecorder) StatusCode() int {
-	return rw.statusCode
+type retryMetrics interface {
+	RetriesCounter() gokitmetrics.Counter
 }
 
-// Handler is the chance for the Metrics implementation
-// to expose its metrics on a server endpoint
-func (m *MetricsWrapper) Handler() http.Handler {
-	return m.Impl.handler()
+// NewMetricsRetryListener instantiates a MetricsRetryListener with the given retryMetrics.
+func NewMetricsRetryListener(retryMetrics retryMetrics, backendName string) RetryListener {
+	return &MetricsRetryListener{retryMetrics: retryMetrics, backendName: backendName}
+}
+
+// MetricsRetryListener is an implementation of the RetryListener interface to
+// record RequestMetrics about retry attempts.
+type MetricsRetryListener struct {
+	retryMetrics retryMetrics
+	backendName  string
+}
+
+// Retried tracks the retry in the RequestMetrics implementation.
+func (m *MetricsRetryListener) Retried(req *http.Request, attempt int) {
+	m.retryMetrics.RetriesCounter().With("backend", m.backendName).Add(1)
 }

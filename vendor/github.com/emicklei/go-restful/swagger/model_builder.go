@@ -14,6 +14,7 @@ type ModelBuildable interface {
 
 type modelBuilder struct {
 	Models *ModelList
+	Config *Config
 }
 
 type documentable interface {
@@ -48,6 +49,14 @@ func (b modelBuilder) addModel(st reflect.Type, nameOverride string) *Model {
 	}
 	// no models needed for primitive types
 	if b.isPrimitiveType(modelName) {
+		return nil
+	}
+	// golang encoding/json packages says array and slice values encode as
+	// JSON arrays, except that []byte encodes as a base64-encoded string.
+	// If we see a []byte here, treat it at as a primitive type (string)
+	// and deal with it in buildArrayTypeProperty.
+	if (st.Kind() == reflect.Slice || st.Kind() == reflect.Array) &&
+		st.Elem().Kind() == reflect.Uint8 {
 		return nil
 	}
 	// see if we already have visited this model
@@ -132,9 +141,11 @@ func (b modelBuilder) buildProperty(field reflect.StructField, model *Model, mod
 		modelDescription = tag
 	}
 
-	fieldType := field.Type
-
 	prop.setPropertyMetadata(field)
+	if prop.Type != nil {
+		return jsonName, modelDescription, prop
+	}
+	fieldType := field.Type
 
 	// check if type is doing its own marshalling
 	marshalerType := reflect.TypeOf((*json.Marshaler)(nil)).Elem()
@@ -176,8 +187,8 @@ func (b modelBuilder) buildProperty(field reflect.StructField, model *Model, mod
 		return jsonName, modelDescription, prop
 	case fieldKind == reflect.Map:
 		// if it's a map, it's unstructured, and swagger 1.2 can't handle it
-		anyt := "any"
-		prop.Type = &anyt
+		objectType := "object"
+		prop.Type = &objectType
 		return jsonName, modelDescription, prop
 	}
 
@@ -212,8 +223,12 @@ func hasNamedJSONTag(field reflect.StructField) bool {
 }
 
 func (b modelBuilder) buildStructTypeProperty(field reflect.StructField, jsonName string, model *Model) (nameJson string, prop ModelProperty) {
-	fieldType := field.Type
 	prop.setPropertyMetadata(field)
+	// Check for type override in tag
+	if prop.Type != nil {
+		return jsonName, prop
+	}
+	fieldType := field.Type
 	// check for anonymous
 	if len(fieldType.Name()) == 0 {
 		// anonymous
@@ -225,7 +240,7 @@ func (b modelBuilder) buildStructTypeProperty(field reflect.StructField, jsonNam
 
 	if field.Name == fieldType.Name() && field.Anonymous && !hasNamedJSONTag(field) {
 		// embedded struct
-		sub := modelBuilder{new(ModelList)}
+		sub := modelBuilder{new(ModelList), b.Config}
 		sub.addModel(fieldType, "")
 		subKey := sub.keyFrom(fieldType)
 		// merge properties from sub
@@ -263,13 +278,23 @@ func (b modelBuilder) buildStructTypeProperty(field reflect.StructField, jsonNam
 }
 
 func (b modelBuilder) buildArrayTypeProperty(field reflect.StructField, jsonName, modelName string) (nameJson string, prop ModelProperty) {
-	fieldType := field.Type
+	// check for type override in tags
 	prop.setPropertyMetadata(field)
+	if prop.Type != nil {
+		return jsonName, prop
+	}
+	fieldType := field.Type
+	if fieldType.Elem().Kind() == reflect.Uint8 {
+		stringt := "string"
+		prop.Type = &stringt
+		return jsonName, prop
+	}
 	var pType = "array"
 	prop.Type = &pType
+	isPrimitive := b.isPrimitiveType(fieldType.Elem().Name())
 	elemTypeName := b.getElementTypeName(modelName, jsonName, fieldType.Elem())
 	prop.Items = new(Item)
-	if b.isPrimitiveType(elemTypeName) {
+	if isPrimitive {
 		mapped := b.jsonSchemaType(elemTypeName)
 		prop.Items.Type = &mapped
 	} else {
@@ -279,22 +304,36 @@ func (b modelBuilder) buildArrayTypeProperty(field reflect.StructField, jsonName
 	if fieldType.Elem().Kind() == reflect.Ptr {
 		fieldType = fieldType.Elem()
 	}
-	b.addModel(fieldType.Elem(), elemTypeName)
+	if !isPrimitive {
+		b.addModel(fieldType.Elem(), elemTypeName)
+	}
 	return jsonName, prop
 }
 
 func (b modelBuilder) buildPointerTypeProperty(field reflect.StructField, jsonName, modelName string) (nameJson string, prop ModelProperty) {
-	fieldType := field.Type
 	prop.setPropertyMetadata(field)
+	// Check for type override in tags
+	if prop.Type != nil {
+		return jsonName, prop
+	}
+	fieldType := field.Type
 
 	// override type of pointer to list-likes
 	if fieldType.Elem().Kind() == reflect.Slice || fieldType.Elem().Kind() == reflect.Array {
 		var pType = "array"
 		prop.Type = &pType
+		isPrimitive := b.isPrimitiveType(fieldType.Elem().Elem().Name())
 		elemName := b.getElementTypeName(modelName, jsonName, fieldType.Elem().Elem())
-		prop.Items = &Item{Ref: &elemName}
-		// add|overwrite model for element type
-		b.addModel(fieldType.Elem().Elem(), elemName)
+		if isPrimitive {
+			primName := b.jsonSchemaType(elemName)
+			prop.Items = &Item{Ref: &primName}
+		} else {
+			prop.Items = &Item{Ref: &elemName}
+		}
+		if !isPrimitive {
+			// add|overwrite model for element type
+			b.addModel(fieldType.Elem().Elem(), elemName)
+		}
 	} else {
 		// non-array, pointer type
 		var pType = b.jsonSchemaType(fieldType.String()[1:]) // no star, include pkg path
@@ -321,9 +360,6 @@ func (b modelBuilder) getElementTypeName(modelName, jsonName string, t reflect.T
 	if t.Name() == "" {
 		return modelName + "." + jsonName
 	}
-	if b.isPrimitiveType(t.Name()) {
-		return b.jsonSchemaType(t.Name())
-	}
 	return b.keyFrom(t)
 }
 
@@ -338,7 +374,10 @@ func (b modelBuilder) keyFrom(st reflect.Type) string {
 
 // see also https://golang.org/ref/spec#Numeric_types
 func (b modelBuilder) isPrimitiveType(modelName string) bool {
-	return strings.Contains("uint8 uint16 uint32 uint64 int int8 int16 int32 int64 float32 float64 bool string byte rune time.Time", modelName)
+	if len(modelName) == 0 {
+		return false
+	}
+	return strings.Contains("uint uint8 uint16 uint32 uint64 int int8 int16 int32 int64 float32 float64 bool string byte rune time.Time", modelName)
 }
 
 // jsonNameOfField returns the name of the field as it should appear in JSON format
@@ -359,6 +398,7 @@ func (b modelBuilder) jsonNameOfField(field reflect.StructField) string {
 // see also http://json-schema.org/latest/json-schema-core.html#anchor8
 func (b modelBuilder) jsonSchemaType(modelName string) string {
 	schemaMap := map[string]string{
+		"uint":   "integer",
 		"uint8":  "integer",
 		"uint16": "integer",
 		"uint32": "integer",
@@ -384,11 +424,17 @@ func (b modelBuilder) jsonSchemaType(modelName string) string {
 }
 
 func (b modelBuilder) jsonSchemaFormat(modelName string) string {
+	if b.Config != nil && b.Config.SchemaFormatHandler != nil {
+		if mapped := b.Config.SchemaFormatHandler(modelName); mapped != "" {
+			return mapped
+		}
+	}
 	schemaMap := map[string]string{
 		"int":        "int32",
 		"int32":      "int32",
 		"int64":      "int64",
 		"byte":       "byte",
+		"uint":       "integer",
 		"uint8":      "byte",
 		"float64":    "double",
 		"float32":    "float",

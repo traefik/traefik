@@ -80,7 +80,7 @@ func (d *Datastore) watchChanges() error {
 	if err != nil {
 		return err
 	}
-	go func() {
+	safe.Go(func() {
 		ctx, cancel := context.WithCancel(d.ctx)
 		operation := func() error {
 			for {
@@ -97,7 +97,6 @@ func (d *Datastore) watchChanges() error {
 					if err != nil {
 						return err
 					}
-					// log.Debugf("Datastore object change received: %+v", d.meta)
 					if d.listener != nil {
 						err := d.listener(d.meta.object)
 						if err != nil {
@@ -114,12 +113,12 @@ func (d *Datastore) watchChanges() error {
 		if err != nil {
 			log.Errorf("Error in watch datastore: %v", err)
 		}
-	}()
+	})
 	return nil
 }
 
 func (d *Datastore) reload() error {
-	log.Debugf("Datastore reload")
+	log.Debug("Datastore reload")
 	d.localLock.Lock()
 	err := d.kv.LoadConfig(d.meta)
 	if err != nil {

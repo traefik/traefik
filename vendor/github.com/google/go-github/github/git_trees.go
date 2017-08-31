@@ -30,6 +30,7 @@ type TreeEntry struct {
 	Type    *string `json:"type,omitempty"`
 	Size    *int    `json:"size,omitempty"`
 	Content *string `json:"content,omitempty"`
+	URL     *string `json:"url,omitempty"`
 }
 
 func (t TreeEntry) String() string {

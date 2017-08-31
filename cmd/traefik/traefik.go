@@ -18,9 +18,11 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/middlewares"
+	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
+	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
 	"github.com/containous/traefik/types"
@@ -34,8 +36,8 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	//traefik config inits
-	traefikConfiguration := server.NewTraefikConfiguration()
-	traefikPointersConfiguration := server.NewTraefikDefaultPointersConfiguration()
+	traefikConfiguration := NewTraefikConfiguration()
+	traefikPointersConfiguration := NewTraefikDefaultPointersConfiguration()
 	//traefik Command init
 	traefikCmd := &flaeg.Command{
 		Name: "traefik",
@@ -44,7 +46,19 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
-			run(traefikConfiguration)
+			globalConfiguration := traefikConfiguration.GlobalConfiguration
+			if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
+				// no filename, setting to global config file
+				if len(traefikConfiguration.ConfigFile) != 0 {
+					globalConfiguration.File.Filename = traefikConfiguration.ConfigFile
+				} else {
+					log.Errorln("Error using file configuration backend, no filename defined")
+				}
+			}
+			if len(traefikConfiguration.ConfigFile) != 0 {
+				log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
+			}
+			run(&globalConfiguration)
 			return nil
 		},
 	}
@@ -53,7 +67,7 @@ Complete documentation is available at https://traefik.io`,
 	var kv *staert.KvSource
 	var err error
 
-	storeconfigCmd := &flaeg.Command{
+	storeConfigCmd := &flaeg.Command{
 		Name:                  "storeconfig",
 		Description:           `Store the static traefik configuration into a Key-value stores. Traefik will not start.`,
 		Config:                traefikConfiguration,
@@ -73,8 +87,8 @@ Complete documentation is available at https://traefik.io`,
 			}
 			if traefikConfiguration.GlobalConfiguration.ACME != nil && len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
 				// convert ACME json file to KV store
-				store := acme.NewLocalStore(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
-				object, err := store.Load()
+				localStore := acme.NewLocalStore(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
+				object, err := localStore.Load()
 				if err != nil {
 					return err
 				}
@@ -99,20 +113,60 @@ Complete documentation is available at https://traefik.io`,
 		},
 	}
 
+	healthCheckCmd := &flaeg.Command{
+		Name:                  "healthcheck",
+		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
+		Config:                traefikConfiguration,
+		DefaultPointersConfig: traefikPointersConfiguration,
+		Run: func() error {
+			if traefikConfiguration.Web == nil {
+				fmt.Println("Please enable the web provider to use healtcheck.")
+				os.Exit(1)
+			}
+			client := &http.Client{Timeout: 5 * time.Second}
+			protocol := "http"
+			if len(traefikConfiguration.Web.CertFile) > 0 {
+				protocol = "https"
+				tr := &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				}
+				client.Transport = tr
+			}
+			resp, err := client.Head(protocol + "://" + traefikConfiguration.Web.Address + "/ping")
+			if err != nil {
+				fmt.Printf("Error calling healthcheck: %s\n", err)
+				os.Exit(1)
+			}
+			if resp.StatusCode != http.StatusOK {
+				fmt.Printf("Bad healthcheck status: %s\n", resp.Status)
+				os.Exit(1)
+			}
+			fmt.Printf("OK: %s\n", resp.Request.URL)
+			os.Exit(0)
+			return nil
+		},
+		Metadata: map[string]string{
+			"parseAllSources": "true",
+		},
+	}
+
 	//init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
 	//add custom parsers
-	f.AddParser(reflect.TypeOf(server.EntryPoints{}), &server.EntryPoints{})
-	f.AddParser(reflect.TypeOf(server.DefaultEntryPoints{}), &server.DefaultEntryPoints{})
+	f.AddParser(reflect.TypeOf(configuration.EntryPoints{}), &configuration.EntryPoints{})
+	f.AddParser(reflect.TypeOf(configuration.DefaultEntryPoints{}), &configuration.DefaultEntryPoints{})
+	f.AddParser(reflect.TypeOf(configuration.RootCAs{}), &configuration.RootCAs{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
+	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
 	//add commands
 	f.AddCommand(newVersionCmd())
 	f.AddCommand(newBugCmd(traefikConfiguration, traefikPointersConfiguration))
-	f.AddCommand(storeconfigCmd)
+	f.AddCommand(storeConfigCmd)
+	f.AddCommand(healthCheckCmd)
 
 	usedCmd, err := f.GetCommand()
 	if err != nil {
@@ -169,31 +223,36 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func run(traefikConfiguration *server.TraefikConfiguration) {
+func run(globalConfiguration *configuration.GlobalConfiguration) {
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
 
-	// load global configuration
-	globalConfiguration := traefikConfiguration.GlobalConfiguration
-
-	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = globalConfiguration.MaxIdleConnsPerHost
-	if globalConfiguration.InsecureSkipVerify {
-		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-	loggerMiddleware := middlewares.NewLogger(globalConfiguration.AccessLogsFile)
-	defer loggerMiddleware.Close()
-
-	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
-		// no filename, setting to global config file
-		if len(traefikConfiguration.ConfigFile) != 0 {
-			globalConfiguration.File.Filename = traefikConfiguration.ConfigFile
-		} else {
-			log.Errorln("Error using file configuration backend, no filename defined")
-		}
-	}
+	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	if len(globalConfiguration.EntryPoints) == 0 {
-		globalConfiguration.EntryPoints = map[string]*server.EntryPoint{"http": {Address: ":80"}}
+		globalConfiguration.EntryPoints = map[string]*configuration.EntryPoint{"http": {Address: ":80"}}
 		globalConfiguration.DefaultEntryPoints = []string{"http"}
+	}
+
+	if globalConfiguration.Rancher != nil {
+		// Ensure backwards compatibility for now
+		if len(globalConfiguration.Rancher.AccessKey) > 0 ||
+			len(globalConfiguration.Rancher.Endpoint) > 0 ||
+			len(globalConfiguration.Rancher.SecretKey) > 0 {
+
+			if globalConfiguration.Rancher.API == nil {
+				globalConfiguration.Rancher.API = &rancher.APIConfiguration{
+					AccessKey: globalConfiguration.Rancher.AccessKey,
+					SecretKey: globalConfiguration.Rancher.SecretKey,
+					Endpoint:  globalConfiguration.Rancher.Endpoint,
+				}
+			}
+			log.Warn("Deprecated configuration found: rancher.[accesskey|secretkey|endpoint]. " +
+				"Please use rancher.api.[accesskey|secretkey|endpoint] instead.")
+		}
+
+		if globalConfiguration.Rancher.Metadata != nil && len(globalConfiguration.Rancher.Metadata.Prefix) == 0 {
+			globalConfiguration.Rancher.Metadata.Prefix = "latest"
+		}
 	}
 
 	if globalConfiguration.Debug {
@@ -214,16 +273,15 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 			log.Errorf("Failed to create log path %s: %s", dir, err)
 		}
 
-		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		err = log.OpenFile(globalConfiguration.TraefikLogsFile)
 		defer func() {
-			if err := fi.Close(); err != nil {
-				log.Error("Error closing file", err)
+			if err := log.CloseFile(); err != nil {
+				log.Error("Error closing log", err)
 			}
 		}()
 		if err != nil {
 			log.Error("Error opening file", err)
 		} else {
-			log.SetOutput(fi)
 			log.SetFormatter(&logrus.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})
 		}
 	} else {
@@ -245,11 +303,8 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 		})
 	}
 
-	if len(traefikConfiguration.ConfigFile) != 0 {
-		log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
-	}
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
-	svr := server.NewServer(globalConfiguration)
+	svr := server.NewServer(*globalConfiguration)
 	svr.Start()
 	defer svr.Close()
 	sent, err := daemon.SdNotify(false, "READY=1")
@@ -278,34 +333,34 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 
 // CreateKvSource creates KvSource
 // TLS support is enable for Consul and Etcd backends
-func CreateKvSource(traefikConfiguration *server.TraefikConfiguration) (*staert.KvSource, error) {
+func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSource, error) {
 	var kv *staert.KvSource
-	var store store.Store
+	var kvStore store.Store
 	var err error
 
 	switch {
 	case traefikConfiguration.Consul != nil:
-		store, err = traefikConfiguration.Consul.CreateStore()
+		kvStore, err = traefikConfiguration.Consul.CreateStore()
 		kv = &staert.KvSource{
-			Store:  store,
+			Store:  kvStore,
 			Prefix: traefikConfiguration.Consul.Prefix,
 		}
 	case traefikConfiguration.Etcd != nil:
-		store, err = traefikConfiguration.Etcd.CreateStore()
+		kvStore, err = traefikConfiguration.Etcd.CreateStore()
 		kv = &staert.KvSource{
-			Store:  store,
+			Store:  kvStore,
 			Prefix: traefikConfiguration.Etcd.Prefix,
 		}
 	case traefikConfiguration.Zookeeper != nil:
-		store, err = traefikConfiguration.Zookeeper.CreateStore()
+		kvStore, err = traefikConfiguration.Zookeeper.CreateStore()
 		kv = &staert.KvSource{
-			Store:  store,
+			Store:  kvStore,
 			Prefix: traefikConfiguration.Zookeeper.Prefix,
 		}
 	case traefikConfiguration.Boltdb != nil:
-		store, err = traefikConfiguration.Boltdb.CreateStore()
+		kvStore, err = traefikConfiguration.Boltdb.CreateStore()
 		kv = &staert.KvSource{
-			Store:  store,
+			Store:  kvStore,
 			Prefix: traefikConfiguration.Boltdb.Prefix,
 		}
 	}

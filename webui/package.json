@@ -54,6 +54,7 @@
     "gulp-util": "^3.0.7",
     "html-loader": "^0.4.3",
     "html-webpack-plugin": "^2.9.0",
+    "http-proxy-middleware": "^0.17.4",
     "isparta-loader": "^2.0.0",
     "jasmine": "^2.4.1",
     "json-loader": "^0.5.4",

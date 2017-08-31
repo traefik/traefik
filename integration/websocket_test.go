@@ -1,16 +1,13 @@
-package main
+package integration
 
 import (
-	"errors"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"strings"
 	"time"
 
-	"github.com/containous/traefik/integration/utils"
+	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 	gorillawebsocket "github.com/gorilla/websocket"
 	checker "github.com/vdemeester/shakers"
@@ -51,33 +48,22 @@ func (suite *WebsocketSuite) TestBase(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "127.0.0.1") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
 	c.Assert(err, checker.IsNil)
 
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
-
 	c.Assert(err, checker.IsNil)
-	conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+
+	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+	c.Assert(err, checker.IsNil)
 
 	_, msg, err := conn.ReadMessage()
 	c.Assert(err, checker.IsNil)
-
 	c.Assert(string(msg), checker.Equals, "OK")
-
 }
 
 func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
@@ -111,35 +97,26 @@ func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "127.0.0.1") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
 	c.Assert(err, checker.IsNil)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:800")
 	c.Assert(err, check.IsNil)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, checker.IsNil)
 	_, err = websocket.NewClient(config, conn)
 	c.Assert(err, checker.NotNil)
 	c.Assert(err, checker.ErrorMatches, "bad status")
-
 }
 
 func (suite *WebsocketSuite) TestOrigin(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	// use default options
+	var upgrader = gorillawebsocket.Upgrader{}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -169,27 +146,18 @@ func (suite *WebsocketSuite) TestOrigin(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "127.0.0.1") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
 	c.Assert(err, checker.IsNil)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:8000")
 	c.Assert(err, check.IsNil)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, check.IsNil)
 	client, err := websocket.NewClient(config, conn)
 	c.Assert(err, checker.IsNil)
 
@@ -238,27 +206,18 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
 	// wait for traefik
-	err = utils.TryRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, func(res *http.Response) error {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-		if !strings.Contains(string(body), "127.0.0.1") {
-			return errors.New("Incorrect traefik config")
-		}
-		return nil
-	})
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
 	c.Assert(err, checker.IsNil)
 
 	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:80")
 	c.Assert(err, check.IsNil)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, checker.IsNil)
 	client, err := websocket.NewClient(config, conn)
 	c.Assert(err, checker.IsNil)
 

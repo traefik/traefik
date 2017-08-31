@@ -154,6 +154,25 @@ func (s *OrganizationsService) Get(ctx context.Context, org string) (*Organizati
 	return organization, resp, nil
 }
 
+// GetByID fetches an organization.
+//
+// Note: GetByID uses the undocumented GitHub API endpoint /organizations/:id.
+func (s *OrganizationsService) GetByID(ctx context.Context, id int) (*Organization, *Response, error) {
+	u := fmt.Sprintf("organizations/%d", id)
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	organization := new(Organization)
+	resp, err := s.client.Do(ctx, req, organization)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	return organization, resp, nil
+}
+
 // Edit an organization.
 //
 // GitHub API docs: https://developer.github.com/v3/orgs/#edit-an-organization

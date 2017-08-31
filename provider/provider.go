@@ -2,16 +2,13 @@ package provider
 
 import (
 	"bytes"
-	"crypto/tls"
-	"crypto/x509"
-	"fmt"
 	"io/ioutil"
-	"os"
 	"strings"
 	"text/template"
 	"unicode"
 
 	"github.com/BurntSushi/toml"
+	"github.com/Masterminds/sprig"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
@@ -27,9 +24,11 @@ type Provider interface {
 
 // BaseProvider should be inherited by providers
 type BaseProvider struct {
-	Watch       bool              `description:"Watch provider"`
-	Filename    string            `description:"Override default configuration template. For advanced users :)"`
-	Constraints types.Constraints `description:"Filter services by constraint, matching with Traefik tags."`
+	Watch                     bool              `description:"Watch provider"`
+	Filename                  string            `description:"Override default configuration template. For advanced users :)"`
+	Constraints               types.Constraints `description:"Filter services by constraint, matching with Traefik tags."`
+	Trace                     bool              `description:"Display additional provider logs (if available)."`
+	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template."`
 }
 
 // MatchConstraints must match with EVERY single contraint
@@ -58,14 +57,12 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 		err error
 	)
 	configuration := new(types.Configuration)
-	var defaultFuncMap = template.FuncMap{
-		"replace":   Replace,
-		"tolower":   strings.ToLower,
-		"normalize": Normalize,
-		"split":     split,
-		"contains":  contains,
-	}
 
+	var defaultFuncMap = sprig.TxtFuncMap()
+	// tolower is deprecated in favor of sprig's lower function
+	defaultFuncMap["tolower"] = strings.ToLower
+	defaultFuncMap["normalize"] = Normalize
+	defaultFuncMap["split"] = split
 	for funcID, funcElement := range funcMap {
 		defaultFuncMap[funcID] = funcElement
 	}
@@ -94,20 +91,13 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 	}
 
 	var renderedTemplate = buffer.String()
-	//	log.Debugf("Rendering results of %s:\n%s", defaultTemplateFile, renderedTemplate)
+	if p.DebugLogGeneratedTemplate {
+		log.Debugf("Rendering results of %s:\n%s", defaultTemplateFile, renderedTemplate)
+	}
 	if _, err := toml.Decode(renderedTemplate, configuration); err != nil {
 		return nil, err
 	}
 	return configuration, nil
-}
-
-// Replace is an alias for strings.Replace
-func Replace(s1 string, s2 string, s3 string) string {
-	return strings.Replace(s3, s1, s2, -1)
-}
-
-func contains(substr, s string) bool {
-	return strings.Contains(s, substr)
 }
 
 func split(sep, s string) []string {
@@ -128,66 +118,4 @@ func ReverseStringSlice(slice *[]string) {
 	for i, j := 0, len(*slice)-1; i < j; i, j = i+1, j-1 {
 		(*slice)[i], (*slice)[j] = (*slice)[j], (*slice)[i]
 	}
-}
-
-// ClientTLS holds TLS specific configurations as client
-// CA, Cert and Key can be either path or file contents
-type ClientTLS struct {
-	CA                 string `description:"TLS CA"`
-	Cert               string `description:"TLS cert"`
-	Key                string `description:"TLS key"`
-	InsecureSkipVerify bool   `description:"TLS insecure skip verify"`
-}
-
-// CreateTLSConfig creates a TLS config from ClientTLS structures
-func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
-	var err error
-	if clientTLS == nil {
-		log.Warnf("clientTLS is nil")
-		return nil, nil
-	}
-	caPool := x509.NewCertPool()
-	if clientTLS.CA != "" {
-		var ca []byte
-		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
-			ca, err = ioutil.ReadFile(clientTLS.CA)
-			if err != nil {
-				return nil, fmt.Errorf("Failed to read CA. %s", err)
-			}
-		} else {
-			ca = []byte(clientTLS.CA)
-		}
-		caPool.AppendCertsFromPEM(ca)
-	}
-
-	cert := tls.Certificate{}
-	_, errKeyIsFile := os.Stat(clientTLS.Key)
-
-	if _, errCertIsFile := os.Stat(clientTLS.Cert); errCertIsFile == nil {
-		if errKeyIsFile == nil {
-			cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
-			if err != nil {
-				return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
-			}
-		} else {
-			return nil, fmt.Errorf("tls cert is a file, but tls key is not")
-		}
-	} else {
-		if errKeyIsFile != nil {
-			cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
-			if err != nil {
-				return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
-
-			}
-		} else {
-			return nil, fmt.Errorf("tls key is a file, but tls cert is not")
-		}
-	}
-
-	TLSConfig := &tls.Config{
-		Certificates:       []tls.Certificate{cert},
-		RootCAs:            caPool,
-		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
-	}
-	return TLSConfig, nil
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/containous/traefik/types"
 )
 
 func makeEcsInstance(containerDef *ecs.ContainerDefinition) ecsInstance {
@@ -68,7 +69,7 @@ func TestEcsProtocol(t *testing.T) {
 		{
 			expected: "https",
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.protocol": aws.String("https"),
+				types.LabelProtocol: aws.String("https"),
 			}),
 		},
 	}
@@ -131,7 +132,7 @@ func TestEcsWeight(t *testing.T) {
 		{
 			expected: "10",
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.weight": aws.String("10"),
+				types.LabelWeight: aws.String("10"),
 			}),
 		},
 	}
@@ -156,7 +157,7 @@ func TestEcsPassHostHeader(t *testing.T) {
 		{
 			expected: "false",
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.frontend.passHostHeader": aws.String("false"),
+				types.LabelFrontendPassHostHeader: aws.String("false"),
 			}),
 		},
 	}
@@ -181,7 +182,7 @@ func TestEcsPriority(t *testing.T) {
 		{
 			expected: "10",
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.frontend.priority": aws.String("10"),
+				types.LabelFrontendPriority: aws.String("10"),
 			}),
 		},
 	}
@@ -206,13 +207,13 @@ func TestEcsEntryPoints(t *testing.T) {
 		{
 			expected: []string{"http"},
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.frontend.entryPoints": aws.String("http"),
+				types.LabelFrontendEntryPoints: aws.String("http"),
 			}),
 		},
 		{
 			expected: []string{"http", "https"},
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.frontend.entryPoints": aws.String("http,https"),
+				types.LabelFrontendEntryPoints: aws.String("http,https"),
 			}),
 		},
 	}
@@ -261,14 +262,14 @@ func TestFilterInstance(t *testing.T) {
 			expected:         false,
 			exposedByDefault: true,
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.enable": aws.String("false"),
+				types.LabelEnable: aws.String("false"),
 			}),
 		},
 		{
 			expected:         true,
 			exposedByDefault: false,
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				"traefik.enable": aws.String("true"),
+				types.LabelEnable: aws.String("true"),
 			}),
 		},
 		{

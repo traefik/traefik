@@ -1,5 +1,5 @@
-// The mapstructure package exposes functionality to convert an
-// arbitrary map[string]interface{} into a native Go structure.
+// Package mapstructure exposes functionality to convert an arbitrary
+// map[string]interface{} into a native Go structure.
 //
 // The Go structure can be arbitrarily complex, containing slices,
 // other structs, etc. and the decoder will properly decode nested
@@ -32,7 +32,12 @@ import (
 // both.
 type DecodeHookFunc interface{}
 
+// DecodeHookFuncType is a DecodeHookFunc which has complete information about
+// the source and target types.
 type DecodeHookFuncType func(reflect.Type, reflect.Type, interface{}) (interface{}, error)
+
+// DecodeHookFuncKind is a DecodeHookFunc which knows only the Kinds of the
+// source and target types.
 type DecodeHookFuncKind func(reflect.Kind, reflect.Kind, interface{}) (interface{}, error)
 
 // DecoderConfig is the configuration that is used to create a new decoder
@@ -436,7 +441,7 @@ func (d *Decoder) decodeFloat(name string, data interface{}, val reflect.Value) 
 	case dataKind == reflect.Uint:
 		val.SetFloat(float64(dataVal.Uint()))
 	case dataKind == reflect.Float32:
-		val.SetFloat(float64(dataVal.Float()))
+		val.SetFloat(dataVal.Float())
 	case dataKind == reflect.Bool && d.config.WeaklyTypedInput:
 		if dataVal.Bool() {
 			val.SetFloat(1)

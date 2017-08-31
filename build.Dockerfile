@@ -1,11 +1,8 @@
-FROM golang:1.8
+FROM golang:1.9-alpine
 
-# Install a more recent version of mercurial to avoid mismatching results
-# between glide run on a decently updated host system and the build container.
-RUN awk '$1 ~ "^deb" { $3 = $3 "-backports"; print; exit }' /etc/apt/sources.list > /etc/apt/sources.list.d/backports.list && \
-  DEBIAN_FRONTEND=noninteractive apt-get update && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -t jessie-backports --yes --no-install-recommends mercurial=3.9.1-1~bpo8+1 && \
-  rm -fr /var/lib/apt/lists/
+RUN apk --update upgrade \
+&& apk --no-cache --no-progress add git mercurial bash gcc musl-dev curl tar \
+&& rm -rf /var/cache/apk/*
 
 RUN go get github.com/jteeuwen/go-bindata/... \
 && go get github.com/golang/lint/golint \
@@ -15,8 +12,7 @@ RUN go get github.com/jteeuwen/go-bindata/... \
 && go get github.com/sgotti/glide-vc
 
 # Which docker version to test on
-ARG DOCKER_VERSION=17.03.1
-
+ARG DOCKER_VERSION=17.03.2
 
 # Which glide version to test on
 ARG GLIDE_VERSION=v0.12.3
@@ -28,7 +24,7 @@ RUN mkdir -p /usr/local/bin \
 
 # Download docker
 RUN mkdir -p /usr/local/bin \
-    && curl -fL https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}-ce.tgz \
+    && curl -fL https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_VERSION}-ce.tgz \
     | tar -xzC /usr/local/bin --transform 's#^.+/##x'
 
 WORKDIR /go/src/github.com/containous/traefik

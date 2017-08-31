@@ -112,11 +112,11 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	}
 
 	notify := func(err error, time time.Duration) {
-		log.Errorf("mesos connection error %+v, retrying in %s", err, time)
+		log.Errorf("Mesos connection error %+v, retrying in %s", err, time)
 	}
 	err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
 	if err != nil {
-		log.Errorf("Cannot connect to mesos server %+v", err)
+		log.Errorf("Cannot connect to Mesos server %+v", err)
 	}
 	return nil
 }
@@ -141,7 +141,7 @@ func (p *Provider) loadMesosConfig() *types.Configuration {
 	t := records.NewRecordGenerator(time.Duration(p.StateTimeoutSecond) * time.Second)
 	sj, err := t.FindMaster(p.Masters...)
 	if err != nil {
-		log.Errorf("Failed to create a client for mesos, error: %s", err)
+		log.Errorf("Failed to create a client for Mesos, error: %s", err)
 		return nil
 	}
 	tasks := p.taskRecords(sj)
@@ -197,32 +197,32 @@ func labels(task state.Task, key string) string {
 
 func mesosTaskFilter(task state.Task, exposedByDefaultFlag bool) bool {
 	if len(task.DiscoveryInfo.Ports.DiscoveryPorts) == 0 {
-		log.Debugf("Filtering mesos task without port %s", task.Name)
+		log.Debugf("Filtering Mesos task without port %s", task.Name)
 		return false
 	}
 	if !isMesosApplicationEnabled(task, exposedByDefaultFlag) {
-		log.Debugf("Filtering disabled mesos task %s", task.DiscoveryInfo.Name)
+		log.Debugf("Filtering disabled Mesos task %s", task.DiscoveryInfo.Name)
 		return false
 	}
 
 	//filter indeterminable task port
-	portIndexLabel := labels(task, "traefik.portIndex")
-	portValueLabel := labels(task, "traefik.port")
+	portIndexLabel := labels(task, types.LabelPortIndex)
+	portValueLabel := labels(task, types.LabelPort)
 	if portIndexLabel != "" && portValueLabel != "" {
-		log.Debugf("Filtering mesos task %s specifying both traefik.portIndex and traefik.port labels", task.Name)
+		log.Debugf("Filtering Mesos task %s specifying both traefik.portIndex and traefik.port labels", task.Name)
 		return false
 	}
 	if portIndexLabel != "" {
-		index, err := strconv.Atoi(labels(task, "traefik.portIndex"))
+		index, err := strconv.Atoi(labels(task, types.LabelPortIndex))
 		if err != nil || index < 0 || index > len(task.DiscoveryInfo.Ports.DiscoveryPorts)-1 {
-			log.Debugf("Filtering mesos task %s with unexpected value for traefik.portIndex label", task.Name)
+			log.Debugf("Filtering Mesos task %s with unexpected value for traefik.portIndex label", task.Name)
 			return false
 		}
 	}
 	if portValueLabel != "" {
-		port, err := strconv.Atoi(labels(task, "traefik.port"))
+		port, err := strconv.Atoi(labels(task, types.LabelPort))
 		if err != nil {
-			log.Debugf("Filtering mesos task %s with unexpected value for traefik.port label", task.Name)
+			log.Debugf("Filtering Mesos task %s with unexpected value for traefik.port label", task.Name)
 			return false
 		}
 
@@ -235,14 +235,14 @@ func mesosTaskFilter(task state.Task, exposedByDefaultFlag bool) bool {
 		}
 
 		if !foundPort {
-			log.Debugf("Filtering mesos task %s without a matching port for traefik.port label", task.Name)
+			log.Debugf("Filtering Mesos task %s without a matching port for traefik.port label", task.Name)
 			return false
 		}
 	}
 
 	//filter healthchecks
 	if task.Statuses != nil && len(task.Statuses) > 0 && task.Statuses[0].Healthy != nil && !*task.Statuses[0].Healthy {
-		log.Debugf("Filtering mesos task %s with bad healthcheck", task.DiscoveryInfo.Name)
+		log.Debugf("Filtering Mesos task %s with bad healthcheck", task.DiscoveryInfo.Name)
 		return false
 
 	}
@@ -259,7 +259,7 @@ func getMesos(task state.Task, apps []state.Task) (state.Task, error) {
 }
 
 func isMesosApplicationEnabled(task state.Task, exposedByDefault bool) bool {
-	return exposedByDefault && labels(task, "traefik.enable") != "false" || labels(task, "traefik.enable") == "true"
+	return exposedByDefault && labels(task, types.LabelEnable) != "false" || labels(task, types.LabelEnable) == "true"
 }
 
 func (p *Provider) getLabel(task state.Task, label string) (string, error) {
@@ -274,16 +274,16 @@ func (p *Provider) getLabel(task state.Task, label string) (string, error) {
 func (p *Provider) getPort(task state.Task, applications []state.Task) string {
 	application, err := getMesos(task, applications)
 	if err != nil {
-		log.Errorf("Unable to get mesos application from task %s", task.DiscoveryInfo.Name)
+		log.Errorf("Unable to get Mesos application from task %s", task.DiscoveryInfo.Name)
 		return ""
 	}
 
-	if portIndexLabel, err := p.getLabel(application, "traefik.portIndex"); err == nil {
+	if portIndexLabel, err := p.getLabel(application, types.LabelPortIndex); err == nil {
 		if index, err := strconv.Atoi(portIndexLabel); err == nil {
 			return strconv.Itoa(task.DiscoveryInfo.Ports.DiscoveryPorts[index].Number)
 		}
 	}
-	if portValueLabel, err := p.getLabel(application, "traefik.port"); err == nil {
+	if portValueLabel, err := p.getLabel(application, types.LabelPort); err == nil {
 		return portValueLabel
 	}
 
@@ -296,18 +296,18 @@ func (p *Provider) getPort(task state.Task, applications []state.Task) string {
 func (p *Provider) getWeight(task state.Task, applications []state.Task) string {
 	application, errApp := getMesos(task, applications)
 	if errApp != nil {
-		log.Errorf("Unable to get mesos application from task %s", task.DiscoveryInfo.Name)
+		log.Errorf("Unable to get Mesos application from task %s", task.DiscoveryInfo.Name)
 		return "0"
 	}
 
-	if label, err := p.getLabel(application, "traefik.weight"); err == nil {
+	if label, err := p.getLabel(application, types.LabelWeight); err == nil {
 		return label
 	}
 	return "0"
 }
 
 func (p *Provider) getDomain(task state.Task) string {
-	if label, err := p.getLabel(task, "traefik.domain"); err == nil {
+	if label, err := p.getLabel(task, types.LabelDomain); err == nil {
 		return label
 	}
 	return p.Domain
@@ -316,31 +316,31 @@ func (p *Provider) getDomain(task state.Task) string {
 func (p *Provider) getProtocol(task state.Task, applications []state.Task) string {
 	application, errApp := getMesos(task, applications)
 	if errApp != nil {
-		log.Errorf("Unable to get mesos application from task %s", task.DiscoveryInfo.Name)
+		log.Errorf("Unable to get Mesos application from task %s", task.DiscoveryInfo.Name)
 		return "http"
 	}
-	if label, err := p.getLabel(application, "traefik.protocol"); err == nil {
+	if label, err := p.getLabel(application, types.LabelProtocol); err == nil {
 		return label
 	}
 	return "http"
 }
 
 func (p *Provider) getPassHostHeader(task state.Task) string {
-	if passHostHeader, err := p.getLabel(task, "traefik.frontend.passHostHeader"); err == nil {
+	if passHostHeader, err := p.getLabel(task, types.LabelFrontendPassHostHeader); err == nil {
 		return passHostHeader
 	}
 	return "false"
 }
 
 func (p *Provider) getPriority(task state.Task) string {
-	if priority, err := p.getLabel(task, "traefik.frontend.priority"); err == nil {
+	if priority, err := p.getLabel(task, types.LabelFrontendPriority); err == nil {
 		return priority
 	}
 	return "0"
 }
 
 func (p *Provider) getEntryPoints(task state.Task) []string {
-	if entryPoints, err := p.getLabel(task, "traefik.frontend.entryPoints"); err == nil {
+	if entryPoints, err := p.getLabel(task, types.LabelFrontendEntryPoints); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
@@ -349,7 +349,7 @@ func (p *Provider) getEntryPoints(task state.Task) []string {
 // getFrontendRule returns the frontend rule for the specified application, using
 // it's label. It returns a default one (Host) if the label is not present.
 func (p *Provider) getFrontendRule(task state.Task) string {
-	if label, err := p.getLabel(task, "traefik.frontend.rule"); err == nil {
+	if label, err := p.getLabel(task, types.LabelFrontendRule); err == nil {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(p.getSubDomain(task.DiscoveryInfo.Name), "_", "-", -1)) + "." + p.Domain
@@ -358,14 +358,14 @@ func (p *Provider) getFrontendRule(task state.Task) string {
 func (p *Provider) getBackend(task state.Task, applications []state.Task) string {
 	application, errApp := getMesos(task, applications)
 	if errApp != nil {
-		log.Errorf("Unable to get mesos application from task %s", task.DiscoveryInfo.Name)
+		log.Errorf("Unable to get Mesos application from task %s", task.DiscoveryInfo.Name)
 		return ""
 	}
 	return p.getFrontendBackend(application)
 }
 
 func (p *Provider) getFrontendBackend(task state.Task) string {
-	if label, err := p.getLabel(task, "traefik.backend"); err == nil {
+	if label, err := p.getLabel(task, types.LabelBackend); err == nil {
 		return label
 	}
 	return "-" + cleanupSpecialChars(task.DiscoveryInfo.Name)
@@ -392,9 +392,9 @@ func detectMasters(zk string, masters []string) <-chan []string {
 	if zk != "" {
 		log.Debugf("Starting master detector for ZK ", zk)
 		if md, err := detector.New(zk); err != nil {
-			log.Errorf("failed to create master detector: %v", err)
+			log.Errorf("Failed to create master detector: %v", err)
 		} else if err := md.Detect(detect.NewMasters(masters, changed)); err != nil {
-			log.Errorf("failed to initialize master detector: %v", err)
+			log.Errorf("Failed to initialize master detector: %v", err)
 		}
 	} else {
 		changed <- masters

@@ -1,14 +1,13 @@
-package main
+package integration
 
 import (
 	"crypto/tls"
-	"errors"
+	"fmt"
 	"net/http"
-	"os"
-	"os/exec"
 	"time"
 
-	"github.com/containous/traefik/integration/utils"
+	"github.com/containous/traefik/integration/try"
+	"github.com/containous/traefik/testhelpers"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
 )
@@ -26,11 +25,13 @@ type AcmeTestCase struct {
 	domainToCheck       string
 }
 
-// Domain to check
-const acmeDomain = "traefik.acme.wtf"
+const (
+	// Domain to check
+	acmeDomain = "traefik.acme.wtf"
 
-// Wildcard domain to chekc
-const wildcardDomain = "*.acme.wtf"
+	// Wildcard domain to check
+	wildcardDomain = "*.acme.wtf"
+)
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	s.createComposeProject(c, "boulder")
@@ -39,17 +40,7 @@ func (s *AcmeSuite) SetUpSuite(c *check.C) {
 	s.boulderIP = s.composeProject.Container(c, "boulder").NetworkSettings.IPAddress
 
 	// wait for boulder
-	err := utils.Try(120*time.Second, func() error {
-		resp, err := http.Get("http://" + s.boulderIP + ":4000/directory")
-		if err != nil {
-			return err
-		}
-		if resp.StatusCode != 200 {
-			return errors.New("Expected http 200 from boulder")
-		}
-		return nil
-	})
-
+	err := try.GetRequest("http://"+s.boulderIP+":4000/directory", 120*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -62,53 +53,61 @@ func (s *AcmeSuite) TearDownSuite(c *check.C) {
 
 // Test OnDemand option with none provided certificate
 func (s *AcmeSuite) TestOnDemandRetrieveAcmeCertificate(c *check.C) {
-	aTestCase := AcmeTestCase{
+	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme.toml",
 		onDemand:            true,
 		domainToCheck:       acmeDomain}
-	s.retrieveAcmeCertificate(c, aTestCase)
+
+	s.retrieveAcmeCertificate(c, testCase)
 }
 
 // Test OnHostRule option with none provided certificate
 func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificate(c *check.C) {
-	aTestCase := AcmeTestCase{
+	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme.toml",
 		onDemand:            false,
 		domainToCheck:       acmeDomain}
-	s.retrieveAcmeCertificate(c, aTestCase)
+
+	s.retrieveAcmeCertificate(c, testCase)
 }
 
 // Test OnDemand option with a wildcard provided certificate
 func (s *AcmeSuite) TestOnDemandRetrieveAcmeCertificateWithWildcard(c *check.C) {
-	aTestCase := AcmeTestCase{
+	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_provided.toml",
 		onDemand:            true,
 		domainToCheck:       wildcardDomain}
-	s.retrieveAcmeCertificate(c, aTestCase)
+
+	s.retrieveAcmeCertificate(c, testCase)
 }
 
 // Test onHostRule option with a wildcard provided certificate
 func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateWithWildcard(c *check.C) {
-	aTestCase := AcmeTestCase{
+	testCase := AcmeTestCase{
 		traefikConfFilePath: "fixtures/acme/acme_provided.toml",
 		onDemand:            false,
 		domainToCheck:       wildcardDomain}
-	s.retrieveAcmeCertificate(c, aTestCase)
+
+	s.retrieveAcmeCertificate(c, testCase)
 }
 
 // Doing an HTTPS request and test the response certificate
-func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, a AcmeTestCase) {
-	file := s.adaptFile(c, a.traefikConfFilePath, struct {
+func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
+	file := s.adaptFile(c, testCase.traefikConfFilePath, struct {
 		BoulderHost          string
 		OnDemand, OnHostRule bool
-	}{s.boulderIP, a.onDemand, !a.onDemand})
-	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+	}{
+		BoulderHost: s.boulderIP,
+		OnDemand:    testCase.onDemand,
+		OnHostRule:  !testCase.onDemand,
+	})
+
+	cmd, output := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	backend := startTestServer("9010", 200)
+	backend := startTestServer("9010", http.StatusOK)
 	defer backend.Close()
 
 	tr := &http.Transport{
@@ -117,13 +116,12 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, a AcmeTestCase) {
 	client := &http.Client{Transport: tr}
 
 	// wait for traefik (generating acme account take some seconds)
-	err = utils.Try(30*time.Second, func() error {
+	err = try.Do(90*time.Second, func() error {
 		_, err := client.Get("https://127.0.0.1:5001")
-		if err != nil {
-			return err
-		}
-		return nil
+		return err
 	})
+	// TODO: waiting a refactor of integration tests
+	s.displayTraefikLog(c, output)
 	c.Assert(err, checker.IsNil)
 
 	tr = &http.Transport{
@@ -133,28 +131,35 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, a AcmeTestCase) {
 		},
 	}
 	client = &http.Client{Transport: tr}
-	req, _ := http.NewRequest("GET", "https://127.0.0.1:5001/", nil)
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "https://127.0.0.1:5001/", nil)
 	req.Host = acmeDomain
 	req.Header.Set("Host", acmeDomain)
 	req.Header.Set("Accept", "*/*")
 
 	var resp *http.Response
+
 	// Retry to send a Request which uses the LE generated certificate
-	err = utils.Try(60*time.Second, func() error {
+	err = try.Do(60*time.Second, func() error {
 		resp, err = client.Do(req)
+
 		// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\
 		req.Close = true
+
 		if err != nil {
 			return err
-		} else if resp.TLS.PeerCertificates[0].Subject.CommonName != a.domainToCheck {
-			return errors.New("Domain " + resp.TLS.PeerCertificates[0].Subject.CommonName + " found in place of " + a.domainToCheck)
 		}
+
+		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
+		if cn != testCase.domainToCheck {
+			return fmt.Errorf("domain %s found in place of %s", cn, testCase.domainToCheck)
+		}
+
 		return nil
 	})
-	c.Assert(err, checker.IsNil)
-	// Check Domain into response certificate
-	c.Assert(resp.TLS.PeerCertificates[0].Subject.CommonName, checker.Equals, a.domainToCheck)
-	// Expected a 200
-	c.Assert(resp.StatusCode, checker.Equals, 200)
 
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusOK)
+	// Check Domain into response certificate
+	c.Assert(resp.TLS.PeerCertificates[0].Subject.CommonName, checker.Equals, testCase.domainToCheck)
 }

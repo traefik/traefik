@@ -8,9 +8,10 @@ import (
 	"os"
 	"testing"
 
-	"github.com/codegangsta/negroni"
+	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/urfave/negroni"
 )
 
 func TestAuthUsersFromFile(t *testing.T) {
@@ -65,14 +66,14 @@ func TestAuthUsersFromFile(t *testing.T) {
 }
 
 func TestBasicAuthFail(t *testing.T) {
-	authMiddleware, err := NewAuthenticator(&types.Auth{
+	_, err := NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{
 			Users: []string{"test"},
 		},
 	})
 	assert.Contains(t, err.Error(), "Error parsing Authenticator user", "should contains")
 
-	authMiddleware, err = NewAuthenticator(&types.Auth{
+	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{
 			Users: []string{"test:test"},
 		},
@@ -88,7 +89,7 @@ func TestBasicAuthFail(t *testing.T) {
 	defer ts.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", ts.URL, nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
@@ -112,7 +113,7 @@ func TestBasicAuthSuccess(t *testing.T) {
 	defer ts.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", ts.URL, nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
@@ -124,14 +125,14 @@ func TestBasicAuthSuccess(t *testing.T) {
 }
 
 func TestDigestAuthFail(t *testing.T) {
-	authMiddleware, err := NewAuthenticator(&types.Auth{
+	_, err := NewAuthenticator(&types.Auth{
 		Digest: &types.Digest{
 			Users: []string{"test"},
 		},
 	})
 	assert.Contains(t, err.Error(), "Error parsing Authenticator user", "should contains")
 
-	authMiddleware, err = NewAuthenticator(&types.Auth{
+	authMiddleware, err := NewAuthenticator(&types.Auth{
 		Digest: &types.Digest{
 			Users: []string{"test:traefik:test"},
 		},
@@ -148,7 +149,7 @@ func TestDigestAuthFail(t *testing.T) {
 	defer ts.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", ts.URL, nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
@@ -160,12 +161,12 @@ func TestBasicAuthUserHeader(t *testing.T) {
 		Basic: &types.Basic{
 			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		},
-		HeaderField: "X-WebAuth-User",
+		HeaderField: "X-Webauth-User",
 	})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "test", r.Header["X-WebAuth-User"][0], "auth user should be set")
+		assert.Equal(t, "test", r.Header["X-Webauth-User"][0], "auth user should be set")
 		fmt.Fprintln(w, "traefik")
 	})
 	n := negroni.New(authMiddleware)
@@ -174,8 +175,73 @@ func TestBasicAuthUserHeader(t *testing.T) {
 	defer ts.Close()
 
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", ts.URL, nil)
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	req.SetBasicAuth("test", "test")
+	res, err := client.Do(req)
+	assert.NoError(t, err, "there should be no error")
+
+	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
+
+	body, err := ioutil.ReadAll(res.Body)
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, "traefik\n", string(body), "they should be equal")
+}
+
+func TestForwardAuthFail(t *testing.T) {
+	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+	}))
+	defer authTs.Close()
+
+	authMiddleware, err := NewAuthenticator(&types.Auth{
+		Forward: &types.Forward{
+			Address: authTs.URL,
+		},
+	})
+	assert.NoError(t, err, "there should be no error")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+	n := negroni.New(authMiddleware)
+	n.UseHandler(handler)
+	ts := httptest.NewServer(n)
+	defer ts.Close()
+
+	client := &http.Client{}
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := client.Do(req)
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, http.StatusForbidden, res.StatusCode, "they should be equal")
+
+	body, err := ioutil.ReadAll(res.Body)
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, "Forbidden\n", string(body), "they should be equal")
+}
+
+func TestForwardAuthSuccess(t *testing.T) {
+	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "Success")
+	}))
+	defer authTs.Close()
+
+	authMiddleware, err := NewAuthenticator(&types.Auth{
+		Forward: &types.Forward{
+			Address: authTs.URL,
+		},
+	})
+	assert.NoError(t, err, "there should be no error")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+	n := negroni.New(authMiddleware)
+	n.UseHandler(handler)
+	ts := httptest.NewServer(n)
+	defer ts.Close()
+
+	client := &http.Client{}
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")

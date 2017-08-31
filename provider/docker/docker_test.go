@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/types"
-	docker "github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/container"
+	docker "github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -23,7 +23,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Headers:User-Agent,bat/0.1.0",
+				types.LabelFrontendRule: "Headers:User-Agent,bat/0.1.0",
 			})),
 			expected: "Headers-User-Agent-bat-0-1-0",
 		},
@@ -36,19 +36,19 @@ func TestDockerGetFrontendName(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Host:foo.bar",
+				types.LabelFrontendRule: "Host:foo.bar",
 			})),
 			expected: "Host-foo-bar",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Path:/test",
+				types.LabelFrontendRule: "Path:/test",
 			})),
 			expected: "Path-test",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "PathPrefix:/test2",
+				types.LabelFrontendRule: "PathPrefix:/test2",
 			})),
 			expected: "PathPrefix-test2",
 		},
@@ -85,7 +85,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Host:foo.bar",
+				types.LabelFrontendRule: "Host:foo.bar",
 			})),
 			expected: "Host:foo.bar",
 		}, {
@@ -97,7 +97,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.rule": "Path:/test",
+				types.LabelFrontendRule: "Path:/test",
 			})),
 			expected: "Path:/test",
 		},
@@ -134,7 +134,7 @@ func TestDockerGetBackend(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.backend": "foobar",
+				types.LabelBackend: "foobar",
 			})),
 			expected: "foobar",
 		},
@@ -173,7 +173,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 		{
 			container: containerJSON(
 				labels(map[string]string{
-					"traefik.docker.network": "testnet",
+					labelDockerNetwork: "testnet",
 				}),
 				withNetwork("testnet", ipv4("10.11.12.13")),
 			),
@@ -182,7 +182,7 @@ func TestDockerGetIPAddress(t *testing.T) {
 		{
 			container: containerJSON(
 				labels(map[string]string{
-					"traefik.docker.network": "testnet2",
+					labelDockerNetwork: "testnet2",
 				}),
 				withNetwork("testnet", ipv4("10.11.12.13")),
 				withNetwork("testnet2", ipv4("10.11.12.14")),
@@ -237,13 +237,13 @@ func TestDockerGetPort(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.port": "8080",
+				types.LabelPort: "8080",
 			})),
 			expected: "8080",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.port": "8080",
+				types.LabelPort: "8080",
 			}), ports(nat.PortMap{
 				"80/tcp": {},
 			})),
@@ -251,7 +251,7 @@ func TestDockerGetPort(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.port": "8080",
+				types.LabelPort: "8080",
 			}), ports(nat.PortMap{
 				"8080/tcp": {},
 				"80/tcp":   {},
@@ -285,7 +285,7 @@ func TestDockerGetWeight(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.weight": "10",
+				types.LabelWeight: "10",
 			})),
 			expected: "10",
 		},
@@ -316,7 +316,7 @@ func TestDockerGetDomain(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.domain": "foo.bar",
+				types.LabelDomain: "foo.bar",
 			})),
 			expected: "foo.bar",
 		},
@@ -349,7 +349,7 @@ func TestDockerGetProtocol(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.protocol": "https",
+				types.LabelProtocol: "https",
 			})),
 			expected: "https",
 		},
@@ -380,7 +380,7 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				"traefik.frontend.passHostHeader": "false",
+				types.LabelFrontendPassHostHeader: "false",
 			})),
 			expected: "false",
 		},
@@ -400,6 +400,68 @@ func TestDockerGetPassHostHeader(t *testing.T) {
 	}
 }
 
+func TestDockerGetWhitelistSourceRange(t *testing.T) {
+	containers := []struct {
+		desc      string
+		container docker.ContainerJSON
+		expected  []string
+	}{
+		{
+			desc:      "no whitelist-label",
+			container: containerJSON(),
+			expected:  nil,
+		},
+		{
+			desc: "whitelist-label with empty string",
+			container: containerJSON(labels(map[string]string{
+				types.LabelTraefikFrontendWhitelistSourceRange: "",
+			})),
+			expected: nil,
+		},
+		{
+			desc: "whitelist-label with IPv4 mask",
+			container: containerJSON(labels(map[string]string{
+				types.LabelTraefikFrontendWhitelistSourceRange: "1.2.3.4/16",
+			})),
+			expected: []string{
+				"1.2.3.4/16",
+			},
+		},
+		{
+			desc: "whitelist-label with IPv6 mask",
+			container: containerJSON(labels(map[string]string{
+				types.LabelTraefikFrontendWhitelistSourceRange: "fe80::/16",
+			})),
+			expected: []string{
+				"fe80::/16",
+			},
+		},
+		{
+			desc: "whitelist-label with multiple masks",
+			container: containerJSON(labels(map[string]string{
+				types.LabelTraefikFrontendWhitelistSourceRange: "1.1.1.1/24, 1234:abcd::42/32",
+			})),
+			expected: []string{
+				"1.1.1.1/24",
+				"1234:abcd::42/32",
+			},
+		},
+	}
+
+	for _, e := range containers {
+		e := e
+		t.Run(e.desc, func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(e.container)
+			provider := &Provider{}
+			actual := provider.getWhitelistSourceRange(dockerData)
+			if !reflect.DeepEqual(actual, e.expected) {
+				t.Errorf("expected %q, got %q", e.expected, actual)
+			}
+		})
+	}
+}
+
 func TestDockerGetLabel(t *testing.T) {
 	containers := []struct {
 		container docker.ContainerJSON
@@ -407,7 +469,7 @@ func TestDockerGetLabel(t *testing.T) {
 	}{
 		{
 			container: containerJSON(),
-			expected:  "Label not found:",
+			expected:  "label not found:",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
@@ -445,7 +507,7 @@ func TestDockerGetLabels(t *testing.T) {
 		{
 			container:      containerJSON(),
 			expectedLabels: map[string]string{},
-			expectedError:  "Label not found:",
+			expectedError:  "label not found:",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
@@ -454,7 +516,7 @@ func TestDockerGetLabels(t *testing.T) {
 			expectedLabels: map[string]string{
 				"foo": "fooz",
 			},
-			expectedError: "Label not found: bar",
+			expectedError: "label not found: bar",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
@@ -514,7 +576,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "false",
+						types.LabelEnable: "false",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -538,7 +600,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.frontend.rule": "Host:foo.bar",
+						types.LabelFrontendRule: "Host:foo.bar",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -603,7 +665,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.port": "80",
+						types.LabelPort: "80",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -628,7 +690,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "true",
+						types.LabelEnable: "true",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -652,7 +714,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "anything",
+						types.LabelEnable: "anything",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -676,7 +738,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.frontend.rule": "Host:foo.bar",
+						types.LabelFrontendRule: "Host:foo.bar",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -720,7 +782,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "true",
+						types.LabelEnable: "true",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -744,7 +806,7 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable": "true",
+						types.LabelEnable: "true",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -767,8 +829,8 @@ func TestDockerTraefikFilter(t *testing.T) {
 				},
 				Config: &container.Config{
 					Labels: map[string]string{
-						"traefik.enable":        "true",
-						"traefik.frontend.rule": "Host:i.love.this.host",
+						types.LabelEnable:       "true",
+						types.LabelFrontendRule: "Host:i.love.this.host",
 					},
 				},
 				NetworkSettings: &docker.NetworkSettings{
@@ -850,9 +912,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				containerJSON(
 					name("test1"),
 					labels(map[string]string{
-						"traefik.backend":              "foobar",
-						"traefik.frontend.entryPoints": "http,https",
-						"traefik.frontend.auth.basic":  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						types.LabelBackend:             "foobar",
+						types.LabelFrontendEntryPoints: "http,https",
+						types.LabelFrontendAuthBasic:   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -862,7 +924,7 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				containerJSON(
 					name("test2"),
 					labels(map[string]string{
-						"traefik.backend": "foobar",
+						types.LabelBackend: "foobar",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -915,12 +977,12 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				containerJSON(
 					name("test1"),
 					labels(map[string]string{
-						"traefik.backend":                           "foobar",
-						"traefik.frontend.entryPoints":              "http,https",
-						"traefik.backend.maxconn.amount":            "1000",
-						"traefik.backend.maxconn.extractorfunc":     "somethingelse",
-						"traefik.backend.loadbalancer.method":       "drr",
-						"traefik.backend.circuitbreaker.expression": "NetworkErrorRatio() > 0.5",
+						types.LabelBackend:                         "foobar",
+						types.LabelFrontendEntryPoints:             "http,https",
+						types.LabelBackendMaxconnAmount:            "1000",
+						types.LabelBackendMaxconnExtractorfunc:     "somethingelse",
+						types.LabelBackendLoadbalancerMethod:       "drr",
+						types.LabelBackendCircuitbreakerExpression: "NetworkErrorRatio() > 0.5",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},

@@ -1,28 +1,17 @@
 package rancher
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"math"
-	"os"
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/BurntSushi/ty/fun"
-	"github.com/cenk/backoff"
-	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	rancher "github.com/rancher/go-rancher/client"
-)
-
-var (
-	withoutPagination *rancher.ListOpts
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -30,13 +19,13 @@ var _ provider.Provider = (*Provider)(nil)
 // Provider holds configurations of the provider.
 type Provider struct {
 	provider.BaseProvider     `mapstructure:",squash"`
-	Endpoint                  string `description:"Rancher server HTTP(S) endpoint."`
-	AccessKey                 string `description:"Rancher server access key."`
-	SecretKey                 string `description:"Rancher server Secret Key."`
-	ExposedByDefault          bool   `description:"Expose Services by default"`
-	Domain                    string `description:"Default domain used"`
-	RefreshSeconds            int    `description:"Polling interval (in seconds)"`
-	EnableServiceHealthFilter bool   `description:"Filter services with unhealthy states and health states."`
+	APIConfiguration          `mapstructure:",squash"` // Provide backwards compatibility
+	API                       *APIConfiguration        `description:"Enable the Rancher API provider"`
+	Metadata                  *MetadataConfiguration   `description:"Enable the Rancher metadata service provider"`
+	Domain                    string                   `description:"Default domain used"`
+	RefreshSeconds            int                      `description:"Polling interval (in seconds)"`
+	ExposedByDefault          bool                     `description:"Expose services by default"`
+	EnableServiceHealthFilter bool                     `description:"Filter services with unhealthy states and inactive states"`
 }
 
 type rancherData struct {
@@ -47,47 +36,41 @@ type rancherData struct {
 	State      string
 }
 
-func init() {
-	withoutPagination = &rancher.ListOpts{
-		Filters: map[string]interface{}{"limit": 0},
-	}
-}
-
 func (r rancherData) String() string {
 	return fmt.Sprintf("{name:%s, labels:%v, containers: %v, health: %s, state: %s}", r.Name, r.Labels, r.Containers, r.Health, r.State)
 }
 
 // Frontend Labels
 func (p *Provider) getPassHostHeader(service rancherData) string {
-	if passHostHeader, err := getServiceLabel(service, "traefik.frontend.passHostHeader"); err == nil {
+	if passHostHeader, err := getServiceLabel(service, types.LabelFrontendPassHostHeader); err == nil {
 		return passHostHeader
 	}
 	return "true"
 }
 
 func (p *Provider) getPriority(service rancherData) string {
-	if priority, err := getServiceLabel(service, "traefik.frontend.priority"); err == nil {
+	if priority, err := getServiceLabel(service, types.LabelFrontendPriority); err == nil {
 		return priority
 	}
 	return "0"
 }
 
 func (p *Provider) getEntryPoints(service rancherData) []string {
-	if entryPoints, err := getServiceLabel(service, "traefik.frontend.entryPoints"); err == nil {
+	if entryPoints, err := getServiceLabel(service, types.LabelFrontendEntryPoints); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
 }
 
 func (p *Provider) getFrontendRule(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.frontend.rule"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelFrontendRule); err == nil {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(service.Name, "/", ".", -1)) + "." + p.Domain
 }
 
 func (p *Provider) getBasicAuth(service rancherData) []string {
-	if basicAuth, err := getServiceLabel(service, "traefik.frontend.auth.basic"); err == nil {
+	if basicAuth, err := getServiceLabel(service, types.LabelFrontendAuthBasic); err == nil {
 		return strings.Split(basicAuth, ",")
 	}
 	return []string{}
@@ -100,15 +83,15 @@ func (p *Provider) getFrontendName(service rancherData) string {
 
 // Backend Labels
 func (p *Provider) getLoadBalancerMethod(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend.loadbalancer.method"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendLoadbalancerMethod); err == nil {
 		return label
 	}
 	return "wrr"
 }
 
 func (p *Provider) hasLoadBalancerLabel(service rancherData) bool {
-	_, errMethod := getServiceLabel(service, "traefik.backend.loadbalancer.method")
-	_, errSticky := getServiceLabel(service, "traefik.backend.loadbalancer.sticky")
+	_, errMethod := getServiceLabel(service, types.LabelBackendLoadbalancerMethod)
+	_, errSticky := getServiceLabel(service, types.LabelBackendLoadbalancerSticky)
 	if errMethod != nil && errSticky != nil {
 		return false
 	}
@@ -116,77 +99,77 @@ func (p *Provider) hasLoadBalancerLabel(service rancherData) bool {
 }
 
 func (p *Provider) hasCircuitBreakerLabel(service rancherData) bool {
-	if _, err := getServiceLabel(service, "traefik.backend.circuitbreaker.expression"); err != nil {
+	if _, err := getServiceLabel(service, types.LabelBackendCircuitbreakerExpression); err != nil {
 		return false
 	}
 	return true
 }
 
 func (p *Provider) getCircuitBreakerExpression(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend.circuitbreaker.expression"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendCircuitbreakerExpression); err == nil {
 		return label
 	}
 	return "NetworkErrorRatio() > 1"
 }
 
 func (p *Provider) getSticky(service rancherData) string {
-	if _, err := getServiceLabel(service, "traefik.backend.loadbalancer.sticky"); err == nil {
+	if _, err := getServiceLabel(service, types.LabelBackendLoadbalancerSticky); err == nil {
 		return "true"
 	}
 	return "false"
 }
 
 func (p *Provider) getBackend(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackend); err == nil {
 		return provider.Normalize(label)
 	}
 	return provider.Normalize(service.Name)
 }
 
-// Generall Application Stuff
+// General Application Stuff
 func (p *Provider) getPort(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.port"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelPort); err == nil {
 		return label
 	}
 	return ""
 }
 
 func (p *Provider) getProtocol(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.protocol"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelProtocol); err == nil {
 		return label
 	}
 	return "http"
 }
 
 func (p *Provider) getWeight(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.weight"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelWeight); err == nil {
 		return label
 	}
 	return "0"
 }
 
 func (p *Provider) getDomain(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.domain"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelDomain); err == nil {
 		return label
 	}
 	return p.Domain
 }
 
 func (p *Provider) hasMaxConnLabels(service rancherData) bool {
-	if _, err := getServiceLabel(service, "traefik.backend.maxconn.amount"); err != nil {
+	if _, err := getServiceLabel(service, types.LabelBackendMaxconnAmount); err != nil {
 		return false
 	}
-	if _, err := getServiceLabel(service, "traefik.backend.maxconn.extractorfunc"); err != nil {
+	if _, err := getServiceLabel(service, types.LabelBackendMaxconnExtractorfunc); err != nil {
 		return false
 	}
 	return true
 }
 
 func (p *Provider) getMaxConnAmount(service rancherData) int64 {
-	if label, err := getServiceLabel(service, "traefik.backend.maxconn.amount"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendMaxconnAmount); err == nil {
 		i, errConv := strconv.ParseInt(label, 10, 64)
 		if errConv != nil {
-			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
+			log.Errorf("Unable to parse %s %s", types.LabelBackendMaxconnAmount, label)
 			return math.MaxInt64
 		}
 		return i
@@ -195,7 +178,7 @@ func (p *Provider) getMaxConnAmount(service rancherData) int64 {
 }
 
 func (p *Provider) getMaxConnExtractorFunc(service rancherData) string {
-	if label, err := getServiceLabel(service, "traefik.backend.maxconn.extractorfunc"); err == nil {
+	if label, err := getServiceLabel(service, types.LabelBackendMaxconnExtractorfunc); err == nil {
 		return label
 	}
 	return "request.host"
@@ -207,205 +190,16 @@ func getServiceLabel(service rancherData, label string) (string, error) {
 			return value, nil
 		}
 	}
-	return "", errors.New("Label not found:" + label)
+	return "", fmt.Errorf("label not found: %s", label)
 }
 
-func (p *Provider) createClient() (*rancher.RancherClient, error) {
-
-	rancherURL := getenv("CATTLE_URL", p.Endpoint)
-	accessKey := getenv("CATTLE_ACCESS_KEY", p.AccessKey)
-	secretKey := getenv("CATTLE_SECRET_KEY", p.SecretKey)
-
-	return rancher.NewRancherClient(&rancher.ClientOpts{
-		Url:       rancherURL,
-		AccessKey: accessKey,
-		SecretKey: secretKey,
-	})
-}
-
-func getenv(key, fallback string) string {
-	value := os.Getenv(key)
-	if len(value) == 0 {
-		return fallback
-	}
-	return value
-}
-
-// Provide allows the rancher provider to provide configurations to traefik
-// using the given configuration channel.
+// Provide allows either the Rancher API or metadata service provider to
+// seed configuration into Traefik using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	p.Constraints = append(p.Constraints, constraints...)
-
-	safe.Go(func() {
-		operation := func() error {
-			rancherClient, err := p.createClient()
-
-			if err != nil {
-				log.Errorf("Failed to create a client for rancher, error: %s", err)
-				return err
-			}
-
-			ctx := context.Background()
-			var environments = listRancherEnvironments(rancherClient)
-			var services = listRancherServices(rancherClient)
-			var container = listRancherContainer(rancherClient)
-
-			var rancherData = parseRancherData(environments, services, container)
-
-			configuration := p.loadRancherConfig(rancherData)
-			configurationChan <- types.ConfigMessage{
-				ProviderName:  "rancher",
-				Configuration: configuration,
-			}
-
-			if p.Watch {
-				_, cancel := context.WithCancel(ctx)
-				ticker := time.NewTicker(time.Second * time.Duration(p.RefreshSeconds))
-				pool.Go(func(stop chan bool) {
-					for {
-						select {
-						case <-ticker.C:
-
-							log.Debugf("Refreshing new Data from Provider API")
-							var environments = listRancherEnvironments(rancherClient)
-							var services = listRancherServices(rancherClient)
-							var container = listRancherContainer(rancherClient)
-
-							rancherData := parseRancherData(environments, services, container)
-
-							configuration := p.loadRancherConfig(rancherData)
-							if configuration != nil {
-								configurationChan <- types.ConfigMessage{
-									ProviderName:  "rancher",
-									Configuration: configuration,
-								}
-							}
-						case <-stop:
-							ticker.Stop()
-							cancel()
-							return
-						}
-					}
-				})
-			}
-
-			return nil
-		}
-		notify := func(err error, time time.Duration) {
-			log.Errorf("Provider connection error %+v, retrying in %s", err, time)
-		}
-		err := backoff.RetryNotify(operation, job.NewBackOff(backoff.NewExponentialBackOff()), notify)
-		if err != nil {
-			log.Errorf("Cannot connect to Provider Endpoint %+v", err)
-		}
-	})
-
-	return nil
-}
-
-func listRancherEnvironments(client *rancher.RancherClient) []*rancher.Environment {
-
-	var environmentList = []*rancher.Environment{}
-
-	environments, err := client.Environment.List(withoutPagination)
-
-	if err != nil {
-		log.Errorf("Cannot get Provider Environments %+v", err)
+	if p.Metadata == nil {
+		return p.apiProvide(configurationChan, pool, constraints)
 	}
-
-	for k := range environments.Data {
-		environmentList = append(environmentList, &environments.Data[k])
-	}
-
-	return environmentList
-}
-
-func listRancherServices(client *rancher.RancherClient) []*rancher.Service {
-
-	var servicesList = []*rancher.Service{}
-
-	services, err := client.Service.List(withoutPagination)
-
-	if err != nil {
-		log.Errorf("Cannot get Provider Services %+v", err)
-	}
-
-	for k := range services.Data {
-		servicesList = append(servicesList, &services.Data[k])
-	}
-
-	return servicesList
-}
-
-func listRancherContainer(client *rancher.RancherClient) []*rancher.Container {
-
-	containerList := []*rancher.Container{}
-
-	container, err := client.Container.List(withoutPagination)
-
-	log.Debugf("first container len: %i", len(container.Data))
-
-	if err != nil {
-		log.Errorf("Cannot get Provider Services %+v", err)
-	}
-
-	valid := true
-
-	for valid {
-		for k := range container.Data {
-			containerList = append(containerList, &container.Data[k])
-		}
-
-		container, err = container.Next()
-
-		if err != nil {
-			break
-		}
-
-		if container == nil || len(container.Data) == 0 {
-			valid = false
-		}
-	}
-
-	return containerList
-}
-
-func parseRancherData(environments []*rancher.Environment, services []*rancher.Service, containers []*rancher.Container) []rancherData {
-	var rancherDataList []rancherData
-
-	for _, environment := range environments {
-
-		for _, service := range services {
-			if service.EnvironmentId != environment.Id {
-				continue
-			}
-
-			rancherData := rancherData{
-				Name:       environment.Name + "/" + service.Name,
-				Health:     service.HealthState,
-				State:      service.State,
-				Labels:     make(map[string]string),
-				Containers: []string{},
-			}
-
-			if service.LaunchConfig == nil || service.LaunchConfig.Labels == nil {
-				log.Warnf("Rancher Service Labels are missing. Environment: %s, service: %s", environment.Name, service.Name)
-			} else {
-				for key, value := range service.LaunchConfig.Labels {
-					rancherData.Labels[key] = value.(string)
-				}
-			}
-
-			for _, container := range containers {
-				if container.Labels["io.rancher.stack_service.name"] == rancherData.Name && containerFilter(container) {
-					rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
-				}
-			}
-			rancherDataList = append(rancherDataList, rancherData)
-		}
-	}
-
-	return rancherDataList
+	return p.metadataProvide(configurationChan, pool, constraints)
 }
 
 func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuration {
@@ -464,14 +258,14 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 
 }
 
-func containerFilter(container *rancher.Container) bool {
-	if container.HealthState != "" && container.HealthState != "healthy" && container.HealthState != "updating-healthy" {
-		log.Debugf("Filtering container %s with healthState of %s", container.Name, container.HealthState)
+func containerFilter(name, healthState, state string) bool {
+	if healthState != "" && healthState != "healthy" && healthState != "updating-healthy" {
+		log.Debugf("Filtering container %s with healthState of %s", name, healthState)
 		return false
 	}
 
-	if container.State != "" && container.State != "running" && container.State != "updating-running" {
-		log.Debugf("Filtering container %s with state of %s", container.Name, container.State)
+	if state != "" && state != "running" && state != "updating-running" {
+		log.Debugf("Filtering container %s with state of %s", name, state)
 		return false
 	}
 
@@ -480,7 +274,7 @@ func containerFilter(container *rancher.Container) bool {
 
 func (p *Provider) serviceFilter(service rancherData) bool {
 
-	if service.Labels["traefik.port"] == "" {
+	if service.Labels[types.LabelPort] == "" {
 		log.Debugf("Filtering service %s without traefik.port label", service.Name)
 		return false
 	}
@@ -490,7 +284,7 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 		return false
 	}
 
-	constraintTags := strings.Split(service.Labels["traefik.tags"], ",")
+	constraintTags := strings.Split(service.Labels[types.LabelTags], ",")
 	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
 		if failingConstraint != nil {
 			log.Debugf("Filtering service %s with constraint %s", service.Name, failingConstraint.String())
@@ -517,8 +311,8 @@ func (p *Provider) serviceFilter(service rancherData) bool {
 
 func isServiceEnabled(service rancherData, exposedByDefault bool) bool {
 
-	if service.Labels["traefik.enable"] != "" {
-		var v = service.Labels["traefik.enable"]
+	if service.Labels[types.LabelEnable] != "" {
+		var v = service.Labels[types.LabelEnable]
 		return exposedByDefault && v != "false" || v == "true"
 	}
 	return exposedByDefault

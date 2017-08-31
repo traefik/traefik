@@ -1,0 +1,24 @@
+provider/kubernetes/**  @containous/kubernetes
+provider/rancher/**     @containous/rancher
+provider/marathon/**    @containous/marathon
+provider/docker/**      @containous/docker
+
+docs/user-guide/kubernetes.md       @containous/kubernetes
+docs/user-guide/marathon.md         @containous/marathon
+docs/user-guide/swarm.md            @containous/docker
+docs/user-guide/swarm-mode.md       @containous/docker
+
+docs/configuration/backends/docker.md       @containous/docker
+docs/configuration/backends/kubernetes.md   @containous/kubernetes
+docs/configuration/backends/marathon.md     @containous/marathon
+docs/configuration/backends/rancher.md      @containous/rancher
+
+examples/k8s/                   @containous/kubernetes
+examples/compose-k8s.yaml       @containous/kubernetes
+examples/k8s.namespace.yaml     @containous/kubernetes
+examples/compose-rancher.yml    @containous/rancher
+examples/compose-marathon.yml   @containous/marathon
+
+vendor/github.com/gambol99/go-marathon  @containous/marathon
+vendor/github.com/rancher               @containous/rancher
+vendor/k8s.io/                          @containous/kubernetes

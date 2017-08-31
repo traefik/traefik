@@ -106,7 +106,7 @@ func (a *ACME) init() error {
 	a.defaultCertificate = cert
 	// TODO: to remove in the futurs
 	if len(a.StorageFile) > 0 && len(a.Storage) == 0 {
-		log.Warnf("ACME.StorageFile is deprecated, use ACME.Storage instead")
+		log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
 		a.Storage = a.StorageFile
 	}
 	a.jobs = channels.NewInfiniteChannel()
@@ -155,8 +155,8 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 
 	ticker := time.NewTicker(24 * time.Hour)
 	leadership.Pool.AddGoCtx(func(ctx context.Context) {
-		log.Infof("Starting ACME renew job...")
-		defer log.Infof("Stopped ACME renew job...")
+		log.Info("Starting ACME renew job...")
+		defer log.Info("Stopped ACME renew job...")
 		for {
 			select {
 			case <-ctx.Done():
@@ -169,7 +169,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 
 	leadership.AddListener(func(elected bool) error {
 		if elected {
-			object, err := a.store.Load()
+			_, err := a.store.Load()
 			if err != nil {
 				return err
 			}
@@ -196,7 +196,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 			}
 			if needRegister {
 				// New users will need to register; be sure to save it
-				log.Debugf("Register...")
+				log.Debug("Register...")
 				reg, err := a.client.Register()
 				if err != nil {
 					return err
@@ -205,7 +205,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 			}
 			// The client has a URL to the current Let's Encrypt Subscriber
 			// Agreement. The user will need to agree to it.
-			log.Debugf("AgreeToTOS...")
+			log.Debug("AgreeToTOS...")
 			err = a.client.AgreeToTOS()
 			if err != nil {
 				// Let's Encrypt Subscriber Agreement renew ?
@@ -254,7 +254,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 	var account *Account
 
 	if fileInfo, fileErr := os.Stat(a.Storage); fileErr == nil && fileInfo.Size() != 0 {
-		log.Infof("Loading ACME Account...")
+		log.Info("Loading ACME Account...")
 		// load account
 		object, err := localStore.Load()
 		if err != nil {
@@ -262,7 +262,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 		}
 		account = object.(*Account)
 	} else {
-		log.Infof("Generating ACME Account...")
+		log.Info("Generating ACME Account...")
 		account, err = NewAccount(a.Email)
 		if err != nil {
 			return err
@@ -277,7 +277,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 
 	if needRegister {
 		// New users will need to register; be sure to save it
-		log.Infof("Register...")
+		log.Info("Register...")
 		reg, err := a.client.Register()
 		if err != nil {
 			return err
@@ -287,7 +287,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 
 	// The client has a URL to the current Let's Encrypt Subscriber
 	// Agreement. The user will need to agree to it.
-	log.Debugf("AgreeToTOS...")
+	log.Debug("AgreeToTOS...")
 	err = a.client.AgreeToTOS()
 	if err != nil {
 		// Let's Encrypt Subscriber Agreement renew ?
@@ -320,7 +320,6 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 		for range ticker.C {
 			a.renewCertificates()
 		}
-
 	})
 	return nil
 }
@@ -353,7 +352,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 
 func (a *ACME) retrieveCertificates() {
 	a.jobs.In() <- func() {
-		log.Infof("Retrieving ACME certificates...")
+		log.Info("Retrieving ACME certificates...")
 		for _, domain := range a.Domains {
 			// check if cert isn't already loaded
 			account := a.store.Get().(*Account)
@@ -384,13 +383,13 @@ func (a *ACME) retrieveCertificates() {
 				}
 			}
 		}
-		log.Infof("Retrieved ACME certificates")
+		log.Info("Retrieved ACME certificates")
 	}
 }
 
 func (a *ACME) renewCertificates() {
 	a.jobs.In() <- func() {
-		log.Debugf("Testing certificate renew...")
+		log.Debug("Testing certificate renew...")
 		account := a.store.Get().(*Account)
 		for _, certificateResource := range account.DomainsCertificate.Certs {
 			if certificateResource.needRenew() {
@@ -450,7 +449,7 @@ func dnsOverrideDelay(delay int) error {
 }
 
 func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
-	log.Debugf("Building ACME client...")
+	log.Debug("Building ACME client...")
 	caServer := "https://acme-v01.api.letsencrypt.org/directory"
 	if len(a.CAServer) > 0 {
 		caServer = a.CAServer
@@ -533,7 +532,7 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 
 		operation := func() error {
 			if a.client == nil {
-				return fmt.Errorf("ACME client still not built")
+				return errors.New("ACME client still not built")
 			}
 			return nil
 		}

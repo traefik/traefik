@@ -1,6 +1,9 @@
 package pflag
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 // -- int Value
 type intValue int
@@ -20,7 +23,7 @@ func (i *intValue) Type() string {
 	return "int"
 }
 
-func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
+func (i *intValue) String() string { return fmt.Sprintf("%v", *i) }
 
 func intConv(sval string) (interface{}, error) {
 	return strconv.Atoi(sval)

@@ -1,0 +1,11 @@
+# rules
+[backends]
+  [backends.backend2]
+    [backends.backend2.servers.server1]
+    url = "http://172.17.0.2:80"
+
+[frontends]
+  [frontends.frontend2]
+  backend = "backend2"
+    [frontends.frontend2.routes.test_2]
+    rule = "Path:/test2"

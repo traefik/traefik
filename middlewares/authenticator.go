@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/abbot/go-http-auth"
-	"github.com/codegangsta/negroni"
+	goauth "github.com/abbot/go-http-auth"
+	"github.com/containous/traefik/auth"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
+	"github.com/urfave/negroni"
 )
 
 // Authenticator is a middleware that provides HTTP basic and digest authentication
@@ -30,13 +31,13 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		if err != nil {
 			return nil, err
 		}
-		basicAuth := auth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
+		basicAuth := goauth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if username := basicAuth.CheckAuth(r); username == "" {
-				log.Debugf("Basic auth failed...")
+				log.Debug("Basic auth failed...")
 				basicAuth.RequireAuth(w, r)
 			} else {
-				log.Debugf("Basic auth success...")
+				log.Debug("Basic auth success...")
 				if authConfig.HeaderField != "" {
 					r.Header[authConfig.HeaderField] = []string{username}
 				}
@@ -48,18 +49,22 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		if err != nil {
 			return nil, err
 		}
-		digestAuth := auth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
+		digestAuth := goauth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if username, _ := digestAuth.CheckAuth(r); username == "" {
-				log.Debugf("Digest auth failed...")
+				log.Debug("Digest auth failed...")
 				digestAuth.RequireAuth(w, r)
 			} else {
-				log.Debugf("Digest auth success...")
+				log.Debug("Digest auth success...")
 				if authConfig.HeaderField != "" {
 					r.Header[authConfig.HeaderField] = []string{username}
 				}
 				next.ServeHTTP(w, r)
 			}
+		})
+	} else if authConfig.Forward != nil {
+		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+			auth.Forward(authConfig.Forward, w, r, next)
 		})
 	}
 	return &authenticator, nil
