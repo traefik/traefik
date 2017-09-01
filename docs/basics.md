@@ -278,6 +278,8 @@ Security related headers (HSTS headers, SSL redirection, Browser XSS filter, etc
 
 In this example, traffic routed through the first frontend will have the `X-Frame-Options` header set to `DENY`, and the second will only allow HTTPS request through, otherwise will return a 301 HTTPS redirect.
 
+The detailed documentation for those security headers can be found in [unrolled/secure](https://github.com/unrolled/secure#available-options).
+
 ### Backends
 
 A backend is responsible to load-balance the traffic coming from one or more frontends to a set of http servers.
