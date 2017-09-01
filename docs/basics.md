@@ -404,14 +404,14 @@ Here is an example of backends and servers definition:
 
 Custom error pages can be returned, in lieu of the default, according to frontend-configured ranges of HTTP Status codes.
 In the example below, if a 503 status is returned from the frontend "website", the custom error page at http://2.3.4.5/503.html is returned with the actual status code set in the HTTP header.
-Note, the 503.html page itself is not hosted on traefik, but some other infrastructure.   
+Note, the `503.html` page itself is not hosted on traefik, but some other infrastructure.   
 
 ```toml
 [frontends]
   [frontends.website]
   backend = "website"
-  [errors]
-    [error.network]
+  [frontends.website.errors]
+    [frontends.website.errors.network]
     status = ["500-599"]
     backend = "error"
     query = "/{status}.html"
