@@ -31,29 +31,6 @@
 #
 # checkNewVersion = false
 
-# Traefik logs file
-# If not defined, logs to stdout
-#
-# Optional
-#
-# traefikLogsFile = "log/traefik.log"
-
-# Access logs file
-#
-# DEPRECATED - see [accessLog] lower down
-# Optional
-#
-# accessLogsFile = "log/access.log"
-
-# Log level
-#
-# Optional
-# Default: "ERROR"
-# Accepted values, in order of severity: "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "PANIC"
-# Messages at and above the selected level will be logged.
-#
-# logLevel = "ERROR"
-
 # Backends throttle duration: minimum duration in seconds between 2 events from providers
 # before applying a new configuration. It avoids unnecessary reloads if multiples events
 # are sent in a short amount of time.
@@ -165,6 +142,27 @@ Supported filters:
 #   constraints = ["tag==api", "tag!=v*-beta"]
 ```
 
+## Traefik Logs
+
+```toml
+# Traefik logs file
+# If not defined, logs to stdout
+#
+# Optional
+#
+# traefikLogsFile = "log/traefik.log"
+
+# Log level
+#
+# Optional
+# Default: "ERROR"
+# Accepted values, in order of severity: "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "PANIC"
+# Messages at and above the selected level will be logged.
+#
+# logLevel = "ERROR"
+```
+
+
 ## Access Log Definition
 
 Access logs are written when `[accessLog]` is defined. 
@@ -187,6 +185,59 @@ To write JSON format logs, specify `json` as the format:
   filePath   = "/path/to/access.log"
   format     = "json"
 ```
+
+Deprecated way (before 1.4):
+```toml
+# Access logs file
+#
+# DEPRECATED - see [accessLog] lower down
+# Optional
+#
+accessLogsFile = "log/access.log"
+```
+
+## Log Rotation
+
+Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.
+This allows the logs to be rotated and processed by an external program, such as `logrotate`.
+
+!!! note
+    that this does not work on Windows due to the lack of USR signals.
+
+
+## Custom Error pages
+
+Custom error pages can be returned, in lieu of the default, according to frontend-configured ranges of HTTP Status codes.
+In the example below, if a 503 status is returned from the frontend "website", the custom error page at http://2.3.4.5/503.html is returned with the actual status code set in the HTTP header.
+Note, the `503.html` page itself is not hosted on traefik, but some other infrastructure.   
+
+```toml
+[frontends]
+  [frontends.website]
+  backend = "website"
+  [frontends.website.errors]
+    [frontends.website.errors.network]
+    status = ["500-599"]
+    backend = "error"
+    query = "/{status}.html"
+  [frontends.website.routes.website]
+  rule = "Host: website.mydomain.com"
+
+[backends]
+  [backends.website]
+    [backends.website.servers.website]
+    url = "https://1.2.3.4"
+  [backends.error]
+    [backends.error.servers.error]
+    url = "http://2.3.4.5"
+```
+
+In the above example, the error page rendered was based on the status code.
+Instead, the query parameter can also be set to some generic error page like so: `query = "/500s.html"`
+
+Now the `500s.html` error page is returned for the configured code range.
+The configured status code ranges are inclusive; that is, in the above example, the `500s.html` page will be returned for status codes `500` through, and including, `599`.
+
 
 ## Entry Points Definition
 
@@ -451,3 +502,4 @@ To write JSON format logs, specify `json` as the format:
 # 
 # responseHeaderTimeout = "0s"
 ```
+

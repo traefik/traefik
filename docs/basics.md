@@ -400,38 +400,6 @@ Here is an example of backends and servers definition:
 - `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
 - a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
 
-### Custom Error pages
-
-Custom error pages can be returned, in lieu of the default, according to frontend-configured ranges of HTTP Status codes.
-In the example below, if a 503 status is returned from the frontend "website", the custom error page at http://2.3.4.5/503.html is returned with the actual status code set in the HTTP header.
-Note, the `503.html` page itself is not hosted on traefik, but some other infrastructure.   
-
-```toml
-[frontends]
-  [frontends.website]
-  backend = "website"
-  [frontends.website.errors]
-    [frontends.website.errors.network]
-    status = ["500-599"]
-    backend = "error"
-    query = "/{status}.html"
-  [frontends.website.routes.website]
-  rule = "Host: website.mydomain.com"
-
-[backends]
-  [backends.website]
-    [backends.website.servers.website]
-    url = "https://1.2.3.4"
-  [backends.error]
-    [backends.error.servers.error]
-    url = "http://2.3.4.5"
-```
-
-In the above example, the error page rendered was based on the status code.
-Instead, the query parameter can also be set to some generic error page like so: `query = "/500s.html"`
-
-Now the 500s.html error page is returned for the configured code range.
-The configured status code ranges are inclusive; that is, in the above example, the 500s.html page will be returned for status codes 500 through, and including, 599.
 
 ## Configuration
 
@@ -439,7 +407,6 @@ Træfik's configuration has two parts:
 
 - The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning.
 - The [dynamic Træfik configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
-
 
 ### Static Træfik configuration
 
@@ -471,7 +438,7 @@ You can override this by setting a `configFile` argument:
 $ traefik --configFile=foo/bar/myconfigfile.toml
 ```
 
-Please refer to the [global configuration](/toml/#global-configuration) section to get documentation on it.
+Please refer to the [global configuration](/configuration/commons) section to get documentation on it.
 
 #### Arguments
 
@@ -502,12 +469,12 @@ The dynamic configuration concerns :
 - [Backends](/basics/#backends)
 - [Servers](/basics/#servers)
 
-Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/toml/#configuration-backends).
+Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/configuration/commons).
 
 We only need to enable `watch` option to make Træfik watch configuration backend changes and generate its configuration automatically.
 Routes to services will be created and updated instantly at any changes.
 
-Please refer to the [configuration backends](/toml/#configuration-backends) section to get documentation on it.
+Please refer to the [configuration backends](/configuration/commons) section to get documentation on it.
 
 ## Commands
 
@@ -554,11 +521,3 @@ Note: the `web` provider must be enabled to allow `/ping` calls by the `healthch
 $ traefik healthcheck
 OK: http://:8082/ping
 ```
-
-## Log Rotation
-
-Traefik will close and reopen its log files, assuming they're configured, on receipt of a USR1 signal.  This allows the logs
-to be rotated and processed by an external program, such as `logrotate`.
-
-Note that this does not work on Windows due to the lack of USR signals.
-
