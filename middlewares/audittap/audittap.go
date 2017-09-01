@@ -108,9 +108,9 @@ func isExcluded(exclusions []*types.Exclusion, req *http.Request) bool {
 	for _, exc := range exclusions {
 		lcHdr := strings.ToLower(exc.HeaderName)
 		// Get host or path direct from request
-		if (lcHdr == "host" || lcHdr == "requesthost") && shouldExclude(req.URL.Host, exc.Contains) {
+		if (lcHdr == "host" || lcHdr == "requesthost") && shouldExclude(req.Host, exc.Contains) {
 			return true
-		} else if (lcHdr == "path" || lcHdr == "requestpath") && shouldExclude(req.URL.Path, exc.Contains) {
+		} else if (lcHdr == "path" || lcHdr == "requestpath") && shouldExclude(req.RequestURI, exc.Contains) {
 			return true
 		} else if shouldExclude(req.Header.Get(exc.HeaderName), exc.Contains) {
 			return true

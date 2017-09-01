@@ -106,7 +106,7 @@ func TestAuditExclusion(t *testing.T) {
 	tap.AuditStreams = []audittypes.AuditStream{capture}
 
 	excHost := httptest.NewRequest("", "/pathsegment?d=1&e=2", nil)
-	excHost.URL.Host = "abchostignoredef.somedomain"
+	excHost.Host = "abchostignoredef.somedomain"
 	tap.ServeHTTP(httptest.NewRecorder(), excHost)
 
 	excPath := httptest.NewRequest("", "/excludeme?d=1&e=2", nil)
