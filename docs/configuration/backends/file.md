@@ -161,7 +161,7 @@ If you want Træfik to watch file changes automatically, just add:
 watch = true
 ```
 
-The configuration files can be also templates written using functions provided by [go template](https://golang.org/pkg/text/template/) as well as functions provided by the [sprig library](http://masterminds.github.io/sprig/), like this:
+The configuration files can be also templates written using functions provided by [go template](https://golang.org/pkg/text/template/) as well as functions provided by the [sprig library](https://masterminds.github.io/sprig/), like this:
 
 ```tmpl
 [backends]

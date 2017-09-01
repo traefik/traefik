@@ -1,16 +1,16 @@
 # Kubernetes Ingress Controller
 
 This guide explains how to use Træfik as an Ingress controller in a Kubernetes cluster.
-If you are not familiar with Ingresses in Kubernetes you might want to read the [Kubernetes user guide](http://kubernetes.io/docs/user-guide/ingress/)
+If you are not familiar with Ingresses in Kubernetes you might want to read the [Kubernetes user guide](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 
 The config files used in this guide can be found in the [examples directory](https://github.com/containous/traefik/tree/master/examples/k8s)
 
 ## Prerequisites
 
-1. A working Kubernetes cluster. If you want to follow along with this guide, you should setup [minikube](http://kubernetes.io/docs/getting-started-guides/minikube/)
+1. A working Kubernetes cluster. If you want to follow along with this guide, you should setup [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/)
 on your machine, as it is the quickest way to get a local Kubernetes cluster setup for experimentation and development.
 
-2. The `kubectl` binary should be [installed on your workstation](http://kubernetes.io/docs/getting-started-guides/minikube/#download-kubectl).
+2. The `kubectl` binary should be [installed on your workstation](https://kubernetes.io/docs/getting-started-guides/minikube/#download-kubectl).
 
 ### Role Based Access Control configuration (Kubernetes 1.6+ only)
 
@@ -696,4 +696,4 @@ By default if the annotation is not set at all Træfik will include the ingress.
 If the annotation is set to anything other than traefik or a blank string Træfik will ignore it.
 
 
-![](http://i.giphy.com/ujUdrdpX7Ok5W.gif)
+![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)

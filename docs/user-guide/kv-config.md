@@ -340,4 +340,4 @@ Then remove the line `storageFile = "acme.json"` from your TOML config file.
 
 That's it!
 
-![](http://i.giphy.com/ujUdrdpX7Ok5W.gif)
+![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)

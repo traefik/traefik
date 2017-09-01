@@ -296,4 +296,4 @@ Now open your browser and go to http://whoami1.traefik/
 
 You will now see that stickyness is maintained.
 
-![](http://i.giphy.com/ujUdrdpX7Ok5W.gif)
+![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)
