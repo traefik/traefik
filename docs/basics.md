@@ -430,12 +430,12 @@ By default, Træfik will try to find a `traefik.toml` in the following places:
 
 - `/etc/traefik/`
 - `$HOME/.traefik/`
-- `.` *the working directory*
+- `.` _the working directory_
 
 You can override this by setting a `configFile` argument:
 
 ```bash
-$ traefik --configFile=foo/bar/myconfigfile.toml
+traefik --configFile=foo/bar/myconfigfile.toml
 ```
 
 Please refer to the [global configuration](/configuration/commons) section to get documentation on it.
@@ -445,7 +445,7 @@ Please refer to the [global configuration](/configuration/commons) section to ge
 Each argument (and command) is described in the help section:
 
 ```bash
-$ traefik --help
+traefik --help
 ```
 
 Note that all default values will be displayed as well.
@@ -478,7 +478,12 @@ Please refer to the [configuration backends](/configuration/commons) section to 
 
 ## Commands
 
-Usage: `traefik [command] [--flag=flag_argument]`
+### Command: traefik
+
+Usage:
+```bash
+traefik [command] [--flag=flag_argument]
+```
 
 List of Træfik available commands with description :                                                             
 
@@ -491,13 +496,13 @@ Each command may have related flags.
 All those related flags will be displayed with :
 
 ```bash
-$ traefik [command] --help
+traefik [command] --help
 ```
 
 Note that each command is described at the beginning of the help section:
 
 ```bash
-$ traefik --help
+traefik --help
 ```
 
 ### Command: bug
@@ -505,7 +510,7 @@ $ traefik --help
 Here is the easiest way to submit a pre-filled issue on [Træfik GitHub](https://github.com/containous/traefik).
 
 ```bash
-$ traefik bug
+traefik bug
 ```
 
 See https://www.youtube.com/watch?v=Lyz62L8m93I.

@@ -160,20 +160,3 @@ If you want Træfik to watch file changes automatically, just add:
 [file]
 watch = true
 ```
-
-The configuration files can be also templates written using functions provided by [go template](https://golang.org/pkg/text/template/) as well as functions provided by the [sprig library](https://masterminds.github.io/sprig/), like this:
-
-```tmpl
-[backends]
-  [backends.backend1]
-  url = "http://firstserver"
-  [backends.backend2]
-  url = "http://secondserver"
-
-{{$frontends := dict "frontend1" "backend1" "frontend2" "backend2"}}
-[frontends]
-{{range $frontend, $backend := $frontends}}
-  [frontends.{{$frontend}}]
-  backend = "{{$backend}}"
-{{end}}
-```
