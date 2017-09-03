@@ -89,11 +89,11 @@ func TestEcsProtocol(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.provider.getProtocol(c.instanceInfo)
-			assert.Equal(t, c.expected, actual)
+			actual := test.provider.getProtocol(test.instanceInfo)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -114,11 +114,11 @@ func TestEcsHost(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.provider.getHost(c.instanceInfo)
-			assert.Equal(t, c.expected, actual)
+			actual := test.provider.getHost(test.instanceInfo)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -139,11 +139,11 @@ func TestEcsPort(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.provider.getPort(c.instanceInfo)
-			assert.Equal(t, c.expected, actual)
+			actual := test.provider.getPort(test.instanceInfo)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -188,11 +188,11 @@ func TestEcsWeight(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.provider.getWeight(c.instanceInfo)
-			assert.Equal(t, c.expected, actual)
+			actual := test.provider.getWeight(test.instanceInfo)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -229,11 +229,11 @@ func TestEcsPassHostHeader(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.provider.getPassHostHeader(c.instanceInfo)
-			assert.Equal(t, c.expected, actual)
+			actual := test.provider.getPassHostHeader(test.instanceInfo)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -270,11 +270,11 @@ func TestEcsPriority(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.provider.getPriority(c.instanceInfo)
-			assert.Equal(t, c.expected, actual)
+			actual := test.provider.getPriority(test.instanceInfo)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -311,11 +311,11 @@ func TestEcsEntryPoints(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.provider.getEntryPoints(c.instanceInfo)
-			assert.Equal(t, c.expected, actual)
+			actual := test.provider.getEntryPoints(test.instanceInfo)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -422,11 +422,11 @@ func TestFilterInstance(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.provider.filterInstance(c.instanceInfo)
-			assert.Equal(t, c.expected, actual)
+			actual := test.provider.filterInstance(test.instanceInfo)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -502,21 +502,21 @@ func TestTaskChunking(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			var tasks []*string
-			for v := 0; v < c.count; v++ {
+			for v := 0; v < test.count; v++ {
 				tasks = append(tasks, &testval)
 			}
 
-			out := c.provider.chunkedTaskArns(tasks)
+			out := test.provider.chunkedTaskArns(tasks)
 			var outCount []int
 
 			for _, el := range out {
 				outCount = append(outCount, len(el))
 			}
 
-			assert.Equal(t, c.expectedLengths, outCount, "Chunking %d elements", c.count)
+			assert.Equal(t, test.expectedLengths, outCount, "Chunking %d elements", test.count)
 		})
 
 	}

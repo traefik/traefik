@@ -34,13 +34,13 @@ func TestClustersSet(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			var clusters Clusters
-			err := clusters.Set(c.value)
+			err := clusters.Set(test.value)
 			assert.Nil(t, err)
-			assert.Equal(t, c.expected, clusters)
+			assert.Equal(t, test.expected, clusters)
 		})
 	}
 }
@@ -69,11 +69,11 @@ func TestClustersGet(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.clusters.Get()
-			assert.Equal(t, c.expected, actual)
+			actual := test.clusters.Get()
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -101,11 +101,11 @@ func TestClustersString(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := c.clusters.String()
-			assert.Equal(t, c.expected, actual)
+			actual := test.clusters.String()
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
@@ -133,12 +133,12 @@ func TestClustersSetValue(t *testing.T) {
 		},
 	}
 	for _, test := range tests {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			var slice Clusters
-			slice.SetValue(c.clusters)
-			assert.Equal(t, c.expected, slice)
+			slice.SetValue(test.clusters)
+			assert.Equal(t, test.expected, slice)
 		})
 	}
 }
