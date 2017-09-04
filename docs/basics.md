@@ -91,30 +91,35 @@ Following is the list of existing modifier rules:
 
 Matcher rules determine if a particular request should be forwarded to a backend.
 
-Separate multiple rule values by `,` (comma) in order to enable ANY semantics (i.e., forward a request if any rule matches). Does not work for `Headers` and `HeadersRegexp`.
+Separate multiple rule values by `,` (comma) in order to enable ANY semantics (i.e., forward a request if any rule matches).
+Does not work for `Headers` and `HeadersRegexp`.
 
 Separate multiple rule values by `;` (semicolon) in order to enable ALL semantics (i.e., forward a request if all rules match).
 
-You can optionally enable `passHostHeader` to forward client `Host` header to the backend. You can also optionally enable `passTLSCert` to forward TLS Client certificates to the backend.
-
 Following is the list of existing matcher rules along with examples:
 
-- `Headers: Content-Type, application/json`: Match HTTP header. It accepts a comma-separated key/value pair where both key and value must be literals.
-- `HeadersRegexp: Content-Type, application/(text|json)`: Match HTTP header. It accepts a comma-separated key/value pair where the key must be a literal and the value may be a literal or a regular expression.
-- `Host: traefik.io, www.traefik.io`: Match request host. It accepts a sequence of literal hosts.
-- `HostRegexp: traefik.io, {subdomain:[a-z]+}.traefik.io`: Match request host. It accepts a sequence of literal and regular expression hosts.
-- `Method: GET, POST, PUT`: Match request HTTP method. It accepts a sequence of HTTP methods.
-- `Path: /products/, /articles/{category}/{id:[0-9]+}`: Match exact request path. It accepts a sequence of literal and regular expression paths.
-- `PathStrip: /products/`: Match exact path and strip off the path prior to forwarding the request to the backend. It accepts a sequence of literal paths.
-- `PathStripRegex: /articles/{category}/{id:[0-9]+}`: Match exact path and strip off the path prior to forwarding the request to the backend. It accepts a sequence of literal and regular expression paths.
-- `PathPrefix: /products/, /articles/{category}/{id:[0-9]+}`: Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.
-- `PathPrefixStrip: /products/`: Match request prefix path and strip off the path prefix prior to forwarding the request to the backend. It accepts a sequence of literal prefix paths. Starting with Traefik 1.3, the stripped prefix path will be available in the `X-Forwarded-Prefix` header.
-- `PathPrefixStripRegex: /articles/{category}/{id:[0-9]+}`: Match request prefix path and strip off the path prefix prior to forwarding the request to the backend. It accepts a sequence of literal and regular expression prefix paths. Starting with Traefik 1.3, the stripped prefix path will be available in the `X-Forwarded-Prefix` header.
-- `Query: foo=bar, bar=baz`: Match Query String parameters. It accepts a sequence of key=value pairs.
+| Matcher                                                    | Description                                                                                                                                                                                                                                                                             |
+|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Headers: Content-Type, application/json`                  | Match HTTP header. It accepts a comma-separated key/value pair where both key and value must be literals.                                                                                                                                                                               |
+| `HeadersRegexp: Content-Type, application/(text/json)`     | Match HTTP header. It accepts a comma-separated key/value pair where the key must be a literal and the value may be a literal or a regular expression.                                                                                                                                  |
+| `Host: traefik.io, www.traefik.io`                         | Match request host. It accepts a sequence of literal hosts.                                                                                                                                                                                                                             |
+| `HostRegexp: traefik.io, {subdomain:[a-z]+}.traefik.io`    | Match request host. It accepts a sequence of literal and regular expression hosts.                                                                                                                                                                                                      |
+| `Method: GET, POST, PUT`                                   | Match request HTTP method. It accepts a sequence of HTTP methods.                                                                                                                                                                                                                       |
+| `Path: /products/, /articles/{category}/{id:[0-9]+}`       | Match exact request path. It accepts a sequence of literal and regular expression paths.                                                                                                                                                                                                |
+| `PathStrip: /products/`                                    | Match exact path and strip off the path prior to forwarding the request to the backend. It accepts a sequence of literal paths.                                                                                                                                                         |
+| `PathStripRegex: /articles/{category}/{id:[0-9]+}`         | Match exact path and strip off the path prior to forwarding the request to the backend. It accepts a sequence of literal and regular expression paths.                                                                                                                                  |
+| `PathPrefix: /products/, /articles/{category}/{id:[0-9]+}` | Match request prefix path. It accepts a sequence of literal and regular expression prefix paths.                                                                                                                                                                                        |
+| `PathPrefixStrip: /products/`                              | Match request prefix path and strip off the path prefix prior to forwarding the request to the backend. It accepts a sequence of literal prefix paths. Starting with Traefik 1.3, the stripped prefix path will be available in the `X-Forwarded-Prefix` header.                        |
+| `PathPrefixStripRegex: /articles/{category}/{id:[0-9]+}`   | Match request prefix path and strip off the path prefix prior to forwarding the request to the backend. It accepts a sequence of literal and regular expression prefix paths. Starting with Traefik 1.3, the stripped prefix path will be available in the `X-Forwarded-Prefix` header. |
+| `Query: foo=bar, bar=baz`                                  | Match Query String parameters. It accepts a sequence of key=value pairs.                                                                                                                                                                                                                |
 
-In order to use regular expressions with Host and Path matchers, you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces. Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used. Example: `/posts/{id:[0-9]+}`.
+In order to use regular expressions with Host and Path matchers, you must declare an arbitrarily named variable followed by the colon-separated regular expression, all enclosed in curly braces. Any pattern supported by [Go's regexp package](https://golang.org/pkg/regexp/) may be used (example: `/posts/{id:[0-9]+}`).
 
-(Note that the variable has no special meaning; however, it is required by the gorilla/mux dependency which embeds the regular expression and defines the syntax.)
+!!! note
+    The variable has no special meaning; however, it is required by the [gorilla/mux](https://github.com/gorilla/mux) dependency which embeds the regular expression and defines the syntax.
+
+You can optionally enable `passHostHeader` to forward client `Host` header to the backend.
+You can also optionally enable `passTLSCert` to forward TLS Client certificates to the backend.
 
 ##### Path Matcher Usage Guidelines
 
@@ -122,12 +127,19 @@ This section explains when to use the various path matchers.
 
 Use `Path` if your backend listens on the exact path only. For instance, `Path: /products` would match `/products` but not `/products/shoes`.
 
-Use a `*Prefix*` matcher if your backend listens on a particular base path but also serves requests on sub-paths. For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`. Since the path is forwarded as-is, your backend is expected to listen on `/products`.
+Use a `*Prefix*` matcher if your backend listens on a particular base path but also serves requests on sub-paths.
+For instance, `PathPrefix: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.
+Since the path is forwarded as-is, your backend is expected to listen on `/products`.
 
-Use a `*Strip` matcher if your backend listens on the root path (`/`) but should be routeable on a specific prefix. For instance, `PathPrefixStrip: /products` would match `/products` but also `/products/shoes` and `/products/shirts`. Since the path is stripped prior to forwarding, your backend is expected to listen on `/`.
-If your backend is serving assets (e.g., images or Javascript files), chances are it must return properly constructed relative URLs. Continuing on the example, the backend should return `/products/shoes/image.png` (and not `/images.png` which Traefik would likely not be able to associate with the same backend). The `X-Forwarded-Prefix` header (available since Traefik 1.3) can be queried to build such URLs dynamically.
+Use a `*Strip` matcher if your backend listens on the root path (`/`) but should be routeable on a specific prefix.
+For instance, `PathPrefixStrip: /products` would match `/products` but also `/products/shoes` and `/products/shirts`.  
+Since the path is stripped prior to forwarding, your backend is expected to listen on `/`.  
+If your backend is serving assets (e.g., images or Javascript files), chances are it must return properly constructed relative URLs.  
+Continuing on the example, the backend should return `/products/shoes/image.png` (and not `/images.png` which Traefik would likely not be able to associate with the same backend).  
+The `X-Forwarded-Prefix` header (available since Traefik 1.3) can be queried to build such URLs dynamically.
 
-Instead of distinguishing your backends by path only, you can add a Host matcher to the mix. That way, namespacing of your backends happens on the basis of hosts in addition to paths.
+Instead of distinguishing your backends by path only, you can add a Host matcher to the mix.
+That way, namespacing of your backends happens on the basis of hosts in addition to paths.
 
 #### Examples
 
@@ -478,7 +490,7 @@ Please refer to the [configuration backends](/configuration/commons) section to 
 
 ## Commands
 
-### Command: traefik
+### traefik
 
 Usage:
 ```bash
