@@ -18,6 +18,7 @@ var (
 
 func init() {
 	logger = logrus.StandardLogger().WithFields(logrus.Fields{})
+	logrus.SetOutput(os.Stdout)
 }
 
 // Context sets the Context of the logger
