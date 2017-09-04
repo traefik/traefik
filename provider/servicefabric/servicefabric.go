@@ -83,21 +83,43 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 							return err
 						}
 						for _, partition := range partitions.Items {
-							replicas, err := sfClient.GetReplicas(app.ID, service.ID, partition.PartitionInformation.ID)
-							if err != nil {
-								log.Error(err)
-								return err
-							}
-							for _, replica := range replicas.Items {
-								defaultEndpoint, err := getDefaultEndpoint(replica.Address)
+							if partition.ServiceKind == "Stateful" {
+								replicas, err := sfClient.GetReplicas(app.ID, service.ID, partition.PartitionInformation.ID)
 								if err != nil {
-									log.Errorf("%s for replica %s in service %s", err, replica.ReplicaID, service.Name)
-									// Service may not have a HTTP endpoint so ignore
-									continue
+									log.Error(err)
+									return err
 								}
-								backend.Servers[replica.ReplicaID] = types.Server{
-									URL: defaultEndpoint,
+								for _, replica := range replicas.Items {
+									defaultEndpoint, err := getDefaultEndpoint(replica.Address)
+									if err != nil {
+										log.Errorf("%s for replica %s in service %s", err, replica.ReplicaID, service.Name)
+										// Service may not have a HTTP endpoint so ignore
+										continue
+									}
+									backend.Servers[replica.ReplicaID] = types.Server{
+										URL: defaultEndpoint,
+									}
 								}
+							} else if partition.ServiceKind == "Stateless" {
+								instances, err := sfClient.GetInstances(app.ID, service.ID, partition.PartitionInformation.ID)
+								if err != nil {
+									log.Error(err)
+									return err
+								}
+								for _, instance := range instances.Items {
+									defaultEndpoint, err := getDefaultEndpoint(instance.Address)
+									if err != nil {
+										log.Errorf("%s for instance %s in service %s", err, instance.InstanceID, service.Name)
+										// Service may not have a HTTP endpoint so ignore
+										continue
+									}
+									backend.Servers[instance.InstanceID] = types.Server{
+										URL: defaultEndpoint,
+									}
+								}
+							} else {
+								log.Errorf("Unsupported service kind %s in service %s", partition.ServiceKind, service.Name)
+								continue
 							}
 						}
 						// Only setup config for routable services

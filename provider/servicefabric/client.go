@@ -24,6 +24,7 @@ type Client interface {
 	GetServices(appName string) (*ServicesData, error)
 	GetPartitions(appName, serviceName string) (*PartitionsData, error)
 	GetReplicas(appName, serviceName, partitionName string) (*ReplicasData, error)
+	GetInstances(appName, serviceName, partitionName string) (*InstancesData, error)
 	GetServiceRoutes(appTypeName, appTypeVersion, manifestName string) (*ServiceRoutes, error)
 }
 
@@ -125,8 +126,24 @@ func (c *clientImpl) GetPartitions(appName, serviceName string) (*PartitionsData
 	return &partitionsData, nil
 }
 
+// GetInstances returns all the instances associated
+// with a stateless Service Fabric partition.
+func (c *clientImpl) GetInstances(appName, serviceName, partitionName string) (*InstancesData, error) {
+	url := c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion
+	res, err := getHTTP(&c.restClient, url)
+	if err != nil {
+		return &InstancesData{}, err
+	}
+	var instancesData InstancesData
+	err = json.Unmarshal(res, &instancesData)
+	if err != nil {
+		log.Errorf("Could not deserialise JSON response: %+v", err)
+	}
+	return &instancesData, nil
+}
+
 // GetReplicas returns all the replicas associated
-// with a Service Fabric partition.
+// with a stateful Service Fabric partition.
 func (c *clientImpl) GetReplicas(appName, serviceName, partitionName string) (*ReplicasData, error) {
 	url := c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion
 	res, err := getHTTP(&c.restClient, url)

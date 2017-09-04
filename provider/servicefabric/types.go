@@ -85,6 +85,22 @@ type ReplicasData struct {
 	} `json:"Items"`
 }
 
+// InstanceData encapsulates the response
+// model for Instances in the Service
+// Fabric API
+type InstancesData struct {
+	ContinuationToken *string `json:"ContinuationToken"`
+	Items             []*struct {
+		Address                      string `json:"Address"`
+		HealthState                  string `json:"HealthState"`
+		LastInBuildDurationInSeconds string `json:"LastInBuildDurationInSeconds"`
+		NodeName                     string `json:"NodeName"`
+		InstanceID                   string `json:"InstanceId"`
+		ReplicaStatus                string `json:"ReplicaStatus"`
+		ServiceKind                  string `json:"ServiceKind"`
+	} `json:"Items"`
+}
+
 // ServiceType encapsulates the response
 // model for Service Descriptions in the
 // Service Fabric API
