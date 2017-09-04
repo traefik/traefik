@@ -22,27 +22,27 @@ domain = "rancher.localhost"
 # Optional
 # Default: true
 #
-Watch = true
+watch = true
 
 # Polling interval (in seconds)
 #
 # Optional
 #
-RefreshSeconds = 15
+refreshSeconds = 15
 
 # Expose Rancher services by default in traefik
 #
 # Optional
 # Default: true
 #
-ExposedByDefault = false
+exposedByDefault = false
 
 # Filter services with unhealthy states and inactive states
 #
 # Optional
 # Default: false
 #
-EnableServiceHealthFilter = true
+enableServiceHealthFilter = true
 ```
 
 ## Rancher Metadata Service
@@ -63,14 +63,14 @@ EnableServiceHealthFilter = true
 # Optional
 # Default: false
 #
-IntervalPoll = true
+intervalPoll = true
 
 # Prefix used for accessing the Rancher metadata service
 #
 # Optional
 # Default: "/latest"
 #
-Prefix = "/2016-07-29"
+prefix = "/2016-07-29"
 ```
 
 ## Rancher API
@@ -86,17 +86,17 @@ Prefix = "/2016-07-29"
 # Endpoint to use when connecting to the Rancher API
 #
 # Required
-Endpoint = "http://rancherserver.example.com/v1"
+endpoint = "http://rancherserver.example.com/v1"
 
 # AccessKey to use when connecting to the Rancher API
 #
 # Required
-AccessKey = "XXXXXXXXXXXXXXXXXXXX"
+accessKey = "XXXXXXXXXXXXXXXXXXXX"
 
 # SecretKey to use when connecting to the Rancher API
 #
 # Required
-SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+secretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 
 !!! note
@@ -109,13 +109,13 @@ SecretKey = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
 Labels can be used on task containers to override default behaviour:
 
-| Label                                                                                                                | Description                                                                                                          |
-|----------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `traefik.protocol=https`                                                                                             | override the default `http` protocol                                                                                 |
-| `traefik.weight=10`                                                                                                  | assign this weight to the container                                                                                  |
-| `traefik.enable=false`                                                                                               | disable this container in Træfik                                                                                     |
-| `traefik.frontend.rule=Host:test.traefik.io`                                                                         | override the default frontend rule (Default: `Host:{containerName}.{domain}`).                                       |
-| `traefik.frontend.passHostHeader=true`                                                                               | forward client `Host` header to the backend.                                                                         |
-| `traefik.frontend.priority=10`                                                                                       | override default frontend priority                                                                                   |
-| `traefik.frontend.entryPoints=http,https`                                                                            | assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.                             |
-| `traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0` | Sets basic authentication for that frontend with the usernames and passwords test:test and test2:test2, respectively |
+| Label                                        | Description                                                                              |
+|----------------------------------------------|------------------------------------------------------------------------------------------|
+| `traefik.protocol=https`                     | override the default `http` protocol                                                     |
+| `traefik.weight=10`                          | assign this weight to the container                                                      |
+| `traefik.enable=false`                       | disable this container in Træfik                                                         |
+| `traefik.frontend.rule=Host:test.traefik.io` | override the default frontend rule (Default: `Host:{containerName}.{domain}`).           |
+| `traefik.frontend.passHostHeader=true`       | forward client `Host` header to the backend.                                             |
+| `traefik.frontend.priority=10`               | override default frontend priority                                                       |
+| `traefik.frontend.entryPoints=http,https`    | assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`. |
+| `traefik.frontend.auth.basic=EXPR`           | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`.        |

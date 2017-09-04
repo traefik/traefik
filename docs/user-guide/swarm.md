@@ -120,6 +120,8 @@ Check that everything is started:
 
 ```shell
 docker ps
+```
+```
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                                      NAMES
 ba2c21488299        emilevauge/whoami   "/whoamI"                8 seconds ago       Up 9 seconds        80/tcp                                                     mhs-demo1/whoami1
 8147a7746e7a        emilevauge/whoami   "/whoamI"                19 seconds ago      Up 20 seconds       80/tcp                                                     mhs-demo0/whoami0
@@ -130,6 +132,8 @@ ba2c21488299        emilevauge/whoami   "/whoamI"                8 seconds ago  
 
 ```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip mhs-demo0)
+```
+```yaml
 Hostname: 8147a7746e7a
 IP: 127.0.0.1
 IP: ::1
@@ -146,8 +150,12 @@ X-Forwarded-For: 192.168.99.1
 X-Forwarded-Host: 10.0.9.3:80
 X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
+```
 
+```shell
 curl -H Host:whoami1.traefik http://$(docker-machine ip mhs-demo0)
+```
+```yaml
 Hostname: ba2c21488299
 IP: 127.0.0.1
 IP: ::1

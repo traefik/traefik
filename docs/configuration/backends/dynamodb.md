@@ -57,7 +57,7 @@ Items in the `dynamodb` table must have three attributes:
 
 - `id` (string): The id is the primary key.
 - `name`(string): The name is used as the name of the frontend or backend.
-- `frontend` or `backend` (map): This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik.
-    See `types/types.go` for details.
+- `frontend` or `backend` (map): This attribute's structure matches exactly the structure of a Frontend or Backend type in traefik.  
+    See `types/types.go` for details.  
     The presence or absence of this attribute determines its type.
     So an item should never have both a `frontend` and a `backend` attribute.

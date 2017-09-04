@@ -125,9 +125,11 @@ networks:
 
 Start it from within the `traefik` folder:
 
-    docker-compose up -d
+```shell
+docker-compose up -d
+```
 
-In a browser you may open `http://localhost:8080` to access Træfik's dashboard and observe the following magic.
+In a browser you may open [http://localhost:8080](http://localhost:8080) to access Træfik's dashboard and observe the following magic.
 
 Now, create a folder named `test` and create a `docker-compose.yml` in it with this content:
 
@@ -159,7 +161,10 @@ docker-compose scale whoami=2
 Finally, test load-balancing between the two services `test_whoami_1` and `test_whoami_2`:
 
 ```shell
-$ curl -H Host:whoami.docker.localhost http://127.0.0.1
+curl -H Host:whoami.docker.localhost http://127.0.0.1
+```
+
+```yaml
 Hostname: ef194d07634a
 IP: 127.0.0.1
 IP: ::1
@@ -174,8 +179,13 @@ X-Forwarded-For: 172.17.0.1
 X-Forwarded-Host: 172.17.0.4:80
 X-Forwarded-Proto: http
 X-Forwarded-Server: dbb60406010d
+```
 
-$ curl -H Host:whoami.docker.localhost http://127.0.0.1
+```shell
+curl -H Host:whoami.docker.localhost http://127.0.0.1
+```
+
+```yaml
 Hostname: 6c3c5df0c79a
 IP: 127.0.0.1
 IP: ::1

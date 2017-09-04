@@ -22,7 +22,7 @@ To redirect an http entrypoint to an https entrypoint (with SNI support).
   [entryPoints.http]
   address = ":80"
     [entryPoints.http.redirect]
-      entryPoint = "https"
+    entryPoint = "https"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -43,8 +43,8 @@ To redirect an entrypoint rewriting the URL.
   [entryPoints.http]
   address = ":80"
     [entryPoints.http.redirect]
-      regex = "^http://localhost/(.*)"
-      replacement = "http://mydomain/$1"
+    regex = "^http://localhost/(.*)"
+    replacement = "http://mydomain/$1"
 ```
 
 ## TLS Mutual Authentication

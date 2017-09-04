@@ -353,8 +353,8 @@ For example:
 [backends]
   [backends.backend1]
     [backends.backend1.healthcheck]
-      path = "/health"
-      interval = "10s"
+    path = "/health"
+    interval = "10s"
 ```
 
 To use a different port for the healthcheck:
@@ -362,9 +362,9 @@ To use a different port for the healthcheck:
 [backends]
   [backends.backend1]
     [backends.backend1.healthcheck]
-      path = "/health"
-      interval = "10s"
-      port = 8080
+    path = "/health"
+    interval = "10s"
+    port = 8080
 ```
 
 ### Servers
@@ -377,7 +377,7 @@ Here is an example of backends and servers definition:
 [backends]
   [backends.backend1]
     [backends.backend1.circuitbreaker]
-      expression = "NetworkErrorRatio() > 0.5"
+    expression = "NetworkErrorRatio() > 0.5"
     [backends.backend1.servers.server1]
     url = "http://172.17.0.2:80"
     weight = 10
@@ -386,7 +386,7 @@ Here is an example of backends and servers definition:
     weight = 1
   [backends.backend2]
     [backends.backend2.LoadBalancer]
-      method = "drr"
+    method = "drr"
     [backends.backend2.servers.server1]
     url = "http://172.17.0.4:80"
     weight = 1

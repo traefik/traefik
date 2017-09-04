@@ -18,18 +18,22 @@ In this example, we're going to use a single network called `web` where all cont
 
 On the Docker host, run the following command:
 
-`$ docker network create web`
+```shell
+docker network create web
+```
 
 Now, let's create a directory on the server where we will configure the rest of Traefik:
 
-`$ mkdir -p /opt/traefik`
+```shell
+mkdir -p /opt/traefik
+```
 
 Within this directory, we're going to create 3 empty files:
 
-```sh
-$ touch /opt/traefik/docker-compose.yml
-$ touch /opt/traefik/acme.json && chmod 600 /opt/traefik/acme.json
-$ touch /opt/traefik/traefik.toml
+```shell
+touch /opt/traefik/docker-compose.yml
+touch /opt/traefik/acme.json && chmod 600 /opt/traefik/acme.json
+touch /opt/traefik/traefik.toml
 ```
 
 The `docker-compose.yml` file will provide us with a simple, consistent and more importantly, a deterministic way to create Traefik.
@@ -76,7 +80,7 @@ defaultEntryPoints = ["https","http"]
   [entryPoints.http]
   address = ":80"
     [entryPoints.http.redirect]
-      entryPoint = "https"
+    entryPoint = "https"
   [entryPoints.https]
   address = ":443"
   [entryPoints.https.tls]
@@ -104,7 +108,7 @@ This is the minimum configuration required to do the following:
 - Enable the Docker configuration backend and listen for container events on the Docker unix socket we've mounted earlier. However, **new containers will not be exposed by Traefik by default, we'll get into this in a bit!**
 - Enable automatic request and configuration of SSL certificates using Let's Encrypt. These certificates will be stored in the `acme.json` file, which you can back-up yourself and store off-premises.
 
-Alright, let's boot the container. From the `/opt/traefik` directory, run `$ docker-compose up -d` which will create and start the Traefik container.
+Alright, let's boot the container. From the `/opt/traefik` directory, run `docker-compose up -d` which will create and start the Traefik container.
 
 ## Exposing Web Services to the Outside World
 

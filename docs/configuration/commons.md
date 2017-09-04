@@ -123,12 +123,12 @@ constraints = ["tag!=us-*", "tag!=asia-*"]
 ```toml
 # Backend-specific constraint
 [consulCatalog]
-  endpoint = "127.0.0.1:8500"
-  constraints = ["tag==api"]
+endpoint = "127.0.0.1:8500"
+constraints = ["tag==api"]
 
 [marathon]
-  endpoint = "127.0.0.1:8800"
-  constraints = ["tag==api", "tag!=v*-beta"]
+endpoint = "127.0.0.1:8800"
+constraints = ["tag==api", "tag!=v*-beta"]
 ```
 
 
@@ -165,14 +165,14 @@ To enable access logs using the default settings just add the `[accessLog]` entr
 To write the logs into a logfile specify the `filePath`.
 ```toml
 [accessLog]
-  filePath = "/path/to/access.log"
+filePath = "/path/to/access.log"
 ```
 
 To write JSON format logs, specify `json` as the format:
 ```toml
 [accessLog]
-  filePath   = "/path/to/access.log"
-  format     = "json"
+filePath = "/path/to/access.log"
+format = "json"
 ```
 
 Deprecated way (before 1.4):
