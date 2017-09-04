@@ -131,7 +131,7 @@ func TestEcsPort(t *testing.T) {
 		provider     *Provider
 	}{
 		{
-			desc:         "Default port sould be 80",
+			desc:         "Default port should be 80",
 			expected:     "80",
 			instanceInfo: simpleEcsInstance(map[string]*string{}),
 			provider:     &Provider{},
