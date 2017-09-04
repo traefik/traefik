@@ -8,9 +8,9 @@ repo_url: 'https://github.com/containous/traefik'
 
 # Documentation and theme
 docs_dir: 'docs'
-theme: united
+#theme: united
 # theme: readthedocs
-# theme: 'material'
+theme: 'material'
 # theme: bootstrap
 
 site_favicon: 'img/traefik.icon.png'
@@ -20,39 +20,62 @@ copyright: "Copyright &copy; 2016-2017 Containous SAS"
 
 # Options
 extra:
-#   version: 0.2.2
   logo: img/traefik.logo.png
-  # author:
-  #   twitter: traefikproxy
   palette:
     primary: 'blue'
     accent: 'light blue'
+  feature:
+    tabs: false
+  palette:
+    primary: 'cyan'
+    accent: 'cyan'
   i18n:
     prev: 'Previous'
-    next: 'Next'  
-  
-markdown_extensions:
-#   - codehilite(css_class=code)
-  - admonition
-#   - toc:
-#       permalink: '##'
-  # - fenced_code
-      
+    next: 'Next'
+# version: 0.2.2
+# author:
+#   twitter: traefikproxy
+
 extra_css:
-    - css/traefik.css
-      
+    - styles/extra.css
+    - styles/atom-one-light.css
+
+extra_javascript:
+  - js/hljs/highlight.pack.js
+  - js/extra.js
+
+markdown_extensions:
+  - admonition
+#  - codehilite(guess_lang=false)
+  - toc(permalink=true)
+
 # Page tree
 pages:
   - Getting Started: index.md
   - Basics: basics.md
-  - traefik.toml: toml.md
+  - Configuration:
+    - 'Commons': 'configuration/commons.md'
+    - 'Let''s Encrypt': 'configuration/acme.md'
+    - 'Web Backend': 'configuration/backends/web.md'
+    - 'BoltDB Backend': 'configuration/backends/boltdb.md'
+    - 'Consul Backend': 'configuration/backends/consul.md'
+    - 'Docker Backend': 'configuration/backends/docker.md'
+    - 'DynamoDB Backend': 'configuration/backends/dynamodb.md'
+    - 'ECS Backend': 'configuration/backends/ecs.md'
+    - 'Etcd Backend': 'configuration/backends/etcd.md'
+    - 'Eureka Backend': 'configuration/backends/eureka.md'
+    - 'File Backend': 'configuration/backends/file.md'
+    - 'Kubernetes Ingress Backend': 'configuration/backends/kubernetes.md'
+    - 'Marathon Backend': 'configuration/backends/marathon.md'
+    - 'Rancher Backend': 'configuration/backends/rancher.md'
+    - 'Zookeeper Backend': 'configuration/backends/zookeeper.md'
   - User Guide:
-      - 'Configuration examples': 'user-guide/examples.md'
-      - 'Swarm cluster': 'user-guide/swarm.md'
-      - 'Swarm mode cluster': 'user-guide/swarm-mode.md'
-      - 'Kubernetes': 'user-guide/kubernetes.md'
-      - 'Marathon': 'user-guide/marathon.md'
-      - 'Key-value store configuration': 'user-guide/kv-config.md'
-      - 'Clustering/HA': 'user-guide/cluster.md'
-      - 'Getting started with Docker & Lets Encrypt': 'user-guide/getting-started-with-docker-and-lets-encrypt.md'
+    - 'Configuration Examples': 'user-guide/examples.md'
+    - 'Swarm Cluster': 'user-guide/swarm.md'
+    - 'Swarm Mode Cluster': 'user-guide/swarm-mode.md'
+    - 'Kubernetes': 'user-guide/kubernetes.md'
+    - 'Marathon': 'user-guide/marathon.md'
+    - 'Key-value Store Configuration': 'user-guide/kv-config.md'
+    - 'Clustering/HA': 'user-guide/cluster.md'
+    - 'Getting Started with Docker & Lets Encrypt': 'user-guide/getting-started-with-docker-and-lets-encrypt.md'
   - Benchmarks: benchmarks.md

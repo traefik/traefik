@@ -12,8 +12,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
-  version: 3772a8e4408fb033d00a947d340475e116854b1a
-  version: 321ed9ffd102941c736731b8e7bae811820d267d
+  version: 7baa97f97557ff96be2798972dc831c7ba0a46e7
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -202,6 +201,8 @@ import:
   - spew
 - package: github.com/Masterminds/sprig
   version: e039e20e500c2c025d9145be375e27cf42a94174
+- package: github.com/armon/go-proxyproto
+  version: 48572f11356f1843b694f21a290d4f1006bc5e47
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose

@@ -1,5 +1,5 @@
-hash: 3d5a06016b7b56be08120ed653406a1e8d4ade7e69b4fbc37b31683cb4e9a519
-updated: 2017-08-21T14:15:06.346751095+02:00
+hash: fd8e1bbabefc71e0fc1551dcf67688d0b5ad1f23168a5c0256b8c98dda1b1fb3
+updated: 2017-08-25T11:52:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -10,6 +10,8 @@ imports:
   version: 0ddd408d5d60ea76e320503cc7dd091992dee608
 - name: github.com/aokoli/goutils
   version: 3391d3790d23d03408670993e957e8f408993c34
+- name: github.com/armon/go-proxyproto
+  version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - name: github.com/ArthurHlt/go-eureka-client
   version: 9d0a49cbd39aa3634ae1977e9f519a262b10adaf
   subpackages:
@@ -477,7 +479,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: 321ed9ffd102941c736731b8e7bae811820d267d
+  version: 7baa97f97557ff96be2798972dc831c7ba0a46e7
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:

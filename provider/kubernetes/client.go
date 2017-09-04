@@ -22,7 +22,7 @@ import (
 const resyncPeriod = time.Minute * 5
 
 // Client is a client for the Provider master.
-// WatchAll starts the watch of the Provider ressources and updates the stores.
+// WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
 	GetIngresses(namespaces Namespaces) []*v1beta1.Ingress

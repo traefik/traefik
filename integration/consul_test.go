@@ -11,7 +11,7 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/integration/try"
-	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/types"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 	"github.com/docker/libkv/store/consul"
@@ -52,7 +52,7 @@ func (s *ConsulSuite) setupConsulTLS(c *check.C) {
 	s.composeProject.Start(c)
 
 	consul.Register()
-	clientTLS := &provider.ClientTLS{
+	clientTLS := &types.ClientTLS{
 		CA:                 "resources/tls/ca.cert",
 		Cert:               "resources/tls/consul.cert",
 		Key:                "resources/tls/consul.key",
