@@ -265,15 +265,29 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 		log.Error("Error getting level", err)
 	}
 	log.SetLevel(level)
-	if len(globalConfiguration.TraefikLogsFile) > 0 {
-		dir := filepath.Dir(globalConfiguration.TraefikLogsFile)
+
+	var formatter logrus.Formatter
+	if globalConfiguration.TraefikLog != nil && globalConfiguration.TraefikLog.Format == "json" {
+		formatter = &logrus.JSONFormatter{}
+	} else {
+		formatter = &logrus.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true}
+	}
+	log.SetFormatter(formatter)
+
+	logFile := globalConfiguration.TraefikLogsFile
+	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
+		logFile = globalConfiguration.TraefikLog.FilePath
+	}
+
+	if len(logFile) > 0 {
+		dir := filepath.Dir(logFile)
 
 		err := os.MkdirAll(dir, 0755)
 		if err != nil {
 			log.Errorf("Failed to create log path %s: %s", dir, err)
 		}
 
-		err = log.OpenFile(globalConfiguration.TraefikLogsFile)
+		err = log.OpenFile(logFile)
 		defer func() {
 			if err := log.CloseFile(); err != nil {
 				log.Error("Error closing log", err)
@@ -281,11 +295,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 		}()
 		if err != nil {
 			log.Error("Error opening file", err)
-		} else {
-			log.SetFormatter(&logrus.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})
 		}
-	} else {
-		log.SetFormatter(&logrus.TextFormatter{FullTimestamp: true, DisableSorting: true})
 	}
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
