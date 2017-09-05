@@ -103,7 +103,7 @@ Træfik needs the following policy to read ECS information:
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "Traefik ECS read access",
+            "Sid": "TraefikECSReadAccess",
             "Effect": "Allow",
             "Action": [
                 "ecs:ListClusters",
