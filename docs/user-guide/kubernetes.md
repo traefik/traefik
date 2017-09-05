@@ -123,8 +123,10 @@ spec:
   ports:
     - protocol: TCP
       port: 80
+      name: web
     - protocol: TCP
       port: 8080
+      name: admin
   type: NodePort
 ```
 [examples/k8s/traefik-deployment.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-deployment.yaml)
@@ -184,8 +186,10 @@ spec:
   ports:
     - protocol: TCP
       port: 80
+      name: web
     - protocol: TCP
       port: 8080
+      name: admin
   type: NodePort
 ```
 
@@ -686,7 +690,7 @@ If you were to visit `example.com/static` the request would then be passed onto 
 
 !!! note
     The per ingress annotation overides whatever the global value is set to.
-    So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing 
+    So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing
     the host header per ingress if you wanted.
 
 ## Excluding an ingress from Træfik
