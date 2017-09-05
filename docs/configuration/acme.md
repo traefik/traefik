@@ -8,9 +8,6 @@
     [entryPoints.https.tls]
 
 # Enable ACME (Let's Encrypt): automatic SSL
-#
-# Optional
-#
 [acme]
 
 # Email address used for registration
@@ -104,22 +101,14 @@ entryPoint = "https"
 # All domains must have A/AAAA records pointing to Traefik
 # WARNING, Take note that Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 # Each domain & SANs will lead to a certificate request.
-#
 # [[acme.domains]]
-#   main = "local1.com"
-#   sans = ["test1.local1.com", "test2.local1.com"]
+# main = "local1.com"
+# sans = ["test1.local1.com", "test2.local1.com"]
 # [[acme.domains]]
-#   main = "local2.com"
-#   sans = ["test1.local2.com", "test2x.local2.com"]
+# main = "local2.com"
+# sans = ["test1.local2.com", "test2.local2.com"]
 # [[acme.domains]]
-#   main = "local3.com"
+# main = "local3.com"
 # [[acme.domains]]
-#   main = "local4.com"
-[[acme.domains]]
-   main = "local1.com"
-   sans = ["test1.local1.com", "test2.local1.com"]
-[[acme.domains]]
-   main = "local3.com"
-[[acme.domains]]
-   main = "local4.com"
+# main = "local4.com"
 ```

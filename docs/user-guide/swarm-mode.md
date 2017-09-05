@@ -1,8 +1,6 @@
 # Docker Swarm (mode) cluster
 
-This section explains how to create a multi-host docker cluster with
-swarm mode using [docker-machine](https://docs.docker.com/machine) and
-how to deploy Træfik on it.
+This section explains how to create a multi-host docker cluster with swarm mode using [docker-machine](https://docs.docker.com/machine) and how to deploy Træfik on it.
 
 The cluster consists of:
 
@@ -59,6 +57,8 @@ Let's validate the cluster is up and running.
 
 ```shell
 docker-machine ssh manager docker node ls
+```
+```
 ID                           HOSTNAME  STATUS  AVAILABILITY  MANAGER STATUS
 2a770ov9vixeadep674265u1n    worker1   Ready   Active
 dbi3or4q8ii8elbws70g4hkdh *  manager   Ready   Active        Leader
@@ -129,6 +129,8 @@ Check that everything is scheduled and started:
 
 ```shell
 docker-machine ssh manager "docker service ls"
+```
+```
 ID            NAME     REPLICAS  IMAGE              COMMAND
 ab046gpaqtln  whoami0  1/1       emilevauge/whoami
 cgfg5ifzrpgm  whoami1  1/1       emilevauge/whoami
@@ -139,6 +141,8 @@ dtpl249tfghc  traefik  1/1       traefik            --docker --docker.swarmmode 
 
 ```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip manager)
+```
+```yaml
 Hostname: 8147a7746e7a
 IP: 127.0.0.1
 IP: ::1
@@ -155,8 +159,11 @@ X-Forwarded-For: 192.168.99.1
 X-Forwarded-Host: 10.0.9.3:80
 X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
-
+```
+```shell
 curl -H Host:whoami1.traefik http://$(docker-machine ip manager)
+```
+```yaml
 Hostname: ba2c21488299
 IP: 127.0.0.1
 IP: ::1
@@ -179,6 +186,8 @@ Note that as Træfik is published, you can access it from any machine and not on
 
 ```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip worker1)
+```
+```yaml
 Hostname: 8147a7746e7a
 IP: 127.0.0.1
 IP: ::1
@@ -195,8 +204,11 @@ X-Forwarded-For: 192.168.99.1
 X-Forwarded-Host: 10.0.9.3:80
 X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
-
+```
+```shell
 curl -H Host:whoami1.traefik http://$(docker-machine ip worker2)
+```
+```yaml
 Hostname: ba2c21488299
 IP: 127.0.0.1
 IP: ::1
@@ -228,6 +240,8 @@ Check that we now have 5 replicas of each `whoami` service:
 
 ```shell
 docker-machine ssh manager "docker service ls"
+```
+```
 ID            NAME     REPLICAS  IMAGE              COMMAND
 ab046gpaqtln  whoami0  5/5       emilevauge/whoami
 cgfg5ifzrpgm  whoami1  5/5       emilevauge/whoami
@@ -239,6 +253,9 @@ Repeat the following command multiple times and note that the Hostname changes e
 
 ```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip manager)
+```
+
+```yaml
 Hostname: 8147a7746e7a
 IP: 127.0.0.1
 IP: ::1
@@ -261,6 +278,9 @@ Do the same against whoami1:
 
 ```shell
 curl -H Host:whoami1.traefik http://$(docker-machine ip manager)
+```
+
+```yaml
 Hostname: ba2c21488299
 IP: 127.0.0.1
 IP: ::1
@@ -278,17 +298,16 @@ X-Forwarded-Host: 10.0.9.4:80
 X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
 ```
-Wait, I thought we added the sticky flag to whoami1?  Traefik relies on a cookie to maintain stickyness so you'll need to test this with a browser.
+Wait, I thought we added the sticky flag to `whoami1`?  Traefik relies on a cookie to maintain stickyness so you'll need to test this with a browser.
 
-First you need to add whoami1.traefik to your hosts file:
+First you need to add `whoami1.traefik` to your hosts file:
 
-```ssh
+```shell
 if [ -n "$(grep whoami1.traefik /etc/hosts)" ];  
 then 
-echo "whoami1.traefik already exists (make sure the ip is current)"; 
+    echo "whoami1.traefik already exists (make sure the ip is current)"; 
 else 
-sudo -- sh -c -e "echo '$(docker-machine ip manager)\twhoami1.traefik' 
->> /etc/hosts"; 
+    sudo -- sh -c -e "echo '$(docker-machine ip manager)\twhoami1.traefik' >> /etc/hosts"; 
 fi
 ```
 

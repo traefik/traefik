@@ -7,14 +7,13 @@ Like any other reverse proxy, Træfik can be configured with a file. You have th
 Add your configuration at the end of the global configuration file `traefik.toml`:
 
 ```toml
-# traefik.toml
-logLevel = "DEBUG"
 defaultEntryPoints = ["http", "https"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
     [entryPoints.http.redirect]
-      entryPoint = "https"
+    entryPoint = "https"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -31,7 +30,7 @@ defaultEntryPoints = ["http", "https"]
 [backends]
   [backends.backend1]
     [backends.backend1.circuitbreaker]
-      expression = "NetworkErrorRatio() > 0.5"
+    expression = "NetworkErrorRatio() > 0.5"
     [backends.backend1.servers.server1]
     url = "http://172.17.0.2:80"
     weight = 10
@@ -40,10 +39,10 @@ defaultEntryPoints = ["http", "https"]
     weight = 1
   [backends.backend2]
     [backends.backend2.maxconn]
-      amount = 10
-      extractorfunc = "request.host"
+    amount = 10
+    extractorfunc = "request.host"
     [backends.backend2.LoadBalancer]
-      method = "drr"
+    method = "drr"
     [backends.backend2.servers.server1]
     url = "http://172.17.0.4:80"
     weight = 1
@@ -56,6 +55,7 @@ defaultEntryPoints = ["http", "https"]
   backend = "backend2"
     [frontends.frontend1.routes.test_1]
     rule = "Host:test.localhost"
+
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
@@ -70,10 +70,11 @@ defaultEntryPoints = ["http", "https"]
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host:{subdomain:[a-z]+}.localhost"
+
   [frontends.frontend3]
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
-    rule = "Path:/test"
+  rule = "Path:/test"
 ```
 
 ## Rules in a Separate File
@@ -82,7 +83,6 @@ Put your rules in a separate file, for example `rules.toml`:
 
 ```toml
 # traefik.toml
-logLevel = "DEBUG"
 [entryPoints]
   [entryPoints.http]
   address = ":80"
@@ -107,7 +107,7 @@ filename = "rules.toml"
 [backends]
   [backends.backend1]
     [backends.backend1.circuitbreaker]
-      expression = "NetworkErrorRatio() > 0.5"
+    expression = "NetworkErrorRatio() > 0.5"
     [backends.backend1.servers.server1]
     url = "http://172.17.0.2:80"
     weight = 10
@@ -116,10 +116,10 @@ filename = "rules.toml"
     weight = 1
   [backends.backend2]
     [backends.backend2.maxconn]
-      amount = 10
-      extractorfunc = "request.host"
+    amount = 10
+    extractorfunc = "request.host"
     [backends.backend2.LoadBalancer]
-      method = "drr"
+    method = "drr"
     [backends.backend2.servers.server1]
     url = "http://172.17.0.4:80"
     weight = 1
@@ -142,7 +142,7 @@ filename = "rules.toml"
   [frontends.frontend3]
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
-    rule = "Path:/test"
+  rule = "Path:/test"
 ```
 
 ## Multiple .toml Files
@@ -159,21 +159,4 @@ If you want Træfik to watch file changes automatically, just add:
 ```toml
 [file]
 watch = true
-```
-
-The configuration files can be also templates written using functions provided by [go template](https://golang.org/pkg/text/template/) as well as functions provided by the [sprig library](https://masterminds.github.io/sprig/), like this:
-
-```tmpl
-[backends]
-  [backends.backend1]
-  url = "http://firstserver"
-  [backends.backend2]
-  url = "http://secondserver"
-
-{{$frontends := dict "frontend1" "backend1" "frontend2" "backend2"}}
-[frontends]
-{{range $frontend, $backend := $frontends}}
-  [frontends.{{$frontend}}]
-  backend = "{{$backend}}"
-{{end}}
 ```

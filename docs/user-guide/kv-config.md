@@ -112,6 +112,7 @@ And there, the same global configuration in the Key-value Store (using `prefix =
 | `/traefik/web/address`                                    | `:8081`                                                       |
 
 In case you are setting key values manually:
+
 - Remember to specify the indexes (`0`,`1`, `2`, ... ) under prefixes `/traefik/defaultentrypoints/` and `/traefik/entrypoints/https/tls/certificates/` in order to match the global configuration structure.
 - Be careful to give the correct IP address and port on the key `/traefik/consul/endpoint`.
 
@@ -190,7 +191,7 @@ Here is the toml configuration we would like to store in the store :
 [backends]
   [backends.backend1]
     [backends.backend1.circuitbreaker]
-      expression = "NetworkErrorRatio() > 0.5"
+    expression = "NetworkErrorRatio() > 0.5"
     [backends.backend1.servers.server1]
     url = "http://172.17.0.2:80"
     weight = 10
@@ -199,10 +200,10 @@ Here is the toml configuration we would like to store in the store :
     weight = 1
   [backends.backend2]
     [backends.backend1.maxconn]
-      amount = 10
-      extractorfunc = "request.host"
+    amount = 10
+    extractorfunc = "request.host"
     [backends.backend2.LoadBalancer]
-      method = "drr"
+    method = "drr"
     [backends.backend2.servers.server1]
     url = "http://172.17.0.4:80"
     weight = 1
@@ -225,7 +226,7 @@ Here is the toml configuration we would like to store in the store :
   [frontends.frontend3]
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
-    rule = "Path:/test"
+  rule = "Path:/test"
 ```
 
 And there, the same dynamic configuration in a KV Store (using `prefix = "traefik"`):
@@ -277,7 +278,10 @@ Træfik can watch the backends/frontends configuration changes and generate its 
 
 Note that only backends/frontends rules are dynamic, the rest of the Træfik configuration stay static.
 
-The [Etcd](https://github.com/coreos/etcd/issues/860) and [Consul](https://github.com/hashicorp/consul/issues/886) backends do not support updating multiple keys atomically. As a result, it may be possible for Træfik to read an intermediate configuration state despite judicious use of the `--providersThrottleDuration` flag. To solve this problem, Træfik supports a special key called `/traefik/alias`. If set, Træfik use the value as an alternative key prefix.
+The [Etcd](https://github.com/coreos/etcd/issues/860) and [Consul](https://github.com/hashicorp/consul/issues/886) backends do not support updating multiple keys atomically.
+As a result, it may be possible for Træfik to read an intermediate configuration state despite judicious use of the `--providersThrottleDuration` flag.
+To solve this problem, Træfik supports a special key called `/traefik/alias`.
+If set, Træfik use the value as an alternative key prefix.
 
 Given the key structure below, Træfik will use the `http://172.17.0.2:80` as its only backend (frontend keys have been omitted for brevity).
 
@@ -287,7 +291,8 @@ Given the key structure below, Træfik will use the `http://172.17.0.2:80` as it
 | `/traefik_configurations/1/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
 | `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
 
-When an atomic configuration change is required, you may write a new configuration at an alternative prefix. Here, although the `/traefik_configurations/2/...` keys have been set, the old configuration is still active because the `/traefik/alias` key still points to `/traefik_configurations/1`:
+When an atomic configuration change is required, you may write a new configuration at an alternative prefix.
+Here, although the `/traefik_configurations/2/...` keys have been set, the old configuration is still active because the `/traefik/alias` key still points to `/traefik_configurations/1`:
 
 | Key                                                                     | Value                       |
 |-------------------------------------------------------------------------|-----------------------------|
@@ -299,7 +304,8 @@ When an atomic configuration change is required, you may write a new configurati
 | `/traefik_configurations/2/backends/backend1/servers/server2/url`       | `http://172.17.0.3:80`      |
 | `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                        |
 
-Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` configuration becomes active atomically. Here, we have a 50% balance between the `http://172.17.0.3:80` and the `http://172.17.0.4:80` hosts while no traffic is sent to the `172.17.0.2:80` host:
+Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` configuration becomes active atomically.
+Here, we have a 50% balance between the `http://172.17.0.3:80` and the `http://172.17.0.4:80` hosts while no traffic is sent to the `172.17.0.2:80` host:
 
 | Key                                                                     | Value                       |
 |-------------------------------------------------------------------------|-----------------------------|
@@ -320,7 +326,7 @@ Don't forget to [setup the connection between Træfik and Key-value store](/user
 The static Træfik configuration in a key-value store can be automatically created and updated, using the [`storeconfig` subcommand](/basics/#commands).
 
 ```bash
-$ traefik storeconfig [flags] ...
+traefik storeconfig [flags] ...
 ```
 This command is here only to automate the [process which upload the configuration into the Key-value store](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store).
 Træfik will not start but the [static configuration](/basics/#static-trfk-configuration) will be uploaded into the Key-value store.

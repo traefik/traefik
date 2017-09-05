@@ -32,17 +32,26 @@ extra:
   i18n:
     prev: 'Previous'
     next: 'Next'
-# version: 0.2.2
-# author:
-#   twitter: traefikproxy
+# Comment because the call of the CDN is very slow.
+#  social:
+#    - type: 'github'
+#      link: 'https://github.com/containous/traefik'
+#    - type: 'stack-overflow'
+#      link: 'https://stackoverflow.com/questions/tagged/traefik'
+#    - type: 'slack'
+#      link: 'https://traefik.herokuapp.com'
+#    - type: 'twitter'
+#      link: 'https://twitter.com/traefikproxy'
+
+theme_dir: docs/theme/
 
 extra_css:
-    - styles/extra.css
-    - styles/atom-one-light.css
+    - theme/styles/extra.css
+    - theme/styles/atom-one-light.css
 
 extra_javascript:
-  - js/hljs/highlight.pack.js
-  - js/extra.js
+  - theme/js/hljs/highlight.pack.js
+  - theme/js/extra.js
 
 markdown_extensions:
   - admonition
@@ -55,22 +64,23 @@ pages:
   - Basics: basics.md
   - Configuration:
     - 'Commons': 'configuration/commons.md'
+    - 'EntryPoints': 'configuration/entrypoints.md'
     - 'Let''s Encrypt': 'configuration/acme.md'
-    - 'Web Backend': 'configuration/backends/web.md'
-    - 'BoltDB Backend': 'configuration/backends/boltdb.md'
-    - 'Consul Backend': 'configuration/backends/consul.md'
-    - 'Docker Backend': 'configuration/backends/docker.md'
-    - 'DynamoDB Backend': 'configuration/backends/dynamodb.md'
-    - 'ECS Backend': 'configuration/backends/ecs.md'
-    - 'Etcd Backend': 'configuration/backends/etcd.md'
-    - 'Eureka Backend': 'configuration/backends/eureka.md'
-    - 'File Backend': 'configuration/backends/file.md'
-    - 'Kubernetes Ingress Backend': 'configuration/backends/kubernetes.md'
-    - 'Marathon Backend': 'configuration/backends/marathon.md'
-    - 'Mesos Backend': 'configuration/backends/mesos.md'
-    - 'Rancher Backend': 'configuration/backends/rancher.md'
-    - 'Zookeeper Backend': 'configuration/backends/zookeeper.md'
-  - User Guide:
+    - 'Backend: Web': 'configuration/backends/web.md'
+    - 'Backend: BoltDB': 'configuration/backends/boltdb.md'
+    - 'Backend: Consul': 'configuration/backends/consul.md'
+    - 'Backend: Docker': 'configuration/backends/docker.md'
+    - 'Backend: DynamoDB': 'configuration/backends/dynamodb.md'
+    - 'Backend: ECS': 'configuration/backends/ecs.md'
+    - 'Backend: Etcd': 'configuration/backends/etcd.md'
+    - 'Backend: Eureka': 'configuration/backends/eureka.md'
+    - 'Backend: File': 'configuration/backends/file.md'
+    - 'Backend: Kubernetes Ingress': 'configuration/backends/kubernetes.md'
+    - 'Backend: Marathon': 'configuration/backends/marathon.md'
+    - 'Backend: Mesos': 'configuration/backends/mesos.md'
+    - 'Backend: Rancher': 'configuration/backends/rancher.md'
+    - 'Backend: Zookeeper': 'configuration/backends/zookeeper.md'
+  - User Guides:
     - 'Configuration Examples': 'user-guide/examples.md'
     - 'Swarm Cluster': 'user-guide/swarm.md'
     - 'Swarm Mode Cluster': 'user-guide/swarm-mode.md'
@@ -78,5 +88,5 @@ pages:
     - 'Marathon': 'user-guide/marathon.md'
     - 'Key-value Store Configuration': 'user-guide/kv-config.md'
     - 'Clustering/HA': 'user-guide/cluster.md'
-    - 'Getting Started with Docker & Lets Encrypt': 'user-guide/getting-started-with-docker-and-lets-encrypt.md'
+    - 'Let''s Encrypt & Docker': 'user-guide/docker-and-lets-encrypt.md'
   - Benchmarks: benchmarks.md
