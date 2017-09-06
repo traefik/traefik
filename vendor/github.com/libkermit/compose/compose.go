@@ -75,13 +75,20 @@ func CreateProject(name string, composeFiles ...string) (*Project, error) {
 }
 
 // Start creates and starts the compose project.
-func (p *Project) Start() error {
+func (p *Project) Start(services ...string) error {
 	ctx := context.Background()
 	err := p.composeProject.Create(ctx, options.Create{})
 	if err != nil {
 		return err
 	}
-	err = p.composeProject.Start(ctx)
+
+	return p.StartOnly(services...)
+}
+
+// StartOnly only starts created services which are stopped.
+func (p *Project) StartOnly(services ...string) error {
+	ctx := context.Background()
+	err := p.composeProject.Start(ctx, services...)
 	if err != nil {
 		return err
 	}
@@ -91,18 +98,27 @@ func (p *Project) Start() error {
 	return nil
 }
 
-// Stop shuts down and clean the project
-func (p *Project) Stop() error {
-	// FIXME(vdemeester) handle timeout
+// StopOnly only stop services without delete them.
+func (p *Project) StopOnly(services ...string) error {
 	ctx := context.Background()
-	err := p.composeProject.Stop(ctx, 10)
+	err := p.composeProject.Stop(ctx, 10, services...)
 	if err != nil {
 		return err
 	}
 	<-p.stopped
 	close(p.stopped)
+	return nil
+}
 
-	err = p.composeProject.Delete(ctx, options.Delete{})
+// Stop shuts down and clean the project
+func (p *Project) Stop(services ...string) error {
+	// FIXME(vdemeester) handle timeout
+	err := p.StopOnly(services...)
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+	err = p.composeProject.Delete(ctx, options.Delete{}, services...)
 	if err != nil {
 		return err
 	}
