@@ -1,4 +1,4 @@
-hash: fd8e1bbabefc71e0fc1551dcf67688d0b5ad1f23168a5c0256b8c98dda1b1fb3
+hash: 5e9aeda91bffc11f916ff6c324b26a02a279ed1d691e7a783ca03dfab584083c
 updated: 2017-08-25T11:52:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
@@ -783,7 +783,7 @@ testImports:
 - name: github.com/gorilla/mux
   version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
 - name: github.com/libkermit/compose
-  version: 2048f803f56422a65b455f918d4a61704dc94603
+  version: 6167fd37267d2dfbcbcbee0a321adaa9531f4062
   subpackages:
   - check
 - name: github.com/libkermit/docker
