@@ -154,7 +154,7 @@ logLevel = "ERROR"
 
 ### Access Logs
 
-Access logs are written when `[accessLog]` is defined. 
+Access logs are written when `[accessLog]` is defined.
 By default it will write to stdout and produce logs in the textual Common Log Format (CLF), extended with additional fields.
 
 To enable access logs using the default settings just add the `[accessLog]` entry.
@@ -197,7 +197,7 @@ This allows the logs to be rotated and processed by an external program, such as
 
 Custom error pages can be returned, in lieu of the default, according to frontend-configured ranges of HTTP Status codes.
 In the example below, if a 503 status is returned from the frontend "website", the custom error page at http://2.3.4.5/503.html is returned with the actual status code set in the HTTP header.
-Note, the `503.html` page itself is not hosted on traefik, but some other infrastructure.   
+Note, the `503.html` page itself is not hosted on traefik, but some other infrastructure.
 
 ```toml
 [frontends]
@@ -275,13 +275,13 @@ The configured status code ranges are inclusive; that is, in the above example, 
 # If zero, no timeout exists.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
 # values (digits). If no units are provided, the value is parsed assuming seconds.
-# 
+#
 # Optional
 # Default: "0s"
-# 
+#
 # readTimeout = "5s"
 
-# writeTimeout is the maximum duration before timing out writes of the response. It covers the time from the end of 
+# writeTimeout is the maximum duration before timing out writes of the response. It covers the time from the end of
 # the request header read to the end of the response write.
 # If zero, no timeout exists.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
@@ -289,7 +289,7 @@ The configured status code ranges are inclusive; that is, in the above example, 
 #
 # Optional
 # Default: "0s"
-# 
+#
 # writeTimeout = "5s"
 
 # idleTimeout is the maximum duration an idle (keep-alive) connection will remain idle before closing itself.
@@ -310,30 +310,30 @@ The configured status code ranges are inclusive; that is, in the above example, 
 ```toml
 [forwardingTimeouts]
 
-# dialTimeout is the amount of time to wait until a connection to a backend server can be established. 
+# dialTimeout is the amount of time to wait until a connection to a backend server can be established.
 # If zero, no timeout exists.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
 # values (digits). If no units are provided, the value is parsed assuming seconds.
-# 
+#
 # Optional
 # Default: "30s"
-# 
+#
 # dialTimeout = "30s"
 
-# responseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any). 
+# responseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
 # If zero, no timeout exists.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
 # values (digits). If no units are provided, the value is parsed assuming seconds.
 #
 # Optional
 # Default: "0s"
-# 
+#
 # responseHeaderTimeout = "0s"
 ```
 
 ### Idle Timeout (deprecated)
 
-Use [respondingTimeouts](/configuration/commons/#responding-timeouts) instead of `IdleTimeout`. 
+Use [respondingTimeouts](/configuration/commons/#responding-timeouts) instead of `IdleTimeout`.
 In the case both settings are configured, the deprecated option will be overwritten.
 
 `IdleTimeout` is the maximum amount of time an idle (keep-alive) connection will remain idle before closing itself.
@@ -344,7 +344,7 @@ If no units are provided, the value is parsed assuming seconds.
 
 ```toml
 # IdleTimeout
-# 
+#
 # DEPRECATED - see [respondingTimeouts] section.
 #
 # Optional
@@ -388,7 +388,7 @@ filename = "my_custom_config_template.tpml"
 
 The template files can be written using functions provided by:
 
-- [go template](https://golang.org/pkg/text/template/) 
+- [go template](https://golang.org/pkg/text/template/)
 - [sprig library](https://masterminds.github.io/sprig/)
 
 Example:

@@ -18,4 +18,4 @@ Once your Træfik configuration is uploaded on your KV store, you can start each
 A Træfik cluster is based on a manager/worker model.
 When starting, Træfik will elect a manager.
 If this instance fails, another manager will be automatically elected.
- 
+

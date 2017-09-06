@@ -86,7 +86,7 @@ You can enable Traefik to export internal metrics to different monitoring system
 - DataDog
 
 ```toml
-# DataDog metrics exporter type 
+# DataDog metrics exporter type
 [web.metrics.datadog]
   Address = "localhost:8125"
   Pushinterval = "10s"
