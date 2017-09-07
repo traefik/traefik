@@ -210,7 +210,7 @@ testImport:
 - package: github.com/go-check/check
   version: 11d3bc7aa68e238947792f30573146a3231fc0f1
 - package: github.com/libkermit/compose
-  version: 6167fd37267d2dfbcbcbee0a321adaa9531f4062
+  version: 4a33a16f1446ba205c4da7b09105d5bdc293b432
   subpackages:
   - check
 - package: github.com/libkermit/docker
