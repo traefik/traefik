@@ -189,15 +189,24 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 
 func loadFrontendConfigFile(envVar string) (*map[string]*types.Frontend, error) {
 	directory := os.Getenv(envVar)
-	files, _ := filepath.Glob(directory + "/*/**.toml")
-	configFile := files[0]
+	files, _ := filepath.Glob(directory + "/*Config*/**.toml")
+
+	var mostRecentFile os.FileInfo
+	var configFilePath string
+	for _, file := range files {
+		fileInfo, _ := os.Stat(file)
+		if mostRecentFile == nil || fileInfo.ModTime().After(mostRecentFile.ModTime()) {
+			mostRecentFile = fileInfo
+			configFilePath = file
+		}
+	}
 
 	configuration := new(types.Configuration)
-	if _, err := toml.DecodeFile(configFile, configuration); err != nil {
+	if _, err := toml.DecodeFile(configFilePath, configuration); err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %s", err)
 	}
 
-	log.Info("Loading fontend config from:", configFile)
+	log.Info("Loading fontend config from:", configFilePath)
 	log.Info(configuration.Frontends)
 
 	return &configuration.Frontends, nil
