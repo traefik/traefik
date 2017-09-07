@@ -1,6 +1,6 @@
 # Clustering / High Availability (beta)
 
-This guide explains how tu use Træfik in high availability mode.
+This guide explains how to use Træfik in high availability mode.
 In order to deploy and configure multiple Træfik instances, without copying the same configuration file on each instance, we will use a distributed Key-Value store.
 
 ## Prerequisites
