@@ -1,4 +1,4 @@
-hash: 110ae989ba77357a6d7cc720f671765b06857cf447296a294a461acd2574a020
+hash: 60a9ffe42cbbf7566a34702eca1348881e78f87bfcc15ff4898d12f7826b89d9
 updated: 2017-08-25T11:52:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
@@ -320,7 +320,7 @@ imports:
 - name: github.com/mvdan/xurls
   version: db96455566f05ffe42bd6ac671f05eeb1152b45d
 - name: github.com/NYTimes/gziphandler
-  version: 316adfc72ed3b0157975917adf62ba2dc31842ce
+  version: 824b33f2a7457025697878c865c323f801118043
   repo: https://github.com/containous/gziphandler.git
   vcs: git
 - name: github.com/ogier/pflag

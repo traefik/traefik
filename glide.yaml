@@ -88,6 +88,7 @@ import:
 - package: github.com/abbot/go-http-auth
 - package: github.com/NYTimes/gziphandler
   repo: https://github.com/containous/gziphandler.git
+  version: ^v1002.0.0
   vcs: git
 - package: github.com/docker/leadership
 - package: github.com/satori/go.uuid
