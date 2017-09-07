@@ -1,5 +1,11 @@
 # Change Log
 
+## [v1.3.8](https://github.com/containous/traefik/tree/v1.3.8) (2017-09-07)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.7...v1.3.8)
+
+**Bug fixes:**
+- **[middleware]** Compress and websocket ([#2079](https://github.com/containous/traefik/pull/2079) by [ldez](https://github.com/ldez))
+
 ## [v1.3.7](https://github.com/containous/traefik/tree/v1.3.7) (2017-08-25)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.6...v1.3.7)
 
