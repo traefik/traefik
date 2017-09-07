@@ -128,6 +128,7 @@ func New(setters ...optSetter) (*Forwarder, error) {
 	if f.httpForwarder.roundTripper == nil {
 		f.httpForwarder.roundTripper = http.DefaultTransport
 	}
+	f.websocketForwarder.TLSClientConfig = f.httpForwarder.roundTripper.(*http.Transport).TLSClientConfig
 	if f.httpForwarder.rewriter == nil {
 		h, err := os.Hostname()
 		if err != nil {
@@ -317,7 +318,11 @@ func (f *websocketForwarder) copyRequest(req *http.Request, u *url.URL) (outReq 
 	}
 
 	if requestURI, err := url.ParseRequestURI(outReq.RequestURI); err == nil {
-		outReq.URL.Path = requestURI.Path
+		if requestURI.RawPath != "" {
+			outReq.URL.Path = requestURI.RawPath
+		} else {
+			outReq.URL.Path = requestURI.Path
+		}
 		outReq.URL.RawQuery = requestURI.RawQuery
 	}
 
