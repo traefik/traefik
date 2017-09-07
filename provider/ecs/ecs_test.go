@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/containous/traefik/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func makeEcsInstance(containerDef *ecs.ContainerDefinition) ecsInstance {
@@ -370,14 +371,12 @@ func TestEcsGetBasicAuth(t *testing.T) {
 	}
 
 	for _, test := range cases {
-		c := test
-		t.Run(c.desc, func(t *testing.T) {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			actual := provider.getBasicAuth(c.instance)
-			if !reflect.DeepEqual(actual, c.expected) {
-				t.Errorf("actual %q, expected %q", actual, c.expected)
-			}
+			actual := provider.getBasicAuth(test.instance)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
