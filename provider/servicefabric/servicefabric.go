@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
@@ -20,11 +23,12 @@ var _ provider.Provider = (*Provider)(nil)
 
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
-	ClusterManagementUrl  string `description:"Service Fabric API endpoint"`
+	ClusterManagementURL  string `description:"Service Fabric API endpoint"`
 	APIVersion            string `description:"Service Fabric API version"`
 	ClientCertFilePath    string `description:"Path to cert file"`
 	ClientCertKeyFilePath string `description:"Path to cert key file"`
 	CACertFilePath        string `description:"Path to CA cert file"`
+	FontendConfigEnv      string `description:"Environment varaible containing path to frontend config file"`
 }
 
 // Provide allows the servicefabric provider to provide configurations to traefik
@@ -33,7 +37,7 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 	if provider.APIVersion == "" {
 		provider.APIVersion = "3.0"
 	}
-	sfClient, err := NewClient(provider.ClusterManagementUrl,
+	sfClient, err := NewClient(provider.ClusterManagementURL,
 		provider.APIVersion,
 		provider.ClientCertFilePath,
 		provider.ClientCertKeyFilePath,
@@ -59,8 +63,12 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 					log.Info("Checking service fabric config")
 				}
 
+				frontends, err := loadFrontendConfigFile(provider.FontendConfigEnv)
+				if err != nil {
+					log.Error(err)
+				}
+
 				backends := make(map[string]*types.Backend)
-				frontends := make(map[string]*types.Frontend)
 
 				apps, err := sfClient.GetApplications()
 				if err != nil {
@@ -122,35 +130,14 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 								continue
 							}
 						}
-						// Only setup config for routable services
-						if len(backend.Servers) > 0 {
-							backends[service.Name] = backend
-							serviceRoutes, err := sfClient.GetServiceRoutes(app.TypeName, app.TypeVersion, service.TypeName)
-							if err != nil {
-								// Services may not have any defined routes
-								continue
-							}
-							routes := make(map[string]types.Route)
-							for i, r := range serviceRoutes.Routes {
-								ruleName := "route" + fmt.Sprint(i)
-								route := types.Route{
-									Rule: r.Rule,
-								}
-								routes[ruleName] = route
-							}
-							frontend := types.Frontend{
-								Routes: routes,
-							}
-							frontend.Backend = service.Name
-							frontends[service.Name] = &frontend
-						}
+
 					}
 				}
 				configMessage := types.ConfigMessage{
 					ProviderName: "servicefabric",
 					Configuration: &types.Configuration{
 						Backends:  backends,
-						Frontends: frontends,
+						Frontends: *frontends,
 					},
 				}
 				if !reflect.DeepEqual(lastConfigUpdate, configMessage) {
@@ -197,5 +184,21 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 	if !defaultHTTPEndpointExists {
 		return emptyString, fmt.Errorf("No default HTTP endpoint")
 	}
-	return defaultHTTPEndpoint, nil
+	return strings.Replace(defaultHTTPEndpoint, "localhost", "10.211.55.3", -1), nil
+}
+
+func loadFrontendConfigFile(envVar string) (*map[string]*types.Frontend, error) {
+	directory := os.Getenv(envVar)
+	files, _ := filepath.Glob(directory + "/*/**.toml")
+	configFile := files[0]
+
+	configuration := new(types.Configuration)
+	if _, err := toml.DecodeFile(configFile, configuration); err != nil {
+		return nil, fmt.Errorf("error reading configuration file: %s", err)
+	}
+
+	log.Info("Loading fontend config from:", configFile)
+	log.Info(configuration.Frontends)
+
+	return &configuration.Frontends, nil
 }

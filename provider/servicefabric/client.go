@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -25,7 +24,6 @@ type Client interface {
 	GetPartitions(appName, serviceName string) (*PartitionsData, error)
 	GetReplicas(appName, serviceName, partitionName string) (*ReplicasData, error)
 	GetInstances(appName, serviceName, partitionName string) (*InstancesData, error)
-	GetServiceRoutes(appTypeName, appTypeVersion, manifestName string) (*ServiceRoutes, error)
 }
 
 type clientImpl struct {
@@ -156,58 +154,6 @@ func (c *clientImpl) GetReplicas(appName, serviceName, partitionName string) (*R
 		log.Errorf("Could not deserialise JSON response: %+v", err)
 	}
 	return &replicasData, nil
-}
-
-// GetServiceRoutes returns configuration for setting up
-// frontends for a Service Fabric service.
-func (c *clientImpl) GetServiceRoutes(appTypeName, appTypeVersion, serviceTypeName string) (*ServiceRoutes, error) {
-	serviceManifest, err := c.getServiceManifest(appTypeName, appTypeVersion, serviceTypeName)
-	if err != nil {
-		return nil, err
-	}
-	url := c.endpoint + "/ApplicationTypes/" + appTypeName + "/$/GetServiceManifest/?api-version=" + c.apiVersion + "&ApplicationTypeVersion=" + appTypeVersion + "&ServiceManifestName=" + serviceManifest
-	res, err := getHTTP(&c.restClient, url)
-	if err != nil {
-		return &ServiceRoutes{}, err
-	}
-	var manifestWrapper map[string]string
-	err = json.Unmarshal(res, &manifestWrapper)
-	if err != nil {
-		return nil, fmt.Errorf("Could not deserialise JSON response: %+v", err)
-	}
-	var manifest ServiceManifest
-	err = xml.Unmarshal([]byte(manifestWrapper["Manifest"]), &manifest)
-	if err != nil {
-		return nil, fmt.Errorf("Could not deserialise XML response: %+v", err)
-	}
-	var serviceRoutes ServiceRoutes
-	err = json.Unmarshal([]byte(manifest.Description), &serviceRoutes)
-	// Some services won't have routes, allow client to handle nil routes
-	return &serviceRoutes, err
-}
-
-func (c *clientImpl) getServiceManifest(appTypeName, appTypeVer, serviceTypeName string) (string, error) {
-	url := c.endpoint + "/ApplicationTypes/" + appTypeName + "/$/GetServiceTypes?ApplicationTypeVersion=" + appTypeVer + "&api-version=" + c.apiVersion
-	res, err := getHTTP(&c.restClient, url)
-	if err != nil {
-		return "", fmt.Errorf("Error requesting service manifest from API: %+v", err)
-	}
-	var serviceTypes []ServiceType
-	err = json.Unmarshal([]byte(res), &serviceTypes)
-	if err != nil {
-		return "", fmt.Errorf("Could not deserialise JSON response: %+v", err)
-	}
-	var serviceManifestName string
-	for _, s := range serviceTypes {
-		if s.ServiceTypeDescription.ServiceTypeName == serviceTypeName {
-			serviceManifestName = s.ServiceManifestName
-			break
-		}
-	}
-	if len(serviceManifestName) <= 0 {
-		return "", fmt.Errorf("No match for service with service name %s", serviceTypeName)
-	}
-	return serviceManifestName, nil
 }
 
 func getHTTP(http *http.Client, url string) ([]byte, error) {
