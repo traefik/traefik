@@ -381,7 +381,10 @@ To use a different port for the healthcheck:
 
 ### Servers
 
-Servers are simply defined using a `URL`. You can also apply a custom `weight` to each server (this will be used by load-balancing).
+Servers are simply defined using a `url`. You can also apply a custom `weight` to each server (this will be used by load-balancing).
+
+!!! note
+    Paths in `url` are ignored. Use `Modifier` to specify paths instead.
 
 Here is an example of backends and servers definition:
 
