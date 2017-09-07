@@ -202,3 +202,42 @@ func (s *ConsulCatalogSuite) TestExposedByDefaultTrueSimpleServiceMultipleNode(c
 	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 }
+
+func (s *ConsulCatalogSuite) TestBasicAuthSimpleService(c *check.C) {
+	cmd, output := s.cmdTraefik(
+		withConfigFile("fixtures/consul_catalog/simple.toml"),
+		"--consulCatalog",
+		"--consulCatalog.exposedByDefault=true",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost")
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	defer func() {
+		s.displayTraefikLog(c, output)
+	}()
+
+	nginx := s.composeProject.Container(c, "nginx")
+
+	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{
+		"traefik.frontend.auth.basic=test:$2a$06$O5NksJPAcgrC9MuANkSoE.Xe9DSg7KcLLFYNr1Lj6hPcMmvgwxhme,test2:$2y$10$xP1SZ70QbZ4K2bTGKJOhpujkpcLxQcB3kEPF6XAV19IdcqsZTyDEe",
+	})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.consul.localhost"
+
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusUnauthorized), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req.SetBasicAuth("test", "test")
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	req.SetBasicAuth("test2", "test2")
+	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+}
