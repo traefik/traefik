@@ -23,6 +23,7 @@ type GzipWriter interface {
 	SetResponseWriter(http.ResponseWriter)
 	setIndex(int)
 	setMinSize(int)
+	setContentTypes([]string)
 }
 
 func (w *GzipResponseWriter) SetResponseWriter(rw http.ResponseWriter) {
@@ -37,6 +38,10 @@ func (w *GzipResponseWriter) setMinSize(minSize int) {
 	w.minSize = minSize
 }
 
+func (w *GzipResponseWriter) setContentTypes(contentTypes []string) {
+	w.contentTypes = contentTypes
+}
+
 // --------
 
 type GzipResponseWriterWrapper struct {
@@ -45,6 +50,9 @@ type GzipResponseWriterWrapper struct {
 
 func (g *GzipResponseWriterWrapper) Write(b []byte) (int, error) {
 	if g.gw == nil && isEncoded(g.Header()) {
+		if g.code != 0 {
+			g.ResponseWriter.WriteHeader(g.code)
+		}
 		return g.ResponseWriter.Write(b)
 	}
 	return g.GzipResponseWriter.Write(b)
