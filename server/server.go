@@ -647,6 +647,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	listener, err := net.Listen("tcp", entryPoint.Address)
 	if err != nil {
 		log.Error("Error opening listener ", err)
+		return nil, nil, err
 	}
 
 	if entryPoint.ProxyProtocol {
