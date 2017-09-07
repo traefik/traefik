@@ -303,11 +303,11 @@ Wait, I thought we added the sticky flag to `whoami1`?  Traefik relies on a cook
 First you need to add `whoami1.traefik` to your hosts file:
 
 ```shell
-if [ -n "$(grep whoami1.traefik /etc/hosts)" ];  
-then 
-    echo "whoami1.traefik already exists (make sure the ip is current)"; 
-else 
-    sudo -- sh -c -e "echo '$(docker-machine ip manager)\twhoami1.traefik' >> /etc/hosts"; 
+if [ -n "$(grep whoami1.traefik /etc/hosts)" ];
+then
+    echo "whoami1.traefik already exists (make sure the ip is current)";
+else
+    sudo -- sh -c -e "echo '$(docker-machine ip manager)\twhoami1.traefik' >> /etc/hosts";
 fi
 ```
 

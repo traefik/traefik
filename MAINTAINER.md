@@ -37,7 +37,7 @@ If you want to preserve commits you must add `bot/merge-method-rebase` before `s
 
 The status `status/4-merge-in-progress` is only for the bot.
 
-If the bot is not able to perform the merge, the label `bot/need-human-merge` is added. 
+If the bot is not able to perform the merge, the label `bot/need-human-merge` is added.  
 In this case you must solve conflicts/CI/... and after you only need to remove `bot/need-human-merge`.
 
 

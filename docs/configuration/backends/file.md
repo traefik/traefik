@@ -148,7 +148,7 @@ filename = "rules.toml"
 ## Multiple .toml Files
 
 You could have multiple `.toml` files in a directory:
- 
+
 ```toml
 [file]
 directory = "/path/to/config/"

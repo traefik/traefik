@@ -52,7 +52,7 @@ GOHOSTOS="linux"
 GOOS="linux"
 GOPATH="/home/<yourusername>/go"
 GORACE=""
-## more go env's will be listed 
+## more go env's will be listed
 ```
 
 ##### Build Træfik
@@ -63,7 +63,7 @@ Once your environment is set up and the Træfik repository cloned you can build 
 cd ~/go/src/github.com/containous/traefik
 
 # Get go-bindata. Please note, the ellipses are required
-go get github.com/jteeuwen/go-bindata/... 
+go get github.com/jteeuwen/go-bindata/...
 
 # Start build
 go generate
@@ -73,7 +73,7 @@ go build ./cmd/traefik
 # run other commands like tests
 ```
 
-You will find the Træfik executable in the `~/go/src/github.com/containous/traefik` folder as `traefik`. 
+You will find the Træfik executable in the `~/go/src/github.com/containous/traefik` folder as `traefik`.
 
 ### Setting up `glide` and `glide-vc` for dependency management
 
@@ -180,7 +180,7 @@ INFO    -  Cleaning site directory
 Please keep in mind that the GitHub issue tracker is not intended as a general support forum, but for reporting bugs and feature requests.
 
 For end-user related support questions, refer to one of the following:
-- the Traefik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) 
+- the Traefik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
 ### Title
@@ -190,7 +190,7 @@ The title must be short and descriptive. (~60 characters)
 ### Description
 
 - Respect the issue template as much as possible. [template](.github/ISSUE_TEMPLATE.md)
-- If it's possible use the command `traefik bug`. See https://www.youtube.com/watch?v=Lyz62L8m93I. 
+- If it's possible use the command `traefik bug`. See https://www.youtube.com/watch?v=Lyz62L8m93I.
 - Explain the conditions which led you to write this issue: the context.
 - The context should lead to something, an idea or a problem that you’re facing.
 - Remain clear and concise.

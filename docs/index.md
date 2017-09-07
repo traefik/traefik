@@ -71,7 +71,7 @@ Run it and forget it!
 You can have a quick look at Træfik in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers.
 
 Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at [GopherCon 2017](https://gophercon.com).
-You will learn Træfik basics in less than 10 minutes. 
+You will learn Træfik basics in less than 10 minutes.
 
 [![Traefik GopherCon 2017](https://img.youtube.com/vi/RgudiksfL-k/0.jpg)](https://www.youtube.com/watch?v=RgudiksfL-k)
 
