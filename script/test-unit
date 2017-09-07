@@ -17,7 +17,6 @@ find_dirs() {
     find . -not \( \
          \( \
          -path './integration/*' \
-         -o -path './.glide/*' \
          -o -path './vendor/*' \
          -o -path './.git/*' \
          \) \
