@@ -77,7 +77,7 @@ func (a nodeSorter) Less(i int, j int) bool {
 	return lentr.Service.Port < rentr.Service.Port
 }
 
-func getChangedServiceKeys(currState map[string]ConsulService, prevState map[string]ConsulService) ([]string, []string) {
+func getChangedServiceKeys(currState map[string]Service, prevState map[string]Service) ([]string, []string) {
 	currKeySet := fun.Set(fun.Keys(currState).([]string)).(map[string]bool)
 	prevKeySet := fun.Set(fun.Keys(prevState).([]string)).(map[string]bool)
 
@@ -87,7 +87,7 @@ func getChangedServiceKeys(currState map[string]ConsulService, prevState map[str
 	return fun.Keys(addedKeys).([]string), fun.Keys(removedKeys).([]string)
 }
 
-func getChangedServiceNodeKeys(currState map[string]ConsulService, prevState map[string]ConsulService) ([]string, []string) {
+func getChangedServiceNodeKeys(currState map[string]Service, prevState map[string]Service) ([]string, []string) {
 	var addedNodeKeys []string
 	var removedNodeKeys []string
 	for key, value := range currState {
@@ -179,7 +179,8 @@ func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<
 	})
 }
 
-type ConsulService struct {
+// Service represent a Consul service.
+type Service struct {
 	Name  string
 	Tags  []string
 	Nodes []string
@@ -189,9 +190,9 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 	catalog := p.client.Catalog()
 
 	safe.Go(func() {
-		current := make(map[string]ConsulService)
+		current := make(map[string]Service)
 		// variable to hold previous state
-		var flashback map[string]ConsulService
+		var flashback map[string]Service
 
 		options := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
 
@@ -222,15 +223,15 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 						log.Errorf("Failed to get detail of service %s: %s", key, err)
 						return
 					}
-					nodesId := getServiceIds(nodes)
+					nodesID := getServiceIds(nodes)
 					if service, ok := current[key]; ok {
 						service.Tags = value
-						service.Nodes = nodesId
+						service.Nodes = nodesID
 					} else {
-						service := ConsulService{
+						service := Service{
 							Name:  key,
 							Tags:  value,
-							Nodes: nodesId,
+							Nodes: nodesID,
 						}
 						current[key] = service
 					}

@@ -613,8 +613,8 @@ func TestConsulCatalogNodeSorter(t *testing.T) {
 
 func TestConsulCatalogGetChangedKeys(t *testing.T) {
 	type Input struct {
-		currState map[string]ConsulService
-		prevState map[string]ConsulService
+		currState map[string]Service
+		prevState map[string]Service
 	}
 
 	type Output struct {
@@ -628,7 +628,7 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 	}{
 		{
 			input: Input{
-				currState: map[string]ConsulService{
+				currState: map[string]Service{
 					"foo-service":    {Name: "v1"},
 					"bar-service":    {Name: "v1"},
 					"baz-service":    {Name: "v1"},
@@ -644,7 +644,7 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 					"xyzzy-service":  {Name: "v1"},
 					"thud-service":   {Name: "v1"},
 				},
-				prevState: map[string]ConsulService{
+				prevState: map[string]Service{
 					"foo-service":    {Name: "v1"},
 					"bar-service":    {Name: "v1"},
 					"baz-service":    {Name: "v1"},
@@ -668,7 +668,7 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 		},
 		{
 			input: Input{
-				currState: map[string]ConsulService{
+				currState: map[string]Service{
 					"foo-service":    {Name: "v1"},
 					"bar-service":    {Name: "v1"},
 					"baz-service":    {Name: "v1"},
@@ -684,7 +684,7 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 					"xyzzy-service":  {Name: "v1"},
 					"thud-service":   {Name: "v1"},
 				},
-				prevState: map[string]ConsulService{
+				prevState: map[string]Service{
 					"foo-service":    {Name: "v1"},
 					"bar-service":    {Name: "v1"},
 					"baz-service":    {Name: "v1"},
@@ -705,7 +705,7 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 		},
 		{
 			input: Input{
-				currState: map[string]ConsulService{
+				currState: map[string]Service{
 					"foo-service":    {Name: "v1"},
 					"qux-service":    {Name: "v1"},
 					"quux-service":   {Name: "v1"},
@@ -719,7 +719,7 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 					"xyzzy-service":  {Name: "v1"},
 					"thud-service":   {Name: "v1"},
 				},
-				prevState: map[string]ConsulService{
+				prevState: map[string]Service{
 					"foo-service":   {Name: "v1"},
 					"bar-service":   {Name: "v1"},
 					"baz-service":   {Name: "v1"},
