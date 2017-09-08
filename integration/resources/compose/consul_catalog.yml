@@ -11,7 +11,7 @@ consul:
     - "8301/udp"
     - "8302"
     - "8302/udp"
-nginx:
+nginx1:
   image: nginx:alpine
 nginx2:
   image: nginx:alpine

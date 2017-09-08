@@ -613,8 +613,8 @@ func TestConsulCatalogNodeSorter(t *testing.T) {
 
 func TestConsulCatalogGetChangedKeys(t *testing.T) {
 	type Input struct {
-		currState map[string][]string
-		prevState map[string][]string
+		currState map[string]Service
+		prevState map[string]Service
 	}
 
 	type Output struct {
@@ -628,37 +628,37 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 	}{
 		{
 			input: Input{
-				currState: map[string][]string{
-					"foo-service":    {"v1"},
-					"bar-service":    {"v1"},
-					"baz-service":    {"v1"},
-					"qux-service":    {"v1"},
-					"quux-service":   {"v1"},
-					"quuz-service":   {"v1"},
-					"corge-service":  {"v1"},
-					"grault-service": {"v1"},
-					"garply-service": {"v1"},
-					"waldo-service":  {"v1"},
-					"fred-service":   {"v1"},
-					"plugh-service":  {"v1"},
-					"xyzzy-service":  {"v1"},
-					"thud-service":   {"v1"},
+				currState: map[string]Service{
+					"foo-service":    {Name: "v1"},
+					"bar-service":    {Name: "v1"},
+					"baz-service":    {Name: "v1"},
+					"qux-service":    {Name: "v1"},
+					"quux-service":   {Name: "v1"},
+					"quuz-service":   {Name: "v1"},
+					"corge-service":  {Name: "v1"},
+					"grault-service": {Name: "v1"},
+					"garply-service": {Name: "v1"},
+					"waldo-service":  {Name: "v1"},
+					"fred-service":   {Name: "v1"},
+					"plugh-service":  {Name: "v1"},
+					"xyzzy-service":  {Name: "v1"},
+					"thud-service":   {Name: "v1"},
 				},
-				prevState: map[string][]string{
-					"foo-service":    {"v1"},
-					"bar-service":    {"v1"},
-					"baz-service":    {"v1"},
-					"qux-service":    {"v1"},
-					"quux-service":   {"v1"},
-					"quuz-service":   {"v1"},
-					"corge-service":  {"v1"},
-					"grault-service": {"v1"},
-					"garply-service": {"v1"},
-					"waldo-service":  {"v1"},
-					"fred-service":   {"v1"},
-					"plugh-service":  {"v1"},
-					"xyzzy-service":  {"v1"},
-					"thud-service":   {"v1"},
+				prevState: map[string]Service{
+					"foo-service":    {Name: "v1"},
+					"bar-service":    {Name: "v1"},
+					"baz-service":    {Name: "v1"},
+					"qux-service":    {Name: "v1"},
+					"quux-service":   {Name: "v1"},
+					"quuz-service":   {Name: "v1"},
+					"corge-service":  {Name: "v1"},
+					"grault-service": {Name: "v1"},
+					"garply-service": {Name: "v1"},
+					"waldo-service":  {Name: "v1"},
+					"fred-service":   {Name: "v1"},
+					"plugh-service":  {Name: "v1"},
+					"xyzzy-service":  {Name: "v1"},
+					"thud-service":   {Name: "v1"},
 				},
 			},
 			output: Output{
@@ -668,34 +668,34 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 		},
 		{
 			input: Input{
-				currState: map[string][]string{
-					"foo-service":    {"v1"},
-					"bar-service":    {"v1"},
-					"baz-service":    {"v1"},
-					"qux-service":    {"v1"},
-					"quux-service":   {"v1"},
-					"quuz-service":   {"v1"},
-					"corge-service":  {"v1"},
-					"grault-service": {"v1"},
-					"garply-service": {"v1"},
-					"waldo-service":  {"v1"},
-					"fred-service":   {"v1"},
-					"plugh-service":  {"v1"},
-					"xyzzy-service":  {"v1"},
-					"thud-service":   {"v1"},
+				currState: map[string]Service{
+					"foo-service":    {Name: "v1"},
+					"bar-service":    {Name: "v1"},
+					"baz-service":    {Name: "v1"},
+					"qux-service":    {Name: "v1"},
+					"quux-service":   {Name: "v1"},
+					"quuz-service":   {Name: "v1"},
+					"corge-service":  {Name: "v1"},
+					"grault-service": {Name: "v1"},
+					"garply-service": {Name: "v1"},
+					"waldo-service":  {Name: "v1"},
+					"fred-service":   {Name: "v1"},
+					"plugh-service":  {Name: "v1"},
+					"xyzzy-service":  {Name: "v1"},
+					"thud-service":   {Name: "v1"},
 				},
-				prevState: map[string][]string{
-					"foo-service":    {"v1"},
-					"bar-service":    {"v1"},
-					"baz-service":    {"v1"},
-					"corge-service":  {"v1"},
-					"grault-service": {"v1"},
-					"garply-service": {"v1"},
-					"waldo-service":  {"v1"},
-					"fred-service":   {"v1"},
-					"plugh-service":  {"v1"},
-					"xyzzy-service":  {"v1"},
-					"thud-service":   {"v1"},
+				prevState: map[string]Service{
+					"foo-service":    {Name: "v1"},
+					"bar-service":    {Name: "v1"},
+					"baz-service":    {Name: "v1"},
+					"corge-service":  {Name: "v1"},
+					"grault-service": {Name: "v1"},
+					"garply-service": {Name: "v1"},
+					"waldo-service":  {Name: "v1"},
+					"fred-service":   {Name: "v1"},
+					"plugh-service":  {Name: "v1"},
+					"xyzzy-service":  {Name: "v1"},
+					"thud-service":   {Name: "v1"},
 				},
 			},
 			output: Output{
@@ -705,33 +705,33 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 		},
 		{
 			input: Input{
-				currState: map[string][]string{
-					"foo-service":    {"v1"},
-					"qux-service":    {"v1"},
-					"quux-service":   {"v1"},
-					"quuz-service":   {"v1"},
-					"corge-service":  {"v1"},
-					"grault-service": {"v1"},
-					"garply-service": {"v1"},
-					"waldo-service":  {"v1"},
-					"fred-service":   {"v1"},
-					"plugh-service":  {"v1"},
-					"xyzzy-service":  {"v1"},
-					"thud-service":   {"v1"},
+				currState: map[string]Service{
+					"foo-service":    {Name: "v1"},
+					"qux-service":    {Name: "v1"},
+					"quux-service":   {Name: "v1"},
+					"quuz-service":   {Name: "v1"},
+					"corge-service":  {Name: "v1"},
+					"grault-service": {Name: "v1"},
+					"garply-service": {Name: "v1"},
+					"waldo-service":  {Name: "v1"},
+					"fred-service":   {Name: "v1"},
+					"plugh-service":  {Name: "v1"},
+					"xyzzy-service":  {Name: "v1"},
+					"thud-service":   {Name: "v1"},
 				},
-				prevState: map[string][]string{
-					"foo-service":   {"v1"},
-					"bar-service":   {"v1"},
-					"baz-service":   {"v1"},
-					"qux-service":   {"v1"},
-					"quux-service":  {"v1"},
-					"quuz-service":  {"v1"},
-					"corge-service": {"v1"},
-					"waldo-service": {"v1"},
-					"fred-service":  {"v1"},
-					"plugh-service": {"v1"},
-					"xyzzy-service": {"v1"},
-					"thud-service":  {"v1"},
+				prevState: map[string]Service{
+					"foo-service":   {Name: "v1"},
+					"bar-service":   {Name: "v1"},
+					"baz-service":   {Name: "v1"},
+					"qux-service":   {Name: "v1"},
+					"quux-service":  {Name: "v1"},
+					"quuz-service":  {Name: "v1"},
+					"corge-service": {Name: "v1"},
+					"waldo-service": {Name: "v1"},
+					"fred-service":  {Name: "v1"},
+					"plugh-service": {Name: "v1"},
+					"xyzzy-service": {Name: "v1"},
+					"thud-service":  {Name: "v1"},
 				},
 			},
 			output: Output{
@@ -742,7 +742,7 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		addedKeys, removedKeys := getChangedKeys(c.input.currState, c.input.prevState)
+		addedKeys, removedKeys := getChangedServiceKeys(c.input.currState, c.input.prevState)
 
 		if !reflect.DeepEqual(fun.Set(addedKeys), fun.Set(c.output.addedKeys)) {
 			t.Fatalf("Added keys comparison results: got %q, want %q", addedKeys, c.output.addedKeys)
