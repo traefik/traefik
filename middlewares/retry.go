@@ -42,6 +42,12 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		recorder := NewRecorder()
 		recorder.responseWriter = rw
 		retry.next.ServeHTTP(recorder, r)
+
+		// In case of a stream, data has already been sent if code 200
+		if recorder.stream {
+			break
+		}
+
 		if !isNetworkError(recorder.Code) || attempts >= retry.attempts {
 			utils.CopyHeaders(rw.Header(), recorder.Header())
 			rw.WriteHeader(recorder.Code)
@@ -66,6 +72,7 @@ type ResponseRecorder struct {
 
 	responseWriter http.ResponseWriter
 	err            error
+	stream         bool
 }
 
 // NewRecorder returns an initialized ResponseRecorder.
@@ -74,6 +81,7 @@ func NewRecorder() *ResponseRecorder {
 		HeaderMap: make(http.Header),
 		Body:      new(bytes.Buffer),
 		Code:      200,
+		stream:    false,
 	}
 }
 
@@ -114,6 +122,10 @@ func (rw *ResponseRecorder) CloseNotify() <-chan bool {
 
 // Flush sends any buffered data to the client.
 func (rw *ResponseRecorder) Flush() {
+	if !rw.stream && !isNetworkError(rw.Code) {
+		rw.stream = true
+		utils.CopyHeaders(rw.responseWriter.Header(), rw.Header())
+	}
 	_, err := rw.responseWriter.Write(rw.Body.Bytes())
 	if err != nil {
 		log.Errorf("Error writing response in ResponseRecorder: %s", err)
