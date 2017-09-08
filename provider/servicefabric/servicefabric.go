@@ -28,7 +28,6 @@ type Provider struct {
 	ClientCertFilePath    string `description:"Path to cert file"`
 	ClientCertKeyFilePath string `description:"Path to cert key file"`
 	CACertFilePath        string `description:"Path to CA cert file"`
-	FontendConfigEnv      string `description:"Environment varaible containing path to frontend config file"`
 }
 
 // Provide allows the servicefabric provider to provide configurations to traefik
@@ -63,12 +62,20 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 					log.Info("Checking service fabric config")
 				}
 
-				frontends, err := loadFrontendConfigFile(provider.FontendConfigEnv)
+				backends := make(map[string]*types.Backend)
+				frontends := make(map[string]*types.Frontend)
+
+				configFromFile, err := loadFrontendConfigFile()
 				if err != nil {
 					log.Error(err)
+				} else {
+					if configFromFile.Frontends != nil {
+						frontends = configFromFile.Frontends
+					}
+					if configFromFile.Backends != nil {
+						backends = configFromFile.Backends
+					}
 				}
-
-				backends := make(map[string]*types.Backend)
 
 				apps, err := sfClient.GetApplications()
 				if err != nil {
@@ -82,8 +89,13 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 						return err
 					}
 					for _, service := range services.Items {
-						backend := &types.Backend{
-							Servers: map[string]types.Server{},
+						backend, exists := backends[service.Name]
+						if !exists {
+							backend = &types.Backend{
+								Servers: map[string]types.Server{},
+							}
+						} else {
+							backend.Servers = make(map[string]types.Server)
 						}
 						partitions, err := sfClient.GetPartitions(app.ID, service.ID)
 						if err != nil {
@@ -124,6 +136,7 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 									backend.Servers[instance.InstanceID] = types.Server{
 										URL: defaultEndpoint,
 									}
+
 								}
 							} else {
 								log.Errorf("Unsupported service kind %s in service %s", partition.ServiceKind, service.Name)
@@ -131,13 +144,17 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 							}
 						}
 
+						// Only setup config for routable services
+						if len(backend.Servers) > 0 {
+							backends[service.Name] = backend
+						}
 					}
 				}
 				configMessage := types.ConfigMessage{
 					ProviderName: "servicefabric",
 					Configuration: &types.Configuration{
 						Backends:  backends,
-						Frontends: *frontends,
+						Frontends: frontends,
 					},
 				}
 				if !reflect.DeepEqual(lastConfigUpdate, configMessage) {
@@ -187,9 +204,10 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 	return strings.Replace(defaultHTTPEndpoint, "localhost", "10.211.55.3", -1), nil
 }
 
-func loadFrontendConfigFile(envVar string) (*map[string]*types.Frontend, error) {
-	directory := os.Getenv(envVar)
-	files, _ := filepath.Glob(directory + "/*Config*/**.toml")
+func loadFrontendConfigFile() (*types.Configuration, error) {
+	dir, _ := os.Getwd()
+	glob := dir + "/../*Config*/**.toml"
+	files, _ := filepath.Glob(glob)
 
 	var mostRecentFile os.FileInfo
 	var configFilePath string
@@ -201,13 +219,18 @@ func loadFrontendConfigFile(envVar string) (*map[string]*types.Frontend, error) 
 		}
 	}
 
+	if configFilePath == "" {
+		return nil, fmt.Errorf("Cannot find fontend config with: %s", glob)
+	}
+
+	log.Info("Loading fontend config from:", configFilePath)
+
 	configuration := new(types.Configuration)
 	if _, err := toml.DecodeFile(configFilePath, configuration); err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %s", err)
 	}
 
-	log.Info("Loading fontend config from:", configFilePath)
-	log.Info(configuration.Frontends)
+	log.Info("Loaded: ", configuration.Frontends)
 
-	return &configuration.Frontends, nil
+	return configuration, nil
 }
