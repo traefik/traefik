@@ -2,7 +2,7 @@ package servicefabric
 
 import "encoding/xml"
 
-// ApplicationData encapsulates the response
+// ApplicationsData encapsulates the response
 // model for Applications in the Service
 // Fabric API
 type ApplicationsData struct {
@@ -26,22 +26,26 @@ type ApplicationItem struct {
 	TypeVersion string `json:"TypeVersion"`
 }
 
-// ServiceData encapsulates the response
+// ServicesData encapsulates the response
 // model for Services in the Service
 // Fabric API
 type ServicesData struct {
-	ContinuationToken *string `json:"ContinuationToken"`
-	Items             []*struct {
-		HasPersistedState bool   `json:"HasPersistedState"`
-		HealthState       string `json:"HealthState"`
-		ID                string `json:"Id"`
-		IsServiceGroup    bool   `json:"IsServiceGroup"`
-		ManifestVersion   string `json:"ManifestVersion"`
-		Name              string `json:"Name"`
-		ServiceKind       string `json:"ServiceKind"`
-		ServiceStatus     string `json:"ServiceStatus"`
-		TypeName          string `json:"TypeName"`
-	} `json:"Items"`
+	ContinuationToken *string       `json:"ContinuationToken"`
+	Items             []ServiceItem `json:"Items"`
+}
+
+// ServiceItem encapsulates the service information
+// returned for each service in the Services data model
+type ServiceItem struct {
+	HasPersistedState bool   `json:"HasPersistedState"`
+	HealthState       string `json:"HealthState"`
+	ID                string `json:"Id"`
+	IsServiceGroup    bool   `json:"IsServiceGroup"`
+	ManifestVersion   string `json:"ManifestVersion"`
+	Name              string `json:"Name"`
+	ServiceKind       string `json:"ServiceKind"`
+	ServiceStatus     string `json:"ServiceStatus"`
+	TypeName          string `json:"TypeName"`
 }
 
 // PartitionsData encapsulates the response
@@ -85,7 +89,7 @@ type ReplicasData struct {
 	} `json:"Items"`
 }
 
-// InstanceData encapsulates the response
+// InstancesData encapsulates the response
 // model for Instances in the Service
 // Fabric API
 type InstancesData struct {

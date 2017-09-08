@@ -2,11 +2,9 @@ package servicefabric
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
 
@@ -21,6 +19,7 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
+// Provider holds for configuration for the provider
 type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
 	ClusterManagementURL  string `description:"Service Fabric API endpoint"`
@@ -48,8 +47,6 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
-			var lastConfigUpdate types.ConfigMessage
-
 			ticker := time.NewTicker(time.Second * 10)
 			for _ = range ticker.C {
 				select {
@@ -89,64 +86,9 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 						return err
 					}
 					for _, service := range services.Items {
-						backend, exists := backends[service.Name]
-						if !exists {
-							backend = &types.Backend{
-								Servers: map[string]types.Server{},
-							}
-						} else {
-							backend.Servers = make(map[string]types.Server)
-						}
-						partitions, err := sfClient.GetPartitions(app.ID, service.ID)
+						_, err := addBackendForService(sfClient, app.ID, &service, backends)
 						if err != nil {
 							log.Error(err)
-							return err
-						}
-						for _, partition := range partitions.Items {
-							if partition.ServiceKind == "Stateful" {
-								replicas, err := sfClient.GetReplicas(app.ID, service.ID, partition.PartitionInformation.ID)
-								if err != nil {
-									log.Error(err)
-									return err
-								}
-								for _, replica := range replicas.Items {
-									defaultEndpoint, err := getDefaultEndpoint(replica.Address)
-									if err != nil {
-										log.Errorf("%s for replica %s in service %s", err, replica.ReplicaID, service.Name)
-										// Service may not have a HTTP endpoint so ignore
-										continue
-									}
-									backend.Servers[replica.ReplicaID] = types.Server{
-										URL: defaultEndpoint,
-									}
-								}
-							} else if partition.ServiceKind == "Stateless" {
-								instances, err := sfClient.GetInstances(app.ID, service.ID, partition.PartitionInformation.ID)
-								if err != nil {
-									log.Error(err)
-									return err
-								}
-								for _, instance := range instances.Items {
-									defaultEndpoint, err := getDefaultEndpoint(instance.Address)
-									if err != nil {
-										log.Errorf("%s for instance %s in service %s", err, instance.InstanceID, service.Name)
-										// Service may not have a HTTP endpoint so ignore
-										continue
-									}
-									backend.Servers[instance.InstanceID] = types.Server{
-										URL: defaultEndpoint,
-									}
-
-								}
-							} else {
-								log.Errorf("Unsupported service kind %s in service %s", partition.ServiceKind, service.Name)
-								continue
-							}
-						}
-
-						// Only setup config for routable services
-						if len(backend.Servers) > 0 {
-							backends[service.Name] = backend
 						}
 					}
 				}
@@ -157,11 +99,8 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 						Frontends: frontends,
 					},
 				}
-				if !reflect.DeepEqual(lastConfigUpdate, configMessage) {
-					log.Info("New configuration for service fabric:", configMessage)
-					configurationChan <- configMessage
-					lastConfigUpdate = configMessage
-				}
+
+				configurationChan <- configMessage
 			}
 			return nil
 		}
@@ -176,17 +115,102 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 	return nil
 }
 
-func getDefaultEndpoint(endpointData string) (string, error) {
+func addBackendForService(sfClient Client, appID string, service *ServiceItem, backends map[string]*types.Backend) (*types.Backend, error) {
+
+	backend, exists := backends[service.Name]
+	if !exists {
+		backend = &types.Backend{
+			Servers: map[string]types.Server{},
+			LoadBalancer: &types.LoadBalancer{
+				Method: "wrr",
+			},
+		}
+	} else {
+		backend.Servers = make(map[string]types.Server)
+	}
+	partitions, err := sfClient.GetPartitions(appID, service.ID)
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+	for _, partition := range partitions.Items {
+		if partition.ServiceKind == "Stateful" {
+			replicas, err := sfClient.GetReplicas(appID, service.ID, partition.PartitionInformation.ID)
+
+			if err != nil {
+				log.Error(err)
+				return nil, err
+			}
+			for _, replica := range replicas.Items {
+				if replica.ReplicaStatus != "Ready" || replica.HealthState == "Error" {
+					log.Infof("Skipping replica %s health: %s replicaStatus: %s in service %s", replica.ReplicaID, replica.HealthState, replica.ReplicaStatus, service.Name)
+					continue
+				}
+
+				hasEndpoint, defaultEndpoint := getDefaultEndpoint(replica.Address)
+				if !hasEndpoint {
+					log.Infof("No default endpoint for replica %s in service %s endpointData: %s", replica.ReplicaID, service.Name, replica.Address)
+					// Service may not have a HTTP endpoint so ignore
+					continue
+				}
+				backend.Servers[replica.ReplicaID] = types.Server{
+					URL: defaultEndpoint,
+				}
+			}
+		} else if partition.ServiceKind == "Stateless" {
+			instances, err := sfClient.GetInstances(appID, service.ID, partition.PartitionInformation.ID)
+			if err != nil {
+				log.Error(err)
+				return nil, err
+			}
+			for _, instance := range instances.Items {
+				if instance.ReplicaStatus != "Ready" || instance.HealthState == "Error" {
+					log.Infof("Skipping instance %s health: %s replicaStatus: %s in service %s", instance.InstanceID, instance.HealthState, instance.ReplicaStatus, service.Name)
+					continue
+				}
+
+				hasEndpoint, defaultEndpoint := getDefaultEndpoint(instance.Address)
+				if !hasEndpoint {
+					log.Infof("No default endpoint for instance %s in service %s endpointData: %s", instance.InstanceID, service.Name, instance.Address)
+					// Service may not have a HTTP endpoint so ignore
+					continue
+				}
+				backend.Servers[instance.InstanceID] = types.Server{
+					URL: defaultEndpoint,
+				}
+
+			}
+		} else {
+			log.Errorf("Unsupported service kind %s in service %s", partition.ServiceKind, service.Name)
+			continue
+		}
+	}
+
+	// Only setup config for routable services
+	if len(backend.Servers) > 0 {
+		backends[service.Name] = backend
+	} else {
+		log.Infof("No routable backends for %s", service.Name)
+	}
+
+	return backend, nil
+}
+
+func getDefaultEndpoint(endpointData string) (bool, string) {
 	var endpointsMap map[string]map[string]string
-	var emptyString string
+
+	if endpointData == "" {
+		return false, ""
+	}
+
 	err := json.Unmarshal([]byte(endpointData), &endpointsMap)
 	if err != nil {
 		log.Error(err)
-		return emptyString, errors.New("Failed to deserialize endpoints")
+		return false, ""
 	}
 	endpoints, endpointsExist := endpointsMap["Endpoints"]
 	if !endpointsExist {
-		return emptyString, fmt.Errorf("No endpoints")
+		return false, ""
 	}
 	var defaultHTTPEndpointExists bool
 	var defaultHTTPEndpoint string
@@ -199,9 +223,9 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 		}
 	}
 	if !defaultHTTPEndpointExists {
-		return emptyString, fmt.Errorf("No default HTTP endpoint")
+		return false, ""
 	}
-	return strings.Replace(defaultHTTPEndpoint, "localhost", "10.211.55.3", -1), nil
+	return true, strings.Replace(defaultHTTPEndpoint, "localhost", "10.211.55.3", -1)
 }
 
 func loadFrontendConfigFile() (*types.Configuration, error) {
