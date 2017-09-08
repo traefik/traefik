@@ -92,7 +92,7 @@ Run it and forget it!
 You can have a quick look at Træfik in this [Katacoda tutorial](https://www.katacoda.com/courses/traefik/deploy-load-balancer) that shows how to load balance requests between multiple Docker containers. If you are looking for a more comprehensive and real use-case example, you can also check [Play-With-Docker](http://training.play-with-docker.com/traefik-load-balancing/) to see how to load balance between multiple nodes.
 
 Here is a talk given by [Emile Vauge](https://github.com/emilevauge) at [GopherCon 2017](https://gophercon.com/).
-You will learn Træfik basics in less than 10 minutes. 
+You will learn Træfik basics in less than 10 minutes.
 
 [![Traefik GopherCon 2017](https://img.youtube.com/vi/RgudiksfL-k/0.jpg)](https://www.youtube.com/watch?v=RgudiksfL-k)
 
@@ -134,13 +134,13 @@ git clone https://github.com/containous/traefik
 ## Documentation
 
 You can find the complete documentation at [https://docs.traefik.io](https://docs.traefik.io).
-A collection of contributions around Træfik can be found at [https://awesome.traefik.io](https://awesome.traefik.io). 
+A collection of contributions around Træfik can be found at [https://awesome.traefik.io](https://awesome.traefik.io).
 
 
 ## Support
 
 To get basic support, you can:
-- join the Træfik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) 
+- join the Træfik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 - use [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
 If you prefer commercial support, please contact [containo.us](https://containo.us) by mail: <mailto:support@containo.us>.

@@ -521,3 +521,34 @@ func TestTaskChunking(t *testing.T) {
 
 	}
 }
+
+func TestEcsGetBasicAuth(t *testing.T) {
+	cases := []struct {
+		desc     string
+		instance ecsInstance
+		expected []string
+	}{
+		{
+			desc:     "label missing",
+			instance: simpleEcsInstance(map[string]*string{}),
+			expected: []string{},
+		},
+		{
+			desc: "label existing",
+			instance: simpleEcsInstance(map[string]*string{
+				types.LabelFrontendAuthBasic: aws.String("user:password"),
+			}),
+			expected: []string{"user:password"},
+		},
+	}
+
+	for _, test := range cases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			provider := &Provider{}
+			actual := provider.getBasicAuth(test.instance)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}

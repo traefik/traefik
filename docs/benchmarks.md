@@ -65,8 +65,8 @@ http {
     keepalive_requests 10000;
     types_hash_max_size 2048;
 
-    open_file_cache max=200000 inactive=300s; 
-    open_file_cache_valid 300s; 
+    open_file_cache max=200000 inactive=300s;
+    open_file_cache_valid 300s;
     open_file_cache_min_uses 2;
     open_file_cache_errors on;
 

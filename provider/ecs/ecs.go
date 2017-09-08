@@ -182,6 +182,7 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 	var ecsFuncMap = template.FuncMap{
 		"filterFrontends":       p.filterFrontends,
 		"getFrontendRule":       p.getFrontendRule,
+		"getBasicAuth":          p.getBasicAuth,
 		"getLoadBalancerSticky": p.getLoadBalancerSticky,
 		"getLoadBalancerMethod": p.getLoadBalancerMethod,
 	}
@@ -467,6 +468,14 @@ func (p *Provider) getFrontendRule(i ecsInstance) string {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain
+}
+
+func (p *Provider) getBasicAuth(i ecsInstance) []string {
+	label := p.label(i, types.LabelFrontendAuthBasic)
+	if label != "" {
+		return strings.Split(label, ",")
+	}
+	return []string{}
 }
 
 func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {

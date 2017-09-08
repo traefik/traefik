@@ -11,7 +11,7 @@ TRAEFIK_ENVS := \
 	-e CI \
 	-e CONTAINER=DOCKER		# Indicator for integration tests that we are running inside a container.
 
-SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/' | grep -v '^integration/vendor/')
+SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/')
 
 BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"

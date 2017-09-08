@@ -9,7 +9,10 @@ import (
 )
 
 // default format for time presentation
-const commonLogTimeFormat = "02/Jan/2006:15:04:05 -0700"
+const (
+	commonLogTimeFormat = "02/Jan/2006:15:04:05 -0700"
+	defaultValue        = "-"
+)
 
 // CommonLogFormatter provides formatting in the Traefik common log format
 type CommonLogFormatter struct{}
@@ -21,27 +24,26 @@ func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	timestamp := entry.Data[StartUTC].(time.Time).Format(commonLogTimeFormat)
 	elapsedMillis := entry.Data[Duration].(time.Duration).Nanoseconds() / 1000000
 
-	_, err := fmt.Fprintf(b, "%s - %s [%s] \"%s %s %s\" %d %d %s %s %d %s %s %dms\n",
+	_, err := fmt.Fprintf(b, "%s - %s [%s] \"%s %s %s\" %v %v %s %s %v %s %s %dms\n",
 		entry.Data[ClientHost],
 		entry.Data[ClientUsername],
 		timestamp,
 		entry.Data[RequestMethod],
 		entry.Data[RequestPath],
 		entry.Data[RequestProtocol],
-		entry.Data[OriginStatus],
-		entry.Data[OriginContentSize],
-		toLogString(entry.Data["request_Referer"]),
-		toLogString(entry.Data["request_User-Agent"]),
-		entry.Data[RequestCount],
-		toLogString(entry.Data[FrontendName]),
-		toLogString(entry.Data[BackendURL]),
+		toLog(entry.Data[OriginStatus]),
+		toLog(entry.Data[OriginContentSize]),
+		toLog(entry.Data["request_Referer"]),
+		toLog(entry.Data["request_User-Agent"]),
+		toLog(entry.Data[RequestCount]),
+		toLog(entry.Data[FrontendName]),
+		toLog(entry.Data[BackendURL]),
 		elapsedMillis)
 
 	return b.Bytes(), err
 }
 
-func toLogString(v interface{}) string {
-	defaultValue := "-"
+func toLog(v interface{}) interface{} {
 	if v == nil {
 		return defaultValue
 	}
@@ -54,7 +56,7 @@ func toLogString(v interface{}) string {
 		return quoted(s.String(), defaultValue)
 
 	default:
-		return defaultValue
+		return v
 	}
 
 }

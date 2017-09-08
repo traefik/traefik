@@ -53,7 +53,7 @@ SecretAccessKey = "123"
 Endpoint = "http://localhost:8080"
 ```
 
-Items in the `dynamodb` table must have three attributes: 
+Items in the `dynamodb` table must have three attributes:
 
 - `id` (string): The id is the primary key.
 - `name`(string): The name is used as the name of the frontend or backend.

@@ -355,7 +355,7 @@ requests periodically carried out by Traefik. The check is defined by a path
 appended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how
 often the health check should be executed (the default being 30 seconds).
 Each backend must respond to the health check within 5 seconds.
-By default, the port of the backend server is used, however, this may be overridden.  
+By default, the port of the backend server is used, however, this may be overridden.
 
 A recovering backend returning 200 OK responses again is being returned to the
 LB rotation pool.
@@ -381,7 +381,10 @@ To use a different port for the healthcheck:
 
 ### Servers
 
-Servers are simply defined using a `URL`. You can also apply a custom `weight` to each server (this will be used by load-balancing).
+Servers are simply defined using a `url`. You can also apply a custom `weight` to each server (this will be used by load-balancing).
+
+!!! note
+    Paths in `url` are ignored. Use `Modifier` to specify paths instead.
 
 Here is an example of backends and servers definition:
 
@@ -497,9 +500,9 @@ Usage:
 traefik [command] [--flag=flag_argument]
 ```
 
-List of Træfik available commands with description :                                                             
+List of Træfik available commands with description :
 
-- `version` : Print version 
+- `version` : Print version
 - `storeconfig` : Store the static traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
 - `bug`: The easiest way to submit a pre-filled issue.
 - `healthcheck`: Calls traefik `/ping` to check health.
