@@ -119,7 +119,7 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
-	cmd, output := s.cmdTraefik(
+	cmd, _ := s.cmdTraefik(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
@@ -127,10 +127,6 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer func() {
-		s.displayTraefikLog(c, output)
-	}()
 
 	nginx := s.composeProject.Container(c, "nginx1")
 
@@ -236,7 +232,7 @@ func (s *ConsulCatalogSuite) TestExposedByDefaultTrueSimpleServiceMultipleNode(c
 }
 
 func (s *ConsulCatalogSuite) TestRefreshConfigWithMultipleNodeWithoutHealthCheck(c *check.C) {
-	cmd, output := s.cmdTraefik(
+	cmd, _ := s.cmdTraefik(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.exposedByDefault=true",
