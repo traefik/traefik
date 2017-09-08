@@ -297,7 +297,7 @@ func (s *ConsulCatalogSuite) TestBasicAuthSimpleService(c *check.C) {
 		s.displayTraefikLog(c, output)
 	}()
 
-	nginx := s.composeProject.Container(c, "nginx")
+	nginx := s.composeProject.Container(c, "nginx1")
 
 	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{
 		"traefik.frontend.auth.basic=test:$2a$06$O5NksJPAcgrC9MuANkSoE.Xe9DSg7KcLLFYNr1Lj6hPcMmvgwxhme,test2:$2y$10$xP1SZ70QbZ4K2bTGKJOhpujkpcLxQcB3kEPF6XAV19IdcqsZTyDEe",
