@@ -3,7 +3,7 @@
 source "$(dirname "$BASH_SOURCE")/.validate"
 
 IFS=$'\n'
-src=( $(validate_diff --diff-filter=ACMR --name-only -- '*.go' | grep -v '^\(integration/\)\?vendor/\|autogen' || true) )
+src=( $(validate_diff --diff-filter=ACMR --name-only -- '*.go' | grep -v '^vendor/\|autogen' || true) )
 docs=( $(validate_diff --diff-filter=ACMR --name-only -- 'docs/*.md') )
 unset IFS
 files=("${src[@]}" "${docs[@]}")
