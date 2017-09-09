@@ -2,7 +2,7 @@
 
 ## Building
 
-You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` (Method 2) in order to build traefik. For changes to its dependencies, the `glide` dependency management tool and `glide-vc` plugin are required.
+You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` (Method 2) in order to build Traefik. For changes to its dependencies, the `glide` dependency management tool and `glide-vc` plugin are required.
 
 ### Method 1: Using `Docker` and `Makefile`
 

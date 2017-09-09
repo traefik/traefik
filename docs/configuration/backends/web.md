@@ -3,35 +3,37 @@
 Træfik can be configured:
 
 - using a RESTful api.
-- to use a metric system (like Prometheus, DataDog or StatD, ...).
+- to use a monitoring system (like Prometheus, DataDog or StatD, ...).
 - to expose a Web Dashboard.
 
 ## Configuration
 
 ```toml
+# Enable web backend.
 [web]
 
-# Web administration port
+# Web administration port.
 #
 # Required
 #
 address = ":8080"
 
-# SSL certificate and key used
+# SSL certificate and key used.
 #
 # Optional
 #
-# CertFile = "traefik.crt"
-# KeyFile = "traefik.key"
+# certFile = "traefik.crt"
+# keyFile = "traefik.key"
 
-# Set REST API to read-only mode
+# Set REST API to read-only mode.
 #
 # Optional
-# ReadOnly = false
+# readOnly = false
 
-# Enable more detailed statistics
-# [web.statistics]
-#   RecentErrors = 10
+# Enable more detailed statistics.
+#
+#    [web.statistics]
+#    recentErrors = 10
 ```
 
 ## Web UI
@@ -42,6 +44,9 @@ address = ":8080"
 
 ### Authentication
 
+!!! note
+    The `/ping` path of the api is excluded from authentication (since 1.4).
+
 - Basic Authentication
 
 Passwords can be encoded in MD5, SHA1 and BCrypt: you can use `htpasswd` to generate those ones.
@@ -50,10 +55,15 @@ Users can be specified directly in the toml file, or indirectly by referencing a
  if both are provided, the two are merged, with external file contents having precedence.
 
 ```toml
+[web]
+# ...
+
 # To enable basic auth on the webui with 2 user/pass: test:test and test2:test2
-  [web.auth.basic]
-    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
-    usersFile = "/path/to/.htpasswd"
+[web.auth.basic]
+users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+usersFile = "/path/to/.htpasswd"
+
+# ...
 ```
 
 - Digest Authentication
@@ -64,10 +74,15 @@ Users can be specified directly in the toml file, or indirectly by referencing a
  if both are provided, the two are merged, with external file contents having precedence
 
 ```toml
+[web]
+# ...
+
 # To enable digest auth on the webui with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
-  [web.auth.digest]
-    users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
-    usersFile = "/path/to/.htdigest"
+[web.auth.digest]
+users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+usersFile = "/path/to/.htdigest"
+
+# ...
 ```
 
 
@@ -78,27 +93,42 @@ You can enable Traefik to export internal metrics to different monitoring system
 - Prometheus
 
 ```toml
+[web]
+# ...
+
 # To enable Traefik to export internal metrics to Prometheus
 [web.metrics.prometheus]
-  Buckets=[0.1,0.3,1.2,5.0]
+buckets=[0.1,0.3,1.2,5.0]
+    
+# ...
 ```
 
 - DataDog
 
 ```toml
+[web]
+# ...
+
 # DataDog metrics exporter type
 [web.metrics.datadog]
-  Address = "localhost:8125"
-  Pushinterval = "10s"
+address = "localhost:8125"
+pushinterval = "10s"
+
+# ...
 ```
 
 - StatsD
 
 ```toml
+[web]
+# ...
+
 # StatsD metrics exporter type
 [web.metrics.statsd]
-  Address = "localhost:8125"
-  Pushinterval = "10s"
+address = "localhost:8125"
+pushinterval = "10s"
+
+# ...
 ```
 
 ## API

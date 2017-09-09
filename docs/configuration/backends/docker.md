@@ -9,7 +9,7 @@ Træfik can be configured to use Docker as a backend configuration.
 # Docker configuration backend
 ################################################################
 
-# Enable Docker configuration backend
+# Enable Docker configuration backend.
 [docker]
 
 # Docker server endpoint. Can be a tcp or a unix socket endpoint.
@@ -25,41 +25,43 @@ endpoint = "unix:///var/run/docker.sock"
 #
 domain = "docker.localhost"
 
-# Enable watch docker changes
+# Enable watch docker changes.
 #
 # Optional
 #
 watch = true
 
-# Override default configuration template. For advanced users :)
+# Override default configuration template.
+# For advanced users :)
 #
 # Optional
 #
 # filename = "docker.tmpl"
 
-# Expose containers by default in traefik
-# If set to false, containers that don't have `traefik.enable=true` will be ignored
+# Expose containers by default in Traefik.
+# If set to false, containers that don't have `traefik.enable=true` will be ignored.
 #
 # Optional
 # Default: true
 #
 exposedbydefault = true
 
-# Use the IP address from the binded port instead of the inner network one. For specific use-case :)
+# Use the IP address from the binded port instead of the inner network one.
+# For specific use-case :)
 #
 # Optional
 # Default: false
 #
 usebindportip = true
 
-# Use Swarm Mode services as data provider
+# Use Swarm Mode services as data provider.
 #
 # Optional
 # Default: false
 #
 swarmmode = false
 
-# Enable docker TLS connection
+# Enable docker TLS connection.
 #
 # Optional
 #
@@ -70,6 +72,9 @@ swarmmode = false
 #  insecureskipverify = true
 ```
 
+To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+
+
 ## Docker Swarm Mode
 
 ```toml
@@ -77,10 +82,11 @@ swarmmode = false
 # Docker Swarmmode configuration backend
 ################################################################
 
-# Enable Docker configuration backend
+# Enable Docker configuration backend.
 [docker]
 
-# Docker server endpoint. Can be a tcp or a unix socket endpoint.
+# Docker server endpoint.
+# Can be a tcp or a unix socket endpoint.
 #
 # Required
 # Default: "unix:///var/run/docker.sock"
@@ -95,40 +101,52 @@ endpoint = "tcp://127.0.0.1:2375"
 #
 domain = "docker.localhost"
 
-# Enable watch docker changes
+# Enable watch docker changes.
 #
 # Optional
+# Default: true
 #
 watch = true
 
-# Use Docker Swarm Mode as data provider
+# Use Docker Swarm Mode as data provider.
+#
+# Optional
+# Default: false
+#
 swarmmode = true
 
-# Override default configuration template. For advanced users :)
+# Override default configuration template.
+# For advanced users :)
 #
 # Optional
 #
 # filename = "docker.tmpl"
 
-# Expose services by default in traefik
+# Expose services by default in Traefik.
 #
 # Optional
 # Default: true
 #
 exposedbydefault = false
 
-# Enable docker TLS connection
+# Enable docker TLS connection.
 #
 # Optional
 #
-#  [swarm.tls]
+#  [docker.tls]
 #  ca = "/etc/ssl/ca.crt"
 #  cert = "/etc/ssl/docker.crt"
 #  key = "/etc/ssl/docker.key"
 #  insecureskipverify = true
 ```
 
-## Labels can be used on containers to override default behaviour
+To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
+
+## Labels: overriding default behaviour
+
+### On Containers
+
+Labels can be used on containers to override default behaviour.
 
 | Label                                             | Description                                                                                                                                                                                                                                                                                                                                                                                                                   |
 |---------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -149,9 +167,11 @@ exposedbydefault = false
 | `traefik.frontend.entryPoints=http,https`         | Assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`                                                                                                                                                                                                                                                                                                                                       |
 | `traefik.frontend.auth.basic=EXPR`                | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`                                                                                                                                                                                                                                                                                                                                              |
 | `traefik.frontend.whitelistSourceRange:RANGE`     | List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.                                                                                                                                                                                                           |
-| `traefik.docker.network`                          | Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with docker inspect <container_id>) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name. |
+| `traefik.docker.network`                          | Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with `docker inspect <container_id>`) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name. |
 
-### Services labels can be used for overriding default behaviour
+### On Service
+
+Services labels can be used for overriding default behaviour
 
 | Label                                             | Description                                                                                      |
 |---------------------------------------------------|--------------------------------------------------------------------------------------------------|

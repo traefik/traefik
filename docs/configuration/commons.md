@@ -4,45 +4,34 @@
 
 ```toml
 # Duration to give active requests a chance to finish before Traefik stops.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
-# If no units are provided, the value is parsed assuming seconds.
-# Note: in this time frame no new requests are accepted.
 #
 # Optional
 # Default: "10s"
 #
 # graceTimeOut = "10s"
 
-# Enable debug mode
+# Enable debug mode.
 #
 # Optional
 # Default: false
 #
 # debug = true
 
-# Periodically check if a new version has been released
+# Periodically check if a new version has been released.
 #
 # Optional
 # Default: true
 #
 # checkNewVersion = false
 
-# Backends throttle duration: minimum duration in seconds between 2 events from providers
-# before applying a new configuration. It avoids unnecessary reloads if multiples events
-# are sent in a short amount of time.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming
-# seconds.
+# Backends throttle duration.
 #
 # Optional
 # Default: "2s"
 #
 # ProvidersThrottleDuration = "2s"
 
-# Controls the maximum idle (keep-alive) connections to keep per-host. If zero, DefaultMaxIdleConnsPerHost
-# from the Go standard library net/http module is used.
-# If you encounter 'too many open files' errors, you can either increase this
-# value or change the `ulimit`.
+# Controls the maximum idle (keep-alive) connections to keep per-host.
 #
 # Optional
 # Default: 200
@@ -50,15 +39,15 @@
 # MaxIdleConnsPerHost = 200
 
 # If set to true invalid SSL certificates are accepted for backends.
-# Note: This disables detection of man-in-the-middle attacks so should only be used on secure backend networks.
+# This disables detection of man-in-the-middle attacks so should only be used on secure backend networks.
 #
 # Optional
 # Default: false
 #
 # InsecureSkipVerify = true
 
-# Register Certificates in the RootCA. This certificates will be use for backends calls.
-# Note: You can use file path or cert content directly
+# Register Certificates in the RootCA.
+#
 # Optional
 # Default: []
 #
@@ -73,24 +62,35 @@
 # defaultEntryPoints = ["http", "https"]
 ```
 
+- `graceTimeOut`: Duration to give active requests a chance to finish before Traefik stops.  
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+If no units are provided, the value is parsed assuming seconds.  
+**Note:** in this time frame no new requests are accepted.
+
+- `ProvidersThrottleDuration`: Backends throttle duration: minimum duration in seconds between 2 events from providers before applying a new configuration.
+It avoids unnecessary reloads if multiples events are sent in a short amount of time.  
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+If no units are provided, the value is parsed assuming seconds.
+
+- `MaxIdleConnsPerHost`: Controls the maximum idle (keep-alive) connections to keep per-host.  
+If zero, `DefaultMaxIdleConnsPerHost` from the Go standard library net/http module is used.
+If you encounter 'too many open files' errors, you can either increase this value or change the `ulimit`.
+
+- `InsecureSkipVerify` : If set to true invalid SSL certificates are accepted for backends.  
+**Note:** This disables detection of man-in-the-middle attacks so should only be used on secure backend networks.
+
+- `RootCAs`: Register Certificates in the RootCA. This certificates will be use for backends calls.  
+**Note** You can use file path or cert content directly
+
+- `defaultEntryPoints`: Entrypoints to be used by frontends that do not specify any entrypoint.  
+Each frontend can specify its own entrypoints.
+
 
 ## Constraints
 
 In a micro-service architecture, with a central service discovery, setting constraints limits Træfik scope to a smaller number of routes.
 
 Træfik filters services according to service attributes/tags set in your configuration backends.
-
-Supported backends:
-
-- Docker
-- Consul K/V
-- BoltDB
-- Zookeeper
-- Etcd
-- Consul Catalog
-- Rancher
-- Marathon
-- Kubernetes (using a provider-specific mechanism based on label selectors)
 
 Supported filters:
 
@@ -120,14 +120,27 @@ constraints = ["tag!=us-*", "tag!=asia-*"]
 
 ### Backend-specific
 
+Supported backends:
+
+- Docker
+- Consul K/V
+- BoltDB
+- Zookeeper
+- Etcd
+- Consul Catalog
+- Rancher
+- Marathon
+- Kubernetes (using a provider-specific mechanism based on label selectors)
+
 ```toml
 # Backend-specific constraint
 [consulCatalog]
-endpoint = "127.0.0.1:8500"
+# ...
 constraints = ["tag==api"]
 
+# Backend-specific constraint
 [marathon]
-endpoint = "127.0.0.1:8800"
+# ...
 constraints = ["tag==api", "tag!=v*-beta"]
 ```
 
@@ -190,14 +203,17 @@ Traefik will close and reopen its log files, assuming they're configured, on rec
 This allows the logs to be rotated and processed by an external program, such as `logrotate`.
 
 !!! note
-    that this does not work on Windows due to the lack of USR signals.
+    This does not work on Windows due to the lack of USR signals.
 
 
 ## Custom Error pages
 
 Custom error pages can be returned, in lieu of the default, according to frontend-configured ranges of HTTP Status codes.
+
 In the example below, if a 503 status is returned from the frontend "website", the custom error page at http://2.3.4.5/503.html is returned with the actual status code set in the HTTP header.
-Note, the `503.html` page itself is not hosted on traefik, but some other infrastructure.
+
+!!! note
+    The `503.html` page itself is not hosted on Traefik, but some other infrastructure.
 
 ```toml
 [frontends]
@@ -248,12 +264,7 @@ The configured status code ranges are inclusive; that is, in the above example, 
 # Enable custom health check options.
 [healthcheck]
 
-# Set the default health check interval. Will only be effective if health check
-# paths are defined. Given provider-specific support, the value may be
-# overridden on a per-backend basis.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming
-# seconds.
+# Set the default health check interval.
 #
 # Optional
 # Default: "30s"
@@ -261,6 +272,11 @@ The configured status code ranges are inclusive; that is, in the above example, 
 # interval = "30s"
 ```
 
+- `interval` set the default health check interval.  
+Will only be effective if health check paths are defined.  
+Given provider-specific support, the value may be overridden on a per-backend basis.  
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).  
+If no units are provided, the value is parsed assuming seconds.
 
 ## Timeouts
 
@@ -272,20 +288,13 @@ The configured status code ranges are inclusive; that is, in the above example, 
 [respondingTimeouts]
 
 # readTimeout is the maximum duration for reading the entire request, including the body.
-# If zero, no timeout exists.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming seconds.
 #
 # Optional
 # Default: "0s"
 #
 # readTimeout = "5s"
 
-# writeTimeout is the maximum duration before timing out writes of the response. It covers the time from the end of
-# the request header read to the end of the response write.
-# If zero, no timeout exists.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming seconds.
+# writeTimeout is the maximum duration before timing out writes of the response.
 #
 # Optional
 # Default: "0s"
@@ -293,15 +302,28 @@ The configured status code ranges are inclusive; that is, in the above example, 
 # writeTimeout = "5s"
 
 # idleTimeout is the maximum duration an idle (keep-alive) connection will remain idle before closing itself.
-# If zero, no timeout exists.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming seconds.
 #
 # Optional
 # Default: "180s"
 #
 # idleTimeout = "360s"
 ```
+
+- `readTimeout` is the maximum duration for reading the entire request, including the body.  
+If zero, no timeout exists.  
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+If no units are provided, the value is parsed assuming seconds.
+
+- `writeTimeout` is the maximum duration before timing out writes of the response.  
+It covers the time from the end of the request header read to the end of the response write.
+If zero, no timeout exists.  
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+If no units are provided, the value is parsed assuming seconds.
+
+- `idleTimeout` is the maximum duration an idle (keep-alive) connection will remain idle before closing itself.  
+If zero, no timeout exists.  
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+If no units are provided, the value is parsed assuming seconds.
 
 ### Forwarding Timeouts
 
@@ -311,9 +333,6 @@ The configured status code ranges are inclusive; that is, in the above example, 
 [forwardingTimeouts]
 
 # dialTimeout is the amount of time to wait until a connection to a backend server can be established.
-# If zero, no timeout exists.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming seconds.
 #
 # Optional
 # Default: "30s"
@@ -321,15 +340,23 @@ The configured status code ranges are inclusive; that is, in the above example, 
 # dialTimeout = "30s"
 
 # responseHeaderTimeout is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any).
-# If zero, no timeout exists.
-# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw
-# values (digits). If no units are provided, the value is parsed assuming seconds.
 #
 # Optional
 # Default: "0s"
 #
 # responseHeaderTimeout = "0s"
 ```
+
+- `dialTimeout` is the amount of time to wait until a connection to a backend server can be established.  
+If zero, no timeout exists.  
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+If no units are provided, the value is parsed assuming seconds.
+
+- `responseHeaderTimeout` is the amount of time to wait for a server's response headers after fully writing the request (including its body, if any).  
+If zero, no timeout exists.  
+Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+If no units are provided, the value is parsed assuming seconds.
+
 
 ### Idle Timeout (deprecated)
 
