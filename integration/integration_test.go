@@ -39,6 +39,7 @@ func init() {
 	check.Suite(&LogRotationSuite{})
 	check.Suite(&MarathonSuite{})
 	check.Suite(&MesosSuite{})
+	check.Suite(&RateLimitSuite{})
 	check.Suite(&SimpleSuite{})
 	check.Suite(&TimeoutSuite{})
 	check.Suite(&WebsocketSuite{})

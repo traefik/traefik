@@ -36,6 +36,7 @@ import (
 	"github.com/vulcand/oxy/cbreaker"
 	"github.com/vulcand/oxy/connlimit"
 	"github.com/vulcand/oxy/forward"
+	"github.com/vulcand/oxy/ratelimit"
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
 	"golang.org/x/net/http2"
@@ -891,6 +892,15 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						}
 					}
 
+					if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
+						lb, err = server.buildRateLimiter(lb, frontend.RateLimit)
+						if err != nil {
+							log.Errorf("Error creating rate limiter: %v", err)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
+						}
+					}
+
 					maxConns := config.Backends[frontend.Backend].MaxConn
 					if maxConns != nil && maxConns.Amount != 0 {
 						extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
@@ -1187,6 +1197,21 @@ func (server *Server) registerMetricClients(metricsConfig *types.Metrics) {
 func stopMetricsClients() {
 	metrics.StopDatadog()
 	metrics.StopStatsd()
+}
+
+func (server *Server) buildRateLimiter(handler http.Handler, rlConfig *types.RateLimit) (http.Handler, error) {
+	extractFunc, err := utils.NewExtractor(rlConfig.ExtractorFunc)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("Creating load-balancer rate limiter")
+	rateSet := ratelimit.NewRateSet()
+	for _, rate := range rlConfig.RateSet {
+		if err := rateSet.Add(time.Duration(rate.Period), rate.Average, rate.Burst); err != nil {
+			return nil, err
+		}
+	}
+	return ratelimit.New(handler, extractFunc, rateSet, ratelimit.Logger(oxyLogger))
 }
 
 func (server *Server) buildRetryMiddleware(handler http.Handler, globalConfig configuration.GlobalConfiguration, countServers int, backendName string) http.Handler {

@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
@@ -65,6 +66,19 @@ type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Backend string   `json:"backend,omitempty"`
 	Query   string   `json:"query,omitempty"`
+}
+
+// Rate holds a rate limiting configuration for a specific time period
+type Rate struct {
+	Period  flaeg.Duration `json:"period,omitempty"`
+	Average int64          `json:"average,omitempty"`
+	Burst   int64          `json:"burst,omitempty"`
+}
+
+// RateLimit holds a rate limiting configuration for a given frontend
+type RateLimit struct {
+	RateSet       map[string]*Rate `json:"rateset,omitempty"`
+	ExtractorFunc string           `json:"extractorFunc,omitempty"`
 }
 
 // Headers holds the custom header configuration
@@ -131,6 +145,7 @@ type Frontend struct {
 	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
 	Headers              Headers              `json:"headers,omitempty"`
 	Errors               map[string]ErrorPage `json:"errors,omitempty"`
+	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
