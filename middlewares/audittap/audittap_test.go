@@ -88,11 +88,11 @@ func TestAuditExclusion(t *testing.T) {
 	capture := &noopAuditStream{}
 	excludes := make(types.Exclusions)
 
-	excludes["Ex1"] = &types.Exclusion{"Host", []string{"aaaignorehost1bbb", "hostignore"}}
-	excludes["Ex2"] = &types.Exclusion{"Path", []string{"excludeme", "someotherpath"}}
+	excludes["Ex1"] = &types.Exclusion{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}}
+	excludes["Ex2"] = &types.Exclusion{HeaderName: "Path", Contains: []string{"excludeme", "someotherpath"}}
 
-	excludes["Ex3"] = &types.Exclusion{"Hdr1", []string{"abcdefg", "drv1"}}
-	excludes["Ex4"] = &types.Exclusion{"Hdr2", []string{"tauditm"}}
+	excludes["Ex3"] = &types.Exclusion{HeaderName: "Hdr1", Contains: []string{"abcdefg", "drv1"}}
+	excludes["Ex4"] = &types.Exclusion{HeaderName: "Hdr2", Contains: []string{"tauditm"}}
 
 	cfg := &types.AuditSink{
 		ProxyingFor: "api",
@@ -133,6 +133,16 @@ func TestAuditExclusion(t *testing.T) {
 		assert.Fail(t, "Audit is not an Api Audit")
 	}
 
+}
+
+func TestShouldExclude(t *testing.T) {
+	assert.True(t, shouldExclude("beginWithThis", &types.Exclusion{HeaderName: "x", StartsWith: []string{"begin"}}))
+	assert.True(t, shouldExclude("endWithThat", &types.Exclusion{HeaderName: "x", EndsWith: []string{"That"}}))
+	assert.True(t, shouldExclude("ithasthatthing", &types.Exclusion{HeaderName: "x", Contains: []string{"hasthat"}}))
+
+	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", StartsWith: []string{"abc"}}))
+	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", EndsWith: []string{"def"}}))
+	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", Contains: []string{"abcde"}}))
 }
 
 // simpleHandler replies to the request with the specified error message and HTTP code.

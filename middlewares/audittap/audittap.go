@@ -108,11 +108,11 @@ func isExcluded(exclusions []*types.Exclusion, req *http.Request) bool {
 	for _, exc := range exclusions {
 		lcHdr := strings.ToLower(exc.HeaderName)
 		// Get host or path direct from request
-		if (lcHdr == "host" || lcHdr == "requesthost") && shouldExclude(req.Host, exc.Contains) {
+		if (lcHdr == "host" || lcHdr == "requesthost") && shouldExclude(req.Host, exc) {
 			return true
-		} else if (lcHdr == "path" || lcHdr == "requestpath") && shouldExclude(req.RequestURI, exc.Contains) {
+		} else if (lcHdr == "path" || lcHdr == "requestpath") && shouldExclude(req.RequestURI, exc) {
 			return true
-		} else if shouldExclude(req.Header.Get(exc.HeaderName), exc.Contains) {
+		} else if shouldExclude(req.Header.Get(exc.HeaderName), exc) {
 			return true
 		}
 	}
@@ -120,10 +120,16 @@ func isExcluded(exclusions []*types.Exclusion, req *http.Request) bool {
 	return false
 }
 
-func shouldExclude(v string, exclusions []string) bool {
+func shouldExclude(v string, exc *types.Exclusion) bool {
+	return excludeValue(v, exc.StartsWith, strings.HasPrefix) ||
+		excludeValue(v, exc.EndsWith, strings.HasSuffix) ||
+		excludeValue(v, exc.Contains, strings.Contains)
+}
+
+func excludeValue(v string, exclusions []string, fn func(string, string) bool) bool {
 	if v != "" {
 		for _, x := range exclusions {
-			if strings.Contains(v, x) {
+			if fn(v, x) {
 				return true
 			}
 		}

@@ -368,7 +368,9 @@ type AccessLog struct {
 // Exclusion excludes a request from auditing if the http header contains any of the specified values
 type Exclusion struct {
 	HeaderName string   `json:"headerName,omitempty" description:"Request header name to evaluate"`
-	Contains   []string `json:"contains,omitempty" description:"Values to exclude"`
+	Contains   []string `json:"contains,omitempty" description:"Substring values to exclude"`
+	EndsWith   []string `json:"endsWith,omitempty" description:"End of string values to exclude"`
+	StartsWith []string `json:"startsWith,omitempty" description:"Start of string values to exclude"`
 }
 
 // Exclusions is a container type for Exclusion
