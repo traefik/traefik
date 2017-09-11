@@ -29,6 +29,7 @@ import (
 type TraefikConfiguration struct {
 	configuration.GlobalConfiguration `mapstructure:",squash" export:"true"`
 	ConfigFile                        string `short:"c" description:"Configuration file to use (TOML)." export:"true"`
+	ExportFileConfigInStoreConfig     bool   `description:"Enable export of File Config to K/V Store Cofnig." export:"true"`
 }
 
 // NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
@@ -281,6 +282,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			},
 			CheckNewVersion: true,
 		},
-		ConfigFile: "",
+		ConfigFile:                    "",
+		ExportFileConfigInStoreConfig: true,
 	}
 }

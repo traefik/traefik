@@ -5,10 +5,13 @@ import (
 	"fmt"
 	fmtlog "log"
 
+	"context"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"
 )
 
@@ -29,6 +32,10 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 		if kv == nil {
 			return fmt.Errorf("error using command storeconfig, no Key-value store defined")
 		}
+		fileConfig := traefikConfiguration.GlobalConfiguration.File
+		if fileConfig != nil && !traefikConfiguration.ExportFileConfigInStoreConfig {
+			traefikConfiguration.GlobalConfiguration.File = nil
+		}
 		jsonConf, err := json.Marshal(traefikConfiguration.GlobalConfiguration)
 		if err != nil {
 			return err
@@ -37,6 +44,42 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 		err = kv.StoreConfig(traefikConfiguration.GlobalConfiguration)
 		if err != nil {
 			return err
+		}
+		if fileConfig != nil {
+			configurationChan := make(chan types.ConfigMessage)
+			signal := make(chan error)
+
+			jsonConf, err = json.Marshal(fileConfig)
+			if err != nil {
+				return err
+			}
+			fmtlog.Printf("Storing file configuration: %s\n", jsonConf)
+
+			safe.Go(func() {
+				//for data := range configurationChan {
+				fmtlog.Print("Waiting for file config to be parsed...")
+				data := <-configurationChan
+				fmtlog.Print("Writing config to KV")
+				err = kv.StoreConfig(data.Configuration)
+				if err != nil {
+					signal <- err
+					return
+				}
+				signal <- nil
+				return
+				//}
+			})
+
+			err = fileConfig.Provide(configurationChan, safe.NewPool(context.Background()), nil)
+			if err != nil {
+				return err
+			}
+
+			fmtlog.Print("Writing for KV write routine to finish...")
+			err = <-signal
+			if err != nil {
+				return err
+			}
 		}
 		if traefikConfiguration.GlobalConfiguration.ACME != nil && len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
 			// convert ACME json file to KV store
