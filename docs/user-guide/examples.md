@@ -300,3 +300,86 @@ providersThrottleDuration = "5s"
 [respondingTimeouts]
 idleTimeout = "360s"
 ```
+
+## Securing Ping Health Check
+
+The `/ping` health-check URL is enabled together with the web admin panel, enabled with the command-line `--web` or config file option `[web]`.
+Thus, if you have a regular path for `/foo` and an entrypoint on `:80`, you would access them as follows:
+
+* Regular path: `http://hostname:80/foo`
+* Admin panel: `http://hostname:8080/`
+* Ping URL: `http://hostname:8080/ping`
+
+However, for security reasons, you may want to be able to expose the `/ping` health-check URL to outside health-checkers, e.g. an Internet service or cloud load-balancer, _without_ exposing your admin panel's port.
+In many environments, the security staff may not _allow_ you to expose it.
+
+You have two options:
+
+* Enable `/ping` on a regular entrypoint
+* Enable `/ping` on a dedicated port
+
+### Enable ping health check on a regular entrypoint
+
+To proxy `/ping` from a regular entrypoint to the admin one without exposing the panel, do the following:
+
+```toml
+[backends]
+  [backends.traefik]
+    [backends.traefik.servers.server1]
+    url = "http://localhost:8080"
+    weight = 10
+
+[frontends]
+  [frontends.traefikadmin]
+  backend = "traefik"
+    [frontends.traefikadmin.routes.ping]
+    rule = "Path:/ping"
+```
+
+The above creates a new backend called `traefik`, listening on `http://localhost:8080`, i.e. the local admin port.
+We only expose the admin panel via the `frontend` named `traefikadmin`, and only expose the `/ping` Path.
+Be careful with the `traefikadmin` frontend. If you do _not_ specify a `Path:` rule, you would expose the entire dashboard.
+
+### Enable ping health check on dedicated port
+
+If you do not want to or cannot expose the health-check on a regular entrypoint - e.g. your security rules do not allow it, or you have a conflicting path - then you can enable health-check on its own entrypoint.
+Use the following config:
+
+```toml
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.ping]
+  address = ":8082"
+
+[backends]
+  [backends.traefik]
+    [backends.traefik.servers.server1]
+    url = "http://localhost:8080"
+    weight = 10
+
+[frontends]
+  [frontends.traefikadmin]
+  backend = "traefik"
+  entrypoints = ["ping"]
+    [frontends.traefikadmin.routes.ping]
+    rule = "Path:/ping"
+```
+
+The above is similar to the previous example, but instead of enabling `/ping` on the _default_ entrypoint, we enable it on a _dedicated_ entrypoint.
+
+In the above example, you would access a regular path, admin panel and health-check as follows:
+
+* Regular path: `http://hostname:80/foo`
+* Admin panel: `http://hostname:8080/`
+* Ping URL: `http://hostname:8082/ping`
+
+Note the dedicated port `:8082` for `/ping`.
+
+In the above example, it is _very_ important to create a named dedicated entrypoint, and do **not** include it in `defaultEntryPoints`.
+Otherwise, you are likely to expose _all_ services via that entrypoint.
+
+In the above example, we have two entrypoints, `http` and `ping`, but we only included `http` in `defaultEntryPoints`, while explicitly tying `frontend.traefikadmin` to the `ping` entrypoint.
+This ensures that all the "normal" frontends will be exposed via entrypoint `http` and _not_ via entrypoint `ping`.
