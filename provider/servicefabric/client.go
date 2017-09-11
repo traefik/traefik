@@ -79,81 +79,151 @@ func NewClient(endpoint, apiVersion, clientCertFilePath, clientCertKeyFilePath, 
 // GetApplications returns all the registered applications
 // within the Service Fabric cluster.
 func (c *clientImpl) GetApplications() (*ApplicationsData, error) {
-	url := c.endpoint + "/Applications/?api-version=" + c.apiVersion
-	res, err := getHTTP(&c.restClient, url)
-	if err != nil {
-		return &ApplicationsData{}, err
+	var aggregateAppData ApplicationsData
+	var continueToken string
+	for {
+		var url string
+		if continueToken == "" {
+			url = c.endpoint + "/Applications/?api-version=" + c.apiVersion
+		} else {
+			url = c.endpoint + "/Applications/?api-version=" + c.apiVersion + "&continue=" + continueToken
+		}
+		res, err := getHTTP(&c.restClient, url)
+		if err != nil {
+			return &ApplicationsData{}, err
+		}
+		var appData ApplicationsData
+		err = json.Unmarshal(res, &appData)
+		if err != nil {
+			log.Errorf("Could not deserialise JSON response: %+v", err)
+		}
+		aggregateAppData.Items = append(aggregateAppData.Items, appData.Items...)
+		continueToken = getString(appData.ContinuationToken)
+		if continueToken == "" {
+			break
+		}
 	}
-	var appData ApplicationsData
-	err = json.Unmarshal(res, &appData)
-	if err != nil {
-		log.Errorf("Could not deserialise JSON response: %+v", err)
-	}
-	return &appData, nil
+	return &aggregateAppData, nil
 }
 
 // GetServices returns all the services associated
 // with a Service Fabric application.
 func (c *clientImpl) GetServices(appName string) (*ServicesData, error) {
-	url := c.endpoint + "/Applications/" + appName + "/$/GetServices?api-version=" + c.apiVersion
-	res, err := getHTTP(&c.restClient, url)
-	if err != nil {
-		return &ServicesData{}, err
+	var aggregateServicesData ServicesData
+	var continueToken string
+	for {
+		var url string
+		if continueToken == "" {
+			url = c.endpoint + "/Applications/" + appName + "/$/GetServices?api-version=" + c.apiVersion
+		} else {
+			url = c.endpoint + "/Applications/" + appName + "/$/GetServices?api-version=" + c.apiVersion + "&continue=" + continueToken
+		}
+		res, err := getHTTP(&c.restClient, url)
+		if err != nil {
+			return &ServicesData{}, err
+		}
+		var servicesData ServicesData
+		err = json.Unmarshal(res, &servicesData)
+		if err != nil {
+			log.Errorf("Could not deserialise JSON response: %+v", err)
+		}
+		aggregateServicesData.Items = append(aggregateServicesData.Items, servicesData.Items...)
+		continueToken = getString(servicesData.ContinuationToken)
+		if continueToken == "" {
+			break
+		}
 	}
-	var servicesData ServicesData
-	err = json.Unmarshal(res, &servicesData)
-	if err != nil {
-		log.Errorf("Could not deserialise JSON response: %+v", err)
-	}
-	return &servicesData, nil
+	return &aggregateServicesData, nil
 }
 
 // GetPartitions returns all the partitions associated
 // with a Service Fabric service.
 func (c *clientImpl) GetPartitions(appName, serviceName string) (*PartitionsData, error) {
-	url := c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=" + c.apiVersion
-	res, err := getHTTP(&c.restClient, url)
-	if err != nil {
-		return &PartitionsData{}, err
+	var aggregatePartitionsData PartitionsData
+	var continueToken string
+	for {
+		var url string
+		if continueToken == "" {
+			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=" + c.apiVersion
+		} else {
+			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=" + c.apiVersion + "&continue=" + continueToken
+		}
+		res, err := getHTTP(&c.restClient, url)
+		if err != nil {
+			return &PartitionsData{}, err
+		}
+		var partitionsData PartitionsData
+		err = json.Unmarshal(res, &partitionsData)
+		if err != nil {
+			log.Errorf("Could not deserialise JSON response: %+v", err)
+		}
+		aggregatePartitionsData.Items = append(aggregatePartitionsData.Items, partitionsData.Items...)
+		continueToken = getString(partitionsData.ContinuationToken)
+		if continueToken == "" {
+			break
+		}
 	}
-	var partitionsData PartitionsData
-	err = json.Unmarshal(res, &partitionsData)
-	if err != nil {
-		log.Errorf("Could not deserialise JSON response: %+v", err)
-	}
-	return &partitionsData, nil
+	return &aggregatePartitionsData, nil
 }
 
 // GetInstances returns all the instances associated
 // with a stateless Service Fabric partition.
 func (c *clientImpl) GetInstances(appName, serviceName, partitionName string) (*InstancesData, error) {
-	url := c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion
-	res, err := getHTTP(&c.restClient, url)
-	if err != nil {
-		return &InstancesData{}, err
+	var aggregateInstancesData InstancesData
+	var continueToken string
+	for {
+		var url string
+		if continueToken == "" {
+			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion
+		} else {
+			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion + "&continue=" + continueToken
+		}
+		res, err := getHTTP(&c.restClient, url)
+		if err != nil {
+			return &InstancesData{}, err
+		}
+		var instancesData InstancesData
+		err = json.Unmarshal(res, &instancesData)
+		if err != nil {
+			log.Errorf("Could not deserialise JSON response: %+v", err)
+		}
+		aggregateInstancesData.Items = append(aggregateInstancesData.Items, instancesData.Items...)
+		continueToken = getString(instancesData.ContinuationToken)
+		if continueToken == "" {
+			break
+		}
 	}
-	var instancesData InstancesData
-	err = json.Unmarshal(res, &instancesData)
-	if err != nil {
-		log.Errorf("Could not deserialise JSON response: %+v", err)
-	}
-	return &instancesData, nil
+	return &aggregateInstancesData, nil
 }
 
 // GetReplicas returns all the replicas associated
 // with a stateful Service Fabric partition.
 func (c *clientImpl) GetReplicas(appName, serviceName, partitionName string) (*ReplicasData, error) {
-	url := c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion
-	res, err := getHTTP(&c.restClient, url)
-	if err != nil {
-		return &ReplicasData{}, err
+	var aggregateReplicasData ReplicasData
+	var continueToken string
+	for {
+		var url string
+		if continueToken == "" {
+			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion
+		} else {
+			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion + "&continue=" + continueToken
+		}
+		res, err := getHTTP(&c.restClient, url)
+		if err != nil {
+			return &ReplicasData{}, err
+		}
+		var replicasData ReplicasData
+		err = json.Unmarshal(res, &replicasData)
+		if err != nil {
+			log.Errorf("Could not deserialise JSON response: %+v", err)
+		}
+		aggregateReplicasData.Items = append(aggregateReplicasData.Items, replicasData.Items...)
+		continueToken = getString(replicasData.ContinuationToken)
+		if continueToken == "" {
+			break
+		}
 	}
-	var replicasData ReplicasData
-	err = json.Unmarshal(res, &replicasData)
-	if err != nil {
-		log.Errorf("Could not deserialise JSON response: %+v", err)
-	}
-	return &replicasData, nil
+	return &aggregateReplicasData, nil
 }
 
 func getHTTP(http *http.Client, url string) ([]byte, error) {
@@ -174,4 +244,11 @@ func getHTTP(http *http.Client, url string) ([]byte, error) {
 		return nil, fmt.Errorf("Failed to read response body from Service Fabric response %+v", readErr)
 	}
 	return body, nil
+}
+
+func getString(str *string) string {
+	if str == nil {
+		return ""
+	}
+	return *str
 }
