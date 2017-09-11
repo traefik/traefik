@@ -93,4 +93,5 @@ pages:
     - 'Marathon': 'user-guide/marathon.md'
     - 'Key-value Store Configuration': 'user-guide/kv-config.md'
     - 'Clustering/HA': 'user-guide/cluster.md'
+    - 'gRPC Example': 'user-guide/grpc.md'
   - Benchmarks: benchmarks.md
