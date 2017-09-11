@@ -36,19 +36,21 @@ type ServicesData struct {
 // of the service with details of the application
 // it belongs too and the replicas/partitions
 type ServiceItemExtended struct {
-	*ServiceItem
-	ApplicationData *ApplicationItem
+	ServiceItem
+	HasHTTPEndpoint bool
+	IsHealthy       bool
+	ApplicationData ApplicationItem
 	Partitions      []PartitionItemExtended
 }
 
 // PartitionItemExtended provides a flattened view
 // of a services partitions
 type PartitionItemExtended struct {
-	*PartitionData
+	PartitionData
 	HasReplicas  bool
-	Replicas     *ReplicasData
+	Replicas     []ReplicaItem
 	HasInstances bool
-	Instances    *InstancesData
+	Instances    []InstanceItem
 }
 
 // ServiceItem encapsulates the service information
@@ -106,13 +108,13 @@ type ReplicasData struct {
 }
 
 type ReplicaItemBase struct {
-	Address                      string  `json:"Address"`
-	HealthState                  string  `json:"HealthState"`
-	LastInBuildDurationInSeconds string  `json:"LastInBuildDurationInSeconds"`
-	NodeName                     string  `json:"NodeName"`
-	ReplicaRole                  *string `json:"ReplicaRole"`
-	ReplicaStatus                string  `json:"ReplicaStatus"`
-	ServiceKind                  string  `json:"ServiceKind"`
+	Address                      string `json:"Address"`
+	HealthState                  string `json:"HealthState"`
+	LastInBuildDurationInSeconds string `json:"LastInBuildDurationInSeconds"`
+	NodeName                     string `json:"NodeName"`
+	ReplicaRole                  string `json:"ReplicaRole"`
+	ReplicaStatus                string `json:"ReplicaStatus"`
+	ServiceKind                  string `json:"ServiceKind"`
 }
 
 type ReplicaItem struct {

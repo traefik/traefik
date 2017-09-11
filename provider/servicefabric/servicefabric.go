@@ -2,6 +2,7 @@ package servicefabric
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,7 +59,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					log.Info("Checking service fabric config")
 				}
 
+				// SF Note: Deploying a config update could change the location or provide
+				// a new version of this file, that is why we query for location each time.
 				configFilePath, err := findTemplateFile()
+				if err == nil {
+					p.Filename = configFilePath
+				}
 
 				services, err := getClusterServices(sfClient)
 
@@ -76,11 +82,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				var sfFuncMap = template.FuncMap{
 					"isPrimary":          p.isPrimary,
 					"isHealthy":          p.isHealthy,
+					"hasHTTPEndpoint":    p.hasHTTPEndpoint,
 					"getDefaultEndpoint": p.getDefaultEndpoint,
 					"getNamedEndpoint":   p.getNamedEndpoint,
 				}
 
-				configuration, err := p.GetConfiguration(configFilePath, sfFuncMap, templateObjects)
+				configuration, err := p.GetConfiguration("templates/servicefabric.tmpl", sfFuncMap, templateObjects)
 
 				if err != nil {
 					log.Error(err)
@@ -104,7 +111,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	return nil
 }
 
-func getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
+func (*p Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
 	results := []ServiceItemExtended{}
 	apps, err := sfClient.GetApplications()
 	if err != nil {
@@ -121,9 +128,10 @@ func getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
 		}
 		for _, service := range services.Items {
 			item := ServiceItemExtended{
-				ServiceItem:     &service,
-				ApplicationData: &app,
+				ServiceItem:     service,
+				ApplicationData: app,
 			}
+
 
 			partitions, err := sfClient.GetPartitions(app.ID, service.ID)
 			if err != nil {
@@ -131,7 +139,7 @@ func getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
 			} else {
 				for _, partition := range partitions.Items {
 					partitionExt := PartitionItemExtended{
-						PartitionData: &partition,
+						PartitionData: partition,
 					}
 
 					if partition.ServiceKind == "Stateful" {
@@ -140,7 +148,7 @@ func getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
 						if err != nil {
 							log.Error(err)
 						} else {
-							partitionExt.Replicas = replicas
+							partitionExt.Replicas = replicas.Items
 							partitionExt.HasReplicas = true
 						}
 					} else if partition.ServiceKind == "Stateless" {
@@ -149,7 +157,7 @@ func getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
 						if err != nil {
 							log.Error(err)
 						} else {
-							partitionExt.Instances = instances
+							partitionExt.Instances = instances.Items
 							partitionExt.HasInstances = true
 						}
 					} else {
@@ -168,24 +176,33 @@ func getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
 	return results, nil
 }
 
-func (provider *Provider) isPrimary(i ReplicaInstance) bool {
+func (p *Provider) isPrimary(i ReplicaInstance) bool {
 	_, data := i.GetReplicaData()
 	primaryString := "Primary"
-	if data.ReplicaRole == &primaryString {
+	if data.ReplicaRole == primaryString {
 		return true
 	}
 	return false
 }
 
-func (provider *Provider) isHealthy(i ReplicaInstance) bool {
+func (p *Provider) isHealthy(i ReplicaInstance) bool {
 	_, data := i.GetReplicaData()
-	if data.ReplicaStatus != "Ready" || data.HealthState == "Error" {
+	if data.ReplicaStatus == "Ready" || data.HealthState != "Error" {
 		return true
 	}
 	return false
 }
 
-func (provider *Provider) getDefaultEndpoint(i ReplicaInstance) string {
+func (p *Provider) hasHTTPEndpoint(i ReplicaInstance) bool {
+	_, data := i.GetReplicaData()
+	exists, _ := getDefaultEndpoint(data.Address)
+	if exists {
+		return true
+	}
+	return false
+}
+
+func (p *Provider) getDefaultEndpoint(i ReplicaInstance) string {
 	id, data := i.GetReplicaData()
 	exists, endpoint := getDefaultEndpoint(data.Address)
 	if !exists {
@@ -195,11 +212,11 @@ func (provider *Provider) getDefaultEndpoint(i ReplicaInstance) string {
 	return endpoint
 }
 
-func (provider *Provider) getNamedEndpoint(i ReplicaInstance, endpointName string) string {
+func (p *Provider) getNamedEndpoint(i ReplicaInstance, endpointName string) string {
 	id, data := i.GetReplicaData()
 	exists, endpoint := getNamedEndpoint(data.Address, endpointName)
 	if !exists {
-		log.Infof("No default endpoint for replica %s in service %s endpointData: %s", id, data.Address)
+		log.Infof("No names endpoint of %s for replica %s in endpointData: %s", endpointName, id, data.Address)
 		return ""
 	}
 	return endpoint
@@ -227,7 +244,7 @@ func decodeEndpointData(endpointData string) (bool, map[string]string) {
 
 func getDefaultEndpoint(endpointData string) (bool, string) {
 	isValid, endpoints := decodeEndpointData(endpointData)
-	if isValid {
+	if !isValid {
 		return false, ""
 	}
 	var defaultHTTPEndpointExists bool
@@ -248,7 +265,7 @@ func getDefaultEndpoint(endpointData string) (bool, string) {
 
 func getNamedEndpoint(endpointData string, endpointName string) (bool, string) {
 	isValid, endpoints := decodeEndpointData(endpointData)
-	if isValid {
+	if !isValid {
 		return false, ""
 	}
 	endpoint, exists := endpoints[endpointName]
@@ -274,8 +291,7 @@ func findTemplateFile() (string, error) {
 	}
 
 	if configFilePath == "" {
-		log.Errorf("Cannot find fontend config with glob %s using default", glob)
-		return "templates/servicefabric.tmpl", nil
+		return "", fmt.Errorf("Cannot find fontend config with glob %s using default", glob)
 	}
 
 	log.Info("Found sf template toml from:", configFilePath)

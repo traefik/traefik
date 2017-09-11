@@ -1,0 +1,46 @@
+[frontends]{{range $service := .Services}}
+  {{if eq $service.ServiceKind "Stateless"}}
+  
+  [frontends."{{$service.Name}}"]
+  backend = "{{$service.Name}}"
+    [frontends."{{$service.Name}}".routes.default]
+    rule = "PathPrefixStrip: /{{$service.ApplicationData.ID}}/{{$service.ID}}"
+  
+  {{else if eq $service.ServiceKind "Stateful"}}
+    {{range $partition := $service.Partitions}}
+      {{$partitionId := $partition.PartitionInformation.ID}}
+
+      [frontends."{{$service.Name}}/{{$partitionId}}"]
+      backend = "{{$service.Name}}/{{$partitionId}}"
+      [frontends."{{$service.Name}}/{{$partitionId}}".routes.default]
+      rule = "PathPrefixStrip: /{{$service.ApplicationData.ID}}/{{$service.ID}}/{{$partitionId}}"
+
+    {{end}}
+  {{end}}
+{{end}}
+
+[backends]{{range $service := .Services}}
+    {{range $partition := $service.Partitions}}
+      {{if eq $partition.ServiceKind "Stateless"}}
+        {{range $instance := $partition.Instances}}
+          {{if and (isHealthy $instance) (hasHTTPEndpoint $instance)}}
+            
+            [backends."{{$service.Name}}".servers."{{$instance.ID}}"]
+            url = "{{getDefaultEndpoint $instance}}"
+            weight = 1
+
+          {{end}}
+        {{end}}
+      {{else if eq $partition.ServiceKind "Stateful"}}
+        {{range $replica := $partition.Replicas}}
+          {{if and (isPrimary $replica) (isHealthy $replica) (hasHTTPEndpoint $replica)}}
+          
+            [backends."{{$service.Name}}/{{$partition.PartitionInformation.ID}}".servers."{{$replica.ID}}"]
+            url = "{{getDefaultEndpoint $replica}}"
+            weight = 1
+          
+          {{end}}    
+        {{end}}
+      {{end}}
+    {{end}}
+{{end}}
