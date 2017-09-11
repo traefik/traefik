@@ -226,17 +226,17 @@ func parseAPISourcedRancherData(environments []*rancher.Environment, services []
 				if container.Labels[labelRancheStackServiceName] == rancherData.Name &&
 					containerFilter(container.Name, container.HealthState, container.State) {
 
-					if container.NetworkMode == hostNetwork && len(service.PublicEndpoints) > 0 {
+					if container.NetworkMode == hostNetwork {
 						var endpoints []*rancher.PublicEndpoint
 						err := mapstructure.Decode(service.PublicEndpoints, &endpoints)
-						
-						if (err != nil) {
+
+						if err != nil {
 							log.Error("Decode to []*rancher.PublicEndpoint failed")
 							continue
 						}
 
-						for _, endpoint := range endpoints {
-							rancherData.Containers = append(rancherData.Containers, endpoint.IpAddress)
+						if len(endpoints) > 0 {
+							rancherData.Containers = append(rancherData.Containers, endpoints[0].IpAddress)
 						}
 					} else {
 						rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
