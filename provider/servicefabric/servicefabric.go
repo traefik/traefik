@@ -62,11 +62,14 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				// SF Note: Deploying a config update could change the location or provide
 				// a new version of this file, that is why we query for location each time.
 				configFilePath, err := findTemplateFile()
-				if err == nil {
+				if err != nil {
+					// Fallback to using the default template
+					p.Filename = ""
+				} else {
 					p.Filename = configFilePath
 				}
 
-				services, err := getClusterServices(sfClient)
+				services, err := p.getClusterServices(sfClient)
 
 				if err != nil {
 					log.Error(err)
@@ -80,11 +83,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				}
 
 				var sfFuncMap = template.FuncMap{
-					"isPrimary":          p.isPrimary,
-					"isHealthy":          p.isHealthy,
-					"hasHTTPEndpoint":    p.hasHTTPEndpoint,
-					"getDefaultEndpoint": p.getDefaultEndpoint,
-					"getNamedEndpoint":   p.getNamedEndpoint,
+					"isPrimary":               p.isPrimary,
+					"isHealthy":               p.isHealthy,
+					"hasHTTPEndpoint":         p.hasHTTPEndpoint,
+					"getDefaultEndpoint":      p.getDefaultEndpoint,
+					"getNamedEndpoint":        p.getNamedEndpoint,
+					"getApplicationParameter": p.getApplicationParameter,
+					"doesAppParamContain":     p.doesAppParamContain,
 				}
 
 				configuration, err := p.GetConfiguration("templates/servicefabric.tmpl", sfFuncMap, templateObjects)
@@ -111,7 +116,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	return nil
 }
 
-func (*p Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
+func (p *Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
 	results := []ServiceItemExtended{}
 	apps, err := sfClient.GetApplications()
 	if err != nil {
@@ -131,7 +136,6 @@ func (*p Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, e
 				ServiceItem:     service,
 				ApplicationData: app,
 			}
-
 
 			partitions, err := sfClient.GetPartitions(app.ID, service.ID)
 			if err != nil {
@@ -191,6 +195,24 @@ func (p *Provider) isHealthy(i ReplicaInstance) bool {
 		return true
 	}
 	return false
+}
+
+func (p *Provider) doesAppParamContain(a ApplicationItem, key, shouldContain string) bool {
+	value := p.getApplicationParameter(a, key)
+	if strings.Contains(value, shouldContain) {
+		return true
+	}
+	return false
+}
+
+func (p *Provider) getApplicationParameter(a ApplicationItem, k string) string {
+	for _, param := range a.Parameters {
+		if param.Key == k {
+			return param.Value
+		}
+	}
+	log.Errorf("Parameter %s doesn't exist in app %s", k, a.Name)
+	return ""
 }
 
 func (p *Provider) hasHTTPEndpoint(i ReplicaInstance) bool {

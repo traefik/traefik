@@ -1,20 +1,22 @@
 [frontends]{{range $service := .Services}}
-  {{if eq $service.ServiceKind "Stateless"}}
-  
-  [frontends."{{$service.Name}}"]
-  backend = "{{$service.Name}}"
-    [frontends."{{$service.Name}}".routes.default]
-    rule = "PathPrefixStrip: /{{$service.ApplicationData.ID}}/{{$service.ID}}"
-  
-  {{else if eq $service.ServiceKind "Stateful"}}
-    {{range $partition := $service.Partitions}}
-      {{$partitionId := $partition.PartitionInformation.ID}}
+  {{if doesAppParamContain $service.ApplicationData "TraefikPublish" $service.Name}}
+    {{if eq $service.ServiceKind "Stateless"}}
+    
+    [frontends."{{$service.Name}}"]
+    backend = "{{$service.Name}}"
+      [frontends."{{$service.Name}}".routes.default]
+      rule = "PathPrefixStrip: /{{$service.ApplicationData.ID}}/{{$service.ID}}"
+    
+    {{else if eq $service.ServiceKind "Stateful"}}
+      {{range $partition := $service.Partitions}}
+        {{$partitionId := $partition.PartitionInformation.ID}}
 
-      [frontends."{{$service.Name}}/{{$partitionId}}"]
-      backend = "{{$service.Name}}/{{$partitionId}}"
-      [frontends."{{$service.Name}}/{{$partitionId}}".routes.default]
-      rule = "PathPrefixStrip: /{{$service.ApplicationData.ID}}/{{$service.ID}}/{{$partitionId}}"
+        [frontends."{{$service.Name}}/{{$partitionId}}"]
+        backend = "{{$service.Name}}/{{$partitionId}}"
+        [frontends."{{$service.Name}}/{{$partitionId}}".routes.default]
+        rule = "PathPrefixStrip: /{{$service.ApplicationData.ID}}/{{$service.ID}}/{{$partitionId}}"
 
+      {{end}}
     {{end}}
   {{end}}
 {{end}}
@@ -44,3 +46,4 @@
       {{end}}
     {{end}}
 {{end}}
+
