@@ -17,20 +17,20 @@ It supports several backends ([Docker](https://www.docker.com/), [Swarm mode](ht
 
 ---
 
-| **[Overview](#overview)** |
-**[Features](#features)** |
-**[Supported backends](#supported-backends)** |
-**[Quickstart](#quickstart)** |
-**[Web UI](#web-ui)** |
-**[Test it](#test-it)** |
-**[Documentation](#documentation)** |
-**[Support](#support)** |
-**[Release cycle](#release-cycle)** |
+. **[Overview](#overview)** .
+**[Features](#features)** .
+**[Supported backends](#supported-backends)** .
+**[Quickstart](#quickstart)** .
+**[Web UI](#web-ui)** .
+**[Test it](#test-it)** .
+**[Documentation](#documentation)** .
 
-| **[Contributing](#contributing)** |
-**[Maintainers](#maintainers)** |
-**[Plumbing](#plumbing)** |
-**[Credits](#credits)** |
+. **[Support](#support)** .
+**[Release cycle](#release-cycle)** .
+**[Contributing](#contributing)** .
+**[Maintainers](#maintainers)** .
+**[Plumbing](#plumbing)** .
+**[Credits](#credits)** .
 
 ---
 
@@ -61,7 +61,7 @@ Run it and forget it!
 
 - [It's fast](https://docs.traefik.io/benchmarks)
 - No dependency hell, single binary made with go
-- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) official docker image
+- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
 - Rest API
 - Hot-reloading of configuration. No need to restart the process
 - Circuit breakers, retry

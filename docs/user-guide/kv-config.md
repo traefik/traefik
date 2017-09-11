@@ -14,13 +14,16 @@ Træfik supports several Key-value stores:
 ## Static configuration in Key-value store
 
 We will see the steps to set it up with an easy example.
-Note that we could do the same with any other Key-value Store.
 
-## docker-compose file for Consul
+!!! note
+    We could do the same with any other Key-value Store.
+
+### docker-compose file for Consul
 
 The Træfik global configuration will be getted from a [Consul](https://consul.io) store.
 
 First we have to launch Consul in a container.
+
 The [docker-compose file](https://docs.docker.com/compose/compose-file/) allows us to launch Consul and four instances of the trivial app [emilevauge/whoamI](https://github.com/emilevauge/whoamI) :
 
 ```yaml
@@ -51,12 +54,12 @@ whoami4:
   image: emilevauge/whoami
 ```
 
-## Upload the configuration in the Key-value store
+### Upload the configuration in the Key-value store
 
-We should now fill the store with the Træfik global configuration, as we do with a [TOML file configuration](/toml).
+We should now fill the store with the Træfik global configuration, as we do with a [TOML file configuration](/toml).  
 To do that, we can send the Key-value pairs via [curl commands](https://www.consul.io/intro/getting-started/kv.html) or via the [Web UI](https://www.consul.io/intro/getting-started/ui.html).
 
-Fortunately, Træfik allows automation of this process using the `storeconfig` subcommand.
+Fortunately, Træfik allows automation of this process using the `storeconfig` subcommand.  
 Please refer to the [store Træfik configuration](/user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
 
 Here is the toml configuration we would like to store in the Key-value Store  :
@@ -82,7 +85,6 @@ defaultEntryPoints = ["http", "https"]
       KeyFile = """-----BEGIN CERTIFICATE-----
                       <key file content>
                       -----END CERTIFICATE-----"""
-
 
 [consul]
   endpoint = "127.0.0.1:8500"
@@ -118,9 +120,10 @@ In case you are setting key values manually:
 
 Note that we can either give path to certificate file or directly the file content itself.
 
-## Launch Træfik
+### Launch Træfik
 
 We will now launch Træfik in a container.
+
 We use CLI flags to setup the connection between Træfik and Consul.
 All the rest of the global configuration is stored in Consul.
 
@@ -138,21 +141,23 @@ traefik:
 !!! warning
     Be careful to give the correct IP address and port in the flag `--consul.endpoint`.
 
-## Consul ACL Token support
+### Consul ACL Token support
 
-To specify a Consul ACL token for Traefik, we have to set a System Environment variable named `CONSUL_HTTP_TOKEN` prior to starting traefik. This variable must be initialized with the ACL token value.
+To specify a Consul ACL token for Traefik, we have to set a System Environment variable named `CONSUL_HTTP_TOKEN` prior to starting Traefik.
+This variable must be initialized with the ACL token value.
 
 If Traefik is launched into a Docker container, the variable `CONSUL_HTTP_TOKEN` can be initialized with the `-e` Docker option : `-e "CONSUL_HTTP_TOKEN=[consul-acl-token-value]"`
 
-## TLS support
+### TLS support
 
 To connect to a Consul endpoint using SSL, simply specify `https://` in the `consul.endpoint` property
 
 - `--consul.endpoint=https://[consul-host]:[consul-ssl-port]`
 
-## TLS support with client certificates
+### TLS support with client certificates
 
 So far, only [Consul](https://consul.io) and [etcd](https://coreos.com/etcd/) support TLS connections with client certificates.
+
 To set it up, we should enable [consul security](https://www.consul.io/docs/internals/security.html) (or [etcd security](https://coreos.com/etcd/docs/latest/security.html)).
 
 Then, we have to provide CA, Cert and Key to Træfik using `consul` flags :
@@ -169,18 +174,20 @@ Or etcd flags :
 - `--etcd.tls.cert=path/to/the/file`
 - `--etcd.tls.key=path/to/the/file`
 
-Note that we can either give directly directly the file content itself (instead of the path to certificate) in a TOML file configuration.
+!! note
+    We can either give directly directly the file content itself (instead of the path to certificate) in a TOML file configuration.
 
 Remember the command `traefik --help` to display the updated list of flags.
 
-# Dynamic configuration in Key-value store
+## Dynamic configuration in Key-value store
 
 Following our example, we will provide backends/frontends rules to Træfik.
 
-Note that this section is independent of the way Træfik got its static configuration.
-It means that the static configuration can either come from the same Key-value store or from any other sources.
+!!! note
+    This section is independent of the way Træfik got its static configuration.
+    It means that the static configuration can either come from the same Key-value store or from any other sources.
 
-## Key-value storage structure
+### Key-value storage structure
 
 Here is the toml configuration we would like to store in the store :
 
@@ -272,14 +279,15 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 | `/traefik/frontends/frontend2/entrypoints`         | `http,https`       |
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `PathPrefix:/test` |
 
-## Atomic configuration changes
+### Atomic configuration changes
 
 Træfik can watch the backends/frontends configuration changes and generate its configuration automatically.
 
-Note that only backends/frontends rules are dynamic, the rest of the Træfik configuration stay static.
+!!! note
+    Only backends/frontends rules are dynamic, the rest of the Træfik configuration stay static.
 
-The [Etcd](https://github.com/coreos/etcd/issues/860) and [Consul](https://github.com/hashicorp/consul/issues/886) backends do not support updating multiple keys atomically.
-As a result, it may be possible for Træfik to read an intermediate configuration state despite judicious use of the `--providersThrottleDuration` flag.
+The [Etcd](https://github.com/coreos/etcd/issues/860) and [Consul](https://github.com/hashicorp/consul/issues/886) backends do not support updating multiple keys atomically.  
+As a result, it may be possible for Træfik to read an intermediate configuration state despite judicious use of the `--providersThrottleDuration` flag.  
 To solve this problem, Træfik supports a special key called `/traefik/alias`.
 If set, Træfik use the value as an alternative key prefix.
 
@@ -292,6 +300,7 @@ Given the key structure below, Træfik will use the `http://172.17.0.2:80` as it
 | `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
 
 When an atomic configuration change is required, you may write a new configuration at an alternative prefix.
+
 Here, although the `/traefik_configurations/2/...` keys have been set, the old configuration is still active because the `/traefik/alias` key still points to `/traefik_configurations/1`:
 
 | Key                                                                     | Value                       |
@@ -305,6 +314,7 @@ Here, although the `/traefik_configurations/2/...` keys have been set, the old c
 | `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                        |
 
 Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` configuration becomes active atomically.
+
 Here, we have a 50% balance between the `http://172.17.0.3:80` and the `http://172.17.0.4:80` hosts while no traffic is sent to the `172.17.0.2:80` host:
 
 | Key                                                                     | Value                       |
@@ -317,22 +327,25 @@ Here, we have a 50% balance between the `http://172.17.0.3:80` and the `http://1
 | `/traefik_configurations/2/backends/backend1/servers/server2/url`       | `http://172.17.0.4:80`      |
 | `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                        |
 
-Note that Træfik *will not watch for key changes in the `/traefik_configurations` prefix*. It will only watch for changes in the `/traefik/alias`.
-Further, if the `/traefik/alias` key is set, all other configuration with `/traefik/backends` or `/traefik/frontends` prefix are ignored.
+!!! note
+    Træfik *will not watch for key changes in the `/traefik_configurations` prefix*. It will only watch for changes in the `/traefik/alias`.  
+    Further, if the `/traefik/alias` key is set, all other configuration with `/traefik/backends` or `/traefik/frontends` prefix are ignored.
 
-# Store configuration in Key-value store
+## Store configuration in Key-value store
 
-Don't forget to [setup the connection between Træfik and Key-value store](/user-guide/kv-config/#launch-trfk).
+!!! note
+    Don't forget to [setup the connection between Træfik and Key-value store](/user-guide/kv-config/#launch-trfk).
+
 The static Træfik configuration in a key-value store can be automatically created and updated, using the [`storeconfig` subcommand](/basics/#commands).
 
 ```bash
 traefik storeconfig [flags] ...
 ```
 This command is here only to automate the [process which upload the configuration into the Key-value store](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store).
-Træfik will not start but the [static configuration](/basics/#static-trfk-configuration) will be uploaded into the Key-value store.
+Træfik will not start but the [static configuration](/basics/#static-trfk-configuration) will be uploaded into the Key-value store.  
 If you configured ACME (Let's Encrypt), your registration account and your certificates will also be uploaded.
 
-To upload your ACME certificates to the KV store, get your traefik TOML file and add the new `storage` option in the `acme` section:
+To upload your ACME certificates to the KV store, get your Traefik TOML file and add the new `storage` option in the `acme` section:
 
 ```toml
 [acme]

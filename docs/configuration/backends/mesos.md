@@ -1,13 +1,13 @@
 # Mesos Generic Backend
 
-Træfik can be configured to use Mesos as a backend configuration:
+Træfik can be configured to use Mesos as a backend configuration.
 
 ```toml
 ################################################################
 # Mesos configuration backend
 ################################################################
 
-# Enable Mesos configuration backend
+# Enable Mesos configuration backend.
 [mesos]
 
 # Mesos server endpoint.
@@ -16,12 +16,14 @@ Træfik can be configured to use Mesos as a backend configuration:
 # endpoint = "zk://192.168.35.20:2181,192.168.35.21:2181,192.168.35.22:2181/mesos"
 #
 # Required
+# Default: "http://127.0.0.1:5050"
 #
 endpoint = "http://127.0.0.1:8080"
 
-# Enable watch Mesos changes
+# Enable watch Mesos changes.
 #
 # Optional
+# Default: true
 #
 watch = true
 
@@ -32,18 +34,19 @@ watch = true
 #
 domain = "mesos.localhost"
 
-# Override default configuration template. For advanced users :)
+# Override default configuration template.
+# For advanced users :)
 #
 # Optional
 #
 # filename = "mesos.tmpl"
 
-# Expose Mesos apps by default in traefik
+# Expose Mesos apps by default in Traefik.
 #
 # Optional
-# Default: false
+# Default: true
 #
-# ExposedByDefault = true
+# ExposedByDefault = false
 
 # TLS client configuration. https://golang.org/pkg/crypto/tls/#Config
 #
@@ -52,30 +55,39 @@ domain = "mesos.localhost"
 # [mesos.TLS]
 # InsecureSkipVerify = true
 
-# Zookeeper timeout (in seconds)
+# Zookeeper timeout (in seconds).
 #
 # Optional
 # Default: 30
 #
 # ZkDetectionTimeout = 30
 
-# Polling interval (in seconds)
+# Polling interval (in seconds).
 #
 # Optional
 # Default: 30
 #
 # RefreshSeconds = 30
 
-# IP sources (e.g. host, docker, mesos, rkt)
+# IP sources (e.g. host, docker, mesos, rkt).
 #
 # Optional
 #
 # IPSources = "host"
 
-# HTTP Timeout (in seconds)
+# HTTP Timeout (in seconds).
 #
 # Optional
 # Default: 30
 #
 # StateTimeoutSecond = "30"
+
+# Convert groups to subdomains.
+# Default behavior: /foo/bar/myapp => foo-bar-myapp.{defaultDomain}
+# with groupsAsSubDomains enabled: /foo/bar/myapp => myapp.bar.foo.{defaultDomain}
+#
+# Optional
+# Default: false
+#
+# groupsAsSubDomains = true
 ```

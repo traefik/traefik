@@ -22,11 +22,11 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
+      certFile = "integration/fixtures/https/snitest.org.cert"
+      keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 Note that we can either give path to certificate file or directly the file content itself ([like in this TOML example](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store)).
 
@@ -43,8 +43,8 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "examples/traefik.crt"
-      KeyFile = "examples/traefik.key"
+      certFile = "examples/traefik.crt"
+      keyFile = "examples/traefik.key"
 ```
 
 ## Let's Encrypt support
@@ -76,6 +76,7 @@ entryPoint = "https"
 ```
 
 This configuration allows generating Let's Encrypt certificates for the four domains `local[1-4].com` with described SANs.
+
 Traefik generates these certificates when it starts and it needs to be restart if new domains are added.
 
 ### OnHostRule option
@@ -106,6 +107,7 @@ entryPoint = "https"
 ```
 
 This configuration allows generating Let's Encrypt certificates for the four domains `local[1-4].com`.
+
 Traefik generates these certificates when it starts.
 
 If a backend is added with a `onHost` rule, Traefik will automatically generate the Let's Encrypt certificate for the new domain.
@@ -121,10 +123,9 @@ If a backend is added with a `onHost` rule, Traefik will automatically generate 
 [acme]
 email = "test@traefik.io"
 storage = "acme.json"
-OnDemand = true
+onDemand = true
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
-
 ```
 
 This configuration allows generating a Let's Encrypt certificate during the first HTTPS request on a new domain.
@@ -166,8 +167,10 @@ entryPoint = "https"
   main = "local4.com"
 ```
 
-DNS challenge needs environment variables to be executed. This variables have to be set on the machine/container which host Traefik.
-These variables has described [in this section](toml/#acme-lets-encrypt-configuration).
+DNS challenge needs environment variables to be executed.
+This variables have to be set on the machine/container which host Traefik.
+
+These variables has described [in this section](/configuration/acme/#dnsprovider).
 
 ### OnHostRule option and provided certificates
 
@@ -177,8 +180,8 @@ These variables has described [in this section](toml/#acme-lets-encrypt-configur
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "examples/traefik.crt"
-      KeyFile = "examples/traefik.key"
+      certFile = "examples/traefik.crt"
+      keyFile = "examples/traefik.key"
 
 [acme]
 email = "test@traefik.io"
@@ -226,7 +229,6 @@ entryPoint = "https"
   endpoint = "127.0.0.1:8500"
   watch = true
   prefix = "traefik"
-
 ```
 
 This configuration allows to use the key `traefik/acme/account` to get/set Let's Encrypt certificates content.
@@ -277,7 +279,7 @@ defaultEntryPoints = ["http"]
 ## Pass Authenticated user to application via headers
 
 Providing an authentication method as described above, it is possible to pass the user to the application
-via a configurable header value
+via a configurable header value.
 
 ```toml
 defaultEntryPoints = ["http"]
@@ -293,6 +295,8 @@ defaultEntryPoints = ["http"]
 ## Override the Traefik HTTP server IdleTimeout and/or throttle configurations from re-loading too quickly
 
 ```toml
-IdleTimeout = "360s"
-ProvidersThrottleDuration = "5s"
+providersThrottleDuration = "5s"
+
+[respondingTimeouts]
+idleTimeout = "360s"
 ```
