@@ -695,12 +695,15 @@ By default if the annotation is not set at all Træfik will include the ingress.
 If the annotation is set to anything other than traefik or a blank string Træfik will ignore it.
 
 
-![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)
-
 ## Production advice
 
 ### Resource limitations
 
-The examples shown deliberately do not specify any [resource limitations](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/) as there is no one size fits all. In a production environment, however, it is important to set proper bounds, especially with regards to CPU: Too strict and Traefik will be throttled while serving requests (as Kubernetes imposes hard quotas); too loose and Traefik may waste resources not available for other containers.
+The examples shown deliberately do not specify any [resource limitations](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/) as there is no one size fits all.
+
+In a production environment, however, it is important to set proper bounds, especially with regards to CPU:
+
+- too strict and Traefik will be throttled while serving requests (as Kubernetes imposes hard quotas)
+- too loose and Traefik may waste resources not available for other containers
 
 When in doubt, you should measure your resource needs, and adjust requests and limits accordingly.
