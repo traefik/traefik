@@ -1133,7 +1133,7 @@ func getRoute(serverRoute *serverRoute, route *types.Route) error {
 	if err != nil {
 		return err
 	}
-	newRoute.Priority(serverRoute.route.GetPriority() + len(route.Rule))
+	newRoute.Priority(serverRoute.route.GetPriority())
 	serverRoute.route = newRoute
 	return nil
 }
