@@ -27,14 +27,31 @@ type Client interface {
 }
 
 type clientImpl struct {
-	endpoint   string      `description:"Service Fabric cluster management endpoint"`
-	restClient http.Client `description:"Reusable HTTP client"`
-	apiVersion string      `description:"Service Fabric API version"`
+	endpoint   string    `description:"Service Fabric cluster management endpoint"`
+	restClient webClient `description:"Reusable HTTP client"`
+	apiVersion string    `description:"Service Fabric API version"`
+}
+
+type webClient interface {
+	Get(url string) (resp *http.Response, err error)
+	SetTransport(transport *http.Transport)
+}
+
+type httpWebClient struct {
+	client http.Client
+}
+
+func (c *httpWebClient) Get(url string) (resp *http.Response, err error) {
+	return c.client.Get(url)
+}
+
+func (c *httpWebClient) SetTransport(transport *http.Transport) {
+	c.client.Transport = transport
 }
 
 // NewClient returns a new Provider client that can query the
 // Service Fabric management API externally or internally
-func NewClient(endpoint, apiVersion, clientCertFilePath, clientCertKeyFilePath, caCertFilePath string) (Client, error) {
+func NewClient(webClient webClient, endpoint, apiVersion, clientCertFilePath, clientCertKeyFilePath, caCertFilePath string) (Client, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for client configuration")
 	}
@@ -68,11 +85,11 @@ func NewClient(endpoint, apiVersion, clientCertFilePath, clientCertKeyFilePath, 
 		tlsConfig.BuildNameToCertificate()
 		transport := &http.Transport{TLSClientConfig: tlsConfig}
 
-		client.restClient = http.Client{Transport: transport}
+		webClient.SetTransport(transport)
+		client.restClient = webClient
 	} else {
-		client.restClient = http.Client{}
+		client.restClient = webClient
 	}
-
 	return client, nil
 }
 
@@ -88,7 +105,7 @@ func (c *clientImpl) GetApplications() (*ApplicationsData, error) {
 		} else {
 			url = c.endpoint + "/Applications/?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(&c.restClient, url)
+		res, err := getHTTP(c.restClient, url)
 		if err != nil {
 			return &ApplicationsData{}, err
 		}
@@ -118,7 +135,7 @@ func (c *clientImpl) GetServices(appName string) (*ServicesData, error) {
 		} else {
 			url = c.endpoint + "/Applications/" + appName + "/$/GetServices?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(&c.restClient, url)
+		res, err := getHTTP(c.restClient, url)
 		if err != nil {
 			return &ServicesData{}, err
 		}
@@ -148,7 +165,7 @@ func (c *clientImpl) GetPartitions(appName, serviceName string) (*PartitionsData
 		} else {
 			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(&c.restClient, url)
+		res, err := getHTTP(c.restClient, url)
 		if err != nil {
 			return &PartitionsData{}, err
 		}
@@ -178,7 +195,7 @@ func (c *clientImpl) GetInstances(appName, serviceName, partitionName string) (*
 		} else {
 			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(&c.restClient, url)
+		res, err := getHTTP(c.restClient, url)
 		if err != nil {
 			return &InstancesData{}, err
 		}
@@ -208,7 +225,7 @@ func (c *clientImpl) GetReplicas(appName, serviceName, partitionName string) (*R
 		} else {
 			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(&c.restClient, url)
+		res, err := getHTTP(c.restClient, url)
 		if err != nil {
 			return &ReplicasData{}, err
 		}
@@ -226,7 +243,7 @@ func (c *clientImpl) GetReplicas(appName, serviceName, partitionName string) (*R
 	return &aggregateReplicasData, nil
 }
 
-func getHTTP(http *http.Client, url string) ([]byte, error) {
+func getHTTP(http webClient, url string) ([]byte, error) {
 	if http == nil {
 		return nil, fmt.Errorf("Invalid http client provided")
 	}

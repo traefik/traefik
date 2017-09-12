@@ -3,6 +3,7 @@ package servicefabric
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,7 +36,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	if p.APIVersion == "" {
 		p.APIVersion = "3.0"
 	}
-	sfClient, err := NewClient(p.ClusterManagementURL,
+	webClient := &httpWebClient{client: http.Client{}}
+	sfClient, err := NewClient(
+		webClient,
+		p.ClusterManagementURL,
 		p.APIVersion,
 		p.ClientCertFilePath,
 		p.ClientCertKeyFilePath,
