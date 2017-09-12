@@ -77,7 +77,13 @@ func Forward(forward *types.Forward, w http.ResponseWriter, r *http.Request, nex
 			w.Header().Add("Location", redirectURL.String())
 		}
 
-		// Pass the forward request's response code and body.
+		// Pass any Set-Cookie headers the forward auth server provides
+
+		cookies := forwardResponse.Cookies()
+
+		for _, cookie := range cookies {
+			w.Header().Add("Set-Cookie", cookie.String())
+		}
 
 		w.WriteHeader(forwardResponse.StatusCode)
 		w.Write(body)
