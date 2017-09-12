@@ -99,7 +99,7 @@ func (c *mockWebClient) Get(url string) (resp *http.Response, err error) {
 	}
 }
 
-func (c *mockWebClient) SetTransport(transport *http.Transport) {}
+func (c *mockWebClient) Transport(transport *http.Transport) {}
 
 func buildSuccessResponse(body string) *http.Response {
 	return &http.Response{

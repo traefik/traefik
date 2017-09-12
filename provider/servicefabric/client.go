@@ -34,7 +34,7 @@ type clientImpl struct {
 
 type webClient interface {
 	Get(url string) (resp *http.Response, err error)
-	SetTransport(transport *http.Transport)
+	Transport(transport *http.Transport)
 }
 
 type httpWebClient struct {
@@ -45,7 +45,7 @@ func (c *httpWebClient) Get(url string) (resp *http.Response, err error) {
 	return c.client.Get(url)
 }
 
-func (c *httpWebClient) SetTransport(transport *http.Transport) {
+func (c *httpWebClient) Transport(transport *http.Transport) {
 	c.client.Transport = transport
 }
 
@@ -85,7 +85,7 @@ func NewClient(webClient webClient, endpoint, apiVersion, clientCertFilePath, cl
 		tlsConfig.BuildNameToCertificate()
 		transport := &http.Transport{TLSClientConfig: tlsConfig}
 
-		webClient.SetTransport(transport)
+		webClient.Transport(transport)
 		client.restClient = webClient
 	} else {
 		client.restClient = webClient
