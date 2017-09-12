@@ -14,8 +14,10 @@ import (
 	rancher "github.com/rancher/go-rancher/client"
 )
 
-const labelRancheStackServiceName = "io.rancher.stack_service.name"
-const hostNetwork = "host"
+const (
+	labelRancherStackServiceName = "io.rancher.stack_service.name"
+	hostNetwork                  = "host"
+)
 
 var withoutPagination *rancher.ListOpts
 
@@ -223,7 +225,7 @@ func parseAPISourcedRancherData(environments []*rancher.Environment, services []
 			}
 
 			for _, container := range containers {
-				if container.Labels[labelRancheStackServiceName] == rancherData.Name &&
+				if container.Labels[labelRancherStackServiceName] == rancherData.Name &&
 					containerFilter(container.Name, container.HealthState, container.State) {
 
 					if container.NetworkMode == hostNetwork {
