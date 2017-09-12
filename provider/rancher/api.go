@@ -233,7 +233,7 @@ func parseAPISourcedRancherData(environments []*rancher.Environment, services []
 						err := mapstructure.Decode(service.PublicEndpoints, &endpoints)
 
 						if err != nil {
-							log.Error("Decode to []*rancher.PublicEndpoint failed")
+							log.Errorf("Failed to decode PublicEndpoint: %v", err)
 							continue
 						}
 
