@@ -357,13 +357,6 @@ spec:
       containers:
       - name: cheese
         image: errm/cheese:stilton
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
-          limits:
-            cpu: 100m
-            memory: 50Mi
         ports:
         - containerPort: 80
 ---
@@ -390,13 +383,6 @@ spec:
       containers:
       - name: cheese
         image: errm/cheese:cheddar
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
-          limits:
-            cpu: 100m
-            memory: 50Mi
         ports:
         - containerPort: 80
 ---
@@ -423,13 +409,6 @@ spec:
       containers:
       - name: cheese
         image: errm/cheese:wensleydale
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
-          limits:
-            cpu: 100m
-            memory: 50Mi
         ports:
         - containerPort: 80
 ```
@@ -717,3 +696,11 @@ If the annotation is set to anything other than traefik or a blank string Træfi
 
 
 ![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)
+
+## Production advice
+
+### Resource limitations
+
+The examples shown deliberately do not specify any [resource limitations](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/) as there is no one size fits all. In a production environment, however, it is important to set proper bounds, especially with regards to CPU: Too strict and Traefik will be throttled while serving requests (as Kubernetes imposes hard quotas); too loose and Traefik may waste resources not available for other containers.
+
+When in doubt, you should measure your resource needs, and adjust requests and limits accordingly.
