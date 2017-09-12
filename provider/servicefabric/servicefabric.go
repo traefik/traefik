@@ -77,7 +77,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 				if err != nil {
 					log.Error(err)
-					panic(err)
+					return err
 				}
 
 				templateObjects := struct {
@@ -128,8 +128,6 @@ func (p *Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, e
 		return nil, err
 	}
 	for _, app := range apps.Items {
-
-		log.Error(app.ID)
 		services, err := sfClient.GetServices(app.ID)
 		if err != nil {
 			log.Error(err)
@@ -303,7 +301,7 @@ func getNamedEndpoint(endpointData string, endpointName string) (bool, string) {
 
 func findTemplateFile() (string, error) {
 	dir, _ := os.Getwd()
-	glob := dir + "/../*Config*/**.toml"
+	glob := dir + "/../*Config*/**.toml.tmpl"
 	files, _ := filepath.Glob(glob)
 
 	var mostRecentFile os.FileInfo
@@ -317,7 +315,7 @@ func findTemplateFile() (string, error) {
 	}
 
 	if configFilePath == "" {
-		return "", fmt.Errorf("Cannot find fontend config with glob %s using default", glob)
+		return "", fmt.Errorf("Cannot find template file with glob %s using default", glob)
 	}
 
 	log.Info("Found sf template toml from:", configFilePath)

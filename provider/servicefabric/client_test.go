@@ -42,6 +42,58 @@ func (c *mockWebClient) Get(url string) (resp *http.Response, err error) {
 					   "IsServiceGroup": false}
 					]}`
 		return buildSuccessResponse(body), nil
+	case "Test/Applications/TestApplication/$/GetServices/TestApplication/TestService/$/GetPartitions/?api-version=1.0":
+		body := `{
+			"ContinuationToken": "",
+			"Items": [{
+				"ServiceKind": "Stateful",
+				"PartitionInformation": {
+					"ServicePartitionKind": "Int64Range",
+					"Id": "bce46a8c-b62d-4996-89dc-7ffc00a96902",
+					"LowKey": "-9223372036854775808",
+					"HighKey": "9223372036854775807"
+				},
+				"TargetReplicaSetSize": 3,
+				"MinReplicaSetSize": 3,
+				"HealthState": "Ok",
+				"PartitionStatus": "Ready",
+				"LastQuorumLossDurationInSeconds": "3",
+				"CurrentConfigurationEpoch": {
+					"ConfigurationVersion": "12884901891",
+					"DataLossVersion": "131496928071680379"
+				}
+			}]
+		}`
+		return buildSuccessResponse(body), nil
+	case "Test/Applications/TestApplication/$/GetServices/TestApplication/TestService/$/GetPartitions/bce46a8c-b62d-4996-89dc-7ffc00a96902/$/GetReplicas?api-version=1.0":
+		body := `{
+				"ContinuationToken": "",
+				"Items": [{
+					"ServiceKind": "Stateful",
+					"ReplicaId": "131496928082309293",
+					"ReplicaRole": "Primary",
+					"ReplicaStatus": "Ready",
+					"HealthState": "Ok",
+					"Address": "{\"Endpoints\":{\"\":\"localhost:30001+bce46a8c-b62d-4996-89dc-7ffc00a96902-131496928082309293\"}}",
+					"NodeName": "_Node_0",
+					"LastInBuildDurationInSeconds": "1"
+				}]
+			}`
+		return buildSuccessResponse(body), nil
+	case "Test/Applications/TestApplication/$/GetServices/TestApplication/TestService/$/GetPartitions/824091ba-fa32-4e9c-9e9c-71738e018312/$/GetReplicas?api-version=1.0":
+		body := `{
+				"ContinuationToken": "",
+				"Items": [{
+					"ServiceKind": "Stateless",
+					"InstanceId": "131497042182378182",
+					"ReplicaStatus": "Ready",
+					"HealthState": "Ok",
+					"Address": "{\"Endpoints\":{\"\":\"http:\\\/\\\/localhost:8081\"}}",
+					"NodeName": "_Node_0",
+					"LastInBuildDurationInSeconds": "3"
+				}]
+			}`
+		return buildSuccessResponse(body), nil
 	default:
 		return nil, errors.New("Unable to handle request: " + url)
 	}
@@ -131,6 +183,105 @@ func TestGetServices(t *testing.T) {
 	}
 	sfClient := setupClient()
 	actual, err := sfClient.GetServices("TestApplication")
+	if err != nil {
+		t.Errorf("Exception thrown %v", err)
+	}
+	isEqual := reflect.DeepEqual(expected, actual)
+	if !isEqual {
+		t.Error("actual != expected")
+	}
+}
+
+func TestGetPartitions(t *testing.T) {
+	expected := &PartitionsData{
+		ContinuationToken: nil,
+		Items: []PartitionData{
+			PartitionData{
+				CurrentConfigurationEpoch: struct {
+					ConfigurationVersion string `json:"ConfigurationVersion"`
+					DataLossVersion      string `json:"DataLossVersion"`
+				}{
+					ConfigurationVersion: "12884901891",
+					DataLossVersion:      "131496928071680379",
+				},
+				HealthState:       "Ok",
+				MinReplicaSetSize: 3,
+				PartitionInformation: struct {
+					HighKey              string `json:"HighKey"`
+					ID                   string `json:"Id"`
+					LowKey               string `json:"LowKey"`
+					ServicePartitionKind string `json:"ServicePartitionKind"`
+				}{
+					HighKey:              "9223372036854775807",
+					ID:                   "bce46a8c-b62d-4996-89dc-7ffc00a96902",
+					LowKey:               "-9223372036854775808",
+					ServicePartitionKind: "Int64Range",
+				},
+				PartitionStatus:      "Ready",
+				ServiceKind:          "Stateful",
+				TargetReplicaSetSize: 3,
+			},
+		},
+	}
+	sfClient := setupClient()
+	actual, err := sfClient.GetPartitions("TestApplication", "TestApplication/TestService")
+	if err != nil {
+		t.Errorf("Exception thrown %v", err)
+	}
+	isEqual := reflect.DeepEqual(expected, actual)
+	if !isEqual {
+		t.Error("actual != expected")
+	}
+}
+
+func TestGetReplicas(t *testing.T) {
+	expected := &ReplicasData{
+		ContinuationToken: nil,
+		Items: []ReplicaItem{
+			ReplicaItem{
+				ReplicaItemBase: &ReplicaItemBase{
+					Address:                      "{\"Endpoints\":{\"\":\"localhost:30001+bce46a8c-b62d-4996-89dc-7ffc00a96902-131496928082309293\"}}",
+					HealthState:                  "Ok",
+					LastInBuildDurationInSeconds: "1",
+					NodeName:                     "_Node_0",
+					ReplicaRole:                  "Primary",
+					ReplicaStatus:                "Ready",
+					ServiceKind:                  "Stateful",
+				},
+				ID: "131496928082309293",
+			},
+		},
+	}
+	sfClient := setupClient()
+	actual, err := sfClient.GetReplicas("TestApplication", "TestApplication/TestService", "bce46a8c-b62d-4996-89dc-7ffc00a96902")
+	if err != nil {
+		t.Errorf("Exception thrown %v", err)
+	}
+	isEqual := reflect.DeepEqual(expected, actual)
+	if !isEqual {
+		t.Error("actual != expected")
+	}
+}
+
+func TestGetInstances(t *testing.T) {
+	expected := &InstancesData{
+		ContinuationToken: nil,
+		Items: []InstanceItem{
+			InstanceItem{
+				ReplicaItemBase: &ReplicaItemBase{
+					Address:                      "{\"Endpoints\":{\"\":\"http:\\/\\/localhost:8081\"}}",
+					HealthState:                  "Ok",
+					LastInBuildDurationInSeconds: "3",
+					NodeName:                     "_Node_0",
+					ReplicaStatus:                "Ready",
+					ServiceKind:                  "Stateless",
+				},
+				ID: "131497042182378182",
+			},
+		},
+	}
+	sfClient := setupClient()
+	actual, err := sfClient.GetInstances("TestApplication", "TestApplication/TestService", "824091ba-fa32-4e9c-9e9c-71738e018312")
 	if err != nil {
 		t.Errorf("Exception thrown %v", err)
 	}

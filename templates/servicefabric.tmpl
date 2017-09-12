@@ -5,7 +5,7 @@
     [frontends."{{$service.Name}}"]
     backend = "{{$service.Name}}"
       [frontends."{{$service.Name}}".routes.default]
-      rule = "PathPrefixStrip: /{{$service.ApplicationData.ID}}/{{$service.ID}}"
+      rule = "PathPrefixStrip: /{{$service.ID}}"
     
     {{else if eq $service.ServiceKind "Stateful"}}
       {{range $partition := $service.Partitions}}
@@ -14,7 +14,7 @@
         [frontends."{{$service.Name}}/{{$partitionId}}"]
         backend = "{{$service.Name}}/{{$partitionId}}"
         [frontends."{{$service.Name}}/{{$partitionId}}".routes.default]
-        rule = "PathPrefixStrip: /{{$service.ApplicationData.ID}}/{{$service.ID}}/{{$partitionId}}"
+        rule = "PathPrefixStrip: /{{$service.ID}}/{{$partitionId}}"
 
       {{end}}
     {{end}}
@@ -24,6 +24,12 @@
 [backends]{{range $service := .Services}}
     {{range $partition := $service.Partitions}}
       {{if eq $partition.ServiceKind "Stateless"}}
+        [backends."{{$service.Name}}".LoadBalancer]
+        method = "drr"
+            
+        [backends."{{$service.Name}}".circuitbreaker]
+        expression = "NetworkErrorRatio() > 0.5"
+
         {{range $instance := $partition.Instances}}
           {{if and (isHealthy $instance) (hasHTTPEndpoint $instance)}}
             
@@ -37,9 +43,16 @@
         {{range $replica := $partition.Replicas}}
           {{if and (isPrimary $replica) (isHealthy $replica) (hasHTTPEndpoint $replica)}}
           
-            [backends."{{$service.Name}}/{{$partition.PartitionInformation.ID}}".servers."{{$replica.ID}}"]
+            {{$backendName := (print $service.Name $partition.PartitionInformation.ID)}}
+            [backends."{{$backendName}}".servers."{{$replica.ID}}"]
             url = "{{getDefaultEndpoint $replica}}"
             weight = 1
+
+            [backends."{{$backendName}}".LoadBalancer]
+            method = "drr"
+                
+            [backends."{{$backendName}}".circuitbreaker]
+            expression = "NetworkErrorRatio() > 0.5"
           
           {{end}}    
         {{end}}

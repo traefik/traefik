@@ -13,3 +13,4 @@
 .DS_Store
 /example/acme/acme.json
 /cmd/traefik/debug
+debug.test
