@@ -109,9 +109,26 @@ Users can be specified directly in the toml file, or indirectly by referencing a
   usersFile = "/path/to/.htdigest"
 ```
 
+### Forward Authentication
+
+This configuration will first forward the request to `http://authserver.com/auth`.
+
+If the response code is 2XX, access is granted and the original request is performed.
+Otherwise, the response from the auth server is returned.
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    # To enable forward auth on an entrypoint
+    [entryPoints.http.auth.forward]
+    address = "http://authserver.com/auth"
+```
+
+
 ## Specify Minimum TLS Version
 
-To specify an https entrypoint with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls).
+To specify an https entry point with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls).
 
 ```toml
 [entryPoints]
