@@ -203,7 +203,7 @@ func (server *Server) Stop() {
 		wg.Add(1)
 		go func(serverEntryPointName string, serverEntryPoint *serverEntryPoint) {
 			defer wg.Done()
-			graceTimeOut := time.Duration(server.globalConfiguration.GraceTimeOut)
+			graceTimeOut := time.Duration(server.globalConfiguration.LifeCycle.GraceTimeOut)
 			ctx, cancel := context.WithTimeout(context.Background(), graceTimeOut)
 			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
 			if err := serverEntryPoint.httpServer.Shutdown(ctx); err != nil {
@@ -220,7 +220,7 @@ func (server *Server) Stop() {
 
 // Close destroys the server
 func (server *Server) Close() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.LifeCycle.GraceTimeOut))
 	go func(ctx context.Context) {
 		<-ctx.Done()
 		if ctx.Err() == context.Canceled {

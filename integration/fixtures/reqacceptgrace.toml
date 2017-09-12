@@ -1,12 +1,13 @@
 defaultEntryPoints = ["http"]
 
-reqAcceptGraceTimeOut = "10s"
-
 logLevel = "DEBUG"
 
 [entryPoints]
   [entryPoints.http]
   address = ":8000"
+
+[lifeCycle]
+  reqAcceptGraceTimeOut = "10s"
 
 [file]
 [backends]
