@@ -135,14 +135,14 @@ To specify an https entry point with a minimum TLS version, and specifying an ar
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
-    MinVersion = "VersionTLS12"
-    CipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+    minVersion = "VersionTLS12"
+    cipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
+      certFile = "integration/fixtures/https/snitest.org.cert"
+      keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
 ## Compression
