@@ -104,10 +104,11 @@ func (s *ConsulCatalogSuite) deregisterService(name string, address string) erro
 }
 
 func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -119,11 +120,12 @@ func (s *ConsulCatalogSuite) TestSimpleConfiguration(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -143,12 +145,13 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 }
 
 func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSingleService(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.exposedByDefault=false",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -168,12 +171,13 @@ func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSingleService(c *check.C) 
 }
 
 func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSimpleServiceMultipleNode(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.exposedByDefault=false",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -198,12 +202,13 @@ func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSimpleServiceMultipleNode(
 }
 
 func (s *ConsulCatalogSuite) TestExposedByDefaultTrueSimpleServiceMultipleNode(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.exposedByDefault=true",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -232,12 +237,13 @@ func (s *ConsulCatalogSuite) TestExposedByDefaultTrueSimpleServiceMultipleNode(c
 }
 
 func (s *ConsulCatalogSuite) TestRefreshConfigWithMultipleNodeWithoutHealthCheck(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.exposedByDefault=true",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -283,19 +289,16 @@ func (s *ConsulCatalogSuite) TestRefreshConfigWithMultipleNodeWithoutHealthCheck
 }
 
 func (s *ConsulCatalogSuite) TestBasicAuthSimpleService(c *check.C) {
-	cmd, output := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.exposedByDefault=true",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
-
-	defer func() {
-		s.displayTraefikLog(c, output)
-	}()
 
 	nginx := s.composeProject.Container(c, "nginx1")
 

@@ -64,7 +64,8 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -81,7 +82,8 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -200,10 +202,11 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// start traefik
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
 		"--etcd.endpoint="+etcdHost+":4001")
+	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -279,10 +282,11 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 	// start traefik
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
 		"--etcd.endpoint="+etcdHost+":4001")
+	defer display(c)
 
 	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
@@ -387,10 +391,11 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		"storeconfig",
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd.endpoint="+etcdHost+":4001")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 

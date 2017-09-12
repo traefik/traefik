@@ -88,7 +88,8 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 		MarathonURL string
 	}{s.marathonURL})
 	defer os.Remove(file)
-	cmd, output := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -102,16 +103,6 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 	config.URL = s.marathonURL
 	client, err := marathon.NewClient(config)
 	c.Assert(err, checker.IsNil)
-
-	// Show the Traefik log if any assertion fails. If the entire test runs
-	// to a successful completion, we flip the flag at the very end and don't
-	// display anything.
-	showTraefikLog := true
-	defer func() {
-		if showTraefikLog {
-			s.displayTraefikLog(c, output)
-		}
-	}()
 
 	// Create test application to be deployed.
 	app := marathon.NewDockerApplication().
@@ -146,6 +137,4 @@ func (s *MarathonSuite) TestConfigurationUpdate(c *check.C) {
 	// Query application via Traefik.
 	err = try.GetRequest("http://127.0.0.1:8000/app", 30*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
-
-	showTraefikLog = false
 }

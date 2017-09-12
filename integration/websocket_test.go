@@ -20,7 +20,7 @@ import (
 // WebsocketSuite
 type WebsocketSuite struct{ BaseSuite }
 
-func (suite *WebsocketSuite) TestBase(c *check.C) {
+func (s *WebsocketSuite) TestBase(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -41,14 +41,15 @@ func (suite *WebsocketSuite) TestBase(c *check.C) {
 		}
 	}))
 
-	file := suite.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
@@ -69,7 +70,7 @@ func (suite *WebsocketSuite) TestBase(c *check.C) {
 	c.Assert(string(msg), checker.Equals, "OK")
 }
 
-func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
+func (s *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -90,14 +91,15 @@ func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
 		}
 	}))
 
-	file := suite.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
@@ -117,7 +119,7 @@ func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	c.Assert(err, checker.ErrorMatches, "bad status")
 }
 
-func (suite *WebsocketSuite) TestOrigin(c *check.C) {
+func (s *WebsocketSuite) TestOrigin(c *check.C) {
 	// use default options
 	var upgrader = gorillawebsocket.Upgrader{}
 
@@ -139,14 +141,15 @@ func (suite *WebsocketSuite) TestOrigin(c *check.C) {
 		}
 	}))
 
-	file := suite.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
@@ -176,7 +179,7 @@ func (suite *WebsocketSuite) TestOrigin(c *check.C) {
 
 }
 
-func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
+func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
 		return true
 	}}
@@ -199,14 +202,15 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 		}
 	}))
 
-	file := suite.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
@@ -236,7 +240,7 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 
 }
 
-func (suite *WebsocketSuite) TestSSLTermination(c *check.C) {
+func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -256,14 +260,15 @@ func (suite *WebsocketSuite) TestSSLTermination(c *check.C) {
 			}
 		}
 	}))
-	file := suite.adaptFile(c, "fixtures/websocket/config_https.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config_https.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)

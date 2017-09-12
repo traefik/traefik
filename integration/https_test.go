@@ -20,7 +20,8 @@ type HTTPSSuite struct{ BaseSuite }
 // "snitest.com", which happens to match the CN of 'snitest.com.crt'. The test
 // verifies that traefik presents the correct certificate.
 func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/https_sni.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -53,7 +54,8 @@ func (s *HTTPSSuite) TestWithSNIConfigHandshake(c *check.C) {
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik routes the requests to the expected backends.
 func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/https_sni.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/https_sni.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -111,7 +113,8 @@ func (s *HTTPSSuite) TestWithSNIConfigRoute(c *check.C) {
 // TestWithClientCertificateAuthentication
 // The client has to send a certificate signed by a CA trusted by the server
 func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/clientca/https_1ca1config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_1ca1config.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -157,7 +160,8 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthentication(c *check.C) {
 // TestWithClientCertificateAuthentication
 // Use two CA:s and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.C) {
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/clientca/https_2ca1config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_2ca1config.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -217,7 +221,8 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAs(c *check.
 // TestWithClientCertificateAuthentication
 // Use two CA:s in two different files and test that clients with client signed by either of them can connect
 func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFiles(c *check.C) {
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/https/clientca/https_2ca2config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/clientca/https_2ca2config.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -281,7 +286,8 @@ func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend(c *check.C) {
 
 	file := s.adaptFile(c, "fixtures/https/rootcas/https.toml", struct{ BackendHost string }{backend.URL})
 	defer os.Remove(file)
-	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -302,7 +308,8 @@ func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend(c *check.C) {
 
 	file := s.adaptFile(c, "fixtures/https/rootcas/https_with_file.toml", struct{ BackendHost string }{backend.URL})
 	defer os.Remove(file)
-	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
