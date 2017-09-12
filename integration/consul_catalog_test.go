@@ -130,6 +130,10 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
+	// Wait for Traefik to turn ready.
+	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
 	nginx := s.composeProject.Container(c, "nginx1")
 
 	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{})
