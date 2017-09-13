@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"github.com/containous/traefik/types"
 )
@@ -80,6 +81,8 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var auditer audittypes.Auditer
 	excludeAudit := isExcluded(tap.Exclusions, req)
+
+	log.Debugf("Exclude audit is %t for Host:%s URI:%s", excludeAudit, req.Host, req.RequestURI)
 
 	if !excludeAudit {
 		switch strings.ToLower(tap.ProxyingFor) {
