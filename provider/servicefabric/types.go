@@ -39,14 +39,14 @@ type ServiceItemExtended struct {
 	ServiceItem
 	HasHTTPEndpoint bool
 	IsHealthy       bool
-	ApplicationData ApplicationItem
+	Application     ApplicationItem
 	Partitions      []PartitionItemExtended
 }
 
 // PartitionItemExtended provides a flattened view
 // of a services partitions
 type PartitionItemExtended struct {
-	PartitionData
+	PartitionItem
 	HasReplicas  bool
 	Replicas     []ReplicaItem
 	HasInstances bool
@@ -72,12 +72,12 @@ type ServiceItem struct {
 // Fabric API
 type PartitionsData struct {
 	ContinuationToken *string         `json:"ContinuationToken"`
-	Items             []PartitionData `json:"Items"`
+	Items             []PartitionItem `json:"Items"`
 }
 
-// PartitionData encapsulates the service information
+// PartitionItem encapsulates the service information
 // returned for each patition under the service
-type PartitionData struct {
+type PartitionItem struct {
 	CurrentConfigurationEpoch struct {
 		ConfigurationVersion string `json:"ConfigurationVersion"`
 		DataLossVersion      string `json:"DataLossVersion"`
@@ -95,6 +95,8 @@ type PartitionData struct {
 	TargetReplicaSetSize int64  `json:"TargetReplicaSetSize"`
 }
 
+// ReplicaInstance interface provides
+// a unified interface over replicas and instances
 type ReplicaInstance interface {
 	GetReplicaData() (string, *ReplicaItemBase)
 }
@@ -107,6 +109,8 @@ type ReplicasData struct {
 	Items             []ReplicaItem `json:"Items"`
 }
 
+// ReplicaItemBase shared data used
+// in both replicas and instances
 type ReplicaItemBase struct {
 	Address                      string `json:"Address"`
 	HealthState                  string `json:"HealthState"`
@@ -117,11 +121,13 @@ type ReplicaItemBase struct {
 	ServiceKind                  string `json:"ServiceKind"`
 }
 
+// ReplicaItem Holds replica specific data
 type ReplicaItem struct {
 	*ReplicaItemBase
 	ID string `json:"ReplicaId"`
 }
 
+// GetReplicaData returns replica data
 func (m *ReplicaItem) GetReplicaData() (string, *ReplicaItemBase) {
 	return m.ID, m.ReplicaItemBase
 }
@@ -134,11 +140,13 @@ type InstancesData struct {
 	Items             []InstanceItem `json:"Items"`
 }
 
+// InstanceItem hold instance specific data
 type InstanceItem struct {
 	*ReplicaItemBase
 	ID string `json:"InstanceId"`
 }
 
+// GetReplicaData returns replica data from an instance
 func (m *InstanceItem) GetReplicaData() (string, *ReplicaItemBase) {
 	return m.ID, m.ReplicaItemBase
 }

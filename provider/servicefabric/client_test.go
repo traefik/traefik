@@ -230,8 +230,8 @@ func TestGetServices(t *testing.T) {
 func TestGetPartitions(t *testing.T) {
 	expected := &PartitionsData{
 		ContinuationToken: nil,
-		Items: []PartitionData{
-			PartitionData{
+		Items: []PartitionItem{
+			PartitionItem{
 				CurrentConfigurationEpoch: struct {
 					ConfigurationVersion string `json:"ConfigurationVersion"`
 					DataLossVersion      string `json:"DataLossVersion"`

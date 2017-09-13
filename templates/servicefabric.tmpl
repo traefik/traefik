@@ -1,5 +1,5 @@
 [frontends]{{range $service := .Services}}
-  {{if doesAppParamContain $service.ApplicationData "TraefikPublish" $service.Name}}
+  {{if doesAppParamContain $service.Application "TraefikPublish" $service.Name}}
     {{if eq $service.ServiceKind "Stateless"}}
     
     [frontends."{{$service.Name}}"]

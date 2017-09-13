@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -78,8 +79,8 @@ func TestUpdateConfig(t *testing.T) {
 	}
 	partitions := &PartitionsData{
 		ContinuationToken: nil,
-		Items: []PartitionData{
-			PartitionData{
+		Items: []PartitionItem{
+			PartitionItem{
 				CurrentConfigurationEpoch: struct {
 					ConfigurationVersion string `json:"ConfigurationVersion"`
 					DataLossVersion      string `json:"DataLossVersion"`
@@ -138,13 +139,19 @@ func TestUpdateConfig(t *testing.T) {
 					Backend:     "fabric:/TestApplication/TestService",
 					Routes: map[string]types.Route{
 						"default": types.Route{
-							Rule: "PathPrefixStrip: /TestApplication/TestApplication/TestService",
+							Rule: "PathPrefixStrip: /TestApplication/TestService",
 						},
 					},
 				},
 			},
 			Backends: map[string]*types.Backend{
 				"fabric:/TestApplication/TestService": &types.Backend{
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
 					Servers: map[string]types.Server{
 						"131497042182378182": types.Server{
 							URL:    "http://localhost:8081",
@@ -155,11 +162,13 @@ func TestUpdateConfig(t *testing.T) {
 			},
 		},
 	}
+
 	provider := Provider{}
 	configurationChan := make(chan types.ConfigMessage)
 	ctx := context.Background()
 	pool := safe.NewPool(ctx)
-	provider.updateConfig(configurationChan, pool, client)
+	defer pool.Stop()
+	provider.updateConfig(configurationChan, pool, client, time.Millisecond*100)
 	actual := <-configurationChan
 	isEqual := compareConfigurations(actual, expected)
 	if !isEqual {

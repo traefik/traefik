@@ -49,14 +49,14 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	}
 	// provider.Constraints = append(provider.Constraints, constraints...)
 
-	p.updateConfig(configurationChan, pool, sfClient)
+	p.updateConfig(configurationChan, pool, sfClient, time.Second*10)
 	return nil
 }
 
-func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, sfClient Client) error {
+func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, sfClient Client, pollInterval time.Duration) error {
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
-			ticker := time.NewTicker(time.Second * 10)
+			ticker := time.NewTicker(pollInterval)
 			for _ = range ticker.C {
 				select {
 				case shouldStop := <-stop:
@@ -140,8 +140,8 @@ func (p *Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, e
 		}
 		for _, service := range services.Items {
 			item := ServiceItemExtended{
-				ServiceItem:     service,
-				ApplicationData: app,
+				ServiceItem: service,
+				Application: app,
 			}
 
 			partitions, err := sfClient.GetPartitions(app.ID, service.ID)
@@ -150,7 +150,7 @@ func (p *Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, e
 			} else {
 				for _, partition := range partitions.Items {
 					partitionExt := PartitionItemExtended{
-						PartitionData: partition,
+						PartitionItem: partition,
 					}
 
 					if partition.ServiceKind == "Stateful" {
