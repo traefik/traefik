@@ -42,7 +42,7 @@ func TestUpdateConfig(t *testing.T) {
 	apps := &ApplicationsData{
 		ContinuationToken: nil,
 		Items: []ApplicationItem{
-			ApplicationItem{
+			{
 				HealthState: "Ok",
 				ID:          "TestApplication",
 				Name:        "fabric:/TestApplication",
@@ -50,10 +50,8 @@ func TestUpdateConfig(t *testing.T) {
 					Key   string `json:"Key"`
 					Value string `json:"Value"`
 				}{
-					&struct {
-						Key   string `json:"Key"`
-						Value string `json:"Value"`
-					}{"TraefikPublish", "fabric:/TestApplication/TestService"},
+
+					{"TraefikPublish", "fabric:/TestApplication/TestService"},
 				},
 				Status:      "Ready",
 				TypeName:    "TestApplicationType",
@@ -64,7 +62,7 @@ func TestUpdateConfig(t *testing.T) {
 	services := &ServicesData{
 		ContinuationToken: nil,
 		Items: []ServiceItem{
-			ServiceItem{
+			{
 				HasPersistedState: true,
 				HealthState:       "Ok",
 				ID:                "TestApplication/TestService",
@@ -80,7 +78,7 @@ func TestUpdateConfig(t *testing.T) {
 	partitions := &PartitionsData{
 		ContinuationToken: nil,
 		Items: []PartitionItem{
-			PartitionItem{
+			{
 				CurrentConfigurationEpoch: struct {
 					ConfigurationVersion string `json:"ConfigurationVersion"`
 					DataLossVersion      string `json:"DataLossVersion"`
@@ -110,7 +108,7 @@ func TestUpdateConfig(t *testing.T) {
 	instances := &InstancesData{
 		ContinuationToken: nil,
 		Items: []InstanceItem{
-			InstanceItem{
+			{
 				ReplicaItemBase: &ReplicaItemBase{
 					Address:                      "{\"Endpoints\":{\"\":\"http:\\/\\/localhost:8081\"}}",
 					HealthState:                  "Ok",
@@ -134,18 +132,18 @@ func TestUpdateConfig(t *testing.T) {
 		ProviderName: "servicefabric",
 		Configuration: &types.Configuration{
 			Frontends: map[string]*types.Frontend{
-				"fabric:/TestApplication/TestService": &types.Frontend{
+				"fabric:/TestApplication/TestService": {
 					EntryPoints: []string{},
 					Backend:     "fabric:/TestApplication/TestService",
 					Routes: map[string]types.Route{
-						"default": types.Route{
+						"default": {
 							Rule: "PathPrefixStrip: /TestApplication/TestService",
 						},
 					},
 				},
 			},
 			Backends: map[string]*types.Backend{
-				"fabric:/TestApplication/TestService": &types.Backend{
+				"fabric:/TestApplication/TestService": {
 					LoadBalancer: &types.LoadBalancer{
 						Method: "drr",
 					},
@@ -153,7 +151,7 @@ func TestUpdateConfig(t *testing.T) {
 						Expression: "NetworkErrorRatio() > 0.5",
 					},
 					Servers: map[string]types.Server{
-						"131497042182378182": types.Server{
+						"131497042182378182": {
 							URL:    "http://localhost:8081",
 							Weight: 1,
 						},

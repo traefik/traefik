@@ -57,7 +57,7 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
 			ticker := time.NewTicker(pollInterval)
-			for _ = range ticker.C {
+			for range ticker.C {
 				select {
 				case shouldStop := <-stop:
 					if shouldStop {

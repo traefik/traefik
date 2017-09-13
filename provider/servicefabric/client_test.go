@@ -144,7 +144,7 @@ func TestGetApplications(t *testing.T) {
 	expected := &ApplicationsData{
 		ContinuationToken: nil,
 		Items: []ApplicationItem{
-			ApplicationItem{
+			{
 				HealthState: "Ok",
 				ID:          "TestApplication",
 				Name:        "fabric:/TestApplication",
@@ -152,20 +152,16 @@ func TestGetApplications(t *testing.T) {
 					Key   string `json:"Key"`
 					Value string `json:"Value"`
 				}{
-					&struct {
-						Key   string `json:"Key"`
-						Value string `json:"Value"`
-					}{"Param1", "Value1"},
-					&struct {
-						Key   string `json:"Key"`
-						Value string `json:"Value"`
-					}{"Param2", "Value2"},
+
+					{"Param1", "Value1"},
+
+					{"Param2", "Value2"},
 				},
 				Status:      "Ready",
 				TypeName:    "TestApplicationType",
 				TypeVersion: "1.0.0",
 			},
-			ApplicationItem{
+			{
 				HealthState: "Ok",
 				ID:          "TestApplication2",
 				Name:        "fabric:/TestApplication2",
@@ -173,14 +169,10 @@ func TestGetApplications(t *testing.T) {
 					Key   string `json:"Key"`
 					Value string `json:"Value"`
 				}{
-					&struct {
-						Key   string `json:"Key"`
-						Value string `json:"Value"`
-					}{"Param1", "Value1"},
-					&struct {
-						Key   string `json:"Key"`
-						Value string `json:"Value"`
-					}{"Param2", "Value2"},
+
+					{"Param1", "Value1"},
+
+					{"Param2", "Value2"},
 				},
 				Status:      "Ready",
 				TypeName:    "TestApplication2Type",
@@ -203,7 +195,7 @@ func TestGetServices(t *testing.T) {
 	expected := &ServicesData{
 		ContinuationToken: nil,
 		Items: []ServiceItem{
-			ServiceItem{
+			{
 				HasPersistedState: true,
 				HealthState:       "Ok",
 				ID:                "TestApplication/TestService",
@@ -231,7 +223,7 @@ func TestGetPartitions(t *testing.T) {
 	expected := &PartitionsData{
 		ContinuationToken: nil,
 		Items: []PartitionItem{
-			PartitionItem{
+			{
 				CurrentConfigurationEpoch: struct {
 					ConfigurationVersion string `json:"ConfigurationVersion"`
 					DataLossVersion      string `json:"DataLossVersion"`
@@ -273,7 +265,7 @@ func TestGetReplicas(t *testing.T) {
 	expected := &ReplicasData{
 		ContinuationToken: nil,
 		Items: []ReplicaItem{
-			ReplicaItem{
+			{
 				ReplicaItemBase: &ReplicaItemBase{
 					Address:                      "{\"Endpoints\":{\"\":\"localhost:30001+bce46a8c-b62d-4996-89dc-7ffc00a96902-131496928082309293\"}}",
 					HealthState:                  "Ok",
@@ -302,7 +294,7 @@ func TestGetInstances(t *testing.T) {
 	expected := &InstancesData{
 		ContinuationToken: nil,
 		Items: []InstanceItem{
-			InstanceItem{
+			{
 				ReplicaItemBase: &ReplicaItemBase{
 					Address:                      "{\"Endpoints\":{\"\":\"http:\\/\\/localhost:8081\"}}",
 					HealthState:                  "Ok",
