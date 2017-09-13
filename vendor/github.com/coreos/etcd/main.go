@@ -1,4 +1,4 @@
-// Copyright 2015 CoreOS, Inc.
+// Copyright 2015 The etcd Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 // This package should NOT be extended or modified in any way; to modify the
 // etcd binary, work in the `github.com/coreos/etcd/etcdmain` package.
 //
-
 package main
 
 import "github.com/coreos/etcd/etcdmain"

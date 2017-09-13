@@ -24,7 +24,7 @@ const (
 	RenewSessionRetryMax = 5
 
 	// MaxSessionDestroyAttempts is the maximum times we will try
-	// to explicitely destroy the session attached to a lock after
+	// to explicitly destroy the session attached to a lock after
 	// the connectivity to the store has been lost
 	MaxSessionDestroyAttempts = 5
 
@@ -74,7 +74,6 @@ func New(endpoints []string, options *store.Config) (store.Store, error) {
 	s.config = config
 	config.HttpClient = http.DefaultClient
 	config.Address = endpoints[0]
-	config.Scheme = "http"
 
 	// Set options
 	if options != nil {
@@ -168,10 +167,15 @@ func (s *Consul) getActiveSession(key string) (string, error) {
 
 // Get the value at "key", returns the last modified index
 // to use in conjunction to CAS calls
-func (s *Consul) Get(key string) (*store.KVPair, error) {
+func (s *Consul) Get(key string, opts *store.ReadOptions) (*store.KVPair, error) {
 	options := &api.QueryOptions{
 		AllowStale:        false,
 		RequireConsistent: true,
+	}
+
+	// Get options
+	if opts != nil {
+		options.RequireConsistent = opts.Consistent
 	}
 
 	pair, meta, err := s.client.KV().Get(s.normalize(key), options)
@@ -217,7 +221,7 @@ func (s *Consul) Put(key string, value []byte, opts *store.WriteOptions) error {
 
 // Delete a value at "key"
 func (s *Consul) Delete(key string) error {
-	if _, err := s.Get(key); err != nil {
+	if _, err := s.Get(key, nil); err != nil {
 		return err
 	}
 	_, err := s.client.KV().Delete(s.normalize(key), nil)
@@ -225,8 +229,8 @@ func (s *Consul) Delete(key string) error {
 }
 
 // Exists checks that the key exists inside the store
-func (s *Consul) Exists(key string) (bool, error) {
-	_, err := s.Get(key)
+func (s *Consul) Exists(key string, opts *store.ReadOptions) (bool, error) {
+	_, err := s.Get(key, opts)
 	if err != nil {
 		if err == store.ErrKeyNotFound {
 			return false, nil
@@ -237,8 +241,20 @@ func (s *Consul) Exists(key string) (bool, error) {
 }
 
 // List child nodes of a given directory
-func (s *Consul) List(directory string) ([]*store.KVPair, error) {
-	pairs, _, err := s.client.KV().List(s.normalize(directory), nil)
+func (s *Consul) List(directory string, opts *store.ReadOptions) ([]*store.KVPair, error) {
+	options := &api.QueryOptions{
+		AllowStale:        false,
+		RequireConsistent: true,
+	}
+
+	if opts != nil {
+		if !opts.Consistent {
+			options.AllowStale = true
+			options.RequireConsistent = false
+		}
+	}
+
+	pairs, _, err := s.client.KV().List(s.normalize(directory), options)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +280,7 @@ func (s *Consul) List(directory string) ([]*store.KVPair, error) {
 
 // DeleteTree deletes a range of keys under a given directory
 func (s *Consul) DeleteTree(directory string) error {
-	if _, err := s.List(directory); err != nil {
+	if _, err := s.List(directory, nil); err != nil {
 		return err
 	}
 	_, err := s.client.KV().DeleteTree(s.normalize(directory), nil)
@@ -276,7 +292,7 @@ func (s *Consul) DeleteTree(directory string) error {
 // on errors. Upon creation, the current value will first
 // be sent to the channel. Providing a non-nil stopCh can
 // be used to stop watching.
-func (s *Consul) Watch(key string, stopCh <-chan struct{}) (<-chan *store.KVPair, error) {
+func (s *Consul) Watch(key string, stopCh <-chan struct{}, opts *store.ReadOptions) (<-chan *store.KVPair, error) {
 	kv := s.client.KV()
 	watchCh := make(chan *store.KVPair)
 
@@ -309,7 +325,6 @@ func (s *Consul) Watch(key string, stopCh <-chan struct{}) (<-chan *store.KVPair
 			opts.WaitIndex = meta.LastIndex
 
 			// Return the value to the channel
-			// FIXME: What happens when a key is deleted?
 			if pair != nil {
 				watchCh <- &store.KVPair{
 					Key:       pair.Key,
@@ -328,7 +343,7 @@ func (s *Consul) Watch(key string, stopCh <-chan struct{}) (<-chan *store.KVPair
 // on errors. Upon creating a watch, the current childs values
 // will be sent to the channel .Providing a non-nil stopCh can
 // be used to stop watching.
-func (s *Consul) WatchTree(directory string, stopCh <-chan struct{}) (<-chan []*store.KVPair, error) {
+func (s *Consul) WatchTree(directory string, stopCh <-chan struct{}, opts *store.ReadOptions) (<-chan []*store.KVPair, error) {
 	kv := s.client.KV()
 	watchCh := make(chan []*store.KVPair)
 
@@ -429,7 +444,7 @@ func (s *Consul) NewLock(key string, options *store.LockOptions) (store.Locker, 
 }
 
 // renewLockSession is used to renew a session Lock, it takes
-// a stopRenew chan which is used to explicitely stop the session
+// a stopRenew chan which is used to explicitly stop the session
 // renew process. The renew routine never stops until a signal is
 // sent to this channel. If deleting the session fails because the
 // connection to the store is lost, it keeps trying to delete the
@@ -449,7 +464,7 @@ func (s *Consul) renewLockSession(initialTTL string, id string, stopRenew chan s
 				entry, _, err := s.client.Session().Renew(id, nil)
 				if err != nil {
 					// If an error occurs, continue until the
-					// session gets destroyed explicitely or
+					// session gets destroyed explicitly or
 					// the session ttl times out
 					continue
 				}
@@ -467,13 +482,15 @@ func (s *Consul) renewLockSession(initialTTL string, id string, stopRenew chan s
 					return
 				}
 
+				// We cannot destroy the session because the store
+				// is unavailable, wait for the session renew period.
+				// Give up after 'MaxSessionDestroyAttempts'.
+				sessionDestroyAttempts++
+
 				if sessionDestroyAttempts >= MaxSessionDestroyAttempts {
 					return
 				}
 
-				// We can't destroy the session because the store
-				// is unavailable, wait for the session renew period
-				sessionDestroyAttempts++
 				time.Sleep(ttl / 2)
 			}
 		}
@@ -520,7 +537,7 @@ func (s *Consul) AtomicPut(key string, value []byte, previous *store.KVPair, opt
 		return false, nil, store.ErrKeyModified
 	}
 
-	pair, err := s.Get(key)
+	pair, err := s.Get(key, nil)
 	if err != nil {
 		return false, nil, err
 	}
@@ -538,7 +555,7 @@ func (s *Consul) AtomicDelete(key string, previous *store.KVPair) (bool, error) 
 	p := &api.KVPair{Key: s.normalize(key), ModifyIndex: previous.LastIndex, Flags: api.LockFlagValue}
 
 	// Extra Get operation to check on the key
-	_, err := s.Get(key)
+	_, err := s.Get(key, nil)
 	if err != nil && err == store.ErrKeyNotFound {
 		return false, err
 	}

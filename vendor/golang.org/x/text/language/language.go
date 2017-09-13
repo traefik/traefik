@@ -593,7 +593,7 @@ func (t Tag) Extension(x byte) (ext Extension, ok bool) {
 			return Extension{ext}, true
 		}
 	}
-	return Extension{string(x)}, false
+	return Extension{}, false
 }
 
 // Extensions returns all extensions of t.

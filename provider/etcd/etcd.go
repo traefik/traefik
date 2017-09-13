@@ -8,7 +8,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/etcd"
+	"github.com/docker/libkv/store/etcd/v3"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -31,7 +31,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 // CreateStore creates the KV store
 func (p *Provider) CreateStore() (store.Store, error) {
-	p.SetStoreType(store.ETCD)
-	etcd.Register()
+	etcdv3.Register()
+	p.SetStoreType(store.ETCDV3)
 	return p.Provider.CreateStore()
 }

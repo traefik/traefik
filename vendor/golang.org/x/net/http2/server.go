@@ -110,9 +110,36 @@ type Server struct {
 	// activity for the purposes of IdleTimeout.
 	IdleTimeout time.Duration
 
+	// MaxUploadBufferPerConnection is the size of the initial flow
+	// control window for each connections. The HTTP/2 spec does not
+	// allow this to be smaller than 65535 or larger than 2^32-1.
+	// If the value is outside this range, a default value will be
+	// used instead.
+	MaxUploadBufferPerConnection int32
+
+	// MaxUploadBufferPerStream is the size of the initial flow control
+	// window for each stream. The HTTP/2 spec does not allow this to
+	// be larger than 2^32-1. If the value is zero or larger than the
+	// maximum, a default value will be used instead.
+	MaxUploadBufferPerStream int32
+
 	// NewWriteScheduler constructs a write scheduler for a connection.
 	// If nil, a default scheduler is chosen.
 	NewWriteScheduler func() WriteScheduler
+}
+
+func (s *Server) initialConnRecvWindowSize() int32 {
+	if s.MaxUploadBufferPerConnection > initialWindowSize {
+		return s.MaxUploadBufferPerConnection
+	}
+	return 1 << 20
+}
+
+func (s *Server) initialStreamRecvWindowSize() int32 {
+	if s.MaxUploadBufferPerStream > 0 {
+		return s.MaxUploadBufferPerStream
+	}
+	return 1 << 20
 }
 
 func (s *Server) maxReadFrameSize() uint32 {
@@ -255,35 +282,34 @@ func (s *Server) ServeConn(c net.Conn, opts *ServeConnOpts) {
 	defer cancel()
 
 	sc := &serverConn{
-		srv:               s,
-		hs:                opts.baseConfig(),
-		conn:              c,
-		baseCtx:           baseCtx,
-		remoteAddrStr:     c.RemoteAddr().String(),
-		bw:                newBufferedWriter(c),
-		handler:           opts.handler(),
-		streams:           make(map[uint32]*stream),
-		readFrameCh:       make(chan readFrameResult),
-		wantWriteFrameCh:  make(chan FrameWriteRequest, 8),
-		wantStartPushCh:   make(chan startPushRequest, 8),
-		wroteFrameCh:      make(chan frameWriteResult, 1), // buffered; one send in writeFrameAsync
-		bodyReadCh:        make(chan bodyReadMsg),         // buffering doesn't matter either way
-		doneServing:       make(chan struct{}),
-		clientMaxStreams:  math.MaxUint32, // Section 6.5.2: "Initially, there is no limit to this value"
-		advMaxStreams:     s.maxConcurrentStreams(),
-		initialWindowSize: initialWindowSize,
-		maxFrameSize:      initialMaxFrameSize,
-		headerTableSize:   initialHeaderTableSize,
-		serveG:            newGoroutineLock(),
-		pushEnabled:       true,
+		srv:                         s,
+		hs:                          opts.baseConfig(),
+		conn:                        c,
+		baseCtx:                     baseCtx,
+		remoteAddrStr:               c.RemoteAddr().String(),
+		bw:                          newBufferedWriter(c),
+		handler:                     opts.handler(),
+		streams:                     make(map[uint32]*stream),
+		readFrameCh:                 make(chan readFrameResult),
+		wantWriteFrameCh:            make(chan FrameWriteRequest, 8),
+		wantStartPushCh:             make(chan startPushRequest, 8),
+		wroteFrameCh:                make(chan frameWriteResult, 1), // buffered; one send in writeFrameAsync
+		bodyReadCh:                  make(chan bodyReadMsg),         // buffering doesn't matter either way
+		doneServing:                 make(chan struct{}),
+		clientMaxStreams:            math.MaxUint32, // Section 6.5.2: "Initially, there is no limit to this value"
+		advMaxStreams:               s.maxConcurrentStreams(),
+		initialStreamSendWindowSize: initialWindowSize,
+		maxFrameSize:                initialMaxFrameSize,
+		headerTableSize:             initialHeaderTableSize,
+		serveG:                      newGoroutineLock(),
+		pushEnabled:                 true,
 	}
 
 	// The net/http package sets the write deadline from the
 	// http.Server.WriteTimeout during the TLS handshake, but then
-	// passes the connection off to us with the deadline already
-	// set. Disarm it here so that it is not applied to additional
-	// streams opened on this connection.
-	// TODO: implement WriteTimeout fully. See Issue 18437.
+	// passes the connection off to us with the deadline already set.
+	// Write deadlines are set per stream in serverConn.newStream.
+	// Disarm the net.Conn write deadline here.
 	if sc.hs.WriteTimeout != 0 {
 		sc.conn.SetWriteDeadline(time.Time{})
 	}
@@ -294,6 +320,9 @@ func (s *Server) ServeConn(c net.Conn, opts *ServeConnOpts) {
 		sc.writeSched = NewRandomWriteScheduler()
 	}
 
+	// These start at the RFC-specified defaults. If there is a higher
+	// configured value for inflow, that will be updated when we send a
+	// WINDOW_UPDATE shortly after sending SETTINGS.
 	sc.flow.add(initialWindowSize)
 	sc.inflow.add(initialWindowSize)
 	sc.hpackEncoder = hpack.NewEncoder(&sc.headerWriteBuf)
@@ -387,34 +416,34 @@ type serverConn struct {
 	writeSched       WriteScheduler
 
 	// Everything following is owned by the serve loop; use serveG.check():
-	serveG                goroutineLock // used to verify funcs are on serve()
-	pushEnabled           bool
-	sawFirstSettings      bool // got the initial SETTINGS frame after the preface
-	needToSendSettingsAck bool
-	unackedSettings       int    // how many SETTINGS have we sent without ACKs?
-	clientMaxStreams      uint32 // SETTINGS_MAX_CONCURRENT_STREAMS from client (our PUSH_PROMISE limit)
-	advMaxStreams         uint32 // our SETTINGS_MAX_CONCURRENT_STREAMS advertised the client
-	curClientStreams      uint32 // number of open streams initiated by the client
-	curPushedStreams      uint32 // number of open streams initiated by server push
-	maxClientStreamID     uint32 // max ever seen from client (odd), or 0 if there have been no client requests
-	maxPushPromiseID      uint32 // ID of the last push promise (even), or 0 if there have been no pushes
-	streams               map[uint32]*stream
-	initialWindowSize     int32
-	maxFrameSize          int32
-	headerTableSize       uint32
-	peerMaxHeaderListSize uint32            // zero means unknown (default)
-	canonHeader           map[string]string // http2-lower-case -> Go-Canonical-Case
-	writingFrame          bool              // started writing a frame (on serve goroutine or separate)
-	writingFrameAsync     bool              // started a frame on its own goroutine but haven't heard back on wroteFrameCh
-	needsFrameFlush       bool              // last frame write wasn't a flush
-	inGoAway              bool              // we've started to or sent GOAWAY
-	inFrameScheduleLoop   bool              // whether we're in the scheduleFrameWrite loop
-	needToSendGoAway      bool              // we need to schedule a GOAWAY frame write
-	goAwayCode            ErrCode
-	shutdownTimerCh       <-chan time.Time // nil until used
-	shutdownTimer         *time.Timer      // nil until used
-	idleTimer             *time.Timer      // nil if unused
-	idleTimerCh           <-chan time.Time // nil if unused
+	serveG                      goroutineLock // used to verify funcs are on serve()
+	pushEnabled                 bool
+	sawFirstSettings            bool // got the initial SETTINGS frame after the preface
+	needToSendSettingsAck       bool
+	unackedSettings             int    // how many SETTINGS have we sent without ACKs?
+	clientMaxStreams            uint32 // SETTINGS_MAX_CONCURRENT_STREAMS from client (our PUSH_PROMISE limit)
+	advMaxStreams               uint32 // our SETTINGS_MAX_CONCURRENT_STREAMS advertised the client
+	curClientStreams            uint32 // number of open streams initiated by the client
+	curPushedStreams            uint32 // number of open streams initiated by server push
+	maxClientStreamID           uint32 // max ever seen from client (odd), or 0 if there have been no client requests
+	maxPushPromiseID            uint32 // ID of the last push promise (even), or 0 if there have been no pushes
+	streams                     map[uint32]*stream
+	initialStreamSendWindowSize int32
+	maxFrameSize                int32
+	headerTableSize             uint32
+	peerMaxHeaderListSize       uint32            // zero means unknown (default)
+	canonHeader                 map[string]string // http2-lower-case -> Go-Canonical-Case
+	writingFrame                bool              // started writing a frame (on serve goroutine or separate)
+	writingFrameAsync           bool              // started a frame on its own goroutine but haven't heard back on wroteFrameCh
+	needsFrameFlush             bool              // last frame write wasn't a flush
+	inGoAway                    bool              // we've started to or sent GOAWAY
+	inFrameScheduleLoop         bool              // whether we're in the scheduleFrameWrite loop
+	needToSendGoAway            bool              // we need to schedule a GOAWAY frame write
+	goAwayCode                  ErrCode
+	shutdownTimerCh             <-chan time.Time // nil until used
+	shutdownTimer               *time.Timer      // nil until used
+	idleTimer                   *time.Timer      // nil if unused
+	idleTimerCh                 <-chan time.Time // nil if unused
 
 	// Owned by the writeFrameAsync goroutine:
 	headerWriteBuf bytes.Buffer
@@ -463,10 +492,10 @@ type stream struct {
 	numTrailerValues int64
 	weight           uint8
 	state            streamState
-	resetQueued      bool   // RST_STREAM queued for write; set by sc.resetStream
-	gotTrailerHeader bool   // HEADER frame for trailers was seen
-	wroteHeaders     bool   // whether we wrote headers (not status 100)
-	reqBuf           []byte // if non-nil, body pipe buffer to return later at EOF
+	resetQueued      bool        // RST_STREAM queued for write; set by sc.resetStream
+	gotTrailerHeader bool        // HEADER frame for trailers was seen
+	wroteHeaders     bool        // whether we wrote headers (not status 100)
+	writeDeadline    *time.Timer // nil if unused
 
 	trailer    http.Header // accumulated trailers
 	reqTrailer http.Header // handler's Request.Trailer
@@ -696,21 +725,23 @@ func (sc *serverConn) serve() {
 			{SettingMaxFrameSize, sc.srv.maxReadFrameSize()},
 			{SettingMaxConcurrentStreams, sc.advMaxStreams},
 			{SettingMaxHeaderListSize, sc.maxHeaderListSize()},
-
-			// TODO: more actual settings, notably
-			// SettingInitialWindowSize, but then we also
-			// want to bump up the conn window size the
-			// same amount here right after the settings
+			{SettingInitialWindowSize, uint32(sc.srv.initialStreamRecvWindowSize())},
 		},
 	})
 	sc.unackedSettings++
+
+	// Each connection starts with intialWindowSize inflow tokens.
+	// If a higher value is configured, we add more tokens.
+	if diff := sc.srv.initialConnRecvWindowSize() - initialWindowSize; diff > 0 {
+		sc.sendWindowUpdate(nil, int(diff))
+	}
 
 	if err := sc.readPreface(); err != nil {
 		sc.condlogf(err, "http2: server: error reading preface from client %v: %v", sc.conn.RemoteAddr(), err)
 		return
 	}
 	// Now that we've got the preface, get us out of the
-	// "StateNew" state.  We can't go directly to idle, though.
+	// "StateNew" state. We can't go directly to idle, though.
 	// Active means we read some data and anticipate a request. We'll
 	// do another Active when we get a HEADERS frame.
 	sc.setConnState(http.StateActive)
@@ -735,6 +766,10 @@ func (sc *serverConn) serve() {
 		loopNum++
 		select {
 		case wr := <-sc.wantWriteFrameCh:
+			if se, ok := wr.write.(StreamError); ok {
+				sc.resetStream(se)
+				break
+			}
 			sc.writeFrame(wr)
 		case spr := <-sc.wantStartPushCh:
 			sc.startPush(spr)
@@ -1014,7 +1049,11 @@ func (sc *serverConn) wroteFrame(res frameWriteResult) {
 			// stateClosed after the RST_STREAM frame is
 			// written.
 			st.state = stateHalfClosedLocal
-			sc.resetStream(streamError(st.id, ErrCodeCancel))
+			// Section 8.1: a server MAY request that the client abort
+			// transmission of a request without error by sending a
+			// RST_STREAM with an error code of NO_ERROR after sending
+			// a complete response.
+			sc.resetStream(streamError(st.id, ErrCodeNo))
 		case stateHalfClosedRemote:
 			sc.closeStream(st, errHandlerComplete)
 		}
@@ -1305,6 +1344,9 @@ func (sc *serverConn) closeStream(st *stream, err error) {
 		panic(fmt.Sprintf("invariant; can't close stream in state %v", st.state))
 	}
 	st.state = stateClosed
+	if st.writeDeadline != nil {
+		st.writeDeadline.Stop()
+	}
 	if st.isPushed() {
 		sc.curPushedStreams--
 	} else {
@@ -1395,9 +1437,9 @@ func (sc *serverConn) processSettingInitialWindowSize(val uint32) error {
 	// adjust the size of all stream flow control windows that it
 	// maintains by the difference between the new value and the
 	// old value."
-	old := sc.initialWindowSize
-	sc.initialWindowSize = int32(val)
-	growth := sc.initialWindowSize - old // may be negative
+	old := sc.initialStreamSendWindowSize
+	sc.initialStreamSendWindowSize = int32(val)
+	growth := int32(val) - old // may be negative
 	for _, st := range sc.streams {
 		if !st.flow.add(growth) {
 			// 6.9.2 Initial Flow Control Window Size
@@ -1541,6 +1583,12 @@ func (st *stream) copyTrailersToHandlerRequest() {
 			st.reqTrailer[k] = vv
 		}
 	}
+}
+
+// onWriteTimeout is run on its own goroutine (from time.AfterFunc)
+// when the stream's WriteTimeout has fired.
+func (st *stream) onWriteTimeout() {
+	st.sc.writeFrameFromHandler(FrameWriteRequest{write: streamError(st.id, ErrCodeInternal)})
 }
 
 func (sc *serverConn) processHeaders(f *MetaHeadersFrame) error {
@@ -1719,9 +1767,12 @@ func (sc *serverConn) newStream(id, pusherID uint32, state streamState) *stream 
 	}
 	st.cw.Init()
 	st.flow.conn = &sc.flow // link to conn-level counter
-	st.flow.add(sc.initialWindowSize)
-	st.inflow.conn = &sc.inflow      // link to conn-level counter
-	st.inflow.add(initialWindowSize) // TODO: update this when we send a higher initial window size in the initial settings
+	st.flow.add(sc.initialStreamSendWindowSize)
+	st.inflow.conn = &sc.inflow // link to conn-level counter
+	st.inflow.add(sc.srv.initialStreamRecvWindowSize())
+	if sc.hs.WriteTimeout != 0 {
+		st.writeDeadline = time.AfterFunc(sc.hs.WriteTimeout, st.onWriteTimeout)
+	}
 
 	sc.streams[id] = st
 	sc.writeSched.OpenStream(st.id, OpenStreamOptions{PusherID: pusherID})
@@ -1785,15 +1836,13 @@ func (sc *serverConn) newWriterAndRequest(st *stream, f *MetaHeadersFrame) (*res
 		return nil, nil, err
 	}
 	if bodyOpen {
-		st.reqBuf = getRequestBodyBuf()
-		req.Body.(*requestBody).pipe = &pipe{
-			b: &fixedBuffer{buf: st.reqBuf},
-		}
-
 		if vv, ok := rp.header["Content-Length"]; ok {
 			req.ContentLength, _ = strconv.ParseInt(vv[0], 10, 64)
 		} else {
 			req.ContentLength = -1
+		}
+		req.Body.(*requestBody).pipe = &pipe{
+			b: &dataBuffer{expected: req.ContentLength},
 		}
 	}
 	return rw, req, nil
@@ -1888,24 +1937,6 @@ func (sc *serverConn) newWriterAndRequestNoBody(st *stream, rp requestParam) (*r
 
 	rw := &responseWriter{rws: rws}
 	return rw, req, nil
-}
-
-var reqBodyCache = make(chan []byte, 8)
-
-func getRequestBodyBuf() []byte {
-	select {
-	case b := <-reqBodyCache:
-		return b
-	default:
-		return make([]byte, initialWindowSize)
-	}
-}
-
-func putRequestBodyBuf(b []byte) {
-	select {
-	case reqBodyCache <- b:
-	default:
-	}
 }
 
 // Run on its own goroutine.
@@ -2003,12 +2034,6 @@ func (sc *serverConn) noteBodyReadFromHandler(st *stream, n int, err error) {
 		case <-sc.doneServing:
 		}
 	}
-	if err == io.EOF {
-		if buf := st.reqBuf; buf != nil {
-			st.reqBuf = nil // shouldn't matter; field unused by other
-			putRequestBodyBuf(buf)
-		}
-	}
 }
 
 func (sc *serverConn) noteBodyRead(st *stream, n int) {
@@ -2103,8 +2128,8 @@ func (b *requestBody) Read(p []byte) (n int, err error) {
 	return
 }
 
-// responseWriter is the http.ResponseWriter implementation.  It's
-// intentionally small (1 pointer wide) to minimize garbage.  The
+// responseWriter is the http.ResponseWriter implementation. It's
+// intentionally small (1 pointer wide) to minimize garbage. The
 // responseWriterState pointer inside is zeroed at the end of a
 // request (in handlerDone) and calls on the responseWriter thereafter
 // simply crash (caller's mistake), but the much larger responseWriterState
@@ -2278,7 +2303,7 @@ const TrailerPrefix = "Trailer:"
 // says you SHOULD (but not must) predeclare any trailers in the
 // header, the official ResponseWriter rules said trailers in Go must
 // be predeclared, and then we reuse the same ResponseWriter.Header()
-// map to mean both Headers and Trailers.  When it's time to write the
+// map to mean both Headers and Trailers. When it's time to write the
 // Trailers, we pick out the fields of Headers that were declared as
 // trailers. That worked for a while, until we found the first major
 // user of Trailers in the wild: gRPC (using them only over http2),
