@@ -119,10 +119,22 @@ Otherwise, the response from the auth server is returned.
 ```toml
 [entryPoints]
   [entryPoints.http]
-  address = ":80"
-    # To enable forward auth on an entrypoint
-    [entryPoints.http.auth.forward]
-    address = "http://authserver.com/auth"
+  # ...
+  # To enable forward auth on an entrypoint
+  [entryPoints.http.auth.forward]
+  address = "http://authserver.com/auth"
+```
+
+```toml
+[entryPoints]
+  [entrypoints.http]
+    # ...
+    # To enable forward auth on an entrypoint (HTTPS)
+    [entrypoints.http.auth.forward]
+    address = "https://authserver.com/auth"
+    [entrypoints.http.auth.forward.tls]
+    cert = "authserver.crt"
+    key = "authserver.key"
 ```
 
 
