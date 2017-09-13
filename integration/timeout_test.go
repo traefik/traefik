@@ -24,7 +24,8 @@ func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {
 	}{httpTimeoutEndpoint})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

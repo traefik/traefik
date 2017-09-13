@@ -30,7 +30,8 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	os.Remove(traefikTestLogFile)
 
 	// Start Traefik
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

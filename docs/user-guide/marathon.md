@@ -16,7 +16,7 @@ Given the complexity of the subject, it is possible that the heuristic fails.
 Apart from filing an issue and waiting for the feature request / bug report to get addressed, one workaround for such situations is to customize the Marathon template file to the individual needs.
 
 !!! note
-   This does _not_ require rebuilding Traefik but only to point the `filename` configuration parameter to a customized version of the `marathon.tmpl` file on Traefik startup.
+    This does _not_ require rebuilding Traefik but only to point the `filename` configuration parameter to a customized version of the `marathon.tmpl` file on Traefik startup.
 
 ## Port detection
 

@@ -17,7 +17,8 @@ func (s *MesosSuite) SetUpSuite(c *check.C) {
 }
 
 func (s *MesosSuite) TestSimpleConfiguration(c *check.C) {
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/mesos/simple.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/mesos/simple.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
