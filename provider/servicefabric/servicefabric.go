@@ -49,6 +49,11 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	}
 	// provider.Constraints = append(provider.Constraints, constraints...)
 
+	p.updateConfig(configurationChan, pool, sfClient)
+	return nil
+}
+
+func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, sfClient Client) error {
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
 			ticker := time.NewTicker(time.Second * 10)
@@ -65,16 +70,16 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 				// SF Note: Deploying a config update could change the location or provide
 				// a new version of this file, that is why we query for location each time.
-				configFilePath, err := findTemplateFile()
-				if err != nil {
-					// Fallback to using the default template
-					p.Filename = ""
-				} else {
-					p.Filename = configFilePath
+				if p.Filename == "" {
+					configFilePath, err := findTemplateFile()
+					if err != nil {
+						log.Infof("Using default template file: %v", err)
+					} else {
+						p.Filename = configFilePath
+					}
 				}
 
 				services, err := p.getClusterServices(sfClient)
-
 				if err != nil {
 					log.Error(err)
 					return err

@@ -15,11 +15,25 @@ type mockWebClient struct {
 func (c *mockWebClient) Get(url string) (resp *http.Response, err error) {
 	switch url {
 	case "Test/Applications/?api-version=1.0":
-		body := `{"ContinuationToken":"",
+		body := `{"ContinuationToken":"00001234",
 				  "Items":[
 					  {"Id":"TestApplication",
 					   "Name":"fabric:\/TestApplication",
 					   "TypeName":"TestApplicationType",
+					   "TypeVersion":"1.0.0",
+					   "Status":"Ready",
+					   "Parameters":
+							   [{"Key":"Param1","Value":"Value1"},
+							   {"Key":"Param2","Value":"Value2"}],
+					   "HealthState":"Ok"}
+					]}`
+		return buildSuccessResponse(body), nil
+	case "Test/Applications/?api-version=1.0&continue=00001234":
+		body := `{"ContinuationToken":"",
+				  "Items":[
+					  {"Id":"TestApplication2",
+					   "Name":"fabric:\/TestApplication2",
+					   "TypeName":"TestApplication2Type",
 					   "TypeVersion":"1.0.0",
 					   "Status":"Ready",
 					   "Parameters":
@@ -149,6 +163,27 @@ func TestGetApplications(t *testing.T) {
 				},
 				Status:      "Ready",
 				TypeName:    "TestApplicationType",
+				TypeVersion: "1.0.0",
+			},
+			ApplicationItem{
+				HealthState: "Ok",
+				ID:          "TestApplication2",
+				Name:        "fabric:/TestApplication2",
+				Parameters: []*struct {
+					Key   string `json:"Key"`
+					Value string `json:"Value"`
+				}{
+					&struct {
+						Key   string `json:"Key"`
+						Value string `json:"Value"`
+					}{"Param1", "Value1"},
+					&struct {
+						Key   string `json:"Key"`
+						Value string `json:"Value"`
+					}{"Param2", "Value2"},
+				},
+				Status:      "Ready",
+				TypeName:    "TestApplication2Type",
 				TypeVersion: "1.0.0",
 			},
 		},
