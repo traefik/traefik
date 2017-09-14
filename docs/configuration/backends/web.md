@@ -15,6 +15,7 @@ Træfik can be configured:
 # Web administration port.
 #
 # Required
+# Default: ":8080"
 #
 address = ":8080"
 
@@ -29,11 +30,6 @@ address = ":8080"
 #
 # Optional
 # readOnly = false
-
-# Enable more detailed statistics.
-#
-#    [web.statistics]
-#    recentErrors = 10
 ```
 
 ## Web UI
@@ -47,7 +43,7 @@ address = ":8080"
 !!! note
     The `/ping` path of the api is excluded from authentication (since 1.4).
 
-- Basic Authentication
+#### Basic Authentication
 
 Passwords can be encoded in MD5, SHA1 and BCrypt: you can use `htpasswd` to generate those ones.
 
@@ -66,7 +62,7 @@ usersFile = "/path/to/.htpasswd"
 # ...
 ```
 
-- Digest Authentication
+#### Digest Authentication
 
 You can use `htdigest` to generate those ones.
 
@@ -90,7 +86,7 @@ usersFile = "/path/to/.htdigest"
 
 You can enable Traefik to export internal metrics to different monitoring systems.
 
-- Prometheus
+### Prometheus
 
 ```toml
 [web]
@@ -98,12 +94,17 @@ You can enable Traefik to export internal metrics to different monitoring system
 
 # To enable Traefik to export internal metrics to Prometheus
 [web.metrics.prometheus]
+
+# Buckets for latency metrics
+#
+# Optional
+# Default: [0.1, 0.3, 1.2, 5]
 buckets=[0.1,0.3,1.2,5.0]
     
 # ...
 ```
 
-- DataDog
+### DataDog
 
 ```toml
 [web]
@@ -111,13 +112,25 @@ buckets=[0.1,0.3,1.2,5.0]
 
 # DataDog metrics exporter type
 [web.metrics.datadog]
+
+# DataDog's address.
+#
+# Required
+# Default: "localhost:8125"
+#
 address = "localhost:8125"
+
+# DataDog push interval
+#
+# Optional
+# Default: "10s"
+#
 pushinterval = "10s"
 
 # ...
 ```
 
-- StatsD
+### StatsD
 
 ```toml
 [web]
@@ -125,11 +138,43 @@ pushinterval = "10s"
 
 # StatsD metrics exporter type
 [web.metrics.statsd]
+
+# StatD's address.
+#
+# Required
+# Default: "localhost:8125"
+#
 address = "localhost:8125"
+
+# StatD push interval
+#
+# Optional
+# Default: "10s"
+#
 pushinterval = "10s"
 
 # ...
 ```
+
+
+## Statistics
+
+```toml
+[web]
+# ...
+
+# Enable more detailed statistics.
+[web.statistics]
+
+# Number of recent errors logged.
+#
+# Default: 10
+#
+recentErrors = 10
+
+# ...
+```
+
 
 ## API
 
@@ -156,7 +201,7 @@ pushinterval = "10s"
 #### Ping
 
 ```shell
-$ curl -sv "http://localhost:8080/ping"
+curl -sv "http://localhost:8080/ping"
 ```
 ```shell
 *   Trying ::1...
@@ -178,7 +223,7 @@ OK
 #### Health
 
 ```shell
-$ curl -s "http://localhost:8080/health" | jq .
+curl -s "http://localhost:8080/health" | jq .
 ```
 ```json
 {
@@ -239,7 +284,7 @@ $ curl -s "http://localhost:8080/health" | jq .
 #### Provider configurations
 
 ```shell
-$ curl -s "http://localhost:8080/api" | jq .
+curl -s "http://localhost:8080/api" | jq .
 ```
 ```json
 {
