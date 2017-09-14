@@ -1,16 +1,15 @@
 package types
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
-
-	"crypto/tls"
-	"crypto/x509"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/containous/traefik/log"
 	"github.com/docker/libkv/store"
