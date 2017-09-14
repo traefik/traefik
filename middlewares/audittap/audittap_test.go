@@ -89,7 +89,7 @@ func TestAuditExclusion(t *testing.T) {
 	excludes := make(types.Exclusions)
 
 	excludes["Ex1"] = &types.Exclusion{HeaderName: "Host", Contains: []string{"aaaignorehost1bbb", "hostignore"}}
-	excludes["Ex2"] = &types.Exclusion{HeaderName: "Path", Contains: []string{"excludeme", "someotherpath"}}
+	excludes["Ex2"] = &types.Exclusion{HeaderName: "Path", StartsWith: []string{"/excludeme", "/someotherpath"}}
 
 	excludes["Ex3"] = &types.Exclusion{HeaderName: "Hdr1", Contains: []string{"abcdefg", "drv1"}}
 	excludes["Ex4"] = &types.Exclusion{HeaderName: "Hdr2", Contains: []string{"tauditm"}}

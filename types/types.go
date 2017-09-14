@@ -373,6 +373,11 @@ type Exclusion struct {
 	StartsWith []string `json:"startsWith,omitempty" description:"Start of string values to exclude"`
 }
 
+// Enabled states whether any exclusion filters are specified
+func (e *Exclusion) Enabled() bool {
+	return len(e.Contains) > 0 || len(e.EndsWith) > 0 || len(e.StartsWith) > 0
+}
+
 // Exclusions is a container type for Exclusion
 type Exclusions map[string]*Exclusion
 

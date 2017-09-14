@@ -10,6 +10,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"github.com/containous/traefik/types"
+	"net/url"
 )
 
 // MaximumEntityLength sets the upper limit for request and response entities. This will
@@ -68,7 +69,7 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 
 	exclusions := []*types.Exclusion{}
 	for _, exc := range config.Exclusions {
-		if len(exc.Contains) > 0 {
+		if exc.Enabled() {
 			exclusions = append(exclusions, exc)
 		}
 	}
@@ -82,7 +83,7 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	var auditer audittypes.Auditer
 	excludeAudit := isExcluded(tap.Exclusions, req)
 
-	log.Debugf("Exclude audit is %t for Host:%s URI:%s", excludeAudit, req.Host, req.RequestURI)
+	log.Debugf("Exclude audit is %t for Host:%s URI:%s Headers:%v", excludeAudit, req.Host, req.RequestURI, req.Header)
 
 	if !excludeAudit {
 		switch strings.ToLower(tap.ProxyingFor) {
@@ -113,8 +114,10 @@ func isExcluded(exclusions []*types.Exclusion, req *http.Request) bool {
 		// Get host or path direct from request
 		if (lcHdr == "host" || lcHdr == "requesthost") && shouldExclude(req.Host, exc) {
 			return true
-		} else if (lcHdr == "path" || lcHdr == "requestpath") && shouldExclude(req.RequestURI, exc) {
-			return true
+		} else if lcHdr == "path" || lcHdr == "requestpath" {
+			if url, err := url.ParseRequestURI(req.RequestURI); err == nil && shouldExclude(url.Path, exc) {
+				return true
+			}
 		} else if shouldExclude(req.Header.Get(exc.HeaderName), exc) {
 			return true
 		}
