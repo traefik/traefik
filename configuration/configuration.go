@@ -193,18 +193,11 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*((?P<TLSACME>TLS))?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol:(?P<ProxyProtocol>\S*))?`)
-	match := regex.FindAllStringSubmatch(value, -1)
-	if match == nil {
-		return fmt.Errorf("bad EntryPoints format: %s", value)
+	result, err := parseEntryPointsConfiguration(value)
+	if err != nil {
+		return err
 	}
-	matchResult := match[0]
-	result := make(map[string]string)
-	for i, name := range regex.SubexpNames() {
-		if i != 0 {
-			result[name] = matchResult[i]
-		}
-	}
+
 	var configTLS *TLS
 	if len(result["TLS"]) > 0 {
 		certs := Certificates{}
@@ -232,24 +225,13 @@ func (ep *EntryPoints) Set(value string) error {
 		}
 	}
 
-	compress := false
-	if len(result["Compress"]) > 0 {
-		compress = strings.EqualFold(result["Compress"], "true") ||
-			strings.EqualFold(result["Compress"], "enable") ||
-			strings.EqualFold(result["Compress"], "on")
-	}
-
 	whiteListSourceRange := []string{}
 	if len(result["WhiteListSourceRange"]) > 0 {
 		whiteListSourceRange = strings.Split(result["WhiteListSourceRange"], ",")
 	}
 
-	proxyprotocol := false
-	if len(result["ProxyProtocol"]) > 0 {
-		proxyprotocol = strings.EqualFold(result["ProxyProtocol"], "true") ||
-			strings.EqualFold(result["ProxyProtocol"], "enable") ||
-			strings.EqualFold(result["ProxyProtocol"], "on")
-	}
+	compress := toBool(result, "Compress")
+	proxyProtocol := toBool(result, "ProxyProtocol")
 
 	(*ep)[result["Name"]] = &EntryPoint{
 		Address:              result["Address"],
@@ -257,10 +239,35 @@ func (ep *EntryPoints) Set(value string) error {
 		Redirect:             redirect,
 		Compress:             compress,
 		WhitelistSourceRange: whiteListSourceRange,
-		ProxyProtocol:        proxyprotocol,
+		ProxyProtocol:        proxyProtocol,
 	}
 
 	return nil
+}
+
+func parseEntryPointsConfiguration(value string) (map[string]string, error) {
+	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*(?P<TLSACME>TLS)?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect\.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect\.Regex:(?P<RedirectRegex>\S*))?\s*(?:Redirect\.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol:(?P<ProxyProtocol>\S*))?`)
+	match := regex.FindAllStringSubmatch(value, -1)
+	if match == nil {
+		return nil, fmt.Errorf("bad EntryPoints format: %s", value)
+	}
+	matchResult := match[0]
+	result := make(map[string]string)
+	for i, name := range regex.SubexpNames() {
+		if i != 0 && len(matchResult[i]) != 0 {
+			result[name] = matchResult[i]
+		}
+	}
+	return result, nil
+}
+
+func toBool(conf map[string]string, key string) bool {
+	if val, ok := conf[key]; ok {
+		return strings.EqualFold(val, "true") ||
+			strings.EqualFold(val, "enable") ||
+			strings.EqualFold(val, "on")
+	}
+	return false
 }
 
 // Get return the EntryPoints map
