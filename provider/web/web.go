@@ -31,7 +31,7 @@ type Provider struct {
 	Statistics            *types.Statistics `description:"Enable more detailed statistics"`
 	Metrics               *types.Metrics    `description:"Enable a metrics exporter"`
 	Path                  string            `description:"Root path for dashboard and API"`
-	Auth                  *types.Auth
+	Auth                  *types.Auth       `description:"Authentication for dashboard and API"`
 	Debug                 bool
 	CurrentConfigurations *safe.Safe
 	Stats                 *thoas_stats.Stats

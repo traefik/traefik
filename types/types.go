@@ -303,10 +303,10 @@ type Cluster struct {
 
 // Auth holds authentication configuration (BASIC, DIGEST, users)
 type Auth struct {
-	Basic       *Basic
-	Digest      *Digest
-	Forward     *Forward
-	HeaderField string
+	Basic       *Basic   `description:"Basic authentication."`
+	Digest      *Digest  `description:"Digest authentication."`
+	Forward     *Forward `description:"Forward authentication."`
+	HeaderField string   `description:"Header field."`
 }
 
 // Users authentication users
