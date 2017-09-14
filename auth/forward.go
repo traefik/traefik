@@ -33,6 +33,10 @@ func Forward(forward *types.Forward, w http.ResponseWriter, r *http.Request, nex
 	}
 	forwardReq.Header = r.Header
 
+	if forward.ForwardHostname != nil {
+		forwardReq.Header.Add(forward.ForwardHostname.HeaderName, r.Host)
+	}
+
 	forwardResponse, forwardErr := httpClient.Do(forwardReq)
 	if forwardErr != nil {
 		log.Debugf("Error calling %s. Cause: %s", forward.Address, forwardErr)
