@@ -137,6 +137,17 @@ Otherwise, the response from the auth server is returned.
     key = "authserver.key"
 ```
 
+# Origin Host
+
+The origin host is forwarded by default in `X-Forwarded-Host` header.
+To override default header name.
+
+```toml
+[entryPoints]
+  [entrypoints.http]
+    address = "https://authserver.com/auth"
+    hostheader = "Traefik-Host"
+```
 
 ## Specify Minimum TLS Version
 
