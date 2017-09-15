@@ -1,54 +1,68 @@
 package types
 
+import "strings"
+
 const (
+	// LabelPrefix Traefik label
+	LabelPrefix = "traefik."
 	// LabelDomain Traefik label
-	LabelDomain = "traefik.domain"
+	LabelDomain = LabelPrefix + "domain"
 	// LabelEnable Traefik label
-	LabelEnable = "traefik.enable"
+	LabelEnable = LabelPrefix + "enable"
 	// LabelPort Traefik label
-	LabelPort = "traefik.port"
+	LabelPort = LabelPrefix + "port"
 	// LabelPortIndex Traefik label
-	LabelPortIndex = "traefik.portIndex"
+	LabelPortIndex = LabelPrefix + "portIndex"
 	// LabelProtocol Traefik label
-	LabelProtocol = "traefik.protocol"
+	LabelProtocol = LabelPrefix + "protocol"
 	// LabelTags Traefik label
-	LabelTags = "traefik.tags"
+	LabelTags = LabelPrefix + "tags"
 	// LabelWeight Traefik label
-	LabelWeight = "traefik.weight"
+	LabelWeight = LabelPrefix + "weight"
 	// LabelFrontendAuthBasic Traefik label
-	LabelFrontendAuthBasic = "traefik.frontend.auth.basic"
+	LabelFrontendAuthBasic = LabelPrefix + "frontend.auth.basic"
 	// LabelFrontendEntryPoints Traefik label
-	LabelFrontendEntryPoints = "traefik.frontend.entryPoints"
+	LabelFrontendEntryPoints = LabelPrefix + "frontend.entryPoints"
 	// LabelFrontendPassHostHeader Traefik label
-	LabelFrontendPassHostHeader = "traefik.frontend.passHostHeader"
+	LabelFrontendPassHostHeader = LabelPrefix + "frontend.passHostHeader"
 	// LabelFrontendPriority Traefik label
-	LabelFrontendPriority = "traefik.frontend.priority"
+	LabelFrontendPriority = LabelPrefix + "frontend.priority"
 	// LabelFrontendRule Traefik label
-	LabelFrontendRule = "traefik.frontend.rule"
+	LabelFrontendRule = LabelPrefix + "frontend.rule"
 	// LabelFrontendRuleType Traefik label
-	LabelFrontendRuleType = "traefik.frontend.rule.type"
+	LabelFrontendRuleType = LabelPrefix + "frontend.rule.type"
 	// LabelTraefikFrontendValue Traefik label
-	LabelTraefikFrontendValue = "traefik.frontend.value"
+	LabelTraefikFrontendValue = LabelPrefix + "frontend.value"
 	// LabelTraefikFrontendWhitelistSourceRange Traefik label
-	LabelTraefikFrontendWhitelistSourceRange = "traefik.frontend.whitelistSourceRange"
+	LabelTraefikFrontendWhitelistSourceRange = LabelPrefix + "frontend.whitelistSourceRange"
 	// LabelBackend Traefik label
-	LabelBackend = "traefik.backend"
+	LabelBackend = LabelPrefix + "backend"
 	// LabelBackendID Traefik label
-	LabelBackendID = "traefik.backend.id"
+	LabelBackendID = LabelPrefix + "backend.id"
 	// LabelTraefikBackendCircuitbreaker Traefik label
-	LabelTraefikBackendCircuitbreaker = "traefik.backend.circuitbreaker"
+	LabelTraefikBackendCircuitbreaker = LabelPrefix + "backend.circuitbreaker"
 	// LabelBackendCircuitbreakerExpression Traefik label
-	LabelBackendCircuitbreakerExpression = "traefik.backend.circuitbreaker.expression"
+	LabelBackendCircuitbreakerExpression = LabelPrefix + "backend.circuitbreaker.expression"
 	// LabelBackendHealthcheckPath Traefik label
-	LabelBackendHealthcheckPath = "traefik.backend.healthcheck.path"
+	LabelBackendHealthcheckPath = LabelPrefix + "backend.healthcheck.path"
 	// LabelBackendHealthcheckInterval Traefik label
-	LabelBackendHealthcheckInterval = "traefik.backend.healthcheck.interval"
+	LabelBackendHealthcheckInterval = LabelPrefix + "backend.healthcheck.interval"
 	// LabelBackendLoadbalancerMethod Traefik label
-	LabelBackendLoadbalancerMethod = "traefik.backend.loadbalancer.method"
+	LabelBackendLoadbalancerMethod = LabelPrefix + "backend.loadbalancer.method"
 	// LabelBackendLoadbalancerSticky Traefik label
-	LabelBackendLoadbalancerSticky = "traefik.backend.loadbalancer.sticky"
+	LabelBackendLoadbalancerSticky = LabelPrefix + "backend.loadbalancer.sticky"
 	// LabelBackendMaxconnAmount Traefik label
-	LabelBackendMaxconnAmount = "traefik.backend.maxconn.amount"
+	LabelBackendMaxconnAmount = LabelPrefix + "backend.maxconn.amount"
 	// LabelBackendMaxconnExtractorfunc Traefik label
-	LabelBackendMaxconnExtractorfunc = "traefik.backend.maxconn.extractorfunc"
+	LabelBackendMaxconnExtractorfunc = LabelPrefix + "backend.maxconn.extractorfunc"
 )
+
+//ServiceLabel converts a key value of Label*, given a serviceName, into a pattern <LabelPrefix>.<serviceName>.<property>
+//    i.e. For LabelFrontendRule and serviceName=app it will return "traefik.app.frontend.rule"
+func ServiceLabel(key, serviceName string) string {
+	if len(serviceName) > 0 {
+		property := strings.TrimPrefix(key, LabelPrefix)
+		return LabelPrefix + serviceName + "." + property
+	}
+	return key
+}

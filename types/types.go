@@ -7,6 +7,13 @@ import (
 	"strconv"
 	"strings"
 
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+	"os"
+
+	"github.com/containous/flaeg"
+	"github.com/containous/traefik/log"
 	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
 )
@@ -59,6 +66,19 @@ type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Backend string   `json:"backend,omitempty"`
 	Query   string   `json:"query,omitempty"`
+}
+
+// Rate holds a rate limiting configuration for a specific time period
+type Rate struct {
+	Period  flaeg.Duration `json:"period,omitempty"`
+	Average int64          `json:"average,omitempty"`
+	Burst   int64          `json:"burst,omitempty"`
+}
+
+// RateLimit holds a rate limiting configuration for a given frontend
+type RateLimit struct {
+	RateSet       map[string]*Rate `json:"rateset,omitempty"`
+	ExtractorFunc string           `json:"extractorFunc,omitempty"`
 }
 
 // Headers holds the custom header configuration
@@ -125,6 +145,7 @@ type Frontend struct {
 	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
 	Headers              Headers              `json:"headers,omitempty"`
 	Errors               map[string]ErrorPage `json:"errors,omitempty"`
+	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
@@ -155,6 +176,9 @@ func NewLoadBalancerMethod(loadBalancer *LoadBalancer) (LoadBalancerMethod, erro
 	}
 	return Wrr, fmt.Errorf("invalid load-balancing method '%s'", method)
 }
+
+// Configurations is for currentConfigurations Map
+type Configurations map[string]*Configuration
 
 // Configuration of a provider.
 type Configuration struct {
@@ -277,7 +301,7 @@ func (cs *Constraints) SetValue(val interface{}) {
 
 // Type exports the Constraints type as a string
 func (cs *Constraints) Type() string {
-	return fmt.Sprint("constraint")
+	return "constraint"
 }
 
 // Store holds KV store cluster config
@@ -296,6 +320,7 @@ type Cluster struct {
 type Auth struct {
 	Basic       *Basic
 	Digest      *Digest
+	Forward     *Forward
 	HeaderField string
 }
 
@@ -312,6 +337,12 @@ type Basic struct {
 type Digest struct {
 	Users     `mapstructure:","`
 	UsersFile string
+}
+
+// Forward authentication
+type Forward struct {
+	Address string     `description:"Authentication server address"`
+	TLS     *ClientTLS `description:"Enable TLS support"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space
@@ -338,7 +369,7 @@ type Prometheus struct {
 
 // Datadog contains address and metrics pushing interval configuration
 type Datadog struct {
-	Address      string `description:"DataDog's Dogstatsd address"`
+	Address      string `description:"DataDog's address"`
 	PushInterval string `description:"DataDog push interval"`
 }
 
@@ -384,4 +415,72 @@ func (b *Buckets) SetValue(val interface{}) {
 type AccessLog struct {
 	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty"`
 	Format   string `json:"format,omitempty" description:"Access log format: json | common"`
+}
+
+// ClientTLS holds TLS specific configurations as client
+// CA, Cert and Key can be either path or file contents
+type ClientTLS struct {
+	CA                 string `description:"TLS CA"`
+	Cert               string `description:"TLS cert"`
+	Key                string `description:"TLS key"`
+	InsecureSkipVerify bool   `description:"TLS insecure skip verify"`
+}
+
+// CreateTLSConfig creates a TLS config from ClientTLS structures
+func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
+	var err error
+	if clientTLS == nil {
+		log.Warnf("clientTLS is nil")
+		return nil, nil
+	}
+	caPool := x509.NewCertPool()
+	if clientTLS.CA != "" {
+		var ca []byte
+		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
+			ca, err = ioutil.ReadFile(clientTLS.CA)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to read CA. %s", err)
+			}
+		} else {
+			ca = []byte(clientTLS.CA)
+		}
+		caPool.AppendCertsFromPEM(ca)
+	}
+
+	cert := tls.Certificate{}
+	_, errKeyIsFile := os.Stat(clientTLS.Key)
+
+	if !clientTLS.InsecureSkipVerify && (len(clientTLS.Cert) == 0 || len(clientTLS.Key) == 0) {
+		return nil, fmt.Errorf("TLS Certificate or Key file must be set when TLS configuration is created")
+	}
+
+	if len(clientTLS.Cert) > 0 && len(clientTLS.Key) > 0 {
+		if _, errCertIsFile := os.Stat(clientTLS.Cert); errCertIsFile == nil {
+			if errKeyIsFile == nil {
+				cert, err = tls.LoadX509KeyPair(clientTLS.Cert, clientTLS.Key)
+				if err != nil {
+					return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
+				}
+			} else {
+				return nil, fmt.Errorf("tls cert is a file, but tls key is not")
+			}
+		} else {
+			if errKeyIsFile != nil {
+				cert, err = tls.X509KeyPair([]byte(clientTLS.Cert), []byte(clientTLS.Key))
+				if err != nil {
+					return nil, fmt.Errorf("Failed to load TLS keypair: %v", err)
+
+				}
+			} else {
+				return nil, fmt.Errorf("tls key is a file, but tls cert is not")
+			}
+		}
+	}
+
+	TLSConfig := &tls.Config{
+		Certificates:       []tls.Certificate{cert},
+		RootCAs:            caPool,
+		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
+	}
+	return TLSConfig, nil
 }

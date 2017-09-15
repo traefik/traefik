@@ -1,6 +1,9 @@
 package integration
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -48,7 +51,6 @@ func (suite *WebsocketSuite) TestBase(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
@@ -57,15 +59,14 @@ func (suite *WebsocketSuite) TestBase(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
-
 	c.Assert(err, checker.IsNil)
-	conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+
+	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+	c.Assert(err, checker.IsNil)
 
 	_, msg, err := conn.ReadMessage()
 	c.Assert(err, checker.IsNil)
-
 	c.Assert(string(msg), checker.Equals, "OK")
-
 }
 
 func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
@@ -99,7 +100,6 @@ func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
@@ -111,14 +111,15 @@ func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, checker.IsNil)
 	_, err = websocket.NewClient(config, conn)
 	c.Assert(err, checker.NotNil)
 	c.Assert(err, checker.ErrorMatches, "bad status")
-
 }
 
 func (suite *WebsocketSuite) TestOrigin(c *check.C) {
-	var upgrader = gorillawebsocket.Upgrader{} // use default options
+	// use default options
+	var upgrader = gorillawebsocket.Upgrader{}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -148,7 +149,6 @@ func (suite *WebsocketSuite) TestOrigin(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
@@ -160,6 +160,7 @@ func (suite *WebsocketSuite) TestOrigin(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, check.IsNil)
 	client, err := websocket.NewClient(config, conn)
 	c.Assert(err, checker.IsNil)
 
@@ -208,7 +209,6 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
 
 	err := cmd.Start()
-
 	c.Assert(err, check.IsNil)
 	defer cmd.Process.Kill()
 
@@ -220,6 +220,7 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	c.Assert(err, check.IsNil)
 
 	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, checker.IsNil)
 	client, err := websocket.NewClient(config, conn)
 	c.Assert(err, checker.IsNil)
 
@@ -233,4 +234,59 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	c.Assert(n, checker.Equals, 2)
 	c.Assert(string(msg), checker.Equals, "OK")
 
+}
+
+func (suite *WebsocketSuite) TestSSLTermination(c *check.C) {
+	var upgrader = gorillawebsocket.Upgrader{} // use default options
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+		for {
+			mt, message, err := c.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = c.WriteMessage(mt, message)
+			if err != nil {
+				break
+			}
+		}
+	}))
+	file := suite.adaptFile(c, "fixtures/websocket/config_https.toml", struct {
+		WebsocketServer string
+	}{
+		WebsocketServer: srv.URL,
+	})
+
+	defer os.Remove(file)
+	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+
+	err := cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
+	c.Assert(err, checker.IsNil)
+
+	//Add client self-signed cert
+	roots := x509.NewCertPool()
+	certContent, err := ioutil.ReadFile("./resources/tls/local.cert")
+	roots.AppendCertsFromPEM(certContent)
+	gorillawebsocket.DefaultDialer.TLSClientConfig = &tls.Config{
+		RootCAs: roots,
+	}
+	conn, _, err := gorillawebsocket.DefaultDialer.Dial("wss://127.0.0.1:8000/ws", nil)
+	c.Assert(err, checker.IsNil)
+
+	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+	c.Assert(err, checker.IsNil)
+
+	_, msg, err := conn.ReadMessage()
+	c.Assert(err, checker.IsNil)
+	c.Assert(string(msg), checker.Equals, "OK")
 }

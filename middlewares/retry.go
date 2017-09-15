@@ -60,7 +60,7 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 		attempts++
 		log.Debugf("New attempt %d for request: %v", attempts, r.URL)
-		retry.listener.Retried(attempts)
+		retry.listener.Retried(r, attempts)
 	}
 }
 
@@ -93,7 +93,18 @@ func (DefaultNetErrorRecorder) Record(ctx context.Context) {
 type RetryListener interface {
 	// Retried will be called when a retry happens, with the request attempt passed to it.
 	// For the first retry this will be attempt 2.
-	Retried(attempt int)
+	Retried(req *http.Request, attempt int)
+}
+
+// RetryListeners is a convenience type to construct a list of RetryListener and notify
+// each of them about a retry attempt.
+type RetryListeners []RetryListener
+
+// Retried exists to implement the RetryListener interface. It calls Retried on each of its slice entries.
+func (l RetryListeners) Retried(req *http.Request, attempt int) {
+	for _, retryListener := range l {
+		retryListener.Retried(req, attempt)
+	}
 }
 
 // retryResponseRecorder is an implementation of http.ResponseWriter that

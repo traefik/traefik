@@ -10,6 +10,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api/types"
 	containertypes "github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/libcompose/config"
 	composecontainer "github.com/docker/libcompose/docker/container"
 	"github.com/docker/libcompose/labels"
@@ -55,9 +56,28 @@ func (s *Service) createContainer(ctx context.Context, namer Namer, oldContainer
 		configWrapper.HostConfig.Binds = util.Merge(configWrapper.HostConfig.Binds, volumeBinds(configWrapper.Config.Volumes, &info))
 	}
 
+	networkConfig := configWrapper.NetworkingConfig
+	if configWrapper.HostConfig.NetworkMode != "" && configWrapper.HostConfig.NetworkMode.IsUserDefined() {
+		if networkConfig == nil {
+			networkConfig = &network.NetworkingConfig{
+				EndpointsConfig: map[string]*network.EndpointSettings{
+					string(configWrapper.HostConfig.NetworkMode): {},
+				},
+			}
+		}
+		for key, value := range networkConfig.EndpointsConfig {
+
+			conf := value
+			if value.Aliases == nil {
+				value.Aliases = []string{}
+			}
+			value.Aliases = append(value.Aliases, s.name)
+			networkConfig.EndpointsConfig[key] = conf
+		}
+	}
 	logrus.Debugf("Creating container %s %#v", containerName, configWrapper)
 	// FIXME(vdemeester): long-term will be container.Create(…)
-	container, err := composecontainer.Create(ctx, client, containerName, configWrapper.Config, configWrapper.HostConfig, configWrapper.NetworkingConfig)
+	container, err := composecontainer.Create(ctx, client, containerName, configWrapper.Config, configWrapper.HostConfig, networkConfig)
 	if err != nil {
 		return nil, err
 	}

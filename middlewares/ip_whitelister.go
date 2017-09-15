@@ -58,7 +58,6 @@ func (whitelister *IPWhitelister) handle(w http.ResponseWriter, r *http.Request,
 
 	log.Debugf("source-IP %s matched none of the whitelists - rejecting", remoteIP)
 	reject(w)
-	return
 }
 
 func reject(w http.ResponseWriter) {

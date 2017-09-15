@@ -128,6 +128,7 @@ func New(setters ...optSetter) (*Forwarder, error) {
 	if f.httpForwarder.roundTripper == nil {
 		f.httpForwarder.roundTripper = http.DefaultTransport
 	}
+	f.websocketForwarder.TLSClientConfig = f.httpForwarder.roundTripper.(*http.Transport).TLSClientConfig
 	if f.httpForwarder.rewriter == nil {
 		h, err := os.Hostname()
 		if err != nil {
@@ -258,7 +259,6 @@ func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request,
 	if outReq.URL.Scheme == "wss" && f.TLSClientConfig != nil {
 		dialer.TLSClientConfig = f.TLSClientConfig
 	}
-
 	targetConn, resp, err := dialer.Dial(outReq.URL.String(), outReq.Header)
 	if err != nil {
 		ctx.log.Errorf("Error dialing `%v`: %v", outReq.Host, err)
@@ -308,7 +308,6 @@ func (f *websocketForwarder) copyRequest(req *http.Request, u *url.URL) (outReq 
 
 	outReq.URL = utils.CopyURL(req.URL)
 	outReq.URL.Scheme = u.Scheme
-	outReq.URL.Path = outReq.RequestURI
 
 	//sometimes backends might be registered as HTTP/HTTPS servers so translate URLs to websocket URLs.
 	switch u.Scheme {
@@ -318,9 +317,16 @@ func (f *websocketForwarder) copyRequest(req *http.Request, u *url.URL) (outReq 
 		outReq.URL.Scheme = "ws"
 	}
 
+	if requestURI, err := url.ParseRequestURI(outReq.RequestURI); err == nil {
+		if requestURI.RawPath != "" {
+			outReq.URL.Path = requestURI.RawPath
+		} else {
+			outReq.URL.Path = requestURI.Path
+		}
+		outReq.URL.RawQuery = requestURI.RawQuery
+	}
+
 	outReq.URL.Host = u.Host
-	// raw query is already included in RequestURI, so ignore it to avoid dupes
-	outReq.URL.RawQuery = ""
 
 	outReq.Header = make(http.Header)
 	//gorilla websocket use this header to set the request.Host tested in checkSameOrigin

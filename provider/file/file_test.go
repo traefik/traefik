@@ -38,7 +38,7 @@ func TestProvideSingleFileAndWatch(t *testing.T) {
 	expectedNumFrontends = 1
 	expectedNumBackends = 1
 
-	tempFile = createFile(t,
+	createFile(t,
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
 		createBackendConfiguration(expectedNumBackends))
@@ -72,7 +72,7 @@ func TestProvideSingleFileAndNotWatch(t *testing.T) {
 	expectedNumFrontends = 1
 	expectedNumBackends = 1
 
-	tempFile = createFile(t,
+	createFile(t,
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
 		createBackendConfiguration(expectedNumBackends))

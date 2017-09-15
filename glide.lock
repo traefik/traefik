@@ -1,5 +1,5 @@
-hash: 1cb8a7bc9dcca526370e84514c3f0c76b342e25d40ba584826d22f7e93be584c
-updated: 2017-08-01T19:11:22.221029923+02:00
+hash: 857714f15cc10657ae2f15f3ab6592734a1ebc524d32b5353948258ce3043b6a
+updated: 2017-09-09T11:52:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -8,6 +8,10 @@ imports:
   - internal
 - name: github.com/abbot/go-http-auth
   version: 0ddd408d5d60ea76e320503cc7dd091992dee608
+- name: github.com/aokoli/goutils
+  version: 3391d3790d23d03408670993e957e8f408993c34
+- name: github.com/armon/go-proxyproto
+  version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - name: github.com/ArthurHlt/go-eureka-client
   version: 9d0a49cbd39aa3634ae1977e9f519a262b10adaf
   subpackages:
@@ -85,7 +89,7 @@ imports:
 - name: github.com/containous/flaeg
   version: b5d2dc5878df07c2d74413348186982e7b865871
 - name: github.com/containous/mux
-  version: a819b77bba13f0c0cbe36e437bc2e948411b3996
+  version: af6ea922f7683d9706834157e6b0610e22ccb2db
 - name: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - name: github.com/coreos/etcd
@@ -300,6 +304,10 @@ imports:
   version: 19f2c401e122352c047a84d6584dd51e2fb8fcc4
   subpackages:
   - coordinate
+- name: github.com/huandu/xstrings
+  version: 3959339b333561bf62a38b424fd41517c2c90f40
+- name: github.com/imdario/mergo
+  version: 3e95a51e0639b4cf372f2ccf74c86749d747fbdc
 - name: github.com/JamesClonk/vultr
   version: 0f156dd232bc4ebf8a32ba83fec57c0e4c9db69f
   subpackages:
@@ -312,14 +320,22 @@ imports:
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
+- name: github.com/mailgun/minheap
+  version: 7c28d80e2ada649fc8ab1a37b86d30a2633bd47c
 - name: github.com/mailgun/timetools
   version: 7e6055773c5137efbeb3bd2410d705fe10ab6bfd
+- name: github.com/mailgun/ttlmap
+  version: c1c17f74874f2a5ea48bfb06b5459d4ef2689749
 - name: github.com/mailru/easyjson
   version: d5b7844b561a7bc640052f1b935f7b800330d7e0
   subpackages:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/Masterminds/semver
+  version: 59c29afe1a994eacb71c833025ca7acf874bb1da
+- name: github.com/Masterminds/sprig
+  version: 9526be0327b26ad31aa70296a7b10704883976d5
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
@@ -367,7 +383,7 @@ imports:
   repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
-  version: 316adfc72ed3b0157975917adf62ba2dc31842ce
+  version: 824b33f2a7457025697878c865c323f801118043
   repo: https://github.com/containous/gziphandler.git
   vcs: git
 - name: github.com/ogier/pflag
@@ -467,7 +483,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: 05a57556d820dc5c56721ebdefbafc15f36fac98
+  version: 6c94d2888dba2b1a15a89b8a2ca515fc85e07477
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -475,6 +491,7 @@ imports:
   - connlimit
   - forward
   - memmetrics
+  - ratelimit
   - roundrobin
   - stream
   - utils
@@ -520,6 +537,8 @@ imports:
   - bcrypt
   - blowfish
   - ocsp
+  - pbkdf2
+  - scrypt
 - name: golang.org/x/net
   version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
   subpackages:
@@ -740,7 +759,7 @@ testImports:
   - cli/config
   - cli/config/configfile
 - name: github.com/docker/libcompose
-  version: 0ad950cbeb3d72107613dd220b5e9d7e001b890b
+  version: 1b708aac26a4fc6f9bff31728a8e3a252ef57dbd
   subpackages:
   - config
   - docker
@@ -769,7 +788,7 @@ testImports:
 - name: github.com/gorilla/mux
   version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
 - name: github.com/libkermit/compose
-  version: 2048f803f56422a65b455f918d4a61704dc94603
+  version: 4a33a16f1446ba205c4da7b09105d5bdc293b432
   subpackages:
   - check
 - name: github.com/libkermit/docker

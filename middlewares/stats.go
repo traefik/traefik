@@ -80,7 +80,7 @@ func (r *responseRecorder) Flush() {
 func (s *StatsRecorder) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	recorder := &responseRecorder{w, http.StatusOK}
 	next(recorder, r)
-	if recorder.statusCode >= 400 {
+	if recorder.statusCode >= http.StatusBadRequest {
 		s.mutex.Lock()
 		defer s.mutex.Unlock()
 		s.recentErrors = append([]*statsError{

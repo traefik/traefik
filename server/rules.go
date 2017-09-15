@@ -131,6 +131,15 @@ func (r *Rules) headersRegexp(headers ...string) *mux.Route {
 	return r.route.route.HeadersRegexp(headers...)
 }
 
+func (r *Rules) query(query ...string) *mux.Route {
+	var queries []string
+	for _, elem := range query {
+		queries = append(queries, strings.Split(elem, "=")...)
+	}
+
+	return r.route.route.Queries(queries...)
+}
+
 func (r *Rules) parseRules(expression string, onRule func(functionName string, function interface{}, arguments []string) error) error {
 	functions := map[string]interface{}{
 		"Host":                 r.host,
@@ -146,6 +155,7 @@ func (r *Rules) parseRules(expression string, onRule func(functionName string, f
 		"HeadersRegexp":        r.headersRegexp,
 		"AddPrefix":            r.addPrefix,
 		"ReplacePath":          r.replacePath,
+		"Query":                r.query,
 	}
 
 	if len(expression) == 0 {
