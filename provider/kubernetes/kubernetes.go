@@ -36,7 +36,8 @@ const (
 	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
 	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
 	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
-	annotationKubernetesSSLRedirect          = "ingress.kubernetes.io/ssl-redirect"
+	annotationKubernetesSSLRedirect          = "ingress.kubernetes.io/force-ssl-redirect"
+	annotationKubernetesSSLProxyHeaders      = "ingress.kubernetes.io/ssl-proxy-headers"
 )
 
 const traefikDefaultRealm = "traefik"
@@ -218,6 +219,18 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					default:
 						log.Warnf("Unknown value '%s' for %s", sslRedirectAnnotation, annotationKubernetesSSLRedirect)
 					}
+
+					sslProxyHeaders, ok := i.Annotations[annotationKubernetesSSLProxyHeaders]
+					if ok {
+						templateObjects.Frontends[r.Host+pa.Path].Headers.SSLProxyHeaders = map[string]string{}
+						for _, kvp := range strings.Split(sslProxyHeaders, ",") {
+							kv := strings.SplitN(kvp, "=", 2)
+							if len(kv) == 2 {
+								templateObjects.Frontends[r.Host+pa.Path].Headers.SSLProxyHeaders[kv[0]] = kv[1]
+							}
+						}
+					}
+
 				}
 
 				if len(r.Host) > 0 {

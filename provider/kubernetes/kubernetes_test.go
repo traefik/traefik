@@ -1714,7 +1714,6 @@ func TestIngressAnnotations(t *testing.T) {
 			},
 			"ssl/redirect": {
 				Backend:        "ssl/redirect",
-				Priority:       len("/redirect"),
 				PassHostHeader: true,
 				Headers: types.Headers{
 					SSLRedirect: true,
@@ -2403,7 +2402,8 @@ func TestSSLRedirectInTemplate(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"ingress.kubernetes.io/ssl-redirect": "true",
+					annotationKubernetesSSLRedirect:     "true",
+					annotationKubernetesSSLProxyHeaders: "X-Forward-Proto=https",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -2467,6 +2467,10 @@ func TestSSLRedirectInTemplate(t *testing.T) {
 	got := actual.Frontends["ssl/redirect"].Headers.SSLRedirect
 	if !got {
 		t.Fatalf("expected SSLRedirect to be true got: %+v", got)
+	}
+
+	if got := actual.Frontends["ssl/redirect"].Headers.SSLProxyHeaders; !reflect.DeepEqual(got, map[string]string{"X-Forward-Proto": "https"}) {
+		t.Fatalf("expected 'X-Forward-Proto' to be 'https' got: %+v", got)
 	}
 }
 

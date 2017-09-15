@@ -21,14 +21,17 @@
   backend = "{{$frontend.Backend}}"
   priority = {{$frontend.Priority}}
   passHostHeader = {{$frontend.PassHostHeader}}
-    [frontends."{{$frontendName}}".headers]
-    sslRedirect = {{$frontend.Headers.SSLRedirect}}
   basicAuth = [{{range $frontend.BasicAuth}}
       "{{.}}",
   {{end}}]
   whitelistSourceRange = [{{range $frontend.WhitelistSourceRange}}
     "{{.}}",
   {{end}}]
+    [frontends."{{$frontendName}}".headers]
+    sslRedirect = {{$frontend.Headers.SSLRedirect}}
+    [frontends."{{$frontendName}}".headers.sslProxyHeaders]{{range $key, $val := $frontend.Headers.SSLProxyHeaders}}
+      {{$key}} = "{{$val}}"
+    {{end}}
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
     rule = "{{$route.Rule}}"
