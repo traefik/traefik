@@ -227,8 +227,10 @@ func RotateFile() error {
 		return nil
 	}
 
-	if err := CloseFile(); err != nil {
-		return fmt.Errorf("error closing log file: %s", err)
+	if logFile != nil {
+		defer func(f *os.File) {
+			f.Close()
+		}(logFile)
 	}
 
 	if err := OpenFile(logFilePath); err != nil {
