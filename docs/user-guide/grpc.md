@@ -39,7 +39,7 @@ Common Name (e.g. server FQDN or YOUR name) []: frontend.local
 
 ## Træfik configuration
 
-At last, we configure our Træfik instance to use the both self-signed certificate.
+At last, we configure our Træfik instance to use both self-signed certificates.
 
 ```toml
 defaultEntryPoints = ["https"]
