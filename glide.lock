@@ -1,5 +1,5 @@
-hash: 7b973a5de5444f7f29252ae78529ee50569174b2c17f4aa89bf15aaf2553c6b7
-updated: 2017-08-25T11:52:16.848940186+02:00
+hash: f742f45c92013191b9840880a200060d58344828ed28fb4e02680adc7b508882
+updated: 2017-09-15T11:52:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -779,7 +779,9 @@ testImports:
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+  version: ca0bf163426aa183d03fd4949101785c0347f273
+  repo: https://github.com/containous/check.git
+  vcs: git
 - name: github.com/gorilla/mux
   version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
 - name: github.com/libkermit/compose
