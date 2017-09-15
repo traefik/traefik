@@ -208,7 +208,9 @@ testImport:
 - package: github.com/docker/libcompose
   version: 1b708aac26a4fc6f9bff31728a8e3a252ef57dbd
 - package: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+  version: fork-containous
+  repo: https://github.com/containous/check.git
+  vcs: git
 - package: github.com/libkermit/compose
   version: 2048f803f56422a65b455f918d4a61704dc94603
   subpackages:
