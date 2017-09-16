@@ -262,7 +262,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 
 func TestForwardAuthCookie(t *testing.T) {
 	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie := &http.Cookie{ Name: "example", Value:"testing", Path: "/" }
+		cookie := &http.Cookie{Name: "example", Value: "testing", Path: "/"}
 		http.SetCookie(w, cookie)
 		http.Error(w, "Forbidden", http.StatusForbidden)
 	}))
