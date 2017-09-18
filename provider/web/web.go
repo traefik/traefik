@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
+	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
@@ -135,7 +136,7 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 		var err error
 		var negroniInstance = negroni.New()
 		if provider.Auth != nil {
-			authMiddleware, err := middlewares.NewAuthenticator(provider.Auth)
+			authMiddleware, err := mauth.NewAuthenticator(provider.Auth)
 			if err != nil {
 				log.Fatal("Error creating Auth: ", err)
 			}
