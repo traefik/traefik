@@ -325,8 +325,9 @@ type Digest struct {
 
 // Forward authentication
 type Forward struct {
-	Address string     `description:"Authentication server address"`
-	TLS     *ClientTLS `description:"Enable TLS support"`
+	Address    string     `description:"Authentication server address"`
+	TLS        *ClientTLS `description:"Enable TLS support"`
+	HostHeader string     `description:"Header name to put the forwarded host"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space

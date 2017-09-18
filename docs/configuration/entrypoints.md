@@ -118,25 +118,27 @@ Otherwise, the response from the auth server is returned.
 
 ```toml
 [entryPoints]
-  [entryPoints.http]
-  # ...
-  # To enable forward auth on an entrypoint
-  [entryPoints.http.auth.forward]
-  address = "http://authserver.com/auth"
-```
-
-```toml
-[entryPoints]
   [entrypoints.http]
     # ...
-    # To enable forward auth on an entrypoint (HTTPS)
+    # To enable forward auth on an entrypoint
     [entrypoints.http.auth.forward]
     address = "https://authserver.com/auth"
+    
+    # Enable forward auth TLS connection.
+    #
+    # Optional
+    #
     [entrypoints.http.auth.forward.tls]
     cert = "authserver.crt"
     key = "authserver.key"
+    
+    #  Pass the request Host via a configurable header value.
+    #
+    # Optional
+    # Default: "X-Forwarded-Host"
+    #
+    hostHeader = "X-Forwarded-Host"
 ```
-
 
 ## Specify Minimum TLS Version
 
