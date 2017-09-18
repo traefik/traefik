@@ -128,7 +128,7 @@ Otherwise, the response from the auth server is returned.
     # Useful with another reverse proxy in front of Traefik.
     #
     # Optional
-    # Deafult: false
+    # Default: false
     #
     trustForwardHeader = true
     

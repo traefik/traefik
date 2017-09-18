@@ -72,25 +72,26 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 				clientIP = strings.Join(prior, ", ") + ", " + clientIP
 			}
 		}
-		req.Header.Set(forward.XForwardedFor, clientIP)
+		forwardReq.Header.Set(forward.XForwardedFor, clientIP)
 	}
 
 	if xfp := req.Header.Get(forward.XForwardedProto); xfp != "" && trustForwardHeader {
-		req.Header.Set(forward.XForwardedProto, xfp)
+		forwardReq.Header.Set(forward.XForwardedProto, xfp)
 	} else if req.TLS != nil {
-		req.Header.Set(forward.XForwardedProto, "https")
+		forwardReq.Header.Set(forward.XForwardedProto, "https")
 	} else {
-		req.Header.Set(forward.XForwardedProto, "http")
+		forwardReq.Header.Set(forward.XForwardedProto, "http")
 	}
 
 	if xfp := req.Header.Get(forward.XForwardedPort); xfp != "" && trustForwardHeader {
-		req.Header.Set(forward.XForwardedPort, xfp)
+		forwardReq.Header.Set(forward.XForwardedPort, xfp)
 	}
 
 	if xfh := req.Header.Get(forward.XForwardedHost); xfh != "" && trustForwardHeader {
-		req.Header.Set(forward.XForwardedHost, xfh)
+		forwardReq.Header.Set(forward.XForwardedHost, xfh)
 	} else if req.Host != "" {
-		req.Header.Set(forward.XForwardedHost, req.Host)
+		forwardReq.Header.Set(forward.XForwardedHost, req.Host)
+	} else {
+		forwardReq.Header.Del(forward.XForwardedHost)
 	}
-
 }
