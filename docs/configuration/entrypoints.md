@@ -124,6 +124,14 @@ Otherwise, the response from the auth server is returned.
     [entrypoints.http.auth.forward]
     address = "https://authserver.com/auth"
     
+    # Trust existing X-Forwarded-* headers.
+    # Useful with another reverse proxy in front of Traefik.
+    #
+    # Optional
+    # Deafult: false
+    #
+    trustForwardHeader = true
+    
     # Enable forward auth TLS connection.
     #
     # Optional

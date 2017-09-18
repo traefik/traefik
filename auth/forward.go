@@ -35,7 +35,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		return
 	}
 
-	writeHeader(r, forwardReq)
+	writeHeader(r, forwardReq, config.TrustForwardHeader)
 
 	forwardResponse, forwardErr := httpClient.Do(forwardReq)
 	if forwardErr != nil {
@@ -63,31 +63,34 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	next(w, r)
 }
 
-func writeHeader(req *http.Request, forwardReq *http.Request) {
+func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader bool) {
 	utils.CopyHeaders(forwardReq.Header, req.Header)
 
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-		if prior, ok := req.Header[forward.XForwardedFor]; ok {
-			clientIP = strings.Join(prior, ", ") + ", " + clientIP
+		if trustForwardHeader {
+			if prior, ok := req.Header[forward.XForwardedFor]; ok {
+				clientIP = strings.Join(prior, ", ") + ", " + clientIP
+			}
 		}
-		forwardReq.Header.Set(forward.XForwardedFor, clientIP)
+		req.Header.Set(forward.XForwardedFor, clientIP)
 	}
 
-	if xfp := req.Header.Get(forward.XForwardedProto); xfp != "" {
-		forwardReq.Header.Set(forward.XForwardedProto, xfp)
+	if xfp := req.Header.Get(forward.XForwardedProto); xfp != "" && trustForwardHeader {
+		req.Header.Set(forward.XForwardedProto, xfp)
 	} else if req.TLS != nil {
-		forwardReq.Header.Set(forward.XForwardedProto, "https")
+		req.Header.Set(forward.XForwardedProto, "https")
 	} else {
-		forwardReq.Header.Set(forward.XForwardedProto, "http")
+		req.Header.Set(forward.XForwardedProto, "http")
 	}
 
-	if xfp := req.Header.Get(forward.XForwardedPort); xfp != "" {
-		forwardReq.Header.Set(forward.XForwardedPort, xfp)
+	if xfp := req.Header.Get(forward.XForwardedPort); xfp != "" && trustForwardHeader {
+		req.Header.Set(forward.XForwardedPort, xfp)
 	}
 
-	if xfh := req.Header.Get(forward.XForwardedHost); xfh != "" {
-		forwardReq.Header.Set(forward.XForwardedHost, xfh)
+	if xfh := req.Header.Get(forward.XForwardedHost); xfh != "" && trustForwardHeader {
+		req.Header.Set(forward.XForwardedHost, xfh)
 	} else if req.Host != "" {
-		forwardReq.Header.Set(forward.XForwardedHost, req.Host)
+		req.Header.Set(forward.XForwardedHost, req.Host)
 	}
+
 }
