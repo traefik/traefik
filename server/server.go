@@ -42,6 +42,7 @@ import (
 	"github.com/sirupsen/logrus"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
+	"github.com/vulcand/oxy/buffer"
 	"github.com/vulcand/oxy/connlimit"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/ratelimit"
@@ -1150,6 +1151,16 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.UseFunc(secureMiddleware.HandlerFuncWithNext)
 					}
 
+					if globalConfiguration.Buffering != nil {
+						bufferedLb, err := server.buildBufferingMiddleware(lb, globalConfiguration)
+
+						if err != nil {
+							log.Errorf("Error setting up buffering middleware: %s", err)
+						} else {
+							lb = bufferedLb
+						}
+					}
+
 					if config.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", config.Backends[frontend.Backend].CircuitBreaker.Expression)
 						expression := config.Backends[frontend.Backend].CircuitBreaker.Expression
@@ -1507,4 +1518,36 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 		return saveFrontend
 	}
 	return handler
+}
+
+func (server *Server) buildBufferingMiddleware(handler http.Handler, globalConfig configuration.GlobalConfiguration) (http.Handler, error) {
+	if !globalConfig.Buffering.Enabled {
+		return handler, nil
+	}
+
+	var lb *buffer.Buffer
+	var err error
+
+	if len(globalConfig.Buffering.RetryExpression) > 0 {
+		lb, err = buffer.New(handler,
+			buffer.MemRequestBodyBytes(globalConfig.Buffering.MemRequestBodyBytes),
+			buffer.MaxRequestBodyBytes(globalConfig.Buffering.MaxRequestBodyBytes),
+			buffer.MemResponseBodyBytes(globalConfig.Buffering.MemResponseBodyBytes),
+			buffer.MaxResponseBodyBytes(globalConfig.Buffering.MaxResponseBodyBytes),
+			buffer.Retry(globalConfig.Buffering.RetryExpression),
+		)
+	} else {
+		lb, err = buffer.New(handler,
+			buffer.MemRequestBodyBytes(globalConfig.Buffering.MemRequestBodyBytes),
+			buffer.MaxRequestBodyBytes(globalConfig.Buffering.MaxRequestBodyBytes),
+			buffer.MemResponseBodyBytes(globalConfig.Buffering.MemResponseBodyBytes),
+			buffer.MaxResponseBodyBytes(globalConfig.Buffering.MaxResponseBodyBytes),
+		)
+	}
+
+	log.Debugf("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
+		globalConfig.Buffering.MemRequestBodyBytes, globalConfig.Buffering.MaxRequestBodyBytes, globalConfig.Buffering.MemResponseBodyBytes,
+		globalConfig.Buffering.MaxResponseBodyBytes, globalConfig.Buffering.RetryExpression)
+
+	return lb, err
 }
