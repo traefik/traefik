@@ -17,8 +17,8 @@ The cluster consists of:
 
 ## Cluster provisioning
 
-First, let's create all the required nodes. It's a shorter version of
-the [swarm tutorial](https://docs.docker.com/engine/swarm/swarm-tutorial/).
+First, let's create all the required nodes.
+It's a shorter version of the [swarm tutorial](https://docs.docker.com/engine/swarm/swarm-tutorial/).
 
 ```shell
 docker-machine create -d virtualbox manager
@@ -29,8 +29,8 @@ docker-machine create -d virtualbox worker2
 Then, let's setup the cluster, in order :
 
 1. initialize the cluster
-2. get the token for other host to join
-3. on both workers, join the cluster with the token
+1. get the token for other host to join
+1. on both workers, join the cluster with the token
 
 ```shell
 docker-machine ssh manager "docker swarm init \
@@ -94,17 +94,19 @@ docker-machine ssh manager "docker service create \
 
 Let's explain this command:
 
-- `--publish 80:80 --publish 8080:8080`: we publish port `80` and `8080` on the cluster.
-- `--constraint=node.role==manager`: we ask docker to schedule Træfik on a manager node.
-- `--mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock`:
-  we bind mount the docker socket where Træfik is scheduled to be able to speak to the daemon.
-- `--network traefik-net`: we attach the Træfik service (and thus the underlying container) to the `traefik-net` network.
-- `--docker`: enable docker backend, and `--docker.swarmmode` to enable the swarm mode on Træfik.
-- `--web`: activate the webUI on port 8080
+| Option                                                                      | Description                                                                                    |
+|-----------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| `--publish 80:80 --publish 8080:8080`                                       | we publish port `80` and `8080` on the cluster.                                                |
+| `--constraint=node.role==manager`                                           | we ask docker to schedule Træfik on a manager node.                                            |
+| `--mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock` | we bind mount the docker socket where Træfik is scheduled to be able to speak to the daemon.   |
+| `--network traefik-net`                                                     | we attach the Træfik service (and thus the underlying container) to the `traefik-net` network. |
+| `--docker`                                                                  | enable docker backend, and `--docker.swarmmode` to enable the swarm mode on Træfik.            |
+| `--web`                                                                     | activate the webUI on port 8080                                                                |
 
 ## Deploy your apps
 
-We can now deploy our app on the cluster, here [whoami](https://github.com/emilevauge/whoami), a simple web server in Go. We start 2 services, on the `traefik-net` network.
+We can now deploy our app on the cluster, here [whoami](https://github.com/emilevauge/whoami), a simple web server in Go.
+We start 2 services, on the `traefik-net` network.
 
 ```shell
 docker-machine ssh manager "docker service create \
@@ -121,9 +123,12 @@ docker-machine ssh manager "docker service create \
 	emilevauge/whoami"
 ```
 
-Note that we set whoami1 to use sticky sessions (`--label traefik.backend.loadbalancer.sticky=true`).  We'll demonstrate that later.
+!!! note
+    We set whoami1 to use sticky sessions (`--label traefik.backend.loadbalancer.sticky=true`).  
+    We'll demonstrate that later.
 
-**Note**: If using `docker stack deploy`, there is [a specific way that the labels must be defined in the docker-compose file](https://github.com/containous/traefik/issues/994#issuecomment-269095109).
+!!! note
+    If using `docker stack deploy`, there is [a specific way that the labels must be defined in the docker-compose file](https://github.com/containous/traefik/issues/994#issuecomment-269095109).
 
 Check that everything is scheduled and started:
 
@@ -182,7 +187,8 @@ X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
 ```
 
-Note that as Træfik is published, you can access it from any machine and not only the manager.
+!!! note
+    As Træfik is published, you can access it from any machine and not only the manager.
 
 ```shell
 curl -H Host:whoami0.traefik http://$(docker-machine ip worker1)
@@ -231,10 +237,8 @@ X-Forwarded-Server: 8fbc39271b4c
 
 ```shell
 docker-machine ssh manager "docker service scale whoami0=5"
-
 docker-machine ssh manager "docker service scale whoami1=5"
 ```
-
 
 Check that we now have 5 replicas of each `whoami` service:
 
@@ -298,7 +302,9 @@ X-Forwarded-Host: 10.0.9.4:80
 X-Forwarded-Proto: http
 X-Forwarded-Server: 8fbc39271b4c
 ```
-Wait, I thought we added the sticky flag to `whoami1`?  Traefik relies on a cookie to maintain stickyness so you'll need to test this with a browser.
+
+Wait, I thought we added the sticky flag to `whoami1`?  
+Traefik relies on a cookie to maintain stickyness so you'll need to test this with a browser.
 
 First you need to add `whoami1.traefik` to your hosts file:
 

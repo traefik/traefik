@@ -1,16 +1,15 @@
 package types
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
-
-	"crypto/tls"
-	"crypto/x509"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
@@ -47,6 +46,7 @@ type CircuitBreaker struct {
 // HealthCheck holds HealthCheck configuration
 type HealthCheck struct {
 	Path     string `json:"path,omitempty"`
+	Port     int    `json:"port,omitempty"`
 	Interval string `json:"interval,omitempty"`
 }
 
@@ -341,8 +341,9 @@ type Digest struct {
 
 // Forward authentication
 type Forward struct {
-	Address string     `description:"Authentication server address"`
-	TLS     *ClientTLS `description:"Enable TLS support"`
+	Address            string     `description:"Authentication server address"`
+	TLS                *ClientTLS `description:"Enable TLS support"`
+	TrustForwardHeader bool       `description:"Trust X-Forwarded-* headers"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space

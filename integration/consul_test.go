@@ -95,7 +95,8 @@ func (s *ConsulSuite) TestSimpleConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -111,7 +112,8 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	file := s.adaptFile(c, "fixtures/consul/simple.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
 
-	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -210,10 +212,11 @@ func (s *ConsulSuite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// start traefik
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--consul",
 		"--consul.endpoint="+consulHost+":8500")
+	defer display(c)
 
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -297,7 +300,7 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// start traefik
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--consul",
 		"--consul.endpoint="+consulHost+":8585",
@@ -305,6 +308,7 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 		"--consul.tls.cert=resources/tls/consul.cert",
 		"--consul.tls.key=resources/tls/consul.key",
 		"--consul.tls.insecureskipverify")
+	defer display(c)
 
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -319,10 +323,11 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 	s.setupConsul(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		"storeconfig",
 		withConfigFile("fixtures/simple_web.toml"),
 		"--consul.endpoint="+consulHost+":8500")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 

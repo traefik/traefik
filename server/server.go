@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
+	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -283,7 +284,7 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 		}
 	}
 	if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
-		authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
+		authMiddleware, err := mauth.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
@@ -945,7 +946,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						auth.Basic = &types.Basic{
 							Users: users,
 						}
-						authMiddleware, err := middlewares.NewAuthenticator(auth)
+						authMiddleware, err := mauth.NewAuthenticator(auth)
 						if err != nil {
 							log.Errorf("Error creating Auth: %s", err)
 						} else {
@@ -1122,6 +1123,7 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 
 	return &healthcheck.Options{
 		Path:     hc.Path,
+		Port:     hc.Port,
 		Interval: interval,
 		LB:       lb,
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/provider/dynamodb"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/etcd"
+	"github.com/containous/traefik/provider/eureka"
 	"github.com/containous/traefik/provider/file"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/marathon"
@@ -148,6 +149,10 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDynamoDB.TableName = "traefik"
 	defaultDynamoDB.Watch = true
 
+	// default Eureka
+	var defaultEureka eureka.Provider
+	defaultEureka.Delay = "30s"
+
 	// default AccessLog
 	defaultAccessLog := types.AccessLog{
 		Format:   accesslog.CommonFormat,
@@ -168,6 +173,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Mesos:         &defaultMesos,
 		ECS:           &defaultECS,
 		Rancher:       &defaultRancher,
+		Eureka:        &defaultEureka,
 		DynamoDB:      &defaultDynamoDB,
 		Retry:         &configuration.Retry{},
 		HealthCheck:   &configuration.HealthCheckConfig{},

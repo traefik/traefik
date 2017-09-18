@@ -35,7 +35,7 @@ type Options struct {
 }
 
 func (opt Options) String() string {
-	return fmt.Sprintf("[Path: %s Interval: %s]", opt.Path, opt.Interval)
+	return fmt.Sprintf("[Path: %s Port: %d Interval: %s]", opt.Path, opt.Port, opt.Interval)
 }
 
 // BackendHealthCheck HealthCheck configuration for a backend
@@ -131,14 +131,14 @@ func checkBackend(currentBackend *BackendHealthCheck) {
 }
 
 func (backend *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
-	if backend.Options.Port == 0 {
+	if backend.Port == 0 {
 		return http.NewRequest("GET", serverURL.String()+backend.Path, nil)
 	}
 
 	// copy the url and add the port to the host
 	u := &url.URL{}
 	*u = *serverURL
-	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(backend.Options.Port))
+	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(backend.Port))
 	u.Path = u.Path + backend.Path
 
 	return http.NewRequest("GET", u.String(), nil)

@@ -1,5 +1,30 @@
 # Change Log
 
+## [v1.4.0-rc3](https://github.com/containous/traefik/tree/v1.4.0-rc3) (2017-09-18)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc2...v1.4.0-rc3)
+
+**Enhancements:**
+- **[acme]** Display Traefik logs in integration tests ([#2114](https://github.com/containous/traefik/pull/2114) by [ldez](https://github.com/ldez))
+- **[authentication]** Manage Headers for the Authentication forwarding. ([#2132](https://github.com/containous/traefik/pull/2132) by [ldez](https://github.com/ldez))
+- Fail fast in IT and fix some flaky tests ([#2126](https://github.com/containous/traefik/pull/2126) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[consul]** Fix Consul Catalog refresh ([#2089](https://github.com/containous/traefik/pull/2089) by [Juliens](https://github.com/Juliens))
+- **[healthcheck]** Fix healthcheck port ([#2131](https://github.com/containous/traefik/pull/2131) by [fredix](https://github.com/fredix))
+- **[logs,middleware]** Enable loss less rotation of log files ([#2062](https://github.com/containous/traefik/pull/2062) by [marco-jantke](https://github.com/marco-jantke))
+- **[rancher]** Add stack name to backend name generation to fix rancher metadata backend ([#2107](https://github.com/containous/traefik/pull/2107) by [SantoDE](https://github.com/SantoDE))
+- **[rancher]** Rancher host IP address ([#2101](https://github.com/containous/traefik/pull/2101) by [matq007](https://github.com/matq007))
+- Fixes entry points configuration. ([#2120](https://github.com/containous/traefik/pull/2120) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme,provider]** Enhance documentation readability. ([#2095](https://github.com/containous/traefik/pull/2095) by [ldez](https://github.com/ldez))
+- **[api]** Add examples of proxying ping ([#2102](https://github.com/containous/traefik/pull/2102) by [deitch](https://github.com/deitch))
+- **[k8s]** Add guide section on production advice, esp. CPU. ([#2113](https://github.com/containous/traefik/pull/2113) by [timoreimann](https://github.com/timoreimann))
+- **[metrics]** Enhance web backend documentation ([#2122](https://github.com/containous/traefik/pull/2122) by [ldez](https://github.com/ldez))
+- Add forward auth documentation. ([#2110](https://github.com/containous/traefik/pull/2110) by [ldez](https://github.com/ldez))
+- User guide gRPC ([#2108](https://github.com/containous/traefik/pull/2108) by [Juliens](https://github.com/Juliens))
+- Document custom error page restrictions. ([#2104](https://github.com/containous/traefik/pull/2104) by [timoreimann](https://github.com/timoreimann))
+
 ## [v1.4.0-rc2](https://github.com/containous/traefik/tree/v1.4.0-rc2) (2017-09-08)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc1...v1.4.0-rc2)
 

@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -34,6 +35,7 @@ type LogHandler struct {
 	logger   *logrus.Logger
 	file     *os.File
 	filePath string
+	mu       sync.Mutex
 }
 
 // NewLogHandler creates a new LogHandler
@@ -148,14 +150,19 @@ func (l *LogHandler) Close() error {
 // by an external source.
 func (l *LogHandler) Rotate() error {
 	var err error
-	if err = l.Close(); err != nil {
-		return err
+
+	if l.file != nil {
+		defer func(f *os.File) {
+			f.Close()
+		}(l.file)
 	}
 
 	l.file, err = os.OpenFile(l.filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		return err
 	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	l.logger.Out = l.file
 	return nil
 }
@@ -226,6 +233,8 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 		fields["downstream_"+k] = logDataTable.DownstreamResponse.Get(k)
 	}
 
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	l.logger.WithFields(fields).Println()
 }
 

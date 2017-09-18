@@ -109,23 +109,55 @@ Users can be specified directly in the toml file, or indirectly by referencing a
   usersFile = "/path/to/.htdigest"
 ```
 
+### Forward Authentication
+
+This configuration will first forward the request to `http://authserver.com/auth`.
+
+If the response code is 2XX, access is granted and the original request is performed.
+Otherwise, the response from the auth server is returned.
+
+```toml
+[entryPoints]
+  [entrypoints.http]
+    # ...
+    # To enable forward auth on an entrypoint
+    [entrypoints.http.auth.forward]
+    address = "https://authserver.com/auth"
+    
+    # Trust existing X-Forwarded-* headers.
+    # Useful with another reverse proxy in front of Traefik.
+    #
+    # Optional
+    # Default: false
+    #
+    trustForwardHeader = true
+    
+    # Enable forward auth TLS connection.
+    #
+    # Optional
+    #
+    [entrypoints.http.auth.forward.tls]
+    cert = "authserver.crt"
+    key = "authserver.key"
+```
+
 ## Specify Minimum TLS Version
 
-To specify an https entrypoint with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls).
+To specify an https entry point with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls).
 
 ```toml
 [entryPoints]
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
-    MinVersion = "VersionTLS12"
-    CipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+    minVersion = "VersionTLS12"
+    cipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
+      certFile = "integration/fixtures/https/snitest.org.cert"
+      keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
 ## Compression
