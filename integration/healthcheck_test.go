@@ -165,3 +165,50 @@ func (s *HealthCheckSuite) doTestMultipleEntrypoints(c *check.C, fixture string)
 	err = try.Request(frontend1Req, 2*time.Second, try.BodyContains(s.whoami1IP))
 	c.Assert(err, checker.Not(checker.IsNil))
 }
+
+func (s *HealthCheckSuite) TestPortOverload(c *check.C) {
+
+	// Set one whoami health to 200
+	client := &http.Client{}
+	statusInternalServerErrorReq, err := http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("200")))
+	c.Assert(err, checker.IsNil)
+	_, err = client.Do(statusInternalServerErrorReq)
+	c.Assert(err, checker.IsNil)
+
+	file := s.adaptFile(c, "fixtures/healthcheck/port_overload.toml", struct {
+		Server1 string
+	}{s.whoami1IP})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("Host:test.localhost"))
+	c.Assert(err, checker.IsNil)
+
+	frontendHealthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/health", nil)
+	c.Assert(err, checker.IsNil)
+	frontendHealthReq.Host = "test.localhost"
+
+	//We test bad gateway because we use an invalid port for the backend
+	err = try.Request(frontendHealthReq, 500*time.Millisecond, try.StatusCodeIs(http.StatusBadGateway))
+	c.Assert(err, checker.IsNil)
+
+	// Set one whoami health to 500
+	statusInternalServerErrorReq, err = http.NewRequest(http.MethodPost, "http://"+s.whoami1IP+"/health", bytes.NewBuffer([]byte("500")))
+	c.Assert(err, checker.IsNil)
+	_, err = client.Do(statusInternalServerErrorReq)
+	c.Assert(err, checker.IsNil)
+
+	// Waiting for Traefik healthcheck
+	try.Sleep(2 * time.Second)
+
+	// Verify no backend service is available due to failing health checks
+	err = try.Request(frontendHealthReq, 3*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable))
+	c.Assert(err, checker.IsNil)
+
+}
