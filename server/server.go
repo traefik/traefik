@@ -1018,7 +1018,10 @@ func (server *Server) initalizeAuditStreams() {
 			if err != nil {
 				log.Fatal("Error creating new AMQP Sink: ", err)
 			}
-			log.Info("Created AMQP sink")
+			log.Info("Created AMQP Sink")
+		case "Blackhole":
+			as = streams.NewBlackholeSink()
+			log.Info("Created Blackhole Sink")
 		default:
 			log.Warn("AuditSink.Type <%v> not currently supported", server.globalConfiguration.AuditSink)
 			return
