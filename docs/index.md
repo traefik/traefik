@@ -39,7 +39,7 @@ Run it and forget it!
 
 - [It's fast](https://docs.traefik.io/benchmarks)
 - No dependency hell, single binary made with go
-- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) official docker image
+- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
 - Rest API
 - Hot-reloading of configuration. No need to restart the process
 - Circuit breakers, retry
