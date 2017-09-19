@@ -327,8 +327,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	return &templateObjects, nil
 }
 
-// getSSLProxyHeaders merging provider defaults and
-// provided 'Key=Val' comma delimited string
+// getSSLProxyHeaders from provider defaults merging headers parsed from str.
+// Expects str format to be a 'Key=Val' comma delimited string.
 func (p *Provider) getSSLProxyHeaders(str string) map[string]string {
 	parts := append(p.DefaultSSLProxyHeaders, strings.Split(str, ",")...)
 	headers := map[string]string{}
