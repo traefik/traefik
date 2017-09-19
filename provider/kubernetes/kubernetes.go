@@ -35,7 +35,7 @@ const (
 	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
 	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
 	annotationKubernetesSSLRedirect          = "ingress.kubernetes.io/force-ssl-redirect"
-	annotationKubernetesSSLProxyHeaders      = "ingress.kubernetes.io/ssl-proxy-headers"
+	annotationKubernetesSSLProxyHeaders      = types.LabelPrefix + "ingress.kubernetes.io/ssl-proxy-headers"
 )
 
 const traefikDefaultRealm = "traefik"
