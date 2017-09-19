@@ -181,12 +181,16 @@ func usernameIfPresent(theURL *url.URL) string {
 // Logging handler to log frontend name, backend name, and elapsed time
 func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestReader, crw *captureResponseWriter) {
 	core := logDataTable.Core
+	now := time.Now().UTC()
 
 	if core[RetryAttempts] == nil {
 		core[RetryAttempts] = 0
 	}
 	if crr != nil {
 		core[RequestContentSize] = crr.count
+		if !crr.processingEnd.IsZero() {
+			core[ResponseDuration] = now.Sub(crr.processingEnd)
+		}
 	}
 
 	core[DownstreamStatus] = crw.Status()
@@ -200,7 +204,7 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 	}
 
 	// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
-	total := time.Now().UTC().Sub(core[StartUTC].(time.Time))
+	total := now.Sub(core[StartUTC].(time.Time))
 	core[Duration] = total
 	if origin, ok := core[OriginDuration]; ok {
 		core[Overhead] = total - origin.(time.Duration)
