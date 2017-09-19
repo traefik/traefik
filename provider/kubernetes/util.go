@@ -9,7 +9,7 @@ import (
 	"k8s.io/client-go/pkg/util/intstr"
 )
 
-// splitKeyValue on first '=' returning a seperate key, value pair
+// splitKeyValue on first '=' returning a separate key, value pair
 func splitKeyValue(str string) (key, val string) {
 	parts := strings.SplitN(str, "=", 2)
 	key = parts[0]
