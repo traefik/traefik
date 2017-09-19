@@ -266,18 +266,22 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 	}
 	log.SetLevel(level)
 
-	var formatter logrus.Formatter
-	if globalConfiguration.TraefikLog != nil && globalConfiguration.TraefikLog.Format == "json" {
-		formatter = &logrus.JSONFormatter{}
-	} else {
-		formatter = &logrus.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true}
-	}
-	log.SetFormatter(formatter)
-
 	logFile := globalConfiguration.TraefikLogsFile
 	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
 		logFile = globalConfiguration.TraefikLog.FilePath
 	}
+
+	var formatter logrus.Formatter
+	if globalConfiguration.TraefikLog != nil && globalConfiguration.TraefikLog.Format == "json" {
+		formatter = &logrus.JSONFormatter{}
+	} else {
+		disableColors := false
+		if len(logFile) > 0 {
+			disableColors = true
+		}
+		formatter = &logrus.TextFormatter{DisableColors: disableColors, FullTimestamp: true, DisableSorting: true}
+	}
+	log.SetFormatter(formatter)
 
 	if len(logFile) > 0 {
 		dir := filepath.Dir(logFile)
@@ -297,6 +301,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 			log.Error("Error opening file", err)
 		}
 	}
+
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 
