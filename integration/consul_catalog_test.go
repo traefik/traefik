@@ -261,6 +261,7 @@ func (s *ConsulCatalogSuite) TestRefreshConfigWithMultipleNodeWithoutHealthCheck
 
 	err = s.registerAgentService("test", nginx.NetworkSettings.IPAddress, 80, []string{"name=nginx1"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering agent service"))
+	defer s.deregisterAgentService(nginx.NetworkSettings.IPAddress)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
