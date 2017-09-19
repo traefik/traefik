@@ -19,6 +19,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/safe"
@@ -99,13 +100,52 @@ Complete documentation is available at https://traefik.io`,
 		},
 	}
 
+	healthcheckCmd := &flaeg.Command{
+		Name:                  "healthcheck",
+		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
+		Config:                traefikConfiguration,
+		DefaultPointersConfig: traefikPointersConfiguration,
+		Run: func() error {
+			if traefikConfiguration.Web == nil {
+				fmt.Println("Please enable the web provider to use healtcheck.")
+				os.Exit(1)
+			}
+			client := &http.Client{Timeout: 5 * time.Second}
+			protocol := "http"
+			if len(traefikConfiguration.Web.CertFile) > 0 {
+				protocol = "https"
+				tr := &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				}
+				client.Transport = tr
+			}
+			resp, err := client.Head(protocol + "://" + traefikConfiguration.Web.Address + "/ping")
+			if err != nil {
+				fmt.Printf("Error calling healthcheck: %s\n", err)
+				os.Exit(1)
+			}
+			if resp.StatusCode != http.StatusOK {
+				fmt.Printf("Bad healthcheck status: %s\n", resp.Status)
+				os.Exit(1)
+			}
+			fmt.Printf("OK: %s\n", resp.Request.URL)
+			os.Exit(0)
+			return nil
+		},
+		Metadata: map[string]string{
+			"parseAllSources": "true",
+		},
+	}
+
 	//init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
 	//add custom parsers
 	f.AddParser(reflect.TypeOf(server.EntryPoints{}), &server.EntryPoints{})
 	f.AddParser(reflect.TypeOf(server.DefaultEntryPoints{}), &server.DefaultEntryPoints{})
+	f.AddParser(reflect.TypeOf(server.RootCAs{}), &server.RootCAs{})
 	f.AddParser(reflect.TypeOf(types.Constraints{}), &types.Constraints{})
 	f.AddParser(reflect.TypeOf(kubernetes.Namespaces{}), &kubernetes.Namespaces{})
+	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
 
@@ -113,6 +153,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddCommand(newVersionCmd())
 	f.AddCommand(newBugCmd(traefikConfiguration, traefikPointersConfiguration))
 	f.AddCommand(storeconfigCmd)
+	f.AddCommand(healthcheckCmd)
 
 	usedCmd, err := f.GetCommand()
 	if err != nil {
@@ -175,11 +216,6 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 	// load global configuration
 	globalConfiguration := traefikConfiguration.GlobalConfiguration
 
-	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = globalConfiguration.MaxIdleConnsPerHost
-	if globalConfiguration.InsecureSkipVerify {
-		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	}
-
 	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
 		// no filename, setting to global config file
 		if len(traefikConfiguration.ConfigFile) != 0 {
@@ -234,16 +270,15 @@ func run(traefikConfiguration *server.TraefikConfiguration) {
 			log.Errorf("Failed to create log path %s: %s", dir, err)
 		}
 
-		fi, err := os.OpenFile(globalConfiguration.TraefikLogsFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		err = log.OpenFile(globalConfiguration.TraefikLogsFile)
 		defer func() {
-			if err := fi.Close(); err != nil {
-				log.Error("Error closing file", err)
+			if err := log.CloseFile(); err != nil {
+				log.Error("Error closing log", err)
 			}
 		}()
 		if err != nil {
 			log.Error("Error opening file", err)
 		} else {
-			log.SetOutput(fi)
 			log.SetFormatter(&logrus.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})
 		}
 	} else {

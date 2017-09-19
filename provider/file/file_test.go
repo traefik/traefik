@@ -38,7 +38,7 @@ func TestProvideSingleFileAndWatch(t *testing.T) {
 	expectedNumFrontends = 1
 	expectedNumBackends = 1
 
-	tempFile = createFile(t,
+	createFile(t,
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
 		createBackendConfiguration(expectedNumBackends))
@@ -72,7 +72,7 @@ func TestProvideSingleFileAndNotWatch(t *testing.T) {
 	expectedNumFrontends = 1
 	expectedNumBackends = 1
 
-	tempFile = createFile(t,
+	createFile(t,
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
 		createBackendConfiguration(expectedNumBackends))
@@ -148,7 +148,7 @@ func createConfigurationRoutine(t *testing.T, expectedNumFrontends *int, expecte
 	configurationChan := make(chan types.ConfigMessage)
 	signal := make(chan interface{})
 
-	go func() {
+	safe.Go(func() {
 		for {
 			data := <-configurationChan
 			assert.Equal(t, "file", data.ProviderName)
@@ -156,7 +156,7 @@ func createConfigurationRoutine(t *testing.T, expectedNumFrontends *int, expecte
 			assert.Len(t, data.Configuration.Backends, *expectedNumBackends)
 			signal <- nil
 		}
-	}()
+	})
 
 	return configurationChan, signal
 }

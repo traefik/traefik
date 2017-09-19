@@ -54,4 +54,5 @@ pages:
       - 'Marathon': 'user-guide/marathon.md'
       - 'Key-value store configuration': 'user-guide/kv-config.md'
       - 'Clustering/HA': 'user-guide/cluster.md'
+      - 'Getting started with Docker & Lets Encrypt': 'user-guide/getting-started-with-docker-and-lets-encrypt.md'
   - Benchmarks: benchmarks.md

@@ -26,9 +26,6 @@ func (s *PullRequestsService) RequestReviewers(ctx context.Context, owner, repo 
 		return nil, nil, err
 	}
 
-	// TODO: remove custom Accept header when this API fully launches
-	req.Header.Set("Accept", mediaTypePullRequestReviewsPreview)
-
 	r := new(PullRequest)
 	resp, err := s.client.Do(ctx, req, r)
 	if err != nil {
@@ -41,16 +38,17 @@ func (s *PullRequestsService) RequestReviewers(ctx context.Context, owner, repo 
 // ListReviewers lists users whose reviews have been requested on the specified pull request.
 //
 // GitHub API docs: https://developer.github.com/v3/pulls/review_requests/#list-review-requests
-func (s *PullRequestsService) ListReviewers(ctx context.Context, owner, repo string, number int) ([]*User, *Response, error) {
+func (s *PullRequestsService) ListReviewers(ctx context.Context, owner, repo string, number int, opt *ListOptions) ([]*User, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/pulls/%d/requested_reviewers", owner, repo, number)
+	u, err := addOptions(u, opt)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	// TODO: remove custom Accept header when this API fully launches
-	req.Header.Set("Accept", mediaTypePullRequestReviewsPreview)
 
 	var users []*User
 	resp, err := s.client.Do(ctx, req, &users)
@@ -76,9 +74,6 @@ func (s *PullRequestsService) RemoveReviewers(ctx context.Context, owner, repo s
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: remove custom Accept header when this API fully launches
-	req.Header.Set("Accept", mediaTypePullRequestReviewsPreview)
 
 	return s.client.Do(ctx, req, reviewers)
 }

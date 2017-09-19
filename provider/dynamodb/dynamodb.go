@@ -61,6 +61,12 @@ func (p *Provider) createClient() (*dynamoClient, error) {
 			}),
 	}
 
+	if p.Trace {
+		cfg.WithLogger(aws.LoggerFunc(func(args ...interface{}) {
+			log.Debug(args...)
+		}))
+	}
+
 	if p.Endpoint != "" {
 		cfg.Endpoint = aws.String(p.Endpoint)
 	}
@@ -149,12 +155,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 	pool.Go(func(stop chan bool) {
 		ctx, cancel := context.WithCancel(context.Background())
-		go func() {
+		safe.Go(func() {
 			select {
 			case <-stop:
 				cancel()
 			}
-		}()
+		})
 
 		operation := func() error {
 			aws, err := p.createClient()

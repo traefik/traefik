@@ -1,5 +1,42 @@
 # Change Log
 
+## [v1.3.6](https://github.com/containous/traefik/tree/v1.3.6) (2017-08-20)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.5...v1.3.6)
+
+**Bug fixes:**
+- **[oxy,websocket]** Websocket parameters and protocol. ([#1970](https://github.com/containous/traefik/pull/1970) by [ldez](https://github.com/ldez))
+
+## [v1.3.5](https://github.com/containous/traefik/tree/v1.3.5) (2017-08-01)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.4...v1.3.5)
+
+**Bug fixes:**
+- **[websocket]** Oxy with fixes on websocket + integration tests ([#1905](https://github.com/containous/traefik/pull/1905) by [Juliens](https://github.com/Juliens))
+
+## [v1.3.4](https://github.com/containous/traefik/tree/v1.3.4) (2017-07-27)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.3...v1.3.4)
+
+**Bug fixes:**
+- **[middleware]** Double compression. ([#1863](https://github.com/containous/traefik/pull/1863) by [ldez](https://github.com/ldez))
+- **[middleware]** Fix replace path rule ([#1859](https://github.com/containous/traefik/pull/1859) by [dedalusj](https://github.com/dedalusj))
+- **[websocket]** New oxy with gorilla for websocket with integration tests ([#1896](https://github.com/containous/traefik/pull/1896) by [Juliens](https://github.com/Juliens))
+
+## [v1.3.3](https://github.com/containous/traefik/tree/v1.3.3) (2017-07-06)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.2...v1.3.3)
+
+**Bug fixes:**
+- **[k8s]** Undo the Secrets controller sync wait. ([#1828](https://github.com/containous/traefik/pull/1828) by [timoreimann](https://github.com/timoreimann))
+- **[k8s]** Tell glog to log everything into STDERR. ([#1817](https://github.com/containous/traefik/pull/1817) by [timoreimann](https://github.com/timoreimann))
+
+## [v1.3.2](https://github.com/containous/traefik/tree/v1.3.2) (2017-06-29)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.1...v1.3.2)
+
+**Bug fixes:**
+- **[acme]** Add provided certificate checking before LE certificate generation with OnHostRule option ([#1772](https://github.com/containous/traefik/pull/1772) by [nmengin](https://github.com/nmengin))
+- **[k8s]** Fix race on closing event channel. ([#1798](https://github.com/containous/traefik/pull/1798) by [timoreimann](https://github.com/timoreimann))
+- **[marathon]** Upgrade go-marathon to dd6cbd4. ([#1800](https://github.com/containous/traefik/pull/1800) by [timoreimann](https://github.com/timoreimann))
+- **[oxy,websocket]** Problem with keepalive when switching protocol failed ([#1782](https://github.com/containous/traefik/pull/1782) by [ldez](https://github.com/ldez))
+- **[oxy]** Fix proxying of unannounced trailers ([#1805](https://github.com/containous/traefik/pull/1805) by [ldez](https://github.com/ldez))
+
 ## [v1.3.1](https://github.com/containous/traefik/tree/v1.3.1) (2017-06-16)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.0...v1.3.1)
 

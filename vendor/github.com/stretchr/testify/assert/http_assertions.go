@@ -99,59 +99,8 @@ func HTTPBodyNotContains(t TestingT, handler http.HandlerFunc, method, url strin
 
 	contains := strings.Contains(body, fmt.Sprint(str))
 	if contains {
-		Fail(t, "Expected response body for %s to NOT contain \"%s\" but found \"%s\"", url+"?"+values.Encode(), str, body)
+		Fail(t, fmt.Sprintf("Expected response body for \"%s\" to NOT contain \"%s\" but found \"%s\"", url+"?"+values.Encode(), str, body))
 	}
 
 	return !contains
-}
-
-//
-// Assertions Wrappers
-//
-
-// HTTPSuccess asserts that a specified handler returns a success status code.
-//
-//  assert.HTTPSuccess(myHandler, "POST", "http://www.google.com", nil)
-//
-// Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) HTTPSuccess(handler http.HandlerFunc, method, url string, values url.Values) bool {
-	return HTTPSuccess(a.t, handler, method, url, values)
-}
-
-// HTTPRedirect asserts that a specified handler returns a redirect status code.
-//
-//  assert.HTTPRedirect(myHandler, "GET", "/a/b/c", url.Values{"a": []string{"b", "c"}}
-//
-// Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) HTTPRedirect(handler http.HandlerFunc, method, url string, values url.Values) bool {
-	return HTTPRedirect(a.t, handler, method, url, values)
-}
-
-// HTTPError asserts that a specified handler returns an error status code.
-//
-//  assert.HTTPError(myHandler, "POST", "/a/b/c", url.Values{"a": []string{"b", "c"}}
-//
-// Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) HTTPError(handler http.HandlerFunc, method, url string, values url.Values) bool {
-	return HTTPError(a.t, handler, method, url, values)
-}
-
-// HTTPBodyContains asserts that a specified handler returns a
-// body that contains a string.
-//
-//  assert.HTTPBodyContains(t, myHandler, "www.google.com", nil, "I'm Feeling Lucky")
-//
-// Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) HTTPBodyContains(handler http.HandlerFunc, method, url string, values url.Values, str interface{}) bool {
-	return HTTPBodyContains(a.t, handler, method, url, values, str)
-}
-
-// HTTPBodyNotContains asserts that a specified handler returns a
-// body that does not contain a string.
-//
-//  assert.HTTPBodyNotContains(t, myHandler, "www.google.com", nil, "I'm Feeling Lucky")
-//
-// Returns whether the assertion was successful (true) or not (false).
-func (a *Assertions) HTTPBodyNotContains(handler http.HandlerFunc, method, url string, values url.Values, str interface{}) bool {
-	return HTTPBodyNotContains(a.t, handler, method, url, values, str)
 }

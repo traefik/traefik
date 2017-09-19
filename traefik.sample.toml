@@ -2,10 +2,10 @@
 # Global configuration
 ################################################################
 
-# Duration to give active requests a chance to finish during hot-reloads.
-# Can be provided in a format supported by Go's time.ParseDuration function or
-# as raw values (digits). If no units are provided, the value is parsed assuming
-# seconds.
+# Duration to give active requests a chance to finish before Traefik stops.
+# Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
+# If no units are provided, the value is parsed assuming seconds.
+# Note: in this time frame no new requests are accepted.
 #
 # Optional
 # Default: "10s"
@@ -75,6 +75,13 @@
 # Default: false
 #
 # InsecureSkipVerify = true
+
+# Register Certificates in the RootCA. This certificates will be use for backends calls.
+# Note: You can use file path or cert content directly
+# Optional
+# Default: []
+#
+# RootCAs = [ "/mycert.cert" ]
 
 # Entrypoints to be used by frontends that do not specify any entrypoint.
 # Each frontend can specify its own entrypoints.
@@ -147,7 +154,7 @@
 # and provide environment variables with access keys to enable setting it:
 #  - cloudflare: CLOUDFLARE_EMAIL, CLOUDFLARE_API_KEY
 #  - digitalocean: DO_AUTH_TOKEN
-#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_API_KEY
+#  - dnsimple: DNSIMPLE_EMAIL, DNSIMPLE_OAUTH_TOKEN
 #  - dnsmadeeasy: DNSMADEEASY_API_KEY, DNSMADEEASY_API_SECRET
 #  - exoscale: EXOSCALE_API_KEY, EXOSCALE_API_SECRET
 #  - gandi: GANDI_API_KEY
@@ -322,6 +329,12 @@
 #   [entryPoints.http]
 #   address = "10.42.13.37:80"
 
+# To enable IP whitelisting at the entrypoint level:
+# [entryPoints]
+#   [entryPoints.http]
+#   address = ":80"
+#   whiteListSourceRange = ["127.0.0.1/32"]
+
 # Enable retry sending request if network error
 #
 # Optional
@@ -352,6 +365,58 @@
 # Default: "30s"
 #
 # interval = "30s"
+
+# Timeout settings for the http servers Traefik starts
+#
+# Optional
+#
+# [respondingTimeouts]
+
+# ReadTimeout is the maximum duration for reading the entire request, including the body.
+# If zero, no timeout exists.
+#
+# Optional
+# Default: "0s"
+#
+# readTimeout = "5s"
+
+# WriteTimeout is the maximum duration before timing out writes of the response.
+# If zero, no timeout exists.
+#
+# Optional
+# Default: "0s"
+#
+# writeTimeout = "5s"
+
+# IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself.
+# Defaults to 180 seconds.
+# If zero, no timeout exists.
+#
+# Optional
+# Default: "180s"
+#
+# idleTimeout = "360s"
+
+# Timeout settings for requests forwarded to the Backend Servers
+#
+# Optional
+#
+# [forwardingTimeouts]
+
+# The amount of time to wait until a connection to a Backend Server can be established.
+# If zero, no timeout exists.
+#
+# Optional
+# Default: "30s"
+#
+# dialTimeout = "30s"
+
+# The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists
+#
+# Optional
+# Default: "0s"
+#
+# responseHeaderTimeout = "0s"
 
 ################################################################
 # Web configuration backend
@@ -659,6 +724,17 @@
 #
 # forceTaskHostname: false 
 
+# Applications may define readiness checks which are probed by Marathon during
+# deployments periodically and the results exposed via the API. Enabling the
+# following parameter causes Traefik to filter out tasks whose readiness checks
+# have not succeeded.
+# Note that the checks are only valid at deployment times. See the Marathon
+# guide for details.
+#
+# Optional
+# Default: false
+# respectReadinessChecks: false
+
 ################################################################
 # Mesos configuration backend
 ################################################################
@@ -785,7 +861,7 @@
 # Array of namespaces to watch.
 #
 # Optional
-# Default: ["default"].
+# Default: all namespaces (empty array).
 #
 # namespaces = ["default"]
 
@@ -1019,10 +1095,16 @@
 
 # ECS Cluster Name
 #
-# Optional
-# Default: "default"
+# Deprecated - Please use Clusters
 #
 # Cluster = "default"
+
+# ECS Clusters Name
+#
+# Optional
+# Default: ["default"]
+#
+# Clusters = ["default"]
 
 # Enable watch ECS changes
 #

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
 	"github.com/containous/traefik/log"
@@ -20,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/unrolled/render"
+	"github.com/urfave/negroni"
 )
 
 var (
@@ -134,28 +134,35 @@ func (provider *WebProvider) Provide(configurationChan chan<- types.ConfigMessag
 		systemRouter.Methods("GET").Path(provider.Path + "debug/vars").HandlerFunc(expvarHandler)
 	}
 
-	go func() {
+	safe.Go(func() {
 		var err error
-		var negroni = negroni.New()
+		var negroniInstance = negroni.New()
 		if provider.Auth != nil {
 			authMiddleware, err := middlewares.NewAuthenticator(provider.Auth)
 			if err != nil {
 				log.Fatal("Error creating Auth: ", err)
 			}
-			negroni.Use(authMiddleware)
+			authMiddlewareWrapper := negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+				if r.URL.Path == "/ping" {
+					next.ServeHTTP(w, r)
+				} else {
+					authMiddleware.ServeHTTP(w, r, next)
+				}
+			})
+			negroniInstance.Use(authMiddlewareWrapper)
 		}
-		negroni.UseHandler(systemRouter)
+		negroniInstance.UseHandler(systemRouter)
 
 		if len(provider.CertFile) > 0 && len(provider.KeyFile) > 0 {
-			err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, negroni)
+			err = http.ListenAndServeTLS(provider.Address, provider.CertFile, provider.KeyFile, negroniInstance)
 		} else {
-			err = http.ListenAndServe(provider.Address, negroni)
+			err = http.ListenAndServe(provider.Address, negroniInstance)
 		}
 
 		if err != nil {
 			log.Fatal("Error creating server: ", err)
 		}
-	}()
+	})
 	return nil
 }
 

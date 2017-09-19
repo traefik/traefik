@@ -1,0 +1,25 @@
+logLevel = "DEBUG"
+
+defaultEntryPoints = ["http"]
+
+# Use certificate in net/internal/testcert.go
+RootCAs =  [ "fixtures/https/rootcas/local.crt"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8081"
+
+[web]
+  address = ":8080"
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    url = "{{ .BackendHost }}"
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Path: /ping"

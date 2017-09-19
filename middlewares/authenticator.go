@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/abbot/go-http-auth"
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
+	"github.com/urfave/negroni"
 )
 
 // Authenticator is a middleware that provides HTTP basic and digest authentication

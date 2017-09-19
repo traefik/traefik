@@ -61,8 +61,13 @@ func (s *RepositoriesService) GetPagesInfo(ctx context.Context, owner, repo stri
 // ListPagesBuilds lists the builds for a GitHub Pages site.
 //
 // GitHub API docs: https://developer.github.com/v3/repos/pages/#list-pages-builds
-func (s *RepositoriesService) ListPagesBuilds(ctx context.Context, owner, repo string) ([]*PagesBuild, *Response, error) {
+func (s *RepositoriesService) ListPagesBuilds(ctx context.Context, owner, repo string, opt *ListOptions) ([]*PagesBuild, *Response, error) {
 	u := fmt.Sprintf("repos/%v/%v/pages/builds", owner, repo)
+	u, err := addOptions(u, opt)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, nil, err

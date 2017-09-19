@@ -52,7 +52,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		}
 
 		ticker := time.NewTicker(delay)
-		go func() {
+		safe.Go(func() {
 			for t := range ticker.C {
 
 				log.Debug("Refreshing Provider " + t.String())
@@ -68,7 +68,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					Configuration: configuration,
 				}
 			}
-		}()
+		})
 		return nil
 	}
 
@@ -131,14 +131,14 @@ func (p *Provider) getProtocol(instance eureka.InstanceInfo) string {
 }
 
 func (p *Provider) getWeight(instance eureka.InstanceInfo) string {
-	if val, ok := instance.Metadata.Map["traefik.weight"]; ok {
+	if val, ok := instance.Metadata.Map[types.LabelWeight]; ok {
 		return val
 	}
 	return "0"
 }
 
 func (p *Provider) getInstanceID(instance eureka.InstanceInfo) string {
-	if val, ok := instance.Metadata.Map["traefik.backend.id"]; ok {
+	if val, ok := instance.Metadata.Map[types.LabelBackendID]; ok {
 		return val
 	}
 	return strings.Replace(instance.IpAddr, ".", "-", -1) + "-" + p.getPort(instance)

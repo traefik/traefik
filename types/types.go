@@ -55,6 +55,13 @@ type Route struct {
 	Rule string `json:"rule,omitempty"`
 }
 
+//ErrorPage holds custom error page configuration
+type ErrorPage struct {
+	Status  []string `json:"status,omitempty"`
+	Backend string   `json:"backend,omitempty"`
+	Query   string   `json:"query,omitempty"`
+}
+
 // Headers holds the custom header configuration
 type Headers struct {
 	CustomRequestHeaders    map[string]string `json:"customRequestHeaders,omitempty"`
@@ -109,15 +116,16 @@ func (h Headers) HasSecureHeadersDefined() bool {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
-	EntryPoints          []string         `json:"entryPoints,omitempty"`
-	Backend              string           `json:"backend,omitempty"`
-	Routes               map[string]Route `json:"routes,omitempty"`
-	PassHostHeader       bool             `json:"passHostHeader,omitempty"`
-	PassTLSCert          bool             `json:"passTLSCert,omitempty"`
-	Priority             int              `json:"priority"`
-	BasicAuth            []string         `json:"basicAuth"`
-	WhitelistSourceRange []string         `json:"whitelistSourceRange,omitempty"`
-	Headers              Headers          `json:"headers,omitempty"`
+	EntryPoints          []string             `json:"entryPoints,omitempty"`
+	Backend              string               `json:"backend,omitempty"`
+	Routes               map[string]Route     `json:"routes,omitempty"`
+	PassHostHeader       bool                 `json:"passHostHeader,omitempty"`
+	PassTLSCert          bool                 `json:"passTLSCert,omitempty"`
+	Priority             int                  `json:"priority"`
+	BasicAuth            []string             `json:"basicAuth"`
+	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
+	Headers              Headers              `json:"headers,omitempty"`
+	Errors               map[string]ErrorPage `json:"errors,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
@@ -270,7 +278,7 @@ func (cs *Constraints) SetValue(val interface{}) {
 
 // Type exports the Constraints type as a string
 func (cs *Constraints) Type() string {
-	return fmt.Sprint("constraint")
+	return "constraint"
 }
 
 // Store holds KV store cluster config
@@ -320,11 +328,25 @@ type Statistics struct {
 // Metrics provides options to expose and send Traefik metrics to different third party monitoring systems
 type Metrics struct {
 	Prometheus *Prometheus `description:"Prometheus metrics exporter type"`
+	Datadog    *Datadog    `description:"DataDog metrics exporter type"`
+	StatsD     *Statsd     `description:"StatsD metrics exporter type"`
 }
 
 // Prometheus can contain specific configuration used by the Prometheus Metrics exporter
 type Prometheus struct {
 	Buckets Buckets `description:"Buckets for latency metrics"`
+}
+
+// Datadog contains address and metrics pushing interval configuration
+type Datadog struct {
+	Address      string `description:"DataDog's Dogstatsd address"`
+	PushInterval string `description:"DataDog push interval"`
+}
+
+// Statsd contains address and metrics pushing interval configuration
+type Statsd struct {
+	Address      string `description:"StatsD address"`
+	PushInterval string `description:"DataDog push interval"`
 }
 
 // Buckets holds Prometheus Buckets

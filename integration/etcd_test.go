@@ -1,11 +1,10 @@
-package main
+package integration
 
 import (
 	"crypto/tls"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -61,9 +60,11 @@ func (s *EtcdSuite) TearDownSuite(c *check.C) {}
 
 func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
+
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
 	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -76,9 +77,11 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 
 func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
+
 	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
 	defer os.Remove(file)
-	cmd := exec.Command(traefikBinary, "--configFile="+file)
+
+	cmd, _ := s.cmdTraefik(withConfigFile(file))
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -173,6 +176,7 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	}
 
 	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/test2", nil)
+	c.Assert(err, checker.IsNil)
 	req.Host = "test2.localhost"
 	resp, err := client.Do(req)
 	c.Assert(err, checker.IsNil)
@@ -196,8 +200,10 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// start traefik
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/simple_web.toml", "--etcd", "--etcd.endpoint="+etcdHost+":4001")
-
+	cmd, _ := s.cmdTraefik(
+		withConfigFile("fixtures/simple_web.toml"),
+		"--etcd",
+		"--etcd.endpoint="+etcdHost+":4001")
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -273,7 +279,10 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 	// start traefik
-	cmd := exec.Command(traefikBinary, "--configFile=fixtures/simple_web.toml", "--etcd", "--etcd.endpoint="+etcdHost+":4001")
+	cmd, _ := s.cmdTraefik(
+		withConfigFile("fixtures/simple_web.toml"),
+		"--etcd",
+		"--etcd.endpoint="+etcdHost+":4001")
 
 	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
@@ -378,7 +387,10 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 
-	cmd := exec.Command(traefikBinary, "storeconfig", "--configFile=fixtures/simple_web.toml", "--etcd.endpoint="+etcdHost+":4001")
+	cmd, _ := s.cmdTraefik(
+		"storeconfig",
+		withConfigFile("fixtures/simple_web.toml"),
+		"--etcd.endpoint="+etcdHost+":4001")
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 

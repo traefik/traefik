@@ -1,14 +1,13 @@
 package kubernetes
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/containous/traefik/types"
-	"github.com/davecgh/go-spew/spew"
+	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
@@ -283,7 +282,6 @@ func TestLoadIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -296,7 +294,6 @@ func TestLoadIngresses(t *testing.T) {
 			"foo/namedthing": {
 				Backend:        "foo/namedthing",
 				PassHostHeader: true,
-				Priority:       len("/namedthing"),
 				Routes: map[string]types.Route{
 					"/namedthing": {
 						Rule: "PathPrefix:/namedthing",
@@ -317,12 +314,8 @@ func TestLoadIngresses(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestRuleType(t *testing.T) {
@@ -382,7 +375,7 @@ func TestRuleType(t *testing.T) {
 
 			if test.ingressRuleType != "" {
 				ingress.ObjectMeta.Annotations = map[string]string{
-					annotationFrontendRuleType: test.ingressRuleType,
+					types.LabelFrontendRuleType: test.ingressRuleType,
 				}
 			}
 
@@ -417,8 +410,7 @@ func TestRuleType(t *testing.T) {
 			actual := actualConfig.Frontends
 			expected := map[string]*types.Frontend{
 				"host/path": {
-					Backend:  "host/path",
-					Priority: len("/path"),
+					Backend: "host/path",
 					Routes: map[string]types.Route{
 						"/path": {
 							Rule: fmt.Sprintf("%s:/path", test.frontendRuleType),
@@ -430,11 +422,7 @@ func TestRuleType(t *testing.T) {
 				},
 			}
 
-			if !reflect.DeepEqual(expected, actual) {
-				expectedJSON, _ := json.Marshal(expected)
-				actualJSON, _ := json.Marshal(actual)
-				t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-			}
+			assert.Equal(t, expected, actual)
 		})
 	}
 }
@@ -508,8 +496,7 @@ func TestGetPassHostHeader(t *testing.T) {
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
-				Backend:  "foo/bar",
-				Priority: len("/bar"),
+				Backend: "foo/bar",
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -521,12 +508,8 @@ func TestGetPassHostHeader(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
@@ -625,12 +608,8 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestLoadNamespacedIngresses(t *testing.T) {
@@ -809,7 +788,6 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -830,12 +808,8 @@ func TestLoadNamespacedIngresses(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestLoadMultipleNamespacedIngresses(t *testing.T) {
@@ -1047,7 +1021,6 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1069,7 +1042,6 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			"awesome/quix": {
 				Backend:        "awesome/quix",
 				PassHostHeader: true,
-				Priority:       len("/quix"),
 				Routes: map[string]types.Route{
 					"/quix": {
 						Rule: "PathPrefix:/quix",
@@ -1081,12 +1053,8 @@ func TestLoadMultipleNamespacedIngresses(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestHostlessIngress(t *testing.T) {
@@ -1157,8 +1125,7 @@ func TestHostlessIngress(t *testing.T) {
 		},
 		Frontends: map[string]*types.Frontend{
 			"/bar": {
-				Backend:  "/bar",
-				Priority: len("/bar"),
+				Backend: "/bar",
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1167,12 +1134,8 @@ func TestHostlessIngress(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestServiceAnnotations(t *testing.T) {
@@ -1223,8 +1186,8 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "1",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
-					"traefik.backend.loadbalancer.method": "drr",
+					types.LabelTraefikBackendCircuitbreaker: "NetworkErrorRatio() > 0.5",
+					types.LabelBackendLoadbalancerMethod:    "drr",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1242,8 +1205,8 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "2",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.backend.circuitbreaker":      "",
-					"traefik.backend.loadbalancer.sticky": "true",
+					types.LabelTraefikBackendCircuitbreaker: "",
+					types.LabelBackendLoadbalancerSticky:    "true",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1382,7 +1345,6 @@ func TestServiceAnnotations(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1403,12 +1365,8 @@ func TestServiceAnnotations(t *testing.T) {
 			},
 		},
 	}
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestIngressAnnotations(t *testing.T) {
@@ -1417,7 +1375,7 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.frontend.passHostHeader": "false",
+					types.LabelFrontendPassHostHeader: "false",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1446,7 +1404,7 @@ func TestIngressAnnotations(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"kubernetes.io/ingress.class":     "traefik",
-					"traefik.frontend.passHostHeader": "true",
+					types.LabelFrontendPassHostHeader: "true",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1544,6 +1502,33 @@ func TestIngressAnnotations(t *testing.T) {
 								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/whitelist-source-range",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}, {
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"ingress.kubernetes.io/rewrite-target": "/",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "rewrite",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/api",
 										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
 											ServicePort: intstr.FromInt(80),
@@ -1659,12 +1644,24 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"rewrite/api": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
 		},
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: false,
-				Priority:       len("/bar"),
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1677,7 +1674,6 @@ func TestIngressAnnotations(t *testing.T) {
 			"other/stuff": {
 				Backend:        "other/stuff",
 				PassHostHeader: true,
-				Priority:       len("/stuff"),
 				Routes: map[string]types.Route{
 					"/stuff": {
 						Rule: "PathPrefix:/stuff",
@@ -1690,7 +1686,6 @@ func TestIngressAnnotations(t *testing.T) {
 			"basic/auth": {
 				Backend:        "basic/auth",
 				PassHostHeader: true,
-				Priority:       len("/auth"),
 				Routes: map[string]types.Route{
 					"/auth": {
 						Rule: "PathPrefix:/auth",
@@ -1708,7 +1703,6 @@ func TestIngressAnnotations(t *testing.T) {
 					"1.1.1.1/24",
 					"1234:abcd::42/32",
 				},
-				Priority: len("/whitelist-source-range"),
 				Routes: map[string]types.Route{
 					"/whitelist-source-range": {
 						Rule: "PathPrefix:/whitelist-source-range",
@@ -1718,24 +1712,31 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 			},
+			"rewrite/api": {
+				Backend:        "rewrite/api",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"/api": {
+						Rule: "ReplacePath:/",
+					},
+					"rewrite": {
+						Rule: "Host:rewrite",
+					},
+				},
+			},
 		},
 	}
 
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
-
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
-	}
+	assert.Equal(t, expected, actual)
 }
 
-func TestInvalidPassHostHeaderValue(t *testing.T) {
+func TestPriorityHeaderValue(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"traefik.frontend.passHostHeader": "herpderp",
+					types.LabelFrontendPriority: "1337",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1815,7 +1816,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
-				Priority:       len("/bar"),
+				Priority:       1337,
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1828,12 +1829,108 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 		},
 	}
 
-	actualJSON, _ := json.Marshal(actual)
-	expectedJSON, _ := json.Marshal(expected)
+	assert.Equal(t, expected, actual)
+}
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected %+v, got %+v", string(expectedJSON), string(actualJSON))
+func TestInvalidPassHostHeaderValue(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					types.LabelFrontendPassHostHeader: "herpderp",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "foo",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/bar",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP:    "10.0.0.1",
+				Type:         "ExternalName",
+				ExternalName: "example.com",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo/bar": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo/bar": {
+				Backend:        "foo/bar",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"/bar": {
+						Rule: "PathPrefix:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, actual)
 }
 
 func TestKubeAPIErrors(t *testing.T) {
@@ -2153,9 +2250,7 @@ func TestMissingResources(t *testing.T) {
 		},
 	}
 
-	if !reflect.DeepEqual(actual, expected) {
-		t.Fatalf("expected\n%v\ngot\n\n%v", spew.Sdump(expected), spew.Sdump(actual))
-	}
+	assert.Equal(t, expected, actual)
 }
 
 func TestBasicAuthInTemplate(t *testing.T) {

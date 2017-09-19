@@ -4,18 +4,16 @@
 package forward
 
 import (
-	"bufio"
 	"crypto/tls"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -159,7 +157,9 @@ func (f *Forwarder) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 // serveHTTP forwards HTTP traffic using the configured transport
 func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx *handlerContext) {
 	start := time.Now().UTC()
+
 	response, err := f.roundTripper.RoundTrip(f.copyRequest(req, req.URL))
+
 	if err != nil {
 		ctx.log.Errorf("Error forwarding to %v, err: %v", req.URL, err)
 		ctx.errHandler.ServeHTTP(w, req, err)
@@ -169,6 +169,16 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx 
 	utils.CopyHeaders(w.Header(), response.Header)
 	// Remove hop-by-hop headers.
 	utils.RemoveHeaders(w.Header(), HopHeaders...)
+
+	announcedTrailerKeyCount := len(response.Trailer)
+	if announcedTrailerKeyCount > 0 {
+		trailerKeys := make([]string, 0, announcedTrailerKeyCount)
+		for k := range response.Trailer {
+			trailerKeys = append(trailerKeys, k)
+		}
+		w.Header().Add("Trailer", strings.Join(trailerKeys, ", "))
+	}
+
 	w.WriteHeader(response.StatusCode)
 
 	stream := f.streamResponse
@@ -179,6 +189,20 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx 
 		}
 	}
 	written, err := io.Copy(newResponseFlusher(w, stream), response.Body)
+	if err != nil {
+		ctx.log.Errorf("Error copying upstream response body: %v", err)
+		ctx.errHandler.ServeHTTP(w, req, err)
+		return
+	}
+
+	defer response.Body.Close()
+
+	forceSetTrailers := len(response.Trailer) != announcedTrailerKeyCount
+	shallowCopyTrailers(w.Header(), response.Trailer, forceSetTrailers)
+
+	if written != 0 {
+		w.Header().Set(ContentLength, strconv.FormatInt(written, 10))
+	}
 
 	if req.TLS != nil {
 		ctx.log.Infof("Round trip: %v, code: %v, duration: %v tls:version: %x, tls:resume:%t, tls:csuite:%x, tls:server:%v",
@@ -192,17 +216,6 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx 
 			req.URL, response.StatusCode, time.Now().UTC().Sub(start))
 	}
 
-	defer response.Body.Close()
-
-	if err != nil {
-		ctx.log.Errorf("Error copying upstream response Body: %v", err)
-		ctx.errHandler.ServeHTTP(w, req, err)
-		return
-	}
-
-	if written != 0 {
-		w.Header().Set(ContentLength, strconv.FormatInt(written, 10))
-	}
 }
 
 // copyRequest makes a copy of the specified request to be sent using the configured
@@ -240,77 +253,51 @@ func (f *httpForwarder) copyRequest(req *http.Request, u *url.URL) *http.Request
 // serveHTTP forwards websocket traffic
 func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx *handlerContext) {
 	outReq := f.copyRequest(req, req.URL)
-	host := outReq.URL.Host
-	dial := net.Dial
 
-	// if host does not specify a port, use the default http port
-	if !strings.Contains(host, ":") {
-		if outReq.URL.Scheme == "wss" {
-			host = host + ":443"
-		} else {
-			host = host + ":80"
-		}
+	dialer := websocket.DefaultDialer
+	if outReq.URL.Scheme == "wss" && f.TLSClientConfig != nil {
+		dialer.TLSClientConfig = f.TLSClientConfig
 	}
-
-	if outReq.URL.Scheme == "wss" {
-		if f.TLSClientConfig == nil {
-			f.TLSClientConfig = http.DefaultTransport.(*http.Transport).TLSClientConfig
-		}
-		dial = func(network, address string) (net.Conn, error) {
-			return tls.Dial("tcp", host, f.TLSClientConfig)
-		}
-	}
-
-	targetConn, err := dial("tcp", host)
+	targetConn, resp, err := dialer.Dial(outReq.URL.String(), outReq.Header)
 	if err != nil {
-		ctx.log.Errorf("Error dialing `%v`: %v", host, err)
+		ctx.log.Errorf("Error dialing `%v`: %v", outReq.Host, err)
 		ctx.errHandler.ServeHTTP(w, req, err)
 		return
 	}
-	hijacker, ok := w.(http.Hijacker)
-	if !ok {
-		ctx.log.Errorf("Unable to hijack the connection: %v", reflect.TypeOf(w))
-		ctx.errHandler.ServeHTTP(w, req, nil)
-		return
-	}
-	underlyingConn, _, err := hijacker.Hijack()
+
+	//Only the targetConn choose to CheckOrigin or not
+	upgrader := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
+		return true
+	}}
+
+	utils.RemoveHeaders(resp.Header, WebsocketUpgradeHeaders...)
+	underlyingConn, err := upgrader.Upgrade(w, req, resp.Header)
 	if err != nil {
-		ctx.log.Errorf("Unable to hijack the connection: %v %v", reflect.TypeOf(w), err)
-		ctx.errHandler.ServeHTTP(w, req, err)
+		ctx.log.Errorf("Error while upgrading connection : %v", err)
 		return
 	}
-	// it is now caller's responsibility to Close the underlying connection
 	defer underlyingConn.Close()
 	defer targetConn.Close()
 
-	ctx.log.Infof("Writing outgoing Websocket request to target connection: %+v", outReq)
-
-	// write the modified incoming request to the dialed connection
-	if err = outReq.Write(targetConn); err != nil {
-		ctx.log.Errorf("Unable to copy request to target: %v", err)
-		ctx.errHandler.ServeHTTP(w, req, err)
-		return
+	errc := make(chan error, 2)
+	replicate := func(dst io.Writer, src io.Reader) {
+		_, err := io.Copy(dst, src)
+		errc <- err
 	}
 
-	br := bufio.NewReader(targetConn)
-	resp, err := http.ReadResponse(br, req)
-	resp.Write(underlyingConn)
-	defer resp.Body.Close()
+	go replicate(targetConn.UnderlyingConn(), underlyingConn.UnderlyingConn())
 
-	// We connect the conn only if the switching protocol has not failed
-	if resp.StatusCode == http.StatusSwitchingProtocols {
-		ctx.log.Infof("Switching protocol success")
-		errc := make(chan error, 2)
-		replicate := func(dst io.Writer, src io.Reader) {
-			_, err := io.Copy(dst, src)
-			errc <- err
-		}
-		go replicate(targetConn, underlyingConn)
-		go replicate(underlyingConn, targetConn)
-		<-errc
+	// Try to read the first message
+	t, msg, err := targetConn.ReadMessage()
+	if err != nil {
+		ctx.log.Errorf("Couldn't read first message : %v", err)
 	} else {
-		ctx.log.Infof("Switching protocol failed")
+		underlyingConn.WriteMessage(t, msg)
 	}
+
+	go replicate(underlyingConn.UnderlyingConn(), targetConn.UnderlyingConn())
+	<-errc
+
 }
 
 // copyRequest makes a copy of the specified request.
@@ -329,20 +316,18 @@ func (f *websocketForwarder) copyRequest(req *http.Request, u *url.URL) (outReq 
 		outReq.URL.Scheme = "ws"
 	}
 
+	if requestURI, err := url.ParseRequestURI(outReq.RequestURI); err == nil {
+		outReq.URL.Path = requestURI.Path
+		outReq.URL.RawQuery = requestURI.RawQuery
+	}
+
 	outReq.URL.Host = u.Host
-	outReq.URL.Opaque = req.RequestURI
-	// raw query is already included in RequestURI, so ignore it to avoid dupes
-	outReq.URL.RawQuery = ""
-
-	outReq.Proto = "HTTP/1.1"
-	outReq.ProtoMajor = 1
-	outReq.ProtoMinor = 1
-
-	// Overwrite close flag so we can keep persistent connection for the backend servers
-	outReq.Close = false
 
 	outReq.Header = make(http.Header)
+	//gorilla websocket use this header to set the request.Host tested in checkSameOrigin
+	outReq.Header.Set("Host", outReq.Host)
 	utils.CopyHeaders(outReq.Header, req.Header)
+	utils.RemoveHeaders(outReq.Header, WebsocketDialHeaders...)
 
 	if f.rewriter != nil {
 		f.rewriter.Rewrite(outReq)
@@ -363,4 +348,13 @@ func isWebsocketRequest(req *http.Request) bool {
 		return false
 	}
 	return containsHeader(Connection, "upgrade") && containsHeader(Upgrade, "websocket")
+}
+
+func shallowCopyTrailers(dstHeader, srcTrailer http.Header, forceSetTrailers bool) {
+	for k, vv := range srcTrailer {
+		if forceSetTrailers {
+			k = http.TrailerPrefix + k
+		}
+		dstHeader[k] = vv
+	}
 }

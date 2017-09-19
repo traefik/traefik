@@ -80,7 +80,7 @@ func (d *Datastore) watchChanges() error {
 	if err != nil {
 		return err
 	}
-	go func() {
+	safe.Go(func() {
 		ctx, cancel := context.WithCancel(d.ctx)
 		operation := func() error {
 			for {
@@ -113,7 +113,7 @@ func (d *Datastore) watchChanges() error {
 		if err != nil {
 			log.Errorf("Error in watch datastore: %v", err)
 		}
-	}()
+	})
 	return nil
 }
 

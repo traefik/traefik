@@ -5,9 +5,9 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/log"
 	"github.com/pkg/errors"
+	"github.com/urfave/negroni"
 )
 
 // IPWhitelister is a middleware that provides Checks of the Requesting IP against a set of Whitelists
@@ -18,11 +18,12 @@ type IPWhitelister struct {
 
 // NewIPWhitelister builds a new IPWhitelister given a list of CIDR-Strings to whitelist
 func NewIPWhitelister(whitelistStrings []string) (*IPWhitelister, error) {
-	whitelister := IPWhitelister{}
 
 	if len(whitelistStrings) == 0 {
 		return nil, errors.New("no whitelists provided")
 	}
+
+	whitelister := IPWhitelister{}
 
 	for _, whitelistString := range whitelistStrings {
 		_, whitelist, err := net.ParseCIDR(whitelistString)
@@ -56,7 +57,6 @@ func (whitelister *IPWhitelister) handle(w http.ResponseWriter, r *http.Request,
 
 	log.Debugf("source-IP %s matched none of the whitelists - rejecting", remoteIP)
 	reject(w)
-	return
 }
 
 func reject(w http.ResponseWriter) {
@@ -65,6 +65,7 @@ func reject(w http.ResponseWriter) {
 	w.WriteHeader(statusCode)
 	w.Write([]byte(http.StatusText(statusCode)))
 }
+
 func ipFromRemoteAddr(addr string) (*net.IP, error) {
 	ip, _, err := net.SplitHostPort(addr)
 	if err != nil {

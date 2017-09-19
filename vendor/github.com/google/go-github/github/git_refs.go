@@ -7,6 +7,8 @@ package github
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -45,7 +47,11 @@ type updateRefRequest struct {
 	Force *bool   `json:"force"`
 }
 
-// GetRef fetches the Reference object for a given Git ref.
+// GetRef fetches a single Reference object for a given Git ref.
+// If there is no exact match, GetRef will return an error.
+//
+// Note: The GitHub API can return multiple matches.
+// If you wish to use this functionality please use the GetRefs() method.
 //
 // GitHub API docs: https://developer.github.com/v3/git/refs/#get-a-reference
 func (s *GitService) GetRef(ctx context.Context, owner string, repo string, ref string) (*Reference, *Response, error) {
@@ -58,11 +64,59 @@ func (s *GitService) GetRef(ctx context.Context, owner string, repo string, ref 
 
 	r := new(Reference)
 	resp, err := s.client.Do(ctx, req, r)
-	if err != nil {
+	if _, ok := err.(*json.UnmarshalTypeError); ok {
+		// Multiple refs, means there wasn't an exact match.
+		return nil, resp, errors.New("no exact match found for this ref")
+	} else if err != nil {
 		return nil, resp, err
 	}
 
 	return r, resp, nil
+}
+
+// GetRefs fetches a slice of Reference objects for a given Git ref.
+// If there is an exact match, only that ref is returned.
+// If there is no exact match, GitHub returns all refs that start with ref.
+// If returned error is nil, there will be at least 1 ref returned.
+// For example:
+//
+// 	"heads/featureA" -> ["refs/heads/featureA"]                         // Exact match, single ref is returned.
+// 	"heads/feature"  -> ["refs/heads/featureA", "refs/heads/featureB"]  // All refs that start with ref.
+// 	"heads/notexist" -> []                                              // Returns an error.
+//
+// GitHub API docs: https://developer.github.com/v3/git/refs/#get-a-reference
+func (s *GitService) GetRefs(ctx context.Context, owner string, repo string, ref string) ([]*Reference, *Response, error) {
+	ref = strings.TrimPrefix(ref, "refs/")
+	u := fmt.Sprintf("repos/%v/%v/git/refs/%v", owner, repo, ref)
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var rawJSON json.RawMessage
+	resp, err := s.client.Do(ctx, req, &rawJSON)
+	if err != nil {
+		return nil, resp, err
+	}
+
+	// Prioritize the most common case: a single returned ref.
+	r := new(Reference)
+	singleUnmarshalError := json.Unmarshal(rawJSON, r)
+	if singleUnmarshalError == nil {
+		return []*Reference{r}, resp, nil
+	}
+
+	// Attempt to unmarshal multiple refs.
+	var rs []*Reference
+	multipleUnmarshalError := json.Unmarshal(rawJSON, &rs)
+	if multipleUnmarshalError == nil {
+		if len(rs) == 0 {
+			return nil, resp, fmt.Errorf("unexpected response from GitHub API: an array of refs with length 0")
+		}
+		return rs, resp, nil
+	}
+
+	return nil, resp, fmt.Errorf("unmarshalling failed for both single and multiple refs: %s and %s", singleUnmarshalError, multipleUnmarshalError)
 }
 
 // ReferenceListOptions specifies optional parameters to the

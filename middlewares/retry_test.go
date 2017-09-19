@@ -41,8 +41,7 @@ func TestRetry(t *testing.T) {
 		t.Run(tcName, func(t *testing.T) {
 			t.Parallel()
 
-			var httpHandler http.Handler
-			httpHandler = &networkFailingHTTPHandler{failAtCalls: tc.failAtCalls, netErrorRecorder: &DefaultNetErrorRecorder{}}
+			var httpHandler http.Handler = &networkFailingHTTPHandler{failAtCalls: tc.failAtCalls, netErrorRecorder: &DefaultNetErrorRecorder{}}
 			httpHandler = NewRetry(tc.attempts, httpHandler, tc.listener)
 
 			recorder := httptest.NewRecorder()

@@ -12,8 +12,8 @@ or other conditions. The main features are:
 
 	* Requests can be matched based on URL host, path, path prefix, schemes,
 	  header and query values, HTTP methods or using custom matchers.
-	* URL hosts and paths can have variables with an optional regular
-	  expression.
+	* URL hosts, paths and query values can have variables with an optional
+	  regular expression.
 	* Registered URLs can be built, or "reversed", which helps maintaining
 	  references to resources.
 	* Routes can be used as subrouters: nested routes are only tested if the
@@ -47,11 +47,20 @@ variable will be anything until the next slash. For example:
 	r.HandleFunc("/articles/{category}/", ArticlesCategoryHandler)
 	r.HandleFunc("/articles/{category}/{id:[0-9]+}", ArticleHandler)
 
+Groups can be used inside patterns, as long as they are non-capturing (?:re). For example:
+
+	r.HandleFunc("/articles/{category}/{sort:(?:asc|desc|new)}", ArticlesCategoryHandler)
+
 The names are used to create a map of route variables which can be retrieved
 calling mux.Vars():
 
 	vars := mux.Vars(request)
 	category := vars["category"]
+
+Note that if any capturing groups are present, mux will panic() during parsing. To prevent
+this, convert any capturing groups to non-capturing, e.g. change "/{sort:(asc|desc)}" to
+"/{sort:(?:asc|desc)}". This is a change from prior versions which behaved unpredictably
+when capturing groups were present.
 
 And this is all you need to know about the basic usage. More advanced options
 are explained below.
@@ -136,6 +145,31 @@ the inner routes use it as base for their paths:
 	// "/products/{key}/details"
 	s.HandleFunc("/{key}/details", ProductDetailsHandler)
 
+Note that the path provided to PathPrefix() represents a "wildcard": calling
+PathPrefix("/static/").Handler(...) means that the handler will be passed any
+request that matches "/static/*". This makes it easy to serve static files with mux:
+
+	func main() {
+		var dir string
+
+		flag.StringVar(&dir, "dir", ".", "the directory to serve files from. Defaults to the current dir")
+		flag.Parse()
+		r := mux.NewRouter()
+
+		// This will serve files under http://localhost:8000/static/<filename>
+		r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(dir))))
+
+		srv := &http.Server{
+			Handler:      r,
+			Addr:         "127.0.0.1:8000",
+			// Good practice: enforce timeouts for servers you create!
+			WriteTimeout: 15 * time.Second,
+			ReadTimeout:  15 * time.Second,
+		}
+
+		log.Fatal(srv.ListenAndServe())
+	}
+
 Now let's see how to build registered URLs.
 
 Routes can be named. All routes that define a name can have their URLs built,
@@ -154,18 +188,20 @@ key/value pairs for the route variables. For the previous route, we would do:
 
 	"/articles/technology/42"
 
-This also works for host variables:
+This also works for host and query value variables:
 
 	r := mux.NewRouter()
 	r.Host("{subdomain}.domain.com").
 	  Path("/articles/{category}/{id:[0-9]+}").
+	  Queries("filter", "{filter}").
 	  HandlerFunc(ArticleHandler).
 	  Name("article")
 
-	// url.String() will be "http://news.domain.com/articles/technology/42"
+	// url.String() will be "http://news.domain.com/articles/technology/42?filter=gorilla"
 	url, err := r.Get("article").URL("subdomain", "news",
 	                                 "category", "technology",
-	                                 "id", "42")
+	                                 "id", "42",
+	                                 "filter", "gorilla")
 
 All variables defined in the route are required, and their values must
 conform to the corresponding patterns. These requirements guarantee that a

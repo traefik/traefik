@@ -123,10 +123,8 @@ func pemEncode(data interface{}) []byte {
 		pemBlock = &pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes}
 	case *rsa.PrivateKey:
 		pemBlock = &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}
-		break
 	case *x509.CertificateRequest:
 		pemBlock = &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: key.Raw}
-		break
 	case []byte:
 		pemBlock = &pem.Block{Type: "CERTIFICATE", Bytes: []byte(data.([]byte))}
 	}

@@ -3,8 +3,8 @@ package middlewares
 import (
 	"net/http"
 
-	"github.com/codegangsta/negroni"
 	"github.com/containous/traefik/log"
+	"github.com/urfave/negroni"
 )
 
 // RecoverHandler recovers from a panic in http handlers

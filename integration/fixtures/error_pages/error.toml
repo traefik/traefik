@@ -1,0 +1,27 @@
+defaultEntryPoints = ["http"]
+
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+[file]
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    url = "http://{{.Server1}}:8989474"
+  [backends.error]
+    [backends.error.servers.error]
+    url = "http://{{.Server2}}:80"
+[frontends]
+    [frontends.frontend1]
+    passHostHeader = true
+    backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Host:test.local"
+    [frontends.frontend1.errors]
+        [frontends.frontend1.errors.networks]
+        status = ["500-502", "503-599"]
+        backend = "error"
+        query = "/50x.html"
