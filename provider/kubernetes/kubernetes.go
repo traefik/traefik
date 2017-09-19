@@ -327,18 +327,16 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	return &templateObjects, nil
 }
 
+// getSSLProxyHeaders
 func (p *Provider) getSSLProxyHeaders(str string) map[string]string {
+	parts := append(p.DefaultSSLProxyHeaders, strings.Split(str, ",")...)
 	headers := map[string]string{}
-	kvs := append(p.DefaultSSLProxyHeaders, strings.Split(str, ",")...)
-	for _, kvp := range kvs {
-		kv := strings.SplitN(kvp, "=", 2)
-		if kv[0] == "" {
+	for _, part := range parts {
+		key, val := splitKeyValue(part)
+		if key == "" {
 			continue
 		}
-		headers[kv[0]] = ""
-		if len(kv) == 2 {
-			headers[kv[0]] = kv[1]
-		}
+		headers[key] = val
 	}
 
 	if len(headers) == 0 {

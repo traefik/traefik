@@ -1,11 +1,22 @@
 package kubernetes
 
 import (
+	"strings"
+
 	"github.com/containous/traefik/types"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
 )
+
+func splitKeyValue(str string) (key, val string) {
+	parts := strings.SplitN(str, "=", 2)
+	key = parts[0]
+	if len(parts) == 2 {
+		val = parts[1]
+	}
+	return
+}
 
 func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
 	if len(pa.Path) == 0 {
