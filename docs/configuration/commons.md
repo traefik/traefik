@@ -318,7 +318,7 @@ Controls the behavior of Traefik during the shutdown phase.
 
 # Duration to keep accepting requests prior to initiating the graceful
 # termination period (as defined by the `graceTimeOut` option). This
-# option is meant to give downstream load-balancer sufficient time to
+# option is meant to give downstream load-balancers sufficient time to
 # take Traefik out of rotation.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
 # If no units are provided, the value is parsed assuming seconds.
