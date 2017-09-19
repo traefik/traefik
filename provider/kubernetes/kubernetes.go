@@ -47,8 +47,8 @@ type Provider struct {
 	Token                  string     `description:"Kubernetes bearer token (not needed for in-cluster client)"`
 	CertAuthFilePath       string     `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
 	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
-	DefaultSSLRedirect     bool       `description:"Kubernetes default ssl redierect mode"`
-	DefaultSSLProxyHeaders []string   `description:"Kubernetes default ssl proxy headers"`
+	DefaultSSLRedirect     bool       `description:"Kubernetes default SSLRedirect mode"`
+	DefaultSSLProxyHeaders []string   `description:"Kubernetes default SSLProxyHeaders (format: key=val)"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces"`
 	LabelSelector          string     `description:"Kubernetes api label selector to use"`
 	lastConfiguration      safe.Safe
