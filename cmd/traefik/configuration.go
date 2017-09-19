@@ -164,6 +164,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		IdleTimeout: flaeg.Duration(configuration.DefaultIdleTimeout),
 	}
 
+	// default ForwardingTimeouts
+	forwardingTimeouts := configuration.ForwardingTimeouts{
+		DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
+	}
+
 	defaultConfiguration := configuration.GlobalConfiguration{
 		Docker:             &defaultDocker,
 		File:               &defaultFile,
@@ -184,6 +189,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		HealthCheck:        &configuration.HealthCheckConfig{},
 		AccessLog:          &defaultAccessLog,
 		RespondingTimeouts: &respondingTimeouts,
+		ForwardingTimeouts: &forwardingTimeouts,
 	}
 
 	return &TraefikConfiguration{
@@ -207,9 +213,6 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			IdleTimeout:               flaeg.Duration(0),
 			HealthCheck: &configuration.HealthCheckConfig{
 				Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
-			},
-			ForwardingTimeouts: &configuration.ForwardingTimeouts{
-				DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
 			},
 			CheckNewVersion: true,
 		},

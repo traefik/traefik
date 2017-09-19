@@ -127,7 +127,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 // behaviour and backwards compatibility issues.
 func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) *http.Transport {
 	dialer := &net.Dialer{
-		Timeout:   30 * time.Second,
+		Timeout:   configuration.DefaultDialTimeout,
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
 	}
