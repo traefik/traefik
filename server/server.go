@@ -675,14 +675,13 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 		writeTimeout = time.Duration(globalConfig.RespondingTimeouts.WriteTimeout)
 	}
 
-	// When RespondingTimeouts.IdleTimout is configured, always use that setting
-	if globalConfig.RespondingTimeouts != nil {
-		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
-	} else if globalConfig.IdleTimeout != 0 {
-		// Backwards compatibility for deprecated IdleTimeout
+	// Prefer legacy idle timeout parameter for backwards compatibility reasons
+	if globalConfig.IdleTimeout > 0 {
 		idleTimeout = time.Duration(globalConfig.IdleTimeout)
+		log.Warn("top-level idle timeout configuration has been deprecated -- please use responding timeouts")
+	} else if globalConfig.RespondingTimeouts != nil {
+		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
 	} else {
-		// Default value if neither the deprecated IdleTimeout nor the new RespondingTimeouts.IdleTimout are configured
 		idleTimeout = time.Duration(configuration.DefaultIdleTimeout)
 	}
 

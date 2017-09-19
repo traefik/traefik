@@ -159,25 +159,31 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		FilePath: "",
 	}
 
+	// default RespondingTimeouts
+	respondingTimeouts := configuration.RespondingTimeouts{
+		IdleTimeout: flaeg.Duration(configuration.DefaultIdleTimeout),
+	}
+
 	defaultConfiguration := configuration.GlobalConfiguration{
-		Docker:        &defaultDocker,
-		File:          &defaultFile,
-		Web:           &defaultWeb,
-		Marathon:      &defaultMarathon,
-		Consul:        &defaultConsul,
-		ConsulCatalog: &defaultConsulCatalog,
-		Etcd:          &defaultEtcd,
-		Zookeeper:     &defaultZookeeper,
-		Boltdb:        &defaultBoltDb,
-		Kubernetes:    &defaultKubernetes,
-		Mesos:         &defaultMesos,
-		ECS:           &defaultECS,
-		Rancher:       &defaultRancher,
-		Eureka:        &defaultEureka,
-		DynamoDB:      &defaultDynamoDB,
-		Retry:         &configuration.Retry{},
-		HealthCheck:   &configuration.HealthCheckConfig{},
-		AccessLog:     &defaultAccessLog,
+		Docker:             &defaultDocker,
+		File:               &defaultFile,
+		Web:                &defaultWeb,
+		Marathon:           &defaultMarathon,
+		Consul:             &defaultConsul,
+		ConsulCatalog:      &defaultConsulCatalog,
+		Etcd:               &defaultEtcd,
+		Zookeeper:          &defaultZookeeper,
+		Boltdb:             &defaultBoltDb,
+		Kubernetes:         &defaultKubernetes,
+		Mesos:              &defaultMesos,
+		ECS:                &defaultECS,
+		Rancher:            &defaultRancher,
+		Eureka:             &defaultEureka,
+		DynamoDB:           &defaultDynamoDB,
+		Retry:              &configuration.Retry{},
+		HealthCheck:        &configuration.HealthCheckConfig{},
+		AccessLog:          &defaultAccessLog,
+		RespondingTimeouts: &respondingTimeouts,
 	}
 
 	return &TraefikConfiguration{
@@ -201,9 +207,6 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			IdleTimeout:               flaeg.Duration(0),
 			HealthCheck: &configuration.HealthCheckConfig{
 				Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
-			},
-			RespondingTimeouts: &configuration.RespondingTimeouts{
-				IdleTimeout: flaeg.Duration(configuration.DefaultIdleTimeout),
 			},
 			ForwardingTimeouts: &configuration.ForwardingTimeouts{
 				DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
