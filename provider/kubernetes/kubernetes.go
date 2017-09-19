@@ -19,9 +19,7 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	"k8s.io/client-go/pkg/util/intstr"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -49,6 +47,8 @@ type Provider struct {
 	Token                  string     `description:"Kubernetes bearer token (not needed for in-cluster client)"`
 	CertAuthFilePath       string     `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
 	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
+	DefaultSSLRedirect     bool       `description:"Kubernetes default ssl redierect mode"`
+	DefaultSSLProxyHeaders []string   `description:"Kubernetes default ssl proxy headers"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces"`
 	LabelSelector          string     `description:"Kubernetes api label selector to use"`
 	lastConfiguration      safe.Safe
@@ -197,7 +197,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 
 					priority := p.getPriority(pa, i)
-
+					sslProxyHeaders := i.Annotations[annotationKubernetesSSLProxyHeaders]
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:              r.Host + pa.Path,
 						PassHostHeader:       PassHostHeader,
@@ -205,7 +205,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Priority:             priority,
 						BasicAuth:            basicAuthCreds,
 						WhitelistSourceRange: whitelistSourceRange,
-						Headers:              types.Headers{},
+						Headers: types.Headers{
+							SSLRedirect:     p.DefaultSSLRedirect,
+							SSLProxyHeaders: p.getSSLProxyHeaders(sslProxyHeaders),
+						},
 					}
 
 					sslRedirectAnnotation, ok := i.Annotations[annotationKubernetesSSLRedirect]
@@ -218,17 +221,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						templateObjects.Frontends[r.Host+pa.Path].Headers.SSLRedirect = true
 					default:
 						log.Warnf("Unknown value '%s' for %s", sslRedirectAnnotation, annotationKubernetesSSLRedirect)
-					}
-
-					sslProxyHeaders, ok := i.Annotations[annotationKubernetesSSLProxyHeaders]
-					if ok {
-						templateObjects.Frontends[r.Host+pa.Path].Headers.SSLProxyHeaders = map[string]string{}
-						for _, kvp := range strings.Split(sslProxyHeaders, ",") {
-							kv := strings.SplitN(kvp, "=", 2)
-							if len(kv) == 2 {
-								templateObjects.Frontends[r.Host+pa.Path].Headers.SSLProxyHeaders[kv[0]] = kv[1]
-							}
-						}
 					}
 
 				}
@@ -335,23 +327,24 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	return &templateObjects, nil
 }
 
-func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
-	if len(pa.Path) == 0 {
-		return ""
+func (p *Provider) getSSLProxyHeaders(str string) map[string]string {
+	headers := map[string]string{}
+	kvs := append(p.DefaultSSLProxyHeaders, strings.Split(str, ",")...)
+	for _, kvp := range kvs {
+		kv := strings.SplitN(kvp, "=", 2)
+		if kv[0] == "" {
+			continue
+		}
+		headers[kv[0]] = ""
+		if len(kv) == 2 {
+			headers[kv[0]] = kv[1]
+		}
 	}
 
-	ruleType := i.Annotations[types.LabelFrontendRuleType]
-	if ruleType == "" {
-		ruleType = ruleTypePathPrefix
+	if len(headers) == 0 {
+		return nil
 	}
-
-	rule := ruleType + ":" + pa.Path
-
-	if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
-		rule = ruleTypeReplacePath + ":" + rewriteTarget
-	}
-
-	return rule
+	return headers
 }
 
 func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress) int {
@@ -420,39 +413,6 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 	}
 
 	return creds, nil
-}
-
-func endpointPortNumber(servicePort v1.ServicePort, endpointPorts []v1.EndpointPort) int {
-	if len(endpointPorts) > 0 {
-		//name is optional if there is only one port
-		port := endpointPorts[0]
-		for _, endpointPort := range endpointPorts {
-			if servicePort.Name == endpointPort.Name {
-				port = endpointPort
-			}
-		}
-		return int(port.Port)
-	}
-	return int(servicePort.Port)
-}
-
-func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool {
-	if int(servicePort.Port) == ingressPort.IntValue() {
-		return true
-	}
-	if servicePort.Name != "" && servicePort.Name == ingressPort.String() {
-		return true
-	}
-	return false
-}
-
-func shouldProcessIngress(ingressClass string) bool {
-	switch ingressClass {
-	case "", "traefik":
-		return true
-	default:
-		return false
-	}
 }
 
 func (p *Provider) getPassHostHeader() bool {

@@ -2403,7 +2403,7 @@ func TestSSLRedirectInTemplate(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					annotationKubernetesSSLRedirect:     "true",
-					annotationKubernetesSSLProxyHeaders: "X-Forward-Proto=https",
+					annotationKubernetesSSLProxyHeaders: "X-Forwarded-Proto=https",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -2464,14 +2464,12 @@ func TestSSLRedirectInTemplate(t *testing.T) {
 	}
 
 	actual = provider.loadConfig(*actual)
-	got := actual.Frontends["ssl/redirect"].Headers.SSLRedirect
-	if !got {
-		t.Fatalf("expected SSLRedirect to be true got: %+v", got)
-	}
+	assert.Equal(t, true,
+		actual.Frontends["ssl/redirect"].Headers.SSLRedirect)
 
-	if got := actual.Frontends["ssl/redirect"].Headers.SSLProxyHeaders; !reflect.DeepEqual(got, map[string]string{"X-Forward-Proto": "https"}) {
-		t.Fatalf("expected 'X-Forward-Proto' to be 'https' got: %+v", got)
-	}
+	assert.Equal(t,
+		map[string]string{"X-Forwarded-Proto": "https"},
+		actual.Frontends["ssl/redirect"].Headers.SSLProxyHeaders)
 }
 
 type clientMock struct {
