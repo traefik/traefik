@@ -159,6 +159,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		FilePath: "",
 	}
 
+	// default HealthCheckConfig
+	healthCheck := configuration.HealthCheckConfig{
+		Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
+	}
+
 	// default RespondingTimeouts
 	respondingTimeouts := configuration.RespondingTimeouts{
 		IdleTimeout: flaeg.Duration(configuration.DefaultIdleTimeout),
@@ -186,7 +191,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Eureka:             &defaultEureka,
 		DynamoDB:           &defaultDynamoDB,
 		Retry:              &configuration.Retry{},
-		HealthCheck:        &configuration.HealthCheckConfig{},
+		HealthCheck:        &healthCheck,
 		AccessLog:          &defaultAccessLog,
 		RespondingTimeouts: &respondingTimeouts,
 		ForwardingTimeouts: &forwardingTimeouts,
