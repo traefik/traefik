@@ -218,7 +218,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 			if data != nil {
 
 				for key, value := range data {
-					nodes, _, err := catalog.Service(key, "", options)
+					nodes, _, err := catalog.Service(key, "", &api.QueryOptions{})
 					if err != nil {
 						log.Errorf("Failed to get detail of service %s: %s", key, err)
 						return
@@ -243,16 +243,13 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 
 				addedServiceNodeKeys, removedServiceNodeKeys := getChangedServiceNodeKeys(current, flashback)
 
-				if len(addedServiceKeys) > 0 || len(addedServiceNodeKeys) > 0 {
-					log.WithField("DiscoveredServices", addedServiceKeys).Debug("Catalog Services change detected.")
+				if len(removedServiceKeys) > 0 || len(removedServiceNodeKeys) > 0 || len(addedServiceKeys) > 0 || len(addedServiceNodeKeys) > 0 {
+					log.WithField("MissingServices", removedServiceKeys).WithField("DiscoveredServices", addedServiceKeys).Debug("Catalog Services change detected.")
 					watchCh <- data
-					flashback = current
-				}
-
-				if len(removedServiceKeys) > 0 || len(removedServiceNodeKeys) > 0 {
-					log.WithField("MissingServices", removedServiceKeys).Debug("Catalog Services change detected.")
-					watchCh <- data
-					flashback = current
+					flashback = make(map[string]Service, len(current))
+					for key, value := range current {
+						flashback[key] = value
+					}
 				}
 			}
 		}
