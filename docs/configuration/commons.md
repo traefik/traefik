@@ -154,6 +154,7 @@ constraints = ["tag==api", "tag!=v*-beta"]
 # If not defined, logs to stdout
 #
 # DEPRECATED - see [traefikLog] lower down
+# In case both traefikLogsFile and traefikLog.filePath are specified, the latter will take precedence.
 # Optional
 #
 traefikLogsFile = "log/traefik.log"
