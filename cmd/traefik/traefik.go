@@ -267,6 +267,9 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 	log.SetLevel(level)
 
 	logFile := globalConfiguration.TraefikLogsFile
+	if len(logFile) > 0 {
+		log.Warn("top-level traefiklogsfile has been deprecated -- please use traefiklog.filepath")
+	}
 	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
 		logFile = globalConfiguration.TraefikLog.FilePath
 	}
