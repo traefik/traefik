@@ -18,14 +18,14 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider     `mapstructure:",squash"`
-	APIConfiguration          `mapstructure:",squash"` // Provide backwards compatibility
-	API                       *APIConfiguration        `description:"Enable the Rancher API provider"`
-	Metadata                  *MetadataConfiguration   `description:"Enable the Rancher metadata service provider"`
-	Domain                    string                   `description:"Default domain used"`
-	RefreshSeconds            int                      `description:"Polling interval (in seconds)"`
-	ExposedByDefault          bool                     `description:"Expose services by default"`
-	EnableServiceHealthFilter bool                     `description:"Filter services with unhealthy states and inactive states"`
+	provider.BaseProvider     `mapstructure:",squash" export:"true"`
+	APIConfiguration          `mapstructure:",squash" export:"true"` // Provide backwards compatibility
+	API                       *APIConfiguration                      `description:"Enable the Rancher API provider" export:"true"`
+	Metadata                  *MetadataConfiguration                 `description:"Enable the Rancher metadata service provider" export:"true"`
+	Domain                    string                                 `description:"Default domain used"`
+	RefreshSeconds            int                                    `description:"Polling interval (in seconds)" export:"true"`
+	ExposedByDefault          bool                                   `description:"Expose services by default" export:"true"`
+	EnableServiceHealthFilter bool                                   `description:"Filter services with unhealthy states and inactive states" export:"true"`
 }
 
 type rancherData struct {
