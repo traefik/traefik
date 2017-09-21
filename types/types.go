@@ -412,6 +412,12 @@ func (b *Buckets) SetValue(val interface{}) {
 	*b = Buckets(val.(Buckets))
 }
 
+// TraefikLog holds the configuration settings for the traefik logger.
+type TraefikLog struct {
+	FilePath string `json:"file,omitempty" description:"Traefik log file path. Stdout is used when omitted or empty"`
+	Format   string `json:"format,omitempty" description:"Traefik log format: json | common"`
+}
+
 // AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
 type AccessLog struct {
 	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty"`
