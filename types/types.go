@@ -198,14 +198,14 @@ func NewConstraint(exp string) (*Constraint, error) {
 		sep = "!="
 		constraint.MustMatch = false
 	} else {
-		return nil, errors.New("Constraint expression missing valid operator: '==' or '!='")
+		return nil, errors.New("constraint expression missing valid operator: '==' or '!='")
 	}
 
 	kv := strings.SplitN(exp, sep, 2)
 	if len(kv) == 2 {
 		// At the moment, it only supports tags
 		if kv[0] != "tag" {
-			return nil, errors.New("Constraint must be tag-based. Syntax: tag==us-*")
+			return nil, errors.New("constraint must be tag-based. Syntax: tag==us-*")
 		}
 
 		constraint.Key = kv[0]
@@ -213,7 +213,7 @@ func NewConstraint(exp string) (*Constraint, error) {
 		return constraint, nil
 	}
 
-	return nil, errors.New("Incorrect constraint expression: " + exp)
+	return nil, fmt.Errorf("incorrect constraint expression: %s", exp)
 }
 
 func (c *Constraint) String() string {
@@ -258,7 +258,7 @@ func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
 func (cs *Constraints) Set(str string) error {
 	exps := strings.Split(str, ",")
 	if len(exps) == 0 {
-		return errors.New("Bad Constraint format: " + str)
+		return fmt.Errorf("bad Constraint format: %s", str)
 	}
 	for _, exp := range exps {
 		constraint, err := NewConstraint(exp)

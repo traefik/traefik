@@ -29,7 +29,9 @@ address = ":8080"
 # Set REST API to read-only mode.
 #
 # Optional
-# readOnly = false
+# Default: false
+#
+readOnly = true
 ```
 
 ## Web UI
