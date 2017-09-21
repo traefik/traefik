@@ -114,9 +114,7 @@ fmt:
 	gofmt -s -l -w $(SRCS)
 
 pull-images:
-	for f in $(shell find ./integration/resources/compose/ -type f); do \
-		docker-compose -f $$f pull; \
-	done
+	cat ./integration/resources/compose/*.yml | grep -E '^\s+image:' | awk '{print $$2}' | sort | uniq  | xargs -n 1 docker pull
 
 help: ## this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

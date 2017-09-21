@@ -83,7 +83,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 					IdleTimeout: flaeg.Duration(80 * time.Second),
 				},
 			},
-			wantIdleTimeout:  time.Duration(80 * time.Second),
+			wantIdleTimeout:  time.Duration(45 * time.Second),
 			wantReadTimeout:  time.Duration(0 * time.Second),
 			wantWriteTimeout: time.Duration(0 * time.Second),
 		},
