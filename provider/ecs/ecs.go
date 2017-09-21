@@ -180,8 +180,11 @@ func wrapAws(ctx context.Context, req *request.Request) error {
 
 func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
 	var ecsFuncMap = template.FuncMap{
-		"filterFrontends": p.filterFrontends,
-		"getFrontendRule": p.getFrontendRule,
+		"filterFrontends":       p.filterFrontends,
+		"getFrontendRule":       p.getFrontendRule,
+		"getBasicAuth":          p.getBasicAuth,
+		"getLoadBalancerSticky": p.getLoadBalancerSticky,
+		"getLoadBalancerMethod": p.getLoadBalancerMethod,
 	}
 
 	instances, err := p.listInstances(ctx, client)
@@ -191,10 +194,20 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 
 	instances = fun.Filter(p.filterInstance, instances).([]ecsInstance)
 
+	services := make(map[string][]ecsInstance)
+
+	for _, instance := range instances {
+		if serviceInstances, ok := services[instance.Name]; ok {
+			services[instance.Name] = append(serviceInstances, instance)
+		} else {
+			services[instance.Name] = []ecsInstance{instance}
+		}
+	}
+
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
-		Instances []ecsInstance
+		Services map[string][]ecsInstance
 	}{
-		instances,
+		services,
 	})
 }
 
@@ -397,7 +410,7 @@ func (p *Provider) lookupTaskDefinitions(ctx context.Context, client *awsClient,
 	return taskDefinitions, nil
 }
 
-func (i ecsInstance) label(k string) string {
+func (p *Provider) label(i ecsInstance, k string) string {
 	if v, found := i.containerDefinition.DockerLabels[k]; found {
 		return *v
 	}
@@ -427,7 +440,7 @@ func (p *Provider) filterInstance(i ecsInstance) bool {
 		return false
 	}
 
-	label := i.label(types.LabelEnable)
+	label := p.label(i, types.LabelEnable)
 	enabled := p.ExposedByDefault && label != "false" || label == "true"
 	if !enabled {
 		log.Debugf("Filtering disabled ecs instance %s (%s) (traefik.enabled = '%s')", i.Name, i.ID, label)
@@ -451,10 +464,38 @@ func (p *Provider) filterFrontends(instances []ecsInstance) []ecsInstance {
 }
 
 func (p *Provider) getFrontendRule(i ecsInstance) string {
-	if label := i.label(types.LabelFrontendRule); label != "" {
+	if label := p.label(i, types.LabelFrontendRule); label != "" {
 		return label
 	}
 	return "Host:" + strings.ToLower(strings.Replace(i.Name, "_", "-", -1)) + "." + p.Domain
+}
+
+func (p *Provider) getBasicAuth(i ecsInstance) []string {
+	label := p.label(i, types.LabelFrontendAuthBasic)
+	if label != "" {
+		return strings.Split(label, ",")
+	}
+	return []string{}
+}
+
+func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
+	if len(instances) > 0 {
+		label := p.label(instances[0], types.LabelBackendLoadbalancerSticky)
+		if label != "" {
+			return label
+		}
+	}
+	return "false"
+}
+
+func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {
+	if len(instances) > 0 {
+		label := p.label(instances[0], types.LabelBackendLoadbalancerMethod)
+		if label != "" {
+			return label
+		}
+	}
+	return "wrr"
 }
 
 // Provider expects no more than 100 parameters be passed to a DescribeTask call; thus, pack
@@ -473,44 +514,44 @@ func (p *Provider) chunkedTaskArns(tasks []*string) [][]*string {
 	return chunkedTasks
 }
 
-func (i ecsInstance) Protocol() string {
-	if label := i.label(types.LabelProtocol); label != "" {
+func (p *Provider) getProtocol(i ecsInstance) string {
+	if label := p.label(i, types.LabelProtocol); label != "" {
 		return label
 	}
 	return "http"
 }
 
-func (i ecsInstance) Host() string {
+func (p *Provider) getHost(i ecsInstance) string {
 	return *i.machine.PrivateIpAddress
 }
 
-func (i ecsInstance) Port() string {
+func (p *Provider) getPort(i ecsInstance) string {
 	return strconv.FormatInt(*i.container.NetworkBindings[0].HostPort, 10)
 }
 
-func (i ecsInstance) Weight() string {
-	if label := i.label(types.LabelWeight); label != "" {
+func (p *Provider) getWeight(i ecsInstance) string {
+	if label := p.label(i, types.LabelWeight); label != "" {
 		return label
 	}
 	return "0"
 }
 
-func (i ecsInstance) PassHostHeader() string {
-	if label := i.label(types.LabelFrontendPassHostHeader); label != "" {
+func (p *Provider) getPassHostHeader(i ecsInstance) string {
+	if label := p.label(i, types.LabelFrontendPassHostHeader); label != "" {
 		return label
 	}
 	return "true"
 }
 
-func (i ecsInstance) Priority() string {
-	if label := i.label(types.LabelFrontendPriority); label != "" {
+func (p *Provider) getPriority(i ecsInstance) string {
+	if label := p.label(i, types.LabelFrontendPriority); label != "" {
 		return label
 	}
 	return "0"
 }
 
-func (i ecsInstance) EntryPoints() []string {
-	if label := i.label(types.LabelFrontendEntryPoints); label != "" {
+func (p *Provider) getEntryPoints(i ecsInstance) []string {
+	if label := p.label(i, types.LabelFrontendEntryPoints); label != "" {
 		return strings.Split(label, ",")
 	}
 	return []string{}

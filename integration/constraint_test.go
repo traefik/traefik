@@ -80,12 +80,13 @@ func (s *ConstraintSuite) deregisterService(name string, address string) error {
 }
 
 func (s *ConstraintSuite) TestMatchConstraintGlobal(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost",
 		"--constraints=tag==api")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -105,12 +106,13 @@ func (s *ConstraintSuite) TestMatchConstraintGlobal(c *check.C) {
 }
 
 func (s *ConstraintSuite) TestDoesNotMatchConstraintGlobal(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost",
 		"--constraints=tag==api")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -130,12 +132,13 @@ func (s *ConstraintSuite) TestDoesNotMatchConstraintGlobal(c *check.C) {
 }
 
 func (s *ConstraintSuite) TestMatchConstraintProvider(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost",
 		"--consulCatalog.constraints=tag==api")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -155,12 +158,13 @@ func (s *ConstraintSuite) TestMatchConstraintProvider(c *check.C) {
 }
 
 func (s *ConstraintSuite) TestDoesNotMatchConstraintProvider(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost",
 		"--consulCatalog.constraints=tag==api")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -180,13 +184,14 @@ func (s *ConstraintSuite) TestDoesNotMatchConstraintProvider(c *check.C) {
 }
 
 func (s *ConstraintSuite) TestMatchMultipleConstraint(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost",
 		"--consulCatalog.constraints=tag==api",
 		"--constraints=tag!=us-*")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -206,13 +211,14 @@ func (s *ConstraintSuite) TestMatchMultipleConstraint(c *check.C) {
 }
 
 func (s *ConstraintSuite) TestDoesNotMatchMultipleConstraint(c *check.C) {
-	cmd, _ := s.cmdTraefik(
+	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/consul_catalog/simple.toml"),
 		"--consulCatalog",
 		"--consulCatalog.endpoint="+s.consulIP+":8500",
 		"--consulCatalog.domain=consul.localhost",
 		"--consulCatalog.constraints=tag==api",
 		"--constraints=tag!=us-*")
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

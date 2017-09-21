@@ -150,8 +150,6 @@ type Marathon interface {
 }
 
 var (
-	// ErrInvalidResponse is thrown when marathon responds with invalid or error response
-	ErrInvalidResponse = errors.New("invalid response from Marathon")
 	// ErrMarathonDown is thrown when all the marathon endpoints are down
 	ErrMarathonDown = errors.New("all the Marathon hosts are presently down")
 	// ErrTimeoutError is thrown when the operation has timed out
@@ -188,6 +186,11 @@ type marathonClient struct {
 type httpClient struct {
 	// the configuration for the marathon HTTP client
 	config Config
+}
+
+// newRequestError signals that creating a new http.Request failed
+type newRequestError struct {
+	error
 }
 
 // NewClient creates a new marathon client
@@ -298,8 +301,7 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 		if response.StatusCode >= 200 && response.StatusCode <= 299 {
 			if result != nil {
 				if err := json.Unmarshal(respBody, result); err != nil {
-					r.debugLog.Printf("apiCall(): failed to unmarshall the response from marathon, error: %s\n", err)
-					return ErrInvalidResponse
+					return fmt.Errorf("failed to unmarshal response from Marathon: %s", err)
 				}
 			}
 			return nil
@@ -317,7 +319,8 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 	}
 }
 
-// buildAPIRequest creates a default API request
+// buildAPIRequest creates a default API request.
+// It fails when there is no available member in the cluster anymore or when the request can not be built.
 func (r *marathonClient) buildAPIRequest(method, path string, reader io.Reader) (request *http.Request, member string, err error) {
 	// Grab a member from the cluster
 	member, err = r.hosts.getMember()
@@ -328,7 +331,7 @@ func (r *marathonClient) buildAPIRequest(method, path string, reader io.Reader) 
 	// Build the HTTP request to Marathon
 	request, err = r.client.buildMarathonRequest(method, member, path, reader)
 	if err != nil {
-		return nil, member, err
+		return nil, member, newRequestError{err}
 	}
 	return request, member, nil
 }

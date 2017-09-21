@@ -1,14 +1,14 @@
 etcd:
   image: containous/docker-etcd
-  
+
 whoami1:
   image: emilevauge/whoami
-  
+
 whoami2:
   image: emilevauge/whoami
-  
+
 whoami3:
   image: emilevauge/whoami
-  
+
 whoami4:
   image: emilevauge/whoami

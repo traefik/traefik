@@ -1,12 +1,10 @@
 [backends]
 {{range $index, $node := .Nodes}}
-  {{if ne (getAttribute "enable" $node.Service.Tags "true") "false"}}
-    [backends."backend-{{getBackend $node}}".servers."{{getBackendName $node $index}}"]
-      url = "{{getAttribute "protocol" $node.Service.Tags "http"}}://{{getBackendAddress $node}}:{{$node.Service.Port}}"
-      {{$weight := getAttribute "backend.weight" $node.Service.Tags "0"}}
-      {{with $weight}}
-        weight = {{$weight}}
-      {{end}}
+  [backends."backend-{{getBackend $node}}".servers."{{getBackendName $node $index}}"]
+    url = "{{getAttribute "protocol" $node.Service.Tags "http"}}://{{getBackendAddress $node}}:{{$node.Service.Port}}"
+    {{$weight := getAttribute "backend.weight" $node.Service.Tags "0"}}
+    {{with $weight}}
+      weight = {{$weight}}
     {{end}}
 {{end}}
 
@@ -18,11 +16,9 @@
     expression = "{{$circuitBreaker}}"
   {{end}}
 
-  {{$loadBalancer := getAttribute "backend.loadbalancer" .Attributes ""}}
-  {{with $loadBalancer}}
   [backends."backend-{{$service}}".loadbalancer]
-    method = "{{$loadBalancer}}"
-  {{end}}
+    sticky = {{getAttribute "backend.loadbalancer.sticky" .Attributes "false"}}
+    method = "{{getAttribute "backend.loadbalancer" .Attributes "wrr"}}"
 
   {{if hasMaxconnAttributes .Attributes}}
   [backends."backend-{{$service}}".maxconn]
@@ -44,6 +40,9 @@
       "{{.}}",
     {{end}}]
   {{end}}
+  basicAuth = [{{range getBasicAuth .Attributes}}
+  "{{.}}",
+  {{end}}]
   [frontends."frontend-{{.ServiceName}}".routes."route-host-{{.ServiceName}}"]
     rule = "{{getFrontendRule .}}"
 {{end}}

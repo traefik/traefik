@@ -6,22 +6,22 @@
 #
 # Usage - dumpcerts.sh /etc/traefik/acme.json /etc/ssl/
 #
-# Dependencies - 
+# Dependencies -
 #   util-linux
 #   openssl
 #   jq
 # The MIT License (MIT)
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -78,7 +78,7 @@ We need to read this file to explode the JSON bundle... exiting.
 
 ${USAGE}" >&2
 	exit 2
-fi	
+fi
 
 
 if [ ! -d "${certdir}" ]; then
@@ -88,7 +88,7 @@ We need a directory in which to explode the JSON bundle... exiting.
 
 ${USAGE}" >&2
 	exit 4
-fi	
+fi
 
 jq=$(command -v jq) || exit_jq
 
@@ -126,7 +126,7 @@ trap 'umask ${oldumask}' EXIT
 #
 # openssl:
 # echo -e "-----BEGIN RSA PRIVATE KEY-----\n${priv}\n-----END RSA PRIVATE KEY-----" \
-#   | openssl rsa -inform pem -out "${pdir}/letsencrypt.key" 
+#   | openssl rsa -inform pem -out "${pdir}/letsencrypt.key"
 #
 # and sed:
 # echo "-----BEGIN RSA PRIVATE KEY-----" > "${pdir}/letsencrypt.key"
@@ -142,7 +142,7 @@ echo -e "-----BEGIN RSA PRIVATE KEY-----\n${priv}\n-----END RSA PRIVATE KEY-----
 
 # Process the certificates for each of the domains in acme.json
 for domain in $(jq -r '.DomainsCertificate.Certs[].Certificate.Domain' acme.json); do
-	# Traefik stores a cert bundle for each domain.  Within this cert 
+	# Traefik stores a cert bundle for each domain.  Within this cert
 	# bundle there is both proper the certificate and the Let's Encrypt CA
 	echo "Extracting cert bundle for ${domain}"
 	cert=$(jq -e -r --arg domain "$domain" '.DomainsCertificate.Certs[].Certificate |

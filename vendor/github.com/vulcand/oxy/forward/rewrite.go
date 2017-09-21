@@ -34,8 +34,6 @@ func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 
 	if xfp := req.Header.Get(XForwardedPort); xfp != "" && rw.TrustForwardHeader {
 		req.Header.Set(XForwardedPort, xfp)
-	} else if req.URL.Port() != "" {
-		req.Header.Set(XForwardedPort, req.URL.Port())
 	}
 
 	if xfh := req.Header.Get(XForwardedHost); xfh != "" && rw.TrustForwardHeader {

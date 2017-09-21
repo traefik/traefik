@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -34,6 +35,7 @@ type LogHandler struct {
 	logger   *logrus.Logger
 	file     *os.File
 	filePath string
+	mu       sync.Mutex
 }
 
 // NewLogHandler creates a new LogHandler
@@ -127,6 +129,10 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 	core[ClientHost], core[ClientPort] = silentSplitHostPort(req.RemoteAddr)
 	core[ClientUsername] = usernameIfPresent(req.URL)
 
+	if forwardedFor := req.Header.Get("X-Forwarded-For"); forwardedFor != "" {
+		core[ClientHost] = forwardedFor
+	}
+
 	crw := &captureResponseWriter{rw: rw}
 
 	next.ServeHTTP(crw, reqWithDataTable)
@@ -144,14 +150,19 @@ func (l *LogHandler) Close() error {
 // by an external source.
 func (l *LogHandler) Rotate() error {
 	var err error
-	if err = l.Close(); err != nil {
-		return err
+
+	if l.file != nil {
+		defer func(f *os.File) {
+			f.Close()
+		}(l.file)
 	}
 
 	l.file, err = os.OpenFile(l.filePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
 		return err
 	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	l.logger.Out = l.file
 	return nil
 }
@@ -176,9 +187,11 @@ func usernameIfPresent(theURL *url.URL) string {
 
 // Logging handler to log frontend name, backend name, and elapsed time
 func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestReader, crw *captureResponseWriter) {
-
 	core := logDataTable.Core
 
+	if core[RetryAttempts] == nil {
+		core[RetryAttempts] = 0
+	}
 	if crr != nil {
 		core[RequestContentSize] = crr.count
 	}
@@ -220,6 +233,8 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 		fields["downstream_"+k] = logDataTable.DownstreamResponse.Get(k)
 	}
 
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	l.logger.WithFields(fields).Println()
 }
 

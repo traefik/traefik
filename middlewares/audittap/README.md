@@ -20,7 +20,7 @@ An example follows
   [auditSink.exclusions]
     [auditSink.exclusions.exc1]
     headerName = "RequestHost"
-    contains = ["captain", "docktor"]
+    startsWith = ["captain", "docktor"]
     [auditSink.exclusions.exc2]
     headerName = "RequestPath"
     contains = ["/ping/ping"]
@@ -28,9 +28,10 @@ An example follows
 
 The properties are as follow:
 
-* type (mandatory): the type of sink audit events will be published to
+* type (mandatory): the type of sink audit events will be published to. Can be AMQP|Blackhole
 * proxyingFor (mandatory): determines the auditing style. Values can be API or RATE
 * auditSource (mandatory for API): the auditSource value to be included in API audit events
 * auditType (mandatory for API): the auditType value to be included in API audit events
 * encryptSecret (optional): base64 encoded AES-256 key, if provided logged audit events will be encrypted
-* auditSink.exclusions.excname (optional): excludes a request from auditing based on the header name when the header contains any of the specified values
+* auditSink.exclusions.excname (optional): excludes a request from auditing based on the header name when the header
+contains any of the specified values. Matching condition can be contains|endsWith|startsWith

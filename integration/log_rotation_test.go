@@ -20,7 +20,8 @@ type LogRotationSuite struct{ BaseSuite }
 
 func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	// Start Traefik
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -68,7 +69,8 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 
 func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 	// Start Traefik
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/traefik_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/traefik_log_config.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -102,7 +104,7 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 
 	// GreaterOrEqualThan used to ensure test doesn't break
 	// If more log entries are output on startup
-	c.Assert(lineCount, checker.GreaterOrEqualThan, 6)
+	c.Assert(lineCount, checker.GreaterOrEqualThan, 5)
 
 	//Verify traefik.log output as expected
 	lineCount = verifyLogLines(c, traefikTestLogFile, lineCount, false)

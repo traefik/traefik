@@ -147,7 +147,8 @@ func (s *DynamoDBSuite) TestSimpleConfiguration(c *check.C) {
 	dynamoURL := "http://" + s.composeProject.Container(c, "dynamo").NetworkSettings.IPAddress + ":8000"
 	file := s.adaptFile(c, "fixtures/dynamodb/simple.toml", struct{ DynamoURL string }{dynamoURL})
 	defer os.Remove(file)
-	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
