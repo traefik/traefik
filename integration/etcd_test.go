@@ -17,6 +17,20 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
+const (
+	// Services IP addresses fixed in the configuration
+	ipEtcd     string = "172.10.1.2"
+	ipWhoami01 string = "172.10.1.3"
+	ipWhoami02 string = "172.10.1.4"
+	ipWhoami03 string = "172.10.1.5"
+	ipWhoami04 string = "172.10.1.6"
+
+	traefikEtcdUrl    string = "http://127.0.0.1:8000/"
+	traefikWebEtcdUrl string = "http://127.0.0.1:8081/"
+
+	serviceEtcdName string = "etcd"
+)
+
 // Etcd test suites (using libcompose)
 type EtcdSuite struct {
 	BaseSuite
@@ -24,11 +38,11 @@ type EtcdSuite struct {
 }
 
 func (s *EtcdSuite) SetUpTest(c *check.C) {
-	s.createComposeProject(c, "etcd")
+	s.createComposeProject(c, serviceEtcdName)
 	s.composeProject.Start(c)
 
 	etcd.Register()
-	url := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress + ":2379"
+	url := ipEtcd + ":2379"
 	kv, err := libkv.NewStore(
 		store.ETCD,
 		[]string{url},
@@ -59,9 +73,7 @@ func (s *EtcdSuite) TearDownTest(c *check.C) {
 func (s *EtcdSuite) TearDownSuite(c *check.C) {}
 
 func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
-	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
-
-	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
+	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{ipEtcd})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -72,14 +84,12 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 
 	// TODO validate : run on 80
 	// Expected a 404 as we did not configure anything
-	err = try.GetRequest("http://127.0.0.1:8000/", 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	err = try.GetRequest(traefikEtcdUrl, 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
 
 func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
-	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
-
-	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
+	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{ipEtcd})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -88,23 +98,18 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
-	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
-	whoami4IP := s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
-
 	backend1 := map[string]string{
 		"/traefik/backends/backend1/circuitbreaker/expression": "NetworkErrorRatio() > 0.5",
-		"/traefik/backends/backend1/servers/server1/url":       "http://" + whoami1IP + ":80",
+		"/traefik/backends/backend1/servers/server1/url":       "http://" + ipWhoami01 + ":80",
 		"/traefik/backends/backend1/servers/server1/weight":    "10",
-		"/traefik/backends/backend1/servers/server2/url":       "http://" + whoami2IP + ":80",
+		"/traefik/backends/backend1/servers/server2/url":       "http://" + ipWhoami02 + ":80",
 		"/traefik/backends/backend1/servers/server2/weight":    "1",
 	}
 	backend2 := map[string]string{
 		"/traefik/backends/backend2/loadbalancer/method":    "drr",
-		"/traefik/backends/backend2/servers/server1/url":    "http://" + whoami3IP + ":80",
+		"/traefik/backends/backend2/servers/server1/url":    "http://" + ipWhoami03 + ":80",
 		"/traefik/backends/backend2/servers/server1/weight": "1",
-		"/traefik/backends/backend2/servers/server2/url":    "http://" + whoami4IP + ":80",
+		"/traefik/backends/backend2/servers/server2/url":    "http://" + ipWhoami04 + ":80",
 		"/traefik/backends/backend2/servers/server2/weight": "2",
 	}
 	frontend1 := map[string]string{
@@ -144,11 +149,11 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
+	err = try.GetRequest(traefikWebEtcdUrl+"api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	req, err := http.NewRequest(http.MethodGet, traefikEtcdUrl, nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
 	response, err := client.Do(req)
@@ -158,12 +163,12 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 
 	body, err := ioutil.ReadAll(response.Body)
 	c.Assert(err, checker.IsNil)
-	if !strings.Contains(string(body), whoami3IP) &&
-		!strings.Contains(string(body), whoami4IP) {
+	if !strings.Contains(string(body), ipWhoami03) &&
+		!strings.Contains(string(body), ipWhoami04) {
 		c.Fail()
 	}
 
-	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/test", nil)
+	req, err = http.NewRequest(http.MethodGet, traefikEtcdUrl+"test", nil)
 	c.Assert(err, checker.IsNil)
 	response, err = client.Do(req)
 
@@ -172,25 +177,24 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 
 	body, err = ioutil.ReadAll(response.Body)
 	c.Assert(err, checker.IsNil)
-	if !strings.Contains(string(body), whoami1IP) &&
-		!strings.Contains(string(body), whoami2IP) {
+	if !strings.Contains(string(body), ipWhoami01) &&
+		!strings.Contains(string(body), ipWhoami02) {
 		c.Fail()
 	}
 
-	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/test2", nil)
+	req, err = http.NewRequest(http.MethodGet, traefikEtcdUrl+"test2", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test2.localhost"
 	resp, err := client.Do(req)
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 
-	resp, err = http.Get("http://127.0.0.1:8000/")
+	resp, err = http.Get(traefikEtcdUrl)
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
 func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
-	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 	err := s.kv.Put("/traefik/entrypoints/http/address", []byte(":8001"), nil)
 	c.Assert(err, checker.IsNil)
 
@@ -205,29 +209,24 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
-		"--etcd.endpoint="+etcdHost+":4001")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 	err = cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
-	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
-	whoami4IP := s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
-
 	backend1 := map[string]string{
 		"/traefik/backends/backend1/circuitbreaker/expression": "NetworkErrorRatio() > 0.5",
-		"/traefik/backends/backend1/servers/server1/url":       "http://" + whoami1IP + ":80",
+		"/traefik/backends/backend1/servers/server1/url":       "http://" + ipWhoami01 + ":80",
 		"/traefik/backends/backend1/servers/server1/weight":    "10",
-		"/traefik/backends/backend1/servers/server2/url":       "http://" + whoami2IP + ":80",
+		"/traefik/backends/backend1/servers/server2/url":       "http://" + ipWhoami02 + ":80",
 		"/traefik/backends/backend1/servers/server2/weight":    "1",
 	}
 	backend2 := map[string]string{
 		"/traefik/backends/backend2/loadbalancer/method":    "drr",
-		"/traefik/backends/backend2/servers/server1/url":    "http://" + whoami3IP + ":80",
+		"/traefik/backends/backend2/servers/server1/url":    "http://" + ipWhoami03 + ":80",
 		"/traefik/backends/backend2/servers/server1/weight": "1",
-		"/traefik/backends/backend2/servers/server2/url":    "http://" + whoami4IP + ":80",
+		"/traefik/backends/backend2/servers/server2/url":    "http://" + ipWhoami04 + ":80",
 		"/traefik/backends/backend2/servers/server2/weight": "2",
 	}
 	frontend1 := map[string]string{
@@ -280,18 +279,12 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 }
 
 func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) {
-	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 	// start traefik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
-		"--etcd.endpoint="+etcdHost+":4001")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
-
-	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
-	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
-	whoami4IP := s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
 
 	//Copy the contents of the certificate files into ETCD
 	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
@@ -314,16 +307,16 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 
 	backend1 := map[string]string{
 		"/traefik/backends/backend1/circuitbreaker/expression": "NetworkErrorRatio() > 0.5",
-		"/traefik/backends/backend1/servers/server1/url":       "http://" + whoami1IP + ":80",
+		"/traefik/backends/backend1/servers/server1/url":       "http://" + ipWhoami01 + ":80",
 		"/traefik/backends/backend1/servers/server1/weight":    "10",
-		"/traefik/backends/backend1/servers/server2/url":       "http://" + whoami2IP + ":80",
+		"/traefik/backends/backend1/servers/server2/url":       "http://" + ipWhoami02 + ":80",
 		"/traefik/backends/backend1/servers/server2/weight":    "1",
 	}
 	backend2 := map[string]string{
 		"/traefik/backends/backend2/loadbalancer/method":    "drr",
-		"/traefik/backends/backend2/servers/server1/url":    "http://" + whoami3IP + ":80",
+		"/traefik/backends/backend2/servers/server1/url":    "http://" + ipWhoami03 + ":80",
 		"/traefik/backends/backend2/servers/server1/weight": "1",
-		"/traefik/backends/backend2/servers/server2/url":    "http://" + whoami4IP + ":80",
+		"/traefik/backends/backend2/servers/server2/url":    "http://" + ipWhoami04 + ":80",
 		"/traefik/backends/backend2/servers/server2/weight": "2",
 	}
 	frontend1 := map[string]string{
@@ -389,12 +382,10 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 }
 
 func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
-	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
-
 	cmd, display := s.traefikCmd(
 		"storeconfig",
 		withConfigFile("fixtures/simple_web.toml"),
-		"--etcd.endpoint="+etcdHost+":4001")
+		"--etcd.endpoint="+ipEtcd+":4001")
 	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
@@ -408,7 +399,7 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 		"/traefik/defaultentrypoints/0":     "http",
 		"/traefik/entrypoints/http/address": ":8000",
 		"/traefik/web/address":              ":8080",
-		"/traefik/etcd/endpoint":            etcdHost + ":4001",
+		"/traefik/etcd/endpoint":            ipEtcd + ":4001",
 	}
 
 	for key, value := range checkmap {
