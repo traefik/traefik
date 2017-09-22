@@ -1,10 +1,9 @@
 package middlewares
 
 import (
-	"bytes"
 	"net/http"
+	"regexp"
 	"strings"
-	"text/template"
 
 	"github.com/containous/traefik/log"
 )
@@ -19,29 +18,18 @@ type ReplacePath struct {
 const ReplacedPathHeader = "X-Replaced-Path"
 
 func (s *ReplacePath) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	r.Header.Add(ReplacedPathHeader, r.URL.Path)
-	r.URL.Path = s.ReplacePath(r.URL.Path)
+	originPath := r.URL.Path
+	r.Header.Add(ReplacedPathHeader, originPath)
+	r.URL.Path = s.ReplacePath(originPath)
+	log.Debug(originPath, " $> ", r.URL.Path)
 	r.RequestURI = r.URL.RequestURI()
 	s.Handler.ServeHTTP(w, r)
 }
 
 // ReplacePath returns a path replaced with path template.
 func (s *ReplacePath) ReplacePath(source string) string {
-	f := template.FuncMap{
-		"Replace": strings.Replace,
+	if sp := strings.SplitN(s.Path, "$>", 2); len(sp) > 1 {
+		return regexp.MustCompile(strings.TrimSpace(sp[0])).ReplaceAllString(source, strings.TrimSpace(sp[1]))
 	}
-	t, err := template.New("replace_path").Funcs(f).Parse(s.Path)
-	if err != nil {
-		log.Error("parsing: ", err)
-	} else {
-		var buffer bytes.Buffer
-		if err = t.Execute(&buffer, source); err != nil {
-			log.Error("execution: ", err)
-		} else {
-			r := buffer.String()
-			log.Debugf("ReplacePath: %s -> %s", source, r)
-			return r
-		}
-	}
-	panic(err)
+	return s.Path
 }
