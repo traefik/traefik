@@ -152,6 +152,11 @@ constraints = ["tag==api", "tag!=v*-beta"]
 ```toml
 # Traefik logs file
 # If not defined, logs to stdout
+#
+# DEPRECATED - see [traefikLog] lower down
+# In case both traefikLogsFile and traefikLog.filePath are specified, the latter will take precedence.
+# Optional
+#
 traefikLogsFile = "log/traefik.log"
 
 # Log level
@@ -163,6 +168,23 @@ traefikLogsFile = "log/traefik.log"
 # Messages at and above the selected level will be logged.
 #
 logLevel = "ERROR"
+```
+
+## Traefik Logs
+
+By default the Traefik log is written to stdout in text format.
+
+To write the logs into a logfile specify the `filePath`.
+```toml
+[traefikLog]
+  filePath = "/path/to/traefik.log"
+```
+
+To write JSON format logs, specify `json` as the format:
+```toml
+[traefikLog]
+  filePath = "/path/to/traefik.log"
+  format   = "json"
 ```
 
 ### Access Logs

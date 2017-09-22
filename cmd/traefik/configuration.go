@@ -153,6 +153,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultEureka eureka.Provider
 	defaultEureka.Delay = "30s"
 
+	// default TraefikLog
+	defaultTraefikLog := types.TraefikLog{
+		Format:   "common",
+		FilePath: "",
+	}
+
 	// default AccessLog
 	defaultAccessLog := types.AccessLog{
 		Format:   accesslog.CommonFormat,
@@ -192,9 +198,10 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		DynamoDB:           &defaultDynamoDB,
 		Retry:              &configuration.Retry{},
 		HealthCheck:        &healthCheck,
-		AccessLog:          &defaultAccessLog,
 		RespondingTimeouts: &respondingTimeouts,
 		ForwardingTimeouts: &forwardingTimeouts,
+		TraefikLog:         &defaultTraefikLog,
+		AccessLog:          &defaultAccessLog,
 	}
 
 	return &TraefikConfiguration{

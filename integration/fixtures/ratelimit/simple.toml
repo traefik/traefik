@@ -1,0 +1,30 @@
+defaultEntryPoints = ["http"]
+
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+[file]
+
+[backends]
+  [backends.backend1]
+    [backends.backend1.servers.server1]
+    url = "http://{{.Server1}}:80"
+[frontends]
+    [frontends.frontend1]
+    passHostHeader = true
+    backend = "backend1"
+    [frontends.frontend1.routes.test_1]
+    rule = "Path:/"
+    [frontends.frontend1.ratelimit]
+    extractorfunc = "client.ip"
+        [frontends.frontend1.ratelimit.rateset.rateset1]
+        period = "60s"
+        average = 4
+        burst = 5
+        [frontends.frontend1.ratelimit.rateset.rateset2]
+        period = "3s"
+        average = 1
+        burst = 2

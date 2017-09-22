@@ -22,6 +22,7 @@ import:
   - roundrobin
   - stream
   - utils
+  - ratelimit
 - package: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - package: github.com/containous/staert
@@ -209,7 +210,7 @@ testImport:
   repo: https://github.com/containous/check.git
   vcs: git
 - package: github.com/libkermit/compose
-  version: 2048f803f56422a65b455f918d4a61704dc94603
+  version: 4a33a16f1446ba205c4da7b09105d5bdc293b432
   subpackages:
   - check
 - package: github.com/libkermit/docker
