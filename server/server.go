@@ -15,6 +15,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -78,6 +79,7 @@ type serverRoute struct {
 	stripPrefixesRegex []string
 	addPrefix          string
 	replacePath        string
+	replacePathRegex   string
 }
 
 // NewServer returns an initialized Server.
@@ -1038,6 +1040,18 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 		handler = &middlewares.ReplacePath{
 			Path:    serverRoute.replacePath,
 			Handler: handler,
+		}
+	}
+
+	if len(serverRoute.replacePathRegex) > 0 {
+		log.Debug(serverRoute.replacePathRegex)
+		if sp := strings.SplitN(serverRoute.replacePathRegex, "$>", 2); len(sp) == 2 {
+			handler = &middlewares.ReplacePathRegex{
+				Regexp:  regexp.MustCompile(strings.TrimSpace(sp[0])),
+				Repl:    strings.TrimSpace(sp[1]),
+				Handler: handler,
+			}
+			log.Debug(handler)
 		}
 	}
 
