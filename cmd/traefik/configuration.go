@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/provider/dynamodb"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/etcd"
+	"github.com/containous/traefik/provider/eureka"
 	"github.com/containous/traefik/provider/file"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/marathon"
@@ -148,30 +149,59 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDynamoDB.TableName = "traefik"
 	defaultDynamoDB.Watch = true
 
+	// default Eureka
+	var defaultEureka eureka.Provider
+	defaultEureka.Delay = "30s"
+
+	// default TraefikLog
+	defaultTraefikLog := types.TraefikLog{
+		Format:   "common",
+		FilePath: "",
+	}
+
 	// default AccessLog
 	defaultAccessLog := types.AccessLog{
 		Format:   accesslog.CommonFormat,
 		FilePath: "",
 	}
 
+	// default HealthCheckConfig
+	healthCheck := configuration.HealthCheckConfig{
+		Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
+	}
+
+	// default RespondingTimeouts
+	respondingTimeouts := configuration.RespondingTimeouts{
+		IdleTimeout: flaeg.Duration(configuration.DefaultIdleTimeout),
+	}
+
+	// default ForwardingTimeouts
+	forwardingTimeouts := configuration.ForwardingTimeouts{
+		DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
+	}
+
 	defaultConfiguration := configuration.GlobalConfiguration{
-		Docker:        &defaultDocker,
-		File:          &defaultFile,
-		Web:           &defaultWeb,
-		Marathon:      &defaultMarathon,
-		Consul:        &defaultConsul,
-		ConsulCatalog: &defaultConsulCatalog,
-		Etcd:          &defaultEtcd,
-		Zookeeper:     &defaultZookeeper,
-		Boltdb:        &defaultBoltDb,
-		Kubernetes:    &defaultKubernetes,
-		Mesos:         &defaultMesos,
-		ECS:           &defaultECS,
-		Rancher:       &defaultRancher,
-		DynamoDB:      &defaultDynamoDB,
-		Retry:         &configuration.Retry{},
-		HealthCheck:   &configuration.HealthCheckConfig{},
-		AccessLog:     &defaultAccessLog,
+		Docker:             &defaultDocker,
+		File:               &defaultFile,
+		Web:                &defaultWeb,
+		Marathon:           &defaultMarathon,
+		Consul:             &defaultConsul,
+		ConsulCatalog:      &defaultConsulCatalog,
+		Etcd:               &defaultEtcd,
+		Zookeeper:          &defaultZookeeper,
+		Boltdb:             &defaultBoltDb,
+		Kubernetes:         &defaultKubernetes,
+		Mesos:              &defaultMesos,
+		ECS:                &defaultECS,
+		Rancher:            &defaultRancher,
+		Eureka:             &defaultEureka,
+		DynamoDB:           &defaultDynamoDB,
+		Retry:              &configuration.Retry{},
+		HealthCheck:        &healthCheck,
+		RespondingTimeouts: &respondingTimeouts,
+		ForwardingTimeouts: &forwardingTimeouts,
+		TraefikLog:         &defaultTraefikLog,
+		AccessLog:          &defaultAccessLog,
 	}
 
 	return &TraefikConfiguration{
@@ -195,12 +225,6 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			IdleTimeout:               flaeg.Duration(0),
 			HealthCheck: &configuration.HealthCheckConfig{
 				Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
-			},
-			RespondingTimeouts: &configuration.RespondingTimeouts{
-				IdleTimeout: flaeg.Duration(configuration.DefaultIdleTimeout),
-			},
-			ForwardingTimeouts: &configuration.ForwardingTimeouts{
-				DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
 			},
 			CheckNewVersion: true,
 		},

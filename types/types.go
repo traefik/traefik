@@ -1,17 +1,17 @@
 package types
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
-	"crypto/tls"
-	"crypto/x509"
-	"io/ioutil"
-	"os"
-
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
@@ -46,6 +46,7 @@ type CircuitBreaker struct {
 // HealthCheck holds HealthCheck configuration
 type HealthCheck struct {
 	Path     string `json:"path,omitempty"`
+	Port     int    `json:"port,omitempty"`
 	Interval string `json:"interval,omitempty"`
 }
 
@@ -65,6 +66,19 @@ type ErrorPage struct {
 	Status  []string `json:"status,omitempty"`
 	Backend string   `json:"backend,omitempty"`
 	Query   string   `json:"query,omitempty"`
+}
+
+// Rate holds a rate limiting configuration for a specific time period
+type Rate struct {
+	Period  flaeg.Duration `json:"period,omitempty"`
+	Average int64          `json:"average,omitempty"`
+	Burst   int64          `json:"burst,omitempty"`
+}
+
+// RateLimit holds a rate limiting configuration for a given frontend
+type RateLimit struct {
+	RateSet       map[string]*Rate `json:"rateset,omitempty"`
+	ExtractorFunc string           `json:"extractorFunc,omitempty"`
 }
 
 // Headers holds the custom header configuration
@@ -131,6 +145,7 @@ type Frontend struct {
 	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
 	Headers              Headers              `json:"headers,omitempty"`
 	Errors               map[string]ErrorPage `json:"errors,omitempty"`
+	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
@@ -326,8 +341,9 @@ type Digest struct {
 
 // Forward authentication
 type Forward struct {
-	Address string     `description:"Authentication server address"`
-	TLS     *ClientTLS `description:"Enable TLS support"`
+	Address            string     `description:"Authentication server address"`
+	TLS                *ClientTLS `description:"Enable TLS support"`
+	TrustForwardHeader bool       `description:"Trust X-Forwarded-* headers"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space
@@ -394,6 +410,12 @@ func (b *Buckets) String() string { return fmt.Sprintf("%v", *b) }
 //SetValue sets []float64 into the parser
 func (b *Buckets) SetValue(val interface{}) {
 	*b = Buckets(val.(Buckets))
+}
+
+// TraefikLog holds the configuration settings for the traefik logger.
+type TraefikLog struct {
+	FilePath string `json:"file,omitempty" description:"Traefik log file path. Stdout is used when omitted or empty"`
+	Format   string `json:"format,omitempty" description:"Traefik log format: json | common"`
 }
 
 // AccessLog holds the configuration settings for the access logger (middlewares/accesslog).

@@ -11,6 +11,6 @@ logLevel = "DEBUG"
   endpoint = "{{.ConsulHost}}:8500"
   watch = true
   prefix = "traefik"
-  
+
 [web]
   address = ":8081"

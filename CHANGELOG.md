@@ -1,5 +1,59 @@
 # Change Log
 
+## [v1.4.0-rc3](https://github.com/containous/traefik/tree/v1.4.0-rc3) (2017-09-18)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc2...v1.4.0-rc3)
+
+**Enhancements:**
+- **[acme]** Display Traefik logs in integration tests ([#2114](https://github.com/containous/traefik/pull/2114) by [ldez](https://github.com/ldez))
+- **[authentication]** Manage Headers for the Authentication forwarding. ([#2132](https://github.com/containous/traefik/pull/2132) by [ldez](https://github.com/ldez))
+- Fail fast in IT and fix some flaky tests ([#2126](https://github.com/containous/traefik/pull/2126) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[consul]** Fix Consul Catalog refresh ([#2089](https://github.com/containous/traefik/pull/2089) by [Juliens](https://github.com/Juliens))
+- **[healthcheck]** Fix healthcheck port ([#2131](https://github.com/containous/traefik/pull/2131) by [fredix](https://github.com/fredix))
+- **[logs,middleware]** Enable loss less rotation of log files ([#2062](https://github.com/containous/traefik/pull/2062) by [marco-jantke](https://github.com/marco-jantke))
+- **[rancher]** Add stack name to backend name generation to fix rancher metadata backend ([#2107](https://github.com/containous/traefik/pull/2107) by [SantoDE](https://github.com/SantoDE))
+- **[rancher]** Rancher host IP address ([#2101](https://github.com/containous/traefik/pull/2101) by [matq007](https://github.com/matq007))
+- Fixes entry points configuration. ([#2120](https://github.com/containous/traefik/pull/2120) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme,provider]** Enhance documentation readability. ([#2095](https://github.com/containous/traefik/pull/2095) by [ldez](https://github.com/ldez))
+- **[api]** Add examples of proxying ping ([#2102](https://github.com/containous/traefik/pull/2102) by [deitch](https://github.com/deitch))
+- **[k8s]** Add guide section on production advice, esp. CPU. ([#2113](https://github.com/containous/traefik/pull/2113) by [timoreimann](https://github.com/timoreimann))
+- **[metrics]** Enhance web backend documentation ([#2122](https://github.com/containous/traefik/pull/2122) by [ldez](https://github.com/ldez))
+- Add forward auth documentation. ([#2110](https://github.com/containous/traefik/pull/2110) by [ldez](https://github.com/ldez))
+- User guide gRPC ([#2108](https://github.com/containous/traefik/pull/2108) by [Juliens](https://github.com/Juliens))
+- Document custom error page restrictions. ([#2104](https://github.com/containous/traefik/pull/2104) by [timoreimann](https://github.com/timoreimann))
+
+## [v1.4.0-rc2](https://github.com/containous/traefik/tree/v1.4.0-rc2) (2017-09-08)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc1...v1.4.0-rc2)
+
+**Enhancements:**
+- **[authentication,consul]** Add Basic auth for consul catalog ([#2027](https://github.com/containous/traefik/pull/2027) by [mmatur](https://github.com/mmatur))
+- **[authentication,ecs]** Add basic auth for ecs ([#2026](https://github.com/containous/traefik/pull/2026) by [mmatur](https://github.com/mmatur))
+- **[logs]** Send traefik logs to stdout instead stderr ([#2054](https://github.com/containous/traefik/pull/2054) by [marco-jantke](https://github.com/marco-jantke))
+- **[websocket]** Add test for SSL TERMINATION in Websocket IT ([#2063](https://github.com/containous/traefik/pull/2063) by [Juliens](https://github.com/Juliens))
+
+**Bug fixes:**
+- **[consul]** Fix consul catalog refresh problems ([#2089](https://github.com/containous/traefik/pull/2089) by [Juliens](https://github.com/Juliens))
+- **[logs,middleware]** Access log default values ([#2061](https://github.com/containous/traefik/pull/2061) by [ldez](https://github.com/ldez))
+- **[metrics]** prometheus, HTTP method and utf8 ([#2081](https://github.com/containous/traefik/pull/2081) by [ldez](https://github.com/ldez))
+- **[rancher]** fix rancher api environment get ([#2053](https://github.com/containous/traefik/pull/2053) by [SantoDE](https://github.com/SantoDE))
+- **[websocket]** RawPath and Transfer TLSConfig in websocket ([#2088](https://github.com/containous/traefik/pull/2088) by [Juliens](https://github.com/Juliens))
+- Fix error in prepareServer ([#2076](https://github.com/containous/traefik/pull/2076) by [emilevauge](https://github.com/emilevauge))
+
+**Documentation:**
+- **[acme,provider]** Fix whitespaces ([#2075](https://github.com/containous/traefik/pull/2075) by [chulkilee](https://github.com/chulkilee))
+- **[ecs]** Fix IAM policy sid. ([#2066](https://github.com/containous/traefik/pull/2066) by [charlieoleary](https://github.com/charlieoleary))
+- **[k8s]** Fix invalid service yaml example ([#2059](https://github.com/containous/traefik/pull/2059) by [kairen](https://github.com/kairen))
+- **[mesos]** fix: documentation Mesos. ([#2029](https://github.com/containous/traefik/pull/2029) by [ldez](https://github.com/ldez))
+- Update cluster.md ([#2073](https://github.com/containous/traefik/pull/2073) by [kmbremner](https://github.com/kmbremner))
+- Enhance documentation. ([#2048](https://github.com/containous/traefik/pull/2048) by [ldez](https://github.com/ldez))
+- doc: add notes on server urls with path ([#2045](https://github.com/containous/traefik/pull/2045) by [chulkilee](https://github.com/chulkilee))
+- Enhance security headers doc. ([#2042](https://github.com/containous/traefik/pull/2042) by [ldez](https://github.com/ldez))
+- HTTPS for images, video and links in docs. ([#2041](https://github.com/containous/traefik/pull/2041) by [ldez](https://github.com/ldez))
+- Fix error pages configuration. ([#2038](https://github.com/containous/traefik/pull/2038) by [ldez](https://github.com/ldez))
+
 ## [v1.4.0-rc1](https://github.com/containous/traefik/tree/v1.4.0-rc1) (2017-08-28)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.0-rc1...v1.4.0-rc1)
 
@@ -142,6 +196,12 @@
 - Merge current v1.3 to master (rc3) ([#1666](https://github.com/containous/traefik/pull/1666) by [ldez](https://github.com/ldez))
 - Merge current v1.3 to master  ([#1643](https://github.com/containous/traefik/pull/1643) by [ldez](https://github.com/ldez))
 - Merge v1.3.0-rc2 master ([#1613](https://github.com/containous/traefik/pull/1613) by [emilevauge](https://github.com/emilevauge))
+
+## [v1.3.8](https://github.com/containous/traefik/tree/v1.3.8) (2017-09-07)
+[All Commits](https://github.com/containous/traefik/compare/v1.3.7...v1.3.8)
+
+**Bug fixes:**
+- **[middleware]** Compress and Webscocket ([#2079](https://github.com/containous/traefik/pull/2079) by [ldez](https://github.com/ldez))
 
 ## [v1.3.7](https://github.com/containous/traefik/tree/v1.3.7) (2017-08-25)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.6...v1.3.7)

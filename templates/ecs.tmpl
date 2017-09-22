@@ -5,8 +5,8 @@
 
   {{range $index, $i := $instances}}
     [backends.backend-{{ $i.Name }}.servers.server-{{ $i.Name }}{{ $i.ID }}]
-      url = "{{ $i.Protocol }}://{{ $i.Host }}:{{ $i.Port }}"
-      weight = {{ $i.Weight }}
+      url = "{{ getProtocol $i }}://{{ getHost $i }}:{{ getPort $i }}"
+      weight = {{ getWeight $i}}
   {{end}}
 {{end}}
 
@@ -14,9 +14,12 @@
   {{range filterFrontends $instances}}
     [frontends.frontend-{{ $serviceName }}]
       backend = "backend-{{ $serviceName }}"
-      passHostHeader = {{ .PassHostHeader }}
-      priority = {{ .Priority }}
-      entryPoints = [{{range  .EntryPoints }}
+      passHostHeader = {{ getPassHostHeader .}}
+      priority = {{ getPriority .}}
+      entryPoints = [{{range  getEntryPoints .}}
+      "{{.}}",
+    {{end}}]
+      basicAuth = [{{range getBasicAuth .}}
       "{{.}}",
     {{end}}]
     [frontends.frontend-{{ $serviceName }}.routes.route-frontend-{{ $serviceName }}]

@@ -5,8 +5,10 @@ package check
 import (
 	"github.com/go-check/check"
 
+	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/libkermit/compose"
+	"strings"
 )
 
 // Project holds compose related project attributes
@@ -25,16 +27,44 @@ func CreateProject(c *check.C, name string, composeFiles ...string) *Project {
 	}
 }
 
-// Start creates and starts the compose project.
-func (p *Project) Start(c *check.C) {
-	c.Assert(p.project.Start(), check.IsNil,
-		check.Commentf("error while starting compose project"))
+// Start creates and starts services of the compose project,if no services are given, all the services are created/started.
+func (p *Project) Start(c *check.C, services ...string) {
+	errString := "error while creating and starting compose project"
+	if services != nil && len(services) > 0 {
+		errString = fmt.Sprintf("error while creating and starting services %s compose project", strings.Join(services, ","))
+	}
+	c.Assert(p.project.Start(services...), check.IsNil,
+		check.Commentf(errString))
 }
 
-// Stop shuts down and clean the project
-func (p *Project) Stop(c *check.C) {
-	c.Assert(p.project.Stop(), check.IsNil,
-		check.Commentf("error while stopping compose project"))
+// StartOnly starts services of the compose project,if no services are given, all the services are started.
+func (p *Project) StartOnly(c *check.C, services ...string) {
+	errString := "error while starting compose project"
+	if services != nil && len(services) > 0 {
+		errString = fmt.Sprintf("error while starting services %s compose project", strings.Join(services, ","))
+	}
+	c.Assert(p.project.StartOnly(services...), check.IsNil,
+		check.Commentf(errString))
+}
+
+// StopOnly stops services of the compose project,if no services are given, all the services are stopped.
+func (p *Project) StopOnly(c *check.C, services ...string) {
+	errString := "error while stopping deleting compose project"
+	if services != nil && len(services) > 0 {
+		errString = fmt.Sprintf("error while stopping deleting services %s compose project", strings.Join(services, ","))
+	}
+	c.Assert(p.project.StopOnly(services...), check.IsNil,
+		check.Commentf(errString))
+}
+
+// Stop shuts down and clean services of the compose project,if no services are given, all the services are stopped/deleted.
+func (p *Project) Stop(c *check.C, services ...string) {
+	errString := "error while stopping and deleting compose project"
+	if services != nil && len(services) > 0 {
+		errString = fmt.Sprintf("error while stopping and deleting services %s compose project", strings.Join(services, ","))
+	}
+	c.Assert(p.project.Stop(services...), check.IsNil,
+		check.Commentf(errString))
 }
 
 // Scale scale a service up
@@ -58,4 +88,16 @@ func (p *Project) Container(c *check.C, service string) types.ContainerJSON {
 	c.Assert(err, check.IsNil,
 		check.Commentf("error while getting the container for service '%s'", service))
 	return container
+}
+
+// NoContainer check is there is no container for the service given
+// It fails if there one or more containers or if the error returned
+// does not indicate an empty container list
+func (p *Project) NoContainer(c *check.C, service string) {
+	validErr := "No container found for '" + service + "' service"
+	_, err := p.project.Container(service)
+	c.Assert(err, check.NotNil,
+		check.Commentf("error while getting the container for service '%s'", service))
+	c.Assert(err.Error(), check.Equals, validErr,
+		check.Commentf("error while getting the container for service '%s'", service))
 }

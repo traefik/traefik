@@ -77,9 +77,32 @@ func (a nodeSorter) Less(i int, j int) bool {
 	return lentr.Service.Port < rentr.Service.Port
 }
 
-func getChangedKeys(currState map[string][]string, prevState map[string][]string) ([]string, []string) {
+func getChangedServiceKeys(currState map[string]Service, prevState map[string]Service) ([]string, []string) {
 	currKeySet := fun.Set(fun.Keys(currState).([]string)).(map[string]bool)
 	prevKeySet := fun.Set(fun.Keys(prevState).([]string)).(map[string]bool)
+
+	addedKeys := fun.Difference(currKeySet, prevKeySet).(map[string]bool)
+	removedKeys := fun.Difference(prevKeySet, currKeySet).(map[string]bool)
+
+	return fun.Keys(addedKeys).([]string), fun.Keys(removedKeys).([]string)
+}
+
+func getChangedServiceNodeKeys(currState map[string]Service, prevState map[string]Service) ([]string, []string) {
+	var addedNodeKeys []string
+	var removedNodeKeys []string
+	for key, value := range currState {
+		if prevValue, ok := prevState[key]; ok {
+			addedKeys, removedKeys := getChangedHealthyKeys(value.Nodes, prevValue.Nodes)
+			addedNodeKeys = append(addedKeys)
+			removedNodeKeys = append(removedKeys)
+		}
+	}
+	return addedNodeKeys, removedNodeKeys
+}
+
+func getChangedHealthyKeys(currState []string, prevState []string) ([]string, []string) {
+	currKeySet := fun.Set(currState).(map[string]bool)
+	prevKeySet := fun.Set(prevState).(map[string]bool)
 
 	addedKeys := fun.Difference(currKeySet, prevKeySet).(map[string]bool)
 	removedKeys := fun.Difference(prevKeySet, currKeySet).(map[string]bool)
@@ -93,7 +116,7 @@ func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<
 
 	safe.Go(func() {
 		// variable to hold previous state
-		var flashback map[string][]string
+		var flashback []string
 
 		options := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
 
@@ -105,12 +128,18 @@ func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<
 			}
 
 			// Listening to changes that leads to `passing` state or degrades from it.
-			// The call is used just as a trigger for further actions
-			// (intentionally there is no interest in the received data).
-			_, meta, err := health.State("passing", options)
+			healthyState, meta, err := health.State("passing", options)
 			if err != nil {
 				log.WithError(err).Error("Failed to retrieve health checks")
 				return
+			}
+
+			var current []string
+			if healthyState != nil {
+				for _, healthy := range healthyState {
+					current = append(current, healthy.ServiceID)
+				}
+
 			}
 
 			// If LastIndex didn't change then it means `Get` returned
@@ -132,30 +161,38 @@ func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<
 				// A critical note is that the return of a blocking request is no guarantee of a change.
 				// It is possible that there was an idempotent write that does not affect the result of the query.
 				// Thus it is required to do extra check for changes...
-				addedKeys, removedKeys := getChangedKeys(data, flashback)
+				addedKeys, removedKeys := getChangedHealthyKeys(current, flashback)
 
 				if len(addedKeys) > 0 {
 					log.WithField("DiscoveredServices", addedKeys).Debug("Health State change detected.")
 					watchCh <- data
-					flashback = data
+					flashback = current
 				}
 
 				if len(removedKeys) > 0 {
 					log.WithField("MissingServices", removedKeys).Debug("Health State change detected.")
 					watchCh <- data
-					flashback = data
+					flashback = current
 				}
 			}
 		}
 	})
 }
 
+// Service represent a Consul service.
+type Service struct {
+	Name  string
+	Tags  []string
+	Nodes []string
+}
+
 func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- map[string][]string) {
 	catalog := p.client.Catalog()
 
 	safe.Go(func() {
+		current := make(map[string]Service)
 		// variable to hold previous state
-		var flashback map[string][]string
+		var flashback map[string]Service
 
 		options := &api.QueryOptions{WaitTime: DefaultWatchWaitTime}
 
@@ -179,25 +216,51 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 			options.WaitIndex = meta.LastIndex
 
 			if data != nil {
+
+				for key, value := range data {
+					nodes, _, err := catalog.Service(key, "", &api.QueryOptions{})
+					if err != nil {
+						log.Errorf("Failed to get detail of service %s: %s", key, err)
+						return
+					}
+					nodesID := getServiceIds(nodes)
+					if service, ok := current[key]; ok {
+						service.Tags = value
+						service.Nodes = nodesID
+					} else {
+						service := Service{
+							Name:  key,
+							Tags:  value,
+							Nodes: nodesID,
+						}
+						current[key] = service
+					}
+				}
 				// A critical note is that the return of a blocking request is no guarantee of a change.
 				// It is possible that there was an idempotent write that does not affect the result of the query.
 				// Thus it is required to do extra check for changes...
-				addedKeys, removedKeys := getChangedKeys(data, flashback)
+				addedServiceKeys, removedServiceKeys := getChangedServiceKeys(current, flashback)
 
-				if len(addedKeys) > 0 {
-					log.WithField("DiscoveredServices", addedKeys).Debug("Catalog Services change detected.")
-					watchCh <- data
-					flashback = data
-				}
+				addedServiceNodeKeys, removedServiceNodeKeys := getChangedServiceNodeKeys(current, flashback)
 
-				if len(removedKeys) > 0 {
-					log.WithField("MissingServices", removedKeys).Debug("Catalog Services change detected.")
+				if len(removedServiceKeys) > 0 || len(removedServiceNodeKeys) > 0 || len(addedServiceKeys) > 0 || len(addedServiceNodeKeys) > 0 {
+					log.WithField("MissingServices", removedServiceKeys).WithField("DiscoveredServices", addedServiceKeys).Debug("Catalog Services change detected.")
 					watchCh <- data
-					flashback = data
+					flashback = make(map[string]Service, len(current))
+					for key, value := range current {
+						flashback[key] = value
+					}
 				}
 			}
 		}
 	})
+}
+func getServiceIds(services []*api.CatalogService) []string {
+	var serviceIds []string
+	for _, service := range services {
+		serviceIds = append(serviceIds, service.ServiceID)
+	}
+	return serviceIds
 }
 
 func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
@@ -330,6 +393,14 @@ func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue 
 	return p.getTag(p.getPrefixedName(name), tags, defaultValue)
 }
 
+func (p *CatalogProvider) getBasicAuth(tags []string) []string {
+	list := p.getAttribute("frontend.auth.basic", tags, "")
+	if list != "" {
+		return strings.Split(list, ",")
+	}
+	return []string{}
+}
+
 func (p *CatalogProvider) hasTag(name string, tags []string) bool {
 	// Very-very unlikely that a Consul tag would ever start with '=!='
 	tag := p.getTag(name, tags, "=!=")
@@ -377,6 +448,7 @@ func (p *CatalogProvider) buildConfig(catalog []catalogUpdate) *types.Configurat
 		"getBackendName":       p.getBackendName,
 		"getBackendAddress":    p.getBackendAddress,
 		"getAttribute":         p.getAttribute,
+		"getBasicAuth":         p.getBasicAuth,
 		"getTag":               p.getTag,
 		"hasTag":               p.hasTag,
 		"getEntryPoints":       p.getEntryPoints,

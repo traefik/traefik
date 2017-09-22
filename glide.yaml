@@ -12,7 +12,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
-  version: 7baa97f97557ff96be2798972dc831c7ba0a46e7
+  version: 6c94d2888dba2b1a15a89b8a2ca515fc85e07477
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -22,6 +22,7 @@ import:
   - roundrobin
   - stream
   - utils
+  - ratelimit
 - package: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - package: github.com/containous/staert
@@ -79,9 +80,6 @@ import:
   vcs: git
 - package: github.com/abbot/go-http-auth
 - package: github.com/NYTimes/gziphandler
-  repo: https://github.com/containous/gziphandler.git
-  vcs: git
-  version: ^v1002.0.0
 - package: github.com/docker/leadership
 - package: github.com/satori/go.uuid
   version: ^1.1.0
@@ -208,9 +206,11 @@ testImport:
 - package: github.com/docker/libcompose
   version: 1b708aac26a4fc6f9bff31728a8e3a252ef57dbd
 - package: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+  version: fork-containous
+  repo: https://github.com/containous/check.git
+  vcs: git
 - package: github.com/libkermit/compose
-  version: 2048f803f56422a65b455f918d4a61704dc94603
+  version: 4a33a16f1446ba205c4da7b09105d5bdc293b432
   subpackages:
   - check
 - package: github.com/libkermit/docker

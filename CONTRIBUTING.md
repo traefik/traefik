@@ -2,7 +2,7 @@
 
 ## Building
 
-You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` (Method 2) in order to build traefik. For changes to its dependencies, the `glide` dependency management tool and `glide-vc` plugin are required.
+You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` (Method 2) in order to build Traefik. For changes to its dependencies, the `glide` dependency management tool and `glide-vc` plugin are required.
 
 ### Method 1: Using `Docker` and `Makefile`
 
@@ -16,7 +16,7 @@ Step 0 : FROM golang:1.9-alpine
  ---> 8c6473912976
 Step 1 : RUN go get github.com/Masterminds/glide
 [...]
-docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/emile/dev/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
+docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 
@@ -52,7 +52,7 @@ GOHOSTOS="linux"
 GOOS="linux"
 GOPATH="/home/<yourusername>/go"
 GORACE=""
-## more go env's will be listed 
+## more go env's will be listed
 ```
 
 ##### Build Træfik
@@ -63,7 +63,7 @@ Once your environment is set up and the Træfik repository cloned you can build 
 cd ~/go/src/github.com/containous/traefik
 
 # Get go-bindata. Please note, the ellipses are required
-go get github.com/jteeuwen/go-bindata/... 
+go get github.com/jteeuwen/go-bindata/...
 
 # Start build
 go generate
@@ -73,7 +73,7 @@ go build ./cmd/traefik
 # run other commands like tests
 ```
 
-You will find the Træfik executable in the `~/go/src/github.com/containous/traefik` folder as `traefik`. 
+You will find the Træfik executable in the `~/go/src/github.com/containous/traefik` folder as `traefik`.
 
 ### Setting up `glide` and `glide-vc` for dependency management
 
@@ -108,7 +108,7 @@ integration test using the `test-integration` target.
 $ make test-unit
 docker build -t "traefik-dev:your-feature-branch" -f build.Dockerfile .
 # […]
-docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/vincent/src/github/vdemeester/traefik/dist:/go/src/github.com/containous/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate test-unit
+docker run --rm -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github/containous/traefik/dist:/go/src/github.com/containous/traefik/dist" "traefik-dev:your-feature-branch" ./script/make.sh generate test-unit
 ---> Making bundle: generate (in .)
 removed 'gen.go'
 
@@ -140,7 +140,7 @@ More: https://labix.org/gocheck
 
 - Tests can be run from the cloned directory, by `$ go test ./...` which should return `ok` similar to:
 ```
-ok      _/home/vincent/src/github/vdemeester/traefik    0.004s
+ok      _/home/user/go/src/github/containous/traefik    0.004s
 ```
 
 ## Documentation
@@ -159,7 +159,7 @@ pip 1.5.2
 Then install mkdocs with pip
 
 ```shell
-$ pip install mkdocs
+pip install --user -r requirements.txt
 ```
 
 To test documentation locally run `mkdocs serve` in the root directory, this should start a server locally to preview your changes.
@@ -180,7 +180,7 @@ INFO    -  Cleaning site directory
 Please keep in mind that the GitHub issue tracker is not intended as a general support forum, but for reporting bugs and feature requests.
 
 For end-user related support questions, refer to one of the following:
-- the Traefik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com) 
+- the Traefik community Slack channel: [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/traefik) (using the `traefik` tag)
 
 ### Title
@@ -190,7 +190,7 @@ The title must be short and descriptive. (~60 characters)
 ### Description
 
 - Respect the issue template as much as possible. [template](.github/ISSUE_TEMPLATE.md)
-- If it's possible use the command `traefik bug`. See https://www.youtube.com/watch?v=Lyz62L8m93I. 
+- If it's possible use the command `traefik bug`. See https://www.youtube.com/watch?v=Lyz62L8m93I.
 - Explain the conditions which led you to write this issue: the context.
 - The context should lead to something, an idea or a problem that you’re facing.
 - Remain clear and concise.

@@ -37,8 +37,16 @@ If you want to preserve commits you must add `bot/merge-method-rebase` before `s
 
 The status `status/4-merge-in-progress` is only for the bot.
 
-If the bot is not able to perform the merge, the label `bot/need-human-merge` is added. 
+If the bot is not able to perform the merge, the label `bot/need-human-merge` is added.  
 In this case you must solve conflicts/CI/... and after you only need to remove `bot/need-human-merge`.
+
+A maintainer can add `bot/no-merge` on a PR if he want (temporarily) prevent a merge by the bot.
+
+`bot/light-review` can be used to decrease required LGTM from 3 to 1 when:
+
+- vendor updates from previously reviewed PRs
+- merges branches into master
+- prepare release
 
 
 ### [Myrmica Bibikoffi](https://github.com/containous/bibikoffi/)
@@ -52,19 +60,20 @@ In this case you must solve conflicts/CI/... and after you only need to remove `
 **Manage GitHub labels**
 
 * Add labels on new PR [GitHub WebHook]
+* Add milestone to a new PR based on a branch version (1.4, 1.3, ...) [GitHub WebHook]
 * Add and remove `contributor/waiting-for-corrections` label when a review request changes [GitHub WebHook]
 * Weekly report of PR status on Slack (CaptainPR) [cron]
 
 
 ## Labels
 
-If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
+If we open/look an issue/PR, we must add a `kind/*`, an `area/*` and a `status/*`.
 
 ### Contributor
 
 * `contributor/need-more-information`: we need more information from the contributor in order to analyze a problem.
 * `contributor/waiting-for-feedback`: we need the contributor to give us feedback.
-* `contributor/waiting-for-corrections`: we need the contributor to take actions in order to move forward with a PR. **(only for PR)**
+* `contributor/waiting-for-corrections`: we need the contributor to take actions in order to move forward with a PR. **(only for PR)** _[bot, humans]_
 * `contributor/needs-resolve-conflicts`: use it only when there is some conflicts (and an automatic rebase is not possible). **(only for PR)** _[bot, humans]_
 
 ### Kind
@@ -75,7 +84,7 @@ If we open/look an issue/PR, we must add a `kind/*` and an `area/*`.
   * _Proposal issues_ are design proposal that need to be refined with multiple contributors.
   * _Proposal PRs_ are technical prototypes that need to be refined with multiple contributors.
 
-* `kind/bug/possible`: if we need to analyze to understand if it's a bug or not. **(only for issues)** _[bot only]_
+* `kind/bug/possible`: if we need to analyze to understand if it's a bug or not. **(only for issues)**
 * `kind/bug/confirmed`: we are sure, it's a bug. **(only for issues)**
 * `kind/bug/fix`: it's a bug fix. **(only for PR)**
 

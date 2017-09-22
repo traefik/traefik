@@ -1,100 +1,98 @@
 # ECS Backend
 
-Træfik can be configured to use Amazon ECS as a backend configuration:
+Træfik can be configured to use Amazon ECS as a backend configuration.
+
+## Configuration
 
 ```toml
 ################################################################
 # ECS configuration backend
 ################################################################
 
-# Enable ECS configuration backend
+# Enable ECS configuration backend.
 [ecs]
 
-# ECS Cluster Name
+# ECS Cluster Name.
 #
-# DEPRECATED - Please use Clusters
+# DEPRECATED - Please use `clusters`.
 #
-Cluster = "default"
+cluster = "default"
 
-# ECS Clusters Name
+# ECS Clusters Name.
 #
 # Optional
 # Default: ["default"]
 #
-Clusters = ["default"]
+clusters = ["default"]
 
-# Enable watch ECS changes
+# Enable watch ECS changes.
 #
 # Optional
 # Default: true
 #
-Watch = true
+watch = true
 
-# Enable auto discover ECS clusters
+# Default domain used.
+#
+# Optional
+# Default: ""
+#
+domain = "ecs.localhost"
+
+# Enable auto discover ECS clusters.
 #
 # Optional
 # Default: false
 #
-AutoDiscoverClusters = false
+autoDiscoverClusters = false
 
-# Polling interval (in seconds)
+# Polling interval (in seconds).
 #
 # Optional
 # Default: 15
 #
-RefreshSeconds = 15
+refreshSeconds = 15
 
-# Expose ECS services by default in traefik
+# Expose ECS services by default in Traefik.
 #
 # Optional
 # Default: true
 #
-ExposedByDefault = false
+exposedByDefault = false
 
-# Region to use when connecting to AWS
+# Region to use when connecting to AWS.
 #
 # Optional
 #
-Region = "us-east-1"
+region = "us-east-1"
 
-# AccessKeyID to use when connecting to AWS
+# AccessKeyID to use when connecting to AWS.
 #
 # Optional
 #
-AccessKeyID = "abc"
+accessKeyID = "abc"
 
-# SecretAccessKey to use when connecting to AWS
+# SecretAccessKey to use when connecting to AWS.
 #
 # Optional
 #
-SecretAccessKey = "123"
+secretAccessKey = "123"
 
-# Override default configuration template. For advanced users :)
+# Override default configuration template.
+# For advanced users :)
 #
 # Optional
 #
 # filename = "ecs.tmpl"
 ```
 
-Labels can be used on task containers to override default behaviour:
-
-| Label                                        | Description                                                                              |
-|----------------------------------------------|------------------------------------------------------------------------------------------|
-| `traefik.protocol=https`                     | override the default `http` protocol                                                     |
-| `traefik.weight=10`                          | assign this weight to the container                                                      |
-| `traefik.enable=false`                       | disable this container in Træfik                                                         |
-| `traefik.backend.loadbalancer.method=drr`    | override the default `wrr` load balancer algorithm                                       |
-| `traefik.backend.loadbalancer.sticky=true`   | enable backend sticky sessions                                                           |
-| `traefik.frontend.rule=Host:test.traefik.io` | override the default frontend rule (Default: `Host:{containerName}.{domain}`).           |
-| `traefik.frontend.passHostHeader=true`       | forward client `Host` header to the backend.                                             |
-| `traefik.frontend.priority=10`               | override default frontend priority                                                       |
-| `traefik.frontend.entryPoints=http,https`    | assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`. |
-
 If `AccessKeyID`/`SecretAccessKey` is not given credentials will be resolved in the following order:
 
 - From environment variables; `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`.
 - Shared credentials, determined by `AWS_PROFILE` and `AWS_SHARED_CREDENTIALS_FILE`, defaults to `default` and `~/.aws/credentials`.
 - EC2 instance role or ECS task role
+
+## Policy
 
 Træfik needs the following policy to read ECS information:
 
@@ -103,7 +101,7 @@ Træfik needs the following policy to read ECS information:
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "Traefik ECS read access",
+            "Sid": "TraefikECSReadAccess",
             "Effect": "Allow",
             "Action": [
                 "ecs:ListClusters",
@@ -121,3 +119,20 @@ Træfik needs the following policy to read ECS information:
     ]
 }
 ```
+
+## Labels: overriding default behaviour
+
+Labels can be used on task containers to override default behaviour:
+
+| Label                                             | Description                                                                              |
+|---------------------------------------------------|------------------------------------------------------------------------------------------|
+| `traefik.protocol=https`                          | override the default `http` protocol                                                     |
+| `traefik.weight=10`                               | assign this weight to the container                                                      |
+| `traefik.enable=false`                            | disable this container in Træfik                                                         |
+| `traefik.backend.loadbalancer.method=drr`         | override the default `wrr` load balancer algorithm                                       |
+| `traefik.backend.loadbalancer.sticky=true`        | enable backend sticky sessions                                                           |
+| `traefik.frontend.rule=Host:test.traefik.io`      | override the default frontend rule (Default: `Host:{containerName}.{domain}`).           |
+| `traefik.frontend.passHostHeader=true`            | forward client `Host` header to the backend.                                             |
+| `traefik.frontend.priority=10`                    | override default frontend priority                                                       |
+| `traefik.frontend.entryPoints=http,https`         | assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`. |
+| `traefik.frontend.auth.basic=EXPR`                | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`         |

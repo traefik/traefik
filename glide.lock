@@ -1,5 +1,5 @@
-hash: fd8e1bbabefc71e0fc1551dcf67688d0b5ad1f23168a5c0256b8c98dda1b1fb3
-updated: 2017-08-25T11:52:16.848940186+02:00
+hash: f5dd83cd0bcf9f38bf6916bc028e108c59aee57ea440e914bc68f2b90da227d3
+updated: 2017-09-09T11:52:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -320,8 +320,12 @@ imports:
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
+- name: github.com/mailgun/minheap
+  version: 7c28d80e2ada649fc8ab1a37b86d30a2633bd47c
 - name: github.com/mailgun/timetools
   version: 7e6055773c5137efbeb3bd2410d705fe10ab6bfd
+- name: github.com/mailgun/ttlmap
+  version: c1c17f74874f2a5ea48bfb06b5459d4ef2689749
 - name: github.com/mailru/easyjson
   version: d5b7844b561a7bc640052f1b935f7b800330d7e0
   subpackages:
@@ -379,9 +383,7 @@ imports:
   repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
-  version: 824b33f2a7457025697878c865c323f801118043
-  repo: https://github.com/containous/gziphandler.git
-  vcs: git
+  version: 97ae7fbaf81620fe97840685304a78a306a39c64
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/go-digest
@@ -479,7 +481,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: 7baa97f97557ff96be2798972dc831c7ba0a46e7
+  version: 6c94d2888dba2b1a15a89b8a2ca515fc85e07477
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -487,6 +489,7 @@ imports:
   - connlimit
   - forward
   - memmetrics
+  - ratelimit
   - roundrobin
   - stream
   - utils
@@ -779,11 +782,13 @@ testImports:
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+  version: ca0bf163426aa183d03fd4949101785c0347f273
+  repo: https://github.com/containous/check.git
+  vcs: git
 - name: github.com/gorilla/mux
   version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
 - name: github.com/libkermit/compose
-  version: 2048f803f56422a65b455f918d4a61704dc94603
+  version: 4a33a16f1446ba205c4da7b09105d5bdc293b432
   subpackages:
   - check
 - name: github.com/libkermit/docker

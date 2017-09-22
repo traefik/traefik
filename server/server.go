@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
+	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -36,6 +37,7 @@ import (
 	"github.com/vulcand/oxy/cbreaker"
 	"github.com/vulcand/oxy/connlimit"
 	"github.com/vulcand/oxy/forward"
+	"github.com/vulcand/oxy/ratelimit"
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
 	"golang.org/x/net/http2"
@@ -126,7 +128,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 // behaviour and backwards compatibility issues.
 func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) *http.Transport {
 	dialer := &net.Dialer{
-		Timeout:   30 * time.Second,
+		Timeout:   configuration.DefaultDialTimeout,
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
 	}
@@ -282,7 +284,7 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 		}
 	}
 	if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
-		authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
+		authMiddleware, err := mauth.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
@@ -647,6 +649,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	listener, err := net.Listen("tcp", entryPoint.Address)
 	if err != nil {
 		log.Error("Error opening listener ", err)
+		return nil, nil, err
 	}
 
 	if entryPoint.ProxyProtocol {
@@ -673,14 +676,13 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 		writeTimeout = time.Duration(globalConfig.RespondingTimeouts.WriteTimeout)
 	}
 
-	// When RespondingTimeouts.IdleTimout is configured, always use that setting
-	if globalConfig.RespondingTimeouts != nil {
-		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
-	} else if globalConfig.IdleTimeout != 0 {
-		// Backwards compatibility for deprecated IdleTimeout
+	// Prefer legacy idle timeout parameter for backwards compatibility reasons
+	if globalConfig.IdleTimeout > 0 {
 		idleTimeout = time.Duration(globalConfig.IdleTimeout)
+		log.Warn("top-level idle timeout configuration has been deprecated -- please use responding timeouts")
+	} else if globalConfig.RespondingTimeouts != nil {
+		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
 	} else {
-		// Default value if neither the deprecated IdleTimeout nor the new RespondingTimeouts.IdleTimout are configured
 		idleTimeout = time.Duration(configuration.DefaultIdleTimeout)
 	}
 
@@ -890,6 +892,15 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						}
 					}
 
+					if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
+						lb, err = server.buildRateLimiter(lb, frontend.RateLimit)
+						if err != nil {
+							log.Errorf("Error creating rate limiter: %v", err)
+							log.Errorf("Skipping frontend %s...", frontendName)
+							continue frontend
+						}
+					}
+
 					maxConns := config.Backends[frontend.Backend].MaxConn
 					if maxConns != nil && maxConns.Amount != 0 {
 						extractFunc, err := utils.NewExtractor(maxConns.ExtractorFunc)
@@ -934,7 +945,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						auth.Basic = &types.Basic{
 							Users: users,
 						}
-						authMiddleware, err := middlewares.NewAuthenticator(auth)
+						authMiddleware, err := mauth.NewAuthenticator(auth)
 						if err != nil {
 							log.Errorf("Error creating Auth: %s", err)
 						} else {
@@ -1111,6 +1122,7 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 
 	return &healthcheck.Options{
 		Path:     hc.Path,
+		Port:     hc.Port,
 		Interval: interval,
 		LB:       lb,
 	}
@@ -1186,6 +1198,21 @@ func (server *Server) registerMetricClients(metricsConfig *types.Metrics) {
 func stopMetricsClients() {
 	metrics.StopDatadog()
 	metrics.StopStatsd()
+}
+
+func (server *Server) buildRateLimiter(handler http.Handler, rlConfig *types.RateLimit) (http.Handler, error) {
+	extractFunc, err := utils.NewExtractor(rlConfig.ExtractorFunc)
+	if err != nil {
+		return nil, err
+	}
+	log.Debugf("Creating load-balancer rate limiter")
+	rateSet := ratelimit.NewRateSet()
+	for _, rate := range rlConfig.RateSet {
+		if err := rateSet.Add(time.Duration(rate.Period), rate.Average, rate.Burst); err != nil {
+			return nil, err
+		}
+	}
+	return ratelimit.New(handler, extractFunc, rateSet, ratelimit.Logger(oxyLogger))
 }
 
 func (server *Server) buildRetryMiddleware(handler http.Handler, globalConfig configuration.GlobalConfiguration, countServers int, backendName string) http.Handler {

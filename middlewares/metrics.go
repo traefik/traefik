@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"unicode/utf8"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	gokitmetrics "github.com/go-kit/kit/metrics"
 )
@@ -17,7 +19,7 @@ type MetricsWrapper struct {
 }
 
 // NewMetricsWrapper return a MetricsWrapper struct with
-// a given Metrics implementation e.g Prometheuss
+// a given Metrics implementation
 func NewMetricsWrapper(registry metrics.Registry, service string) *MetricsWrapper {
 	var metricsWrapper = MetricsWrapper{
 		registry:    registry,
@@ -32,7 +34,7 @@ func (m *MetricsWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next
 	prw := &responseRecorder{rw, http.StatusOK}
 	next(prw, r)
 
-	reqLabels := []string{"service", m.serviceName, "code", strconv.Itoa(prw.statusCode), "method", r.Method}
+	reqLabels := []string{"service", m.serviceName, "code", strconv.Itoa(prw.statusCode), "method", getMethod(r)}
 	m.registry.ReqsCounter().With(reqLabels...).Add(1)
 
 	reqDurationLabels := []string{"service", m.serviceName, "code", strconv.Itoa(prw.statusCode)}
@@ -46,6 +48,14 @@ type retryMetrics interface {
 // NewMetricsRetryListener instantiates a MetricsRetryListener with the given retryMetrics.
 func NewMetricsRetryListener(retryMetrics retryMetrics, backendName string) RetryListener {
 	return &MetricsRetryListener{retryMetrics: retryMetrics, backendName: backendName}
+}
+
+func getMethod(r *http.Request) string {
+	if !utf8.ValidString(r.Method) {
+		log.Warnf("Invalid HTTP method encoding: %s", r.Method)
+		return "NON_UTF8_HTTP_METHOD"
+	}
+	return r.Method
 }
 
 // MetricsRetryListener is an implementation of the RetryListener interface to

@@ -23,6 +23,7 @@ import (
 
 // Project holds compose related project attributes
 type Project struct {
+	composeFiles   []string
 	composeProject project.APIProject
 	name           string
 	listenChan     chan events.Event
@@ -30,6 +31,7 @@ type Project struct {
 	stopped        chan struct{}
 	deleted        chan struct{}
 	client         client.APIClient
+	hasOpenedChan  bool
 }
 
 // CreateProject creates a compose project with the given name based on the
@@ -58,6 +60,7 @@ func CreateProject(name string, composeFiles ...string) (*Project, error) {
 		return nil, err
 	}
 	p := &Project{
+		composeFiles:   composeFiles,
 		composeProject: composeProject,
 		name:           name,
 		listenChan:     make(chan events.Event),
@@ -65,6 +68,7 @@ func CreateProject(name string, composeFiles ...string) (*Project, error) {
 		stopped:        make(chan struct{}),
 		deleted:        make(chan struct{}),
 		client:         apiClient,
+		hasOpenedChan:  true,
 	}
 
 	// Listen to compose events
@@ -75,40 +79,82 @@ func CreateProject(name string, composeFiles ...string) (*Project, error) {
 }
 
 // Start creates and starts the compose project.
-func (p *Project) Start() error {
+func (p *Project) Start(services ...string) error {
+	// If project chan are closed, recreate new compose project
+	if !p.hasOpenedChan {
+		newProject, _ := CreateProject(p.name, p.composeFiles...)
+		*p = *newProject
+	}
 	ctx := context.Background()
 	err := p.composeProject.Create(ctx, options.Create{})
 	if err != nil {
 		return err
 	}
-	err = p.composeProject.Start(ctx)
+
+	return p.StartOnly(services...)
+}
+
+// StartOnly only starts created services which are stopped.
+func (p *Project) StartOnly(services ...string) error {
+	ctx := context.Background()
+	err := p.composeProject.Start(ctx, services...)
 	if err != nil {
 		return err
 	}
 	// Wait for compose to start
 	<-p.started
-	close(p.started)
 	return nil
 }
 
-// Stop shuts down and clean the project
-func (p *Project) Stop() error {
-	// FIXME(vdemeester) handle timeout
+// StopOnly only stop services without delete them.
+func (p *Project) StopOnly(services ...string) error {
 	ctx := context.Background()
-	err := p.composeProject.Stop(ctx, 10)
+	err := p.composeProject.Stop(ctx, 10, services...)
 	if err != nil {
 		return err
 	}
 	<-p.stopped
-	close(p.stopped)
+	return nil
+}
 
-	err = p.composeProject.Delete(ctx, options.Delete{})
+// Stop shuts down and clean the project
+func (p *Project) Stop(services ...string) error {
+	// FIXME(vdemeester) handle timeout
+	err := p.StopOnly(services...)
+	if err != nil {
+		return err
+	}
+
+	err = p.composeProject.Delete(context.Background(), options.Delete{}, services...)
 	if err != nil {
 		return err
 	}
 	<-p.deleted
-	close(p.deleted)
+
+	existingContainers, err := p.existContainers(project.AnyState)
+	if err != nil {
+		return err
+	}
+	// Close channels only if there are no running services
+	if !existingContainers {
+		p.hasOpenedChan = false
+		close(p.started)
+		close(p.stopped)
+		close(p.deleted)
+		close(p.listenChan)
+	}
 	return nil
+}
+
+// Check if containers exist in the desirated state for the given services
+func (p *Project) existContainers(stateFiltered project.State, services ...string) (bool, error) {
+	existingContainers := false
+	var err error
+	containersFound, err := p.composeProject.Containers(context.Background(), project.Filter{stateFiltered})
+	if err == nil && containersFound != nil && len(containersFound) > 0 {
+		existingContainers = true
+	}
+	return existingContainers, err
 }
 
 // Scale scale a service up

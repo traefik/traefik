@@ -11,7 +11,7 @@ TRAEFIK_ENVS := \
 	-e CI \
 	-e CONTAINER=DOCKER		# Indicator for integration tests that we are running inside a container.
 
-SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/' | grep -v '^integration/vendor/')
+SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/')
 
 BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"
@@ -114,9 +114,7 @@ fmt:
 	gofmt -s -l -w $(SRCS)
 
 pull-images:
-	for f in $(shell find ./integration/resources/compose/ -type f); do \
-		docker-compose -f $$f pull; \
-	done
+	cat ./integration/resources/compose/*.yml | grep -E '^\s+image:' | awk '{print $$2}' | sort | uniq  | xargs -n 1 docker pull
 
 help: ## this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

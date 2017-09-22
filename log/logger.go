@@ -18,6 +18,7 @@ var (
 
 func init() {
 	logger = logrus.StandardLogger().WithFields(logrus.Fields{})
+	logrus.SetOutput(os.Stdout)
 }
 
 // Context sets the Context of the logger
@@ -226,8 +227,10 @@ func RotateFile() error {
 		return nil
 	}
 
-	if err := CloseFile(); err != nil {
-		return fmt.Errorf("error closing log file: %s", err)
+	if logFile != nil {
+		defer func(f *os.File) {
+			f.Close()
+		}(logFile)
 	}
 
 	if err := OpenFile(logFilePath); err != nil {

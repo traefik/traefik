@@ -6,7 +6,7 @@ defaultEntryPoints = ["http", "https"]
   [entryPoints.http]
   address = ":80"
     [entryPoints.http.redirect]
-        entryPoint = "https"
+    entryPoint = "https"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -22,7 +22,7 @@ caServer = "http://traefik.localhost.com:4000/directory"
 
 
 [web]
-  address = ":8080"
+address = ":8080"
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"

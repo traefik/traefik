@@ -14,7 +14,7 @@ I used 4 VMs for the tests with the following configuration:
 ## Setup
 
 1. One VM used to launch the benchmarking tool [wrk](https://github.com/wg/wrk)
-2. One VM for traefik (v1.0.0-beta.416) / nginx (v1.4.6)
+2. One VM for Traefik (v1.0.0-beta.416) / nginx (v1.4.6)
 3. Two VMs for 2 backend servers in go [whoami](https://github.com/emilevauge/whoamI/)
 
 Each VM has been tuned using the following limits:
@@ -65,8 +65,8 @@ http {
     keepalive_requests 10000;
     types_hash_max_size 2048;
 
-    open_file_cache max=200000 inactive=300s; 
-    open_file_cache_valid 300s; 
+    open_file_cache max=200000 inactive=300s;
+    open_file_cache_valid 300s;
     open_file_cache_min_uses 2;
     open_file_cache_errors on;
 
@@ -182,7 +182,8 @@ Requests/sec:  33591.67
 Transfer/sec:      4.97MB
 ```
 
-### traefik:
+### Traefik:
+
 ```shell
 wrk -t20 -c1000 -d60s -H "Host: test.traefik" --latency  http://IP-traefik:8000/bench
 Running 1m test @ http://IP-traefik:8000/bench
@@ -209,5 +210,5 @@ Not bad for young project :) !
 Some areas of possible improvements:
 
 - Use [GO_REUSEPORT](https://github.com/kavu/go_reuseport) listener
-- Run a separate server instance per CPU core with `GOMAXPROCS=1` (it appears during benchmarks that there is a lot more context switches with traefik than with nginx)
+- Run a separate server instance per CPU core with `GOMAXPROCS=1` (it appears during benchmarks that there is a lot more context switches with Traefik than with nginx)
 

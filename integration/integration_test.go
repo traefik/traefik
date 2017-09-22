@@ -12,6 +12,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/containous/traefik/log"
 	"github.com/go-check/check"
 	compose "github.com/libkermit/compose/check"
 	checker "github.com/vdemeester/shakers"
@@ -39,6 +40,7 @@ func init() {
 	check.Suite(&LogRotationSuite{})
 	check.Suite(&MarathonSuite{})
 	check.Suite(&MesosSuite{})
+	check.Suite(&RateLimitSuite{})
 	check.Suite(&SimpleSuite{})
 	check.Suite(&TimeoutSuite{})
 	check.Suite(&WebsocketSuite{})
@@ -87,12 +89,21 @@ func (s *BaseSuite) cmdTraefik(args ...string) (*exec.Cmd, *bytes.Buffer) {
 	return cmd, &out
 }
 
+func (s *BaseSuite) traefikCmd(args ...string) (*exec.Cmd, func(*check.C)) {
+	cmd, out := s.cmdTraefik(args...)
+	return cmd, func(c *check.C) {
+		if c.Failed() {
+			s.displayTraefikLog(c, out)
+		}
+	}
+}
+
 func (s *BaseSuite) displayTraefikLog(c *check.C, output *bytes.Buffer) {
 	if output == nil || output.Len() == 0 {
-		fmt.Printf("%s: No Traefik logs present.", c.TestName())
+		log.Printf("%s: No Traefik logs.", c.TestName())
 	} else {
-		fmt.Printf("%s: Traefik logs: ", c.TestName())
-		fmt.Println(output.String())
+		log.Printf("%s: Traefik logs: ", c.TestName())
+		log.Println(output.String())
 	}
 }
 

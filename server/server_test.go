@@ -83,7 +83,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 					IdleTimeout: flaeg.Duration(80 * time.Second),
 				},
 			},
-			wantIdleTimeout:  time.Duration(80 * time.Second),
+			wantIdleTimeout:  time.Duration(45 * time.Second),
 			wantReadTimeout:  time.Duration(0 * time.Second),
 			wantWriteTimeout: time.Duration(0 * time.Second),
 		},
@@ -96,7 +96,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			t.Parallel()
 
 			entryPointName := "http"
-			entryPoint := &configuration.EntryPoint{Address: "localhost:8080"}
+			entryPoint := &configuration.EntryPoint{Address: "localhost:0"}
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
 			srv := NewServer(test.globalConfig)
@@ -504,14 +504,14 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 		{
 			desc: "no whitelist middleware if no config on entrypoint",
 			entrypoint: &configuration.EntryPoint{
-				Address: ":8080",
+				Address: ":0",
 			},
 			wantMiddleware: false,
 		},
 		{
 			desc: "whitelist middleware should be added if configured on entrypoint",
 			entrypoint: &configuration.EntryPoint{
-				Address: ":8080",
+				Address: ":0",
 				WhitelistSourceRange: []string{
 					"127.0.0.1/32",
 				},
