@@ -25,8 +25,8 @@ const (
 	ipWhoami03 string = "172.10.1.5"
 	ipWhoami04 string = "172.10.1.6"
 
-	traefikEtcdUrl    string = "http://127.0.0.1:8000/"
-	traefikWebEtcdUrl string = "http://127.0.0.1:8081/"
+	traefikEtcdURL    string = "http://127.0.0.1:8000/"
+	traefikWebEtcdURL string = "http://127.0.0.1:8081/"
 
 	serviceEtcdName string = "etcd"
 )
@@ -84,7 +84,7 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 
 	// TODO validate : run on 80
 	// Expected a 404 as we did not configure anything
-	err = try.GetRequest(traefikEtcdUrl, 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
+	err = try.GetRequest(traefikEtcdURL, 1000*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -149,11 +149,11 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik
-	err = try.GetRequest(traefikWebEtcdUrl+"api/providers", 60*time.Second, try.BodyContains("Path:/test"))
+	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
 	client := &http.Client{}
-	req, err := http.NewRequest(http.MethodGet, traefikEtcdUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, traefikEtcdURL, nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
 	response, err := client.Do(req)
@@ -168,7 +168,7 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 		c.Fail()
 	}
 
-	req, err = http.NewRequest(http.MethodGet, traefikEtcdUrl+"test", nil)
+	req, err = http.NewRequest(http.MethodGet, traefikEtcdURL+"test", nil)
 	c.Assert(err, checker.IsNil)
 	response, err = client.Do(req)
 
@@ -182,14 +182,14 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 		c.Fail()
 	}
 
-	req, err = http.NewRequest(http.MethodGet, traefikEtcdUrl+"test2", nil)
+	req, err = http.NewRequest(http.MethodGet, traefikEtcdURL+"test2", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test2.localhost"
 	resp, err := client.Do(req)
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 
-	resp, err = http.Get(traefikEtcdUrl)
+	resp, err = http.Get(traefikEtcdURL)
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
