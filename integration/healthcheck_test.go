@@ -2,6 +2,7 @@ package integration
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
 	"os"
 	"time"
@@ -96,6 +97,31 @@ func (s *HealthCheckSuite) TestSimpleConfiguration(c *check.C) {
 	// Expected a 404 as we did not configure anything
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
+
+	healthReq, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8080/health", nil)
+	c.Assert(err, checker.IsNil)
+	healthReq.Host = "test.localhost"
+
+	resp, err = client.Do(healthReq)
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, 200)
+
+	// check for connection stats
+	var j map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&j)
+	handled := j["handled_connections"]
+	current := j["current_connections"]
+	active := j["active_connections"]
+	idle := j["idle_connections"]
+	c.Assert(handled, checker.GreaterOrEqualThan, float64(4))
+	c.Assert(current, checker.LessOrEqualThan, current)
+	c.Assert(active, checker.Equals, float64(0))
+	c.Assert(idle, checker.Equals, current)
+
+	backendReqs := j["backend_requests"].(map[string]interface{})
+
+	// No backend requests as we got a 404
+	c.Assert(len(backendReqs), checker.Equals, 0)
 }
 
 func (s *HealthCheckSuite) TestMultipleEntrypointsWrr(c *check.C) {

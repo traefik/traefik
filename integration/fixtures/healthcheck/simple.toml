@@ -9,6 +9,8 @@ logLevel = "DEBUG"
 [web]
   address = ":8080"
 
+[web.statistics]
+
 [file]
 [backends]
   [backends.backend1]

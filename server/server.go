@@ -663,6 +663,12 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 		listener = &proxyproto.Listener{Listener: listener}
 	}
 
+	var connStateListener func(net.Conn, http.ConnState)
+
+	if (server.globalConfiguration.Web) != nil {
+		connStateListener = newConnChangeListener(server.globalConfiguration.Web.StatsRecorder)
+	}
+
 	return &http.Server{
 			Addr:         entryPoint.Address,
 			Handler:      n,
@@ -670,6 +676,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,
 			IdleTimeout:  idleTimeout,
+			ConnState:    connStateListener,
 		},
 		listener,
 		nil
@@ -1197,6 +1204,14 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func newConnChangeListener(sr *middlewares.StatsRecorder) func(net.Conn, http.ConnState) {
+	return func(conn net.Conn, newState http.ConnState) {
+		if sr != nil {
+			sr.ConnStateChange(conn, newState)
+		}
+	}
 }
 
 func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
