@@ -1044,14 +1044,8 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 	}
 
 	if len(serverRoute.replacePathRegex) > 0 {
-		log.Debug(serverRoute.replacePathRegex)
 		if sp := strings.SplitN(serverRoute.replacePathRegex, "$>", 2); len(sp) == 2 {
-			handler = &middlewares.ReplacePathRegex{
-				Regexp:  regexp.MustCompile(strings.TrimSpace(sp[0])),
-				Repl:    strings.TrimSpace(sp[1]),
-				Handler: handler,
-			}
-			log.Debug(handler)
+			handler = middlewares.NewReplacePathRegexHandler(sp[0], sp[1], handler)
 		}
 	}
 
