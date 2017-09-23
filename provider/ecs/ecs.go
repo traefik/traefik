@@ -214,7 +214,6 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 // Find all running Provider tasks in a cluster, also collect the task definitions (for docker labels)
 // and the EC2 instance data
 func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsInstance, error) {
-	var taskArns []*string
 	var instances []ecsInstance
 	var clustersArn []*string
 	var clusters Clusters
@@ -255,6 +254,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			DesiredStatus: aws.String(ecs.DesiredStatusRunning),
 		})
 
+		var taskArns []*string
+
 		for ; req != nil; req = req.NextPage() {
 			if err := wrapAws(ctx, req); err != nil {
 				return nil, err
@@ -263,12 +264,10 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			taskArns = append(taskArns, req.Data.(*ecs.ListTasksOutput).TaskArns...)
 		}
 
-		// Early return: if we can't list tasks we have nothing to
-		// describe below - likely empty cluster/permissions are bad.  This
-		// stops the AWS API from returning a 401 when you DescribeTasks
-		// with no input.
+		// Skip to the next cluster if there are no tasks found on
+		// this cluster.
 		if len(taskArns) == 0 {
-			return []ecsInstance{}, nil
+			continue
 		}
 
 		chunkedTaskArns := p.chunkedTaskArns(taskArns)
