@@ -114,7 +114,8 @@ func (s *SimpleSuite) TestReqAcceptGraceTimeout(c *check.C) {
 		Server string
 	}{whoami})
 	defer os.Remove(file)
-	cmd, output := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -122,16 +123,6 @@ func (s *SimpleSuite) TestReqAcceptGraceTimeout(c *check.C) {
 	// Wait for Traefik to turn ready.
 	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
-
-	// Show the Traefik log if any assertion fails. If the entire test runs
-	// to a successful completion, we flip the flag at the very end and don't
-	// display anything.
-	showTraefikLog := true
-	defer func() {
-		if showTraefikLog {
-			s.displayTraefikLog(c, output)
-		}
-	}()
 
 	// Make sure exposed service is ready.
 	err = try.GetRequest("http://127.0.0.1:8000/service", 3*time.Second, try.StatusCodeIs(http.StatusOK))
@@ -165,5 +156,4 @@ func (s *SimpleSuite) TestReqAcceptGraceTimeout(c *check.C) {
 	case <-time.After(10 * time.Second):
 		c.Fatal("Traefik did not terminate in time")
 	}
-	showTraefikLog = false
 }
