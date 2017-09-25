@@ -154,6 +154,11 @@ func (s *SimpleSuite) TestReqAcceptGraceTimeout(c *check.C) {
 	case err := <-waitErr:
 		c.Assert(err, checker.IsNil)
 	case <-time.After(10 * time.Second):
+		// By now we are ~5 seconds out of the request accepting grace period
+		// (start + 5 seconds sleep prior to the mid-grace period request +
+		// 10 seconds timeout = 15 seconds > 10 seconds grace period).
+		// Something must have gone wrong if we still haven't terminated at
+		// this point.
 		c.Fatal("Traefik did not terminate in time")
 	}
 }
