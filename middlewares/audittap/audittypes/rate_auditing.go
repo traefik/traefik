@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/beevik/etree"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/types"
-	"gopkg.in/beevik/etree.v0"
 )
 
 // RATEAuditDetail is the detail section of the event

@@ -1,5 +1,5 @@
-hash: a4d92c61d7d32f74c385d29eb98f31abe071afc17a3489c813fa4f538a4ca786
-updated: 2017-09-21T15:53:29.409485533+01:00
+hash: aa086c996899f43e150bd557c2fbc5b74155c6b61ed4de06e36866a5763d4cda
+updated: 2017-09-25T11:57:43.115680805+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -70,6 +70,8 @@ imports:
   - autorest/to
 - name: github.com/beeker1121/goque
   version: e1e63ca63c14b41209e160f54c8e7669564eacc4
+- name: github.com/beevik/etree
+  version: 15a30b44cfd6c5a16a7ddfe271bf146aaf2d3195
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
   subpackages:
@@ -99,6 +101,8 @@ imports:
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
+  - Godeps/_workspace/src/github.com/ugorji/go/codec
+  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/pathutil
   - pkg/types
@@ -652,8 +656,6 @@ imports:
   - stats
   - tap
   - transport
-- name: gopkg.in/beevik/etree.v0
-  version: abae5fc32af8862e420d52e686a7e6ec14111685
 - name: gopkg.in/fsnotify.v1
   version: 629574ca2a5df945712d3079857300b5e4da0236
 - name: gopkg.in/inf.v0

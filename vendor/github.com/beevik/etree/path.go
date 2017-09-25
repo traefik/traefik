@@ -25,8 +25,9 @@ only the following limited syntax is supported:
     [@attrib='val'] Selects all elements with the given attribute set to val
     [tag]           Selects all elements with a child element named tag
     [tag='val']     Selects all elements with a child element named tag
-                      and text equal to val
-    |               Selects the predicate on either side of the '|' operator
+                      and text matching val
+    [text()]        Selects all elements with non-empty text
+    [text()='val']  Selects all elements whose text matches val
 
 Examples:
 
@@ -42,15 +43,17 @@ Starting from the current element, select all children of book elements
 with an attribute 'language' set to 'english':
     ./book/*[@language='english']
 
+Starting from the current element, select all children of book elements
+containing the text 'special':
+    ./book/*[text()='special']
+
 Select all descendant book elements whose title element has an attribute
 'language' set to 'french':
     //book/title[@language='french']/..
 
-Select all title and year elements:
-    //title|//year
 */
 type Path struct {
-	groups []group
+	segments []segment
 }
 
 // ErrPath is returned by path functions when an invalid etree path is provided.
@@ -65,11 +68,11 @@ func (err ErrPath) Error() string {
 // can be used to query elements in an element tree.
 func CompilePath(path string) (Path, error) {
 	var comp compiler
-	groups := comp.parsePath(path)
+	segments := comp.parsePath(path)
 	if comp.err != ErrPath("") {
 		return Path{nil}, comp.err
 	}
-	return Path{groups}, nil
+	return Path{segments}, nil
 }
 
 // MustCompilePath creates an optimized version of an XPath-like string that
@@ -82,18 +85,6 @@ func MustCompilePath(path string) Path {
 		panic(err)
 	}
 	return p
-}
-
-// A group is a group of path segments. Each group appears between the '|'
-// operators in a path.
-type group struct {
-	segments []segment
-}
-
-func (g *group) apply(e *Element, p *pather) {
-	for _, ss := range g.segments {
-		ss.apply(e, p)
-	}
 }
 
 // A segment is a portion of a path between "/" characters.
@@ -153,10 +144,8 @@ func newPather() *pather {
 // and then returning all elements that match the path's selectors
 // and filters.
 func (p *pather) traverse(e *Element, path Path) []*Element {
-	for _, g := range path.groups {
-		for p.queue.add(node{e, g.segments}); p.queue.len() > 0; {
-			p.eval(p.queue.remove().(node))
-		}
+	for p.queue.add(node{e, path.segments}); p.queue.len() > 0; {
+		p.eval(p.queue.remove().(node))
 	}
 	return p.results
 }
@@ -189,22 +178,8 @@ type compiler struct {
 
 // parsePath parses an XPath-like string describing a path
 // through an element tree and returns a slice of segment
-// descriptor groups.
-func (c *compiler) parsePath(path string) []group {
-	var groups []group
-	for _, g := range strings.Split(path, "|") {
-		groups = append(groups, c.parseGroup(g))
-		if c.err != ErrPath("") {
-			break
-		}
-	}
-	return groups
-}
-
-// parseSegments parses an XPath-like string describing a path
-// through an element tree and returns a slice of segment
 // descriptors.
-func (c *compiler) parseGroup(path string) group {
+func (c *compiler) parsePath(path string) []segment {
 	// If path starts or ends with //, fix it
 	if strings.HasPrefix(path, "//") {
 		path = "." + path
@@ -216,18 +191,33 @@ func (c *compiler) parseGroup(path string) group {
 	// Paths cannot be absolute
 	if strings.HasPrefix(path, "/") {
 		c.err = ErrPath("paths cannot be absolute.")
-		return group{nil}
+		return nil
 	}
 
 	// Split path into segment objects
 	var segments []segment
-	for _, s := range strings.Split(path, "/") {
+	for _, s := range splitPath(path) {
 		segments = append(segments, c.parseSegment(s))
 		if c.err != ErrPath("") {
 			break
 		}
 	}
-	return group{segments}
+	return segments
+}
+
+func splitPath(path string) []string {
+	pieces := make([]string, 0)
+	start := 0
+	inquote := false
+	for i := 0; i+1 <= len(path); i++ {
+		if path[i] == '\'' {
+			inquote = !inquote
+		} else if path[i] == '/' && !inquote {
+			pieces = append(pieces, path[start:i])
+			start = i + 1
+		}
+	}
+	return append(pieces, path[start:])
 }
 
 // parseSegment parses a path segment between / characters.
@@ -271,7 +261,7 @@ func (c *compiler) parseFilter(path string) filter {
 		return nil
 	}
 
-	// Filter contains [@attr='val'] or [tag='val']?
+	// Filter contains [@attr='val'], [text()='val'], or [tag='val']?
 	eqindex := strings.Index(path, "='")
 	if eqindex >= 0 {
 		rindex := nextIndex(path, "'", eqindex+2)
@@ -282,15 +272,19 @@ func (c *compiler) parseFilter(path string) filter {
 		switch {
 		case path[0] == '@':
 			return newFilterAttrVal(path[1:eqindex], path[eqindex+2:rindex])
+		case strings.HasPrefix(path, "text()"):
+			return newFilterTextVal(path[eqindex+2 : rindex])
 		default:
 			return newFilterChildText(path[:eqindex], path[eqindex+2:rindex])
 		}
 	}
 
-	// Filter contains [@attr], [N] or [tag]
+	// Filter contains [@attr], [N], [tag] or [text()]
 	switch {
 	case path[0] == '@':
 		return newFilterAttr(path[1:])
+	case path == "text()":
+		return newFilterText()
 	case isInteger(path):
 		pos, _ := strconv.Atoi(path)
 		switch {
@@ -432,6 +426,41 @@ func (f *filterAttrVal) apply(p *pather) {
 				p.scratch = append(p.scratch, c)
 				break
 			}
+		}
+	}
+	p.candidates, p.scratch = p.scratch, p.candidates[0:0]
+}
+
+// filterText filters the candidate list for elements having text.
+type filterText struct{}
+
+func newFilterText() *filterText {
+	return &filterText{}
+}
+
+func (f *filterText) apply(p *pather) {
+	for _, c := range p.candidates {
+		if c.Text() != "" {
+			p.scratch = append(p.scratch, c)
+		}
+	}
+	p.candidates, p.scratch = p.scratch, p.candidates[0:0]
+}
+
+// filterTextVal filters the candidate list for elements having
+// text equal to the specified value.
+type filterTextVal struct {
+	val string
+}
+
+func newFilterTextVal(value string) *filterTextVal {
+	return &filterTextVal{value}
+}
+
+func (f *filterTextVal) apply(p *pather) {
+	for _, c := range p.candidates {
+		if c.Text() == f.val {
+			p.scratch = append(p.scratch, c)
 		}
 	}
 	p.candidates, p.scratch = p.scratch, p.candidates[0:0]

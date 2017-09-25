@@ -24,6 +24,22 @@ const (
 // ErrXML is returned when XML parsing fails due to incorrect formatting.
 var ErrXML = errors.New("etree: invalid XML format")
 
+// ReadSettings allow for changing the default behavior of the ReadFrom*
+// methods.
+type ReadSettings struct {
+	// CharsetReader to be passed to standard xml.Decoder. Default: nil.
+	CharsetReader func(charset string, input io.Reader) (io.Reader, error)
+
+	// Permissive allows input containing common mistakes such as missing tags
+	// or attribute values. Default: false.
+	Permissive bool
+}
+
+// newReadSettings creates a default ReadSettings record.
+func newReadSettings() ReadSettings {
+	return ReadSettings{}
+}
+
 // WriteSettings allow for changing the serialization behavior of the WriteTo*
 // methods.
 type WriteSettings struct {
@@ -66,6 +82,7 @@ type Token interface {
 // processing instructions or BOM CharData tokens.
 type Document struct {
 	Element
+	ReadSettings  ReadSettings
 	WriteSettings WriteSettings
 }
 
@@ -113,13 +130,14 @@ type ProcInst struct {
 func NewDocument() *Document {
 	return &Document{
 		Element{Child: make([]Token, 0)},
+		newReadSettings(),
 		newWriteSettings(),
 	}
 }
 
 // Copy returns a recursive, deep copy of the document.
 func (d *Document) Copy() *Document {
-	return &Document{*(d.dup(nil).(*Element)), d.WriteSettings}
+	return &Document{*(d.dup(nil).(*Element)), d.ReadSettings, d.WriteSettings}
 }
 
 // Root returns the root element of the document, or nil if there is no root
@@ -157,7 +175,7 @@ func (d *Document) SetRoot(e *Element) {
 // ReadFrom reads XML from the reader r into the document d. It returns the
 // number of bytes read and any error encountered.
 func (d *Document) ReadFrom(r io.Reader) (n int64, err error) {
-	return d.Element.readFrom(r)
+	return d.Element.readFrom(r, d.ReadSettings)
 }
 
 // ReadFromFile reads XML from the string s into the document d.
@@ -338,6 +356,7 @@ func (e *Element) InsertChild(ex Token, t Token) {
 
 	for i, c := range e.Child {
 		if c == ex {
+			e.Child = append(e.Child, nil)
 			copy(e.Child[i+1:], e.Child[i:])
 			e.Child[i] = t
 			return
@@ -362,9 +381,11 @@ func (e *Element) RemoveChild(t Token) Token {
 
 // ReadFrom reads XML from the reader r and stores the result as a new child
 // of element e.
-func (e *Element) readFrom(ri io.Reader) (n int64, err error) {
+func (e *Element) readFrom(ri io.Reader, settings ReadSettings) (n int64, err error) {
 	r := newCountReader(ri)
 	dec := xml.NewDecoder(r)
+	dec.CharsetReader = settings.CharsetReader
+	dec.Strict = !settings.Permissive
 	var stack stack
 	stack.push(e)
 	for {
@@ -681,12 +702,16 @@ var xmlReplacerCanonicalText = strings.NewReplacer(
 	"&", "&amp;",
 	"<", "&lt;",
 	">", "&gt;",
+	"\r", "&#xD;",
 )
 
 var xmlReplacerCanonicalAttrVal = strings.NewReplacer(
 	"&", "&amp;",
 	"<", "&lt;",
 	`"`, "&quot;",
+	"\t", "&#x9;",
+	"\n", "&#xA;",
+	"\r", "&#xD;",
 )
 
 // writeTo serializes the attribute to the writer.

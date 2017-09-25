@@ -209,8 +209,8 @@ import:
 - package: github.com/beeker1121/goque
   version: v2.0.1
 - package: github.com/syndtr/goleveldb
-- package: gopkg.in/beevik/etree.v0
-  version: v0
+- package: github.com/beevik/etree
+  version: v1.0.0
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose
