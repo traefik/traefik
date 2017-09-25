@@ -502,6 +502,6 @@ type ForwardingTimeouts struct {
 // LifeCycle contains configurations relevant to the lifecycle (such as the
 // shutdown phase) of Traefik.
 type LifeCycle struct {
-	ReqAcceptGraceTimeOut flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
-	GraceTimeOut          flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
+	RequestAcceptGraceTimeout flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
+	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
 }

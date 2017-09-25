@@ -104,7 +104,7 @@ func (s *SimpleSuite) TestPrintHelp(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *SimpleSuite) TestReqAcceptGraceTimeout(c *check.C) {
+func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	s.createComposeProject(c, "reqacceptgrace")
 	s.composeProject.Start(c)
 

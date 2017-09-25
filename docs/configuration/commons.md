@@ -328,7 +328,7 @@ Controls the behavior of Traefik during the shutdown phase.
 # Optional
 # Default: 0
 #
-# reqAcceptGraceTimeOut = "10s"
+# requestAcceptGraceTimeout = "10s"
 
 # Duration to give active requests a chance to finish before Traefik stops.
 # Can be provided in a format supported by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration) or as raw values (digits).
