@@ -19,9 +19,7 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
-	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	"k8s.io/client-go/pkg/util/intstr"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -36,6 +34,8 @@ const (
 	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
 	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
 	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
+	annotationKubernetesSSLRedirect          = "ingress.kubernetes.io/force-ssl-redirect"
+	annotationKubernetesSSLProxyHeaders      = types.LabelPrefix + "ingress.kubernetes.io/ssl-proxy-headers"
 )
 
 const traefikDefaultRealm = "traefik"
@@ -47,6 +47,8 @@ type Provider struct {
 	Token                  string     `description:"Kubernetes bearer token (not needed for in-cluster client)"`
 	CertAuthFilePath       string     `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
 	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
+	DefaultSSLRedirect     bool       `description:"Kubernetes default SSLRedirect mode"`
+	DefaultSSLProxyHeaders []string   `description:"Kubernetes default SSLProxyHeaders (format: key=val)"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces"`
 	LabelSelector          string     `description:"Kubernetes api label selector to use"`
 	lastConfiguration      safe.Safe
@@ -179,6 +181,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				default:
 					log.Warnf("Unknown value '%s' for %s, falling back to %s", passHostHeaderAnnotation, types.LabelFrontendPassHostHeader, PassHostHeader)
 				}
+
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
 					return nil, errors.New("no realm customization supported")
 				}
@@ -194,7 +197,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 
 					priority := p.getPriority(pa, i)
-
+					sslProxyHeaders := i.Annotations[annotationKubernetesSSLProxyHeaders]
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:              r.Host + pa.Path,
 						PassHostHeader:       PassHostHeader,
@@ -202,8 +205,26 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Priority:             priority,
 						BasicAuth:            basicAuthCreds,
 						WhitelistSourceRange: whitelistSourceRange,
+						Headers: types.Headers{
+							SSLRedirect:     p.DefaultSSLRedirect,
+							SSLProxyHeaders: p.getSSLProxyHeaders(sslProxyHeaders),
+						},
 					}
+
+					sslRedirectAnnotation, ok := i.Annotations[annotationKubernetesSSLRedirect]
+					switch {
+					case !ok:
+						// No op.
+					case sslRedirectAnnotation == "false":
+						templateObjects.Frontends[r.Host+pa.Path].Headers.SSLRedirect = false
+					case sslRedirectAnnotation == "true":
+						templateObjects.Frontends[r.Host+pa.Path].Headers.SSLRedirect = true
+					default:
+						log.Warnf("Unknown value '%s' for %s", sslRedirectAnnotation, annotationKubernetesSSLRedirect)
+					}
+
 				}
+
 				if len(r.Host) > 0 {
 					rule := "Host:" + r.Host
 
@@ -306,23 +327,23 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	return &templateObjects, nil
 }
 
-func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
-	if len(pa.Path) == 0 {
-		return ""
+// getSSLProxyHeaders from provider defaults merging headers parsed from str.
+// Expects str format to be a 'Key=Val' comma delimited string.
+func (p *Provider) getSSLProxyHeaders(str string) map[string]string {
+	parts := append(p.DefaultSSLProxyHeaders, strings.Split(str, ",")...)
+	headers := map[string]string{}
+	for _, part := range parts {
+		key, val := splitKeyValue(part)
+		if key == "" {
+			continue
+		}
+		headers[key] = val
 	}
 
-	ruleType := i.Annotations[types.LabelFrontendRuleType]
-	if ruleType == "" {
-		ruleType = ruleTypePathPrefix
+	if len(headers) == 0 {
+		return nil
 	}
-
-	rule := ruleType + ":" + pa.Path
-
-	if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
-		rule = ruleTypeReplacePath + ":" + rewriteTarget
-	}
-
-	return rule
+	return headers
 }
 
 func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress) int {
@@ -391,39 +412,6 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 	}
 
 	return creds, nil
-}
-
-func endpointPortNumber(servicePort v1.ServicePort, endpointPorts []v1.EndpointPort) int {
-	if len(endpointPorts) > 0 {
-		//name is optional if there is only one port
-		port := endpointPorts[0]
-		for _, endpointPort := range endpointPorts {
-			if servicePort.Name == endpointPort.Name {
-				port = endpointPort
-			}
-		}
-		return int(port.Port)
-	}
-	return int(servicePort.Port)
-}
-
-func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool {
-	if int(servicePort.Port) == ingressPort.IntValue() {
-		return true
-	}
-	if servicePort.Name != "" && servicePort.Name == ingressPort.String() {
-		return true
-	}
-	return false
-}
-
-func shouldProcessIngress(ingressClass string) bool {
-	switch ingressClass {
-	case "", "traefik":
-		return true
-	default:
-		return false
-	}
 }
 
 func (p *Provider) getPassHostHeader() bool {

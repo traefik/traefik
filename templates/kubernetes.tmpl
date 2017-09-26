@@ -27,6 +27,11 @@
   whitelistSourceRange = [{{range $frontend.WhitelistSourceRange}}
     "{{.}}",
   {{end}}]
+    [frontends."{{$frontendName}}".headers]
+    sslRedirect = {{$frontend.Headers.SSLRedirect}}
+    [frontends."{{$frontendName}}".headers.sslProxyHeaders]{{range $key, $val := $frontend.Headers.SSLProxyHeaders}}
+      {{$key}} = "{{$val}}"
+    {{end}}
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
     rule = "{{$route.Rule}}"

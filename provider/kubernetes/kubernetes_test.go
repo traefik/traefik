@@ -1403,6 +1403,34 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
+					annotationKubernetesSSLRedirect: "true",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "ssl",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/redirect",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
 					"kubernetes.io/ingress.class":     "traefik",
 					types.LabelFrontendPassHostHeader: "true",
 				},
@@ -1605,6 +1633,19 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"ssl/redirect": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
 			"other/stuff": {
 				Servers: map[string]types.Server{
 					"http://example.com": {
@@ -1668,6 +1709,21 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 					"foo": {
 						Rule: "Host:foo",
+					},
+				},
+			},
+			"ssl/redirect": {
+				Backend:        "ssl/redirect",
+				PassHostHeader: true,
+				Headers: types.Headers{
+					SSLRedirect: true,
+				},
+				Routes: map[string]types.Route{
+					"/redirect": {
+						Rule: "PathPrefix:/redirect",
+					},
+					"ssl": {
+						Rule: "Host:ssl",
 					},
 				},
 			},
@@ -2338,6 +2394,200 @@ func TestBasicAuthInTemplate(t *testing.T) {
 	if !reflect.DeepEqual(got, []string{"myUser:myEncodedPW"}) {
 		t.Fatalf("unexpected credentials: %+v", got)
 	}
+}
+
+func TestSSLRedirectInTemplate(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					annotationKubernetesSSLRedirect:     "true",
+					annotationKubernetesSSLProxyHeaders: "X-Forwarded-Proto=https",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "ssl",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/redirect",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					annotationKubernetesSSLProxyHeaders: "X-Forwarded-Proto=https,X-Test=test",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "multiple",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/headers",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP:    "10.0.0.1",
+				Type:         "ExternalName",
+				ExternalName: "example.com",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	actual = provider.loadConfig(*actual)
+	assert.Equal(t, true,
+		actual.Frontends["ssl/redirect"].Headers.SSLRedirect)
+
+	assert.Equal(t,
+		map[string]string{"X-Forwarded-Proto": "https"},
+		actual.Frontends["ssl/redirect"].Headers.SSLProxyHeaders)
+
+	assert.Equal(t,
+		map[string]string{
+			"X-Forwarded-Proto": "https",
+			"X-Test":            "test",
+		},
+		actual.Frontends["multiple/headers"].Headers.SSLProxyHeaders,
+		"Parses multiple headers from annotation")
+}
+
+func TestProviderDefaultSSLConfig(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Annotations: map[string]string{
+					annotationKubernetesSSLProxyHeaders: "X-Forwarded-Proto=https",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "default",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/headers",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name: "service1",
+				UID:  "1",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Type:      "ClusterIP",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{
+		DefaultSSLRedirect: true,
+		DefaultSSLProxyHeaders: []string{
+			"X-Test=test",
+		},
+	}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	actual = provider.loadConfig(*actual)
+
+	assert.Equal(t,
+		true,
+		actual.Frontends["default/headers"].Headers.SSLRedirect)
+
+	assert.Equal(t,
+		map[string]string{
+			"X-Forwarded-Proto": "https",
+			"X-Test":            "test",
+		},
+		actual.Frontends["default/headers"].Headers.SSLProxyHeaders)
 }
 
 type clientMock struct {
