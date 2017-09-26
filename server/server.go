@@ -627,7 +627,7 @@ func (server *Server) startServer(serverEntryPoint *serverEntryPoint, globalConf
 	} else {
 		err = serverEntryPoint.httpServer.Serve(serverEntryPoint.listener)
 	}
-	if err != nil {
+	if err != http.ErrServerClosed {
 		log.Error("Error creating server: ", err)
 	}
 }
