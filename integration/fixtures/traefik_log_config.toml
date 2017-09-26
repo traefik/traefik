@@ -4,8 +4,11 @@
 traefikLogsFile = "traefik.log"
 accessLogsFile = "access.log"
 logLevel = "DEBUG"
-checkNewVersion = false
 defaultEntryPoints = ["http"]
+
+sendAnonymousData = false
+checkNewVersion = false
+
 [entryPoints]
   [entryPoints.http]
   address = ":8000"

@@ -9,6 +9,9 @@ defaultEntryPoints = ["http"]
   [entryPoints.http]
   address = ":8000"
 
+sendAnonymousData = false
+checkNewVersion = false
+
 ################################################################
 # Web configuration backend
 ################################################################

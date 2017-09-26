@@ -18,6 +18,7 @@ import (
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
+	"github.com/containous/traefik/collector"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/ecs"
@@ -25,11 +26,11 @@ import (
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
+	"github.com/containous/traefik/server/uuid"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/docker/libkv/store"
-	"github.com/satori/go.uuid"
 )
 
 func main() {
@@ -188,7 +189,7 @@ Complete documentation is available at https://traefik.io`,
 	s.AddSource(toml)
 	s.AddSource(f)
 	if _, err := s.LoadConfig(); err != nil {
-		fmtlog.Println(fmt.Errorf("Error reading TOML config file %s : %s", toml.ConfigFileUsed(), err))
+		fmtlog.Printf("Error reading TOML config file %s : %s\n", toml.ConfigFileUsed(), err)
 		os.Exit(-1)
 	}
 
@@ -203,7 +204,7 @@ Complete documentation is available at https://traefik.io`,
 	// IF a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
 		if traefikConfiguration.Cluster == nil {
-			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.NewV4().String()}
+			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.Get()}
 		}
 		if traefikConfiguration.Cluster.Store == nil {
 			traefikConfiguration.Cluster.Store = &types.Store{Prefix: kv.Prefix, Store: kv.Store}
@@ -291,16 +292,11 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 
 	if globalConfiguration.CheckNewVersion {
-		ticker := time.NewTicker(24 * time.Hour)
-		safe.Go(func() {
-			version.CheckNewVersion()
-			for {
-				select {
-				case <-ticker.C:
-					version.CheckNewVersion()
-				}
-			}
-		})
+		checkNewVersion()
+	}
+
+	if globalConfiguration.SendAnonymousUsage {
+		collect(globalConfiguration)
 	}
 
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
@@ -365,4 +361,38 @@ func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSourc
 		}
 	}
 	return kv, err
+}
+
+func collect(globalConfiguration *configuration.GlobalConfiguration) {
+	log.Info("Many thanks to contribute to Træfik improvement by allowing us to receive anonymous information from your configuration.")
+	log.Info("More information about collected data: https://docs.traefik.io/configuration/commons/#collected-data")
+	ticker := time.NewTicker(24 * time.Hour)
+	safe.Go(func() {
+		err := collector.Collect(globalConfiguration)
+		if err != nil {
+			log.Debug(err)
+		}
+		for {
+			select {
+			case <-ticker.C:
+				err := collector.Collect(globalConfiguration)
+				if err != nil {
+					log.Debug(err)
+				}
+			}
+		}
+	})
+}
+
+func checkNewVersion() {
+	ticker := time.NewTicker(24 * time.Hour)
+	safe.Go(func() {
+		version.CheckNewVersion()
+		for {
+			select {
+			case <-ticker.C:
+				version.CheckNewVersion()
+			}
+		}
+	})
 }
