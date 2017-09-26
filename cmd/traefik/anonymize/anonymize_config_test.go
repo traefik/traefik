@@ -26,6 +26,7 @@ import (
 	"github.com/containous/traefik/provider/web"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/safe"
+	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	thoas_stats "github.com/thoas/stats"
 )
@@ -48,10 +49,10 @@ func TestDo_globalConfiguration(t *testing.T) {
 		"foo": {
 			Network: "foo Network",
 			Address: "foo Address",
-			TLS: &configuration.TLS{
+			TLS: &traefikTls.TLS{
 				MinVersion:   "foo MinVersion",
 				CipherSuites: []string{"foo CipherSuites 1", "foo CipherSuites 2", "foo CipherSuites 3"},
-				Certificates: configuration.Certificates{
+				Certificates: traefikTls.Certificates{
 					{CertFile: "CertFile 1", KeyFile: "KeyFile 1"},
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
@@ -91,10 +92,10 @@ func TestDo_globalConfiguration(t *testing.T) {
 		"fii": {
 			Network: "fii Network",
 			Address: "fii Address",
-			TLS: &configuration.TLS{
+			TLS: &traefikTls.TLS{
 				MinVersion:   "fii MinVersion",
 				CipherSuites: []string{"fii CipherSuites 1", "fii CipherSuites 2", "fii CipherSuites 3"},
-				Certificates: configuration.Certificates{
+				Certificates: traefikTls.Certificates{
 					{CertFile: "CertFile 1", KeyFile: "KeyFile 1"},
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
@@ -178,7 +179,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.MaxIdleConnsPerHost = 666
 	config.IdleTimeout = flaeg.Duration(666 * time.Second)
 	config.InsecureSkipVerify = true
-	config.RootCAs = configuration.RootCAs{"RootCAs 1", "RootCAs 2", "RootCAs 3"}
+	config.RootCAs = traefikTls.RootCAs{"RootCAs 1", "RootCAs 2", "RootCAs 3"}
 	config.Retry = &configuration.Retry{
 		Attempts: 666,
 	}
@@ -196,7 +197,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Docker = &docker.Provider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "docker Filename",
 			Constraints: types.Constraints{
 				{
@@ -210,7 +213,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		Endpoint: "docker Endpoint",
@@ -227,7 +229,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.File = &file.Provider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "file Filename",
 			Constraints: types.Constraints{
 				{
@@ -241,7 +245,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		Directory: "file Directory",
@@ -301,7 +304,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Marathon = &marathon.Provider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "marathon Filename",
 			Constraints: types.Constraints{
 				{
@@ -315,7 +320,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		Endpoint:                "",
@@ -341,7 +345,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.ConsulCatalog = &consul.CatalogProvider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "ConsulCatalog Filename",
 			Constraints: types.Constraints{
 				{
@@ -355,7 +361,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		Endpoint:         "ConsulCatalog Endpoint",
@@ -366,7 +371,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Kubernetes = &kubernetes.Provider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "k8s Filename",
 			Constraints: types.Constraints{
 				{
@@ -380,7 +387,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		Endpoint:               "k8s Endpoint",
@@ -392,7 +398,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Mesos = &mesos.Provider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "mesos Filename",
 			Constraints: types.Constraints{
 				{
@@ -406,7 +414,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		Endpoint:           "mesos Endpoint",
@@ -421,7 +428,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Eureka = &eureka.Provider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "eureka Filename",
 			Constraints: types.Constraints{
 				{
@@ -435,7 +444,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		Endpoint: "eureka Endpoint",
@@ -443,7 +451,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.ECS = &ecs.Provider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "ecs Filename",
 			Constraints: types.Constraints{
 				{
@@ -457,7 +467,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		Domain:               "ecs Domain",
@@ -472,7 +481,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Rancher = &rancher.Provider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "rancher Filename",
 			Constraints: types.Constraints{
 				{
@@ -486,7 +497,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		APIConfiguration: rancher.APIConfiguration{
@@ -510,7 +520,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.DynamoDB = &dynamodb.Provider{
 		BaseProvider: provider.BaseProvider{
-			Watch:    true,
+			RootProvider: provider.RootProvider{
+				Watch: true,
+				Trace: true},
 			Filename: "dynamodb Filename",
 			Constraints: types.Constraints{
 				{
@@ -524,7 +536,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 					MustMatch: true,
 				},
 			},
-			Trace: true,
 			DebugLogGeneratedTemplate: true,
 		},
 		AccessKeyID:     "dynamodb AccessKeyID",
@@ -537,7 +548,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.Etcd = &etcd.Provider{
 		Provider: kv.Provider{
 			BaseProvider: provider.BaseProvider{
-				Watch:    true,
+				RootProvider: provider.RootProvider{
+					Watch: true,
+					Trace: true},
 				Filename: "etcd Filename",
 				Constraints: types.Constraints{
 					{
@@ -551,7 +564,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 						MustMatch: true,
 					},
 				},
-				Trace: true,
 				DebugLogGeneratedTemplate: true,
 			},
 			Endpoint: "etcd Endpoint",
@@ -569,7 +581,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.Zookeeper = &zk.Provider{
 		Provider: kv.Provider{
 			BaseProvider: provider.BaseProvider{
-				Watch:    true,
+				RootProvider: provider.RootProvider{
+					Watch: true,
+					Trace: true},
 				Filename: "zk Filename",
 				Constraints: types.Constraints{
 					{
@@ -583,7 +597,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 						MustMatch: true,
 					},
 				},
-				Trace: true,
 				DebugLogGeneratedTemplate: true,
 			},
 			Endpoint: "zk Endpoint",
@@ -601,7 +614,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.Boltdb = &boltdb.Provider{
 		Provider: kv.Provider{
 			BaseProvider: provider.BaseProvider{
-				Watch:    true,
+				RootProvider: provider.RootProvider{
+					Watch: true,
+					Trace: true},
 				Filename: "boltdb Filename",
 				Constraints: types.Constraints{
 					{
@@ -615,7 +630,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 						MustMatch: true,
 					},
 				},
-				Trace: true,
 				DebugLogGeneratedTemplate: true,
 			},
 			Endpoint: "boltdb Endpoint",
@@ -633,7 +647,9 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.Consul = &consul.Provider{
 		Provider: kv.Provider{
 			BaseProvider: provider.BaseProvider{
-				Watch:    true,
+				RootProvider: provider.RootProvider{
+					Watch: true,
+					Trace: true},
 				Filename: "consul Filename",
 				Constraints: types.Constraints{
 					{
@@ -647,7 +663,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 						MustMatch: true,
 					},
 				},
-				Trace: true,
 				DebugLogGeneratedTemplate: true,
 			},
 			Endpoint: "consul Endpoint",

@@ -1,0 +1,5 @@
+[[Tls]]
+EntryPoints = ["https"]
+    [Tls.Certificate]
+     CertFile = "fixtures/acme/ssl/wildcard.crt"
+     KeyFile = "fixtures/acme/ssl/wildcard.key"

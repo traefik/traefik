@@ -1,4 +1,4 @@
-package acme
+package tls
 
 import (
 	"crypto"
@@ -16,7 +16,8 @@ import (
 	"time"
 )
 
-func generateDefaultCertificate() (*tls.Certificate, error) {
+// GenerateDefaultCertificate generates random TLS certificates
+func GenerateDefaultCertificate() (*tls.Certificate, error) {
 	randomBytes := make([]byte, 100)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
@@ -26,7 +27,7 @@ func generateDefaultCertificate() (*tls.Certificate, error) {
 	z := hex.EncodeToString(zBytes[:sha256.Size])
 	domain := fmt.Sprintf("%s.%s.traefik.default", z[:32], z[32:])
 
-	certPEM, keyPEM, err := generateKeyPair(domain, time.Time{})
+	certPEM, keyPEM, err := GenerateKeyPair(domain, time.Time{})
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +40,8 @@ func generateDefaultCertificate() (*tls.Certificate, error) {
 	return &certificate, nil
 }
 
-func generateKeyPair(domain string, expiration time.Time) ([]byte, []byte, error) {
+// GenerateKeyPair generates cert and key files
+func GenerateKeyPair(domain string, expiration time.Time) ([]byte, []byte, error) {
 	rsaPrivKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, nil, err
@@ -89,8 +91,8 @@ func generateDerCert(privKey *rsa.PrivateKey, expiration time.Time, domain strin
 	return x509.CreateCertificate(rand.Reader, &template, &template, &privKey.PublicKey, privKey)
 }
 
-// TLSSNI01ChallengeCert returns a certificate and target domain for the `tls-sni-01` challenge
-func TLSSNI01ChallengeCert(keyAuth string) (ChallengeCert, string, error) {
+// SNI01ChallengeCert returns a certificate and target domain for the `tls-sni-01` challenge
+func SNI01ChallengeCert(keyAuth string) (ChallengeCert, string, error) {
 	// generate a new RSA key for the certificates
 	var tempPrivKey crypto.PrivateKey
 	tempPrivKey, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -113,7 +115,7 @@ func TLSSNI01ChallengeCert(keyAuth string) (ChallengeCert, string, error) {
 		return ChallengeCert{}, "", err
 	}
 
-	return ChallengeCert{Certificate: tempCertPEM, PrivateKey: rsaPrivPEM, certificate: &certificate}, domain, nil
+	return ChallengeCert{Certificate: tempCertPEM, PrivateKey: rsaPrivPEM, TLSCertificate: &certificate}, domain, nil
 }
 func pemEncode(data interface{}) []byte {
 	var pemBlock *pem.Block

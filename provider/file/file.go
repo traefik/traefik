@@ -3,6 +3,7 @@ package file
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
@@ -137,6 +138,16 @@ func loadFileConfigFromDirectory(directory string) (*types.Configuration, error)
 }
 
 func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage, event fsnotify.Event) {
+	watchItem := p.Filename
+	if p.Directory != "" {
+		watchItem = p.Directory
+	}
+
+	if _, err := os.Stat(watchItem); err != nil {
+		log.Debugf("Impossible to watch %s : %v", watchItem, err)
+		return
+	}
+
 	configuration, err := p.loadConfig()
 
 	if err != nil {

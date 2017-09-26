@@ -13,6 +13,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
+	traefikTls "github.com/containous/traefik/tls"
 	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
 )
@@ -186,6 +187,9 @@ func NewLoadBalancerMethod(loadBalancer *LoadBalancer) (LoadBalancerMethod, erro
 // Configurations is for currentConfigurations Map
 type Configurations map[string]*Configuration
 
+// TLSConfigurations is for currentTlsConfigurations Map
+type TLSConfigurations map[string]*traefikTls.EntrypointsCertificates
+
 // Configuration of a provider.
 type Configuration struct {
 	Backends  map[string]*Backend  `json:"backends,omitempty"`
@@ -194,8 +198,9 @@ type Configuration struct {
 
 // ConfigMessage hold configuration information exchanged between parts of traefik.
 type ConfigMessage struct {
-	ProviderName  string
-	Configuration *Configuration
+	ProviderName     string
+	Configuration    *Configuration
+	TLSConfiguration *traefikTls.EntrypointsCertificates
 }
 
 // Constraint hold a parsed constraint expression

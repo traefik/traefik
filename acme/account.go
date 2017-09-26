@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/containous/traefik/log"
+	traefikTls "github.com/containous/traefik/tls"
 	"github.com/xenolf/lego/acme"
 )
 
@@ -23,14 +24,7 @@ type Account struct {
 	Registration       *acme.RegistrationResource
 	PrivateKey         []byte
 	DomainsCertificate DomainsCertificates
-	ChallengeCerts     map[string]*ChallengeCert
-}
-
-// ChallengeCert stores a challenge certificate
-type ChallengeCert struct {
-	Certificate []byte
-	PrivateKey  []byte
-	certificate *tls.Certificate
+	ChallengeCerts     map[string]*traefikTls.ChallengeCert
 }
 
 // Init inits account struct
@@ -41,19 +35,19 @@ func (a *Account) Init() error {
 	}
 
 	for _, cert := range a.ChallengeCerts {
-		if cert.certificate == nil {
+		if cert.TLSCertificate == nil {
 			certificate, err := tls.X509KeyPair(cert.Certificate, cert.PrivateKey)
 			if err != nil {
 				return err
 			}
-			cert.certificate = &certificate
+			cert.TLSCertificate = &certificate
 		}
-		if cert.certificate.Leaf == nil {
-			leaf, err := x509.ParseCertificate(cert.certificate.Certificate[0])
+		if cert.TLSCertificate.Leaf == nil {
+			leaf, err := x509.ParseCertificate(cert.TLSCertificate.Certificate[0])
 			if err != nil {
 				return err
 			}
-			cert.certificate.Leaf = leaf
+			cert.TLSCertificate.Leaf = leaf
 		}
 	}
 	return nil
@@ -72,7 +66,7 @@ func NewAccount(email string) (*Account, error) {
 		Email:              email,
 		PrivateKey:         x509.MarshalPKCS1PrivateKey(privateKey),
 		DomainsCertificate: DomainsCertificates{Certs: domainsCerts.Certs},
-		ChallengeCerts:     map[string]*ChallengeCert{}}, nil
+		ChallengeCerts:     map[string]*traefikTls.ChallengeCert{}}, nil
 }
 
 // GetEmail returns email

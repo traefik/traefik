@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
+	traefikTls "github.com/containous/traefik/tls"
 	"github.com/xenolf/lego/acme"
 )
 
@@ -36,9 +37,9 @@ func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate
 	var result *tls.Certificate
 	operation := func() error {
 		for _, cert := range account.ChallengeCerts {
-			for _, dns := range cert.certificate.Leaf.DNSNames {
+			for _, dns := range cert.TLSCertificate.Leaf.DNSNames {
 				if domain == dns {
-					result = cert.certificate
+					result = cert.TLSCertificate
 					return nil
 				}
 			}
@@ -60,7 +61,7 @@ func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate
 
 func (c *challengeProvider) Present(domain, token, keyAuth string) error {
 	log.Debugf("Challenge Present %s", domain)
-	cert, _, err := TLSSNI01ChallengeCert(keyAuth)
+	cert, _, err := traefikTls.SNI01ChallengeCert(keyAuth)
 	if err != nil {
 		return err
 	}
@@ -73,7 +74,7 @@ func (c *challengeProvider) Present(domain, token, keyAuth string) error {
 	}
 	account := object.(*Account)
 	if account.ChallengeCerts == nil {
-		account.ChallengeCerts = map[string]*ChallengeCert{}
+		account.ChallengeCerts = map[string]*traefikTls.ChallengeCert{}
 	}
 	account.ChallengeCerts[domain] = &cert
 	return transaction.Commit(account)

@@ -43,7 +43,6 @@ func TestProvideSingleFileAndWatch(t *testing.T) {
 		createFrontendConfiguration(expectedNumFrontends),
 		createBackendConfiguration(expectedNumBackends))
 
-	// Must fail because we don't watch the change
 	err = waitForSignal(signal, 2*time.Second, "single frontend and backend")
 	assert.NoError(t, err)
 }
