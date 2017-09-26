@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -37,17 +38,23 @@ const (
 
 	// DefaultIdleTimeout before closing an idle connection.
 	DefaultIdleTimeout = 180 * time.Second
+
+	// DefaultGraceTimeout controls how long Traefik serves pending requests
+	// prior to shutting down.
+	DefaultGraceTimeout = 10 * time.Second
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish before Traefik stops"`
+	LifeCycle                 *LifeCycle              `description:"Timeouts influencing the server life cycle"`
+	GraceTimeOut              flaeg.Duration          `short:"g" description:"(Deprecated) Duration to give active requests a chance to finish before Traefik stops"` // Deprecated
 	Debug                     bool                    `short:"d" description:"Enable debug mode"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
 	AccessLogsFile            string                  `description:"(Deprecated) Access logs file"` // Deprecated
 	AccessLog                 *types.AccessLog        `description:"Access log settings"`
-	TraefikLogsFile           string                  `description:"Traefik logs file. Stdout is used when omitted or empty"`
+	TraefikLogsFile           string                  `description:"(Deprecated) Traefik logs file. Stdout is used when omitted or empty"` // Deprecated
+	TraefikLog                *types.TraefikLog       `description:"Traefik log settings"`
 	LogLevel                  string                  `short:"l" description:"Log level"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
 	Cluster                   *types.Cluster          `description:"Enable clustering"`
@@ -78,6 +85,52 @@ type GlobalConfiguration struct {
 	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings"`
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings"`
+}
+
+// SetEffectiveConfiguration adds missing configuration parameters derived from
+// existing ones. It also takes care of maintaining backwards compatibility.
+func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
+	if len(gc.EntryPoints) == 0 {
+		gc.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
+		gc.DefaultEntryPoints = []string{"http"}
+	}
+
+	// Make sure LifeCycle isn't nil to spare nil checks elsewhere.
+	if gc.LifeCycle == nil {
+		gc.LifeCycle = &LifeCycle{}
+	}
+
+	// Prefer legacy grace timeout parameter for backwards compatibility reasons.
+	if gc.GraceTimeOut > 0 {
+		log.Warn("top-level grace period configuration has been deprecated -- please use lifecycle grace period")
+		gc.LifeCycle.GraceTimeOut = gc.GraceTimeOut
+	}
+
+	if gc.Rancher != nil {
+		// Ensure backwards compatibility for now
+		if len(gc.Rancher.AccessKey) > 0 ||
+			len(gc.Rancher.Endpoint) > 0 ||
+			len(gc.Rancher.SecretKey) > 0 {
+
+			if gc.Rancher.API == nil {
+				gc.Rancher.API = &rancher.APIConfiguration{
+					AccessKey: gc.Rancher.AccessKey,
+					SecretKey: gc.Rancher.SecretKey,
+					Endpoint:  gc.Rancher.Endpoint,
+				}
+			}
+			log.Warn("Deprecated configuration found: rancher.[accesskey|secretkey|endpoint]. " +
+				"Please use rancher.api.[accesskey|secretkey|endpoint] instead.")
+		}
+
+		if gc.Rancher.Metadata != nil && len(gc.Rancher.Metadata.Prefix) == 0 {
+			gc.Rancher.Metadata.Prefix = "latest"
+		}
+	}
+
+	if gc.Debug {
+		gc.LogLevel = "DEBUG"
+	}
 }
 
 // DefaultEntryPoints holds default entry points
@@ -193,18 +246,11 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*((?P<TLSACME>TLS))?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol:(?P<ProxyProtocol>\S*))?`)
-	match := regex.FindAllStringSubmatch(value, -1)
-	if match == nil {
-		return fmt.Errorf("bad EntryPoints format: %s", value)
+	result, err := parseEntryPointsConfiguration(value)
+	if err != nil {
+		return err
 	}
-	matchResult := match[0]
-	result := make(map[string]string)
-	for i, name := range regex.SubexpNames() {
-		if i != 0 {
-			result[name] = matchResult[i]
-		}
-	}
+
 	var configTLS *TLS
 	if len(result["TLS"]) > 0 {
 		certs := Certificates{}
@@ -232,24 +278,13 @@ func (ep *EntryPoints) Set(value string) error {
 		}
 	}
 
-	compress := false
-	if len(result["Compress"]) > 0 {
-		compress = strings.EqualFold(result["Compress"], "true") ||
-			strings.EqualFold(result["Compress"], "enable") ||
-			strings.EqualFold(result["Compress"], "on")
-	}
-
 	whiteListSourceRange := []string{}
 	if len(result["WhiteListSourceRange"]) > 0 {
 		whiteListSourceRange = strings.Split(result["WhiteListSourceRange"], ",")
 	}
 
-	proxyprotocol := false
-	if len(result["ProxyProtocol"]) > 0 {
-		proxyprotocol = strings.EqualFold(result["ProxyProtocol"], "true") ||
-			strings.EqualFold(result["ProxyProtocol"], "enable") ||
-			strings.EqualFold(result["ProxyProtocol"], "on")
-	}
+	compress := toBool(result, "Compress")
+	proxyProtocol := toBool(result, "ProxyProtocol")
 
 	(*ep)[result["Name"]] = &EntryPoint{
 		Address:              result["Address"],
@@ -257,10 +292,35 @@ func (ep *EntryPoints) Set(value string) error {
 		Redirect:             redirect,
 		Compress:             compress,
 		WhitelistSourceRange: whiteListSourceRange,
-		ProxyProtocol:        proxyprotocol,
+		ProxyProtocol:        proxyProtocol,
 	}
 
 	return nil
+}
+
+func parseEntryPointsConfiguration(value string) (map[string]string, error) {
+	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*(?P<TLSACME>TLS)?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect\.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect\.Regex:(?P<RedirectRegex>\S*))?\s*(?:Redirect\.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol:(?P<ProxyProtocol>\S*))?`)
+	match := regex.FindAllStringSubmatch(value, -1)
+	if match == nil {
+		return nil, fmt.Errorf("bad EntryPoints format: %s", value)
+	}
+	matchResult := match[0]
+	result := make(map[string]string)
+	for i, name := range regex.SubexpNames() {
+		if i != 0 && len(matchResult[i]) != 0 {
+			result[name] = matchResult[i]
+		}
+	}
+	return result, nil
+}
+
+func toBool(conf map[string]string, key string) bool {
+	if val, ok := conf[key]; ok {
+		return strings.EqualFold(val, "true") ||
+			strings.EqualFold(val, "enable") ||
+			strings.EqualFold(val, "on")
+	}
+	return false
 }
 
 // Get return the EntryPoints map
@@ -437,4 +497,11 @@ type RespondingTimeouts struct {
 type ForwardingTimeouts struct {
 	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists"`
 	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists"`
+}
+
+// LifeCycle contains configurations relevant to the lifecycle (such as the
+// shutdown phase) of Traefik.
+type LifeCycle struct {
+	RequestAcceptGraceTimeout flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
+	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
 }

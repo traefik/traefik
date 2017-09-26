@@ -20,7 +20,8 @@ type LogRotationSuite struct{ BaseSuite }
 
 func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	// Start Traefik
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/access_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
@@ -68,7 +69,8 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 
 func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 	// Start Traefik
-	cmd, _ := s.cmdTraefik(withConfigFile("fixtures/traefik_log_config.toml"))
+	cmd, display := s.traefikCmd(withConfigFile("fixtures/traefik_log_config.toml"))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

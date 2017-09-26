@@ -9,13 +9,6 @@
 #
 # debug = true
 
-# Traefik logs file
-# If not defined, logs to stdout
-#
-# Optional
-#
-# traefikLogsFile = "log/traefik.log"
-
 # Log level
 #
 # Optional
@@ -38,6 +31,28 @@
 [entryPoints]
     [entryPoints.http]
     address = ":80"
+
+# Traefik logs
+# Enabled by default and log to stdout
+#
+# Optional
+#
+# [traefikLog]
+
+# Sets the filepath for the traefik log. If not specified, stdout will be used.
+# Intermediate directories are created if necessary.
+#
+# Optional
+# Default: os.Stdout
+#
+# filePath = "log/traefik.log"
+
+# Format is either "json" or "common".
+#
+# Optional
+# Default: "common"
+#
+# format = "common"
 
 # Enable access logs
 # By default it will write to stdout and produce logs in the textual

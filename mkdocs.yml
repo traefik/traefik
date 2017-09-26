@@ -6,17 +6,21 @@ site_url: https://docs.traefik.io
 repo_name: 'GitHub'
 repo_url: 'https://github.com/containous/traefik'
 
-# Documentation and theme
+# Documentation
 docs_dir: 'docs'
+
 #theme: united
-# theme: readthedocs
+#theme: readthedocs
 theme: 'material'
-# theme: bootstrap
+#theme: bootstrap
 
 site_favicon: 'img/traefik.icon.png'
 
-# Copyright
 copyright: "Copyright &copy; 2016-2017 Containous SAS"
+
+google_analytics:
+  - 'UA-51880359-3'
+  - 'docs.traefik.io'
 
 # Options
 extra:
@@ -46,8 +50,8 @@ extra:
 theme_dir: docs/theme/
 
 extra_css:
-    - theme/styles/extra.css
-    - theme/styles/atom-one-light.css
+  - theme/styles/extra.css
+  - theme/styles/atom-one-light.css
 
 extra_javascript:
   - theme/js/hljs/highlight.pack.js
@@ -82,11 +86,12 @@ pages:
     - 'Backend: Zookeeper': 'configuration/backends/zookeeper.md'
   - User Guides:
     - 'Configuration Examples': 'user-guide/examples.md'
-    - 'Swarm Cluster': 'user-guide/swarm.md'
     - 'Swarm Mode Cluster': 'user-guide/swarm-mode.md'
+    - 'Swarm Cluster': 'user-guide/swarm.md'
+    - 'Let''s Encrypt & Docker': 'user-guide/docker-and-lets-encrypt.md'
     - 'Kubernetes': 'user-guide/kubernetes.md'
     - 'Marathon': 'user-guide/marathon.md'
     - 'Key-value Store Configuration': 'user-guide/kv-config.md'
     - 'Clustering/HA': 'user-guide/cluster.md'
-    - 'Let''s Encrypt & Docker': 'user-guide/docker-and-lets-encrypt.md'
+    - 'gRPC Example': 'user-guide/grpc.md'
   - Benchmarks: benchmarks.md

@@ -24,7 +24,7 @@ type GRPCSuite struct{ BaseSuite }
 
 type myserver struct{}
 
-func (suite *GRPCSuite) SetUpSuite(c *check.C) {
+func (s *GRPCSuite) SetUpSuite(c *check.C) {
 	var err error
 	LocalhostCert, err = ioutil.ReadFile("./resources/tls/local.cert")
 	c.Assert(err, check.IsNil)
@@ -72,7 +72,7 @@ func callHelloClientGRPC() (string, error) {
 	return r.Message, nil
 }
 
-func (suite *GRPCSuite) TestGRPC(c *check.C) {
+func (s *GRPCSuite) TestGRPC(c *check.C) {
 	lis, err := net.Listen("tcp", ":0")
 	_, port, err := net.SplitHostPort(lis.Addr().String())
 	c.Assert(err, check.IsNil)
@@ -83,7 +83,7 @@ func (suite *GRPCSuite) TestGRPC(c *check.C) {
 		c.Assert(err, check.IsNil)
 	}()
 
-	file := suite.adaptFile(c, "fixtures/grpc/config.toml", struct {
+	file := s.adaptFile(c, "fixtures/grpc/config.toml", struct {
 		CertContent    string
 		KeyContent     string
 		GRPCServerPort string
@@ -94,7 +94,8 @@ func (suite *GRPCSuite) TestGRPC(c *check.C) {
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 
 	err = cmd.Start()
 	c.Assert(err, check.IsNil)
