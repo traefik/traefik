@@ -28,12 +28,12 @@ var _ provider.Provider = (*CatalogProvider)(nil)
 
 // CatalogProvider holds configurations of the Consul catalog provider.
 type CatalogProvider struct {
-	provider.BaseProvider `mapstructure:",squash"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string `description:"Consul server endpoint"`
 	Domain                string `description:"Default domain used"`
-	ExposedByDefault      bool   `description:"Expose Consul services by default"`
-	Prefix                string `description:"Prefix used for Consul catalog tags"`
-	FrontEndRule          string `description:"Frontend rule used for Consul services"`
+	ExposedByDefault      bool   `description:"Expose Consul services by default" export:"true"`
+	Prefix                string `description:"Prefix used for Consul catalog tags" export:"true"`
+	FrontEndRule          string `description:"Frontend rule used for Consul services" export:"true"`
 	client                *api.Client
 	frontEndRuleTemplate  *template.Template
 }

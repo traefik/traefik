@@ -29,17 +29,17 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
 
 	Domain           string `description:"Default domain used"`
-	ExposedByDefault bool   `description:"Expose containers by default"`
-	RefreshSeconds   int    `description:"Polling interval (in seconds)"`
+	ExposedByDefault bool   `description:"Expose containers by default" export:"true"`
+	RefreshSeconds   int    `description:"Polling interval (in seconds)" export:"true"`
 
 	// Provider lookup parameters
 	Clusters             Clusters `description:"ECS Clusters name"`
 	Cluster              string   `description:"deprecated - ECS Cluster name"` // deprecated
-	AutoDiscoverClusters bool     `description:"Auto discover cluster"`
-	Region               string   `description:"The AWS region to use for requests"`
+	AutoDiscoverClusters bool     `description:"Auto discover cluster" export:"true"`
+	Region               string   `description:"The AWS region to use for requests" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
 	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests"`
 }

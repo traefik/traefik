@@ -24,14 +24,13 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configuration for provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
-
-	AccessKeyID     string `description:"The AWS credentials access key to use for making requests"`
-	RefreshSeconds  int    `description:"Polling interval (in seconds)"`
-	Region          string `description:"The AWS region to use for requests"`
-	SecretAccessKey string `description:"The AWS credentals secret key to use for making requests"`
-	TableName       string `description:"The AWS dynamodb table that stores configuration for traefik"`
-	Endpoint        string `description:"The endpoint of a dynamodb. Used for testing with a local dynamodb"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
+	AccessKeyID           string `description:"The AWS credentials access key to use for making requests"`
+	RefreshSeconds        int    `description:"Polling interval (in seconds)" export:"true"`
+	Region                string `description:"The AWS region to use for requests" export:"true"`
+	SecretAccessKey       string `description:"The AWS credentials secret key to use for making requests"`
+	TableName             string `description:"The AWS dynamodb table that stores configuration for traefik" export:"true"`
+	Endpoint              string `description:"The endpoint of a dynamodb. Used for testing with a local dynamodb"`
 }
 
 type dynamoClient struct {

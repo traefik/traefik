@@ -1,5 +1,5 @@
-hash: 17b4abe35874c0990cf9ac68f4cdfae0229f4395097bcaab3105b698d91bd272
-updated: 2017-09-18T11:52:16.848940186+02:00
+hash: 9d176906cf25eaa3224c750b1dd3a5c8ce3340a58df3c562e57572c6294e16f0
+updated: 2017-09-30T18:32:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -370,8 +370,12 @@ imports:
   version: f533f7a102197536779ea3a8cb881d639e21ec5a
 - name: github.com/miekg/dns
   version: 8060d9f51305bbe024b99679454e62f552cd0b0b
+- name: github.com/mitchellh/copystructure
+  version: d23ffcb85de31694d6ccaa23ccb4a03e55c1303f
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
+- name: github.com/mitchellh/reflectwalk
+  version: 63d60e9d0dbc60cf9164e6510889b0db6683d98c
 - name: github.com/mvdan/xurls
   version: db96455566f05ffe42bd6ac671f05eeb1152b45d
 - name: github.com/Nvveen/Gotty
