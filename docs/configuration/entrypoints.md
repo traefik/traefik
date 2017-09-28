@@ -171,6 +171,12 @@ To enable compression support using gzip format.
   compress = true
 ```
 
+Responses are compressed when:
+
+* The response body is larger than `512` bytes
+* And the `Accept-Encoding` request header contains `gzip`
+* And the response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
+
 ## Whitelisting
 
 To enable IP whitelisting at the entrypoint level.
