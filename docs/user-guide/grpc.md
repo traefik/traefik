@@ -14,7 +14,7 @@ This section explains how to use Traefik as reverse proxy for gRPC application w
 In order to secure the gRPC server, we generate a self-signed certificate for backend url:
 
 ```bash
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./backend.key -out ./backend.crt
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./backend.key -out ./backend.cert
 ```
 
 That will prompt for information, the important answer is:
