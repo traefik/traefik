@@ -138,7 +138,6 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 
 	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
-	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
 	c.Assert(err, checker.IsNil)
@@ -146,6 +145,11 @@ func (s *ConsulCatalogSuite) TestSingleService(c *check.C) {
 
 	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
+
+	s.deregisterService("test", nginx.NetworkSettings.IPAddress)
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusNotFound), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
 }
 
 func (s *ConsulCatalogSuite) TestExposedByDefaultFalseSingleService(c *check.C) {
