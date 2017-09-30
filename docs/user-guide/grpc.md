@@ -119,8 +119,6 @@ defer s.Stop()
 pb.RegisterGreeterServer(s, &server{})
 err := s.Serve(lis)
 
-// s := grpc.NewServer()
-
 // ...
 ```
 
