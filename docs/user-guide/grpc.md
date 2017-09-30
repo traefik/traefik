@@ -92,12 +92,6 @@ So we modify the "gRPC server example" to use our own self-signed certificate:
 ```go
 // ...
 
-  "crypto/tls"
-  "google.golang.org/grpc/credentials"
-  "io/ioutil"
-
-
-
 // Read cert and key file
 BackendCert, _ := ioutil.ReadFile("./backend.cert")
 BackendKey, _ := ioutil.ReadFile("./backend.key")
@@ -126,16 +120,6 @@ Next we will modify gRPC Client to use our Træfik self-signed certificate:
 
 ```go
 // ...
-
-
-// ...
-
-  "crypto/x509"
-  "fmt"
-  "google.golang.org/grpc/credentials"
-  "io/ioutil"
-
-
 
 // Read cert file
 FrontendCert, _ := ioutil.ReadFile("./frontend.cert")
