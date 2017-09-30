@@ -66,7 +66,7 @@ RootCAs = [ "./backend.cert" ]
   [backends.backend1]
     [backends.backend1.servers.server1]
     # Access on backend with HTTPS
-    url = "https://backend.local:8080"
+    url = "https://backend.local:50051"
 
 
 [frontends]
@@ -90,59 +90,164 @@ We will use the gRPC greeter example in [grpc-go](https://github.com/grpc/grpc-g
 So we modify the "gRPC server example" to use our own self-signed certificate:
 
 ```go
-// ...
+/*
+ *
+ * Copyright 2015 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
-// Read cert and key file
-BackendCert := ioutil.ReadFile("./backend.cert")
-BackendKey := ioutil.ReadFile("./backend.key")
+//go:generate protoc -I ../helloworld --go_out=plugins=grpc:../helloworld ../helloworld/helloworld.proto
 
-// Generate Certificate struct
-cert, err := tls.X509KeyPair(BackendCert, BackendKey)
-if err != nil {
-  return err
+package main
+
+import (
+	"log"
+	"net"
+
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	pb "google.golang.org/grpc/examples/helloworld/helloworld"
+	"google.golang.org/grpc/reflection"
+
+	"crypto/tls"
+	"google.golang.org/grpc/credentials"
+	"io/ioutil"
+)
+
+const (
+	port = ":50051"
+)
+
+// server is used to implement helloworld.GreeterServer.
+type server struct{}
+
+// SayHello implements helloworld.GreeterServer
+func (s *server) SayHello(ctx context.Context, in *pb.HelloRequest) (*pb.HelloReply, error) {
+	return &pb.HelloReply{Message: "Hello " + in.Name}, nil
 }
 
-// Create credentials
-creds := credentials.NewServerTLSFromCert(&cert)
+func main() {
 
-// Use Credentials in gRPC server options
-serverOption := grpc.Creds(creds)
-var s *grpc.Server = grpc.NewServer(serverOption)
-defer s.Stop()
+	// Read cert and key file
+	BackendCert, _ := ioutil.ReadFile("./backend.cert")
+	BackendKey, _ := ioutil.ReadFile("./backend.key")
 
-helloworld.RegisterGreeterServer(s, &myserver{})
-err := s.Serve(lis)
+	// Generate Certificate struct
+	cert, err := tls.X509KeyPair(BackendCert, BackendKey)
+	if err != nil {
+		log.Fatalf("failed to parse certificate: %v", err)
+	}
 
-// ...
+	// Create credentials
+	creds := credentials.NewServerTLSFromCert(&cert)
+
+	// Use Credentials in gRPC server options
+	serverOption := grpc.Creds(creds)
+	var s *grpc.Server = grpc.NewServer(serverOption)
+	defer s.Stop()
+
+	pb.RegisterGreeterServer(s, &server{})
+
+	lis, err := net.Listen("tcp", port)
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	// s := grpc.NewServer()
+	// pb.RegisterGreeterServer(s, &server{})
+	// Register reflection service on gRPC server.
+	reflection.Register(s)
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
 ```
 
 Next we will modify gRPC Client to use our Træfik self-signed certificate:
 
 ```go
-// ...
+/*
+ *
+ * Copyright 2015 gRPC authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
-// Read cert file
-FrontendCert := ioutil.ReadFile("./frontend.cert")
+package main
 
-// Create CertPool
-roots := x509.NewCertPool()
-roots.AppendCertsFromPEM(FrontendCert)
+import (
+	"log"
+	"os"
 
-// Create credentials
-credsClient := credentials.NewClientTLSFromCert(roots, "")
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	pb "google.golang.org/grpc/examples/helloworld/helloworld"
 
-// Dial with specific Transport (with credentials)
-conn, err := grpc.Dial("https://frontend:4443", grpc.WithTransportCredentials(credsClient))
-if err != nil {
-  return err
+	"crypto/x509"
+	"google.golang.org/grpc/credentials"
+	"io/ioutil"
+)
+
+const (
+	address     = "localhost:4443"
+	defaultName = "world"
+)
+
+func main() {
+
+	// Read cert file
+	FrontendCert, _ := ioutil.ReadFile("./frontend.cert")
+
+	// Create CertPool
+	roots := x509.NewCertPool()
+	roots.AppendCertsFromPEM(FrontendCert)
+
+	// Create credentials
+	credsClient := credentials.NewClientTLSFromCert(roots, "")
+
+	// Set up a connection to the server.
+	conn, err := grpc.Dial("https://frontend.local:4443", grpc.WithTransportCredentials(credsClient))
+	// conn, err := grpc.Dial(address, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	c := pb.NewGreeterClient(conn)
+
+	// Contact the server and print out its response.
+	name := defaultName
+	if len(os.Args) > 1 {
+		name = os.Args[1]
+	}
+	r, err := c.SayHello(context.Background(), &pb.HelloRequest{Name: name})
+	if err != nil {
+		log.Fatalf("could not greet: %v", err)
+	}
+	log.Printf("Greeting: %s", r.Message)
 }
 
-defer conn.Close()
-client := helloworld.NewGreeterClient(conn)
-
-name := "World"
-r, err := client.SayHello(context.Background(), &helloworld.HelloRequest{Name: name})
-
-// ...
 ```
 
