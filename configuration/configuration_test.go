@@ -3,7 +3,9 @@ package configuration
 import (
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -196,6 +198,54 @@ func TestEntryPoints_Set(t *testing.T) {
 
 			ep := eps[test.expectedEntryPointName]
 			assert.EqualValues(t, test.expectedEntryPoint, ep)
+		})
+	}
+}
+
+func TestSetEffecticeConfiguration(t *testing.T) {
+	tests := []struct {
+		desc                  string
+		legacyGraceTimeout    time.Duration
+		lifeCycleGraceTimeout time.Duration
+		wantGraceTimeout      time.Duration
+	}{
+		{
+			desc:               "legacy grace timeout given only",
+			legacyGraceTimeout: 5 * time.Second,
+			wantGraceTimeout:   5 * time.Second,
+		},
+		{
+			desc:                  "legacy and life cycle grace timeouts given",
+			legacyGraceTimeout:    5 * time.Second,
+			lifeCycleGraceTimeout: 12 * time.Second,
+			wantGraceTimeout:      5 * time.Second,
+		},
+		{
+			desc:                  "legacy grace timeout omitted",
+			legacyGraceTimeout:    0,
+			lifeCycleGraceTimeout: 12 * time.Second,
+			wantGraceTimeout:      12 * time.Second,
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			gc := &GlobalConfiguration{
+				GraceTimeOut: flaeg.Duration(test.legacyGraceTimeout),
+			}
+			if test.lifeCycleGraceTimeout > 0 {
+				gc.LifeCycle = &LifeCycle{
+					GraceTimeOut: flaeg.Duration(test.lifeCycleGraceTimeout),
+				}
+			}
+
+			gc.SetEffectiveConfiguration()
+			gotGraceTimeout := time.Duration(gc.LifeCycle.GraceTimeOut)
+			if gotGraceTimeout != test.wantGraceTimeout {
+				t.Fatalf("got effective grace timeout %d, want %d", gotGraceTimeout, test.wantGraceTimeout)
+			}
 		})
 	}
 }

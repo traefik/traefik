@@ -180,6 +180,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
 	}
 
+	// default LifeCycle
+	defaultLifeycle := configuration.LifeCycle{
+		GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
+	}
+
 	defaultConfiguration := configuration.GlobalConfiguration{
 		Docker:             &defaultDocker,
 		File:               &defaultFile,
@@ -202,6 +207,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		ForwardingTimeouts: &forwardingTimeouts,
 		TraefikLog:         &defaultTraefikLog,
 		AccessLog:          &defaultAccessLog,
+		LifeCycle:          &defaultLifeycle,
 	}
 
 	return &TraefikConfiguration{
@@ -213,7 +219,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 func NewTraefikConfiguration() *TraefikConfiguration {
 	return &TraefikConfiguration{
 		GlobalConfiguration: configuration.GlobalConfiguration{
-			GraceTimeOut:              flaeg.Duration(10 * time.Second),
 			AccessLogsFile:            "",
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",

@@ -22,7 +22,6 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
-	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
 	"github.com/containous/traefik/types"
@@ -228,36 +227,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
-	if len(globalConfiguration.EntryPoints) == 0 {
-		globalConfiguration.EntryPoints = map[string]*configuration.EntryPoint{"http": {Address: ":80"}}
-		globalConfiguration.DefaultEntryPoints = []string{"http"}
-	}
-
-	if globalConfiguration.Rancher != nil {
-		// Ensure backwards compatibility for now
-		if len(globalConfiguration.Rancher.AccessKey) > 0 ||
-			len(globalConfiguration.Rancher.Endpoint) > 0 ||
-			len(globalConfiguration.Rancher.SecretKey) > 0 {
-
-			if globalConfiguration.Rancher.API == nil {
-				globalConfiguration.Rancher.API = &rancher.APIConfiguration{
-					AccessKey: globalConfiguration.Rancher.AccessKey,
-					SecretKey: globalConfiguration.Rancher.SecretKey,
-					Endpoint:  globalConfiguration.Rancher.Endpoint,
-				}
-			}
-			log.Warn("Deprecated configuration found: rancher.[accesskey|secretkey|endpoint]. " +
-				"Please use rancher.api.[accesskey|secretkey|endpoint] instead.")
-		}
-
-		if globalConfiguration.Rancher.Metadata != nil && len(globalConfiguration.Rancher.Metadata.Prefix) == 0 {
-			globalConfiguration.Rancher.Metadata.Prefix = "latest"
-		}
-	}
-
-	if globalConfiguration.Debug {
-		globalConfiguration.LogLevel = "DEBUG"
-	}
+	globalConfiguration.SetEffectiveConfiguration()
 
 	// logging
 	level, err := logrus.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
