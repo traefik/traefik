@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
-	"strings"
 
 	"github.com/mitchellh/copystructure"
 	"github.com/mvdan/xurls"
@@ -44,15 +43,18 @@ func doOnJSON(input string) string {
 }
 
 func doOnStruct(field reflect.Value) error {
-	if reflect.Ptr == field.Kind() && !field.IsNil() {
-		if err := doOnStruct(field.Elem()); err != nil {
-			return err
+	switch field.Kind() {
+	case reflect.Ptr:
+		if !field.IsNil() {
+			if err := doOnStruct(field.Elem()); err != nil {
+				return err
+			}
 		}
-	} else if reflect.Struct == field.Kind() {
+	case reflect.Struct:
 		for i := 0; i < field.NumField(); i++ {
 			fld := field.Field(i)
 			stField := field.Type().Field(i)
-			if !isExported(stField.Name) {
+			if !isExported(stField) {
 				continue
 			}
 			if stField.Tag.Get("export") == "true" {
@@ -65,13 +67,13 @@ func doOnStruct(field reflect.Value) error {
 				}
 			}
 		}
-	} else if reflect.Map == field.Kind() {
+	case reflect.Map:
 		for _, key := range field.MapKeys() {
 			if err := doOnStruct(field.MapIndex(key)); err != nil {
 				return err
 			}
 		}
-	} else if reflect.Slice == field.Kind() {
+	case reflect.Slice:
 		for j := 0; j < field.Len(); j++ {
 			if err := doOnStruct(field.Index(j)); err != nil {
 				return err
@@ -85,43 +87,45 @@ func reset(field reflect.Value, name string) error {
 	if !field.CanSet() {
 		return fmt.Errorf("cannot reset field %s", name)
 	}
-	if reflect.Ptr == field.Kind() {
+
+	switch field.Kind() {
+	case reflect.Ptr:
 		if !field.IsNil() {
 			field.Set(reflect.Zero(field.Type()))
 		}
-	} else if reflect.String == field.Kind() {
-		if field.String() != "" {
-			field.Set(reflect.ValueOf(maskShort))
-		}
-	} else if reflect.Struct == field.Kind() {
+	case reflect.Struct:
 		if field.IsValid() {
 			field.Set(reflect.Zero(field.Type()))
 		}
-	} else if reflect.Map == field.Kind() {
+	case reflect.String:
+		if field.String() != "" {
+			field.Set(reflect.ValueOf(maskShort))
+		}
+	case reflect.Map:
 		if field.Len() > 0 {
 			field.Set(reflect.MakeMap(field.Type()))
 		}
-	} else if reflect.Slice == field.Kind() {
+	case reflect.Slice:
 		if field.Len() > 0 {
 			field.Set(reflect.MakeSlice(field.Type(), 0, 0))
 		}
-	} else if reflect.Interface == field.Kind() {
+	case reflect.Interface:
 		if !field.IsNil() {
 			return reset(field.Elem(), "")
 		}
-	} else {
+	default:
 		// Primitive type
 		field.Set(reflect.Zero(field.Type()))
 	}
 	return nil
 }
 
-// isExported return true is the field (from fieldName) is exported, else false
-func isExported(fieldName string) bool {
-	if len(fieldName) < 1 {
+// isExported return true is a struct field is exported, else false
+func isExported(f reflect.StructField) bool {
+	if f.PkgPath != "" && !f.Anonymous {
 		return false
 	}
-	return string(fieldName[0]) == strings.ToUpper(string(fieldName[0]))
+	return true
 }
 
 func marshal(anomConfig interface{}, indent bool) ([]byte, error) {
