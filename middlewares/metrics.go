@@ -38,7 +38,7 @@ func (m *MetricsWrapper) ServeHTTP(rw http.ResponseWriter, r *http.Request, next
 	m.registry.ReqsCounter().With(reqLabels...).Add(1)
 
 	reqDurationLabels := []string{"service", m.serviceName, "code", strconv.Itoa(prw.statusCode)}
-	m.registry.ReqDurationHistogram().With(reqDurationLabels...).Observe(float64(time.Since(start).Seconds()))
+	m.registry.ReqDurationHistogram().With(reqDurationLabels...).Observe(time.Since(start).Seconds())
 }
 
 type retryMetrics interface {

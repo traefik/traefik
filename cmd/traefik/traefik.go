@@ -25,11 +25,11 @@ import (
 	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
+	"github.com/containous/traefik/server/uuid"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/docker/libkv/store"
-	"github.com/satori/go.uuid"
 )
 
 func main() {
@@ -188,7 +188,7 @@ Complete documentation is available at https://traefik.io`,
 	s.AddSource(toml)
 	s.AddSource(f)
 	if _, err := s.LoadConfig(); err != nil {
-		fmtlog.Println(fmt.Errorf("Error reading TOML config file %s : %s", toml.ConfigFileUsed(), err))
+		fmtlog.Printf("Error reading TOML config file %s : %s\n", toml.ConfigFileUsed(), err)
 		os.Exit(-1)
 	}
 
@@ -203,7 +203,7 @@ Complete documentation is available at https://traefik.io`,
 	// IF a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
 		if traefikConfiguration.Cluster == nil {
-			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.NewV4().String()}
+			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.Get()}
 		}
 		if traefikConfiguration.Cluster.Store == nil {
 			traefikConfiguration.Cluster.Store = &types.Store{Prefix: kv.Prefix, Store: kv.Store}
@@ -291,16 +291,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 
 	if globalConfiguration.CheckNewVersion {
-		ticker := time.NewTicker(24 * time.Hour)
-		safe.Go(func() {
-			version.CheckNewVersion()
-			for {
-				select {
-				case <-ticker.C:
-					version.CheckNewVersion()
-				}
-			}
-		})
+		checkNewVersion()
 	}
 
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
@@ -365,4 +356,17 @@ func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSourc
 		}
 	}
 	return kv, err
+}
+
+func checkNewVersion() {
+	ticker := time.NewTicker(24 * time.Hour)
+	safe.Go(func() {
+		version.CheckNewVersion()
+		for {
+			select {
+			case <-ticker.C:
+				version.CheckNewVersion()
+			}
+		}
+	})
 }

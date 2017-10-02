@@ -24,11 +24,11 @@ type Provider interface {
 
 // BaseProvider should be inherited by providers
 type BaseProvider struct {
-	Watch                     bool              `description:"Watch provider"`
-	Filename                  string            `description:"Override default configuration template. For advanced users :)"`
-	Constraints               types.Constraints `description:"Filter services by constraint, matching with Traefik tags."`
-	Trace                     bool              `description:"Display additional provider logs (if available)."`
-	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template."`
+	Watch                     bool              `description:"Watch provider" export:"true"`
+	Filename                  string            `description:"Override default configuration template. For advanced users :)" export:"true"`
+	Constraints               types.Constraints `description:"Filter services by constraint, matching with Traefik tags." export:"true"`
+	Trace                     bool              `description:"Display additional provider logs (if available)." export:"true"`
+	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template." export:"true"`
 }
 
 // MatchConstraints must match with EVERY single contraint

@@ -200,6 +200,7 @@ import:
   version: e039e20e500c2c025d9145be375e27cf42a94174
 - package: github.com/armon/go-proxyproto
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
+- package: github.com/mitchellh/copystructure
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose

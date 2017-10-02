@@ -25,15 +25,15 @@ import (
 
 // Provider is a provider.Provider implementation that provides the UI
 type Provider struct {
-	Address               string            `description:"Web administration port"`
-	CertFile              string            `description:"SSL certificate"`
-	KeyFile               string            `description:"SSL certificate"`
-	ReadOnly              bool              `description:"Enable read only API"`
-	Statistics            *types.Statistics `description:"Enable more detailed statistics"`
-	Metrics               *types.Metrics    `description:"Enable a metrics exporter"`
+	Address               string            `description:"Web administration port" export:"true"`
+	CertFile              string            `description:"SSL certificate" export:"true"`
+	KeyFile               string            `description:"SSL certificate" export:"true"`
+	ReadOnly              bool              `description:"Enable read only API" export:"true"`
+	Statistics            *types.Statistics `description:"Enable more detailed statistics" export:"true"`
+	Metrics               *types.Metrics    `description:"Enable a metrics exporter" export:"true"`
 	Path                  string            `description:"Root path for dashboard and API"`
-	Auth                  *types.Auth
-	Debug                 bool
+	Auth                  *types.Auth       `export:"true"`
+	Debug                 bool              `export:"true"`
 	CurrentConfigurations *safe.Safe
 	Stats                 *thoas_stats.Stats
 	StatsRecorder         *middlewares.StatsRecorder
