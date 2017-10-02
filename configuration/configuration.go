@@ -89,7 +89,7 @@ type GlobalConfiguration struct {
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from
 // existing ones. It also takes care of maintaining backwards compatibility.
-func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
+func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 	if len(gc.EntryPoints) == 0 {
 		gc.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
 		gc.DefaultEntryPoints = []string{"http"}
@@ -128,8 +128,14 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
 		}
 	}
 
-	if gc.Debug {
-		gc.LogLevel = "DEBUG"
+	// Try to fallback to traefik config file in case the file provider is enabled
+	// but has no file name configured.
+	if gc.File != nil && len(gc.File.Filename) == 0 {
+		if len(configFile) > 0 {
+			gc.File.Filename = configFile
+		} else {
+			log.Errorln("Error using file configuration backend, no filename defined")
+		}
 	}
 }
 

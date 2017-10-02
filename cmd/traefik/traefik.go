@@ -45,17 +45,7 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
-			globalConfiguration := &traefikConfiguration.GlobalConfiguration
-			fileProviderEnabled := globalConfiguration.File != nil
-			traefikConfigFileExists := len(traefikConfiguration.ConfigFile) != 0
-
-			// Try to fallback to traefik config file in case the file provider is enabled
-			// but it has no file name configured.
-			if fileProviderEnabled && len(globalConfiguration.File.Filename) == 0 && traefikConfigFileExists {
-				globalConfiguration.File.Filename = traefikConfiguration.ConfigFile
-			}
-
-			run(globalConfiguration, traefikConfiguration.ConfigFile)
+			run(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
 			return nil
 		},
 	}
@@ -226,13 +216,10 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 	if len(configFile) > 0 {
 		log.Infof("Using TOML configuration file %s", configFile)
 	}
-	if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
-		log.Errorln("Error using file configuration backend, no filename defined")
-	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
-	globalConfiguration.SetEffectiveConfiguration()
+	globalConfiguration.SetEffectiveConfiguration(configFile)
 
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
