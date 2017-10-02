@@ -1,5 +1,27 @@
 # Change Log
 
+## [v1.4.0-rc4](https://github.com/containous/traefik/tree/v1.4.0-rc4) (2017-10-02)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc3...v1.4.0-rc4)
+
+**Bug fixes:**
+- **[cluster,kv]** Be certain to clear our marshalled representation before reloading it ([#2165](https://github.com/containous/traefik/pull/2165) by [gozer](https://github.com/gozer))
+- **[consulcatalog]** Consul catalog failed to remove service  ([#2157](https://github.com/containous/traefik/pull/2157) by [Juliens](https://github.com/Juliens))
+- **[consulcatalog]** Flaky tests and refresh problem in consul catalog ([#2148](https://github.com/containous/traefik/pull/2148) by [Juliens](https://github.com/Juliens))
+- **[ecs]** Handle empty ECS Clusters properly ([#2170](https://github.com/containous/traefik/pull/2170) by [jeffreykoetsier](https://github.com/jeffreykoetsier))
+- **[middleware]** Fix SSE subscriptions when retries are enabled ([#2145](https://github.com/containous/traefik/pull/2145) by [marco-jantke](https://github.com/marco-jantke))
+- **[websocket]** Forward upgrade error from backend ([#2187](https://github.com/containous/traefik/pull/2187) by [Juliens](https://github.com/Juliens))
+- `bug` command. ([#2178](https://github.com/containous/traefik/pull/2178) by [ldez](https://github.com/ldez))
+- Fix deprecated IdleTimeout config ([#2143](https://github.com/containous/traefik/pull/2143) by [marco-jantke](https://github.com/marco-jantke))
+
+**Documentation:**
+- **[docker]** Updating Docker output and curl for sticky sessions ([#2150](https://github.com/containous/traefik/pull/2150) by [jtyr](https://github.com/jtyr))
+- **[middleware]** Improve compression documentation ([#2184](https://github.com/containous/traefik/pull/2184) by [errm](https://github.com/errm))
+- Fix grammar mistake in the kv-config docs ([#2197](https://github.com/containous/traefik/pull/2197) by [chr4](https://github.com/chr4))
+- Update gRPC example ([#2191](https://github.com/containous/traefik/pull/2191) by [jsenon](https://github.com/jsenon))
+
+**Misc:**
+- **[websocket]** Add tests for urlencoded part in url ([#2199](https://github.com/containous/traefik/pull/2199) by [Juliens](https://github.com/Juliens))
+
 ## [v1.4.0-rc3](https://github.com/containous/traefik/tree/v1.4.0-rc3) (2017-09-18)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc2...v1.4.0-rc3)
 
