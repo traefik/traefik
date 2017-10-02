@@ -390,3 +390,54 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
 	c.Assert(resp.StatusCode, check.Equals, 401)
 
 }
+
+func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
+	var upgrader = gorillawebsocket.Upgrader{} // use default options
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c.Assert(r.URL.Path, check.Equals, "/ws/http%3A%2F%2Ftest")
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		for {
+			mt, message, err := conn.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = conn.WriteMessage(mt, message)
+			if err != nil {
+				break
+			}
+		}
+	}))
+
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+		WebsocketServer string
+	}{
+		WebsocketServer: srv.URL,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
+	c.Assert(err, checker.IsNil)
+
+	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws/http%3A%2F%2Ftest", nil)
+	c.Assert(err, checker.IsNil)
+
+	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+	c.Assert(err, checker.IsNil)
+
+	_, msg, err := conn.ReadMessage()
+	c.Assert(err, checker.IsNil)
+	c.Assert(string(msg), checker.Equals, "OK")
+}
