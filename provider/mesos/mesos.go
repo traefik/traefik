@@ -32,12 +32,12 @@ type Provider struct {
 	provider.BaseProvider
 	Endpoint           string `description:"Mesos server endpoint. You can also specify multiple endpoint for Mesos"`
 	Domain             string `description:"Default domain used"`
-	ExposedByDefault   bool   `description:"Expose Mesos apps by default"`
-	GroupsAsSubDomains bool   `description:"Convert Mesos groups to subdomains"`
-	ZkDetectionTimeout int    `description:"Zookeeper timeout (in seconds)"`
-	RefreshSeconds     int    `description:"Polling interval (in seconds)"`
-	IPSources          string `description:"IPSources (e.g. host, docker, mesos, rkt)"` // e.g. "host", "docker", "mesos", "rkt"
-	StateTimeoutSecond int    `description:"HTTP Timeout (in seconds)"`
+	ExposedByDefault   bool   `description:"Expose Mesos apps by default" export:"true"`
+	GroupsAsSubDomains bool   `description:"Convert Mesos groups to subdomains" export:"true"`
+	ZkDetectionTimeout int    `description:"Zookeeper timeout (in seconds)" export:"true"`
+	RefreshSeconds     int    `description:"Polling interval (in seconds)" export:"true"`
+	IPSources          string `description:"IPSources (e.g. host, docker, mesos, rkt)" export:"true"`
+	StateTimeoutSecond int    `description:"HTTP Timeout (in seconds)" export:"true"`
 	Masters            []string
 }
 

@@ -28,12 +28,12 @@ var _ provider.Provider = (*CatalogProvider)(nil)
 
 // CatalogProvider holds configurations of the Consul catalog provider.
 type CatalogProvider struct {
-	provider.BaseProvider `mapstructure:",squash"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string `description:"Consul server endpoint"`
 	Domain                string `description:"Default domain used"`
-	ExposedByDefault      bool   `description:"Expose Consul services by default"`
-	Prefix                string `description:"Prefix used for Consul catalog tags"`
-	FrontEndRule          string `description:"Frontend rule used for Consul services"`
+	ExposedByDefault      bool   `description:"Expose Consul services by default" export:"true"`
+	Prefix                string `description:"Prefix used for Consul catalog tags" export:"true"`
+	FrontEndRule          string `description:"Frontend rule used for Consul services" export:"true"`
 	client                *api.Client
 	frontEndRuleTemplate  *template.Template
 }
@@ -190,7 +190,6 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 	catalog := p.client.Catalog()
 
 	safe.Go(func() {
-		current := make(map[string]Service)
 		// variable to hold previous state
 		var flashback map[string]Service
 
@@ -216,7 +215,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 			options.WaitIndex = meta.LastIndex
 
 			if data != nil {
-
+				current := make(map[string]Service)
 				for key, value := range data {
 					nodes, _, err := catalog.Service(key, "", &api.QueryOptions{})
 					if err != nil {
@@ -246,10 +245,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 				if len(removedServiceKeys) > 0 || len(removedServiceNodeKeys) > 0 || len(addedServiceKeys) > 0 || len(addedServiceNodeKeys) > 0 {
 					log.WithField("MissingServices", removedServiceKeys).WithField("DiscoveredServices", addedServiceKeys).Debug("Catalog Services change detected.")
 					watchCh <- data
-					flashback = make(map[string]Service, len(current))
-					for key, value := range current {
-						flashback[key] = value
-					}
+					flashback = current
 				}
 			}
 		}

@@ -14,7 +14,7 @@ This section explains how to use Traefik as reverse proxy for gRPC application w
 In order to secure the gRPC server, we generate a self-signed certificate for backend url:
 
 ```bash
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./backend.key -out ./backend.crt
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./backend.key -out ./backend.cert
 ```
 
 That will prompt for information, the important answer is:
@@ -28,7 +28,7 @@ Common Name (e.g. server FQDN or YOUR name) []: backend.local
 Generate your self-signed certificate for frontend url:
 
 ```bash
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./frontend.key -out ./frontend.crt
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ./frontend.key -out ./frontend.cert
 ```
 
 with
@@ -93,13 +93,13 @@ So we modify the "gRPC server example" to use our own self-signed certificate:
 // ...
 
 // Read cert and key file
-BackendCert := ioutil.ReadFile("./backend.cert")
-BackendKey := ioutil.ReadFile("./backend.key")
+BackendCert, _ := ioutil.ReadFile("./backend.cert")
+BackendKey, _ := ioutil.ReadFile("./backend.key")
 
 // Generate Certificate struct
 cert, err := tls.X509KeyPair(BackendCert, BackendKey)
 if err != nil {
-  return err
+  log.Fatalf("failed to parse certificate: %v", err)
 }
 
 // Create credentials
@@ -110,7 +110,7 @@ serverOption := grpc.Creds(creds)
 var s *grpc.Server = grpc.NewServer(serverOption)
 defer s.Stop()
 
-helloworld.RegisterGreeterServer(s, &myserver{})
+pb.RegisterGreeterServer(s, &server{})
 err := s.Serve(lis)
 
 // ...
@@ -122,7 +122,7 @@ Next we will modify gRPC Client to use our Træfik self-signed certificate:
 // ...
 
 // Read cert file
-FrontendCert := ioutil.ReadFile("./frontend.cert")
+FrontendCert, _ := ioutil.ReadFile("./frontend.cert")
 
 // Create CertPool
 roots := x509.NewCertPool()
@@ -132,16 +132,16 @@ roots.AppendCertsFromPEM(FrontendCert)
 credsClient := credentials.NewClientTLSFromCert(roots, "")
 
 // Dial with specific Transport (with credentials)
-conn, err := grpc.Dial("https://frontend:4443", grpc.WithTransportCredentials(credsClient))
+conn, err := grpc.Dial("frontend.local:4443", grpc.WithTransportCredentials(credsClient))
 if err != nil {
-  return err
+    log.Fatalf("did not connect: %v", err)
 }
 
 defer conn.Close()
-client := helloworld.NewGreeterClient(conn)
+client := pb.NewGreeterClient(conn)
 
 name := "World"
-r, err := client.SayHello(context.Background(), &helloworld.HelloRequest{Name: name})
+r, err := client.SayHello(context.Background(), &pb.HelloRequest{Name: name})
 
 // ...
 ```

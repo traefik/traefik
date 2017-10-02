@@ -18,7 +18,7 @@ type Authenticator struct {
 	users   map[string]string
 }
 
-// NewAuthenticator builds a new Autenticator given a config
+// NewAuthenticator builds a new Authenticator given a config
 func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 	if authConfig == nil {
 		return nil, fmt.Errorf("Error creating Authenticator: auth is nil")

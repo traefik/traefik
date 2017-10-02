@@ -1,5 +1,5 @@
-hash: f5dd83cd0bcf9f38bf6916bc028e108c59aee57ea440e914bc68f2b90da227d3
-updated: 2017-09-09T11:52:16.848940186+02:00
+hash: 6881e0574a026dde78c9d7f03a4aa56f6c6dc585d2b6d3e6f4ae1a94810b7f88
+updated: 2017-10-02T18:32:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -374,8 +374,12 @@ imports:
   version: f533f7a102197536779ea3a8cb881d639e21ec5a
 - name: github.com/miekg/dns
   version: 8060d9f51305bbe024b99679454e62f552cd0b0b
+- name: github.com/mitchellh/copystructure
+  version: d23ffcb85de31694d6ccaa23ccb4a03e55c1303f
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
+- name: github.com/mitchellh/reflectwalk
+  version: 63d60e9d0dbc60cf9164e6510889b0db6683d98c
 - name: github.com/mvdan/xurls
   version: db96455566f05ffe42bd6ac671f05eeb1152b45d
 - name: github.com/Nvveen/Gotty
@@ -481,7 +485,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: 6c94d2888dba2b1a15a89b8a2ca515fc85e07477
+  version: 648088ee0902cf8d8337826ae2a82444008720e2
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
