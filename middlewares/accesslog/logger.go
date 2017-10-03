@@ -102,7 +102,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 
 	var crr *captureRequestReader
 	if req.Body != nil {
-		crr = &captureRequestReader{source: req.Body, count: 0}
+		crr = &captureRequestReader{source: req.Body, count: 0, processingEnd: time.Now().UTC()}
 		reqWithDataTable.Body = crr
 	}
 
@@ -188,16 +188,12 @@ func usernameIfPresent(theURL *url.URL) string {
 // Logging handler to log frontend name, backend name, and elapsed time
 func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestReader, crw *captureResponseWriter) {
 	core := logDataTable.Core
-	now := time.Now().UTC()
 
 	if core[RetryAttempts] == nil {
 		core[RetryAttempts] = 0
 	}
 	if crr != nil {
 		core[RequestContentSize] = crr.count
-		if !crr.processingEnd.IsZero() {
-			core[ResponseDuration] = now.Sub(crr.processingEnd)
-		}
 	}
 
 	core[DownstreamStatus] = crw.Status()
@@ -211,12 +207,19 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 	}
 
 	// n.b. take care to perform time arithmetic using UTC to avoid errors at DST boundaries
-	total := now.Sub(core[StartUTC].(time.Time))
+	total := time.Now().UTC().Sub(core[StartUTC].(time.Time))
 	core[Duration] = total
 	if origin, ok := core[OriginDuration]; ok {
 		core[Overhead] = total - origin.(time.Duration)
 	} else {
 		core[Overhead] = total
+	}
+	if crr != nil && crw != nil {
+		core[ResponseDuration] = crw.processingStart.Sub(crr.processingEnd)
+	} else if crr == nil && crw != nil {
+		core[ResponseDuration] = crw.processingStart.Sub(core[StartUTC].(time.Time))
+	} else {
+		core[ResponseDuration] = float64(0.0)
 	}
 
 	fields := logrus.Fields{}
