@@ -11,6 +11,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -37,47 +38,99 @@ const (
 
 	// DefaultIdleTimeout before closing an idle connection.
 	DefaultIdleTimeout = 180 * time.Second
+
+	// DefaultGraceTimeout controls how long Traefik serves pending requests
+	// prior to shutting down.
+	DefaultGraceTimeout = 10 * time.Second
 )
 
 // GlobalConfiguration holds global configuration (with providers, etc.).
 // It's populated from the traefik configuration file passed as an argument to the binary.
 type GlobalConfiguration struct {
-	GraceTimeOut              flaeg.Duration          `short:"g" description:"Duration to give active requests a chance to finish before Traefik stops"`
-	Debug                     bool                    `short:"d" description:"Enable debug mode"`
-	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released"`
-	AccessLogsFile            string                  `description:"(Deprecated) Access logs file"` // Deprecated
-	AccessLog                 *types.AccessLog        `description:"Access log settings"`
-	TraefikLogsFile           string                  `description:"Traefik logs file. Stdout is used when omitted or empty"`
-	LogLevel                  string                  `short:"l" description:"Log level"`
-	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'"`
-	Cluster                   *types.Cluster          `description:"Enable clustering"`
-	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags"`
-	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL"`
-	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint"`
-	ProvidersThrottleDuration flaeg.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time."`
-	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used"`
-	IdleTimeout               flaeg.Duration          `description:"(Deprecated) maximum amount of time an idle (keep-alive) connection will remain idle before closing itself."` // Deprecated
-	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification"`
-	RootCAs                   RootCAs                 `description:"Add cert file for self-signed certicate"`
-	Retry                     *Retry                  `description:"Enable retry sending request if network error"`
-	HealthCheck               *HealthCheckConfig      `description:"Health check parameters"`
-	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance"`
-	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers"`
-	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings"`
-	File                      *file.Provider          `description:"Enable File backend with default settings"`
-	Web                       *web.Provider           `description:"Enable Web backend with default settings"`
-	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings"`
-	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings"`
-	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend with default settings"`
-	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings"`
-	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings"`
-	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings"`
-	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend with default settings"`
-	Mesos                     *mesos.Provider         `description:"Enable Mesos backend with default settings"`
-	Eureka                    *eureka.Provider        `description:"Enable Eureka backend with default settings"`
-	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings"`
-	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings"`
-	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings"`
+	LifeCycle                 *LifeCycle              `description:"Timeouts influencing the server life cycle" export:"true"`
+	GraceTimeOut              flaeg.Duration          `short:"g" description:"(Deprecated) Duration to give active requests a chance to finish before Traefik stops" export:"true"` // Deprecated
+	Debug                     bool                    `short:"d" description:"Enable debug mode" export:"true"`
+	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released" export:"true"`
+	AccessLogsFile            string                  `description:"(Deprecated) Access logs file" export:"true"` // Deprecated
+	AccessLog                 *types.AccessLog        `description:"Access log settings" export:"true"`
+	TraefikLogsFile           string                  `description:"(Deprecated) Traefik logs file. Stdout is used when omitted or empty" export:"true"` // Deprecated
+	TraefikLog                *types.TraefikLog       `description:"Traefik log settings" export:"true"`
+	LogLevel                  string                  `short:"l" description:"Log level" export:"true"`
+	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'" export:"true"`
+	Cluster                   *types.Cluster          `description:"Enable clustering" export:"true"`
+	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags" export:"true"`
+	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
+	DefaultEntryPoints        DefaultEntryPoints      `description:"Entrypoints to be used by frontends that do not specify any entrypoint" export:"true"`
+	ProvidersThrottleDuration flaeg.Duration          `description:"Backends throttle duration: minimum duration between 2 events from providers before applying a new configuration. It avoids unnecessary reloads if multiples events are sent in a short amount of time." export:"true"`
+	MaxIdleConnsPerHost       int                     `description:"If non-zero, controls the maximum idle (keep-alive) to keep per-host.  If zero, DefaultMaxIdleConnsPerHost is used" export:"true"`
+	IdleTimeout               flaeg.Duration          `description:"(Deprecated) maximum amount of time an idle (keep-alive) connection will remain idle before closing itself." export:"true"` // Deprecated
+	InsecureSkipVerify        bool                    `description:"Disable SSL certificate verification" export:"true"`
+	RootCAs                   RootCAs                 `description:"Add cert file for self-signed certificate"`
+	Retry                     *Retry                  `description:"Enable retry sending request if network error" export:"true"`
+	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
+	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
+	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers" export:"true"`
+	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
+	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`
+	Web                       *web.Provider           `description:"Enable Web backend with default settings" export:"true"`
+	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings" export:"true"`
+	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings" export:"true"`
+	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend with default settings" export:"true"`
+	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings" export:"true"`
+	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings" export:"true"`
+	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings" export:"true"`
+	Kubernetes                *kubernetes.Provider    `description:"Enable Kubernetes backend with default settings" export:"true"`
+	Mesos                     *mesos.Provider         `description:"Enable Mesos backend with default settings" export:"true"`
+	Eureka                    *eureka.Provider        `description:"Enable Eureka backend with default settings" export:"true"`
+	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings" export:"true"`
+	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings" export:"true"`
+	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
+}
+
+// SetEffectiveConfiguration adds missing configuration parameters derived from
+// existing ones. It also takes care of maintaining backwards compatibility.
+func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
+	if len(gc.EntryPoints) == 0 {
+		gc.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
+		gc.DefaultEntryPoints = []string{"http"}
+	}
+
+	// Make sure LifeCycle isn't nil to spare nil checks elsewhere.
+	if gc.LifeCycle == nil {
+		gc.LifeCycle = &LifeCycle{}
+	}
+
+	// Prefer legacy grace timeout parameter for backwards compatibility reasons.
+	if gc.GraceTimeOut > 0 {
+		log.Warn("top-level grace period configuration has been deprecated -- please use lifecycle grace period")
+		gc.LifeCycle.GraceTimeOut = gc.GraceTimeOut
+	}
+
+	if gc.Rancher != nil {
+		// Ensure backwards compatibility for now
+		if len(gc.Rancher.AccessKey) > 0 ||
+			len(gc.Rancher.Endpoint) > 0 ||
+			len(gc.Rancher.SecretKey) > 0 {
+
+			if gc.Rancher.API == nil {
+				gc.Rancher.API = &rancher.APIConfiguration{
+					AccessKey: gc.Rancher.AccessKey,
+					SecretKey: gc.Rancher.SecretKey,
+					Endpoint:  gc.Rancher.Endpoint,
+				}
+			}
+			log.Warn("Deprecated configuration found: rancher.[accesskey|secretkey|endpoint]. " +
+				"Please use rancher.api.[accesskey|secretkey|endpoint] instead.")
+		}
+
+		if gc.Rancher.Metadata != nil && len(gc.Rancher.Metadata.Prefix) == 0 {
+			gc.Rancher.Metadata.Prefix = "latest"
+		}
+	}
+
+	if gc.Debug {
+		gc.LogLevel = "DEBUG"
+	}
 }
 
 // DefaultEntryPoints holds default entry points
@@ -193,18 +246,11 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*((?P<TLSACME>TLS))?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect.Regex:(?P<RedirectRegex>\\S*))?\s*(?:Redirect.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol:(?P<ProxyProtocol>\S*))?`)
-	match := regex.FindAllStringSubmatch(value, -1)
-	if match == nil {
-		return fmt.Errorf("bad EntryPoints format: %s", value)
+	result, err := parseEntryPointsConfiguration(value)
+	if err != nil {
+		return err
 	}
-	matchResult := match[0]
-	result := make(map[string]string)
-	for i, name := range regex.SubexpNames() {
-		if i != 0 {
-			result[name] = matchResult[i]
-		}
-	}
+
 	var configTLS *TLS
 	if len(result["TLS"]) > 0 {
 		certs := Certificates{}
@@ -232,24 +278,13 @@ func (ep *EntryPoints) Set(value string) error {
 		}
 	}
 
-	compress := false
-	if len(result["Compress"]) > 0 {
-		compress = strings.EqualFold(result["Compress"], "true") ||
-			strings.EqualFold(result["Compress"], "enable") ||
-			strings.EqualFold(result["Compress"], "on")
-	}
-
 	whiteListSourceRange := []string{}
 	if len(result["WhiteListSourceRange"]) > 0 {
 		whiteListSourceRange = strings.Split(result["WhiteListSourceRange"], ",")
 	}
 
-	proxyprotocol := false
-	if len(result["ProxyProtocol"]) > 0 {
-		proxyprotocol = strings.EqualFold(result["ProxyProtocol"], "true") ||
-			strings.EqualFold(result["ProxyProtocol"], "enable") ||
-			strings.EqualFold(result["ProxyProtocol"], "on")
-	}
+	compress := toBool(result, "Compress")
+	proxyProtocol := toBool(result, "ProxyProtocol")
 
 	(*ep)[result["Name"]] = &EntryPoint{
 		Address:              result["Address"],
@@ -257,10 +292,35 @@ func (ep *EntryPoints) Set(value string) error {
 		Redirect:             redirect,
 		Compress:             compress,
 		WhitelistSourceRange: whiteListSourceRange,
-		ProxyProtocol:        proxyprotocol,
+		ProxyProtocol:        proxyProtocol,
 	}
 
 	return nil
+}
+
+func parseEntryPointsConfiguration(value string) (map[string]string, error) {
+	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*(?P<TLSACME>TLS)?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect\.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect\.Regex:(?P<RedirectRegex>\S*))?\s*(?:Redirect\.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol:(?P<ProxyProtocol>\S*))?`)
+	match := regex.FindAllStringSubmatch(value, -1)
+	if match == nil {
+		return nil, fmt.Errorf("bad EntryPoints format: %s", value)
+	}
+	matchResult := match[0]
+	result := make(map[string]string)
+	for i, name := range regex.SubexpNames() {
+		if i != 0 && len(matchResult[i]) != 0 {
+			result[name] = matchResult[i]
+		}
+	}
+	return result, nil
+}
+
+func toBool(conf map[string]string, key string) bool {
+	if val, ok := conf[key]; ok {
+		return strings.EqualFold(val, "true") ||
+			strings.EqualFold(val, "enable") ||
+			strings.EqualFold(val, "on")
+	}
+	return false
 }
 
 // Get return the EntryPoints map
@@ -282,12 +342,12 @@ func (ep *EntryPoints) Type() string {
 type EntryPoint struct {
 	Network              string
 	Address              string
-	TLS                  *TLS
-	Redirect             *Redirect
-	Auth                 *types.Auth
+	TLS                  *TLS        `export:"true"`
+	Redirect             *Redirect   `export:"true"`
+	Auth                 *types.Auth `export:"true"`
 	WhitelistSourceRange []string
-	Compress             bool
-	ProxyProtocol        bool
+	Compress             bool `export:"true"`
+	ProxyProtocol        bool `export:"true"`
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
@@ -299,7 +359,7 @@ type Redirect struct {
 
 // TLS configures TLS for an entry point
 type TLS struct {
-	MinVersion    string
+	MinVersion    string `export:"true"`
 	CipherSuites  []string
 	Certificates  Certificates
 	ClientCAFiles []string
@@ -349,8 +409,6 @@ func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
 	config.Certificates = []tls.Certificate{}
 	certsSlice := []Certificate(*certs)
 	for _, v := range certsSlice {
-		cert := tls.Certificate{}
-
 		var err error
 
 		certContent, err := v.CertFile.Read()
@@ -363,7 +421,7 @@ func (certs *Certificates) CreateTLSConfig() (*tls.Config, error) {
 			return nil, err
 		}
 
-		cert, err = tls.X509KeyPair(certContent, keyContent)
+		cert, err := tls.X509KeyPair(certContent, keyContent)
 		if err != nil {
 			return nil, err
 		}
@@ -418,23 +476,30 @@ type Certificate struct {
 
 // Retry contains request retry config
 type Retry struct {
-	Attempts int `description:"Number of attempts"`
+	Attempts int `description:"Number of attempts" export:"true"`
 }
 
 // HealthCheckConfig contains health check configuration parameters.
 type HealthCheckConfig struct {
-	Interval flaeg.Duration `description:"Default periodicity of enabled health checks"`
+	Interval flaeg.Duration `description:"Default periodicity of enabled health checks" export:"true"`
 }
 
 // RespondingTimeouts contains timeout configurations for incoming requests to the Traefik instance.
 type RespondingTimeouts struct {
-	ReadTimeout  flaeg.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set"`
-	WriteTimeout flaeg.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set"`
-	IdleTimeout  flaeg.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. Defaults to 180 seconds. If zero, no timeout is set"`
+	ReadTimeout  flaeg.Duration `description:"ReadTimeout is the maximum duration for reading the entire request, including the body. If zero, no timeout is set" export:"true"`
+	WriteTimeout flaeg.Duration `description:"WriteTimeout is the maximum duration before timing out writes of the response. If zero, no timeout is set" export:"true"`
+	IdleTimeout  flaeg.Duration `description:"IdleTimeout is the maximum amount duration an idle (keep-alive) connection will remain idle before closing itself. Defaults to 180 seconds. If zero, no timeout is set" export:"true"`
 }
 
 // ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
 type ForwardingTimeouts struct {
-	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists"`
-	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists"`
+	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
+	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
+}
+
+// LifeCycle contains configurations relevant to the lifecycle (such as the
+// shutdown phase) of Traefik.
+type LifeCycle struct {
+	RequestAcceptGraceTimeout flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
+	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
 }

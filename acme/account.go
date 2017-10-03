@@ -178,7 +178,7 @@ func (dc *DomainsCertificates) renewCertificates(acmeCert *Certificate, domain D
 			return nil
 		}
 	}
-	return fmt.Errorf("Certificate to renew not found for domain %s", domain.Main)
+	return fmt.Errorf("certificate to renew not found for domain %s", domain.Main)
 }
 
 func (dc *DomainsCertificates) addCertificateForDomains(acmeCert *Certificate, domain Domain) (*DomainsCertificate, error) {

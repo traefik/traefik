@@ -15,7 +15,7 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	kv.Provider `mapstructure:",squash"`
+	kv.Provider `mapstructure:",squash" export:"true"`
 }
 
 // Provide allows the zk provider to Provide configurations to traefik

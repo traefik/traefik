@@ -27,6 +27,7 @@ import (
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
+	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -127,7 +128,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 // behaviour and backwards compatibility issues.
 func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) *http.Transport {
 	dialer := &net.Dialer{
-		Timeout:   30 * time.Second,
+		Timeout:   configuration.DefaultDialTimeout,
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
 	}
@@ -202,7 +203,7 @@ func (server *Server) Stop() {
 		wg.Add(1)
 		go func(serverEntryPointName string, serverEntryPoint *serverEntryPoint) {
 			defer wg.Done()
-			graceTimeOut := time.Duration(server.globalConfiguration.GraceTimeOut)
+			graceTimeOut := time.Duration(server.globalConfiguration.LifeCycle.GraceTimeOut)
 			ctx, cancel := context.WithTimeout(context.Background(), graceTimeOut)
 			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
 			if err := serverEntryPoint.httpServer.Shutdown(ctx); err != nil {
@@ -219,7 +220,7 @@ func (server *Server) Stop() {
 
 // Close destroys the server
 func (server *Server) Close() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.LifeCycle.GraceTimeOut))
 	go func(ctx context.Context) {
 		<-ctx.Done()
 		if ctx.Err() == context.Canceled {
@@ -283,7 +284,7 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 		}
 	}
 	if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
-		authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
+		authMiddleware, err := mauth.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
@@ -675,14 +676,13 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 		writeTimeout = time.Duration(globalConfig.RespondingTimeouts.WriteTimeout)
 	}
 
-	// When RespondingTimeouts.IdleTimout is configured, always use that setting
-	if globalConfig.RespondingTimeouts != nil {
-		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
-	} else if globalConfig.IdleTimeout != 0 {
-		// Backwards compatibility for deprecated IdleTimeout
+	// Prefer legacy idle timeout parameter for backwards compatibility reasons
+	if globalConfig.IdleTimeout > 0 {
 		idleTimeout = time.Duration(globalConfig.IdleTimeout)
+		log.Warn("top-level idle timeout configuration has been deprecated -- please use responding timeouts")
+	} else if globalConfig.RespondingTimeouts != nil {
+		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
 	} else {
-		// Default value if neither the deprecated IdleTimeout nor the new RespondingTimeouts.IdleTimout are configured
 		idleTimeout = time.Duration(configuration.DefaultIdleTimeout)
 	}
 
@@ -945,7 +945,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						auth.Basic = &types.Basic{
 							Users: users,
 						}
-						authMiddleware, err := middlewares.NewAuthenticator(auth)
+						authMiddleware, err := mauth.NewAuthenticator(auth)
 						if err != nil {
 							log.Errorf("Error creating Auth: %s", err)
 						} else {
@@ -1122,6 +1122,7 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 
 	return &healthcheck.Options{
 		Path:     hc.Path,
+		Port:     hc.Port,
 		Interval: interval,
 		LB:       lb,
 	}

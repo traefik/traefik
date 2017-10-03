@@ -40,7 +40,8 @@ func (s *EurekaSuite) TestSimpleConfiguration(c *check.C) {
 
 	file := s.adaptFile(c, "fixtures/eureka/simple.toml", struct{ EurekaHost string }{s.eurekaIP})
 	defer os.Remove(file)
-	cmd, _ := s.cmdTraefik(withConfigFile(file))
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()

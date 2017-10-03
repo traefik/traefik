@@ -52,6 +52,13 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		recorder.responseWriter = rw
 
 		retry.next.ServeHTTP(recorder, r.WithContext(newCtx))
+
+		// It's a stream request and the body gets already sent to the client.
+		// Therefore we should not send the response a second time.
+		if recorder.streamingResponseStarted {
+			break
+		}
+
 		if !netErrorOccurred || attempts >= retry.attempts {
 			utils.CopyHeaders(rw.Header(), recorder.Header())
 			rw.WriteHeader(recorder.Code)
@@ -114,8 +121,9 @@ type retryResponseRecorder struct {
 	HeaderMap http.Header   // the HTTP response headers
 	Body      *bytes.Buffer // if non-nil, the bytes.Buffer to append written data to
 
-	responseWriter http.ResponseWriter
-	err            error
+	responseWriter           http.ResponseWriter
+	err                      error
+	streamingResponseStarted bool
 }
 
 // newRetryResponseRecorder returns an initialized retryResponseRecorder.
@@ -164,6 +172,12 @@ func (rw *retryResponseRecorder) CloseNotify() <-chan bool {
 
 // Flush sends any buffered data to the client.
 func (rw *retryResponseRecorder) Flush() {
+	if !rw.streamingResponseStarted {
+		utils.CopyHeaders(rw.responseWriter.Header(), rw.Header())
+		rw.responseWriter.WriteHeader(rw.Code)
+		rw.streamingResponseStarted = true
+	}
+
 	_, err := rw.responseWriter.Write(rw.Body.Bytes())
 	if err != nil {
 		log.Errorf("Error writing response in retryResponseRecorder: %s", err)

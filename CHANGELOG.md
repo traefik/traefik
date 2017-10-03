@@ -1,5 +1,52 @@
 # Change Log
 
+## [v1.4.0-rc4](https://github.com/containous/traefik/tree/v1.4.0-rc4) (2017-10-02)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc3...v1.4.0-rc4)
+
+**Bug fixes:**
+- **[cluster,kv]** Be certain to clear our marshalled representation before reloading it ([#2165](https://github.com/containous/traefik/pull/2165) by [gozer](https://github.com/gozer))
+- **[consulcatalog]** Consul catalog failed to remove service  ([#2157](https://github.com/containous/traefik/pull/2157) by [Juliens](https://github.com/Juliens))
+- **[consulcatalog]** Flaky tests and refresh problem in consul catalog ([#2148](https://github.com/containous/traefik/pull/2148) by [Juliens](https://github.com/Juliens))
+- **[ecs]** Handle empty ECS Clusters properly ([#2170](https://github.com/containous/traefik/pull/2170) by [jeffreykoetsier](https://github.com/jeffreykoetsier))
+- **[middleware]** Fix SSE subscriptions when retries are enabled ([#2145](https://github.com/containous/traefik/pull/2145) by [marco-jantke](https://github.com/marco-jantke))
+- **[websocket]** Forward upgrade error from backend ([#2187](https://github.com/containous/traefik/pull/2187) by [Juliens](https://github.com/Juliens))
+- `bug` command. ([#2178](https://github.com/containous/traefik/pull/2178) by [ldez](https://github.com/ldez))
+- Fix deprecated IdleTimeout config ([#2143](https://github.com/containous/traefik/pull/2143) by [marco-jantke](https://github.com/marco-jantke))
+
+**Documentation:**
+- **[docker]** Updating Docker output and curl for sticky sessions ([#2150](https://github.com/containous/traefik/pull/2150) by [jtyr](https://github.com/jtyr))
+- **[middleware]** Improve compression documentation ([#2184](https://github.com/containous/traefik/pull/2184) by [errm](https://github.com/errm))
+- Fix grammar mistake in the kv-config docs ([#2197](https://github.com/containous/traefik/pull/2197) by [chr4](https://github.com/chr4))
+- Update gRPC example ([#2191](https://github.com/containous/traefik/pull/2191) by [jsenon](https://github.com/jsenon))
+
+**Misc:**
+- **[websocket]** Add tests for urlencoded part in url ([#2199](https://github.com/containous/traefik/pull/2199) by [Juliens](https://github.com/Juliens))
+
+## [v1.4.0-rc3](https://github.com/containous/traefik/tree/v1.4.0-rc3) (2017-09-18)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc2...v1.4.0-rc3)
+
+**Enhancements:**
+- **[acme]** Display Traefik logs in integration tests ([#2114](https://github.com/containous/traefik/pull/2114) by [ldez](https://github.com/ldez))
+- **[authentication]** Manage Headers for the Authentication forwarding. ([#2132](https://github.com/containous/traefik/pull/2132) by [ldez](https://github.com/ldez))
+- Fail fast in IT and fix some flaky tests ([#2126](https://github.com/containous/traefik/pull/2126) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[consul]** Fix Consul Catalog refresh ([#2089](https://github.com/containous/traefik/pull/2089) by [Juliens](https://github.com/Juliens))
+- **[healthcheck]** Fix healthcheck port ([#2131](https://github.com/containous/traefik/pull/2131) by [fredix](https://github.com/fredix))
+- **[logs,middleware]** Enable loss less rotation of log files ([#2062](https://github.com/containous/traefik/pull/2062) by [marco-jantke](https://github.com/marco-jantke))
+- **[rancher]** Add stack name to backend name generation to fix rancher metadata backend ([#2107](https://github.com/containous/traefik/pull/2107) by [SantoDE](https://github.com/SantoDE))
+- **[rancher]** Rancher host IP address ([#2101](https://github.com/containous/traefik/pull/2101) by [matq007](https://github.com/matq007))
+- Fixes entry points configuration. ([#2120](https://github.com/containous/traefik/pull/2120) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme,provider]** Enhance documentation readability. ([#2095](https://github.com/containous/traefik/pull/2095) by [ldez](https://github.com/ldez))
+- **[api]** Add examples of proxying ping ([#2102](https://github.com/containous/traefik/pull/2102) by [deitch](https://github.com/deitch))
+- **[k8s]** Add guide section on production advice, esp. CPU. ([#2113](https://github.com/containous/traefik/pull/2113) by [timoreimann](https://github.com/timoreimann))
+- **[metrics]** Enhance web backend documentation ([#2122](https://github.com/containous/traefik/pull/2122) by [ldez](https://github.com/ldez))
+- Add forward auth documentation. ([#2110](https://github.com/containous/traefik/pull/2110) by [ldez](https://github.com/ldez))
+- User guide gRPC ([#2108](https://github.com/containous/traefik/pull/2108) by [Juliens](https://github.com/Juliens))
+- Document custom error page restrictions. ([#2104](https://github.com/containous/traefik/pull/2104) by [timoreimann](https://github.com/timoreimann))
+
 ## [v1.4.0-rc2](https://github.com/containous/traefik/tree/v1.4.0-rc2) (2017-09-08)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc1...v1.4.0-rc2)
 

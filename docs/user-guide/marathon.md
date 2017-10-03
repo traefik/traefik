@@ -2,7 +2,7 @@
 
 This guide explains how to integrate Marathon and operate the cluster in a reliable way from Traefik's standpoint.
 
-# Host detection
+## Host detection
 
 Marathon offers multiple ways to run (Docker-containerized) applications, the most popular ones being
 
@@ -14,9 +14,11 @@ Traefik tries to detect the configured mode and route traffic to the right IP ad
 
 Given the complexity of the subject, it is possible that the heuristic fails.
 Apart from filing an issue and waiting for the feature request / bug report to get addressed, one workaround for such situations is to customize the Marathon template file to the individual needs.
-(Note that this does _not_ require rebuilding Traefik but only to point the `filename` configuration parameter to a customized version of the `marathon.tmpl` file on Traefik startup.)
 
-# Port detection
+!!! note
+    This does _not_ require rebuilding Traefik but only to point the `filename` configuration parameter to a customized version of the `marathon.tmpl` file on Traefik startup.
+
+## Port detection
 
 Traefik also attempts to determine the right port (which is a [non-trivial matter in Marathon](https://mesosphere.github.io/marathon/docs/ports.html)).
 Following is the order by which Traefik tries to identify the port (the first one that yields a positive result will be used):
@@ -26,9 +28,9 @@ Following is the order by which Traefik tries to identify the port (the first on
 1. The port from the application's `portDefinitions` field (possibly indexed through the `traefik.portIndex` label, otherwise the first one).
 1. The port from the application's `ipAddressPerTask` field (possibly indexed through the `traefik.portIndex` label, otherwise the first one).
 
-# Achieving high availability
+## Achieving high availability
 
-## Scenarios
+### Scenarios
 
 There are three scenarios where the availability of a Marathon application could be impaired along with the risk of losing or failing requests:
 
@@ -36,27 +38,29 @@ There are three scenarios where the availability of a Marathon application could
 - During the shutdown phase when Traefik still routes requests to the backend while the backend is already terminating.
 - During a failure of the application when Traefik has not yet identified the backend as being erroneous.
 
-The first two scenarios are common with every rolling upgrade of an application (i.e., a new version release or configuration update).
+The first two scenarios are common with every rolling upgrade of an application (i.e. a new version release or configuration update).
 
 The following sub-sections describe how to resolve or mitigate each scenario.
 
-### Startup
+#### Startup
 
 It is possible to define [readiness checks](https://mesosphere.github.io/marathon/docs/readiness-checks.html) (available since Marathon version 1.1) per application and have Marathon take these into account during the startup phase.
-The idea is that each application provides an HTTP endpoint that Marathon queries periodically during an ongoing deployment in order to mark the associated readiness check result as successful if and only if the endpoint returns a response within the configured HTTP code range.
+
+The idea is that each application provides an HTTP endpoint that Marathon queries periodically during an ongoing deployment in order to mark the associated readiness check result as successful if and only if the endpoint returns a response within the configured HTTP code range.  
 As long as the check keeps failing, Marathon will not proceed with the deployment (within the configured upgrade strategy bounds).
 
 Beginning with version 1.4, Traefik respects readiness check results if the Traefik option is set and checks are configured on the applications accordingly.
-Note that due to the way readiness check results are currently exposed by the Marathon API, ready tasks may be taken into rotation with a small delay.
-It is on the order of one readiness check timeout interval (as configured on the application specifiation) and guarantees that non-ready tasks do not receive traffic prematurely.
+
+!!! note
+    Due to the way readiness check results are currently exposed by the Marathon API, ready tasks may be taken into rotation with a small delay.
+    It is on the order of one readiness check timeout interval (as configured on the application specifiation) and guarantees that non-ready tasks do not receive traffic prematurely.
 
 If readiness checks are not possible, a current mitigation strategy is to enable [retries](/configuration/commons#retry-configuration) and make sure that a sufficient number of healthy application tasks exist so that one retry will likely hit one of those.
 Apart from its probabilistic nature, the workaround comes at the price of increased latency.
 
-### Shutdown
+#### Shutdown
 
-It is possible to install a [termination handler](https://mesosphere.github.io/marathon/docs/health-checks.html) (available since Marathon version 1.3) with each application whose responsibility it is to delay the shutdown process long enough until the backend has been taken out of load-balancing rotation with reasonable confidence
-(i.e., Traefik has received an update from the Marathon event bus, recomputes the available Marathon backends, and applies the new configuration).
+It is possible to install a [termination handler](https://mesosphere.github.io/marathon/docs/health-checks.html) (available since Marathon version 1.3) with each application whose responsibility it is to delay the shutdown process long enough until the backend has been taken out of load-balancing rotation with reasonable confidence (i.e., Traefik has received an update from the Marathon event bus, recomputes the available Marathon backends, and applies the new configuration).  
 Specifically, each termination handler should install a signal handler listening for a SIGTERM signal and implement the following steps on signal reception:
 
 1. Disable Keep-Alive HTTP connections.
@@ -70,12 +74,13 @@ Traefik already ignores Marathon tasks whose state does not match `TASK_RUNNING`
 How long HTTP requests should continue to be accepted in step 2 depends on how long Traefik needs to receive and process the Marathon configuration update.
 Under regular operational conditions, it should be on the order of seconds, with 10 seconds possibly being a good default value.
 
-Again, configuring Traefik to do retries (as discussed in the previous section) can serve as a decent workaround strategy.
+Again, configuring Traefik to do retries (as discussed in the previous section) can serve as a decent workaround strategy.  
 Paired with termination handlers, they would cover for those cases where either the termination sequence or Traefik cannot complete their part of the orchestration process in time.
 
-### Failure
+#### Failure
 
 A failing application always happens unexpectedly, and hence, it is very difficult or even impossible to rule out the adversal effects categorically.
+
 Failure reasons vary broadly and could stretch from unacceptable slowness, a task crash, or a network split.
 
 There are two mitigaton efforts:
@@ -85,19 +90,22 @@ There are two mitigaton efforts:
 
 The Marathon health check makes sure that applications once deemed dysfunctional are being rescheduled to different slaves.
 However, they might take a while to get triggered and the follow-up processes to complete.
+
 For that reason, the Treafik health check provides an additional check that responds more rapidly and does not require a configuration reload to happen.
 Additionally, it protects from cases that the Marathon health check may not be able to cover, such as a network split.
 
-## (Non-)Alternatives
+### (Non-)Alternatives
 
-There are a few alternatives of varying quality that are frequently asked for. The remaining section is going to explore them along with a benefit/cost trade-off.
+There are a few alternatives of varying quality that are frequently asked for.
 
-### Reusing Marathon health checks
+The remaining section is going to explore them along with a benefit/cost trade-off.
+
+#### Reusing Marathon health checks
 
 It may seem obvious to reuse the Marathon health checks as a signal to Traefik whether an application should be taken into load-balancing rotation or not.
 
 Apart from the increased latency a failing health check may have, a major problem with this is is that Marathon does not persist the health check results.
-Consequently, if a master re-election occurs in the Marathon clusters, all health check results will revert to the _unknown_ state, effectively causing all applications inside the cluster to become unavailable and leading to a complete cluster failure.
+Consequently, if a master re-election occurs in the Marathon clusters, all health check results will revert to the _unknown_ state, effectively causing all applications inside the cluster to become unavailable and leading to a complete cluster failure.  
 Re-elections do not only happen during regular maintenance work (often requiring rolling upgrades of the Marathon nodes) but also when the Marathon leader fails spontaneously.
 As such, there is no way to handle this situation deterministically.
 
@@ -106,11 +114,14 @@ Finally, Marathon health checks are not mandatory (the default is to use the tas
 Traefik used to use the health check results as a strict requirement but moved away from it as [users reported the dramatic consequences](https://github.com/containous/traefik/issues/653).
 If health check results are known to exist, however, they will be used to signal task availability.
 
-### Draining
+#### Draining
 
-Another common approach is to let a proxy drain backends that are supposed to shut down. That is, once a backend is supposed to shut down, Traefik would stop forwarding requests.
+Another common approach is to let a proxy drain backends that are supposed to shut down.
+That is, once a backend is supposed to shut down, Traefik would stop forwarding requests.
 
-On the plus side, this would not require any modifications to the application in question. However, implementing this fully within Traefik seems like a non-trivial undertaking.
+On the plus side, this would not require any modifications to the application in question.
+However, implementing this fully within Traefik seems like a non-trivial undertaking.
+
 Additionally, the approach is less flexible compared to a custom termination handler since only the latter allows for the implementation of custom termination sequences that go beyond simple request draining (e.g., persisting a snapshot state to disk prior to terminating).
 
 The feature is currently not implemented; a request for draining in general is at [issue 41](https://github.com/containous/traefik/issues/41).

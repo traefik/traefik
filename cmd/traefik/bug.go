@@ -2,20 +2,18 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os/exec"
-	"regexp"
 	"runtime"
 	"text/template"
 
 	"github.com/containous/flaeg"
-	"github.com/mvdan/xurls"
+	"github.com/containous/traefik/cmd/traefik/anonymize"
 )
 
-var (
-	bugtracker  = "https://github.com/containous/traefik/issues/new"
+const (
+	bugTracker  = "https://github.com/containous/traefik/issues/new"
 	bugTemplate = `<!--
 DO NOT FILE ISSUES FOR GENERAL SUPPORT QUESTIONS.
 
@@ -94,47 +92,64 @@ func newBugCmd(traefikConfiguration interface{}, traefikPointersConfiguration in
 		Description:           `Report an issue on Traefik bugtracker`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
-		Run: func() error {
-			var version bytes.Buffer
-			if err := getVersionPrint(&version); err != nil {
-				return err
-			}
-
-			tmpl, err := template.New("").Parse(bugTemplate)
-			if err != nil {
-				return err
-			}
-
-			configJSON, err := json.MarshalIndent(traefikConfiguration, "", " ")
-			if err != nil {
-				return err
-			}
-
-			v := struct {
-				Version       string
-				Configuration string
-			}{
-				Version:       version.String(),
-				Configuration: anonymize(string(configJSON)),
-			}
-
-			var bug bytes.Buffer
-			if err := tmpl.Execute(&bug, v); err != nil {
-				return err
-			}
-
-			body := bug.String()
-			URL := bugtracker + "?body=" + url.QueryEscape(body)
-			if err := openBrowser(URL); err != nil {
-				fmt.Printf("Please file a new issue at %s using this template:\n\n", bugtracker)
-				fmt.Print(body)
-			}
-
-			return nil
-		},
+		Run: runBugCmd(traefikConfiguration),
 		Metadata: map[string]string{
 			"parseAllSources": "true",
 		},
+	}
+}
+
+func runBugCmd(traefikConfiguration interface{}) func() error {
+	return func() error {
+
+		body, err := createBugReport(traefikConfiguration)
+		if err != nil {
+			return err
+		}
+
+		sendBugReport(body)
+
+		return nil
+	}
+}
+
+func createBugReport(traefikConfiguration interface{}) (string, error) {
+	var version bytes.Buffer
+	if err := getVersionPrint(&version); err != nil {
+		return "", err
+	}
+
+	tmpl, err := template.New("bug").Parse(bugTemplate)
+	if err != nil {
+		return "", err
+	}
+
+	config, err := anonymize.Do(&traefikConfiguration, true)
+	if err != nil {
+		return "", err
+	}
+
+	v := struct {
+		Version       string
+		Configuration string
+	}{
+		Version:       version.String(),
+		Configuration: config,
+	}
+
+	var bug bytes.Buffer
+	if err := tmpl.Execute(&bug, v); err != nil {
+		return "", err
+	}
+
+	return bug.String(), nil
+}
+
+func sendBugReport(body string) {
+	URL := bugTracker + "?body=" + url.QueryEscape(body)
+	if err := openBrowser(URL); err != nil {
+		fmt.Printf("Please file a new issue at %s using this template:\n\n", bugTracker)
+		fmt.Print(body)
 	}
 }
 
@@ -151,10 +166,4 @@ func openBrowser(URL string) error {
 		err = fmt.Errorf("unsupported platform")
 	}
 	return err
-}
-
-func anonymize(input string) string {
-	replace := "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx\""
-	mailExp := regexp.MustCompile(`\w[-._\w]*\w@\w[-._\w]*\w\.\w{2,3}"`)
-	return xurls.Relaxed.ReplaceAllString(mailExp.ReplaceAllString(input, replace), replace)
 }

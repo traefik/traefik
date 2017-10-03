@@ -88,7 +88,7 @@ func (checker *notChecker) Info() *CheckerInfo {
 }
 
 func (checker *notChecker) Check(params []interface{}, names []string) (result bool, error string) {
-	result, error = checker.sub.Check(params, names)
+	result, _ = checker.sub.Check(params, names)
 	result = !result
 	return
 }
@@ -212,7 +212,7 @@ type hasLenChecker struct {
 
 // The HasLen checker verifies that the obtained value has the
 // provided length. In many cases this is superior to using Equals
-// in conjuction with the len function because in case the check
+// in conjunction with the len function because in case the check
 // fails the value itself will be printed, instead of its length,
 // providing more details for figuring the problem.
 //
@@ -235,7 +235,10 @@ func (checker *hasLenChecker) Check(params []interface{}, names []string) (resul
 	default:
 		return false, "obtained value type has no length"
 	}
-	return value.Len() == n, ""
+	if value.Len() == n {
+		return true, ""
+	}
+	return false, fmt.Sprintf("obtained length = %d", value.Len())
 }
 
 // -----------------------------------------------------------------------

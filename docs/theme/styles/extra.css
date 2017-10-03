@@ -9,7 +9,12 @@
 .md-typeset__table td code {
     word-break: unset;
 }
+
 .md-typeset__table tr :nth-child(1) {
     word-wrap: break-word;
     max-width: 30em;
+}
+
+p {
+    text-align: justify;
 }

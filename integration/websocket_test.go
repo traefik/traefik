@@ -3,6 +3,7 @@ package integration
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -20,7 +21,7 @@ import (
 // WebsocketSuite
 type WebsocketSuite struct{ BaseSuite }
 
-func (suite *WebsocketSuite) TestBase(c *check.C) {
+func (s *WebsocketSuite) TestBase(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -41,14 +42,15 @@ func (suite *WebsocketSuite) TestBase(c *check.C) {
 		}
 	}))
 
-	file := suite.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
@@ -69,7 +71,7 @@ func (suite *WebsocketSuite) TestBase(c *check.C) {
 	c.Assert(string(msg), checker.Equals, "OK")
 }
 
-func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
+func (s *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -90,14 +92,15 @@ func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
 		}
 	}))
 
-	file := suite.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
@@ -117,7 +120,7 @@ func (suite *WebsocketSuite) TestWrongOrigin(c *check.C) {
 	c.Assert(err, checker.ErrorMatches, "bad status")
 }
 
-func (suite *WebsocketSuite) TestOrigin(c *check.C) {
+func (s *WebsocketSuite) TestOrigin(c *check.C) {
 	// use default options
 	var upgrader = gorillawebsocket.Upgrader{}
 
@@ -139,14 +142,15 @@ func (suite *WebsocketSuite) TestOrigin(c *check.C) {
 		}
 	}))
 
-	file := suite.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
@@ -176,7 +180,7 @@ func (suite *WebsocketSuite) TestOrigin(c *check.C) {
 
 }
 
-func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
+func (s *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
 		return true
 	}}
@@ -199,14 +203,15 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 		}
 	}))
 
-	file := suite.adaptFile(c, "fixtures/websocket/config.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
@@ -236,7 +241,7 @@ func (suite *WebsocketSuite) TestWrongOriginIgnoredByServer(c *check.C) {
 
 }
 
-func (suite *WebsocketSuite) TestSSLTermination(c *check.C) {
+func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -256,14 +261,15 @@ func (suite *WebsocketSuite) TestSSLTermination(c *check.C) {
 			}
 		}
 	}))
-	file := suite.adaptFile(c, "fixtures/websocket/config_https.toml", struct {
+	file := s.adaptFile(c, "fixtures/websocket/config_https.toml", struct {
 		WebsocketServer string
 	}{
 		WebsocketServer: srv.URL,
 	})
 
 	defer os.Remove(file)
-	cmd, _ := suite.cmdTraefik(withConfigFile(file), "--debug")
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
 
 	err := cmd.Start()
 	c.Assert(err, check.IsNil)
@@ -281,6 +287,151 @@ func (suite *WebsocketSuite) TestSSLTermination(c *check.C) {
 		RootCAs: roots,
 	}
 	conn, _, err := gorillawebsocket.DefaultDialer.Dial("wss://127.0.0.1:8000/ws", nil)
+	c.Assert(err, checker.IsNil)
+
+	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+	c.Assert(err, checker.IsNil)
+
+	_, msg, err := conn.ReadMessage()
+	c.Assert(err, checker.IsNil)
+	c.Assert(string(msg), checker.Equals, "OK")
+}
+
+func (s *WebsocketSuite) TestBasicAuth(c *check.C) {
+	var upgrader = gorillawebsocket.Upgrader{} // use default options
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+
+		user, password, _ := r.BasicAuth()
+		c.Assert(user, check.Equals, "traefiker")
+		c.Assert(password, check.Equals, "secret")
+
+		for {
+			mt, message, err := conn.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = conn.WriteMessage(mt, message)
+			if err != nil {
+				break
+			}
+		}
+	}))
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+		WebsocketServer string
+	}{
+		WebsocketServer: srv.URL,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
+	c.Assert(err, checker.IsNil)
+
+	config, err := websocket.NewConfig("ws://127.0.0.1:8000/ws", "ws://127.0.0.1:8000")
+	auth := "traefiker:secret"
+	config.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(auth)))
+
+	c.Assert(err, check.IsNil)
+
+	conn, err := net.DialTimeout("tcp", "127.0.0.1:8000", time.Second)
+	c.Assert(err, checker.IsNil)
+	client, err := websocket.NewClient(config, conn)
+	c.Assert(err, checker.IsNil)
+
+	n, err := client.Write([]byte("OK"))
+	c.Assert(err, checker.IsNil)
+	c.Assert(n, checker.Equals, 2)
+
+	msg := make([]byte, 2)
+	n, err = client.Read(msg)
+	c.Assert(err, checker.IsNil)
+	c.Assert(n, checker.Equals, 2)
+	c.Assert(string(msg), checker.Equals, "OK")
+}
+
+func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(401)
+	}))
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+		WebsocketServer string
+	}{
+		WebsocketServer: srv.URL,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
+	c.Assert(err, checker.IsNil)
+
+	_, resp, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
+	c.Assert(err, checker.NotNil)
+	c.Assert(resp.StatusCode, check.Equals, 401)
+
+}
+
+func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
+	var upgrader = gorillawebsocket.Upgrader{} // use default options
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c.Assert(r.URL.Path, check.Equals, "/ws/http%3A%2F%2Ftest")
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		for {
+			mt, message, err := conn.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = conn.WriteMessage(mt, message)
+			if err != nil {
+				break
+			}
+		}
+	}))
+
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+		WebsocketServer string
+	}{
+		WebsocketServer: srv.URL,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
+	c.Assert(err, checker.IsNil)
+
+	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws/http%3A%2F%2Ftest", nil)
 	c.Assert(err, checker.IsNil)
 
 	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))

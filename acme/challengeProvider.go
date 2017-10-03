@@ -43,7 +43,7 @@ func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate
 				}
 			}
 		}
-		return fmt.Errorf("Cannot find challenge cert for domain %s", domain)
+		return fmt.Errorf("cannot find challenge cert for domain %s", domain)
 	}
 	notify := func(err error, time time.Duration) {
 		log.Errorf("Error getting cert: %v, retrying in %s", err, time)

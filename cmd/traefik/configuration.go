@@ -12,6 +12,7 @@ import (
 	"github.com/containous/traefik/provider/dynamodb"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/etcd"
+	"github.com/containous/traefik/provider/eureka"
 	"github.com/containous/traefik/provider/file"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/marathon"
@@ -24,8 +25,8 @@ import (
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff
 type TraefikConfiguration struct {
-	configuration.GlobalConfiguration `mapstructure:",squash"`
-	ConfigFile                        string `short:"c" description:"Configuration file to use (TOML)."`
+	configuration.GlobalConfiguration `mapstructure:",squash" export:"true"`
+	ConfigFile                        string `short:"c" description:"Configuration file to use (TOML)." export:"true"`
 }
 
 // NewTraefikDefaultPointersConfiguration creates a TraefikConfiguration with pointers default values
@@ -148,30 +149,65 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDynamoDB.TableName = "traefik"
 	defaultDynamoDB.Watch = true
 
+	// default Eureka
+	var defaultEureka eureka.Provider
+	defaultEureka.Delay = "30s"
+
+	// default TraefikLog
+	defaultTraefikLog := types.TraefikLog{
+		Format:   "common",
+		FilePath: "",
+	}
+
 	// default AccessLog
 	defaultAccessLog := types.AccessLog{
 		Format:   accesslog.CommonFormat,
 		FilePath: "",
 	}
 
+	// default HealthCheckConfig
+	healthCheck := configuration.HealthCheckConfig{
+		Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
+	}
+
+	// default RespondingTimeouts
+	respondingTimeouts := configuration.RespondingTimeouts{
+		IdleTimeout: flaeg.Duration(configuration.DefaultIdleTimeout),
+	}
+
+	// default ForwardingTimeouts
+	forwardingTimeouts := configuration.ForwardingTimeouts{
+		DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
+	}
+
+	// default LifeCycle
+	defaultLifeycle := configuration.LifeCycle{
+		GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
+	}
+
 	defaultConfiguration := configuration.GlobalConfiguration{
-		Docker:        &defaultDocker,
-		File:          &defaultFile,
-		Web:           &defaultWeb,
-		Marathon:      &defaultMarathon,
-		Consul:        &defaultConsul,
-		ConsulCatalog: &defaultConsulCatalog,
-		Etcd:          &defaultEtcd,
-		Zookeeper:     &defaultZookeeper,
-		Boltdb:        &defaultBoltDb,
-		Kubernetes:    &defaultKubernetes,
-		Mesos:         &defaultMesos,
-		ECS:           &defaultECS,
-		Rancher:       &defaultRancher,
-		DynamoDB:      &defaultDynamoDB,
-		Retry:         &configuration.Retry{},
-		HealthCheck:   &configuration.HealthCheckConfig{},
-		AccessLog:     &defaultAccessLog,
+		Docker:             &defaultDocker,
+		File:               &defaultFile,
+		Web:                &defaultWeb,
+		Marathon:           &defaultMarathon,
+		Consul:             &defaultConsul,
+		ConsulCatalog:      &defaultConsulCatalog,
+		Etcd:               &defaultEtcd,
+		Zookeeper:          &defaultZookeeper,
+		Boltdb:             &defaultBoltDb,
+		Kubernetes:         &defaultKubernetes,
+		Mesos:              &defaultMesos,
+		ECS:                &defaultECS,
+		Rancher:            &defaultRancher,
+		Eureka:             &defaultEureka,
+		DynamoDB:           &defaultDynamoDB,
+		Retry:              &configuration.Retry{},
+		HealthCheck:        &healthCheck,
+		RespondingTimeouts: &respondingTimeouts,
+		ForwardingTimeouts: &forwardingTimeouts,
+		TraefikLog:         &defaultTraefikLog,
+		AccessLog:          &defaultAccessLog,
+		LifeCycle:          &defaultLifeycle,
 	}
 
 	return &TraefikConfiguration{
@@ -183,7 +219,6 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 func NewTraefikConfiguration() *TraefikConfiguration {
 	return &TraefikConfiguration{
 		GlobalConfiguration: configuration.GlobalConfiguration{
-			GraceTimeOut:              flaeg.Duration(10 * time.Second),
 			AccessLogsFile:            "",
 			TraefikLogsFile:           "",
 			LogLevel:                  "ERROR",
@@ -195,12 +230,6 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			IdleTimeout:               flaeg.Duration(0),
 			HealthCheck: &configuration.HealthCheckConfig{
 				Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
-			},
-			RespondingTimeouts: &configuration.RespondingTimeouts{
-				IdleTimeout: flaeg.Duration(configuration.DefaultIdleTimeout),
-			},
-			ForwardingTimeouts: &configuration.ForwardingTimeouts{
-				DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
 			},
 			CheckNewVersion: true,
 		},
