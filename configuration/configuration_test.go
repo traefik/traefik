@@ -200,7 +200,7 @@ func TestEntryPoints_Set(t *testing.T) {
 	}
 }
 
-func TestSetEffecticeConfigurationGraceTimeout(t *testing.T) {
+func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
 	tests := []struct {
 		desc                  string
 		legacyGraceTimeout    time.Duration
