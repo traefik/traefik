@@ -62,7 +62,7 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	c.Assert(lineCount, checker.GreaterOrEqualThan, 1)
 
 	// make sure that the access log file is at least created before we do assertions on it
-	err = try.Do(3*time.Second, func() error {
+	err = try.Do(1*time.Second, func() error {
 		_, err := os.Stat(traefikTestAccessLogFile)
 		return err
 	})
