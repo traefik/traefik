@@ -122,9 +122,8 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 
 func logAccessLogFile(c *check.C, fileName string) {
 	output, err := ioutil.ReadFile(fileName)
-	c.Assert(err, checker.IsNil, check.Commentf("error opening access log file %s: %s", fileName, err))
-	c.Logf("Contents of file %s", fileName)
-	c.Log(string(output))
+	c.Assert(err, checker.IsNil)
+	c.Logf("Contents of file %s\n%s", fileName, string(output))
 }
 
 func verifyEmptyErrorLog(c *check.C, name string) {
