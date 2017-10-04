@@ -15,6 +15,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -826,7 +827,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 					}
 
 					stickySession := config.Backends[frontend.Backend].LoadBalancer.Sticky
-					cookieName := "_TRAEFIK_BACKEND_" + frontend.Backend
+					cookieName := getCookieName(frontend.Backend)
 					var sticky *roundrobin.StickySession
 
 					if stickySession {
@@ -1207,4 +1208,29 @@ func (server *Server) buildRetryMiddleware(handler http.Handler, globalConfig co
 	log.Debugf("Creating retries max attempts %d", retryAttempts)
 
 	return middlewares.NewRetry(retryAttempts, handler, retryListeners)
+}
+
+// getCookieName returns a cookie name from the given backend, sanitizing
+// characters that do not satisfy the requirements of RFC 2616.
+func getCookieName(backend string) string {
+	const cookiePrefix = "_TRAEFIK_BACKEND_"
+	sanitizer := func(r rune) rune {
+		switch r {
+		case '!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '`', '|', '~':
+			return r
+		}
+
+		switch {
+		case r >= 'a' && r <= 'z':
+			fallthrough
+		case r >= 'A' && r <= 'Z':
+			fallthrough
+		case r >= '0' && r <= '9':
+			return r
+		default:
+			return '_'
+		}
+	}
+
+	return cookiePrefix + strings.Map(sanitizer, backend)
 }
