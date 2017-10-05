@@ -97,7 +97,7 @@ dist:
 
 run-dev:
 	go generate
-	go build
+	go build ./cmd/traefik
 	./traefik
 
 generate-webui: build-webui
