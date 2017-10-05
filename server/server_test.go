@@ -659,6 +659,13 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 	}
 }
 
+func TestGetCookieName(t *testing.T) {
+	want := "_TRAEFIK_BACKEND__my_BACKEND-v1.0~rc1"
+	if got := getCookieName("/my/BACKEND-v1.0~rc1"); got != want {
+		t.Errorf("got sticky cookie name %q, want %q", got, want)
+	}
+}
+
 func buildDynamicConfig(dynamicConfigBuilders ...func(*types.Configuration)) *types.Configuration {
 	config := &types.Configuration{
 		Frontends: make(map[string]*types.Frontend),
