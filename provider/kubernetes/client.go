@@ -20,7 +20,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-const resyncPeriod = 1 * time.Minute
+const resyncPeriod = 10 * time.Minute
 
 const (
 	kindIngresses = "ingresses"
