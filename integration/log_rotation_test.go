@@ -1,4 +1,3 @@
-// +build integration
 // +build !windows
 
 package integration
