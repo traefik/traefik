@@ -57,10 +57,19 @@ func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// Verify access.log.rotated output as expected
+	logAccessLogFile(c, traefikTestAccessLogFile+".rotated")
 	lineCount := verifyLogLines(c, traefikTestAccessLogFile+".rotated", 0, true)
 	c.Assert(lineCount, checker.GreaterOrEqualThan, 1)
 
+	// make sure that the access log file is at least created before we do assertions on it
+	err = try.Do(1*time.Second, func() error {
+		_, err := os.Stat(traefikTestAccessLogFile)
+		return err
+	})
+	c.Assert(err, checker.IsNil, check.Commentf("access log file was not created in time"))
+
 	// Verify access.log output as expected
+	logAccessLogFile(c, traefikTestAccessLogFile)
 	lineCount = verifyLogLines(c, traefikTestAccessLogFile, lineCount, true)
 	c.Assert(lineCount, checker.Equals, 3)
 
@@ -111,6 +120,12 @@ func (s *LogRotationSuite) TestTraefikLogRotation(c *check.C) {
 	c.Assert(lineCount, checker.GreaterOrEqualThan, 7)
 }
 
+func logAccessLogFile(c *check.C, fileName string) {
+	output, err := ioutil.ReadFile(fileName)
+	c.Assert(err, checker.IsNil)
+	c.Logf("Contents of file %s\n%s", fileName, string(output))
+}
+
 func verifyEmptyErrorLog(c *check.C, name string) {
 	err := try.Do(5*time.Second, func() error {
 		traefikLog, e2 := ioutil.ReadFile(name)
@@ -130,7 +145,6 @@ func verifyLogLines(c *check.C, fileName string, countInit int, accessLog bool) 
 	count := countInit
 	for rotatedLog.Scan() {
 		line := rotatedLog.Text()
-		c.Log(line)
 		if accessLog {
 			if len(line) > 0 {
 				CheckAccessLogFormat(c, line, count)
