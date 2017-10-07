@@ -46,6 +46,7 @@ type Provider struct {
 	EnablePassTLSCert      bool       `description:"Kubernetes enable Pass TLS Client Certs" export:"true"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces" export:"true"`
 	LabelSelector          string     `description:"Kubernetes api label selector to use" export:"true"`
+	IngressClass           string     `description:"Value of kubernetes.io/ingress.class annotation to watch for" export:"true"`
 	lastConfiguration      safe.Safe
 }
 
@@ -135,6 +136,15 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	return nil
 }
 
+func (p *Provider) shouldProcessIngress(ingressClass string) bool {
+	switch ingressClass {
+	case "", p.IngressClass:
+		return true
+	default:
+		return false
+	}
+}
+
 func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error) {
 	ingresses := k8sClient.GetIngresses()
 
@@ -147,7 +157,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		annotationIngressClass := getAnnotationName(i.Annotations, annotationKubernetesIngressClass)
 		ingressClass := i.Annotations[annotationIngressClass]
 
-		if !shouldProcessIngress(ingressClass) {
+		if !p.shouldProcessIngress(ingressClass) {
 			continue
 		}
 
@@ -449,10 +459,6 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 		return true
 	}
 	return false
-}
-
-func shouldProcessIngress(ingressClass string) bool {
-	return ingressClass == "" || ingressClass == "traefik"
 }
 
 func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
