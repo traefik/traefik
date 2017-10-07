@@ -137,8 +137,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 }
 
 func (p *Provider) shouldProcessIngress(ingressClass string) bool {
+	ingressClassRequired := "traefik"
+	if p.IngressClass != "" {
+		ingressClassRequired = p.IngressClass
+	}
+
 	switch ingressClass {
-	case "", p.IngressClass:
+	case "", ingressClassRequired:
 		return true
 	default:
 		return false
