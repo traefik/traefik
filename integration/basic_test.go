@@ -16,6 +16,12 @@ import (
 // SimpleSuite
 type SimpleSuite struct{ BaseSuite }
 
+func (s *SimpleSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
+}
+
 func (s *SimpleSuite) TestInvalidConfigShouldFail(c *check.C) {
 	cmd, output := s.cmdTraefik(withConfigFile("fixtures/invalid_configuration.toml"))
 

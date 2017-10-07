@@ -3,6 +3,7 @@ package integration
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -17,6 +18,8 @@ import (
 	compose "github.com/libkermit/compose/check"
 	checker "github.com/vdemeester/shakers"
 )
+
+var integration = flag.Bool("integration", false, "run integration tests")
 
 func Test(t *testing.T) {
 	check.TestingT(t)
@@ -50,6 +53,12 @@ var traefikBinary = "../dist/traefik"
 
 type BaseSuite struct {
 	composeProject *compose.Project
+}
+
+func (s *BaseSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
 }
 
 func (s *BaseSuite) TearDownSuite(c *check.C) {

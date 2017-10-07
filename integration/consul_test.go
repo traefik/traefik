@@ -25,6 +25,12 @@ type ConsulSuite struct {
 	kv store.Store
 }
 
+func (s *ConsulSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
+}
+
 func (s *ConsulSuite) setupConsul(c *check.C) {
 	s.createComposeProject(c, "consul")
 	s.composeProject.Start(c)

@@ -21,6 +21,12 @@ import (
 // WebsocketSuite
 type WebsocketSuite struct{ BaseSuite }
 
+func (s *WebsocketSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
+}
+
 func (s *WebsocketSuite) TestBase(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{} // use default options
 

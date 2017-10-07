@@ -18,6 +18,12 @@ import (
 // Log rotation integration test suite
 type LogRotationSuite struct{ BaseSuite }
 
+func (s *LogRotationSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
+}
+
 func (s *LogRotationSuite) TestAccessLogRotation(c *check.C) {
 	// Start Traefik
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/access_log_config.toml"))

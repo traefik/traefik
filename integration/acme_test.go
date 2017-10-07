@@ -35,6 +35,10 @@ const (
 )
 
 func (s *AcmeSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
+
 	s.createComposeProject(c, "boulder")
 	s.composeProject.Start(c)
 

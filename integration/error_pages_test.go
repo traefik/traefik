@@ -18,6 +18,10 @@ type ErrorPagesSuite struct {
 }
 
 func (s *ErrorPagesSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
+
 	s.createComposeProject(c, "error_pages")
 	s.composeProject.Start(c)
 

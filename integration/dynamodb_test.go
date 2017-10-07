@@ -36,6 +36,10 @@ type DynamoDBFrontendItem struct {
 }
 
 func (s *DynamoDBSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
+
 	s.createComposeProject(c, "dynamodb")
 	s.composeProject.Start(c)
 	dynamoURL := "http://" + s.composeProject.Container(c, "dynamo").NetworkSettings.IPAddress + ":8000"

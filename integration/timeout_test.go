@@ -13,6 +13,10 @@ import (
 type TimeoutSuite struct{ BaseSuite }
 
 func (s *TimeoutSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
+
 	s.createComposeProject(c, "timeout")
 	s.composeProject.Start(c)
 }

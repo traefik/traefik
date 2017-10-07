@@ -19,6 +19,9 @@ type ConstraintSuite struct {
 }
 
 func (s *ConstraintSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
 
 	s.createComposeProject(c, "constraints")
 	s.composeProject.Start(c)

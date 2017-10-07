@@ -25,6 +25,10 @@ type GRPCSuite struct{ BaseSuite }
 type myserver struct{}
 
 func (s *GRPCSuite) SetUpSuite(c *check.C) {
+	if !*integration {
+		c.Skip("skipping integration tests")
+	}
+
 	var err error
 	LocalhostCert, err = ioutil.ReadFile("./resources/tls/local.cert")
 	c.Assert(err, check.IsNil)
