@@ -15,12 +15,13 @@ on your machine, as it is the quickest way to get a local Kubernetes cluster set
 
 ### Role Based Access Control configuration (Kubernetes 1.6+ only)
 
-Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control of Kubernetes resources and api.
+Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control of Kubernetes resources and API.
 
-If your cluster is configured with RBAC, you may need to authorize Træfik to use the Kubernetes API using ClusterRole and ClusterRoleBinding resources:
+If your cluster is configured with RBAC, you will need to authorize Træfik to use the Kubernetes API. There are two ways to set up the proper permission: Via namespace-specific RoleBindings or a single, global ClusterRoleBinding.
 
-!!! note
-    your cluster may have suitable ClusterRoles already setup, but the following should work everywhere
+RoleBindings per namespace enable to restrict granted permissions to the very namespaces only that Træfik is watching over, thereby following the least-privileges principle. This is the preferred approach if Træfik is not supposed to watch all namespaces, and the set of namespaces does not change dynamically. Otherwise, a single ClusterRoleBinding must be employed.
+
+For the sake of simplicity, this guide will use a ClusterRoleBinding:
 
 ```yaml
 ---
@@ -68,6 +69,8 @@ subjects:
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-rbac.yaml
 ```
+
+For namespaced restrictions, one RoleBinding is required per watched namespace along with a corresponding configuration of Træfik's `kubernetes.namespaces` parameter.
 
 ## Deploy Træfik using a Deployment or DaemonSet
 
