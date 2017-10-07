@@ -618,12 +618,7 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *configur
 
 func (server *Server) startServer(serverEntryPoint *serverEntryPoint, globalConfiguration configuration.GlobalConfiguration) {
 	log.Infof("Starting server on %s", serverEntryPoint.httpServer.Addr)
-	var err error
-	if serverEntryPoint.httpServer.TLSConfig != nil {
-		err = serverEntryPoint.httpServer.ServeTLS(serverEntryPoint.listener, "", "")
-	} else {
-		err = serverEntryPoint.httpServer.Serve(serverEntryPoint.listener)
-	}
+	err := serverEntryPoint.httpServer.Serve(serverEntryPoint.listener)
 	if err != nil {
 		log.Error("Error creating server: ", err)
 	}
@@ -650,6 +645,10 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	if err != nil {
 		log.Error("Error opening listener ", err)
 		return nil, nil, err
+	}
+
+	if tlsConfig != nil {
+		listener = tls.NewListener(listener, tlsConfig)
 	}
 
 	if entryPoint.ProxyProtocol {
