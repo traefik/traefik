@@ -1,0 +1,87 @@
+<div class="container">
+  <div class="content">
+    <div class="columns is-multiline">
+      <div class="column is-12">
+        
+        <div class="tabs" *ngIf="keys?.length">
+          <div class="tab" *ngFor="let provider of keys" [class.is-active]="tab === provider">
+            {{ provider }}
+          </div>
+        </div>
+
+        <div *ngIf="keys?.length">
+          <div class="columns" *ngFor="let provider of keys">
+            <div class="column is-6">
+              <h2 class="subtitle">Frontends</h2>
+              <div class="message" *ngFor="let p of providers[provider]?.frontends; let i = index;">
+                <div class="message-header">
+                  <h2>
+                    <img src="/icons/globe.svg" class="icon">
+                    {{ p.id }}
+                  </h2>
+                </div>
+                <div class="message-body">
+                  <div class="columns list-title">
+                    <div class="column is-6">
+                      <span>Route</span>
+                    </div>
+                    <div class="column is-6">
+                      <span>Route Rule</span>
+                    </div>
+                  </div>
+                  <div class="list-item" *ngFor="let route of p.routes; let ri = index;">
+                    <div class="columns">
+                      <div class="column is-6">
+                        <span>{{ route.title }}</span>
+                      </div>
+                      <div class="column is-6">
+                        <span class="label">{{ route.rule }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="column is-6">
+              <h2 class="subtitle">Backends</h2>
+              <div class="message" *ngFor="let p of providers[provider]?.backends; let i = index;">
+                <div class="message-header">
+                  <h2>
+                    <img src="/icons/server.svg" class="icon">
+                    {{ p.id }}
+                  </h2>
+                </div>
+                <div class="message-body">
+                  <div class="columns list-title">
+                    <div class="column is-5">
+                      <span>Server</span>
+                    </div>
+                    <div class="column is-5">
+                      <span>URL</span>
+                    </div>
+                    <div class="column is-2">
+                      <span>Weight</span>
+                    </div>
+                  </div>
+                  <div class="list-item" *ngFor="let server of p.servers; let ri = index;">
+                    <div class="columns">
+                      <div class="column is-5">
+                        <span>{{ server.title }}</span>
+                      </div>
+                      <div class="column is-5">
+                        <span class="label">{{ server.url }}</span>
+                      </div>
+                      <div class="column is-2">
+                        <span>{{ server.weight }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
