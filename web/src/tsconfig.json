@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "module": "es2015",
+    "moduleResolution": "node",
+    "target": "es5",
+    "noImplicitAny": false,
+    "sourceMap": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "lib": [
+      "es2016",
+      "dom"
+    ],
+    "outDir": "lib",
+    "typeRoots": [
+      "../node_modules/@types"
+    ]
+  },
+  "exclude": [
+    "./main.aot.ts"
+  ],
+  "angularCompilerOptions": {
+    "genDir": "ngfactory",
+    "entryModule": "./app.module#AppModule"
+  },
+  "awesomeTypescriptLoaderOptions": {
+    "silent": true
+  }
+}
