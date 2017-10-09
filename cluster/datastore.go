@@ -199,6 +199,10 @@ func (d *Datastore) get() *Metadata {
 func (d *Datastore) Load() (Object, error) {
 	d.localLock.Lock()
 	defer d.localLock.Unlock()
+
+	// clear Object first, as mapstructure's decoder doesn't have ZeroFields set to true for merging purposes
+	d.meta.Object = d.meta.Object[:0]
+
 	err := d.kv.LoadConfig(d.meta)
 	if err != nil {
 		return nil, err

@@ -20,7 +20,7 @@ We will see the steps to set it up with an easy example.
 
 ### docker-compose file for Consul
 
-The Træfik global configuration will be getted from a [Consul](https://consul.io) store.
+The Træfik global configuration will be retrieved from a [Consul](https://consul.io) store.
 
 First we have to launch Consul in a container.
 

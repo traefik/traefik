@@ -29,17 +29,17 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
 
 	Domain           string `description:"Default domain used"`
-	ExposedByDefault bool   `description:"Expose containers by default"`
-	RefreshSeconds   int    `description:"Polling interval (in seconds)"`
+	ExposedByDefault bool   `description:"Expose containers by default" export:"true"`
+	RefreshSeconds   int    `description:"Polling interval (in seconds)" export:"true"`
 
 	// Provider lookup parameters
 	Clusters             Clusters `description:"ECS Clusters name"`
 	Cluster              string   `description:"deprecated - ECS Cluster name"` // deprecated
-	AutoDiscoverClusters bool     `description:"Auto discover cluster"`
-	Region               string   `description:"The AWS region to use for requests"`
+	AutoDiscoverClusters bool     `description:"Auto discover cluster" export:"true"`
+	Region               string   `description:"The AWS region to use for requests" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
 	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests"`
 }
@@ -214,7 +214,6 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 // Find all running Provider tasks in a cluster, also collect the task definitions (for docker labels)
 // and the EC2 instance data
 func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsInstance, error) {
-	var taskArns []*string
 	var instances []ecsInstance
 	var clustersArn []*string
 	var clusters Clusters
@@ -255,6 +254,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			DesiredStatus: aws.String(ecs.DesiredStatusRunning),
 		})
 
+		var taskArns []*string
+
 		for ; req != nil; req = req.NextPage() {
 			if err := wrapAws(ctx, req); err != nil {
 				return nil, err
@@ -263,12 +264,10 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			taskArns = append(taskArns, req.Data.(*ecs.ListTasksOutput).TaskArns...)
 		}
 
-		// Early return: if we can't list tasks we have nothing to
-		// describe below - likely empty cluster/permissions are bad.  This
-		// stops the AWS API from returning a 401 when you DescribeTasks
-		// with no input.
+		// Skip to the next cluster if there are no tasks found on
+		// this cluster.
 		if len(taskArns) == 0 {
-			return []ecsInstance{}, nil
+			continue
 		}
 
 		chunkedTaskArns := p.chunkedTaskArns(taskArns)

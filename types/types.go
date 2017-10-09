@@ -192,13 +192,13 @@ type ConfigMessage struct {
 	Configuration *Configuration
 }
 
-// Constraint hold a parsed constraint expresssion
+// Constraint hold a parsed constraint expression
 type Constraint struct {
-	Key string
+	Key string `export:"true"`
 	// MustMatch is true if operator is "==" or false if operator is "!="
-	MustMatch bool
+	MustMatch bool `export:"true"`
 	// TODO: support regex
-	Regex string
+	Regex string `export:"true"`
 }
 
 // NewConstraint receive a string and return a *Constraint, after checking syntax and parsing the constraint expression
@@ -213,14 +213,14 @@ func NewConstraint(exp string) (*Constraint, error) {
 		sep = "!="
 		constraint.MustMatch = false
 	} else {
-		return nil, errors.New("Constraint expression missing valid operator: '==' or '!='")
+		return nil, errors.New("constraint expression missing valid operator: '==' or '!='")
 	}
 
 	kv := strings.SplitN(exp, sep, 2)
 	if len(kv) == 2 {
 		// At the moment, it only supports tags
 		if kv[0] != "tag" {
-			return nil, errors.New("Constraint must be tag-based. Syntax: tag==us-*")
+			return nil, errors.New("constraint must be tag-based. Syntax: tag==us-*")
 		}
 
 		constraint.Key = kv[0]
@@ -228,7 +228,7 @@ func NewConstraint(exp string) (*Constraint, error) {
 		return constraint, nil
 	}
 
-	return nil, errors.New("Incorrect constraint expression: " + exp)
+	return nil, fmt.Errorf("incorrect constraint expression: %s", exp)
 }
 
 func (c *Constraint) String() string {
@@ -273,7 +273,7 @@ func (c *Constraint) MatchConstraintWithAtLeastOneTag(tags []string) bool {
 func (cs *Constraints) Set(str string) error {
 	exps := strings.Split(str, ",")
 	if len(exps) == 0 {
-		return errors.New("Bad Constraint format: " + str)
+		return fmt.Errorf("bad Constraint format: %s", str)
 	}
 	for _, exp := range exps {
 		constraint, err := NewConstraint(exp)
@@ -307,21 +307,22 @@ func (cs *Constraints) Type() string {
 // Store holds KV store cluster config
 type Store struct {
 	store.Store
-	Prefix string // like this "prefix" (without the /)
+	// like this "prefix" (without the /)
+	Prefix string `export:"true"`
 }
 
 // Cluster holds cluster config
 type Cluster struct {
-	Node  string `description:"Node name"`
-	Store *Store
+	Node  string `description:"Node name" export:"true"`
+	Store *Store `export:"true"`
 }
 
 // Auth holds authentication configuration (BASIC, DIGEST, users)
 type Auth struct {
-	Basic       *Basic
-	Digest      *Digest
-	Forward     *Forward
-	HeaderField string
+	Basic       *Basic   `export:"true"`
+	Digest      *Digest  `export:"true"`
+	Forward     *Forward `export:"true"`
+	HeaderField string   `export:"true"`
 }
 
 // Users authentication users
@@ -342,8 +343,8 @@ type Digest struct {
 // Forward authentication
 type Forward struct {
 	Address            string     `description:"Authentication server address"`
-	TLS                *ClientTLS `description:"Enable TLS support"`
-	TrustForwardHeader bool       `description:"Trust X-Forwarded-* headers"`
+	TLS                *ClientTLS `description:"Enable TLS support" export:"true"`
+	TrustForwardHeader bool       `description:"Trust X-Forwarded-* headers" export:"true"`
 }
 
 // CanonicalDomain returns a lower case domain with trim space
@@ -353,31 +354,31 @@ func CanonicalDomain(domain string) string {
 
 // Statistics provides options for monitoring request and response stats
 type Statistics struct {
-	RecentErrors int `description:"Number of recent errors logged"`
+	RecentErrors int `description:"Number of recent errors logged" export:"true"`
 }
 
 // Metrics provides options to expose and send Traefik metrics to different third party monitoring systems
 type Metrics struct {
-	Prometheus *Prometheus `description:"Prometheus metrics exporter type"`
-	Datadog    *Datadog    `description:"DataDog metrics exporter type"`
-	StatsD     *Statsd     `description:"StatsD metrics exporter type"`
+	Prometheus *Prometheus `description:"Prometheus metrics exporter type" export:"true"`
+	Datadog    *Datadog    `description:"DataDog metrics exporter type" export:"true"`
+	StatsD     *Statsd     `description:"StatsD metrics exporter type" export:"true"`
 }
 
 // Prometheus can contain specific configuration used by the Prometheus Metrics exporter
 type Prometheus struct {
-	Buckets Buckets `description:"Buckets for latency metrics"`
+	Buckets Buckets `description:"Buckets for latency metrics" export:"true"`
 }
 
 // Datadog contains address and metrics pushing interval configuration
 type Datadog struct {
 	Address      string `description:"DataDog's address"`
-	PushInterval string `description:"DataDog push interval"`
+	PushInterval string `description:"DataDog push interval" export:"true"`
 }
 
 // Statsd contains address and metrics pushing interval configuration
 type Statsd struct {
 	Address      string `description:"StatsD address"`
-	PushInterval string `description:"DataDog push interval"`
+	PushInterval string `description:"DataDog push interval" export:"true"`
 }
 
 // Buckets holds Prometheus Buckets
@@ -420,8 +421,8 @@ type TraefikLog struct {
 
 // AccessLog holds the configuration settings for the access logger (middlewares/accesslog).
 type AccessLog struct {
-	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty"`
-	Format   string `json:"format,omitempty" description:"Access log format: json | common"`
+	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
+	Format   string `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
 }
 
 // ClientTLS holds TLS specific configurations as client
