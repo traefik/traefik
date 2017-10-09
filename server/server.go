@@ -15,7 +15,6 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +30,7 @@ import (
 	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/server/cookie"
 	"github.com/containous/traefik/types"
 	"github.com/streamrail/concurrent-map"
 	thoas_stats "github.com/thoas/stats"
@@ -335,11 +335,11 @@ func (server *Server) listenProviders(stop chan bool) {
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
 				providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
 				if time.Now().After(lastReceivedConfigurationValue.Add(providersThrottleDuration)) {
-					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
+					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
 					// last config received more than n s ago
 					server.configurationValidatedChan <- configMsg
 				} else {
-					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
+					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
 					safe.Go(func() {
 						<-time.After(providersThrottleDuration)
 						lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
@@ -826,11 +826,10 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
-					stickySession := config.Backends[frontend.Backend].LoadBalancer.Sticky
-					cookieName := getCookieName(frontend.Backend)
 					var sticky *roundrobin.StickySession
-
-					if stickySession {
+					var cookieName string
+					if stickiness := config.Backends[frontend.Backend].LoadBalancer.Stickiness; stickiness != nil {
+						cookieName = cookie.GetName(stickiness.CookieName, frontend.Backend)
 						sticky = roundrobin.NewStickySession(cookieName)
 					}
 
@@ -839,7 +838,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 					case types.Drr:
 						log.Debugf("Creating load-balancer drr")
 						rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
-						if stickySession {
+						if sticky != nil {
 							log.Debugf("Sticky session with cookie %v", cookieName)
 							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
 						}
@@ -856,7 +855,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
 					case types.Wrr:
 						log.Debugf("Creating load-balancer wrr")
-						if stickySession {
+						if sticky != nil {
 							log.Debugf("Sticky session with cookie %v", cookieName)
 							if server.accessLoggerMiddleware != nil {
 								rr, _ = roundrobin.New(saveFrontend, roundrobin.EnableStickySession(sticky))
@@ -1150,16 +1149,31 @@ func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
 
 func (*Server) configureBackends(backends map[string]*types.Backend) {
 	for backendName, backend := range backends {
+		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
+			log.Warn("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
+		}
+
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
-		if err != nil {
+		if err == nil {
+			if backend.LoadBalancer != nil && backend.LoadBalancer.Stickiness == nil && backend.LoadBalancer.Sticky {
+				backend.LoadBalancer.Stickiness = &types.Stickiness{}
+			}
+		} else {
 			log.Debugf("Validation of load balancer method for backend %s failed: %s. Using default method wrr.", backendName, err)
-			var sticky bool
+
+			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
-				sticky = backend.LoadBalancer.Sticky
+				if backend.LoadBalancer.Stickiness != nil {
+					stickiness = backend.LoadBalancer.Stickiness
+				} else if backend.LoadBalancer.Sticky {
+					if backend.LoadBalancer.Stickiness == nil {
+						stickiness = &types.Stickiness{}
+					}
+				}
 			}
 			backend.LoadBalancer = &types.LoadBalancer{
-				Method: "wrr",
-				Sticky: sticky,
+				Method:     "wrr",
+				Stickiness: stickiness,
 			}
 		}
 	}
@@ -1208,29 +1222,4 @@ func (server *Server) buildRetryMiddleware(handler http.Handler, globalConfig co
 	log.Debugf("Creating retries max attempts %d", retryAttempts)
 
 	return middlewares.NewRetry(retryAttempts, handler, retryListeners)
-}
-
-// getCookieName returns a cookie name from the given backend, sanitizing
-// characters that do not satisfy the requirements of RFC 2616.
-func getCookieName(backend string) string {
-	const cookiePrefix = "_TRAEFIK_BACKEND_"
-	sanitizer := func(r rune) rune {
-		switch r {
-		case '!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '`', '|', '~':
-			return r
-		}
-
-		switch {
-		case r >= 'a' && r <= 'z':
-			fallthrough
-		case r >= 'A' && r <= 'Z':
-			fallthrough
-		case r >= '0' && r <= '9':
-			return r
-		default:
-			return '_'
-		}
-	}
-
-	return cookiePrefix + strings.Map(sanitizer, backend)
 }

@@ -385,16 +385,32 @@ func (p *CatalogProvider) getBackendName(node *api.ServiceEntry, index int) stri
 	return serviceName
 }
 
-func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {
-	return p.getTag(p.getPrefixedName(name), tags, defaultValue)
-}
-
 func (p *CatalogProvider) getBasicAuth(tags []string) []string {
 	list := p.getAttribute("frontend.auth.basic", tags, "")
 	if list != "" {
 		return strings.Split(list, ",")
 	}
 	return []string{}
+}
+
+func (p *CatalogProvider) hasStickinessLabel(tags []string) bool {
+	stickiness := p.getTag(types.LabelBackendLoadbalancerStickiness, tags, "")
+
+	sticky := p.getTag(types.LabelBackendLoadbalancerSticky, tags, "")
+	if len(sticky) != 0 {
+		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+	}
+
+	return (len(stickiness) != 0 && strings.EqualFold(strings.TrimSpace(stickiness), "true")) ||
+		(len(sticky) != 0 && strings.EqualFold(strings.TrimSpace(sticky), "true"))
+}
+
+func (p *CatalogProvider) getStickinessCookieName(tags []string) string {
+	return p.getTag(types.LabelBackendLoadbalancerStickinessCookieName, tags, "")
+}
+
+func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {
+	return p.getTag(p.getPrefixedName(name), tags, defaultValue)
 }
 
 func (p *CatalogProvider) hasTag(name string, tags []string) bool {
@@ -439,16 +455,18 @@ func (p *CatalogProvider) getConstraintTags(tags []string) []string {
 
 func (p *CatalogProvider) buildConfig(catalog []catalogUpdate) *types.Configuration {
 	var FuncMap = template.FuncMap{
-		"getBackend":           p.getBackend,
-		"getFrontendRule":      p.getFrontendRule,
-		"getBackendName":       p.getBackendName,
-		"getBackendAddress":    p.getBackendAddress,
-		"getAttribute":         p.getAttribute,
-		"getBasicAuth":         p.getBasicAuth,
-		"getTag":               p.getTag,
-		"hasTag":               p.hasTag,
-		"getEntryPoints":       p.getEntryPoints,
-		"hasMaxconnAttributes": p.hasMaxconnAttributes,
+		"getBackend":              p.getBackend,
+		"getFrontendRule":         p.getFrontendRule,
+		"getBackendName":          p.getBackendName,
+		"getBackendAddress":       p.getBackendAddress,
+		"getBasicAuth":            p.getBasicAuth,
+		"hasStickinessLabel":      p.hasStickinessLabel,
+		"getStickinessCookieName": p.getStickinessCookieName,
+		"getAttribute":            p.getAttribute,
+		"getTag":                  p.getTag,
+		"hasTag":                  p.hasTag,
+		"getEntryPoints":          p.getEntryPoints,
+		"hasMaxconnAttributes":    p.hasMaxconnAttributes,
 	}
 
 	allNodes := []*api.ServiceEntry{}

@@ -855,21 +855,36 @@ func TestMarathonGetProtocol(t *testing.T) {
 	}
 }
 
-func TestMarathonGetSticky(t *testing.T) {
+func TestMarathonHasStickinessLabel(t *testing.T) {
 	cases := []struct {
 		desc        string
 		application marathon.Application
-		expected    string
+		expected    bool
 	}{
 		{
 			desc:        "label missing",
 			application: application(),
-			expected:    "false",
+			expected:    false,
 		},
 		{
-			desc:        "label existing",
+			desc:        "label existing and value equals true (deprecated)",
 			application: application(label(types.LabelBackendLoadbalancerSticky, "true")),
-			expected:    "true",
+			expected:    true,
+		},
+		{
+			desc:        "label existing and value equals false (deprecated)",
+			application: application(label(types.LabelBackendLoadbalancerSticky, "false")),
+			expected:    false,
+		},
+		{
+			desc:        "label existing and value equals true",
+			application: application(label(types.LabelBackendLoadbalancerStickiness, "true")),
+			expected:    true,
+		},
+		{
+			desc:        "label existing and value equals false ",
+			application: application(label(types.LabelBackendLoadbalancerStickiness, "true")),
+			expected:    true,
 		},
 	}
 
@@ -878,7 +893,7 @@ func TestMarathonGetSticky(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			actual := provider.getSticky(c.application)
+			actual := provider.hasStickinessLabel(c.application)
 			if actual != c.expected {
 				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}

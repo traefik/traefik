@@ -162,12 +162,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		})
 
 		operation := func() error {
-			aws, err := p.createClient()
+			awsClient, err := p.createClient()
 			if err != nil {
 				return handleCanceled(ctx, err)
 			}
 
-			configuration, err := p.loadDynamoConfig(aws)
+			configuration, err := p.loadDynamoConfig(awsClient)
 			if err != nil {
 				return handleCanceled(ctx, err)
 			}
@@ -184,7 +184,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					log.Debug("Watching Provider...")
 					select {
 					case <-reload.C:
-						configuration, err := p.loadDynamoConfig(aws)
+						configuration, err := p.loadDynamoConfig(awsClient)
 						if err != nil {
 							return handleCanceled(ctx, err)
 						}
