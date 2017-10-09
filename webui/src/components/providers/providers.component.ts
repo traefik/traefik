@@ -19,8 +19,6 @@ export class ProvidersComponent implements OnInit, OnDestroy {
       this.providers = data;
       this.keys = Object.keys(this.providers);
       this.tab = this.keys[0];
-
-      console.log(this.providers);
     });
   }
 

@@ -1,1 +1,53 @@
+<div class="container">
+  <div class="content">
+    <div class="columns is-multiline">
+      <div class="column is-12">
+        <div class="columns">
+          
+          <div class="column is-12">
+            <div class="content-item">
+              <div class="widget-item">
+                <div class="columns is-multiline">
+                  <div class="column is-12">
+                    <h1>Proxy Status</h1>
+                  </div>
+                  <div class="column is-3">
+                    <img src="/icons/icon-stats-uptime.svg">
+                    <span>Uptime: <strong>{{ uptime }}</strong></span>
+                    <span>Since: <strong>{{ uptimeSince }}</strong></span>
+                  </div>
+                  <div class="column is-3">
+                    <img src="/icons/icon-stats-process.svg">
+                    <span class="mtop12">Process PID: <strong>{{ pid }}</strong></span>
+                  </div>
+                  <div class="column is-3">
+                    <img src="/icons/icon-stats-transfer.svg">
+                    <span>Response Time (average): <strong>{{ averageResponseTime }}</strong></span>
+                    <span>Response TIme (total): <strong>{{ totalResponseTime }}</strong></span>
+                  </div>
+                  <div class="column is-3">
+                    <img src="/icons/icon-stats-count.svg">
+                    <span>Status Code Count (total): <strong>{{ totalCodeCount }}</span>
+                    <span>Status Code Count (current): <strong>{{ codeCount }}</strong></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
+        </div>
+      </div>
+
+      <div class="column is-12">
+        <div class="columns">
+          <div class="column is-6">
+            <div class="content-item">
+              <line-chart [value]="chartValue"></line-chart>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

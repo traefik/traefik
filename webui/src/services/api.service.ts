@@ -12,16 +12,23 @@ export interface ProviderType {
 
 @Injectable()
 export class ApiService {
-  constructor(private http: Http) { }
+  headers: Headers;
 
-  fetchProviders(): Observable<any> {
-    const headers: Headers = new Headers({ 
+  constructor(private http: Http) { 
+    this.headers = new Headers({ 
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Allow-Methods': 'GET',
       'Access-Control-Allow-Origin': '*'
     });
+  }
 
-    return this.http.get(`/api/providers`, { headers: headers })
+  fetchHealthStatus(): Observable<any> {
+    return this.http.get(`/health`, { headers: this.headers })
+      .map(res => res.json());
+  }
+
+  fetchProviders(): Observable<any> {
+    return this.http.get(`/api/providers`, { headers: this.headers })
       .map(res => res.json())
       .map(this.parseProviders);
   }

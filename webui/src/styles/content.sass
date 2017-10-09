@@ -1,6 +1,5 @@
 .content
-  background: $white
-  border: 1px solid $border
+  background: transparent
   border-radius: 4px
   margin-top: 20px
   padding: 20px
@@ -78,3 +77,31 @@
     display: block
     float: left
     margin-right: 10px
+
+.content-item
+  background: $white
+  border-radius: 4px
+  border: 1px solid $border-secondary
+
+  .widget-item
+    min-height: 80px
+    padding: 20px
+
+    h1
+      color: $text-dark
+      font-size: 18px
+      font-weight: $weight-light
+
+    img
+      width: 40px
+      heught: 40px
+      display: block
+      float: left
+      margin-right: 10px
+
+    span
+      font-size: 13px
+      display: block
+
+      &.mtop12
+        margin-top: 12px

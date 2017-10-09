@@ -6,6 +6,7 @@
     "Micaël Mbagira <micael.mbagira@icloud.com>",
     "Jan Kuri <jan@bleenco.com>"
   ],
+  "license": "MIT",
   "scripts": {
     "clean": "rimraf dist",
     "prestart": "npm run clean",
@@ -31,6 +32,7 @@
     "@angular/platform-server": "^4.4.4",
     "@angular/router": "^4.4.4",
     "@ngtools/webpack": "^1.7.2",
+    "@types/d3": "^4.10.1",
     "@types/jasmine": "^2.6.0",
     "add-asset-html-webpack-plugin": "^2.1.2",
     "angular2-template-loader": "^0.6.2",
@@ -41,6 +43,8 @@
     "copy-webpack-plugin": "^4.1.1",
     "core-js": "^2.5.1",
     "css-loader": "^0.28.7",
+    "d3": "^4.11.0",
+    "date-fns": "^1.28.5",
     "extract-text-webpack-plugin": "^3.0.1",
     "file-loader": "^1.1.5",
     "html-loader": "^0.5.1",
