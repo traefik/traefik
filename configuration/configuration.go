@@ -231,7 +231,15 @@ func (ep *EntryPoints) Set(value string) error {
 	}
 
 	compress := toBool(result, "Compress")
-	proxyProtocol := toBool(result, "ProxyProtocol")
+
+	var proxyProtocol *ProxyProtocol
+	if len(result["ProxyProtocol"]) > 0 {
+		trustedIPs := []string{}
+		trustedIPs = strings.Split(result["ProxyProtocol"], ",")
+		proxyProtocol = &ProxyProtocol{
+			TrustedIPs: trustedIPs,
+		}
+	}
 
 	(*ep)[result["Name"]] = &EntryPoint{
 		Address:              result["Address"],
@@ -293,8 +301,8 @@ type EntryPoint struct {
 	Redirect             *Redirect   `export:"true"`
 	Auth                 *types.Auth `export:"true"`
 	WhitelistSourceRange []string
-	Compress             bool `export:"true"`
-	ProxyProtocol        bool `export:"true"`
+	Compress             bool           `export:"true"`
+	ProxyProtocol        *ProxyProtocol `export:"true"`
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
@@ -442,4 +450,9 @@ type RespondingTimeouts struct {
 type ForwardingTimeouts struct {
 	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
 	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
+}
+
+// ProxyProtocol contains Proxy-Protocol configuration
+type ProxyProtocol struct {
+	TrustedIPs []string
 }

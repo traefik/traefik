@@ -142,7 +142,7 @@ func TestEntryPoints_Set(t *testing.T) {
 	}{
 		{
 			name:                   "all parameters",
-			expression:             "Name:foo Address:bar TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol:true",
+			expression:             "Name:foo Address:bar TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol:192.168.0.1",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: "bar",
@@ -151,8 +151,10 @@ func TestEntryPoints_Set(t *testing.T) {
 					Regex:       "RedirectRegex",
 					Replacement: "RedirectReplacement",
 				},
-				Compress:             true,
-				ProxyProtocol:        true,
+				Compress: true,
+				ProxyProtocol: &ProxyProtocol{
+					TrustedIPs: []string{"192.168.0.1"},
+				},
 				WhitelistSourceRange: []string{"Range"},
 				TLS: &TLS{
 					ClientCAFiles: []string{"car"},
