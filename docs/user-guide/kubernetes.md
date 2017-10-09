@@ -590,7 +590,7 @@ kind: Ingress
 metadata:
   name: wildcard-cheeses
   annotations:
-    traefik.frontend.priority: 1
+    traefik.frontend.priority: "1"
 spec:
   rules:
   - host: *.minikube
@@ -605,7 +605,7 @@ kind: Ingress
 metadata:
   name: specific-cheeses
   annotations:
-    traefik.frontend.priority: 2
+    traefik.frontend.priority: "2"
 spec:
   rules:
   - host: specific.minikube
@@ -617,6 +617,7 @@ spec:
           servicePort: http
 ```
 
+Note that priority values must be quoted to avoid them being interpreted as numbers (which are illegal for annotations).
 
 ## Forwarding to ExternalNames
 

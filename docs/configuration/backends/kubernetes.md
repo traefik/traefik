@@ -86,7 +86,7 @@ Annotations can be used on containers to override default behaviour for the whol
 
 - `traefik.frontend.rule.type: PathPrefixStrip`  
     Override the default frontend rule type. Default: `PathPrefix`.
-- `traefik.frontend.priority: 3`  
+- `traefik.frontend.priority: "3"`
     Override the default frontend rule priority.
 
 Annotations can be used on the Kubernetes service to override default behaviour:
