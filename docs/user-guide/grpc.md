@@ -3,7 +3,7 @@
 This section explains how to use Traefik as reverse proxy for gRPC application with self-signed certificates.
 
 !!! warning
-    As gRPC needs HTTP2, we need valid HTTPS certificates on both gRPC Server and Træfik.
+    As gRPC needs HTTP2, we need HTTPS certificates on both gRPC Server and Træfik.
 
 <p align="center">
 <img src="/img/grpc.svg" alt="gRPC architecture" title="gRPC architecture" />
@@ -76,9 +76,12 @@ RootCAs = [ "./backend.cert" ]
     rule = "Host:frontend.local"
 ```
 
+!!! warning
+    With some backends, the server URLs use the IP, so you may need to configure `InsecureSkipVerify` instead of the `RootCAS` to activate HTTPS without hostname verification.
+
 ## Conclusion
 
-We don't need specific configuration to use gRPC in Træfik, we just need to be careful that all the exchanges (between client and Træfik, and between Træfik and backend) are valid HTTPS communications (without `InsecureSkipVerify` enabled) because gRPC use HTTP2.
+We don't need specific configuration to use gRPC in Træfik, we just need to be careful that all the exchanges (between client and Træfik, and between Træfik and backend) are HTTPS communications because gRPC uses HTTP2.
 
 ## A gRPC example in go
 
