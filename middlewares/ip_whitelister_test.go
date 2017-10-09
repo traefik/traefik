@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"strings"
 
 	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
@@ -80,7 +81,7 @@ func TestNewIPWhitelister(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			whitelister, err := NewIPWhitelister(test.whitelistStrings)
+			whitelister, err := NewIPWhitelister(test.whitelistStrings, false)
 			if test.errMessage != "" {
 				require.EqualError(t, err, test.errMessage)
 			} else {
@@ -270,17 +271,24 @@ func TestIPWhitelisterHandle(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			whitelister, err := NewIPWhitelister(test.whitelistStrings)
-
+			whitelisterNoHeaderCheck, err := NewIPWhitelister(test.whitelistStrings, false)
 			require.NoError(t, err)
-			require.NotNil(t, whitelister)
+			require.NotNil(t, whitelisterNoHeaderCheck)
+
+			whitelisterHeaderCheck, err := NewIPWhitelister(test.whitelistStrings, true)
+						require.NoError(t, err)
+						require.NotNil(t, whitelisterHeaderCheck)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintln(w, "traefik")
 			})
-			n := negroni.New(whitelister)
+			n := negroni.New(whitelisterNoHeaderCheck)
 			n.UseHandler(handler)
 
+			n2 := negroni.New(whitelisterHeaderCheck)
+			n2.UseHandler(handler)
+
+			// assert whitelisted IPs in remoteAddr pass.
 			for _, testIP := range test.passIPs {
 				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
 
@@ -292,6 +300,7 @@ func TestIPWhitelisterHandle(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "traefik")
 			}
 
+			// assert non-whitelisted IPs in remoteAddr fail.
 			for _, testIP := range test.rejectIPs {
 				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
 
@@ -301,6 +310,54 @@ func TestIPWhitelisterHandle(t *testing.T) {
 
 				assert.Equal(t, http.StatusForbidden, recorder.Code, testIP+" should not have passed "+test.desc)
 				assert.NotContains(t, recorder.Body.String(), "traefik")
+			}
+
+			// assert valid IPs in X-Forwarded-For, pass when whitelistCheckHeaders = true (n2).
+			for _, testIP := range test.passIPs {
+				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
+				req.RemoteAddr = "254.254.254.254:2342"
+				req.Header.Set("X-Forwarded-For", strings.Trim(testIP, "[]"))
+				recorder := httptest.NewRecorder()
+				n2.ServeHTTP(recorder, req)
+
+				assert.Equal(t, http.StatusOK, recorder.Code, testIP+" should have passed "+test.desc)
+				assert.Contains(t, recorder.Body.String(), "traefik")
+			}
+
+			 // assert valid IPs in X-Forwarded-For, fail when whitelistCheckHeaders = false (n).
+			for _, testIP := range test.passIPs {
+				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
+				req.RemoteAddr = "254.254.254.254:2342"
+				req.Header.Set("X-Forwarded-For", strings.Trim(testIP, "[]"))
+				recorder := httptest.NewRecorder()
+				n.ServeHTTP(recorder, req)
+
+				assert.Equal(t, http.StatusForbidden, recorder.Code, testIP+" should not have passed "+test.desc)
+				assert.NotContains(t, recorder.Body.String(), "traefik")
+			}
+
+			// assert invalid IPs in X-Forwarded-For, fail when whitelistCheckHeaders = true (n2).
+			for _, testIP := range test.rejectIPs {
+				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
+				req.RemoteAddr = "254.254.254.254:2342"
+				req.Header.Set("X-Forwarded-For", strings.Trim(testIP, "[]"))
+				recorder := httptest.NewRecorder()
+				n2.ServeHTTP(recorder, req)
+
+				assert.Equal(t, http.StatusForbidden, recorder.Code, testIP+" should not have passed "+test.desc)
+				assert.NotContains(t, recorder.Body.String(), "traefik")
+			}
+
+			// assert valid IPs in X-Real-Ip, pass when whitelistCheckHeaders = true (n2).
+			for _, testIP := range test.passIPs {
+				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
+				req.RemoteAddr = "254.254.254.254:2342"
+				req.Header.Set("X-Real-Ip", strings.Trim(testIP, "[]"))
+				recorder := httptest.NewRecorder()
+				n2.ServeHTTP(recorder, req)
+
+				assert.Equal(t, http.StatusOK, recorder.Code, testIP+" should have passed "+test.desc)
+				assert.Contains(t, recorder.Body.String(), "traefik")
 			}
 		})
 	}
