@@ -18,25 +18,32 @@ func TestReplacePathRegex(t *testing.T) {
 		expectedPath string
 	}{
 		{
-			desc:         "^/whoami $> /who-am-i",
-			path:         "/whoami/and/whoami",
-			replacement:  "/who-am-i",
-			regex:        `^/whoami`,
-			expectedPath: "/who-am-i/and/whoami",
+			desc:         `^/whoami/(.*) /who-am-i/$1`,
+			path:         `/whoami/and/whoami`,
+			replacement:  `/who-am-i/$1`,
+			regex:        `^/whoami/(.*)`,
+			expectedPath: `/who-am-i/and/whoami`,
 		},
 		{
-			desc:         "/whoami $> /who-am-i",
-			path:         "/whoami/and/whoami",
-			replacement:  "/who-am-i",
+			desc:         `/whoami /who-am-i`,
+			path:         `/whoami/and/whoami`,
+			replacement:  `/who-am-i`,
 			regex:        `/whoami`,
-			expectedPath: "/who-am-i/and/who-am-i",
+			expectedPath: `/who-am-i/and/who-am-i`,
 		},
 		{
-			desc:         "{scope} $> internal",
-			path:         "/resources/{scope}",
-			replacement:  "internal",
-			regex:        `{scope}`,
-			expectedPath: "/resources/internal",
+			desc:         `^/api/v2/(.*) /api/$1`,
+			path:         `/api/v2/users/192`,
+			replacement:  `/api/$1`,
+			regex:        `^/api/v2/(.*)`,
+			expectedPath: `/api/users/192`,
+		},
+		{
+			desc:         `^(?i)/downloads/([^/]+)/([^/]+)$ /downloads/$1-$2`,
+			path:         `/downloads/src/source.go`,
+			replacement:  `/downloads/$1-$2`,
+			regex:        `^(?i)/downloads/([^/]+)/([^/]+)$`,
+			expectedPath: `/downloads/src-source.go`,
 		},
 	}
 
@@ -53,13 +60,13 @@ func TestReplacePathRegex(t *testing.T) {
 				}),
 			}
 
-			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
+			req := testhelpers.MustNewRequest(http.MethodGet, `http://localhost`+test.path, nil)
 
 			handler.ServeHTTP(nil, req)
 
-			assert.Equal(t, expectedPath, test.expectedPath, "Unexpected path.")
-			assert.Equal(t, test.path, actualHeader, "Unexpected '%s' header.", ReplacedPathHeader)
-			assert.Equal(t, expectedPath, requestURI, "Unexpected request URI.")
+			assert.Equal(t, expectedPath, test.expectedPath, `Unexpected path.`)
+			assert.Equal(t, test.path, actualHeader, `Unexpected '%s' header.`, ReplacedPathHeader)
+			assert.Equal(t, expectedPath, requestURI, `Unexpected request URI.`)
 		})
 	}
 }

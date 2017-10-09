@@ -23,7 +23,7 @@ func NewReplacePathRegexHandler(regex string, replacement string, handler http.H
 }
 
 func (s *ReplacePathRegex) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if s.Regexp != nil && len(s.Repl) > 0 {
+	if s.Regexp != nil && len(s.Repl) > 0 && s.Regexp.MatchString(r.URL.Path) {
 		r.Header.Add(ReplacedPathHeader, r.URL.Path)
 		r.URL.Path = s.Regexp.ReplaceAllString(r.URL.Path, s.Repl)
 		r.RequestURI = r.URL.RequestURI()
