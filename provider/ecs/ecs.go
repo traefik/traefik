@@ -480,22 +480,21 @@ func (p *Provider) getBasicAuth(i ecsInstance) []string {
 
 func getFirstInstanceLabel(instances []ecsInstance, labelName string) string {
 	if len(instances) > 0 {
-		label := instances[0].label(labelName)
-		return label
+		return instances[0].label(labelName)
 	}
 	return ""
 }
 
 func (p *Provider) hasStickinessLabel(instances []ecsInstance) bool {
-	stickiness := getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerStickiness)
+	stickinessLabel := getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerStickiness)
 
-	sticky := getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerSticky)
-	if len(sticky) != 0 {
+	stickyLabel := getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerSticky)
+	if len(stickyLabel) > 0 {
 		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
-
-	return (len(stickiness) != 0 && strings.EqualFold(strings.TrimSpace(stickiness), "true")) ||
-		(len(sticky) != 0 && strings.EqualFold(strings.TrimSpace(sticky), "true"))
+	stickiness := len(stickinessLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickinessLabel), "true")
+	sticky := len(stickyLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickyLabel), "true")
+	return stickiness || sticky
 }
 
 func (p *Provider) getStickinessCookieName(instances []ecsInstance) string {

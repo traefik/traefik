@@ -648,7 +648,7 @@ func (p *Provider) hasStickinessLabel(container dockerData) bool {
 	_, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
 
 	label, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
-	if len(label) != 0 {
+	if len(label) > 0 {
 		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 

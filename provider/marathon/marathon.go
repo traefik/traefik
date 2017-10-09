@@ -433,7 +433,7 @@ func (p *Provider) hasStickinessLabel(application marathon.Application) bool {
 	_, okStickiness := p.getAppLabel(application, types.LabelBackendLoadbalancerStickiness)
 
 	label, okSticky := p.getAppLabel(application, types.LabelBackendLoadbalancerSticky)
-	if len(label) != 0 {
+	if len(label) > 0 {
 		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 

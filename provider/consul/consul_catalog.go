@@ -394,15 +394,16 @@ func (p *CatalogProvider) getBasicAuth(tags []string) []string {
 }
 
 func (p *CatalogProvider) hasStickinessLabel(tags []string) bool {
-	stickiness := p.getTag(types.LabelBackendLoadbalancerStickiness, tags, "")
+	stickinessTag := p.getTag(types.LabelBackendLoadbalancerStickiness, tags, "")
 
-	sticky := p.getTag(types.LabelBackendLoadbalancerSticky, tags, "")
-	if len(sticky) != 0 {
+	stickyTag := p.getTag(types.LabelBackendLoadbalancerSticky, tags, "")
+	if len(stickyTag) > 0 {
 		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 
-	return (len(stickiness) != 0 && strings.EqualFold(strings.TrimSpace(stickiness), "true")) ||
-		(len(sticky) != 0 && strings.EqualFold(strings.TrimSpace(sticky), "true"))
+	stickiness := len(stickinessTag) > 0 && strings.EqualFold(strings.TrimSpace(stickinessTag), "true")
+	sticky := len(stickyTag) > 0 && strings.EqualFold(strings.TrimSpace(stickyTag), "true")
+	return stickiness || sticky
 }
 
 func (p *CatalogProvider) getStickinessCookieName(tags []string) string {
