@@ -289,13 +289,13 @@ func (ep *EntryPoints) Set(value string) error {
 	proxyProtocol := toBool(result, "ProxyProtocol")
 
 	(*ep)[result["Name"]] = &EntryPoint{
-		Address:              result["Address"],
-		TLS:                  configTLS,
-		Redirect:             redirect,
-		Compress:             compress,
-		WhitelistSourceRange: whiteListSourceRange,
+		Address:               result["Address"],
+		TLS:                   configTLS,
+		Redirect:              redirect,
+		Compress:              compress,
+		WhitelistSourceRange:  whiteListSourceRange,
 		WhitelistCheckHeaders: whiteListCheckHeaders,
-		ProxyProtocol:        proxyProtocol,
+		ProxyProtocol:         proxyProtocol,
 	}
 
 	return nil
@@ -343,15 +343,15 @@ func (ep *EntryPoints) Type() string {
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
-	Network              string
-	Address              string
-	TLS                  *TLS        `export:"true"`
-	Redirect             *Redirect   `export:"true"`
-	Auth                 *types.Auth `export:"true"`
-	WhitelistSourceRange []string
+	Network               string
+	Address               string
+	TLS                   *TLS        `export:"true"`
+	Redirect              *Redirect   `export:"true"`
+	Auth                  *types.Auth `export:"true"`
+	WhitelistSourceRange  []string
 	WhitelistCheckHeaders bool
-	Compress             bool `export:"true"`
-	ProxyProtocol        bool `export:"true"`
+	Compress              bool `export:"true"`
+	ProxyProtocol         bool `export:"true"`
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL

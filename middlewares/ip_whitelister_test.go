@@ -5,8 +5,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 	"strings"
+	"testing"
 
 	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
@@ -276,8 +276,8 @@ func TestIPWhitelisterHandle(t *testing.T) {
 			require.NotNil(t, whitelisterNoHeaderCheck)
 
 			whitelisterHeaderCheck, err := NewIPWhitelister(test.whitelistStrings, true)
-						require.NoError(t, err)
-						require.NotNil(t, whitelisterHeaderCheck)
+			require.NoError(t, err)
+			require.NotNil(t, whitelisterHeaderCheck)
 
 			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintln(w, "traefik")
@@ -324,7 +324,7 @@ func TestIPWhitelisterHandle(t *testing.T) {
 				assert.Contains(t, recorder.Body.String(), "traefik")
 			}
 
-			 // assert valid IPs in X-Forwarded-For, fail when whitelistCheckHeaders = false (n).
+			// assert valid IPs in X-Forwarded-For, fail when whitelistCheckHeaders = false (n).
 			for _, testIP := range test.passIPs {
 				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
 				req.RemoteAddr = "254.254.254.254:2342"

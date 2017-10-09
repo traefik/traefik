@@ -183,8 +183,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
 					return nil, errors.New("no realm customization supported")
 				}
-				
-				
+
 				whitelistCheckHeaders := false
 				whitelistCheckHeadersAnnotation, ok := i.Annotations[annotationKubernetesWhitelistCheckHeaders]
 				switch {
