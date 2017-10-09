@@ -25,10 +25,6 @@ type MarathonSuite struct {
 }
 
 func (s *MarathonSuite) SetUpSuite(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
-
 	s.createComposeProject(c, "marathon")
 	s.composeProject.Start(c)
 

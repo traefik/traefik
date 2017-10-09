@@ -61,10 +61,6 @@ func (s *DockerSuite) startContainerWithConfig(c *check.C, image string, config 
 }
 
 func (s *DockerSuite) SetUpSuite(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
-
 	project := docker.NewProjectFromEnv(c)
 	s.project = project
 

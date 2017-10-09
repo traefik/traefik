@@ -16,10 +16,6 @@ type RateLimitSuite struct {
 }
 
 func (s *RateLimitSuite) SetUpSuite(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
-
 	s.createComposeProject(c, "ratelimit")
 	s.composeProject.Start(c)
 

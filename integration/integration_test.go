@@ -26,6 +26,12 @@ func Test(t *testing.T) {
 }
 
 func init() {
+	flag.Parse()
+	if !*integration {
+		log.Info("Integration tests disabled.")
+		return
+	}
+
 	check.Suite(&AccessLogSuite{})
 	check.Suite(&AcmeSuite{})
 	check.Suite(&ConstraintSuite{})
@@ -53,12 +59,6 @@ var traefikBinary = "../dist/traefik"
 
 type BaseSuite struct {
 	composeProject *compose.Project
-}
-
-func (s *BaseSuite) SetUpSuite(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
 }
 
 func (s *BaseSuite) TearDownSuite(c *check.C) {

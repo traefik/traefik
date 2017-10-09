@@ -25,10 +25,6 @@ const (
 type AccessLogSuite struct{ BaseSuite }
 
 func (s *AccessLogSuite) TestAccessLog(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
-
 	// Ensure working directory is clean
 	os.Remove(traefikTestAccessLogFile)
 	os.Remove(traefikTestLogFile)

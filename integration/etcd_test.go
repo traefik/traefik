@@ -24,10 +24,6 @@ type EtcdSuite struct {
 }
 
 func (s *EtcdSuite) SetUpTest(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
-
 	s.createComposeProject(c, "etcd")
 	s.composeProject.Start(c)
 

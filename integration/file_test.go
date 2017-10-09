@@ -13,10 +13,6 @@ import (
 type FileSuite struct{ BaseSuite }
 
 func (s *FileSuite) SetUpSuite(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
-
 	s.createComposeProject(c, "file")
 
 	s.composeProject.Start(c)

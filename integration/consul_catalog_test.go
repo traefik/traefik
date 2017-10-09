@@ -19,9 +19,6 @@ type ConsulCatalogSuite struct {
 }
 
 func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
 
 	s.createComposeProject(c, "consul_catalog")
 	s.composeProject.Start(c)

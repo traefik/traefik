@@ -19,10 +19,6 @@ type HealthCheckSuite struct {
 }
 
 func (s *HealthCheckSuite) SetUpSuite(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
-
 	s.createComposeProject(c, "healthcheck")
 	s.composeProject.Start(c)
 

@@ -16,12 +16,6 @@ import (
 // HTTPSSuite
 type HTTPSSuite struct{ BaseSuite }
 
-func (s *HTTPSSuite) SetUpSuite(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
-}
-
 // TestWithSNIConfigHandshake involves a client sending a SNI hostname of
 // "snitest.com", which happens to match the CN of 'snitest.com.crt'. The test
 // verifies that traefik presents the correct certificate.

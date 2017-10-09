@@ -22,10 +22,6 @@ type EurekaSuite struct {
 }
 
 func (s *EurekaSuite) SetUpSuite(c *check.C) {
-	if !*integration {
-		c.Skip("skipping integration tests")
-	}
-
 	s.createComposeProject(c, "eureka")
 	s.composeProject.Start(c)
 
