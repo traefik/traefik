@@ -825,7 +825,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 		return []dockerData{}, err
 	}
 	networkListArgs := filters.NewArgs()
-	networkListArgs.Add("driver", "overlay")
+	networkListArgs.Add("scope", "swarm")
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 
