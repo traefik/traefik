@@ -132,6 +132,7 @@ Labels can be used on task containers to override default behaviour:
 | `traefik.backend.loadbalancer.method=drr`                 | override the default `wrr` load balancer algorithm                                       |
 | `traefik.backend.loadbalancer.stickiness=true`            | enable backend sticky sessions                                                           |
 | `traefik.backend.loadbalancer.stickiness.cookieName=NAME` | Manually set the cookie name for sticky sessions                                         |
+| `traefik.backend.loadbalancer.sticky=true`                | enable backend sticky sessions (DEPRECATED)                                              |
 | `traefik.frontend.rule=Host:test.traefik.io`              | override the default frontend rule (Default: `Host:{containerName}.{domain}`).           |
 | `traefik.frontend.passHostHeader=true`                    | forward client `Host` header to the backend.                                             |
 | `traefik.frontend.priority=10`                            | override default frontend priority                                                       |

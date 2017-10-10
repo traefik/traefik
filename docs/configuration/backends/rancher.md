@@ -124,7 +124,8 @@ Labels can be used on task containers to override default behaviour:
 | `traefik.frontend.priority=10`                                        | Override default frontend priority                                                       |
 | `traefik.frontend.entryPoints=http,https`                             | Assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`. |
 | `traefik.frontend.auth.basic=EXPR`                                    | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`.        |
+| `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5` | Create a [circuit breaker](/basics/#backends) to be used against the backend             |
 | `traefik.backend.loadbalancer.method=drr`                             | Override the default `wrr` load balancer algorithm                                       |
 | `traefik.backend.loadbalancer.stickiness=true`                        | Enable backend sticky sessions                                                           |
 | `traefik.backend.loadbalancer.stickiness.cookieName=NAME`             | Manually set the cookie name for sticky sessions                                         |
-| `traefik.backend.circuitbreaker.expression=NetworkErrorRatio() > 0.5` | Create a [circuit breaker](/basics/#backends) to be used against the backend             |
+| `traefik.backend.loadbalancer.sticky=true`                            | Enable backend sticky sessions (DEPRECATED)                                              |

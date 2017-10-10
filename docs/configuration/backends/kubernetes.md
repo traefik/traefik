@@ -97,6 +97,8 @@ Annotations can be used on the Kubernetes service to override default behaviour:
     Enable backend sticky sessions
 - `traefik.backend.loadbalancer.stickiness.cookieName=NAME`      
     Manually set the cookie name for sticky sessions
+- `traefik.backend.loadbalancer.sticky=true`      
+    Enable backend sticky sessions (DEPRECATED)
 
 You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml).
 
