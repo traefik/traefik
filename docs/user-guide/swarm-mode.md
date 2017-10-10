@@ -126,7 +126,7 @@ docker-machine ssh manager "docker service create \
 ```
 
 !!! note
-    We set `whoami1` to use sticky sessions (`--label traefik.backend.loadbalancer.sticky=true`).
+    We set `whoami1` to use sticky sessions (`--label traefik.backend.loadbalancer.stickiness=true`).
     We'll demonstrate that later.
 
 !!! note

@@ -346,18 +346,41 @@ For example:
 - Another possible value for `extractorfunc` is `client.ip` which will categorize requests based on client source ip.
 - Lastly `extractorfunc` can take the value of `request.header.ANY_HEADER` which will categorize requests based on `ANY_HEADER` that you provide.
 
+### Sticky sessions
+
 Sticky sessions are supported with both load balancers.  
-When sticky sessions are enabled, a cookie called `_TRAEFIK_BACKEND` is set on the initial request.
+When sticky sessions are enabled, a cookie is set on the initial request.
+The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 On subsequent requests, the client will be directed to the backend stored in the cookie if it is still healthy.
 If not, a new backend will be assigned.
 
-For example:
+To activate sticky session:
+
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.loadbalancer.stickiness]
+```
+
+To customize the cookie name:
+
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.loadbalancer.stickiness]
+      cookieName = "my_cookie"
+```
+
+The deprecated way:
+
 ```toml
 [backends]
   [backends.backend1]
     [backends.backend1.loadbalancer]
       sticky = true
 ```
+
+### Health Check
 
 A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `200 OK` to HTTP GET requests periodically carried out by Traefik.  
 The check is defined by a pathappended to the backend URL and an interval (given in a format understood by [time.ParseDuration](https://golang.org/pkg/time/#ParseDuration)) specifying how often the health check should be executed (the default being 30 seconds).
