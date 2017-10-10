@@ -88,7 +88,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				stopWatch := make(chan struct{}, 1)
 				defer close(stopWatch)
 				log.Debugf("Using label selector: '%s'", p.LabelSelector)
-				eventsChan, err := k8sClient.WatchAll(p.LabelSelector, stopWatch)
+				eventsChan, err := k8sClient.WatchAll(p.Namespaces, p.LabelSelector, stopWatch)
 				if err != nil {
 					log.Errorf("Error watching kubernetes events: %v", err)
 					timer := time.NewTimer(1 * time.Second)
@@ -104,13 +104,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					case <-stop:
 						return nil
 					case event := <-eventsChan:
-						log.Debugf("Received event from kubernetes %+v", event)
+						log.Debugf("Received Kubernetes event kind %T", event)
 						templateObjects, err := p.loadIngresses(k8sClient)
 						if err != nil {
 							return err
 						}
 						if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
-							log.Debugf("Skipping event from kubernetes %+v", event)
+							log.Debugf("Skipping Kubernetes event kind %T", event)
 						} else {
 							p.lastConfiguration.Set(templateObjects)
 							configurationChan <- types.ConfigMessage{
@@ -136,7 +136,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 }
 
 func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error) {
-	ingresses := k8sClient.GetIngresses(p.Namespaces)
+	ingresses := k8sClient.GetIngresses()
 
 	templateObjects := types.Configuration{
 		Backends:  map[string]*types.Backend{},
