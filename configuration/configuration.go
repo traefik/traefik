@@ -283,23 +283,26 @@ func (ep *EntryPoints) Set(value string) error {
 		whiteListSourceRange = strings.Split(result["WhiteListSourceRange"], ",")
 	}
 
+	whiteListCheckHeaders := toBool(result, "WhiteListCheckHeaders")
+
 	compress := toBool(result, "Compress")
 	proxyProtocol := toBool(result, "ProxyProtocol")
 
 	(*ep)[result["Name"]] = &EntryPoint{
-		Address:              result["Address"],
-		TLS:                  configTLS,
-		Redirect:             redirect,
-		Compress:             compress,
-		WhitelistSourceRange: whiteListSourceRange,
-		ProxyProtocol:        proxyProtocol,
+		Address:               result["Address"],
+		TLS:                   configTLS,
+		Redirect:              redirect,
+		Compress:              compress,
+		WhitelistSourceRange:  whiteListSourceRange,
+		WhitelistCheckHeaders: whiteListCheckHeaders,
+		ProxyProtocol:         proxyProtocol,
 	}
 
 	return nil
 }
 
 func parseEntryPointsConfiguration(value string) (map[string]string, error) {
-	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*(?P<TLSACME>TLS)?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect\.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect\.Regex:(?P<RedirectRegex>\S*))?\s*(?:Redirect\.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol:(?P<ProxyProtocol>\S*))?`)
+	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*(?P<TLSACME>TLS)?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect\.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect\.Regex:(?P<RedirectRegex>\S*))?\s*(?:Redirect\.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:WhiteListCheckHeaders:(?P<WhiteListCheckHeaders>\S*))?\s*(?:ProxyProtocol:(?P<ProxyProtocol>\S*))?`)
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
 		return nil, fmt.Errorf("bad EntryPoints format: %s", value)
@@ -340,14 +343,15 @@ func (ep *EntryPoints) Type() string {
 
 // EntryPoint holds an entry point configuration of the reverse proxy (ip, port, TLS...)
 type EntryPoint struct {
-	Network              string
-	Address              string
-	TLS                  *TLS        `export:"true"`
-	Redirect             *Redirect   `export:"true"`
-	Auth                 *types.Auth `export:"true"`
-	WhitelistSourceRange []string
-	Compress             bool `export:"true"`
-	ProxyProtocol        bool `export:"true"`
+	Network               string
+	Address               string
+	TLS                   *TLS        `export:"true"`
+	Redirect              *Redirect   `export:"true"`
+	Auth                  *types.Auth `export:"true"`
+	WhitelistSourceRange  []string
+	WhitelistCheckHeaders bool
+	Compress              bool `export:"true"`
+	ProxyProtocol         bool `export:"true"`
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL

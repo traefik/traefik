@@ -30,12 +30,13 @@ const (
 	ruleTypePathPrefix  = "PathPrefix"
 	ruleTypeReplacePath = "ReplacePath"
 
-	annotationKubernetesIngressClass         = "kubernetes.io/ingress.class"
-	annotationKubernetesAuthRealm            = "ingress.kubernetes.io/auth-realm"
-	annotationKubernetesAuthType             = "ingress.kubernetes.io/auth-type"
-	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
-	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
-	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
+	annotationKubernetesIngressClass          = "kubernetes.io/ingress.class"
+	annotationKubernetesAuthRealm             = "ingress.kubernetes.io/auth-realm"
+	annotationKubernetesAuthType              = "ingress.kubernetes.io/auth-type"
+	annotationKubernetesAuthSecret            = "ingress.kubernetes.io/auth-secret"
+	annotationKubernetesRewriteTarget         = "ingress.kubernetes.io/rewrite-target"
+	annotationKubernetesWhitelistSourceRange  = "ingress.kubernetes.io/whitelist-source-range"
+	annotationKubernetesWhitelistCheckHeaders = "ingress.kubernetes.io/whitelist-check-headers"
 )
 
 const traefikDefaultRealm = "traefik"
@@ -183,8 +184,21 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					return nil, errors.New("no realm customization supported")
 				}
 
-				witelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
-				whitelistSourceRange := provider.SplitAndTrimString(witelistSourceRangeAnnotation)
+				whitelistCheckHeaders := false
+				whitelistCheckHeadersAnnotation, ok := i.Annotations[annotationKubernetesWhitelistCheckHeaders]
+				switch {
+				case !ok:
+					// no op
+				case whitelistCheckHeadersAnnotation == "false":
+					// no op
+				case whitelistCheckHeadersAnnotation == "true":
+					whitelistCheckHeaders = true
+				default:
+					log.Warnf("Unknown value '%s' for annotation %s, falling back to false", whitelistCheckHeadersAnnotation, annotationKubernetesWhitelistCheckHeaders)
+				}
+
+				whitelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
+				whitelistSourceRange := provider.SplitAndTrimString(whitelistSourceRangeAnnotation)
 
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
@@ -196,12 +210,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					priority := p.getPriority(pa, i)
 
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
-						Backend:              r.Host + pa.Path,
-						PassHostHeader:       PassHostHeader,
-						Routes:               make(map[string]types.Route),
-						Priority:             priority,
-						BasicAuth:            basicAuthCreds,
-						WhitelistSourceRange: whitelistSourceRange,
+						Backend:               r.Host + pa.Path,
+						PassHostHeader:        PassHostHeader,
+						Routes:                make(map[string]types.Route),
+						Priority:              priority,
+						BasicAuth:             basicAuthCreds,
+						WhitelistSourceRange:  whitelistSourceRange,
+						WhitelistCheckHeaders: whitelistCheckHeaders,
 					}
 				}
 				if len(r.Host) > 0 {
