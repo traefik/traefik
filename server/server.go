@@ -154,8 +154,8 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 		transport.TLSClientConfig = &tls.Config{
 			RootCAs: createRootCACertPool(globalConfiguration.RootCAs),
 		}
-		http2.ConfigureTransport(transport)
 	}
+	http2.ConfigureTransport(transport)
 
 	return transport
 }
