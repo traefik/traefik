@@ -38,7 +38,7 @@ func NewIPWhitelister(whitelistStrings []string) (*IPWhiteLister, error) {
 	return &whiteLister, nil
 }
 
-func (whiteLister *IPWhiteLister) handle(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (wl *IPWhiteLister) handle(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	ipAddress, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		log.Warnf("unable to parse remote-address from header: %s - rejecting", r.RemoteAddr)
@@ -46,7 +46,7 @@ func (whiteLister *IPWhiteLister) handle(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	allowed, ip, err := whiteLister.whiteLister.Contains(ipAddress)
+	allowed, ip, err := wl.whiteLister.Contains(ipAddress)
 	if err != nil {
 		log.Debugf("source-IP %s matched none of the whitelists - rejecting", ipAddress)
 		reject(w)
@@ -54,7 +54,7 @@ func (whiteLister *IPWhiteLister) handle(w http.ResponseWriter, r *http.Request,
 	}
 
 	if allowed {
-		log.Debugf("source-IP %s matched whitelist %s - passing", ipAddress, whiteLister.whiteLister)
+		log.Debugf("source-IP %s matched whitelist %s - passing", ipAddress, wl.whiteLister)
 		next.ServeHTTP(w, r)
 		return
 	}
@@ -63,8 +63,8 @@ func (whiteLister *IPWhiteLister) handle(w http.ResponseWriter, r *http.Request,
 	reject(w)
 }
 
-func (whiteLister *IPWhiteLister) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	whiteLister.handler.ServeHTTP(rw, r, next)
+func (wl *IPWhiteLister) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	wl.handler.ServeHTTP(rw, r, next)
 }
 
 func reject(w http.ResponseWriter) {

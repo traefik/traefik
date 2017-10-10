@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -18,7 +19,6 @@ import (
 	"sync"
 	"time"
 
-	"fmt"
 	"github.com/armon/go-proxyproto"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
@@ -667,14 +667,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 				if !ok {
 					return false, fmt.Errorf("Type error %v", addr)
 				}
-				contains, err := IPs.ContainsIP(ip.IP)
-				if err != nil {
-					return false, err
-				}
-				if contains {
-					return true, nil
-				}
-				return false, nil
+				return IPs.ContainsIP(ip.IP)
 			},
 		}
 	}
