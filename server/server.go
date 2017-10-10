@@ -30,6 +30,7 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
@@ -37,6 +38,8 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/whitelist"
 	"github.com/eapache/channels"
+	"github.com/opentracing-contrib/go-stdlib/nethttp"
+	opentracing "github.com/opentracing/opentracing-go"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/cbreaker"
@@ -63,6 +66,7 @@ type Server struct {
 	currentConfigurations         safe.Safe
 	globalConfiguration           configuration.GlobalConfiguration
 	accessLoggerMiddleware        *accesslog.LogHandler
+	tracingMiddleware             *tracing.Tracing
 	routinesPool                  *safe.Pool
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
@@ -107,6 +111,11 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 
 	server.routinesPool = safe.NewPool(context.Background())
 	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
+
+	server.tracingMiddleware = globalConfiguration.Tracing
+	if globalConfiguration.Tracing != nil {
+		server.tracingMiddleware.Setup()
+	}
 
 	server.metricsRegistry = metrics.NewVoidRegistry()
 	if globalConfiguration.Metrics != nil {
@@ -281,6 +290,16 @@ func (server *Server) startHTTPServers() {
 func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 	serverInternalMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
+
+	if server.tracingMiddleware != nil {
+		serverMiddlewares = append(
+			serverMiddlewares,
+			negroni.HandlerFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+				nethttp.Middleware(server.tracingMiddleware, next, nethttp.MWComponentName("entrypoint")).ServeHTTP(rw, r)
+			}))
+		log.Debug("Added incoming tracing middleware")
+	}
+
 	if server.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 	}
@@ -958,7 +977,8 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
-					fwd, err := forward.New(
+					var fwd http.Handler
+					fwd, err = forward.New(
 						forward.Logger(oxyLogger),
 						forward.PassHostHeader(frontend.PassHostHeader),
 						forward.RoundTripper(roundTripper),
@@ -970,6 +990,35 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
+					}
+
+					if server.tracingMiddleware != nil {
+						next := fwd
+						fwd = http.HandlerFunc(
+							func(next http.Handler, ep, fn, be string) func(rw http.ResponseWriter, r *http.Request) {
+								return func(rw http.ResponseWriter, r *http.Request) {
+									if span := opentracing.SpanFromContext(r.Context()); span != nil {
+										span, _ := opentracing.StartSpanFromContext(r.Context(), "proxy")
+										defer span.Finish()
+										span.SetOperationName("backend")
+										span.SetTag("entrypoint.name", ep)
+										span.SetTag("frontend.name", fn)
+										span.SetTag("backend.name", be)
+										span.SetTag("http.url", r.URL.String())
+
+										log.Debug("Added outgoing trace headers", frontendName, err)
+										opentracing.GlobalTracer().Inject(
+											span.Context(),
+											opentracing.HTTPHeaders,
+											opentracing.HTTPHeadersCarrier(r.Header))
+									} else {
+										log.Debug("no context found")
+									}
+
+									next.ServeHTTP(rw, r)
+								}
+							}(next, entryPointName, frontendName, frontend.Backend))
+						log.Debug("Added outgoing tracing middleware", frontendName, err)
 					}
 
 					var rr *roundrobin.RoundRobin
