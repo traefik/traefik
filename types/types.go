@@ -33,8 +33,14 @@ type MaxConn struct {
 
 // LoadBalancer holds load balancing configuration.
 type LoadBalancer struct {
-	Method string `json:"method,omitempty"`
-	Sticky bool   `json:"sticky,omitempty"`
+	Method     string      `json:"method,omitempty"`
+	Sticky     bool        `json:"sticky,omitempty"` // Deprecated: use Stickiness instead
+	Stickiness *Stickiness `json:"stickiness,omitempty"`
+}
+
+// Stickiness holds sticky session configuration.
+type Stickiness struct {
+	CookieName string `json:"cookieName,omitempty"`
 }
 
 // CircuitBreaker holds circuit breaker configuration.

@@ -422,52 +422,49 @@ func TestConfigureBackends(t *testing.T) {
 	defaultMethod := "wrr"
 
 	tests := []struct {
-		desc       string
-		lb         *types.LoadBalancer
-		wantMethod string
-		wantSticky bool
+		desc           string
+		lb             *types.LoadBalancer
+		wantMethod     string
+		wantStickiness *types.Stickiness
 	}{
 		{
 			desc: "valid load balancer method with sticky enabled",
 			lb: &types.LoadBalancer{
-				Method: validMethod,
-				Sticky: true,
+				Method:     validMethod,
+				Stickiness: &types.Stickiness{},
 			},
-			wantMethod: validMethod,
-			wantSticky: true,
+			wantMethod:     validMethod,
+			wantStickiness: &types.Stickiness{},
 		},
 		{
 			desc: "valid load balancer method with sticky disabled",
 			lb: &types.LoadBalancer{
-				Method: validMethod,
-				Sticky: false,
+				Method:     validMethod,
+				Stickiness: nil,
 			},
 			wantMethod: validMethod,
-			wantSticky: false,
 		},
 		{
 			desc: "invalid load balancer method with sticky enabled",
 			lb: &types.LoadBalancer{
-				Method: "Invalid",
-				Sticky: true,
+				Method:     "Invalid",
+				Stickiness: &types.Stickiness{},
 			},
-			wantMethod: defaultMethod,
-			wantSticky: true,
+			wantMethod:     defaultMethod,
+			wantStickiness: &types.Stickiness{},
 		},
 		{
 			desc: "invalid load balancer method with sticky disabled",
 			lb: &types.LoadBalancer{
-				Method: "Invalid",
-				Sticky: false,
+				Method:     "Invalid",
+				Stickiness: nil,
 			},
 			wantMethod: defaultMethod,
-			wantSticky: false,
 		},
 		{
 			desc:       "missing load balancer",
 			lb:         nil,
 			wantMethod: defaultMethod,
-			wantSticky: false,
 		},
 	}
 
@@ -485,8 +482,8 @@ func TestConfigureBackends(t *testing.T) {
 			})
 
 			wantLB := types.LoadBalancer{
-				Method: test.wantMethod,
-				Sticky: test.wantSticky,
+				Method:     test.wantMethod,
+				Stickiness: test.wantStickiness,
 			}
 			if !reflect.DeepEqual(*backend.LoadBalancer, wantLB) {
 				t.Errorf("got backend load-balancer\n%v\nwant\n%v\n", spew.Sdump(backend.LoadBalancer), spew.Sdump(wantLB))
@@ -659,13 +656,6 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 	}
 }
 
-func TestGetCookieName(t *testing.T) {
-	want := "_TRAEFIK_BACKEND__my_BACKEND-v1.0~rc1"
-	if got := getCookieName("/my/BACKEND-v1.0~rc1"); got != want {
-		t.Errorf("got sticky cookie name %q, want %q", got, want)
-	}
-}
-
 func buildDynamicConfig(dynamicConfigBuilders ...func(*types.Configuration)) *types.Configuration {
 	config := &types.Configuration{
 		Frontends: make(map[string]*types.Frontend),
@@ -726,6 +716,10 @@ func withServer(name, url string) func(backend *types.Backend) {
 
 func withLoadBalancer(method string, sticky bool) func(*types.Backend) {
 	return func(be *types.Backend) {
-		be.LoadBalancer = &types.LoadBalancer{Method: method, Sticky: sticky}
+		if sticky {
+			be.LoadBalancer = &types.LoadBalancer{Method: method, Stickiness: &types.Stickiness{CookieName: "test"}}
+		} else {
+			be.LoadBalancer = &types.LoadBalancer{Method: method}
+		}
 	}
 }
