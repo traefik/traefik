@@ -18,6 +18,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/server/cookie"
 	"github.com/containous/traefik/types"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
@@ -160,7 +161,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
 						Servers: make(map[string]types.Server),
 						LoadBalancer: &types.LoadBalancer{
-							Sticky: false,
 							Method: "wrr",
 						},
 					}
@@ -247,8 +247,14 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
 
-				if service.Annotations[types.LabelBackendLoadbalancerSticky] == "true" {
-					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
+				if len(service.Annotations[types.LabelBackendLoadbalancerSticky]) > 0 {
+					log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+				}
+
+				if service.Annotations[types.LabelBackendLoadbalancerSticky] == "true" || service.Annotations[types.LabelBackendLoadbalancerStickiness] == "true" {
+					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Stickiness = &types.Stickiness{
+						CookieName: cookie.GenerateName(r.Host + pa.Path),
+					}
 				}
 
 				protocol := "http"

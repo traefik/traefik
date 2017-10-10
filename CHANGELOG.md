@@ -1,5 +1,26 @@
 # Change Log
 
+## [v1.4.0-rc5](https://github.com/containous/traefik/tree/v1.4.0-rc5) (2017-10-10)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc4...v1.4.0-rc5)
+
+**Enhancements:**
+- **[middleware]** Add trusted whitelist proxy protocol ([#2234](https://github.com/containous/traefik/pull/2234) by [emilevauge](https://github.com/emilevauge))
+
+**Bug fixes:**
+- **[consul,docker,ecs,k8s,marathon,rancher,sticky-session]** Stickiness cookie name ([#2232](https://github.com/containous/traefik/pull/2232) by [ldez](https://github.com/ldez))
+- **[logs]** Fix flakiness in log rotation test ([#2213](https://github.com/containous/traefik/pull/2213) by [marco-jantke](https://github.com/marco-jantke))
+- **[middleware]** Enable prefix matching within slash boundaries ([#2214](https://github.com/containous/traefik/pull/2214) by [marco-jantke](https://github.com/marco-jantke))
+- **[sticky-session]** Sanitize cookie names. ([#2216](https://github.com/containous/traefik/pull/2216) by [timoreimann](https://github.com/timoreimann))
+- Move http2 configure transport  ([#2231](https://github.com/containous/traefik/pull/2231) by [Juliens](https://github.com/Juliens))
+- Delay first version check ([#2215](https://github.com/containous/traefik/pull/2215) by [emilevauge](https://github.com/emilevauge))
+
+**Documentation:**
+- **[acme]** Fix grammar ([#2208](https://github.com/containous/traefik/pull/2208) by [mvasin](https://github.com/mvasin))
+- **[docker,ecs,k8s,marathon,rancher]** Stickiness documentation ([#2238](https://github.com/containous/traefik/pull/2238) by [ldez](https://github.com/ldez))
+- **[k8s]** Quote priority values in annotation examples. ([#2230](https://github.com/containous/traefik/pull/2230) by [timoreimann](https://github.com/timoreimann))
+- **[k8s]** Remove pod from RBAC rules. ([#2229](https://github.com/containous/traefik/pull/2229) by [timoreimann](https://github.com/timoreimann))
+- **[k8s]** Document ways to partition Ingresses in the k8s guide. ([#2223](https://github.com/containous/traefik/pull/2223) by [timoreimann](https://github.com/timoreimann))
+
 ## [v1.4.0-rc4](https://github.com/containous/traefik/tree/v1.4.0-rc4) (2017-10-02)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.0-rc3...v1.4.0-rc4)
 

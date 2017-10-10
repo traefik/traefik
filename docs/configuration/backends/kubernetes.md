@@ -86,15 +86,19 @@ Annotations can be used on containers to override default behaviour for the whol
 
 - `traefik.frontend.rule.type: PathPrefixStrip`  
     Override the default frontend rule type. Default: `PathPrefix`.
-- `traefik.frontend.priority: 3`  
+- `traefik.frontend.priority: "3"`
     Override the default frontend rule priority.
 
 Annotations can be used on the Kubernetes service to override default behaviour:
 
 - `traefik.backend.loadbalancer.method=drr`  
     Override the default `wrr` load balancer algorithm
-- `traefik.backend.loadbalancer.sticky=true`      
+- `traefik.backend.loadbalancer.stickiness=true`      
     Enable backend sticky sessions
+- `traefik.backend.loadbalancer.stickiness.cookieName=NAME`      
+    Manually set the cookie name for sticky sessions
+- `traefik.backend.loadbalancer.sticky=true`      
+    Enable backend sticky sessions (DEPRECATED)
 
 You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml).
 

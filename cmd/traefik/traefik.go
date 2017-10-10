@@ -349,6 +349,7 @@ func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSourc
 func checkNewVersion() {
 	ticker := time.NewTicker(24 * time.Hour)
 	safe.Go(func() {
+		time.Sleep(10 * time.Minute)
 		version.CheckNewVersion()
 		for {
 			select {

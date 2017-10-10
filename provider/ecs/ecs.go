@@ -122,12 +122,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		})
 
 		operation := func() error {
-			aws, err := p.createClient()
+			awsClient, err := p.createClient()
 			if err != nil {
 				return err
 			}
 
-			configuration, err := p.loadECSConfig(ctx, aws)
+			configuration, err := p.loadECSConfig(ctx, awsClient)
 			if err != nil {
 				return handleCanceled(ctx, err)
 			}
@@ -143,7 +143,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				for {
 					select {
 					case <-reload.C:
-						configuration, err := p.loadECSConfig(ctx, aws)
+						configuration, err := p.loadECSConfig(ctx, awsClient)
 						if err != nil {
 							return handleCanceled(ctx, err)
 						}
@@ -180,11 +180,12 @@ func wrapAws(ctx context.Context, req *request.Request) error {
 
 func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
 	var ecsFuncMap = template.FuncMap{
-		"filterFrontends":       p.filterFrontends,
-		"getFrontendRule":       p.getFrontendRule,
-		"getBasicAuth":          p.getBasicAuth,
-		"getLoadBalancerSticky": p.getLoadBalancerSticky,
-		"getLoadBalancerMethod": p.getLoadBalancerMethod,
+		"filterFrontends":         p.filterFrontends,
+		"getFrontendRule":         p.getFrontendRule,
+		"getBasicAuth":            p.getBasicAuth,
+		"getLoadBalancerMethod":   p.getLoadBalancerMethod,
+		"hasStickinessLabel":      p.hasStickinessLabel,
+		"getStickinessCookieName": p.getStickinessCookieName,
 	}
 
 	instances, err := p.listInstances(ctx, client)
@@ -477,14 +478,27 @@ func (p *Provider) getBasicAuth(i ecsInstance) []string {
 	return []string{}
 }
 
-func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
+func (p *Provider) getFirstInstanceLabel(instances []ecsInstance, labelName string) string {
 	if len(instances) > 0 {
-		label := p.label(instances[0], types.LabelBackendLoadbalancerSticky)
-		if label != "" {
-			return label
-		}
+		return p.label(instances[0], labelName)
 	}
-	return "false"
+	return ""
+}
+
+func (p *Provider) hasStickinessLabel(instances []ecsInstance) bool {
+	stickinessLabel := p.getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerStickiness)
+
+	stickyLabel := p.getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerSticky)
+	if len(stickyLabel) > 0 {
+		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+	}
+	stickiness := len(stickinessLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickinessLabel), "true")
+	sticky := len(stickyLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickyLabel), "true")
+	return stickiness || sticky
+}
+
+func (p *Provider) getStickinessCookieName(instances []ecsInstance) string {
+	return p.getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerStickinessCookieName)
 }
 
 func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {

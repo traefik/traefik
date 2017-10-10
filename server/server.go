@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -30,7 +31,9 @@ import (
 	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/server/cookie"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/whitelist"
 	"github.com/streamrail/concurrent-map"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
@@ -154,8 +157,8 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 		transport.TLSClientConfig = &tls.Config{
 			RootCAs: createRootCACertPool(globalConfiguration.RootCAs),
 		}
-		http2.ConfigureTransport(transport)
 	}
+	http2.ConfigureTransport(transport)
 
 	return transport
 }
@@ -335,11 +338,11 @@ func (server *Server) listenProviders(stop chan bool) {
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
 				providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
 				if time.Now().After(lastReceivedConfigurationValue.Add(providersThrottleDuration)) {
-					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
+					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
 					// last config received more than n s ago
 					server.configurationValidatedChan <- configMsg
 				} else {
-					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
+					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
 					safe.Go(func() {
 						<-time.After(providersThrottleDuration)
 						lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
@@ -652,8 +655,22 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 		return nil, nil, err
 	}
 
-	if entryPoint.ProxyProtocol {
-		listener = &proxyproto.Listener{Listener: listener}
+	if entryPoint.ProxyProtocol != nil {
+		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Error creating whitelist: %s", err)
+		}
+		log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
+		listener = &proxyproto.Listener{
+			Listener: listener,
+			SourceCheck: func(addr net.Addr) (bool, error) {
+				ip, ok := addr.(*net.TCPAddr)
+				if !ok {
+					return false, fmt.Errorf("Type error %v", addr)
+				}
+				return IPs.ContainsIP(ip.IP)
+			},
+		}
 	}
 
 	return &http.Server{
@@ -826,11 +843,10 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
-					stickySession := config.Backends[frontend.Backend].LoadBalancer.Sticky
-					cookieName := "_TRAEFIK_BACKEND_" + frontend.Backend
 					var sticky *roundrobin.StickySession
-
-					if stickySession {
+					var cookieName string
+					if stickiness := config.Backends[frontend.Backend].LoadBalancer.Stickiness; stickiness != nil {
+						cookieName = cookie.GetName(stickiness.CookieName, frontend.Backend)
 						sticky = roundrobin.NewStickySession(cookieName)
 					}
 
@@ -839,7 +855,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 					case types.Drr:
 						log.Debugf("Creating load-balancer drr")
 						rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
-						if stickySession {
+						if sticky != nil {
 							log.Debugf("Sticky session with cookie %v", cookieName)
 							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
 						}
@@ -856,7 +872,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
 					case types.Wrr:
 						log.Debugf("Creating load-balancer wrr")
-						if stickySession {
+						if sticky != nil {
 							log.Debugf("Sticky session with cookie %v", cookieName)
 							if server.accessLoggerMiddleware != nil {
 								rr, _ = roundrobin.New(saveFrontend, roundrobin.EnableStickySession(sticky))
@@ -1159,16 +1175,31 @@ func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
 
 func (*Server) configureBackends(backends map[string]*types.Backend) {
 	for backendName, backend := range backends {
+		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
+			log.Warn("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
+		}
+
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
-		if err != nil {
+		if err == nil {
+			if backend.LoadBalancer != nil && backend.LoadBalancer.Stickiness == nil && backend.LoadBalancer.Sticky {
+				backend.LoadBalancer.Stickiness = &types.Stickiness{}
+			}
+		} else {
 			log.Debugf("Validation of load balancer method for backend %s failed: %s. Using default method wrr.", backendName, err)
-			var sticky bool
+
+			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
-				sticky = backend.LoadBalancer.Sticky
+				if backend.LoadBalancer.Stickiness != nil {
+					stickiness = backend.LoadBalancer.Stickiness
+				} else if backend.LoadBalancer.Sticky {
+					if backend.LoadBalancer.Stickiness == nil {
+						stickiness = &types.Stickiness{}
+					}
+				}
 			}
 			backend.LoadBalancer = &types.LoadBalancer{
-				Method: "wrr",
-				Sticky: sticky,
+				Method:     "wrr",
+				Stickiness: stickiness,
 			}
 		}
 	}

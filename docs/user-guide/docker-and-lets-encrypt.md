@@ -74,7 +74,7 @@ Also, we're making sure the container is automatically restarted by the Docker e
 We're publishing the default HTTP ports `80` and `443` on the host, and making sure the container is placed within the `web` network we've created earlier on.  
 Finally, we're giving this container a static name called `traefik`.
 
-Let's take a look at a simply `traefik.toml` configuration as well before we'll create the Traefik container:
+Let's take a look at a simple `traefik.toml` configuration as well before we'll create the Traefik container:
 
 ```toml
 debug = false

@@ -275,7 +275,8 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"hasMaxConnLabels":            p.hasMaxConnLabels,
 		"getMaxConnAmount":            p.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     p.getMaxConnExtractorFunc,
-		"getSticky":                   p.getSticky,
+		"getStickinessCookieName":     p.getStickinessCookieName,
+		"hasStickinessLabel":          p.hasStickinessLabel,
 		"getIsBackendLBSwarm":         p.getIsBackendLBSwarm,
 		"hasServices":                 p.hasServices,
 		"getServiceNames":             p.getServiceNames,
@@ -328,10 +329,8 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 }
 
 func (p *Provider) hasCircuitBreakerLabel(container dockerData) bool {
-	if _, err := getLabel(container, types.LabelBackendCircuitbreakerExpression); err != nil {
-		return false
-	}
-	return true
+	_, err := getLabel(container, types.LabelBackendCircuitbreakerExpression)
+	return err == nil
 }
 
 // Regexp used to extract the name of the service and the name of the property for this service
@@ -645,11 +644,22 @@ func (p *Provider) getWeight(container dockerData) string {
 	return "0"
 }
 
-func (p *Provider) getSticky(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendLoadbalancerSticky); err == nil {
+func (p *Provider) hasStickinessLabel(container dockerData) bool {
+	_, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
+
+	label, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
+	if len(label) > 0 {
+		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+	}
+
+	return errStickiness == nil || (errSticky == nil && strings.EqualFold(strings.TrimSpace(label), "true"))
+}
+
+func (p *Provider) getStickinessCookieName(container dockerData) string {
+	if label, err := getLabel(container, types.LabelBackendLoadbalancerStickinessCookieName); err == nil {
 		return label
 	}
-	return "false"
+	return ""
 }
 
 func (p *Provider) getIsBackendLBSwarm(container dockerData) string {

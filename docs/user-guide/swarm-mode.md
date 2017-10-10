@@ -126,7 +126,7 @@ docker-machine ssh manager "docker service create \
 ```
 
 !!! note
-    We set `whoami1` to use sticky sessions (`--label traefik.backend.loadbalancer.sticky=true`).
+    We set `whoami1` to use sticky sessions (`--label traefik.backend.loadbalancer.stickiness=true`).
     We'll demonstrate that later.
 
 !!! note
@@ -307,7 +307,7 @@ cat ./cookies.txt
 whoami1.traefik FALSE  /  FALSE  0  _TRAEFIK_BACKEND  http://10.0.0.15:80
 ```
 
-If you load the cookies file (`-b cookies.txt`) for the next request, you will see that stickyness is maintained:
+If you load the cookies file (`-b cookies.txt`) for the next request, you will see that stickiness is maintained:
 
 ```shell
 curl -b cookies.txt -H Host:whoami1.traefik http://$(docker-machine ip manager)

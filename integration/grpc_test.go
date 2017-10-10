@@ -113,3 +113,45 @@ func (s *GRPCSuite) TestGRPC(c *check.C) {
 	c.Assert(err, check.IsNil)
 	c.Assert(response, check.Equals, "Hello World")
 }
+
+func (s *GRPCSuite) TestGRPCInsecure(c *check.C) {
+	lis, err := net.Listen("tcp", ":0")
+	_, port, err := net.SplitHostPort(lis.Addr().String())
+	c.Assert(err, check.IsNil)
+
+	go func() {
+		err := startGRPCServer(lis)
+		c.Log(err)
+		c.Assert(err, check.IsNil)
+	}()
+
+	file := s.adaptFile(c, "fixtures/grpc/config_insecure.toml", struct {
+		CertContent    string
+		KeyContent     string
+		GRPCServerPort string
+	}{
+		CertContent:    string(LocalhostCert),
+		KeyContent:     string(LocalhostKey),
+		GRPCServerPort: port,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+
+	err = cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:127.0.0.1"))
+	c.Assert(err, check.IsNil)
+	var response string
+	err = try.Do(1*time.Second, func() error {
+		response, err = callHelloClientGRPC()
+		return err
+	})
+
+	c.Assert(err, check.IsNil)
+	c.Assert(response, check.Equals, "Hello World")
+}

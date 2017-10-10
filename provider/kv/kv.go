@@ -139,11 +139,13 @@ func (p *Provider) loadConfig() *types.Configuration {
 	}
 
 	var KvFuncMap = template.FuncMap{
-		"List":        p.list,
-		"ListServers": p.listServers,
-		"Get":         p.get,
-		"SplitGet":    p.splitGet,
-		"Last":        p.last,
+		"List":                    p.list,
+		"ListServers":             p.listServers,
+		"Get":                     p.get,
+		"SplitGet":                p.splitGet,
+		"Last":                    p.last,
+		"hasStickinessLabel":      p.hasStickinessLabel,
+		"getStickinessCookieName": p.getStickinessCookieName,
 	}
 
 	configuration, err := p.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -238,4 +240,18 @@ func (p *Provider) checkConstraints(keys ...string) bool {
 		return false
 	}
 	return true
+}
+
+func (p *Provider) hasStickinessLabel(rootPath string) bool {
+	stickiness, err := p.kvclient.Exists(rootPath + "/loadbalancer/stickiness")
+	if err != nil {
+		log.Debugf("Error occurs when check stickiness: %v", err)
+	}
+	sticky := p.get("false", rootPath, "/loadbalancer", "/sticky")
+
+	return stickiness || (len(sticky) != 0 && strings.EqualFold(strings.TrimSpace(sticky), "true"))
+}
+
+func (p *Provider) getStickinessCookieName(rootPath string) string {
+	return p.get("", rootPath, "/loadbalancer", "/stickiness", "/cookiename")
 }
