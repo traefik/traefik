@@ -355,8 +355,7 @@ For example:
 ```toml
 [backends]
   [backends.backend1]
-    [backends.backend1.loadbalancer]
-      sticky = true
+    [backends.backend1.loadbalancer.stickiness]
 ```
 
 A health check can be configured in order to remove a backend from LB rotation as long as it keeps returning HTTP status codes other than `200 OK` to HTTP GET requests periodically carried out by Traefik.  
