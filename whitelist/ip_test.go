@@ -1,19 +1,14 @@
-package middlewares
+package whitelist
 
 import (
-	"fmt"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/urfave/negroni"
 )
 
-func TestNewIPWhitelister(t *testing.T) {
+func TestNew(t *testing.T) {
 	cases := []struct {
 		desc               string
 		whitelistStrings   []string
@@ -24,12 +19,12 @@ func TestNewIPWhitelister(t *testing.T) {
 			desc:               "nil whitelist",
 			whitelistStrings:   nil,
 			expectedWhitelists: nil,
-			errMessage:         "no whitelists provided",
+			errMessage:         "no whiteListsNet provided",
 		}, {
 			desc:               "empty whitelist",
 			whitelistStrings:   []string{},
 			expectedWhitelists: nil,
-			errMessage:         "no whitelists provided",
+			errMessage:         "no whiteListsNet provided",
 		}, {
 			desc: "whitelist containing empty string",
 			whitelistStrings: []string{
@@ -80,12 +75,12 @@ func TestNewIPWhitelister(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			whitelister, err := NewIPWhitelister(test.whitelistStrings)
+			whitelister, err := NewIP(test.whitelistStrings)
 			if test.errMessage != "" {
 				require.EqualError(t, err, test.errMessage)
 			} else {
 				require.NoError(t, err)
-				for index, actual := range whitelister.whitelists {
+				for index, actual := range whitelister.whiteListsNet {
 					expected := test.expectedWhitelists[index]
 					assert.Equal(t, expected.IP, actual.IP)
 					assert.Equal(t, expected.Mask.String(), actual.Mask.String())
@@ -95,7 +90,7 @@ func TestNewIPWhitelister(t *testing.T) {
 	}
 }
 
-func TestIPWhitelisterHandle(t *testing.T) {
+func TestIsAllowed(t *testing.T) {
 	cases := []struct {
 		desc             string
 		whitelistStrings []string
@@ -122,6 +117,23 @@ func TestIPWhitelisterHandle(t *testing.T) {
 		},
 		{
 			desc: "IPv4 single IP",
+			whitelistStrings: []string{
+				"8.8.8.8",
+			},
+			passIPs: []string{
+				"8.8.8.8",
+			},
+			rejectIPs: []string{
+				"8.8.8.7",
+				"8.8.8.9",
+				"8.8.8.0",
+				"8.8.8.255",
+				"4.4.4.4",
+				"127.0.0.1",
+			},
+		},
+		{
+			desc: "IPv4 Net single IP",
 			whitelistStrings: []string{
 				"8.8.8.8/32",
 			},
@@ -167,16 +179,16 @@ func TestIPWhitelisterHandle(t *testing.T) {
 				"2a03:4000:6:d080::/64",
 			},
 			passIPs: []string{
-				"[2a03:4000:6:d080::]",
-				"[2a03:4000:6:d080::1]",
-				"[2a03:4000:6:d080:dead:beef:ffff:ffff]",
-				"[2a03:4000:6:d080::42]",
+				"2a03:4000:6:d080::",
+				"2a03:4000:6:d080::1",
+				"2a03:4000:6:d080:dead:beef:ffff:ffff",
+				"2a03:4000:6:d080::42",
 			},
 			rejectIPs: []string{
-				"[2a03:4000:7:d080::]",
-				"[2a03:4000:7:d080::1]",
-				"[fe80::]",
-				"[4242::1]",
+				"2a03:4000:7:d080::",
+				"2a03:4000:7:d080::1",
+				"fe80::",
+				"4242::1",
 			},
 		},
 		{
@@ -185,12 +197,12 @@ func TestIPWhitelisterHandle(t *testing.T) {
 				"2a03:4000:6:d080::42/128",
 			},
 			passIPs: []string{
-				"[2a03:4000:6:d080::42]",
+				"2a03:4000:6:d080::42",
 			},
 			rejectIPs: []string{
-				"[2a03:4000:6:d080::1]",
-				"[2a03:4000:6:d080:dead:beef:ffff:ffff]",
-				"[2a03:4000:6:d080::43]",
+				"2a03:4000:6:d080::1",
+				"2a03:4000:6:d080:dead:beef:ffff:ffff",
+				"2a03:4000:6:d080::43",
 			},
 		},
 		{
@@ -200,18 +212,18 @@ func TestIPWhitelisterHandle(t *testing.T) {
 				"fe80::/16",
 			},
 			passIPs: []string{
-				"[2a03:4000:6:d080::]",
-				"[2a03:4000:6:d080::1]",
-				"[2a03:4000:6:d080:dead:beef:ffff:ffff]",
-				"[2a03:4000:6:d080::42]",
-				"[fe80::1]",
-				"[fe80:aa00:00bb:4232:ff00:eeee:00ff:1111]",
-				"[fe80::fe80]",
+				"2a03:4000:6:d080::",
+				"2a03:4000:6:d080::1",
+				"2a03:4000:6:d080:dead:beef:ffff:ffff",
+				"2a03:4000:6:d080::42",
+				"fe80::1",
+				"fe80:aa00:00bb:4232:ff00:eeee:00ff:1111",
+				"fe80::fe80",
 			},
 			rejectIPs: []string{
-				"[2a03:4000:7:d080::]",
-				"[2a03:4000:7:d080::1]",
-				"[4242::1]",
+				"2a03:4000:7:d080::",
+				"2a03:4000:7:d080::1",
+				"4242::1",
 			},
 		},
 		{
@@ -223,13 +235,13 @@ func TestIPWhitelisterHandle(t *testing.T) {
 				"8.8.8.8/8",
 			},
 			passIPs: []string{
-				"[2a03:4000:6:d080::]",
-				"[2a03:4000:6:d080::1]",
-				"[2a03:4000:6:d080:dead:beef:ffff:ffff]",
-				"[2a03:4000:6:d080::42]",
-				"[fe80::1]",
-				"[fe80:aa00:00bb:4232:ff00:eeee:00ff:1111]",
-				"[fe80::fe80]",
+				"2a03:4000:6:d080::",
+				"2a03:4000:6:d080::1",
+				"2a03:4000:6:d080:dead:beef:ffff:ffff",
+				"2a03:4000:6:d080::42",
+				"fe80::1",
+				"fe80:aa00:00bb:4232:ff00:eeee:00ff:1111",
+				"fe80::fe80",
 				"1.2.3.1",
 				"1.2.3.32",
 				"1.2.3.156",
@@ -240,9 +252,9 @@ func TestIPWhitelisterHandle(t *testing.T) {
 				"8.255.255.255",
 			},
 			rejectIPs: []string{
-				"[2a03:4000:7:d080::]",
-				"[2a03:4000:7:d080::1]",
-				"[4242::1]",
+				"2a03:4000:7:d080::",
+				"2a03:4000:7:d080::1",
+				"4242::1",
 				"1.2.16.1",
 				"1.2.32.1",
 				"127.0.0.1",
@@ -256,13 +268,6 @@ func TestIPWhitelisterHandle(t *testing.T) {
 				"127.0.0.1/32",
 			},
 			passIPs: nil,
-			rejectIPs: []string{
-				"foo",
-				"10.0.0.350",
-				"fe:::80",
-				"",
-				"\\&$§&/(",
-			},
 		},
 	}
 
@@ -270,38 +275,44 @@ func TestIPWhitelisterHandle(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			whitelister, err := NewIPWhitelister(test.whitelistStrings)
+			whiteLister, err := NewIP(test.whitelistStrings)
 
 			require.NoError(t, err)
-			require.NotNil(t, whitelister)
-
-			handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				fmt.Fprintln(w, "traefik")
-			})
-			n := negroni.New(whitelister)
-			n.UseHandler(handler)
+			require.NotNil(t, whiteLister)
 
 			for _, testIP := range test.passIPs {
-				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
-
-				req.RemoteAddr = testIP + ":2342"
-				recorder := httptest.NewRecorder()
-				n.ServeHTTP(recorder, req)
-
-				assert.Equal(t, http.StatusOK, recorder.Code, testIP+" should have passed "+test.desc)
-				assert.Contains(t, recorder.Body.String(), "traefik")
+				allowed, ip, err := whiteLister.Contains(testIP)
+				require.NoError(t, err)
+				require.NotNil(t, ip, err)
+				assert.True(t, allowed, testIP+" should have passed "+test.desc)
 			}
 
 			for _, testIP := range test.rejectIPs {
-				req := testhelpers.MustNewRequest(http.MethodGet, "/", nil)
-
-				req.RemoteAddr = testIP + ":2342"
-				recorder := httptest.NewRecorder()
-				n.ServeHTTP(recorder, req)
-
-				assert.Equal(t, http.StatusForbidden, recorder.Code, testIP+" should not have passed "+test.desc)
-				assert.NotContains(t, recorder.Body.String(), "traefik")
+				allowed, ip, err := whiteLister.Contains(testIP)
+				require.NoError(t, err)
+				require.NotNil(t, ip, err)
+				assert.False(t, allowed, testIP+" should not have passed "+test.desc)
 			}
 		})
 	}
+}
+
+func TestBrokenIPs(t *testing.T) {
+	brokenIPs := []string{
+		"foo",
+		"10.0.0.350",
+		"fe:::80",
+		"",
+		"\\&$§&/(",
+	}
+
+	whiteLister, err := NewIP([]string{"1.2.3.4/24"})
+	require.NoError(t, err)
+
+	for _, testIP := range brokenIPs {
+		_, ip, err := whiteLister.Contains(testIP)
+		assert.Error(t, err)
+		require.Nil(t, ip, err)
+	}
+
 }

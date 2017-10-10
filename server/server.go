@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -32,6 +33,7 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/whitelist"
 	"github.com/streamrail/concurrent-map"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
@@ -652,8 +654,22 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 		return nil, nil, err
 	}
 
-	if entryPoint.ProxyProtocol {
-		listener = &proxyproto.Listener{Listener: listener}
+	if entryPoint.ProxyProtocol != nil {
+		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Error creating whitelist: %s", err)
+		}
+		log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
+		listener = &proxyproto.Listener{
+			Listener: listener,
+			SourceCheck: func(addr net.Addr) (bool, error) {
+				ip, ok := addr.(*net.TCPAddr)
+				if !ok {
+					return false, fmt.Errorf("Type error %v", addr)
+				}
+				return IPs.ContainsIP(ip.IP)
+			},
+		}
 	}
 
 	return &http.Server{

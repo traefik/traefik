@@ -16,7 +16,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 	}{
 		{
 			name:  "all parameters",
-			value: "Name:foo Address:bar TLS:goo TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:WhiteListSourceRange ProxyProtocol:true",
+			value: "Name:foo Address:bar TLS:goo TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:WhiteListSourceRange ProxyProtocol.TrustedIPs:192.168.0.1",
 			expectedResult: map[string]string{
 				"Name":                 "foo",
 				"Address":              "bar",
@@ -27,16 +27,8 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"RedirectRegex":        "RedirectRegex",
 				"RedirectReplacement":  "RedirectReplacement",
 				"WhiteListSourceRange": "WhiteListSourceRange",
-				"ProxyProtocol":        "true",
+				"ProxyProtocol":        "192.168.0.1",
 				"Compress":             "true",
-			},
-		},
-		{
-			name:  "proxy protocol on",
-			value: "Name:foo ProxyProtocol:on",
-			expectedResult: map[string]string{
-				"Name":          "foo",
-				"ProxyProtocol": "on",
 			},
 		},
 		{
@@ -142,7 +134,7 @@ func TestEntryPoints_Set(t *testing.T) {
 	}{
 		{
 			name:                   "all parameters",
-			expression:             "Name:foo Address:bar TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol:true",
+			expression:             "Name:foo Address:bar TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol.TrustedIPs:192.168.0.1",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: "bar",
@@ -151,8 +143,10 @@ func TestEntryPoints_Set(t *testing.T) {
 					Regex:       "RedirectRegex",
 					Replacement: "RedirectReplacement",
 				},
-				Compress:             true,
-				ProxyProtocol:        true,
+				Compress: true,
+				ProxyProtocol: &ProxyProtocol{
+					TrustedIPs: []string{"192.168.0.1"},
+				},
 				WhitelistSourceRange: []string{"Range"},
 				TLS: &TLS{
 					ClientCAFiles: []string{"car"},

@@ -355,7 +355,7 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 				"foo",
 			},
 			middlewareConfigured: false,
-			errMessage:           "parsing CIDR whitelist <nil>: invalid CIDR address: foo",
+			errMessage:           "parsing CIDR whitelist [foo]: parsing CIDR whitelist <nil>: invalid CIDR address: foo",
 		},
 	}
 
@@ -536,7 +536,7 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 			handler := srvEntryPoint.httpServer.Handler.(*negroni.Negroni)
 			found := false
 			for _, handler := range handler.Handlers() {
-				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhitelister)(nil)) {
+				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhiteLister)(nil)) {
 					found = true
 				}
 			}
