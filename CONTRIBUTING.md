@@ -166,7 +166,6 @@ And go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 ### Method 2: `mkdocs`
 
-
 First make sure you have python and pip installed
 
 ```shell
