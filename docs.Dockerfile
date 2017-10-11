@@ -4,10 +4,9 @@ RUN apk --update upgrade \
 && apk --no-cache --no-progress add py-pip \
 && rm -rf /var/cache/apk/*
 
-RUN mkdir /mkdocs
-
+COPY requirements.txt /mkdocs/
 WORKDIR /mkdocs
-COPY requirements.txt /mkdocs
+
 
 RUN pip install --user -r requirements.txt
 
