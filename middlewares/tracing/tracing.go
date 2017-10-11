@@ -4,40 +4,52 @@ import (
 	"io"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/tracing/jaeger"
+	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	opentracing "github.com/opentracing/opentracing-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
-	jaegermet "github.com/uber/jaeger-lib/metrics"
 )
 
 // Tracing middleware
 type Tracing struct {
-	Enable bool `description:"Enable opentracing." export:"true"`
-	opentracing.Tracer
+	Backend     string         `description:"Selects the tracking backend ('jaeger','zipkin')." export:"true"`
+	ServiceName string         `description:"Set the name for this service" export:"true"`
+	Jaeger      *jaeger.Config `description:"Settings for jaeger" export:"true"`
+	Zipkin      *zipkin.Config `description:"Settings for zipkin" export:"true"`
 
+	opentracing.Tracer
 	closer io.Closer
+}
+
+// Backend describes things we can use to setup tracing
+type Backend interface {
+	Setup(serviceName string) (opentracing.Tracer, io.Closer, error)
 }
 
 // Setup Tracing middleware
 func (t *Tracing) Setup() {
 	var err error
-	jcfg := jaegercfg.Configuration{}
-	jLogger := jaegerlog.StdLogger
-	jMetricsFactory := jaegermet.NullFactory
-	t.closer, err = jcfg.InitGlobalTracer(
-		"traefik",
-		jaegercfg.Logger(jLogger),
-		jaegercfg.Metrics(jMetricsFactory),
-	)
-	if err != nil {
-		log.Warnf("Could not initialize jaeger tracer: %v", err)
+
+	switch t.Backend {
+	case jaeger.Name:
+		t.Tracer, t.closer, err = t.Jaeger.Setup(t.ServiceName)
+	case zipkin.Name:
+		t.Tracer, t.closer, err = t.Zipkin.Setup(t.ServiceName)
+	default:
+		log.Warnf("unknown tracer %q", t.Backend)
 		return
 	}
-	log.Debugf("jaeger tracer configured", err)
-	t.Tracer = opentracing.GlobalTracer()
+
+	if err != nil {
+		log.Warnf("Could not initialize %s tracing: %v", err)
+		return
+	}
+
+	return
 }
 
 // Close tracer
 func (t *Tracing) Close() {
-	t.closer.Close()
+	if t.closer != nil {
+		t.closer.Close()
+	}
 }
