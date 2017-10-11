@@ -45,19 +45,7 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
-			globalConfiguration := traefikConfiguration.GlobalConfiguration
-			if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
-				// no filename, setting to global config file
-				if len(traefikConfiguration.ConfigFile) != 0 {
-					globalConfiguration.File.Filename = traefikConfiguration.ConfigFile
-				} else {
-					log.Errorln("Error using file configuration backend, no filename defined")
-				}
-			}
-			if len(traefikConfiguration.ConfigFile) != 0 {
-				log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
-			}
-			run(&globalConfiguration)
+			run(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
 			return nil
 		},
 	}
@@ -222,58 +210,16 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func run(globalConfiguration *configuration.GlobalConfiguration) {
-	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
+func run(globalConfiguration *configuration.GlobalConfiguration, configFile string) {
+	configureLogging(globalConfiguration)
+
+	if len(configFile) > 0 {
+		log.Infof("Using TOML configuration file %s", configFile)
+	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
-	globalConfiguration.SetEffectiveConfiguration()
-
-	// logging
-	level, err := logrus.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
-	if err != nil {
-		log.Error("Error getting level", err)
-	}
-	log.SetLevel(level)
-
-	logFile := globalConfiguration.TraefikLogsFile
-	if len(logFile) > 0 {
-		log.Warn("top-level traefiklogsfile has been deprecated -- please use traefiklog.filepath")
-	}
-	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
-		logFile = globalConfiguration.TraefikLog.FilePath
-	}
-
-	var formatter logrus.Formatter
-	if globalConfiguration.TraefikLog != nil && globalConfiguration.TraefikLog.Format == "json" {
-		formatter = &logrus.JSONFormatter{}
-	} else {
-		disableColors := false
-		if len(logFile) > 0 {
-			disableColors = true
-		}
-		formatter = &logrus.TextFormatter{DisableColors: disableColors, FullTimestamp: true, DisableSorting: true}
-	}
-	log.SetFormatter(formatter)
-
-	if len(logFile) > 0 {
-		dir := filepath.Dir(logFile)
-
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			log.Errorf("Failed to create log path %s: %s", dir, err)
-		}
-
-		err = log.OpenFile(logFile)
-		defer func() {
-			if err := log.CloseFile(); err != nil {
-				log.Error("Error closing log", err)
-			}
-		}()
-		if err != nil {
-			log.Error("Error opening file", err)
-		}
-	}
+	globalConfiguration.SetEffectiveConfiguration(configFile)
 
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
@@ -308,6 +254,64 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 	}
 	svr.Wait()
 	log.Info("Shutting down")
+	logrus.Exit(0)
+}
+
+func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
+	// configure default log flags
+	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
+
+	if globalConfiguration.Debug {
+		globalConfiguration.LogLevel = "DEBUG"
+	}
+
+	// configure log level
+	level, err := logrus.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
+	if err != nil {
+		log.Error("Error getting level", err)
+	}
+	log.SetLevel(level)
+
+	// configure log output file
+	logFile := globalConfiguration.TraefikLogsFile
+	if len(logFile) > 0 {
+		log.Warn("top-level traefiklogsfile has been deprecated -- please use traefiklog.filepath")
+	}
+	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
+		logFile = globalConfiguration.TraefikLog.FilePath
+	}
+
+	// configure log format
+	var formatter logrus.Formatter
+	if globalConfiguration.TraefikLog != nil && globalConfiguration.TraefikLog.Format == "json" {
+		formatter = &logrus.JSONFormatter{}
+	} else {
+		disableColors := false
+		if len(logFile) > 0 {
+			disableColors = true
+		}
+		formatter = &logrus.TextFormatter{DisableColors: disableColors, FullTimestamp: true, DisableSorting: true}
+	}
+	log.SetFormatter(formatter)
+
+	if len(logFile) > 0 {
+		dir := filepath.Dir(logFile)
+
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			log.Errorf("Failed to create log path %s: %s", dir, err)
+		}
+
+		err = log.OpenFile(logFile)
+		logrus.RegisterExitHandler(func() {
+			if err := log.CloseFile(); err != nil {
+				log.Error("Error closing log", err)
+			}
+		})
+		if err != nil {
+			log.Error("Error opening file", err)
+		}
+	}
 }
 
 // CreateKvSource creates KvSource

@@ -6,9 +6,13 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const defaultConfigFile = "traefik.toml"
 
 func Test_parseEntryPointsConfiguration(t *testing.T) {
 	testCases := []struct {
@@ -196,7 +200,7 @@ func TestEntryPoints_Set(t *testing.T) {
 	}
 }
 
-func TestSetEffecticeConfiguration(t *testing.T) {
+func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
 	tests := []struct {
 		desc                  string
 		legacyGraceTimeout    time.Duration
@@ -235,10 +239,48 @@ func TestSetEffecticeConfiguration(t *testing.T) {
 				}
 			}
 
-			gc.SetEffectiveConfiguration()
+			gc.SetEffectiveConfiguration(defaultConfigFile)
+
 			gotGraceTimeout := time.Duration(gc.LifeCycle.GraceTimeOut)
 			if gotGraceTimeout != test.wantGraceTimeout {
 				t.Fatalf("got effective grace timeout %d, want %d", gotGraceTimeout, test.wantGraceTimeout)
+			}
+
+		})
+	}
+}
+
+func TestSetEffectiveConfigurationFileProviderFilename(t *testing.T) {
+	tests := []struct {
+		desc                     string
+		fileProvider             *file.Provider
+		wantFileProviderFilename string
+	}{
+		{
+			desc:                     "no filename for file provider given",
+			fileProvider:             &file.Provider{},
+			wantFileProviderFilename: defaultConfigFile,
+		},
+		{
+			desc:                     "filename for file provider given",
+			fileProvider:             &file.Provider{BaseProvider: provider.BaseProvider{Filename: "other.toml"}},
+			wantFileProviderFilename: "other.toml",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			gc := &GlobalConfiguration{
+				File: test.fileProvider,
+			}
+
+			gc.SetEffectiveConfiguration(defaultConfigFile)
+
+			gotFileProviderFilename := gc.File.Filename
+			if gotFileProviderFilename != test.wantFileProviderFilename {
+				t.Fatalf("got file provider file name %q, want %q", gotFileProviderFilename, test.wantFileProviderFilename)
 			}
 		})
 	}
