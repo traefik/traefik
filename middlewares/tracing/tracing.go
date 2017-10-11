@@ -18,6 +18,7 @@ type Tracing struct {
 	closer io.Closer
 }
 
+// Setup Tracing middleware
 func (t *Tracing) Setup() {
 	var err error
 	jcfg := jaegercfg.Configuration{}
@@ -36,6 +37,7 @@ func (t *Tracing) Setup() {
 	t.Tracer = opentracing.GlobalTracer()
 }
 
+// Close tracer
 func (t *Tracing) Close() {
 	t.closer.Close()
 }
