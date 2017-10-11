@@ -2,6 +2,7 @@ site_name: Træfik
 site_description: Træfik Documentation
 site_author: containo.us
 site_url: https://docs.traefik.io
+dev_addr: 0.0.0.0:8000
 
 repo_name: 'GitHub'
 repo_url: 'https://github.com/containous/traefik'

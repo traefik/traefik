@@ -147,6 +147,25 @@ ok      _/home/user/go/src/github/containous/traefik    0.004s
 
 The [documentation site](http://docs.traefik.io/) is built with [mkdocs](http://mkdocs.org/)
 
+### Method 1: `Docker` and `make`
+
+You can test documentation using the `docs` target.
+
+```bash
+$ make docs
+docker build -t traefik-docs -f docs.Dockerfile .
+# […]
+docker run  --rm -v /home/user/go/github/containous/traefik:/mkdocs -p 8000:8000 traefik-docs mkdocs serve
+# […]
+[I 170828 20:47:48 server:283] Serving on http://0.0.0.0:8000
+[I 170828 20:47:48 handlers:60] Start watching changes
+[I 170828 20:47:48 handlers:62] Start detecting changes
+```
+
+And go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+### Method 2: `mkdocs`
+
 First make sure you have python and pip installed
 
 ```shell
