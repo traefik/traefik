@@ -232,6 +232,8 @@ import:
   version: ^1.1.0
   subpackages:
   - metrics
+- package: github.com/openzipkin/zipkin-go-opentracing
+  version: 1f5c07e90700ae93ddcba0c7af7d9c7201646ccc
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose

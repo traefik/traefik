@@ -1,4 +1,3 @@
->>>>>>> refactor(OpenTracing): glide dependencies for opentracing support2
 hash: 2a604d8b74e8659df7db72d063432fa0822fdee6c81bc6657efa3c1bf0d9cd8a
 updated: 2017-11-17T14:21:55.148450413+01:00
 imports:
@@ -103,7 +102,12 @@ imports:
 - name: github.com/coreos/etcd
   version: f1d7dd87da3e8feab4aaf675b8e29c6a5ed5f58b
   subpackages:
+<<<<<<< HEAD
   - auth/authpb
+=======
+  - Godeps/_workspace/src/github.com/ugorji/go/codec
+  - Godeps/_workspace/src/golang.org/x/net/context
+>>>>>>> Add glide deps for zipkin
   - client
   - clientv3
   - clientv3/concurrency
@@ -242,6 +246,12 @@ imports:
   version: b8f31a59085e69dd2678cf51840db2ac625cb741
 - name: github.com/eapache/channels
   version: 47238d5aae8c0fefd518ef2bee46290909cf8263
+- name: github.com/eapache/go-resiliency
+  version: b1fe83b5b03f624450823b751b662259ffc6af70
+  subpackages:
+  - breaker
+- name: github.com/eapache/go-xerial-snappy
+  version: bb955e01b9346ac19dc29eb16586c90ded99a98c
 - name: github.com/eapache/queue
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/edeckers/auroradnsclient
@@ -307,7 +317,12 @@ imports:
   subpackages:
   - jsonpb
   - proto
+<<<<<<< HEAD
   - ptypes/any
+=======
+- name: github.com/golang/snappy
+  version: 553a641470496b2327abcac10b36396bd98e45c9
+>>>>>>> Add glide deps for zipkin
 - name: github.com/google/go-github
   version: fe7d11f8add400587b6718d9f39a62e42cb04c28
   subpackages:
@@ -339,6 +354,7 @@ imports:
 - name: github.com/huandu/xstrings
   version: 3959339b333561bf62a38b424fd41517c2c90f40
 - name: github.com/imdario/mergo
+<<<<<<< HEAD
   version: 3e95a51e0639b4cf372f2ccf74c86749d747fbdc
 - name: github.com/influxdata/influxdb
   version: 2d474a3089bcfce6b472779be9470a1f0ef3d5e4
@@ -346,6 +362,9 @@ imports:
   - client/v2
   - models
   - pkg/escape
+=======
+  version: 7fe0c75c13abdee74b09fcacef5ea1c6bba6a874
+>>>>>>> Add glide deps for zipkin
 - name: github.com/JamesClonk/vultr
   version: 2fd0705ce648e602e6c9c57329a174270a4f6688
   subpackages:
@@ -373,7 +392,7 @@ imports:
 - name: github.com/Masterminds/semver
   version: 59c29afe1a994eacb71c833025ca7acf874bb1da
 - name: github.com/Masterminds/sprig
-  version: 9526be0327b26ad31aa70296a7b10704883976d5
+  version: e039e20e500c2c025d9145be375e27cf42a94174
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
@@ -437,6 +456,8 @@ imports:
   subpackages:
   - specs-go
   - specs-go/v1
+- name: github.com/opentracing-contrib/go-observer
+  version: a52f2342449246d5bcc273e65cbdcfa5f7d6c63c
 - name: github.com/opentracing-contrib/go-stdlib
   version: 48e4d763b2fbcd10e666e6a1742acdf8cc2286ef
   subpackages:
@@ -446,12 +467,26 @@ imports:
   subpackages:
   - ext
   - log
+- name: github.com/openzipkin/zipkin-go-opentracing
+  version: 1f5c07e90700ae93ddcba0c7af7d9c7201646ccc
+  subpackages:
+  - flag
+  - thrift/gen-go/scribe
+  - thrift/gen-go/zipkincore
+  - types
+  - wire
 - name: github.com/ovh/go-ovh
   version: 4b1fea467323b74c5f462f0947f402b428ca0626
   subpackages:
   - ovh
 - name: github.com/pborman/uuid
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
+- name: github.com/pierrec/lz4
+  version: 08c27939df1bd95e881e2c2367a749964ad1fceb
+- name: github.com/pierrec/xxHash
+  version: a0006b13c722f7f12368c00a3d3c2ae8a999a0c6
+  subpackages:
+  - xxHash32
 - name: github.com/pkg/errors
   version: c605e284fe17294bda444b34710735b29d1a9d90
 - name: github.com/pmezard/go-difflib
@@ -489,6 +524,8 @@ imports:
   version: d2103caca5873119ff423d29cba09b4d03cd69b8
   subpackages:
   - metadata
+- name: github.com/rcrowley/go-metrics
+  version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
 - name: github.com/ryanuber/go-glob
   version: 256dc444b735e061061cf46c809487313d5b0065
 - name: github.com/samuel/go-zookeeper
@@ -497,6 +534,8 @@ imports:
   - zk
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
+- name: github.com/Shopify/sarama
+  version: 70f6a705d4a17af059acbc6946fb2bd30762acd7
 - name: github.com/Sirupsen/logrus
   version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - name: github.com/spf13/pflag
