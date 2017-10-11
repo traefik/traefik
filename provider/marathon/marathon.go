@@ -434,7 +434,7 @@ func (p *Provider) hasStickinessLabel(application marathon.Application) bool {
 
 	label, okSticky := p.getAppLabel(application, types.LabelBackendLoadbalancerSticky)
 	if len(label) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 
 	return okStickiness || (okSticky && strings.EqualFold(strings.TrimSpace(label), "true"))

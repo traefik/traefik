@@ -117,7 +117,7 @@ func (p *Provider) hasStickinessLabel(service rancherData) bool {
 
 	label, errSticky := getServiceLabel(service, types.LabelBackendLoadbalancerSticky)
 	if len(label) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 
 	return errStickiness == nil || (errSticky == nil && strings.EqualFold(strings.TrimSpace(label), "true"))

@@ -250,7 +250,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				if len(service.Annotations[types.LabelBackendLoadbalancerSticky]) > 0 {
-					log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+					log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 				}
 
 				if service.Annotations[types.LabelBackendLoadbalancerSticky] == "true" || service.Annotations[types.LabelBackendLoadbalancerStickiness] == "true" {

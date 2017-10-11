@@ -247,9 +247,13 @@ func (p *Provider) hasStickinessLabel(rootPath string) bool {
 	if err != nil {
 		log.Debugf("Error occurs when check stickiness: %v", err)
 	}
-	sticky := p.get("false", rootPath, "/loadbalancer", "/sticky")
+	stickyValue := p.get("false", rootPath, "/loadbalancer", "/sticky")
 
-	return stickiness || (len(sticky) != 0 && strings.EqualFold(strings.TrimSpace(sticky), "true"))
+	sticky := len(stickyValue) != 0 && strings.EqualFold(strings.TrimSpace(stickyValue), "true")
+	if sticky {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", "/loadbalancer/sticky", "/loadbalancer/stickiness")
+	}
+	return stickiness || sticky
 }
 
 func (p *Provider) getStickinessCookieName(rootPath string) string {

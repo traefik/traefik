@@ -649,7 +649,7 @@ func (p *Provider) hasStickinessLabel(container dockerData) bool {
 
 	labelSticky, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
 	if len(labelSticky) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 
 	stickiness := errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
