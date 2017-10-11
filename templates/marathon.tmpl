@@ -22,7 +22,7 @@
         method = "{{getLoadBalancerMethod $app }}"
         {{if hasStickinessLabel $app}}
         [Backends."backend{{getBackend $app $serviceName }}".LoadBalancer.Stickiness]
-          cookieName = {{getStickinessCookieName $app}}
+          cookieName = "{{getStickinessCookieName $app}}"
         {{end}}
 {{end}}
 {{ if hasCircuitBreakerLabels $app }}

@@ -10,7 +10,7 @@
       method = "{{getLoadBalancerMethod $backend}}"
       {{if hasStickinessLabel $backend}}
       [Backends."{{$backendName}}".LoadBalancer.Stickiness]
-        cookieName = {{getStickinessCookieName $backend}}
+        cookieName = "{{getStickinessCookieName $backend}}"
       {{end}}
     {{end}}
 

@@ -1179,12 +1179,12 @@ func (*Server) configureBackends(backends map[string]*types.Backend) {
 
 			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
-				if backend.LoadBalancer.Stickiness != nil {
-					stickiness = backend.LoadBalancer.Stickiness
-				} else if backend.LoadBalancer.Sticky {
-					if backend.LoadBalancer.Stickiness == nil {
+				if backend.LoadBalancer.Stickiness == nil {
+					if backend.LoadBalancer.Sticky {
 						stickiness = &types.Stickiness{}
 					}
+				} else {
+					stickiness = backend.LoadBalancer.Stickiness
 				}
 			}
 			backend.LoadBalancer = &types.LoadBalancer{
