@@ -10,10 +10,6 @@ imports:
   version: 0ddd408d5d60ea76e320503cc7dd091992dee608
 - name: github.com/aokoli/goutils
   version: 3391d3790d23d03408670993e957e8f408993c34
-- name: github.com/apache/thrift
-  version: b2a4d4ae21c789b689dd162deb819665567f481c
-  subpackages:
-  - lib/go/thrift
 - name: github.com/armon/go-proxyproto
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - name: github.com/ArthurHlt/go-eureka-client
@@ -436,15 +432,6 @@ imports:
   subpackages:
   - specs-go
   - specs-go/v1
-- name: github.com/opentracing-contrib/go-stdlib
-  version: 48e4d763b2fbcd10e666e6a1742acdf8cc2286ef
-  subpackages:
-  - nethttp
-- name: github.com/opentracing/opentracing-go
-  version: 1949ddbfd147afd4d964a9f00b24eb291e0e7c38
-  subpackages:
-  - ext
-  - log
 - name: github.com/ovh/go-ovh
   version: 4b1fea467323b74c5f462f0947f402b428ca0626
   subpackages:
@@ -516,22 +503,6 @@ imports:
   - dns
 - name: github.com/tv42/zbase32
   version: 03389da7e0bf9844767f82690f4d68fc097a1306
-- name: github.com/uber/jaeger-client-go
-  version: 3e3870040def0ebdaf65a003863fa64f5cb26139
-  subpackages:
-  - config
-  - internal/spanlog
-  - log
-  - rpcmetrics
-  - thrift-gen/agent
-  - thrift-gen/jaeger
-  - thrift-gen/sampling
-  - thrift-gen/zipkincore
-  - utils
-- name: github.com/uber/jaeger-lib
-  version: 3b2a9ad2a045881ab7a0f81d465be54c8292ee4f
-  subpackages:
-  - metrics
 - name: github.com/ugorji/go
   version: ea9cd21fa0bc41ee4bdd50ac7ed8cbc7ea2ed960
   subpackages:
