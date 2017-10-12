@@ -1326,7 +1326,7 @@ func TestServiceAnnotations(t *testing.T) {
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
 					Stickiness: &types.Stickiness{
-						CookieName: "_4155f",
+						CookieName: "bar",
 					},
 				},
 			},

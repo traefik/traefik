@@ -9,6 +9,7 @@ import (
 	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestConsulCatalogGetFrontendRule(t *testing.T) {
@@ -888,6 +889,72 @@ func TestConsulCatalogGetBasicAuth(t *testing.T) {
 			if !reflect.DeepEqual(actual, c.expected) {
 				t.Errorf("actual %q, expected %q", actual, c.expected)
 			}
+		})
+	}
+}
+
+func TestConsulCatalogHasStickinessLabel(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected bool
+	}{
+		{
+			desc:     "label missing",
+			tags:     []string{},
+			expected: false,
+		},
+		{
+			desc: "sticky=true",
+			tags: []string{
+				"traefik.backend.loadbalancer.sticky=true",
+			},
+			expected: true,
+		},
+		{
+			desc: "stickiness=true",
+			tags: []string{
+				"traefik.backend.loadbalancer.stickiness=true",
+			},
+			expected: true,
+		},
+		{
+			desc: "sticky=true and stickiness=true",
+			tags: []string{
+				"traefik.backend.loadbalancer.sticky=true",
+				"traefik.backend.loadbalancer.stickiness=true",
+			},
+			expected: true,
+		},
+		{
+			desc: "sticky=false and stickiness=true",
+			tags: []string{
+				"traefik.backend.loadbalancer.sticky=true",
+				"traefik.backend.loadbalancer.stickiness=false",
+			},
+			expected: true,
+		},
+		{
+			desc: "sticky=true and stickiness=false",
+			tags: []string{
+				"traefik.backend.loadbalancer.sticky=true",
+				"traefik.backend.loadbalancer.stickiness=false",
+			},
+			expected: true,
+		},
+	}
+
+	provider := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := provider.hasStickinessLabel(test.tags)
+			assert.Equal(t, actual, test.expected)
 		})
 	}
 }
