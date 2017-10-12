@@ -66,7 +66,8 @@ test-unit: build ## run the unit tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate test-unit
 
 test-integration: build ## run the integration tests
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary test-integration
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary
+	./script/make.sh test-integration
 
 validate: build  ## validate gofmt, golint and go vet
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-glide validate-gofmt validate-govet validate-golint validate-misspell validate-vendor

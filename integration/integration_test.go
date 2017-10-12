@@ -43,6 +43,7 @@ func init() {
 	check.Suite(&SimpleSuite{})
 	check.Suite(&TimeoutSuite{})
 	check.Suite(&WebsocketSuite{})
+	check.Suite(&ProxyProtocolSuite{})
 }
 
 var traefikBinary = "../dist/traefik"
