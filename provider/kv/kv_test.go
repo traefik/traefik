@@ -1,10 +1,8 @@
 package kv
 
 import (
-	"errors"
 	"reflect"
 	"sort"
-	"strings"
 	"testing"
 	"time"
 
@@ -237,14 +235,6 @@ func TestKvLast(t *testing.T) {
 	}
 }
 
-type KvMock struct {
-	Provider
-}
-
-func (provider *KvMock) loadConfig() *types.Configuration {
-	return nil
-}
-
 func TestKvWatchTree(t *testing.T) {
 	returnedChans := make(chan chan []*store.KVPair)
 	provider := &KvMock{
@@ -287,91 +277,6 @@ func TestKvWatchTree(t *testing.T) {
 	default:
 	}
 }
-
-// Override Get/List to return a error
-type KvError struct {
-	Get  error
-	List error
-}
-
-// Extremely limited mock store so we can test initialization
-type Mock struct {
-	Error           KvError
-	KVPairs         []*store.KVPair
-	WatchTreeMethod func() <-chan []*store.KVPair
-}
-
-func (s *Mock) Put(key string, value []byte, opts *store.WriteOptions) error {
-	return errors.New("Put not supported")
-}
-
-func (s *Mock) Get(key string) (*store.KVPair, error) {
-	if err := s.Error.Get; err != nil {
-		return nil, err
-	}
-	for _, kvPair := range s.KVPairs {
-		if kvPair.Key == key {
-			return kvPair, nil
-		}
-	}
-	return nil, store.ErrKeyNotFound
-}
-
-func (s *Mock) Delete(key string) error {
-	return errors.New("Delete not supported")
-}
-
-// Exists mock
-func (s *Mock) Exists(key string) (bool, error) {
-	return false, errors.New("Exists not supported")
-}
-
-// Watch mock
-func (s *Mock) Watch(key string, stopCh <-chan struct{}) (<-chan *store.KVPair, error) {
-	return nil, errors.New("Watch not supported")
-}
-
-// WatchTree mock
-func (s *Mock) WatchTree(prefix string, stopCh <-chan struct{}) (<-chan []*store.KVPair, error) {
-	return s.WatchTreeMethod(), nil
-}
-
-// NewLock mock
-func (s *Mock) NewLock(key string, options *store.LockOptions) (store.Locker, error) {
-	return nil, errors.New("NewLock not supported")
-}
-
-// List mock
-func (s *Mock) List(prefix string) ([]*store.KVPair, error) {
-	if err := s.Error.List; err != nil {
-		return nil, err
-	}
-	kv := []*store.KVPair{}
-	for _, kvPair := range s.KVPairs {
-		if strings.HasPrefix(kvPair.Key, prefix) && !strings.ContainsAny(strings.TrimPrefix(kvPair.Key, prefix), "/") {
-			kv = append(kv, kvPair)
-		}
-	}
-	return kv, nil
-}
-
-// DeleteTree mock
-func (s *Mock) DeleteTree(prefix string) error {
-	return errors.New("DeleteTree not supported")
-}
-
-// AtomicPut mock
-func (s *Mock) AtomicPut(key string, value []byte, previous *store.KVPair, opts *store.WriteOptions) (bool, *store.KVPair, error) {
-	return false, nil, errors.New("AtomicPut not supported")
-}
-
-// AtomicDelete mock
-func (s *Mock) AtomicDelete(key string, previous *store.KVPair) (bool, error) {
-	return false, errors.New("AtomicDelete not supported")
-}
-
-// Close mock
-func (s *Mock) Close() {}
 
 func TestKVLoadConfig(t *testing.T) {
 	provider := &Provider{
@@ -461,5 +366,99 @@ func TestKVLoadConfig(t *testing.T) {
 	}
 	if !reflect.DeepEqual(actual.Frontends, expected.Frontends) {
 		t.Fatalf("expected %+v, got %+v", expected.Frontends, actual.Frontends)
+	}
+}
+
+func TestKVHasStickinessLabel(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		KVPairs  []*store.KVPair
+		expected bool
+	}{
+		{
+			desc:     "without option",
+			expected: false,
+		},
+		{
+			desc: "with cookie name without stickiness=true",
+			KVPairs: []*store.KVPair{
+				{
+					Key:   "loadbalancer/stickiness/cookiename",
+					Value: []byte("foo"),
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "stickiness=true",
+			KVPairs: []*store.KVPair{
+				{
+					Key:   "loadbalancer/stickiness",
+					Value: []byte("true"),
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "stickiness=true and sticky=true",
+			KVPairs: []*store.KVPair{
+				{
+					Key:   "loadbalancer/stickiness",
+					Value: []byte("true"),
+				},
+				{
+					Key:   "loadbalancer/sticky",
+					Value: []byte("true"),
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "stickiness=false and sticky=true",
+			KVPairs: []*store.KVPair{
+				{
+					Key:   "loadbalancer/stickiness",
+					Value: []byte("false"),
+				},
+				{
+					Key:   "loadbalancer/sticky",
+					Value: []byte("true"),
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "stickiness=true and sticky=false",
+			KVPairs: []*store.KVPair{
+				{
+					Key:   "loadbalancer/stickiness",
+					Value: []byte("true"),
+				},
+				{
+					Key:   "loadbalancer/sticky",
+					Value: []byte("false"),
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := &Provider{
+				kvclient: &Mock{
+					KVPairs: test.KVPairs,
+				},
+			}
+
+			actual := p.hasStickinessLabel("")
+
+			if actual != test.expected {
+				t.Fatalf("expected %v, got %v", test.expected, actual)
+			}
+		})
 	}
 }

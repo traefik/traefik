@@ -8,7 +8,7 @@
       method = "{{$backend.LoadBalancer.Method}}"
       {{if $backend.LoadBalancer.Stickiness}}
       [Backends."{{$backendName}}".LoadBalancer.Stickiness]
-        cookieName = {{$backend.LoadBalancer.Stickiness.CookieName}}
+        cookieName = "{{$backend.LoadBalancer.Stickiness.CookieName}}"
       {{end}}
     {{range $serverName, $server := $backend.Servers}}
     [backends."{{$backendName}}".servers."{{$serverName}}"]

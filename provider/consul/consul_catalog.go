@@ -398,7 +398,7 @@ func (p *CatalogProvider) hasStickinessLabel(tags []string) bool {
 
 	stickyTag := p.getTag(types.LabelBackendLoadbalancerSticky, tags, "")
 	if len(stickyTag) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 
 	stickiness := len(stickinessTag) > 0 && strings.EqualFold(strings.TrimSpace(stickinessTag), "true")

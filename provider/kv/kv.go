@@ -243,13 +243,17 @@ func (p *Provider) checkConstraints(keys ...string) bool {
 }
 
 func (p *Provider) hasStickinessLabel(rootPath string) bool {
-	stickiness, err := p.kvclient.Exists(rootPath + "/loadbalancer/stickiness")
-	if err != nil {
-		log.Debugf("Error occurs when check stickiness: %v", err)
-	}
-	sticky := p.get("false", rootPath, "/loadbalancer", "/sticky")
+	stickyValue := p.get("false", rootPath, "/loadbalancer", "/sticky")
 
-	return stickiness || (len(sticky) != 0 && strings.EqualFold(strings.TrimSpace(sticky), "true"))
+	sticky := len(stickyValue) != 0 && strings.EqualFold(strings.TrimSpace(stickyValue), "true")
+	if sticky {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", "loadbalancer/sticky", "loadbalancer/stickiness")
+	}
+
+	stickinessValue := p.get("false", rootPath, "/loadbalancer", "/stickiness")
+	stickiness := len(stickinessValue) > 0 && strings.EqualFold(strings.TrimSpace(stickinessValue), "true")
+
+	return stickiness || sticky
 }
 
 func (p *Provider) getStickinessCookieName(rootPath string) string {

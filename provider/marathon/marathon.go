@@ -430,14 +430,16 @@ func (p *Provider) getProtocol(application marathon.Application, serviceName str
 }
 
 func (p *Provider) hasStickinessLabel(application marathon.Application) bool {
-	_, okStickiness := p.getAppLabel(application, types.LabelBackendLoadbalancerStickiness)
+	labelStickiness, okStickiness := p.getAppLabel(application, types.LabelBackendLoadbalancerStickiness)
 
-	label, okSticky := p.getAppLabel(application, types.LabelBackendLoadbalancerSticky)
-	if len(label) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+	labelSticky, okSticky := p.getAppLabel(application, types.LabelBackendLoadbalancerSticky)
+	if len(labelSticky) > 0 {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 
-	return okStickiness || (okSticky && strings.EqualFold(strings.TrimSpace(label), "true"))
+	stickiness := okStickiness && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
+	sticky := okSticky && len(labelSticky) > 0 && strings.EqualFold(strings.TrimSpace(labelSticky), "true")
+	return stickiness || sticky
 }
 
 func (p *Provider) getStickinessCookieName(application marathon.Application) string {

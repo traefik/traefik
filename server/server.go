@@ -1166,25 +1166,29 @@ func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
 func (*Server) configureBackends(backends map[string]*types.Backend) {
 	for backendName, backend := range backends {
 		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
-			log.Warn("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
 		}
 
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
 		if err == nil {
 			if backend.LoadBalancer != nil && backend.LoadBalancer.Stickiness == nil && backend.LoadBalancer.Sticky {
-				backend.LoadBalancer.Stickiness = &types.Stickiness{}
+				backend.LoadBalancer.Stickiness = &types.Stickiness{
+					CookieName: "_TRAEFIK_BACKEND",
+				}
 			}
 		} else {
 			log.Debugf("Validation of load balancer method for backend %s failed: %s. Using default method wrr.", backendName, err)
 
 			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
-				if backend.LoadBalancer.Stickiness != nil {
-					stickiness = backend.LoadBalancer.Stickiness
-				} else if backend.LoadBalancer.Sticky {
-					if backend.LoadBalancer.Stickiness == nil {
-						stickiness = &types.Stickiness{}
+				if backend.LoadBalancer.Stickiness == nil {
+					if backend.LoadBalancer.Sticky {
+						stickiness = &types.Stickiness{
+							CookieName: "_TRAEFIK_BACKEND",
+						}
 					}
+				} else {
+					stickiness = backend.LoadBalancer.Stickiness
 				}
 			}
 			backend.LoadBalancer = &types.LoadBalancer{

@@ -18,7 +18,6 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
-	"github.com/containous/traefik/server/cookie"
 	"github.com/containous/traefik/types"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
@@ -185,8 +184,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					continue
 				}
 
-				witelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
-				whitelistSourceRange := provider.SplitAndTrimString(witelistSourceRangeAnnotation)
+				whitelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
+				whitelistSourceRange := provider.SplitAndTrimString(whitelistSourceRangeAnnotation)
 
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
@@ -250,12 +249,12 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				}
 
 				if len(service.Annotations[types.LabelBackendLoadbalancerSticky]) > 0 {
-					log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+					log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 				}
 
 				if service.Annotations[types.LabelBackendLoadbalancerSticky] == "true" || service.Annotations[types.LabelBackendLoadbalancerStickiness] == "true" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Stickiness = &types.Stickiness{
-						CookieName: cookie.GenerateName(r.Host + pa.Path),
+						CookieName: r.Host + pa.Path,
 					}
 				}
 

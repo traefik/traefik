@@ -645,14 +645,16 @@ func (p *Provider) getWeight(container dockerData) string {
 }
 
 func (p *Provider) hasStickinessLabel(container dockerData) bool {
-	_, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
+	labelStickiness, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
 
-	label, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
-	if len(label) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+	labelSticky, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
+	if len(labelSticky) > 0 {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 
-	return errStickiness == nil || (errSticky == nil && strings.EqualFold(strings.TrimSpace(label), "true"))
+	stickiness := errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
+	sticky := errSticky == nil && len(labelSticky) > 0 && strings.EqualFold(strings.TrimSpace(labelSticky), "true")
+	return stickiness || sticky
 }
 
 func (p *Provider) getStickinessCookieName(container dockerData) string {

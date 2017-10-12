@@ -113,14 +113,16 @@ func (p *Provider) getCircuitBreakerExpression(service rancherData) string {
 }
 
 func (p *Provider) hasStickinessLabel(service rancherData) bool {
-	_, errStickiness := getServiceLabel(service, types.LabelBackendLoadbalancerStickiness)
+	labelStickiness, errStickiness := getServiceLabel(service, types.LabelBackendLoadbalancerStickiness)
 
-	label, errSticky := getServiceLabel(service, types.LabelBackendLoadbalancerSticky)
-	if len(label) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+	labelSticky, errSticky := getServiceLabel(service, types.LabelBackendLoadbalancerSticky)
+	if len(labelSticky) > 0 {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 
-	return errStickiness == nil || (errSticky == nil && strings.EqualFold(strings.TrimSpace(label), "true"))
+	stickiness := errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
+	sticky := errSticky == nil && len(labelSticky) > 0 && strings.EqualFold(strings.TrimSpace(labelSticky), "true")
+	return stickiness || sticky
 }
 
 func (p *Provider) getStickinessCookieName(service rancherData, backendName string) string {

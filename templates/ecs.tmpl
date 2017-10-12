@@ -3,7 +3,7 @@
     method = "{{ getLoadBalancerMethod $instances}}"
     {{if hasStickinessLabel $instances}} 
     [Backends.backend-{{ $serviceName }}.LoadBalancer.Stickiness]
-      cookieName = {{getStickinessCookieName $instances}}
+      cookieName = "{{getStickinessCookieName $instances}}"
     {{end}}
 
   {{range $index, $i := $instances}}

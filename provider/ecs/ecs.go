@@ -490,7 +490,7 @@ func (p *Provider) hasStickinessLabel(instances []ecsInstance) bool {
 
 	stickyLabel := getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerSticky)
 	if len(stickyLabel) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
 	stickiness := len(stickinessLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickinessLabel), "true")
 	sticky := len(stickyLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickyLabel), "true")

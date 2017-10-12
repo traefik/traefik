@@ -856,7 +856,7 @@ func TestMarathonGetProtocol(t *testing.T) {
 }
 
 func TestMarathonHasStickinessLabel(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc        string
 		application marathon.Application
 		expected    bool
@@ -867,35 +867,50 @@ func TestMarathonHasStickinessLabel(t *testing.T) {
 			expected:    false,
 		},
 		{
-			desc:        "label existing and value equals true (deprecated)",
+			desc:        "sticky=true (deprecated)",
 			application: application(label(types.LabelBackendLoadbalancerSticky, "true")),
 			expected:    true,
 		},
 		{
-			desc:        "label existing and value equals false (deprecated)",
+			desc:        "sticky=false (deprecated)",
 			application: application(label(types.LabelBackendLoadbalancerSticky, "false")),
 			expected:    false,
 		},
 		{
-			desc:        "label existing and value equals true",
+			desc:        "stickiness=true",
 			application: application(label(types.LabelBackendLoadbalancerStickiness, "true")),
 			expected:    true,
 		},
 		{
-			desc:        "label existing and value equals false ",
+			desc:        "stickiness=false ",
 			application: application(label(types.LabelBackendLoadbalancerStickiness, "true")),
 			expected:    true,
 		},
+		{
+			desc: "sticky=false stickiness=true ",
+			application: application(
+				label(types.LabelBackendLoadbalancerStickiness, "true"),
+				label(types.LabelBackendLoadbalancerSticky, "false")),
+			expected: true,
+		},
+		{
+			desc: "sticky=true stickiness=false ",
+			application: application(
+				label(types.LabelBackendLoadbalancerStickiness, "false"),
+				label(types.LabelBackendLoadbalancerSticky, "true")),
+			expected: true,
+		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			provider := &Provider{}
-			actual := provider.hasStickinessLabel(c.application)
-			if actual != c.expected {
-				t.Errorf("actual %q, expected %q", actual, c.expected)
+			actual := provider.hasStickinessLabel(test.application)
+			if actual != test.expected {
+				t.Errorf("actual %q, expected %q", actual, test.expected)
 			}
 		})
 	}
