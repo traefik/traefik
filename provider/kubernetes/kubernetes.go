@@ -180,7 +180,9 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					log.Warnf("Unknown value '%s' for %s, falling back to %s", passHostHeaderAnnotation, types.LabelFrontendPassHostHeader, PassHostHeader)
 				}
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
-					return nil, errors.New("no realm customization supported")
+					log.Errorf("Value for annotation %q on ingress %s/%s invalid: no realm customization supported", annotationKubernetesAuthRealm, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
+					delete(templateObjects.Backends, r.Host+pa.Path)
+					continue
 				}
 
 				witelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
