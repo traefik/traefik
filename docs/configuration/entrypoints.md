@@ -188,11 +188,14 @@ To enable IP whitelisting at the entrypoint level.
   whiteListSourceRange = ["127.0.0.1/32", "192.168.1.7"]
 ```
 
-## ProxyProtocol Support
+## ProxyProtocol
 
 To enable [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt) support.
-Only IPs in `trustedIPs` will lead to remote client address replacement: you should declare your load-balancer IP or CIDR range here.
+Only IPs in `trustedIPs` will lead to remote client address replacement: you should declare your load-balancer IP or CIDR range here (in testing environment, you can trust everyone using `0.0.0.0/0`).
 
+!!! danger
+    When queuing Træfik behind another load-balancer, be sure to carefully configure Proxy Protocol on both sides.
+    Otherwise, it could introduce a security risk in your system by forging requests. 
 
 ```toml
 [entryPoints]
@@ -201,4 +204,3 @@ Only IPs in `trustedIPs` will lead to remote client address replacement: you sho
   [entryPoints.http.proxyProtocol]
     trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
 ```
-²
