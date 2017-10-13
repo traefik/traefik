@@ -229,7 +229,10 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
 	if len(globalConfiguration.EntryPoints) == 0 {
-		globalConfiguration.EntryPoints = map[string]*configuration.EntryPoint{"http": {Address: ":80"}}
+		globalConfiguration.EntryPoints = map[string]*configuration.EntryPoint{"http": {
+			Address:          ":80",
+			ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
+		}}
 		globalConfiguration.DefaultEntryPoints = []string{"http"}
 	}
 
@@ -257,6 +260,14 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 
 	if globalConfiguration.Debug {
 		globalConfiguration.LogLevel = "DEBUG"
+	}
+
+	// ForwardedHeaders must be remove in the next breaking version
+	for entryPointName := range globalConfiguration.EntryPoints {
+		entryPoint := globalConfiguration.EntryPoints[entryPointName]
+		if entryPoint.ForwardedHeaders == nil {
+			entryPoint.ForwardedHeaders = &configuration.ForwardedHeaders{Insecure: true}
+		}
 	}
 
 	// logging

@@ -218,3 +218,22 @@ Only IPs in `trustedIPs` will lead to remote client address replacement: you sho
       #
       # insecure = true
 ```
+
+## Forwarded Header
+
+Only IPs in `trustedIPs` will be authorize to trust the client forwarded headers (`X-Forwarded-*`).
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+
+    # Enable Forwarded Headers
+    [entryPoints.http.forwardedHeaders]
+      # List of trusted IPs
+      #
+      # Required
+      # Default: []
+      #
+      trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
+```
