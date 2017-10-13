@@ -229,10 +229,12 @@ func (ep *EntryPoints) Set(value string) error {
 	compress := toBool(result, "compress")
 
 	var proxyProtocol *ProxyProtocol
-	if len(result["proxyprotocol_trustedips"]) > 0 {
-		trustedIPs := strings.Split(result["proxyprotocol_trustedips"], ",")
-		proxyProtocol = &ProxyProtocol{
-			TrustedIPs: trustedIPs,
+	ppTrustedIPs := result["proxyprotocol_trustedips"]
+	if len(result["proxyprotocol_insecure"]) > 0 || len(ppTrustedIPs) > 0 {
+		ppInsecure := toBool(result, "proxyprotocol_insecure")
+		proxyProtocol = &ProxyProtocol{Insecure: ppInsecure}
+		if len(ppTrustedIPs) > 0 {
+			proxyProtocol.TrustedIPs = strings.Split(ppTrustedIPs, ",")
 		}
 	}
 
@@ -453,5 +455,6 @@ type ForwardingTimeouts struct {
 
 // ProxyProtocol contains Proxy-Protocol configuration
 type ProxyProtocol struct {
+	Insecure   bool
 	TrustedIPs []string
 }

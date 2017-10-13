@@ -655,7 +655,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	}
 
 	if entryPoint.ProxyProtocol != nil {
-		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs)
+		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Error creating whitelist: %s", err)
 		}

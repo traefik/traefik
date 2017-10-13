@@ -26,7 +26,7 @@ func NewIPWhitelister(whitelistStrings []string) (*IPWhiteLister, error) {
 
 	whiteLister := IPWhiteLister{}
 
-	ip, err := whitelist.NewIP(whitelistStrings)
+	ip, err := whitelist.NewIP(whitelistStrings, false)
 	if err != nil {
 		return nil, fmt.Errorf("parsing CIDR whitelist %s: %v", whitelistStrings, err)
 	}
