@@ -24,19 +24,20 @@ func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 	s.composeProject.Start(c)
 
 	consul := s.composeProject.Container(c, "consul")
-
 	s.consulIP = consul.NetworkSettings.IPAddress
 	config := api.DefaultConfig()
 	config.Address = s.consulIP + ":8500"
-	consulClient, err := api.NewClient(config)
-	if err != nil {
-		c.Fatalf("Error creating consul client. %v", err)
-	}
-	s.consulClient = consulClient
+	s.createConsulClient(config, c)
 
 	// Wait for consul to elect itself leader
-	err = try.Do(3*time.Second, func() error {
-		leader, err := consulClient.Status().Leader()
+	err := s.waitToElectConsulLeader()
+	c.Assert(err, checker.IsNil)
+
+}
+
+func (s *ConsulCatalogSuite) waitToElectConsulLeader() error {
+	return try.Do(3*time.Second, func() error {
+		leader, err := s.consulClient.Status().Leader()
 
 		if err != nil || len(leader) == 0 {
 			return fmt.Errorf("Leader not found. %v", err)
@@ -44,7 +45,17 @@ func (s *ConsulCatalogSuite) SetUpSuite(c *check.C) {
 
 		return nil
 	})
-	c.Assert(err, checker.IsNil)
+}
+func (s *ConsulCatalogSuite) createConsulClient(config *api.Config, c *check.C) *api.Client {
+	consulClient, err := api.NewClient(config)
+	if err != nil {
+		c.Fatalf("Error creating consul client. %v", err)
+	}
+	s.consulClient = consulClient
+	return consulClient
+}
+func (s *ConsulCatalogSuite) startConsulService(c *check.C) {
+
 }
 
 func (s *ConsulCatalogSuite) registerService(name string, address string, port int, tags []string) error {
@@ -330,5 +341,52 @@ func (s *ConsulCatalogSuite) TestBasicAuthSimpleService(c *check.C) {
 
 	req.SetBasicAuth("test2", "test2")
 	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
+
+	//Scale consul to 0 to be able to start traefik before and test retry
+	s.composeProject.Scale(c, "consul", 0)
+
+	cmd, display := s.traefikCmd(
+		withConfigFile("fixtures/consul_catalog/simple.toml"),
+		"--consulCatalog",
+		"--consulCatalog.watch=false",
+		"--consulCatalog.exposedByDefault=true",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// Wait for Traefik to turn ready.
+	err = try.GetRequest("http://127.0.0.1:8000/", 2*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.consul.localhost"
+
+	// Request should fail
+	err = try.Request(req, 2*time.Second, try.StatusCodeIs(http.StatusNotFound), try.HasBody())
+	c.Assert(err, checker.IsNil)
+
+	// Scale consul to 1
+	s.composeProject.Scale(c, "consul", 1)
+	s.waitToElectConsulLeader()
+
+	nginx := s.composeProject.Container(c, "nginx1")
+	// Register service
+	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+
+	// Provider consul catalog should be present
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("consul_catalog"))
+	c.Assert(err, checker.IsNil)
+
+	// Should be ok
+	err = try.Request(req, 10*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 }
