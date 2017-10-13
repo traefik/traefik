@@ -1,5 +1,5 @@
 logLevel = "DEBUG"
-
+checkNewVersion=false
 defaultEntryPoints = ["http", "https"]
 
 [entryPoints]

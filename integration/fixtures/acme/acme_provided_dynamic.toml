@@ -1,5 +1,5 @@
 logLevel = "DEBUG"
-
+checkNewVersion=false
 defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
@@ -10,10 +10,6 @@ defaultEntryPoints = ["http", "https"]
     [entryPoints.https.tls]
 
 
-[httpsFile]
-configurationFile = "fixtures/acme/certificates.toml"
-watch = true
-
 [acme]
 email = "test@traefik.io"
 storage = "/dev/null"
@@ -23,15 +19,5 @@ OnHostRule = {{.OnHostRule}}
 caServer = "http://{{.BoulderHost}}:4000/directory"
 
 [file]
-
-[backends]
-  [backends.backend]
-    [backends.backend.servers.server1]
-    url = "http://127.0.0.1:9010"
-
-
-[frontends]
-  [frontends.frontend]
-  backend = "backend"
-    [frontends.frontend.routes.test]
-    rule = "Host:traefik.acme.wtf"
+filename = "fixtures/acme/certificates.toml"
+watch = true

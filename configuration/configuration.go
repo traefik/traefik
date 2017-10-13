@@ -16,7 +16,6 @@ import (
 	"github.com/containous/traefik/provider/etcd"
 	"github.com/containous/traefik/provider/eureka"
 	"github.com/containous/traefik/provider/file"
-	httpsFile "github.com/containous/traefik/provider/https/file"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
@@ -83,7 +82,6 @@ type GlobalConfiguration struct {
 	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings" export:"true"`
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings" export:"true"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
-	HTTPSFile                 *httpsFile.Provider     `description:"Enable dynamic HTTPS configuration from file with default settings"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.

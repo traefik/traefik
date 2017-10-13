@@ -50,7 +50,7 @@ type ACME struct {
 	checkOnDemandDomain func(domain string) bool
 	jobs                *channels.InfiniteChannel
 	TLSConfig           *tls.Config `description:"TLS config in case wildcard certs are used"`
-	dynamicsCerts       map[string]*tls.Certificate
+	dynamicsCerts       *safe.Safe
 }
 
 //Domains parse []Domain
@@ -116,7 +116,7 @@ func (a *ACME) init() error {
 }
 
 // CreateClusterConfig creates a tls.config using ACME configuration in cluster mode
-func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tls.Config, certs map[string]*tls.Certificate, checkOnDemandDomain func(domain string) bool) error {
+func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tls.Config, certs *safe.Safe, checkOnDemandDomain func(domain string) bool) error {
 	err := a.init()
 	if err != nil {
 		return err
@@ -237,7 +237,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 }
 
 // CreateLocalConfig creates a tls.config using local ACME configuration
-func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs map[string]*tls.Certificate, checkOnDemandDomain func(domain string) bool) error {
+func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkOnDemandDomain func(domain string) bool) error {
 	err := a.init()
 	if err != nil {
 		return err
@@ -592,8 +592,8 @@ func (a *ACME) getProvidedCertificate(domains []string) *tls.Certificate {
 	log.Debugf("Look for provided certificate to validate %s...", domains)
 	var cert *tls.Certificate
 	cert = searchProvidedCertificateForDomains(domains, a.TLSConfig.NameToCertificate)
-	if cert == nil {
-		cert = searchProvidedCertificateForDomains(domains, a.dynamicsCerts)
+	if cert == nil && a.dynamicsCerts != nil && a.dynamicsCerts.Get() != nil {
+		cert = searchProvidedCertificateForDomains(domains, a.dynamicsCerts.Get().(*traefikTls.DomainsCertificates).Get().(map[string]*tls.Certificate))
 	}
 	log.Debugf("No provided certificate found for domains %s, get ACME certificate.", domains)
 	return cert

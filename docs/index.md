@@ -50,7 +50,6 @@ Run it and forget it!
 - Access Logs (JSON, CLF)
 - [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS with renewal)
 - High Availability with cluster mode
-- [Dynamic TLS configuration](/https-providers/file.md) thanks to watched file
 
 
 ## Supported backends

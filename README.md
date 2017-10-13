@@ -73,7 +73,6 @@ Run it and forget it!
 - [Let's Encrypt](https://letsencrypt.org) support (Automatic HTTPS with renewal)
 - [Proxy Protocol](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt) support
 - High Availability with cluster mode (beta)
-- [Dynamic TLS configuration](/https-providers/file.md) thanks to watched file
 
 ## Supported backends
 

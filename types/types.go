@@ -187,20 +187,17 @@ func NewLoadBalancerMethod(loadBalancer *LoadBalancer) (LoadBalancerMethod, erro
 // Configurations is for currentConfigurations Map
 type Configurations map[string]*Configuration
 
-// TLSConfigurations is for currentTlsConfigurations Map
-type TLSConfigurations map[string]*traefikTls.EntrypointsCertificates
-
 // Configuration of a provider.
 type Configuration struct {
-	Backends  map[string]*Backend  `json:"backends,omitempty"`
-	Frontends map[string]*Frontend `json:"frontends,omitempty"`
+	Backends         map[string]*Backend         `json:"backends,omitempty"`
+	Frontends        map[string]*Frontend        `json:"frontends,omitempty"`
+	TLSConfiguration []*traefikTls.Configuration `json:"tlsConfiguration,omitempty"`
 }
 
 // ConfigMessage hold configuration information exchanged between parts of traefik.
 type ConfigMessage struct {
-	ProviderName     string
-	Configuration    *Configuration
-	TLSConfiguration *traefikTls.EntrypointsCertificates
+	ProviderName  string
+	Configuration *Configuration
 }
 
 // Constraint hold a parsed constraint expression

@@ -8,6 +8,8 @@ You have three choices:
 - [Rules in a Separate File](/configuration/backends/file/#rules-in-a-separate-file)
 - [Multiple `.toml` Files](/configuration/backends/file/#multiple-toml-files)
 
+The configuration file allows managing both backends/frontends and HTTPS certificates (which are not [Let's Encrypt](https://letsencrypt.org) certificates generated through Træfik).
+
 ## Simple
 
 Add your configuration at the end of the global configuration file `traefik.toml`:
@@ -23,12 +25,6 @@ defaultEntryPoints = ["http", "https"]
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
-      [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
 
 [file]
 
@@ -81,7 +77,15 @@ defaultEntryPoints = ["http", "https"]
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
   rule = "Path:/test"
+
+# HTTPS certificate
+[[TLSConfiguration]]
+EntryPoints = ["https"]
+  [TLSConfiguration.Certificate]
+    CertFile = "integration/fixtures/https/snitest.com.cert"
+    KeyFile = "integration/fixtures/https/snitest.com.key"
 ```
+
 
 ## Rules in a Separate File
 
@@ -97,12 +101,6 @@ Put your rules in a separate file, for example `rules.toml`:
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
-      [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
 
 [file]
 filename = "rules.toml"
@@ -149,11 +147,23 @@ filename = "rules.toml"
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
   rule = "Path:/test"
+# HTTPS certificate
+[[TLSConfiguration]]
+EntryPoints = ["https"]
+  [TLSConfiguration.Certificate]
+    CertFile = "integration/fixtures/https/snitest.com.cert"
+    KeyFile = "integration/fixtures/https/snitest.com.key"
+
+[[TLSConfiguration]]
+EntryPoints = ["https"]
+  [[TLSConfiguration.certificates]]
+  CertFile = "integration/fixtures/https/snitest.org.cert"
+  KeyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
 ## Multiple `.toml` Files
 
-You could have multiple `.toml` files in a directory:
+You could have multiple `.toml` files in a directory (and recursively and its sub-directories):
 
 ```toml
 [file]
