@@ -20,12 +20,12 @@ import (
 
 // Provider holds common configurations of key-value providers.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
-	Endpoint              string              `description:"Comma separated server endpoints"`
-	Prefix                string              `description:"Prefix used for KV store"`
-	TLS                   *provider.ClientTLS `description:"Enable TLS support"`
-	Username              string              `description:"KV Username"`
-	Password              string              `description:"KV Password"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
+	Endpoint              string           `description:"Comma separated server endpoints"`
+	Prefix                string           `description:"Prefix used for KV store" export:"true"`
+	TLS                   *types.ClientTLS `description:"Enable TLS support" export:"true"`
+	Username              string           `description:"KV Username"`
+	Password              string           `description:"KV Password"`
 	storeType             store.Backend
 	kvclient              store.Store
 }
@@ -139,11 +139,13 @@ func (p *Provider) loadConfig() *types.Configuration {
 	}
 
 	var KvFuncMap = template.FuncMap{
-		"List":        p.list,
-		"ListServers": p.listServers,
-		"Get":         p.get,
-		"SplitGet":    p.splitGet,
-		"Last":        p.last,
+		"List":                    p.list,
+		"ListServers":             p.listServers,
+		"Get":                     p.get,
+		"SplitGet":                p.splitGet,
+		"Last":                    p.last,
+		"hasStickinessLabel":      p.hasStickinessLabel,
+		"getStickinessCookieName": p.getStickinessCookieName,
 	}
 
 	configuration, err := p.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -152,7 +154,7 @@ func (p *Provider) loadConfig() *types.Configuration {
 	}
 
 	for key, frontend := range configuration.Frontends {
-		if _, ok := configuration.Backends[frontend.Backend]; ok == false {
+		if _, ok := configuration.Backends[frontend.Backend]; !ok {
 			delete(configuration.Frontends, key)
 		}
 	}
@@ -231,11 +233,25 @@ func (p *Provider) checkConstraints(keys ...string) bool {
 
 	constraintTags := strings.Split(value, ",")
 	ok, failingConstraint := p.MatchConstraints(constraintTags)
-	if ok == false {
+	if !ok {
 		if failingConstraint != nil {
 			log.Debugf("Constraint %v not matching with following tags: %v", failingConstraint.String(), value)
 		}
 		return false
 	}
 	return true
+}
+
+func (p *Provider) hasStickinessLabel(rootPath string) bool {
+	stickiness, err := p.kvclient.Exists(rootPath + "/loadbalancer/stickiness")
+	if err != nil {
+		log.Debugf("Error occurs when check stickiness: %v", err)
+	}
+	sticky := p.get("false", rootPath, "/loadbalancer", "/sticky")
+
+	return stickiness || (len(sticky) != 0 && strings.EqualFold(strings.TrimSpace(sticky), "true"))
+}
+
+func (p *Provider) getStickinessCookieName(rootPath string) string {
+	return p.get("", rootPath, "/loadbalancer", "/stickiness", "/cookiename")
 }

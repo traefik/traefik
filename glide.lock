@@ -1,5 +1,5 @@
-hash: c7f74f8b5eac556a531d2cb3bae212e32785c1128d416c75fabedc31d27f0e03
-updated: 2017-08-12T14:15:06.346751095+02:00
+hash: 6881e0574a026dde78c9d7f03a4aa56f6c6dc585d2b6d3e6f4ae1a94810b7f88
+updated: 2017-10-02T18:32:16.848940186+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -10,6 +10,8 @@ imports:
   version: 0ddd408d5d60ea76e320503cc7dd091992dee608
 - name: github.com/aokoli/goutils
   version: 3391d3790d23d03408670993e957e8f408993c34
+- name: github.com/armon/go-proxyproto
+  version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - name: github.com/ArthurHlt/go-eureka-client
   version: 9d0a49cbd39aa3634ae1977e9f519a262b10adaf
   subpackages:
@@ -87,7 +89,7 @@ imports:
 - name: github.com/containous/flaeg
   version: b5d2dc5878df07c2d74413348186982e7b865871
 - name: github.com/containous/mux
-  version: a819b77bba13f0c0cbe36e437bc2e948411b3996
+  version: af6ea922f7683d9706834157e6b0610e22ccb2db
 - name: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - name: github.com/coreos/etcd
@@ -318,8 +320,12 @@ imports:
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/kr/logfmt
   version: b84e30acd515aadc4b783ad4ff83aff3299bdfe0
+- name: github.com/mailgun/minheap
+  version: 7c28d80e2ada649fc8ab1a37b86d30a2633bd47c
 - name: github.com/mailgun/timetools
   version: 7e6055773c5137efbeb3bd2410d705fe10ab6bfd
+- name: github.com/mailgun/ttlmap
+  version: c1c17f74874f2a5ea48bfb06b5459d4ef2689749
 - name: github.com/mailru/easyjson
   version: d5b7844b561a7bc640052f1b935f7b800330d7e0
   subpackages:
@@ -368,8 +374,12 @@ imports:
   version: f533f7a102197536779ea3a8cb881d639e21ec5a
 - name: github.com/miekg/dns
   version: 8060d9f51305bbe024b99679454e62f552cd0b0b
+- name: github.com/mitchellh/copystructure
+  version: d23ffcb85de31694d6ccaa23ccb4a03e55c1303f
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
+- name: github.com/mitchellh/reflectwalk
+  version: 63d60e9d0dbc60cf9164e6510889b0db6683d98c
 - name: github.com/mvdan/xurls
   version: db96455566f05ffe42bd6ac671f05eeb1152b45d
 - name: github.com/Nvveen/Gotty
@@ -377,9 +387,7 @@ imports:
   repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
-  version: 316adfc72ed3b0157975917adf62ba2dc31842ce
-  repo: https://github.com/containous/gziphandler.git
-  vcs: git
+  version: 97ae7fbaf81620fe97840685304a78a306a39c64
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/go-digest
@@ -477,7 +485,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: d40fb60c9a1620892a6fc146dcdc891fb02bd488
+  version: 648088ee0902cf8d8337826ae2a82444008720e2
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -485,6 +493,7 @@ imports:
   - connlimit
   - forward
   - memmetrics
+  - ratelimit
   - roundrobin
   - stream
   - utils
@@ -777,11 +786,13 @@ testImports:
 - name: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 - name: github.com/go-check/check
-  version: 11d3bc7aa68e238947792f30573146a3231fc0f1
+  version: ca0bf163426aa183d03fd4949101785c0347f273
+  repo: https://github.com/containous/check.git
+  vcs: git
 - name: github.com/gorilla/mux
   version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
 - name: github.com/libkermit/compose
-  version: 2048f803f56422a65b455f918d4a61704dc94603
+  version: 4a33a16f1446ba205c4da7b09105d5bdc293b432
   subpackages:
   - check
 - name: github.com/libkermit/docker

@@ -10,7 +10,9 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/containous/traefik/types"
 	shellwords "github.com/mattn/go-shellwords"
@@ -33,7 +35,86 @@ var (
 	testMethod              = "POST"
 	testReferer             = "testReferer"
 	testUserAgent           = "testUserAgent"
+	testRetryAttempts       = 2
 )
+
+func TestLogRotation(t *testing.T) {
+	tempDir, err := ioutil.TempDir("", "traefik_")
+	if err != nil {
+		t.Fatalf("Error setting up temporary directory: %s", err)
+	}
+
+	fileName := tempDir + "traefik.log"
+	rotatedFileName := fileName + ".rotated"
+
+	config := &types.AccessLog{FilePath: fileName, Format: CommonFormat}
+	logHandler, err := NewLogHandler(config)
+	if err != nil {
+		t.Fatalf("Error creating new log handler: %s", err)
+	}
+	defer logHandler.Close()
+
+	recorder := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
+	next := func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusOK)
+	}
+
+	iterations := 20
+	halfDone := make(chan bool)
+	writeDone := make(chan bool)
+	go func() {
+		for i := 0; i < iterations; i++ {
+			logHandler.ServeHTTP(recorder, req, next)
+			if i == iterations/2 {
+				halfDone <- true
+			}
+		}
+		writeDone <- true
+	}()
+
+	<-halfDone
+	err = os.Rename(fileName, rotatedFileName)
+	if err != nil {
+		t.Fatalf("Error renaming file: %s", err)
+	}
+
+	err = logHandler.Rotate()
+	if err != nil {
+		t.Fatalf("Error rotating file: %s", err)
+	}
+
+	select {
+	case <-writeDone:
+		gotLineCount := lineCount(t, fileName) + lineCount(t, rotatedFileName)
+		if iterations != gotLineCount {
+			t.Errorf("Wanted %d written log lines, got %d", iterations, gotLineCount)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatalf("test timed out")
+	}
+
+	close(halfDone)
+	close(writeDone)
+}
+
+func lineCount(t *testing.T, fileName string) int {
+	t.Helper()
+	fileContents, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		t.Fatalf("Error reading from file %s: %s", fileName, err)
+	}
+
+	count := 0
+	for _, line := range strings.Split(string(fileContents), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		count++
+	}
+
+	return count
+}
 
 func TestLoggerCLF(t *testing.T) {
 	tmpDir := createTempDir(t, CommonFormat)
@@ -91,6 +172,7 @@ func TestLoggerJSON(t *testing.T) {
 		RequestCount,
 		Duration,
 		Overhead,
+		RetryAttempts,
 		"time",
 		"StartLocal",
 		"StartUTC",
@@ -149,6 +231,8 @@ func TestLoggerJSON(t *testing.T) {
 	assert.NotZero(t, jsonData[Duration].(float64))
 	assertCount++
 	assert.NotZero(t, jsonData[Overhead].(float64))
+	assertCount++
+	assert.Equal(t, float64(testRetryAttempts), jsonData[RetryAttempts].(float64))
 	assertCount++
 	assert.NotEqual(t, "", jsonData["time"].(string))
 	assertCount++
@@ -218,8 +302,8 @@ func createTempDir(t *testing.T, prefix string) string {
 
 func doLogging(t *testing.T, config *types.AccessLog) {
 	logger, err := NewLogHandler(config)
-	defer logger.Close()
 	require.NoError(t, err)
+	defer logger.Close()
 
 	if config.FilePath != "" {
 		_, err = os.Stat(config.FilePath)
@@ -275,4 +359,5 @@ func logWriterTestHandlerFunc(rw http.ResponseWriter, r *http.Request) {
 	logDataTable.Core[BackendURL] = testBackendName
 	logDataTable.Core[OriginStatus] = testStatus
 	logDataTable.Core[OriginContentSize] = testContentSize
+	logDataTable.Core[RetryAttempts] = testRetryAttempts
 }

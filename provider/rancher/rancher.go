@@ -18,14 +18,14 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider     `mapstructure:",squash"`
-	APIConfiguration          `mapstructure:",squash"` // Provide backwards compatibility
-	API                       *APIConfiguration        `description:"Enable the Rancher API provider"`
-	Metadata                  *MetadataConfiguration   `description:"Enable the Rancher metadata service provider"`
-	Domain                    string                   `description:"Default domain used"`
-	RefreshSeconds            int                      `description:"Polling interval (in seconds)"`
-	ExposedByDefault          bool                     `description:"Expose services by default"`
-	EnableServiceHealthFilter bool                     `description:"Filter services with unhealthy states and inactive states"`
+	provider.BaseProvider     `mapstructure:",squash" export:"true"`
+	APIConfiguration          `mapstructure:",squash" export:"true"` // Provide backwards compatibility
+	API                       *APIConfiguration                      `description:"Enable the Rancher API provider" export:"true"`
+	Metadata                  *MetadataConfiguration                 `description:"Enable the Rancher metadata service provider" export:"true"`
+	Domain                    string                                 `description:"Default domain used"`
+	RefreshSeconds            int                                    `description:"Polling interval (in seconds)" export:"true"`
+	ExposedByDefault          bool                                   `description:"Expose services by default" export:"true"`
+	EnableServiceHealthFilter bool                                   `description:"Filter services with unhealthy states and inactive states" export:"true"`
 }
 
 type rancherData struct {
@@ -112,11 +112,22 @@ func (p *Provider) getCircuitBreakerExpression(service rancherData) string {
 	return "NetworkErrorRatio() > 1"
 }
 
-func (p *Provider) getSticky(service rancherData) string {
-	if _, err := getServiceLabel(service, types.LabelBackendLoadbalancerSticky); err == nil {
-		return "true"
+func (p *Provider) hasStickinessLabel(service rancherData) bool {
+	_, errStickiness := getServiceLabel(service, types.LabelBackendLoadbalancerStickiness)
+
+	label, errSticky := getServiceLabel(service, types.LabelBackendLoadbalancerSticky)
+	if len(label) > 0 {
+		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 	}
-	return "false"
+
+	return errStickiness == nil || (errSticky == nil && strings.EqualFold(strings.TrimSpace(label), "true"))
+}
+
+func (p *Provider) getStickinessCookieName(service rancherData, backendName string) string {
+	if label, err := getServiceLabel(service, types.LabelBackendLoadbalancerStickinessCookieName); err == nil {
+		return label
+	}
+	return ""
 }
 
 func (p *Provider) getBackend(service rancherData) string {
@@ -222,7 +233,8 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 		"hasMaxConnLabels":            p.hasMaxConnLabels,
 		"getMaxConnAmount":            p.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     p.getMaxConnExtractorFunc,
-		"getSticky":                   p.getSticky,
+		"hasStickinessLabel":          p.hasStickinessLabel,
+		"getStickinessCookieName":     p.getStickinessCookieName,
 	}
 
 	// filter services

@@ -1,0 +1,2 @@
+nginx1:
+  image: nginx:alpine

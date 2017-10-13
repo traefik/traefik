@@ -11,7 +11,7 @@ TRAEFIK_ENVS := \
 	-e CI \
 	-e CONTAINER=DOCKER		# Indicator for integration tests that we are running inside a container.
 
-SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/' | grep -v '^integration/vendor/')
+SRCS = $(shell git ls-files '*.go' | grep -v '^vendor/')
 
 BIND_DIR := "dist"
 TRAEFIK_MOUNT := -v "$(CURDIR)/$(BIND_DIR):/go/src/github.com/containous/traefik/$(BIND_DIR)"
@@ -21,11 +21,15 @@ TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"containous/traefik")
 INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -v "/var/run/docker.sock:/var/run/docker.sock")
+TRAEFIK_DOC_IMAGE := traefik-docs
 
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
 DOCKER_RUN_OPTS := $(TRAEFIK_ENVS) $(TRAEFIK_MOUNT) "$(TRAEFIK_DEV_IMAGE)"
 DOCKER_RUN_TRAEFIK := docker run $(INTEGRATION_OPTS) -it $(DOCKER_RUN_OPTS)
 DOCKER_RUN_TRAEFIK_NOTTY := docker run $(INTEGRATION_OPTS) -i $(DOCKER_RUN_OPTS)
+DOCKER_RUN_DOC_PORT := 8000
+DOCKER_RUN_DOC_MOUNT := -v $(CURDIR):/mkdocs
+DOCKER_RUN_DOC_OPTS := --rm $(DOCKER_RUN_DOC_MOUNT) -p $(DOCKER_RUN_DOC_PORT):8000
 
 
 print-%: ; @echo $*=$($*)
@@ -89,6 +93,12 @@ image-dirty: binary ## build a docker traefik image
 image: clear-static binary ## clean up static directory and build a docker traefik image
 	docker build -t $(TRAEFIK_IMAGE) .
 
+docs: docs-image
+	docker run  $(DOCKER_RUN_DOC_OPTS) $(TRAEFIK_DOC_IMAGE) mkdocs serve
+
+docs-image:
+	docker build -t $(TRAEFIK_DOC_IMAGE) -f docs.Dockerfile .
+
 clear-static:
 	rm -rf static
 
@@ -97,7 +107,7 @@ dist:
 
 run-dev:
 	go generate
-	go build
+	go build ./cmd/traefik
 	./traefik
 
 generate-webui: build-webui
@@ -114,9 +124,7 @@ fmt:
 	gofmt -s -l -w $(SRCS)
 
 pull-images:
-	for f in $(shell find ./integration/resources/compose/ -type f); do \
-		docker-compose -f $$f pull; \
-	done
+	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq  | xargs -P 6 -n 1 docker pull
 
 help: ## this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

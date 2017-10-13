@@ -9,6 +9,7 @@ import (
 	"github.com/NYTimes/gziphandler"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/negroni"
 )
 
@@ -80,63 +81,114 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
 }
 
-func TestIntegrationShouldNotCompressWhenContentAlreadyCompressed(t *testing.T) {
+func TestIntegrationShouldNotCompress(t *testing.T) {
 	fakeCompressedBody := generateBytes(100000)
-
-	handler := func(rw http.ResponseWriter, r *http.Request) {
-		rw.Header().Add(contentEncodingHeader, gzipValue)
-		rw.Header().Add(varyHeader, acceptEncodingHeader)
-		rw.Write(fakeCompressedBody)
-	}
-
 	comp := &Compress{}
 
-	negro := negroni.New(comp)
-	negro.UseHandlerFunc(handler)
-	ts := httptest.NewServer(negro)
-	defer ts.Close()
+	testCases := []struct {
+		name               string
+		handler            func(rw http.ResponseWriter, r *http.Request)
+		expectedStatusCode int
+	}{
+		{
+			name: "when content already compressed",
+			handler: func(rw http.ResponseWriter, r *http.Request) {
+				rw.Header().Add(contentEncodingHeader, gzipValue)
+				rw.Header().Add(varyHeader, acceptEncodingHeader)
+				rw.Write(fakeCompressedBody)
+			},
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name: "when content already compressed and status code Created",
+			handler: func(rw http.ResponseWriter, r *http.Request) {
+				rw.Header().Add(contentEncodingHeader, gzipValue)
+				rw.Header().Add(varyHeader, acceptEncodingHeader)
+				rw.WriteHeader(http.StatusCreated)
+				rw.Write(fakeCompressedBody)
+			},
+			expectedStatusCode: http.StatusCreated,
+		},
+	}
 
-	client := &http.Client{}
-	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	req.Header.Add(acceptEncodingHeader, gzipValue)
+	for _, test := range testCases {
 
-	resp, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+		t.Run(test.name, func(t *testing.T) {
+			negro := negroni.New(comp)
+			negro.UseHandlerFunc(test.handler)
+			ts := httptest.NewServer(negro)
+			defer ts.Close()
 
-	assert.Equal(t, gzipValue, resp.Header.Get(contentEncodingHeader))
-	assert.Equal(t, acceptEncodingHeader, resp.Header.Get(varyHeader))
+			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+			req.Header.Add(acceptEncodingHeader, gzipValue)
 
-	body, err := ioutil.ReadAll(resp.Body)
-	assert.EqualValues(t, fakeCompressedBody, body)
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedStatusCode, resp.StatusCode)
+
+			assert.Equal(t, gzipValue, resp.Header.Get(contentEncodingHeader))
+			assert.Equal(t, acceptEncodingHeader, resp.Header.Get(varyHeader))
+
+			body, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			assert.EqualValues(t, fakeCompressedBody, body)
+		})
+	}
 }
 
-func TestIntegrationShouldCompressWhenAcceptEncodingHeaderIsPresent(t *testing.T) {
+func TestIntegrationShouldCompress(t *testing.T) {
 	fakeBody := generateBytes(100000)
 
-	handler := func(rw http.ResponseWriter, r *http.Request) {
-		rw.Write(fakeBody)
+	testCases := []struct {
+		name               string
+		handler            func(rw http.ResponseWriter, r *http.Request)
+		expectedStatusCode int
+	}{
+		{
+			name: "when AcceptEncoding header is present",
+			handler: func(rw http.ResponseWriter, r *http.Request) {
+				rw.Write(fakeBody)
+			},
+			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name: "when AcceptEncoding header is present and status code Created",
+			handler: func(rw http.ResponseWriter, r *http.Request) {
+				rw.WriteHeader(http.StatusCreated)
+				rw.Write(fakeBody)
+			},
+			expectedStatusCode: http.StatusCreated,
+		},
 	}
 
-	comp := &Compress{}
+	for _, test := range testCases {
 
-	negro := negroni.New(comp)
-	negro.UseHandlerFunc(handler)
-	ts := httptest.NewServer(negro)
-	defer ts.Close()
+		t.Run(test.name, func(t *testing.T) {
+			comp := &Compress{}
 
-	client := &http.Client{}
-	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	req.Header.Add(acceptEncodingHeader, gzipValue)
+			negro := negroni.New(comp)
+			negro.UseHandlerFunc(test.handler)
+			ts := httptest.NewServer(negro)
+			defer ts.Close()
 
-	resp, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
+			req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+			req.Header.Add(acceptEncodingHeader, gzipValue)
 
-	assert.Equal(t, gzipValue, resp.Header.Get(contentEncodingHeader))
-	assert.Equal(t, acceptEncodingHeader, resp.Header.Get(varyHeader))
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
 
-	body, err := ioutil.ReadAll(resp.Body)
-	if assert.ObjectsAreEqualValues(body, fakeBody) {
-		assert.Fail(t, "expected a compressed body", "got %v", body)
+			assert.Equal(t, test.expectedStatusCode, resp.StatusCode)
+
+			assert.Equal(t, gzipValue, resp.Header.Get(contentEncodingHeader))
+			assert.Equal(t, acceptEncodingHeader, resp.Header.Get(varyHeader))
+
+			body, err := ioutil.ReadAll(resp.Body)
+			require.NoError(t, err)
+			if assert.ObjectsAreEqualValues(body, fakeBody) {
+				assert.Fail(t, "expected a compressed body", "got %v", body)
+			}
+		})
 	}
 }
 
