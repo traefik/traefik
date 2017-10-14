@@ -111,7 +111,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
 
 	server.tracingMiddleware = globalConfiguration.Tracing
-	if globalConfiguration.Tracing != nil {
+	if globalConfiguration.Tracing != nil && globalConfiguration.Tracing.Backend != "" {
 		server.tracingMiddleware.Setup()
 	}
 
