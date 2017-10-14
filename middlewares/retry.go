@@ -9,6 +9,8 @@ import (
 	"net/http"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -34,6 +36,9 @@ func NewRetry(attempts int, next http.Handler, listener RetryListener) *Retry {
 }
 
 func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	span, nr := tracing.StartSpan(r, "retry")
+	defer span.Finish()
+	r = nr
 	// if we might make multiple attempts, swap the body for an ioutil.NopCloser
 	// cf https://github.com/containous/traefik/issues/1008
 	if retry.attempts > 1 {
@@ -63,10 +68,12 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			utils.CopyHeaders(rw.Header(), recorder.Header())
 			rw.WriteHeader(recorder.Code)
 			rw.Write(recorder.Body.Bytes())
+			ext.Error.Set(span, true)
 			break
 		}
 		attempts++
 		log.Debugf("New attempt %d for request: %v", attempts, r.URL)
+		tracing.LogEventf(r, "New attempt %d for request: %v", attempts, r.URL)
 		retry.listener.Retried(r, attempts)
 	}
 }
