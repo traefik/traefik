@@ -399,48 +399,6 @@ func TestKVHasStickinessLabel(t *testing.T) {
 			},
 			expected: true,
 		},
-		{
-			desc: "stickiness=true and sticky=true",
-			KVPairs: []*store.KVPair{
-				{
-					Key:   "loadbalancer/stickiness",
-					Value: []byte("true"),
-				},
-				{
-					Key:   "loadbalancer/sticky",
-					Value: []byte("true"),
-				},
-			},
-			expected: true,
-		},
-		{
-			desc: "stickiness=false and sticky=true",
-			KVPairs: []*store.KVPair{
-				{
-					Key:   "loadbalancer/stickiness",
-					Value: []byte("false"),
-				},
-				{
-					Key:   "loadbalancer/sticky",
-					Value: []byte("true"),
-				},
-			},
-			expected: true,
-		},
-		{
-			desc: "stickiness=true and sticky=false",
-			KVPairs: []*store.KVPair{
-				{
-					Key:   "loadbalancer/stickiness",
-					Value: []byte("true"),
-				},
-				{
-					Key:   "loadbalancer/sticky",
-					Value: []byte("false"),
-				},
-			},
-			expected: true,
-		},
 	}
 
 	for _, test := range testCases {

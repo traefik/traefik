@@ -617,16 +617,6 @@ func TestRancherHasStickinessLabel(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc: "sticky=true",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelBackendLoadbalancerSticky: "true",
-				},
-			},
-			expected: true,
-		},
-		{
 			desc: "stickiness=true",
 			service: rancherData{
 				Name: "test-service",
@@ -637,48 +627,14 @@ func TestRancherHasStickinessLabel(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc: "sticky=true and stickiness=true",
+			desc: "stickiness=true",
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					types.LabelBackendLoadbalancerSticky:     "true",
-					types.LabelBackendLoadbalancerStickiness: "true",
-				},
-			},
-			expected: true,
-		},
-		{
-			desc: "sticky=false and stickiness=false",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelBackendLoadbalancerSticky:     "false",
 					types.LabelBackendLoadbalancerStickiness: "false",
 				},
 			},
 			expected: false,
-		},
-		{
-			desc: "sticky=true and stickiness=false",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelBackendLoadbalancerSticky:     "true",
-					types.LabelBackendLoadbalancerStickiness: "false",
-				},
-			},
-			expected: true,
-		},
-		{
-			desc: "sticky=false and stickiness=true",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelBackendLoadbalancerSticky:     "false",
-					types.LabelBackendLoadbalancerStickiness: "true",
-				},
-			},
-			expected: true,
 		},
 	}
 

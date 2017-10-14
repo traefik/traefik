@@ -1325,9 +1325,7 @@ func TestServiceAnnotations(t *testing.T) {
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
-					Stickiness: &types.Stickiness{
-						CookieName: "bar",
-					},
+					Sticky: true,
 				},
 			},
 		},
@@ -1356,7 +1354,7 @@ func TestServiceAnnotations(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, actual)
+	assert.EqualValues(t, expected, actual)
 }
 
 func TestIngressAnnotations(t *testing.T) {

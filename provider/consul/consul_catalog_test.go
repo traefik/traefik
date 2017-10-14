@@ -905,42 +905,18 @@ func TestConsulCatalogHasStickinessLabel(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc: "sticky=true",
-			tags: []string{
-				"traefik.backend.loadbalancer.sticky=true",
-			},
-			expected: true,
-		},
-		{
 			desc: "stickiness=true",
 			tags: []string{
-				"traefik.backend.loadbalancer.stickiness=true",
+				types.LabelBackendLoadbalancerStickiness + "=true",
 			},
 			expected: true,
 		},
 		{
-			desc: "sticky=true and stickiness=true",
+			desc: "stickiness=false",
 			tags: []string{
-				"traefik.backend.loadbalancer.sticky=true",
-				"traefik.backend.loadbalancer.stickiness=true",
+				types.LabelBackendLoadbalancerStickiness + "=false",
 			},
-			expected: true,
-		},
-		{
-			desc: "sticky=false and stickiness=true",
-			tags: []string{
-				"traefik.backend.loadbalancer.sticky=true",
-				"traefik.backend.loadbalancer.stickiness=false",
-			},
-			expected: true,
-		},
-		{
-			desc: "sticky=true and stickiness=false",
-			tags: []string{
-				"traefik.backend.loadbalancer.sticky=true",
-				"traefik.backend.loadbalancer.stickiness=false",
-			},
-			expected: true,
+			expected: false,
 		},
 	}
 

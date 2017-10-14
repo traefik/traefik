@@ -354,21 +354,19 @@ The default cookie name is an abbreviation of a sha1 (ex: `_1d52e`).
 On subsequent requests, the client will be directed to the backend stored in the cookie if it is still healthy.
 If not, a new backend will be assigned.
 
-To activate sticky session:
 
 ```toml
 [backends]
   [backends.backend1]
+    # Enable sticky session
     [backends.backend1.loadbalancer.stickiness]
-```
 
-To customize the cookie name:
-
-```toml
-[backends]
-  [backends.backend1]
-    [backends.backend1.loadbalancer.stickiness]
-      cookieName = "my_cookie"
+    # Customize the cookie name
+    #
+    # Optional
+    # Default: a sha1 (6 chars)
+    #
+    #  cookieName = "my_cookie"
 ```
 
 The deprecated way:

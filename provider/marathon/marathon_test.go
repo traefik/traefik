@@ -854,6 +854,36 @@ func TestMarathonGetProtocol(t *testing.T) {
 		})
 	}
 }
+func TestMarathonGetSticky(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		expected    string
+	}{
+		{
+			desc:        "label missing",
+			application: application(),
+			expected:    "false",
+		},
+		{
+			desc:        "label existing",
+			application: application(label(types.LabelBackendLoadbalancerSticky, "true")),
+			expected:    "true",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			provider := &Provider{}
+			actual := provider.getSticky(test.application)
+			if actual != test.expected {
+				t.Errorf("actual %q, expected %q", actual, test.expected)
+			}
+		})
+	}
+}
 
 func TestMarathonHasStickinessLabel(t *testing.T) {
 	testCases := []struct {
@@ -867,16 +897,6 @@ func TestMarathonHasStickinessLabel(t *testing.T) {
 			expected:    false,
 		},
 		{
-			desc:        "sticky=true (deprecated)",
-			application: application(label(types.LabelBackendLoadbalancerSticky, "true")),
-			expected:    true,
-		},
-		{
-			desc:        "sticky=false (deprecated)",
-			application: application(label(types.LabelBackendLoadbalancerSticky, "false")),
-			expected:    false,
-		},
-		{
 			desc:        "stickiness=true",
 			application: application(label(types.LabelBackendLoadbalancerStickiness, "true")),
 			expected:    true,
@@ -885,20 +905,6 @@ func TestMarathonHasStickinessLabel(t *testing.T) {
 			desc:        "stickiness=false ",
 			application: application(label(types.LabelBackendLoadbalancerStickiness, "true")),
 			expected:    true,
-		},
-		{
-			desc: "sticky=false stickiness=true ",
-			application: application(
-				label(types.LabelBackendLoadbalancerStickiness, "true"),
-				label(types.LabelBackendLoadbalancerSticky, "false")),
-			expected: true,
-		},
-		{
-			desc: "sticky=true stickiness=false ",
-			application: application(
-				label(types.LabelBackendLoadbalancerStickiness, "false"),
-				label(types.LabelBackendLoadbalancerSticky, "true")),
-			expected: true,
 		},
 	}
 

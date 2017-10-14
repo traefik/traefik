@@ -184,6 +184,7 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 		"getFrontendRule":         p.getFrontendRule,
 		"getBasicAuth":            p.getBasicAuth,
 		"getLoadBalancerMethod":   p.getLoadBalancerMethod,
+		"getLoadBalancerSticky":   p.getLoadBalancerSticky,
 		"hasStickinessLabel":      p.hasStickinessLabel,
 		"getStickinessCookieName": p.getStickinessCookieName,
 	}
@@ -485,16 +486,20 @@ func getFirstInstanceLabel(instances []ecsInstance, labelName string) string {
 	return ""
 }
 
+func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
+	if len(instances) > 0 {
+		label := getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerSticky)
+		if label != "" {
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+			return label
+		}
+	}
+	return "false"
+}
+
 func (p *Provider) hasStickinessLabel(instances []ecsInstance) bool {
 	stickinessLabel := getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerStickiness)
-
-	stickyLabel := getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerSticky)
-	if len(stickyLabel) > 0 {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
-	}
-	stickiness := len(stickinessLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickinessLabel), "true")
-	sticky := len(stickyLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickyLabel), "true")
-	return stickiness || sticky
+	return len(stickinessLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickinessLabel), "true")
 }
 
 func (p *Provider) getStickinessCookieName(instances []ecsInstance) string {
