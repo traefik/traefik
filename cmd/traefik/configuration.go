@@ -7,6 +7,7 @@ import (
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
@@ -195,6 +196,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
 	}
 
+	// default Tracing
+	defaultTracing := tracing.Tracing{
+		ServiceName: "traefik",
+	}
+
 	// default LifeCycle
 	defaultLifeycle := configuration.LifeCycle{
 		GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
@@ -256,6 +262,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Ping:               &defaultPing,
 		API:                &defaultAPI,
 		Metrics:            &defaultMetrics,
+		Tracing:            &defaultTracing,
 	}
 
 	return &TraefikConfiguration{

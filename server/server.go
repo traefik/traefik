@@ -38,8 +38,6 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/whitelist"
 	"github.com/eapache/channels"
-	"github.com/opentracing-contrib/go-stdlib/nethttp"
-	opentracing "github.com/opentracing/opentracing-go"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/cbreaker"
@@ -291,13 +289,11 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 	serverInternalMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 
-	if server.tracingMiddleware != nil {
+	if server.tracingMiddleware.Tracer != nil {
 		serverMiddlewares = append(
 			serverMiddlewares,
-			negroni.HandlerFunc(func(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-				nethttp.Middleware(server.tracingMiddleware, next, nethttp.MWComponentName("entrypoint")).ServeHTTP(rw, r)
-			}))
-		log.Debug("Added incoming tracing middleware")
+			server.tracingMiddleware.NewEntryPoint(newServerEntryPointName))
+		log.Debug("Added entrypoint tracing middleware")
 	}
 
 	if server.accessLoggerMiddleware != nil {
@@ -992,32 +988,12 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
-					if server.tracingMiddleware != nil {
+					if server.tracingMiddleware.Tracer != nil {
+						tm := server.tracingMiddleware.NewForwarder(frontendName, frontend.Backend)
 						next := fwd
-						fwd = http.HandlerFunc(
-							func(next http.Handler, ep, fn, be string) func(rw http.ResponseWriter, r *http.Request) {
-								return func(rw http.ResponseWriter, r *http.Request) {
-									if span := opentracing.SpanFromContext(r.Context()); span != nil {
-										span, _ := opentracing.StartSpanFromContext(r.Context(), "proxy")
-										defer span.Finish()
-										span.SetOperationName("backend")
-										span.SetTag("entrypoint.name", ep)
-										span.SetTag("frontend.name", fn)
-										span.SetTag("backend.name", be)
-										span.SetTag("http.url", r.URL.String())
-
-										log.Debug("Added outgoing trace headers", frontendName, err)
-										opentracing.GlobalTracer().Inject(
-											span.Context(),
-											opentracing.HTTPHeaders,
-											opentracing.HTTPHeadersCarrier(r.Header))
-									} else {
-										log.Debug("no context found")
-									}
-
-									next.ServeHTTP(rw, r)
-								}
-							}(next, entryPointName, frontendName, frontend.Backend))
+						fwd = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+							tm.ServeHTTP(w, r, next.ServeHTTP)
+						})
 						log.Debug("Added outgoing tracing middleware", frontendName, err)
 					}
 
