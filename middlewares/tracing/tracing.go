@@ -18,8 +18,8 @@ import (
 type Tracing struct {
 	Backend     string         `description:"Selects the tracking backend ('jaeger','zipkin')." export:"true"`
 	ServiceName string         `description:"Set the name for this service" export:"true"`
-	Jaeger      *jaeger.Config `description:"Settings for jaeger" export:"true"`
-	Zipkin      *zipkin.Config `description:"Settings for zipkin" export:"true"`
+	Jaeger      *jaeger.Config `description:"Settings for jaeger"`
+	Zipkin      *zipkin.Config `description:"Settings for zipkin"`
 
 	opentracing.Tracer
 	closer io.Closer

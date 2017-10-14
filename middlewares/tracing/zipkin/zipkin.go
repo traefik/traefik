@@ -20,17 +20,18 @@ type Config struct {
 
 // Setup sets up the tracer
 func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error) {
-	collector, err := zipkin.NewHTTPCollector("0.0.0.0:0")
-	recorder := zipkin.NewRecorder(collector, c.Debug, c.HTTPEndpoint, serviceName)
+	collector, err := zipkin.NewHTTPCollector(c.HTTPEndpoint)
+	recorder := zipkin.NewRecorder(collector, c.Debug, "0.0.0.0:0", serviceName)
 	tracer, err := zipkin.NewTracer(
 		recorder,
 		zipkin.ClientServerSameSpan(c.SameSpan),
 		zipkin.TraceID128Bit(c.ID128Bit),
+		zipkin.DebugMode(c.Debug),
 	)
 
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return tracer, nil, nil
+	return tracer, collector, nil
 }
