@@ -10,6 +10,8 @@ import (
 	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
+	otlog "github.com/opentracing/opentracing-go/log"
+	"github.com/urfave/negroni"
 )
 
 // Tracing middleware
@@ -72,7 +74,8 @@ type epMiddleware struct {
 	*Tracing
 }
 
-func (t *Tracing) NewEntryPoint(name string) *epMiddleware {
+// NewEntryPoint creates a new middleware that the incoming request
+func (t *Tracing) NewEntryPoint(name string) negroni.Handler {
 	return &epMiddleware{Tracing: t, ep: name}
 }
 
@@ -108,7 +111,8 @@ type fwdMiddleware struct {
 	*Tracing
 }
 
-func (t *Tracing) NewForwarder(frontend, backend string) *fwdMiddleware {
+// NewForwarder creates a new forwarder middleware that the final outgoing request
+func (t *Tracing) NewForwarder(frontend, backend string) negroni.Handler {
 	return &fwdMiddleware{
 		Tracing:  t,
 		frontend: frontend,
@@ -141,5 +145,43 @@ func (t *fwdMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next h
 	if code >= 400 {
 		ext.Error.Set(span, true)
 	}
+	span.Finish()
+}
+
+// LogEventf logs an event to the span in the request context.
+func LogEventf(r *http.Request, str string, vals ...interface{}) {
+	if span := opentracing.SpanFromContext(r.Context()); span != nil {
+		span.LogEvent(fmt.Sprintf(str, vals...))
+	}
+}
+
+// LogFields logs the opentracing log fields to the span in the request context.
+func LogFields(r *http.Request, flds ...otlog.Field) {
+	if span := opentracing.SpanFromContext(r.Context()); span != nil {
+		span.LogFields(flds...)
+	}
+}
+
+// StartSpan starts a new span from the one in the request context
+func StartSpan(r *http.Request, operationName string, opts ...opentracing.StartSpanOption) (opentracing.Span, *http.Request) {
+	span, ctx := opentracing.StartSpanFromContext(r.Context(), operationName, opts...)
+	r = r.WithContext(ctx)
+	return span, r
+}
+
+type baseMiddleware struct {
+	opName string
+	*Tracing
+}
+
+// NewSpanMiddleware creates a new middleware wraps a span around subsequent
+// middleware
+func (t *Tracing) NewSpanMiddleware(name string) negroni.Handler {
+	return &baseMiddleware{Tracing: t, opName: name}
+}
+
+func (t *baseMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	span, nr := StartSpan(r, t.opName)
+	next(w, nr)
 	span.Finish()
 }
