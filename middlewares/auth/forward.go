@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/types"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
 )
@@ -21,10 +23,16 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 			return http.ErrUseLastResponse
 		},
 	}
+	span, nr := tracing.StartSpan(r, "externalauth")
+	defer span.Finish()
+	r = nr
+
+	httpClient := http.Client{}
 
 	if config.TLS != nil {
 		tlsConfig, err := config.TLS.CreateTLSConfig()
 		if err != nil {
+			ext.Error.Set(span, true)
 			log.Debugf("Impossible to configure TLS to call %s. Cause %s", config.Address, err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -36,6 +44,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 
 	forwardReq, err := http.NewRequest(http.MethodGet, config.Address, nil)
 	if err != nil {
+		ext.Error.Set(span, true)
 		log.Debugf("Error calling %s. Cause %s", config.Address, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -45,6 +54,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 
 	forwardResponse, forwardErr := httpClient.Do(forwardReq)
 	if forwardErr != nil {
+		ext.Error.Set(span, true)
 		log.Debugf("Error calling %s. Cause: %s", config.Address, forwardErr)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -52,6 +62,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 
 	body, readError := ioutil.ReadAll(forwardResponse.Body)
 	if readError != nil {
+		ext.Error.Set(span, true)
 		log.Debugf("Error reading body %s. Cause: %s", config.Address, readError)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -61,6 +72,8 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
+		ext.Error.Set(span, true)
+		tracing.LogEventf(r, "Remote error %s. StatusCode: %d", config.Address, forwardResponse.StatusCode)
 		log.Debugf("Remote error %s. StatusCode: %d", config.Address, forwardResponse.StatusCode)
 
 		// Grab the location header, if any.
