@@ -185,3 +185,10 @@ func (t *baseMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next 
 	next(w, nr)
 	span.Finish()
 }
+
+// SetError flags the span associated with this request as in error
+func SetError(r *http.Request) {
+	if span := opentracing.SpanFromContext(r.Context()); span != nil {
+		ext.Error.Set(span, true)
+	}
+}
