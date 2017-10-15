@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	"net/http"
-	"regexp"
 	"testing"
 
 	"github.com/containous/traefik/testhelpers"
@@ -50,15 +49,15 @@ func TestReplacePathRegex(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
 			var expectedPath, actualHeader, requestURI string
-			handler := &ReplacePathRegex{
-				Regexp: regexp.MustCompile(test.regex),
-				Repl:   test.replacement,
-				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler := NewReplacePathRegexHandler(
+				test.regex,
+				test.replacement,
+				http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					expectedPath = r.URL.Path
 					actualHeader = r.Header.Get(ReplacedPathHeader)
 					requestURI = r.RequestURI
 				}),
-			}
+			)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, `http://localhost`+test.path, nil)
 
