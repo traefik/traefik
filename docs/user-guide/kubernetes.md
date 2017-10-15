@@ -15,12 +15,13 @@ on your machine, as it is the quickest way to get a local Kubernetes cluster set
 
 ### Role Based Access Control configuration (Kubernetes 1.6+ only)
 
-Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control of Kubernetes resources and api.
+Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control of Kubernetes resources and API.
 
-If your cluster is configured with RBAC, you may need to authorize Træfik to use the Kubernetes API using ClusterRole and ClusterRoleBinding resources:
+If your cluster is configured with RBAC, you will need to authorize Træfik to use the Kubernetes API. There are two ways to set up the proper permission: Via namespace-specific RoleBindings or a single, global ClusterRoleBinding.
 
-!!! note
-    your cluster may have suitable ClusterRoles already setup, but the following should work everywhere
+RoleBindings per namespace enable to restrict granted permissions to the very namespaces only that Træfik is watching over, thereby following the least-privileges principle. This is the preferred approach if Træfik is not supposed to watch all namespaces, and the set of namespaces does not change dynamically. Otherwise, a single ClusterRoleBinding must be employed.
+
+For the sake of simplicity, this guide will use a ClusterRoleBinding:
 
 ```yaml
 ---
@@ -32,7 +33,6 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - pods
       - services
       - endpoints
       - secrets
@@ -68,6 +68,8 @@ subjects:
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-rbac.yaml
 ```
+
+For namespaced restrictions, one RoleBinding is required per watched namespace along with a corresponding configuration of Træfik's `kubernetes.namespaces` parameter.
 
 ## Deploy Træfik using a Deployment or DaemonSet
 
@@ -591,7 +593,7 @@ kind: Ingress
 metadata:
   name: wildcard-cheeses
   annotations:
-    traefik.frontend.priority: 1
+    traefik.frontend.priority: "1"
 spec:
   rules:
   - host: *.minikube
@@ -606,7 +608,7 @@ kind: Ingress
 metadata:
   name: specific-cheeses
   annotations:
-    traefik.frontend.priority: 2
+    traefik.frontend.priority: "2"
 spec:
   rules:
   - host: specific.minikube
@@ -618,6 +620,7 @@ spec:
           servicePort: http
 ```
 
+Note that priority values must be quoted to avoid them being interpreted as numbers (which are illegal for annotations).
 
 ## Forwarding to ExternalNames
 
@@ -687,13 +690,23 @@ If you were to visit `example.com/static` the request would then be passed onto 
     So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing
     the host header per ingress if you wanted.
 
-## Excluding an ingress from Træfik
+## Partitioning the Ingress object space
 
-You can control which ingress Træfik cares about by using the `kubernetes.io/ingress.class` annotation.
+By default, Træfik processes every Ingress objects it observes. At times, however, it may be desirable to ignore certain objects. The following sub-sections describe common use cases and how they can be handled with Træfik.
 
-By default if the annotation is not set at all Træfik will include the ingress.
-If the annotation is set to anything other than traefik or a blank string Træfik will ignore it.
+### Between Træfik and other Ingress controller implementations
 
+Sometimes Træfik runs along other Ingress controller implementations. One such example is when both Træfik and a cloud provider Ingress controller are active.
+
+The `kubernetes.io/ingress.class` annotation can be attached to any Ingress object in order to control whether Træfik should handle it.
+
+If the annotation is missing, contains an empty value, or the value `traefik`, then the Træfik controller will take responsibility and process the associated Ingress object. If the annotation contains any other value (usually the name of a different Ingress controller), Træfik will ignore the object.
+
+### Between multiple Træfik Deployments
+
+Sometimes multiple Træfik Deployments are supposed to run concurrently. For instance, it is conceivable to have one Deployment deal with internal and another one with external traffic.
+
+For such cases, it is advisable to classify Ingress objects through a label and configure the `labelSelector` option per each Træfik Deployment accordingly. To stick with the internal/external example above, all Ingress objects meant for internal traffic could receive a `traffic-type: internal` label while objects designated for external traffic receive a `traffic-type: external` label. The label selectors on the Træfik Deployments would then be `traffic-type=internal` and `traffic-type=external`, respectively.
 
 ## Production advice
 

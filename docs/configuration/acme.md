@@ -177,7 +177,7 @@ Enable on demand certificate.
 This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate.
 
 !!! warning
-    TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DoS attacks.
+    TLS handshakes will be slow when requesting a hostname certificate for the first time, this can lead to DoS attacks.
     
 !!! warning
     Take note that Let's Encrypt have [rate limiting](https://letsencrypt.org/docs/rate-limits)

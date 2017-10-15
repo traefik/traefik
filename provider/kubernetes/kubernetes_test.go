@@ -243,7 +243,6 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -256,7 +255,6 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -273,7 +271,6 @@ func TestLoadIngresses(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -489,7 +486,6 @@ func TestGetPassHostHeader(t *testing.T) {
 				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -591,7 +587,6 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -603,451 +598,6 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 				Routes: map[string]types.Route{
 					"foo": {
 						Rule: "Host:foo",
-					},
-				},
-			},
-		},
-	}
-
-	assert.Equal(t, expected, actual)
-}
-
-func TestLoadNamespacedIngresses(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "awesome",
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						Host: "bar",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service3",
-											ServicePort: intstr.FromInt(443),
-										},
-									},
-									{
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service2",
-											ServicePort: intstr.FromInt(802),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "not-awesome",
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "baz",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/baz",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "awesome",
-				Name:      "service1",
-				UID:       "1",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 801,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				Namespace: "not-awesome",
-				UID:       "1",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 801,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service2",
-				Namespace: "awesome",
-				UID:       "2",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.2",
-				Ports: []v1.ServicePort{
-					{
-						Port: 802,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service3",
-				Namespace: "awesome",
-				UID:       "3",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.3",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 443,
-					},
-				},
-			},
-		},
-	}
-	watchChan := make(chan interface{})
-	client := clientMock{
-		ingresses: ingresses,
-		services:  services,
-		watchChan: watchChan,
-	}
-	provider := Provider{
-		Namespaces: []string{"awesome"},
-	}
-	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
-
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"foo/bar": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
-					Method: "wrr",
-				},
-			},
-			"bar": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"foo/bar": {
-				Backend:        "foo/bar",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/bar": {
-						Rule: "PathPrefix:/bar",
-					},
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-			"bar": {
-				Backend:        "bar",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"bar": {
-						Rule: "Host:bar",
-					},
-				},
-			},
-		},
-	}
-
-	assert.Equal(t, expected, actual)
-}
-
-func TestLoadMultipleNamespacedIngresses(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "awesome",
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						Host: "bar",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service3",
-											ServicePort: intstr.FromInt(443),
-										},
-									},
-									{
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service2",
-											ServicePort: intstr.FromInt(802),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "somewhat-awesome",
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "awesome",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/quix",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "not-awesome",
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "baz",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/baz",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(801),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				Namespace: "awesome",
-				UID:       "1",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 801,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "somewhat-awesome",
-				Name:      "service1",
-				UID:       "17",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.4",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 801,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "awesome",
-				Name:      "service2",
-				UID:       "2",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.2",
-				Ports: []v1.ServicePort{
-					{
-						Port: 802,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "awesome",
-				Name:      "service3",
-				UID:       "3",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.3",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 443,
-					},
-				},
-			},
-		},
-	}
-	watchChan := make(chan interface{})
-	client := clientMock{
-		ingresses: ingresses,
-		services:  services,
-		watchChan: watchChan,
-	}
-	provider := Provider{
-		Namespaces: []string{"awesome", "somewhat-awesome"},
-	}
-	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
-
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"foo/bar": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
-					Method: "wrr",
-				},
-			},
-			"bar": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
-					Method: "wrr",
-				},
-			},
-			"awesome/quix": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"foo/bar": {
-				Backend:        "foo/bar",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/bar": {
-						Rule: "PathPrefix:/bar",
-					},
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-			"bar": {
-				Backend:        "bar",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"bar": {
-						Rule: "Host:bar",
-					},
-				},
-			},
-			"awesome/quix": {
-				Backend:        "awesome/quix",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/quix": {
-						Rule: "PathPrefix:/quix",
-					},
-					"awesome": {
-						Rule: "Host:awesome",
 					},
 				},
 			},
@@ -1118,7 +668,6 @@ func TestHostlessIngress(t *testing.T) {
 				Servers:        map[string]types.Server{},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1320,7 +869,6 @@ func TestServiceAnnotations(t *testing.T) {
 				},
 				LoadBalancer: &types.LoadBalancer{
 					Method: "drr",
-					Sticky: false,
 				},
 			},
 			"bar": {
@@ -1337,7 +885,9 @@ func TestServiceAnnotations(t *testing.T) {
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
-					Sticky: true,
+					Stickiness: &types.Stickiness{
+						CookieName: "_4155f",
+					},
 				},
 			},
 		},
@@ -1601,7 +1151,6 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1614,7 +1163,6 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1627,7 +1175,6 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1640,7 +1187,6 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1653,7 +1199,6 @@ func TestIngressAnnotations(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1807,7 +1352,6 @@ func TestPriorityHeaderValue(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -1909,7 +1453,6 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 				},
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
-					Sticky: false,
 					Method: "wrr",
 				},
 			},
@@ -2192,14 +1735,12 @@ func TestMissingResources(t *testing.T) {
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
-					Sticky: false,
 				},
 			},
 			"missing_service": {
 				Servers: map[string]types.Server{},
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
-					Sticky: false,
 				},
 			},
 			"missing_endpoints": {
@@ -2207,7 +1748,6 @@ func TestMissingResources(t *testing.T) {
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
-					Sticky: false,
 				},
 			},
 			"missing_endpoint_subsets": {
@@ -2215,7 +1755,6 @@ func TestMissingResources(t *testing.T) {
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
-					Sticky: false,
 				},
 			},
 		},
@@ -2352,15 +1891,8 @@ type clientMock struct {
 	apiEndpointsError error
 }
 
-func (c clientMock) GetIngresses(namespaces Namespaces) []*v1beta1.Ingress {
-	result := make([]*v1beta1.Ingress, 0, len(c.ingresses))
-
-	for _, ingress := range c.ingresses {
-		if HasNamespace(ingress, namespaces) {
-			result = append(result, ingress)
-		}
-	}
-	return result
+func (c clientMock) GetIngresses() []*v1beta1.Ingress {
+	return c.ingresses
 }
 
 func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error) {
@@ -2371,19 +1903,6 @@ func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error
 	for _, service := range c.services {
 		if service.Namespace == namespace && service.Name == name {
 			return service, true, nil
-		}
-	}
-	return nil, false, nil
-}
-
-func (c clientMock) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
-	if c.apiSecretError != nil {
-		return nil, false, c.apiSecretError
-	}
-
-	for _, secret := range c.secrets {
-		if secret.Namespace == namespace && secret.Name == name {
-			return secret, true, nil
 		}
 	}
 	return nil, false, nil
@@ -2403,6 +1922,19 @@ func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, e
 	return &v1.Endpoints{}, false, nil
 }
 
-func (c clientMock) WatchAll(labelString string, stopCh <-chan struct{}) (<-chan interface{}, error) {
+func (c clientMock) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
+	if c.apiSecretError != nil {
+		return nil, false, c.apiSecretError
+	}
+
+	for _, secret := range c.secrets {
+		if secret.Namespace == namespace && secret.Name == name {
+			return secret, true, nil
+		}
+	}
+	return nil, false, nil
+}
+
+func (c clientMock) WatchAll(namespaces Namespaces, labelString string, stopCh <-chan struct{}) (<-chan interface{}, error) {
 	return c.watchChan, nil
 }

@@ -13,4 +13,4 @@ fi
 cd integration
 echo "Testing against…"
 docker version
-CGO_ENABLED=0 go test $TESTFLAGS
+CGO_ENABLED=0 go test -integration $TESTFLAGS

@@ -3,6 +3,7 @@ package integration
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -18,11 +19,19 @@ import (
 	checker "github.com/vdemeester/shakers"
 )
 
+var integration = flag.Bool("integration", false, "run integration tests")
+
 func Test(t *testing.T) {
 	check.TestingT(t)
 }
 
 func init() {
+	flag.Parse()
+	if !*integration {
+		log.Info("Integration tests disabled.")
+		return
+	}
+
 	check.Suite(&AccessLogSuite{})
 	check.Suite(&AcmeSuite{})
 	check.Suite(&ConstraintSuite{})

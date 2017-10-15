@@ -6,9 +6,13 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const defaultConfigFile = "traefik.toml"
 
 func Test_parseEntryPointsConfiguration(t *testing.T) {
 	testCases := []struct {
@@ -18,7 +22,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 	}{
 		{
 			name:  "all parameters",
-			value: "Name:foo Address:bar TLS:goo TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:WhiteListSourceRange ProxyProtocol:true",
+			value: "Name:foo Address:bar TLS:goo TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:WhiteListSourceRange ProxyProtocol.TrustedIPs:192.168.0.1",
 			expectedResult: map[string]string{
 				"Name":                 "foo",
 				"Address":              "bar",
@@ -29,16 +33,8 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"RedirectRegex":        "RedirectRegex",
 				"RedirectReplacement":  "RedirectReplacement",
 				"WhiteListSourceRange": "WhiteListSourceRange",
-				"ProxyProtocol":        "true",
+				"ProxyProtocol":        "192.168.0.1",
 				"Compress":             "true",
-			},
-		},
-		{
-			name:  "proxy protocol on",
-			value: "Name:foo ProxyProtocol:on",
-			expectedResult: map[string]string{
-				"Name":          "foo",
-				"ProxyProtocol": "on",
 			},
 		},
 		{
@@ -144,7 +140,7 @@ func TestEntryPoints_Set(t *testing.T) {
 	}{
 		{
 			name:                   "all parameters",
-			expression:             "Name:foo Address:bar TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol:true",
+			expression:             "Name:foo Address:bar TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol.TrustedIPs:192.168.0.1",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: "bar",
@@ -153,8 +149,10 @@ func TestEntryPoints_Set(t *testing.T) {
 					Regex:       "RedirectRegex",
 					Replacement: "RedirectReplacement",
 				},
-				Compress:             true,
-				ProxyProtocol:        true,
+				Compress: true,
+				ProxyProtocol: &ProxyProtocol{
+					TrustedIPs: []string{"192.168.0.1"},
+				},
 				WhitelistSourceRange: []string{"Range"},
 				TLS: &TLS{
 					ClientCAFiles: []string{"car"},
@@ -202,7 +200,7 @@ func TestEntryPoints_Set(t *testing.T) {
 	}
 }
 
-func TestSetEffecticeConfiguration(t *testing.T) {
+func TestSetEffectiveConfigurationGraceTimeout(t *testing.T) {
 	tests := []struct {
 		desc                  string
 		legacyGraceTimeout    time.Duration
@@ -241,10 +239,48 @@ func TestSetEffecticeConfiguration(t *testing.T) {
 				}
 			}
 
-			gc.SetEffectiveConfiguration()
+			gc.SetEffectiveConfiguration(defaultConfigFile)
+
 			gotGraceTimeout := time.Duration(gc.LifeCycle.GraceTimeOut)
 			if gotGraceTimeout != test.wantGraceTimeout {
 				t.Fatalf("got effective grace timeout %d, want %d", gotGraceTimeout, test.wantGraceTimeout)
+			}
+
+		})
+	}
+}
+
+func TestSetEffectiveConfigurationFileProviderFilename(t *testing.T) {
+	tests := []struct {
+		desc                     string
+		fileProvider             *file.Provider
+		wantFileProviderFilename string
+	}{
+		{
+			desc:                     "no filename for file provider given",
+			fileProvider:             &file.Provider{},
+			wantFileProviderFilename: defaultConfigFile,
+		},
+		{
+			desc:                     "filename for file provider given",
+			fileProvider:             &file.Provider{BaseProvider: provider.BaseProvider{Filename: "other.toml"}},
+			wantFileProviderFilename: "other.toml",
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			gc := &GlobalConfiguration{
+				File: test.fileProvider,
+			}
+
+			gc.SetEffectiveConfiguration(defaultConfigFile)
+
+			gotFileProviderFilename := gc.File.Filename
+			if gotFileProviderFilename != test.wantFileProviderFilename {
+				t.Fatalf("got file provider file name %q, want %q", gotFileProviderFilename, test.wantFileProviderFilename)
 			}
 		})
 	}

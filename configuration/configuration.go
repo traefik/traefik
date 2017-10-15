@@ -89,7 +89,7 @@ type GlobalConfiguration struct {
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from
 // existing ones. It also takes care of maintaining backwards compatibility.
-func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
+func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 	if len(gc.EntryPoints) == 0 {
 		gc.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
 		gc.DefaultEntryPoints = []string{"http"}
@@ -128,8 +128,14 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
 		}
 	}
 
-	if gc.Debug {
-		gc.LogLevel = "DEBUG"
+	// Try to fallback to traefik config file in case the file provider is enabled
+	// but has no file name configured.
+	if gc.File != nil && len(gc.File.Filename) == 0 {
+		if len(configFile) > 0 {
+			gc.File.Filename = configFile
+		} else {
+			log.Errorln("Error using file configuration backend, no filename defined")
+		}
 	}
 }
 
@@ -284,7 +290,14 @@ func (ep *EntryPoints) Set(value string) error {
 	}
 
 	compress := toBool(result, "Compress")
-	proxyProtocol := toBool(result, "ProxyProtocol")
+
+	var proxyProtocol *ProxyProtocol
+	if len(result["ProxyProtocol"]) > 0 {
+		trustedIPs := strings.Split(result["ProxyProtocol"], ",")
+		proxyProtocol = &ProxyProtocol{
+			TrustedIPs: trustedIPs,
+		}
+	}
 
 	(*ep)[result["Name"]] = &EntryPoint{
 		Address:              result["Address"],
@@ -299,7 +312,7 @@ func (ep *EntryPoints) Set(value string) error {
 }
 
 func parseEntryPointsConfiguration(value string) (map[string]string, error) {
-	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*(?P<TLSACME>TLS)?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect\.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect\.Regex:(?P<RedirectRegex>\S*))?\s*(?:Redirect\.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol:(?P<ProxyProtocol>\S*))?`)
+	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*(?P<TLSACME>TLS)?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect\.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect\.Regex:(?P<RedirectRegex>\S*))?\s*(?:Redirect\.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol\.TrustedIPs:(?P<ProxyProtocol>\S*))?`)
 	match := regex.FindAllStringSubmatch(value, -1)
 	if match == nil {
 		return nil, fmt.Errorf("bad EntryPoints format: %s", value)
@@ -346,8 +359,8 @@ type EntryPoint struct {
 	Redirect             *Redirect   `export:"true"`
 	Auth                 *types.Auth `export:"true"`
 	WhitelistSourceRange []string
-	Compress             bool `export:"true"`
-	ProxyProtocol        bool `export:"true"`
+	Compress             bool           `export:"true"`
+	ProxyProtocol        *ProxyProtocol `export:"true"`
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
@@ -495,6 +508,11 @@ type RespondingTimeouts struct {
 type ForwardingTimeouts struct {
 	DialTimeout           flaeg.Duration `description:"The amount of time to wait until a connection to a backend server can be established. Defaults to 30 seconds. If zero, no timeout exists" export:"true"`
 	ResponseHeaderTimeout flaeg.Duration `description:"The amount of time to wait for a server's response headers after fully writing the request (including its body, if any). If zero, no timeout exists" export:"true"`
+}
+
+// ProxyProtocol contains Proxy-Protocol configuration
+type ProxyProtocol struct {
+	TrustedIPs []string
 }
 
 // LifeCycle contains configurations relevant to the lifecycle (such as the

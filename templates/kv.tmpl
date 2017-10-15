@@ -3,25 +3,29 @@
 
 [backends]{{range $backends}}
 {{$backend := .}}
+{{$backendName := Last $backend}}
 {{$servers := ListServers $backend }}
 
 {{$circuitBreaker := Get "" . "/circuitbreaker/" "expression"}}
 {{with $circuitBreaker}}
-[backends."{{Last $backend}}".circuitBreaker]
+[backends."{{$backendName}}".circuitBreaker]
     expression = "{{$circuitBreaker}}"
 {{end}}
 
 {{$loadBalancer := Get "" . "/loadbalancer/" "method"}}
-{{$sticky := Get "false" . "/loadbalancer/" "sticky"}}
 {{with $loadBalancer}}
-[backends."{{Last $backend}}".loadBalancer]
+[backends."{{$backendName}}".loadBalancer]
     method = "{{$loadBalancer}}"
-    sticky = {{$sticky}}
+    sticky = {{ Get "false" . "/loadbalancer/" "sticky" }}
+    {{if hasStickinessLabel $backend}}
+    [Backends."{{$backendName}}".LoadBalancer.Stickiness]
+      cookieName = {{getStickinessCookieName $backend}}
+    {{end}}
 {{end}}
 
 {{$healthCheck := Get "" . "/healthcheck/" "path"}}
 {{with $healthCheck}}
-[backends."{{Last $backend}}".healthCheck]
+[backends."{{$backendName}}".healthCheck]
     path = "{{$healthCheck}}"
     interval = "{{ Get "30s" $backend "/healthcheck/" "interval" }}"
 {{end}}
@@ -30,14 +34,14 @@
 {{$maxConnExtractorFunc := Get "" . "/maxconn/" "extractorfunc"}}
 {{with $maxConnAmt}}
 {{with $maxConnExtractorFunc}}
-[backends."{{Last $backend}}".maxConn]
+[backends."{{$backendName}}".maxConn]
     amount = {{$maxConnAmt}}
     extractorFunc = "{{$maxConnExtractorFunc}}"
 {{end}}
 {{end}}
 
 {{range $servers}}
-[backends."{{Last $backend}}".servers."{{Last .}}"]
+[backends."{{$backendName}}".servers."{{Last .}}"]
     url = "{{Get "" . "/url"}}"
     weight = {{Get "0"  . "/weight"}}
 {{end}}

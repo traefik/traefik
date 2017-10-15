@@ -3,3 +3,5 @@
 //go:generate go-bindata -pkg autogen -o autogen/gen.go ./static/... ./templates/...
 
 package main
+
+func main() {}

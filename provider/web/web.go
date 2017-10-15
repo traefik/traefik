@@ -157,7 +157,7 @@ func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, 
 			err = http.ListenAndServe(provider.Address, negroniInstance)
 		}
 
-		if err != nil {
+		if err != http.ErrServerClosed {
 			log.Fatal("Error creating server: ", err)
 		}
 	})

@@ -355,7 +355,7 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 				"foo",
 			},
 			middlewareConfigured: false,
-			errMessage:           "parsing CIDR whitelist <nil>: invalid CIDR address: foo",
+			errMessage:           "parsing CIDR whitelist [foo]: parsing CIDR whitelist <nil>: invalid CIDR address: foo",
 		},
 	}
 
@@ -422,52 +422,49 @@ func TestConfigureBackends(t *testing.T) {
 	defaultMethod := "wrr"
 
 	tests := []struct {
-		desc       string
-		lb         *types.LoadBalancer
-		wantMethod string
-		wantSticky bool
+		desc           string
+		lb             *types.LoadBalancer
+		wantMethod     string
+		wantStickiness *types.Stickiness
 	}{
 		{
 			desc: "valid load balancer method with sticky enabled",
 			lb: &types.LoadBalancer{
-				Method: validMethod,
-				Sticky: true,
+				Method:     validMethod,
+				Stickiness: &types.Stickiness{},
 			},
-			wantMethod: validMethod,
-			wantSticky: true,
+			wantMethod:     validMethod,
+			wantStickiness: &types.Stickiness{},
 		},
 		{
 			desc: "valid load balancer method with sticky disabled",
 			lb: &types.LoadBalancer{
-				Method: validMethod,
-				Sticky: false,
+				Method:     validMethod,
+				Stickiness: nil,
 			},
 			wantMethod: validMethod,
-			wantSticky: false,
 		},
 		{
 			desc: "invalid load balancer method with sticky enabled",
 			lb: &types.LoadBalancer{
-				Method: "Invalid",
-				Sticky: true,
+				Method:     "Invalid",
+				Stickiness: &types.Stickiness{},
 			},
-			wantMethod: defaultMethod,
-			wantSticky: true,
+			wantMethod:     defaultMethod,
+			wantStickiness: &types.Stickiness{},
 		},
 		{
 			desc: "invalid load balancer method with sticky disabled",
 			lb: &types.LoadBalancer{
-				Method: "Invalid",
-				Sticky: false,
+				Method:     "Invalid",
+				Stickiness: nil,
 			},
 			wantMethod: defaultMethod,
-			wantSticky: false,
 		},
 		{
 			desc:       "missing load balancer",
 			lb:         nil,
 			wantMethod: defaultMethod,
-			wantSticky: false,
 		},
 	}
 
@@ -485,8 +482,8 @@ func TestConfigureBackends(t *testing.T) {
 			})
 
 			wantLB := types.LoadBalancer{
-				Method: test.wantMethod,
-				Sticky: test.wantSticky,
+				Method:     test.wantMethod,
+				Stickiness: test.wantStickiness,
 			}
 			if !reflect.DeepEqual(*backend.LoadBalancer, wantLB) {
 				t.Errorf("got backend load-balancer\n%v\nwant\n%v\n", spew.Sdump(backend.LoadBalancer), spew.Sdump(wantLB))
@@ -539,7 +536,7 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 			handler := srvEntryPoint.httpServer.Handler.(*negroni.Negroni)
 			found := false
 			for _, handler := range handler.Handlers() {
-				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhitelister)(nil)) {
+				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhiteLister)(nil)) {
 					found = true
 				}
 			}
@@ -719,6 +716,10 @@ func withServer(name, url string) func(backend *types.Backend) {
 
 func withLoadBalancer(method string, sticky bool) func(*types.Backend) {
 	return func(be *types.Backend) {
-		be.LoadBalancer = &types.LoadBalancer{Method: method, Sticky: sticky}
+		if sticky {
+			be.LoadBalancer = &types.LoadBalancer{Method: method, Stickiness: &types.Stickiness{CookieName: "test"}}
+		} else {
+			be.LoadBalancer = &types.LoadBalancer{Method: method}
+		}
 	}
 }
