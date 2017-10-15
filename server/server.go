@@ -1060,8 +1060,11 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 	}
 
 	if len(serverRoute.replacePathRegex) > 0 {
-		if sp := strings.SplitN(serverRoute.replacePathRegex, " ", 2); len(sp) == 2 {
+		sp := strings.Split(serverRoute.replacePathRegex, " ")
+		if len(sp) == 2 {
 			handler = middlewares.NewReplacePathRegexHandler(sp[0], sp[1], handler)
+		} else {
+			log.Warnf("Invalid syntax for ReplacePathRegex: %s. Separate the regular expression and the replacement by a space.", serverRoute.replacePathRegex)
 		}
 	}
 

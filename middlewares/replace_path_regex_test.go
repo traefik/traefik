@@ -10,11 +10,12 @@ import (
 
 func TestReplacePathRegex(t *testing.T) {
 	testCases := []struct {
-		desc         string
-		path         string
-		replacement  string
-		regex        string
-		expectedPath string
+		desc          string
+		path          string
+		replacement   string
+		regex         string
+		expectedPath  string
+		invalidRegexp bool
 	}{
 		{
 			desc:         `^/whoami/(.*) /who-am-i/$1`,
@@ -44,11 +45,19 @@ func TestReplacePathRegex(t *testing.T) {
 			regex:        `^(?i)/downloads/([^/]+)/([^/]+)$`,
 			expectedPath: `/downloads/src-source.go`,
 		},
+		{
+			desc:          `^(?err)/invalid/regexp/([^/]+)$ /valid/regexp/$1`, // invalid regexp
+			path:          `/invalid/regexp/test`,
+			replacement:   `/valid/regexp/$1`,
+			regex:         `^(?err)/invalid/regexp/([^/]+)$`,
+			expectedPath:  `/invalid/regexp/test`,
+			invalidRegexp: true,
+		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.desc, func(t *testing.T) {
-			var expectedPath, actualHeader, requestURI string
+			var expectedPath, expectedHeader, actualHeader, requestURI string
 			handler := NewReplacePathRegexHandler(
 				test.regex,
 				test.replacement,
@@ -60,11 +69,18 @@ func TestReplacePathRegex(t *testing.T) {
 			)
 
 			req := testhelpers.MustNewRequest(http.MethodGet, `http://localhost`+test.path, nil)
+			req.RequestURI = req.URL.Path // In actual, req.RequestURI should be equal to req.URL.Path
+
+			if test.invalidRegexp {
+				expectedHeader = "" // if test.invalidRegexp is true, expectedHeader should be empty
+			} else {
+				expectedHeader = req.URL.Path // Else, expectedHeader should be equal to req.URL.Path
+			}
 
 			handler.ServeHTTP(nil, req)
 
 			assert.Equal(t, expectedPath, test.expectedPath, `Unexpected path.`)
-			assert.Equal(t, test.path, actualHeader, `Unexpected '%s' header.`, ReplacedPathHeader)
+			assert.Equal(t, expectedHeader, actualHeader, `Unexpected '%s' header.`, ReplacedPathHeader)
 			assert.Equal(t, expectedPath, requestURI, `Unexpected request URI.`)
 		})
 	}

@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/containous/traefik/log"
 )
 
 // ReplacePathRegex is a middleware used to replace the path of a URL request with a regular expression
@@ -15,8 +17,12 @@ type ReplacePathRegex struct {
 
 // NewReplacePathRegexHandler returns a new instance of ReplacePathRegex
 func NewReplacePathRegexHandler(regex string, replacement string, handler http.Handler) http.Handler {
+	exp, err := regexp.Compile(strings.TrimSpace(regex)) // `exp` will be nil when error
+	if err != nil {
+		log.Warnf("Error compiling regular expression %s: %s", regex, err)
+	}
 	return &ReplacePathRegex{
-		Regexp:      regexp.MustCompile(strings.TrimSpace(regex)),
+		Regexp:      exp,
 		Replacement: strings.TrimSpace(replacement),
 		Handler:     handler,
 	}
