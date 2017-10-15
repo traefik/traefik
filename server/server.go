@@ -1159,7 +1159,17 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 
 					if config.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", config.Backends[frontend.Backend].CircuitBreaker.Expression)
-						circuitBreaker, err := middlewares.NewCircuitBreaker(lb, config.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
+						expression := config.Backends[frontend.Backend].CircuitBreaker.Expression
+						circuitBreaker, err := middlewares.NewCircuitBreaker(
+							lb,
+							expression,
+							cbreaker.Logger(oxyLogger),
+							cbreaker.Fallback(func(w http.ResponseWriter, r *http.Request) {
+								tracing.LogEventf(r, "blocked by circuitbreaker (%q)", expression)
+								w.WriteHeader(http.StatusServiceUnavailable)
+								w.Write([]byte(http.StatusText(http.StatusServiceUnavailable)))
+							}),
+						)
 						if err != nil {
 							log.Errorf("Error creating circuit breaker: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)
