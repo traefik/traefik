@@ -1164,11 +1164,11 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 							lb,
 							expression,
 							cbreaker.Logger(oxyLogger),
-							cbreaker.Fallback(func(w http.ResponseWriter, r *http.Request) {
+							cbreaker.Fallback(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 								tracing.LogEventf(r, "blocked by circuitbreaker (%q)", expression)
 								w.WriteHeader(http.StatusServiceUnavailable)
 								w.Write([]byte(http.StatusText(http.StatusServiceUnavailable)))
-							}),
+							})),
 						)
 						if err != nil {
 							log.Errorf("Error creating circuit breaker: %v", err)

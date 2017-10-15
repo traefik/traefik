@@ -10,7 +10,6 @@ import (
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing"
-	"github.com/opentracing/opentracing-go/ext"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -68,7 +67,7 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			utils.CopyHeaders(rw.Header(), recorder.Header())
 			rw.WriteHeader(recorder.Code)
 			rw.Write(recorder.Body.Bytes())
-			ext.Error.Set(span, true)
+			tracing.SetError(r)
 			break
 		}
 		attempts++
