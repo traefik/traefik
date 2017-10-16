@@ -1,6 +1,6 @@
 # Change Log
 
-## [v1.4.0](https://github.com/containous/traefik/tree/v1.4.0) (2017-05-31)
+## [v1.4.0](https://github.com/containous/traefik/tree/v1.4.0) (2017-10-16)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.0-rc1...v1.4.0)
 
 **Enhancements:**
