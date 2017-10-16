@@ -110,7 +110,7 @@ func getChangedHealthyKeys(currState []string, prevState []string) ([]string, []
 	return fun.Keys(addedKeys).([]string), fun.Keys(removedKeys).([]string)
 }
 
-func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[string][]string) {
+func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
 	health := p.client.Health()
 	catalog := p.client.Catalog()
 
@@ -131,6 +131,7 @@ func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<
 			healthyState, meta, err := health.State("passing", options)
 			if err != nil {
 				log.WithError(err).Error("Failed to retrieve health checks")
+				errorCh <- err
 				return
 			}
 
@@ -154,6 +155,7 @@ func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<
 			data, _, err := catalog.Services(&api.QueryOptions{})
 			if err != nil {
 				log.Errorf("Failed to list services: %s", err)
+				errorCh <- err
 				return
 			}
 
@@ -186,7 +188,7 @@ type Service struct {
 	Nodes []string
 }
 
-func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- map[string][]string) {
+func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
 	catalog := p.client.Catalog()
 
 	safe.Go(func() {
@@ -205,6 +207,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 			data, meta, err := catalog.Services(options)
 			if err != nil {
 				log.Errorf("Failed to list services: %s", err)
+				errorCh <- err
 				return
 			}
 
@@ -220,6 +223,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 					nodes, _, err := catalog.Service(key, "", &api.QueryOptions{})
 					if err != nil {
 						log.Errorf("Failed to get detail of service %s: %s", key, err)
+						errorCh <- err
 						return
 					}
 					nodesID := getServiceIds(nodes)
@@ -531,9 +535,10 @@ func (p *CatalogProvider) getNodes(index map[string][]string) ([]catalogUpdate, 
 func (p *CatalogProvider) watch(configurationChan chan<- types.ConfigMessage, stop chan bool) error {
 	stopCh := make(chan struct{})
 	watchCh := make(chan map[string][]string)
+	errorCh := make(chan error)
 
-	p.watchHealthState(stopCh, watchCh)
-	p.watchCatalogServices(stopCh, watchCh)
+	p.watchHealthState(stopCh, watchCh, errorCh)
+	p.watchCatalogServices(stopCh, watchCh, errorCh)
 
 	defer close(stopCh)
 	defer close(watchCh)
@@ -556,6 +561,8 @@ func (p *CatalogProvider) watch(configurationChan chan<- types.ConfigMessage, st
 				ProviderName:  "consul_catalog",
 				Configuration: configuration,
 			}
+		case err := <-errorCh:
+			return err
 		}
 	}
 }
