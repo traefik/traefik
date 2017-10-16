@@ -289,7 +289,7 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 	serverInternalMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 
-	if server.tracingMiddleware.Tracer != nil {
+	if server.tracingMiddleware.IsEnabled() {
 		serverMiddlewares = append(
 			serverMiddlewares,
 			server.tracingMiddleware.NewEntryPoint(newServerEntryPointName))
@@ -988,7 +988,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
-					if server.tracingMiddleware.Tracer != nil {
+					if server.tracingMiddleware.IsEnabled() {
 						tm := server.tracingMiddleware.NewForwarder(frontendName, frontend.Backend)
 						next := fwd
 						fwd = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

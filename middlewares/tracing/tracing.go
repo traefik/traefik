@@ -52,6 +52,14 @@ func (t *Tracing) Setup() {
 	return
 }
 
+// IsEnabled determines if tracing was successfully activated
+func (t *Tracing) IsEnabled() bool {
+	if t == nil || t.Tracer == nil {
+		return false
+	}
+	return true
+}
+
 // Close tracer
 func (t *Tracing) Close() {
 	if t.closer != nil {
