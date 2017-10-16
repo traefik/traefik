@@ -1060,23 +1060,9 @@ func TestDockerHasStickinessLabel(t *testing.T) {
 		expected  bool
 	}{
 		{
-			desc:      "no sticky/stickiness-label",
+			desc:      "no stickiness-label",
 			container: containerJSON(),
 			expected:  false,
-		},
-		{
-			desc: "sticky true",
-			container: containerJSON(labels(map[string]string{
-				types.LabelBackendLoadbalancerSticky: "true",
-			})),
-			expected: true,
-		},
-		{
-			desc: "sticky false",
-			container: containerJSON(labels(map[string]string{
-				types.LabelBackendLoadbalancerSticky: "false",
-			})),
-			expected: false,
 		},
 		{
 			desc: "stickiness true",
@@ -1088,30 +1074,6 @@ func TestDockerHasStickinessLabel(t *testing.T) {
 		{
 			desc: "stickiness false",
 			container: containerJSON(labels(map[string]string{
-				types.LabelBackendLoadbalancerStickiness: "false",
-			})),
-			expected: false,
-		},
-		{
-			desc: "sticky true + stickiness false",
-			container: containerJSON(labels(map[string]string{
-				types.LabelBackendLoadbalancerSticky:     "true",
-				types.LabelBackendLoadbalancerStickiness: "false",
-			})),
-			expected: true,
-		},
-		{
-			desc: "sticky false + stickiness true",
-			container: containerJSON(labels(map[string]string{
-				types.LabelBackendLoadbalancerSticky:     "false",
-				types.LabelBackendLoadbalancerStickiness: "true",
-			})),
-			expected: true,
-		},
-		{
-			desc: "sticky false + stickiness false",
-			container: containerJSON(labels(map[string]string{
-				types.LabelBackendLoadbalancerSticky:     "false",
 				types.LabelBackendLoadbalancerStickiness: "false",
 			})),
 			expected: false,

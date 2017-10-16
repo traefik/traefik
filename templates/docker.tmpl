@@ -8,8 +8,9 @@
     {{if hasLoadBalancerLabel $backend}}
     [backends.backend-{{$backendName}}.loadbalancer]
       method = "{{getLoadBalancerMethod $backend}}"
+      sticky = {{getSticky $backend}}
       {{if hasStickinessLabel $backend}}
-      [Backends."{{$backendName}}".LoadBalancer.Stickiness]
+      [backends.backend-{{$backendName}}.loadBalancer.stickiness]
         cookieName = "{{getStickinessCookieName $backend}}"
       {{end}}
     {{end}}

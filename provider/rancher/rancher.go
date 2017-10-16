@@ -92,10 +92,10 @@ func (p *Provider) getLoadBalancerMethod(service rancherData) string {
 func (p *Provider) hasLoadBalancerLabel(service rancherData) bool {
 	_, errMethod := getServiceLabel(service, types.LabelBackendLoadbalancerMethod)
 	_, errSticky := getServiceLabel(service, types.LabelBackendLoadbalancerSticky)
-	if errMethod != nil && errSticky != nil {
-		return false
-	}
-	return true
+	_, errStickiness := getServiceLabel(service, types.LabelBackendLoadbalancerStickiness)
+	_, errCookieName := getServiceLabel(service, types.LabelBackendLoadbalancerStickinessCookieName)
+
+	return errMethod == nil || errSticky == nil || errStickiness == nil || errCookieName == nil
 }
 
 func (p *Provider) hasCircuitBreakerLabel(service rancherData) bool {
@@ -112,17 +112,18 @@ func (p *Provider) getCircuitBreakerExpression(service rancherData) string {
 	return "NetworkErrorRatio() > 1"
 }
 
+func (p *Provider) getSticky(service rancherData) string {
+	if _, err := getServiceLabel(service, types.LabelBackendLoadbalancerSticky); err == nil {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+		return "true"
+	}
+	return "false"
+}
+
 func (p *Provider) hasStickinessLabel(service rancherData) bool {
 	labelStickiness, errStickiness := getServiceLabel(service, types.LabelBackendLoadbalancerStickiness)
 
-	labelSticky, errSticky := getServiceLabel(service, types.LabelBackendLoadbalancerSticky)
-	if len(labelSticky) > 0 {
-		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
-	}
-
-	stickiness := errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
-	sticky := errSticky == nil && len(labelSticky) > 0 && strings.EqualFold(strings.TrimSpace(labelSticky), "true")
-	return stickiness || sticky
+	return errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
 }
 
 func (p *Provider) getStickinessCookieName(service rancherData, backendName string) string {
@@ -235,6 +236,7 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 		"hasMaxConnLabels":            p.hasMaxConnLabels,
 		"getMaxConnAmount":            p.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     p.getMaxConnExtractorFunc,
+		"getSticky":                   p.getSticky,
 		"hasStickinessLabel":          p.hasStickinessLabel,
 		"getStickinessCookieName":     p.getStickinessCookieName,
 	}

@@ -144,6 +144,7 @@ func (p *Provider) loadConfig() *types.Configuration {
 		"Get":                     p.get,
 		"SplitGet":                p.splitGet,
 		"Last":                    p.last,
+		"getSticky":               p.getSticky,
 		"hasStickinessLabel":      p.hasStickinessLabel,
 		"getStickinessCookieName": p.getStickinessCookieName,
 	}
@@ -242,18 +243,19 @@ func (p *Provider) checkConstraints(keys ...string) bool {
 	return true
 }
 
-func (p *Provider) hasStickinessLabel(rootPath string) bool {
-	stickyValue := p.get("false", rootPath, "/loadbalancer", "/sticky")
-
-	sticky := len(stickyValue) != 0 && strings.EqualFold(strings.TrimSpace(stickyValue), "true")
-	if sticky {
+func (p *Provider) getSticky(rootPath string) string {
+	stickyValue := p.get("", rootPath, "/loadbalancer", "/sticky")
+	if len(stickyValue) > 0 {
 		log.Warnf("Deprecated configuration found: %s. Please use %s.", "loadbalancer/sticky", "loadbalancer/stickiness")
+	} else {
+		stickyValue = "false"
 	}
+	return stickyValue
+}
 
+func (p *Provider) hasStickinessLabel(rootPath string) bool {
 	stickinessValue := p.get("false", rootPath, "/loadbalancer", "/stickiness")
-	stickiness := len(stickinessValue) > 0 && strings.EqualFold(strings.TrimSpace(stickinessValue), "true")
-
-	return stickiness || sticky
+	return len(stickinessValue) > 0 && strings.EqualFold(strings.TrimSpace(stickinessValue), "true")
 }
 
 func (p *Provider) getStickinessCookieName(rootPath string) string {

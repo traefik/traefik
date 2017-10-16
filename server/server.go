@@ -1172,7 +1172,8 @@ func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
 }
 
 func (*Server) configureBackends(backends map[string]*types.Backend) {
-	for backendName, backend := range backends {
+	for backendName := range backends {
+		backend := backends[backendName]
 		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
 			log.Warnf("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
 		}
