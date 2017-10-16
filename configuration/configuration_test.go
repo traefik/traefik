@@ -1,7 +1,6 @@
 package configuration
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 	}{
 		{
 			name:  "all parameters",
-			value: "Name:foo TLS:goo TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:WhiteListSourceRange ProxyProtocol.TrustedIPs:192.168.0.1 Address::8000",
+			value: "Name:foo TLS:goo TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:WhiteListSourceRange ProxyProtocol.TrustedIPs:192.168.0.1 ProxyProtocol.Insecure:false Address::8000",
 			expectedResult: map[string]string{
 				"name":                     "foo",
 				"address":                  ":8000",
@@ -28,6 +27,7 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 				"redirect_replacement":     "RedirectReplacement",
 				"whitelistsourcerange":     "WhiteListSourceRange",
 				"proxyprotocol_trustedips": "192.168.0.1",
+				"proxyprotocol_insecure":   "false",
 				"compress":                 "true",
 			},
 		},
@@ -56,10 +56,6 @@ func Test_parseEntryPointsConfiguration(t *testing.T) {
 			t.Parallel()
 
 			conf := parseEntryPointsConfiguration(test.value)
-
-			for key, value := range conf {
-				fmt.Println(key, value)
-			}
 
 			assert.Len(t, conf, len(test.expectedResult))
 			assert.Equal(t, test.expectedResult, conf)
@@ -131,7 +127,7 @@ func TestEntryPoints_Set(t *testing.T) {
 	}{
 		{
 			name:                   "all parameters camelcase",
-			expression:             "Name:foo Address::8000 TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol.TrustedIPs:192.168.0.1",
+			expression:             "Name:foo Address::8000 TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol.TrustedIPs:192.168.0.1 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
@@ -143,6 +139,9 @@ func TestEntryPoints_Set(t *testing.T) {
 				Compress: true,
 				ProxyProtocol: &ProxyProtocol{
 					TrustedIPs: []string{"192.168.0.1"},
+				},
+				ForwardedHeaders: &ForwardedHeaders{
+					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
 				},
 				WhitelistSourceRange: []string{"Range"},
 				TLS: &TLS{
@@ -158,7 +157,7 @@ func TestEntryPoints_Set(t *testing.T) {
 		},
 		{
 			name:                   "all parameters lowercase",
-			expression:             "name:foo address::8000 tls:goo,gii tls ca:car redirect.entryPoint:RedirectEntryPoint redirect.regex:RedirectRegex redirect.replacement:RedirectReplacement compress:true whiteListSourceRange:Range proxyProtocol.TrustedIPs:192.168.0.1",
+			expression:             "name:foo address::8000 tls:goo,gii tls ca:car redirect.entryPoint:RedirectEntryPoint redirect.regex:RedirectRegex redirect.replacement:RedirectReplacement compress:true whiteListSourceRange:Range proxyProtocol.trustedIPs:192.168.0.1 forwardedHeaders.trustedIPs:10.0.0.3/24,20.0.0.3/24",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
@@ -170,6 +169,9 @@ func TestEntryPoints_Set(t *testing.T) {
 				Compress: true,
 				ProxyProtocol: &ProxyProtocol{
 					TrustedIPs: []string{"192.168.0.1"},
+				},
+				ForwardedHeaders: &ForwardedHeaders{
+					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
 				},
 				WhitelistSourceRange: []string{"Range"},
 				TLS: &TLS{
@@ -184,12 +186,83 @@ func TestEntryPoints_Set(t *testing.T) {
 			},
 		},
 		{
+			name:                   "default",
+			expression:             "Name:foo",
+			expectedEntryPointName: "foo",
+			expectedEntryPoint: &EntryPoint{
+				WhitelistSourceRange: []string{},
+				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
+			},
+		},
+		{
+			name:                   "ForwardedHeaders insecure true",
+			expression:             "Name:foo ForwardedHeaders.Insecure:true",
+			expectedEntryPointName: "foo",
+			expectedEntryPoint: &EntryPoint{
+				WhitelistSourceRange: []string{},
+				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
+			},
+		},
+		{
+			name:                   "ForwardedHeaders insecure false",
+			expression:             "Name:foo ForwardedHeaders.Insecure:false",
+			expectedEntryPointName: "foo",
+			expectedEntryPoint: &EntryPoint{
+				WhitelistSourceRange: []string{},
+				ForwardedHeaders:     &ForwardedHeaders{Insecure: false},
+			},
+		},
+		{
+			name:                   "ForwardedHeaders TrustedIPs",
+			expression:             "Name:foo ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
+			expectedEntryPointName: "foo",
+			expectedEntryPoint: &EntryPoint{
+				WhitelistSourceRange: []string{},
+				ForwardedHeaders: &ForwardedHeaders{
+					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
+				},
+			},
+		},
+		{
+			name:                   "ProxyProtocol insecure true",
+			expression:             "Name:foo ProxyProtocol.Insecure:true",
+			expectedEntryPointName: "foo",
+			expectedEntryPoint: &EntryPoint{
+				WhitelistSourceRange: []string{},
+				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
+				ProxyProtocol:        &ProxyProtocol{Insecure: true},
+			},
+		},
+		{
+			name:                   "ProxyProtocol insecure false",
+			expression:             "Name:foo ProxyProtocol.Insecure:false",
+			expectedEntryPointName: "foo",
+			expectedEntryPoint: &EntryPoint{
+				WhitelistSourceRange: []string{},
+				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
+				ProxyProtocol:        &ProxyProtocol{},
+			},
+		},
+		{
+			name:                   "ProxyProtocol TrustedIPs",
+			expression:             "Name:foo ProxyProtocol.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
+			expectedEntryPointName: "foo",
+			expectedEntryPoint: &EntryPoint{
+				WhitelistSourceRange: []string{},
+				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
+				ProxyProtocol: &ProxyProtocol{
+					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
+				},
+			},
+		},
+		{
 			name:                   "compress on",
 			expression:             "Name:foo Compress:on",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Compress:             true,
 				WhitelistSourceRange: []string{},
+				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
 			},
 		},
 		{
@@ -199,6 +272,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			expectedEntryPoint: &EntryPoint{
 				Compress:             true,
 				WhitelistSourceRange: []string{},
+				ForwardedHeaders:     &ForwardedHeaders{Insecure: true},
 			},
 		},
 	}

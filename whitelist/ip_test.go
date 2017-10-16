@@ -75,7 +75,7 @@ func TestNew(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			whitelister, err := NewIP(test.whitelistStrings)
+			whitelister, err := NewIP(test.whitelistStrings, false)
 			if test.errMessage != "" {
 				require.EqualError(t, err, test.errMessage)
 			} else {
@@ -275,7 +275,7 @@ func TestIsAllowed(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			whiteLister, err := NewIP(test.whitelistStrings)
+			whiteLister, err := NewIP(test.whitelistStrings, false)
 
 			require.NoError(t, err)
 			require.NotNil(t, whiteLister)
@@ -306,7 +306,7 @@ func TestBrokenIPs(t *testing.T) {
 		"\\&$§&/(",
 	}
 
-	whiteLister, err := NewIP([]string{"1.2.3.4/24"})
+	whiteLister, err := NewIP([]string{"1.2.3.4/24"}, false)
 	require.NoError(t, err)
 
 	for _, testIP := range brokenIPs {

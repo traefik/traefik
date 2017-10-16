@@ -191,7 +191,7 @@ To enable IP whitelisting at the entrypoint level.
 ## ProxyProtocol
 
 To enable [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt) support.
-Only IPs in `trustedIPs` will lead to remote client address replacement: you should declare your load-balancer IP or CIDR range here (in testing environment, you can trust everyone using `0.0.0.0/0`).
+Only IPs in `trustedIPs` will lead to remote client address replacement: you should declare your load-balancer IP or CIDR range here (in testing environment, you can trust everyone using `insecure = true`).
 
 !!! danger
     When queuing Træfik behind another load-balancer, be sure to carefully configure Proxy Protocol on both sides.
@@ -200,7 +200,40 @@ Only IPs in `trustedIPs` will lead to remote client address replacement: you sho
 ```toml
 [entryPoints]
   [entryPoints.http]
-  address = ":80"
-  [entryPoints.http.proxyProtocol]
-    trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
+    address = ":80"
+
+    # Enable ProxyProtocol
+    [entryPoints.http.proxyProtocol]
+      # List of trusted IPs
+      #
+      # Required
+      # Default: []
+      #
+      trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
+
+      # Insecure mode FOR TESTING ENVIRONNEMENT ONLY
+      #
+      # Optional
+      # Default: false
+      #
+      # insecure = true
+```
+
+## Forwarded Header
+
+Only IPs in `trustedIPs` will be authorize to trust the client forwarded headers (`X-Forwarded-*`).
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+
+    # Enable Forwarded Headers
+    [entryPoints.http.forwardedHeaders]
+      # List of trusted IPs
+      #
+      # Required
+      # Default: []
+      #
+      trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
 ```

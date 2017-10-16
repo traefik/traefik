@@ -10,6 +10,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -229,11 +230,31 @@ func (ep *EntryPoints) Set(value string) error {
 	compress := toBool(result, "compress")
 
 	var proxyProtocol *ProxyProtocol
-	if len(result["proxyprotocol_trustedips"]) > 0 {
-		trustedIPs := strings.Split(result["proxyprotocol_trustedips"], ",")
+	ppTrustedIPs := result["proxyprotocol_trustedips"]
+	if len(result["proxyprotocol_insecure"]) > 0 || len(ppTrustedIPs) > 0 {
 		proxyProtocol = &ProxyProtocol{
-			TrustedIPs: trustedIPs,
+			Insecure: toBool(result, "proxyprotocol_insecure"),
 		}
+		if len(ppTrustedIPs) > 0 {
+			proxyProtocol.TrustedIPs = strings.Split(ppTrustedIPs, ",")
+		}
+	}
+
+	// TODO must be changed to false by default in the next breaking version.
+	forwardedHeaders := &ForwardedHeaders{Insecure: true}
+	if _, ok := result["forwardedheaders_insecure"]; ok {
+		forwardedHeaders.Insecure = toBool(result, "forwardedheaders_insecure")
+	}
+
+	fhTrustedIPs := result["forwardedheaders_trustedips"]
+	if len(fhTrustedIPs) > 0 {
+		// TODO must be removed in the next breaking version.
+		forwardedHeaders.Insecure = toBool(result, "forwardedheaders_insecure")
+		forwardedHeaders.TrustedIPs = strings.Split(fhTrustedIPs, ",")
+	}
+
+	if proxyProtocol != nil && proxyProtocol.Insecure {
+		log.Warn("ProxyProtocol.Insecure:true is dangerous. Please use 'ProxyProtocol.TrustedIPs:IPs' and remove 'ProxyProtocol.Insecure:true'")
 	}
 
 	(*ep)[result["name"]] = &EntryPoint{
@@ -243,6 +264,7 @@ func (ep *EntryPoints) Set(value string) error {
 		Compress:             compress,
 		WhitelistSourceRange: whiteListSourceRange,
 		ProxyProtocol:        proxyProtocol,
+		ForwardedHeaders:     forwardedHeaders,
 	}
 
 	return nil
@@ -300,8 +322,9 @@ type EntryPoint struct {
 	Redirect             *Redirect   `export:"true"`
 	Auth                 *types.Auth `export:"true"`
 	WhitelistSourceRange []string
-	Compress             bool           `export:"true"`
-	ProxyProtocol        *ProxyProtocol `export:"true"`
+	Compress             bool              `export:"true"`
+	ProxyProtocol        *ProxyProtocol    `export:"true"`
+	ForwardedHeaders     *ForwardedHeaders `export:"true"`
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
@@ -453,5 +476,12 @@ type ForwardingTimeouts struct {
 
 // ProxyProtocol contains Proxy-Protocol configuration
 type ProxyProtocol struct {
+	Insecure   bool
+	TrustedIPs []string
+}
+
+// ForwardedHeaders Trust client forwarding headers
+type ForwardedHeaders struct {
+	Insecure   bool
 	TrustedIPs []string
 }

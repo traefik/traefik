@@ -655,7 +655,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	}
 
 	if entryPoint.ProxyProtocol != nil {
-		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs)
+		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Error creating whitelist: %s", err)
 		}
@@ -806,11 +806,19 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
+					rewriter, err := NewHeaderRewriter(entryPoint.ForwardedHeaders.TrustedIPs, entryPoint.ForwardedHeaders.Insecure)
+					if err != nil {
+						log.Errorf("Error creating rewriter for frontend %s: %v", frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
+
 					fwd, err := forward.New(
 						forward.Logger(oxyLogger),
 						forward.PassHostHeader(frontend.PassHostHeader),
 						forward.RoundTripper(roundTripper),
 						forward.ErrorHandler(errorHandler),
+						forward.Rewriter(rewriter),
 					)
 
 					if err != nil {
