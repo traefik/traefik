@@ -90,6 +90,7 @@ func (t *epMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next ht
 	ext.HTTPMethod.Set(span, r.Method)
 	ext.HTTPUrl.Set(span, r.URL.String())
 	span.SetTag("http.host", r.Host)
+	ext.SpanKindRPCServer.Set(span)
 
 	w = &statusCodeTracker{w, 200}
 	r = r.WithContext(opentracing.ContextWithSpan(r.Context(), span))
@@ -129,6 +130,7 @@ func (t *fwdMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next h
 	ext.HTTPMethod.Set(span, r.Method)
 	ext.HTTPUrl.Set(span, r.URL.String())
 	span.SetTag("http.host", r.Host)
+	ext.SpanKindRPCClient.Set(span)
 
 	opentracing.GlobalTracer().Inject(
 		span.Context(),

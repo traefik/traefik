@@ -9,6 +9,8 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/types"
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/utils"
 )
@@ -23,6 +25,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		},
 	}
 	span, nr := tracing.StartSpan(r, "externalauth")
+	ext.SpanKindRPCClient.Set(span)
 	defer span.Finish()
 	r = nr
 
@@ -50,6 +53,11 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	}
 
 	writeHeader(r, forwardReq, config.TrustForwardHeader)
+
+	span.Tracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(forwardReq.Header))
 
 	forwardResponse, forwardErr := httpClient.Do(forwardReq)
 	if forwardErr != nil {
