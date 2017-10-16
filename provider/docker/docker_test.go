@@ -10,6 +10,7 @@ import (
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDockerGetFrontendName(t *testing.T) {
@@ -1048,6 +1049,45 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
 				t.Errorf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
 			}
+		})
+	}
+}
+
+func TestDockerHasStickinessLabel(t *testing.T) {
+	testCases := []struct {
+		desc      string
+		container docker.ContainerJSON
+		expected  bool
+	}{
+		{
+			desc:      "no stickiness-label",
+			container: containerJSON(),
+			expected:  false,
+		},
+		{
+			desc: "stickiness true",
+			container: containerJSON(labels(map[string]string{
+				types.LabelBackendLoadbalancerStickiness: "true",
+			})),
+			expected: true,
+		},
+		{
+			desc: "stickiness false",
+			container: containerJSON(labels(map[string]string{
+				types.LabelBackendLoadbalancerStickiness: "false",
+			})),
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			dockerData := parseContainer(test.container)
+			provider := &Provider{}
+			actual := provider.hasStickinessLabel(dockerData)
+			assert.Equal(t, actual, test.expected)
 		})
 	}
 }

@@ -188,8 +188,9 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		"getMaxConnAmount":            p.getMaxConnAmount,
 		"getLoadBalancerMethod":       p.getLoadBalancerMethod,
 		"getCircuitBreakerExpression": p.getCircuitBreakerExpression,
-		"getStickinessCookieName":     p.getStickinessCookieName,
+		"getSticky":                   p.getSticky,
 		"hasStickinessLabel":          p.hasStickinessLabel,
+		"getStickinessCookieName":     p.getStickinessCookieName,
 		"hasHealthCheckLabels":        p.hasHealthCheckLabels,
 		"getHealthCheckPath":          p.getHealthCheckPath,
 		"getHealthCheckInterval":      p.getHealthCheckInterval,
@@ -429,15 +430,17 @@ func (p *Provider) getProtocol(application marathon.Application, serviceName str
 	return "http"
 }
 
-func (p *Provider) hasStickinessLabel(application marathon.Application) bool {
-	_, okStickiness := p.getAppLabel(application, types.LabelBackendLoadbalancerStickiness)
-
-	label, okSticky := p.getAppLabel(application, types.LabelBackendLoadbalancerSticky)
-	if len(label) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+func (p *Provider) getSticky(application marathon.Application) string {
+	if sticky, ok := p.getAppLabel(application, types.LabelBackendLoadbalancerSticky); ok {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+		return sticky
 	}
+	return "false"
+}
 
-	return okStickiness || (okSticky && strings.EqualFold(strings.TrimSpace(label), "true"))
+func (p *Provider) hasStickinessLabel(application marathon.Application) bool {
+	labelStickiness, okStickiness := p.getAppLabel(application, types.LabelBackendLoadbalancerStickiness)
+	return okStickiness && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
 }
 
 func (p *Provider) getStickinessCookieName(application marathon.Application) string {

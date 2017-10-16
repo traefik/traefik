@@ -275,6 +275,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"hasMaxConnLabels":            p.hasMaxConnLabels,
 		"getMaxConnAmount":            p.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     p.getMaxConnExtractorFunc,
+		"getSticky":                   p.getSticky,
 		"getStickinessCookieName":     p.getStickinessCookieName,
 		"hasStickinessLabel":          p.hasStickinessLabel,
 		"getIsBackendLBSwarm":         p.getIsBackendLBSwarm,
@@ -465,10 +466,10 @@ func (p *Provider) getServiceProtocol(container dockerData, serviceName string) 
 func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
 	_, errMethod := getLabel(container, types.LabelBackendLoadbalancerMethod)
 	_, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
-	if errMethod != nil && errSticky != nil {
-		return false
-	}
-	return true
+	_, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
+	_, errCookieName := getLabel(container, types.LabelBackendLoadbalancerStickinessCookieName)
+
+	return errMethod == nil || errSticky == nil || errStickiness == nil || errCookieName == nil
 }
 
 func (p *Provider) hasMaxConnLabels(container dockerData) bool {
@@ -645,14 +646,18 @@ func (p *Provider) getWeight(container dockerData) string {
 }
 
 func (p *Provider) hasStickinessLabel(container dockerData) bool {
-	_, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
+	labelStickiness, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
+	return errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
+}
 
-	label, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
-	if len(label) > 0 {
-		log.Warn("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+func (p *Provider) getSticky(container dockerData) string {
+	if label, err := getLabel(container, types.LabelBackendLoadbalancerSticky); err == nil {
+		if len(label) > 0 {
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+		}
+		return label
 	}
-
-	return errStickiness == nil || (errSticky == nil && strings.EqualFold(strings.TrimSpace(label), "true"))
+	return "false"
 }
 
 func (p *Provider) getStickinessCookieName(container dockerData) string {
@@ -823,7 +828,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 		return []dockerData{}, err
 	}
 	networkListArgs := filters.NewArgs()
-	networkListArgs.Add("driver", "overlay")
+	networkListArgs.Add("scope", "swarm")
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 

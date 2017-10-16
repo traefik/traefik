@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -87,12 +86,23 @@ type GlobalConfiguration struct {
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
 }
 
-// SetEffectiveConfiguration adds missing configuration parameters derived from
-// existing ones. It also takes care of maintaining backwards compatibility.
+// SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
+// It also takes care of maintaining backwards compatibility.
 func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 	if len(gc.EntryPoints) == 0 {
-		gc.EntryPoints = map[string]*EntryPoint{"http": {Address: ":80"}}
+		gc.EntryPoints = map[string]*EntryPoint{"http": {
+			Address:          ":80",
+			ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+		}}
 		gc.DefaultEntryPoints = []string{"http"}
+	}
+
+	// ForwardedHeaders must be remove in the next breaking version
+	for entryPointName := range gc.EntryPoints {
+		entryPoint := gc.EntryPoints[entryPointName]
+		if entryPoint.ForwardedHeaders == nil {
+			entryPoint.ForwardedHeaders = &ForwardedHeaders{Insecure: true}
+		}
 	}
 
 	// Make sure LifeCycle isn't nil to spare nil checks elsewhere.
@@ -252,79 +262,101 @@ func (ep *EntryPoints) String() string {
 // Set's argument is a string to be parsed to set the flag.
 // It's a comma-separated list, so we split it.
 func (ep *EntryPoints) Set(value string) error {
-	result, err := parseEntryPointsConfiguration(value)
-	if err != nil {
-		return err
-	}
+	result := parseEntryPointsConfiguration(value)
 
 	var configTLS *TLS
-	if len(result["TLS"]) > 0 {
+	if len(result["tls"]) > 0 {
 		certs := Certificates{}
-		if err := certs.Set(result["TLS"]); err != nil {
+		if err := certs.Set(result["tls"]); err != nil {
 			return err
 		}
 		configTLS = &TLS{
 			Certificates: certs,
 		}
-	} else if len(result["TLSACME"]) > 0 {
+	} else if len(result["tls_acme"]) > 0 {
 		configTLS = &TLS{
 			Certificates: Certificates{},
 		}
 	}
-	if len(result["CA"]) > 0 {
-		files := strings.Split(result["CA"], ",")
+	if len(result["ca"]) > 0 {
+		files := strings.Split(result["ca"], ",")
 		configTLS.ClientCAFiles = files
 	}
 	var redirect *Redirect
-	if len(result["RedirectEntryPoint"]) > 0 || len(result["RedirectRegex"]) > 0 || len(result["RedirectReplacement"]) > 0 {
+	if len(result["redirect_entrypoint"]) > 0 || len(result["redirect_regex"]) > 0 || len(result["redirect_replacement"]) > 0 {
 		redirect = &Redirect{
-			EntryPoint:  result["RedirectEntryPoint"],
-			Regex:       result["RedirectRegex"],
-			Replacement: result["RedirectReplacement"],
+			EntryPoint:  result["redirect_entrypoint"],
+			Regex:       result["redirect_regex"],
+			Replacement: result["redirect_replacement"],
 		}
 	}
 
 	whiteListSourceRange := []string{}
-	if len(result["WhiteListSourceRange"]) > 0 {
-		whiteListSourceRange = strings.Split(result["WhiteListSourceRange"], ",")
+	if len(result["whitelistsourcerange"]) > 0 {
+		whiteListSourceRange = strings.Split(result["whitelistsourcerange"], ",")
 	}
 
-	compress := toBool(result, "Compress")
+	compress := toBool(result, "compress")
 
 	var proxyProtocol *ProxyProtocol
-	if len(result["ProxyProtocol"]) > 0 {
-		trustedIPs := strings.Split(result["ProxyProtocol"], ",")
+	ppTrustedIPs := result["proxyprotocol_trustedips"]
+	if len(result["proxyprotocol_insecure"]) > 0 || len(ppTrustedIPs) > 0 {
 		proxyProtocol = &ProxyProtocol{
-			TrustedIPs: trustedIPs,
+			Insecure: toBool(result, "proxyprotocol_insecure"),
+		}
+		if len(ppTrustedIPs) > 0 {
+			proxyProtocol.TrustedIPs = strings.Split(ppTrustedIPs, ",")
 		}
 	}
 
-	(*ep)[result["Name"]] = &EntryPoint{
-		Address:              result["Address"],
+	// TODO must be changed to false by default in the next breaking version.
+	forwardedHeaders := &ForwardedHeaders{Insecure: true}
+	if _, ok := result["forwardedheaders_insecure"]; ok {
+		forwardedHeaders.Insecure = toBool(result, "forwardedheaders_insecure")
+	}
+
+	fhTrustedIPs := result["forwardedheaders_trustedips"]
+	if len(fhTrustedIPs) > 0 {
+		// TODO must be removed in the next breaking version.
+		forwardedHeaders.Insecure = toBool(result, "forwardedheaders_insecure")
+		forwardedHeaders.TrustedIPs = strings.Split(fhTrustedIPs, ",")
+	}
+
+	if proxyProtocol != nil && proxyProtocol.Insecure {
+		log.Warn("ProxyProtocol.Insecure:true is dangerous. Please use 'ProxyProtocol.TrustedIPs:IPs' and remove 'ProxyProtocol.Insecure:true'")
+	}
+
+	(*ep)[result["name"]] = &EntryPoint{
+		Address:              result["address"],
 		TLS:                  configTLS,
 		Redirect:             redirect,
 		Compress:             compress,
 		WhitelistSourceRange: whiteListSourceRange,
 		ProxyProtocol:        proxyProtocol,
+		ForwardedHeaders:     forwardedHeaders,
 	}
 
 	return nil
 }
 
-func parseEntryPointsConfiguration(value string) (map[string]string, error) {
-	regex := regexp.MustCompile(`(?:Name:(?P<Name>\S*))\s*(?:Address:(?P<Address>\S*))?\s*(?:TLS:(?P<TLS>\S*))?\s*(?P<TLSACME>TLS)?\s*(?:CA:(?P<CA>\S*))?\s*(?:Redirect\.EntryPoint:(?P<RedirectEntryPoint>\S*))?\s*(?:Redirect\.Regex:(?P<RedirectRegex>\S*))?\s*(?:Redirect\.Replacement:(?P<RedirectReplacement>\S*))?\s*(?:Compress:(?P<Compress>\S*))?\s*(?:WhiteListSourceRange:(?P<WhiteListSourceRange>\S*))?\s*(?:ProxyProtocol\.TrustedIPs:(?P<ProxyProtocol>\S*))?`)
-	match := regex.FindAllStringSubmatch(value, -1)
-	if match == nil {
-		return nil, fmt.Errorf("bad EntryPoints format: %s", value)
-	}
-	matchResult := match[0]
-	result := make(map[string]string)
-	for i, name := range regex.SubexpNames() {
-		if i != 0 && len(matchResult[i]) != 0 {
-			result[name] = matchResult[i]
+func parseEntryPointsConfiguration(raw string) map[string]string {
+	sections := strings.Fields(raw)
+
+	config := make(map[string]string)
+	for _, part := range sections {
+		field := strings.SplitN(part, ":", 2)
+		name := strings.ToLower(strings.Replace(field[0], ".", "_", -1))
+		if len(field) > 1 {
+			config[name] = field[1]
+		} else {
+			if strings.EqualFold(name, "TLS") {
+				config["tls_acme"] = "TLS"
+			} else {
+				config[name] = ""
+			}
 		}
 	}
-	return result, nil
+	return config
 }
 
 func toBool(conf map[string]string, key string) bool {
@@ -359,8 +391,9 @@ type EntryPoint struct {
 	Redirect             *Redirect   `export:"true"`
 	Auth                 *types.Auth `export:"true"`
 	WhitelistSourceRange []string
-	Compress             bool           `export:"true"`
-	ProxyProtocol        *ProxyProtocol `export:"true"`
+	Compress             bool              `export:"true"`
+	ProxyProtocol        *ProxyProtocol    `export:"true"`
+	ForwardedHeaders     *ForwardedHeaders `export:"true"`
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL
@@ -512,6 +545,13 @@ type ForwardingTimeouts struct {
 
 // ProxyProtocol contains Proxy-Protocol configuration
 type ProxyProtocol struct {
+	Insecure   bool
+	TrustedIPs []string
+}
+
+// ForwardedHeaders Trust client forwarding headers
+type ForwardedHeaders struct {
+	Insecure   bool
 	TrustedIPs []string
 }
 

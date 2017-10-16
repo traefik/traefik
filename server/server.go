@@ -656,7 +656,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	}
 
 	if entryPoint.ProxyProtocol != nil {
-		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs)
+		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Error creating whitelist: %s", err)
 		}
@@ -807,11 +807,19 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
+					rewriter, err := NewHeaderRewriter(entryPoint.ForwardedHeaders.TrustedIPs, entryPoint.ForwardedHeaders.Insecure)
+					if err != nil {
+						log.Errorf("Error creating rewriter for frontend %s: %v", frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
+
 					fwd, err := forward.New(
 						forward.Logger(oxyLogger),
 						forward.PassHostHeader(frontend.PassHostHeader),
 						forward.RoundTripper(roundTripper),
 						forward.ErrorHandler(errorHandler),
+						forward.Rewriter(rewriter),
 					)
 
 					if err != nil {
@@ -1174,27 +1182,32 @@ func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
 }
 
 func (*Server) configureBackends(backends map[string]*types.Backend) {
-	for backendName, backend := range backends {
+	for backendName := range backends {
+		backend := backends[backendName]
 		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
-			log.Warn("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
 		}
 
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
 		if err == nil {
 			if backend.LoadBalancer != nil && backend.LoadBalancer.Stickiness == nil && backend.LoadBalancer.Sticky {
-				backend.LoadBalancer.Stickiness = &types.Stickiness{}
+				backend.LoadBalancer.Stickiness = &types.Stickiness{
+					CookieName: "_TRAEFIK_BACKEND",
+				}
 			}
 		} else {
 			log.Debugf("Validation of load balancer method for backend %s failed: %s. Using default method wrr.", backendName, err)
 
 			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
-				if backend.LoadBalancer.Stickiness != nil {
-					stickiness = backend.LoadBalancer.Stickiness
-				} else if backend.LoadBalancer.Sticky {
-					if backend.LoadBalancer.Stickiness == nil {
-						stickiness = &types.Stickiness{}
+				if backend.LoadBalancer.Stickiness == nil {
+					if backend.LoadBalancer.Sticky {
+						stickiness = &types.Stickiness{
+							CookieName: "_TRAEFIK_BACKEND",
+						}
 					}
+				} else {
+					stickiness = backend.LoadBalancer.Stickiness
 				}
 			}
 			backend.LoadBalancer = &types.LoadBalancer{
