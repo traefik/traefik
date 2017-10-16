@@ -138,10 +138,12 @@ More: https://labix.org/gocheck
 
 #### Method 2: `go`
 
-- Tests can be run from the cloned directory, by `$ go test ./...` which should return `ok` similar to:
+Unit tests can be run from the cloned directory by `$ go test ./...` which should return `ok` similar to:
 ```
 ok      _/home/user/go/src/github/containous/traefik    0.004s
 ```
+
+Integration tests must be run from the `integration/` directory and require the `-integration` switch to be passed like this: `$ cd integration && go test -integration ./...`.
 
 ## Documentation
 
