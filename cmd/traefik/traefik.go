@@ -14,11 +14,13 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
@@ -209,7 +211,15 @@ Complete documentation is available at https://traefik.io`,
 			traefikConfiguration.Cluster.Store = &types.Store{Prefix: kv.Prefix, Store: kv.Store}
 		}
 		s.AddSource(kv)
-		if _, err := s.LoadConfig(); err != nil {
+		operation := func() error {
+			_, err := s.LoadConfig()
+			return err
+		}
+		notify := func(err error, time time.Duration) {
+			log.Errorf("Load config error: %+v, retrying in %s", err, time)
+		}
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		if err != nil {
 			fmtlog.Printf("Error loading configuration: %s\n", err)
 			os.Exit(-1)
 		}
