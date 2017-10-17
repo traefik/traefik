@@ -137,12 +137,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 }
 
 func (p *Provider) shouldProcessIngress(ingressClass string) bool {
-	ingressClassRequired := "traefik"
-	if p.IngressClass != "" {
-		ingressClassRequired = p.IngressClass
-	}
-
-	return ingressClass == "" || ingressClass == ingressClassRequired
+	return ingressClass == "" || ingressClass == p.IngressClass
 }
 
 func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error) {
