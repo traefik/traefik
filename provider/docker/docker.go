@@ -14,7 +14,6 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
-	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
@@ -160,28 +159,25 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			if p.Watch {
 				ctx, cancel := context.WithCancel(ctx)
 				if p.SwarmMode {
-					errChan := make(chan error)
+					stopChan := make(chan struct{})
 					// TODO: This need to be change. Linked to Swarm events docker/docker#23827
 					ticker := time.NewTicker(SwarmDefaultWatchTime)
 					pool.Go(func(stop chan bool) {
-						defer close(errChan)
+						defer close(stopChan)
 						for {
 							select {
 							case <-ticker.C:
 								services, err := p.listServices(ctx, dockerClient)
 								if err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
-									errChan <- err
-									return
-								}
-								configuration := p.loadDockerConfig(services)
-								if configuration != nil {
-									configurationChan <- types.ConfigMessage{
-										ProviderName:  "docker",
-										Configuration: configuration,
+								} else {
+									if configuration := p.loadDockerConfig(services); configuration != nil {
+										configurationChan <- types.ConfigMessage{
+											ProviderName:  "docker",
+											Configuration: configuration,
+										}
 									}
 								}
-
 							case <-stop:
 								ticker.Stop()
 								cancel()
@@ -189,11 +185,9 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							}
 						}
 					})
-					if err, ok := <-errChan; ok {
-						return err
-					}
 					// channel closed
-
+					<-stopChan
+					log.Info("Stop watching as expected")
 				} else {
 					pool.Go(func(stop chan bool) {
 						for {
@@ -246,7 +240,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Provider connection error %+v, retrying in %s", err, time)
 		}
-		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), backoff.NewConstantBackOff(time.Second*3), notify)
 		if err != nil {
 			log.Errorf("Cannot connect to docker server %+v", err)
 		}
@@ -884,7 +878,8 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 					}
 					dockerData.NetworkSettings.Networks[network.Name] = network
 				} else {
-					log.Debug("Network not found, id: %s", virtualIP.NetworkID)
+					log.Debugf("Network not found, service: %s, id: %s, addr: %s",
+						service.Spec.Name, virtualIP.NetworkID, virtualIP.Addr)
 				}
 			}
 		}

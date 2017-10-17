@@ -5,14 +5,12 @@
       expression = "{{getCircuitBreakerExpression $backend}}"
     {{end}}
 
-    {{if hasLoadBalancerLabel $backend}}
     [backends.backend-{{$backendName}}.loadbalancer]
       method = "{{getLoadBalancerMethod $backend}}"
       {{if hasStickinessLabel $backend}}
       [Backends."{{$backendName}}".LoadBalancer.Stickiness]
         cookieName = {{getStickinessCookieName $backend}}
       {{end}}
-    {{end}}
 
     {{if hasMaxConnLabels $backend}}
     [backends.backend-{{$backendName}}.maxconn]

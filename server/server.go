@@ -338,11 +338,13 @@ func (server *Server) listenProviders(stop chan bool) {
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
 				providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
 				if time.Now().After(lastReceivedConfigurationValue.Add(providersThrottleDuration)) {
-					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+					log.Debugf("Last %s config received more than %s, OK",
+						configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					// last config received more than n s ago
 					server.configurationValidatedChan <- configMsg
 				} else {
-					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+					log.Debugf("Last %s config received less than %s, waiting...",
+						configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					safe.Go(func() {
 						<-time.After(providersThrottleDuration)
 						lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
