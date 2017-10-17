@@ -33,5 +33,8 @@ func (c *Config) Setup(serviceName string) (opentracing.Tracer, io.Closer, error
 		return nil, nil, err
 	}
 
+	// Without this, child spans are getting the NOOP tracer
+	opentracing.SetGlobalTracer(tracer)
+
 	return tracer, collector, nil
 }
