@@ -85,7 +85,7 @@ func (p *Provider) intervalPoll(client rancher.Client, updateConfiguration func(
 	_, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ticker := time.NewTicker(time.Duration(p.RefreshSeconds))
+	ticker := time.NewTicker(time.Second * time.Duration(p.RefreshSeconds))
 	defer ticker.Stop()
 
 	var version string

@@ -249,6 +249,12 @@ func (f *httpForwarder) copyRequest(req *http.Request, u *url.URL) *http.Request
 	if f.rewriter != nil {
 		f.rewriter.Rewrite(outReq)
 	}
+
+	if req.ContentLength == 0 {
+		// https://github.com/golang/go/issues/16036: nil Body for http.Transport retries
+		outReq.Body = nil
+	}
+
 	return outReq
 }
 

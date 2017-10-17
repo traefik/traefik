@@ -885,9 +885,7 @@ func TestServiceAnnotations(t *testing.T) {
 				CircuitBreaker: nil,
 				LoadBalancer: &types.LoadBalancer{
 					Method: "wrr",
-					Stickiness: &types.Stickiness{
-						CookieName: "_4155f",
-					},
+					Sticky: true,
 				},
 			},
 		},
@@ -916,7 +914,7 @@ func TestServiceAnnotations(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, actual)
+	assert.EqualValues(t, expected, actual)
 }
 
 func TestIngressAnnotations(t *testing.T) {
@@ -1079,6 +1077,34 @@ func TestIngressAnnotations(t *testing.T) {
 								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/api",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"ingress.kubernetes.io/auth-realm": "customized",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "auth-realm-customized",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/auth-realm-customized",
 										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
 											ServicePort: intstr.FromInt(80),
