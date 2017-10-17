@@ -77,6 +77,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		return err
 	}
 
+	// We require that IngressClasses start with `traefik` to reduce chances of
+	// conflict with other Ingress Providers
+	if !strings.HasPrefix(p.IngressClass, "traefik") {
+		return fmt.Errorf("kubernetes.io/ingress.class must start with traefik, instead found %s", p.IngressClass)
+	}
+
 	k8sClient, err := p.newK8sClient()
 	if err != nil {
 		return err
