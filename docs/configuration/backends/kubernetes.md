@@ -50,7 +50,7 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 #
 # labelselector = "A and not B"
 
-# Value of `kubernetes.io/ingress.class` annotation that identify Ingress objects to be processed.
+# Value of `kubernetes.io/ingress.class` annotation that identifies Ingress objects to be processed.
 # Note that Ingress objects with an empty or nonexistent `kubernetes.io/ingress.class` value
 # will also be processed.
 #
