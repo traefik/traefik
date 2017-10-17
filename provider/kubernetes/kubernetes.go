@@ -142,12 +142,7 @@ func (p *Provider) shouldProcessIngress(ingressClass string) bool {
 		ingressClassRequired = p.IngressClass
 	}
 
-	switch ingressClass {
-	case "", ingressClassRequired:
-		return true
-	default:
-		return false
-	}
+	return ingressClass == "" || ingressClass == ingressClassRequired
 }
 
 func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error) {
