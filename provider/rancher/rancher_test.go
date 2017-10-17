@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRancherServiceFilter(t *testing.T) {
@@ -595,5 +596,55 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 		if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
 			t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
 		}
+	}
+}
+
+func TestRancherHasStickinessLabel(t *testing.T) {
+	provider := &Provider{
+		Domain: "rancher.localhost",
+	}
+
+	testCases := []struct {
+		desc     string
+		service  rancherData
+		expected bool
+	}{
+		{
+			desc: "no labels",
+			service: rancherData{
+				Name: "test-service",
+			},
+			expected: false,
+		},
+		{
+			desc: "stickiness=true",
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.LabelBackendLoadbalancerStickiness: "true",
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "stickiness=true",
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.LabelBackendLoadbalancerStickiness: "false",
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := provider.hasStickinessLabel(test.service)
+			assert.Equal(t, actual, test.expected)
+		})
 	}
 }

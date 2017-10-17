@@ -11,26 +11,29 @@ import (
 type IP struct {
 	whiteListsIPs []*net.IP
 	whiteListsNet []*net.IPNet
+	insecure      bool
 }
 
 // NewIP builds a new IP given a list of CIDR-Strings to whitelist
-func NewIP(whitelistStrings []string) (*IP, error) {
-	if len(whitelistStrings) == 0 {
+func NewIP(whitelistStrings []string, insecure bool) (*IP, error) {
+	if len(whitelistStrings) == 0 && !insecure {
 		return nil, errors.New("no whiteListsNet provided")
 	}
 
 	ip := IP{}
 
-	for _, whitelistString := range whitelistStrings {
-		ipAddr := net.ParseIP(whitelistString)
-		if ipAddr != nil {
-			ip.whiteListsIPs = append(ip.whiteListsIPs, &ipAddr)
-		} else {
-			_, whitelist, err := net.ParseCIDR(whitelistString)
-			if err != nil {
-				return nil, fmt.Errorf("parsing CIDR whitelist %s: %v", whitelist, err)
+	if !insecure {
+		for _, whitelistString := range whitelistStrings {
+			ipAddr := net.ParseIP(whitelistString)
+			if ipAddr != nil {
+				ip.whiteListsIPs = append(ip.whiteListsIPs, &ipAddr)
+			} else {
+				_, whitelist, err := net.ParseCIDR(whitelistString)
+				if err != nil {
+					return nil, fmt.Errorf("parsing CIDR whitelist %s: %v", whitelist, err)
+				}
+				ip.whiteListsNet = append(ip.whiteListsNet, whitelist)
 			}
-			ip.whiteListsNet = append(ip.whiteListsNet, whitelist)
 		}
 	}
 
@@ -39,6 +42,10 @@ func NewIP(whitelistStrings []string) (*IP, error) {
 
 // Contains checks if provided address is in the white list
 func (ip *IP) Contains(addr string) (bool, net.IP, error) {
+	if ip.insecure {
+		return true, nil, nil
+	}
+
 	ipAddr, err := ipFromRemoteAddr(addr)
 	if err != nil {
 		return false, nil, fmt.Errorf("unable to parse address: %s: %s", addr, err)
@@ -50,6 +57,10 @@ func (ip *IP) Contains(addr string) (bool, net.IP, error) {
 
 // ContainsIP checks if provided address is in the white list
 func (ip *IP) ContainsIP(addr net.IP) (bool, error) {
+	if ip.insecure {
+		return true, nil
+	}
+
 	for _, whiteListIP := range ip.whiteListsIPs {
 		if whiteListIP.Equal(addr) {
 			return true, nil

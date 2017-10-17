@@ -16,9 +16,9 @@
 {{with $loadBalancer}}
 [backends."{{$backendName}}".loadBalancer]
     method = "{{$loadBalancer}}"
-    sticky = {{ Get "false" . "/loadbalancer/" "sticky" }}
+    sticky = {{ getSticky . }}
     {{if hasStickinessLabel $backend}}
-    [Backends."{{$backendName}}".LoadBalancer.Stickiness]
+    [backends."{{$backendName}}".loadBalancer.stickiness]
       cookieName = {{getStickinessCookieName $backend}}
     {{end}}
 {{end}}

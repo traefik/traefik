@@ -96,7 +96,10 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			t.Parallel()
 
 			entryPointName := "http"
-			entryPoint := &configuration.EntryPoint{Address: "localhost:0"}
+			entryPoint := &configuration.EntryPoint{
+				Address:          "localhost:0",
+				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
+			}
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
 			srv := NewServer(test.globalConfig)
@@ -210,7 +213,9 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/hc=%t", lbMethod, healthCheck != nil), func(t *testing.T) {
 				globalConfig := configuration.GlobalConfiguration{
 					EntryPoints: configuration.EntryPoints{
-						"http": &configuration.EntryPoint{},
+						"http": &configuration.EntryPoint{
+							ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
+						},
 					},
 					HealthCheck: &configuration.HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
 				}
@@ -383,7 +388,7 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 	globalConfig := configuration.GlobalConfiguration{
 		EntryPoints: configuration.EntryPoints{
-			"http": &configuration.EntryPoint{},
+			"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
 		},
 	}
 
@@ -492,7 +497,7 @@ func TestConfigureBackends(t *testing.T) {
 	}
 }
 
-func TestServerEntrypointWhitelistConfig(t *testing.T) {
+func TestServerEntryPointWhitelistConfig(t *testing.T) {
 	tests := []struct {
 		desc           string
 		entrypoint     *configuration.EntryPoint
@@ -501,7 +506,8 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 		{
 			desc: "no whitelist middleware if no config on entrypoint",
 			entrypoint: &configuration.EntryPoint{
-				Address: ":0",
+				Address:          ":0",
+				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
 			},
 			wantMiddleware: false,
 		},
@@ -512,6 +518,7 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 				WhitelistSourceRange: []string{
 					"127.0.0.1/32",
 				},
+				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
 			},
 			wantMiddleware: true,
 		},
@@ -633,7 +640,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 			globalConfig := configuration.GlobalConfiguration{
 				EntryPoints: configuration.EntryPoints{
-					"http": &configuration.EntryPoint{},
+					"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
 				},
 			}
 			dynamicConfigs := types.Configurations{"config": test.dynamicConfig(testServer.URL)}
