@@ -46,13 +46,13 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
 	Domain                string           `description:"Default domain used"`
-	TLS                   *types.ClientTLS `description:"Enable Docker TLS support"`
-	ExposedByDefault      bool             `description:"Expose containers by default"`
-	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network"`
-	SwarmMode             bool             `description:"Use Docker on Swarm Mode"`
+	TLS                   *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
+	ExposedByDefault      bool             `description:"Expose containers by default" export:"true"`
+	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
+	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
 }
 
 // dockerData holds the need data to the Provider p
@@ -276,6 +276,8 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getMaxConnAmount":            p.getMaxConnAmount,
 		"getMaxConnExtractorFunc":     p.getMaxConnExtractorFunc,
 		"getSticky":                   p.getSticky,
+		"getStickinessCookieName":     p.getStickinessCookieName,
+		"hasStickinessLabel":          p.hasStickinessLabel,
 		"getIsBackendLBSwarm":         p.getIsBackendLBSwarm,
 		"hasServices":                 p.hasServices,
 		"getServiceNames":             p.getServiceNames,
@@ -328,10 +330,8 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 }
 
 func (p *Provider) hasCircuitBreakerLabel(container dockerData) bool {
-	if _, err := getLabel(container, types.LabelBackendCircuitbreakerExpression); err != nil {
-		return false
-	}
-	return true
+	_, err := getLabel(container, types.LabelBackendCircuitbreakerExpression)
+	return err == nil
 }
 
 // Regexp used to extract the name of the service and the name of the property for this service
@@ -466,10 +466,10 @@ func (p *Provider) getServiceProtocol(container dockerData, serviceName string) 
 func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
 	_, errMethod := getLabel(container, types.LabelBackendLoadbalancerMethod)
 	_, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
-	if errMethod != nil && errSticky != nil {
-		return false
-	}
-	return true
+	_, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
+	_, errCookieName := getLabel(container, types.LabelBackendLoadbalancerStickinessCookieName)
+
+	return errMethod == nil || errSticky == nil || errStickiness == nil || errCookieName == nil
 }
 
 func (p *Provider) hasMaxConnLabels(container dockerData) bool {
@@ -645,11 +645,26 @@ func (p *Provider) getWeight(container dockerData) string {
 	return "0"
 }
 
+func (p *Provider) hasStickinessLabel(container dockerData) bool {
+	labelStickiness, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
+	return errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
+}
+
 func (p *Provider) getSticky(container dockerData) string {
 	if label, err := getLabel(container, types.LabelBackendLoadbalancerSticky); err == nil {
+		if len(label) > 0 {
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+		}
 		return label
 	}
 	return "false"
+}
+
+func (p *Provider) getStickinessCookieName(container dockerData) string {
+	if label, err := getLabel(container, types.LabelBackendLoadbalancerStickinessCookieName); err == nil {
+		return label
+	}
+	return ""
 }
 
 func (p *Provider) getIsBackendLBSwarm(container dockerData) string {
@@ -813,7 +828,7 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 		return []dockerData{}, err
 	}
 	networkListArgs := filters.NewArgs()
-	networkListArgs.Add("driver", "overlay")
+	networkListArgs.Add("scope", "swarm")
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 

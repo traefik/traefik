@@ -1,4 +1,4 @@
-package middlewares
+package auth
 
 import (
 	"fmt"
@@ -157,7 +157,7 @@ func TestDigestAuthFail(t *testing.T) {
 }
 
 func TestBasicAuthUserHeader(t *testing.T) {
-	authMiddleware, err := NewAuthenticator(&types.Auth{
+	middleware, err := NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{
 			Users: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/"},
 		},
@@ -169,7 +169,7 @@ func TestBasicAuthUserHeader(t *testing.T) {
 		assert.Equal(t, "test", r.Header["X-Webauth-User"][0], "auth user should be set")
 		fmt.Fprintln(w, "traefik")
 	})
-	n := negroni.New(authMiddleware)
+	n := negroni.New(middleware)
 	n.UseHandler(handler)
 	ts := httptest.NewServer(n)
 	defer ts.Close()
@@ -180,149 +180,6 @@ func TestBasicAuthUserHeader(t *testing.T) {
 	res, err := client.Do(req)
 	assert.NoError(t, err, "there should be no error")
 
-	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
-
-	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, "traefik\n", string(body), "they should be equal")
-}
-
-func TestForwardAuthFail(t *testing.T) {
-	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Forbidden", http.StatusForbidden)
-	}))
-	defer authTs.Close()
-
-	authMiddleware, err := NewAuthenticator(&types.Auth{
-		Forward: &types.Forward{
-			Address: authTs.URL,
-		},
-	})
-	assert.NoError(t, err, "there should be no error")
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
-	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
-	defer ts.Close()
-
-	client := &http.Client{}
-	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusForbidden, res.StatusCode, "they should be equal")
-
-	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, "Forbidden\n", string(body), "they should be equal")
-}
-
-func TestForwardAuthRedirect(t *testing.T) {
-	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "http://example.com/redirect-test", http.StatusFound)
-	}))
-	defer authTs.Close()
-
-	authMiddleware, err := NewAuthenticator(&types.Auth{
-		Forward: &types.Forward{
-			Address: authTs.URL,
-		},
-	})
-	assert.NoError(t, err, "there should be no error")
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
-	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
-	defer ts.Close()
-
-	client := &http.Client{
-		CheckRedirect: func(r *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
-	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusFound, res.StatusCode, "they should be equal")
-
-	location, err := res.Location()
-
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, "http://example.com/redirect-test", location.String(), "they should be equal")
-
-	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
-	assert.NotEmpty(t, string(body), "there should be something in the body")
-}
-
-func TestForwardAuthCookie(t *testing.T) {
-	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		cookie := &http.Cookie{Name: "example", Value: "testing", Path: "/"}
-		http.SetCookie(w, cookie)
-		http.Error(w, "Forbidden", http.StatusForbidden)
-	}))
-	defer authTs.Close()
-
-	authMiddleware, err := NewAuthenticator(&types.Auth{
-		Forward: &types.Forward{
-			Address: authTs.URL,
-		},
-	})
-	assert.NoError(t, err, "there should be no error")
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
-	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
-	defer ts.Close()
-
-	client := &http.Client{}
-	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, http.StatusForbidden, res.StatusCode, "they should be equal")
-
-	for _, cookie := range res.Cookies() {
-		assert.Equal(t, "testing", cookie.Value, "they should be equal")
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	assert.NoError(t, err, "there should be no error")
-	assert.Equal(t, "Forbidden\n", string(body), "they should be equal")
-}
-
-func TestForwardAuthSuccess(t *testing.T) {
-	authTs := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Success")
-	}))
-	defer authTs.Close()
-
-	authMiddleware, err := NewAuthenticator(&types.Auth{
-		Forward: &types.Forward{
-			Address: authTs.URL,
-		},
-	})
-	assert.NoError(t, err, "there should be no error")
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "traefik")
-	})
-	n := negroni.New(authMiddleware)
-	n.UseHandler(handler)
-	ts := httptest.NewServer(n)
-	defer ts.Close()
-
-	client := &http.Client{}
-	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
-	res, err := client.Do(req)
-	assert.NoError(t, err, "there should be no error")
 	assert.Equal(t, http.StatusOK, res.StatusCode, "they should be equal")
 
 	body, err := ioutil.ReadAll(res.Body)

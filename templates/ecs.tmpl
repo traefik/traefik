@@ -1,7 +1,11 @@
 [backends]{{range $serviceName, $instances := .Services}}
   [backends.backend-{{ $serviceName }}.loadbalancer]
-    sticky = {{ getLoadBalancerSticky $instances}}
     method = "{{ getLoadBalancerMethod $instances}}"
+    sticky = {{ getLoadBalancerSticky $instances}}
+    {{if hasStickinessLabel $instances}} 
+    [backends.backend-{{ $serviceName }}.loadbalancer.stickiness]
+      cookieName = "{{getStickinessCookieName $instances}}"
+    {{end}}
 
   {{range $index, $i := $instances}}
     [backends.backend-{{ $i.Name }}.servers.server-{{ $i.Name }}{{ $i.ID }}]

@@ -10,10 +10,14 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	"github.com/mitchellh/mapstructure"
 	rancher "github.com/rancher/go-rancher/client"
 )
 
-const labelRancheStackServiceName = "io.rancher.stack_service.name"
+const (
+	labelRancherStackServiceName = "io.rancher.stack_service.name"
+	hostNetwork                  = "host"
+)
 
 var withoutPagination *rancher.ListOpts
 
@@ -221,9 +225,24 @@ func parseAPISourcedRancherData(environments []*rancher.Environment, services []
 			}
 
 			for _, container := range containers {
-				if container.Labels[labelRancheStackServiceName] == rancherData.Name &&
+				if container.Labels[labelRancherStackServiceName] == rancherData.Name &&
 					containerFilter(container.Name, container.HealthState, container.State) {
-					rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
+
+					if container.NetworkMode == hostNetwork {
+						var endpoints []*rancher.PublicEndpoint
+						err := mapstructure.Decode(service.PublicEndpoints, &endpoints)
+
+						if err != nil {
+							log.Errorf("Failed to decode PublicEndpoint: %v", err)
+							continue
+						}
+
+						if len(endpoints) > 0 {
+							rancherData.Containers = append(rancherData.Containers, endpoints[0].IpAddress)
+						}
+					} else {
+						rancherData.Containers = append(rancherData.Containers, container.PrimaryIpAddress)
+					}
 				}
 			}
 			rancherDataList = append(rancherDataList, rancherData)

@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -27,9 +28,12 @@ import (
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
+	mauth "github.com/containous/traefik/middlewares/auth"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/server/cookie"
 	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/whitelist"
 	"github.com/streamrail/concurrent-map"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
@@ -127,7 +131,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 // behaviour and backwards compatibility issues.
 func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) *http.Transport {
 	dialer := &net.Dialer{
-		Timeout:   30 * time.Second,
+		Timeout:   configuration.DefaultDialTimeout,
 		KeepAlive: 30 * time.Second,
 		DualStack: true,
 	}
@@ -153,8 +157,8 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 		transport.TLSClientConfig = &tls.Config{
 			RootCAs: createRootCACertPool(globalConfiguration.RootCAs),
 		}
-		http2.ConfigureTransport(transport)
 	}
+	http2.ConfigureTransport(transport)
 
 	return transport
 }
@@ -202,7 +206,7 @@ func (server *Server) Stop() {
 		wg.Add(1)
 		go func(serverEntryPointName string, serverEntryPoint *serverEntryPoint) {
 			defer wg.Done()
-			graceTimeOut := time.Duration(server.globalConfiguration.GraceTimeOut)
+			graceTimeOut := time.Duration(server.globalConfiguration.LifeCycle.GraceTimeOut)
 			ctx, cancel := context.WithTimeout(context.Background(), graceTimeOut)
 			log.Debugf("Waiting %s seconds before killing connections on entrypoint %s...", graceTimeOut, serverEntryPointName)
 			if err := serverEntryPoint.httpServer.Shutdown(ctx); err != nil {
@@ -219,7 +223,7 @@ func (server *Server) Stop() {
 
 // Close destroys the server
 func (server *Server) Close() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.GraceTimeOut))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(server.globalConfiguration.LifeCycle.GraceTimeOut))
 	go func(ctx context.Context) {
 		<-ctx.Done()
 		if ctx.Err() == context.Canceled {
@@ -283,7 +287,7 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 		}
 	}
 	if server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
-		authMiddleware, err := middlewares.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
+		authMiddleware, err := mauth.NewAuthenticator(server.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
@@ -334,11 +338,11 @@ func (server *Server) listenProviders(stop chan bool) {
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
 				providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
 				if time.Now().After(lastReceivedConfigurationValue.Add(providersThrottleDuration)) {
-					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
+					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
 					// last config received more than n s ago
 					server.configurationValidatedChan <- configMsg
 				} else {
-					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
+					log.Debugf("Last %s config received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
 					safe.Go(func() {
 						<-time.After(providersThrottleDuration)
 						lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
@@ -623,7 +627,7 @@ func (server *Server) startServer(serverEntryPoint *serverEntryPoint, globalConf
 	} else {
 		err = serverEntryPoint.httpServer.Serve(serverEntryPoint.listener)
 	}
-	if err != nil {
+	if err != http.ErrServerClosed {
 		log.Error("Error creating server: ", err)
 	}
 }
@@ -651,8 +655,22 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 		return nil, nil, err
 	}
 
-	if entryPoint.ProxyProtocol {
-		listener = &proxyproto.Listener{Listener: listener}
+	if entryPoint.ProxyProtocol != nil {
+		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Error creating whitelist: %s", err)
+		}
+		log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
+		listener = &proxyproto.Listener{
+			Listener: listener,
+			SourceCheck: func(addr net.Addr) (bool, error) {
+				ip, ok := addr.(*net.TCPAddr)
+				if !ok {
+					return false, fmt.Errorf("Type error %v", addr)
+				}
+				return IPs.ContainsIP(ip.IP)
+			},
+		}
 	}
 
 	return &http.Server{
@@ -675,14 +693,13 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 		writeTimeout = time.Duration(globalConfig.RespondingTimeouts.WriteTimeout)
 	}
 
-	// When RespondingTimeouts.IdleTimout is configured, always use that setting
-	if globalConfig.RespondingTimeouts != nil {
-		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
-	} else if globalConfig.IdleTimeout != 0 {
-		// Backwards compatibility for deprecated IdleTimeout
+	// Prefer legacy idle timeout parameter for backwards compatibility reasons
+	if globalConfig.IdleTimeout > 0 {
 		idleTimeout = time.Duration(globalConfig.IdleTimeout)
+		log.Warn("top-level idle timeout configuration has been deprecated -- please use responding timeouts")
+	} else if globalConfig.RespondingTimeouts != nil {
+		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
 	} else {
-		// Default value if neither the deprecated IdleTimeout nor the new RespondingTimeouts.IdleTimout are configured
 		idleTimeout = time.Duration(configuration.DefaultIdleTimeout)
 	}
 
@@ -790,11 +807,19 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
+					rewriter, err := NewHeaderRewriter(entryPoint.ForwardedHeaders.TrustedIPs, entryPoint.ForwardedHeaders.Insecure)
+					if err != nil {
+						log.Errorf("Error creating rewriter for frontend %s: %v", frontendName, err)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
+
 					fwd, err := forward.New(
 						forward.Logger(oxyLogger),
 						forward.PassHostHeader(frontend.PassHostHeader),
 						forward.RoundTripper(roundTripper),
 						forward.ErrorHandler(errorHandler),
+						forward.Rewriter(rewriter),
 					)
 
 					if err != nil {
@@ -826,11 +851,10 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
-					stickySession := config.Backends[frontend.Backend].LoadBalancer.Sticky
-					cookieName := "_TRAEFIK_BACKEND_" + frontend.Backend
 					var sticky *roundrobin.StickySession
-
-					if stickySession {
+					var cookieName string
+					if stickiness := config.Backends[frontend.Backend].LoadBalancer.Stickiness; stickiness != nil {
+						cookieName = cookie.GetName(stickiness.CookieName, frontend.Backend)
 						sticky = roundrobin.NewStickySession(cookieName)
 					}
 
@@ -839,7 +863,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 					case types.Drr:
 						log.Debugf("Creating load-balancer drr")
 						rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
-						if stickySession {
+						if sticky != nil {
 							log.Debugf("Sticky session with cookie %v", cookieName)
 							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
 						}
@@ -856,7 +880,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
 					case types.Wrr:
 						log.Debugf("Creating load-balancer wrr")
-						if stickySession {
+						if sticky != nil {
 							log.Debugf("Sticky session with cookie %v", cookieName)
 							if server.accessLoggerMiddleware != nil {
 								rr, _ = roundrobin.New(saveFrontend, roundrobin.EnableStickySession(sticky))
@@ -945,7 +969,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						auth.Basic = &types.Basic{
 							Users: users,
 						}
-						authMiddleware, err := middlewares.NewAuthenticator(auth)
+						authMiddleware, err := mauth.NewAuthenticator(auth)
 						if err != nil {
 							log.Errorf("Error creating Auth: %s", err)
 						} else {
@@ -1122,6 +1146,7 @@ func parseHealthCheckOptions(lb healthcheck.LoadBalancer, backend string, hc *ty
 
 	return &healthcheck.Options{
 		Path:     hc.Path,
+		Port:     hc.Port,
 		Interval: interval,
 		LB:       lb,
 	}
@@ -1157,17 +1182,37 @@ func (server *Server) configureFrontends(frontends map[string]*types.Frontend) {
 }
 
 func (*Server) configureBackends(backends map[string]*types.Backend) {
-	for backendName, backend := range backends {
+	for backendName := range backends {
+		backend := backends[backendName]
+		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", "backend.LoadBalancer.Sticky", "backend.LoadBalancer.Stickiness")
+		}
+
 		_, err := types.NewLoadBalancerMethod(backend.LoadBalancer)
-		if err != nil {
+		if err == nil {
+			if backend.LoadBalancer != nil && backend.LoadBalancer.Stickiness == nil && backend.LoadBalancer.Sticky {
+				backend.LoadBalancer.Stickiness = &types.Stickiness{
+					CookieName: "_TRAEFIK_BACKEND",
+				}
+			}
+		} else {
 			log.Debugf("Validation of load balancer method for backend %s failed: %s. Using default method wrr.", backendName, err)
-			var sticky bool
+
+			var stickiness *types.Stickiness
 			if backend.LoadBalancer != nil {
-				sticky = backend.LoadBalancer.Sticky
+				if backend.LoadBalancer.Stickiness == nil {
+					if backend.LoadBalancer.Sticky {
+						stickiness = &types.Stickiness{
+							CookieName: "_TRAEFIK_BACKEND",
+						}
+					}
+				} else {
+					stickiness = backend.LoadBalancer.Stickiness
+				}
 			}
 			backend.LoadBalancer = &types.LoadBalancer{
-				Method: "wrr",
-				Sticky: sticky,
+				Method:     "wrr",
+				Stickiness: stickiness,
 			}
 		}
 	}

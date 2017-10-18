@@ -53,18 +53,18 @@ var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+
 // Provider holds configuration of the provider.
 type Provider struct {
 	provider.BaseProvider
-	Endpoint                string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon"`
-	Domain                  string           `description:"Default domain used"`
-	ExposedByDefault        bool             `description:"Expose Marathon apps by default"`
-	GroupsAsSubDomains      bool             `description:"Convert Marathon groups to subdomains"`
-	DCOSToken               string           `description:"DCOSToken for DCOS environment, This will override the Authorization header"`
-	MarathonLBCompatibility bool             `description:"Add compatibility with marathon-lb labels"`
-	TLS                     *types.ClientTLS `description:"Enable Docker TLS support"`
-	DialerTimeout           flaeg.Duration   `description:"Set a non-default connection timeout for Marathon"`
-	KeepAlive               flaeg.Duration   `description:"Set a non-default TCP Keep Alive time in seconds"`
-	ForceTaskHostname       bool             `description:"Force to use the task's hostname."`
-	Basic                   *Basic           `description:"Enable basic authentication"`
-	RespectReadinessChecks  bool             `description:"Filter out tasks with non-successful readiness checks during deployments"`
+	Endpoint                string           `description:"Marathon server endpoint. You can also specify multiple endpoint for Marathon" export:"true"`
+	Domain                  string           `description:"Default domain used" export:"true"`
+	ExposedByDefault        bool             `description:"Expose Marathon apps by default" export:"true"`
+	GroupsAsSubDomains      bool             `description:"Convert Marathon groups to subdomains" export:"true"`
+	DCOSToken               string           `description:"DCOSToken for DCOS environment, This will override the Authorization header" export:"true"`
+	MarathonLBCompatibility bool             `description:"Add compatibility with marathon-lb labels" export:"true"`
+	TLS                     *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
+	DialerTimeout           flaeg.Duration   `description:"Set a non-default connection timeout for Marathon" export:"true"`
+	KeepAlive               flaeg.Duration   `description:"Set a non-default TCP Keep Alive time in seconds" export:"true"`
+	ForceTaskHostname       bool             `description:"Force to use the task's hostname." export:"true"`
+	Basic                   *Basic           `description:"Enable basic authentication" export:"true"`
+	RespectReadinessChecks  bool             `description:"Filter out tasks with non-successful readiness checks during deployments" export:"true"`
 	readyChecker            *readinessChecker
 	marathonClient          marathon.Marathon
 }
@@ -189,6 +189,8 @@ func (p *Provider) loadMarathonConfig() *types.Configuration {
 		"getLoadBalancerMethod":       p.getLoadBalancerMethod,
 		"getCircuitBreakerExpression": p.getCircuitBreakerExpression,
 		"getSticky":                   p.getSticky,
+		"hasStickinessLabel":          p.hasStickinessLabel,
+		"getStickinessCookieName":     p.getStickinessCookieName,
 		"hasHealthCheckLabels":        p.hasHealthCheckLabels,
 		"getHealthCheckPath":          p.getHealthCheckPath,
 		"getHealthCheckInterval":      p.getHealthCheckInterval,
@@ -430,9 +432,22 @@ func (p *Provider) getProtocol(application marathon.Application, serviceName str
 
 func (p *Provider) getSticky(application marathon.Application) string {
 	if sticky, ok := p.getAppLabel(application, types.LabelBackendLoadbalancerSticky); ok {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 		return sticky
 	}
 	return "false"
+}
+
+func (p *Provider) hasStickinessLabel(application marathon.Application) bool {
+	labelStickiness, okStickiness := p.getAppLabel(application, types.LabelBackendLoadbalancerStickiness)
+	return okStickiness && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
+}
+
+func (p *Provider) getStickinessCookieName(application marathon.Application) string {
+	if label, ok := p.getAppLabel(application, types.LabelBackendLoadbalancerStickinessCookieName); ok {
+		return label
+	}
+	return ""
 }
 
 func (p *Provider) getPassHostHeader(application marathon.Application, serviceName string) string {

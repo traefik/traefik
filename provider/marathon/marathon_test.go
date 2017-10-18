@@ -854,9 +854,8 @@ func TestMarathonGetProtocol(t *testing.T) {
 		})
 	}
 }
-
 func TestMarathonGetSticky(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc        string
 		application marathon.Application
 		expected    string
@@ -873,14 +872,51 @@ func TestMarathonGetSticky(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
-			actual := provider.getSticky(c.application)
-			if actual != c.expected {
-				t.Errorf("actual %q, expected %q", actual, c.expected)
+			actual := provider.getSticky(test.application)
+			if actual != test.expected {
+				t.Errorf("actual %q, expected %q", actual, test.expected)
+			}
+		})
+	}
+}
+
+func TestMarathonHasStickinessLabel(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		expected    bool
+	}{
+		{
+			desc:        "label missing",
+			application: application(),
+			expected:    false,
+		},
+		{
+			desc:        "stickiness=true",
+			application: application(label(types.LabelBackendLoadbalancerStickiness, "true")),
+			expected:    true,
+		},
+		{
+			desc:        "stickiness=false ",
+			application: application(label(types.LabelBackendLoadbalancerStickiness, "true")),
+			expected:    true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			provider := &Provider{}
+			actual := provider.hasStickinessLabel(test.application)
+			if actual != test.expected {
+				t.Errorf("actual %q, expected %q", actual, test.expected)
 			}
 		})
 	}

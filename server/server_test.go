@@ -83,7 +83,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 					IdleTimeout: flaeg.Duration(80 * time.Second),
 				},
 			},
-			wantIdleTimeout:  time.Duration(80 * time.Second),
+			wantIdleTimeout:  time.Duration(45 * time.Second),
 			wantReadTimeout:  time.Duration(0 * time.Second),
 			wantWriteTimeout: time.Duration(0 * time.Second),
 		},
@@ -96,7 +96,10 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			t.Parallel()
 
 			entryPointName := "http"
-			entryPoint := &configuration.EntryPoint{Address: "localhost:0"}
+			entryPoint := &configuration.EntryPoint{
+				Address:          "localhost:0",
+				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
+			}
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
 			srv := NewServer(test.globalConfig)
@@ -210,7 +213,9 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/hc=%t", lbMethod, healthCheck != nil), func(t *testing.T) {
 				globalConfig := configuration.GlobalConfiguration{
 					EntryPoints: configuration.EntryPoints{
-						"http": &configuration.EntryPoint{},
+						"http": &configuration.EntryPoint{
+							ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
+						},
 					},
 					HealthCheck: &configuration.HealthCheckConfig{Interval: flaeg.Duration(5 * time.Second)},
 				}
@@ -355,7 +360,7 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 				"foo",
 			},
 			middlewareConfigured: false,
-			errMessage:           "parsing CIDR whitelist <nil>: invalid CIDR address: foo",
+			errMessage:           "parsing CIDR whitelist [foo]: parsing CIDR whitelist <nil>: invalid CIDR address: foo",
 		},
 	}
 
@@ -383,7 +388,7 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 	globalConfig := configuration.GlobalConfiguration{
 		EntryPoints: configuration.EntryPoints{
-			"http": &configuration.EntryPoint{},
+			"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
 		},
 	}
 
@@ -422,52 +427,49 @@ func TestConfigureBackends(t *testing.T) {
 	defaultMethod := "wrr"
 
 	tests := []struct {
-		desc       string
-		lb         *types.LoadBalancer
-		wantMethod string
-		wantSticky bool
+		desc           string
+		lb             *types.LoadBalancer
+		wantMethod     string
+		wantStickiness *types.Stickiness
 	}{
 		{
 			desc: "valid load balancer method with sticky enabled",
 			lb: &types.LoadBalancer{
-				Method: validMethod,
-				Sticky: true,
+				Method:     validMethod,
+				Stickiness: &types.Stickiness{},
 			},
-			wantMethod: validMethod,
-			wantSticky: true,
+			wantMethod:     validMethod,
+			wantStickiness: &types.Stickiness{},
 		},
 		{
 			desc: "valid load balancer method with sticky disabled",
 			lb: &types.LoadBalancer{
-				Method: validMethod,
-				Sticky: false,
+				Method:     validMethod,
+				Stickiness: nil,
 			},
 			wantMethod: validMethod,
-			wantSticky: false,
 		},
 		{
 			desc: "invalid load balancer method with sticky enabled",
 			lb: &types.LoadBalancer{
-				Method: "Invalid",
-				Sticky: true,
+				Method:     "Invalid",
+				Stickiness: &types.Stickiness{},
 			},
-			wantMethod: defaultMethod,
-			wantSticky: true,
+			wantMethod:     defaultMethod,
+			wantStickiness: &types.Stickiness{},
 		},
 		{
 			desc: "invalid load balancer method with sticky disabled",
 			lb: &types.LoadBalancer{
-				Method: "Invalid",
-				Sticky: false,
+				Method:     "Invalid",
+				Stickiness: nil,
 			},
 			wantMethod: defaultMethod,
-			wantSticky: false,
 		},
 		{
 			desc:       "missing load balancer",
 			lb:         nil,
 			wantMethod: defaultMethod,
-			wantSticky: false,
 		},
 	}
 
@@ -485,8 +487,8 @@ func TestConfigureBackends(t *testing.T) {
 			})
 
 			wantLB := types.LoadBalancer{
-				Method: test.wantMethod,
-				Sticky: test.wantSticky,
+				Method:     test.wantMethod,
+				Stickiness: test.wantStickiness,
 			}
 			if !reflect.DeepEqual(*backend.LoadBalancer, wantLB) {
 				t.Errorf("got backend load-balancer\n%v\nwant\n%v\n", spew.Sdump(backend.LoadBalancer), spew.Sdump(wantLB))
@@ -495,7 +497,7 @@ func TestConfigureBackends(t *testing.T) {
 	}
 }
 
-func TestServerEntrypointWhitelistConfig(t *testing.T) {
+func TestServerEntryPointWhitelistConfig(t *testing.T) {
 	tests := []struct {
 		desc           string
 		entrypoint     *configuration.EntryPoint
@@ -504,7 +506,8 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 		{
 			desc: "no whitelist middleware if no config on entrypoint",
 			entrypoint: &configuration.EntryPoint{
-				Address: ":0",
+				Address:          ":0",
+				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
 			},
 			wantMiddleware: false,
 		},
@@ -515,6 +518,7 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 				WhitelistSourceRange: []string{
 					"127.0.0.1/32",
 				},
+				ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true},
 			},
 			wantMiddleware: true,
 		},
@@ -539,7 +543,7 @@ func TestServerEntrypointWhitelistConfig(t *testing.T) {
 			handler := srvEntryPoint.httpServer.Handler.(*negroni.Negroni)
 			found := false
 			for _, handler := range handler.Handlers() {
-				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhitelister)(nil)) {
+				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhiteLister)(nil)) {
 					found = true
 				}
 			}
@@ -636,7 +640,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 
 			globalConfig := configuration.GlobalConfiguration{
 				EntryPoints: configuration.EntryPoints{
-					"http": &configuration.EntryPoint{},
+					"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
 				},
 			}
 			dynamicConfigs := types.Configurations{"config": test.dynamicConfig(testServer.URL)}
@@ -719,6 +723,10 @@ func withServer(name, url string) func(backend *types.Backend) {
 
 func withLoadBalancer(method string, sticky bool) func(*types.Backend) {
 	return func(be *types.Backend) {
-		be.LoadBalancer = &types.LoadBalancer{Method: method, Sticky: sticky}
+		if sticky {
+			be.LoadBalancer = &types.LoadBalancer{Method: method, Stickiness: &types.Stickiness{CookieName: "test"}}
+		} else {
+			be.LoadBalancer = &types.LoadBalancer{Method: method}
+		}
 	}
 }

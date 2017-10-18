@@ -14,22 +14,23 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/cenk/backoff"
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
+	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
-	"github.com/containous/traefik/provider/rancher"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server"
+	"github.com/containous/traefik/server/uuid"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/docker/libkv/store"
-	"github.com/satori/go.uuid"
 )
 
 func main() {
@@ -46,19 +47,7 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
-			globalConfiguration := traefikConfiguration.GlobalConfiguration
-			if globalConfiguration.File != nil && len(globalConfiguration.File.Filename) == 0 {
-				// no filename, setting to global config file
-				if len(traefikConfiguration.ConfigFile) != 0 {
-					globalConfiguration.File.Filename = traefikConfiguration.ConfigFile
-				} else {
-					log.Errorln("Error using file configuration backend, no filename defined")
-				}
-			}
-			if len(traefikConfiguration.ConfigFile) != 0 {
-				log.Infof("Using TOML configuration file %s", traefikConfiguration.ConfigFile)
-			}
-			run(&globalConfiguration)
+			run(&traefikConfiguration.GlobalConfiguration, traefikConfiguration.ConfigFile)
 			return nil
 		},
 	}
@@ -188,7 +177,7 @@ Complete documentation is available at https://traefik.io`,
 	s.AddSource(toml)
 	s.AddSource(f)
 	if _, err := s.LoadConfig(); err != nil {
-		fmtlog.Println(fmt.Errorf("Error reading TOML config file %s : %s", toml.ConfigFileUsed(), err))
+		fmtlog.Printf("Error reading TOML config file %s : %s\n", toml.ConfigFileUsed(), err)
 		os.Exit(-1)
 	}
 
@@ -203,13 +192,21 @@ Complete documentation is available at https://traefik.io`,
 	// IF a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
 		if traefikConfiguration.Cluster == nil {
-			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.NewV4().String()}
+			traefikConfiguration.Cluster = &types.Cluster{Node: uuid.Get()}
 		}
 		if traefikConfiguration.Cluster.Store == nil {
 			traefikConfiguration.Cluster.Store = &types.Store{Prefix: kv.Prefix, Store: kv.Store}
 		}
 		s.AddSource(kv)
-		if _, err := s.LoadConfig(); err != nil {
+		operation := func() error {
+			_, err := s.LoadConfig()
+			return err
+		}
+		notify := func(err error, time time.Duration) {
+			log.Errorf("Load config error: %+v, retrying in %s", err, time)
+		}
+		err := backoff.RetryNotify(safe.OperationWithRecover(operation), job.NewBackOff(backoff.NewExponentialBackOff()), notify)
+		if err != nil {
 			fmtlog.Printf("Error loading configuration: %s\n", err)
 			os.Exit(-1)
 		}
@@ -223,84 +220,22 @@ Complete documentation is available at https://traefik.io`,
 	os.Exit(0)
 }
 
-func run(globalConfiguration *configuration.GlobalConfiguration) {
-	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
+func run(globalConfiguration *configuration.GlobalConfiguration, configFile string) {
+	configureLogging(globalConfiguration)
+
+	if len(configFile) > 0 {
+		log.Infof("Using TOML configuration file %s", configFile)
+	}
 
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
 
-	if len(globalConfiguration.EntryPoints) == 0 {
-		globalConfiguration.EntryPoints = map[string]*configuration.EntryPoint{"http": {Address: ":80"}}
-		globalConfiguration.DefaultEntryPoints = []string{"http"}
-	}
+	globalConfiguration.SetEffectiveConfiguration(configFile)
 
-	if globalConfiguration.Rancher != nil {
-		// Ensure backwards compatibility for now
-		if len(globalConfiguration.Rancher.AccessKey) > 0 ||
-			len(globalConfiguration.Rancher.Endpoint) > 0 ||
-			len(globalConfiguration.Rancher.SecretKey) > 0 {
-
-			if globalConfiguration.Rancher.API == nil {
-				globalConfiguration.Rancher.API = &rancher.APIConfiguration{
-					AccessKey: globalConfiguration.Rancher.AccessKey,
-					SecretKey: globalConfiguration.Rancher.SecretKey,
-					Endpoint:  globalConfiguration.Rancher.Endpoint,
-				}
-			}
-			log.Warn("Deprecated configuration found: rancher.[accesskey|secretkey|endpoint]. " +
-				"Please use rancher.api.[accesskey|secretkey|endpoint] instead.")
-		}
-
-		if globalConfiguration.Rancher.Metadata != nil && len(globalConfiguration.Rancher.Metadata.Prefix) == 0 {
-			globalConfiguration.Rancher.Metadata.Prefix = "latest"
-		}
-	}
-
-	if globalConfiguration.Debug {
-		globalConfiguration.LogLevel = "DEBUG"
-	}
-
-	// logging
-	level, err := logrus.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
-	if err != nil {
-		log.Error("Error getting level", err)
-	}
-	log.SetLevel(level)
-	if len(globalConfiguration.TraefikLogsFile) > 0 {
-		dir := filepath.Dir(globalConfiguration.TraefikLogsFile)
-
-		err := os.MkdirAll(dir, 0755)
-		if err != nil {
-			log.Errorf("Failed to create log path %s: %s", dir, err)
-		}
-
-		err = log.OpenFile(globalConfiguration.TraefikLogsFile)
-		defer func() {
-			if err := log.CloseFile(); err != nil {
-				log.Error("Error closing log", err)
-			}
-		}()
-		if err != nil {
-			log.Error("Error opening file", err)
-		} else {
-			log.SetFormatter(&logrus.TextFormatter{DisableColors: true, FullTimestamp: true, DisableSorting: true})
-		}
-	} else {
-		log.SetFormatter(&logrus.TextFormatter{FullTimestamp: true, DisableSorting: true})
-	}
 	jsonConf, _ := json.Marshal(globalConfiguration)
 	log.Infof("Traefik version %s built on %s", version.Version, version.BuildDate)
 
 	if globalConfiguration.CheckNewVersion {
-		ticker := time.NewTicker(24 * time.Hour)
-		safe.Go(func() {
-			version.CheckNewVersion()
-			for {
-				select {
-				case <-ticker.C:
-					version.CheckNewVersion()
-				}
-			}
-		})
+		checkNewVersion()
 	}
 
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
@@ -329,6 +264,64 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 	}
 	svr.Wait()
 	log.Info("Shutting down")
+	logrus.Exit(0)
+}
+
+func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
+	// configure default log flags
+	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
+
+	if globalConfiguration.Debug {
+		globalConfiguration.LogLevel = "DEBUG"
+	}
+
+	// configure log level
+	level, err := logrus.ParseLevel(strings.ToLower(globalConfiguration.LogLevel))
+	if err != nil {
+		log.Error("Error getting level", err)
+	}
+	log.SetLevel(level)
+
+	// configure log output file
+	logFile := globalConfiguration.TraefikLogsFile
+	if len(logFile) > 0 {
+		log.Warn("top-level traefikLogsFile has been deprecated -- please use traefiklog.filepath")
+	}
+	if globalConfiguration.TraefikLog != nil && len(globalConfiguration.TraefikLog.FilePath) > 0 {
+		logFile = globalConfiguration.TraefikLog.FilePath
+	}
+
+	// configure log format
+	var formatter logrus.Formatter
+	if globalConfiguration.TraefikLog != nil && globalConfiguration.TraefikLog.Format == "json" {
+		formatter = &logrus.JSONFormatter{}
+	} else {
+		disableColors := false
+		if len(logFile) > 0 {
+			disableColors = true
+		}
+		formatter = &logrus.TextFormatter{DisableColors: disableColors, FullTimestamp: true, DisableSorting: true}
+	}
+	log.SetFormatter(formatter)
+
+	if len(logFile) > 0 {
+		dir := filepath.Dir(logFile)
+
+		err := os.MkdirAll(dir, 0755)
+		if err != nil {
+			log.Errorf("Failed to create log path %s: %s", dir, err)
+		}
+
+		err = log.OpenFile(logFile)
+		logrus.RegisterExitHandler(func() {
+			if err := log.CloseFile(); err != nil {
+				log.Error("Error closing log", err)
+			}
+		})
+		if err != nil {
+			log.Error("Error opening file", err)
+		}
+	}
 }
 
 // CreateKvSource creates KvSource
@@ -365,4 +358,18 @@ func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSourc
 		}
 	}
 	return kv, err
+}
+
+func checkNewVersion() {
+	ticker := time.NewTicker(24 * time.Hour)
+	safe.Go(func() {
+		time.Sleep(10 * time.Minute)
+		version.CheckNewVersion()
+		for {
+			select {
+			case <-ticker.C:
+				version.CheckNewVersion()
+			}
+		}
+	})
 }

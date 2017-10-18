@@ -1,6 +1,7 @@
 # Kubernetes Ingress Controller
 
 This guide explains how to use Træfik as an Ingress controller in a Kubernetes cluster.
+
 If you are not familiar with Ingresses in Kubernetes you might want to read the [Kubernetes user guide](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 
 The config files used in this guide can be found in the [examples directory](https://github.com/containous/traefik/tree/master/examples/k8s)
@@ -14,12 +15,13 @@ on your machine, as it is the quickest way to get a local Kubernetes cluster set
 
 ### Role Based Access Control configuration (Kubernetes 1.6+ only)
 
-Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control of Kubernetes resources and api.
+Kubernetes introduces [Role Based Access Control (RBAC)](https://kubernetes.io/docs/admin/authorization/rbac/) in 1.6+ to allow fine-grained control of Kubernetes resources and API.
 
-If your cluster is configured with RBAC, you may need to authorize Træfik to use the Kubernetes API using ClusterRole and ClusterRoleBinding resources:
+If your cluster is configured with RBAC, you will need to authorize Træfik to use the Kubernetes API. There are two ways to set up the proper permission: Via namespace-specific RoleBindings or a single, global ClusterRoleBinding.
 
-!!! note
-    your cluster may have suitable ClusterRoles already setup, but the following should work everywhere
+RoleBindings per namespace enable to restrict granted permissions to the very namespaces only that Træfik is watching over, thereby following the least-privileges principle. This is the preferred approach if Træfik is not supposed to watch all namespaces, and the set of namespaces does not change dynamically. Otherwise, a single ClusterRoleBinding must be employed.
+
+For the sake of simplicity, this guide will use a ClusterRoleBinding:
 
 ```yaml
 ---
@@ -31,7 +33,6 @@ rules:
   - apiGroups:
       - ""
     resources:
-      - pods
       - services
       - endpoints
       - secrets
@@ -68,13 +69,16 @@ subjects:
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-rbac.yaml
 ```
 
+For namespaced restrictions, one RoleBinding is required per watched namespace along with a corresponding configuration of Træfik's `kubernetes.namespaces` parameter.
+
 ## Deploy Træfik using a Deployment or DaemonSet
 
 It is possible to use Træfik with a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) object,
  whereas both options have their own pros and cons:
- The scalability is much better when using a Deployment, because you will have a Single-Pod-per-Node model when using the DeaemonSet.
-It is possible to exclusively run a Service on a dedicated set of machines using taints and tolerations with a DaemonSet.
-On the other hand the DaemonSet allows you to access any Node directly on Port 80 and 443, where you have to setup a [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object with a Deployment.
+ 
+- The scalability is much better when using a Deployment, because you will have a Single-Pod-per-Node model when using the DeaemonSet.  
+- It is possible to exclusively run a Service on a dedicated set of machines using taints and tolerations with a DaemonSet.  
+- On the other hand the DaemonSet allows you to access any Node directly on Port 80 and 443, where you have to setup a [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object with a Deployment.
 
 The Deployment objects looks like this:
 
@@ -131,7 +135,8 @@ spec:
 ```
 [examples/k8s/traefik-deployment.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-deployment.yaml)
 
-> The Service will expose two NodePorts which allow access to the ingress and the web interface.
+!!! note
+    The Service will expose two NodePorts which allow access to the ingress and the web interface.
 
 The DaemonSet objects looks not much different:
 
@@ -198,20 +203,20 @@ spec:
 To deploy Træfik to your cluster start by submitting one of the YAML files to the cluster with `kubectl`:
 
 ```shell
-$ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-deployment.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-deployment.yaml
 ```
 
 ```shell
-$ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-ds.yaml
+kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik-ds.yaml
 ```
 
-There are some significant differences between using Deployments and DaemonSets.
-The Deployment has easier up and down scaling possibilities. It can implement full pod lifecycle and supports rolling updates from Kubernetes 1.2.
-At least one Pod is needed to run the Deployment.
-The DaemonSet automatically scales to all nodes that meets a specific selector and guarantees to fill nodes one at a time.
-Rolling updates are fully supported from Kubernetes 1.7 for DaemonSets as well.
+There are some significant differences between using Deployments and DaemonSets:
 
-
+- The Deployment has easier up and down scaling possibilities.
+    It can implement full pod lifecycle and supports rolling updates from Kubernetes 1.2.
+    At least one Pod is needed to run the Deployment.
+- The DaemonSet automatically scales to all nodes that meets a specific selector and guarantees to fill nodes one at a time.
+    Rolling updates are fully supported from Kubernetes 1.7 for DaemonSets as well.
 
 ### Check the Pods
 
@@ -220,8 +225,10 @@ Now lets check if our command was successful.
 Start by listing the pods in the `kube-system` namespace:
 
 ```shell
-$ kubectl --namespace=kube-system get pods
+kubectl --namespace=kube-system get pods
+```
 
+```
 NAME                                         READY     STATUS    RESTARTS   AGE
 kube-addon-manager-minikubevm                1/1       Running   0          4h
 kubernetes-dashboard-s8krj                   1/1       Running   0          4h
@@ -231,14 +238,17 @@ traefik-ingress-controller-678226159-eqseo   1/1       Running   0          7m
 You should see that after submitting the Deployment or DaemonSet to Kubernetes it has launched a Pod, and it is now running.
 _It might take a few moments for kubernetes to pull the Træfik image and start the container._
 
-> You could also check the deployment with the Kubernetes dashboard, run
-> `minikube dashboard` to open it in your browser, then choose the `kube-system`
-> namespace from the menu at the top right of the screen.
+!!! note
+    You could also check the deployment with the Kubernetes dashboard, run
+    `minikube dashboard` to open it in your browser, then choose the `kube-system`
+    namespace from the menu at the top right of the screen.
 
 You should now be able to access Træfik on port 80 of your Minikube instance when using the DaemonSet:
 
 ```sh
 curl $(minikube ip)
+```
+```
 404 page not found
 ```
 
@@ -246,20 +256,24 @@ If you decided to use the deployment, then you need to target the correct NodePo
 
 ```sh
 curl $(minikube ip):<NODEPORT>
+```
+```
 404 page not found
 ```
 
-> We expect to see a 404 response here as we haven't yet given Træfik any configuration.
+!!! note
+    We expect to see a 404 response here as we haven't yet given Træfik any configuration.
 
 ## Deploy Træfik using Helm Chart
 
 Instead of installing Træfik via an own object, you can also use the Træfik Helm chart.
+
 This allows more complex configuration via Kubernetes [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configmap/) and enabled TLS certificates.
 
 Install Træfik chart by:
 
 ```shell
-$ helm install stable/traefik
+helm install stable/traefik
 ```
 
 For more information, check out [the doc](https://github.com/kubernetes/charts/tree/master/stable/traefik).
@@ -305,9 +319,8 @@ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/exa
 
 Now lets setup an entry in our /etc/hosts file to route `traefik-ui.minikube` to our cluster.
 
-> In production you would want to set up real dns entries.
-
-> You can get the ip address of your minikube instance by running `minikube ip`
+In production you would want to set up real dns entries.  
+You can get the ip address of your minikube instance by running `minikube ip`
 
 ```shell
 echo "$(minikube ip) traefik-ui.minikube" | sudo tee -a /etc/hosts
@@ -346,13 +359,6 @@ spec:
       containers:
       - name: cheese
         image: errm/cheese:stilton
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
-          limits:
-            cpu: 100m
-            memory: 50Mi
         ports:
         - containerPort: 80
 ---
@@ -379,13 +385,6 @@ spec:
       containers:
       - name: cheese
         image: errm/cheese:cheddar
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
-          limits:
-            cpu: 100m
-            memory: 50Mi
         ports:
         - containerPort: 80
 ---
@@ -412,13 +411,6 @@ spec:
       containers:
       - name: cheese
         image: errm/cheese:wensleydale
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
-          limits:
-            cpu: 100m
-            memory: 50Mi
         ports:
         - containerPort: 80
 ```
@@ -474,8 +466,8 @@ spec:
     task: wensleydale
 ```
 
-> Notice that we also set a [circuit breaker expression](https://docs.traefik.io/basics/#backends) for one of the backends
-> by setting the `traefik.backend.circuitbreaker` annotation on the service.
+!!! note
+    We also set a [circuit breaker expression](/basics/#backends) for one of the backends by setting the `traefik.backend.circuitbreaker` annotation on the service.
 
 
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
@@ -519,13 +511,15 @@ spec:
 ```
 [examples/k8s/cheese-ingress.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-ingress.yaml)
 
-> Notice that we list each hostname, and add a backend service.
+!!! note
+    we list each hostname, and add a backend service.
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml
 ```
 
-Now visit the [Træfik dashboard](http://traefik-ui.minikube/) and you should see a frontend for each host. Along with a backend listing for each service with a Server set up for each pod.
+Now visit the [Træfik dashboard](http://traefik-ui.minikube/) and you should see a frontend for each host.
+Along with a backend listing for each service with a Server set up for each pod.
 
 If you edit your `/etc/hosts` again you should be able to access the cheese websites in your browser.
 
@@ -542,7 +536,6 @@ echo "$(minikube ip) stilton.minikube cheddar.minikube wensleydale.minikube" | s
 Now lets suppose that our fictional client has decided that while they are super happy about our cheesy web design, when they asked for 3 websites they had not really bargained on having to buy 3 domain names.
 
 No problem, we say, why don't we reconfigure the sites to host all 3 under one domain.
-
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -572,9 +565,8 @@ spec:
 ```
 [examples/k8s/cheeses-ingress.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheeses-ingress.yaml)
 
-> Notice that we are configuring Træfik to strip the prefix from the url path
-> with the `traefik.frontend.rule.type` annotation so that we can use
-> the containers from the previous example without modification.
+!!! note
+    we are configuring Træfik to strip the prefix from the url path with the `traefik.frontend.rule.type` annotation so that we can use the containers from the previous example without modification.
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheeses-ingress.yaml
@@ -601,7 +593,7 @@ kind: Ingress
 metadata:
   name: wildcard-cheeses
   annotations:
-    traefik.frontend.priority: 1
+    traefik.frontend.priority: "1"
 spec:
   rules:
   - host: *.minikube
@@ -616,7 +608,7 @@ kind: Ingress
 metadata:
   name: specific-cheeses
   annotations:
-    traefik.frontend.priority: 2
+    traefik.frontend.priority: "2"
 spec:
   rules:
   - host: specific.minikube
@@ -628,22 +620,25 @@ spec:
           servicePort: http
 ```
 
+Note that priority values must be quoted to avoid them being interpreted as numbers (which are illegal for annotations).
 
 ## Forwarding to ExternalNames
 
 When specifying an [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors),
-Træfik will forward requests to the given host accordingly and use HTTPS when the Service port matches 443.
+Træfik will forward requests to the given host accordingly and use HTTPS when the Service port matches 443.  
 This still requires setting up a proper port mapping on the Service from the Ingress port to the (external) Service port.
 
 ## Disable passing the Host header
 
 By default Træfik will pass the incoming Host header on to the upstream resource.
+
 There are times however where you may not want this to be the case.
 For example if your service is of the ExternalName type.
 
 ### Disable entirely
 
 Add the following to your toml config:
+
 ```toml
 disablePassHostHeaders = true
 ```
@@ -653,6 +648,7 @@ disablePassHostHeaders = true
 To disable passing the Host header per ingress resource set the `traefik.frontend.passHostHeader` annotation on your ingress to `false`.
 
 Here is an example ingress definition:
+
 ```yaml
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -673,6 +669,7 @@ spec:
 ```
 
 And an example service definition:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -693,11 +690,33 @@ If you were to visit `example.com/static` the request would then be passed onto 
     So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing
     the host header per ingress if you wanted.
 
-## Excluding an ingress from Træfik
+## Partitioning the Ingress object space
 
-You can control which ingress Træfik cares about by using the `kubernetes.io/ingress.class` annotation.
-By default if the annotation is not set at all Træfik will include the ingress.
-If the annotation is set to anything other than traefik or a blank string Træfik will ignore it.
+By default, Træfik processes every Ingress objects it observes. At times, however, it may be desirable to ignore certain objects. The following sub-sections describe common use cases and how they can be handled with Træfik.
 
+### Between Træfik and other Ingress controller implementations
 
-![](https://i.giphy.com/ujUdrdpX7Ok5W.gif)
+Sometimes Træfik runs along other Ingress controller implementations. One such example is when both Træfik and a cloud provider Ingress controller are active.
+
+The `kubernetes.io/ingress.class` annotation can be attached to any Ingress object in order to control whether Træfik should handle it.
+
+If the annotation is missing, contains an empty value, or the value `traefik`, then the Træfik controller will take responsibility and process the associated Ingress object. If the annotation contains any other value (usually the name of a different Ingress controller), Træfik will ignore the object.
+
+### Between multiple Træfik Deployments
+
+Sometimes multiple Træfik Deployments are supposed to run concurrently. For instance, it is conceivable to have one Deployment deal with internal and another one with external traffic.
+
+For such cases, it is advisable to classify Ingress objects through a label and configure the `labelSelector` option per each Træfik Deployment accordingly. To stick with the internal/external example above, all Ingress objects meant for internal traffic could receive a `traffic-type: internal` label while objects designated for external traffic receive a `traffic-type: external` label. The label selectors on the Træfik Deployments would then be `traffic-type=internal` and `traffic-type=external`, respectively.
+
+## Production advice
+
+### Resource limitations
+
+The examples shown deliberately do not specify any [resource limitations](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/) as there is no one size fits all.
+
+In a production environment, however, it is important to set proper bounds, especially with regards to CPU:
+
+- too strict and Traefik will be throttled while serving requests (as Kubernetes imposes hard quotas)
+- too loose and Traefik may waste resources not available for other containers
+
+When in doubt, you should measure your resource needs, and adjust requests and limits accordingly.

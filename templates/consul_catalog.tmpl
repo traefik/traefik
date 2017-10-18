@@ -17,8 +17,12 @@
   {{end}}
 
   [backends."backend-{{$service}}".loadbalancer]
-    sticky = {{getAttribute "backend.loadbalancer.sticky" .Attributes "false"}}
     method = "{{getAttribute "backend.loadbalancer" .Attributes "wrr"}}"
+    sticky = {{getSticky .Attributes}}
+    {{if hasStickinessLabel .Attributes}}
+    [backends."backend-{{$service}}".loadbalancer.stickiness]
+      cookieName = "{{getStickinessCookieName .Attributes}}"
+    {{end}}
 
   {{if hasMaxconnAttributes .Attributes}}
   [backends."backend-{{$service}}".maxconn]

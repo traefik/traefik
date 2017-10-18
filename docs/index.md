@@ -4,7 +4,7 @@
 
 [![Build Status SemaphoreCI](https://semaphoreci.com/api/v1/containous/traefik/branches/master/shields_badge.svg)](https://semaphoreci.com/containous/traefik)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://docs.traefik.io)
-[![Go Report Card](https://goreportcard.com/badge/kubernetes/helm)](https://goreportcard.com/report/containous/traefik)
+[![Go Report Card](https://goreportcard.com/badge/github.com/containous/traefik)](https://goreportcard.com/report/github.com/containous/traefik)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/containous/traefik/blob/master/LICENSE.md)
 [![Join the chat at https://traefik.herokuapp.com](https://img.shields.io/badge/style-register-green.svg?style=social&label=Slack)](https://traefik.herokuapp.com)
 [![Twitter](https://img.shields.io/twitter/follow/traefikproxy.svg?style=social)](https://twitter.com/intent/follow?screen_name=traefikproxy)
@@ -37,9 +37,9 @@ Run it and forget it!
 
 ## Features
 
-- [It's fast](https://docs.traefik.io/benchmarks)
+- [It's fast](/benchmarks)
 - No dependency hell, single binary made with go
-- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) official docker image
+- [Tiny](https://microbadger.com/images/traefik) [official](https://hub.docker.com/r/_/traefik/) docker image
 - Rest API
 - Hot-reloading of configuration. No need to restart the process
 - Circuit breakers, retry

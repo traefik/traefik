@@ -18,8 +18,8 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
-	Directory             string `description:"Load configuration from one or more .toml files in a directory"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
+	Directory             string `description:"Load configuration from one or more .toml files in a directory" export:"true"`
 }
 
 // Provide allows the file provider to provide configurations to traefik

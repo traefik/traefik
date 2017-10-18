@@ -42,13 +42,13 @@ const traefikDefaultRealm = "traefik"
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider  `mapstructure:",squash"`
+	provider.BaseProvider  `mapstructure:",squash" export:"true"`
 	Endpoint               string     `description:"Kubernetes server endpoint (required for external cluster client)"`
 	Token                  string     `description:"Kubernetes bearer token (not needed for in-cluster client)"`
 	CertAuthFilePath       string     `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
-	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers"`
-	Namespaces             Namespaces `description:"Kubernetes namespaces"`
-	LabelSelector          string     `description:"Kubernetes api label selector to use"`
+	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers" export:"true"`
+	Namespaces             Namespaces `description:"Kubernetes namespaces" export:"true"`
+	LabelSelector          string     `description:"Kubernetes api label selector to use" export:"true"`
 	lastConfiguration      safe.Safe
 }
 
@@ -88,7 +88,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				stopWatch := make(chan struct{}, 1)
 				defer close(stopWatch)
 				log.Debugf("Using label selector: '%s'", p.LabelSelector)
-				eventsChan, err := k8sClient.WatchAll(p.LabelSelector, stopWatch)
+				eventsChan, err := k8sClient.WatchAll(p.Namespaces, p.LabelSelector, stopWatch)
 				if err != nil {
 					log.Errorf("Error watching kubernetes events: %v", err)
 					timer := time.NewTimer(1 * time.Second)
@@ -104,13 +104,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					case <-stop:
 						return nil
 					case event := <-eventsChan:
-						log.Debugf("Received event from kubernetes %+v", event)
+						log.Debugf("Received Kubernetes event kind %T", event)
 						templateObjects, err := p.loadIngresses(k8sClient)
 						if err != nil {
 							return err
 						}
 						if reflect.DeepEqual(p.lastConfiguration.Get(), templateObjects) {
-							log.Debugf("Skipping event from kubernetes %+v", event)
+							log.Debugf("Skipping Kubernetes event kind %T", event)
 						} else {
 							p.lastConfiguration.Set(templateObjects)
 							configurationChan <- types.ConfigMessage{
@@ -136,7 +136,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 }
 
 func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error) {
-	ingresses := k8sClient.GetIngresses(p.Namespaces)
+	ingresses := k8sClient.GetIngresses()
 
 	templateObjects := types.Configuration{
 		Backends:  map[string]*types.Backend{},
@@ -160,7 +160,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					templateObjects.Backends[r.Host+pa.Path] = &types.Backend{
 						Servers: make(map[string]types.Server),
 						LoadBalancer: &types.LoadBalancer{
-							Sticky: false,
 							Method: "wrr",
 						},
 					}
@@ -180,11 +179,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					log.Warnf("Unknown value '%s' for %s, falling back to %s", passHostHeaderAnnotation, types.LabelFrontendPassHostHeader, PassHostHeader)
 				}
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
-					return nil, errors.New("no realm customization supported")
+					log.Errorf("Value for annotation %q on ingress %s/%s invalid: no realm customization supported", annotationKubernetesAuthRealm, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
+					delete(templateObjects.Backends, r.Host+pa.Path)
+					continue
 				}
 
-				witelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
-				whitelistSourceRange := provider.SplitAndTrimString(witelistSourceRangeAnnotation)
+				whitelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
+				whitelistSourceRange := provider.SplitAndTrimString(whitelistSourceRangeAnnotation)
 
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
@@ -247,8 +248,16 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
 
-				if service.Annotations[types.LabelBackendLoadbalancerSticky] == "true" {
-					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = true
+				if sticky := service.Annotations[types.LabelBackendLoadbalancerSticky]; len(sticky) > 0 {
+					log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = strings.EqualFold(strings.TrimSpace(sticky), "true")
+				}
+
+				if service.Annotations[types.LabelBackendLoadbalancerStickiness] == "true" {
+					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Stickiness = &types.Stickiness{}
+					if cookieName := service.Annotations[types.LabelBackendLoadbalancerStickinessCookieName]; len(cookieName) > 0 {
+						templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Stickiness.CookieName = cookieName
+					}
 				}
 
 				protocol := "http"

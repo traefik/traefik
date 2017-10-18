@@ -86,6 +86,14 @@ func TestStripPrefix(t *testing.T) {
 			expectedPath:       "/",
 			expectedHeader:     "/stat",
 		},
+		{
+			desc:               "prefix matching within slash boundaries",
+			prefixes:           []string{"/stat"},
+			path:               "/status",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/us",
+			expectedHeader:     "/stat",
+		},
 	}
 
 	for _, test := range tests {

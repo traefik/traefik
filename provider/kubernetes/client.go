@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"sync"
 	"time"
 
 	"github.com/containous/traefik/safe"
@@ -19,31 +20,71 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-const resyncPeriod = time.Minute * 5
+const resyncPeriod = 10 * time.Minute
+
+const (
+	kindIngresses = "ingresses"
+	kindServices  = "services"
+	kindEndpoints = "endpoints"
+	kindSecrets   = "secrets"
+)
+
+type resourceEventHandler struct {
+	ev chan<- interface{}
+}
+
+func (reh *resourceEventHandler) OnAdd(obj interface{}) {
+	eventHandlerFunc(reh.ev, obj)
+}
+
+func (reh *resourceEventHandler) OnUpdate(oldObj, newObj interface{}) {
+	eventHandlerFunc(reh.ev, newObj)
+}
+
+func (reh *resourceEventHandler) OnDelete(obj interface{}) {
+	eventHandlerFunc(reh.ev, obj)
+}
+
+type informerManager struct {
+	informers []cache.SharedInformer
+	syncFuncs []cache.InformerSynced
+}
+
+func (im *informerManager) extend(informer cache.SharedInformer, withSyncFunc bool) {
+	im.informers = append(im.informers, informer)
+	if withSyncFunc {
+		im.syncFuncs = append(im.syncFuncs, informer.HasSynced)
+	}
+}
 
 // Client is a client for the Provider master.
 // WatchAll starts the watch of the Provider resources and updates the stores.
 // The stores can then be accessed via the Get* functions.
 type Client interface {
-	GetIngresses(namespaces Namespaces) []*v1beta1.Ingress
+	WatchAll(namespaces Namespaces, labelSelector string, stopCh <-chan struct{}) (<-chan interface{}, error)
+	GetIngresses() []*v1beta1.Ingress
 	GetService(namespace, name string) (*v1.Service, bool, error)
 	GetSecret(namespace, name string) (*v1.Secret, bool, error)
 	GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error)
-	WatchAll(labelSelector string, stopCh <-chan struct{}) (<-chan interface{}, error)
 }
 
 type clientImpl struct {
-	ingController *cache.Controller
-	svcController *cache.Controller
-	epController  *cache.Controller
-	secController *cache.Controller
+	clientset      *kubernetes.Clientset
+	ingStores      []cache.Store
+	svcStores      map[string]cache.Store
+	epStores       map[string]cache.Store
+	secStores      map[string]cache.Store
+	isNamespaceAll bool
+}
 
-	ingStore cache.Store
-	svcStore cache.Store
-	epStore  cache.Store
-	secStore cache.Store
-
-	clientset *kubernetes.Clientset
+func newClientImpl(clientset *kubernetes.Clientset) Client {
+	return &clientImpl{
+		clientset: clientset,
+		ingStores: []cache.Store{},
+		svcStores: map[string]cache.Store{},
+		epStores:  map[string]cache.Store{},
+		secStores: map[string]cache.Store{},
+	}
 }
 
 // NewInClusterClient returns a new Provider client that is expected to run
@@ -92,67 +133,120 @@ func createClientFromConfig(c *rest.Config) (Client, error) {
 		return nil, err
 	}
 
-	return &clientImpl{
-		clientset: clientset,
-	}, nil
+	return newClientImpl(clientset), nil
 }
 
-// GetIngresses returns all ingresses in the cluster
-func (c *clientImpl) GetIngresses(namespaces Namespaces) []*v1beta1.Ingress {
-	ingList := c.ingStore.List()
-	result := make([]*v1beta1.Ingress, 0, len(ingList))
+// WatchAll starts namespace-specific controllers for all relevant kinds.
+func (c *clientImpl) WatchAll(namespaces Namespaces, labelSelector string, stopCh <-chan struct{}) (<-chan interface{}, error) {
+	eventCh := make(chan interface{}, 1)
 
-	for _, obj := range ingList {
-		ingress := obj.(*v1beta1.Ingress)
-		if HasNamespace(ingress, namespaces) {
-			result = append(result, ingress)
+	kubeLabelSelector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(namespaces) == 0 {
+		namespaces = Namespaces{api.NamespaceAll}
+		c.isNamespaceAll = true
+	}
+
+	var informManager informerManager
+	for _, ns := range namespaces {
+		ns := ns
+		informManager.extend(c.WatchIngresses(ns, kubeLabelSelector, eventCh), true)
+		informManager.extend(c.WatchObjects(ns, kindServices, &v1.Service{}, c.svcStores, eventCh), true)
+		informManager.extend(c.WatchObjects(ns, kindEndpoints, &v1.Endpoints{}, c.epStores, eventCh), true)
+		// Do not wait for the Secrets store to get synced since we cannot rely on
+		// users having granted RBAC permissions for this object.
+		// https://github.com/containous/traefik/issues/1784 should improve the
+		// situation here in the future.
+		informManager.extend(c.WatchObjects(ns, kindSecrets, &v1.Secret{}, c.secStores, eventCh), false)
+	}
+
+	var wg sync.WaitGroup
+	for _, informer := range informManager.informers {
+		informer := informer
+		safe.Go(func() {
+			wg.Add(1)
+			informer.Run(stopCh)
+			wg.Done()
+		})
+	}
+
+	if !cache.WaitForCacheSync(stopCh, informManager.syncFuncs...) {
+		return nil, fmt.Errorf("timed out waiting for controller caches to sync")
+	}
+
+	safe.Go(func() {
+		<-stopCh
+		wg.Wait()
+		close(eventCh)
+	})
+
+	return eventCh, nil
+}
+
+// WatchIngresses sets up a watch on Ingress objects and returns a corresponding shared informer.
+func (c *clientImpl) WatchIngresses(namespace string, labelSelector labels.Selector, watchCh chan<- interface{}) cache.SharedInformer {
+	listWatch := newListWatchFromClientWithLabelSelector(
+		c.clientset.ExtensionsV1beta1().RESTClient(),
+		kindIngresses,
+		namespace,
+		fields.Everything(),
+		labelSelector)
+
+	informer := loadInformer(listWatch, &v1beta1.Ingress{}, watchCh)
+	c.ingStores = append(c.ingStores, informer.GetStore())
+	return informer
+}
+
+// WatchObjects sets up a watch on objects and returns a corresponding shared informer.
+func (c *clientImpl) WatchObjects(namespace, kind string, object runtime.Object, storeMap map[string]cache.Store, watchCh chan<- interface{}) cache.SharedInformer {
+	listWatch := cache.NewListWatchFromClient(
+		c.clientset.CoreV1().RESTClient(),
+		kind,
+		namespace,
+		fields.Everything())
+
+	informer := loadInformer(listWatch, object, watchCh)
+	storeMap[namespace] = informer.GetStore()
+	return informer
+}
+
+func loadInformer(listWatch *cache.ListWatch, object runtime.Object, watchCh chan<- interface{}) cache.SharedInformer {
+	informer := cache.NewSharedInformer(
+		listWatch,
+		object,
+		resyncPeriod,
+	)
+
+	if err := informer.AddEventHandler(newResourceEventHandler(watchCh)); err != nil {
+		// This should only ever fail if we add an event handler after the
+		// informer has been started already, which would be a programming bug.
+		panic(err)
+	}
+
+	return informer
+}
+
+// GetIngresses returns all Ingresses for observed namespaces in the cluster.
+func (c *clientImpl) GetIngresses() []*v1beta1.Ingress {
+	var result []*v1beta1.Ingress
+
+	for _, store := range c.ingStores {
+		for _, obj := range store.List() {
+			ing := obj.(*v1beta1.Ingress)
+			result = append(result, ing)
 		}
 	}
 
 	return result
 }
 
-// WatchIngresses starts the watch of Provider Ingresses resources and updates the corresponding store
-func (c *clientImpl) WatchIngresses(labelSelector labels.Selector, watchCh chan<- interface{}, stopCh <-chan struct{}) {
-	source := NewListWatchFromClient(
-		c.clientset.ExtensionsV1beta1().RESTClient(),
-		"ingresses",
-		api.NamespaceAll,
-		fields.Everything(),
-		labelSelector)
-
-	c.ingStore, c.ingController = cache.NewInformer(
-		source,
-		&v1beta1.Ingress{},
-		resyncPeriod,
-		newResourceEventHandlerFuncs(watchCh))
-	safe.Go(func() {
-		c.ingController.Run(stopCh)
-	})
-}
-
-// eventHandlerFunc will pass the obj on to the events channel or drop it
-// This is so passing the events along won't block in the case of high volume
-// The events are only used for signalling anyway so dropping a few is ok
-func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
-	select {
-	case events <- obj:
-	default:
-	}
-}
-
-func newResourceEventHandlerFuncs(events chan<- interface{}) cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj interface{}) { eventHandlerFunc(events, obj) },
-		UpdateFunc: func(old, new interface{}) { eventHandlerFunc(events, new) },
-		DeleteFunc: func(obj interface{}) { eventHandlerFunc(events, obj) },
-	}
-}
-
-// GetService returns the named service from the named namespace
+// GetService returns the named service from the given namespace.
 func (c *clientImpl) GetService(namespace, name string) (*v1.Service, bool, error) {
 	var service *v1.Service
-	item, exists, err := c.svcStore.GetByKey(namespace + "/" + name)
+	item, exists, err := c.svcStores[c.lookupNamespace(namespace)].GetByKey(namespace + "/" + name)
 	if item != nil {
 		service = item.(*v1.Service)
 	}
@@ -160,39 +254,10 @@ func (c *clientImpl) GetService(namespace, name string) (*v1.Service, bool, erro
 	return service, exists, err
 }
 
-func (c *clientImpl) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
-	var secret *v1.Secret
-	item, exists, err := c.secStore.GetByKey(namespace + "/" + name)
-	if err == nil && item != nil {
-		secret = item.(*v1.Secret)
-	}
-
-	return secret, exists, err
-}
-
-// WatchServices starts the watch of Provider Service resources and updates the corresponding store
-func (c *clientImpl) WatchServices(watchCh chan<- interface{}, stopCh <-chan struct{}) {
-	source := cache.NewListWatchFromClient(
-		c.clientset.CoreV1().RESTClient(),
-		"services",
-		api.NamespaceAll,
-		fields.Everything())
-
-	c.svcStore, c.svcController = cache.NewInformer(
-		source,
-		&v1.Service{},
-		resyncPeriod,
-		newResourceEventHandlerFuncs(watchCh))
-	safe.Go(func() {
-		c.svcController.Run(stopCh)
-	})
-}
-
-// GetEndpoints returns the named Endpoints
-// Endpoints have the same name as the coresponding service
+// GetEndpoints returns the named endpoints from the given namespace.
 func (c *clientImpl) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
 	var endpoint *v1.Endpoints
-	item, exists, err := c.epStore.GetByKey(namespace + "/" + name)
+	item, exists, err := c.epStores[c.lookupNamespace(namespace)].GetByKey(namespace + "/" + name)
 
 	if item != nil {
 		endpoint = item.(*v1.Endpoints)
@@ -201,99 +266,33 @@ func (c *clientImpl) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, 
 	return endpoint, exists, err
 }
 
-// WatchEndpoints starts the watch of Provider Endpoints resources and updates the corresponding store
-func (c *clientImpl) WatchEndpoints(watchCh chan<- interface{}, stopCh <-chan struct{}) {
-	source := cache.NewListWatchFromClient(
-		c.clientset.CoreV1().RESTClient(),
-		"endpoints",
-		api.NamespaceAll,
-		fields.Everything())
-
-	c.epStore, c.epController = cache.NewInformer(
-		source,
-		&v1.Endpoints{},
-		resyncPeriod,
-		newResourceEventHandlerFuncs(watchCh))
-	safe.Go(func() {
-		c.epController.Run(stopCh)
-	})
-}
-
-func (c *clientImpl) WatchSecrets(watchCh chan<- interface{}, stopCh <-chan struct{}) {
-	source := cache.NewListWatchFromClient(
-		c.clientset.CoreV1().RESTClient(),
-		"secrets",
-		api.NamespaceAll,
-		fields.Everything())
-
-	c.secStore, c.secController = cache.NewInformer(
-		source,
-		&v1.Secret{},
-		resyncPeriod,
-		newResourceEventHandlerFuncs(watchCh))
-	safe.Go(func() {
-		c.secController.Run(stopCh)
-	})
-}
-
-// WatchAll returns events in the cluster and updates the stores via informer
-// Filters ingresses by labelSelector
-func (c *clientImpl) WatchAll(labelSelector string, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	watchCh := make(chan interface{}, 1)
-	eventCh := make(chan interface{}, 1)
-
-	kubeLabelSelector, err := labels.Parse(labelSelector)
-	if err != nil {
-		return nil, err
+// GetSecret returns the named secret from the given namespace.
+func (c *clientImpl) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
+	var secret *v1.Secret
+	item, exists, err := c.secStores[c.lookupNamespace(namespace)].GetByKey(namespace + "/" + name)
+	if err == nil && item != nil {
+		secret = item.(*v1.Secret)
 	}
 
-	c.WatchIngresses(kubeLabelSelector, eventCh, stopCh)
-	c.WatchServices(eventCh, stopCh)
-	c.WatchEndpoints(eventCh, stopCh)
-	c.WatchSecrets(eventCh, stopCh)
-
-	safe.Go(func() {
-		defer close(watchCh)
-		defer close(eventCh)
-
-		for {
-			select {
-			case <-stopCh:
-				return
-			case event := <-eventCh:
-				c.fireEvent(event, watchCh)
-			}
-		}
-	})
-
-	return watchCh, nil
+	return secret, exists, err
 }
 
-// fireEvent checks if all controllers have synced before firing
-// Used after startup or a reconnect
-func (c *clientImpl) fireEvent(event interface{}, eventCh chan interface{}) {
-	if !c.ingController.HasSynced() || !c.svcController.HasSynced() || !c.epController.HasSynced() {
-		return
+// lookupNamespace returns the lookup namespace key for the given namespace.
+// When listening on all namespaces, it returns the client-go identifier ("")
+// for all-namespaces. Otherwise, it returns the given namespace.
+// The distinction is necessary because we index all informers on the special
+// identifier iff all-namespaces are requested but receive specific namespace
+// identifiers from the Kubernetes API, so we have to bridge this gap.
+func (c *clientImpl) lookupNamespace(ns string) string {
+	if c.isNamespaceAll {
+		return api.NamespaceAll
 	}
-	eventHandlerFunc(eventCh, event)
+	return ns
 }
 
-// HasNamespace checks if the ingress is in one of the namespaces
-func HasNamespace(ingress *v1beta1.Ingress, namespaces Namespaces) bool {
-	if len(namespaces) == 0 {
-		return true
-	}
-	for _, n := range namespaces {
-		if ingress.ObjectMeta.Namespace == n {
-			return true
-		}
-	}
-	return false
-}
-
-// NewListWatchFromClient creates a new ListWatch from the specified client, resource, namespace, field selector and label selector.
-// Extends cache.NewListWatchFromClient to support labelSelector
-func NewListWatchFromClient(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector, labelSelector labels.Selector) *cache.ListWatch {
+// newListWatchFromClientWithLabelSelector creates a new ListWatch from the given parameters.
+// It extends cache.NewListWatchFromClient to support label selectors.
+func newListWatchFromClientWithLabelSelector(c cache.Getter, resource string, namespace string, fieldSelector fields.Selector, labelSelector labels.Selector) *cache.ListWatch {
 	listFunc := func(options api.ListOptions) (runtime.Object, error) {
 		return c.Get().
 			Namespace(namespace).
@@ -315,4 +314,18 @@ func NewListWatchFromClient(c cache.Getter, resource string, namespace string, f
 			Watch()
 	}
 	return &cache.ListWatch{ListFunc: listFunc, WatchFunc: watchFunc}
+}
+
+func newResourceEventHandler(events chan<- interface{}) cache.ResourceEventHandler {
+	return &resourceEventHandler{events}
+}
+
+// eventHandlerFunc will pass the obj on to the events channel or drop it.
+// This is so passing the events along won't block in the case of high volume.
+// The events are only used for signalling anyway so dropping a few is ok.
+func eventHandlerFunc(events chan<- interface{}, obj interface{}) {
+	select {
+	case events <- obj:
+	default:
+	}
 }

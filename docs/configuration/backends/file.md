@@ -1,6 +1,12 @@
 # File Backends
 
-Like any other reverse proxy, Træfik can be configured with a file. You have three choices:
+Like any other reverse proxy, Træfik can be configured with a file.
+
+You have three choices:
+
+- [Simple](/configuration/backends/file/#simple)
+- [Rules in a Separate File](/configuration/backends/file/#rules-in-a-separate-file)
+- [Multiple `.toml` Files](/configuration/backends/file/#multiple-toml-files)
 
 ## Simple
 
@@ -145,7 +151,7 @@ filename = "rules.toml"
   rule = "Path:/test"
 ```
 
-## Multiple .toml Files
+## Multiple `.toml` Files
 
 You could have multiple `.toml` files in a directory:
 

@@ -7,7 +7,11 @@
     [backends."{{$backendName}}".loadbalancer]
       method = "{{$backend.LoadBalancer.Method}}"
       {{if $backend.LoadBalancer.Sticky}}
-          sticky = true
+      sticky = true
+      {{end}}
+      {{if $backend.LoadBalancer.Stickiness}}
+      [backends."{{$backendName}}".loadbalancer.stickiness]
+        cookieName = "{{$backend.LoadBalancer.Stickiness.CookieName}}"
       {{end}}
     {{range $serverName, $server := $backend.Servers}}
     [backends."{{$backendName}}".servers."{{$serverName}}"]

@@ -29,17 +29,17 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
 
 	Domain           string `description:"Default domain used"`
-	ExposedByDefault bool   `description:"Expose containers by default"`
-	RefreshSeconds   int    `description:"Polling interval (in seconds)"`
+	ExposedByDefault bool   `description:"Expose containers by default" export:"true"`
+	RefreshSeconds   int    `description:"Polling interval (in seconds)" export:"true"`
 
 	// Provider lookup parameters
 	Clusters             Clusters `description:"ECS Clusters name"`
 	Cluster              string   `description:"deprecated - ECS Cluster name"` // deprecated
-	AutoDiscoverClusters bool     `description:"Auto discover cluster"`
-	Region               string   `description:"The AWS region to use for requests"`
+	AutoDiscoverClusters bool     `description:"Auto discover cluster" export:"true"`
+	Region               string   `description:"The AWS region to use for requests" export:"true"`
 	AccessKeyID          string   `description:"The AWS credentials access key to use for making requests"`
 	SecretAccessKey      string   `description:"The AWS credentials access key to use for making requests"`
 }
@@ -122,12 +122,12 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		})
 
 		operation := func() error {
-			aws, err := p.createClient()
+			awsClient, err := p.createClient()
 			if err != nil {
 				return err
 			}
 
-			configuration, err := p.loadECSConfig(ctx, aws)
+			configuration, err := p.loadECSConfig(ctx, awsClient)
 			if err != nil {
 				return handleCanceled(ctx, err)
 			}
@@ -143,7 +143,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				for {
 					select {
 					case <-reload.C:
-						configuration, err := p.loadECSConfig(ctx, aws)
+						configuration, err := p.loadECSConfig(ctx, awsClient)
 						if err != nil {
 							return handleCanceled(ctx, err)
 						}
@@ -180,11 +180,13 @@ func wrapAws(ctx context.Context, req *request.Request) error {
 
 func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
 	var ecsFuncMap = template.FuncMap{
-		"filterFrontends":       p.filterFrontends,
-		"getFrontendRule":       p.getFrontendRule,
-		"getBasicAuth":          p.getBasicAuth,
-		"getLoadBalancerSticky": p.getLoadBalancerSticky,
-		"getLoadBalancerMethod": p.getLoadBalancerMethod,
+		"filterFrontends":         p.filterFrontends,
+		"getFrontendRule":         p.getFrontendRule,
+		"getBasicAuth":            p.getBasicAuth,
+		"getLoadBalancerMethod":   p.getLoadBalancerMethod,
+		"getLoadBalancerSticky":   p.getLoadBalancerSticky,
+		"hasStickinessLabel":      p.hasStickinessLabel,
+		"getStickinessCookieName": p.getStickinessCookieName,
 	}
 
 	instances, err := p.listInstances(ctx, client)
@@ -214,7 +216,6 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 // Find all running Provider tasks in a cluster, also collect the task definitions (for docker labels)
 // and the EC2 instance data
 func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsInstance, error) {
-	var taskArns []*string
 	var instances []ecsInstance
 	var clustersArn []*string
 	var clusters Clusters
@@ -255,6 +256,8 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			DesiredStatus: aws.String(ecs.DesiredStatusRunning),
 		})
 
+		var taskArns []*string
+
 		for ; req != nil; req = req.NextPage() {
 			if err := wrapAws(ctx, req); err != nil {
 				return nil, err
@@ -263,12 +266,10 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 			taskArns = append(taskArns, req.Data.(*ecs.ListTasksOutput).TaskArns...)
 		}
 
-		// Early return: if we can't list tasks we have nothing to
-		// describe below - likely empty cluster/permissions are bad.  This
-		// stops the AWS API from returning a 401 when you DescribeTasks
-		// with no input.
+		// Skip to the next cluster if there are no tasks found on
+		// this cluster.
 		if len(taskArns) == 0 {
-			return []ecsInstance{}, nil
+			continue
 		}
 
 		chunkedTaskArns := p.chunkedTaskArns(taskArns)
@@ -478,14 +479,31 @@ func (p *Provider) getBasicAuth(i ecsInstance) []string {
 	return []string{}
 }
 
+func (p *Provider) getFirstInstanceLabel(instances []ecsInstance, labelName string) string {
+	if len(instances) > 0 {
+		return p.label(instances[0], labelName)
+	}
+	return ""
+}
+
 func (p *Provider) getLoadBalancerSticky(instances []ecsInstance) string {
 	if len(instances) > 0 {
-		label := p.label(instances[0], types.LabelBackendLoadbalancerSticky)
+		label := p.getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerSticky)
 		if label != "" {
+			log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
 			return label
 		}
 	}
 	return "false"
+}
+
+func (p *Provider) hasStickinessLabel(instances []ecsInstance) bool {
+	stickinessLabel := p.getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerStickiness)
+	return len(stickinessLabel) > 0 && strings.EqualFold(strings.TrimSpace(stickinessLabel), "true")
+}
+
+func (p *Provider) getStickinessCookieName(instances []ecsInstance) string {
+	return p.getFirstInstanceLabel(instances, types.LabelBackendLoadbalancerStickinessCookieName)
 }
 
 func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {

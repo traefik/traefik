@@ -18,9 +18,9 @@ import (
 
 // Provider holds configuration of the Provider provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string `description:"Eureka server endpoint"`
-	Delay                 string `description:"Override default configuration time between refresh"`
+	Delay                 string `description:"Override default configuration time between refresh" export:"true"`
 }
 
 // Provide allows the eureka provider to provide configurations to traefik

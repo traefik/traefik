@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -248,6 +249,12 @@ func (f *httpForwarder) copyRequest(req *http.Request, u *url.URL) *http.Request
 	if f.rewriter != nil {
 		f.rewriter.Rewrite(outReq)
 	}
+
+	if req.ContentLength == 0 {
+		// https://github.com/golang/go/issues/16036: nil Body for http.Transport retries
+		outReq.Body = nil
+	}
+
 	return outReq
 }
 
@@ -261,8 +268,32 @@ func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request,
 	}
 	targetConn, resp, err := dialer.Dial(outReq.URL.String(), outReq.Header)
 	if err != nil {
-		ctx.log.Errorf("Error dialing `%v`: %v", outReq.Host, err)
-		ctx.errHandler.ServeHTTP(w, req, err)
+		if resp == nil {
+			ctx.errHandler.ServeHTTP(w, req, err)
+		} else {
+			ctx.log.Errorf("Error dialing %q: %v with resp: %d %s", outReq.Host, err, resp.StatusCode, resp.Status)
+			hijacker, ok := w.(http.Hijacker)
+			if !ok {
+				ctx.log.Errorf("%s can not be hijack", reflect.TypeOf(w))
+				ctx.errHandler.ServeHTTP(w, req, err)
+				return
+			}
+
+			conn, _, err := hijacker.Hijack()
+			if err != nil {
+				ctx.log.Errorf("Failed to hijack responseWriter")
+				ctx.errHandler.ServeHTTP(w, req, err)
+				return
+			}
+			defer conn.Close()
+
+			err = resp.Write(conn)
+			if err != nil {
+				ctx.log.Errorf("Failed to forward response")
+				ctx.errHandler.ServeHTTP(w, req, err)
+				return
+			}
+		}
 		return
 	}
 

@@ -109,23 +109,55 @@ Users can be specified directly in the toml file, or indirectly by referencing a
   usersFile = "/path/to/.htdigest"
 ```
 
+### Forward Authentication
+
+This configuration will first forward the request to `http://authserver.com/auth`.
+
+If the response code is 2XX, access is granted and the original request is performed.
+Otherwise, the response from the auth server is returned.
+
+```toml
+[entryPoints]
+  [entrypoints.http]
+    # ...
+    # To enable forward auth on an entrypoint
+    [entrypoints.http.auth.forward]
+    address = "https://authserver.com/auth"
+    
+    # Trust existing X-Forwarded-* headers.
+    # Useful with another reverse proxy in front of Traefik.
+    #
+    # Optional
+    # Default: false
+    #
+    trustForwardHeader = true
+    
+    # Enable forward auth TLS connection.
+    #
+    # Optional
+    #
+    [entrypoints.http.auth.forward.tls]
+    cert = "authserver.crt"
+    key = "authserver.key"
+```
+
 ## Specify Minimum TLS Version
 
-To specify an https entrypoint with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls).
+To specify an https entry point with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls).
 
 ```toml
 [entryPoints]
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
-    MinVersion = "VersionTLS12"
-    CipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
+    minVersion = "VersionTLS12"
+    cipherSuites = ["TLS_RSA_WITH_AES_256_GCM_SHA384"]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
+      certFile = "integration/fixtures/https/snitest.org.cert"
+      keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
 ## Compression
@@ -139,6 +171,12 @@ To enable compression support using gzip format.
   compress = true
 ```
 
+Responses are compressed when:
+
+* The response body is larger than `512` bytes
+* And the `Accept-Encoding` request header contains `gzip`
+* And the response is not already compressed, i.e. the `Content-Encoding` response header is not already set.
+
 ## Whitelisting
 
 To enable IP whitelisting at the entrypoint level.
@@ -147,16 +185,55 @@ To enable IP whitelisting at the entrypoint level.
 [entryPoints]
   [entryPoints.http]
   address = ":80"
-  whiteListSourceRange = ["127.0.0.1/32"]
+  whiteListSourceRange = ["127.0.0.1/32", "192.168.1.7"]
 ```
 
-## ProxyProtocol Support
+## ProxyProtocol
 
 To enable [ProxyProtocol](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt) support.
+Only IPs in `trustedIPs` will lead to remote client address replacement: you should declare your load-balancer IP or CIDR range here (in testing environment, you can trust everyone using `insecure = true`).
+
+!!! danger
+    When queuing Træfik behind another load-balancer, be sure to carefully configure Proxy Protocol on both sides.
+    Otherwise, it could introduce a security risk in your system by forging requests. 
 
 ```toml
 [entryPoints]
   [entryPoints.http]
-  address = ":80"
-  proxyprotocol = true
+    address = ":80"
+
+    # Enable ProxyProtocol
+    [entryPoints.http.proxyProtocol]
+      # List of trusted IPs
+      #
+      # Required
+      # Default: []
+      #
+      trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
+
+      # Insecure mode FOR TESTING ENVIRONNEMENT ONLY
+      #
+      # Optional
+      # Default: false
+      #
+      # insecure = true
+```
+
+## Forwarded Header
+
+Only IPs in `trustedIPs` will be authorize to trust the client forwarded headers (`X-Forwarded-*`).
+
+```toml
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+
+    # Enable Forwarded Headers
+    [entryPoints.http.forwardedHeaders]
+      # List of trusted IPs
+      #
+      # Required
+      # Default: []
+      #
+      trustedIPs = ["127.0.0.1/32", "192.168.1.7"]
 ```

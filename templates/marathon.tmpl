@@ -21,6 +21,10 @@
       [backends."backend{{getBackend $app $serviceName }}".loadbalancer]
         method = "{{getLoadBalancerMethod $app }}"
         sticky = {{getSticky $app}}
+        {{if hasStickinessLabel $app}}
+        [backends."backend{{getBackend $app $serviceName }}".loadbalancer.stickiness]
+          cookieName = "{{getStickinessCookieName $app}}"
+        {{end}}
 {{end}}
 {{ if hasCircuitBreakerLabels $app }}
       [backends."backend{{getBackend $app $serviceName }}".circuitbreaker]

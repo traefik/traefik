@@ -9,6 +9,10 @@
     [backends.backend-{{$backendName}}.loadbalancer]
       method = "{{getLoadBalancerMethod $backend}}"
       sticky = {{getSticky $backend}}
+      {{if hasStickinessLabel $backend}}
+      [backends.backend-{{$backendName}}.loadbalancer.stickiness]
+        cookieName = "{{getStickinessCookieName $backend}}"
+      {{end}}
     {{end}}
 
     {{if hasMaxConnLabels $backend}}

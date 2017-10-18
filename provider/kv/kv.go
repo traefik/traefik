@@ -20,10 +20,10 @@ import (
 
 // Provider holds common configurations of key-value providers.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash"`
+	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string           `description:"Comma separated server endpoints"`
-	Prefix                string           `description:"Prefix used for KV store"`
-	TLS                   *types.ClientTLS `description:"Enable TLS support"`
+	Prefix                string           `description:"Prefix used for KV store" export:"true"`
+	TLS                   *types.ClientTLS `description:"Enable TLS support" export:"true"`
 	Username              string           `description:"KV Username"`
 	Password              string           `description:"KV Password"`
 	storeType             store.Backend
@@ -139,11 +139,14 @@ func (p *Provider) loadConfig() *types.Configuration {
 	}
 
 	var KvFuncMap = template.FuncMap{
-		"List":        p.list,
-		"ListServers": p.listServers,
-		"Get":         p.get,
-		"SplitGet":    p.splitGet,
-		"Last":        p.last,
+		"List":                    p.list,
+		"ListServers":             p.listServers,
+		"Get":                     p.get,
+		"SplitGet":                p.splitGet,
+		"Last":                    p.last,
+		"getSticky":               p.getSticky,
+		"hasStickinessLabel":      p.hasStickinessLabel,
+		"getStickinessCookieName": p.getStickinessCookieName,
 	}
 
 	configuration, err := p.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -238,4 +241,23 @@ func (p *Provider) checkConstraints(keys ...string) bool {
 		return false
 	}
 	return true
+}
+
+func (p *Provider) getSticky(rootPath string) string {
+	stickyValue := p.get("", rootPath, "/loadbalancer", "/sticky")
+	if len(stickyValue) > 0 {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.", "loadbalancer/sticky", "loadbalancer/stickiness")
+	} else {
+		stickyValue = "false"
+	}
+	return stickyValue
+}
+
+func (p *Provider) hasStickinessLabel(rootPath string) bool {
+	stickinessValue := p.get("false", rootPath, "/loadbalancer", "/stickiness")
+	return len(stickinessValue) > 0 && strings.EqualFold(strings.TrimSpace(stickinessValue), "true")
+}
+
+func (p *Provider) getStickinessCookieName(rootPath string) string {
+	return p.get("", rootPath, "/loadbalancer", "/stickiness", "/cookiename")
 }
