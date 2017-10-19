@@ -167,8 +167,12 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 		safe.Go(func() {
 			tick := time.Tick(t)
 			for range tick {
-				if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
-					log.Error("Fail to tick watchdog")
+				if ok, err := traefikHealthCheck(globalConfiguration); ok {
+					if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
+						log.Error("Fail to tick watchdog")
+					}
+				} else {
+					log.Error(err)
 				}
 			}
 		})
@@ -247,4 +251,27 @@ func checkNewVersion() {
 			}
 		}
 	})
+}
+
+func traefikHealthCheck(traefikConfiguration *configuration.GlobalConfiguration) (bool, error) {
+	if traefikConfiguration.Web == nil {
+		return true, fmt.Errorf("please enable the web provider to use healtcheck")
+	}
+	client := &http.Client{Timeout: 5 * time.Second}
+	protocol := "http"
+	if len(traefikConfiguration.Web.CertFile) > 0 {
+		protocol = "https"
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client.Transport = tr
+	}
+	resp, err := client.Head(protocol + "://" + traefikConfiguration.Web.Address + "/ping")
+	if err != nil {
+		return false, fmt.Errorf("error calling healthcheck: %s", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("bad healthcheck status: %s", resp.Status)
+	}
+	return true, nil
 }
