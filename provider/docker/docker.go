@@ -291,6 +291,10 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServicePriority":          p.getServicePriority,
 		"getServiceBackend":           p.getServiceBackend,
 		"getWhitelistSourceRange":     p.getWhitelistSourceRange,
+		"getRequestHeaders":           p.getRequestHeaders,
+		"getResponseHeaders":          p.getResponseHeaders,
+		"hasRequestHeaders":           p.hasRequestHeaders,
+		"hasResponseHeaders":          p.hasResponseHeaders,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -726,6 +730,41 @@ func (p *Provider) getBasicAuth(container dockerData) []string {
 	return []string{}
 }
 
+func (p *Provider) hasRequestHeaders(container dockerData) bool {
+	label, err := getLabel(container, types.LabelFrontendRequestHeader)
+	return err == nil && len(label) > 0
+}
+
+func (p *Provider) hasResponseHeaders(container dockerData) bool {
+	label, err := getLabel(container, types.LabelFrontendResponseHeader)
+	return err == nil && len(label) > 0
+}
+
+func (p *Provider) getRequestHeaders(container dockerData) map[string]string {
+	return parseCustomHeaders(container, types.LabelFrontendRequestHeader)
+}
+
+func (p *Provider) getResponseHeaders(container dockerData) map[string]string {
+	return parseCustomHeaders(container, types.LabelFrontendResponseHeader)
+}
+
+func parseCustomHeaders(container dockerData, containerType string) map[string]string {
+	customHeaders := make(map[string]string)
+	if label, err := getLabel(container, containerType); err == nil {
+		for _, headers := range strings.Split(label, ",") {
+			pair := strings.Split(headers, ":")
+			if len(pair) != 2 {
+				log.Warnf("Could not load header %v, skipping...", pair)
+			} else {
+				customHeaders[pair[0]] = pair[1]
+			}
+		}
+	}
+	if len(customHeaders) == 0 {
+		log.Errorf("Could not load any custom headers")
+	}
+	return customHeaders
+}
 func isContainerEnabled(container dockerData, exposedByDefault bool) bool {
 	return exposedByDefault && container.Labels[types.LabelEnable] != "false" || container.Labels[types.LabelEnable] == "true"
 }
