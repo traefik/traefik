@@ -12,6 +12,7 @@ const (
 	LabelProtocol                                = LabelPrefix + "protocol"
 	LabelTags                                    = LabelPrefix + "tags"
 	LabelWeight                                  = LabelPrefix + "weight"
+	LabelFrontend                                = LabelPrefix + "frontend"
 	LabelFrontendAuthBasic                       = LabelPrefix + "frontend.auth.basic"
 	LabelFrontendEntryPoints                     = LabelPrefix + "frontend.entryPoints"
 	LabelFrontendPassHostHeader                  = LabelPrefix + "frontend.passHostHeader"

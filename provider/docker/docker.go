@@ -544,6 +544,9 @@ func (p *Provider) containerFilter(container dockerData) bool {
 
 func (p *Provider) getFrontendName(container dockerData) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
+	if label, err := getLabel(container, types.LabelFrontend); err == nil {
+		return label
+	}
 	return provider.Normalize(p.getFrontendRule(container))
 }
 
