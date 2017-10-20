@@ -52,6 +52,13 @@
 #
 # InsecureSkipVerify = true
 
+# Add generated X-Request-ID if not present
+#
+# Optional
+# Default: false
+#
+# RequestId = false
+
 # Register Certificates in the RootCA.
 #
 # Optional
