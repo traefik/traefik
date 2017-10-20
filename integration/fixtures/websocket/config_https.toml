@@ -1,6 +1,7 @@
 defaultEntryPoints = ["wss"]
 
 logLevel = "DEBUG"
+InsecureSkipVerify=true
 
 [entryPoints]
   [entryPoints.wss]
@@ -24,4 +25,4 @@ logLevel = "DEBUG"
   [frontends.frontend1]
   backend = "backend1"
     [frontends.frontend1.routes.test_1]
-    rule = "Path:/ws"
+    rule = "Path:/echo,/ws"

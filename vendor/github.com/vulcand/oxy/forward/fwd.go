@@ -264,7 +264,8 @@ func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request,
 
 	dialer := websocket.DefaultDialer
 	if outReq.URL.Scheme == "wss" && f.TLSClientConfig != nil {
-		dialer.TLSClientConfig = f.TLSClientConfig
+		dialer.TLSClientConfig = f.TLSClientConfig.Clone()
+		dialer.TLSClientConfig.NextProtos = []string{"http/1.1"}
 	}
 	targetConn, resp, err := dialer.Dial(outReq.URL.String(), outReq.Header)
 	if err != nil {
