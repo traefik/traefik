@@ -232,6 +232,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 				Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
 			},
 			CheckNewVersion: true,
+			RequestId:       false,
 		},
 		ConfigFile: "",
 	}
