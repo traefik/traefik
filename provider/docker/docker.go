@@ -597,8 +597,6 @@ func (p *Provider) getIPAddress(container dockerData) string {
 		}
 	}
 
-	// If net==host, quick n' dirty, we return 127.0.0.1
-	// This will work locally, but will fail with swarm.
 	if "host" == container.NetworkSettings.NetworkMode {
 		if container.Node != nil {
 			if container.Node.IPAddress != "" {
