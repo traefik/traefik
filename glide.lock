@@ -89,7 +89,7 @@ imports:
 - name: github.com/containous/flaeg
   version: b5d2dc5878df07c2d74413348186982e7b865871
 - name: github.com/containous/mux
-  version: af6ea922f7683d9706834157e6b0610e22ccb2db
+  version: 06ccd3e75091eb659b1d720cda0e16bc7057954c
 - name: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - name: github.com/coreos/etcd
