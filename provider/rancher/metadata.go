@@ -129,7 +129,7 @@ func parseMetadataSourcedRancherData(stacks []rancher.Stack) (rancherDataList []
 			}
 
 			rancherDataList = append(rancherDataList, rancherData{
-				Name:       stack.Name + "/" + service.Name,
+				Name:       service.Name + "/" + stack.Name,
 				State:      service.State,
 				Labels:     service.Labels,
 				Containers: containerIPAddresses,
