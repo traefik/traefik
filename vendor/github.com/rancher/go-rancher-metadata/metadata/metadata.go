@@ -20,6 +20,7 @@ type Client interface {
 	GetSelfStack() (Stack, error)
 	GetServices() ([]Service, error)
 	GetStacks() ([]Stack, error)
+	GetStackByName(string) (Stack, error)
 	GetContainers() ([]Container, error)
 	GetServiceContainers(string, string) ([]Container, error)
 	GetHosts() ([]Host, error)
@@ -188,6 +189,20 @@ func (m *client) GetStacks() ([]Stack, error) {
 		return stacks, err
 	}
 	return stacks, nil
+}
+
+func (m *client) GetStackByName(name string) (Stack, error) {
+	resp, err := m.SendRequest("/stacks/" + name)
+	var stack Stack
+	if err != nil {
+		return stack, err
+	}
+
+	if err = json.Unmarshal(resp, &stack); err != nil {
+		return stack, err
+	}
+
+	return stack, nil
 }
 
 func (m *client) GetContainers() ([]Container, error) {

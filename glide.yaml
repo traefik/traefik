@@ -166,7 +166,7 @@ import:
 - package: github.com/golang/protobuf
   version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
 - package: github.com/rancher/go-rancher
-  version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
+  version: 52e2f489534007ae843065468c5a1920d542afa4
 - package: golang.org/x/oauth2
   version: 7fdf09982454086d5570c7db3e11f360194830ca
   subpackages:
@@ -174,7 +174,7 @@ import:
 - package: golang.org/x/time
   version: 8be79e1e0910c292df4e79c241bb7e8f7e725959
 - package: github.com/rancher/go-rancher-metadata
-  version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
+  version: d2103caca5873119ff423d29cba09b4d03cd69b8
 - package: github.com/googleapis/gax-go
   version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
 - package: google.golang.org/grpc
