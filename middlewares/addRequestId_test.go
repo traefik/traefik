@@ -10,33 +10,33 @@ import (
 	"net/http/httptest"
 )
 
-func TestNewAddRequestIdWithRequestId(t *testing.T) {
+func TestNewAddRequestIdWithRequestID(t *testing.T) {
 	expected := uuid.NewV4().String()
 
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
-	req.Header.Set(RequestId, expected)
+	req.Header.Set(RequestID, expected)
 	rw := httptest.NewRecorder()
 
-	handler := &AddRequestId{
+	handler := &AddRequestID{
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}),
 	}
 
 	handler.ServeHTTP(rw, req, nil)
 
-	assert.Equal(t, expected, req.Header.Get(RequestId), "Unexpected X-Request-Id.")
-	assert.Equal(t, expected, rw.HeaderMap.Get(RequestId), "Unexpected X-Request-Id.")
+	assert.Equal(t, expected, req.Header.Get(RequestID), "Unexpected X-Request-Id.")
+	assert.Equal(t, expected, rw.HeaderMap.Get(RequestID), "Unexpected X-Request-Id.")
 }
 
-func TestNewAddRequestIdWithoutRequestId(t *testing.T) {
+func TestNewAddRequestIdWithoutRequestID(t *testing.T) {
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
 	rw := httptest.NewRecorder()
 
-	handler := &AddRequestId{
+	handler := &AddRequestID{
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}),
 	}
 
 	handler.ServeHTTP(rw, req, nil)
 
-	assert.NotEmpty(t, req.Header.Get(RequestId), "Unexpected X-Request-Id.")
-	assert.NotEmpty(t, rw.HeaderMap.Get(RequestId), "Unexpected X-Request-Id.")
+	assert.NotEmpty(t, req.Header.Get(RequestID), "Unexpected X-Request-Id.")
+	assert.NotEmpty(t, rw.HeaderMap.Get(RequestID), "Unexpected X-Request-Id.")
 }

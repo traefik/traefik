@@ -5,26 +5,27 @@ import (
 	"net/http"
 )
 
-const RequestId = "X-Request-ID"
+// RequestID is the header to be used to add unique request ID
+const RequestID = "X-Request-ID"
 
-// AddRequestId is a middleware used to add a uniq request ID header if not present
-type AddRequestId struct {
+// AddRequestID is a middleware used to add a uniq request ID header if not present
+type AddRequestID struct {
 	Handler http.Handler
 }
 
-func (s *AddRequestId) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	requestId := r.Header.Get(RequestId)
-	if requestId == "" {
-		requestId = uuid.NewV4().String()
+func (s *AddRequestID) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	requestID := r.Header.Get(RequestID)
+	if requestID == "" {
+		requestID = uuid.NewV4().String()
 	}
-	r.Header.Set(RequestId, requestId)
-	rw.Header().Set(RequestId, requestId)
+	r.Header.Set(RequestID, requestID)
+	rw.Header().Set(RequestID, requestID)
 	if next != nil {
 		next.ServeHTTP(rw, r)
 	}
 }
 
 // SetHandler sets handler
-func (s *AddRequestId) SetHandler(Handler http.Handler) {
+func (s *AddRequestID) SetHandler(Handler http.Handler) {
 	s.Handler = Handler
 }

@@ -133,8 +133,8 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 		core[ClientHost] = forwardedFor
 	}
 
-	if requestIdValue := req.Header.Get("X-Request-Id"); requestIdValue != "" {
-		core[RequestId] = requestIdValue
+	if requestIDValue := req.Header.Get("X-Request-Id"); requestIDValue != "" {
+		core[RequestID] = requestIDValue
 	}
 	crw := &captureResponseWriter{rw: rw}
 

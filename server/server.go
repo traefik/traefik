@@ -272,8 +272,8 @@ func (server *Server) startHTTPServers() {
 
 func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
-	if server.globalConfiguration.RequestId {
-		serverMiddlewares = append(serverMiddlewares, &middlewares.AddRequestId{})
+	if server.globalConfiguration.RequestID {
+		serverMiddlewares = append(serverMiddlewares, &middlewares.AddRequestID{})
 	}
 	if server.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
