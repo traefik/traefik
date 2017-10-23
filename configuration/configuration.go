@@ -123,10 +123,7 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
 		gc.LogLevel = "DEBUG"
 	}
 	if gc.Web != nil {
-		if gc.Web.Path == "" {
-			gc.Web.Path = "/"
-		}
-		if gc.Web.Path[len(gc.Web.Path)-1:] != "/" {
+		if gc.Web.Path == "" || gc.Web.Path[len(gc.Web.Path)-1:] != "/"  {
 			gc.Web.Path += "/"
 		}
 	}
