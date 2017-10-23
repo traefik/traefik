@@ -237,7 +237,9 @@ Complete documentation is available at https://traefik.io`,
 
 func run(globalConfiguration *configuration.GlobalConfiguration) {
 	fmtlog.SetFlags(fmtlog.Lshortfile | fmtlog.LstdFlags)
+
 	http.DefaultTransport.(*http.Transport).Proxy = http.ProxyFromEnvironment
+
 	globalConfiguration.SetEffectiveConfiguration()
 
 	// logging
@@ -246,6 +248,7 @@ func run(globalConfiguration *configuration.GlobalConfiguration) {
 		log.Error("Error getting level", err)
 	}
 	log.SetLevel(level)
+
 	if len(globalConfiguration.TraefikLogsFile) > 0 {
 		dir := filepath.Dir(globalConfiguration.TraefikLogsFile)
 

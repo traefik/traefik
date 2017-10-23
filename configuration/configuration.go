@@ -98,6 +98,7 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
 			entryPoint.ForwardedHeaders = &ForwardedHeaders{Insecure: true}
 		}
 	}
+
 	if gc.Rancher != nil {
 		// Ensure backwards compatibility for now
 		if len(gc.Rancher.AccessKey) > 0 ||
@@ -119,13 +120,13 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
 			gc.Rancher.Metadata.Prefix = "latest"
 		}
 	}
+
 	if gc.Debug {
 		gc.LogLevel = "DEBUG"
 	}
-	if gc.Web != nil {
-		if gc.Web.Path == "" || gc.Web.Path[len(gc.Web.Path)-1:] != "/"  {
-			gc.Web.Path += "/"
-		}
+
+	if gc.Web != nil && (gc.Web.Path == "" || !strings.HasSuffix(gc.Web.Path, "/")) {
+		gc.Web.Path += "/"
 	}
 }
 
