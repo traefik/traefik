@@ -18,39 +18,39 @@ func TestReplacePathRegex(t *testing.T) {
 		invalidRegexp bool
 	}{
 		{
-			desc:         `^/whoami/(.*) /who-am-i/$1`,
-			path:         `/whoami/and/whoami`,
-			replacement:  `/who-am-i/$1`,
+			desc:         "^/whoami/(.*) /who-am-i/$1",
+			path:         "/whoami/and/whoami",
+			replacement:  "/who-am-i/$1",
 			regex:        `^/whoami/(.*)`,
-			expectedPath: `/who-am-i/and/whoami`,
+			expectedPath: "/who-am-i/and/whoami",
 		},
 		{
-			desc:         `/whoami /who-am-i`,
-			path:         `/whoami/and/whoami`,
-			replacement:  `/who-am-i`,
+			desc:         "/whoami /who-am-i",
+			path:         "/whoami/and/whoami",
+			replacement:  "/who-am-i",
 			regex:        `/whoami`,
-			expectedPath: `/who-am-i/and/who-am-i`,
+			expectedPath: "/who-am-i/and/who-am-i",
 		},
 		{
-			desc:         `^/api/v2/(.*) /api/$1`,
-			path:         `/api/v2/users/192`,
-			replacement:  `/api/$1`,
+			desc:         "^/api/v2/(.*) /api/$1",
+			path:         "/api/v2/users/192",
+			replacement:  "/api/$1",
 			regex:        `^/api/v2/(.*)`,
-			expectedPath: `/api/users/192`,
+			expectedPath: "/api/users/192",
 		},
 		{
-			desc:         `^(?i)/downloads/([^/]+)/([^/]+)$ /downloads/$1-$2`,
-			path:         `/downloads/src/source.go`,
-			replacement:  `/downloads/$1-$2`,
+			desc:         "^(?i)/downloads/([^/]+)/([^/]+)$ /downloads/$1-$2",
+			path:         "/downloads/src/source.go",
+			replacement:  "/downloads/$1-$2",
 			regex:        `^(?i)/downloads/([^/]+)/([^/]+)$`,
-			expectedPath: `/downloads/src-source.go`,
+			expectedPath: "/downloads/src-source.go",
 		},
 		{
-			desc:          `^(?err)/invalid/regexp/([^/]+)$ /valid/regexp/$1`, // invalid regexp
-			path:          `/invalid/regexp/test`,
-			replacement:   `/valid/regexp/$1`,
+			desc:          "invalid regular expression",
+			path:          "/invalid/regexp/test",
+			replacement:   "/valid/regexp/$1",
 			regex:         `^(?err)/invalid/regexp/([^/]+)$`,
-			expectedPath:  `/invalid/regexp/test`,
+			expectedPath:  "/invalid/regexp/test",
 			invalidRegexp: true,
 		},
 	}
@@ -68,20 +68,20 @@ func TestReplacePathRegex(t *testing.T) {
 				}),
 			)
 
-			req := testhelpers.MustNewRequest(http.MethodGet, `http://localhost`+test.path, nil)
-			req.RequestURI = req.URL.Path // In actual, req.RequestURI should be equal to req.URL.Path
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
+			req.RequestURI = req.URL.Path
 
 			if test.invalidRegexp {
-				expectedHeader = "" // if test.invalidRegexp is true, expectedHeader should be empty
+				expectedHeader = ""
 			} else {
-				expectedHeader = req.URL.Path // Else, expectedHeader should be equal to req.URL.Path
+				expectedHeader = req.URL.Path
 			}
 
 			handler.ServeHTTP(nil, req)
 
-			assert.Equal(t, expectedPath, test.expectedPath, `Unexpected path.`)
-			assert.Equal(t, expectedHeader, actualHeader, `Unexpected '%s' header.`, ReplacedPathHeader)
-			assert.Equal(t, expectedPath, requestURI, `Unexpected request URI.`)
+			assert.Equal(t, expectedPath, test.expectedPath, "Unexpected path.")
+			assert.Equal(t, expectedHeader, actualHeader, "Unexpected '%s' header.", ReplacedPathHeader)
+			assert.Equal(t, expectedPath, requestURI, "Unexpected request URI.")
 		})
 	}
 }

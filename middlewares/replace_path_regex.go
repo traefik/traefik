@@ -15,11 +15,11 @@ type ReplacePathRegex struct {
 	Replacement string
 }
 
-// NewReplacePathRegexHandler returns a new instance of ReplacePathRegex
+// NewReplacePathRegexHandler returns a new ReplacePathRegex
 func NewReplacePathRegexHandler(regex string, replacement string, handler http.Handler) http.Handler {
-	exp, err := regexp.Compile(strings.TrimSpace(regex)) // `exp` will be nil when error
+	exp, err := regexp.Compile(strings.TrimSpace(regex))
 	if err != nil {
-		log.Warnf("Error compiling regular expression %s: %s", regex, err)
+		log.Errorf("Error compiling regular expression %s: %s", regex, err)
 	}
 	return &ReplacePathRegex{
 		Regexp:      exp,
