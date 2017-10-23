@@ -47,6 +47,9 @@ defaultEntryPoints = ["http", "https"]
       keyFile = "examples/traefik.key"
 ```
 
+!!! note
+    Please note that `regex` and `replacement` do not have to be set in the `redirect` structure if an entrypoint is defined for the redirection (they will not be used in this case)
+
 ## Let's Encrypt support
 
 ### Basic example
