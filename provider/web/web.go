@@ -56,17 +56,9 @@ func goroutines() interface{} {
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
 func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
-
 	systemRouter := mux.NewRouter()
 
-	if provider.Path == "" {
-		provider.Path = "/"
-	}
-
 	if provider.Path != "/" {
-		if provider.Path[len(provider.Path)-1:] != "/" {
-			provider.Path += "/"
-		}
 		systemRouter.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			http.Redirect(response, request, provider.Path, 302)
 		})

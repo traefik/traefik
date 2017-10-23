@@ -80,6 +80,56 @@ type GlobalConfiguration struct {
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
 }
 
+// SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
+// It also takes care of maintaining backwards compatibility.
+func (gc *GlobalConfiguration) SetEffectiveConfiguration() {
+	if len(gc.EntryPoints) == 0 {
+		gc.EntryPoints = map[string]*EntryPoint{"http": {
+			Address:          ":80",
+			ForwardedHeaders: &ForwardedHeaders{Insecure: true},
+		}}
+		gc.DefaultEntryPoints = []string{"http"}
+	}
+
+	// ForwardedHeaders must be remove in the next breaking version
+	for entryPointName := range gc.EntryPoints {
+		entryPoint := gc.EntryPoints[entryPointName]
+		if entryPoint.ForwardedHeaders == nil {
+			entryPoint.ForwardedHeaders = &ForwardedHeaders{Insecure: true}
+		}
+	}
+
+	if gc.Rancher != nil {
+		// Ensure backwards compatibility for now
+		if len(gc.Rancher.AccessKey) > 0 ||
+			len(gc.Rancher.Endpoint) > 0 ||
+			len(gc.Rancher.SecretKey) > 0 {
+
+			if gc.Rancher.API == nil {
+				gc.Rancher.API = &rancher.APIConfiguration{
+					AccessKey: gc.Rancher.AccessKey,
+					SecretKey: gc.Rancher.SecretKey,
+					Endpoint:  gc.Rancher.Endpoint,
+				}
+			}
+			log.Warn("Deprecated configuration found: rancher.[accesskey|secretkey|endpoint]. " +
+				"Please use rancher.api.[accesskey|secretkey|endpoint] instead.")
+		}
+
+		if gc.Rancher.Metadata != nil && len(gc.Rancher.Metadata.Prefix) == 0 {
+			gc.Rancher.Metadata.Prefix = "latest"
+		}
+	}
+
+	if gc.Debug {
+		gc.LogLevel = "DEBUG"
+	}
+
+	if gc.Web != nil && (gc.Web.Path == "" || !strings.HasSuffix(gc.Web.Path, "/")) {
+		gc.Web.Path += "/"
+	}
+}
+
 // DefaultEntryPoints holds default entry points
 type DefaultEntryPoints []string
 
