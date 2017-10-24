@@ -552,3 +552,74 @@ func TestEcsGetBasicAuth(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateECSConfig(t *testing.T) {
+	provider := &Provider{}
+	tests := []struct {
+		desc     string
+		services map[string][]ecsInstance
+		exp      *types.Configuration
+		err      error
+	}{
+		{
+			desc: "config parsed successfully",
+			services: map[string][]ecsInstance{
+				"testing": {
+					{
+						Name: "instance-1",
+						containerDefinition: &ecs.ContainerDefinition{
+							DockerLabels: map[string]*string{},
+						},
+						machine: &ec2.Instance{
+							PrivateIpAddress: func(s string) *string { return &s }("10.0.0.1"),
+						},
+						container: &ecs.Container{
+							NetworkBindings: []*ecs.NetworkBinding{
+								{
+									HostPort: func(i int64) *int64 { return &i }(1337),
+								},
+							},
+						},
+					},
+				},
+			},
+			exp: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance-1": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL: "http://10.0.0.1:1337",
+							},
+						},
+					},
+					"backend-testing": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-testing": {
+						EntryPoints: []string{},
+						Backend:     "backend-testing",
+						Routes: map[string]types.Route{
+							"route-frontend-testing": {
+								Rule: "Host:instance-1.",
+							},
+						},
+						PassHostHeader: true,
+						BasicAuth:      []string{},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			got, err := provider.generateECSConfig(test.services)
+			assert.Equal(t, test.err, err)
+			assert.Equal(t, test.exp, got)
+		})
+	}
+}
