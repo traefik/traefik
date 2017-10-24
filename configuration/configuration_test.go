@@ -134,7 +134,7 @@ func TestEntryPoints_Set(t *testing.T) {
 	}{
 		{
 			name:                   "all parameters camelcase",
-			expression:             "Name:foo Address::8000 TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol.TrustedIPs:192.168.0.1 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
+			expression:             "Name:foo Address::8000 TLS:goo,gii TLS CA:car CA.Optional:false Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol.TrustedIPs:192.168.0.1 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
@@ -152,7 +152,10 @@ func TestEntryPoints_Set(t *testing.T) {
 				},
 				WhitelistSourceRange: []string{"Range"},
 				TLS: &tls.TLS{
-					ClientCAFiles: []string{"car"},
+					ClientCA: tls.ClientCA{
+						Files:    []string{"car"},
+						Optional: false,
+					},
 					Certificates: tls.Certificates{
 						{
 							CertFile: tls.FileOrContent("goo"),
@@ -164,7 +167,7 @@ func TestEntryPoints_Set(t *testing.T) {
 		},
 		{
 			name:                   "all parameters lowercase",
-			expression:             "name:foo address::8000 tls:goo,gii tls ca:car redirect.entryPoint:RedirectEntryPoint redirect.regex:RedirectRegex redirect.replacement:RedirectReplacement compress:true whiteListSourceRange:Range proxyProtocol.trustedIPs:192.168.0.1 forwardedHeaders.trustedIPs:10.0.0.3/24,20.0.0.3/24",
+			expression:             "name:foo address::8000 tls:goo,gii tls ca:car ca.optional:true redirect.entryPoint:RedirectEntryPoint redirect.regex:RedirectRegex redirect.replacement:RedirectReplacement compress:true whiteListSourceRange:Range proxyProtocol.trustedIPs:192.168.0.1 forwardedHeaders.trustedIPs:10.0.0.3/24,20.0.0.3/24",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
@@ -182,7 +185,10 @@ func TestEntryPoints_Set(t *testing.T) {
 				},
 				WhitelistSourceRange: []string{"Range"},
 				TLS: &tls.TLS{
-					ClientCAFiles: []string{"car"},
+					ClientCA: tls.ClientCA{
+						Files:    []string{"car"},
+						Optional: true,
+					},
 					Certificates: tls.Certificates{
 						{
 							CertFile: tls.FileOrContent("goo"),
