@@ -1,5 +1,16 @@
 # Change Log
 
+## [v1.4.1](https://github.com/containous/traefik/tree/v1.4.1) (2017-10-24)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.0...v1.4.1)
+
+**Bug fixes:**
+- **[docker]** Network filter ([#2301](https://github.com/containous/traefik/pull/2301) by [ldez](https://github.com/ldez))
+- **[healthcheck]** Fix healthcheck path ([#2295](https://github.com/containous/traefik/pull/2295) by [emilevauge](https://github.com/emilevauge))
+- **[rules]** Regex capturing group. ([#2296](https://github.com/containous/traefik/pull/2296) by [ldez](https://github.com/ldez))
+- **[websocket]** Force http/1.1 for websocket ([#2292](https://github.com/containous/traefik/pull/2292) by [Juliens](https://github.com/Juliens))
+- Stream mode when http2 ([#2309](https://github.com/containous/traefik/pull/2309) by [Juliens](https://github.com/Juliens))
+- Enhance Trust Forwarded Headers ([#2302](https://github.com/containous/traefik/pull/2302) by [ldez](https://github.com/ldez))
+
 ## [v1.4.0](https://github.com/containous/traefik/tree/v1.4.0) (2017-10-16)
 [All Commits](https://github.com/containous/traefik/compare/v1.3.0-rc1...v1.4.0)
 
