@@ -34,6 +34,9 @@ To redirect an http entrypoint to an https entrypoint (with SNI support).
       KeyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
+!!! note
+    Please note that `regex` and `replacement` do not have to be set in the `redirect` structure if an entrypoint is defined for the redirection (they will not be used in this case).
+
 ## Rewriting URL
 
 To redirect an entrypoint rewriting the URL.
@@ -46,6 +49,9 @@ To redirect an entrypoint rewriting the URL.
     regex = "^http://localhost/(.*)"
     replacement = "http://mydomain/$1"
 ```
+
+!!! note
+    Please note that `regex` and `replacement` do not have to be set in the `redirect` structure if an entrypoint is defined for the redirection (they will not be used in this case).
 
 ## TLS Mutual Authentication
 
@@ -71,7 +77,6 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
     CertFile = "integration/fixtures/https/snitest.org.cert"
     KeyFile = "integration/fixtures/https/snitest.org.key"
 ```
-
 
 ## Authentication
 
