@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -24,6 +25,7 @@ type Client interface {
 	GetPartitions(appName, serviceName string) (*PartitionsData, error)
 	GetReplicas(appName, serviceName, partitionName string) (*ReplicasData, error)
 	GetInstances(appName, serviceName, partitionName string) (*InstancesData, error)
+	GetServicesExtensions(appType, applicationVersion string, runningServices *ServicesData) (ServicesExtensionData, error)
 }
 
 type clientImpl struct {
@@ -151,6 +153,58 @@ func (c *clientImpl) GetServices(appName string) (*ServicesData, error) {
 		}
 	}
 	return &aggregateServicesData, nil
+}
+
+// GetServices returns all the services associated
+// with a Service Fabric application.
+func (c *clientImpl) GetServicesExtensions(appType, applicationVersion string, runningServices *ServicesData) (ServicesExtensionData, error) {
+
+	//Todo: Refactor this method to make it nicer to look at!
+
+	url := c.endpoint + "/ApplicationTypes/" + appType + "/$/GetServiceTypes?api-version=" + c.apiVersion + "&ApplicationTypeVersion=" + applicationVersion
+	res, err := getHTTP(c.restClient, url)
+	if err != nil {
+		return ServicesExtensionData{}, err
+	}
+	var servicesData []ServiceType
+	err = json.Unmarshal(res, &servicesData)
+	if err != nil {
+		log.Errorf("Could not deserialise JSON response: %+v", err)
+	}
+
+	servicesExtensions := make(ServicesExtensionData)
+	for _, serviceTypeInfo := range servicesData {
+
+		//Find service
+		var service ServiceItem
+		for _, runningService := range runningServices.Items {
+			if runningService.TypeName == serviceTypeInfo.ServiceTypeDescription.ServiceTypeName {
+				service = runningService
+			}
+		}
+
+		for _, extension := range serviceTypeInfo.ServiceTypeDescription.Extensions {
+			if extension.Key == "Traefik" {
+				var result ServiceExtensionLabels
+				xmlData := extension.Value
+				err = xml.Unmarshal([]byte(xmlData), &result)
+				if err != nil {
+					log.Errorf("Could not deserialise extension xml for Application: %s Service: %s Errror: %+v", appType, service.Name, err)
+					continue
+				}
+
+				labels := make(map[string]string)
+				for _, label := range result.Label {
+					log.Infoln(label.Key)
+					log.Infoln(label.Value)
+					labels[label.Key] = label.Value
+				}
+
+				servicesExtensions[service.Name] = labels
+			}
+		}
+	}
+	return servicesExtensions, nil
 }
 
 // GetPartitions returns all the partitions associated

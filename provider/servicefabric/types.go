@@ -1,5 +1,7 @@
 package servicefabric
 
+import "encoding/xml"
+
 // ApplicationsData encapsulates the response
 // model for Applications in the Service
 // Fabric API
@@ -41,6 +43,7 @@ type ServiceItemExtended struct {
 	IsHealthy       bool
 	Application     ApplicationItem
 	Partitions      []PartitionItemExtended
+	Labels          map[string]string
 }
 
 // PartitionItemExtended provides a flattened view
@@ -66,6 +69,33 @@ type ServiceItem struct {
 	ServiceStatus     string `json:"ServiceStatus"`
 	TypeName          string `json:"TypeName"`
 }
+
+// ServiceType encapsulates the additional service data
+// such as extensions, placement constraints and other information stored in
+// the service manifest.
+type ServiceType struct {
+	IsServiceGroup         bool   `json:"IsServiceGroup"`
+	ServiceManifestName    string `json:"ServiceManifestName"`
+	ServiceManifestVersion string `json:"ServiceManifestVersion"`
+	ServiceTypeDescription struct {
+		Extensions []struct {
+			Key   string `json:"Key"`
+			Value string `json:"Value"`
+		} `json:"Extensions"`
+		HasPersistedState        bool          `json:"HasPersistedState"`
+		IsStateful               bool          `json:"IsStateful"`
+		Kind                     string        `json:"Kind"`
+		LoadMetrics              []interface{} `json:"LoadMetrics"`
+		PlacementConstraints     string        `json:"PlacementConstraints"`
+		ServicePlacementPolicies []interface{} `json:"ServicePlacementPolicies"`
+		ServiceTypeName          string        `json:"ServiceTypeName"`
+		UseImplicitHost          bool          `json:"UseImplicitHost"`
+	} `json:"ServiceTypeDescription"`
+}
+
+// ServicesExtensionData provides dictionaries for each service, in an application,
+// containing the traefik labels defined in the Extension section of the service manifest.
+type ServicesExtensionData map[string]map[string]string
 
 // PartitionsData encapsulates the response
 // model for Parititons in the Service
@@ -151,24 +181,11 @@ func (m *InstanceItem) GetReplicaData() (string, *ReplicaItemBase) {
 	return m.ID, m.ReplicaItemBase
 }
 
-// ServiceType encapsulates the response
-// model for Service Descriptions in the
-// Service Fabric API
-type ServiceType struct {
-	ServiceTypeDescription struct {
-		IsStateful           bool   `json:"IsStateful"`
-		ServiceTypeName      string `json:"ServiceTypeName"`
-		PlacementConstraints string `json:"PlacementConstraints"`
-		HasPersistedState    bool   `json:"HasPersistedState"`
-		Kind                 string `json:"Kind"`
-		Extensions           []struct {
-			Key   string `json:"Key"`
-			Value string `json:"Value"`
-		} `json:"Extensions"`
-		LoadMetrics              []interface{} `json:"LoadMetrics"`
-		ServicePlacementPolicies []interface{} `json:"ServicePlacementPolicies"`
-	} `json:"ServiceTypeDescription"`
-	ServiceManifestVersion string `json:"ServiceManifestVersion"`
-	ServiceManifestName    string `json:"ServiceManifestName"`
-	IsServiceGroup         bool   `json:"IsServiceGroup"`
+type ServiceExtensionLabels struct {
+	XMLName xml.Name `xml:"Labels"`
+	Label   []struct {
+		XMLName xml.Name `xml:"Label"`
+		Value   string   `xml:",chardata"`
+		Key     string   `xml:"Key,attr"`
+	}
 }

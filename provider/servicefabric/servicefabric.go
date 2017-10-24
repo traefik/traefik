@@ -2,10 +2,7 @@ package servicefabric
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -25,6 +22,7 @@ type Provider struct {
 	provider.BaseProvider `mapstructure:",squash"`
 	ClusterManagementURL  string `description:"Service Fabric API endpoint"`
 	APIVersion            string `description:"Service Fabric API version"`
+	UseCertificateAuth    bool   `description:"Should use certificate authentication"`
 	ClientCertFilePath    string `description:"Path to cert file"`
 	ClientCertKeyFilePath string `description:"Path to cert key file"`
 	CACertFilePath        string `description:"Path to CA cert file"`
@@ -66,17 +64,6 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 					}
 				default:
 					log.Info("Checking service fabric config")
-				}
-
-				// SF Note: Deploying a config update could change the location or provide
-				// a new version of this file, that is why we query for location each time.
-				if p.Filename == "" {
-					configFilePath, err := findTemplateFile()
-					if err != nil {
-						log.Infof("Using default template file: %v", err)
-					} else {
-						p.Filename = configFilePath
-					}
 				}
 
 				services, err := p.getClusterServices(sfClient)
@@ -138,11 +125,25 @@ func (p *Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, e
 			log.Error(err)
 			return nil, err
 		}
+
+		servicesExtensions, err := sfClient.GetServicesExtensions(app.TypeName, app.TypeVersion, services)
+		if err != nil {
+			log.Error(err)
+			return nil, err
+		}
+
 		for _, service := range services.Items {
 			item := ServiceItemExtended{
 				ServiceItem: service,
 				Application: app,
 			}
+
+			labels, hasLabels := servicesExtensions[service.Name]
+			if hasLabels {
+				item.Labels = labels
+			}
+
+			log.Info(item.Labels)
 
 			partitions, err := sfClient.GetPartitions(app.ID, service.ID)
 			if err != nil {
@@ -302,28 +303,4 @@ func getNamedEndpoint(endpointData string, endpointName string) (bool, string) {
 		return false, ""
 	}
 	return true, endpoint
-}
-
-func findTemplateFile() (string, error) {
-	dir, _ := os.Getwd()
-	glob := dir + "/../*Config*/**.toml.tmpl"
-	files, _ := filepath.Glob(glob)
-
-	var mostRecentFile os.FileInfo
-	var configFilePath string
-	for _, file := range files {
-		fileInfo, _ := os.Stat(file)
-		if mostRecentFile == nil || fileInfo.ModTime().After(mostRecentFile.ModTime()) {
-			mostRecentFile = fileInfo
-			configFilePath = file
-		}
-	}
-
-	if configFilePath == "" {
-		return "", fmt.Errorf("Cannot find template file with glob %s using default", glob)
-	}
-
-	log.Info("Found sf template toml from:", configFilePath)
-
-	return configFilePath, nil
 }
