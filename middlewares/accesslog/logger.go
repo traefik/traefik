@@ -102,7 +102,7 @@ func (l *LogHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request, next h
 
 	var crr *captureRequestReader
 	if req.Body != nil {
-		crr = &captureRequestReader{source: req.Body, count: 0}
+		crr = &captureRequestReader{source: req.Body, count: 0, processingEnd: time.Now().UTC()}
 		reqWithDataTable.Body = crr
 	}
 
@@ -213,6 +213,13 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 		core[Overhead] = total - origin.(time.Duration)
 	} else {
 		core[Overhead] = total
+	}
+	if crr != nil && crw != nil {
+		core[ResponseDuration] = crw.processingStart.Sub(crr.processingEnd)
+	} else if crr == nil && crw != nil {
+		core[ResponseDuration] = crw.processingStart.Sub(core[StartUTC].(time.Time))
+	} else {
+		core[ResponseDuration] = float64(0.0)
 	}
 
 	fields := logrus.Fields{}

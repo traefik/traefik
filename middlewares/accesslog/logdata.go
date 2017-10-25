@@ -70,6 +70,8 @@ const (
 	Overhead = "Overhead"
 	// RetryAttempts is the map key used for the amount of attempts the request was retried.
 	RetryAttempts = "RetryAttempts"
+	// ResponseDuration is the map key used for the time between last byte received (request) to last byte sent out (response)
+	ResponseDuration = "ResponseDuration"
 )
 
 // These are written out in the default case when no config is provided to specify keys of interest.
@@ -113,6 +115,7 @@ func init() {
 	allCoreKeys[StartLocal] = struct{}{}
 	allCoreKeys[Overhead] = struct{}{}
 	allCoreKeys[RetryAttempts] = struct{}{}
+	allCoreKeys[ResponseDuration] = struct{}{}
 }
 
 // CoreLogData holds the fields computed from the request/response.

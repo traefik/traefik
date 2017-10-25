@@ -1,15 +1,22 @@
 package accesslog
 
-import "io"
+import (
+	"io"
+	"time"
+)
 
 type captureRequestReader struct {
-	source io.ReadCloser
-	count  int64
+	source        io.ReadCloser
+	count         int64
+	processingEnd time.Time
 }
 
 func (r *captureRequestReader) Read(p []byte) (int, error) {
 	n, err := r.source.Read(p)
 	r.count += int64(n)
+	if err == io.EOF {
+		r.processingEnd = time.Now().UTC()
+	}
 	return n, err
 }
 

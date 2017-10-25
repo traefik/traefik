@@ -176,6 +176,7 @@ func TestLoggerJSON(t *testing.T) {
 		"time",
 		"StartLocal",
 		"StartUTC",
+		ResponseDuration,
 	}
 	containsKeys(t, expectedKeys, jsonData)
 
@@ -239,6 +240,8 @@ func TestLoggerJSON(t *testing.T) {
 	assert.NotEqual(t, "", jsonData["StartLocal"].(string))
 	assertCount++
 	assert.NotEqual(t, "", jsonData["StartUTC"].(string))
+	assertCount++
+	assert.NotZero(t, jsonData[ResponseDuration].(float64))
 	assertCount++
 
 	assert.Equal(t, len(jsonData), assertCount, string(logData))

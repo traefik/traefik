@@ -6,6 +6,8 @@ import (
 	"net"
 	"net/http"
 
+	"time"
+
 	"github.com/containous/traefik/middlewares"
 )
 
@@ -16,9 +18,10 @@ var (
 // captureResponseWriter is a wrapper of type http.ResponseWriter
 // that tracks request status and size
 type captureResponseWriter struct {
-	rw     http.ResponseWriter
-	status int
-	size   int64
+	rw              http.ResponseWriter
+	status          int
+	size            int64
+	processingStart time.Time
 }
 
 func (crw *captureResponseWriter) Header() http.Header {
@@ -29,12 +32,18 @@ func (crw *captureResponseWriter) Write(b []byte) (int, error) {
 	if crw.status == 0 {
 		crw.status = http.StatusOK
 	}
+	if crw.processingStart.IsZero() {
+		crw.processingStart = time.Now().UTC()
+	}
 	size, err := crw.rw.Write(b)
 	crw.size += int64(size)
 	return size, err
 }
 
 func (crw *captureResponseWriter) WriteHeader(s int) {
+	if crw.processingStart.IsZero() {
+		crw.processingStart = time.Now().UTC()
+	}
 	crw.rw.WriteHeader(s)
 	crw.status = s
 }
