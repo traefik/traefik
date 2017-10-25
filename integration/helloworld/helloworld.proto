@@ -9,7 +9,10 @@ package helloworld;
 // The greeting service definition.
 service Greeter {
   // Sends a greeting
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc SayHello (HelloRequest) returns (HelloReply) {};
+
+  rpc StreamExample (StreamExampleRequest) returns (stream StreamExampleReply) {};
+
 }
 
 // The request message containing the user's name.
@@ -20,4 +23,10 @@ message HelloRequest {
 // The response message containing the greetings
 message HelloReply {
   string message = 1;
+}
+
+message StreamExampleRequest {}
+
+message StreamExampleReply {
+    string data = 1;
 }

@@ -190,7 +190,9 @@ func (f *httpForwarder) serveHTTP(w http.ResponseWriter, req *http.Request, ctx 
 			stream = contentType == "text/event-stream"
 		}
 	}
-	written, err := io.Copy(newResponseFlusher(w, stream), response.Body)
+
+	flush := stream || req.ProtoMajor == 2
+	written, err := io.Copy(newResponseFlusher(w, flush), response.Body)
 	if err != nil {
 		ctx.log.Errorf("Error copying upstream response body: %v", err)
 		ctx.errHandler.ServeHTTP(w, req, err)
@@ -264,7 +266,8 @@ func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request,
 
 	dialer := websocket.DefaultDialer
 	if outReq.URL.Scheme == "wss" && f.TLSClientConfig != nil {
-		dialer.TLSClientConfig = f.TLSClientConfig
+		dialer.TLSClientConfig = f.TLSClientConfig.Clone()
+		dialer.TLSClientConfig.NextProtos = []string{"http/1.1"}
 	}
 	targetConn, resp, err := dialer.Dial(outReq.URL.String(), outReq.Header)
 	if err != nil {

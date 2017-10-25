@@ -25,6 +25,7 @@ import (
 	eventtypes "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	swarmtypes "github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
@@ -564,10 +565,10 @@ func (p *Provider) getFrontendRule(container dockerData) string {
 		return label
 	}
 	if labels, err := getLabels(container, []string{labelDockerComposeProject, labelDockerComposeService}); err == nil {
-		return "Host:" + p.getSubDomain(labels[labelDockerComposeService]+"."+labels[labelDockerComposeProject]) + "." + p.Domain
+		return "Host:" + getSubDomain(labels[labelDockerComposeService]+"."+labels[labelDockerComposeProject]) + "." + p.Domain
 	}
 	if len(p.Domain) > 0 {
-		return "Host:" + p.getSubDomain(container.ServiceName) + "." + p.Domain
+		return "Host:" + getSubDomain(container.ServiceName) + "." + p.Domain
 	}
 	return ""
 }
@@ -857,7 +858,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 }
 
 // Escape beginning slash "/", convert all others to dash "-", and convert underscores "_" to dash "-"
-func (p *Provider) getSubDomain(name string) string {
+func getSubDomain(name string) string {
 	return strings.Replace(strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1), "_", "-", -1)
 }
 
@@ -866,8 +867,16 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 	if err != nil {
 		return []dockerData{}, err
 	}
+
+	serverVersion, err := dockerClient.ServerVersion(ctx)
+
 	networkListArgs := filters.NewArgs()
-	networkListArgs.Add("scope", "swarm")
+	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
+	if versions.GreaterThanOrEqualTo(serverVersion.APIVersion, "1.29") {
+		networkListArgs.Add("scope", "swarm")
+	} else {
+		networkListArgs.Add("driver", "overlay")
+	}
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 
