@@ -24,6 +24,7 @@ const (
 	LabelTraefikFrontendWhitelistSourceRange     = LabelPrefix + "frontend.whitelistSourceRange"
 	LabelBackend                                 = LabelPrefix + "backend"
 	LabelBackendID                               = LabelPrefix + "backend.id"
+	LabelBackendPort                             = LabelPrefix + "backend.port"
 	LabelTraefikBackendCircuitbreaker            = LabelPrefix + "backend.circuitbreaker"
 	LabelBackendCircuitbreakerExpression         = LabelPrefix + "backend.circuitbreaker.expression"
 	LabelBackendHealthcheckPath                  = LabelPrefix + "backend.healthcheck.path"
