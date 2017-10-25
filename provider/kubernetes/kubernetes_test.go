@@ -508,6 +508,92 @@ func TestGetPassHostHeader(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestGetPassTLSCert(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "awesome",
+		},
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
+				{
+					Host: "foo",
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Path: "/bar",
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service1",
+										ServicePort: intstr.FromInt(801),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				Namespace: "awesome",
+				UID:       "1",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 801,
+					},
+				},
+			},
+		},
+	}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Provider{EnablePassTLSCert: true}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo/bar": {
+				Servers:        map[string]types.Server{},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+				},
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo/bar": {
+				Backend:        "foo/bar",
+				PassTLSCert:    true,
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"/bar": {
+						Rule: "PathPrefix:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, actual)
+}
+
 func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		{
@@ -980,6 +1066,64 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
+					"kubernetes.io/ingress.class":  "traefik",
+					types.LabelFrontendPassTLSCert: "true",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "other",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/sslstuff",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"kubernetes.io/ingress.class":  "traefik",
+					types.LabelFrontendEntryPoints: "http,https",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "other",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
 					"ingress.kubernetes.io/auth-type":   "basic",
 					"ingress.kubernetes.io/auth-secret": "mySecret",
 				},
@@ -1222,6 +1366,30 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"other/": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+				},
+			},
+			"other/sslstuff": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+				},
+			},
 			"basic/auth": {
 				Servers: map[string]types.Server{
 					"http://example.com": {
@@ -1298,6 +1466,32 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 				Redirect: "",
+			},
+			"other/": {
+				Backend:        "other/",
+				PassHostHeader: true,
+				EntryPoints:    []string{"http", "https"},
+				Routes: map[string]types.Route{
+					"/": {
+						Rule: "PathPrefix:/",
+					},
+					"other": {
+						Rule: "Host:other",
+					},
+				},
+			},
+			"other/sslstuff": {
+				Backend:        "other/sslstuff",
+				PassHostHeader: true,
+				PassTLSCert:    true,
+				Routes: map[string]types.Route{
+					"/sslstuff": {
+						Rule: "PathPrefix:/sslstuff",
+					},
+					"other": {
+						Rule: "Host:other",
+					},
+				},
 			},
 			"basic/auth": {
 				Backend:        "basic/auth",
@@ -1449,6 +1643,107 @@ func TestPriorityHeaderValue(t *testing.T) {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
 				Priority:       1337,
+				Routes: map[string]types.Route{
+					"/bar": {
+						Rule: "PathPrefix:/bar",
+					},
+					"foo": {
+						Rule: "Host:foo",
+					},
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestInvalidPassTLSCertValue(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					types.LabelFrontendPassTLSCert: "herpderp",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "foo",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/bar",
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP:    "10.0.0.1",
+				Type:         "ExternalName",
+				ExternalName: "example.com",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"foo/bar": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+				},
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"foo/bar": {
+				Backend:        "foo/bar",
+				PassTLSCert:    false,
+				PassHostHeader: true,
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
