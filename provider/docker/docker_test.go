@@ -198,6 +198,19 @@ func TestDockerGetIPAddress(t *testing.T) {
 			),
 			expected: "127.0.0.1",
 		},
+		{
+			container: containerJSON(
+				networkMode("host"),
+			),
+			expected: "127.0.0.1",
+		},
+		{
+			container: containerJSON(
+				networkMode("host"),
+				nodeIP("10.0.0.5"),
+			),
+			expected: "10.0.0.5",
+		},
 	}
 
 	for containerID, e := range containers {

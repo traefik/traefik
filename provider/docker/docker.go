@@ -63,6 +63,7 @@ type dockerData struct {
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
 	Health          string
+	Node            *dockertypes.ContainerNode
 }
 
 // NetworkSettings holds the networks data to the Provider p
@@ -596,9 +597,13 @@ func (p *Provider) getIPAddress(container dockerData) string {
 		}
 	}
 
-	// If net==host, quick n' dirty, we return 127.0.0.1
-	// This will work locally, but will fail with swarm.
 	if "host" == container.NetworkSettings.NetworkMode {
+		if container.Node != nil {
+			if container.Node.IPAddress != "" {
+				return container.Node.IPAddress
+			}
+		}
+
 		return "127.0.0.1"
 	}
 
@@ -823,6 +828,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 	if container.ContainerJSONBase != nil {
 		dockerData.Name = container.ContainerJSONBase.Name
 		dockerData.ServiceName = dockerData.Name //Default ServiceName to be the container's Name.
+		dockerData.Node = container.ContainerJSONBase.Node
 
 		if container.ContainerJSONBase.HostConfig != nil {
 			dockerData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
