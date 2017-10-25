@@ -33,18 +33,18 @@ type Topology struct {
 }
 
 type SecurityGroupRule struct {
-	Cidr            string
-	IcmpType        int
-	IcmpCode        int
-	Port            int
-	Protocol        string
-	SecurityGroupId string
-        UserSecurityGroupList []UserSecurityGroup `json:"usersecuritygrouplist,omitempty"`
+	Cidr                  string
+	IcmpType              int
+	IcmpCode              int
+	Port                  int
+	Protocol              string
+	SecurityGroupId       string
+	UserSecurityGroupList []UserSecurityGroup `json:"usersecuritygrouplist,omitempty"`
 }
 
 type UserSecurityGroup struct {
-        Group    string   `json:"group,omitempty"`
-        Account  string   `json:"account,omitempty"`
+	Group   string `json:"group,omitempty"`
+	Account string `json:"account,omitempty"`
 }
 
 type MachineProfile struct {
@@ -390,39 +390,39 @@ type VirtualMachine struct {
 	Networkkbsread        int64             `json:"networkkbsread,omitempty"`
 	Networkkbswrite       int64             `json:"networkkbswrite,omitempty"`
 	Nic                   []struct {
-		Broadcasturi string   `json:"broadcasturi,omitempty"`
-		Gateway      string   `json:"gateway,omitempty"`
-		Id           string   `json:"id,omitempty"`
-		Ip6address   string   `json:"ip6address,omitempty"`
-		Ip6cidr      string   `json:"ip6cidr,omitempty"`
-		Ip6gateway   string   `json:"ip6gateway,omitempty"`
-		Ipaddress    string   `json:"ipaddress,omitempty"`
-		Isdefault    bool     `json:"isdefault,omitempty"`
-		Isolationuri string   `json:"isolationuri,omitempty"`
-		Macaddress   string   `json:"macaddress,omitempty"`
-		Netmask      string   `json:"netmask,omitempty"`
-		Networkid    string   `json:"networkid,omitempty"`
-		Networkname  string   `json:"networkname,omitempty"`
+		Broadcasturi string `json:"broadcasturi,omitempty"`
+		Gateway      string `json:"gateway,omitempty"`
+		Id           string `json:"id,omitempty"`
+		Ip6address   string `json:"ip6address,omitempty"`
+		Ip6cidr      string `json:"ip6cidr,omitempty"`
+		Ip6gateway   string `json:"ip6gateway,omitempty"`
+		Ipaddress    string `json:"ipaddress,omitempty"`
+		Isdefault    bool   `json:"isdefault,omitempty"`
+		Isolationuri string `json:"isolationuri,omitempty"`
+		Macaddress   string `json:"macaddress,omitempty"`
+		Netmask      string `json:"netmask,omitempty"`
+		Networkid    string `json:"networkid,omitempty"`
+		Networkname  string `json:"networkname,omitempty"`
 		Secondaryip  []struct {
-			Id		string `json:"id,omitempty"`
-			IpAddress	string `json:"ipaddress,omitempty"`
+			Id        string `json:"id,omitempty"`
+			IpAddress string `json:"ipaddress,omitempty"`
 		} `json:"secondaryip,omitempty"`
-		Traffictype  string   `json:"traffictype,omitempty"`
-		Type         string   `json:"type,omitempty"`
+		Traffictype string `json:"traffictype,omitempty"`
+		Type        string `json:"type,omitempty"`
 	} `json:"nic,omitempty"`
-	Password            string `json:"password,omitempty"`
-	Passwordenabled     bool   `json:"passwordenabled,omitempty"`
-	Project             string `json:"project,omitempty"`
-	Projectid           string `json:"projectid,omitempty"`
-	Publicip            string `json:"publicip,omitempty"`
-	Publicipid          string `json:"publicipid,omitempty"`
-	Rootdeviceid        int64  `json:"rootdeviceid,omitempty"`
-	Rootdevicetype      string `json:"rootdevicetype,omitempty"`
-	SecurityGroups      []struct {
-		Account     string `json:"account,omitempty"`
-		Description string `json:"description,omitempty"`
-		Id          string `json:"id,omitempty"`
-		Name        string `json:"name,omitemtpy"`
+	Password        string `json:"password,omitempty"`
+	Passwordenabled bool   `json:"passwordenabled,omitempty"`
+	Project         string `json:"project,omitempty"`
+	Projectid       string `json:"projectid,omitempty"`
+	Publicip        string `json:"publicip,omitempty"`
+	Publicipid      string `json:"publicipid,omitempty"`
+	Rootdeviceid    int64  `json:"rootdeviceid,omitempty"`
+	Rootdevicetype  string `json:"rootdevicetype,omitempty"`
+	SecurityGroups  []struct {
+		Account     string   `json:"account,omitempty"`
+		Description string   `json:"description,omitempty"`
+		Id          string   `json:"id,omitempty"`
+		Name        string   `json:"name,omitemtpy"`
 		Tags        []string `json:"tags,omitempty"`
 	} `json:"securitygroup,omitempty"`
 	Serviceofferingid   string `json:"serviceofferingid,omitempty"`
@@ -465,11 +465,11 @@ type RemoveIpFromNicResponse struct {
 }
 
 type AddIpToNicResponse struct {
-	Id string `json:"id"`
+	Id        string `json:"id"`
 	IpAddress string `json:"ipaddress"`
 	NetworkId string `json:"networkid"`
-	NicId string `json:"nicid"`
-	VmId string `json:"virtualmachineid"`
+	NicId     string `json:"nicid"`
+	VmId      string `json:"virtualmachineid"`
 }
 
 type CreateAffinityGroupResponse struct {

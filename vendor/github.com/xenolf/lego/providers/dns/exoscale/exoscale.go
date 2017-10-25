@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/pyr/egoscale/src/egoscale"
+	"github.com/exoscale/egoscale"
 	"github.com/xenolf/lego/acme"
 )
 

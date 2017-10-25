@@ -269,7 +269,7 @@ func (c *DNSProvider) makeRequest(method, uri string, body io.Reader) (json.RawM
 	return r, nil
 }
 
-// RackspaceRecords is the list of records sent/recieved from the DNS API
+// RackspaceRecords is the list of records sent/received from the DNS API
 type RackspaceRecords struct {
 	RackspaceRecord []RackspaceRecord `json:"records"`
 }

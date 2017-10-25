@@ -4,12 +4,14 @@ package googlecloud
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"time"
 
 	"github.com/xenolf/lego/acme"
 
 	"golang.org/x/net/context"
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
 	"google.golang.org/api/dns/v1"
@@ -22,9 +24,14 @@ type DNSProvider struct {
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for Google Cloud
-// DNS. Credentials must be passed in the environment variable: GCE_PROJECT.
+// DNS. Project name must be passed in the environment variable: GCE_PROJECT.
+// A Service Account file can be passed in the environment variable:
+// GCE_SERVICE_ACCOUNT_FILE
 func NewDNSProvider() (*DNSProvider, error) {
 	project := os.Getenv("GCE_PROJECT")
+	if saFile, ok := os.LookupEnv("GCE_SERVICE_ACCOUNT_FILE"); ok {
+		return NewDNSProviderServiceAccount(project, saFile)
+	}
 	return NewDNSProviderCredentials(project)
 }
 
@@ -39,6 +46,36 @@ func NewDNSProviderCredentials(project string) (*DNSProvider, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Unable to get Google Cloud client: %v", err)
 	}
+	svc, err := dns.New(client)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create Google Cloud DNS service: %v", err)
+	}
+	return &DNSProvider{
+		project: project,
+		client:  svc,
+	}, nil
+}
+
+// NewDNSProviderServiceAccount uses the supplied service account JSON file to
+// return a DNSProvider instance configured for Google Cloud DNS.
+func NewDNSProviderServiceAccount(project string, saFile string) (*DNSProvider, error) {
+	if project == "" {
+		return nil, fmt.Errorf("Google Cloud project name missing")
+	}
+	if saFile == "" {
+		return nil, fmt.Errorf("Google Cloud Service Account file missing")
+	}
+
+	dat, err := ioutil.ReadFile(saFile)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to read Service Account file: %v", err)
+	}
+	conf, err := google.JWTConfigFromJSON(dat, dns.NdevClouddnsReadwriteScope)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to acquire config: %v", err)
+	}
+	client := conf.Client(oauth2.NoContext)
+
 	svc, err := dns.New(client)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create Google Cloud DNS service: %v", err)

@@ -5,6 +5,7 @@ package route53
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
@@ -23,7 +24,8 @@ const (
 
 // DNSProvider implements the acme.ChallengeProvider interface
 type DNSProvider struct {
-	client *route53.Route53
+	client       *route53.Route53
+	hostedZoneID string
 }
 
 // customRetryer implements the client.Retryer interface by composing the
@@ -58,14 +60,22 @@ func (d customRetryer) RetryRules(r *request.Request) time.Duration {
 // 2. Shared credentials file (defaults to ~/.aws/credentials)
 // 3. Amazon EC2 IAM role
 //
+// If AWS_HOSTED_ZONE_ID is not set, Lego tries to determine the correct
+// public hosted zone via the FQDN.
+//
 // See also: https://github.com/aws/aws-sdk-go/wiki/configuring-sdk
 func NewDNSProvider() (*DNSProvider, error) {
+	hostedZoneID := os.Getenv("AWS_HOSTED_ZONE_ID")
+
 	r := customRetryer{}
 	r.NumMaxRetries = maxRetries
 	config := request.WithRetryer(aws.NewConfig(), r)
 	client := route53.New(session.New(config))
 
-	return &DNSProvider{client: client}, nil
+	return &DNSProvider{
+		client:       client,
+		hostedZoneID: hostedZoneID,
+	}, nil
 }
 
 // Present creates a TXT record using the specified parameters
@@ -83,7 +93,7 @@ func (r *DNSProvider) CleanUp(domain, token, keyAuth string) error {
 }
 
 func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
-	hostedZoneID, err := getHostedZoneID(fqdn, r.client)
+	hostedZoneID, err := r.getHostedZoneID(fqdn)
 	if err != nil {
 		return fmt.Errorf("Failed to determine Route 53 hosted zone ID: %v", err)
 	}
@@ -124,7 +134,11 @@ func (r *DNSProvider) changeRecord(action, fqdn, value string, ttl int) error {
 	})
 }
 
-func getHostedZoneID(fqdn string, client *route53.Route53) (string, error) {
+func (r *DNSProvider) getHostedZoneID(fqdn string) (string, error) {
+	if r.hostedZoneID != "" {
+		return r.hostedZoneID, nil
+	}
+
 	authZone, err := acme.FindZoneByFqdn(fqdn, acme.RecursiveNameservers)
 	if err != nil {
 		return "", err
@@ -134,7 +148,7 @@ func getHostedZoneID(fqdn string, client *route53.Route53) (string, error) {
 	reqParams := &route53.ListHostedZonesByNameInput{
 		DNSName: aws.String(acme.UnFqdn(authZone)),
 	}
-	resp, err := client.ListHostedZonesByName(reqParams)
+	resp, err := r.client.ListHostedZonesByName(reqParams)
 	if err != nil {
 		return "", err
 	}

@@ -15,18 +15,18 @@ type DomainsService struct {
 }
 
 type DomainInfo struct {
-	DomainTotal   int `json:"domain_total,omitempty"`
-	AllTotal      int `json:"all_total,omitempty"`
-	MineTotal     int `json:"mine_total,omitempty"`
-	ShareTotal    int `json:"share_total,omitempty"`
-	VipTotal      int `json:"vip_total,omitempty"`
-	IsMarkTotal   int `json:"ismark_total,omitempty"`
-	PauseTotal    int `json:"pause_total,omitempty"`
-	ErrorTotal    int `json:"error_total,omitempty"`
-	LockTotal     int `json:"lock_total,omitempty"`
-	SpamTotal     int `json:"spam_total,omitempty"`
-	VipExpire     int `json:"vip_expire,omitempty"`
-	ShareOutTotal int `json:"share_out_total,omitempty"`
+	DomainTotal   int    `json:"domain_total,omitempty"`
+	AllTotal      int    `json:"all_total,omitempty"`
+	MineTotal     int    `json:"mine_total,omitempty"`
+	ShareTotal    string `json:"share_total,omitempty"`
+	VipTotal      int    `json:"vip_total,omitempty"`
+	IsMarkTotal   int    `json:"ismark_total,omitempty"`
+	PauseTotal    int    `json:"pause_total,omitempty"`
+	ErrorTotal    int    `json:"error_total,omitempty"`
+	LockTotal     int    `json:"lock_total,omitempty"`
+	SpamTotal     int    `json:"spam_total,omitempty"`
+	VipExpire     int    `json:"vip_expire,omitempty"`
+	ShareOutTotal int    `json:"share_out_total,omitempty"`
 }
 
 type Domain struct {
