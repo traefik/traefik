@@ -2,12 +2,12 @@ package integration
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
-	"os"
 )
 
 type ProxyProtocolSuite struct{ BaseSuite }
