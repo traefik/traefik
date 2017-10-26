@@ -3,7 +3,9 @@ package metrics
 import (
 	"github.com/containous/traefik/types"
 	"github.com/go-kit/kit/metrics/prometheus"
+	"github.com/containous/mux"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const (
@@ -13,6 +15,12 @@ const (
 	reqDurationName  = metricNamePrefix + "request_duration_seconds"
 	retriesTotalName = metricNamePrefix + "backend_retries_total"
 )
+
+type PrometheusHander struct{}
+
+func (h PrometheusHander) AddRoutes(router *mux.Router) {
+	router.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
+}
 
 // RegisterPrometheus registers all Prometheus metrics.
 // It must be called only once and failing to register the metrics will lead to a panic.

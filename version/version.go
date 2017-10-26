@@ -4,9 +4,13 @@ import (
 	"context"
 	"net/url"
 
+	"net/http"
+
 	"github.com/containous/traefik/log"
 	"github.com/google/go-github/github"
+	"github.com/containous/mux"
 	goversion "github.com/hashicorp/go-version"
+	"github.com/unrolled/render"
 )
 
 var (
@@ -17,6 +21,27 @@ var (
 	// BuildDate holds the build date of traefik.
 	BuildDate = "I don't remember exactly"
 )
+
+type VersionHandler struct{}
+
+var (
+	templatesRenderer = render.New(render.Options{
+		Directory: "nowhere",
+	})
+)
+
+func (v VersionHandler) AddRoutes(router *mux.Router) {
+	router.Methods("GET").Path("/api/version").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+		v := struct {
+			Version  string
+			Codename string
+		}{
+			Version:  Version,
+			Codename: Codename,
+		}
+		templatesRenderer.JSON(response, http.StatusOK, v)
+	})
+}
 
 // CheckNewVersion checks if a new version is available
 func CheckNewVersion() {
