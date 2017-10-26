@@ -26,7 +26,8 @@ var (
 	})
 )
 
-func (provider *Provider) AddRoutes(systemRouter *mux.Router) {
+// AddRoutes add rest provider routes on a router
+func (p *Provider) AddRoutes(systemRouter *mux.Router) {
 	systemRouter.Methods("PUT").Path("/api/providers/{provider}").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		vars := mux.Vars(request)
 		//todo deprecated
@@ -43,8 +44,8 @@ func (provider *Provider) AddRoutes(systemRouter *mux.Router) {
 		err := json.Unmarshal(body, configuration)
 		if err == nil {
 			//todo change to rest when we can break
-			provider.configurationChan <- types.ConfigMessage{ProviderName: "web", Configuration: configuration}
-			provider.getConfigHandler(response, request)
+			p.configurationChan <- types.ConfigMessage{ProviderName: "web", Configuration: configuration}
+			p.getConfigHandler(response, request)
 		} else {
 			log.Errorf("Error parsing configuration %+v", err)
 			http.Error(response, fmt.Sprintf("%+v", err), http.StatusBadRequest)
@@ -54,8 +55,8 @@ func (provider *Provider) AddRoutes(systemRouter *mux.Router) {
 
 // Provide allows the provider to provide configurations to traefik
 // using the given configuration channel.
-func (provider *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
-	provider.configurationChan = configurationChan
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, _ types.Constraints) error {
+	p.configurationChan = configurationChan
 	return nil
 }
 

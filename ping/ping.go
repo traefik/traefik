@@ -7,11 +7,13 @@ import (
 	"github.com/containous/mux"
 )
 
-type PingHandler struct {
+//Handler expose ping routes
+type Handler struct {
 	EntryPoint string `description:"Ping entrypoint Default: traefik"`
 }
 
-func (g PingHandler) AddRoutes(router *mux.Router) {
+// AddRoutes add ping routes on a router
+func (g Handler) AddRoutes(router *mux.Router) {
 	router.Methods("GET", "HEAD").Path("/ping").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		fmt.Fprint(response, "OK")
 	})

@@ -8,8 +8,10 @@ import (
 	"github.com/elazarl/go-bindata-assetfs"
 )
 
+// DashboardHandler expose dashboard routes
 type DashboardHandler struct{}
 
+// AddRoutes add dashboard routes on a router
 func (g DashboardHandler) AddRoutes(router *mux.Router) {
 	// Expose dashboard
 	router.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {

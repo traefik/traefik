@@ -103,8 +103,8 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 	currentConfigurations := make(types.Configurations)
 	server.currentConfigurations.Set(currentConfigurations)
 	server.globalConfiguration = globalConfiguration
-	if server.globalConfiguration.Api != nil {
-		server.globalConfiguration.Api.CurrentConfigurations = &server.currentConfigurations
+	if server.globalConfiguration.API != nil {
+		server.globalConfiguration.API.CurrentConfigurations = &server.currentConfigurations
 	}
 
 	server.routinesPool = safe.NewPool(context.Background())
@@ -291,12 +291,12 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 	if server.metricsRegistry.IsEnabled() {
 		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(server.metricsRegistry, newServerEntryPointName))
 	}
-	if server.globalConfiguration.Api != nil {
-		server.globalConfiguration.Api.Stats = thoas_stats.New()
-		serverMiddlewares = append(serverMiddlewares, server.globalConfiguration.Api.Stats)
-		if server.globalConfiguration.Api.Statistics != nil {
-			server.globalConfiguration.Api.StatsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.Api.Statistics.RecentErrors)
-			serverMiddlewares = append(serverMiddlewares, server.globalConfiguration.Api.StatsRecorder)
+	if server.globalConfiguration.API != nil {
+		server.globalConfiguration.API.Stats = thoas_stats.New()
+		serverMiddlewares = append(serverMiddlewares, server.globalConfiguration.API.Stats)
+		if server.globalConfiguration.API.Statistics != nil {
+			server.globalConfiguration.API.StatsRecorder = middlewares.NewStatsRecorder(server.globalConfiguration.API.Statistics.RecentErrors)
+			serverMiddlewares = append(serverMiddlewares, server.globalConfiguration.API.StatsRecorder)
 		}
 
 	}
@@ -698,15 +698,15 @@ func (server *Server) startServer(serverEntryPoint *serverEntryPoint, globalConf
 
 func (server *Server) addInternalRoutes(entryPointName string, router *mux.Router) {
 	if server.globalConfiguration.Metrics != nil && server.globalConfiguration.Metrics.Prometheus != nil && server.globalConfiguration.Metrics.Prometheus.EntryPoint == entryPointName {
-		metrics.PrometheusHander{}.AddRoutes(router)
+		metrics.PrometheusHandler{}.AddRoutes(router)
 	}
 
 	if server.globalConfiguration.Rest != nil && server.globalConfiguration.Rest.EntryPoint == entryPointName {
 		server.globalConfiguration.Rest.AddRoutes(router)
 	}
 
-	if server.globalConfiguration.Api != nil && server.globalConfiguration.Api.EntryPoint == entryPointName {
-		server.globalConfiguration.Api.AddRoutes(router)
+	if server.globalConfiguration.API != nil && server.globalConfiguration.API.EntryPoint == entryPointName {
+		server.globalConfiguration.API.AddRoutes(router)
 	}
 }
 

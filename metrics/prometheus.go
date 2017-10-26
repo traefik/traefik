@@ -16,9 +16,11 @@ const (
 	retriesTotalName = metricNamePrefix + "backend_retries_total"
 )
 
-type PrometheusHander struct{}
+// PrometheusHandler expose Prometheus routes
+type PrometheusHandler struct{}
 
-func (h PrometheusHander) AddRoutes(router *mux.Router) {
+// AddRoutes add Prometheus routes on a router
+func (h PrometheusHandler) AddRoutes(router *mux.Router) {
 	router.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
 }
 

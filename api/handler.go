@@ -13,6 +13,7 @@ import (
 	thoas_stats "github.com/thoas/stats"
 )
 
+// Handler expose api routes
 type Handler struct {
 	EntryPoint            string `description:"Entrypoint"`
 	Dashboard             bool   `description:"Activate dashboard"`
@@ -29,6 +30,7 @@ var (
 	})
 )
 
+// AddRoutes add api routes on a router
 func (p Handler) AddRoutes(router *mux.Router) {
 	if p.Debug {
 		DebugHandler{}.AddRoutes(router)
@@ -49,7 +51,7 @@ func (p Handler) AddRoutes(router *mux.Router) {
 	// health route
 	router.Methods("GET").Path("/health").HandlerFunc(p.getHealthHandler)
 
-	version.VersionHandler{}.AddRoutes(router)
+	version.Handler{}.AddRoutes(router)
 
 	if p.Dashboard {
 		DashboardHandler{}.AddRoutes(router)

@@ -85,11 +85,12 @@ type GlobalConfiguration struct {
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings" export:"true"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
 	Rest                      *rest.Provider          `description:"Enable Rest backend with default settings" export:"true"`
-	Api                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
+	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
-	Ping                      *ping.PingHandler       `description:"Enable ping"`
+	Ping                      *ping.Handler           `description:"Enable ping"`
 }
 
+// WebCompatibility is a configuration to handle compatibility with deprecated web provider options
 type WebCompatibility struct {
 	Address    string            `description:"Web administration port" export:"true"`
 	CertFile   string            `description:"SSL certificate" export:"true"`
@@ -106,7 +107,7 @@ func (gc *GlobalConfiguration) handleWebDeprecation() {
 	if gc.Web != nil {
 		log.Warn("web provider configuration is deprecated, you should use --api for api, --rest for rest provider, --ping for ping and --metrics for metrics")
 
-		if gc.Api != nil || gc.Metrics != nil || gc.Ping != nil || gc.Rest != nil {
+		if gc.API != nil || gc.Metrics != nil || gc.Ping != nil || gc.Rest != nil {
 			return
 		}
 		gc.EntryPoints["traefik"] = &EntryPoint{
@@ -124,8 +125,8 @@ func (gc *GlobalConfiguration) handleWebDeprecation() {
 			}
 		}
 
-		if gc.Api == nil {
-			gc.Api = &api.Handler{
+		if gc.API == nil {
+			gc.API = &api.Handler{
 				EntryPoint: "traefik",
 				Statistics: gc.Web.Statistics,
 				Dashboard:  true,
@@ -133,7 +134,7 @@ func (gc *GlobalConfiguration) handleWebDeprecation() {
 		}
 
 		if gc.Ping == nil {
-			gc.Ping = &ping.PingHandler{
+			gc.Ping = &ping.Handler{
 				EntryPoint: "traefik",
 			}
 		}
@@ -161,7 +162,7 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 
 	gc.handleWebDeprecation()
 
-	if (gc.Api != nil && gc.Api.EntryPoint == "traefik") ||
+	if (gc.API != nil && gc.API.EntryPoint == "traefik") ||
 		(gc.Ping != nil && gc.Ping.EntryPoint == "traefik") ||
 		(gc.Metrics != nil && gc.Metrics.Prometheus != nil && gc.Metrics.Prometheus.EntryPoint == "traefik") ||
 		(gc.Rest != nil && gc.Rest.EntryPoint == "traefik") {
@@ -211,8 +212,8 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
-	if gc.Api != nil {
-		gc.Api.Debug = gc.Debug
+	if gc.API != nil {
+		gc.API.Debug = gc.Debug
 	}
 
 	if gc.Debug {

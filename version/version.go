@@ -22,7 +22,8 @@ var (
 	BuildDate = "I don't remember exactly"
 )
 
-type VersionHandler struct{}
+// Handler expose version routes
+type Handler struct{}
 
 var (
 	templatesRenderer = render.New(render.Options{
@@ -30,7 +31,8 @@ var (
 	})
 )
 
-func (v VersionHandler) AddRoutes(router *mux.Router) {
+// AddRoutes add version routes on a router
+func (v Handler) AddRoutes(router *mux.Router) {
 	router.Methods("GET").Path("/api/version").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		v := struct {
 			Version  string

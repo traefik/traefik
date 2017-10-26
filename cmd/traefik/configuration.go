@@ -163,7 +163,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultEureka.Delay = "30s"
 
 	// dafault Ping
-	var defaultPing ping.PingHandler = ping.PingHandler{
+	var defaultPing ping.Handler = ping.Handler{
 		EntryPoint: "traefik",
 	}
 
@@ -200,11 +200,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	}
 
 	// default ApiConfiguration
-	defaultApi := api.Handler{
+	defaultAPI := api.Handler{
 		EntryPoint: "traefik",
 		Dashboard:  true,
 	}
-	defaultApi.Statistics = &types.Statistics{
+	defaultAPI.Statistics = &types.Statistics{
 		RecentErrors: 10,
 	}
 
@@ -249,7 +249,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		AccessLog:          &defaultAccessLog,
 		LifeCycle:          &defaultLifeycle,
 		Ping:               &defaultPing,
-		Api:                &defaultApi,
+		API:                &defaultAPI,
 		Metrics:            &defaultMetrics,
 	}
 
