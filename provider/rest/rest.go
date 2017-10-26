@@ -15,8 +15,8 @@ import (
 
 // Provider is a provider.Provider implementation that provides the UI
 type Provider struct {
-	configurationChan chan<- types.ConfigMessage
-	EntryPoint        string `description:"Entrypoint"`
+	configurationChan     chan<- types.ConfigMessage
+	EntryPoint            string `description:"Entrypoint"`
 	CurrentConfigurations *safe.Safe
 }
 

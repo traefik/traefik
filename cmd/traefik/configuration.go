@@ -4,8 +4,10 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -18,7 +20,7 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
-	"github.com/containous/traefik/provider/web"
+	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
 )
@@ -43,8 +45,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultFile.Watch = true
 	defaultFile.Filename = "" //needs equivalent to  viper.ConfigFileUsed()
 
-	// default Web
-	var defaultWeb web.Provider
+	// default Rest
+	var defaultRest rest.Provider
+	defaultRest.EntryPoint = "traefik"
+
+	var defaultWeb configuration.WebCompatibility
 	defaultWeb.Address = ":8080"
 	defaultWeb.Statistics = &types.Statistics{
 		RecentErrors: 10,
@@ -157,6 +162,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultEureka eureka.Provider
 	defaultEureka.Delay = "30s"
 
+	// dafault Ping
+	var defaultPing ping.PingHandler = ping.PingHandler{
+		EntryPoint: "traefik",
+	}
+
 	// default TraefikLog
 	defaultTraefikLog := types.TraefikLog{
 		Format:   "common",
@@ -189,10 +199,36 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
 	}
 
+	// default ApiConfiguration
+	defaultApi := api.Handler{
+		EntryPoint: "traefik",
+		Dashboard:  true,
+	}
+	defaultApi.Statistics = &types.Statistics{
+		RecentErrors: 10,
+	}
+
+	// default Metrics
+	defaultMetrics := types.Metrics{
+		Prometheus: &types.Prometheus{
+			Buckets:    types.Buckets{0.1, 0.3, 1.2, 5},
+			EntryPoint: "traefik",
+		},
+		Datadog: &types.Datadog{
+			Address:      "localhost:8125",
+			PushInterval: "10s",
+		},
+		StatsD: &types.Statsd{
+			Address:      "localhost:8125",
+			PushInterval: "10s",
+		},
+	}
+
 	defaultConfiguration := configuration.GlobalConfiguration{
 		Docker:             &defaultDocker,
 		File:               &defaultFile,
 		Web:                &defaultWeb,
+		Rest:               &defaultRest,
 		Marathon:           &defaultMarathon,
 		Consul:             &defaultConsul,
 		ConsulCatalog:      &defaultConsulCatalog,
@@ -212,6 +248,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		TraefikLog:         &defaultTraefikLog,
 		AccessLog:          &defaultAccessLog,
 		LifeCycle:          &defaultLifeycle,
+		Ping:               &defaultPing,
+		Api:                &defaultApi,
+		Metrics:            &defaultMetrics,
 	}
 
 	return &TraefikConfiguration{

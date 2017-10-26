@@ -7,7 +7,9 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -20,7 +22,7 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
-	"github.com/containous/traefik/provider/web"
+	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
@@ -67,9 +69,9 @@ type GlobalConfiguration struct {
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
 	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers" export:"true"`
+	Web                       *WebCompatibility       `description:"(Depreceated) Enable Web backend with default settings" export:"true"` // Deprecated
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
 	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`
-	Web                       *web.Provider           `description:"Enable Web backend with default settings" export:"true"`
 	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings" export:"true"`
 	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings" export:"true"`
 	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend with default settings" export:"true"`
@@ -82,6 +84,68 @@ type GlobalConfiguration struct {
 	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings" export:"true"`
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings" export:"true"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
+	Rest                      *rest.Provider          `description:"Enable Rest backend with default settings" export:"true"`
+	Api                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
+	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
+	Ping                      *ping.PingHandler       `description:"Enable ping"`
+}
+
+type WebCompatibility struct {
+	Address    string            `description:"Web administration port" export:"true"`
+	CertFile   string            `description:"SSL certificate" export:"true"`
+	KeyFile    string            `description:"SSL certificate" export:"true"`
+	ReadOnly   bool              `description:"Enable read only API" export:"true"`
+	Statistics *types.Statistics `description:"Enable more detailed statistics" export:"true"`
+	Metrics    *types.Metrics    `description:"Enable a metrics exporter" export:"true"`
+	Path       string            `description:"Root path for dashboard and API"`
+	Auth       *types.Auth       `export:"true"`
+	Debug      bool              `export:"true"`
+}
+
+func (gc *GlobalConfiguration) handleWebDeprecation() {
+	if gc.Web != nil {
+		log.Warn("web provider configuration is deprecated, you should use --api for api, --rest for rest provider, --ping for ping and --metrics for metrics")
+
+		if gc.Api != nil || gc.Metrics != nil || gc.Ping != nil || gc.Rest != nil {
+			return
+		}
+		gc.EntryPoints["traefik"] = &EntryPoint{
+			Address: gc.Web.Address,
+			Auth:    gc.Web.Auth,
+		}
+		if gc.Web.CertFile != "" {
+			gc.EntryPoints["traefik"].TLS = &TLS{
+				Certificates: []Certificate{
+					{
+						CertFile: FileOrContent(gc.Web.CertFile),
+						KeyFile:  FileOrContent(gc.Web.KeyFile),
+					},
+				},
+			}
+		}
+
+		if gc.Api == nil {
+			gc.Api = &api.Handler{
+				EntryPoint: "traefik",
+				Statistics: gc.Web.Statistics,
+				Dashboard:  true,
+			}
+		}
+
+		if gc.Ping == nil {
+			gc.Ping = &ping.PingHandler{
+				EntryPoint: "traefik",
+			}
+		}
+
+		if gc.Metrics == nil {
+			gc.Metrics = gc.Web.Metrics
+		}
+
+		if !gc.Debug {
+			gc.Debug = gc.Web.Debug
+		}
+	}
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.
@@ -93,6 +157,17 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 			ForwardedHeaders: &ForwardedHeaders{Insecure: true},
 		}}
 		gc.DefaultEntryPoints = []string{"http"}
+	}
+
+	gc.handleWebDeprecation()
+
+	if (gc.Api != nil && gc.Api.EntryPoint == "traefik") ||
+		(gc.Ping != nil && gc.Ping.EntryPoint == "traefik") ||
+		(gc.Metrics != nil && gc.Metrics.Prometheus != nil && gc.Metrics.Prometheus.EntryPoint == "traefik") ||
+		(gc.Rest != nil && gc.Rest.EntryPoint == "traefik") {
+		if _, ok := gc.EntryPoints["traefik"]; !ok {
+			gc.EntryPoints["traefik"] = &EntryPoint{Address: ":8080"}
+		}
 	}
 
 	// ForwardedHeaders must be remove in the next breaking version
@@ -134,6 +209,14 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		if gc.Rancher.Metadata != nil && len(gc.Rancher.Metadata.Prefix) == 0 {
 			gc.Rancher.Metadata.Prefix = "latest"
 		}
+	}
+
+	if gc.Api != nil {
+		gc.Api.Debug = gc.Debug
+	}
+
+	if gc.Debug {
+		gc.LogLevel = "DEBUG"
 	}
 
 	if gc.Web != nil && (gc.Web.Path == "" || !strings.HasSuffix(gc.Web.Path, "/")) {

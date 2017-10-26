@@ -2,8 +2,9 @@ package ping
 
 import (
 	"fmt"
-	"github.com/containous/mux"
 	"net/http"
+
+	"github.com/containous/mux"
 )
 
 type PingHandler struct {

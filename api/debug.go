@@ -4,9 +4,10 @@ import (
 	"expvar"
 	"fmt"
 
-	"github.com/containous/mux"
 	"net/http"
 	"runtime"
+
+	"github.com/containous/mux"
 )
 
 func init() {

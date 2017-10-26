@@ -1,10 +1,11 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/containous/mux"
 	"github.com/containous/traefik/autogen"
 	"github.com/elazarl/go-bindata-assetfs"
-	"net/http"
 )
 
 type DashboardHandler struct{}

@@ -1,9 +1,9 @@
 package metrics
 
 import (
+	"github.com/containous/mux"
 	"github.com/containous/traefik/types"
 	"github.com/go-kit/kit/metrics/prometheus"
-	"github.com/containous/mux"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
