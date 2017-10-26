@@ -1,16 +1,16 @@
 package integration
 
 import (
-	"fmt"
 	"net/http"
-	"os"
-	"strings"
-	"syscall"
 	"time"
 
+	"fmt"
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
+	"os"
+	"strings"
+	"syscall"
 )
 
 // SimpleSuite
@@ -161,4 +161,105 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 		// this point.
 		c.Fatal("Traefik did not terminate in time")
 	}
+}
+
+func (s *SimpleSuite) TestApiOnSameEntrypoint(c *check.C) {
+
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	cmd, output := s.traefikCmd("--defaultEntrypoints=http", "--entryPoints=Name:http Address::8000", "--api.entrypoint=http", "--debug", "--docker")
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// TODO validate : run on 80
+	// Expected a 404 as we did not configure anything
+	err = try.GetRequest("http://127.0.0.1:8000/test", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
+
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	cmd, output := s.traefikCmd(withConfigFile("./fixtures/simple_auth.toml"))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8001/api", 1*time.Second, try.StatusCodeIs(http.StatusUnauthorized))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8001/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestWebCompatibilityWithoutPath(c *check.C) {
+
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	cmd, output := s.traefikCmd("--defaultEntrypoints=http", "--entryPoints=Name:http Address::8000", "--web", "--debug", "--docker")
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// TODO validate : run on 80
+	// Expected a 404 as we did not configure anything
+	err = try.GetRequest("http://127.0.0.1:8000/test", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestWebCompatibilityWithPath(c *check.C) {
+
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	cmd, output := s.traefikCmd("--defaultEntrypoints=http", "--entryPoints=Name:http Address::8000", "--web.path=/test", "--debug", "--docker")
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// TODO validate : run on 80
+	// Expected a 404 as we did not configure anything
+	err = try.GetRequest("http://127.0.0.1:8000/notfound", 1*time.Second, try.StatusCodeIs(http.StatusNotFound))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/test/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/test/ping", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/test/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
 }
