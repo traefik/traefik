@@ -1,47 +1,19 @@
 package servicefabric
 
-import "encoding/xml"
+import (
+	"encoding/xml"
 
-// ApplicationsData encapsulates the response
-// model for Applications in the Service
-// Fabric API
-type ApplicationsData struct {
-	ContinuationToken *string           `json:"ContinuationToken"`
-	Items             []ApplicationItem `json:"Items"`
-}
+	sfsdk "github.com/jjcollinge/servicefabric"
+)
 
-// ApplicationItem encapsulates the nested
-// model for items within the ApplicationData
-// model
-type ApplicationItem struct {
-	HealthState string `json:"HealthState"`
-	ID          string `json:"Id"`
-	Name        string `json:"Name"`
-	Parameters  []*struct {
-		Key   string `json:"Key"`
-		Value string `json:"Value"`
-	} `json:"Parameters"`
-	Status      string `json:"Status"`
-	TypeName    string `json:"TypeName"`
-	TypeVersion string `json:"TypeVersion"`
-}
-
-// ServicesData encapsulates the response
-// model for Services in the Service
-// Fabric API
-type ServicesData struct {
-	ContinuationToken *string       `json:"ContinuationToken"`
-	Items             []ServiceItem `json:"Items"`
-}
-
-// ServiceItemExtended provies a flattened view
+// ServiceItemExtended provides a flattened view
 // of the service with details of the application
 // it belongs too and the replicas/partitions
 type ServiceItemExtended struct {
-	ServiceItem
+	sfsdk.ServiceItem
 	HasHTTPEndpoint bool
 	IsHealthy       bool
-	Application     ApplicationItem
+	Application     sfsdk.ApplicationItem
 	Partitions      []PartitionItemExtended
 	Labels          map[string]string
 }
@@ -49,136 +21,11 @@ type ServiceItemExtended struct {
 // PartitionItemExtended provides a flattened view
 // of a services partitions
 type PartitionItemExtended struct {
-	PartitionItem
+	sfsdk.PartitionItem
 	HasReplicas  bool
-	Replicas     []ReplicaItem
+	Replicas     []sfsdk.ReplicaItem
 	HasInstances bool
-	Instances    []InstanceItem
-}
-
-// ServiceItem encapsulates the service information
-// returned for each service in the Services data model
-type ServiceItem struct {
-	HasPersistedState bool   `json:"HasPersistedState"`
-	HealthState       string `json:"HealthState"`
-	ID                string `json:"Id"`
-	IsServiceGroup    bool   `json:"IsServiceGroup"`
-	ManifestVersion   string `json:"ManifestVersion"`
-	Name              string `json:"Name"`
-	ServiceKind       string `json:"ServiceKind"`
-	ServiceStatus     string `json:"ServiceStatus"`
-	TypeName          string `json:"TypeName"`
-}
-
-// ServiceType encapsulates the additional service data
-// such as extensions, placement constraints and other information stored in
-// the service manifest.
-type ServiceType struct {
-	IsServiceGroup         bool   `json:"IsServiceGroup"`
-	ServiceManifestName    string `json:"ServiceManifestName"`
-	ServiceManifestVersion string `json:"ServiceManifestVersion"`
-	ServiceTypeDescription struct {
-		Extensions []struct {
-			Key   string `json:"Key"`
-			Value string `json:"Value"`
-		} `json:"Extensions"`
-		HasPersistedState        bool          `json:"HasPersistedState"`
-		IsStateful               bool          `json:"IsStateful"`
-		Kind                     string        `json:"Kind"`
-		LoadMetrics              []interface{} `json:"LoadMetrics"`
-		PlacementConstraints     string        `json:"PlacementConstraints"`
-		ServicePlacementPolicies []interface{} `json:"ServicePlacementPolicies"`
-		ServiceTypeName          string        `json:"ServiceTypeName"`
-		UseImplicitHost          bool          `json:"UseImplicitHost"`
-	} `json:"ServiceTypeDescription"`
-}
-
-// ServicesExtensionData provides dictionaries for each service, in an application,
-// containing the traefik labels defined in the Extension section of the service manifest.
-type ServicesExtensionData map[string]map[string]string
-
-// PartitionsData encapsulates the response
-// model for Parititons in the Service
-// Fabric API
-type PartitionsData struct {
-	ContinuationToken *string         `json:"ContinuationToken"`
-	Items             []PartitionItem `json:"Items"`
-}
-
-// PartitionItem encapsulates the service information
-// returned for each patition under the service
-type PartitionItem struct {
-	CurrentConfigurationEpoch struct {
-		ConfigurationVersion string `json:"ConfigurationVersion"`
-		DataLossVersion      string `json:"DataLossVersion"`
-	} `json:"CurrentConfigurationEpoch"`
-	HealthState          string `json:"HealthState"`
-	MinReplicaSetSize    int64  `json:"MinReplicaSetSize"`
-	PartitionInformation struct {
-		HighKey              string `json:"HighKey"`
-		ID                   string `json:"Id"`
-		LowKey               string `json:"LowKey"`
-		ServicePartitionKind string `json:"ServicePartitionKind"`
-	} `json:"PartitionInformation"`
-	PartitionStatus      string `json:"PartitionStatus"`
-	ServiceKind          string `json:"ServiceKind"`
-	TargetReplicaSetSize int64  `json:"TargetReplicaSetSize"`
-}
-
-// ReplicaInstance interface provides
-// a unified interface over replicas and instances
-type ReplicaInstance interface {
-	GetReplicaData() (string, *ReplicaItemBase)
-}
-
-// ReplicasData encapsulates the response
-// model for Replicas in the Service
-// Fabric API
-type ReplicasData struct {
-	ContinuationToken *string       `json:"ContinuationToken"`
-	Items             []ReplicaItem `json:"Items"`
-}
-
-// ReplicaItemBase shared data used
-// in both replicas and instances
-type ReplicaItemBase struct {
-	Address                      string `json:"Address"`
-	HealthState                  string `json:"HealthState"`
-	LastInBuildDurationInSeconds string `json:"LastInBuildDurationInSeconds"`
-	NodeName                     string `json:"NodeName"`
-	ReplicaRole                  string `json:"ReplicaRole"`
-	ReplicaStatus                string `json:"ReplicaStatus"`
-	ServiceKind                  string `json:"ServiceKind"`
-}
-
-// ReplicaItem Holds replica specific data
-type ReplicaItem struct {
-	*ReplicaItemBase
-	ID string `json:"ReplicaId"`
-}
-
-// GetReplicaData returns replica data
-func (m *ReplicaItem) GetReplicaData() (string, *ReplicaItemBase) {
-	return m.ID, m.ReplicaItemBase
-}
-
-// InstancesData encapsulates the response
-// model for Instances in the Service
-// Fabric API
-type InstancesData struct {
-	ContinuationToken *string        `json:"ContinuationToken"`
-	Items             []InstanceItem `json:"Items"`
-}
-
-// InstanceItem hold instance specific data
-type InstanceItem struct {
-	*ReplicaItemBase
-	ID string `json:"InstanceId"`
-}
-
-// GetReplicaData returns replica data from an instance
-func (m *InstanceItem) GetReplicaData() (string, *ReplicaItemBase) {
-	return m.ID, m.ReplicaItemBase
+	Instances    []sfsdk.InstanceItem
 }
 
 type ServiceExtensionLabels struct {

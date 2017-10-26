@@ -23,6 +23,7 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
+	"github.com/containous/traefik/provider/servicefabric"
 	"github.com/containous/traefik/provider/web"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
@@ -84,6 +85,7 @@ type GlobalConfiguration struct {
 	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings" export:"true"`
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings" export:"true"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
+	ServiceFabric             *servicefabric.Provider `description:"Enable DynamoDB backend with default settings" export:"true"`
 }
 
 // SetEffectiveConfiguration adds missing configuration parameters derived from existing ones.

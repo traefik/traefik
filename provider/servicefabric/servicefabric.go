@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	sfsdk "github.com/jjcollinge/servicefabric"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -34,8 +35,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	if p.APIVersion == "" {
 		p.APIVersion = "3.0"
 	}
-	webClient := &httpWebClient{client: http.Client{}}
-	sfClient, err := NewClient(
+	webClient := sfsdk.NewHTTPClient(http.Client{})
+	sfClient, err := sfsdk.NewClient(
 		webClient,
 		p.ClusterManagementURL,
 		p.APIVersion,
@@ -51,7 +52,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	return nil
 }
 
-func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, sfClient Client, pollInterval time.Duration) error {
+func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, sfClient sfsdk.Client, pollInterval time.Duration) error {
 	pool.Go(func(stop chan bool) {
 		operation := func() error {
 			ticker := time.NewTicker(pollInterval)
@@ -112,7 +113,7 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 	return nil
 }
 
-func (p *Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, error) {
+func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExtended, error) {
 	results := []ServiceItemExtended{}
 	apps, err := sfClient.GetApplications()
 	if err != nil {
@@ -126,24 +127,25 @@ func (p *Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, e
 			return nil, err
 		}
 
-		servicesExtensions, err := sfClient.GetServicesExtensions(app.TypeName, app.TypeVersion, services)
-		if err != nil {
-			log.Error(err)
-			return nil, err
-		}
-
 		for _, service := range services.Items {
 			item := ServiceItemExtended{
 				ServiceItem: service,
 				Application: app,
 			}
 
-			labels, hasLabels := servicesExtensions[service.Name]
-			if hasLabels {
-				item.Labels = labels
+			extensionData := ServiceExtensionLabels{}
+			_, err := sfClient.GetServiceExtension(app.TypeName, app.TypeVersion, "Traefik", &service, &extensionData)
+
+			if err != nil {
+				log.Error(err)
+				return nil, err
 			}
 
-			log.Info(item.Labels)
+			// if extensionData == sfsdk.ServiceExtensionLabels{} {
+			// 	//Didn't exist
+			// } else {
+			// 	item
+			// }
 
 			partitions, err := sfClient.GetPartitions(app.ID, service.ID)
 			if err != nil {
@@ -188,7 +190,7 @@ func (p *Provider) getClusterServices(sfClient Client) ([]ServiceItemExtended, e
 	return results, nil
 }
 
-func (p *Provider) isPrimary(i ReplicaInstance) bool {
+func (p *Provider) isPrimary(i sfsdk.ReplicaInstance) bool {
 	_, data := i.GetReplicaData()
 	primaryString := "Primary"
 	if data.ReplicaRole == primaryString {
@@ -197,7 +199,7 @@ func (p *Provider) isPrimary(i ReplicaInstance) bool {
 	return false
 }
 
-func (p *Provider) isHealthy(i ReplicaInstance) bool {
+func (p *Provider) isHealthy(i sfsdk.ReplicaInstance) bool {
 	_, data := i.GetReplicaData()
 	if data.ReplicaStatus == "Ready" || data.HealthState != "Error" {
 		return true
@@ -205,7 +207,7 @@ func (p *Provider) isHealthy(i ReplicaInstance) bool {
 	return false
 }
 
-func (p *Provider) doesAppParamContain(a ApplicationItem, key, shouldContain string) bool {
+func (p *Provider) doesAppParamContain(a sfsdk.ApplicationItem, key, shouldContain string) bool {
 	value := p.getApplicationParameter(a, key)
 	if strings.Contains(value, shouldContain) {
 		return true
@@ -213,7 +215,7 @@ func (p *Provider) doesAppParamContain(a ApplicationItem, key, shouldContain str
 	return false
 }
 
-func (p *Provider) getApplicationParameter(a ApplicationItem, k string) string {
+func (p *Provider) getApplicationParameter(a sfsdk.ApplicationItem, k string) string {
 	for _, param := range a.Parameters {
 		if param.Key == k {
 			return param.Value
@@ -223,7 +225,7 @@ func (p *Provider) getApplicationParameter(a ApplicationItem, k string) string {
 	return ""
 }
 
-func (p *Provider) hasHTTPEndpoint(i ReplicaInstance) bool {
+func (p *Provider) hasHTTPEndpoint(i sfsdk.ReplicaInstance) bool {
 	_, data := i.GetReplicaData()
 	exists, _ := getDefaultEndpoint(data.Address)
 	if exists {
@@ -232,7 +234,7 @@ func (p *Provider) hasHTTPEndpoint(i ReplicaInstance) bool {
 	return false
 }
 
-func (p *Provider) getDefaultEndpoint(i ReplicaInstance) string {
+func (p *Provider) getDefaultEndpoint(i sfsdk.ReplicaInstance) string {
 	id, data := i.GetReplicaData()
 	exists, endpoint := getDefaultEndpoint(data.Address)
 	if !exists {
@@ -242,7 +244,7 @@ func (p *Provider) getDefaultEndpoint(i ReplicaInstance) string {
 	return endpoint
 }
 
-func (p *Provider) getNamedEndpoint(i ReplicaInstance, endpointName string) string {
+func (p *Provider) getNamedEndpoint(i sfsdk.ReplicaInstance, endpointName string) string {
 	id, data := i.GetReplicaData()
 	exists, endpoint := getNamedEndpoint(data.Address, endpointName)
 	if !exists {
