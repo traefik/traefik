@@ -142,7 +142,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
 			srv := NewServer(test.globalConfig)
-			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router)
+			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil, nil)
 			if err != nil {
 				t.Fatalf("Unexpected error when preparing srv: %s", err)
 			}
@@ -597,7 +597,7 @@ func TestServerEntryPointWhitelistConfig(t *testing.T) {
 
 			srv.serverEntryPoints = srv.buildEntryPoints(srv.globalConfiguration)
 			srvEntryPoint := srv.setupServerEntryPoint("test", srv.serverEntryPoints["test"])
-			handler := srvEntryPoint.httpServer.Handler.(*negroni.Negroni)
+			handler := srvEntryPoint.httpServer.Handler.(*mux.Router).NotFoundHandler.(*negroni.Negroni)
 			found := false
 			for _, handler := range handler.Handlers() {
 				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhiteLister)(nil)) {
