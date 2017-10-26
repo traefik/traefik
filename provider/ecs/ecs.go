@@ -429,7 +429,7 @@ func (p *Provider) label(i ecsInstance, k string) string {
 }
 
 func (p *Provider) filterInstance(i ecsInstance) bool {
-	if labelPort := p.label(i, types.LabelBackendPort); len(i.container.NetworkBindings) == 0 && labelPort == "" {
+	if labelPort := p.label(i, types.LabelPort); len(i.container.NetworkBindings) == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}
@@ -554,7 +554,7 @@ func (p *Provider) getHost(i ecsInstance) string {
 }
 
 func (p *Provider) getPort(i ecsInstance) string {
-	if port := p.label(i, types.LabelBackendPort); port != "" {
+	if port := p.label(i, types.LabelPort); port != "" {
 		return port
 	}
 	return strconv.FormatInt(*i.container.NetworkBindings[0].HostPort, 10)

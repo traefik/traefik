@@ -348,7 +348,7 @@ func TestFilterInstance(t *testing.T) {
 	noNetwork := simpleEcsInstanceNoNetwork(map[string]*string{})
 
 	noNetworkWithLabel := simpleEcsInstanceNoNetwork(map[string]*string{
-		types.LabelBackendPort: aws.String("80"),
+		types.LabelPort: aws.String("80"),
 	})
 
 	tests := []struct {
@@ -665,7 +665,7 @@ func TestEcsWithoutPort(t *testing.T) {
 			desc:     "Label should override network port",
 			expected: "4242",
 			instanceInfo: simpleEcsInstance(map[string]*string{
-				types.LabelBackendPort: aws.String("4242"),
+				types.LabelPort: aws.String("4242"),
 			}),
 			provider: &Provider{},
 		},
@@ -673,7 +673,7 @@ func TestEcsWithoutPort(t *testing.T) {
 			desc:     "Label should provide exposed port",
 			expected: "80",
 			instanceInfo: simpleEcsInstanceNoNetwork(map[string]*string{
-				types.LabelBackendPort: aws.String("80"),
+				types.LabelPort: aws.String("80"),
 			}),
 			provider: &Provider{},
 		},
