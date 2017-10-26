@@ -2,8 +2,6 @@ package: github.com/containous/traefik
 ignore:
 - github.com/sirupsen/logrus
 import:
-- package: github.com/jjcollinge/servicefabric
-  version: 15265f5ee7e850a3af4b2541fa9b064bded72da2
 - package: github.com/BurntSushi/toml
   version: v0.3.0
 - package: github.com/BurntSushi/ty
@@ -204,6 +202,8 @@ import:
 - package: github.com/armon/go-proxyproto
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - package: github.com/mitchellh/copystructure
+- package: github.com/jjcollinge/servicefabric
+  version: 15265f5ee7e850a3af4b2541fa9b064bded72da2
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose

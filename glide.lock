@@ -1,5 +1,5 @@
-hash: 90d53da9a6eaba85d524d95410051ff7f12b1f76181df2ad4796b2439f3a2a37
-updated: 2017-10-24T14:08:11.364720581+02:00
+hash: bd198132a47f7cbfb90587cf0ee5cd9e96edde0acce148911f64e3fc2c9133af
+updated: 2017-10-26T16:08:41.098474+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -307,11 +307,13 @@ imports:
 - name: github.com/huandu/xstrings
   version: 3959339b333561bf62a38b424fd41517c2c90f40
 - name: github.com/imdario/mergo
-  version: 3e95a51e0639b4cf372f2ccf74c86749d747fbdc
+  version: 7fe0c75c13abdee74b09fcacef5ea1c6bba6a874
 - name: github.com/JamesClonk/vultr
   version: 0f156dd232bc4ebf8a32ba83fec57c0e4c9db69f
   subpackages:
   - lib
+- name: github.com/jjcollinge/servicefabric
+  version: 15265f5ee7e850a3af4b2541fa9b064bded72da2
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jonboulle/clockwork
@@ -335,7 +337,7 @@ imports:
 - name: github.com/Masterminds/semver
   version: 59c29afe1a994eacb71c833025ca7acf874bb1da
 - name: github.com/Masterminds/sprig
-  version: 9526be0327b26ad31aa70296a7b10704883976d5
+  version: e039e20e500c2c025d9145be375e27cf42a94174
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
