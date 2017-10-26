@@ -594,8 +594,23 @@ func (p *Provider) getIPAddress(container dockerData) string {
 
 	// If net==host, quick n' dirty, we return 127.0.0.1
 	// This will work locally, but will fail with swarm.
-	if "host" == container.NetworkSettings.NetworkMode {
+	if container.NetworkSettings.NetworkMode.IsHost() {
 		return "127.0.0.1"
+	}
+
+	if container.NetworkSettings.NetworkMode.IsContainer() {
+		dockerClient, err := p.createClient()
+		if err != nil {
+			log.Warnf("Unable to get IP address for container %s, error: %s", container.Name, err)
+			return ""
+		}
+		ctx := context.Background()
+		containerInspected, err := dockerClient.ContainerInspect(ctx, container.NetworkSettings.NetworkMode.ConnectedContainer())
+		if err != nil {
+			log.Warnf("Unable to get IP address for container %s : Failed to inspect container ID %s, error: %s", container.Name, container.NetworkSettings.NetworkMode.ConnectedContainer(), err)
+			return ""
+		}
+		return p.getIPAddress(parseContainer(containerInspected))
 	}
 
 	if p.UseBindPortIP {
