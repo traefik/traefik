@@ -20,38 +20,38 @@ func TestDockerGetFrontendName(t *testing.T) {
 	}{
 		{
 			container: containerJSON(name("foo")),
-			expected:  "Host-foo-docker-localhost",
+			expected:  "Host-foo-docker-localhost-0",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelFrontendRule: "Headers:User-Agent,bat/0.1.0",
 			})),
-			expected: "Headers-User-Agent-bat-0-1-0",
+			expected: "Headers-User-Agent-bat-0-1-0-0",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				"com.docker.compose.project": "foo",
 				"com.docker.compose.service": "bar",
 			})),
-			expected: "Host-bar-foo-docker-localhost",
+			expected: "Host-bar-foo-docker-localhost-0",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelFrontendRule: "Host:foo.bar",
 			})),
-			expected: "Host-foo-bar",
+			expected: "Host-foo-bar-0",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelFrontendRule: "Path:/test",
 			})),
-			expected: "Path-test",
+			expected: "Path-test-0",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelFrontendRule: "PathPrefix:/test2",
 			})),
-			expected: "PathPrefix-test2",
+			expected: "PathPrefix-test2-0",
 		},
 	}
 
@@ -63,7 +63,7 @@ func TestDockerGetFrontendName(t *testing.T) {
 			provider := &Provider{
 				Domain: "docker.localhost",
 			}
-			actual := provider.getFrontendName(dockerData)
+			actual := provider.getFrontendName(dockerData, 0)
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
 			}
@@ -884,13 +884,13 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-Host-test-docker-localhost": {
+				"frontend-Host-test-docker-localhost-0": {
 					Backend:        "backend-test",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
 					Routes: map[string]types.Route{
-						"route-frontend-Host-test-docker-localhost": {
+						"route-frontend-Host-test-docker-localhost-0": {
 							Rule: "Host:test.docker.localhost",
 						},
 					},
@@ -934,24 +934,24 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-Host-test1-docker-localhost": {
+				"frontend-Host-test1-docker-localhost-0": {
 					Backend:        "backend-foobar",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 					Routes: map[string]types.Route{
-						"route-frontend-Host-test1-docker-localhost": {
+						"route-frontend-Host-test1-docker-localhost-0": {
 							Rule: "Host:test1.docker.localhost",
 						},
 					},
 				},
-				"frontend-Host-test2-docker-localhost": {
+				"frontend-Host-test2-docker-localhost-1": {
 					Backend:        "backend-foobar",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
 					Routes: map[string]types.Route{
-						"route-frontend-Host-test2-docker-localhost": {
+						"route-frontend-Host-test2-docker-localhost-1": {
 							Rule: "Host:test2.docker.localhost",
 						},
 					},
@@ -992,13 +992,13 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-Host-test1-docker-localhost": {
+				"frontend-Host-test1-docker-localhost-0": {
 					Backend:        "backend-foobar",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{},
 					Routes: map[string]types.Route{
-						"route-frontend-Host-test1-docker-localhost": {
+						"route-frontend-Host-test1-docker-localhost-0": {
 							Rule: "Host:test1.docker.localhost",
 						},
 					},

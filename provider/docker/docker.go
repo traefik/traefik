@@ -301,8 +301,8 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 	frontends := map[string][]dockerData{}
 	backends := map[string]dockerData{}
 	servers := map[string][]dockerData{}
-	for _, container := range filteredContainers {
-		frontendName := p.getFrontendName(container)
+	for idx, container := range filteredContainers {
+		frontendName := p.getFrontendName(container, idx)
 		frontends[frontendName] = append(frontends[frontendName], container)
 		backendName := p.getBackend(container)
 		backends[backendName] = container
@@ -549,9 +549,9 @@ func (p *Provider) containerFilter(container dockerData) bool {
 	return true
 }
 
-func (p *Provider) getFrontendName(container dockerData) string {
+func (p *Provider) getFrontendName(container dockerData, idx int) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
-	return provider.Normalize(p.getFrontendRule(container))
+	return provider.Normalize(p.getFrontendRule(container) + "-" + strconv.Itoa(idx))
 }
 
 // GetFrontendRule returns the frontend rule for the specified container, using

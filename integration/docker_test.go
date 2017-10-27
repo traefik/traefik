@@ -129,6 +129,11 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
+	// Start another container by replacing a '.' by a '-'
+	labels = map[string]string{
+		types.LabelFrontendRule: "Host:my-super.host",
+	}
+	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blablabla")
 	// Start traefik
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
@@ -138,10 +143,18 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
-	req.Host = "my.super.host"
+	req.Host = "my-super.host"
 
 	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	c.Assert(err, checker.IsNil)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "my.super.host"
+
+	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	resp, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
 	body, err := ioutil.ReadAll(resp.Body)
