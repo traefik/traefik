@@ -63,6 +63,10 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			Address:      "localhost:8125",
 			PushInterval: "10s",
 		},
+		Influx: &types.Influx{
+			Address:      "localhost:8089",
+			PushInterval: "10s",
+		},
 	}
 
 	// default Marathon

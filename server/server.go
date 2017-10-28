@@ -1244,6 +1244,10 @@ func (server *Server) registerMetricClients(metricsConfig *types.Metrics) {
 		registries = append(registries, metrics.RegisterStatsd(metricsConfig.StatsD))
 		log.Debugf("Configured StatsD metrics pushing to %s once every %s", metricsConfig.StatsD.Address, metricsConfig.StatsD.PushInterval)
 	}
+	if metricsConfig.Influx != nil {
+		registries = append(registries, metrics.RegisterInflux(metricsConfig.Influx))
+		log.Debugf("Configured Influx metrics pushing to %s once every %s", metricsConfig.Influx.Address, metricsConfig.Influx.PushInterval)
+	}
 
 	if len(registries) > 0 {
 		server.metricsRegistry = metrics.NewMultiRegistry(registries)

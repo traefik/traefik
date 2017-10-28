@@ -85,6 +85,10 @@ import:
   version: ^1.1.0
 - package: k8s.io/client-go
   version: v2.0.0
+- package: github.com/influxdata/influxdb
+  version: v1.3.7
+  subpackages:
+  - client/v2
 - package: github.com/gambol99/go-marathon
   version: dd6cbd4c2d71294a19fb89158f2a00d427f174ab
 - package: github.com/ArthurHlt/go-eureka-client
@@ -103,10 +107,13 @@ import:
   - log
   - metrics
   - metrics/dogstatsd
+  - metrics/internal/lv
+  - metrics/internal/ratemap
   - metrics/multi
   - metrics/prometheus
   - metrics/statsd
   - util/conn
+  - metrics/influx
 - package: github.com/prometheus/client_golang
   version: 08fd2e12372a66e68e30523c7642e0cbc3e4fbde
   subpackages:

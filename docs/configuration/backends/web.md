@@ -158,6 +158,31 @@ pushinterval = "10s"
 # ...
 ```
 
+### Influx
+
+```toml
+[web]
+# ...
+
+# Influx metrics exporter type
+[web.metrics.influx]
+
+# Influx's address.
+#
+# Required
+# Default: "localhost:8089"
+#
+address = "localhost:8089"
+
+# Influx push interval
+#
+# Optional
+# Default: "10s"
+#
+pushinterval = "10s"
+
+# ...
+```
 
 ## Statistics
 
