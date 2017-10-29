@@ -147,5 +147,5 @@ for domain in $(jq -r '.DomainsCertificate.Certs[].Certificate.Domain' acme.json
 	echo "Extracting cert bundle for ${domain}"
 	cert=$(jq -e -r --arg domain "$domain" '.DomainsCertificate.Certs[].Certificate |
          	select (.Domain == $domain )| .Certificate' ${acmefile}) || bad_acme
-	echo "${cert}" | base64 --decode > "${cdir}/${domain}.pem"
+	echo "${cert}" | base64 -d > "${cdir}/${domain}.pem"
 done
