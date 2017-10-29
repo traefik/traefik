@@ -149,10 +149,10 @@ for domain in $(jq -r '.DomainsCertificate.Certs[].Certificate.Domain' ${acmefil
 	echo "Extracting cert bundle for ${domain}"
 	cert=$(jq -e -r --arg domain "$domain" '.DomainsCertificate.Certs[].Certificate |
          	select (.Domain == $domain )| .Certificate' ${acmefile}) || bad_acme
-	echo "${cert}" | base64 --decode > "${cdir}/${domain}.crt"
+	echo "${cert}" | base64 -d > "${cdir}/${domain}.crt"
 
 	echo "Extracting private key for ${domain}"
 	key=$(jq -e -r --arg domain "$domain" '.DomainsCertificate.Certs[].Certificate |
 		select (.Domain == $domain )| .PrivateKey' ${acmefile}) || bad_acme
-	echo "${key}" | base64 --decode > "${pdir}/${domain}.key"
+	echo "${key}" | base64 -d > "${pdir}/${domain}.key"
 done
