@@ -118,10 +118,10 @@ Otherwise, the response from the auth server is returned.
 
 ```toml
 [entryPoints]
-  [entrypoints.http]
+  [entryPoints.http]
     # ...
     # To enable forward auth on an entrypoint
-    [entrypoints.http.auth.forward]
+    [entryPoints.http.auth.forward]
     address = "https://authserver.com/auth"
     
     # Trust existing X-Forwarded-* headers.
@@ -136,7 +136,7 @@ Otherwise, the response from the auth server is returned.
     #
     # Optional
     #
-    [entrypoints.http.auth.forward.tls]
+    [entryPoints.http.auth.forward.tls]
     cert = "authserver.crt"
     key = "authserver.key"
 ```
