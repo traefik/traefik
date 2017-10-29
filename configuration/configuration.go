@@ -97,7 +97,6 @@ type GlobalConfiguration struct {
 	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
 	Ping                      *ping.Handler           `description:"Enable ping" export:"true"`
-	Buffering                 *BufferConfig           `description:"Request buffering settings"`
 }
 
 // WebCompatibility is a configuration to handle compatibility with deprecated web provider options
@@ -505,13 +504,4 @@ type ForwardedHeaders struct {
 type LifeCycle struct {
 	RequestAcceptGraceTimeout flaeg.Duration `description:"Duration to keep accepting requests before Traefik initiates the graceful shutdown procedure"`
 	GraceTimeOut              flaeg.Duration `description:"Duration to give active requests a chance to finish before Traefik stops"`
-}
-
-type BufferConfig struct {
-	Enabled              bool   `description:"Enable buffering of each requests"`
-	MaxRequestBodyBytes  int64  `description:"Set maximum request body size [bytes] (-1: no limit)"`
-	MemRequestBodyBytes  int64  `description:"Set maximum request body size [bytes] to be kept in memory (-1: no limit)"`
-	MaxResponseBodyBytes int64  `description:"Set maximum response body size [bytes] to be buffered (-1: no limit)"`
-	MemResponseBodyBytes int64  `description:"Set maximum response body size [bytes] to be kept in memory (-1: no limit)"`
-	RetryExpression      string `description:"Set retry predicate (see: vulcand/oxy for details)"`
 }

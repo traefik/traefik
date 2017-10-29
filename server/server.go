@@ -1151,8 +1151,8 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.UseFunc(secureMiddleware.HandlerFuncWithNext)
 					}
 
-					if globalConfiguration.Buffering != nil {
-						bufferedLb, err := server.buildBufferingMiddleware(lb, globalConfiguration)
+					if config.Backends[frontend.Backend].Buffering != nil {
+						bufferedLb, err := s.buildBufferingMiddleware(lb, config.Backends[frontend.Backend].Buffering)
 
 						if err != nil {
 							log.Errorf("Error setting up buffering middleware: %s", err)
@@ -1520,34 +1520,30 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 	return handler
 }
 
-func (server *Server) buildBufferingMiddleware(handler http.Handler, globalConfig configuration.GlobalConfiguration) (http.Handler, error) {
-	if !globalConfig.Buffering.Enabled {
-		return handler, nil
-	}
-
+func (server *Server) buildBufferingMiddleware(handler http.Handler, config *types.Buffering) (http.Handler, error) {
 	var lb *buffer.Buffer
 	var err error
 
-	if len(globalConfig.Buffering.RetryExpression) > 0 {
+	if len(config.RetryExpression) > 0 {
 		lb, err = buffer.New(handler,
-			buffer.MemRequestBodyBytes(globalConfig.Buffering.MemRequestBodyBytes),
-			buffer.MaxRequestBodyBytes(globalConfig.Buffering.MaxRequestBodyBytes),
-			buffer.MemResponseBodyBytes(globalConfig.Buffering.MemResponseBodyBytes),
-			buffer.MaxResponseBodyBytes(globalConfig.Buffering.MaxResponseBodyBytes),
-			buffer.Retry(globalConfig.Buffering.RetryExpression),
+			buffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
+			buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
+			buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
+			buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
+			buffer.Retry(config.RetryExpression),
 		)
 	} else {
 		lb, err = buffer.New(handler,
-			buffer.MemRequestBodyBytes(globalConfig.Buffering.MemRequestBodyBytes),
-			buffer.MaxRequestBodyBytes(globalConfig.Buffering.MaxRequestBodyBytes),
-			buffer.MemResponseBodyBytes(globalConfig.Buffering.MemResponseBodyBytes),
-			buffer.MaxResponseBodyBytes(globalConfig.Buffering.MaxResponseBodyBytes),
+			buffer.MemRequestBodyBytes(config.MemRequestBodyBytes),
+			buffer.MaxRequestBodyBytes(config.MaxRequestBodyBytes),
+			buffer.MemResponseBodyBytes(config.MemResponseBodyBytes),
+			buffer.MaxResponseBodyBytes(config.MaxResponseBodyBytes),
 		)
 	}
 
 	log.Debugf("Setting up buffering: request limits: %d (mem), %d (max), response limits: %d (mem), %d (max) with retry: '%s'",
-		globalConfig.Buffering.MemRequestBodyBytes, globalConfig.Buffering.MaxRequestBodyBytes, globalConfig.Buffering.MemResponseBodyBytes,
-		globalConfig.Buffering.MaxResponseBodyBytes, globalConfig.Buffering.RetryExpression)
+		config.MemRequestBodyBytes, config.MaxRequestBodyBytes, config.MemResponseBodyBytes,
+		config.MaxResponseBodyBytes, config.RetryExpression)
 
 	return lb, err
 }

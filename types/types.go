@@ -25,6 +25,7 @@ type Backend struct {
 	LoadBalancer   *LoadBalancer     `json:"loadBalancer,omitempty"`
 	MaxConn        *MaxConn          `json:"maxConn,omitempty"`
 	HealthCheck    *HealthCheck      `json:"healthCheck,omitempty"`
+	Buffering      *Buffering        `json:"buffering,omitempty"`
 }
 
 // MaxConn holds maximum connection configuration
@@ -48,6 +49,15 @@ type Stickiness struct {
 // CircuitBreaker holds circuit breaker configuration.
 type CircuitBreaker struct {
 	Expression string `json:"expression,omitempty"`
+}
+
+// Buffering holds request/response buffering configuration/
+type Buffering struct {
+	MaxRequestBodyBytes  int64  `json:"maxRequestBodyBytes"`
+	MemRequestBodyBytes  int64  `json:"memRequestBodyBytes"`
+	MaxResponseBodyBytes int64  `json:"maxResponseBodyBytes"`
+	MemResponseBodyBytes int64  `json:"memResponseBodyBytes"`
+	RetryExpression      string `json:"retryExpression"`
 }
 
 // HealthCheck holds HealthCheck configuration
