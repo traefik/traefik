@@ -29,6 +29,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -517,9 +518,16 @@ func (p *Provider) getMaxConnExtractorFunc(container dockerData) string {
 }
 
 func (p *Provider) containerFilter(container dockerData) bool {
-	_, err := strconv.Atoi(container.Labels[types.LabelPort])
+	var err error
+	portLabel := "traefik.port label"
+	if p.hasServices(container) {
+		portLabel = "traefik.<serviceName>.port or " + portLabel + "s"
+		err = checkServiceLabelPort(container)
+	} else {
+		_, err = strconv.Atoi(container.Labels[types.LabelPort])
+	}
 	if len(container.NetworkSettings.Ports) == 0 && err != nil {
-		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
+		log.Debugf("Filtering container without port and no %s %s : %s", portLabel, container.Name, err.Error())
 		return false
 	}
 
@@ -547,6 +555,43 @@ func (p *Provider) containerFilter(container dockerData) bool {
 	}
 
 	return true
+}
+
+// checkServiceLabelPort checks if all service names have a port service label
+// or if port container label exists for default value
+func checkServiceLabelPort(container dockerData) error {
+	// If port container label is present, there is a default values for all ports, use it for the check
+	_, err := strconv.Atoi(container.Labels[types.LabelPort])
+	if err != nil {
+		serviceLabelPorts := make(map[string]struct{})
+		serviceLabels := make(map[string]struct{})
+		portRegexp := regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.port$`)
+		for label := range container.Labels {
+			// Get all port service labels
+			portLabel := portRegexp.FindStringSubmatch(label)
+			if portLabel != nil && len(portLabel) > 0 {
+				serviceLabelPorts[portLabel[0]] = struct{}{}
+			}
+			// Get only one instance of all service names from service labels
+			servicesLabelNames := servicesPropertiesRegexp.FindStringSubmatch(label)
+			if servicesLabelNames != nil && len(servicesLabelNames) > 0 {
+				serviceLabels[strings.Split(servicesLabelNames[0], ".")[1]] = struct{}{}
+			}
+		}
+		// If the number of service labels is different than the number of port services label
+		// there is an error
+		if len(serviceLabels) == len(serviceLabelPorts) {
+			for labelPort := range serviceLabelPorts {
+				_, err = strconv.Atoi(container.Labels[labelPort])
+				if err != nil {
+					break
+				}
+			}
+		} else {
+			err = errors.New("Port service labels missing, please use traefik.port as default value or define all port service labels")
+		}
+	}
+	return err
 }
 
 func (p *Provider) getFrontendName(container dockerData, idx int) string {

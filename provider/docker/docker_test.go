@@ -1091,3 +1091,53 @@ func TestDockerHasStickinessLabel(t *testing.T) {
 		})
 	}
 }
+
+func TestDockerCheckPortLabels(t *testing.T) {
+	testCases := []struct {
+		container     docker.ContainerJSON
+		expectedError bool
+	}{
+		{
+			container: containerJSON(labels(map[string]string{
+				types.LabelPort: "80",
+			})),
+			expectedError: false,
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				types.LabelPrefix + "servicename.protocol": "http",
+				types.LabelPrefix + "servicename.port":     "80",
+			})),
+			expectedError: false,
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				types.LabelPrefix + "servicename.protocol": "http",
+				types.LabelPort:                            "80",
+			})),
+			expectedError: false,
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				types.LabelPrefix + "servicename.protocol": "http",
+			})),
+			expectedError: true,
+		},
+	}
+
+	for containerID, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+
+			dockerData := parseContainer(test.container)
+			err := checkServiceLabelPort(dockerData)
+
+			if test.expectedError && err == nil {
+				t.Error("expected an error but got nil")
+			} else if !test.expectedError && err != nil {
+				t.Errorf("expected no error, got %q", err)
+			}
+		})
+	}
+}

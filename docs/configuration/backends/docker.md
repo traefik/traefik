@@ -187,6 +187,12 @@ Services labels can be used for overriding default behaviour
 | `traefik.<service-name>.frontend.priority`        | Overrides `traefik.frontend.priority`.                                                           |
 | `traefik.<service-name>.frontend.rule`            | Overrides `traefik.frontend.rule`.                                                               |
 
+
+!!! note
+    if a label is defined both as a `container label` and a `service label` (for example `traefik.<service-name>.port=PORT` and `traefik.port=PORT` ), the `service label` is used to defined the `<service-name>` property (`port` in the example).
+    It's possible to mix `container labels` and `service labels`, in this case `container labels` are used as default value for missing `service labels` but no frontends are going to be created with the `container labels`.
+    More details in this [example](/user-guide/docker-and-lets-encrypt/#labels).
+
 !!! warning
     when running inside a container, Træfik will need network access through:
 
