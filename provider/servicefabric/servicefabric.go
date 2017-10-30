@@ -26,7 +26,7 @@ type Provider struct {
 	UseCertificateAuth    bool   `description:"Should use certificate authentication"`
 	ClientCertFilePath    string `description:"Path to cert file"`
 	ClientCertKeyFilePath string `description:"Path to cert key file"`
-	CACertFilePath        string `description:"Path to CA cert file"`
+	InsecureSkipVerify    bool   `description:"Skip verification of server ca certificate"`
 }
 
 // Provide allows the servicefabric provider to provide configurations to traefik
@@ -42,7 +42,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		p.APIVersion,
 		p.ClientCertFilePath,
 		p.ClientCertKeyFilePath,
-		p.CACertFilePath)
+		p.InsecureSkipVerify)
 	if err != nil {
 		return err
 	}
@@ -87,6 +87,8 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 					"getNamedEndpoint":        p.getNamedEndpoint,
 					"getApplicationParameter": p.getApplicationParameter,
 					"doesAppParamContain":     p.doesAppParamContain,
+					"hasServiceLabel":         p.hasServiceLabel,
+					"getServiceLabel":         p.getServiceLabel,
 				}
 
 				configuration, err := p.GetConfiguration("templates/servicefabric.tmpl", sfFuncMap, templateObjects)
@@ -131,21 +133,22 @@ func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExten
 			item := ServiceItemExtended{
 				ServiceItem: service,
 				Application: app,
+				Labels:      make(map[string]string),
 			}
 
 			extensionData := ServiceExtensionLabels{}
-			_, err := sfClient.GetServiceExtension(app.TypeName, app.TypeVersion, "Traefik", &service, &extensionData)
+			err := sfClient.GetServiceExtension(app.TypeName, app.TypeVersion, "Traefik", &service, &extensionData)
 
 			if err != nil {
 				log.Error(err)
 				return nil, err
 			}
 
-			// if extensionData == sfsdk.ServiceExtensionLabels{} {
-			// 	//Didn't exist
-			// } else {
-			// 	item
-			// }
+			if extensionData.Label != nil {
+				for _, label := range extensionData.Label {
+					item.Labels[label.Key] = label.Value
+				}
+			}
 
 			partitions, err := sfClient.GetPartitions(app.ID, service.ID)
 			if err != nil {
@@ -188,6 +191,16 @@ func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExten
 	}
 
 	return results, nil
+}
+
+func (p *Provider) hasServiceLabel(s ServiceItemExtended, key string) bool {
+	_, exists := s.Labels[key]
+	return exists
+}
+
+func (p *Provider) getServiceLabel(s ServiceItemExtended, key string) string {
+	value, _ := s.Labels[key]
+	return value
 }
 
 func (p *Provider) isPrimary(i sfsdk.ReplicaInstance) bool {

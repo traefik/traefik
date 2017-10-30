@@ -1,5 +1,5 @@
-hash: bd198132a47f7cbfb90587cf0ee5cd9e96edde0acce148911f64e3fc2c9133af
-updated: 2017-10-26T16:08:41.098474+01:00
+hash: d30cf00f2f588a6872b23825af2391018fb62cd29a7b6369d89af35139d697e7
+updated: 2017-10-30T16:04:37.839407Z
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -95,6 +95,8 @@ imports:
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
+  - Godeps/_workspace/src/github.com/ugorji/go/codec
+  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/pathutil
   - pkg/types
@@ -313,7 +315,7 @@ imports:
   subpackages:
   - lib
 - name: github.com/jjcollinge/servicefabric
-  version: 15265f5ee7e850a3af4b2541fa9b064bded72da2
+  version: a845e06417e0294c162d369ed36e1fcb3bed8019
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jonboulle/clockwork

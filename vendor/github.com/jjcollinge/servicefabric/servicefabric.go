@@ -3,7 +3,6 @@ package servicefabric
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -21,21 +20,26 @@ type Client interface {
 	GetPartitions(appName, serviceName string) (*PartitionItemsPage, error)
 	GetReplicas(appName, serviceName, partitionName string) (*ReplicaItemsPage, error)
 	GetInstances(appName, serviceName, partitionName string) (*InstanceItemsPage, error)
-	GetServiceExtension(appType, applicationVersion, extensionKey string, service *ServiceItem, response interface{}) (interface{}, error)
+	GetServiceExtension(appType, applicationVersion, extensionKey string, service *ServiceItem, response interface{}) error
 }
 
 type clientImpl struct {
 	endpoint    string     `description:"Service Fabric cluster management endpoint"`
-	restClient  HTTPClient `description:"Reusable HTTP client"`
+	http        HTTPClient `description:"Reusable HTTP client"`
 	apiVersion  string     `description:"Service Fabric API version"`
 	clusterName string     `description:"Service Fabric cluster name"`
 }
 
-// NewClient returns a new Provider client that can query the
+const defaultAPIVersion string = "3.0"
+
+// NewClient returns a new provider client that can query the
 // Service Fabric management API externally or internally
-func NewClient(httpClient HTTPClient, endpoint, apiVersion, clientCertFilePath, clientCertKeyFilePath, caCertFilePath string) (Client, error) {
+func NewClient(httpClient HTTPClient, endpoint, apiVersion, clientCertFilePath, clientCertKeyFilePath string, insecureSkipVerify bool) (Client, error) {
 	if endpoint == "" {
 		return nil, errors.New("endpoint missing for client configuration")
+	}
+	if apiVersion == "" {
+		apiVersion = defaultAPIVersion
 	}
 
 	client := &clientImpl{
@@ -43,32 +47,22 @@ func NewClient(httpClient HTTPClient, endpoint, apiVersion, clientCertFilePath, 
 		apiVersion: apiVersion,
 	}
 
-	if caCertFilePath != "" {
+	if clientCertFilePath != "" && clientCertKeyFilePath != "" {
 		cert, err := tls.LoadX509KeyPair(clientCertFilePath, clientCertKeyFilePath)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load X509 key pair %v", err)
 		}
-
-		caCert, err := ioutil.ReadFile(caCertFilePath)
-		if err != nil {
-			return nil, fmt.Errorf("unable read CA certificate file %v", err)
-		}
-
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
 		tlsConfig := &tls.Config{
 			Certificates:       []tls.Certificate{cert},
-			RootCAs:            caCertPool,
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: insecureSkipVerify,
 			Renegotiation:      tls.RenegotiateFreelyAsClient,
 		}
 		tlsConfig.BuildNameToCertificate()
 		transport := &http.Transport{TLSClientConfig: tlsConfig}
-
 		httpClient.Transport(transport)
-		client.restClient = httpClient
+		client.http = httpClient
 	} else {
-		client.restClient = httpClient
+		client.http = httpClient
 	}
 	return client, nil
 }
@@ -85,7 +79,7 @@ func (c *clientImpl) GetApplications() (*ApplicationItemsPage, error) {
 		} else {
 			url = c.endpoint + "/Applications/?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(c.restClient, url)
+		res, err := getHTTP(c.http, url)
 		if err != nil {
 			return &ApplicationItemsPage{}, err
 		}
@@ -115,7 +109,7 @@ func (c *clientImpl) GetServices(appName string) (*ServiceItemsPage, error) {
 		} else {
 			url = c.endpoint + "/Applications/" + appName + "/$/GetServices?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(c.restClient, url)
+		res, err := getHTTP(c.http, url)
 		if err != nil {
 			return &ServiceItemsPage{}, err
 		}
@@ -145,7 +139,7 @@ func (c *clientImpl) GetPartitions(appName, serviceName string) (*PartitionItems
 		} else {
 			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(c.restClient, url)
+		res, err := getHTTP(c.http, url)
 		if err != nil {
 			return &PartitionItemsPage{}, err
 		}
@@ -175,7 +169,7 @@ func (c *clientImpl) GetInstances(appName, serviceName, partitionName string) (*
 		} else {
 			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(c.restClient, url)
+		res, err := getHTTP(c.http, url)
 		if err != nil {
 			return &InstanceItemsPage{}, err
 		}
@@ -205,7 +199,7 @@ func (c *clientImpl) GetReplicas(appName, serviceName, partitionName string) (*R
 		} else {
 			url = c.endpoint + "/Applications/" + appName + "/$/GetServices/" + serviceName + "/$/GetPartitions/" + partitionName + "/$/GetReplicas?api-version=" + c.apiVersion + "&continue=" + continueToken
 		}
-		res, err := getHTTP(c.restClient, url)
+		res, err := getHTTP(c.http, url)
 		if err != nil {
 			return &ReplicaItemsPage{}, err
 		}
@@ -224,25 +218,22 @@ func (c *clientImpl) GetReplicas(appName, serviceName, partitionName string) (*R
 }
 
 // GetServicesExtensions retruns all the extensions specified
-// in a Service's manifest file.
-//
-// Warning: The caller is responsible for type asserting the interface
-// in to it's intended form. This is not guaranteed to work as the XML
-// package will unmarshall the data even if the provided type does not
-// match the extension's schema.
-func (c *clientImpl) GetServiceExtension(appType, applicationVersion, extensionKey string, service *ServiceItem, response interface{}) (interface{}, error) {
+// in a Service's manifest file. If the XML schema does not
+// map to the provided interface, the default type interface will
+// be returned.
+func (c *clientImpl) GetServiceExtension(appType, applicationVersion, extensionKey string, service *ServiceItem, response interface{}) error {
 	url := c.endpoint + "/ApplicationTypes/" + appType + "/$/GetServiceTypes?api-version=" + c.apiVersion + "&ApplicationTypeVersion=" + applicationVersion
-	res, err := getHTTP(c.restClient, url)
+	res, err := getHTTP(c.http, url)
 
 	if err != nil {
-		return nil, fmt.Errorf("error requesting service extensions: %v", err)
+		return fmt.Errorf("error requesting service extensions: %v", err)
 	}
 
 	var serviceTypes []ServiceType
 	err = json.Unmarshal(res, &serviceTypes)
 
 	if err != nil {
-		return nil, fmt.Errorf("could not deserialise JSON response: %+v", err)
+		return fmt.Errorf("could not deserialise JSON response: %+v", err)
 	}
 
 	for _, serviceTypeInfo := range serviceTypes {
@@ -252,14 +243,14 @@ func (c *clientImpl) GetServiceExtension(appType, applicationVersion, extensionK
 					xmlData := extension.Value
 					err = xml.Unmarshal([]byte(xmlData), &response)
 					if err != nil {
-						return nil, fmt.Errorf("could not deserialise extension's XML value: %+v", err)
+						return fmt.Errorf("could not deserialise extension's XML value: %+v", err)
 					}
-					return response, nil
+					return nil
 				}
 			}
 		}
 	}
-	return nil, nil
+	return nil
 }
 
 func getHTTP(http HTTPClient, url string) ([]byte, error) {
@@ -270,10 +261,10 @@ func getHTTP(http HTTPClient, url string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Service Fabric server %+v on %s", err, url)
 	}
-	defer res.Body.Close()
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("Service Fabric responded with error code %s to request %s with body %s", res.Status, url, res.Body)
 	}
+	defer res.Body.Close()
 	body, readErr := ioutil.ReadAll(res.Body)
 	if readErr != nil {
 		return nil, fmt.Errorf("failed to read response body from Service Fabric response %+v", readErr)

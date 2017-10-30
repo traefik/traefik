@@ -2,7 +2,6 @@ package servicefabric
 
 import (
 	"bytes"
-	"errors"
 	"io/ioutil"
 	"net/http"
 )
@@ -148,7 +147,7 @@ func (c *mockHTTPClient) Get(url string) (resp *http.Response, err error) {
 			}]`
 		return buildSuccessResponse(body), nil
 	default:
-		return nil, errors.New("Unable to handle request: " + url)
+		return buildFailedResponse(404), nil
 	}
 }
 
@@ -164,5 +163,15 @@ func buildSuccessResponse(body string) *http.Response {
 		ContentLength: int64(len(body)),
 		Request:       nil,
 		Header:        make(http.Header, 0),
+	}
+}
+
+func buildFailedResponse(errorCode int) *http.Response {
+	return &http.Response{
+		StatusCode: errorCode,
+		ProtoMajor: 1,
+		ProtoMinor: 1,
+		Request:    nil,
+		Header:     make(http.Header, 0),
 	}
 }
