@@ -20,6 +20,8 @@ import (
 )
 
 var integration = flag.Bool("integration", false, "run integration tests")
+var container = flag.Bool("container", false, "run container integration tests")
+var host = flag.Bool("host", false, "run host integration tests")
 
 func Test(t *testing.T) {
 	check.TestingT(t)
@@ -32,27 +34,34 @@ func init() {
 		return
 	}
 
-	check.Suite(&AccessLogSuite{})
-	check.Suite(&AcmeSuite{})
-	check.Suite(&ConstraintSuite{})
-	check.Suite(&ConsulCatalogSuite{})
-	check.Suite(&ConsulSuite{})
-	check.Suite(&DockerSuite{})
-	check.Suite(&DynamoDBSuite{})
-	check.Suite(&ErrorPagesSuite{})
-	check.Suite(&EtcdSuite{})
-	check.Suite(&EurekaSuite{})
-	check.Suite(&FileSuite{})
-	check.Suite(&GRPCSuite{})
-	check.Suite(&HealthCheckSuite{})
-	check.Suite(&HTTPSSuite{})
-	check.Suite(&LogRotationSuite{})
-	check.Suite(&MarathonSuite{})
-	check.Suite(&MesosSuite{})
-	check.Suite(&RateLimitSuite{})
-	check.Suite(&SimpleSuite{})
-	check.Suite(&TimeoutSuite{})
-	check.Suite(&WebsocketSuite{})
+	if *container {
+		// tests launched from a container
+		check.Suite(&AccessLogSuite{})
+		check.Suite(&AcmeSuite{})
+		check.Suite(&ConstraintSuite{})
+		check.Suite(&ConsulCatalogSuite{})
+		check.Suite(&ConsulSuite{})
+		check.Suite(&DockerSuite{})
+		check.Suite(&DynamoDBSuite{})
+		check.Suite(&ErrorPagesSuite{})
+		check.Suite(&EtcdSuite{})
+		check.Suite(&EurekaSuite{})
+		check.Suite(&FileSuite{})
+		check.Suite(&GRPCSuite{})
+		check.Suite(&HealthCheckSuite{})
+		check.Suite(&HTTPSSuite{})
+		check.Suite(&LogRotationSuite{})
+		check.Suite(&MarathonSuite{})
+		check.Suite(&MesosSuite{})
+		check.Suite(&RateLimitSuite{})
+		check.Suite(&SimpleSuite{})
+		check.Suite(&TimeoutSuite{})
+		check.Suite(&WebsocketSuite{})
+	}
+	if *host {
+		// tests launched from the host
+		check.Suite(&ProxyProtocolSuite{})
+	}
 }
 
 var traefikBinary = "../dist/traefik"

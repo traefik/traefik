@@ -108,6 +108,8 @@ Complete documentation is available at https://traefik.io`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
+			traefikConfiguration.GlobalConfiguration.SetEffectiveConfiguration(traefikConfiguration.ConfigFile)
+
 			if traefikConfiguration.Web == nil {
 				fmt.Println("Please enable the web provider to use healtcheck.")
 				os.Exit(1)
@@ -121,7 +123,8 @@ Complete documentation is available at https://traefik.io`,
 				}
 				client.Transport = tr
 			}
-			resp, err := client.Head(protocol + "://" + traefikConfiguration.Web.Address + "/ping")
+
+			resp, err := client.Head(protocol + "://" + traefikConfiguration.Web.Address + traefikConfiguration.Web.Path + "ping")
 			if err != nil {
 				fmt.Printf("Error calling healthcheck: %s\n", err)
 				os.Exit(1)

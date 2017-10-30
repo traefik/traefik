@@ -178,7 +178,8 @@ func wrapAws(ctx context.Context, req *request.Request) error {
 	return req.Send()
 }
 
-func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
+// generateECSConfig fills the config template with the given instances
+func (p *Provider) generateECSConfig(services map[string][]ecsInstance) (*types.Configuration, error) {
 	var ecsFuncMap = template.FuncMap{
 		"filterFrontends":         p.filterFrontends,
 		"getFrontendRule":         p.getFrontendRule,
@@ -187,8 +188,22 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 		"getLoadBalancerSticky":   p.getLoadBalancerSticky,
 		"hasStickinessLabel":      p.hasStickinessLabel,
 		"getStickinessCookieName": p.getStickinessCookieName,
+		"getProtocol":             p.getProtocol,
+		"getHost":                 p.getHost,
+		"getPort":                 p.getPort,
+		"getWeight":               p.getWeight,
+		"getPassHostHeader":       p.getPassHostHeader,
+		"getPriority":             p.getPriority,
+		"getEntryPoints":          p.getEntryPoints,
 	}
+	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
+		Services map[string][]ecsInstance
+	}{
+		services,
+	})
+}
 
+func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types.Configuration, error) {
 	instances, err := p.listInstances(ctx, client)
 	if err != nil {
 		return nil, err
@@ -205,12 +220,7 @@ func (p *Provider) loadECSConfig(ctx context.Context, client *awsClient) (*types
 			services[instance.Name] = []ecsInstance{instance}
 		}
 	}
-
-	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
-		Services map[string][]ecsInstance
-	}{
-		services,
-	})
+	return p.generateECSConfig(services)
 }
 
 // Find all running Provider tasks in a cluster, also collect the task definitions (for docker labels)

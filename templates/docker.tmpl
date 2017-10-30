@@ -26,7 +26,7 @@
     {{if hasServices $server}}
       {{$services := getServiceNames $server}}
       {{range $serviceIndex, $serviceName := $services}}
-      [backends.backend-{{getServiceBackend $server $serviceName}}.servers.service]
+      [backends.backend-{{getServiceBackend $server $serviceName}}.servers.service-{{$serverName}}]
       url = "{{getServiceProtocol $server $serviceName}}://{{getIPAddress $server}}:{{getServicePort $server $serviceName}}"
       weight = {{getServiceWeight $server $serviceName}}
       {{end}}

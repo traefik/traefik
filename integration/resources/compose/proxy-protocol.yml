@@ -1,0 +1,7 @@
+haproxy:
+  image: haproxy
+  volumes:
+    - ../haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+
+whoami:
+  image: emilevauge/whoami

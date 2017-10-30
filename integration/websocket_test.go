@@ -441,3 +441,65 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(string(msg), checker.Equals, "OK")
 }
+
+func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
+	var upgrader = gorillawebsocket.Upgrader{} // use default options
+
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+		for {
+			mt, message, err := c.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = c.WriteMessage(mt, message)
+			if err != nil {
+				break
+			}
+		}
+	}))
+
+	ts.TLS = &tls.Config{}
+	ts.TLS.NextProtos = append(ts.TLS.NextProtos, `h2`)
+	ts.TLS.NextProtos = append(ts.TLS.NextProtos, `http/1.1`)
+	ts.StartTLS()
+
+	file := s.adaptFile(c, "fixtures/websocket/config_https.toml", struct {
+		WebsocketServer string
+	}{
+		WebsocketServer: ts.URL,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug", "--accesslog")
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
+	c.Assert(err, checker.IsNil)
+
+	//Add client self-signed cert
+	roots := x509.NewCertPool()
+	certContent, err := ioutil.ReadFile("./resources/tls/local.cert")
+	roots.AppendCertsFromPEM(certContent)
+	gorillawebsocket.DefaultDialer.TLSClientConfig = &tls.Config{
+		RootCAs: roots,
+	}
+	conn, _, err := gorillawebsocket.DefaultDialer.Dial("wss://127.0.0.1:8000/echo", nil)
+	c.Assert(err, checker.IsNil)
+
+	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+	c.Assert(err, checker.IsNil)
+
+	_, msg, err := conn.ReadMessage()
+	c.Assert(err, checker.IsNil)
+	c.Assert(string(msg), checker.Equals, "OK")
+}

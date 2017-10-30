@@ -20,7 +20,7 @@ GIT_BRANCH := $(subst heads/,,$(shell git rev-parse --abbrev-ref HEAD 2>/dev/nul
 TRAEFIK_DEV_IMAGE := traefik-dev$(if $(GIT_BRANCH),:$(subst /,-,$(GIT_BRANCH)))
 REPONAME := $(shell echo $(REPO) | tr '[:upper:]' '[:lower:]')
 TRAEFIK_IMAGE := $(if $(REPONAME),$(REPONAME),"containous/traefik")
-INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -v "/var/run/docker.sock:/var/run/docker.sock")
+INTEGRATION_OPTS := $(if $(MAKE_DOCKER_HOST),-e "DOCKER_HOST=$(MAKE_DOCKER_HOST)", -e "TEST_CONTAINER=1" -v "/var/run/docker.sock:/var/run/docker.sock")
 TRAEFIK_DOC_IMAGE := traefik-docs
 
 DOCKER_BUILD_ARGS := $(if $(DOCKER_VERSION), "--build-arg=DOCKER_VERSION=$(DOCKER_VERSION)",)
@@ -71,6 +71,7 @@ test-unit: build ## run the unit tests
 
 test-integration: build ## run the integration tests
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh generate binary test-integration
+	TEST_HOST=1 ./script/make.sh test-integration
 
 validate: build  ## validate gofmt, golint and go vet
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh  validate-glide validate-gofmt validate-govet validate-golint validate-misspell validate-vendor
