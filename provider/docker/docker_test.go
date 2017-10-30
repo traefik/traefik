@@ -1093,46 +1093,50 @@ func TestDockerHasStickinessLabel(t *testing.T) {
 }
 
 func TestDockerCheckPortLabels(t *testing.T) {
-	containers := []struct {
-		container docker.ContainerJSON
-		expected  bool
+	testCases := []struct {
+		container     docker.ContainerJSON
+		expectedError bool
 	}{
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelPort: "80",
 			})),
-			expected: true,
+			expectedError: false,
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelPrefix + "servicename.protocol": "http",
 				types.LabelPrefix + "servicename.port":     "80",
 			})),
-			expected: true,
+			expectedError: false,
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelPrefix + "servicename.protocol": "http",
 				types.LabelPort:                            "80",
 			})),
-			expected: true,
+			expectedError: false,
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelPrefix + "servicename.protocol": "http",
 			})),
-			expected: false,
+			expectedError: true,
 		},
 	}
 
-	for containerID, e := range containers {
-		e := e
+	for containerID, test := range testCases {
+		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-			dockerData := parseContainer(e.container)
-			actual := checkServiceLabelPort(dockerData)
-			if (actual != nil) == e.expected {
-				t.Errorf("expected error nil is %t, got %q", e.expected, actual)
+
+			dockerData := parseContainer(test.container)
+			err := checkServiceLabelPort(dockerData)
+
+			if test.expectedError && err == nil {
+				t.Error("expected an error but got nil")
+			} else if !test.expectedError && err != nil {
+				t.Errorf("expected no error, got %q", err)
 			}
 		})
 	}
