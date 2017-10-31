@@ -1,5 +1,5 @@
-hash: 90d53da9a6eaba85d524d95410051ff7f12b1f76181df2ad4796b2439f3a2a37
-updated: 2017-10-24T14:08:11.364720581+02:00
+hash: 70e3ed39d2777d36b679ff55b8b0f2eb8d0b239fdfb8108f41b8b7239bc7920c
+updated: 2017-10-25T10:18:20.438135-04:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -56,13 +56,14 @@ imports:
   - service/route53
   - service/sts
 - name: github.com/Azure/azure-sdk-for-go
-  version: 088007b3b08cc02b27f2eadfdcd870958460ce7e
+  version: f7bb4db3ea4c73dc58bd284c38ea644a79324be0
   subpackages:
   - arm/dns
 - name: github.com/Azure/go-autorest
-  version: a2fdd780c9a50455cecd249b00bdc3eb73a78e31
+  version: f6be1abbb5abd0517522f850dd785990d373da7e
   subpackages:
   - autorest
+  - autorest/adal
   - autorest/azure
   - autorest/date
   - autorest/to
@@ -121,11 +122,11 @@ imports:
   subpackages:
   - spew
 - name: github.com/decker502/dnspod-go
-  version: 68650ee11e182e30773781d391c66a0c80ccf9f2
+  version: f33a2c6040fc2550a631de7b3a53bddccdcd73fb
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/dnsimple/dnsimple-go
-  version: 5a5b427618a76f9eed5ede0f3e6306fbd9311d2e
+  version: f2d9b723cc9547d182e24ac2e527ae25d25fc93f
   subpackages:
   - dnsimple
 - name: github.com/docker/distribution
@@ -219,7 +220,7 @@ imports:
 - name: github.com/eapache/queue
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/edeckers/auroradnsclient
-  version: 8b777c170cfd377aa16bb4368f093017dddef3f9
+  version: 398f53855ba258191157e20fabfaccca5e13cea9
   subpackages:
   - records
   - requests
@@ -233,6 +234,8 @@ imports:
   subpackages:
   - log
   - swagger
+- name: github.com/exoscale/egoscale
+  version: 325740036187ddae3a5b74be00fbbc70011c4d96
 - name: github.com/fatih/color
   version: 62e9147c64a1ed519147b62a56a14e83e2be02c1
 - name: github.com/gambol99/go-marathon
@@ -240,7 +243,7 @@ imports:
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
-  version: e7fea39b01aea8d5671f6858f0532f56e8bff3a5
+  version: f384f410798cbe7cdce40eec40b79ed32bb4f1ad
 - name: github.com/go-kit/kit
   version: f66b0e13579bfc5a48b9e2a94b1209c107ea1f41
   subpackages:
@@ -309,7 +312,7 @@ imports:
 - name: github.com/imdario/mergo
   version: 3e95a51e0639b4cf372f2ccf74c86749d747fbdc
 - name: github.com/JamesClonk/vultr
-  version: 0f156dd232bc4ebf8a32ba83fec57c0e4c9db69f
+  version: 2fd0705ce648e602e6c9c57329a174270a4f6688
   subpackages:
   - lib
 - name: github.com/jmespath/go-jmespath
@@ -398,7 +401,7 @@ imports:
   - specs-go
   - specs-go/v1
 - name: github.com/ovh/go-ovh
-  version: d2207178e10e4527e8f222fd8707982df8c3af17
+  version: 4b1fea467323b74c5f462f0947f402b428ca0626
   subpackages:
   - ovh
 - name: github.com/pborman/uuid
@@ -432,10 +435,6 @@ imports:
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
-- name: github.com/pyr/egoscale
-  version: 987e683a7552f34ee586217d1cc8507d52e80ab9
-  subpackages:
-  - src/egoscale
 - name: github.com/rancher/go-rancher
   version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
   subpackages:
@@ -509,7 +508,7 @@ imports:
   - plugin/rewrite
   - router
 - name: github.com/xenolf/lego
-  version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
+  version: 67c86d860a797ce2483f50d9174d4ed24984bef2
   subpackages:
   - acme
   - providers/dns
@@ -527,6 +526,7 @@ imports:
   - providers/dns/linode
   - providers/dns/namecheap
   - providers/dns/ns1
+  - providers/dns/otc
   - providers/dns/ovh
   - providers/dns/pdns
   - providers/dns/rackspace
@@ -585,7 +585,7 @@ imports:
   subpackages:
   - rate
 - name: google.golang.org/api
-  version: 9bf6e6e569ff057f75d9604a46c52928f17d2b54
+  version: 1575df15c1bb8b18ad4d9bc5ca495cc85b0764fe
   subpackages:
   - dns/v1
   - gensupport
@@ -622,9 +622,9 @@ imports:
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/ini.v1
-  version: e7fea39b01aea8d5671f6858f0532f56e8bff3a5
+  version: 5b3e00af70a9484542169a976dcab8d03e601a17
 - name: gopkg.in/ns1/ns1-go.v2
-  version: 2abc76c60bf88ba33b15d1d87a13f624d8dff956
+  version: c563826f4cbef9c11bebeb9f20a3f7afe9c1e2f4
   subpackages:
   - rest
   - rest/model/account
@@ -751,7 +751,7 @@ imports:
   - transport
 testImports:
 - name: github.com/Azure/go-ansiterm
-  version: 19f72df4d05d31cbe1c56bfc8045c96babff6c7e
+  version: d6e3b3328b783f23731bc4d058875b0371ff8109
   subpackages:
   - winterm
 - name: github.com/docker/cli

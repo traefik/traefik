@@ -72,7 +72,7 @@ func (c *Client) GetDNSRecords(domain string) (records []DNSRecord, err error) {
 func (c *Client) CreateDNSDomain(domain, serverIP string) error {
 	values := url.Values{
 		"domain":   {domain},
-		"serverIP": {serverIP},
+		"serverip": {serverIP},
 	}
 
 	if err := c.post(`dns/create_domain`, values, nil); err != nil {
