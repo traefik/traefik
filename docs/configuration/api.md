@@ -1,17 +1,30 @@
 # API Definition
 
 ```toml
-# Api definition
-#
-# Default:
-# [api]
-#   entrypoint = "traefik"
-#   dashboard = true
+# API definition
 [api]
-  entrypoint="traefik"
-  dashboard=true
-  debug=true
+  # Name of the related entry point
+  #
+  # Optional
+  # Default: "traefik"
+  #
+  entryPoint = "traefik"
+  
+  # Enabled Dashboard
+  #
+  # Optional
+  # Default: true
+  #
+  dashboard = true
+  
+  # Enabled debug mode
+  #
+  # Optional
+  # Default: false
+  #
+  debug = true
 ```
+
 ## Web UI
 
 ![Web UI Providers](/img/web.frontend.png)
@@ -20,25 +33,25 @@
 
 ## API
 
-| Path                                                            |     Method    | Description                                                                                        |
-|-----------------------------------------------------------------|:-------------:|----------------------------------------------------------------------------------------------------|
-| `/`                                                             |     `GET`     | Provides a simple HTML frontend of Træfik                                                          |
-| `/health`                                                       |     `GET`     | json health metrics                                                                                |
-| `/api`                                                          |     `GET`     | Configuration for all providers                                                                    |
-| `/api/providers`                                                |     `GET`     | Providers                                                                                          |
-| `/api/providers/{provider}`                                     |     `GET`     | Get or update provider                                                                             |
-| `/api/providers/{provider}/backends`                            |     `GET`     | List backends                                                                                      |
-| `/api/providers/{provider}/backends/{backend}`                  |     `GET`     | Get backend                                                                                        |
-| `/api/providers/{provider}/backends/{backend}/servers`          |     `GET`     | List servers in backend                                                                            |
-| `/api/providers/{provider}/backends/{backend}/servers/{server}` |     `GET`     | Get a server in a backend                                                                          |
-| `/api/providers/{provider}/frontends`                           |     `GET`     | List frontends                                                                                     |
-| `/api/providers/{provider}/frontends/{frontend}`                |     `GET`     | Get a frontend                                                                                     |
-| `/api/providers/{provider}/frontends/{frontend}/routes`         |     `GET`     | List routes in a frontend                                                                          |
-| `/api/providers/{provider}/frontends/{frontend}/routes/{route}` |     `GET`     | Get a route in a frontend                                                                          |
+| Path                                                            | Method           | Description                               |
+|-----------------------------------------------------------------|------------------|-------------------------------------------|
+| `/`                                                             |     `GET`        | Provides a simple HTML frontend of Træfik |
+| `/health`                                                       |     `GET`        | json health metrics                       |
+| `/api`                                                          |     `GET`        | Configuration for all providers           |
+| `/api/providers`                                                |     `GET`        | Providers                                 |
+| `/api/providers/{provider}`                                     |     `GET`, `PUT` | Get or update provider                    |
+| `/api/providers/{provider}/backends`                            |     `GET`        | List backends                             |
+| `/api/providers/{provider}/backends/{backend}`                  |     `GET`        | Get backend                               |
+| `/api/providers/{provider}/backends/{backend}/servers`          |     `GET`        | List servers in backend                   |
+| `/api/providers/{provider}/backends/{backend}/servers/{server}` |     `GET`        | Get a server in a backend                 |
+| `/api/providers/{provider}/frontends`                           |     `GET`        | List frontends                            |
+| `/api/providers/{provider}/frontends/{frontend}`                |     `GET`        | Get a frontend                            |
+| `/api/providers/{provider}/frontends/{frontend}/routes`         |     `GET`        | List routes in a frontend                 |
+| `/api/providers/{provider}/frontends/{frontend}/routes/{route}` |     `GET`        | Get a route in a frontend                 |
 
-!!!warning
-    For compatibility reason, when you activate the rest provider, you can use `web` or `rest` for `provider` value.
-    But be careful, in the configuration for all provider the key is still `web`
+!!! warning
+    For compatibility reason, when you activate the rest provider, you can use `web` or `rest` as `provider` value.
+    But be careful, in the configuration for all providers the key is still `web`.
 
 ### Provider configurations
 
@@ -171,20 +184,20 @@ curl -s "http://localhost:8080/health" | jq .
 You can enable Traefik to export internal metrics to different monitoring systems.
 ```toml
 [api]
-# ...
+  # ...
 
-# Enable more detailed statistics.
-[api.statistics]
+  # Enable more detailed statistics.
+  [api.statistics]
 
-# Number of recent errors logged.
-#
-# Default: 10
-#
-recentErrors = 10
+    # Number of recent errors logged.
+    #
+    # Default: 10
+    #
+    recentErrors = 10
 
-# ...
+  # ...
 ```
 
-| Path                                                            |     Method    | Description                                                                                        |
-|-----------------------------------------------------------------|:-------------:|----------------------------------------------------------------------------------------------------|
-| `/metrics`                                                      |     `GET`     | Export internal metrics                                                                            |
+| Path       | Method        | Description             |
+|------------|---------------|-------------------------|
+| `/metrics` |     `GET`     | Export internal metrics |

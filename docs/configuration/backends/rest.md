@@ -8,28 +8,30 @@ Træfik can be configured:
 
 ```toml
 # Enable rest backend.
-# Defaults
-# [rest]
-# entrypoint="traefik"
 [rest]
-entrypoint="traefik"
+  # Name of the related entry point
+  #
+  # Optional
+  # Default: "traefik"
+  #
+  entryPoint = "traefik"
 ```
 
 ## API
 
-| Path                         |     Method    | Description                                    |
-|------------------------------|:-------------:|------------------------------------------------|
-| `/api/providers/web`         |         `PUT` | update provider                                |
-| `/api/providers/rest`        |         `PUT` | update provider                                |
+| Path                         | Method | Description     |
+|------------------------------|--------|-----------------|
+| `/api/providers/web`         | `PUT`  | update provider |
+| `/api/providers/rest`        | `PUT`  | update provider |
 
-!!!warning
-    For compatibility reason, when you activate the rest provider, you can use `web` or `rest` for `provider` value.
+!!! warning
+    For compatibility reason, when you activate the rest provider, you can use `web` or `rest` as `provider` value.
 
 
 ```shell
 curl -XPUT @file "http://localhost:8080/api" 
 ```
-with file
+with `@file`
 ```json
 {
     "frontends": {

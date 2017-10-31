@@ -2,23 +2,22 @@
 
 ```toml
 # Ping definition
-#
-# Default:
-# [ping]
-#   entrypoint = "traefik"
-#
 [ping]
-  entrypoint="traefik"
+  # Name of the related entry point
+  #
+  # Optional
+  # Default: "traefik"
+  #
+  entryPoint = "traefik"
 ```
 
+| Path    | Method        | Description                                                                                        |
+|---------|---------------|----------------------------------------------------------------------------------------------------|
+| `/ping` | `GET`, `HEAD` | A simple endpoint to check for Træfik process liveness. Return a code `200` with the content: `OK` |
 
-| Path                                                            |     Method    | Description                                                                                        |
-|-----------------------------------------------------------------|:-------------:|----------------------------------------------------------------------------------------------------|
-| `/ping`                                                         | `GET`, `HEAD` | A simple endpoint to check for Træfik process liveness. Return a code `200` with the content: `OK` |
 
-
-!!!warning
-    Even if you have authentication configure on entrypoint, the `/ping` path of the api is excluded from authentication.
+!!! warning
+    Even if you have authentication configured on entry point, the `/ping` path of the api is excluded from authentication.
 
 ### Example
 

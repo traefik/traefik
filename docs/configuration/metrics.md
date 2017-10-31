@@ -1,89 +1,94 @@
 # Metrics Definition
-```toml
-# Metrics definition
-#
-# Default:
-# [metrics]
-#
-[metrics]
-```
 
 ## Prometheus
 
 ```toml
-# To enable Traefik to export internal metrics to Prometheus
-[metrics.prometheus]
+# Metrics definition
+[metrics]
+  #...
 
-# Buckets for latency metrics
-#
-# Optional
-# Default: [0.1, 0.3, 1.2, 5]
-buckets=[0.1,0.3,1.2,5.0]
-    
-# ...
+  # To enable Traefik to export internal metrics to Prometheus
+  [metrics.prometheus]
+
+    # Buckets for latency metrics
+    #
+    # Optional
+    # Default: [0.1, 0.3, 1.2, 5]
+    #
+    buckets = [0.1,0.3,1.2,5.0]
+
+  # ...
 ```
 
-### DataDog
+## DataDog
 
 ```toml
-# DataDog metrics exporter type
-[metrics.datadog]
+# Metrics definition
+[metrics]
+  #...
 
-# DataDog's address.
-#
-# Required
-# Default: "localhost:8125"
-#
-address = "localhost:8125"
+  # DataDog metrics exporter type
+  [metrics.datadog]
 
-# DataDog push interval
-#
-# Optional
-# Default: "10s"
-#
-pushinterval = "10s"
+    # DataDog's address.
+    #
+    # Required
+    # Default: "localhost:8125"
+    #
+    address = "localhost:8125"
 
-# ...
+    # DataDog push interval
+    #
+    # Optional
+    # Default: "10s"
+    #
+    pushInterval = "10s"
+
+  # ...
 ```
 
-### StatsD
+## StatsD
 
 ```toml
-# StatsD metrics exporter type
-[metrics.statsd]
+# Metrics definition
+[metrics]
+  #...
 
-# StatD's address.
-#
-# Required
-# Default: "localhost:8125"
-#
-address = "localhost:8125"
+  # StatsD metrics exporter type
+  [metrics.statsd]
 
-# StatD push interval
-#
-# Optional
-# Default: "10s"
-#
-pushinterval = "10s"
+    # StatD's address.
+    #
+    # Required
+    # Default: "localhost:8125"
+    #
+    address = "localhost:8125"
 
-# ...
+    # StatD push interval
+    #
+    # Optional
+    # Default: "10s"
+    #
+    pushInterval = "10s"
+
+  # ...
 ```
-
 
 ## Statistics
 
 ```toml
+# Metrics definition
 [metrics]
-# ...
+  # ...
 
-# Enable more detailed statistics.
-[metrics.statistics]
+  # Enable more detailed statistics.
+  [metrics.statistics]
 
-# Number of recent errors logged.
-#
-# Default: 10
-#
-recentErrors = 10
+    # Number of recent errors logged.
+    #
+    # Default: 10
+    #
+    recentErrors = 10
 
-# ...
+  # ...
 ```
