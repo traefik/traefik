@@ -25,6 +25,7 @@ import (
 	eventtypes "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	swarmtypes "github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
@@ -62,6 +63,7 @@ type dockerData struct {
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
 	Health          string
+	Node            *dockertypes.ContainerNode
 }
 
 // NetworkSettings holds the networks data to the Provider p
@@ -291,6 +293,10 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServicePriority":          p.getServicePriority,
 		"getServiceBackend":           p.getServiceBackend,
 		"getWhitelistSourceRange":     p.getWhitelistSourceRange,
+		"getRequestHeaders":           p.getRequestHeaders,
+		"getResponseHeaders":          p.getResponseHeaders,
+		"hasRequestHeaders":           p.hasRequestHeaders,
+		"hasResponseHeaders":          p.hasResponseHeaders,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -560,10 +566,10 @@ func (p *Provider) getFrontendRule(container dockerData) string {
 		return label
 	}
 	if labels, err := getLabels(container, []string{labelDockerComposeProject, labelDockerComposeService}); err == nil {
-		return "Host:" + p.getSubDomain(labels[labelDockerComposeService]+"."+labels[labelDockerComposeProject]) + "." + p.Domain
+		return "Host:" + getSubDomain(labels[labelDockerComposeService]+"."+labels[labelDockerComposeProject]) + "." + p.Domain
 	}
 	if len(p.Domain) > 0 {
-		return "Host:" + p.getSubDomain(container.ServiceName) + "." + p.Domain
+		return "Host:" + getSubDomain(container.ServiceName) + "." + p.Domain
 	}
 	return ""
 }
@@ -591,9 +597,13 @@ func (p *Provider) getIPAddress(container dockerData) string {
 		}
 	}
 
-	// If net==host, quick n' dirty, we return 127.0.0.1
-	// This will work locally, but will fail with swarm.
 	if "host" == container.NetworkSettings.NetworkMode {
+		if container.Node != nil {
+			if container.Node.IPAddress != "" {
+				return container.Node.IPAddress
+			}
+		}
+
 		return "127.0.0.1"
 	}
 
@@ -726,6 +736,41 @@ func (p *Provider) getBasicAuth(container dockerData) []string {
 	return []string{}
 }
 
+func (p *Provider) hasRequestHeaders(container dockerData) bool {
+	label, err := getLabel(container, types.LabelFrontendRequestHeader)
+	return err == nil && len(label) > 0
+}
+
+func (p *Provider) hasResponseHeaders(container dockerData) bool {
+	label, err := getLabel(container, types.LabelFrontendResponseHeader)
+	return err == nil && len(label) > 0
+}
+
+func (p *Provider) getRequestHeaders(container dockerData) map[string]string {
+	return parseCustomHeaders(container, types.LabelFrontendRequestHeader)
+}
+
+func (p *Provider) getResponseHeaders(container dockerData) map[string]string {
+	return parseCustomHeaders(container, types.LabelFrontendResponseHeader)
+}
+
+func parseCustomHeaders(container dockerData, containerType string) map[string]string {
+	customHeaders := make(map[string]string)
+	if label, err := getLabel(container, containerType); err == nil {
+		for _, headers := range strings.Split(label, ",") {
+			pair := strings.Split(headers, ":")
+			if len(pair) != 2 {
+				log.Warnf("Could not load header %v, skipping...", pair)
+			} else {
+				customHeaders[pair[0]] = pair[1]
+			}
+		}
+	}
+	if len(customHeaders) == 0 {
+		log.Errorf("Could not load any custom headers")
+	}
+	return customHeaders
+}
 func isContainerEnabled(container dockerData, exposedByDefault bool) bool {
 	return exposedByDefault && container.Labels[types.LabelEnable] != "false" || container.Labels[types.LabelEnable] == "true"
 }
@@ -783,6 +828,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 	if container.ContainerJSONBase != nil {
 		dockerData.Name = container.ContainerJSONBase.Name
 		dockerData.ServiceName = dockerData.Name //Default ServiceName to be the container's Name.
+		dockerData.Node = container.ContainerJSONBase.Node
 
 		if container.ContainerJSONBase.HostConfig != nil {
 			dockerData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
@@ -818,7 +864,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 }
 
 // Escape beginning slash "/", convert all others to dash "-", and convert underscores "_" to dash "-"
-func (p *Provider) getSubDomain(name string) string {
+func getSubDomain(name string) string {
 	return strings.Replace(strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1), "_", "-", -1)
 }
 
@@ -827,8 +873,16 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 	if err != nil {
 		return []dockerData{}, err
 	}
+
+	serverVersion, err := dockerClient.ServerVersion(ctx)
+
 	networkListArgs := filters.NewArgs()
-	networkListArgs.Add("scope", "swarm")
+	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
+	if versions.GreaterThanOrEqualTo(serverVersion.APIVersion, "1.29") {
+		networkListArgs.Add("scope", "swarm")
+	} else {
+		networkListArgs.Add("driver", "overlay")
+	}
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 

@@ -16,6 +16,7 @@ import (
 	"reflect"
 	"regexp"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -81,6 +82,7 @@ type serverRoute struct {
 	stripPrefixesRegex []string
 	addPrefix          string
 	replacePath        string
+	replacePathRegex   string
 }
 
 // NewServer returns an initialized Server.
@@ -338,7 +340,7 @@ func (server *Server) listenProviders(stop chan bool) {
 				lastReceivedConfigurationValue := lastReceivedConfiguration.Get().(time.Time)
 				providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
 				if time.Now().After(lastReceivedConfigurationValue.Add(providersThrottleDuration)) {
-					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration)
+					log.Debugf("Last %s config received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
 					// last config received more than n s ago
 					server.configurationValidatedChan <- configMsg
 				} else {
@@ -1062,6 +1064,15 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 		handler = &middlewares.ReplacePath{
 			Path:    serverRoute.replacePath,
 			Handler: handler,
+		}
+	}
+
+	if len(serverRoute.replacePathRegex) > 0 {
+		sp := strings.Split(serverRoute.replacePathRegex, " ")
+		if len(sp) == 2 {
+			handler = middlewares.NewReplacePathRegexHandler(sp[0], sp[1], handler)
+		} else {
+			log.Warnf("Invalid syntax for ReplacePathRegex: %s. Separate the regular expression and the replacement by a space.", serverRoute.replacePathRegex)
 		}
 	}
 

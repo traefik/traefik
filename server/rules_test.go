@@ -136,6 +136,57 @@ func TestPriorites(t *testing.T) {
 	assert.NotEqual(t, foobarMatcher.Handler, fooHandler, "Error matching priority")
 }
 
+func TestHostRegexp(t *testing.T) {
+	testCases := []struct {
+		desc    string
+		hostExp string
+		urls    map[string]bool
+	}{
+		{
+			desc:    "capturing group",
+			hostExp: "{subdomain:(foo\\.)?bar\\.com}",
+			urls: map[string]bool{
+				"http://foo.bar.com": true,
+				"http://bar.com":     true,
+				"http://fooubar.com": false,
+				"http://barucom":     false,
+				"http://barcom":      false,
+			},
+		},
+		{
+			desc:    "non capturing group",
+			hostExp: "{subdomain:(?:foo\\.)?bar\\.com}",
+			urls: map[string]bool{
+				"http://foo.bar.com": true,
+				"http://bar.com":     true,
+				"http://fooubar.com": false,
+				"http://barucom":     false,
+				"http://barcom":      false,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rls := &Rules{
+				route: &serverRoute{
+					route: &mux.Route{},
+				},
+			}
+
+			rt := rls.hostRegexp(test.hostExp)
+
+			for testURL, match := range test.urls {
+				req := testhelpers.MustNewRequest(http.MethodGet, testURL, nil)
+				assert.Equal(t, match, rt.Match(req, &mux.RouteMatch{}))
+			}
+		})
+	}
+}
+
 type fakeHandler struct {
 	name string
 }

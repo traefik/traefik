@@ -1,5 +1,5 @@
-hash: b929df3c022d8a67b8d174f81257a502670c3683e801f8a53283c2965c921c6e
-updated: 2017-10-16T23:09:16.848940186+02:00
+hash: 90d53da9a6eaba85d524d95410051ff7f12b1f76181df2ad4796b2439f3a2a37
+updated: 2017-10-24T14:08:11.364720581+02:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -89,7 +89,7 @@ imports:
 - name: github.com/containous/flaeg
   version: b5d2dc5878df07c2d74413348186982e7b865871
 - name: github.com/containous/mux
-  version: af6ea922f7683d9706834157e6b0610e22ccb2db
+  version: 06ccd3e75091eb659b1d720cda0e16bc7057954c
 - name: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
 - name: github.com/coreos/etcd
@@ -485,7 +485,7 @@ imports:
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - name: github.com/vulcand/oxy
-  version: c024a22700b56debed9a9c8dbb297210a7ece02d
+  version: 7e9763c4dc71b9758379da3581e6495c145caaab
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:

@@ -11,7 +11,10 @@ import (
 	"path"
 	"regexp"
 	"sort"
-	"strings"
+)
+
+var (
+	ErrMethodMismatch = errors.New("method is not allowed")
 )
 
 // NewRouter returns a new router instance.
@@ -40,6 +43,10 @@ func NewRouter() *Router {
 type Router struct {
 	// Configurable Handler to be used when no route matches.
 	NotFoundHandler http.Handler
+
+	// Configurable Handler to be used when the request method does not match the route.
+	MethodNotAllowedHandler http.Handler
+
 	// Parent route, if this is a subrouter.
 	parent parentRoute
 	// Routes to be matched, in order.
@@ -66,6 +73,11 @@ func (r *Router) Match(req *http.Request, match *RouteMatch) bool {
 		}
 	}
 
+	if match.MatchErr == ErrMethodMismatch && r.MethodNotAllowedHandler != nil {
+		match.Handler = r.MethodNotAllowedHandler
+		return true
+	}
+
 	// Closest match for a router (includes sub-routers)
 	if r.NotFoundHandler != nil {
 		match.Handler = r.NotFoundHandler
@@ -82,7 +94,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if !r.skipClean {
 		path := req.URL.Path
 		if r.useEncodedPath {
-			path = getPath(req)
+			path = req.URL.EscapedPath()
 		}
 		// Clean path to canonical form and redirect.
 		if p := cleanPath(path); p != path {
@@ -106,9 +118,15 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		req = setVars(req, match.Vars)
 		req = setCurrentRoute(req, match.Route)
 	}
+
+	if handler == nil && match.MatchErr == ErrMethodMismatch {
+		handler = methodNotAllowedHandler()
+	}
+
 	if handler == nil {
 		handler = http.NotFoundHandler()
 	}
+
 	if !r.KeepContext {
 		defer contextClear(req)
 	}
@@ -356,6 +374,11 @@ type RouteMatch struct {
 	Route   *Route
 	Handler http.Handler
 	Vars    map[string]string
+
+	// MatchErr is set to appropriate matching error
+	// It is set to ErrMethodMismatch if there is a mismatch in
+	// the request method and route method
+	MatchErr error
 }
 
 type contextKey int
@@ -396,28 +419,6 @@ func setCurrentRoute(r *http.Request, val interface{}) *http.Request {
 // ----------------------------------------------------------------------------
 // Helpers
 // ----------------------------------------------------------------------------
-
-// getPath returns the escaped path if possible; doing what URL.EscapedPath()
-// which was added in go1.5 does
-func getPath(req *http.Request) string {
-	if req.RequestURI != "" {
-		// Extract the path from RequestURI (which is escaped unlike URL.Path)
-		// as detailed here as detailed in https://golang.org/pkg/net/url/#URL
-		// for < 1.5 server side workaround
-		// http://localhost/path/here?v=1 -> /path/here
-		path := req.RequestURI
-		path = strings.TrimPrefix(path, req.URL.Scheme+`://`)
-		path = strings.TrimPrefix(path, req.URL.Host)
-		if i := strings.LastIndex(path, "?"); i > -1 {
-			path = path[:i]
-		}
-		if i := strings.LastIndex(path, "#"); i > -1 {
-			path = path[:i]
-		}
-		return path
-	}
-	return req.URL.Path
-}
 
 // cleanPath returns the canonical path for p, eliminating . and .. elements.
 // Borrowed from the net/http package.
@@ -557,3 +558,12 @@ func matchMapWithRegex(toCheck map[string]*regexp.Regexp, toMatch map[string][]s
 	}
 	return true
 }
+
+// methodNotAllowed replies to the request with an HTTP status code 405.
+func methodNotAllowed(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusMethodNotAllowed)
+}
+
+// methodNotAllowedHandler returns a simple request handler
+// that replies to each request with a status code 405.
+func methodNotAllowedHandler() http.Handler { return http.HandlerFunc(methodNotAllowed) }

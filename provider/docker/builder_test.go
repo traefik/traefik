@@ -39,6 +39,14 @@ func networkMode(mode string) func(*docker.ContainerJSON) {
 	}
 }
 
+func nodeIP(ip string) func(*docker.ContainerJSON) {
+	return func(c *docker.ContainerJSON) {
+		c.ContainerJSONBase.Node = &docker.ContainerNode{
+			IPAddress: ip,
+		}
+	}
+}
+
 func labels(labels map[string]string) func(*docker.ContainerJSON) {
 	return func(c *docker.ContainerJSON) {
 		c.Config.Labels = labels

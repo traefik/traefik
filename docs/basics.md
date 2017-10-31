@@ -86,6 +86,7 @@ Following is the list of existing modifier rules:
 
 - `AddPrefix: /products`: Add path prefix to the existing request path prior to forwarding the request to the backend.
 - `ReplacePath: /serverless-path`: Replaces the path and adds the old path to the `X-Replaced-Path` header. Useful for mapping to AWS Lambda or Google Cloud Functions.
+- `ReplacePathRegex: ^/api/v2/(.*) /api/$1`: Replaces the path with a regular expression and adds the old path to the `X-Replaced-Path` header. Separate the regular expression and the replacement by a space.
 
 #### Matchers
 

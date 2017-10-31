@@ -138,6 +138,10 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 		}
 	}
 
+	if gc.Web != nil && (gc.Web.Path == "" || !strings.HasSuffix(gc.Web.Path, "/")) {
+		gc.Web.Path += "/"
+	}
+
 	// Try to fallback to traefik config file in case the file provider is enabled
 	// but has no file name configured.
 	if gc.File != nil && len(gc.File.Filename) == 0 {
