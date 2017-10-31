@@ -330,6 +330,10 @@ DNSNames:
 	challenges, failures := c.getChallenges(domains)
 	// If any challenge fails - return. Do not generate partial SAN certificates.
 	if len(failures) > 0 {
+		for _, auth := range challenges {
+			c.disableAuthz(auth)
+		}
+
 		return CertificateResource{}, failures
 	}
 
@@ -373,6 +377,10 @@ func (c *Client) ObtainCertificate(domains []string, bundle bool, privKey crypto
 	challenges, failures := c.getChallenges(domains)
 	// If any challenge fails - return. Do not generate partial SAN certificates.
 	if len(failures) > 0 {
+		for _, auth := range challenges {
+			c.disableAuthz(auth)
+		}
+
 		return CertificateResource{}, failures
 	}
 
@@ -493,10 +501,12 @@ func (c *Client) solveChallenges(challenges []authorizationResource) map[string]
 				// TODO: do not immediately fail if one domain fails to validate.
 				err := solver.Solve(authz.Body.Challenges[i], authz.Domain)
 				if err != nil {
+					c.disableAuthz(authz)
 					failures[authz.Domain] = err
 				}
 			}
 		} else {
+			c.disableAuthz(authz)
 			failures[authz.Domain] = fmt.Errorf("[%s] acme: Could not determine solvers", authz.Domain)
 		}
 	}
@@ -584,6 +594,13 @@ func logAuthz(authz []authorizationResource) {
 	for _, auth := range authz {
 		logf("[INFO][%s] AuthURL: %s", auth.Domain, auth.AuthURL)
 	}
+}
+
+// cleanAuthz loops through the passed in slice and disables any auths which are not "valid"
+func (c *Client) disableAuthz(auth authorizationResource) error {
+	var disabledAuth authorization
+	_, err := postJSON(c.jws, auth.AuthURL, deactivateAuthMessage{Resource: "authz", Status: "deactivated"}, &disabledAuth)
+	return err
 }
 
 func (c *Client) requestCertificate(authz []authorizationResource, bundle bool, privKey crypto.PrivateKey, mustStaple bool) (CertificateResource, error) {

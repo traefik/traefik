@@ -194,7 +194,7 @@ func dnsQuery(fqdn string, rtype uint16, nameservers []string, recursive bool) (
 
 		if err == dns.ErrTruncated {
 			tcp := &dns.Client{Net: "tcp", Timeout: DNSTimeout}
-			// If the TCP request suceeds, the err will reset to nil
+			// If the TCP request succeeds, the err will reset to nil
 			in, _, err = tcp.Exchange(m, ns)
 		}
 

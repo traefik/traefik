@@ -145,7 +145,7 @@ func (exo *Client) GetVirtualMachine(id string) (*VirtualMachine, error) {
 
 func (exo *Client) ListVirtualMachines() ([]*VirtualMachine, error) {
 
- 	resp, err := exo.Request("listVirtualMachines", url.Values{})
+	resp, err := exo.Request("listVirtualMachines", url.Values{})
 	if err != nil {
 		return nil, err
 	}

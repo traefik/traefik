@@ -114,7 +114,7 @@ func setup(c *cli.Context) (*Configuration, *Account, *acme.Client) {
 	}
 
 	if c.GlobalIsSet("dns") {
-    provider, err := dns.NewDNSChallengeProviderByName(c.GlobalString("dns"))
+		provider, err := dns.NewDNSChallengeProviderByName(c.GlobalString("dns"))
 		if err != nil {
 			logger().Fatal(err)
 		}

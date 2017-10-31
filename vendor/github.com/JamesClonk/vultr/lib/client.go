@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"errors"
@@ -168,8 +169,25 @@ func (c *Client) do(req *http.Request, data interface{}) error {
 	// Throttle http requests to avoid hitting Vultr's API rate-limit
 	c.bucket.Wait(1)
 
+	// Request body gets drained on each read so we
+	// need to save it's content for retrying requests
+	var err error
+	var requestBody []byte
+	if req.Body != nil {
+		requestBody, err = ioutil.ReadAll(req.Body)
+		if err != nil {
+			return fmt.Errorf("Error reading request body: %v", err)
+		}
+		req.Body.Close()
+	}
+
 	var apiError error
 	for tryCount := 1; tryCount <= c.MaxAttempts; tryCount++ {
+		// Restore request body to the original state
+		if requestBody != nil {
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
+		}
+
 		resp, err := c.client.Do(req)
 		if err != nil {
 			return err

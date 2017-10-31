@@ -20,27 +20,32 @@ type DNSProvider struct {
 	tsigAlgorithm string
 	tsigKey       string
 	tsigSecret    string
+	timeout       time.Duration
 }
 
 // NewDNSProvider returns a DNSProvider instance configured for rfc2136
-// dynamic update. Credentials must be passed in the environment variables:
-// RFC2136_NAMESERVER, RFC2136_TSIG_ALGORITHM, RFC2136_TSIG_KEY and
-// RFC2136_TSIG_SECRET. To disable TSIG authentication, leave the TSIG
-// variables unset. RFC2136_NAMESERVER must be a network address in the form
-// "host" or "host:port".
+// dynamic update. Configured with environment variables:
+// RFC2136_NAMESERVER: Network address in the form "host" or "host:port".
+// RFC2136_TSIG_ALGORITHM: Defaults to hmac-md5.sig-alg.reg.int. (HMAC-MD5).
+// See https://github.com/miekg/dns/blob/master/tsig.go for supported values. 
+// RFC2136_TSIG_KEY: Name of the secret key as defined in DNS server configuration.
+// RFC2136_TSIG_SECRET: Secret key payload.
+// RFC2136_TIMEOUT: DNS propagation timeout in time.ParseDuration format. (60s)
+// To disable TSIG authentication, leave the RFC2136_TSIG* variables unset.
 func NewDNSProvider() (*DNSProvider, error) {
 	nameserver := os.Getenv("RFC2136_NAMESERVER")
 	tsigAlgorithm := os.Getenv("RFC2136_TSIG_ALGORITHM")
 	tsigKey := os.Getenv("RFC2136_TSIG_KEY")
 	tsigSecret := os.Getenv("RFC2136_TSIG_SECRET")
-	return NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret)
+	timeout := os.Getenv("RFC2136_TIMEOUT")
+	return NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, timeout)
 }
 
 // NewDNSProviderCredentials uses the supplied credentials to return a
 // DNSProvider instance configured for rfc2136 dynamic update. To disable TSIG
 // authentication, leave the TSIG parameters as empty strings.
 // nameserver must be a network address in the form "host" or "host:port".
-func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret string) (*DNSProvider, error) {
+func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret, timeout string) (*DNSProvider, error) {
 	if nameserver == "" {
 		return nil, fmt.Errorf("RFC2136 nameserver missing")
 	}
@@ -65,7 +70,25 @@ func NewDNSProviderCredentials(nameserver, tsigAlgorithm, tsigKey, tsigSecret st
 		d.tsigSecret = tsigSecret
 	}
 
+	if timeout == "" {
+		d.timeout = 60 * time.Second
+	} else {
+		t, err := time.ParseDuration(timeout)
+		if err != nil {
+			return nil, err
+		} else if t < 0 {
+			return nil, fmt.Errorf("Invalid/negative RFC2136_TIMEOUT: %v", timeout)
+		} else {
+			d.timeout = t
+		}
+	}
+
 	return d, nil
+}
+
+// Returns the timeout configured with RFC2136_TIMEOUT, or 60s.
+func (d *DNSProvider) Timeout() (timeout, interval time.Duration) {
+    return d.timeout, 2 * time.Second
 }
 
 // Present creates a TXT record using the specified parameters

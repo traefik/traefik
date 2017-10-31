@@ -2,12 +2,7 @@ package azure
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
-)
-
-const (
-	activeDirectoryAPIVersion = "1.0"
 )
 
 var environments = map[string]Environment{
@@ -132,36 +127,4 @@ func EnvironmentFromName(name string) (Environment, error) {
 		return env, fmt.Errorf("autorest/azure: There is no cloud environment matching the name %q", name)
 	}
 	return env, nil
-}
-
-// OAuthConfigForTenant returns an OAuthConfig with tenant specific urls
-func (env Environment) OAuthConfigForTenant(tenantID string) (*OAuthConfig, error) {
-	return OAuthConfigForTenant(env.ActiveDirectoryEndpoint, tenantID)
-}
-
-// OAuthConfigForTenant returns an OAuthConfig with tenant specific urls for target cloud auth endpoint
-func OAuthConfigForTenant(activeDirectoryEndpoint, tenantID string) (*OAuthConfig, error) {
-	template := "%s/oauth2/%s?api-version=%s"
-	u, err := url.Parse(activeDirectoryEndpoint)
-	if err != nil {
-		return nil, err
-	}
-	authorizeURL, err := u.Parse(fmt.Sprintf(template, tenantID, "authorize", activeDirectoryAPIVersion))
-	if err != nil {
-		return nil, err
-	}
-	tokenURL, err := u.Parse(fmt.Sprintf(template, tenantID, "token", activeDirectoryAPIVersion))
-	if err != nil {
-		return nil, err
-	}
-	deviceCodeURL, err := u.Parse(fmt.Sprintf(template, tenantID, "devicecode", activeDirectoryAPIVersion))
-	if err != nil {
-		return nil, err
-	}
-
-	return &OAuthConfig{
-		AuthorizeEndpoint:  *authorizeURL,
-		TokenEndpoint:      *tokenURL,
-		DeviceCodeEndpoint: *deviceCodeURL,
-	}, nil
 }

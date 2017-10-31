@@ -59,7 +59,7 @@ import:
 - package: github.com/vulcand/predicate
   version: 19b9dde14240d94c804ae5736ad0e1de10bf8fe6
 - package: github.com/xenolf/lego
-  version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
+  version: 67c86d860a797ce2483f50d9174d4ed24984bef2
   subpackages:
   - acme
 - package: gopkg.in/fsnotify.v1

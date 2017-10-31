@@ -10,21 +10,21 @@ func (exo *Client) CreateEgressRule(rule SecurityGroupRule) (*AuthorizeSecurityG
 
 	params := url.Values{}
 	params.Set("securitygroupid", rule.SecurityGroupId)
-	
-        if rule.Cidr != "" {
-            params.Set("cidrlist", rule.Cidr)
-        } else if len(rule.UserSecurityGroupList) > 0 {
-            usg,err := json.Marshal(rule.UserSecurityGroupList)
-	    if err != nil {
-	        	return nil, err
-	    }
-	    params.Set("usersecuritygrouplist", string(usg))
-        } else {
-            return nil, fmt.Errorf("No Egress rule CIDR or Security Group List provided")
-        }
+
+	if rule.Cidr != "" {
+		params.Set("cidrlist", rule.Cidr)
+	} else if len(rule.UserSecurityGroupList) > 0 {
+		usg, err := json.Marshal(rule.UserSecurityGroupList)
+		if err != nil {
+			return nil, err
+		}
+		params.Set("usersecuritygrouplist", string(usg))
+	} else {
+		return nil, fmt.Errorf("No Egress rule CIDR or Security Group List provided")
+	}
 
 	params.Set("protocol", rule.Protocol)
-        
+
 	if rule.Protocol == "ICMP" {
 		params.Set("icmpcode", fmt.Sprintf("%d", rule.IcmpCode))
 		params.Set("icmptype", fmt.Sprintf("%d", rule.IcmpType))
@@ -52,18 +52,18 @@ func (exo *Client) CreateIngressRule(rule SecurityGroupRule) (*AuthorizeSecurity
 
 	params := url.Values{}
 	params.Set("securitygroupid", rule.SecurityGroupId)
-        
-        if rule.Cidr != "" {
-            params.Set("cidrlist", rule.Cidr)
-        } else if len(rule.UserSecurityGroupList) >0 {
-            for i := 0; i < len(rule.UserSecurityGroupList); i++ {
-                    params.Set(fmt.Sprintf("usersecuritygrouplist[%d].account", i), rule.UserSecurityGroupList[i].Account)
-                    params.Set(fmt.Sprintf("usersecuritygrouplist[%d].group", i), rule.UserSecurityGroupList[i].Group)
-                    
-                }
-        } else {
-            return nil, fmt.Errorf("No Ingress rule CIDR or Security Group List provided")
-        }
+
+	if rule.Cidr != "" {
+		params.Set("cidrlist", rule.Cidr)
+	} else if len(rule.UserSecurityGroupList) > 0 {
+		for i := 0; i < len(rule.UserSecurityGroupList); i++ {
+			params.Set(fmt.Sprintf("usersecuritygrouplist[%d].account", i), rule.UserSecurityGroupList[i].Account)
+			params.Set(fmt.Sprintf("usersecuritygrouplist[%d].group", i), rule.UserSecurityGroupList[i].Group)
+
+		}
+	} else {
+		return nil, fmt.Errorf("No Ingress rule CIDR or Security Group List provided")
+	}
 
 	params.Set("protocol", rule.Protocol)
 
@@ -77,7 +77,7 @@ func (exo *Client) CreateIngressRule(rule SecurityGroupRule) (*AuthorizeSecurity
 		return nil, fmt.Errorf("Invalid Egress rule Protocol: %s", rule.Protocol)
 	}
 
-        fmt.Printf("## params: %+v\n", params)
+	fmt.Printf("## params: %+v\n", params)
 
 	resp, err := exo.Request("authorizeSecurityGroupIngress", params)
 
@@ -130,11 +130,12 @@ func (exo *Client) CreateSecurityGroupWithRules(name string, ingress []SecurityG
 	return &r.Wrapped, nil
 }
 
-func (exo *Client) DeleteSecurityGroup(name string) (error) {
+func (exo *Client) DeleteSecurityGroup(name string) error {
 	params := url.Values{}
 	params.Set("name", name)
 
-	resp, err := exo.Request("deleteSecurityGroup", params); if err != nil {
+	resp, err := exo.Request("deleteSecurityGroup", params)
+	if err != nil {
 		return err
 	}
 
