@@ -142,6 +142,28 @@ type ServiceType struct {
 	IsServiceGroup         bool   `json:"IsServiceGroup"`
 }
 
+// PropertiesListPage encapsulates the response model for
+// PagedPropertyInfoList in the Service Fabric API
+type PropertiesListPage struct {
+	ContinuationToken string `json:"ContinuationToken"`
+	IsConsistent      bool   `json:"IsConsistent"`
+	Properties        []struct {
+		Metadata struct {
+			CustomTypeID             string `json:"CustomTypeId"`
+			LastModifiedUtcTimestamp string `json:"LastModifiedUtcTimestamp"`
+			Parent                   string `json:"Parent"`
+			SequenceNumber           string `json:"SequenceNumber"`
+			SizeInBytes              int64  `json:"SizeInBytes"`
+			TypeID                   string `json:"TypeId"`
+		} `json:"Metadata"`
+		Name  string `json:"Name"`
+		Value struct {
+			Data string `json:"Data"`
+			Kind string `json:"Kind"`
+		} `json:"Value"`
+	} `json:"Properties"`
+}
+
 // KeyValuePair represents a key value pair structure
 type KeyValuePair struct {
 	Key   string `json:"Key"`

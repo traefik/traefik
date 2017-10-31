@@ -21,6 +21,7 @@ type Client interface {
 	GetReplicas(appName, serviceName, partitionName string) (*ReplicaItemsPage, error)
 	GetInstances(appName, serviceName, partitionName string) (*InstanceItemsPage, error)
 	GetServiceExtension(appType, applicationVersion, extensionKey string, service *ServiceItem, response interface{}) error
+	GetProperties(name string) (bool, map[string]string, error)
 }
 
 type clientImpl struct {
@@ -253,6 +254,67 @@ func (c *clientImpl) GetServiceExtension(appType, applicationVersion, extensionK
 	return nil
 }
 
+// GetProperties uses the Property Manager API to retreive
+// string properties from a name as a dictionary
+func (c *clientImpl) GetProperties(name string) (bool, map[string]string, error) {
+	nameExists, err := c.nameExists(name)
+	if err != nil {
+		return false, nil, err
+	}
+	if !nameExists {
+		return false, nil, nil
+	}
+
+	properties := make(map[string]string)
+
+	var continueToken string
+	baseURL := c.endpoint + "/Names/" + name + "/$/GetProperties?api-version=" + c.apiVersion + "&IncludeValues=true"
+	for {
+		var url string
+		if continueToken == "" {
+			url = baseURL
+		} else {
+			url = baseURL + "&continue=" + continueToken
+		}
+		res, err := getHTTP(c.http, url)
+		if err != nil {
+			return false, nil, err
+		}
+		var propertiesListPage PropertiesListPage
+		err = json.Unmarshal(res, &propertiesListPage)
+		if err != nil {
+			return false, nil, fmt.Errorf("could not deserialise JSON response: %+v", err)
+		}
+
+		for _, property := range propertiesListPage.Properties {
+			if property.Value.Kind != "String" {
+				continue
+			}
+			properties[property.Name] = property.Value.Data
+		}
+
+		if continueToken == "" {
+			break
+		}
+	}
+
+	return true, properties, nil
+}
+
+func (c *clientImpl) nameExists(propertyName string) (bool, error) {
+	url := c.endpoint + "/Names/" + propertyName + "?api-version=" + c.apiVersion
+	res, err := getHTTPRaw(c.http, url)
+
+	//Get http will return error for any non 200 response code.
+	if err != nil {
+		return false, fmt.Errorf("Service Fabric responded with error code %s to request %s with body %s", res.Status, url, res.Body)
+	}
+	if res.StatusCode == 200 {
+		return true, nil
+	}
+	return false, nil
+}
+
 func getHTTP(http HTTPClient, url string) ([]byte, error) {
 	if http == nil {
 		return nil, fmt.Errorf("invalid http client provided")
@@ -270,6 +332,17 @@ func getHTTP(http HTTPClient, url string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to read response body from Service Fabric response %+v", readErr)
 	}
 	return body, nil
+}
+
+func getHTTPRaw(http HTTPClient, url string) (*http.Response, error) {
+	if http == nil {
+		return nil, fmt.Errorf("invalid http client provided")
+	}
+	res, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to Service Fabric server %+v on %s", err, url)
+	}
+	return res, nil
 }
 
 func getString(str *string) string {
