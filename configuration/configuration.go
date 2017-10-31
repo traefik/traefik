@@ -29,6 +29,9 @@ import (
 )
 
 const (
+	// DefaultInternalEntryPointName the name of the default internal entry point
+	DefaultInternalEntryPointName = "traefik"
+
 	// DefaultHealthCheckInterval is the default health check interval.
 	DefaultHealthCheckInterval = 30 * time.Second
 
@@ -69,7 +72,7 @@ type GlobalConfiguration struct {
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
 	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers" export:"true"`
-	Web                       *WebCompatibility       `description:"(Depreceated) Enable Web backend with default settings" export:"true"` // Deprecated
+	Web                       *WebCompatibility       `description:"(Deprecated) Enable Web backend with default settings" export:"true"` // Deprecated
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`
 	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`
 	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings" export:"true"`
@@ -87,7 +90,7 @@ type GlobalConfiguration struct {
 	Rest                      *rest.Provider          `description:"Enable Rest backend with default settings" export:"true"`
 	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
-	Ping                      *ping.Handler           `description:"Enable ping"`
+	Ping                      *ping.Handler           `description:"Enable ping" export:"true"`
 }
 
 // WebCompatibility is a configuration to handle compatibility with deprecated web provider options
@@ -98,7 +101,7 @@ type WebCompatibility struct {
 	ReadOnly   bool              `description:"Enable read only API" export:"true"`
 	Statistics *types.Statistics `description:"Enable more detailed statistics" export:"true"`
 	Metrics    *types.Metrics    `description:"Enable a metrics exporter" export:"true"`
-	Path       string            `description:"Root path for dashboard and API"`
+	Path       string            `description:"Root path for dashboard and API" export:"true"`
 	Auth       *types.Auth       `export:"true"`
 	Debug      bool              `export:"true"`
 }
@@ -110,12 +113,12 @@ func (gc *GlobalConfiguration) handleWebDeprecation() {
 		if gc.API != nil || gc.Metrics != nil || gc.Ping != nil || gc.Rest != nil {
 			return
 		}
-		gc.EntryPoints["traefik"] = &EntryPoint{
+		gc.EntryPoints[DefaultInternalEntryPointName] = &EntryPoint{
 			Address: gc.Web.Address,
 			Auth:    gc.Web.Auth,
 		}
 		if gc.Web.CertFile != "" {
-			gc.EntryPoints["traefik"].TLS = &TLS{
+			gc.EntryPoints[DefaultInternalEntryPointName].TLS = &TLS{
 				Certificates: []Certificate{
 					{
 						CertFile: FileOrContent(gc.Web.CertFile),
@@ -127,7 +130,7 @@ func (gc *GlobalConfiguration) handleWebDeprecation() {
 
 		if gc.API == nil {
 			gc.API = &api.Handler{
-				EntryPoint: "traefik",
+				EntryPoint: DefaultInternalEntryPointName,
 				Statistics: gc.Web.Statistics,
 				Dashboard:  true,
 			}
@@ -135,7 +138,7 @@ func (gc *GlobalConfiguration) handleWebDeprecation() {
 
 		if gc.Ping == nil {
 			gc.Ping = &ping.Handler{
-				EntryPoint: "traefik",
+				EntryPoint: DefaultInternalEntryPointName,
 			}
 		}
 
@@ -162,12 +165,12 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 
 	gc.handleWebDeprecation()
 
-	if (gc.API != nil && gc.API.EntryPoint == "traefik") ||
-		(gc.Ping != nil && gc.Ping.EntryPoint == "traefik") ||
-		(gc.Metrics != nil && gc.Metrics.Prometheus != nil && gc.Metrics.Prometheus.EntryPoint == "traefik") ||
-		(gc.Rest != nil && gc.Rest.EntryPoint == "traefik") {
-		if _, ok := gc.EntryPoints["traefik"]; !ok {
-			gc.EntryPoints["traefik"] = &EntryPoint{Address: ":8080"}
+	if (gc.API != nil && gc.API.EntryPoint == DefaultInternalEntryPointName) ||
+		(gc.Ping != nil && gc.Ping.EntryPoint == DefaultInternalEntryPointName) ||
+		(gc.Metrics != nil && gc.Metrics.Prometheus != nil && gc.Metrics.Prometheus.EntryPoint == DefaultInternalEntryPointName) ||
+		(gc.Rest != nil && gc.Rest.EntryPoint == DefaultInternalEntryPointName) {
+		if _, ok := gc.EntryPoints[DefaultInternalEntryPointName]; !ok {
+			gc.EntryPoints[DefaultInternalEntryPointName] = &EntryPoint{Address: ":8080"}
 		}
 	}
 

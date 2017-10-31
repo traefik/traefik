@@ -2,9 +2,8 @@ package version
 
 import (
 	"context"
-	"net/url"
-
 	"net/http"
+	"net/url"
 
 	"github.com/containous/mux"
 	"github.com/containous/traefik/log"
@@ -33,16 +32,17 @@ var (
 
 // AddRoutes add version routes on a router
 func (v Handler) AddRoutes(router *mux.Router) {
-	router.Methods("GET").Path("/api/version").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-		v := struct {
-			Version  string
-			Codename string
-		}{
-			Version:  Version,
-			Codename: Codename,
-		}
-		templatesRenderer.JSON(response, http.StatusOK, v)
-	})
+	router.Methods("GET").Path("/api/version").
+		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+			v := struct {
+				Version  string
+				Codename string
+			}{
+				Version:  Version,
+				Codename: Codename,
+			}
+			templatesRenderer.JSON(response, http.StatusOK, v)
+		})
 }
 
 // CheckNewVersion checks if a new version is available

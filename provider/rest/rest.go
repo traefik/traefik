@@ -16,21 +16,17 @@ import (
 // Provider is a provider.Provider implementation that provides the UI
 type Provider struct {
 	configurationChan     chan<- types.ConfigMessage
-	EntryPoint            string `description:"Entrypoint"`
+	EntryPoint            string `description:"EntryPoint" export:"true"`
 	CurrentConfigurations *safe.Safe
 }
 
-var (
-	templatesRenderer = render.New(render.Options{
-		Directory: "nowhere",
-	})
-)
+var templatesRenderer = render.New(render.Options{Directory: "nowhere"})
 
 // AddRoutes add rest provider routes on a router
 func (p *Provider) AddRoutes(systemRouter *mux.Router) {
 	systemRouter.Methods("PUT").Path("/api/providers/{provider}").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		vars := mux.Vars(request)
-		//todo deprecated
+		// TODO: Deprecated configuration - Need to be removed in the future
 		if vars["provider"] != "web" && vars["provider"] != "rest" {
 			response.WriteHeader(http.StatusBadRequest)
 			fmt.Fprint(response, "Only 'rest' provider can be updated through the REST API")
@@ -43,7 +39,7 @@ func (p *Provider) AddRoutes(systemRouter *mux.Router) {
 		body, _ := ioutil.ReadAll(request.Body)
 		err := json.Unmarshal(body, configuration)
 		if err == nil {
-			//todo change to rest when we can break
+			// TODO: Deprecated configuration - Change to `rest` in the future
 			p.configurationChan <- types.ConfigMessage{ProviderName: "web", Configuration: configuration}
 			p.getConfigHandler(response, request)
 		} else {
@@ -62,5 +58,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 func (p *Provider) getConfigHandler(response http.ResponseWriter, request *http.Request) {
 	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
+	err := templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
+	if err != nil {
+		log.Error(err)
+	}
 }

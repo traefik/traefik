@@ -1,16 +1,16 @@
 package integration
 
 import (
-	"net/http"
-	"time"
-
 	"fmt"
-	"github.com/containous/traefik/integration/try"
-	"github.com/go-check/check"
-	checker "github.com/vdemeester/shakers"
+	"net/http"
 	"os"
 	"strings"
 	"syscall"
+	"time"
+
+	"github.com/containous/traefik/integration/try"
+	"github.com/go-check/check"
+	checker "github.com/vdemeester/shakers"
 )
 
 // SimpleSuite
@@ -163,12 +163,11 @@ func (s *SimpleSuite) TestRequestAcceptGraceTimeout(c *check.C) {
 	}
 }
 
-func (s *SimpleSuite) TestApiOnSameEntrypoint(c *check.C) {
-
+func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--defaultEntrypoints=http", "--entryPoints=Name:http Address::8000", "--api.entrypoint=http", "--debug", "--docker")
+	cmd, output := s.traefikCmd("--defaultEntryPoints=http", "--entryPoints=Name:http Address::8000", "--api.entryPoint=http", "--debug", "--docker")
 	defer output(c)
 
 	err := cmd.Start()
@@ -191,7 +190,6 @@ func (s *SimpleSuite) TestApiOnSameEntrypoint(c *check.C) {
 }
 
 func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
-
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
@@ -214,7 +212,7 @@ func (s *SimpleSuite) TestWebCompatibilityWithoutPath(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--defaultEntrypoints=http", "--entryPoints=Name:http Address::8000", "--web", "--debug", "--docker")
+	cmd, output := s.traefikCmd("--defaultEntryPoints=http", "--entryPoints=Name:http Address::8000", "--web", "--debug", "--docker")
 	defer output(c)
 
 	err := cmd.Start()
@@ -230,6 +228,7 @@ func (s *SimpleSuite) TestWebCompatibilityWithoutPath(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)
@@ -240,7 +239,7 @@ func (s *SimpleSuite) TestWebCompatibilityWithPath(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
 
-	cmd, output := s.traefikCmd("--defaultEntrypoints=http", "--entryPoints=Name:http Address::8000", "--web.path=/test", "--debug", "--docker")
+	cmd, output := s.traefikCmd("--defaultEntryPoints=http", "--entryPoints=Name:http Address::8000", "--web.path=/test", "--debug", "--docker")
 	defer output(c)
 
 	err := cmd.Start()
@@ -259,6 +258,7 @@ func (s *SimpleSuite) TestWebCompatibilityWithPath(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8080/test/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
 	c.Assert(err, checker.IsNil)

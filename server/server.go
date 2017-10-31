@@ -742,8 +742,8 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 
 	server.addInternalRoutes(entryPointName, internalMuxSubrouter)
 	internalMuxRouter.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		middlewares := append(internalMiddlewares, negroni.Wrap(route.GetHandler()))
-		route.Handler(negroni.New(middlewares...))
+		middles := append(internalMiddlewares, negroni.Wrap(route.GetHandler()))
+		route.Handler(negroni.New(middles...))
 		return nil
 	})
 
@@ -765,7 +765,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	if entryPoint.ProxyProtocol != nil {
 		IPs, err := whitelist.NewIP(entryPoint.ProxyProtocol.TrustedIPs, entryPoint.ProxyProtocol.Insecure)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Error creating whitelist: %s", err)
+			return nil, nil, fmt.Errorf("error creating whitelist: %s", err)
 		}
 		log.Infof("Enabling ProxyProtocol for trusted IPs %v", entryPoint.ProxyProtocol.TrustedIPs)
 		listener = &proxyproto.Listener{
@@ -773,7 +773,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 			SourceCheck: func(addr net.Addr) (bool, error) {
 				ip, ok := addr.(*net.TCPAddr)
 				if !ok {
-					return false, fmt.Errorf("Type error %v", addr)
+					return false, fmt.Errorf("type error %v", addr)
 				}
 				return IPs.ContainsIP(ip.IP)
 			},

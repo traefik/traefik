@@ -128,9 +128,9 @@ Complete documentation is available at https://traefik.io`,
 				client.Transport = tr
 			}
 
-			resp, err := client.Head(protocol + "://" + pingEntryPoint.Address + traefikConfiguration.Web.Path + "ping")
-			if err != nil {
-				fmt.Printf("Error calling healthcheck: %s\n", err)
+			resp, errPing := client.Head(protocol + "://" + pingEntryPoint.Address + traefikConfiguration.Web.Path + "ping")
+			if errPing != nil {
+				fmt.Printf("Error calling healthcheck: %s\n", errPing)
 				os.Exit(1)
 			}
 			if resp.StatusCode != http.StatusOK {

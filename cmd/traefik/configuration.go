@@ -47,15 +47,16 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 
 	// default Rest
 	var defaultRest rest.Provider
-	defaultRest.EntryPoint = "traefik"
+	defaultRest.EntryPoint = configuration.DefaultInternalEntryPointName
 
+	// TODO: Deprecated - Web provider, use REST provider instead
 	var defaultWeb configuration.WebCompatibility
 	defaultWeb.Address = ":8080"
 	defaultWeb.Statistics = &types.Statistics{
 		RecentErrors: 10,
 	}
 
-	// default Metrics
+	// TODO: Deprecated - default Metrics
 	defaultWeb.Metrics = &types.Metrics{
 		Prometheus: &types.Prometheus{
 			Buckets: types.Buckets{0.1, 0.3, 1.2, 5},
@@ -162,8 +163,8 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultEureka eureka.Provider
 	defaultEureka.Delay = "30s"
 
-	// dafault Ping
-	var defaultPing ping.Handler = ping.Handler{
+	// default Ping
+	var defaultPing = ping.Handler{
 		EntryPoint: "traefik",
 	}
 

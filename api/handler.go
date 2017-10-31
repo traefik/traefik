@@ -4,20 +4,20 @@ import (
 	"net/http"
 
 	"github.com/containous/mux"
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
-	"github.com/unrolled/render"
-
 	thoas_stats "github.com/thoas/stats"
+	"github.com/unrolled/render"
 )
 
 // Handler expose api routes
 type Handler struct {
-	EntryPoint            string `description:"Entrypoint"`
-	Dashboard             bool   `description:"Activate dashboard"`
-	Debug                 bool
+	EntryPoint            string `description:"EntryPoint" export:"true"`
+	Dashboard             bool   `description:"Activate dashboard" export:"true"`
+	Debug                 bool   `export:"true"`
 	CurrentConfigurations *safe.Safe
 	Statistics            *types.Statistics `description:"Enable more detailed statistics" export:"true"`
 	Stats                 *thoas_stats.Stats
@@ -60,7 +60,7 @@ func (p Handler) AddRoutes(router *mux.Router) {
 
 func getProviderIDFromVars(vars map[string]string) string {
 	providerID := vars["provider"]
-	//todo deprecated
+	// TODO: Deprecated
 	if providerID == "rest" {
 		providerID = "web"
 	}
@@ -69,7 +69,10 @@ func getProviderIDFromVars(vars map[string]string) string {
 
 func (p Handler) getConfigHandler(response http.ResponseWriter, request *http.Request) {
 	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
-	templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
+	err := templatesRenderer.JSON(response, http.StatusOK, currentConfigurations)
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 func (p Handler) getProviderHandler(response http.ResponseWriter, request *http.Request) {
@@ -77,7 +80,10 @@ func (p Handler) getProviderHandler(response http.ResponseWriter, request *http.
 
 	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
-		templatesRenderer.JSON(response, http.StatusOK, provider)
+		err := templatesRenderer.JSON(response, http.StatusOK, provider)
+		if err != nil {
+			log.Error(err)
+		}
 	} else {
 		http.NotFound(response, request)
 	}
@@ -88,7 +94,10 @@ func (p Handler) getBackendsHandler(response http.ResponseWriter, request *http.
 
 	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
-		templatesRenderer.JSON(response, http.StatusOK, provider.Backends)
+		err := templatesRenderer.JSON(response, http.StatusOK, provider.Backends)
+		if err != nil {
+			log.Error(err)
+		}
 	} else {
 		http.NotFound(response, request)
 	}
@@ -102,7 +111,10 @@ func (p Handler) getBackendHandler(response http.ResponseWriter, request *http.R
 	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
-			templatesRenderer.JSON(response, http.StatusOK, backend)
+			err := templatesRenderer.JSON(response, http.StatusOK, backend)
+			if err != nil {
+				log.Error(err)
+			}
 			return
 		}
 	}
@@ -117,7 +129,10 @@ func (p Handler) getServersHandler(response http.ResponseWriter, request *http.R
 	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
-			templatesRenderer.JSON(response, http.StatusOK, backend.Servers)
+			err := templatesRenderer.JSON(response, http.StatusOK, backend.Servers)
+			if err != nil {
+				log.Error(err)
+			}
 			return
 		}
 	}
@@ -134,7 +149,10 @@ func (p Handler) getServerHandler(response http.ResponseWriter, request *http.Re
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if backend, ok := provider.Backends[backendID]; ok {
 			if server, ok := backend.Servers[serverID]; ok {
-				templatesRenderer.JSON(response, http.StatusOK, server)
+				err := templatesRenderer.JSON(response, http.StatusOK, server)
+				if err != nil {
+					log.Error(err)
+				}
 				return
 			}
 		}
@@ -147,7 +165,10 @@ func (p Handler) getFrontendsHandler(response http.ResponseWriter, request *http
 
 	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
-		templatesRenderer.JSON(response, http.StatusOK, provider.Frontends)
+		err := templatesRenderer.JSON(response, http.StatusOK, provider.Frontends)
+		if err != nil {
+			log.Error(err)
+		}
 	} else {
 		http.NotFound(response, request)
 	}
@@ -161,7 +182,10 @@ func (p Handler) getFrontendHandler(response http.ResponseWriter, request *http.
 	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
-			templatesRenderer.JSON(response, http.StatusOK, frontend)
+			err := templatesRenderer.JSON(response, http.StatusOK, frontend)
+			if err != nil {
+				log.Error(err)
+			}
 			return
 		}
 	}
@@ -176,7 +200,10 @@ func (p Handler) getRoutesHandler(response http.ResponseWriter, request *http.Re
 	currentConfigurations := p.CurrentConfigurations.Get().(types.Configurations)
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
-			templatesRenderer.JSON(response, http.StatusOK, frontend.Routes)
+			err := templatesRenderer.JSON(response, http.StatusOK, frontend.Routes)
+			if err != nil {
+				log.Error(err)
+			}
 			return
 		}
 	}
@@ -193,7 +220,10 @@ func (p Handler) getRouteHandler(response http.ResponseWriter, request *http.Req
 	if provider, ok := currentConfigurations[providerID]; ok {
 		if frontend, ok := provider.Frontends[frontendID]; ok {
 			if route, ok := frontend.Routes[routeID]; ok {
-				templatesRenderer.JSON(response, http.StatusOK, route)
+				err := templatesRenderer.JSON(response, http.StatusOK, route)
+				if err != nil {
+					log.Error(err)
+				}
 				return
 			}
 		}
@@ -213,5 +243,8 @@ func (p *Handler) getHealthHandler(response http.ResponseWriter, request *http.R
 	if p.StatsRecorder != nil {
 		health.Stats = p.StatsRecorder.Data()
 	}
-	templatesRenderer.JSON(response, http.StatusOK, health)
+	err := templatesRenderer.JSON(response, http.StatusOK, health)
+	if err != nil {
+		log.Error(err)
+	}
 }
