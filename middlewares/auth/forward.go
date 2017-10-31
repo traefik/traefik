@@ -69,23 +69,20 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 
 		redirectURL, err := forwardResponse.Location()
 
-		if err != nil && err != http.ErrNoLocation {
-			log.Debugf("Error reading response location header %s. Cause: %s", config.Address, err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		// Set the location in our response if one was sent back.
-
-		if err != http.ErrNoLocation && redirectURL.String() != "" {
+		if err != nil {
+			if err != http.ErrNoLocation {
+				log.Debugf("Error reading response location header %s. Cause: %s", config.Address, err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else if redirectURL.String() != "" {
+			// Set the location in our response if one was sent back.
 			w.Header().Add("Location", redirectURL.String())
 		}
 
 		// Pass any Set-Cookie headers the forward auth server provides
 
-		cookies := forwardResponse.Cookies()
-
-		for _, cookie := range cookies {
+		for _, cookie := range forwardResponse.Cookies() {
 			w.Header().Add("Set-Cookie", cookie.String())
 		}
 
