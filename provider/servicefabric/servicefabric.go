@@ -136,6 +136,9 @@ func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExten
 				Labels:      make(map[string]string),
 			}
 
+			//Todo: Recfactor into methods
+
+			//Add labels from service manifest extensions
 			extensionData := ServiceExtensionLabels{}
 			err := sfClient.GetServiceExtension(app.TypeName, app.TypeVersion, "Traefik", &service, &extensionData)
 
@@ -147,6 +150,21 @@ func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExten
 			if extensionData.Label != nil {
 				for _, label := range extensionData.Label {
 					item.Labels[label.Key] = label.Value
+				}
+			}
+
+			//Override labels with runtime values from properties store
+			exists, labels, err := sfClient.GetProperties(service.ID + "/Traefik")
+			if err != nil {
+				log.Error(err)
+			} else {
+				if !exists {
+					log.Infof("Service %s doesn't have any property overrides in PropertyManager")
+				} else {
+					for k, v := range labels {
+
+						item.Labels[k] = v
+					}
 				}
 			}
 
