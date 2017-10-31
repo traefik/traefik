@@ -43,7 +43,7 @@ set -o nounset
 USAGE="$(basename "$0") <path to acme> <destination cert directory>"
 
 # Platform variations
-case `uname` in
+case $(uname) in
 	'Linux')
 		# On Linux, -d should always work. --decode does not work with Alpine's busybox-binary
 		CMD_DECODE_BASE64="base64 -d"
