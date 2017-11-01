@@ -8,40 +8,49 @@ import (
 
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
+	sfsdk "github.com/jjcollinge/servicefabric"
 )
 
 type clientMock struct {
-	applications *ApplicationsData
-	services     *ServicesData
-	partitions   *PartitionsData
-	replicas     *ReplicasData
-	instances    *InstancesData
+	applications *sfsdk.ApplicationItemsPage
+	services     *sfsdk.ServiceItemsPage
+	partitions   *sfsdk.PartitionItemsPage
+	replicas     *sfsdk.ReplicaItemsPage
+	instances    *sfsdk.InstanceItemsPage
+	labels       map[string]string
 }
 
-func (c *clientMock) GetApplications() (*ApplicationsData, error) {
+func (c *clientMock) GetApplications() (*sfsdk.ApplicationItemsPage, error) {
 	return c.applications, nil
 }
 
-func (c *clientMock) GetServices(appName string) (*ServicesData, error) {
+func (c *clientMock) GetServices(appName string) (*sfsdk.ServiceItemsPage, error) {
 	return c.services, nil
 }
 
-func (c *clientMock) GetPartitions(appName, serviceName string) (*PartitionsData, error) {
+func (c *clientMock) GetPartitions(appName, serviceName string) (*sfsdk.PartitionItemsPage, error) {
 	return c.partitions, nil
 }
 
-func (c *clientMock) GetReplicas(appName, serviceName, partitionName string) (*ReplicasData, error) {
+func (c *clientMock) GetReplicas(appName, serviceName, partitionName string) (*sfsdk.ReplicaItemsPage, error) {
 	return c.replicas, nil
 }
 
-func (c *clientMock) GetInstances(appName, serviceName, partitionName string) (*InstancesData, error) {
+func (c *clientMock) GetInstances(appName, serviceName, partitionName string) (*sfsdk.InstanceItemsPage, error) {
 	return c.instances, nil
 }
 
+func (c *clientMock) GetServiceExtension(appType, applicationVersion, serviceTypeName, extensionKey string, response interface{}) error {
+	return nil
+}
+func (c *clientMock) GetProperties(name string) (bool, map[string]string, error) {
+	return true, c.labels, nil
+}
+
 func TestUpdateConfig(t *testing.T) {
-	apps := &ApplicationsData{
+	apps := &sfsdk.ApplicationItemsPage{
 		ContinuationToken: nil,
-		Items: []ApplicationItem{
+		Items: []sfsdk.ApplicationItem{
 			{
 				HealthState: "Ok",
 				ID:          "TestApplication",
@@ -59,9 +68,9 @@ func TestUpdateConfig(t *testing.T) {
 			},
 		},
 	}
-	services := &ServicesData{
+	services := &sfsdk.ServiceItemsPage{
 		ContinuationToken: nil,
-		Items: []ServiceItem{
+		Items: []sfsdk.ServiceItem{
 			{
 				HasPersistedState: true,
 				HealthState:       "Ok",
@@ -75,9 +84,9 @@ func TestUpdateConfig(t *testing.T) {
 			},
 		},
 	}
-	partitions := &PartitionsData{
+	partitions := &sfsdk.PartitionItemsPage{
 		ContinuationToken: nil,
-		Items: []PartitionItem{
+		Items: []sfsdk.PartitionItem{
 			{
 				CurrentConfigurationEpoch: struct {
 					ConfigurationVersion string `json:"ConfigurationVersion"`
@@ -105,11 +114,11 @@ func TestUpdateConfig(t *testing.T) {
 			},
 		},
 	}
-	instances := &InstancesData{
+	instances := &sfsdk.InstanceItemsPage{
 		ContinuationToken: nil,
-		Items: []InstanceItem{
+		Items: []sfsdk.InstanceItem{
 			{
-				ReplicaItemBase: &ReplicaItemBase{
+				ReplicaItemBase: &sfsdk.ReplicaItemBase{
 					Address:                      "{\"Endpoints\":{\"\":\"http:\\/\\/localhost:8081\"}}",
 					HealthState:                  "Ok",
 					LastInBuildDurationInSeconds: "3",
@@ -121,12 +130,21 @@ func TestUpdateConfig(t *testing.T) {
 			},
 		},
 	}
+
+	labels := map[string]string{
+		"traefik.expose":                      "",
+		"traefik.frontend.rule.default":       "Path: /",
+		"traefik.backend.loadbalancer.method": "wrr",
+		"traefik.backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
+	}
+
 	client := &clientMock{
 		applications: apps,
 		services:     services,
 		partitions:   partitions,
 		replicas:     nil,
 		instances:    instances,
+		labels:       labels,
 	}
 	expected := types.ConfigMessage{
 		ProviderName: "servicefabric",
@@ -136,8 +154,8 @@ func TestUpdateConfig(t *testing.T) {
 					EntryPoints: []string{},
 					Backend:     "fabric:/TestApplication/TestService",
 					Routes: map[string]types.Route{
-						"default": {
-							Rule: "PathPrefixStrip: /TestApplication/TestService",
+						"frontend.rule.default": {
+							Rule: "Path: /",
 						},
 					},
 				},
@@ -145,7 +163,7 @@ func TestUpdateConfig(t *testing.T) {
 			Backends: map[string]*types.Backend{
 				"fabric:/TestApplication/TestService": {
 					LoadBalancer: &types.LoadBalancer{
-						Method: "drr",
+						Method: "wrr",
 					},
 					CircuitBreaker: &types.CircuitBreaker{
 						Expression: "NetworkErrorRatio() > 0.5",
@@ -170,14 +188,16 @@ func TestUpdateConfig(t *testing.T) {
 	actual := <-configurationChan
 	isEqual := compareConfigurations(actual, expected)
 	if !isEqual {
+		res, _ := json.Marshal(actual)
+		t.Log(string(res))
 		t.Error("actual != expected")
 	}
 }
 
 func TestIsPrimary(t *testing.T) {
 	provider := Provider{}
-	replica := &ReplicaItem{
-		ReplicaItemBase: &ReplicaItemBase{
+	replica := &sfsdk.ReplicaItem{
+		ReplicaItemBase: &sfsdk.ReplicaItemBase{
 			Address:                      "{\"Endpoints\":{\"\":\"localhost:30001+bce46a8c-b62d-4996-89dc-7ffc00a96902-131496928082309293\"}}",
 			HealthState:                  "Ok",
 			LastInBuildDurationInSeconds: "1",
@@ -196,8 +216,8 @@ func TestIsPrimary(t *testing.T) {
 
 func TestIsPrimaryWhenSecondary(t *testing.T) {
 	provider := Provider{}
-	replica := &ReplicaItem{
-		ReplicaItemBase: &ReplicaItemBase{
+	replica := &sfsdk.ReplicaItem{
+		ReplicaItemBase: &sfsdk.ReplicaItemBase{
 			Address:                      "{\"Endpoints\":{\"\":\"localhost:30001+bce46a8c-b62d-4996-89dc-7ffc00a96902-131496928082309293\"}}",
 			HealthState:                  "Ok",
 			LastInBuildDurationInSeconds: "1",
@@ -216,8 +236,8 @@ func TestIsPrimaryWhenSecondary(t *testing.T) {
 
 func TestIsHealthy(t *testing.T) {
 	provider := Provider{}
-	replica := &ReplicaItem{
-		ReplicaItemBase: &ReplicaItemBase{
+	replica := &sfsdk.ReplicaItem{
+		ReplicaItemBase: &sfsdk.ReplicaItemBase{
 			Address:                      "{\"Endpoints\":{\"\":\"localhost:30001+bce46a8c-b62d-4996-89dc-7ffc00a96902-131496928082309293\"}}",
 			HealthState:                  "Ok",
 			LastInBuildDurationInSeconds: "1",
@@ -236,8 +256,8 @@ func TestIsHealthy(t *testing.T) {
 
 func TestIsHealthyWhenError(t *testing.T) {
 	provider := Provider{}
-	replica := &ReplicaItem{
-		ReplicaItemBase: &ReplicaItemBase{
+	replica := &sfsdk.ReplicaItem{
+		ReplicaItemBase: &sfsdk.ReplicaItemBase{
 			Address:                      "{\"Endpoints\":{\"\":\"localhost:30001+bce46a8c-b62d-4996-89dc-7ffc00a96902-131496928082309293\"}}",
 			HealthState:                  "Error",
 			LastInBuildDurationInSeconds: "1",
