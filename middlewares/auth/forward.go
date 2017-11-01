@@ -16,7 +16,6 @@ import (
 func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 
 	// Ensure our request client does not follow redirects
-
 	httpClient := http.Client{
 		CheckRedirect: func(r *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
@@ -61,12 +60,10 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 
 	// Pass the forward response's body and selected headers if it
 	// didn't return a response within the range of [200, 300).
-
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
 		log.Debugf("Remote error %s. StatusCode: %d", config.Address, forwardResponse.StatusCode)
 
 		// Grab the location header, if any.
-
 		redirectURL, err := forwardResponse.Location()
 
 		if err != nil {
@@ -81,7 +78,6 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 		}
 
 		// Pass any Set-Cookie headers the forward auth server provides
-
 		for _, cookie := range forwardResponse.Cookies() {
 			w.Header().Add("Set-Cookie", cookie.String())
 		}
