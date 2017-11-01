@@ -221,7 +221,7 @@ Only IPs in `trustedIPs` will lead to remote client address replacement: you sho
 
 ## Forwarded Header
 
-Only IPs in `trustedIPs` will be authorize to trust the client forwarded headers (`X-Forwarded-*`).
+Only IPs in `trustedIPs` will be authorized to trust the client forwarded headers (`X-Forwarded-*`).
 
 ```toml
 [entryPoints]
