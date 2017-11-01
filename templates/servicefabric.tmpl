@@ -1,26 +1,3 @@
-[frontends]{{range $service := .Services}}
-  {{if doesAppParamContain $service.Application "TraefikPublish" $service.Name}}
-    {{if eq $service.ServiceKind "Stateless"}}
-    
-    [frontends."{{$service.Name}}"]
-    backend = "{{$service.Name}}"
-      [frontends."{{$service.Name}}".routes.default]
-      rule = "PathPrefixStrip: /{{$service.ID}}"
-    
-    {{else if eq $service.ServiceKind "Stateful"}}
-      {{range $partition := $service.Partitions}}
-        {{$partitionId := $partition.PartitionInformation.ID}}
-
-        [frontends."{{$service.Name}}/{{$partitionId}}"]
-        backend = "{{$service.Name}}/{{$partitionId}}"
-        [frontends."{{$service.Name}}/{{$partitionId}}".routes.default]
-        rule = "PathPrefixStrip: /{{$service.ID}}/{{$partitionId}}"
-
-      {{end}}
-    {{end}}
-  {{end}}
-{{end}}
-
 [backends]{{range $service := .Services}}
     {{range $partition := $service.Partitions}}
       {{if eq $partition.ServiceKind "Stateless"}}
@@ -60,3 +37,49 @@
     {{end}}
 {{end}}
 
+[frontends]{{range $service := .Services}}
+  {{if hasServiceLabel $service "expose"}}
+    {{if eq $service.ServiceKind "Stateless"}}
+    
+    [frontends."{{$service.Name}}"]
+    backend = "{{$service.Name}}"
+
+    
+    {{if hasServiceLabel $service "frontend.passHostHeader"}}
+      passHostHeader = {{getServiceLabelValue $service "frontend.passHostHeader" }}
+    {{end}}
+
+    {{if hasServiceLabel $service "frontend.whitelistSourceRange"}}
+      whitelistSourceRange = {{getServiceLabelValue $service "frontend.whitelistSourceRange" }}
+    {{end}}
+
+    {{if hasServiceLabel $service "frontend.priority"}}
+      priority = {{getServiceLabelValue $service "frontend.priority"}}
+    {{end}}
+
+    {{if hasServiceLabel $service "frontend.basicAuth"}}
+      basicAuth = {{getServiceLabelValue $service "frontend.basicAuth"}}
+    {{end}}
+
+    {{if hasServiceLabel $service "frontend.entryPoints"}}
+      entryPoints = {{getServiceLabelValue $service "frontend.entryPoints"}}
+    {{end}}
+      
+    [frontends."{{$service.Name}}".routes.default]
+    rule = "{{getServiceLabelValue $service "frontend.rule"}}"
+    
+    {{else if eq $service.ServiceKind "Stateful"}}
+      {{range $partition := $service.Partitions}}
+        {{$partitionId := $partition.PartitionInformation.ID}}
+
+        {{if hasServiceLabel $service "frontend.rule"}}
+          [frontends."{{$service.Name}}/{{$partitionId}}"]
+          backend = "{{$service.Name}}/{{$partitionId}}"
+          [frontends."{{$service.Name}}/{{$partitionId}}".routes.default]
+          rule = {{getServiceLabelValue $service "frontend.rule.partition.$partitionId"}}
+
+      {{end}}
+    {{end}}
+  {{end}}
+{{end}}
+{{end}}

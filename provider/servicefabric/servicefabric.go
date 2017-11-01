@@ -80,15 +80,16 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 				}
 
 				var sfFuncMap = template.FuncMap{
-					"isPrimary":               p.isPrimary,
-					"isHealthy":               p.isHealthy,
-					"hasHTTPEndpoint":         p.hasHTTPEndpoint,
-					"getDefaultEndpoint":      p.getDefaultEndpoint,
-					"getNamedEndpoint":        p.getNamedEndpoint,
-					"getApplicationParameter": p.getApplicationParameter,
-					"doesAppParamContain":     p.doesAppParamContain,
-					"hasServiceLabel":         p.hasServiceLabel,
-					"getServiceLabel":         p.getServiceLabel,
+					"isPrimary":                  p.isPrimary,
+					"isHealthy":                  p.isHealthy,
+					"hasHTTPEndpoint":            p.hasHTTPEndpoint,
+					"getDefaultEndpoint":         p.getDefaultEndpoint,
+					"getNamedEndpoint":           p.getNamedEndpoint,
+					"getApplicationParameter":    p.getApplicationParameter,
+					"doesAppParamContain":        p.doesAppParamContain,
+					"hasServiceLabel":            p.hasServiceLabel,
+					"getServiceLabelValue":       p.getServiceLabelValue,
+					"getServiceLabelsWithPrefix": p.getServiceLabelsWithPrefix,
 				}
 
 				configuration, err := p.GetConfiguration("templates/servicefabric.tmpl", sfFuncMap, templateObjects)
@@ -187,9 +188,19 @@ func (p *Provider) hasServiceLabel(s ServiceItemExtended, key string) bool {
 	return exists
 }
 
-func (p *Provider) getServiceLabel(s ServiceItemExtended, key string) string {
+func (p *Provider) getServiceLabelValue(s ServiceItemExtended, key string) string {
 	value, _ := s.Labels[key]
 	return value
+}
+
+func (p *Provider) getServiceLabelsWithPrefix(s ServiceItemExtended, prefix string) map[string]string {
+	results := make(map[string]string)
+	for k, v := range s.Labels {
+		if strings.HasPrefix(k, prefix) {
+			results[k] = v
+		}
+	}
+	return results
 }
 
 func (p *Provider) isPrimary(i sfsdk.ReplicaInstance) bool {
