@@ -28,6 +28,8 @@ type PartitionItemExtended struct {
 	Instances    []sfsdk.InstanceItem
 }
 
+// ServiceExtensionLabels provides the structure for
+// deserialising the XML document used to store labels in an Extension
 type ServiceExtensionLabels struct {
 	XMLName xml.Name `xml:"Labels"`
 	Label   []struct {

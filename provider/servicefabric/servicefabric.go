@@ -136,37 +136,8 @@ func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExten
 				Labels:      make(map[string]string),
 			}
 
-			//Todo: Recfactor into methods
-
-			//Add labels from service manifest extensions
-			extensionData := ServiceExtensionLabels{}
-			err := sfClient.GetServiceExtension(app.TypeName, app.TypeVersion, "Traefik", &service, &extensionData)
-
-			if err != nil {
-				log.Error(err)
-				return nil, err
-			}
-
-			if extensionData.Label != nil {
-				for _, label := range extensionData.Label {
-					item.Labels[label.Key] = label.Value
-				}
-			}
-
-			//Override labels with runtime values from properties store
-			exists, labels, err := sfClient.GetProperties(service.ID + "/Traefik")
-			if err != nil {
-				log.Error(err)
-			} else {
-				if !exists {
-					log.Infof("Service %s doesn't have any property overrides in PropertyManager")
-				} else {
-					for k, v := range labels {
-
-						item.Labels[k] = v
-					}
-				}
-			}
+			addLabelsFromServiceExtension(sfClient, service.TypeName, &app, &item)
+			addLabelsFromPropertyManager(sfClient, &item)
 
 			partitions, err := sfClient.GetPartitions(app.ID, service.ID)
 			if err != nil {
@@ -336,4 +307,48 @@ func getNamedEndpoint(endpointData string, endpointName string) (bool, string) {
 		return false, ""
 	}
 	return true, endpoint
+}
+
+// Add labels from service manifest extensions
+func addLabelsFromServiceExtension(sfClient sfsdk.Client, serviceType string, app *sfsdk.ApplicationItem, service *ServiceItemExtended) error {
+	const traefikExtensionName = "Traefik"
+	extensionData := ServiceExtensionLabels{}
+	err := sfClient.GetServiceExtension(app.TypeName, app.TypeVersion, serviceType, traefikExtensionName, &extensionData)
+
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	if extensionData.Label != nil {
+		for _, label := range extensionData.Label {
+			log.Debugf("Extension label found for %s with key %s and value %s", service.ID, label.Key, label.Value)
+			service.Labels[label.Key] = label.Value
+		}
+	} else {
+		log.Debugf("No Extension found for %s", service.ID)
+	}
+
+	return nil
+}
+
+// Override labels with runtime values from properties store
+func addLabelsFromPropertyManager(sfClient sfsdk.Client, service *ServiceItemExtended) {
+	exists, labels, err := sfClient.GetProperties(service.ID + "/Traefik")
+	if err != nil {
+		log.Error(err)
+	} else {
+		if !exists {
+			log.Debugf("Service %s doesn't have any property overrides in PropertyManager", service.ID)
+		} else {
+			for k, v := range labels {
+				const keyPrefix = "traefik."
+				if strings.HasPrefix(k, keyPrefix) {
+					labelKey := strings.Replace(k, keyPrefix, "", -1)
+					log.Debugf("Override label found for %s with key %s and value %s", service.ID, labelKey, v)
+					service.Labels[labelKey] = v
+				}
+			}
+		}
+	}
 }

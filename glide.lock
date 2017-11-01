@@ -1,5 +1,5 @@
-hash: 3b3973b3729dd15abd64d496b3970d73fd9f55f8cb20542bec2b5d6aaf2de184
-updated: 2017-10-31T18:18:42.297359Z
+hash: 6a85336fc5641ab5861091182fc60ee4d1c4520f24d4703fd65c3a6618545fed
+updated: 2017-11-01T11:39:07.898818Z
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -315,7 +315,7 @@ imports:
   subpackages:
   - lib
 - name: github.com/jjcollinge/servicefabric
-  version: 73f5415a24a133d9e735a3a8f66c485365b41a96
+  version: 33a646f351757545d5dba6aa7a8a2b1754a0243e
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jonboulle/clockwork

@@ -20,7 +20,7 @@ type Client interface {
 	GetPartitions(appName, serviceName string) (*PartitionItemsPage, error)
 	GetReplicas(appName, serviceName, partitionName string) (*ReplicaItemsPage, error)
 	GetInstances(appName, serviceName, partitionName string) (*InstanceItemsPage, error)
-	GetServiceExtension(appType, applicationVersion, extensionKey string, service *ServiceItem, response interface{}) error
+	GetServiceExtension(appType, applicationVersion, serviceTypeName, extensionKey string, response interface{}) error
 	GetProperties(name string) (bool, map[string]string, error)
 }
 
@@ -222,7 +222,7 @@ func (c *clientImpl) GetReplicas(appName, serviceName, partitionName string) (*R
 // in a Service's manifest file. If the XML schema does not
 // map to the provided interface, the default type interface will
 // be returned.
-func (c *clientImpl) GetServiceExtension(appType, applicationVersion, extensionKey string, service *ServiceItem, response interface{}) error {
+func (c *clientImpl) GetServiceExtension(appType, applicationVersion, serviceTypeName, extensionKey string, response interface{}) error {
 	url := c.endpoint + "/ApplicationTypes/" + appType + "/$/GetServiceTypes?api-version=" + c.apiVersion + "&ApplicationTypeVersion=" + applicationVersion
 	res, err := getHTTP(c.http, url)
 
@@ -238,7 +238,7 @@ func (c *clientImpl) GetServiceExtension(appType, applicationVersion, extensionK
 	}
 
 	for _, serviceTypeInfo := range serviceTypes {
-		if serviceTypeInfo.ServiceTypeDescription.ServiceTypeName == service.TypeName {
+		if serviceTypeInfo.ServiceTypeDescription.ServiceTypeName == serviceTypeName {
 			for _, extension := range serviceTypeInfo.ServiceTypeDescription.Extensions {
 				if extension.Key == extensionKey {
 					xmlData := extension.Value
