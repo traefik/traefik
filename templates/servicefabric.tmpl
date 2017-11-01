@@ -1,18 +1,43 @@
 [backends]{{range $service := .Services}}
     {{range $partition := $service.Partitions}}
       {{if eq $partition.ServiceKind "Stateless"}}
+      [backends."{{$service.Name}}"]
         [backends."{{$service.Name}}".LoadBalancer]
-        method = "drr"
-            
-        [backends."{{$service.Name}}".circuitbreaker]
-        expression = "NetworkErrorRatio() > 0.5"
+        {{if hasServiceLabel $service "backend.loadbalancer.method"}}
+          method = "{{getServiceLabelValue $service "backend.loadbalancer.method" }}"
+        {{else}}
+          method = "drr"
+        {{end}}
+
+        {{if hasServiceLabel $service "backend.healthcheck"}}              
+          [backends."{{$service.Name}}".healthcheck]
+          path = "{{getServiceLabelValue $service "backend.healthcheck"}}"
+          interval = "{{getServiceLabelValueWithDefault $service "backend.healthcheck.interval" "10s"}}"
+        {{end}}
+
+        {{if hasServiceLabel $service "backend.loadbalancer.stickiness"}}
+          [backends."{{$service.Name}}".LoadBalancer.stickiness]
+        {{end}}    
+
+        {{if hasServiceLabel $service "backend.circuitbreaker"}}
+          [backends."{{$service.Name}}".circuitbreaker]
+          expression = "{{getServiceLabelValue $service "backend.circuitbreaker"}}"
+        {{end}}    
+        
+        {{if hasServiceLabel $service "backend.maxconn.amount"}}
+          [backends."{{$service.Name}}".maxconn]
+          amount = {{getServiceLabelValue $service "backend.maxconn.amount"}}
+          {{if hasServiceLabel $service "backend.maxconn.extractorfunc"}}
+          extractorfunc = "{{getServiceLabelValue $service "backend.maxconn.extractorfunc"}}"
+          {{end}}
+        {{end}}
 
         {{range $instance := $partition.Instances}}
           {{if and (isHealthy $instance) (hasHTTPEndpoint $instance)}}
             
             [backends."{{$service.Name}}".servers."{{$instance.ID}}"]
             url = "{{getDefaultEndpoint $instance}}"
-            weight = 1
+            weight = {{getServiceLabelValueWithDefault $service "backend.weight" "1"}}
 
           {{end}}
         {{end}}
@@ -64,9 +89,11 @@
     {{if hasServiceLabel $service "frontend.entryPoints"}}
       entryPoints = {{getServiceLabelValue $service "frontend.entryPoints"}}
     {{end}}
-      
-    [frontends."{{$service.Name}}".routes.default]
-    rule = "{{getServiceLabelValue $service "frontend.rule"}}"
+
+    {{range $key, $value := getServiceLabelsWithPrefix $service "frontend.rule"}}  
+    [frontends."{{$service.Name}}".routes."{{$key}}"]
+    rule = "{{$value}}"
+    {{end}}
     
     {{else if eq $service.ServiceKind "Stateful"}}
       {{range $partition := $service.Partitions}}

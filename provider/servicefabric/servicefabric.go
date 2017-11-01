@@ -80,16 +80,17 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 				}
 
 				var sfFuncMap = template.FuncMap{
-					"isPrimary":                  p.isPrimary,
-					"isHealthy":                  p.isHealthy,
-					"hasHTTPEndpoint":            p.hasHTTPEndpoint,
-					"getDefaultEndpoint":         p.getDefaultEndpoint,
-					"getNamedEndpoint":           p.getNamedEndpoint,
-					"getApplicationParameter":    p.getApplicationParameter,
-					"doesAppParamContain":        p.doesAppParamContain,
-					"hasServiceLabel":            p.hasServiceLabel,
-					"getServiceLabelValue":       p.getServiceLabelValue,
-					"getServiceLabelsWithPrefix": p.getServiceLabelsWithPrefix,
+					"isPrimary":                       p.isPrimary,
+					"isHealthy":                       p.isHealthy,
+					"hasHTTPEndpoint":                 p.hasHTTPEndpoint,
+					"getDefaultEndpoint":              p.getDefaultEndpoint,
+					"getNamedEndpoint":                p.getNamedEndpoint,
+					"getApplicationParameter":         p.getApplicationParameter,
+					"doesAppParamContain":             p.doesAppParamContain,
+					"hasServiceLabel":                 p.hasServiceLabel,
+					"getServiceLabelValue":            p.getServiceLabelValue,
+					"getServiceLabelValueWithDefault": p.getServiceLabelValueWithDefault,
+					"getServiceLabelsWithPrefix":      p.getServiceLabelsWithPrefix,
 				}
 
 				configuration, err := p.GetConfiguration("templates/servicefabric.tmpl", sfFuncMap, templateObjects)
@@ -190,6 +191,16 @@ func (p *Provider) hasServiceLabel(s ServiceItemExtended, key string) bool {
 
 func (p *Provider) getServiceLabelValue(s ServiceItemExtended, key string) string {
 	value, _ := s.Labels[key]
+	return value
+}
+
+func (p *Provider) getServiceLabelValueWithDefault(s ServiceItemExtended, key, defaultValue string) string {
+	value, exists := s.Labels[key]
+
+	if !exists {
+		return defaultValue
+	}
+
 	return value
 }
 
