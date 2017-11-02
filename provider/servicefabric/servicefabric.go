@@ -356,7 +356,7 @@ func addLabelsFromServiceExtension(sfClient sfsdk.Client, serviceType string, ap
 
 // Override labels with runtime values from properties store
 func addLabelsFromPropertyManager(sfClient sfsdk.Client, service *ServiceItemExtended) {
-	exists, labels, err := sfClient.GetProperties(service.ID + "/Traefik")
+	exists, labels, err := sfClient.GetProperties(service.ID)
 	if err != nil {
 		log.Error(err)
 	} else {
