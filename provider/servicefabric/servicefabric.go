@@ -344,8 +344,11 @@ func addLabelsFromServiceExtension(sfClient sfsdk.Client, serviceType string, ap
 
 	if extensionData.Label != nil {
 		for _, label := range extensionData.Label {
-			log.Debugf("Extension label found for %s with key %s and value %s", service.ID, label.Key, label.Value)
-			service.Labels[label.Key] = label.Value
+			if strings.HasPrefix(label.Key, keyPrefix) {
+				labelKey := strings.Replace(label.Key, keyPrefix, "", -1)
+				log.Debugf("Extension label found for %s with key %s and value %s", service.ID, label.Key, label.Value)
+				service.Labels[labelKey] = label.Value
+			}
 		}
 	} else {
 		log.Debugf("No Extension found for %s", service.ID)
@@ -353,6 +356,8 @@ func addLabelsFromServiceExtension(sfClient sfsdk.Client, serviceType string, ap
 
 	return nil
 }
+
+const keyPrefix = "traefik."
 
 // Override labels with runtime values from properties store
 func addLabelsFromPropertyManager(sfClient sfsdk.Client, service *ServiceItemExtended) {
@@ -364,7 +369,6 @@ func addLabelsFromPropertyManager(sfClient sfsdk.Client, service *ServiceItemExt
 			log.Debugf("Service %s doesn't have any property overrides in PropertyManager", service.ID)
 		} else {
 			for k, v := range labels {
-				const keyPrefix = "traefik."
 				if strings.HasPrefix(k, keyPrefix) {
 					labelKey := strings.Replace(k, keyPrefix, "", -1)
 					log.Debugf("Override label found for %s with key %s and value %s", service.ID, labelKey, v)
