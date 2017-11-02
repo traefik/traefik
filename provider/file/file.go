@@ -176,7 +176,7 @@ func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage,
 	}
 
 	if _, err := os.Stat(watchItem); err != nil {
-		log.Debugf("Impossible to watch %s : %v", watchItem, err)
+		log.Debugf("Unable to watch %s : %v", watchItem, err)
 		return
 	}
 

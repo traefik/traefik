@@ -197,9 +197,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Docker = &docker.Provider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "docker Filename",
 			Constraints: types.Constraints{
 				{
@@ -229,9 +228,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.File = &file.Provider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "file Filename",
 			Constraints: types.Constraints{
 				{
@@ -304,9 +302,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Marathon = &marathon.Provider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "marathon Filename",
 			Constraints: types.Constraints{
 				{
@@ -345,9 +342,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.ConsulCatalog = &consul.CatalogProvider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "ConsulCatalog Filename",
 			Constraints: types.Constraints{
 				{
@@ -371,9 +367,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Kubernetes = &kubernetes.Provider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "k8s Filename",
 			Constraints: types.Constraints{
 				{
@@ -398,9 +393,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Mesos = &mesos.Provider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "mesos Filename",
 			Constraints: types.Constraints{
 				{
@@ -428,9 +422,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Eureka = &eureka.Provider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "eureka Filename",
 			Constraints: types.Constraints{
 				{
@@ -451,9 +444,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.ECS = &ecs.Provider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "ecs Filename",
 			Constraints: types.Constraints{
 				{
@@ -481,9 +473,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.Rancher = &rancher.Provider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "rancher Filename",
 			Constraints: types.Constraints{
 				{
@@ -520,9 +511,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	}
 	config.DynamoDB = &dynamodb.Provider{
 		BaseProvider: provider.BaseProvider{
-			RootProvider: provider.RootProvider{
-				Watch: true,
-				Trace: true},
+			Watch:    true,
+			Trace:    true,
 			Filename: "dynamodb Filename",
 			Constraints: types.Constraints{
 				{
@@ -548,9 +538,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.Etcd = &etcd.Provider{
 		Provider: kv.Provider{
 			BaseProvider: provider.BaseProvider{
-				RootProvider: provider.RootProvider{
-					Watch: true,
-					Trace: true},
+				Watch:    true,
+				Trace:    true,
 				Filename: "etcd Filename",
 				Constraints: types.Constraints{
 					{
@@ -581,9 +570,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.Zookeeper = &zk.Provider{
 		Provider: kv.Provider{
 			BaseProvider: provider.BaseProvider{
-				RootProvider: provider.RootProvider{
-					Watch: true,
-					Trace: true},
+				Watch:    true,
+				Trace:    true,
 				Filename: "zk Filename",
 				Constraints: types.Constraints{
 					{
@@ -614,9 +602,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.Boltdb = &boltdb.Provider{
 		Provider: kv.Provider{
 			BaseProvider: provider.BaseProvider{
-				RootProvider: provider.RootProvider{
-					Watch: true,
-					Trace: true},
+				Watch:    true,
+				Trace:    true,
 				Filename: "boltdb Filename",
 				Constraints: types.Constraints{
 					{
@@ -647,9 +634,8 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.Consul = &consul.Provider{
 		Provider: kv.Provider{
 			BaseProvider: provider.BaseProvider{
-				RootProvider: provider.RootProvider{
-					Watch: true,
-					Trace: true},
+				Watch:    true,
+				Trace:    true,
 				Filename: "consul Filename",
 				Constraints: types.Constraints{
 					{

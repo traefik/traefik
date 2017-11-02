@@ -78,7 +78,6 @@ func (lb *testLoadBalancer) Servers() []*url.URL {
 }
 
 func TestPrepareServerTimeouts(t *testing.T) {
-
 	tests := []struct {
 		desc             string
 		globalConfig     configuration.GlobalConfiguration

@@ -348,7 +348,7 @@ func startTestServer(port string, statusCode int) (ts *httptest.Server) {
 // TestWithSNIConfigRoute involves a client sending HTTPS requests with
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik routes the requests to the expected backends thanks to given certificate if possible
-// otherwise tahnks to the default one.
+// otherwise thanks to the default one.
 func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange(c *check.C) {
 	cmd, display := s.traefikCmd(withConfigFile("fixtures/https/dynamic_https_sni.toml"))
 	defer display(c)
