@@ -8,7 +8,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "lib": [
-      "es2016",
+      "es2017",
       "dom"
     ],
     "outDir": "lib",
@@ -17,12 +17,8 @@
     ]
   },
   "exclude": [
-    "./main.aot.ts"
+    "**/*.spec.ts"
   ],
-  "angularCompilerOptions": {
-    "genDir": "ngfactory",
-    "entryModule": "./app.module#AppModule"
-  },
   "awesomeTypescriptLoaderOptions": {
     "silent": true
   }

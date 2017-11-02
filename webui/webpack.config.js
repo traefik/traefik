@@ -1,5 +1,5 @@
 const { resolve } = require('path');
-const AoTPlugin = require('@ngtools/webpack').AotPlugin;
+const AngularCompilerPlugin = require('@ngtools/webpack').AngularCompilerPlugin;
 const webpack = require('webpack');
 const webpackMerge = require('webpack-merge');
 const compression = require('compression-webpack-plugin');
@@ -115,30 +115,14 @@ module.exports = function (options, webpackOptions) {
     config = webpackMerge({}, config, getDevStylesConfig());
   }
 
-  if (options.aot) {
-    console.log(`Running build with AoT compilation...`)
-
-    config = webpackMerge({}, config, {
-      module: {
-        rules: [{ test: /\.ts$/, loader: '@ngtools/webpack' }]
-      },
-      plugins: [
-        new AoTPlugin({ tsConfigPath: root('src/tsconfig.json') })
-      ]
-    });
-  } else {
-    config = webpackMerge({}, config, {
-      module: {
-        rules: [{ test: /\.ts$/, loader: '@ngtools/webpack' }]
-      },
-      plugins: [
-        new AoTPlugin({
-          tsConfigPath: root('src/tsconfig.json'),
-          skipCodeGeneration: true
-        })
-      ]
-    });
-  }
+  config = webpackMerge({}, config, {
+    module: {
+      rules: [{ test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/, loader: '@ngtools/webpack' }]
+    },
+    plugins: [
+      new AngularCompilerPlugin({ tsConfigPath: root('src/tsconfig.json'), entryModule: 'src/app.module#AppModule' })
+    ]
+  });
 
   if (options.serve) {
     return portfinder.getPortPromise().then(port => {
@@ -156,7 +140,7 @@ function root(path) {
 
 function getEntry(options) {
   if (options.aot) {
-    return { app: root('src/main.aot.ts') };
+    return { app: root('src/main.ts') };
   } else {
     return { app: root('src/main.ts'), polyfills: root('src/polyfills.ts') };
   }
