@@ -85,6 +85,10 @@
     source-map "^0.5.6"
     tree-kill "^1.0.0"
 
+"@swimlane/ngx-charts@^6.1.0":
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/@swimlane/ngx-charts/-/ngx-charts-6.1.0.tgz#63feaa27389eaf730ea446012face6a4a7aa966d"
+
 "@types/d3-array@*":
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-1.2.1.tgz#e489605208d46a1c9d980d2e5772fa9c75d9ec65"

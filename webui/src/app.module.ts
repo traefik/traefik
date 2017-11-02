@@ -4,6 +4,8 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpModule } from '@angular/http';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { ApiService } from './services/api.service';
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './components/header';
@@ -23,12 +25,14 @@ import { LineChartComponent } from './charts/line-chart';
     BrowserModule,
     CommonModule,
     HttpModule,
+    NgxChartsModule,
+    BrowserAnimationsModule,
     RouterModule.forRoot([
       { path: '', component: ProvidersComponent, pathMatch: 'full' },
       { path: 'status', component: HealthComponent }
     ])
   ],
-  providers: [ 
+  providers: [
     ApiService
   ],
   bootstrap: [ AppComponent ]

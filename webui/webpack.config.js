@@ -19,7 +19,7 @@ module.exports = function (options, webpackOptions) {
   config = webpackMerge({}, config, {
     entry: getEntry(options),
     resolve: {
-      extensions: ['.ts', '.js', '.json'],
+      extensions: ['.ts', '.js', '.json', '.css'],
       modules: ['node_modules', nodeModules]
     },
     resolveLoader: {
@@ -109,11 +109,11 @@ module.exports = function (options, webpackOptions) {
 
   if (webpackOptions.p) {
     config = webpackMerge({}, config, getProductionPlugins());
-    config = webpackMerge({}, config, getProdStylesConfig());
   } else {
     config = webpackMerge({}, config, getDevelopmentConfig());
-    config = webpackMerge({}, config, getDevStylesConfig());
   }
+
+  config = webpackMerge({}, config, getStylesConfig());
 
   config = webpackMerge({}, config, {
     module: {
@@ -180,20 +180,7 @@ function getProductionPlugins() {
   };
 }
 
-function getDevStylesConfig() {
-  return {
-    module: {
-      rules: [
-        { test: /\.css$/, use: ['style-loader', 'css-loader'], exclude: [root('src')] },
-        { test: /\.css$/, use: ['to-string-loader', 'css-loader'], exclude: [root('src/styles')] },
-        { test: /\.scss$|\.sass$/, use: ['style-loader', 'css-loader', 'sass-loader'], include: [root('src/styles') ] },
-        { test: /\.scss$|\.sass$/, use: ['to-string-loader', 'css-loader', 'sass-loader'], exclude: [root('src/styles')] },
-      ]
-    }
-  };
-}
-
-function getProdStylesConfig() {
+function getStylesConfig() {
   return {
     plugins: [
       new extract('css/[hash].css')

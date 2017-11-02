@@ -12,7 +12,7 @@ import { format, distanceInWordsStrict, subSeconds } from 'date-fns';
   selector: 'health',
   templateUrl: 'health.component.html'
 })
-export class HealthComponent implements OnInit, OnDestroy { 
+export class HealthComponent implements OnInit, OnDestroy {
   sub: Subscription;
   pid: number;
   uptime: string;
@@ -31,7 +31,6 @@ export class HealthComponent implements OnInit, OnDestroy {
       .timeInterval()
       .mergeMap(() => this.apiService.fetchHealthStatus())
       .subscribe(data => {
-        console.log(data);
         this.chartValue = { count: data.average_response_time_sec, date: data.time };
         this.pid = data.pid;
         this.uptime = distanceInWordsStrict(subSeconds(new Date(), data.uptime_sec), new Date());
