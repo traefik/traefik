@@ -1,5 +1,23 @@
 # Change Log
 
+## [v1.4.2](https://github.com/containous/traefik/tree/v1.4.2) (2017-11-02)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.1...v1.4.2)
+
+**Bug fixes:**
+- **[cluster]** Fix datastore corruption on reload due to shrinking config size ([#2340](https://github.com/containous/traefik/pull/2340) by [else](https://github.com/else))
+- **[docker,docker/swarm]** Make frontend names differents for similar routes ([#2338](https://github.com/containous/traefik/pull/2338) by [nmengin](https://github.com/nmengin))
+- **[docker]** Fix IP address when Docker container network mode is container ([#2331](https://github.com/containous/traefik/pull/2331) by [nmengin](https://github.com/nmengin))
+- **[docker]** Make the traefik.port label optional when using service labels in Docker containers. ([#2330](https://github.com/containous/traefik/pull/2330) by [nmengin](https://github.com/nmengin))
+- **[docker]** Add unique ID to Docker services replicas ([#2314](https://github.com/containous/traefik/pull/2314) by [nmengin](https://github.com/nmengin))
+- **[marathon]** Missing Backend key in configuration when application has no tasks ([#2333](https://github.com/containous/traefik/pull/2333) by [aantono](https://github.com/aantono))
+- Remove hardcoded runtime.GOMAXPROCS. ([#2317](https://github.com/containous/traefik/pull/2317) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[k8s]** fixed dead link in kubernetes backend config docs ([#2337](https://github.com/containous/traefik/pull/2337) by [perplexa](https://github.com/perplexa))
+- **[k8s]** Fix the k8s docs example deployment yaml ([#2308](https://github.com/containous/traefik/pull/2308) by [gnur](https://github.com/gnur))
+- Minor grammar change ([#2350](https://github.com/containous/traefik/pull/2350) by [haxorjim](https://github.com/haxorjim))
+- Minor typo ([#2343](https://github.com/containous/traefik/pull/2343) by [burningTyger](https://github.com/burningTyger))
+
 ## [v1.4.1](https://github.com/containous/traefik/tree/v1.4.1) (2017-10-24)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.0...v1.4.1)
 
