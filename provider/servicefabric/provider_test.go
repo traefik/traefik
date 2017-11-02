@@ -185,12 +185,23 @@ func TestUpdateConfig(t *testing.T) {
 	pool := safe.NewPool(ctx)
 	defer pool.Stop()
 	provider.updateConfig(configurationChan, pool, client, time.Millisecond*100)
-	actual := <-configurationChan
-	isEqual := compareConfigurations(actual, expected)
-	if !isEqual {
-		res, _ := json.Marshal(actual)
-		t.Log(string(res))
-		t.Error("actual != expected")
+
+	timeout := make(chan string, 1)
+	go func() {
+		time.Sleep(time.Second * 2)
+		timeout <- "Timeout triggered"
+	}()
+
+	select {
+	case actual := <-configurationChan:
+		isEqual := compareConfigurations(actual, expected)
+		if !isEqual {
+			res, _ := json.Marshal(actual)
+			t.Log(string(res))
+			t.Error("actual != expected")
+		}
+	case <-timeout:
+		t.Error("Provider failed to return configuration")
 	}
 }
 
