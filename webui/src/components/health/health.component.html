@@ -26,8 +26,41 @@
               </div>
             </div>
           </div>
+        </div>
+        <div class="content-item">
+          <div class="content-item-data">
+            <div class="columns">
+              <div class="column is-4">
+                <div class="item-data border-right">
+                  <span class="data-blue">{{ averageResponseTime }}</span>
+                  <span class="data-grey">Average Response Time</span>
+                </div>
+              </div>
+              <div class="column is-4">
+                <div class="item-data border-right">
+                  <span class="data-blue">{{ codeCount }}</span>
+                  <span class="data-grey">Code Count</span>
+                </div>
+              </div>
+              <div class="column is-4">
+                <div class="item-data">
+                  <span class="data-blue">{{ pid }}</span>
+                  <span class="data-grey">PID</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-          <line-chart [value]="chartValue"></line-chart>
+      <div class="column is-12">
+        <div class="columns">
+          <div class="column is-6">
+            <div class="content-item">
+              <h2>Average Response Time</h2>
+              <line-chart [value]="chartValue"></line-chart>
+            </div>
+          </div>
         </div>
       </div>
 

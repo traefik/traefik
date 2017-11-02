@@ -1,4 +1,25 @@
 .line-chart
   width: 100%
   height: 320px
-  display: inline-block
+  background-color: $white
+
+  svg
+    font: 10px sans-serif
+
+  .line
+    fill: none
+    stroke: $blue
+    stroke-width: 1.5px
+
+  .axis line, .axis path
+    stroke: $text
+    opacity: .2
+    shape-rendering: crispEdges
+    fill: none
+
+  .axis path
+    display: none
+
+  .axis text
+    fill: $text
+

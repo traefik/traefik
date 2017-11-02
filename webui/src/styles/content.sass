@@ -1,7 +1,6 @@
 .content
   background: transparent
   border-radius: 4px
-  margin-top: 20px
   padding: 20px
 
   .subtitle
@@ -82,29 +81,36 @@
   background: $white
   border-radius: 4px
   border: 1px solid $border-secondary
+  margin: 10px 0
+  border-radius: 4px
+
+  h2
+    color: $text-dark
+    font-size: 14px
+    padding: 20px 20px 0 20px
+    font-weight: $weight-semibold
 
   .content-item-data
-    padding: 20px
+    padding: 10px 20px
 
     .item-data
       display: flex
       align-items: center
-      justify-content: center
+      justify-content: space-between
+      padding: 5px 10px
 
       &.border-right
         border-right: 1px solid #DFE3E9
 
     .data-blue
       color: $blue
-      font-size: 36px
+      font-size: 22px
       font-weight: $weight-semibold
 
     .data-grey
       color: $grey
-      font-size: 14px
+      font-size: 12px
       font-weight: $weight-light
-      margin-left: 20px
-
 
   .widget-item
     min-height: 80px
@@ -128,3 +134,14 @@
 
       &.mtop12
         margin-top: 12px
+
+.loading-text
+  height: 320px
+  display: flex
+  align-items: center
+  justify-content: center
+
+  .main-loader
+    width: 70px
+    display: block
+    margin: 15px auto

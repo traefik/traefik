@@ -1,19 +1,7 @@
-<!-- <canvas id="line-chart" style="width:100%; height:250px"></canvas> -->
-<div class="line-chart">
-  <ngx-charts-line-chart
-  [scheme]="colorScheme"
-  [results]="data"
-  [gradient]="gradient"
-  [xAxis]="showXAxis"
-  [yAxis]="showYAxis"
-  [legend]="showLegend"
-  [showXAxisLabel]="showXAxisLabel"
-  [showYAxisLabel]="showYAxisLabel"
-  [gradient]="false"
-  [yAxisLabel]="yAxisLabel"
-  [autoScale]="autoScale"
-  [timeline]="true"
-  [roundDomains]="true"
-  (select)="onSelect($event)">
-  </ngx-charts-line-chart>
+<div class="line-chart" [class.is-hidden]="loading"></div>
+<div class="loading-text" [class.is-hidden]="!loading">
+  <span>
+    <span>Loading, please wait...</span>
+    <img src="/images/loader.svg" class="main-loader">
+  </span>
 </div>
