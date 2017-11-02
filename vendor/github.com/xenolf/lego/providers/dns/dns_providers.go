@@ -19,6 +19,7 @@ import (
 	"github.com/xenolf/lego/providers/dns/linode"
 	"github.com/xenolf/lego/providers/dns/namecheap"
 	"github.com/xenolf/lego/providers/dns/ns1"
+	"github.com/xenolf/lego/providers/dns/otc"
 	"github.com/xenolf/lego/providers/dns/ovh"
 	"github.com/xenolf/lego/providers/dns/pdns"
 	"github.com/xenolf/lego/providers/dns/rackspace"
@@ -48,7 +49,7 @@ func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) 
 	case "dyn":
 		provider, err = dyn.NewDNSProvider()
 	case "exoscale":
-		provider, err = exoscale.NewDNSProvider()		
+		provider, err = exoscale.NewDNSProvider()
 	case "gandi":
 		provider, err = gandi.NewDNSProvider()
 	case "gcloud":
@@ -73,6 +74,8 @@ func NewDNSChallengeProviderByName(name string) (acme.ChallengeProvider, error) 
 		provider, err = pdns.NewDNSProvider()
 	case "ns1":
 		provider, err = ns1.NewDNSProvider()
+	case "otc":
+		provider, err = otc.NewDNSProvider()
 	default:
 		err = fmt.Errorf("Unrecognised DNS provider: %s", name)
 	}

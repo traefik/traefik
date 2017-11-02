@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"net/url"
 	"sort"
 )
@@ -76,6 +77,32 @@ func (c *Client) ListIPv4(id string) (list []IPv4, err error) {
 	}
 	sort.Sort(ipv4s(list))
 	return list, nil
+}
+
+// CreateIPv4 creates an IPv4 address and attaches it to a virtual machine
+func (c *Client) CreateIPv4(id string, reboot bool) error {
+	values := url.Values{
+		"SUBID":  {id},
+		"reboot": {fmt.Sprintf("%t", reboot)},
+	}
+
+	if err := c.post(`server/create_ipv4`, values, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+// DeleteIPv4 deletes an IPv4 address and detaches it from a virtual machine
+func (c *Client) DeleteIPv4(id, ip string) error {
+	values := url.Values{
+		"SUBID": {id},
+		"ip":    {ip},
+	}
+
+	if err := c.post(`server/destroy_ipv4`, values, nil); err != nil {
+		return err
+	}
+	return nil
 }
 
 // ListIPv6 lists the IPv4 information of a virtual machine

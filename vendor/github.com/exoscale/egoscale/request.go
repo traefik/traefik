@@ -9,8 +9,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strings"
 	"sort"
+	"strings"
 )
 
 func csQuotePlus(s string) string {
@@ -89,11 +89,11 @@ func (exo *Client) Request(command string, params url.Values) (json.RawMessage, 
 	params.Set("command", command)
 	params.Set("response", "json")
 
-	for k, _ := range(params) {
+	for k, _ := range params {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	for _, k := range(keys) {
+	for _, k := range keys {
 		arg := k + "=" + csEncode(params[k][0])
 		unencoded = append(unencoded, arg)
 	}
@@ -113,17 +113,18 @@ func (exo *Client) Request(command string, params url.Values) (json.RawMessage, 
 	return exo.ParseResponse(resp)
 }
 
-
 func (exo *Client) DetailedRequest(uri string, params string, method string, header http.Header) (json.RawMessage, error) {
 	url := exo.endpoint + uri
 
-	req, err := http.NewRequest(method, url, strings.NewReader(params)); if err != nil {
+	req, err := http.NewRequest(method, url, strings.NewReader(params))
+	if err != nil {
 		return nil, err
 	}
 
 	req.Header = header
 
-	response, err := exo.client.Do(req); if err != nil {
+	response, err := exo.client.Do(req)
+	if err != nil {
 		return nil, err
 	}
 

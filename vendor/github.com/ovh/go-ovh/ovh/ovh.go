@@ -188,9 +188,10 @@ func (c *Client) getResponse(response *http.Response, resType interface{}) error
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
 		apiError := &APIError{Code: response.StatusCode}
 		if err = json.Unmarshal(body, apiError); err != nil {
-			return err
+			apiError.Message = string(body)
 		}
 		apiError.QueryID = response.Header.Get("X-Ovh-QueryID")
+
 		return apiError
 	}
 
