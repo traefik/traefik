@@ -91,6 +91,8 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 					"getServiceLabelValue":            p.getServiceLabelValue,
 					"getServiceLabelValueWithDefault": p.getServiceLabelValueWithDefault,
 					"getServiceLabelsWithPrefix":      p.getServiceLabelsWithPrefix,
+					"getServicesWithLabelValueMap":    p.getServicesWithLabelValueMap,
+					"getServicesWithLabelValue":       p.getServicesWithLabelValue,
 				}
 
 				configuration, err := p.GetConfiguration("templates/servicefabric.tmpl", sfFuncMap, templateObjects)
@@ -192,6 +194,42 @@ func (p *Provider) hasServiceLabel(s ServiceItemExtended, key string) bool {
 func (p *Provider) getServiceLabelValue(s ServiceItemExtended, key string) string {
 	value, _ := s.Labels[key]
 	return value
+}
+
+func (p *Provider) getServicesWithLabelValueMap(services []ServiceItemExtended, key string) map[string][]ServiceItemExtended {
+	result := map[string][]ServiceItemExtended{}
+	for _, service := range services {
+		if value, exists := service.Labels[key]; exists {
+			matchingServices, hasKeyAlready := result[value]
+			if hasKeyAlready {
+				result[value] = append(matchingServices, service)
+			} else {
+				result[value] = []ServiceItemExtended{service}
+			}
+		}
+	}
+	return result
+}
+
+func (p *Provider) getServicesWithLabel(services []ServiceItemExtended, key string) []ServiceItemExtended {
+	srvWithLabel := []ServiceItemExtended{}
+	for _, service := range services {
+		if p.hasServiceLabel(service, key) {
+			srvWithLabel = append(srvWithLabel, service)
+		}
+	}
+	return srvWithLabel
+}
+
+func (p *Provider) getServicesWithLabelValue(services []ServiceItemExtended, key, expectedValue string) []ServiceItemExtended {
+	srvWithLabel := []ServiceItemExtended{}
+	for _, service := range services {
+		value, exists := service.Labels[key]
+		if exists && value == expectedValue {
+			srvWithLabel = append(srvWithLabel, service)
+		}
+	}
+	return srvWithLabel
 }
 
 func (p *Provider) getServiceLabelValueWithDefault(s ServiceItemExtended, key, defaultValue string) string {

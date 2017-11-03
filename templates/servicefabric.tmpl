@@ -1,4 +1,20 @@
-[backends]{{range $service := .Services}}
+[backends]
+    {{$groupedServiceMap := getServicesWithLabelValueMap .Services "backend.group.name"}}
+    {{range $aggName, $aggServices := $groupedServiceMap }}
+      [backends."{{$aggName}}"]
+      {{range $service := $aggServices}}
+        {{range $partition := $service.Partitions}}
+          {{range $instance := $partition.Instances}}
+            {{if and (isHealthy $instance) (hasHTTPEndpoint $instance)}} 
+              [backends."{{$aggName}}".servers."{{$service.ID}}-{{$instance.ID}}"]
+              url = "{{getDefaultEndpoint $instance}}"
+              weight = {{getServiceLabelValueWithDefault $service "backend.group.weight" "1"}}
+            {{end}}
+          {{end}}
+        {{end}}
+      {{end}}
+    {{end}}    
+  {{range $service := .Services}}
     {{range $partition := $service.Partitions}}
       {{if eq $partition.ServiceKind "Stateless"}}
       [backends."{{$service.Name}}"]
@@ -62,7 +78,22 @@
     {{end}}
 {{end}}
 
-[frontends]{{range $service := .Services}}
+[frontends]
+{{range $groupName, $groupServices := $groupedServiceMap}}
+  {{$service := index $groupServices 0}}
+    [frontends."{{$groupName}}"]
+    backend = "{{$groupName}}"
+
+    {{if hasServiceLabel $service "frontend.priority"}}
+    priority = 100
+    {{end}}
+    
+    {{range $key, $value := getServiceLabelsWithPrefix $service "frontend.rule"}}  
+    [frontends."{{$groupName}}".routes."{{$key}}"]
+    rule = "{{$value}}"
+    {{end}}
+{{end}}
+{{range $service := .Services}}
   {{if hasServiceLabel $service "expose"}}
     {{if eq $service.ServiceKind "Stateless"}}
     
