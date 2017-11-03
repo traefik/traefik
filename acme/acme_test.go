@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	traefikTls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/tls/generate"
 	"github.com/stretchr/testify/assert"
 	"github.com/xenolf/lego/acme"
 )
@@ -71,8 +71,8 @@ func TestDomainsSetAppend(t *testing.T) {
 }
 
 func TestCertificatesRenew(t *testing.T) {
-	foo1Cert, foo1Key, _ := traefikTls.GenerateKeyPair("foo1.com", time.Now())
-	foo2Cert, foo2Key, _ := traefikTls.GenerateKeyPair("foo2.com", time.Now())
+	foo1Cert, foo1Key, _ := generate.KeyPair("foo1.com", time.Now())
+	foo2Cert, foo2Key, _ := generate.KeyPair("foo2.com", time.Now())
 	domainsCertificates := DomainsCertificates{
 		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{
@@ -102,7 +102,7 @@ func TestCertificatesRenew(t *testing.T) {
 			},
 		},
 	}
-	foo1Cert, foo1Key, _ = traefikTls.GenerateKeyPair("foo1.com", time.Now())
+	foo1Cert, foo1Key, _ = generate.KeyPair("foo1.com", time.Now())
 	newCertificate := &Certificate{
 		Domain:        "foo1.com",
 		CertURL:       "url",
@@ -129,10 +129,10 @@ func TestCertificatesRenew(t *testing.T) {
 
 func TestRemoveDuplicates(t *testing.T) {
 	now := time.Now()
-	fooCert, fooKey, _ := traefikTls.GenerateKeyPair("foo.com", now)
-	foo24Cert, foo24Key, _ := traefikTls.GenerateKeyPair("foo.com", now.Add(24*time.Hour))
-	foo48Cert, foo48Key, _ := traefikTls.GenerateKeyPair("foo.com", now.Add(48*time.Hour))
-	barCert, barKey, _ := traefikTls.GenerateKeyPair("bar.com", now)
+	fooCert, fooKey, _ := generate.KeyPair("foo.com", now)
+	foo24Cert, foo24Key, _ := generate.KeyPair("foo.com", now.Add(24*time.Hour))
+	foo48Cert, foo48Key, _ := generate.KeyPair("foo.com", now.Add(48*time.Hour))
+	barCert, barKey, _ := generate.KeyPair("bar.com", now)
 	domainsCertificates := DomainsCertificates{
 		lock: sync.RWMutex{},
 		Certs: []*DomainsCertificate{

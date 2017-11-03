@@ -27,11 +27,11 @@ To redirect an http entrypoint to an https entrypoint (with SNI support).
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
+      certFile = "integration/fixtures/https/snitest.org.cert"
+      keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
 !!! note
@@ -63,8 +63,8 @@ Define an entrypoint with SNI support.
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
 ```
 
 !!! note
@@ -88,11 +88,11 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
   [entryPoints.https.tls]
   ClientCAFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
     [[entryPoints.https.tls.certificates]]
-    CertFile = "integration/fixtures/https/snitest.com.cert"
-    KeyFile = "integration/fixtures/https/snitest.com.key"
+    certFile = "integration/fixtures/https/snitest.com.cert"
+    keyFile = "integration/fixtures/https/snitest.com.key"
     [[entryPoints.https.tls.certificates]]
-    CertFile = "integration/fixtures/https/snitest.org.cert"
-    KeyFile = "integration/fixtures/https/snitest.org.key"
+    certFile = "integration/fixtures/https/snitest.org.cert"
+    keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
 ## Authentication

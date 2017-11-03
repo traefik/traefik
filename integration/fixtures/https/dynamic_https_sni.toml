@@ -1,7 +1,5 @@
 logLevel = "DEBUG"
 
-checkNewVersion = false
-
 defaultEntryPoints = ["https"]
 
 [entryPoints]
@@ -14,5 +12,5 @@ defaultEntryPoints = ["https"]
 
 [file]
 
-fileName = "fixtures/https/dynamic_https.toml"
+fileName = "{{.DynamicConfFileName}}"
 watch = true

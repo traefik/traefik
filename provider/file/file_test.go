@@ -231,6 +231,7 @@ func createRandomFile(t *testing.T, tempDir string, contents ...string) *os.File
 
 // createFile Helper
 func createFile(t *testing.T, tempDir string, name string, contents ...string) *os.File {
+	t.Helper()
 	fileName := path.Join(tempDir, name)
 
 	tempFile, err := os.Create(fileName)
@@ -255,6 +256,7 @@ func createFile(t *testing.T, tempDir string, name string, contents ...string) *
 
 // createTempDir Helper
 func createTempDir(t *testing.T, dir string) string {
+	t.Helper()
 	d, err := ioutil.TempDir("", dir)
 	if err != nil {
 		t.Fatal(err)
@@ -264,6 +266,7 @@ func createTempDir(t *testing.T, dir string) string {
 
 // createDir Helper
 func createSubDir(t *testing.T, rootDir, dir string) string {
+	t.Helper()
 	err := os.Mkdir(rootDir+"/"+dir, 0775)
 	if err != nil {
 		t.Fatal(err)

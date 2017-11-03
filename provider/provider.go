@@ -22,12 +22,12 @@ type Provider interface {
 	Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error
 }
 
-// BaseProvider should be inherited by non https providers
+// BaseProvider should be inherited by providers
 type BaseProvider struct {
 	Watch                     bool              `description:"Watch provider" export:"true"`
-	Trace                     bool              `description:"Display additional provider logs (if available)." export:"true"`
 	Filename                  string            `description:"Override default configuration template. For advanced users :)" export:"true"`
 	Constraints               types.Constraints `description:"Filter services by constraint, matching with Traefik tags." export:"true"`
+	Trace                     bool              `description:"Display additional provider logs (if available)." export:"true"`
 	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template." export:"true"`
 }
 

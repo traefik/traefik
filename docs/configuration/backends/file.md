@@ -25,6 +25,9 @@ defaultEntryPoints = ["http", "https"]
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]		
+      certFile = "integration/fixtures/https/snitest.org.cert"		
+      keyFile = "integration/fixtures/https/snitest.org.key"
 
 [file]
 
@@ -79,13 +82,16 @@ defaultEntryPoints = ["http", "https"]
   rule = "Path:/test"
 
 # HTTPS certificate
-[[TLSConfiguration]]
-EntryPoints = ["https"]
-  [TLSConfiguration.Certificate]
-    CertFile = "integration/fixtures/https/snitest.com.cert"
-    KeyFile = "integration/fixtures/https/snitest.com.key"
+[[tlsConfiguration]]
+entryPoints = ["https"]
+  [tlsConfiguration.certificate]
+    certFile = "integration/fixtures/https/snitest.com.cert"
+    keyFile = "integration/fixtures/https/snitest.com.key"
 ```
 
+!!! note
+    adding certificates directly to the entrypoint is still maintained but certificates declared in this way cannot be managed dynamically.
+    It's recommended to use the file provider to declare certificates.
 
 ## Rules in a Separate File
 
@@ -148,22 +154,22 @@ filename = "rules.toml"
   backend = "backend2"
   rule = "Path:/test"
 # HTTPS certificate
-[[TLSConfiguration]]
-EntryPoints = ["https"]
-  [TLSConfiguration.Certificate]
-    CertFile = "integration/fixtures/https/snitest.com.cert"
-    KeyFile = "integration/fixtures/https/snitest.com.key"
+[[tlsConfiguration]]
+entryPoints = ["https"]
+  [tlsConfiguration.certificate]
+    certFile = "integration/fixtures/https/snitest.com.cert"
+    keyFile = "integration/fixtures/https/snitest.com.key"
 
-[[TLSConfiguration]]
-EntryPoints = ["https"]
-  [[TLSConfiguration.certificates]]
-  CertFile = "integration/fixtures/https/snitest.org.cert"
-  KeyFile = "integration/fixtures/https/snitest.org.key"
+[[tlsConfiguration]]
+entryPoints = ["https"]
+  [[tlsConfiguration.certificates]]
+  certFile = "integration/fixtures/https/snitest.org.cert"
+  keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
 ## Multiple `.toml` Files
 
-You could have multiple `.toml` files in a directory (and recursively and its sub-directories):
+You could have multiple `.toml` files in a directory (and recursively in its sub-directories):
 
 ```toml
 [file]

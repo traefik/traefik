@@ -19,6 +19,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	traefikTls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
 	"github.com/xenolf/lego/acme"
@@ -50,7 +51,7 @@ type ACME struct {
 	checkOnDemandDomain func(domain string) bool
 	jobs                *channels.InfiniteChannel
 	TLSConfig           *tls.Config `description:"TLS config in case wildcard certs are used"`
-	dynamicsCerts       *safe.Safe
+	dynamicCerts        *safe.Safe
 }
 
 //Domains parse []Domain
@@ -101,7 +102,7 @@ func (a *ACME) init() error {
 		acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
 	// no certificates in TLS config, so we add a default one
-	cert, err := traefikTls.GenerateDefaultCertificate()
+	cert, err := generate.DefaultCertificate()
 	if err != nil {
 		return err
 	}
@@ -125,7 +126,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 		return errors.New("Empty Store, please provide a key for certs storage")
 	}
 	a.checkOnDemandDomain = checkOnDemandDomain
-	a.dynamicsCerts = certs
+	a.dynamicCerts = certs
 	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
@@ -246,7 +247,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkO
 		return errors.New("Empty Store, please provide a filename for certs storage")
 	}
 	a.checkOnDemandDomain = checkOnDemandDomain
-	a.dynamicsCerts = certs
+	a.dynamicCerts = certs
 	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
@@ -590,10 +591,9 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 // from static and dynamic provided certificates
 func (a *ACME) getProvidedCertificate(domains []string) *tls.Certificate {
 	log.Debugf("Look for provided certificate to validate %s...", domains)
-	var cert *tls.Certificate
-	cert = searchProvidedCertificateForDomains(domains, a.TLSConfig.NameToCertificate)
-	if cert == nil && a.dynamicsCerts != nil && a.dynamicsCerts.Get() != nil {
-		cert = searchProvidedCertificateForDomains(domains, a.dynamicsCerts.Get().(*traefikTls.DomainsCertificates).Get().(map[string]*tls.Certificate))
+	cert := searchProvidedCertificateForDomains(domains, a.TLSConfig.NameToCertificate)
+	if cert == nil && a.dynamicCerts != nil && a.dynamicCerts.Get() != nil {
+		cert = searchProvidedCertificateForDomains(domains, a.dynamicCerts.Get().(*traefikTls.DomainsCertificates).Get().(map[string]*tls.Certificate))
 	}
 	log.Debugf("No provided certificate found for domains %s, get ACME certificate.", domains)
 	return cert
