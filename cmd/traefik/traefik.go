@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"strings"
 	"time"
 
@@ -34,8 +33,6 @@ import (
 )
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
-
 	//traefik config inits
 	traefikConfiguration := NewTraefikConfiguration()
 	traefikPointersConfiguration := NewTraefikDefaultPointersConfiguration()

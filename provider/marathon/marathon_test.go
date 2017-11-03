@@ -93,7 +93,9 @@ func TestMarathonLoadConfigNonAPIErrors(t *testing.T) {
 					},
 				},
 			},
-			expectedBackends: nil,
+			expectedBackends: map[string]*types.Backend{
+				"backend-app": {},
+			},
 		},
 		{
 			desc: "load balancer / circuit breaker labels",

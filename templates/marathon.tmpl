@@ -12,6 +12,7 @@
 
 {{range $app := $apps}}
 {{range $serviceIndex, $serviceName := getServiceNames $app}}
+[backends."backend{{getBackend $app $serviceName }}"]
 {{ if hasMaxConnLabels $app }}
       [backends."backend{{getBackend $app $serviceName }}".maxconn]
         amount = {{getMaxConnAmount $app }}

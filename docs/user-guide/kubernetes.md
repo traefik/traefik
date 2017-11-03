@@ -121,6 +121,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: traefik-ingress-service
+  namespace: kube-system
 spec:
   selector:
     k8s-app: traefik-ingress-lb
@@ -185,6 +186,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: traefik-ingress-service
+  namespace: kube-system
 spec:
   selector:
     k8s-app: traefik-ingress-lb
