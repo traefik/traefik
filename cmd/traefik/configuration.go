@@ -6,6 +6,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/plugin"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -232,6 +233,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 				Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
 			},
 			CheckNewVersion: true,
+			Plugins:         plugin.Plugins{},
 		},
 		ConfigFile: "",
 	}

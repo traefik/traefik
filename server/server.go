@@ -30,6 +30,7 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
+	"github.com/containous/traefik/plugin"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
@@ -66,6 +67,7 @@ type Server struct {
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
 	metricsRegistry               metrics.Registry
+	pluginManager                 *plugin.Manager
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -106,6 +108,9 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 	if globalConfiguration.Web != nil && globalConfiguration.Web.Metrics != nil {
 		server.registerMetricClients(globalConfiguration.Web.Metrics)
 	}
+
+	// This initialization needs to happen after the metricsRegistry has been configured with clients
+	server.pluginManager = loadPlugins(globalConfiguration, server.metricsRegistry)
 
 	if globalConfiguration.Cluster != nil {
 		// leadership creation if cluster mode
@@ -220,6 +225,7 @@ func (server *Server) Stop() {
 		}(sepn, sep)
 	}
 	wg.Wait()
+	server.pluginManager.Stop()
 	server.stopChan <- true
 }
 
@@ -236,6 +242,7 @@ func (server *Server) Close() {
 		}
 	}(ctx)
 	stopMetricsClients()
+	server.pluginManager.Stop()
 	server.stopLeadership()
 	server.routinesPool.Cleanup()
 	close(server.configurationChan)
@@ -304,6 +311,9 @@ func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newS
 			log.Fatal("Error starting server: ", err)
 		}
 		serverMiddlewares = append(serverMiddlewares, ipWhitelistMiddleware)
+	}
+	for _, m := range server.pluginManager.GetMiddlewares() {
+		serverMiddlewares = append(serverMiddlewares, *m)
 	}
 	newSrv, listener, err := server.prepareServer(newServerEntryPointName, server.globalConfiguration.EntryPoints[newServerEntryPointName], newServerEntryPoint.httpRouter, serverMiddlewares...)
 	if err != nil {
@@ -1287,4 +1297,16 @@ func (server *Server) buildRetryMiddleware(handler http.Handler, globalConfig co
 	log.Debugf("Creating retries max attempts %d", retryAttempts)
 
 	return middlewares.NewRetry(retryAttempts, handler, retryListeners)
+}
+
+func loadPlugins(globalConfiguration configuration.GlobalConfiguration, registry metrics.Registry) *plugin.Manager {
+	manager := plugin.NewManager(registry)
+	for _, pluginConfiguration := range globalConfiguration.Plugins {
+		if err := manager.Load(pluginConfiguration); err != nil {
+			log.Errorf("Error loading plugin: %s", err)
+			continue
+		}
+		log.Infof("Plugin loaded %+v", pluginConfiguration)
+	}
+	return manager
 }

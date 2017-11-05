@@ -11,6 +11,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/plugin"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
 	"github.com/containous/traefik/provider/docker"
@@ -67,6 +68,7 @@ type GlobalConfiguration struct {
 	RootCAs                   RootCAs                 `description:"Add cert file for self-signed certificate"`
 	Retry                     *Retry                  `description:"Enable retry sending request if network error" export:"true"`
 	HealthCheck               *HealthCheckConfig      `description:"Health check parameters" export:"true"`
+	Plugins                   plugin.Plugins          `description:"External plugins definition using format: --plugins='grpc:before|/path/to/plugin;go|/path/to/plugin'" export:"true"`
 	RespondingTimeouts        *RespondingTimeouts     `description:"Timeouts for incoming requests to the Traefik instance" export:"true"`
 	ForwardingTimeouts        *ForwardingTimeouts     `description:"Timeouts for requests forwarded to the backend servers" export:"true"`
 	Docker                    *docker.Provider        `description:"Enable Docker backend with default settings" export:"true"`

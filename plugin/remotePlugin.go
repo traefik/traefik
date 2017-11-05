@@ -1,10 +1,14 @@
 package plugin
 
 import (
-	//"io/ioutil"
+	"io/ioutil"
 	"net/http"
 	"net/rpc"
+	"net/url"
 	"os/exec"
+	"path/filepath"
+	"strconv"
+	"time"
 
 	"google.golang.org/grpc"
 
@@ -14,11 +18,6 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/satori/go.uuid"
 	"github.com/vulcand/oxy/forward"
-	"io/ioutil"
-	"net/url"
-	"path/filepath"
-	"strconv"
-	"time"
 )
 
 // RemoteHandshake is a common handshake that is shared by plugin and host.
@@ -129,16 +128,10 @@ func (h *RemotePluginMiddlewareHandler) ServeHTTP(rw http.ResponseWriter, r *htt
 func (h *RemotePluginMiddlewareHandler) executeRemotePlugin(rw http.ResponseWriter, r *http.Request, guid string, before bool) bool {
 	if h.client != nil {
 		start := time.Now()
-		//log.Debugf("Calling Remote Plugin %+v for Request %+v", remote, r)
-		//log.Debug("Request Method: " + r.Method)
 		pluginRequest := h.createPluginRequest(rw, r, guid)
 		log.Debugf("Plugin Request: %+v", pluginRequest)
 		resp, err := h.remote.ServeHttp(pluginRequest)
-		//resp, err := remote.ServeHttp(&proto.Request{
-		//	Request: &proto.HttpRequest{
-		//		Body: []byte("test"),
-		//	},
-		//})
+
 		if h.registry.IsEnabled() {
 			pluginDurationLabels := []string{"plugin", filepath.Base(h.plugin.Path), "error", strconv.FormatBool(err != nil), "order", h.plugin.Order}
 			h.registry.PluginDurationHistogram().With(pluginDurationLabels...).Observe(time.Since(start).Seconds())
@@ -220,8 +213,7 @@ func (h *RemotePluginMiddlewareHandler) handlePluginResponse(pResp *proto.Respon
 		return true
 	}
 	log.Debug("Generic plugin response")
-	rw.WriteHeader(int(pResp.Response.StatusCode))
-	rw.Write([]byte("Response from plugin"))
+
 	return pResp.StopChain
 }
 

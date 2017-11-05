@@ -21,6 +21,7 @@ import (
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/plugin"
 	"github.com/containous/traefik/provider/ecs"
 	"github.com/containous/traefik/provider/kubernetes"
 	"github.com/containous/traefik/safe"
@@ -150,6 +151,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
+	f.AddParser(reflect.TypeOf(plugin.Plugins{}), &plugin.Plugins{})
 
 	//add commands
 	f.AddCommand(newVersionCmd())
