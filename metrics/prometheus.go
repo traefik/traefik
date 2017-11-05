@@ -9,9 +9,10 @@ import (
 const (
 	metricNamePrefix = "traefik_"
 
-	reqsTotalName    = metricNamePrefix + "requests_total"
-	reqDurationName  = metricNamePrefix + "request_duration_seconds"
-	retriesTotalName = metricNamePrefix + "backend_retries_total"
+	reqsTotalName      = metricNamePrefix + "requests_total"
+	reqDurationName    = metricNamePrefix + "request_duration_seconds"
+	retriesTotalName   = metricNamePrefix + "backend_retries_total"
+	pluginDurationName = metricNamePrefix + "plugin_duration_seconds"
 )
 
 // RegisterPrometheus registers all Prometheus metrics.
@@ -35,11 +36,17 @@ func RegisterPrometheus(config *types.Prometheus) Registry {
 		Name: retriesTotalName,
 		Help: "How many request retries happened in total.",
 	}, []string{"service"})
+	pluginDurationHistogram := prometheus.NewHistogramFrom(stdprometheus.HistogramOpts{
+		Name:    pluginDurationName,
+		Help:    "How long it took for plugin to process the request.",
+		Buckets: buckets,
+	}, []string{"plugin", "error", "order"})
 
 	return &standardRegistry{
-		enabled:              true,
-		reqsCounter:          reqCounter,
-		reqDurationHistogram: reqDurationHistogram,
-		retriesCounter:       retryCounter,
+		enabled:                 true,
+		reqsCounter:             reqCounter,
+		reqDurationHistogram:    reqDurationHistogram,
+		retriesCounter:          retryCounter,
+		pluginDurationHistogram: pluginDurationHistogram,
 	}
 }

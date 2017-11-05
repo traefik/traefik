@@ -22,6 +22,7 @@ const (
 	ddMetricsReqsName    = "requests.total"
 	ddMetricsLatencyName = "request.duration"
 	ddRetriesTotalName   = "backend.retries.total"
+	ddPluginLatencyName  = "plugin.duration"
 )
 
 // RegisterDatadog registers the metrics pusher if this didn't happen yet and creates a datadog Registry instance.
@@ -31,10 +32,11 @@ func RegisterDatadog(config *types.Datadog) Registry {
 	}
 
 	registry := &standardRegistry{
-		enabled:              true,
-		reqsCounter:          datadogClient.NewCounter(ddMetricsReqsName, 1.0),
-		reqDurationHistogram: datadogClient.NewHistogram(ddMetricsLatencyName, 1.0),
-		retriesCounter:       datadogClient.NewCounter(ddRetriesTotalName, 1.0),
+		enabled:                 true,
+		reqsCounter:             datadogClient.NewCounter(ddMetricsReqsName, 1.0),
+		reqDurationHistogram:    datadogClient.NewHistogram(ddMetricsLatencyName, 1.0),
+		retriesCounter:          datadogClient.NewCounter(ddRetriesTotalName, 1.0),
+		pluginDurationHistogram: datadogClient.NewHistogram(ddPluginLatencyName, 1.0),
 	}
 
 	return registry
