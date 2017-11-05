@@ -1,5 +1,5 @@
-hash: 70e3ed39d2777d36b679ff55b8b0f2eb8d0b239fdfb8108f41b8b7239bc7920c
-updated: 2017-10-25T10:18:20.438135-04:00
+hash: 1d18b9c76989feed304a8781b18ea24b43e858091b775316af97bfc210a06ea0
+updated: 2017-11-02T11:39:20.438135-04:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -436,11 +436,11 @@ imports:
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/rancher/go-rancher
-  version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
+  version: 52e2f489534007ae843065468c5a1920d542afa4
   subpackages:
-  - client
+  - v2
 - name: github.com/rancher/go-rancher-metadata
-  version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
+  version: d2103caca5873119ff423d29cba09b4d03cd69b8
   subpackages:
   - metadata
 - name: github.com/ryanuber/go-glob
