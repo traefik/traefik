@@ -10,6 +10,16 @@ RED=$'\033[31m'
 GREEN=$'\033[32m'
 TEXTRESET=$'\033[0m' # reset the foreground colour
 
+# Build plugin test binaries
+OS_PLATFORM_ARG=(darwin linux windows)
+OS_ARCH_ARG=(amd64)
+for OS in ${OS_PLATFORM_ARG[@]}; do
+  for ARCH in ${OS_ARCH_ARG[@]}; do
+    echo "Building plugin test binary for ${OS}/${ARCH}..."
+    GOARCH=${ARCH} GOOS=${OS} CGO_ENABLED=0 go build -o "plugin/test/plugin-test-go-grpc_${OS}-${ARCH}" ./plugin/test/
+  done
+done
+
 # This helper function walks the current directory looking for directories
 # holding certain files ($1 parameter), and prints their paths on standard
 # output, one per line.
