@@ -1,5 +1,5 @@
-hash: 1d18b9c76989feed304a8781b18ea24b43e858091b775316af97bfc210a06ea0
-updated: 2017-11-02T11:39:20.438135-04:00
+hash: fca576d82af11a54e072f17b7ddf7fa9f0e76709c0efead508a63ff6dd8e9c1f
+updated: 2017-11-05T19:46:37.284061439-06:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -96,6 +96,8 @@ imports:
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:
+  - Godeps/_workspace/src/github.com/ugorji/go/codec
+  - Godeps/_workspace/src/golang.org/x/net/context
   - client
   - pkg/pathutil
   - pkg/types
@@ -276,9 +278,13 @@ imports:
 - name: github.com/golang/glog
   version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/golang/protobuf
-  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
+  version: 1643683e1b54a9e88ad26d98f81400c8c9d9f4f9
   subpackages:
   - proto
+  - ptypes
+  - ptypes/any
+  - ptypes/duration
+  - ptypes/timestamp
 - name: github.com/google/go-github
   version: fe7d11f8add400587b6718d9f39a62e42cb04c28
   subpackages:
@@ -301,6 +307,8 @@ imports:
   - api
 - name: github.com/hashicorp/go-cleanhttp
   version: 3573b8b52aa7b37b9358d966a898feb387f62437
+- name: github.com/hashicorp/go-plugin
+  version: e2fbc6864d18d3c37b6cde4297ec9fca266d28f1
 - name: github.com/hashicorp/go-version
   version: 03c5bf6be031b6dd45afec16b1cf94fc8938bc77
 - name: github.com/hashicorp/serf
@@ -310,7 +318,7 @@ imports:
 - name: github.com/huandu/xstrings
   version: 3959339b333561bf62a38b424fd41517c2c90f40
 - name: github.com/imdario/mergo
-  version: 3e95a51e0639b4cf372f2ccf74c86749d747fbdc
+  version: 7fe0c75c13abdee74b09fcacef5ea1c6bba6a874
 - name: github.com/JamesClonk/vultr
   version: 2fd0705ce648e602e6c9c57329a174270a4f6688
   subpackages:
@@ -338,7 +346,7 @@ imports:
 - name: github.com/Masterminds/semver
   version: 59c29afe1a994eacb71c833025ca7acf874bb1da
 - name: github.com/Masterminds/sprig
-  version: 9526be0327b26ad31aa70296a7b10704883976d5
+  version: e039e20e500c2c025d9145be375e27cf42a94174
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable
@@ -542,7 +550,7 @@ imports:
   - pbkdf2
   - scrypt
 - name: golang.org/x/net
-  version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
+  version: ab5485076ff3407ad2d02db054635913f017b0ed
   subpackages:
   - context
   - context/ctxhttp
@@ -568,9 +576,10 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 2910a502d2bf9e43193af9d68ca516529614eed3
+  version: 2c2f828ccebb0403bb1f3244c9e1aa5a4e10cc6f
   subpackages:
   - cases
+  - internal
   - internal/tag
   - language
   - runes
@@ -603,18 +612,27 @@ imports:
   - internal/remote_api
   - internal/urlfetch
   - urlfetch
-- name: google.golang.org/grpc
-  version: cdee119ee21e61eef7093a41ba148fa83585e143
+- name: google.golang.org/genproto
+  version: 11c7f9e547da6db876260ce49ea7536985904c9b
   subpackages:
+  - googleapis/rpc/status
+- name: google.golang.org/grpc
+  version: 61d37c5d657a47e4404fd6823bd598341a2595de
+  subpackages:
+  - balancer
   - codes
+  - connectivity
   - credentials
+  - grpclb/grpc_lb_v1/messages
   - grpclog
   - internal
   - keepalive
   - metadata
   - naming
   - peer
+  - resolver
   - stats
+  - status
   - tap
   - transport
 - name: gopkg.in/fsnotify.v1

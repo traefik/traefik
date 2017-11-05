@@ -765,7 +765,7 @@ func nextExtension(s string, p int) int {
 
 var errInvalidWeight = errors.New("ParseAcceptLanguage: invalid weight")
 
-// ParseAcceptLanguage parses the contents of a Accept-Language header as
+// ParseAcceptLanguage parses the contents of an Accept-Language header as
 // defined in http://www.ietf.org/rfc/rfc2616.txt and returns a list of Tags and
 // a list of corresponding quality weights. It is more permissive than RFC 2616
 // and may return non-nil slices even if the input is not valid.

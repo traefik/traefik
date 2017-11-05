@@ -575,7 +575,7 @@ func (cc *ClientConn) canTakeNewRequestLocked() bool {
 		cc.nextStreamID < math.MaxInt32
 }
 
-// onIdleTimeout is called from a time.AfterFunc goroutine.  It will
+// onIdleTimeout is called from a time.AfterFunc goroutine. It will
 // only be called when we're idle, but because we're coming from a new
 // goroutine, there could be a new request coming in at the same time,
 // so this simply calls the synchronized closeIfIdle to shut down this
@@ -694,7 +694,7 @@ func checkConnHeaders(req *http.Request) error {
 // req.ContentLength, where 0 actually means zero (not unknown) and -1
 // means unknown.
 func actualContentLength(req *http.Request) int64 {
-	if req.Body == nil {
+	if req.Body == nil || reqBodyIsNoBody(req.Body) {
 		return 0
 	}
 	if req.ContentLength != 0 {
@@ -725,8 +725,8 @@ func (cc *ClientConn) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	body := req.Body
-	hasBody := body != nil
 	contentLen := actualContentLength(req)
+	hasBody := contentLen != 0
 
 	// TODO(bradfitz): this is a copy of the logic in net/http. Unify somewhere?
 	var requestedGzip bool
@@ -809,8 +809,8 @@ func (cc *ClientConn) RoundTrip(req *http.Request) (*http.Response, error) {
 			// 2xx, however, then assume the server DOES potentially
 			// want our body (e.g. full-duplex streaming:
 			// golang.org/issue/13444). If it turns out the server
-			// doesn't, they'll RST_STREAM us soon enough.  This is a
-			// heuristic to avoid adding knobs to Transport.  Hopefully
+			// doesn't, they'll RST_STREAM us soon enough. This is a
+			// heuristic to avoid adding knobs to Transport. Hopefully
 			// we can keep it.
 			bodyWriter.cancel()
 			cs.abortRequestBodyWrite(errStopReqBodyWrite)
@@ -1528,8 +1528,7 @@ func (rl *clientConnReadLoop) handleResponse(cs *clientStream, f *MetaHeadersFra
 		return res, nil
 	}
 
-	buf := new(bytes.Buffer) // TODO(bradfitz): recycle this garbage
-	cs.bufPipe = pipe{b: buf}
+	cs.bufPipe = pipe{b: &dataBuffer{expected: res.ContentLength}}
 	cs.bytesRemain = res.ContentLength
 	res.Body = transportResponseBody{cs}
 	go cs.awaitRequestCancel(cs.req)
@@ -1656,6 +1655,7 @@ func (b transportResponseBody) Close() error {
 		cc.wmu.Lock()
 		if !serverSentStreamEnd {
 			cc.fr.WriteRSTStream(cs.ID, ErrCodeCancel)
+			cs.didReset = true
 		}
 		// Return connection-level flow control.
 		if unread > 0 {
@@ -1703,12 +1703,6 @@ func (rl *clientConnReadLoop) processData(f *DataFrame) error {
 		return nil
 	}
 	if f.Length > 0 {
-		if len(data) > 0 && cs.bufPipe.b == nil {
-			// Data frame after it's already closed?
-			cc.logf("http2: Transport received DATA frame for closed stream; closing connection")
-			return ConnectionError(ErrCodeProtocol)
-		}
-
 		// Check connection-level flow control.
 		cc.mu.Lock()
 		if cs.inflow.available() >= int32(f.Length) {
@@ -1719,16 +1713,27 @@ func (rl *clientConnReadLoop) processData(f *DataFrame) error {
 		}
 		// Return any padded flow control now, since we won't
 		// refund it later on body reads.
-		if pad := int32(f.Length) - int32(len(data)); pad > 0 {
-			cs.inflow.add(pad)
-			cc.inflow.add(pad)
+		var refund int
+		if pad := int(f.Length) - len(data); pad > 0 {
+			refund += pad
+		}
+		// Return len(data) now if the stream is already closed,
+		// since data will never be read.
+		didReset := cs.didReset
+		if didReset {
+			refund += len(data)
+		}
+		if refund > 0 {
+			cc.inflow.add(int32(refund))
 			cc.wmu.Lock()
-			cc.fr.WriteWindowUpdate(0, uint32(pad))
-			cc.fr.WriteWindowUpdate(cs.ID, uint32(pad))
+			cc.fr.WriteWindowUpdate(0, uint32(refund))
+			if !didReset {
+				cs.inflow.add(int32(refund))
+				cc.fr.WriteWindowUpdate(cs.ID, uint32(refund))
+			}
 			cc.bw.Flush()
 			cc.wmu.Unlock()
 		}
-		didReset := cs.didReset
 		cc.mu.Unlock()
 
 		if len(data) > 0 && !didReset {

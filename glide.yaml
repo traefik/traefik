@@ -48,6 +48,7 @@ import:
 - package: github.com/hashicorp/consul
   subpackages:
   - api
+- package: github.com/hashicorp/go-plugin
 - package: github.com/streamrail/concurrent-map
 - package: github.com/thoas/stats
   version: 152b5d051953fdb6e45f14b6826962aadc032324
@@ -124,7 +125,7 @@ import:
 - package: golang.org/x/sys
   version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
 - package: golang.org/x/net
-  version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
+  version: ab5485076ff3407ad2d02db054635913f017b0ed
   subpackages:
   - http2
   - context
@@ -164,7 +165,7 @@ import:
   subpackages:
   - proto
 - package: github.com/golang/protobuf
-  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
+  version: 1643683e1b54a9e88ad26d98f81400c8c9d9f4f9
 - package: github.com/rancher/go-rancher
   version: 52e2f489534007ae843065468c5a1920d542afa4
 - package: golang.org/x/oauth2
@@ -178,7 +179,7 @@ import:
 - package: github.com/googleapis/gax-go
   version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
 - package: google.golang.org/grpc
-  version: v1.2.0
+  version: v1.7.1
 - package: github.com/unrolled/secure
   version: 824e85271811af89640ea25620c67f6c2eed987e
 - package: github.com/Nvveen/Gotty
@@ -202,6 +203,8 @@ import:
 - package: github.com/armon/go-proxyproto
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - package: github.com/mitchellh/copystructure
+- package: golang.org/x/text
+  version: 2c2f828ccebb0403bb1f3244c9e1aa5a4e10cc6f
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose
