@@ -198,7 +198,7 @@ Traefik will only try to generate a Let's encrypt certificate if the domain cann
 
 #### Prerequisites
 
-Before to use Let's Encrypt in a Traefik cluster, take a look to [the key-value store explanations](/user-guide/kv-config) and more precisely to [this section](/user-guide/kv-config/#store-configuration-in-key-value-store) in the way to know how to migrate from a acme local storage *(acme.json file)* to a key-value store configuration.
+Before you use Let's Encrypt in a Traefik cluster, take a look to [the key-value store explanations](/user-guide/kv-config) and more precisely at [this section](/user-guide/kv-config/#store-configuration-in-key-value-store), which will describe how to migrate from a acme local storage *(acme.json file)* to a key-value store configuration.
 
 #### Configuration
 
