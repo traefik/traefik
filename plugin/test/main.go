@@ -7,9 +7,10 @@ import (
 	hPlugin "github.com/hashicorp/go-plugin"
 )
 
+// MiddlewareTest is a test struct
 type MiddlewareTest struct{}
 
-func (MiddlewareTest) ServeHttp(req *proto.Request) (*proto.Response, error) {
+func (MiddlewareTest) ServeHTTP(req *proto.Request) (*proto.Response, error) {
 	gProto.Merge(req.Request, &proto.HttpRequest{
 		Url:        "https://www.google.com",
 		RequestUri: "https://www.google.com",

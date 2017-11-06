@@ -8,8 +8,9 @@ import (
 // GRPCClient is an implementation of KV that talks over RPC.
 type GRPCClient struct{ client proto.MiddlewareClient }
 
-func (m *GRPCClient) ServeHttp(req *proto.Request) (*proto.Response, error) {
-	resp, err := m.client.ServeHttp(context.Background(), req)
+// ServeHTTP method implements facade on top of gRPC Client
+func (m *GRPCClient) ServeHTTP(req *proto.Request) (*proto.Response, error) {
+	resp, err := m.client.ServeHTTP(context.Background(), req)
 	if err != nil {
 		return nil, err
 	}
@@ -17,14 +18,15 @@ func (m *GRPCClient) ServeHttp(req *proto.Request) (*proto.Response, error) {
 	return resp, nil
 }
 
-// Here is the gRPC server that GRPCClient talks to.
+// GRPCServer is the gRPC server that GRPCClient talks to.
 type GRPCServer struct {
 	// This is the real implementation
 	Impl RemotePluginMiddleware
 }
 
-func (m *GRPCServer) ServeHttp(
+// ServeHTTP method implements facade on top of gRPC Server.
+func (m *GRPCServer) ServeHTTP(
 	ctx context.Context,
 	req *proto.Request) (*proto.Response, error) {
-	return m.Impl.ServeHttp(req)
+	return m.Impl.ServeHTTP(req)
 }

@@ -6,6 +6,7 @@ import (
 )
 
 // Flaeg Parsing Hooks
+
 // Plugin defines a plugin configuration in traefik
 type Plugin struct {
 	Path  string
@@ -13,21 +14,25 @@ type Plugin struct {
 	Order string
 }
 
+// Before returns true if plugin execution order is going to take place before the next handler, i.e "order" == 'before' or 'around'
 func (p *Plugin) Before() bool {
 	return p.Order == PluginBefore || p.Order == PluginAround
 }
 
+// After returns true if plugin execution order is going to take place after the next handler, i.e "order" == 'after' or 'around'
 func (p *Plugin) After() bool {
 	return p.Order == PluginAfter || p.Order == PluginAround
 }
 
+// Around returns true if plugin execution order is going to take place around the next handler, i.e "order" == 'around'
 func (p *Plugin) Around() bool {
 	return p.Order == PluginAround
 }
 
+// Constants defining Plugin types and orders
 const (
 	PluginGo     = "go"
-	PluginNetRpc = "netrpc"
+	PluginNetRPC = "netrpc"
 	PluginGrpc   = "grpc"
 
 	PluginBefore = "before"

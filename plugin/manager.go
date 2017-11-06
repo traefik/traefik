@@ -10,14 +10,14 @@ import (
 
 // Manager is in charge of instantiating plugins and storing those in memory
 type Manager struct {
-	middlewares []*PluginMiddleware
+	middlewares []*Middleware
 	registry    metrics.Registry
 }
 
 // NewManager builds a new manager
 func NewManager(registry metrics.Registry) *Manager {
 	return &Manager{
-		middlewares: []*PluginMiddleware{},
+		middlewares: []*Middleware{},
 		registry:    registry,
 	}
 }
@@ -32,7 +32,7 @@ func (m *Manager) Load(plugin Plugin) error {
 		switch plugin.Type {
 		case PluginGo:
 			instance = m.loadGoPlugin(plugin, errChan)
-		case PluginGrpc, PluginNetRpc:
+		case PluginGrpc, PluginNetRPC:
 			instance = m.loadRemotePlugin(plugin, errChan)
 		default:
 			errChan <- fmt.Errorf("unknown plugin type: %s", plugin.Type)
@@ -43,7 +43,7 @@ func (m *Manager) Load(plugin Plugin) error {
 			errChan <- fmt.Errorf("plugin from %+v can not be loaded", plugin)
 			return
 		}
-		if middleware, ok := instance.(PluginMiddleware); ok {
+		if middleware, ok := instance.(Middleware); ok {
 			// if RemotePluginMiddleware, add to middleware list
 			m.middlewares = append(m.middlewares, &middleware)
 		} else {
@@ -62,7 +62,7 @@ func (m *Manager) Load(plugin Plugin) error {
 	return nil
 }
 
-func (m *Manager) loadRemotePlugin(plugin Plugin, errChan chan error) PluginMiddleware {
+func (m *Manager) loadRemotePlugin(plugin Plugin, errChan chan error) Middleware {
 	log.Debugf("Loading Remote Plugin from %s", plugin.Path)
 	return NewRemotePluginMiddleware(plugin, m.registry)
 }
@@ -86,14 +86,15 @@ func (m *Manager) loadGoPlugin(plugin Plugin, errChan chan error) interface{} {
 	return load()
 }
 
-// GetMiddlewares return a list of all PluginMiddleware plugins
-func (m *Manager) GetMiddlewares() []*PluginMiddleware {
+// GetMiddlewares return a list of all Middleware plugins
+func (m *Manager) GetMiddlewares() []*Middleware {
 	if m != nil {
 		return m.middlewares
 	}
-	return []*PluginMiddleware{}
+	return []*Middleware{}
 }
 
+// Stop method shuts down all the plugin middlewares
 func (m *Manager) Stop() {
 	if m != nil {
 		for _, p := range m.GetMiddlewares() {

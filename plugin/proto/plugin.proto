@@ -190,5 +190,5 @@ message ValueList {
 }
 
 service Middleware {
-    rpc ServeHttp(Request) returns (Response);
+    rpc ServeHTTP(Request) returns (Response);
 }

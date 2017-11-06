@@ -34,13 +34,13 @@ var RemotePluginMap = map[string]plugin.Plugin{
 
 // RemotePluginMiddleware is the interface that we're exposing as a plugin.
 type RemotePluginMiddleware interface {
-	ServeHttp(req *proto.Request) (*proto.Response, error)
+	ServeHTTP(req *proto.Request) (*proto.Response, error)
 }
 
 var _ plugin.Plugin = (*RemotePlugin)(nil)
 var _ plugin.GRPCPlugin = (*RemotePlugin)(nil)
 
-// This is the implementation of plugin.Plugin so we can serve/consume this.
+// RemotePlugin is the implementation of plugin.Plugin so we can serve/consume this.
 // We also implement GRPCPlugin so that this plugin can be served over
 // gRPC.
 type RemotePlugin struct {
@@ -49,24 +49,28 @@ type RemotePlugin struct {
 	Impl RemotePluginMiddleware
 }
 
+// Server is the method that creates NetRPC server instance
 func (p *RemotePlugin) Server(*plugin.MuxBroker) (interface{}, error) {
 	return &RPCServer{Impl: p.Impl}, nil
 }
 
+// Client is the method that creates NetRPC client instance
 func (*RemotePlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
 	return &RPCClient{client: c}, nil
 }
 
+// GRPCServer is the method that creates GRPCServer server instance
 func (p *RemotePlugin) GRPCServer(s *grpc.Server) error {
 	proto.RegisterMiddlewareServer(s, &GRPCServer{Impl: p.Impl})
 	return nil
 }
 
+// GRPCClient is the method that creates GRPCClient client instance
 func (p *RemotePlugin) GRPCClient(c *grpc.ClientConn) (interface{}, error) {
 	return &GRPCClient{client: proto.NewMiddlewareClient(c)}, nil
 }
 
-// RemotePluginMiddleware
+// RemotePluginMiddlewareHandler defines the struct for remote plugin handler (grpc/netrpc)
 type RemotePluginMiddlewareHandler struct {
 	client   *plugin.Client
 	remote   RemotePluginMiddleware
@@ -74,7 +78,7 @@ type RemotePluginMiddlewareHandler struct {
 	plugin   Plugin
 }
 
-// NewRemotePluginMiddleware creates a new PluginMiddleware instance.
+// NewRemotePluginMiddleware creates a new Middleware instance.
 func NewRemotePluginMiddleware(p Plugin, registry metrics.Registry) *RemotePluginMiddlewareHandler {
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig:  RemoteHandshake,
@@ -102,6 +106,7 @@ func NewRemotePluginMiddleware(p Plugin, registry metrics.Registry) *RemotePlugi
 	}
 }
 
+// Stop method shuts down remote plugin process
 func (h *RemotePluginMiddlewareHandler) Stop() {
 	log.Debug("Stopping Plugins")
 	h.client.Kill()
@@ -130,7 +135,7 @@ func (h *RemotePluginMiddlewareHandler) executeRemotePlugin(rw http.ResponseWrit
 		start := time.Now()
 		pluginRequest := h.createPluginRequest(rw, r, guid)
 		log.Debugf("Plugin Request: %+v", pluginRequest)
-		resp, err := h.remote.ServeHttp(pluginRequest)
+		resp, err := h.remote.ServeHTTP(pluginRequest)
 
 		if h.registry.IsEnabled() {
 			pluginDurationLabels := []string{"plugin", filepath.Base(h.plugin.Path), "error", strconv.FormatBool(err != nil), "order", h.plugin.Order}
@@ -142,9 +147,8 @@ func (h *RemotePluginMiddlewareHandler) executeRemotePlugin(rw http.ResponseWrit
 			rw.WriteHeader(http.StatusServiceUnavailable)
 			rw.Write([]byte(http.StatusText(http.StatusServiceUnavailable)))
 			return true
-		} else {
-			return h.handlePluginResponse(resp, rw, r)
 		}
+		return h.handlePluginResponse(resp, rw, r)
 	}
 	// nothing was done, so proceed with the next middleware chain
 	return false
@@ -200,9 +204,8 @@ func (h *RemotePluginMiddlewareHandler) handlePluginResponse(pResp *proto.Respon
 				fwd.ServeHTTP(rw, r)
 				log.Debugf("Forwarded plugin response to %s", pResp.Request.Url)
 				return true
-			} else {
-				log.Errorf("Unable to forward request to %s - %+v", pResp.Request.Url, err)
 			}
+			log.Errorf("Unable to forward request to %s - %+v", pResp.Request.Url, err)
 		}
 	}
 	if pResp.RenderContent && pResp.Response.Body != nil && len(pResp.Response.Body) > 0 {

@@ -36,7 +36,7 @@ func TestBasicPlugin(t *testing.T) {
 
 	assert.NotNil(t, remote)
 
-	resp, err := remote.ServeHttp(&proto.Request{
+	resp, err := remote.ServeHTTP(&proto.Request{
 		RequestUuid: "blah-blah-blah",
 		Request: &proto.HttpRequest{
 			Body: []byte("test"),
