@@ -1,5 +1,5 @@
 hash: fca576d82af11a54e072f17b7ddf7fa9f0e76709c0efead508a63ff6dd8e9c1f
-updated: 2017-11-05T19:46:37.284061439-06:00
+updated: 2017-11-05T20:55:49.431094725-06:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -307,6 +307,8 @@ imports:
   - api
 - name: github.com/hashicorp/go-cleanhttp
   version: 3573b8b52aa7b37b9358d966a898feb387f62437
+- name: github.com/hashicorp/go-hclog
+  version: ca137eb4b4389c9bc6f1a6d887f056bf16c00510
 - name: github.com/hashicorp/go-plugin
   version: e2fbc6864d18d3c37b6cde4297ec9fca266d28f1
 - name: github.com/hashicorp/go-version
@@ -315,6 +317,8 @@ imports:
   version: 19f2c401e122352c047a84d6584dd51e2fb8fcc4
   subpackages:
   - coordinate
+- name: github.com/hashicorp/yamux
+  version: f5742cb6b85602e7fa834e9d5d91a7d7fa850824
 - name: github.com/huandu/xstrings
   version: 3959339b333561bf62a38b424fd41517c2c90f40
 - name: github.com/imdario/mergo
@@ -387,6 +391,8 @@ imports:
   version: 8060d9f51305bbe024b99679454e62f552cd0b0b
 - name: github.com/mitchellh/copystructure
   version: d23ffcb85de31694d6ccaa23ccb4a03e55c1303f
+- name: github.com/mitchellh/go-testing-interface
+  version: a61a99592b77c9ba629d254a693acffaeb4b7e28
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
 - name: github.com/mitchellh/reflectwalk
@@ -625,6 +631,8 @@ imports:
   - credentials
   - grpclb/grpc_lb_v1/messages
   - grpclog
+  - health
+  - health/grpc_health_v1
   - internal
   - keepalive
   - metadata
