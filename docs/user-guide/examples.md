@@ -137,7 +137,7 @@ This configuration allows generating a Let's Encrypt certificate during the firs
     * TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DDoS attacks.
     * Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 
-    That's why, it's better to use the `onHostRule` optin if possible.
+    That's why, it's better to use the `onHostRule` option if possible.
 
 ### DNS challenge
 
@@ -170,7 +170,7 @@ entryPoint = "https"
 DNS challenge needs environment variables to be executed.
 This variables have to be set on the machine/container which host Traefik.
 
-These variables has described [in this section](/configuration/acme/#dnsprovider).
+These variables are described [in this section](/configuration/acme/#dnsprovider).
 
 ### OnHostRule option and provided certificates
 
