@@ -1,0 +1,100 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	fmtlog "log"
+
+	"github.com/containous/flaeg"
+	"github.com/containous/staert"
+	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/cluster"
+	"github.com/docker/libkv/store"
+)
+
+func newStoreConfigCmd(traefikConfiguration *TraefikConfiguration, traefikPointersConfiguration *TraefikConfiguration) *flaeg.Command {
+	return &flaeg.Command{
+		Name:                  "storeconfig",
+		Description:           `Store the static traefik configuration into a Key-value stores. Traefik will not start.`,
+		Config:                traefikConfiguration,
+		DefaultPointersConfig: traefikPointersConfiguration,
+		Metadata: map[string]string{
+			"parseAllSources": "true",
+		},
+	}
+}
+
+func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfiguration) func() error {
+	return func() error {
+		if kv == nil {
+			return fmt.Errorf("error using command storeconfig, no Key-value store defined")
+		}
+		jsonConf, err := json.Marshal(traefikConfiguration.GlobalConfiguration)
+		if err != nil {
+			return err
+		}
+		fmtlog.Printf("Storing configuration: %s\n", jsonConf)
+		err = kv.StoreConfig(traefikConfiguration.GlobalConfiguration)
+		if err != nil {
+			return err
+		}
+		if traefikConfiguration.GlobalConfiguration.ACME != nil && len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
+			// convert ACME json file to KV store
+			localStore := acme.NewLocalStore(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
+			object, err := localStore.Load()
+			if err != nil {
+				return err
+			}
+			meta := cluster.NewMetadata(object)
+			err = meta.Marshall()
+			if err != nil {
+				return err
+			}
+			source := staert.KvSource{
+				Store:  kv,
+				Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
+			}
+			err = source.StoreConfig(meta)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+// createKvSource creates KvSource
+// TLS support is enable for Consul and Etcd backends
+func createKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSource, error) {
+	var kv *staert.KvSource
+	var kvStore store.Store
+	var err error
+
+	switch {
+	case traefikConfiguration.Consul != nil:
+		kvStore, err = traefikConfiguration.Consul.CreateStore()
+		kv = &staert.KvSource{
+			Store:  kvStore,
+			Prefix: traefikConfiguration.Consul.Prefix,
+		}
+	case traefikConfiguration.Etcd != nil:
+		kvStore, err = traefikConfiguration.Etcd.CreateStore()
+		kv = &staert.KvSource{
+			Store:  kvStore,
+			Prefix: traefikConfiguration.Etcd.Prefix,
+		}
+	case traefikConfiguration.Zookeeper != nil:
+		kvStore, err = traefikConfiguration.Zookeeper.CreateStore()
+		kv = &staert.KvSource{
+			Store:  kvStore,
+			Prefix: traefikConfiguration.Zookeeper.Prefix,
+		}
+	case traefikConfiguration.Boltdb != nil:
+		kvStore, err = traefikConfiguration.Boltdb.CreateStore()
+		kv = &staert.KvSource{
+			Store:  kvStore,
+			Prefix: traefikConfiguration.Boltdb.Prefix,
+		}
+	}
+	return kv, err
+}

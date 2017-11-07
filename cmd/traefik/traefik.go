@@ -1,9 +1,7 @@
 package main
 
 import (
-	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	fmtlog "log"
 	"net/http"
 	"os"
@@ -17,7 +15,6 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
-	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
@@ -30,7 +27,6 @@ import (
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/version"
 	"github.com/coreos/go-systemd/daemon"
-	"github.com/docker/libkv/store"
 )
 
 func main() {
@@ -51,100 +47,7 @@ Complete documentation is available at https://traefik.io`,
 	}
 
 	//storeconfig Command init
-	var kv *staert.KvSource
-	var err error
-
-	storeConfigCmd := &flaeg.Command{
-		Name:                  "storeconfig",
-		Description:           `Store the static traefik configuration into a Key-value stores. Traefik will not start.`,
-		Config:                traefikConfiguration,
-		DefaultPointersConfig: traefikPointersConfiguration,
-		Run: func() error {
-			if kv == nil {
-				return fmt.Errorf("Error using command storeconfig, no Key-value store defined")
-			}
-			jsonConf, err := json.Marshal(traefikConfiguration.GlobalConfiguration)
-			if err != nil {
-				return err
-			}
-			fmtlog.Printf("Storing configuration: %s\n", jsonConf)
-			err = kv.StoreConfig(traefikConfiguration.GlobalConfiguration)
-			if err != nil {
-				return err
-			}
-			if traefikConfiguration.GlobalConfiguration.ACME != nil && len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
-				// convert ACME json file to KV store
-				localStore := acme.NewLocalStore(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
-				object, err := localStore.Load()
-				if err != nil {
-					return err
-				}
-				meta := cluster.NewMetadata(object)
-				err = meta.Marshall()
-				if err != nil {
-					return err
-				}
-				source := staert.KvSource{
-					Store:  kv,
-					Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
-				}
-				err = source.StoreConfig(meta)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		},
-		Metadata: map[string]string{
-			"parseAllSources": "true",
-		},
-	}
-
-	healthCheckCmd := &flaeg.Command{
-		Name:                  "healthcheck",
-		Description:           `Calls traefik /ping to check health (ping must be enabled)`,
-		Config:                traefikConfiguration,
-		DefaultPointersConfig: traefikPointersConfiguration,
-		Run: func() error {
-			traefikConfiguration.GlobalConfiguration.SetEffectiveConfiguration(traefikConfiguration.ConfigFile)
-
-			if traefikConfiguration.Ping == nil {
-				fmt.Println("Please enable `ping` to use healtcheck.")
-				os.Exit(1)
-			}
-
-			pingEntryPoint, ok := traefikConfiguration.EntryPoints[traefikConfiguration.Ping.EntryPoint]
-			if !ok {
-				pingEntryPoint = &configuration.EntryPoint{Address: ":8080"}
-			}
-
-			client := &http.Client{Timeout: 5 * time.Second}
-			protocol := "http"
-			if pingEntryPoint.TLS != nil {
-				protocol = "https"
-				tr := &http.Transport{
-					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-				}
-				client.Transport = tr
-			}
-
-			resp, errPing := client.Head(protocol + "://" + pingEntryPoint.Address + traefikConfiguration.Web.Path + "ping")
-			if errPing != nil {
-				fmt.Printf("Error calling healthcheck: %s\n", errPing)
-				os.Exit(1)
-			}
-			if resp.StatusCode != http.StatusOK {
-				fmt.Printf("Bad healthcheck status: %s\n", resp.Status)
-				os.Exit(1)
-			}
-			fmt.Printf("OK: %s\n", resp.Request.URL)
-			os.Exit(0)
-			return nil
-		},
-		Metadata: map[string]string{
-			"parseAllSources": "true",
-		},
-	}
+	storeConfigCmd := newStoreConfigCmd(traefikConfiguration, traefikPointersConfiguration)
 
 	//init flaeg source
 	f := flaeg.New(traefikCmd, os.Args[1:])
@@ -162,7 +65,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddCommand(newVersionCmd())
 	f.AddCommand(newBugCmd(traefikConfiguration, traefikPointersConfiguration))
 	f.AddCommand(storeConfigCmd)
-	f.AddCommand(healthCheckCmd)
+	f.AddCommand(newHealthCheckCmd(traefikConfiguration, traefikPointersConfiguration))
 
 	usedCmd, err := f.GetCommand()
 	if err != nil {
@@ -190,11 +93,12 @@ Complete documentation is available at https://traefik.io`,
 
 	traefikConfiguration.ConfigFile = toml.ConfigFileUsed()
 
-	kv, err = CreateKvSource(traefikConfiguration)
+	kv, err := createKvSource(traefikConfiguration)
 	if err != nil {
 		fmtlog.Printf("Error creating kv store: %s\n", err)
 		os.Exit(-1)
 	}
+	storeConfigCmd.Run = runStoreConfig(kv, traefikConfiguration)
 
 	// IF a KV Store is enable and no sub-command called in args
 	if kv != nil && usedCmd == traefikCmd {
@@ -329,42 +233,6 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 			log.Error("Error opening file", err)
 		}
 	}
-}
-
-// CreateKvSource creates KvSource
-// TLS support is enable for Consul and Etcd backends
-func CreateKvSource(traefikConfiguration *TraefikConfiguration) (*staert.KvSource, error) {
-	var kv *staert.KvSource
-	var kvStore store.Store
-	var err error
-
-	switch {
-	case traefikConfiguration.Consul != nil:
-		kvStore, err = traefikConfiguration.Consul.CreateStore()
-		kv = &staert.KvSource{
-			Store:  kvStore,
-			Prefix: traefikConfiguration.Consul.Prefix,
-		}
-	case traefikConfiguration.Etcd != nil:
-		kvStore, err = traefikConfiguration.Etcd.CreateStore()
-		kv = &staert.KvSource{
-			Store:  kvStore,
-			Prefix: traefikConfiguration.Etcd.Prefix,
-		}
-	case traefikConfiguration.Zookeeper != nil:
-		kvStore, err = traefikConfiguration.Zookeeper.CreateStore()
-		kv = &staert.KvSource{
-			Store:  kvStore,
-			Prefix: traefikConfiguration.Zookeeper.Prefix,
-		}
-	case traefikConfiguration.Boltdb != nil:
-		kvStore, err = traefikConfiguration.Boltdb.CreateStore()
-		kv = &staert.KvSource{
-			Store:  kvStore,
-			Prefix: traefikConfiguration.Boltdb.Prefix,
-		}
-	}
-	return kv, err
 }
 
 func checkNewVersion() {
