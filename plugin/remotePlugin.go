@@ -1,6 +1,8 @@
 package plugin
 
 import (
+	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/rpc"
@@ -12,12 +14,14 @@ import (
 
 	"google.golang.org/grpc"
 
+	//"bytes"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/plugin/proto"
 	"github.com/hashicorp/go-plugin"
 	"github.com/satori/go.uuid"
 	"github.com/vulcand/oxy/forward"
+	//"strings"
 )
 
 // RemoteHandshake is a common handshake that is shared by plugin and host.
@@ -79,22 +83,24 @@ type RemotePluginMiddlewareHandler struct {
 }
 
 // NewRemotePluginMiddleware creates a new Middleware instance.
-func NewRemotePluginMiddleware(p Plugin, registry metrics.Registry) *RemotePluginMiddlewareHandler {
+func NewRemotePluginMiddleware(p Plugin, registry metrics.Registry) (*RemotePluginMiddlewareHandler, error) {
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig:  RemoteHandshake,
 		Plugins:          RemotePluginMap,
 		Cmd:              exec.Command("sh", "-c", p.Path),
 		AllowedProtocols: []plugin.Protocol{plugin.ProtocolNetRPC, plugin.ProtocolGRPC},
-		// TODO: Add Logger Wrapper Logger:           log,
+		Logger:           &LoggerAdapter{logger: log.RootLogger()},
 	})
 
 	rpcClient, err := client.Client()
 	if err != nil {
 		log.Error("Unable to allocate plugin client")
+		return nil, err
 	}
 	raw, err := rpcClient.Dispense("middleware")
 	if err != nil {
 		log.Error("Unable to invoke plugin")
+		return nil, err
 	}
 	remote := raw.(RemotePluginMiddleware)
 
@@ -103,7 +109,7 @@ func NewRemotePluginMiddleware(p Plugin, registry metrics.Registry) *RemotePlugi
 		remote:   remote,
 		registry: registry,
 		plugin:   p,
-	}
+	}, nil
 }
 
 // Stop method shuts down remote plugin process
@@ -156,18 +162,20 @@ func (h *RemotePluginMiddlewareHandler) executeRemotePlugin(rw http.ResponseWrit
 
 func (h *RemotePluginMiddlewareHandler) createPluginRequest(rw http.ResponseWriter, r *http.Request, guid string) *proto.Request {
 	var body []byte
-	//if r.Body != http.NoBody {
-	if r.GetBody != nil {
-		log.Debug("Getting Body Reader")
-		bodyReader, _ := r.GetBody()
-		log.Debug("Created Body Reader")
-		// TODO: Should we handle the error?
-		body, _ = ioutil.ReadAll(bodyReader)
+	log.Debug("Getting Body Reader")
+	bodyReader, err := h.getBody(r)
+	log.Debug("Created Body Reader")
+	if err == nil {
+		body, err = ioutil.ReadAll(bodyReader)
 		log.Debug("Converted Body to byte[]")
-		// TODO: Should we handle the error?
+		if err != nil {
+			log.Errorf("Unable to read request body %+v", err)
+		}
+	} else {
+		log.Errorf("Unable to get request body %+v", err)
 	}
 
-	log.Debug("Creating Remote Plugin Proto Request")
+	log.Debugf("Creating Remote Plugin Proto Request from %+v", r)
 	return &proto.Request{
 		RequestUuid: guid,
 		Request: &proto.HttpRequest{
@@ -191,9 +199,35 @@ func (h *RemotePluginMiddlewareHandler) createPluginRequest(rw http.ResponseWrit
 	}
 }
 
+func (h *RemotePluginMiddlewareHandler) getBody(req *http.Request) (io.ReadCloser, error) {
+	if req.GetBody != nil {
+		return req.GetBody()
+	}
+	//switch v := req.Body.(type) {
+	//case *bytes.Buffer:
+	//	buf := v.Bytes()
+	//	r := bytes.NewReader(buf)
+	//	return ioutil.NopCloser(r), nil
+	//case *bytes.Reader:
+	//	snapshot := *v
+	//	r := snapshot
+	//	return ioutil.NopCloser(&r), nil
+	//case *strings.Reader:
+	//	snapshot := *v
+	//	r := snapshot
+	//	return ioutil.NopCloser(&r), nil
+	//}
+	if req.Body != nil {
+		return ioutil.NopCloser(req.Body), nil
+	}
+	return nil, fmt.Errorf("Unable to get request body for %s", req.RequestURI)
+}
+
 // handlePluginResponseAndContinue processes the remote plugin response and returns `false` if "next" middleware in the chain should be executed, otherwise returns `true`
 func (h *RemotePluginMiddlewareHandler) handlePluginResponse(pResp *proto.Response, rw http.ResponseWriter, r *http.Request) bool {
 	h.syncRequest(pResp.Request, r)
+	h.syncResponseHeaders(pResp.Response, rw)
+	rw.Header()
 	if pResp.Redirect {
 		url, err := url.ParseRequestURI(pResp.Request.Url)
 		if err == nil {
@@ -218,6 +252,21 @@ func (h *RemotePluginMiddlewareHandler) handlePluginResponse(pResp *proto.Respon
 	log.Debug("Generic plugin response")
 
 	return pResp.StopChain
+}
+
+func (h *RemotePluginMiddlewareHandler) syncResponseHeaders(r *proto.HttpResponse, rw http.ResponseWriter) {
+	if rw.Header != nil {
+		headers := rw.Header()
+		rh := h.mapOfStrings(r.Header)
+		for k, v := range rh {
+			hv := headers[k]
+			if len(hv) == 0 {
+				headers[k] = v
+			} else {
+				headers[k] = append(headers[k], v...)
+			}
+		}
+	}
 }
 
 func (h *RemotePluginMiddlewareHandler) syncRequest(src *proto.HttpRequest, dest *http.Request) {

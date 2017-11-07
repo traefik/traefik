@@ -457,7 +457,7 @@ Plugin support is currently provided via the use of [HashiCorp's Go Plugin Syste
 # path is the full system path to the plugin binary that implements the gRPC plugin interface
 path = "/full/path/to/plugin/binary"
 
-# type is the kind of plugin. Valid options are "grpc", "netrpc" and "go", whre "go" is the natively compiled binary (not currently supported just yet)
+# type is the kind of plugin. Valid options are "grpc", "netrpc" and "go", where "go" is the natively compiled binary (not currently supported just yet)
 type = "grpc"
 
 # order is the place when the plugin should be executed. Valid options are "before", "after" and "around".  "go" plugin types always use "around" regardless of this setting 
@@ -659,7 +659,7 @@ message ValueList {
 }
 
 service Middleware {
-    rpc ServeHttp(Request) returns (Response);
+    rpc ServeHTTP(Request) returns (Response);
 }
 ```
 

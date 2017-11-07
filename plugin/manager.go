@@ -64,7 +64,12 @@ func (m *Manager) Load(plugin Plugin) error {
 
 func (m *Manager) loadRemotePlugin(plugin Plugin, errChan chan error) Middleware {
 	log.Debugf("Loading Remote Plugin from %s", plugin.Path)
-	return NewRemotePluginMiddleware(plugin, m.registry)
+	p, err := NewRemotePluginMiddleware(plugin, m.registry)
+	if err != nil {
+		errChan <- fmt.Errorf("error in plugin loading: %s", err)
+		return nil
+	}
+	return p
 }
 
 func (m *Manager) loadGoPlugin(plugin Plugin, errChan chan error) interface{} {
