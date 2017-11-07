@@ -75,6 +75,10 @@ func WithFields(fields logrus.Fields) *logrus.Entry {
 	return logger.WithFields(fields)
 }
 
+func RootLogger() *logrus.Entry {
+	return logger
+}
+
 // Debug logs a message at level Debug on the standard logger.
 func Debug(args ...interface{}) {
 	logger.Debug(args...)
