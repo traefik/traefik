@@ -223,6 +223,10 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 			Address:      "localhost:8125",
 			PushInterval: "10s",
 		},
+		InfluxDB: &types.InfluxDB{
+			Address:      "localhost:8089",
+			PushInterval: "10s",
+		},
 	}
 
 	defaultConfiguration := configuration.GlobalConfiguration{
