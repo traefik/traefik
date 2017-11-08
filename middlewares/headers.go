@@ -3,8 +3,9 @@ package middlewares
 //Middleware based on https://github.com/unrolled/secure
 
 import (
-	"github.com/containous/traefik/types"
 	"net/http"
+
+	"github.com/containous/traefik/types"
 )
 
 // HeaderOptions is a struct for specifying configuration options for the headers middleware.
