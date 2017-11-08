@@ -77,26 +77,26 @@
 
 ```toml
 [web]
-# ...
+  # ...
 
-# InfluxDB metrics exporter type
-[web.metrics.influxdb]
+  # InfluxDB metrics exporter type
+  [web.metrics.influxdb]
 
-# InfluxDB's address.
-#
-# Required
-# Default: "localhost:8089"
-#
-address = "localhost:8089"
+    # InfluxDB's address.
+    #
+    # Required
+    # Default: "localhost:8089"
+    #
+    address = "localhost:8089"
 
-# InfluxDB push interval
-#
-# Optional
-# Default: "10s"
-#
-pushinterval = "10s"
+    # InfluxDB push interval
+    #
+    # Optional
+    # Default: "10s"
+    #
+    pushinterval = "10s"
 
-# ...
+  # ...
 ```
 
 ## Statistics

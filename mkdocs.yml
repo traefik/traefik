@@ -71,7 +71,7 @@ pages:
     - 'Commons': 'configuration/commons.md'
     - 'EntryPoints': 'configuration/entrypoints.md'
     - 'Let''s Encrypt': 'configuration/acme.md'
-    - 'Backend: Web --DEPRECATED--': 'configuration/backends/web.md'
+    - 'Backend: Web': 'configuration/backends/web.md'
     - 'Backend: BoltDB': 'configuration/backends/boltdb.md'
     - 'Backend: Consul': 'configuration/backends/consul.md'
     - 'Backend: Docker': 'configuration/backends/docker.md'
