@@ -137,6 +137,31 @@ func TestIntegrationShouldNotCompress(t *testing.T) {
 	}
 }
 
+func TestShouldWriteHeaderWhenFlush(t *testing.T) {
+	comp := &Compress{}
+	negro := negroni.New(comp)
+	negro.UseHandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Add(contentEncodingHeader, gzipValue)
+		rw.Header().Add(varyHeader, acceptEncodingHeader)
+		rw.WriteHeader(http.StatusUnauthorized)
+		rw.(http.Flusher).Flush()
+		rw.Write([]byte("short"))
+	})
+	ts := httptest.NewServer(negro)
+	defer ts.Close()
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.Header.Add(acceptEncodingHeader, gzipValue)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	assert.Equal(t, gzipValue, resp.Header.Get(contentEncodingHeader))
+	assert.Equal(t, acceptEncodingHeader, resp.Header.Get(varyHeader))
+}
+
 func TestIntegrationShouldCompress(t *testing.T) {
 	fakeBody := generateBytes(100000)
 
