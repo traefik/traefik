@@ -503,3 +503,56 @@ func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	c.Assert(string(msg), checker.Equals, "OK")
 }
+
+func (s *WebsocketSuite) TestHeaderAreForwared(c *check.C) {
+	var upgrader = gorillawebsocket.Upgrader{} // use default options
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c.Assert(r.Header.Get("X-Token"), check.Equals, "my-token")
+		c, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+		defer c.Close()
+		for {
+			mt, message, err := c.ReadMessage()
+			if err != nil {
+				break
+			}
+			err = c.WriteMessage(mt, message)
+			if err != nil {
+				break
+			}
+		}
+	}))
+
+	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
+		WebsocketServer string
+	}{
+		WebsocketServer: srv.URL,
+	})
+
+	defer os.Remove(file)
+	cmd, display := s.traefikCmd(withConfigFile(file), "--debug")
+	defer display(c)
+
+	err := cmd.Start()
+	c.Assert(err, check.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 10*time.Second, try.BodyContains("127.0.0.1"))
+	c.Assert(err, checker.IsNil)
+
+	headers := http.Header{}
+	headers.Add("X-Token", "my-token")
+	conn, _, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", headers)
+
+	c.Assert(err, checker.IsNil)
+	err = conn.WriteMessage(gorillawebsocket.TextMessage, []byte("OK"))
+	c.Assert(err, checker.IsNil)
+
+	_, msg, err := conn.ReadMessage()
+	c.Assert(err, checker.IsNil)
+	c.Assert(string(msg), checker.Equals, "OK")
+}
