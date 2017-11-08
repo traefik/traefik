@@ -383,7 +383,7 @@ imports:
   repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
-  version: 97ae7fbaf81620fe97840685304a78a306a39c64
+  version: 0f67f3f25d3b17590ee0ab93fcb216363ee30967
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/go-digest
