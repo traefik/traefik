@@ -3,11 +3,12 @@ package middlewares
 //Middleware tests based on https://github.com/unrolled/secure
 
 import (
-	"github.com/containous/traefik/testhelpers"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/containous/traefik/testhelpers"
+	"github.com/stretchr/testify/assert"
 )
 
 var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
