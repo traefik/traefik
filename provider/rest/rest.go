@@ -13,7 +13,7 @@ import (
 	"github.com/unrolled/render"
 )
 
-// Provider is a provider.Provider implementation that provides the UI
+// Provider is a provider.Provider implementation that provides a Rest API
 type Provider struct {
 	configurationChan     chan<- types.ConfigMessage
 	EntryPoint            string `description:"EntryPoint" export:"true"`

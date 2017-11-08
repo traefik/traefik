@@ -111,6 +111,7 @@ func (gc *GlobalConfiguration) handleWebDeprecation() {
 		log.Warn("web provider configuration is deprecated, you should use --api for api, --rest for rest provider, --ping for ping and --metrics for metrics")
 
 		if gc.API != nil || gc.Metrics != nil || gc.Ping != nil || gc.Rest != nil {
+			log.Warn("--web is ignored if you use it with one of --api, --rest , --ping or --metrics")
 			return
 		}
 		gc.EntryPoints[DefaultInternalEntryPointName] = &EntryPoint{
