@@ -1,4 +1,4 @@
-hash: 1d18b9c76989feed304a8781b18ea24b43e858091b775316af97bfc210a06ea0
+hash: 7fd36649e80749e16bbfa69777e0f90a017fbc2f67d7efd46373716a16b1a60a
 updated: 2017-11-02T11:39:20.438135-04:00
 imports:
 - name: cloud.google.com/go
@@ -250,6 +250,8 @@ imports:
   - log
   - metrics
   - metrics/dogstatsd
+  - metrics/generic
+  - metrics/influx
   - metrics/internal/lv
   - metrics/internal/ratemap
   - metrics/multi
@@ -311,6 +313,12 @@ imports:
   version: 3959339b333561bf62a38b424fd41517c2c90f40
 - name: github.com/imdario/mergo
   version: 3e95a51e0639b4cf372f2ccf74c86749d747fbdc
+- name: github.com/influxdata/influxdb
+  version: 2d474a3089bcfce6b472779be9470a1f0ef3d5e4
+  subpackages:
+  - client/v2
+  - models
+  - pkg/escape
 - name: github.com/JamesClonk/vultr
   version: 2fd0705ce648e602e6c9c57329a174270a4f6688
   subpackages:
@@ -483,6 +491,8 @@ imports:
   version: 824e85271811af89640ea25620c67f6c2eed987e
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
+- name: github.com/VividCortex/gohistogram
+  version: 51564d9861991fb0ad0f531c99ef602d0f9866e6
 - name: github.com/vulcand/oxy
   version: 7e9763c4dc71b9758379da3581e6495c145caaab
   repo: https://github.com/containous/oxy.git
@@ -805,7 +815,7 @@ testImports:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/stvp/go-udp-testing
-  version: 06eb4f886d9f8242b0c176cf0d3ce5ec2cedda05
+  version: c4434f09ec131ecf30f986d5dcb1636508bfa49a
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/xeipuuv/gojsonpointer
