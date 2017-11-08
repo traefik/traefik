@@ -16,7 +16,7 @@ func TestInflux(t *testing.T) {
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	influxRegistry := RegisterInflux(&types.Influx{Address: "localhost:8089", PushInterval: "1s"})
+	influxRegistry := RegisterInflux(&types.Influx{Address: ":8089", PushInterval: "1s"})
 	defer StopInflux()
 
 	if !influxRegistry.IsEnabled() {
@@ -24,14 +24,17 @@ func TestInflux(t *testing.T) {
 	}
 
 	expected := []string{
-		"(traefik_requests_total,code=200,method=GET,service=test count=1) [0-9]{19}",
-		"(traefik_requests_total,code=404,method=GET,service=test count=1) [0-9]{19}",
-		"(traefik_request_duration,code=200,method=GET,service=test p50=10000,p90=10000,p95=10000,p99=10000) [0-9]{19}",
+		"(traefik.requests.total,code=200,method=GET,service=test count=1) [0-9]{19}",
+		"(traefik.requests.total,code=404,method=GET,service=test count=1) [0-9]{19}",
+		"(traefik.request.duration,code=200,method=GET,service=test p50=10000,p90=10000,p95=10000,p99=10000) [0-9]{19}",
+		"(traefik.backend.retries.total,code=404,method=GET,service=test count=2) [0-9]{19}",
 	}
 
 	msg := udp.ReceiveString(t, func() {
 		influxRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
 		influxRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		influxRegistry.RetriesCounter().With("service", "test").Add(1)
+		influxRegistry.RetriesCounter().With("service", "test").Add(1)
 		influxRegistry.ReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	})
 

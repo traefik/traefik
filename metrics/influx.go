@@ -25,9 +25,9 @@ type influxWriter struct {
 var influxTicker *time.Ticker
 
 const (
-	influxMetricsReqsName    = "traefik_requests_total"
-	influxMetricsLatencyName = "traefik_request_duration"
-	influxRetriesTotalName   = "traefik_backend_retries_total"
+	influxMetricsReqsName    = "traefik.requests.total"
+	influxMetricsLatencyName = "traefik.request.duration"
+	influxRetriesTotalName   = "traefik.backend.retries.total"
 )
 
 // RegisterInflux registers the metrics pusher if this didn't happen yet and creates a Influx Registry instance.

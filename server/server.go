@@ -1257,6 +1257,7 @@ func (server *Server) registerMetricClients(metricsConfig *types.Metrics) {
 func stopMetricsClients() {
 	metrics.StopDatadog()
 	metrics.StopStatsd()
+	metrics.StopInflux()
 }
 
 func (server *Server) buildRateLimiter(handler http.Handler, rlConfig *types.RateLimit) (http.Handler, error) {

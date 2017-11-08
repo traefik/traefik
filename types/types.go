@@ -385,7 +385,7 @@ type Datadog struct {
 // Statsd contains address and metrics pushing interval configuration
 type Statsd struct {
 	Address      string `description:"StatsD address"`
-	PushInterval string `description:"DataDog push interval" export:"true"`
+	PushInterval string `description:"StatsD push interval" export:"true"`
 }
 
 // Influx contains address and metrics pushing interval configuration
