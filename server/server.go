@@ -1244,9 +1244,9 @@ func (server *Server) registerMetricClients(metricsConfig *types.Metrics) {
 		registries = append(registries, metrics.RegisterStatsd(metricsConfig.StatsD))
 		log.Debugf("Configured StatsD metrics pushing to %s once every %s", metricsConfig.StatsD.Address, metricsConfig.StatsD.PushInterval)
 	}
-	if metricsConfig.Influx != nil {
-		registries = append(registries, metrics.RegisterInflux(metricsConfig.Influx))
-		log.Debugf("Configured Influx metrics pushing to %s once every %s", metricsConfig.Influx.Address, metricsConfig.Influx.PushInterval)
+	if metricsConfig.InfluxDB != nil {
+		registries = append(registries, metrics.RegisterInfluxDB(metricsConfig.InfluxDB))
+		log.Debugf("Configured InfluxDB metrics pushing to %s once every %s", metricsConfig.InfluxDB.Address, metricsConfig.InfluxDB.PushInterval)
 	}
 
 	if len(registries) > 0 {
@@ -1257,7 +1257,7 @@ func (server *Server) registerMetricClients(metricsConfig *types.Metrics) {
 func stopMetricsClients() {
 	metrics.StopDatadog()
 	metrics.StopStatsd()
-	metrics.StopInflux()
+	metrics.StopInfluxDB()
 }
 
 func (server *Server) buildRateLimiter(handler http.Handler, rlConfig *types.RateLimit) (http.Handler, error) {

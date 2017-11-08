@@ -158,23 +158,23 @@ pushinterval = "10s"
 # ...
 ```
 
-### Influx
+### InfluxDB
 
 ```toml
 [web]
 # ...
 
-# Influx metrics exporter type
-[web.metrics.influx]
+# InfluxDB metrics exporter type
+[web.metrics.influxdb]
 
-# Influx's address.
+# InfluxDB's address.
 #
 # Required
 # Default: "localhost:8089"
 #
 address = "localhost:8089"
 
-# Influx push interval
+# InfluxDB push interval
 #
 # Optional
 # Default: "10s"

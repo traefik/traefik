@@ -368,7 +368,7 @@ type Metrics struct {
 	Prometheus *Prometheus `description:"Prometheus metrics exporter type" export:"true"`
 	Datadog    *Datadog    `description:"DataDog metrics exporter type" export:"true"`
 	StatsD     *Statsd     `description:"StatsD metrics exporter type" export:"true"`
-	Influx     *Influx     `description:"Influx metrics exporter type"`
+	InfluxDB   *InfluxDB   `description:"InfluxDB metrics exporter type"`
 }
 
 // Prometheus can contain specific configuration used by the Prometheus Metrics exporter
@@ -388,10 +388,10 @@ type Statsd struct {
 	PushInterval string `description:"StatsD push interval" export:"true"`
 }
 
-// Influx contains address and metrics pushing interval configuration
-type Influx struct {
-	Address      string `description:"Influxdb address"`
-	PushInterval string `description:"Influxdb push interval"`
+// InfluxDB contains address and metrics pushing interval configuration
+type InfluxDB struct {
+	Address      string `description:"InfluxDB address"`
+	PushInterval string `description:"InfluxDB push interval"`
 }
 
 // Buckets holds Prometheus Buckets

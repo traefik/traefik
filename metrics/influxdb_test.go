@@ -11,16 +11,16 @@ import (
 	"github.com/stvp/go-udp-testing"
 )
 
-func TestInflux(t *testing.T) {
+func TestInfluxDB(t *testing.T) {
 	udp.SetAddr(":8089")
 	// This is needed to make sure that UDP Listener listens for data a bit longer, otherwise it will quit after a millisecond
 	udp.Timeout = 5 * time.Second
 
-	influxRegistry := RegisterInflux(&types.Influx{Address: ":8089", PushInterval: "1s"})
-	defer StopInflux()
+	influxDBRegistry := RegisterInfluxDB(&types.InfluxDB{Address: ":8089", PushInterval: "1s"})
+	defer StopInfluxDB()
 
-	if !influxRegistry.IsEnabled() {
-		t.Fatalf("Influx registry must be enabled")
+	if !influxDBRegistry.IsEnabled() {
+		t.Fatalf("InfluxDB registry must be enabled")
 	}
 
 	expected := []string{
@@ -31,11 +31,11 @@ func TestInflux(t *testing.T) {
 	}
 
 	msg := udp.ReceiveString(t, func() {
-		influxRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-		influxRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-		influxRegistry.RetriesCounter().With("service", "test").Add(1)
-		influxRegistry.RetriesCounter().With("service", "test").Add(1)
-		influxRegistry.ReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
+		influxDBRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		influxDBRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		influxDBRegistry.RetriesCounter().With("service", "test").Add(1)
+		influxDBRegistry.RetriesCounter().With("service", "test").Add(1)
+		influxDBRegistry.ReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	})
 
 	extractAndMatchMessage(t, expected, msg)
