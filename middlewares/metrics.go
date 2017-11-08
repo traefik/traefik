@@ -45,6 +45,10 @@ type retryMetrics interface {
 	RetriesCounter() gokitmetrics.Counter
 }
 
+type pluginMetrics interface {
+	PluginDurationHistogram() gokitmetrics.Histogram
+}
+
 // NewMetricsRetryListener instantiates a MetricsRetryListener with the given retryMetrics.
 func NewMetricsRetryListener(retryMetrics retryMetrics, backendName string) RetryListener {
 	return &MetricsRetryListener{retryMetrics: retryMetrics, backendName: backendName}

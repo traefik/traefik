@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+
+go get -u github.com/golang/protobuf/protoc-gen-go
+
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"; export SCRIPTDIR
+BASEDIR="$( pwd ${SCRIPTDIR}/.. )"
+
+protoc -I ${BASEDIR}/plugin/proto/ ${BASEDIR}/plugin/proto/plugin.proto --go_out=plugins=grpc:${BASEDIR}/plugin/proto/

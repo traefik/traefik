@@ -24,10 +24,11 @@ func RegisterStatsd(config *types.Statsd) Registry {
 	}
 
 	return &standardRegistry{
-		enabled:              true,
-		reqsCounter:          statsdClient.NewCounter(ddMetricsReqsName, 1.0),
-		reqDurationHistogram: statsdClient.NewTiming(ddMetricsLatencyName, 1.0),
-		retriesCounter:       statsdClient.NewCounter(ddRetriesTotalName, 1.0),
+		enabled:                 true,
+		reqsCounter:             statsdClient.NewCounter(ddMetricsReqsName, 1.0),
+		reqDurationHistogram:    statsdClient.NewTiming(ddMetricsLatencyName, 1.0),
+		retriesCounter:          statsdClient.NewCounter(ddRetriesTotalName, 1.0),
+		pluginDurationHistogram: statsdClient.NewTiming(ddPluginLatencyName, 1.0),
 	}
 }
 

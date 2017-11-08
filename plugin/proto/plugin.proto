@@ -1,0 +1,194 @@
+syntax = "proto3";
+package proto;
+
+message Request {
+    // RequestUuid specifies the unique GUID for the given request.
+    // It is useful for validating identity of a request when using
+    // "around" plugin order to tie together "before" and "after"
+    // parts of the remote plugin callback
+    string request_uuid = 1;
+    // Request contains the values of the HTTP Request made to the server
+    HttpRequest request = 2;
+    //map<string, ValueList> response_headers = 3;
+}
+
+message Response {
+    // Request contains the modified HTTP Request and all the values
+    // will be synced back into original "http.Request" struct
+    HttpRequest request = 1;
+    // Response specifies values like response status code, response headers
+    // and content payload
+    HttpResponse response = 2;
+    // StopChain indicates that no further middleware handlers shall be called
+    bool stopChain = 3;
+    // RenderContent indicates that the value of "HttpResponse.Body" shoud be
+    // rendered to the "http.ResponseWriter", which will also stop the chain,
+    // similar to "StopChain" flag
+    bool renderContent = 4;
+    // Redirect indicates that the request should be forwarded to the URL set by
+    // "HttpRequest.Url" field, which will also stop the chain, similar to
+    // "StopChain" flag
+    bool redirect = 5;
+}
+
+message HttpRequest {
+    // Method specifies the HTTP method (GET, POST, PUT, etc.).
+    // For client requests an empty string means GET.
+    string method = 1;
+    // URL specifies either the URI being requested (for server
+    // requests) or the URL to access (for client requests).
+    //
+    // For server requests the URL is parsed from the URI
+    // supplied on the Request-Line as stored in RequestURI.  For
+    // most requests, fields other than Path and RawQuery will be
+    // empty. (See RFC 2616, Section 5.1.2)
+    //
+    // For client requests, the URL's Host specifies the server to
+    // connect to, while the Request's Host field optionally
+    // specifies the Host header value to send in the HTTP
+    // request.
+    string url = 2;
+    // The protocol version for incoming server requests.
+    //
+    // For client requests these fields are ignored. The HTTP
+    // client code always uses either HTTP/1.1 or HTTP/2.
+    // See the docs on Transport for details.
+    string proto = 3;
+    int32 protoMajor = 4;
+    int32 protoMinor = 5;
+    // Header contains the request header fields either received
+    // by the server or to be sent by the client.
+    //
+    // If a server received a request with header lines,
+    //
+    //	Host: example.com
+    //	accept-encoding: gzip, deflate
+    //	Accept-Language: en-us
+    //	fOO: Bar
+    //	foo: two
+    //
+    // then
+    //
+    //	Header = map[string]*proto.ValueList{
+    //		"Accept-Encoding": &proto.ValueList{Value: {"gzip, deflate"}},
+    //		"Accept-Language": &proto.ValueList{Value: {"en-us"}},
+    //		"Foo": &proto.ValueList{Value: {"Bar", "two"}},
+    //	}
+    //
+    // For incoming requests, the Host header is promoted to the
+    // Request.Host field and removed from the Header map.
+    //
+    // HTTP defines that header names are case-insensitive. The
+    // request parser implements this by using CanonicalHeaderKey,
+    // making the first character and any characters following a
+    // hyphen uppercase and the rest lowercase.
+    //
+    // For client requests, certain headers such as Content-Length
+    // and Connection are automatically written when needed and
+    // values in Header may be ignored. See the documentation
+    // for the Request.Write method.
+    map<string, ValueList> header = 6;
+    // Body is the request's body.
+    //
+    // For client requests a nil body means the request has no
+    // body, such as a GET request.
+    bytes body = 7;
+    // ContentLength records the length of the associated content.
+    // The value -1 indicates that the length is unknown.
+    // Values >= 0 indicate that the given number of bytes may
+    // be read from Body.
+    // For client requests, a value of 0 with a non-nil Body is
+    // also treated as unknown.
+    int64 contentLength = 8;
+    // TransferEncoding lists the transfer encodings from outermost to
+    // innermost. An empty list denotes the "identity" encoding.
+    // TransferEncoding can usually be ignored; chunked encoding is
+    // automatically added and removed as necessary when sending and
+    // receiving requests.
+    repeated string transferEncoding = 9;
+    // Close indicates whether to close the connection after
+    // replying to this request (for servers) or after sending this
+    // request and reading its response (for clients).
+    //
+    // For server requests, the HTTP server handles this automatically
+    // and this field is not needed by Handlers.
+    //
+    // For client requests, setting this field prevents re-use of
+    // TCP connections between requests to the same hosts, as if
+    // Transport.DisableKeepAlives were set.
+    bool close = 10;
+    // For server requests Host specifies the host on which the
+    // URL is sought. Per RFC 2616, this is either the value of
+    // the "Host" header or the host name given in the URL itself.
+    // It may be of the form "host:port". For international domain
+    // names, Host may be in Punycode or Unicode form. Use
+    // golang.org/x/net/idna to convert it to either format if
+    // needed.
+    //
+    // For client requests Host optionally overrides the Host
+    // header to send. If empty, the Request.Write method uses
+    // the value of URL.Host. Host may contain an international
+    // domain name.
+    string host = 11;
+    // Form contains the parsed form data, including both the URL
+    // field's query parameters and the POST or PUT form data.
+    // This field is only available after ParseForm is called.
+    // The HTTP client ignores Form and uses Body instead.
+    map<string, ValueList> formValues = 12;
+    // PostForm contains the parsed form data from POST, PATCH,
+    // or PUT body parameters.
+    //
+    // This field is only available after ParseForm is called.
+    // The HTTP client ignores PostForm and uses Body instead.
+    map<string, ValueList> postFormValues = 13;
+    //reserved for multipart.Form = 14
+
+    // Trailer specifies additional headers that are sent after the request
+    // body.
+    //
+    // For server requests the Trailer map initially contains only the
+    // trailer keys, with nil values. (The client declares which trailers it
+    // will later send.)  While the handler is reading from Body, it must
+    // not reference Trailer. After reading from Body returns EOF, Trailer
+    // can be read again and will contain non-nil values, if they were sent
+    // by the client.
+    //
+    // For client requests Trailer must be initialized to a map containing
+    // the trailer keys to later send. The values may be nil or their final
+    // values. The ContentLength must be 0 or -1, to send a chunked request.
+    // After the HTTP request is sent the map values can be updated while
+    // the request body is read. Once the body returns EOF, the caller must
+    // not mutate Trailer.
+    //
+    // Few HTTP clients, servers, or proxies support HTTP trailers.
+    map<string, ValueList> trailer = 15;
+    // RemoteAddr allows HTTP servers and other software to record
+    // the network address that sent the request, usually for
+    // logging. This field is not filled in by ReadRequest and
+    // has no defined format. The HTTP server in this package
+    // sets RemoteAddr to an "IP:port" address before invoking a
+    // handler.
+    // This field is ignored by the HTTP client.
+    string remoteAddr = 16;
+    // RequestURI is the unmodified Request-URI of the
+    // Request-Line (RFC 2616, Section 5.1) as sent by the client
+    // to a server. Usually the URL field should be used instead.
+    // It is an error to set this field in an HTTP client request.
+    string requestUri = 17;
+}
+
+message HttpResponse {
+    int32 status_code = 1;
+    map<string, ValueList> header = 2;
+    bytes body = 3;
+}
+
+message Empty {}
+
+message ValueList {
+    repeated string value = 1;
+}
+
+service Middleware {
+    rpc ServeHTTP(Request) returns (Response);
+}
