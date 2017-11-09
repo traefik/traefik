@@ -10,13 +10,13 @@ import (
 )
 
 func TestStripPrefixRegex(t *testing.T) {
-
 	testPrefixRegex := []string{"/a/api/", "/b/{regex}/", "/c/{category}/{id:[0-9]+}/"}
 
 	tests := []struct {
 		path               string
 		expectedStatusCode int
 		expectedPath       string
+		expectedRawPath    string
 		expectedHeader     string
 	}{
 		{
@@ -61,6 +61,13 @@ func TestStripPrefixRegex(t *testing.T) {
 			path:               "/c/api/abc/test4",
 			expectedStatusCode: http.StatusNotFound,
 		},
+		{
+			path:               "/a/api/a%2Fb",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "a/b",
+			expectedRawPath:    "a%2Fb",
+			expectedHeader:     "/a/api/",
+		},
 	}
 
 	for _, test := range tests {
@@ -68,9 +75,10 @@ func TestStripPrefixRegex(t *testing.T) {
 		t.Run(test.path, func(t *testing.T) {
 			t.Parallel()
 
-			var actualPath, actualHeader string
+			var actualPath, actualRawPath, actualHeader string
 			handlerPath := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				actualPath = r.URL.Path
+				actualRawPath = r.URL.RawPath
 				actualHeader = r.Header.Get(ForwardedPrefixHeader)
 			})
 			handler := NewStripPrefixRegex(handlerPath, testPrefixRegex)
@@ -82,6 +90,7 @@ func TestStripPrefixRegex(t *testing.T) {
 
 			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
+			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
 			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ForwardedPrefixHeader)
 		})
 	}
