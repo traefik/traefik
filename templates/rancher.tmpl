@@ -22,24 +22,51 @@
     {{end}}
 
     {{range $index, $ip := $backend.Containers}}
+      {{if hasServices $backend}}
+        {{$services := getServiceNames $backend}}
+        {{range $serviceIndex, $serviceName := $services}}
+        [backends.backend-{{getServiceBackend $backend $serviceName}}.servers.server-{{$index}}]
+        url = "{{getServiceProtocol $backend $serviceName}}://{{$ip}}:{{getServicePort $backend $serviceName}}"
+        weight = {{getServiceWeight $backend $serviceName}}
+        {{end}}
+      {{else}}
       [backends.backend-{{$backendName}}.servers.server-{{$index}}]
       url = "{{getProtocol $backend}}://{{$ip}}:{{getPort $backend}}"
       weight = {{getWeight $backend}}
+      {{end}}
     {{end}}
 
 {{end}}
 
-[frontends]{{range $frontendName, $service := .Frontends}}
+[frontends]{{range $frontendName, $frontend := .Frontends}}
+  {{if hasServices $frontend}}
+    {{$services := getServiceNames $frontend}}
+    {{range $serviceIndex, $serviceName := $services}}
+    [frontends."frontend-{{$frontendName}}-{{$serviceName}}"]
+    backend = "backend-{{getServiceBackend $frontend $serviceName}}"
+    passHostHeader = {{getServicePassHostHeader $frontend $serviceName}}
+    priority = {{getServicePriority $frontend $serviceName}}
+    entryPoints = [{{range getServiceEntryPoints $frontend $serviceName}}
+      "{{.}}",
+    {{end}}]
+    basicAuth = [{{range getServiceBasicAuth $frontend $serviceName}}
+      "{{.}}",
+    {{end}}]
+    [frontends."frontend-{{$frontendName}}-{{$serviceName}}".routes."route-frontend-{{$frontendName}}-{{$serviceName | replace "/" "" | replace "." "-"}}"]
+    rule = "{{getServiceFrontendRule $frontend $serviceName}}"
+    {{end}}
+  {{else}}
     [frontends."frontend-{{$frontendName}}"]
-    backend = "backend-{{getBackend $service}}"
-    passHostHeader = {{getPassHostHeader $service}}
-    priority = {{getPriority $service}}
-    entryPoints = [{{range getEntryPoints $service}}
+    backend = "backend-{{getBackend $frontend}}"
+    passHostHeader = {{getPassHostHeader $frontend}}
+    priority = {{getPriority $frontend}}
+    entryPoints = [{{range getEntryPoints $frontend}}
         "{{.}}",
     {{end}}]
-    basicAuth = [{{range getBasicAuth $service}}
+    basicAuth = [{{range getBasicAuth $frontend}}
         "{{.}}",
     {{end}}]
     [frontends."frontend-{{$frontendName}}".routes."route-frontend-{{$frontendName}}"]
-    rule = "{{getFrontendRule $service}}"
+    rule = "{{getFrontendRule $frontend}}"
+  {{end}}
 {{end}}

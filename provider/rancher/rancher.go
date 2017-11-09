@@ -3,6 +3,7 @@ package rancher
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"text/template"
@@ -169,6 +170,117 @@ func (p *Provider) getDomain(service rancherData) string {
 	return p.Domain
 }
 
+// Regexp used to extract the name of the service and the name of the property for this service
+// All properties are under the format traefik.<servicename>.frontend.*= except the port/weight/protocol directly after traefik.<servicename>.
+var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|weight|protocol|frontend\.(.*))$`)
+
+// Map of services properties
+// we can get it with label[serviceName][propertyName] and we got the propertyValue
+type labelServiceProperties map[string]map[string]string
+
+// Extract the service labels from container labels of rancherData struct
+func extractServicesLabels(labels map[string]string) labelServiceProperties {
+	v := make(labelServiceProperties)
+
+	for index, serviceProperty := range labels {
+		matches := servicesPropertiesRegexp.FindStringSubmatch(index)
+		if matches != nil {
+			result := make(map[string]string)
+			for i, name := range servicesPropertiesRegexp.SubexpNames() {
+				if i != 0 {
+					result[name] = matches[i]
+				}
+			}
+			serviceName := result["service_name"]
+			if _, ok := v[serviceName]; !ok {
+				v[serviceName] = make(map[string]string)
+			}
+			v[serviceName][result["property_name"]] = serviceProperty
+		}
+	}
+
+	return v
+}
+
+// Check if for the given container, we find labels that are defining services
+func (p *Provider) hasServices(service rancherData) bool {
+	return len(extractServicesLabels(service.Labels)) > 0
+}
+
+// Gets array of service names for a given container
+func (p *Provider) getServiceNames(service rancherData) []string {
+	labelServiceProperties := extractServicesLabels(service.Labels)
+	keys := make([]string, 0, len(labelServiceProperties))
+	for k := range labelServiceProperties {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
+// Traefik services
+func (p *Provider) getServiceEntryPoints(service rancherData, serviceName string) []string {
+	if entryPoints, err := getServiceLabel(service, types.ServiceLabel(types.LabelFrontendEntryPoints, serviceName)); err == nil {
+		return strings.Split(entryPoints, ",")
+	}
+	return p.getEntryPoints(service)
+}
+
+func (p *Provider) getServiceBasicAuth(service rancherData, serviceName string) []string {
+	if basicAuth, err := getServiceLabel(service, types.ServiceLabel(types.LabelFrontendAuthBasic, serviceName)); err == nil {
+		return strings.Split(basicAuth, ",")
+	}
+	return p.getBasicAuth(service)
+}
+
+func (p *Provider) getServicePassHostHeader(service rancherData, serviceName string) string {
+	if passHostHeader, err := getServiceLabel(service, types.ServiceLabel(types.LabelFrontendPassHostHeader, serviceName)); err == nil {
+		return passHostHeader
+	}
+	return p.getPassHostHeader(service)
+}
+
+func (p *Provider) getServicePriority(service rancherData, serviceName string) string {
+	if priority, err := getServiceLabel(service, types.ServiceLabel(types.LabelFrontendPriority, serviceName)); err == nil {
+		return priority
+	}
+	return p.getPriority(service)
+}
+
+func (p *Provider) getServiceBackend(service rancherData, serviceName string) string {
+	if label, err := getServiceLabel(service, types.ServiceLabel(types.LabelBackend, serviceName)); err == nil {
+		return provider.Normalize(label)
+	}
+	return p.getBackend(service) + "-" + provider.Normalize(serviceName)
+}
+
+func (p *Provider) getServiceFrontendRule(service rancherData, serviceName string) string {
+	if label, err := getServiceLabel(service, types.ServiceLabel(types.LabelFrontendRule, serviceName)); err == nil {
+		return label
+	}
+	return p.getFrontendRule(service)
+}
+
+func (p *Provider) getServicePort(service rancherData, serviceName string) string {
+	if label, err := getServiceLabel(service, types.ServiceLabel(types.LabelPort, serviceName)); err == nil {
+		return label
+	}
+	return p.getPort(service)
+}
+
+func (p *Provider) getServiceWeight(service rancherData, serviceName string) string {
+	if label, err := getServiceLabel(service, types.ServiceLabel(types.LabelWeight, serviceName)); err == nil {
+		return label
+	}
+	return p.getWeight(service)
+}
+
+func (p *Provider) getServiceProtocol(service rancherData, serviceName string) string {
+	if label, err := getServiceLabel(service, types.ServiceLabel(types.LabelProtocol, serviceName)); err == nil {
+		return label
+	}
+	return p.getProtocol(service)
+}
+
 func (p *Provider) hasMaxConnLabels(service rancherData) bool {
 	if _, err := getServiceLabel(service, types.LabelBackendMaxconnAmount); err != nil {
 		return false
@@ -239,6 +351,17 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 		"getSticky":                   p.getSticky,
 		"hasStickinessLabel":          p.hasStickinessLabel,
 		"getStickinessCookieName":     p.getStickinessCookieName,
+		"hasServices":                 p.hasServices,
+		"getServiceNames":             p.getServiceNames,
+		"getServicePort":              p.getServicePort,
+		"getServiceWeight":            p.getServiceWeight,
+		"getServiceProtocol":          p.getServiceProtocol,
+		"getServiceEntryPoints":       p.getServiceEntryPoints,
+		"getServiceBasicAuth":         p.getServiceBasicAuth,
+		"getServiceFrontendRule":      p.getServiceFrontendRule,
+		"getServicePassHostHeader":    p.getServicePassHostHeader,
+		"getServicePriority":          p.getServicePriority,
+		"getServiceBackend":           p.getServiceBackend,
 	}
 
 	// filter services
@@ -291,8 +414,17 @@ func containerFilter(name, healthState, state string) bool {
 func (p *Provider) serviceFilter(service rancherData) bool {
 
 	if service.Labels[types.LabelPort] == "" {
-		log.Debugf("Filtering service %s without traefik.port label", service.Name)
-		return false
+		if p.hasServices(service) {
+			for _, serviceName := range p.getServiceNames(service) {
+				if service.Labels[types.ServiceLabel(types.LabelPort, serviceName)] == "" {
+					log.Debugf("Filtering service %s without traefik.%s.port or traefik.port labels", service.Name, serviceName)
+					return false
+				}
+			}
+		} else {
+			log.Debugf("Filtering service %s without traefik.port label", service.Name)
+			return false
+		}
 	}
 
 	if !isServiceEnabled(service, p.ExposedByDefault) {

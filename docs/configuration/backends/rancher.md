@@ -135,3 +135,25 @@ Labels can be used on task containers to override default behaviour:
 | `traefik.backend.loadbalancer.stickiness=true`                        | Enable backend sticky sessions                                                           |
 | `traefik.backend.loadbalancer.stickiness.cookieName=NAME`             | Manually set the cookie name for sticky sessions                                         |
 | `traefik.backend.loadbalancer.sticky=true`                            | Enable backend sticky sessions (DEPRECATED)                                              |
+
+### On Service
+
+Services labels can be used for overriding default behaviour
+
+| Label                                             | Description                                                                                      |
+|---------------------------------------------------|--------------------------------------------------------------------------------------------------|
+| `traefik.<service-name>.port=PORT`                | Overrides `traefik.port`. If several ports need to be exposed, the service labels could be used. |
+| `traefik.<service-name>.protocol`                 | Overrides `traefik.protocol`.                                                                    |
+| `traefik.<service-name>.weight`                   | Assign this service weight. Overrides `traefik.weight`.                                          |
+| `traefik.<service-name>.frontend.backend=BACKEND` | Assign this service frontend to `BACKEND`. Default is to assign to the service backend.          |
+| `traefik.<service-name>.frontend.entryPoints`     | Overrides `traefik.frontend.entrypoints`                                                         |
+| `traefik.<service-name>.frontend.auth.basic`      | Sets a Basic Auth for that frontend                                                              |
+| `traefik.<service-name>.frontend.passHostHeader`  | Overrides `traefik.frontend.passHostHeader`.                                                     |
+| `traefik.<service-name>.frontend.priority`        | Overrides `traefik.frontend.priority`.                                                           |
+| `traefik.<service-name>.frontend.rule`            | Overrides `traefik.frontend.rule`.                                                               |
+
+
+!!! note
+    if a label is defined both as a `container label` and a `service label` (for example `traefik.<service-name>.port=PORT` and `traefik.port=PORT` ), the `service label` is used to defined the `<service-name>` property (`port` in the example).
+    It's possible to mix `container labels` and `service labels`, in this case `container labels` are used as default value for missing `service labels` but no frontends are going to be created with the `container labels`.
+    More details in this [example](/user-guide/docker-and-lets-encrypt/#labels).
