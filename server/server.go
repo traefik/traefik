@@ -741,11 +741,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	internalMuxSubrouter.SkipClean(true)
 
 	server.addInternalRoutes(entryPointName, internalMuxSubrouter)
-	internalMuxRouter.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-		middles := append(internalMiddlewares, negroni.Wrap(route.GetHandler()))
-		route.Handler(negroni.New(middles...))
-		return nil
-	})
+	deepConfigureMiddlewares(internalMuxRouter, internalMiddlewares)
 
 	server.addInternalPublicRoutes(entryPointName, internalMuxSubrouter)
 	internalMuxRouter.NotFoundHandler = n
@@ -790,6 +786,15 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 		},
 		listener,
 		nil
+}
+
+// Configure middlewares on each route in the subrouter
+func deepConfigureMiddlewares(router *mux.Router, middlewares []negroni.Handler) {
+	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		middles := append(middlewares, negroni.Wrap(route.GetHandler()))
+		route.Handler(negroni.New(middles...))
+		return nil
+	})
 }
 
 func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTimeout, writeTimeout, idleTimeout time.Duration) {
