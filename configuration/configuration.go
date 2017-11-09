@@ -119,11 +119,11 @@ func (gc *GlobalConfiguration) handleWebDeprecation() {
 			Auth:    gc.Web.Auth,
 		}
 		if gc.Web.CertFile != "" {
-			gc.EntryPoints[DefaultInternalEntryPointName].TLS = &TLS{
-				Certificates: []Certificate{
+			gc.EntryPoints[DefaultInternalEntryPointName].TLS = &tls.TLS{
+				Certificates: []tls.Certificate{
 					{
-						CertFile: FileOrContent(gc.Web.CertFile),
-						KeyFile:  FileOrContent(gc.Web.KeyFile),
+						CertFile: tls.FileOrContent(gc.Web.CertFile),
+						KeyFile:  tls.FileOrContent(gc.Web.KeyFile),
 					},
 				},
 			}
