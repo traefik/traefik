@@ -13,6 +13,7 @@ import (
 
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
+	traefikTls "github.com/containous/traefik/tls"
 	"github.com/docker/libkv/store"
 	"github.com/ryanuber/go-glob"
 )
@@ -188,8 +189,9 @@ type Configurations map[string]*Configuration
 
 // Configuration of a provider.
 type Configuration struct {
-	Backends  map[string]*Backend  `json:"backends,omitempty"`
-	Frontends map[string]*Frontend `json:"frontends,omitempty"`
+	Backends         map[string]*Backend         `json:"backends,omitempty"`
+	Frontends        map[string]*Frontend        `json:"frontends,omitempty"`
+	TLSConfiguration []*traefikTls.Configuration `json:"tlsConfiguration,omitempty"`
 }
 
 // ConfigMessage hold configuration information exchanged between parts of traefik.

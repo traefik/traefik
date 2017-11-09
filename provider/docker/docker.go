@@ -523,6 +523,11 @@ func (p *Provider) getMaxConnExtractorFunc(container dockerData) string {
 }
 
 func (p *Provider) containerFilter(container dockerData) bool {
+	if !isContainerEnabled(container, p.ExposedByDefault) {
+		log.Debugf("Filtering disabled container %s", container.Name)
+		return false
+	}
+
 	var err error
 	portLabel := "traefik.port label"
 	if p.hasServices(container) {
@@ -533,11 +538,6 @@ func (p *Provider) containerFilter(container dockerData) bool {
 	}
 	if len(container.NetworkSettings.Ports) == 0 && err != nil {
 		log.Debugf("Filtering container without port and no %s %s : %s", portLabel, container.Name, err.Error())
-		return false
-	}
-
-	if !isContainerEnabled(container, p.ExposedByDefault) {
-		log.Debugf("Filtering disabled container %s", container.Name)
 		return false
 	}
 

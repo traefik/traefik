@@ -7,8 +7,8 @@ RootCAs = [ """{{ .CertContent }}""" ]
   address = ":4443"
     [entryPoints.https.tls]
      [[entryPoints.https.tls.certificates]]
-     CertFile = """{{ .CertContent }}"""
-     KeyFile  = """{{ .KeyContent }}"""
+     certFile = """{{ .CertContent }}"""
+     keyFile  = """{{ .KeyContent }}"""
 
 
 [web]

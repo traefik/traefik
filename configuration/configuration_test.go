@@ -7,6 +7,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/tls"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -150,12 +151,12 @@ func TestEntryPoints_Set(t *testing.T) {
 					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
 				},
 				WhitelistSourceRange: []string{"Range"},
-				TLS: &TLS{
+				TLS: &tls.TLS{
 					ClientCAFiles: []string{"car"},
-					Certificates: Certificates{
+					Certificates: tls.Certificates{
 						{
-							CertFile: FileOrContent("goo"),
-							KeyFile:  FileOrContent("gii"),
+							CertFile: tls.FileOrContent("goo"),
+							KeyFile:  tls.FileOrContent("gii"),
 						},
 					},
 				},
@@ -180,12 +181,12 @@ func TestEntryPoints_Set(t *testing.T) {
 					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
 				},
 				WhitelistSourceRange: []string{"Range"},
-				TLS: &TLS{
+				TLS: &tls.TLS{
 					ClientCAFiles: []string{"car"},
-					Certificates: Certificates{
+					Certificates: tls.Certificates{
 						{
-							CertFile: FileOrContent("goo"),
-							KeyFile:  FileOrContent("gii"),
+							CertFile: tls.FileOrContent("goo"),
+							KeyFile:  tls.FileOrContent("gii"),
 						},
 					},
 				},

@@ -6,6 +6,7 @@ import (
 	"github.com/containous/traefik/cmd/traefik/anonymize"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/tls"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +22,7 @@ func Test_createBugReport(t *testing.T) {
 			File: &file.Provider{
 				Directory: "BAR",
 			},
-			RootCAs: configuration.RootCAs{"fllf"},
+			RootCAs: tls.RootCAs{"fllf"},
 		},
 	}
 
