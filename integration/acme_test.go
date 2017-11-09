@@ -92,6 +92,26 @@ func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateWithWildcard(c *check.C
 	s.retrieveAcmeCertificate(c, testCase)
 }
 
+// Test OnDemand option with a wildcard provided certificate
+func (s *AcmeSuite) TestOnDemandRetrieveAcmeCertificateWithDynamicWildcard(c *check.C) {
+	testCase := AcmeTestCase{
+		traefikConfFilePath: "fixtures/acme/acme_provided_dynamic.toml",
+		onDemand:            true,
+		domainToCheck:       wildcardDomain}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
+// Test onHostRule option with a wildcard provided certificate
+func (s *AcmeSuite) TestOnHostRuleRetrieveAcmeCertificateWithDynamicWildcard(c *check.C) {
+	testCase := AcmeTestCase{
+		traefikConfFilePath: "fixtures/acme/acme_provided_dynamic.toml",
+		onDemand:            false,
+		domainToCheck:       wildcardDomain}
+
+	s.retrieveAcmeCertificate(c, testCase)
+}
+
 // Doing an HTTPS request and test the response certificate
 func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 	file := s.adaptFile(c, testCase.traefikConfFilePath, struct {

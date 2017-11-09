@@ -78,7 +78,7 @@ Let's take a look at a simple `traefik.toml` configuration as well before we'll 
 
 ```toml
 debug = false
-checkNewVersion = true
+
 logLevel = "ERROR"
 defaultEntryPoints = ["https","http"]
 

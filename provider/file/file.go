@@ -3,13 +3,16 @@ package file
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"gopkg.in/fsnotify.v1"
 )
@@ -37,7 +40,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		if p.Directory != "" {
 			watchItem = p.Directory
 		} else {
-			watchItem = p.Filename
+			watchItem = filepath.Dir(p.Filename)
 		}
 
 		if err := p.addWatcher(pool, watchItem, configurationChan, p.watcherCallback); err != nil {
@@ -63,7 +66,15 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 			case <-stop:
 				return
 			case evt := <-watcher.Events:
-				callback(configurationChan, evt)
+				if p.Directory == "" {
+					_, evtFileName := filepath.Split(evt.Name)
+					_, confFileName := filepath.Split(p.Filename)
+					if evtFileName == confFileName {
+						callback(configurationChan, evt)
+					}
+				} else {
+					callback(configurationChan, evt)
+				}
 			case err := <-watcher.Errors:
 				log.Errorf("Watcher event error: %s", err)
 			}
@@ -92,28 +103,39 @@ func loadFileConfig(filename string) (*types.Configuration, error) {
 	return configuration, nil
 }
 
-func loadFileConfigFromDirectory(directory string) (*types.Configuration, error) {
+func loadFileConfigFromDirectory(directory string, configuration *types.Configuration) (*types.Configuration, error) {
 	fileList, err := ioutil.ReadDir(directory)
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to read directory %s: %v", directory, err)
+		return configuration, fmt.Errorf("unable to read directory %s: %v", directory, err)
 	}
 
-	configuration := &types.Configuration{
-		Frontends: make(map[string]*types.Frontend),
-		Backends:  make(map[string]*types.Backend),
+	if configuration == nil {
+		configuration = &types.Configuration{
+			Frontends:        make(map[string]*types.Frontend),
+			Backends:         make(map[string]*types.Backend),
+			TLSConfiguration: make([]*tls.Configuration, 0),
+		}
 	}
 
-	for _, file := range fileList {
-		if !strings.HasSuffix(file.Name(), ".toml") {
+	configTLSMaps := make(map[*tls.Configuration]struct{})
+	for _, item := range fileList {
+
+		if item.IsDir() {
+			configuration, err = loadFileConfigFromDirectory(filepath.Join(directory, item.Name()), configuration)
+			if err != nil {
+				return configuration, fmt.Errorf("unable to load content configuration from subdirectory %s: %v", item, err)
+			}
+			continue
+		} else if !strings.HasSuffix(item.Name(), ".toml") {
 			continue
 		}
 
 		var c *types.Configuration
-		c, err = loadFileConfig(path.Join(directory, file.Name()))
+		c, err = loadFileConfig(path.Join(directory, item.Name()))
 
 		if err != nil {
-			return nil, err
+			return configuration, err
 		}
 
 		for backendName, backend := range c.Backends {
@@ -131,12 +153,33 @@ func loadFileConfigFromDirectory(directory string) (*types.Configuration, error)
 				configuration.Frontends[frontendName] = frontend
 			}
 		}
-	}
 
+		for _, conf := range c.TLSConfiguration {
+			if _, exists := configTLSMaps[conf]; exists {
+				log.Warnf("TLS Configuration %v already configured, skipping", conf)
+			} else {
+				configTLSMaps[conf] = struct{}{}
+			}
+		}
+
+	}
+	for conf := range configTLSMaps {
+		configuration.TLSConfiguration = append(configuration.TLSConfiguration, conf)
+	}
 	return configuration, nil
 }
 
 func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage, event fsnotify.Event) {
+	watchItem := p.Filename
+	if p.Directory != "" {
+		watchItem = p.Directory
+	}
+
+	if _, err := os.Stat(watchItem); err != nil {
+		log.Debugf("Unable to watch %s : %v", watchItem, err)
+		return
+	}
+
 	configuration, err := p.loadConfig()
 
 	if err != nil {
@@ -149,7 +192,7 @@ func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage,
 
 func (p *Provider) loadConfig() (*types.Configuration, error) {
 	if p.Directory != "" {
-		return loadFileConfigFromDirectory(p.Directory)
+		return loadFileConfigFromDirectory(p.Directory, nil)
 	}
 
 	return loadFileConfig(p.Filename)

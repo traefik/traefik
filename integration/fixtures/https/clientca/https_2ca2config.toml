@@ -8,11 +8,11 @@ defaultEntryPoints = ["https"]
     [entryPoints.https.tls]
     ClientCAFiles = ["fixtures/https/clientca/ca1.crt", "fixtures/https/clientca/ca2.crt"]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "fixtures/https/snitest.com.cert"
-      KeyFile = "fixtures/https/snitest.com.key"
+      certFile = "fixtures/https/snitest.com.cert"
+      keyFile = "fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = "fixtures/https/snitest.org.cert"
-      KeyFile = "fixtures/https/snitest.org.key"
+      certFile = "fixtures/https/snitest.org.cert"
+      keyFile = "fixtures/https/snitest.org.key"
 
 [web]
   address = ":8080"

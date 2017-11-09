@@ -1,5 +1,8 @@
 # Web Backend
 
+!!! danger "DEPRECATED"
+    The web provider is deprecated, please use the [api](/configuration/api.md), the [ping](/configuration/ping.md), the [metrics](/configuration/metrics) and the [rest](/configuration/backends/rest.md) provider.
+
 Træfik can be configured:
 
 - using a RESTful api.

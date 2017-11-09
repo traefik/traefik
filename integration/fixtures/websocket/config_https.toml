@@ -8,8 +8,8 @@ InsecureSkipVerify=true
   address = ":8000"
   [entryPoints.wss.tls]
   [[entryPoints.wss.tls.certificates]]
-    CertFile = "resources/tls/local.cert"
-    KeyFile = "resources/tls/local.key"
+    certFile = "resources/tls/local.cert"
+    keyFile = "resources/tls/local.key"
 
 [web]
   address = ":8080"

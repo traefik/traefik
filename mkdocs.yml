@@ -84,7 +84,11 @@ pages:
     - 'Backend: Marathon': 'configuration/backends/marathon.md'
     - 'Backend: Mesos': 'configuration/backends/mesos.md'
     - 'Backend: Rancher': 'configuration/backends/rancher.md'
+    - 'Backend: Rest': 'configuration/backends/rest.md'
     - 'Backend: Zookeeper': 'configuration/backends/zookeeper.md'
+    - 'API / Dashboard': 'configuration/api.md'
+    - 'Ping': 'configuration/ping.md'
+    - 'Metrics': 'configuration/metrics.md'
   - User Guides:
     - 'Configuration Examples': 'user-guide/examples.md'
     - 'Swarm Mode Cluster': 'user-guide/swarm-mode.md'

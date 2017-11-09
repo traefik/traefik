@@ -76,13 +76,13 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = """-----BEGIN CERTIFICATE-----
+      certFile = """-----BEGIN CERTIFICATE-----
                       <cert file content>
                       -----END CERTIFICATE-----"""
-      KeyFile = """-----BEGIN CERTIFICATE-----
+      keyFile = """-----BEGIN CERTIFICATE-----
                       <key file content>
                       -----END CERTIFICATE-----"""
 

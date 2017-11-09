@@ -27,11 +27,11 @@ To redirect an http entrypoint to an https entrypoint (with SNI support).
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
+      certFile = "integration/fixtures/https/snitest.org.cert"
+      keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
 !!! note
@@ -53,6 +53,23 @@ To redirect an entrypoint rewriting the URL.
 !!! note
     Please note that `regex` and `replacement` do not have to be set in the `redirect` structure if an entrypoint is defined for the redirection (they will not be used in this case).
 
+## TLS
+
+Define an entrypoint with SNI support.
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
+```
+
+!!! note
+    If an empty TLS configuration is done, default self-signed certificates are generated.
+
 ## TLS Mutual Authentication
 
 Only accept clients that present a certificate signed by a specified Certificate Authority (CA).
@@ -71,11 +88,11 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
   [entryPoints.https.tls]
   ClientCAFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
     [[entryPoints.https.tls.certificates]]
-    CertFile = "integration/fixtures/https/snitest.com.cert"
-    KeyFile = "integration/fixtures/https/snitest.com.key"
+    certFile = "integration/fixtures/https/snitest.com.cert"
+    keyFile = "integration/fixtures/https/snitest.com.key"
     [[entryPoints.https.tls.certificates]]
-    CertFile = "integration/fixtures/https/snitest.org.cert"
-    KeyFile = "integration/fixtures/https/snitest.org.key"
+    certFile = "integration/fixtures/https/snitest.org.cert"
+    keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
 ## Authentication

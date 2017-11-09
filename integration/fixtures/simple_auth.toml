@@ -1,0 +1,16 @@
+logLevel = "DEBUG"
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+  [entryPoints.traefik]
+  address = ":8001"
+  [entryPoints.traefik.auth.basic]
+    users = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+
+
+[api]
+
+[ping]

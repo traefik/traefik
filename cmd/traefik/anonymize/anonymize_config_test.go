@@ -8,7 +8,6 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
@@ -23,11 +22,9 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
-	"github.com/containous/traefik/provider/web"
 	"github.com/containous/traefik/provider/zk"
-	"github.com/containous/traefik/safe"
+	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	thoas_stats "github.com/thoas/stats"
 )
 
 func TestDo_globalConfiguration(t *testing.T) {
@@ -48,10 +45,10 @@ func TestDo_globalConfiguration(t *testing.T) {
 		"foo": {
 			Network: "foo Network",
 			Address: "foo Address",
-			TLS: &configuration.TLS{
+			TLS: &traefikTls.TLS{
 				MinVersion:   "foo MinVersion",
 				CipherSuites: []string{"foo CipherSuites 1", "foo CipherSuites 2", "foo CipherSuites 3"},
-				Certificates: configuration.Certificates{
+				Certificates: traefikTls.Certificates{
 					{CertFile: "CertFile 1", KeyFile: "KeyFile 1"},
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
@@ -91,10 +88,10 @@ func TestDo_globalConfiguration(t *testing.T) {
 		"fii": {
 			Network: "fii Network",
 			Address: "fii Address",
-			TLS: &configuration.TLS{
+			TLS: &traefikTls.TLS{
 				MinVersion:   "fii MinVersion",
 				CipherSuites: []string{"fii CipherSuites 1", "fii CipherSuites 2", "fii CipherSuites 3"},
-				Certificates: configuration.Certificates{
+				Certificates: traefikTls.Certificates{
 					{CertFile: "CertFile 1", KeyFile: "KeyFile 1"},
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
@@ -178,7 +175,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 	config.MaxIdleConnsPerHost = 666
 	config.IdleTimeout = flaeg.Duration(666 * time.Second)
 	config.InsecureSkipVerify = true
-	config.RootCAs = configuration.RootCAs{"RootCAs 1", "RootCAs 2", "RootCAs 3"}
+	config.RootCAs = traefikTls.RootCAs{"RootCAs 1", "RootCAs 2", "RootCAs 3"}
 	config.Retry = &configuration.Retry{
 		Attempts: 666,
 	}
@@ -246,7 +243,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 		Directory: "file Directory",
 	}
-	config.Web = &web.Provider{
+	config.Web = &configuration.WebCompatibility{
 		Address:  "web Address",
 		CertFile: "web CertFile",
 		KeyFile:  "web KeyFile",
@@ -289,15 +286,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 		Debug: true,
-		CurrentConfigurations: &safe.Safe{},
-		Stats: &thoas_stats.Stats{
-			Uptime:              time.Now(),
-			Pid:                 666,
-			ResponseCounts:      map[string]int{"foo": 1, "fii": 2, "fuu": 3},
-			TotalResponseCounts: map[string]int{"foo": 1, "fii": 2, "fuu": 3},
-			TotalResponseTime:   time.Now(),
-		},
-		StatsRecorder: &middlewares.StatsRecorder{},
 	}
 	config.Marathon = &marathon.Provider{
 		BaseProvider: provider.BaseProvider{
