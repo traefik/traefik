@@ -8,7 +8,6 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/configuration"
-	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
@@ -23,12 +22,9 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
-	"github.com/containous/traefik/provider/web"
 	"github.com/containous/traefik/provider/zk"
-	"github.com/containous/traefik/safe"
 	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
-	thoas_stats "github.com/thoas/stats"
 )
 
 func TestDo_globalConfiguration(t *testing.T) {
@@ -247,7 +243,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 		},
 		Directory: "file Directory",
 	}
-	config.Web = &web.Provider{
+	config.Web = &configuration.WebCompatibility{
 		Address:  "web Address",
 		CertFile: "web CertFile",
 		KeyFile:  "web KeyFile",
@@ -290,15 +286,6 @@ func TestDo_globalConfiguration(t *testing.T) {
 			},
 		},
 		Debug: true,
-		CurrentConfigurations: &safe.Safe{},
-		Stats: &thoas_stats.Stats{
-			Uptime:              time.Now(),
-			Pid:                 666,
-			ResponseCounts:      map[string]int{"foo": 1, "fii": 2, "fuu": 3},
-			TotalResponseCounts: map[string]int{"foo": 1, "fii": 2, "fuu": 3},
-			TotalResponseTime:   time.Now(),
-		},
-		StatsRecorder: &middlewares.StatsRecorder{},
 	}
 	config.Marathon = &marathon.Provider{
 		BaseProvider: provider.BaseProvider{

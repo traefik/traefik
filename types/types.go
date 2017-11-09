@@ -375,7 +375,8 @@ type Metrics struct {
 
 // Prometheus can contain specific configuration used by the Prometheus Metrics exporter
 type Prometheus struct {
-	Buckets Buckets `description:"Buckets for latency metrics" export:"true"`
+	Buckets    Buckets `description:"Buckets for latency metrics" export:"true"`
+	EntryPoint string  `description:"EntryPoint" export:"true"`
 }
 
 // Datadog contains address and metrics pushing interval configuration

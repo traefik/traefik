@@ -102,19 +102,25 @@ Complete documentation is available at https://traefik.io`,
 
 	healthCheckCmd := &flaeg.Command{
 		Name:                  "healthcheck",
-		Description:           `Calls traefik /ping to check health (web provider must be enabled)`,
+		Description:           `Calls traefik /ping to check health (ping must be enabled)`,
 		Config:                traefikConfiguration,
 		DefaultPointersConfig: traefikPointersConfiguration,
 		Run: func() error {
 			traefikConfiguration.GlobalConfiguration.SetEffectiveConfiguration(traefikConfiguration.ConfigFile)
 
-			if traefikConfiguration.Web == nil {
-				fmt.Println("Please enable the web provider to use healtcheck.")
+			if traefikConfiguration.Ping == nil {
+				fmt.Println("Please enable `ping` to use healtcheck.")
 				os.Exit(1)
 			}
+
+			pingEntryPoint, ok := traefikConfiguration.EntryPoints[traefikConfiguration.Ping.EntryPoint]
+			if !ok {
+				pingEntryPoint = &configuration.EntryPoint{Address: ":8080"}
+			}
+
 			client := &http.Client{Timeout: 5 * time.Second}
 			protocol := "http"
-			if len(traefikConfiguration.Web.CertFile) > 0 {
+			if pingEntryPoint.TLS != nil {
 				protocol = "https"
 				tr := &http.Transport{
 					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -122,9 +128,9 @@ Complete documentation is available at https://traefik.io`,
 				client.Transport = tr
 			}
 
-			resp, err := client.Head(protocol + "://" + traefikConfiguration.Web.Address + traefikConfiguration.Web.Path + "ping")
-			if err != nil {
-				fmt.Printf("Error calling healthcheck: %s\n", err)
+			resp, errPing := client.Head(protocol + "://" + pingEntryPoint.Address + traefikConfiguration.Web.Path + "ping")
+			if errPing != nil {
+				fmt.Printf("Error calling healthcheck: %s\n", errPing)
 				os.Exit(1)
 			}
 			if resp.StatusCode != http.StatusOK {
