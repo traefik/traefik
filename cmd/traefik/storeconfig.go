@@ -33,7 +33,7 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 			return fmt.Errorf("error using command storeconfig, no Key-value store defined")
 		}
 		fileConfig := traefikConfiguration.GlobalConfiguration.File
-		if fileConfig != nil && !traefikConfiguration.ExportFileConfigInStoreConfig {
+		if fileConfig != nil {
 			traefikConfiguration.GlobalConfiguration.File = nil
 		}
 		jsonConf, err := json.Marshal(traefikConfiguration.GlobalConfiguration)
