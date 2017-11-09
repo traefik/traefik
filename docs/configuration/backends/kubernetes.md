@@ -2,7 +2,7 @@
 
 Træfik can be configured to use Kubernetes Ingress as a backend configuration.
 
-See also [Kubernetes user guide](/docs/user-guide/kubernetes). 
+See also [Kubernetes user guide](/user-guide/kubernetes). 
 
 
 ## Configuration
