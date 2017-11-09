@@ -24,10 +24,10 @@ func TestInfluxDB(t *testing.T) {
 	}
 
 	expected := []string{
-		"(traefik.requests.total,code=200,method=GET,service=test count=1) [0-9]{19}",
-		"(traefik.requests.total,code=404,method=GET,service=test count=1) [0-9]{19}",
-		"(traefik.request.duration,code=200,method=GET,service=test p50=10000,p90=10000,p95=10000,p99=10000) [0-9]{19}",
-		"(traefik.backend.retries.total,code=404,method=GET,service=test count=2) [0-9]{19}",
+		`(traefik\.requests\.total,code=200,method=GET,service=test count=1) [\d]{19}`,
+		`(traefik\.requests\.total,code=404,method=GET,service=test count=1) [\d]{19}`,
+		`(traefik\.request\.duration,code=200,method=GET,service=test p50=10000,p90=10000,p95=10000,p99=10000) [\d]{19}`,
+		`(traefik\.backend\.retries\.total(?:,code=[\d]{3},method=GET)?,service=test count=2) [\d]{19}`,
 	}
 
 	msg := udp.ReceiveString(t, func() {
@@ -38,10 +38,10 @@ func TestInfluxDB(t *testing.T) {
 		influxDBRegistry.ReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	})
 
-	extractAndMatchMessage(t, expected, msg)
+	assertMessage(t, msg, expected)
 }
 
-func extractAndMatchMessage(t *testing.T, patterns []string, msg string) {
+func assertMessage(t *testing.T, msg string, patterns []string) {
 	t.Helper()
 	for _, pattern := range patterns {
 		re := regexp.MustCompile(pattern)
