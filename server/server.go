@@ -727,23 +727,12 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 	}
 	n.UseHandler(router)
 
-	internalMuxRouter := mux.NewRouter()
-	internalMuxRouter.StrictSlash(true)
-	internalMuxRouter.SkipClean(true)
-
 	path := "/"
 	if server.globalConfiguration.Web != nil && server.globalConfiguration.Web.Path != "" {
 		path = server.globalConfiguration.Web.Path
 	}
 
-	internalMuxSubrouter := internalMuxRouter.PathPrefix(path).Subrouter()
-	internalMuxSubrouter.StrictSlash(true)
-	internalMuxSubrouter.SkipClean(true)
-
-	server.addInternalRoutes(entryPointName, internalMuxSubrouter)
-	deepConfigureMiddlewares(internalMuxRouter, internalMiddlewares)
-
-	server.addInternalPublicRoutes(entryPointName, internalMuxSubrouter)
+	internalMuxRouter := server.buildInternalRouter(entryPointName, path, internalMiddlewares)
 	internalMuxRouter.NotFoundHandler = n
 
 	tlsConfig, err := server.createTLSConfig(entryPointName, entryPoint.TLS, router)
@@ -788,13 +777,29 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 		nil
 }
 
-// Configure middlewares on each route in the subrouter
-func deepConfigureMiddlewares(router *mux.Router, middlewares []negroni.Handler) {
-	router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+func (server *Server) buildInternalRouter(entryPointName, path string, internalMiddlewares []negroni.Handler) *mux.Router {
+	internalMuxRouter := mux.NewRouter()
+	internalMuxRouter.StrictSlash(true)
+	internalMuxRouter.SkipClean(true)
+
+	internalMuxSubrouter := internalMuxRouter.PathPrefix(path).Subrouter()
+	internalMuxSubrouter.StrictSlash(true)
+	internalMuxSubrouter.SkipClean(true)
+
+	server.addInternalRoutes(entryPointName, internalMuxSubrouter)
+	internalMuxRouter.Walk(wrapRoute(internalMiddlewares))
+
+	server.addInternalPublicRoutes(entryPointName, internalMuxSubrouter)
+	return internalMuxRouter
+}
+
+// wrapRoute with middlewares
+func wrapRoute(middlewares []negroni.Handler) func(*mux.Route, *mux.Router, []*mux.Route) error {
+	return func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		middles := append(middlewares, negroni.Wrap(route.GetHandler()))
 		route.Handler(negroni.New(middles...))
 		return nil
-	})
+	}
 }
 
 func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTimeout, writeTimeout, idleTimeout time.Duration) {
