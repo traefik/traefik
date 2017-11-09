@@ -70,6 +70,8 @@ const (
 	Overhead = "Overhead"
 	// RetryAttempts is the map key used for the amount of attempts the request was retried.
 	RetryAttempts = "RetryAttempts"
+	// RequestID is the uniq request identifier
+	RequestID = "RequestID"
 )
 
 // These are written out in the default case when no config is provided to specify keys of interest.

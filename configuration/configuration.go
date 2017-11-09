@@ -54,6 +54,7 @@ type GlobalConfiguration struct {
 	TraefikLog                *types.TraefikLog       `description:"Traefik log settings" export:"true"`
 	LogLevel                  string                  `short:"l" description:"Log level" export:"true"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'" export:"true"`
+	RequestID                 bool                    `description:"Automatically add a generated X-Request-ID if not present"`
 	Cluster                   *types.Cluster          `description:"Enable clustering" export:"true"`
 	Constraints               types.Constraints       `description:"Filter services by constraint, matching with service tags" export:"true"`
 	ACME                      *acme.ACME              `description:"Enable ACME (Let's Encrypt): automatic SSL" export:"true"`
