@@ -1,4 +1,4 @@
-hash: 5aef5628a880e04fac9cd9db2a33f1f4716680b0c338f3aa803d9786f253405a
+hash: 6e35766dd261f1eb0c2dfaadb8e0bf235eb4f3f942de776f9b48faf8a868a2d0
 updated: 2017-11-15T18:39:20.364720581+02:00
 imports:
 - name: cloud.google.com/go
@@ -465,8 +465,6 @@ imports:
   version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - name: github.com/spf13/pflag
   version: cb88ea77998c3f024757528e3305022ab50b43be
-- name: github.com/streamrail/concurrent-map
-  version: 8bf1e9bacbf65b10c81d0f4314cf2b1ebef728b5
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
