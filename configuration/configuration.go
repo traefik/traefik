@@ -108,10 +108,10 @@ type WebCompatibility struct {
 
 func (gc *GlobalConfiguration) handleWebDeprecation() {
 	if gc.Web != nil {
-		log.Warn("web provider configuration is deprecated, you should use --api for api, --rest for rest provider, --ping for ping and --metrics for metrics")
+		log.Warn("web provider configuration is deprecated, you should use these options : api, rest provider, ping and metrics")
 
 		if gc.API != nil || gc.Metrics != nil || gc.Ping != nil || gc.Rest != nil {
-			log.Warn("--web is ignored if you use it with one of these options : --api, --rest , --ping or --metrics")
+			log.Warn("web option is ignored if you use it with one of these options : api, rest provider, ping or metrics")
 			return
 		}
 		gc.EntryPoints[DefaultInternalEntryPointName] = &EntryPoint{
