@@ -59,6 +59,7 @@ type Provider struct {
 	GroupsAsSubDomains      bool             `description:"Convert Marathon groups to subdomains" export:"true"`
 	DCOSToken               string           `description:"DCOSToken for DCOS environment, This will override the Authorization header" export:"true"`
 	MarathonLBCompatibility bool             `description:"Add compatibility with marathon-lb labels" export:"true"`
+	MarathonConstraints     bool             `description:"Enable use of Marathon constraints in constraint filtering" export:"true"`
 	TLS                     *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
 	DialerTimeout           flaeg.Duration   `description:"Set a non-default connection timeout for Marathon" export:"true"`
 	KeepAlive               flaeg.Duration   `description:"Set a non-default TCP Keep Alive time in seconds" export:"true"`
@@ -245,6 +246,13 @@ func (p *Provider) applicationFilter(app marathon.Application) bool {
 	if p.MarathonLBCompatibility {
 		if label, ok := p.getAppLabel(app, "HAPROXY_GROUP"); ok {
 			constraintTags = append(constraintTags, label)
+		}
+	}
+	if p.MarathonConstraints {
+		if app.Constraints != nil && len(*app.Constraints) > 0 {
+			for _, list := range *app.Constraints {
+				constraintTags = append(constraintTags, strings.Join(list, ":"))
+			}
 		}
 	}
 	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {

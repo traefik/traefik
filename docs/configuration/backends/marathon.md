@@ -68,6 +68,13 @@ domain = "marathon.localhost"
 #
 # marathonLBCompatibility = true
 
+# Enable marathon constraints.
+#
+# Optional
+# Default: false
+#
+# marathonConstraints = true
+
 # Enable Marathon basic authentication.
 #
 # Optional

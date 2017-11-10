@@ -522,18 +522,42 @@ func TestMarathonApplicationFilterConstraints(t *testing.T) {
 		desc                    string
 		application             marathon.Application
 		marathonLBCompatibility bool
+		marathonConstraints     bool
 		expected                bool
 	}{
 		{
 			desc:                    "tags missing",
 			application:             application(),
 			marathonLBCompatibility: false,
+			marathonConstraints:     false,
 			expected:                false,
 		},
 		{
 			desc:                    "tag matching",
 			application:             application(label(types.LabelTags, "valid")),
 			marathonLBCompatibility: false,
+			marathonConstraints:     false,
+			expected:                true,
+		},
+		{
+			desc:                    "constraint missing",
+			application:             application(),
+			marathonLBCompatibility: false,
+			marathonConstraints:     true,
+			expected:                false,
+		},
+		{
+			desc:                    "constraint invalid",
+			application:             application(constraint("service_cluster:CLUSTER:test")),
+			marathonLBCompatibility: false,
+			marathonConstraints:     true,
+			expected:                false,
+		},
+		{
+			desc:                    "constraint valid",
+			application:             application(constraint("valid")),
+			marathonLBCompatibility: false,
+			marathonConstraints:     true,
 			expected:                true,
 		},
 		{
@@ -554,6 +578,7 @@ func TestMarathonApplicationFilterConstraints(t *testing.T) {
 			provider := &Provider{
 				ExposedByDefault:        true,
 				MarathonLBCompatibility: c.marathonLBCompatibility,
+				MarathonConstraints:     c.marathonConstraints,
 			}
 			constraint, err := types.NewConstraint("tag==valid")
 			if err != nil {
