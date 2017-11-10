@@ -15,3 +15,5 @@ nginx1:
   image: nginx:alpine
 nginx2:
   image: nginx:alpine
+nginx3:
+  image: nginx:alpine

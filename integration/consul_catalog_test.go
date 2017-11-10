@@ -380,8 +380,46 @@ func (s *ConsulCatalogSuite) TestRefreshConfigTagChange(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
+func (s *ConsulCatalogSuite) TestCircuitBreaker(c *check.C) {
+	cmd, display := s.traefikCmd(
+		withConfigFile("fixtures/consul_catalog/simple.toml"),
+		"--retry",
+		"--retry.attempts=1",
+		"--forwardingTimeouts.dialTimeout=5s",
+		"--forwardingTimeouts.responseHeaderTimeout=10s",
+		"--consulCatalog",
+		"--consulCatalog.exposedByDefault=false",
+		"--consulCatalog.watch=true",
+		"--consulCatalog.endpoint="+s.consulIP+":8500",
+		"--consulCatalog.domain=consul.localhost")
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
 
+	nginx := s.composeProject.Container(c, "nginx1")
+	nginx2 := s.composeProject.Container(c, "nginx2")
+	nginx3 := s.composeProject.Container(c, "nginx3")
+
+	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{"name=nginx1", "traefik.enable=true", "traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5"})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
+	err = s.registerService("test", nginx2.NetworkSettings.IPAddress, 42, []string{"name=nginx2", "traefik.enable=true", "traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5"})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+	defer s.deregisterService("test", nginx2.NetworkSettings.IPAddress)
+	err = s.registerService("test", nginx3.NetworkSettings.IPAddress, 42, []string{"name=nginx3", "traefik.enable=true", "traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5"})
+	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
+	defer s.deregisterService("test", nginx3.NetworkSettings.IPAddress)
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "test.consul.localhost"
+
+	err = try.Request(req, 20*time.Second, try.StatusCodeIs(http.StatusServiceUnavailable), try.HasBody())
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *ConsulCatalogSuite) TestRetryWithConsulServer(c *check.C) {
 	//Scale consul to 0 to be able to start traefik before and test retry
 	s.composeProject.Scale(c, "consul", 0)
 
