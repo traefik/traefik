@@ -16,6 +16,7 @@ import (
 const (
 	acceptEncodingHeader  = "Accept-Encoding"
 	contentEncodingHeader = "Content-Encoding"
+	contentTypeHeader     = "Content-Type"
 	varyHeader            = "Vary"
 	gzipValue             = "gzip"
 )
@@ -79,6 +80,26 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 
 	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
 	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
+}
+
+func TestShouldNotCompressWhenGRPC(t *testing.T) {
+	handler := &Compress{}
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, gzipValue)
+	req.Header.Add(contentTypeHeader, "application/grpc")
+
+	baseBody := generateBytes(gziphandler.DefaultMinSize)
+	next := func(rw http.ResponseWriter, r *http.Request) {
+		rw.Write(baseBody)
+	}
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req, next)
+
+	assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.EqualValues(t, rw.Body.Bytes(), baseBody)
 }
 
 func TestIntegrationShouldNotCompress(t *testing.T) {
