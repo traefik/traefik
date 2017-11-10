@@ -445,6 +445,7 @@ type AccessLog struct {
 // CA, Cert and Key can be either path or file contents
 type ClientTLS struct {
 	CA                 string `description:"TLS CA"`
+	CAOptional         bool   `description:"TLS CA.Optional"`
 	Cert               string `description:"TLS cert"`
 	Key                string `description:"TLS key"`
 	InsecureSkipVerify bool   `description:"TLS insecure skip verify"`
@@ -458,6 +459,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 		return nil, nil
 	}
 	caPool := x509.NewCertPool()
+	clientAuth := tls.NoClientCert
 	if clientTLS.CA != "" {
 		var ca []byte
 		if _, errCA := os.Stat(clientTLS.CA); errCA == nil {
@@ -469,6 +471,11 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 			ca = []byte(clientTLS.CA)
 		}
 		caPool.AppendCertsFromPEM(ca)
+		if clientTLS.CAOptional {
+			clientAuth = tls.VerifyClientCertIfGiven
+		} else {
+			clientAuth = tls.RequireAndVerifyClientCert
+		}
 	}
 
 	cert := tls.Certificate{}
@@ -505,6 +512,7 @@ func (clientTLS *ClientTLS) CreateTLSConfig() (*tls.Config, error) {
 		Certificates:       []tls.Certificate{cert},
 		RootCAs:            caPool,
 		InsecureSkipVerify: clientTLS.InsecureSkipVerify,
+		ClientAuth:         clientAuth,
 	}
 	return TLSConfig, nil
 }

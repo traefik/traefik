@@ -52,7 +52,10 @@ func TestDo_globalConfiguration(t *testing.T) {
 					{CertFile: "CertFile 1", KeyFile: "KeyFile 1"},
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
-				ClientCAFiles: []string{"foo ClientCAFiles 1", "foo ClientCAFiles 2", "foo ClientCAFiles 3"},
+				ClientCA: traefikTls.ClientCA{
+					Files:    []string{"foo ClientCAFiles 1", "foo ClientCAFiles 2", "foo ClientCAFiles 3"},
+					Optional: false,
+				},
 			},
 			Redirect: &configuration.Redirect{
 				Replacement: "foo Replacement",
@@ -95,7 +98,10 @@ func TestDo_globalConfiguration(t *testing.T) {
 					{CertFile: "CertFile 1", KeyFile: "KeyFile 1"},
 					{CertFile: "CertFile 2", KeyFile: "KeyFile 2"},
 				},
-				ClientCAFiles: []string{"fii ClientCAFiles 1", "fii ClientCAFiles 2", "fii ClientCAFiles 3"},
+				ClientCA: traefikTls.ClientCA{
+					Files:    []string{"fii ClientCAFiles 1", "fii ClientCAFiles 2", "fii ClientCAFiles 3"},
+					Optional: false,
+				},
 			},
 			Redirect: &configuration.Redirect{
 				Replacement: "fii Replacement",

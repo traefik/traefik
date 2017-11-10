@@ -62,10 +62,13 @@ And here is another example with client certificate authentication:
   [entryPoints.https]
   address = ":443"
   [entryPoints.https.tls]
-  clientCAFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
-    [[entryPoints.https.tls.certificates]]
-    certFile = "tests/traefik.crt"
-    keyFile = "tests/traefik.key"
+    [entryPoints.https.tls]
+      [entryPoints.https.tls.ClientCA]
+      files = ["tests/clientca1.crt", "tests/clientca2.crt"]
+      optional = false
+      [[entryPoints.https.tls.certificates]]
+      certFile = "tests/traefik.crt"
+      keyFile = "tests/traefik.key"
 ```
 
 - We enable SSL on `https` by giving a certificate and a key.
