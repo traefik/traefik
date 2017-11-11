@@ -439,6 +439,35 @@ type TraefikLog struct {
 type AccessLog struct {
 	FilePath string `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
 	Format   string `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
+  HeaderRedactions HeaderRedactions `json:"redactheaders,omitempty" description:"List of names of sensitive headers to redact" export:"true"`
+}
+
+// Buckets holds Prometheus Buckets
+type HeaderRedactions []string
+
+//Set adds strings elem into the the parser
+//it splits str on "," and ";" and apply ParseFloat to string
+func (b *HeaderRedactions) Set(str string) error {
+	fargs := func(c rune) bool {
+		return c == ',' || c == ';'
+	}
+	// get function
+	slice := strings.FieldsFunc(str, fargs)
+	for _, header := range slice {
+		*b = append(*b, header)
+	}
+	return nil
+}
+
+//Get []string
+func (b *HeaderRedactions) Get() interface{} { return HeaderRedactions(*b) }
+
+//String return slice in a string
+func (b *HeaderRedactions) String() string { return fmt.Sprintf("%v", *b) }
+
+//SetValue sets []float64 into the parser
+func (b *HeaderRedactions) SetValue(val interface{}) {
+	*b = HeaderRedactions(val.(HeaderRedactions))
 }
 
 // ClientTLS holds TLS specific configurations as client
