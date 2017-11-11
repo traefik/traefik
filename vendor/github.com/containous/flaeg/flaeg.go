@@ -232,13 +232,11 @@ func getDefaultValue(defaultValue reflect.Value, defaultPointersValue reflect.Va
 	case reflect.Ptr:
 		if !defaultPointersValue.IsNil() {
 			if len(key) != 0 {
-				//turn ptr fields to nil
-				defaultPointersNilValue, err := setPointersNil(defaultPointersValue)
-				if err != nil {
-					return err
+				if !defaultValue.IsNil() {
+					defaultValmap[name] = reflect.ValueOf(true)
+				} else {
+					defaultValmap[name] = reflect.ValueOf(false)
 				}
-				defaultValmap[name] = defaultPointersNilValue
-				// fmt.Printf("%s: got default value %+v\n", name, defaultPointersNilValue)
 			}
 			if !defaultValue.IsNil() {
 				if err := getDefaultValue(defaultValue.Elem(), defaultPointersValue.Elem(), defaultValmap, name); err != nil {
@@ -252,8 +250,11 @@ func getDefaultValue(defaultValue reflect.Value, defaultPointersValue reflect.Va
 		} else {
 			instValue := reflect.New(defaultPointersValue.Type().Elem())
 			if len(key) != 0 {
-				defaultValmap[name] = instValue
-				// fmt.Printf("%s: got default value %+v\n", name, instValue)
+				if !defaultValue.IsNil() {
+					defaultValmap[name] = reflect.ValueOf(true)
+				} else {
+					defaultValmap[name] = reflect.ValueOf(false)
+				}
 			}
 			if !defaultValue.IsNil() {
 				if err := getDefaultValue(defaultValue.Elem(), instValue.Elem(), defaultValmap, name); err != nil {
@@ -296,14 +297,14 @@ func setPointersNil(objValue reflect.Value) (reflect.Value, error) {
 }
 
 //FillStructRecursive initialize a value of any taged Struct given by reference
-func fillStructRecursive(objValue reflect.Value, defaultPointerValmap map[string]reflect.Value, valmap map[string]Parser, key string) error {
+func fillStructRecursive(objValue reflect.Value, defaultPointersValue reflect.Value, defaultValmap map[string]reflect.Value, valmap map[string]Parser, key string) error {
 	name := key
 	switch objValue.Kind() {
 	case reflect.Struct:
 
 		for i := 0; i < objValue.Type().NumField(); i++ {
 			if objValue.Type().Field(i).Anonymous {
-				if err := fillStructRecursive(objValue.Field(i), defaultPointerValmap, valmap, name); err != nil {
+				if err := fillStructRecursive(objValue.Field(i), defaultPointersValue.Field(i), defaultValmap, valmap, name); err != nil {
 					return err
 				}
 			} else if len(objValue.Type().Field(i).Tag.Get("description")) > 0 {
@@ -327,7 +328,7 @@ func fillStructRecursive(objValue reflect.Value, defaultPointerValmap map[string
 						}
 					}
 				}
-				if err := fillStructRecursive(objValue.Field(i), defaultPointerValmap, valmap, name); err != nil {
+				if err := fillStructRecursive(objValue.Field(i), defaultPointersValue.Field(i), defaultValmap, valmap, name); err != nil {
 					return err
 				}
 			}
@@ -335,7 +336,7 @@ func fillStructRecursive(objValue reflect.Value, defaultPointerValmap map[string
 
 	case reflect.Ptr:
 		if len(key) == 0 && !objValue.IsNil() {
-			if err := fillStructRecursive(objValue.Elem(), defaultPointerValmap, valmap, name); err != nil {
+			if err := fillStructRecursive(objValue.Elem(), defaultPointersValue.Elem(), defaultValmap, valmap, name); err != nil {
 				return err
 			}
 			return nil
@@ -357,17 +358,20 @@ func fillStructRecursive(objValue reflect.Value, defaultPointerValmap map[string
 		}
 
 		if needDefault {
-			if defVal, ok := defaultPointerValmap[name]; ok {
-				//set default pointer value
-				// fmt.Printf("%s  : set default value %+v\n", name, defVal)
-				objValue.Set(defVal)
+			//turn ptr fields to nil
+			defaultPointersNilValue, err := setPointersNil(defaultPointersValue)
+			if err != nil {
+				return fmt.Errorf("Error setting nil pointers to %s: %s", name, err)
+			}
+			if defaultPointersNilValue.Kind() == reflect.Bool {
+				objValue.Set(reflect.New(objValue.Type().Elem()))
 			} else {
-				return fmt.Errorf("flag %s default value not provided", name)
+				objValue.Set(defaultPointersNilValue)
 			}
 		}
 		if !objValue.IsNil() && contains {
 			if objValue.Type().Elem().Kind() == reflect.Struct {
-				if err := fillStructRecursive(objValue.Elem(), defaultPointerValmap, valmap, name); err != nil {
+				if err := fillStructRecursive(objValue.Elem(), defaultPointersValue.Elem(), defaultValmap, valmap, name); err != nil {
 					return err
 				}
 			}
@@ -458,7 +462,7 @@ func LoadWithCommand(cmd *Command, cmdArgs []string, customParsers map[reflect.T
 		return PrintErrorWithCommand(errParseArgs, tagsmap, defaultValmap, parsers, cmd, subCommand)
 	}
 
-	if err := fillStructRecursive(reflect.ValueOf(cmd.Config), defaultValmap, valmap, ""); err != nil {
+	if err := fillStructRecursive(reflect.ValueOf(cmd.Config), reflect.ValueOf(cmd.DefaultPointersConfig), defaultValmap, valmap, ""); err != nil {
 		return err
 	}
 
@@ -545,13 +549,14 @@ func printFlagsDescriptionsDefaultValues(flagmap map[string]reflect.StructField,
 		if defVal, ok := defaultValmap[flag]; ok {
 			if defVal.Kind() != reflect.Ptr {
 				// Set defaultValue on parsers
-				parsers[field.Type].SetValue(defaultValmap[flag].Interface())
-			}
-
-			if defVal := parsers[field.Type].String(); len(defVal) > 0 {
-				defaultValues = append(defaultValues, fmt.Sprintf("(default \"%s\")", defVal))
+				parsers[field.Type].SetValue(defVal.Interface())
+				if defValStr := parsers[field.Type].String(); len(defValStr) > 0 {
+					defaultValues = append(defaultValues, fmt.Sprintf("(default \"%s\")", defValStr))
+				} else {
+					defaultValues = append(defaultValues, "")
+				}
 			} else {
-				defaultValues = append(defaultValues, "")
+				defaultValues = append(defaultValues, fmt.Sprintf("(default \"%s\")", defVal))
 			}
 		}
 
@@ -565,6 +570,7 @@ func printFlagsDescriptionsDefaultValues(flagmap map[string]reflect.StructField,
 			}
 		}
 	}
+
 	//add help flag
 	shortFlagsWithDash = append(shortFlagsWithDash, "-h,")
 	flagsWithDashs = append(flagsWithDashs, "--help")
