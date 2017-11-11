@@ -60,6 +60,7 @@ Complete documentation is available at https://traefik.io`,
 	f.AddParser(reflect.TypeOf(ecs.Clusters{}), &ecs.Clusters{})
 	f.AddParser(reflect.TypeOf([]acme.Domain{}), &acme.Domains{})
 	f.AddParser(reflect.TypeOf(types.Buckets{}), &types.Buckets{})
+	f.AddParser(reflect.TypeOf(types.HeaderRedactions{}), &types.HeaderRedactions{})
 
 	//add commands
 	f.AddCommand(newVersionCmd())
