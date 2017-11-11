@@ -1,0 +1,28 @@
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+logLevel = "DEBUG"
+
+[file]
+
+# rules
+[backends]
+  [backends.backend1]
+    [backends.backend1.circuitbreaker]
+      expression = "NetworkErrorRatio() > 0.5"
+    [backends.backend1.servers.server1]
+    url = "http://172.17.0.1:80"
+    weight = 1
+
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+
+    [frontends.frontend1.routes.test1]
+    rule = "Path:/test1"
+
+    [frontends.frontend1.routes.test2]
+    rule = "Path:/test2"
