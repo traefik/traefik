@@ -35,6 +35,7 @@ var (
 	testMethod              = "POST"
 	testReferer             = "testReferer"
 	testUserAgent           = "testUserAgent"
+	testAuthorization       = "REDACTED_BY_TRAEFIK"
 	testRetryAttempts       = 2
 )
 
@@ -135,7 +136,7 @@ func TestLoggerJSON(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	logFilePath := filepath.Join(tmpDir, logFileNameSuffix)
-	config := &types.AccessLog{FilePath: logFilePath, Format: JSONFormat}
+	config := &types.AccessLog{FilePath: logFilePath, Format: JSONFormat, HeaderRedactions: types.HeaderRedactions{"Authorization"}}
 	doLogging(t, config)
 
 	logData, err := ioutil.ReadFile(logFilePath)
@@ -160,6 +161,7 @@ func TestLoggerJSON(t *testing.T) {
 		OriginStatus,
 		"request_Referer",
 		"request_User-Agent",
+		"request_Authorization",
 		FrontendName,
 		BackendURL,
 		ClientUsername,
@@ -207,6 +209,8 @@ func TestLoggerJSON(t *testing.T) {
 	assert.Equal(t, testReferer, jsonData["request_Referer"])
 	assertCount++
 	assert.Equal(t, testUserAgent, jsonData["request_User-Agent"])
+	assertCount++
+	assert.Equal(t, testAuthorization, jsonData["request_Authorization"])
 	assertCount++
 	assert.Equal(t, testFrontendName, jsonData[FrontendName])
 	assertCount++
@@ -312,8 +316,9 @@ func doLogging(t *testing.T, config *types.AccessLog) {
 
 	req := &http.Request{
 		Header: map[string][]string{
-			"User-Agent": {testUserAgent},
-			"Referer":    {testReferer},
+			"User-Agent":    {testUserAgent},
+			"Referer":       {testReferer},
+			"Authorization": {"UnredactedAuthToken"},
 		},
 		Proto:      testProto,
 		Host:       testHostname,
