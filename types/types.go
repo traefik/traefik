@@ -442,7 +442,7 @@ type AccessLog struct {
 	HeaderRedactions HeaderRedactions `json:"headerredactions,omitempty" description:"List of names of sensitive headers to redact" export:"true"`
 }
 
-// Buckets holds Prometheus Buckets
+// HeaderRedactions holds a list of HTTP header names
 type HeaderRedactions []string
 
 //Set adds strings elem into the the parser
