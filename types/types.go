@@ -465,7 +465,7 @@ func (b *HeaderRedactions) Get() interface{} { return HeaderRedactions(*b) }
 //String return slice in a string
 func (b *HeaderRedactions) String() string { return fmt.Sprintf("%v", *b) }
 
-//SetValue sets []float64 into the parser
+//SetValue sets []string into the parser
 func (b *HeaderRedactions) SetValue(val interface{}) {
 	*b = HeaderRedactions(val.(HeaderRedactions))
 }
