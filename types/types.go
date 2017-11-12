@@ -439,7 +439,7 @@ type TraefikLog struct {
 type AccessLog struct {
 	FilePath         string           `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
 	Format           string           `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
-	HeaderRedactions HeaderRedactions `json:"redactheaders,omitempty" description:"List of names of sensitive headers to redact" export:"true"`
+	HeaderRedactions HeaderRedactions `json:"headerredactions,omitempty" description:"List of names of sensitive headers to redact" export:"true"`
 }
 
 // Buckets holds Prometheus Buckets
