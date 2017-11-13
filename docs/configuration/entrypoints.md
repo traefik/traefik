@@ -72,11 +72,13 @@ Define an entrypoint with SNI support.
 
 ## TLS Mutual Authentication
 
-Only accept clients that present a certificate signed by a specified Certificate Authority (CA).
+TLS Mutual Authentication can be `optional` or not.
+If it's `optional`, Træfik will authorize connection with certificates not signed by a specified Certificate Authority (CA).
+Otherwise, Træfik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
 `ClientCAFiles` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
 The `CA:s` has to be in PEM format.
 
-All clients will be required to present a valid cert.
+By default, `ClientCAFiles` is not optional, all clients will be required to present a valid cert.
 The requirement will apply to all server certs in the entrypoint.
 
 In the example below both `snitest.com` and `snitest.org` will require client certs
@@ -86,7 +88,9 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
   [entryPoints.https]
   address = ":443"
   [entryPoints.https.tls]
-  ClientCAFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
+    [entryPoints.https.tls.ClientCA]
+    files = ["tests/clientca1.crt", "tests/clientca2.crt"]
+    optional = false
     [[entryPoints.https.tls.certificates]]
     certFile = "integration/fixtures/https/snitest.com.cert"
     keyFile = "integration/fixtures/https/snitest.com.key"
@@ -94,6 +98,11 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
     certFile = "integration/fixtures/https/snitest.org.cert"
     keyFile = "integration/fixtures/https/snitest.org.key"
 ```
+
+!!! note
+
+The deprecated argument `ClientCAFiles` allows adding Client CA files which are mandatory.
+If this parameter exists, the new ones are not checked.
 
 ## Authentication
 

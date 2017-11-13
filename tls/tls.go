@@ -6,12 +6,20 @@ import (
 	"strings"
 )
 
+// ClientCA defines traefik CA files for a entryPoint
+// and it indicates if they are mandatory or have just to be analyzed if provided
+type ClientCA struct {
+	Files    []string
+	Optional bool
+}
+
 // TLS configures TLS for an entry point
 type TLS struct {
 	MinVersion    string `export:"true"`
 	CipherSuites  []string
 	Certificates  Certificates
-	ClientCAFiles []string
+	ClientCAFiles []string // Deprecated
+	ClientCA      ClientCA
 }
 
 // RootCAs hold the CA we want to have in root

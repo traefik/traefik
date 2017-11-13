@@ -574,8 +574,13 @@ func createClientTLSConfig(entryPointName string, tlsOption *traefikTls.TLS) (*t
 	}
 
 	if len(tlsOption.ClientCAFiles) > 0 {
+		log.Warnf("Deprecated configuration found during client TLS configuration creation: %s. Please use %s (which allows to make the CA Files optional).", "tls.ClientCAFiles", "tls.ClientCA.files")
+		tlsOption.ClientCA.Files = tlsOption.ClientCAFiles
+		tlsOption.ClientCA.Optional = false
+	}
+	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
-		for _, caFile := range tlsOption.ClientCAFiles {
+		for _, caFile := range tlsOption.ClientCA.Files {
 			data, err := ioutil.ReadFile(caFile)
 			if err != nil {
 				return nil, err
@@ -611,8 +616,13 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *traefikT
 	config.NextProtos = []string{"h2", "http/1.1"}
 
 	if len(tlsOption.ClientCAFiles) > 0 {
+		log.Warnf("Deprecated configuration found during TLS configuration creation: %s. Please use %s (which allows to make the CA Files optional).", "tls.ClientCAFiles", "tls.ClientCA.files")
+		tlsOption.ClientCA.Files = tlsOption.ClientCAFiles
+		tlsOption.ClientCA.Optional = false
+	}
+	if len(tlsOption.ClientCA.Files) > 0 {
 		pool := x509.NewCertPool()
-		for _, caFile := range tlsOption.ClientCAFiles {
+		for _, caFile := range tlsOption.ClientCA.Files {
 			data, err := ioutil.ReadFile(caFile)
 			if err != nil {
 				return nil, err
@@ -623,7 +633,11 @@ func (server *Server) createTLSConfig(entryPointName string, tlsOption *traefikT
 			}
 		}
 		config.ClientCAs = pool
-		config.ClientAuth = tls.RequireAndVerifyClientCert
+		if tlsOption.ClientCA.Optional {
+			config.ClientAuth = tls.VerifyClientCertIfGiven
+		} else {
+			config.ClientAuth = tls.RequireAndVerifyClientCert
+		}
 	}
 
 	if server.globalConfiguration.ACME != nil {

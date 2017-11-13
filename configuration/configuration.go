@@ -308,7 +308,11 @@ func (ep *EntryPoints) Set(value string) error {
 	}
 	if len(result["ca"]) > 0 {
 		files := strings.Split(result["ca"], ",")
-		configTLS.ClientCAFiles = files
+		optional := toBool(result, "ca_optional")
+		configTLS.ClientCA = tls.ClientCA{
+			Files:    files,
+			Optional: optional,
+		}
 	}
 	var redirect *Redirect
 	if len(result["redirect_entrypoint"]) > 0 || len(result["redirect_regex"]) > 0 || len(result["redirect_replacement"]) > 0 {
