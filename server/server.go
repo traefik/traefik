@@ -960,12 +960,20 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
+					var headerMiddleware *middlewares.HeaderStruct
+					var responseModifier func(res *http.Response) error
+					if frontend.Headers.HasCustomHeadersDefined() {
+						headerMiddleware = middlewares.NewHeaderFromStruct(frontend.Headers)
+						responseModifier = headerMiddleware.ModifyResponseHeaders
+					}
+
 					fwd, err := forward.New(
 						forward.Stream(true),
 						forward.PassHostHeader(frontend.PassHostHeader),
 						forward.RoundTripper(roundTripper),
 						forward.ErrorHandler(errorHandler),
 						forward.Rewriter(rewriter),
+						forward.ResponseModifier(responseModifier),
 					)
 
 					if err != nil {
@@ -1140,8 +1148,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						}
 					}
 
-					if frontend.Headers.HasCustomHeadersDefined() {
-						headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
+					if headerMiddleware != nil {
 						log.Debugf("Adding header middleware for frontend %s", frontendName)
 						n.Use(headerMiddleware)
 					}
