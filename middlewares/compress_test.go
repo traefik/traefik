@@ -16,6 +16,7 @@ import (
 const (
 	acceptEncodingHeader  = "Accept-Encoding"
 	contentEncodingHeader = "Content-Encoding"
+	contentTypeHeader     = "Content-Type"
 	varyHeader            = "Vary"
 	gzipValue             = "gzip"
 )
@@ -81,6 +82,26 @@ func TestShouldNotCompressWhenNoAcceptEncodingHeader(t *testing.T) {
 	assert.EqualValues(t, rw.Body.Bytes(), fakeBody)
 }
 
+func TestShouldNotCompressWhenGRPC(t *testing.T) {
+	handler := &Compress{}
+
+	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost", nil)
+	req.Header.Add(acceptEncodingHeader, gzipValue)
+	req.Header.Add(contentTypeHeader, "application/grpc")
+
+	baseBody := generateBytes(gziphandler.DefaultMinSize)
+	next := func(rw http.ResponseWriter, r *http.Request) {
+		rw.Write(baseBody)
+	}
+
+	rw := httptest.NewRecorder()
+	handler.ServeHTTP(rw, req, next)
+
+	assert.Empty(t, rw.Header().Get(acceptEncodingHeader))
+	assert.Empty(t, rw.Header().Get(contentEncodingHeader))
+	assert.EqualValues(t, rw.Body.Bytes(), baseBody)
+}
+
 func TestIntegrationShouldNotCompress(t *testing.T) {
 	fakeCompressedBody := generateBytes(100000)
 	comp := &Compress{}
@@ -135,6 +156,31 @@ func TestIntegrationShouldNotCompress(t *testing.T) {
 			assert.EqualValues(t, fakeCompressedBody, body)
 		})
 	}
+}
+
+func TestShouldWriteHeaderWhenFlush(t *testing.T) {
+	comp := &Compress{}
+	negro := negroni.New(comp)
+	negro.UseHandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Add(contentEncodingHeader, gzipValue)
+		rw.Header().Add(varyHeader, acceptEncodingHeader)
+		rw.WriteHeader(http.StatusUnauthorized)
+		rw.(http.Flusher).Flush()
+		rw.Write([]byte("short"))
+	})
+	ts := httptest.NewServer(negro)
+	defer ts.Close()
+
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	req.Header.Add(acceptEncodingHeader, gzipValue)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+
+	assert.Equal(t, gzipValue, resp.Header.Get(contentEncodingHeader))
+	assert.Equal(t, acceptEncodingHeader, resp.Header.Get(varyHeader))
 }
 
 func TestIntegrationShouldCompress(t *testing.T) {

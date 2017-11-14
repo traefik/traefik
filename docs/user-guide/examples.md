@@ -140,7 +140,7 @@ This configuration allows generating a Let's Encrypt certificate during the firs
     * TLS handshakes will be slow when requesting a hostname certificate for the first time, this can leads to DDoS attacks.
     * Let's Encrypt have rate limiting: https://letsencrypt.org/docs/rate-limits
 
-    That's why, it's better to use the `onHostRule` optin if possible.
+    That's why, it's better to use the `onHostRule` option if possible.
 
 ### DNS challenge
 
@@ -173,7 +173,7 @@ entryPoint = "https"
 DNS challenge needs environment variables to be executed.
 This variables have to be set on the machine/container which host Traefik.
 
-These variables has described [in this section](/configuration/acme/#dnsprovider).
+These variables are described [in this section](/configuration/acme/#dnsprovider).
 
 ### OnHostRule option and provided certificates
 
@@ -201,7 +201,7 @@ Traefik will only try to generate a Let's encrypt certificate if the domain cann
 
 #### Prerequisites
 
-Before to use Let's Encrypt in a Traefik cluster, take a look to [the key-value store explanations](/user-guide/kv-config) and more precisely to [this section](/user-guide/kv-config/#store-configuration-in-key-value-store) in the way to know how to migrate from a acme local storage *(acme.json file)* to a key-value store configuration.
+Before you use Let's Encrypt in a Traefik cluster, take a look to [the key-value store explanations](/user-guide/kv-config) and more precisely at [this section](/user-guide/kv-config/#store-configuration-in-key-value-store), which will describe how to migrate from a acme local storage *(acme.json file)* to a key-value store configuration.
 
 #### Configuration
 

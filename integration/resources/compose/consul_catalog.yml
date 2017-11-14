@@ -1,6 +1,6 @@
 consul:
-  image: progrium/consul
-  command: -server -bootstrap -log-level debug -ui-dir /ui
+  image: consul
+  command: agent -server -bootstrap-expect 1 -client 0.0.0.0 -log-level debug -ui
   ports:
     - "8400:8400"
     - "8500:8500"
@@ -14,4 +14,6 @@ consul:
 nginx1:
   image: nginx:alpine
 nginx2:
+  image: nginx:alpine
+nginx3:
   image: nginx:alpine

@@ -1,5 +1,23 @@
 # Change Log
 
+## [v1.4.3](https://github.com/containous/traefik/tree/v1.4.3) (2017-11-14)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.2...v1.4.3)
+
+**Bug fixes:**
+- **[consulcatalog]** Fix Traefik reload if Consul Catalog tags change ([#2389](https://github.com/containous/traefik/pull/2389) by [mmatur](https://github.com/mmatur))
+- **[kv]** Add Traefik prefix to the KV key ([#2400](https://github.com/containous/traefik/pull/2400) by [nmengin](https://github.com/nmengin))
+- **[middleware]** Flush and Status code ([#2403](https://github.com/containous/traefik/pull/2403) by [ldez](https://github.com/ldez))
+- **[middleware]** Exclude GRPC from compress ([#2391](https://github.com/containous/traefik/pull/2391) by [ldez](https://github.com/ldez))
+- **[middleware]** Keep status when stream mode and compress ([#2380](https://github.com/containous/traefik/pull/2380) by [Juliens](https://github.com/Juliens))
+
+**Documentation:**
+- **[acme]** Fix some typos ([#2363](https://github.com/containous/traefik/pull/2363) by [tomsaleeba](https://github.com/tomsaleeba))
+- **[docker]** Minor fix for docker volume vs created directory ([#2372](https://github.com/containous/traefik/pull/2372) by [visibilityspots](https://github.com/visibilityspots))
+- **[k8s]** Link corrected ([#2385](https://github.com/containous/traefik/pull/2385) by [xlazex](https://github.com/xlazex))
+
+**Misc:**
+- **[k8s]** Add secret creation to docs for kubernetes backend ([#2374](https://github.com/containous/traefik/pull/2374) by [shadycuz](https://github.com/shadycuz))
+
 ## [v1.4.2](https://github.com/containous/traefik/tree/v1.4.2) (2017-11-02)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.1...v1.4.2)
 

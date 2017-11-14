@@ -150,7 +150,9 @@ func (w *GzipResponseWriter) startGzip() error {
 
 // WriteHeader just saves the response code until close or GZIP effective writes.
 func (w *GzipResponseWriter) WriteHeader(code int) {
-	w.code = code
+	if w.code == 0 {
+		w.code = code
+	}
 }
 
 // init graps a new gzip writer from the gzipWriterPool and writes the correct
@@ -190,9 +192,15 @@ func (w *GzipResponseWriter) Close() error {
 // http.ResponseWriter if it is an http.Flusher. This makes GzipResponseWriter
 // an http.Flusher.
 func (w *GzipResponseWriter) Flush() {
-	if w.gw != nil {
-		w.gw.Flush()
+	if w.gw == nil {
+		// Only flush once startGzip has been called.
+		//
+		// Flush is thus a no-op until the written body
+		// exceeds minSize.
+		return
 	}
+
+	w.gw.Flush()
 
 	if fw, ok := w.ResponseWriter.(http.Flusher); ok {
 		fw.Flush()
