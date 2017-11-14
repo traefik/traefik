@@ -362,7 +362,7 @@ func TestWillHandleUnknownXml(t *testing.T) {
 	event.AppendRequest(req)
 	event.AppendResponse(respHdrs, respInfo)
 
-	assert.Equal(t, "", event.AuditType)
+	assert.Equal(t, "UnclassifiedRequest", event.AuditType)
 	assert.Equal(t, "1", event.Version)
 	assert.Equal(t, "POST", event.Method)
 	assert.Equal(t, "/some/rate/url", event.Path)

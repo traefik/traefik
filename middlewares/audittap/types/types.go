@@ -26,6 +26,9 @@ const (
 	Entity = "entity"
 )
 
+// UnclassifiedRequest is used as the auditType when no explicit value is configured or can be derived
+const UnclassifiedRequest = "UnclassifiedRequest"
+
 // DataMap holds headers in which the values are all either string or []string.
 type DataMap map[string]interface{}
 

@@ -19,7 +19,7 @@ import (
 type RATEAuditDetail struct {
 	CorrelationID   string `json:"correlationID,omitempty"`
 	Email           string `json:"email,omitempty"`
-	RequestType     string `json:"populateRequestType,omitempty"`
+	RequestType     string `json:"requestType,omitempty"`
 	Role            string `json:"role,omitempty"`
 	SenderID        string `json:"senderID,omitempty"`
 	SoftwareFamily  string `json:"softwareFamily,omitempty"`
@@ -83,6 +83,10 @@ func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
 		}
 	} else {
 		log.Debugf("Error processing RATE message: %v", err)
+	}
+
+	if ev.AuditType == "" {
+		ev.AuditType = types.UnclassifiedRequest
 	}
 }
 
