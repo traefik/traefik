@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
+	"encoding/xml"
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 )
 
 func TestRateAuditEvent(t *testing.T) {
+
+	types.TheClock = T0
 
 	vatDecl := `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -179,7 +180,6 @@ func TestRateAuditEvent(t *testing.T) {
 	</Body>
 </GovTalkMessage>
 `
-
 	req := httptest.NewRequest("POST", "/some/rate/url?qq=zz", bytes.NewReader([]byte(vatDecl)))
 	req.Header.Set("X-Request-Id", "req321")
 	req.Header.Set("True-Client-IP", "101.1.101.1")
@@ -229,8 +229,160 @@ func TestRateAuditEvent(t *testing.T) {
 
 }
 
+func TestChrisRateAuditEvent(t *testing.T) {
+
+	types.TheClock = T0
+
+	chrisEnvelope := `
+<?xml version="1.0" encoding="UTF-8"?>
+<ChRISEnvelope xmlns="http://www.hmrc.gov.uk/ChRIS/Envelope/2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<EnvelopeVersion>2.0</EnvelopeVersion>
+	<Header>
+		<MessageClass>HMRC-PAYE-RTI-EPS</MessageClass>
+		<Qualifier>request</Qualifier>
+		<Function>submit</Function>
+		<Sender>
+			<System>EDI-TP</System>
+			<CorrelatingID>AAAAZZZZCORRID</CorrelatingID>
+			<ReceiptDate>2016-03-11T08:51:22</ReceiptDate>
+			<Additions>
+				<EDI xmlns="http://www.hmrc.gov.uk/ChRIS/Envelope/Additions/EDI/1" xmlns:EDIAdditions="http://www.hmrc.gov.uk/ChRIS/Envelope/Additions/ED/1">
+					<Ref>EPS17|Worksoft 98|999|AZ12345678|123PQ7654321X|15935</Ref>
+					<TradingPartnerID>bzc0qd</TradingPartnerID>
+				</EDI>
+			</Additions>
+		</Sender>
+	</Header>
+	<Body>
+		<IRenvelope xmlns="http://www.govtalk.gov.uk/taxation/PAYE/RTI/EmployerPaymentSummary/16-17/1">
+			<IRheader>
+				<Keys>
+					<Key Type="TaxOfficeNumber">999</Key>
+					<Key Type="TaxOfficeReference">AZ12345678</Key>
+					<Key Type="AORef">123PQ7654321X</Key>
+				</Keys>
+				<PeriodEnd>2017-04-05</PeriodEnd>
+				<DefaultCurrency>GBP</DefaultCurrency>
+				<IRmark Type="generic"></IRmark>
+				<Sender>Company</Sender>
+			</IRheader>
+			<EmployerPaymentSummary>
+				<EmpRefs>
+					<OfficeNo>999</OfficeNo>
+					<PayeRef>AZ12345678</PayeRef>
+					<AORef>123PQ7654321X</AORef>
+				</EmpRefs>
+				<EmpAllceInd>yes</EmpAllceInd>
+				<RecoverableAmountsYTD>
+					<TaxMonth>1</TaxMonth>
+					<ShPPRecovered>132.40</ShPPRecovered>
+					<NICCompensationOnShPP>52.40</NICCompensationOnShPP>
+				</RecoverableAmountsYTD>
+				<RelatedTaxYear>16-17</RelatedTaxYear>
+			</EmployerPaymentSummary>
+		</IRenvelope>
+	</Body>
+</ChRISEnvelope>
+	`
+
+	req := httptest.NewRequest("POST", "/some/rate/chris/url?qq=zz", bytes.NewReader([]byte(chrisEnvelope)))
+	req.Header.Set("X-Request-Id", "req321")
+	req.Header.Set("True-Client-IP", "101.1.101.1")
+	req.Header.Set("True-Client-Port", "5005")
+	req.Header.Set("X-Source", "202.2.202.2")
+	req.Header.Set("Request-ID", "R123")
+	req.Header.Set("Session-ID", "S123")
+	req.Header.Set("Akamai-Test-Hdr", "Ak999")
+
+	respHdrs := http.Header{}
+	respInfo := types.ResponseInfo{}
+
+	event := &RATEAuditEvent{}
+	event.AppendRequest(req)
+	event.AppendResponse(respHdrs, respInfo)
+
+	assert.Equal(t, "HMRC-PAYE-RTI-EPS", event.AuditType)
+	assert.Equal(t, "1", event.Version)
+	assert.Equal(t, "POST", event.Method)
+	assert.Equal(t, "/some/rate/chris/url", event.Path)
+	assert.Equal(t, "qq=zz", event.QueryString)
+	assert.Equal(t, "req321", event.RequestID)
+	assert.Equal(t, "101.1.101.1", event.ClientIP)
+	assert.Equal(t, "5005", event.ClientPort)
+	assert.Equal(t, "202.2.202.2", event.ReceivingIP)
+	assert.Equal(t, "2001-09-09T01:46:40.000Z", event.GeneratedAt)
+	assert.Equal(t, types.DataMap{"session-id": "S123", "request-id": "R123"}, event.ClientHeaders)
+	assert.Equal(t, types.DataMap{"akamai-test-hdr": "Ak999"}, event.RequestHeaders)
+
+	assert.Equal(t, "AAAAZZZZCORRID", event.Detail.CorrelationID)
+	assert.Equal(t, "bzc0qd", event.Detail.SenderID)
+	assert.Equal(t, "SUBMISSION_REQUEST", event.Detail.RequestType)
+	assert.Equal(t, "", event.Detail.TransactionID)
+	assert.Equal(t, "", event.Detail.Email)
+	assert.Equal(t, "", event.Detail.SoftwareFamily)
+	assert.Equal(t, "", event.Detail.SoftwareVersion)
+	assert.Equal(t, "", event.Detail.Role)
+	assert.Equal(t, "", event.Detail.UserType)
+
+	assert.Equal(t, "999", event.Identifiers.Get("TaxOfficeNumber"))
+	assert.Equal(t, "AZ12345678", event.Identifiers.Get("TaxOfficeReference"))
+	assert.Equal(t, "123PQ7654321X", event.Identifiers.Get("AORef"))
+
+	assert.Equal(t, types.DataMap{}, event.Enrolments)
+}
+
+func TestWillHandleUnknownXml(t *testing.T) {
+
+	types.TheClock = T0
+
+	x := `
+		<Root>
+			<Header>
+				<Element1 />
+			</Header>
+			<SomeDetails>
+				<Element2 />
+			</SomeDetails>
+		</Root>
+	`
+
+	req := httptest.NewRequest("POST", "/some/rate/url?qq=zz", bytes.NewReader([]byte(x)))
+	req.Header.Set("X-Request-Id", "req321")
+	req.Header.Set("True-Client-IP", "101.1.101.1")
+	req.Header.Set("True-Client-Port", "5005")
+	req.Header.Set("X-Source", "202.2.202.2")
+	req.Header.Set("Request-ID", "R123")
+	req.Header.Set("Session-ID", "S123")
+	req.Header.Set("Akamai-Test-Hdr", "Ak999")
+
+	respHdrs := http.Header{}
+	respInfo := types.ResponseInfo{}
+
+	event := &RATEAuditEvent{}
+	event.AppendRequest(req)
+	event.AppendResponse(respHdrs, respInfo)
+
+	assert.Equal(t, "", event.AuditType)
+	assert.Equal(t, "1", event.Version)
+	assert.Equal(t, "POST", event.Method)
+	assert.Equal(t, "/some/rate/url", event.Path)
+	assert.Equal(t, "qq=zz", event.QueryString)
+	assert.Equal(t, "req321", event.RequestID)
+	assert.Equal(t, "101.1.101.1", event.ClientIP)
+	assert.Equal(t, "5005", event.ClientPort)
+	assert.Equal(t, "202.2.202.2", event.ReceivingIP)
+	assert.Equal(t, "2001-09-09T01:46:40.000Z", event.GeneratedAt)
+	assert.Equal(t, types.DataMap{"session-id": "S123", "request-id": "R123"}, event.ClientHeaders)
+	assert.Equal(t, types.DataMap{"akamai-test-hdr": "Ak999"}, event.RequestHeaders)
+
+	assert.Equal(t, RATEAuditDetail{}, event.Detail)
+	assert.Equal(t, types.DataMap(nil), event.Identifiers)
+	assert.Equal(t, types.DataMap(nil), event.Enrolments)
+
+}
+
 func TestGetMessageParts(t *testing.T) {
-	xml := `
+	x := `
 		<Root>
 			<Header>
 				<Element1 />
@@ -241,13 +393,14 @@ func TestGetMessageParts(t *testing.T) {
 		</Root>
 	`
 
-	parts, _ := getMessageParts(ioutil.NopCloser(strings.NewReader(xml)))
+	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
+	parts, _ := gtmGetMessageParts(decoder)
 	assert.NotEmpty(t, parts.Header)
 	assert.NotEmpty(t, parts.Details)
 }
 
 func TestXmlMissingHeader(t *testing.T) {
-	xml := `
+	x := `
 		<Root>
 			<GovTalkDetails>
 				<Element1 />
@@ -255,12 +408,13 @@ func TestXmlMissingHeader(t *testing.T) {
 		</Root>
 	`
 
-	_, err := getMessageParts(ioutil.NopCloser(strings.NewReader(xml)))
+	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
+	_, err := gtmGetMessageParts(decoder)
 	assert.Error(t, err)
 }
 
 func TestXmlMissingDetails(t *testing.T) {
-	xml := `
+	x := `
 		<Root>
 			<Header>
 				<Element1 />
@@ -268,7 +422,8 @@ func TestXmlMissingDetails(t *testing.T) {
 		</Root>
 	`
 
-	_, err := getMessageParts(ioutil.NopCloser(strings.NewReader(xml)))
+	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
+	_, err := gtmGetMessageParts(decoder)
 	assert.Error(t, err)
 }
 
