@@ -8,6 +8,8 @@ import (
 	"text/template"
 
 	"github.com/containous/traefik/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type myProvider struct {
@@ -430,4 +432,43 @@ func TestSprigFunctions(t *testing.T) {
 	if _, ok := configuration.Frontends["frontend-1"]; !ok {
 		t.Fatal("Frontend frontend-1 should exists, but it not")
 	}
+}
+
+func TestBaseProvider_GetConfiguration(t *testing.T) {
+	baseProvider := BaseProvider{}
+
+	testCases := []struct {
+		name                string
+		defaultTemplateFile string
+		expectedContent     string
+	}{
+		{
+			defaultTemplateFile: "templates/docker.tmpl",
+			expectedContent:     readTemplateFile(t, "./../templates/docker.tmpl"),
+		},
+		{
+			defaultTemplateFile: `template content`,
+			expectedContent:     `template content`,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+
+			content, err := baseProvider.getTemplateContent(test.defaultTemplateFile)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedContent, content)
+		})
+	}
+}
+
+func readTemplateFile(t *testing.T, path string) string {
+	t.Helper()
+	expectedContent, err := ioutil.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(expectedContent)
 }
