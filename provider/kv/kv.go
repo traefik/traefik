@@ -194,7 +194,7 @@ func (p *Provider) listServers(backend string) []string {
 
 func (p *Provider) get(defaultValue string, keys ...string) string {
 	joinedKeys := strings.Join(keys, "")
-	keyPair, err := p.kvclient.Get(strings.TrimPrefix(joinedKeys, "/"), nil)
+	keyPair, err := p.kvclient.Get(joinedKeys, nil)
 	if err != nil {
 		log.Debugf("Cannot get key %s %s, setting default %s", joinedKeys, err, defaultValue)
 		return defaultValue

@@ -44,7 +44,6 @@ func init() {
 		check.Suite(&DockerSuite{})
 		check.Suite(&DynamoDBSuite{})
 		check.Suite(&ErrorPagesSuite{})
-		check.Suite(&EtcdSuite{})
 		check.Suite(&EurekaSuite{})
 		check.Suite(&FileSuite{})
 		check.Suite(&GRPCSuite{})
@@ -61,6 +60,7 @@ func init() {
 	if *host {
 		// tests launched from the host
 		check.Suite(&ProxyProtocolSuite{})
+		check.Suite(&EtcdSuite{})
 	}
 }
 
