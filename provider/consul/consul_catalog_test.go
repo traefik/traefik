@@ -1,6 +1,7 @@
 package consul
 
 import (
+	"reflect"
 	"sort"
 	"testing"
 	"text/template"
@@ -20,13 +21,11 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 	}
 	provider.setupFrontEndTemplate()
 
-	testCases := []struct {
-		desc     string
+	services := []struct {
 		service  serviceUpdate
 		expected string
 	}{
 		{
-			desc: "Should return default host foo.localhost",
 			service: serviceUpdate{
 				ServiceName: "foo",
 				Attributes:  []string{},
@@ -34,7 +33,6 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 			expected: "Host:foo.localhost",
 		},
 		{
-			desc: "Should return host *.example.com",
 			service: serviceUpdate{
 				ServiceName: "foo",
 				Attributes: []string{
@@ -44,7 +42,6 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 			expected: "Host:*.example.com",
 		},
 		{
-			desc: "Should return host foo.example.com",
 			service: serviceUpdate{
 				ServiceName: "foo",
 				Attributes: []string{
@@ -54,7 +51,6 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 			expected: "Host:foo.example.com",
 		},
 		{
-			desc: "Should return path prefix /bar",
 			service: serviceUpdate{
 				ServiceName: "foo",
 				Attributes: []string{
@@ -66,14 +62,11 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getFrontendRule(test.service)
-			assert.Equal(t, test.expected, actual)
-		})
+	for _, e := range services {
+		actual := provider.getFrontendRule(e.service)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
 	}
 }
 
@@ -83,15 +76,13 @@ func TestConsulCatalogGetTag(t *testing.T) {
 		Prefix: "traefik",
 	}
 
-	testCases := []struct {
-		desc         string
+	services := []struct {
 		tags         []string
 		key          string
 		defaultValue string
 		expected     string
 	}{
 		{
-			desc: "Should return value of foo.bar key",
 			tags: []string{
 				"foo.bar=random",
 				"traefik.backend.weight=42",
@@ -103,17 +94,21 @@ func TestConsulCatalogGetTag(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, true, provider.hasTag("management", []string{"management"}))
-	assert.Equal(t, true, provider.hasTag("management", []string{"management=yes"}))
+	actual := provider.hasTag("management", []string{"management"})
+	if !actual {
+		t.Fatalf("expected %v, got %v", true, actual)
+	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+	actual = provider.hasTag("management", []string{"management=yes"})
+	if !actual {
+		t.Fatalf("expected %v, got %v", true, actual)
+	}
 
-			actual := provider.getTag(test.key, test.tags, test.defaultValue)
-			assert.Equal(t, test.expected, actual)
-		})
+	for _, e := range services {
+		actual := provider.getTag(e.key, e.tags, e.defaultValue)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
 	}
 }
 
@@ -123,15 +118,13 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 		Prefix: "traefik",
 	}
 
-	testCases := []struct {
-		desc         string
+	services := []struct {
 		tags         []string
 		key          string
 		defaultValue string
 		expected     string
 	}{
 		{
-			desc: "Should return tag value 42",
 			tags: []string{
 				"foo.bar=ramdom",
 				"traefik.backend.weight=42",
@@ -141,7 +134,6 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 			expected:     "42",
 		},
 		{
-			desc: "Should return tag default value 0",
 			tags: []string{
 				"foo.bar=ramdom",
 				"traefik.backend.wei=42",
@@ -152,16 +144,17 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, provider.Prefix+".foo", provider.getPrefixedName("foo"))
+	expected := provider.Prefix + ".foo"
+	actual := provider.getPrefixedName("foo")
+	if actual != expected {
+		t.Fatalf("expected %s, got %s", expected, actual)
+	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getAttribute(test.key, test.tags, test.defaultValue)
-			assert.Equal(t, test.expected, actual)
-		})
+	for _, e := range services {
+		actual := provider.getAttribute(e.key, e.tags, e.defaultValue)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
 	}
 }
 
@@ -171,15 +164,13 @@ func TestConsulCatalogGetAttributeWithEmptyPrefix(t *testing.T) {
 		Prefix: "",
 	}
 
-	testCases := []struct {
-		desc         string
+	services := []struct {
 		tags         []string
 		key          string
 		defaultValue string
 		expected     string
 	}{
 		{
-			desc: "Should return tag value 42",
 			tags: []string{
 				"foo.bar=ramdom",
 				"backend.weight=42",
@@ -189,7 +180,6 @@ func TestConsulCatalogGetAttributeWithEmptyPrefix(t *testing.T) {
 			expected:     "42",
 		},
 		{
-			desc: "Should return default value 0",
 			tags: []string{
 				"foo.bar=ramdom",
 				"backend.wei=42",
@@ -199,7 +189,6 @@ func TestConsulCatalogGetAttributeWithEmptyPrefix(t *testing.T) {
 			expected:     "0",
 		},
 		{
-			desc: "Should return for.bar key value random",
 			tags: []string{
 				"foo.bar=ramdom",
 				"backend.wei=42",
@@ -210,16 +199,17 @@ func TestConsulCatalogGetAttributeWithEmptyPrefix(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, "foo", provider.getPrefixedName("foo"))
+	expected := "foo"
+	actual := provider.getPrefixedName("foo")
+	if actual != expected {
+		t.Fatalf("expected %s, got %s", expected, actual)
+	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getAttribute(test.key, test.tags, test.defaultValue)
-			assert.Equal(t, test.expected, actual)
-		})
+	for _, e := range services {
+		actual := provider.getAttribute(e.key, e.tags, e.defaultValue)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
 	}
 }
 
@@ -229,13 +219,11 @@ func TestConsulCatalogGetBackendAddress(t *testing.T) {
 		Prefix: "traefik",
 	}
 
-	testCases := []struct {
-		desc     string
+	services := []struct {
 		node     *api.ServiceEntry
 		expected string
 	}{
 		{
-			desc: "Should return the address of the service",
 			node: &api.ServiceEntry{
 				Node: &api.Node{
 					Address: "10.1.0.1",
@@ -247,7 +235,6 @@ func TestConsulCatalogGetBackendAddress(t *testing.T) {
 			expected: "10.2.0.1",
 		},
 		{
-			desc: "Should return the address of the node",
 			node: &api.ServiceEntry{
 				Node: &api.Node{
 					Address: "10.1.0.1",
@@ -260,14 +247,11 @@ func TestConsulCatalogGetBackendAddress(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getBackendAddress(test.node)
-			assert.Equal(t, test.expected, actual)
-		})
+	for _, e := range services {
+		actual := provider.getBackendAddress(e.node)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
 	}
 }
 
@@ -277,13 +261,11 @@ func TestConsulCatalogGetBackendName(t *testing.T) {
 		Prefix: "traefik",
 	}
 
-	testCases := []struct {
-		desc     string
+	services := []struct {
 		node     *api.ServiceEntry
 		expected string
 	}{
 		{
-			desc: "Should create backend name without tags",
 			node: &api.ServiceEntry{
 				Service: &api.AgentService{
 					Service: "api",
@@ -295,7 +277,6 @@ func TestConsulCatalogGetBackendName(t *testing.T) {
 			expected: "api--10-0-0-1--80--0",
 		},
 		{
-			desc: "Should create backend name with multiple tags",
 			node: &api.ServiceEntry{
 				Service: &api.AgentService{
 					Service: "api",
@@ -307,7 +288,6 @@ func TestConsulCatalogGetBackendName(t *testing.T) {
 			expected: "api--10-0-0-1--80--traefik-weight-42--traefik-enable-true--1",
 		},
 		{
-			desc: "Should create backend name with one tag",
 			node: &api.ServiceEntry{
 				Service: &api.AgentService{
 					Service: "api",
@@ -320,15 +300,11 @@ func TestConsulCatalogGetBackendName(t *testing.T) {
 		},
 	}
 
-	for i, test := range testCases {
-		test := test
-		i := i
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getBackendName(test.node, i)
-			assert.Equal(t, test.expected, actual)
-		})
+	for i, e := range services {
+		actual := provider.getBackendName(e.node, i)
+		if actual != e.expected {
+			t.Fatalf("expected %s, got %s", e.expected, actual)
+		}
 	}
 }
 
@@ -341,20 +317,17 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
 	}
 
-	testCases := []struct {
-		desc              string
+	cases := []struct {
 		nodes             []catalogUpdate
 		expectedFrontends map[string]*types.Frontend
 		expectedBackends  map[string]*types.Backend
 	}{
 		{
-			desc:              "Should build config of nothing",
 			nodes:             []catalogUpdate{},
 			expectedFrontends: map[string]*types.Frontend{},
 			expectedBackends:  map[string]*types.Backend{},
 		},
 		{
-			desc: "Should build config with no frontend and backend",
 			nodes: []catalogUpdate{
 				{
 					Service: &serviceUpdate{
@@ -366,7 +339,6 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 			expectedBackends:  map[string]*types.Backend{},
 		},
 		{
-			desc: "Should build config who contains one frontend and one backend",
 			nodes: []catalogUpdate{
 				{
 					Service: &serviceUpdate{
@@ -436,31 +408,28 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actualConfig := provider.buildConfig(test.nodes)
-			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
-			assert.Equal(t, test.expectedFrontends, actualConfig.Frontends)
-		})
+	for _, c := range cases {
+		actualConfig := provider.buildConfig(c.nodes)
+		if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
+			t.Fatalf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
+		}
+		if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
+			t.Fatalf("expected %#v, got %#v", c.expectedFrontends["frontend-test"].BasicAuth, actualConfig.Frontends["frontend-test"].BasicAuth)
+			t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
+		}
 	}
 }
 
 func TestConsulCatalogNodeSorter(t *testing.T) {
-	testCases := []struct {
-		desc     string
+	cases := []struct {
 		nodes    []*api.ServiceEntry
 		expected []*api.ServiceEntry
 	}{
 		{
-			desc:     "Should sort nothing",
 			nodes:    []*api.ServiceEntry{},
 			expected: []*api.ServiceEntry{},
 		},
 		{
-			desc: "Should sort by node address",
 			nodes: []*api.ServiceEntry{
 				{
 					Service: &api.AgentService{
@@ -489,7 +458,6 @@ func TestConsulCatalogNodeSorter(t *testing.T) {
 			},
 		},
 		{
-			desc: "Should sort by service name",
 			nodes: []*api.ServiceEntry{
 				{
 					Service: &api.AgentService{
@@ -584,7 +552,6 @@ func TestConsulCatalogNodeSorter(t *testing.T) {
 			},
 		},
 		{
-			desc: "Should sort by node address",
 			nodes: []*api.ServiceEntry{
 				{
 					Service: &api.AgentService{
@@ -636,15 +603,12 @@ func TestConsulCatalogNodeSorter(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			sort.Sort(nodeSorter(test.nodes))
-			actual := test.nodes
-			assert.Equal(t, test.expected, actual)
-		})
+	for _, c := range cases {
+		sort.Sort(nodeSorter(c.nodes))
+		actual := c.nodes
+		if !reflect.DeepEqual(actual, c.expected) {
+			t.Fatalf("expected %q, got %q", c.expected, actual)
+		}
 	}
 }
 
@@ -659,13 +623,11 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 		removedKeys []string
 	}
 
-	testCases := []struct {
-		desc   string
+	cases := []struct {
 		input  Input
 		output Output
 	}{
 		{
-			desc: "Should add 0 services and removed 0",
 			input: Input{
 				currState: map[string]Service{
 					"foo-service":    {Name: "v1"},
@@ -706,7 +668,6 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 			},
 		},
 		{
-			desc: "Should add 3 services and removed 0",
 			input: Input{
 				currState: map[string]Service{
 					"foo-service":    {Name: "v1"},
@@ -744,7 +705,6 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 			},
 		},
 		{
-			desc: "Should add 2 services and removed 2",
 			input: Input{
 				currState: map[string]Service{
 					"foo-service":    {Name: "v1"},
@@ -782,20 +742,21 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
+	for _, c := range cases {
+		addedKeys, removedKeys := getChangedServiceKeys(c.input.currState, c.input.prevState)
 
-			addedKeys, removedKeys := getChangedServiceKeys(test.input.currState, test.input.prevState)
-			assert.Equal(t, fun.Set(test.output.addedKeys), fun.Set(addedKeys), "Added keys comparison results: got %q, want %q", addedKeys, test.output.addedKeys)
-			assert.Equal(t, fun.Set(test.output.removedKeys), fun.Set(removedKeys), "Removed keys comparison results: got %q, want %q", removedKeys, test.output.removedKeys)
-		})
+		if !reflect.DeepEqual(fun.Set(addedKeys), fun.Set(c.output.addedKeys)) {
+			t.Fatalf("Added keys comparison results: got %q, want %q", addedKeys, c.output.addedKeys)
+		}
+
+		if !reflect.DeepEqual(fun.Set(removedKeys), fun.Set(c.output.removedKeys)) {
+			t.Fatalf("Removed keys comparison results: got %q, want %q", removedKeys, c.output.removedKeys)
+		}
 	}
 }
 
 func TestConsulCatalogFilterEnabled(t *testing.T) {
-	testCases := []struct {
+	cases := []struct {
 		desc             string
 		exposedByDefault bool
 		node             *api.ServiceEntry
@@ -881,23 +842,24 @@ func TestConsulCatalogFilterEnabled(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
+	for _, c := range cases {
+		c := c
+		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &CatalogProvider{
 				Domain:           "localhost",
 				Prefix:           "traefik",
-				ExposedByDefault: test.exposedByDefault,
+				ExposedByDefault: c.exposedByDefault,
 			}
-			actual := provider.nodeFilter("test", test.node)
-			assert.Equal(t, test.expected, actual)
+			if provider.nodeFilter("test", c.node) != c.expected {
+				t.Errorf("got unexpected filtering = %t", !c.expected)
+			}
 		})
 	}
 }
 
 func TestConsulCatalogGetBasicAuth(t *testing.T) {
-	testCases := []struct {
+	cases := []struct {
 		desc     string
 		tags     []string
 		expected []string
@@ -916,15 +878,17 @@ func TestConsulCatalogGetBasicAuth(t *testing.T) {
 		},
 	}
 
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
+	for _, c := range cases {
+		c := c
+		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &CatalogProvider{
 				Prefix: "traefik",
 			}
-			actual := provider.getBasicAuth(test.tags)
-			assert.Equal(t, test.expected, actual)
+			actual := provider.getBasicAuth(c.tags)
+			if !reflect.DeepEqual(actual, c.expected) {
+				t.Errorf("actual %q, expected %q", actual, c.expected)
+			}
 		})
 	}
 }
@@ -966,276 +930,7 @@ func TestConsulCatalogHasStickinessLabel(t *testing.T) {
 			t.Parallel()
 
 			actual := provider.hasStickinessLabel(test.tags)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestConsulCatalogGetChangedStringKeys(t *testing.T) {
-	testCases := []struct {
-		desc            string
-		current         []string
-		previous        []string
-		expectedAdded   []string
-		expectedRemoved []string
-	}{
-		{
-			desc:            "1 element added, 0 removed",
-			current:         []string{"chou"},
-			previous:        []string{},
-			expectedAdded:   []string{"chou"},
-			expectedRemoved: []string{},
-		}, {
-			desc:            "0 element added, 0 removed",
-			current:         []string{"chou"},
-			previous:        []string{"chou"},
-			expectedAdded:   []string{},
-			expectedRemoved: []string{},
-		},
-		{
-			desc:            "0 element added, 1 removed",
-			current:         []string{},
-			previous:        []string{"chou"},
-			expectedAdded:   []string{},
-			expectedRemoved: []string{"chou"},
-		},
-		{
-			desc:            "1 element added, 1 removed",
-			current:         []string{"carotte"},
-			previous:        []string{"chou"},
-			expectedAdded:   []string{"carotte"},
-			expectedRemoved: []string{"chou"},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actualAdded, actualRemoved := getChangedStringKeys(test.current, test.previous)
-			assert.Equal(t, test.expectedAdded, actualAdded)
-			assert.Equal(t, test.expectedRemoved, actualRemoved)
-		})
-	}
-}
-
-func TestConsulCatalogHasNodeOrTagschanged(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		current  map[string]Service
-		previous map[string]Service
-		expected bool
-	}{
-		{
-			desc: "Change detected due to change of nodes",
-			current: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{},
-				},
-			},
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node2"},
-					Tags:  []string{},
-				},
-			},
-			expected: true,
-		},
-		{
-			desc:    "No change missing current service",
-			current: make(map[string]Service),
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{},
-				},
-			},
-			expected: false,
-		},
-		{
-			desc: "No change on nodes",
-			current: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{},
-				},
-			},
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{},
-				},
-			},
-			expected: false,
-		},
-		{
-			desc: "No change on nodes and tags",
-			current: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{"foo=bar"},
-				},
-			},
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{"foo=bar"},
-				},
-			},
-			expected: false,
-		},
-		{
-			desc: "Change detected con tags",
-			current: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{"foo=bar"},
-				},
-			},
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{"foo"},
-				},
-			},
-			expected: true,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := hasNodeOrTagsChanged(test.current, test.previous)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestConsulCatalogHasChanged(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		current  map[string]Service
-		previous map[string]Service
-		expected bool
-	}{
-		{
-			desc: "Change detected due to change new service",
-			current: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{},
-				},
-			},
-			previous: make(map[string]Service),
-			expected: true,
-		},
-		{
-			desc:    "Change detected due to change service removed",
-			current: make(map[string]Service),
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{},
-				},
-			},
-			expected: true,
-		},
-		{
-			desc: "Change detected due to change of nodes",
-			current: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{},
-				},
-			},
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node2"},
-					Tags:  []string{},
-				},
-			},
-			expected: true,
-		},
-		{
-			desc: "No change on nodes",
-			current: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{},
-				},
-			},
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{},
-				},
-			},
-			expected: false,
-		},
-		{
-			desc: "No change on nodes and tags",
-			current: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{"foo=bar"},
-				},
-			},
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{"foo=bar"},
-				},
-			},
-			expected: false,
-		},
-		{
-			desc: "Change detected on tags",
-			current: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{"foo=bar"},
-				},
-			},
-			previous: map[string]Service{
-				"foo-service": {
-					Name:  "foo",
-					Nodes: []string{"node1"},
-					Tags:  []string{"foo"},
-				},
-			},
-			expected: true,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := hasChanged(test.current, test.previous)
-			assert.Equal(t, test.expected, actual)
+			assert.Equal(t, actual, test.expected)
 		})
 	}
 }

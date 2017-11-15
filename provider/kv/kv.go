@@ -102,7 +102,7 @@ func (p *Provider) watchKv(configurationChan chan<- types.ConfigMessage, prefix 
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	p.Constraints = append(p.Constraints, constraints...)
 	operation := func() error {
-		if _, err := p.kvclient.Exists(p.Prefix + "/qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"); err != nil {
+		if _, err := p.kvclient.Exists("qmslkjdfmqlskdjfmqlksjazçueznbvbwzlkajzebvkwjdcqmlsfj"); err != nil {
 			return fmt.Errorf("Failed to test KV store connection: %v", err)
 		}
 		if p.Watch {
