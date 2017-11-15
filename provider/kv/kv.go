@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
+	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
@@ -158,6 +159,21 @@ func (p *Provider) loadConfig() *types.Configuration {
 		if _, ok := configuration.Backends[frontend.Backend]; !ok {
 			delete(configuration.Frontends, key)
 		}
+	}
+
+	if p.storeType == store.ETCD {
+		entrypoints := p.get("", p.Prefix, "/tlsConfiguration", "/entryPoints")
+		certAndKeys := p.list(p.Prefix, "tlsConfiguration/", "certificate/")
+		aggregates := make([]*traefikTls.Configuration, 0)
+		for _, certificatename := range certAndKeys {
+			certFile := p.get("", certificatename, "/certFile")
+			keyFile := p.get("", certificatename, "/keyFile")
+			tlscfg := traefikTls.Configuration{}
+			tlscfg.EntryPoints = []string{entrypoints}
+			tlscfg.Certificate = &traefikTls.Certificate{CertFile: traefikTls.FileOrContent(certFile), KeyFile: traefikTls.FileOrContent(keyFile)}
+			aggregates = append(aggregates, &tlscfg)
+		}
+		configuration.TLSConfiguration = aggregates
 	}
 
 	return configuration
