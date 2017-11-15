@@ -148,37 +148,6 @@ This variable must be initialized with the ACL token value.
 
 If Traefik is launched into a Docker container, the variable `CONSUL_HTTP_TOKEN` can be initialized with the `-e` Docker option : `-e "CONSUL_HTTP_TOKEN=[consul-acl-token-value]"`
 
-If a Consul ACL is used to restrict Træfik read/write access, one of the following configurations is needed.
-
-- HCL format :
-
-```
-    key "traefik" {
-        policy = "write"
-    },
-    
-    session "" {
-        policy = "write"
-    }
-```
-
-- JSON format :
-
-```json
-{
-    "key": {
-        "traefik": {
-          "policy": "write"
-        }
-    },
-    "session": {
-        "": {
-        "policy": "write"
-        }
-    }
-}
-```
-
 ### TLS support
 
 To connect to a Consul endpoint using SSL, simply specify `https://` in the `consul.endpoint` property
