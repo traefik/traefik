@@ -27,12 +27,15 @@ To redirect an http entrypoint to an https entrypoint (with SNI support).
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.org.cert"
-      KeyFile = "integration/fixtures/https/snitest.org.key"
+      certFile = "integration/fixtures/https/snitest.org.cert"
+      keyFile = "integration/fixtures/https/snitest.org.key"
 ```
+
+!!! note
+    Please note that `regex` and `replacement` do not have to be set in the `redirect` structure if an entrypoint is defined for the redirection (they will not be used in this case).
 
 ## Rewriting URL
 
@@ -47,13 +50,35 @@ To redirect an entrypoint rewriting the URL.
     replacement = "http://mydomain/$1"
 ```
 
+!!! note
+    Please note that `regex` and `replacement` do not have to be set in the `redirect` structure if an entrypoint is defined for the redirection (they will not be used in this case).
+
+## TLS
+
+Define an entrypoint with SNI support.
+
+```toml
+[entryPoints]
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
+```
+
+!!! note
+    If an empty TLS configuration is done, default self-signed certificates are generated.
+
 ## TLS Mutual Authentication
 
-Only accept clients that present a certificate signed by a specified Certificate Authority (CA).
+TLS Mutual Authentication can be `optional` or not.
+If it's `optional`, Træfik will authorize connection with certificates not signed by a specified Certificate Authority (CA).
+Otherwise, Træfik will only accept clients that present a certificate signed by a specified Certificate Authority (CA).
 `ClientCAFiles` can be configured with multiple `CA:s` in the same file or use multiple files containing one or several `CA:s`.
 The `CA:s` has to be in PEM format.
 
-All clients will be required to present a valid cert.
+By default, `ClientCAFiles` is not optional, all clients will be required to present a valid cert.
 The requirement will apply to all server certs in the entrypoint.
 
 In the example below both `snitest.com` and `snitest.org` will require client certs
@@ -63,15 +88,21 @@ In the example below both `snitest.com` and `snitest.org` will require client ce
   [entryPoints.https]
   address = ":443"
   [entryPoints.https.tls]
-  ClientCAFiles = ["tests/clientca1.crt", "tests/clientca2.crt"]
+    [entryPoints.https.tls.ClientCA]
+    files = ["tests/clientca1.crt", "tests/clientca2.crt"]
+    optional = false
     [[entryPoints.https.tls.certificates]]
-    CertFile = "integration/fixtures/https/snitest.com.cert"
-    KeyFile = "integration/fixtures/https/snitest.com.key"
+    certFile = "integration/fixtures/https/snitest.com.cert"
+    keyFile = "integration/fixtures/https/snitest.com.key"
     [[entryPoints.https.tls.certificates]]
-    CertFile = "integration/fixtures/https/snitest.org.cert"
-    KeyFile = "integration/fixtures/https/snitest.org.key"
+    certFile = "integration/fixtures/https/snitest.org.cert"
+    keyFile = "integration/fixtures/https/snitest.org.key"
 ```
 
+!!! note
+
+The deprecated argument `ClientCAFiles` allows adding Client CA files which are mandatory.
+If this parameter exists, the new ones are not checked.
 
 ## Authentication
 
@@ -118,10 +149,10 @@ Otherwise, the response from the auth server is returned.
 
 ```toml
 [entryPoints]
-  [entrypoints.http]
+  [entryPoints.http]
     # ...
     # To enable forward auth on an entrypoint
-    [entrypoints.http.auth.forward]
+    [entryPoints.http.auth.forward]
     address = "https://authserver.com/auth"
     
     # Trust existing X-Forwarded-* headers.
@@ -136,7 +167,7 @@ Otherwise, the response from the auth server is returned.
     #
     # Optional
     #
-    [entrypoints.http.auth.forward.tls]
+    [entryPoints.http.auth.forward.tls]
     cert = "authserver.crt"
     key = "authserver.key"
 ```
@@ -221,7 +252,7 @@ Only IPs in `trustedIPs` will lead to remote client address replacement: you sho
 
 ## Forwarded Header
 
-Only IPs in `trustedIPs` will be authorize to trust the client forwarded headers (`X-Forwarded-*`).
+Only IPs in `trustedIPs` will be authorized to trust the client forwarded headers (`X-Forwarded-*`).
 
 ```toml
 [entryPoints]

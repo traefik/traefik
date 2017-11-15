@@ -1,14 +1,15 @@
 defaultEntryPoints = ["wss"]
 
 logLevel = "DEBUG"
+InsecureSkipVerify=true
 
 [entryPoints]
   [entryPoints.wss]
   address = ":8000"
   [entryPoints.wss.tls]
   [[entryPoints.wss.tls.certificates]]
-    CertFile = "resources/tls/local.cert"
-    KeyFile = "resources/tls/local.key"
+    certFile = "resources/tls/local.cert"
+    keyFile = "resources/tls/local.key"
 
 [web]
   address = ":8080"
@@ -24,4 +25,4 @@ logLevel = "DEBUG"
   [frontends.frontend1]
   backend = "backend1"
     [frontends.frontend1.routes.test_1]
-    rule = "Path:/ws"
+    rule = "Path:/echo,/ws"

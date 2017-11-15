@@ -129,25 +129,33 @@ dnsProvider = "digitalocean"
 
 Use a DNS based acme challenge rather than external HTTPS access, e.g. for a firewalled server.
 
-Select the provider that matches the DNS domain that will host the challenge TXT record, and provide environment variables with access keys to enable setting it:
+Select the provider that matches the DNS domain that will host the challenge TXT record, and provide environment variables to enable setting it:
 
-| Provider                                     | Configuration                                                                                             |
-|----------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| [Cloudflare](https://www.cloudflare.com)     | `CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_KEY`                                                                  |
-| [DigitalOcean](https://www.digitalocean.com) | `DO_AUTH_TOKEN`                                                                                           |
-| [DNSimple](https://dnsimple.com)             | `DNSIMPLE_EMAIL`, `DNSIMPLE_OAUTH_TOKEN`                                                                  |
-| [DNS Made Easy](https://dnsmadeeasy.com)     | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`                                                           |
-| [Exoscale](https://www.exoscale.ch)          | `EXOSCALE_API_KEY`, `EXOSCALE_API_SECRET`                                                                 |
-| [Gandi](https://www.gandi.net)               | `GANDI_API_KEY`                                                                                           |
-| [Linode](https://www.linode.com)             | `LINODE_API_KEY`                                                                                          |
-| manual                                       | none, but run Traefik interactively & turn on `acmeLogging` to see instructions & press <kbd>Enter</kbd>. |
-| [Namecheap](https://www.namecheap.com)       | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                 |
-| RFC2136                                      | `RFC2136_TSIG_KEY`, `RFC2136_TSIG_SECRET`, `RFC2136_TSIG_ALGORITHM`, `RFC2136_NAMESERVER`                 |
-| [Route 53](https://aws.amazon.com/route53/)  | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, or configured user/instance IAM profile.      |
-| [dyn](https://dyn.com)                       | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                      |
-| [VULTR](https://www.vultr.com)               | `VULTR_API_KEY`                                                                                           |
-| [OVH](https://www.ovh.com)                   | `OVH_ENDPOINT`, `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY`                       |
-| [pdns](https://www.powerdns.com)             | `PDNS_API_KEY`, `PDNS_API_URL`                                                                            |
+| Provider Name                                          | Provider code  | Configuration                                                                                                             |
+|--------------------------------------------------------|----------------|---------------------------------------------------------------------------------------------------------------------------|
+| [Auroradns](https://www.pcextreme.com/aurora/dns)      | `auroradns`    | `AURORA_USER_ID`, `AURORA_KEY`, `AURORA_ENDPOINT`                                                                         |
+| [Azure](https://azure.microsoft.com/services/dns/)     | `azure`        | `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_SUBSCRIPTION_ID`, `AZURE_TENANT_ID`, `AZURE_RESOURCE_GROUP`              |
+| [Cloudflare](https://www.cloudflare.com)               | `cloudflare`   | `CLOUDFLARE_EMAIL`, `CLOUDFLARE_API_KEY`                                                                                  |
+| [DigitalOcean](https://www.digitalocean.com)           | `digitalocean` | `DO_AUTH_TOKEN`                                                                                                           |
+| [DNSimple](https://dnsimple.com)                       | `dnsimple`     | `DNSIMPLE_OAUTH_TOKEN`, `DNSIMPLE_BASE_URL`                                                                               |
+| [DNS Made Easy](https://dnsmadeeasy.com)               | `dnsmadeeasy`  | `DNSMADEEASY_API_KEY`, `DNSMADEEASY_API_SECRET`, `DNSMADEEASY_SANDBOX`                                                    |
+| [DNSPod](http://www.dnspod.net/)                       | `dnspod`       | `DNSPOD_API_KEY`                                                                                                          |
+| [Dyn](https://dyn.com)                                 | `dyn`          | `DYN_CUSTOMER_NAME`, `DYN_USER_NAME`, `DYN_PASSWORD`                                                                      |
+| [Exoscale](https://www.exoscale.ch)                    | `exoscale`     | `EXOSCALE_API_KEY`, `EXOSCALE_API_SECRET`, `EXOSCALE_ENDPOINT`                                                            |
+| [Gandi](https://www.gandi.net)                         | `gandi`        | `GANDI_API_KEY`                                                                                                           |
+| [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                   |
+| [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, `GCE_SERVICE_ACCOUNT_FILE`                                                                                 |
+| [Linode](https://www.linode.com)                       | `linode`       | `LINODE_API_KEY`                                                                                                          |
+| manual                                                 | -              | none, but run Traefik interactively & turn on `acmeLogging` to see instructions & press <kbd>Enter</kbd>.                 |
+| [Namecheap](https://www.namecheap.com)                 | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                 |
+| [Ns1](https://ns1.com/)                                | `ns1`          | `NS1_API_KEY`                                                                                                             |
+| [Open Telekom Cloud](https://cloud.telekom.de/en/)     | `otc`          | `OTC_DOMAIN_NAME`, `OTC_USER_NAME`, `OTC_PASSWORD`, `OTC_PROJECT_NAME`, `OTC_IDENTITY_ENDPOINT`                           |
+| [OVH](https://www.ovh.com)                             | `ovh`          | `OVH_ENDPOINT`, `OVH_APPLICATION_KEY`, `OVH_APPLICATION_SECRET`, `OVH_CONSUMER_KEY`                                       |
+| [PowerDNS](https://www.powerdns.com)                   | `pdns`         | `PDNS_API_KEY`, `PDNS_API_URL`                                                                                            |
+| [Rackspace](https://www.rackspace.com/cloud/dns)       | `rackspace`    | `RACKSPACE_USER`, `RACKSPACE_API_KEY`                                                                                     |
+| [RFC2136](https://tools.ietf.org/html/rfc2136)         | `rfc2136`      | `RFC2136_TSIG_KEY`, `RFC2136_TSIG_SECRET`, `RFC2136_TSIG_ALGORITHM`, `RFC2136_NAMESERVER`                                 |
+| [Route 53](https://aws.amazon.com/route53/)            | `route53`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_HOSTED_ZONE_ID` or configured user/instance IAM profile. |
+| [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                           |
 
 ### `delayDontCheckDNS`
 

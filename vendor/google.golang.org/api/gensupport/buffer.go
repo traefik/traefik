@@ -11,8 +11,8 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
-// ResumableBuffer buffers data from an io.Reader to support uploading media in retryable chunks.
-type ResumableBuffer struct {
+// MediaBuffer buffers data from an io.Reader to support uploading media in retryable chunks.
+type MediaBuffer struct {
 	media io.Reader
 
 	chunk []byte // The current chunk which is pending upload.  The capacity is the chunk size.
@@ -22,42 +22,42 @@ type ResumableBuffer struct {
 	off int64
 }
 
-func NewResumableBuffer(media io.Reader, chunkSize int) *ResumableBuffer {
-	return &ResumableBuffer{media: media, chunk: make([]byte, 0, chunkSize)}
+func NewMediaBuffer(media io.Reader, chunkSize int) *MediaBuffer {
+	return &MediaBuffer{media: media, chunk: make([]byte, 0, chunkSize)}
 }
 
 // Chunk returns the current buffered chunk, the offset in the underlying media
 // from which the chunk is drawn, and the size of the chunk.
 // Successive calls to Chunk return the same chunk between calls to Next.
-func (rb *ResumableBuffer) Chunk() (chunk io.Reader, off int64, size int, err error) {
+func (mb *MediaBuffer) Chunk() (chunk io.Reader, off int64, size int, err error) {
 	// There may already be data in chunk if Next has not been called since the previous call to Chunk.
-	if rb.err == nil && len(rb.chunk) == 0 {
-		rb.err = rb.loadChunk()
+	if mb.err == nil && len(mb.chunk) == 0 {
+		mb.err = mb.loadChunk()
 	}
-	return bytes.NewReader(rb.chunk), rb.off, len(rb.chunk), rb.err
+	return bytes.NewReader(mb.chunk), mb.off, len(mb.chunk), mb.err
 }
 
 // loadChunk will read from media into chunk, up to the capacity of chunk.
-func (rb *ResumableBuffer) loadChunk() error {
-	bufSize := cap(rb.chunk)
-	rb.chunk = rb.chunk[:bufSize]
+func (mb *MediaBuffer) loadChunk() error {
+	bufSize := cap(mb.chunk)
+	mb.chunk = mb.chunk[:bufSize]
 
 	read := 0
 	var err error
 	for err == nil && read < bufSize {
 		var n int
-		n, err = rb.media.Read(rb.chunk[read:])
+		n, err = mb.media.Read(mb.chunk[read:])
 		read += n
 	}
-	rb.chunk = rb.chunk[:read]
+	mb.chunk = mb.chunk[:read]
 	return err
 }
 
 // Next advances to the next chunk, which will be returned by the next call to Chunk.
 // Calls to Next without a corresponding prior call to Chunk will have no effect.
-func (rb *ResumableBuffer) Next() {
-	rb.off += int64(len(rb.chunk))
-	rb.chunk = rb.chunk[0:0]
+func (mb *MediaBuffer) Next() {
+	mb.off += int64(len(mb.chunk))
+	mb.chunk = mb.chunk[0:0]
 }
 
 type readerTyper struct {

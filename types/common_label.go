@@ -15,6 +15,8 @@ const (
 	LabelFrontend                                = LabelPrefix + "frontend"
 	LabelFrontendAuthBasic                       = LabelPrefix + "frontend.auth.basic"
 	LabelFrontendEntryPoints                     = LabelPrefix + "frontend.entryPoints"
+	LabelFrontendRequestHeader                   = LabelPrefix + "frontend.headers.customrequestheaders"
+	LabelFrontendResponseHeader                  = LabelPrefix + "frontend.headers.customresponseheaders"
 	LabelFrontendPassHostHeader                  = LabelPrefix + "frontend.passHostHeader"
 	LabelFrontendPriority                        = LabelPrefix + "frontend.priority"
 	LabelFrontendRule                            = LabelPrefix + "frontend.rule"

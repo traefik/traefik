@@ -75,10 +75,6 @@ type Basic struct {
 	HTTPBasicPassword string `description:"Basic authentication Password"`
 }
 
-type lightMarathonClient interface {
-	Applications(url.Values) (*marathon.Applications, error)
-}
-
 // Provide allows the marathon provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {

@@ -118,10 +118,10 @@ If one of the Net-Specifications are invalid, the whole list is invalid and allo
 ### Authentication
 
 Is possible to add additional authentication annotations in the Ingress rule.
-The source of the authentication is a secret that contains usernames and passwords inside the the key auth.
+The source of the authentication is a secret that contains usernames and passwords inside the key auth.
 
 - `ingress.kubernetes.io/auth-type`: `basic`
-- `ingress.kubernetes.io/auth-secret`  
+- `ingress.kubernetes.io/auth-secret`: `mysecret`  
     Contains the usernames and passwords with access to the paths defined in the Ingress Rule.
 
 The secret must be created in the same namespace as the Ingress rule.

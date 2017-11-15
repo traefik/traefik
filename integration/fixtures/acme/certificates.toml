@@ -1,0 +1,16 @@
+[backends]
+  [backends.backend]
+    [backends.backend.servers.server1]
+    url = "http://127.0.0.1:9010"
+
+[frontends]
+  [frontends.frontend]
+  backend = "backend"
+    [frontends.frontend.routes.test]
+    rule = "Host:traefik.acme.wtf"
+
+[[tlsConfiguration]]
+entryPoints = ["https"]
+    [tlsConfiguration.certificate]
+     certFile = "fixtures/acme/ssl/wildcard.crt"
+     keyFile = "fixtures/acme/ssl/wildcard.key"

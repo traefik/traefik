@@ -169,6 +169,8 @@ Labels can be used on containers to override default behaviour.
 | `traefik.frontend.entryPoints=http,https`                 | Assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`                                                                                                                                                                                                                                                                                                                                         |
 | `traefik.frontend.auth.basic=EXPR`                        | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`                                                                                                                                                                                                                                                                                                                                                |
 | `traefik.frontend.whitelistSourceRange:RANGE`             | List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access. If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.                                                                                                                                                                                                             |
+| `traefik.frontend.headers.customrequestheaders=EXPR `             | Provides the container with custom request headers that will be appended to each request forwarded to the container. Format:  `HEADER:value,HEADER2:value2`                                                                                                                                                                                                            |
+| `traefik.frontend.headers.customresponseheaders=EXPR`             | Appends the headers to each response returned by the container, before forwarding the response to the client. Format:  `HEADER:value,HEADER2:value2`                                                                                                                                                                                                            |
 | `traefik.docker.network`                                  | Set the docker network to use for connections to this container. If a container is linked to several networks, be sure to set the proper network name (you can check with `docker inspect <container_id>`) otherwise it will randomly pick one (depending on how docker is returning them). For instance when deploying docker `stack` from compose files, the compose defined networks will be prefixed with the `stack` name. |
 
 ### On Service
@@ -186,6 +188,12 @@ Services labels can be used for overriding default behaviour
 | `traefik.<service-name>.frontend.passHostHeader`  | Overrides `traefik.frontend.passHostHeader`.                                                     |
 | `traefik.<service-name>.frontend.priority`        | Overrides `traefik.frontend.priority`.                                                           |
 | `traefik.<service-name>.frontend.rule`            | Overrides `traefik.frontend.rule`.                                                               |
+
+
+!!! note
+    if a label is defined both as a `container label` and a `service label` (for example `traefik.<service-name>.port=PORT` and `traefik.port=PORT` ), the `service label` is used to defined the `<service-name>` property (`port` in the example).
+    It's possible to mix `container labels` and `service labels`, in this case `container labels` are used as default value for missing `service labels` but no frontends are going to be created with the `container labels`.
+    More details in this [example](/user-guide/docker-and-lets-encrypt/#labels).
 
 !!! warning
     when running inside a container, Træfik will need network access through:

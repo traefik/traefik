@@ -44,26 +44,21 @@ func getMessage(t *testing.T, body fn) string {
 	start(t)
 	defer stop(t)
 
-	result := make(chan string)
-
-	go func() {
-		message := make([]byte, 1024*32)
-		var bufLen int
-		for {
-			listener.SetReadDeadline(time.Now().Add(Timeout))
-			n, _, _ := listener.ReadFrom(message[bufLen:])
-			if n == 0 {
-				result <- string(message[0:bufLen])
-				break
-			} else {
-				bufLen += n
-			}
-		}
-	}()
-
 	body()
 
-	return <-result
+	message := make([]byte, 1024*32)
+	var bufLen int
+	for {
+		listener.SetReadDeadline(time.Now().Add(Timeout))
+		n, _, _ := listener.ReadFrom(message[bufLen:])
+		if n == 0 {
+			break
+		} else {
+			bufLen += n
+		}
+	}
+
+	return string(message[0:bufLen])
 }
 
 func get(t *testing.T, match string, body fn) (got string, equals bool, contains bool) {
@@ -189,4 +184,8 @@ func ShouldReceiveAllAndNotReceiveAny(t *testing.T, expected []string, unexpecte
 	if failed {
 		t.Errorf("but got: %#v", got)
 	}
+}
+
+func ReceiveString(t *testing.T, body fn) string {
+	return getMessage(t, body)
 }

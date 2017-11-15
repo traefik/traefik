@@ -20,13 +20,15 @@ func TestProvideSingleFileAndWatch(t *testing.T) {
 
 	expectedNumFrontends := 2
 	expectedNumBackends := 2
+	expectedNumTLSConf := 2
 
 	tempFile := createFile(t,
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
-		createBackendConfiguration(expectedNumBackends))
+		createBackendConfiguration(expectedNumBackends),
+		createTLSConfiguration(expectedNumTLSConf))
 
-	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends)
+	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
 
 	provide(configurationChan, watch, withFile(tempFile))
 
@@ -37,14 +39,15 @@ func TestProvideSingleFileAndWatch(t *testing.T) {
 	// Now test again with single frontend and backend
 	expectedNumFrontends = 1
 	expectedNumBackends = 1
+	expectedNumTLSConf = 1
 
 	createFile(t,
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
-		createBackendConfiguration(expectedNumBackends))
+		createBackendConfiguration(expectedNumBackends),
+		createTLSConfiguration(expectedNumTLSConf))
 
-	// Must fail because we don't watch the change
-	err = waitForSignal(signal, 2*time.Second, "single frontend and backend")
+	err = waitForSignal(signal, 2*time.Second, "single frontend, backend, TLS configuration")
 	assert.NoError(t, err)
 }
 
@@ -54,13 +57,15 @@ func TestProvideSingleFileAndNotWatch(t *testing.T) {
 
 	expectedNumFrontends := 2
 	expectedNumBackends := 2
+	expectedNumTLSConf := 2
 
 	tempFile := createFile(t,
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
-		createBackendConfiguration(expectedNumBackends))
+		createBackendConfiguration(expectedNumBackends),
+		createTLSConfiguration(expectedNumTLSConf))
 
-	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends)
+	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
 
 	provide(configurationChan, withFile(tempFile))
 
@@ -71,14 +76,16 @@ func TestProvideSingleFileAndNotWatch(t *testing.T) {
 	// Now test again with single frontend and backend
 	expectedNumFrontends = 1
 	expectedNumBackends = 1
+	expectedNumTLSConf = 1
 
 	createFile(t,
 		tempDir, "simple.toml",
 		createFrontendConfiguration(expectedNumFrontends),
-		createBackendConfiguration(expectedNumBackends))
+		createBackendConfiguration(expectedNumBackends),
+		createTLSConfiguration(expectedNumTLSConf))
 
 	// Must fail because we don't watch the changes
-	err = waitForSignal(signal, 2*time.Second, "single frontend and backend")
+	err = waitForSignal(signal, 2*time.Second, "single frontend, backend and TLS configuration")
 	assert.Error(t, err)
 }
 
@@ -88,11 +95,13 @@ func TestProvideDirectoryAndWatch(t *testing.T) {
 
 	expectedNumFrontends := 2
 	expectedNumBackends := 2
+	expectedNumTLSConf := 2
 
 	tempFile1 := createRandomFile(t, tempDir, createFrontendConfiguration(expectedNumFrontends))
 	tempFile2 := createRandomFile(t, tempDir, createBackendConfiguration(expectedNumBackends))
+	tempFile3 := createRandomFile(t, tempDir, createTLSConfiguration(expectedNumTLSConf))
 
-	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends)
+	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
 
 	provide(configurationChan, watch, withDirectory(tempDir))
 
@@ -103,6 +112,7 @@ func TestProvideDirectoryAndWatch(t *testing.T) {
 	// Now remove the backends file
 	expectedNumFrontends = 2
 	expectedNumBackends = 0
+	expectedNumTLSConf = 2
 	os.Remove(tempFile2.Name())
 	err = waitForSignal(signal, 2*time.Second, "remove the backends file")
 	assert.NoError(t, err)
@@ -110,22 +120,34 @@ func TestProvideDirectoryAndWatch(t *testing.T) {
 	// Now remove the frontends file
 	expectedNumFrontends = 0
 	expectedNumBackends = 0
+	expectedNumTLSConf = 2
 	os.Remove(tempFile1.Name())
 	err = waitForSignal(signal, 2*time.Second, "remove the frontends file")
+	assert.NoError(t, err)
+
+	// Now remove the TLS configuration file
+	expectedNumFrontends = 0
+	expectedNumBackends = 0
+	expectedNumTLSConf = 0
+	os.Remove(tempFile3.Name())
+	err = waitForSignal(signal, 2*time.Second, "remove the TLS configuration file")
 	assert.NoError(t, err)
 }
 
 func TestProvideDirectoryAndNotWatch(t *testing.T) {
 	tempDir := createTempDir(t, "testdir")
+	tempTLSDir := createSubDir(t, tempDir, "tls")
 	defer os.RemoveAll(tempDir)
 
 	expectedNumFrontends := 2
 	expectedNumBackends := 2
+	expectedNumTLSConf := 2
 
 	createRandomFile(t, tempDir, createFrontendConfiguration(expectedNumFrontends))
 	tempFile2 := createRandomFile(t, tempDir, createBackendConfiguration(expectedNumBackends))
+	createRandomFile(t, tempTLSDir, createTLSConfiguration(expectedNumTLSConf))
 
-	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends)
+	configurationChan, signal := createConfigurationRoutine(t, &expectedNumFrontends, &expectedNumBackends, &expectedNumTLSConf)
 
 	provide(configurationChan, withDirectory(tempDir))
 
@@ -136,6 +158,7 @@ func TestProvideDirectoryAndNotWatch(t *testing.T) {
 	// Now remove the backends file
 	expectedNumFrontends = 2
 	expectedNumBackends = 0
+	expectedNumTLSConf = 2
 	os.Remove(tempFile2.Name())
 
 	// Must fail because we don't watch the changes
@@ -144,7 +167,7 @@ func TestProvideDirectoryAndNotWatch(t *testing.T) {
 
 }
 
-func createConfigurationRoutine(t *testing.T, expectedNumFrontends *int, expectedNumBackends *int) (chan types.ConfigMessage, chan interface{}) {
+func createConfigurationRoutine(t *testing.T, expectedNumFrontends *int, expectedNumBackends *int, expectedNumTLSConfigurations *int) (chan types.ConfigMessage, chan interface{}) {
 	configurationChan := make(chan types.ConfigMessage)
 	signal := make(chan interface{})
 
@@ -154,6 +177,7 @@ func createConfigurationRoutine(t *testing.T, expectedNumFrontends *int, expecte
 			assert.Equal(t, "file", data.ProviderName)
 			assert.Len(t, data.Configuration.Frontends, *expectedNumFrontends)
 			assert.Len(t, data.Configuration.Backends, *expectedNumBackends)
+			assert.Len(t, data.Configuration.TLSConfiguration, *expectedNumTLSConfigurations)
 			signal <- nil
 		}
 	})
@@ -207,6 +231,7 @@ func createRandomFile(t *testing.T, tempDir string, contents ...string) *os.File
 
 // createFile Helper
 func createFile(t *testing.T, tempDir string, name string, contents ...string) *os.File {
+	t.Helper()
 	fileName := path.Join(tempDir, name)
 
 	tempFile, err := os.Create(fileName)
@@ -231,11 +256,22 @@ func createFile(t *testing.T, tempDir string, name string, contents ...string) *
 
 // createTempDir Helper
 func createTempDir(t *testing.T, dir string) string {
+	t.Helper()
 	d, err := ioutil.TempDir("", dir)
 	if err != nil {
 		t.Fatal(err)
 	}
 	return d
+}
+
+// createDir Helper
+func createSubDir(t *testing.T, rootDir, dir string) string {
+	t.Helper()
+	err := os.Mkdir(rootDir+"/"+dir, 0775)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return rootDir + "/" + dir
 }
 
 // createFrontendConfiguration Helper
@@ -256,6 +292,20 @@ func createBackendConfiguration(n int) string {
 		conf += fmt.Sprintf(`  [backends.backend%[1]d]
     [backends.backend%[1]d.servers.server1]
     url = "http://172.17.0.%[1]d:80"
+`, i)
+	}
+	return conf
+}
+
+// createTLSConfiguration Helper
+func createTLSConfiguration(n int) string {
+	var conf string
+	for i := 1; i <= n; i++ {
+		conf += fmt.Sprintf(`[[TLSConfiguration]]
+	EntryPoints = ["https"]
+	[TLSConfiguration.Certificate]
+	CertFile = "integration/fixtures/https/snitest%[1]d.com.cert"
+	KeyFile = "integration/fixtures/https/snitest%[1]d.com.key"
 `, i)
 	}
 	return conf

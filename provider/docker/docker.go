@@ -24,14 +24,16 @@ import (
 	eventtypes "github.com/docker/docker/api/types/events"
 	"github.com/docker/docker/api/types/filters"
 	swarmtypes "github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/api/types/versions"
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
+	"github.com/pkg/errors"
 )
 
 const (
 	// SwarmAPIVersion is a constant holding the version of the Provider API traefik will use
-	SwarmAPIVersion string = "1.24"
+	SwarmAPIVersion = "1.24"
 	// SwarmDefaultWatchTime is the duration of the interval when polling docker
 	SwarmDefaultWatchTime = 15 * time.Second
 
@@ -61,6 +63,7 @@ type dockerData struct {
 	Labels          map[string]string // List of labels set to container or service
 	NetworkSettings networkSettings
 	Health          string
+	Node            *dockertypes.ContainerNode
 }
 
 // NetworkSettings holds the networks data to the Provider p
@@ -285,6 +288,10 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServicePriority":          p.getServicePriority,
 		"getServiceBackend":           p.getServiceBackend,
 		"getWhitelistSourceRange":     p.getWhitelistSourceRange,
+		"getRequestHeaders":           p.getRequestHeaders,
+		"getResponseHeaders":          p.getResponseHeaders,
+		"hasRequestHeaders":           p.hasRequestHeaders,
+		"hasResponseHeaders":          p.hasResponseHeaders,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -294,8 +301,8 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 	frontends := map[string][]dockerData{}
 	backends := map[string]dockerData{}
 	servers := map[string][]dockerData{}
-	for _, container := range filteredContainers {
-		frontendName := p.getFrontendName(container)
+	for idx, container := range filteredContainers {
+		frontendName := p.getFrontendName(container, idx)
 		frontends[frontendName] = append(frontends[frontendName], container)
 		backendName := p.getBackend(container)
 		backends[backendName] = container
@@ -510,14 +517,21 @@ func (p *Provider) getMaxConnExtractorFunc(container dockerData) string {
 }
 
 func (p *Provider) containerFilter(container dockerData) bool {
-	_, err := strconv.Atoi(container.Labels[types.LabelPort])
-	if len(container.NetworkSettings.Ports) == 0 && err != nil {
-		log.Debugf("Filtering container without port and no traefik.port label %s", container.Name)
+	if !isContainerEnabled(container, p.ExposedByDefault) {
+		log.Debugf("Filtering disabled container %s", container.Name)
 		return false
 	}
 
-	if !isContainerEnabled(container, p.ExposedByDefault) {
-		log.Debugf("Filtering disabled container %s", container.Name)
+	var err error
+	portLabel := "traefik.port label"
+	if p.hasServices(container) {
+		portLabel = "traefik.<serviceName>.port or " + portLabel + "s"
+		err = checkServiceLabelPort(container)
+	} else {
+		_, err = strconv.Atoi(container.Labels[types.LabelPort])
+	}
+	if len(container.NetworkSettings.Ports) == 0 && err != nil {
+		log.Debugf("Filtering container without port and no %s %s : %s", portLabel, container.Name, err.Error())
 		return false
 	}
 
@@ -542,12 +556,49 @@ func (p *Provider) containerFilter(container dockerData) bool {
 	return true
 }
 
-func (p *Provider) getFrontendName(container dockerData) string {
-	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
+// checkServiceLabelPort checks if all service names have a port service label
+// or if port container label exists for default value
+func checkServiceLabelPort(container dockerData) error {
+	// If port container label is present, there is a default values for all ports, use it for the check
+	_, err := strconv.Atoi(container.Labels[types.LabelPort])
+	if err != nil {
+		serviceLabelPorts := make(map[string]struct{})
+		serviceLabels := make(map[string]struct{})
+		portRegexp := regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.port$`)
+		for label := range container.Labels {
+			// Get all port service labels
+			portLabel := portRegexp.FindStringSubmatch(label)
+			if portLabel != nil && len(portLabel) > 0 {
+				serviceLabelPorts[portLabel[0]] = struct{}{}
+			}
+			// Get only one instance of all service names from service labels
+			servicesLabelNames := servicesPropertiesRegexp.FindStringSubmatch(label)
+			if servicesLabelNames != nil && len(servicesLabelNames) > 0 {
+				serviceLabels[strings.Split(servicesLabelNames[0], ".")[1]] = struct{}{}
+			}
+		}
+		// If the number of service labels is different than the number of port services label
+		// there is an error
+		if len(serviceLabels) == len(serviceLabelPorts) {
+			for labelPort := range serviceLabelPorts {
+				_, err = strconv.Atoi(container.Labels[labelPort])
+				if err != nil {
+					break
+				}
+			}
+		} else {
+			err = errors.New("Port service labels missing, please use traefik.port as default value or define all port service labels")
+		}
+	}
+	return err
+}
+
+func (p *Provider) getFrontendName(container dockerData, idx int) string {
 	if label, err := getLabel(container, types.LabelFrontend); err == nil {
 		return label
 	}
-	return provider.Normalize(p.getFrontendRule(container))
+	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
+	return provider.Normalize(p.getFrontendRule(container) + "-" + strconv.Itoa(idx))
 }
 
 // GetFrontendRule returns the frontend rule for the specified container, using
@@ -557,10 +608,10 @@ func (p *Provider) getFrontendRule(container dockerData) string {
 		return label
 	}
 	if labels, err := getLabels(container, []string{labelDockerComposeProject, labelDockerComposeService}); err == nil {
-		return "Host:" + p.getSubDomain(labels[labelDockerComposeService]+"."+labels[labelDockerComposeProject]) + "." + p.Domain
+		return "Host:" + getSubDomain(labels[labelDockerComposeService]+"."+labels[labelDockerComposeProject]) + "." + p.Domain
 	}
 	if len(p.Domain) > 0 {
-		return "Host:" + p.getSubDomain(container.ServiceName) + "." + p.Domain
+		return "Host:" + getSubDomain(container.ServiceName) + "." + p.Domain
 	}
 	return ""
 }
@@ -588,10 +639,29 @@ func (p *Provider) getIPAddress(container dockerData) string {
 		}
 	}
 
-	// If net==host, quick n' dirty, we return 127.0.0.1
-	// This will work locally, but will fail with swarm.
-	if "host" == container.NetworkSettings.NetworkMode {
+	if container.NetworkSettings.NetworkMode.IsHost() {
+		if container.Node != nil {
+			if container.Node.IPAddress != "" {
+				return container.Node.IPAddress
+			}
+		}
+
 		return "127.0.0.1"
+	}
+
+	if container.NetworkSettings.NetworkMode.IsContainer() {
+		dockerClient, err := p.createClient()
+		if err != nil {
+			log.Warnf("Unable to get IP address for container %s, error: %s", container.Name, err)
+			return ""
+		}
+		ctx := context.Background()
+		containerInspected, err := dockerClient.ContainerInspect(ctx, container.NetworkSettings.NetworkMode.ConnectedContainer())
+		if err != nil {
+			log.Warnf("Unable to get IP address for container %s : Failed to inspect container ID %s, error: %s", container.Name, container.NetworkSettings.NetworkMode.ConnectedContainer(), err)
+			return ""
+		}
+		return p.getIPAddress(parseContainer(containerInspected))
 	}
 
 	if p.UseBindPortIP {
@@ -723,6 +793,41 @@ func (p *Provider) getBasicAuth(container dockerData) []string {
 	return []string{}
 }
 
+func (p *Provider) hasRequestHeaders(container dockerData) bool {
+	label, err := getLabel(container, types.LabelFrontendRequestHeader)
+	return err == nil && len(label) > 0
+}
+
+func (p *Provider) hasResponseHeaders(container dockerData) bool {
+	label, err := getLabel(container, types.LabelFrontendResponseHeader)
+	return err == nil && len(label) > 0
+}
+
+func (p *Provider) getRequestHeaders(container dockerData) map[string]string {
+	return parseCustomHeaders(container, types.LabelFrontendRequestHeader)
+}
+
+func (p *Provider) getResponseHeaders(container dockerData) map[string]string {
+	return parseCustomHeaders(container, types.LabelFrontendResponseHeader)
+}
+
+func parseCustomHeaders(container dockerData, containerType string) map[string]string {
+	customHeaders := make(map[string]string)
+	if label, err := getLabel(container, containerType); err == nil {
+		for _, headers := range strings.Split(label, ",") {
+			pair := strings.Split(headers, ":")
+			if len(pair) != 2 {
+				log.Warnf("Could not load header %v, skipping...", pair)
+			} else {
+				customHeaders[pair[0]] = pair[1]
+			}
+		}
+	}
+	if len(customHeaders) == 0 {
+		log.Errorf("Could not load any custom headers")
+	}
+	return customHeaders
+}
 func isContainerEnabled(container dockerData, exposedByDefault bool) bool {
 	return exposedByDefault && container.Labels[types.LabelEnable] != "false" || container.Labels[types.LabelEnable] == "true"
 }
@@ -780,6 +885,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 	if container.ContainerJSONBase != nil {
 		dockerData.Name = container.ContainerJSONBase.Name
 		dockerData.ServiceName = dockerData.Name //Default ServiceName to be the container's Name.
+		dockerData.Node = container.ContainerJSONBase.Node
 
 		if container.ContainerJSONBase.HostConfig != nil {
 			dockerData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
@@ -815,7 +921,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 }
 
 // Escape beginning slash "/", convert all others to dash "-", and convert underscores "_" to dash "-"
-func (p *Provider) getSubDomain(name string) string {
+func getSubDomain(name string) string {
 	return strings.Replace(strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1), "_", "-", -1)
 }
 
@@ -824,8 +930,16 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 	if err != nil {
 		return []dockerData{}, err
 	}
+
+	serverVersion, err := dockerClient.ServerVersion(ctx)
+
 	networkListArgs := filters.NewArgs()
-	networkListArgs.Add("scope", "swarm")
+	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
+	if versions.GreaterThanOrEqualTo(serverVersion.APIVersion, "1.29") {
+		networkListArgs.Add("scope", "swarm")
+	} else {
+		networkListArgs.Add("driver", "overlay")
+	}
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
 

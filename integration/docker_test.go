@@ -129,6 +129,11 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 
+	// Start another container by replacing a '.' by a '-'
+	labels = map[string]string{
+		types.LabelFrontendRule: "Host:my-super.host",
+	}
+	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blablabla")
 	// Start traefik
 	cmd, display := s.traefikCmd(withConfigFile(file))
 	defer display(c)
@@ -138,10 +143,18 @@ func (s *DockerSuite) TestDockerContainersWithLabels(c *check.C) {
 
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
 	c.Assert(err, checker.IsNil)
-	req.Host = "my.super.host"
+	req.Host = "my-super.host"
 
 	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
 	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	c.Assert(err, checker.IsNil)
+
+	req, err = http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "my.super.host"
+
+	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	resp, err = try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -178,4 +191,41 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	// Expected a 404 as we did not comfigure anything
 	err = try.Request(req, 1500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
+}
+
+// TestDockerContainersWithServiceLabels allows cheking the labels behavior
+// Use service label if defined and compete information with container labels.
+func (s *DockerSuite) TestDockerContainersWithServiceLabels(c *check.C) {
+	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	defer os.Remove(file)
+	// Start a container with some labels
+	labels := map[string]string{
+		types.LabelPrefix + "servicename.frontend.rule": "Host:my.super.host",
+		types.LabelFrontendRule:                         "Host:my.wrong.host",
+		types.LabelPort:                                 "2375",
+	}
+	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
+
+	// Start traefik
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "my.super.host"
+
+	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	c.Assert(err, checker.IsNil)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	c.Assert(err, checker.IsNil)
+
+	var version map[string]interface{}
+
+	c.Assert(json.Unmarshal(body, &version), checker.IsNil)
+	c.Assert(version["Version"], checker.Equals, "swarm/1.0.0")
 }

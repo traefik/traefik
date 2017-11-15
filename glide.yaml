@@ -12,7 +12,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/vulcand/oxy
-  version: c024a22700b56debed9a9c8dbb297210a7ece02d
+  version: 7e9763c4dc71b9758379da3581e6495c145caaab
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -59,7 +59,7 @@ import:
 - package: github.com/vulcand/predicate
   version: 19b9dde14240d94c804ae5736ad0e1de10bf8fe6
 - package: github.com/xenolf/lego
-  version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
+  version: 67c86d860a797ce2483f50d9174d4ed24984bef2
   subpackages:
   - acme
 - package: gopkg.in/fsnotify.v1
@@ -80,11 +80,18 @@ import:
   vcs: git
 - package: github.com/abbot/go-http-auth
 - package: github.com/NYTimes/gziphandler
+  version: fork-containous
+  repo: https://github.com/containous/gziphandler.git
+  vcs: git
 - package: github.com/docker/leadership
 - package: github.com/satori/go.uuid
   version: ^1.1.0
 - package: k8s.io/client-go
   version: v2.0.0
+- package: github.com/influxdata/influxdb
+  version: v1.3.7
+  subpackages:
+  - client/v2
 - package: github.com/gambol99/go-marathon
   version: dd6cbd4c2d71294a19fb89158f2a00d427f174ab
 - package: github.com/ArthurHlt/go-eureka-client
@@ -103,10 +110,13 @@ import:
   - log
   - metrics
   - metrics/dogstatsd
+  - metrics/internal/lv
+  - metrics/internal/ratemap
   - metrics/multi
   - metrics/prometheus
   - metrics/statsd
   - util/conn
+  - metrics/influx
 - package: github.com/prometheus/client_golang
   version: 08fd2e12372a66e68e30523c7642e0cbc3e4fbde
   subpackages:
@@ -166,7 +176,7 @@ import:
 - package: github.com/golang/protobuf
   version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
 - package: github.com/rancher/go-rancher
-  version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
+  version: 52e2f489534007ae843065468c5a1920d542afa4
 - package: golang.org/x/oauth2
   version: 7fdf09982454086d5570c7db3e11f360194830ca
   subpackages:
@@ -174,7 +184,7 @@ import:
 - package: golang.org/x/time
   version: 8be79e1e0910c292df4e79c241bb7e8f7e725959
 - package: github.com/rancher/go-rancher-metadata
-  version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
+  version: d2103caca5873119ff423d29cba09b4d03cd69b8
 - package: github.com/googleapis/gax-go
   version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
 - package: google.golang.org/grpc

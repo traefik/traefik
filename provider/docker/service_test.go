@@ -356,7 +356,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-foo-service": {
 					Servers: map[string]types.Server{
-						"service": {
+						"service-0": {
 							URL:    "http://127.0.0.1:2503",
 							Weight: 0,
 						},
@@ -426,7 +426,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 			expectedBackends: map[string]*types.Backend{
 				"backend-foobar": {
 					Servers: map[string]types.Server{
-						"service": {
+						"service-0": {
 							URL:    "https://127.0.0.1:2503",
 							Weight: 80,
 						},
@@ -435,7 +435,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 				},
 				"backend-test2-anotherservice": {
 					Servers: map[string]types.Server{
-						"service": {
+						"service-0": {
 							URL:    "http://127.0.0.1:8079",
 							Weight: 33,
 						},

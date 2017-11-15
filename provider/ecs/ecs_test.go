@@ -57,6 +57,14 @@ func simpleEcsInstance(labels map[string]*string) ecsInstance {
 	})
 }
 
+func simpleEcsInstanceNoNetwork(labels map[string]*string) ecsInstance {
+	return makeEcsInstance(&ecs.ContainerDefinition{
+		Name:         aws.String("http"),
+		PortMappings: []*ecs.PortMapping{},
+		DockerLabels: labels,
+	})
+}
+
 func TestEcsProtocol(t *testing.T) {
 	tests := []struct {
 		desc         string
@@ -337,6 +345,12 @@ func TestFilterInstance(t *testing.T) {
 	invalidMachineState := simpleEcsInstance(map[string]*string{})
 	invalidMachineState.machine.State.Name = aws.String(ec2.InstanceStateNameStopped)
 
+	noNetwork := simpleEcsInstanceNoNetwork(map[string]*string{})
+
+	noNetworkWithLabel := simpleEcsInstanceNoNetwork(map[string]*string{
+		types.LabelPort: aws.String("80"),
+	})
+
 	tests := []struct {
 		desc         string
 		expected     bool
@@ -415,6 +429,22 @@ func TestFilterInstance(t *testing.T) {
 			desc:         "Instance with invalid machine state and exposed by default enabled should be filtered",
 			expected:     false,
 			instanceInfo: invalidMachineState,
+			provider: &Provider{
+				ExposedByDefault: true,
+			},
+		},
+		{
+			desc:         "Instance with no port mappings should be filtered",
+			expected:     false,
+			instanceInfo: noNetwork,
+			provider: &Provider{
+				ExposedByDefault: true,
+			},
+		},
+		{
+			desc:         "Instance with no port mapping and with label should not be filtered",
+			expected:     true,
+			instanceInfo: noNetworkWithLabel,
 			provider: &Provider{
 				ExposedByDefault: true,
 			},
@@ -548,6 +578,112 @@ func TestEcsGetBasicAuth(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{}
 			actual := provider.getBasicAuth(test.instance)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGenerateECSConfig(t *testing.T) {
+	provider := &Provider{}
+	tests := []struct {
+		desc     string
+		services map[string][]ecsInstance
+		exp      *types.Configuration
+		err      error
+	}{
+		{
+			desc: "config parsed successfully",
+			services: map[string][]ecsInstance{
+				"testing": {
+					{
+						Name: "instance-1",
+						containerDefinition: &ecs.ContainerDefinition{
+							DockerLabels: map[string]*string{},
+						},
+						machine: &ec2.Instance{
+							PrivateIpAddress: func(s string) *string { return &s }("10.0.0.1"),
+						},
+						container: &ecs.Container{
+							NetworkBindings: []*ecs.NetworkBinding{
+								{
+									HostPort: func(i int64) *int64 { return &i }(1337),
+								},
+							},
+						},
+					},
+				},
+			},
+			exp: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance-1": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL: "http://10.0.0.1:1337",
+							},
+						},
+					},
+					"backend-testing": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-testing": {
+						EntryPoints: []string{},
+						Backend:     "backend-testing",
+						Routes: map[string]types.Route{
+							"route-frontend-testing": {
+								Rule: "Host:instance-1.",
+							},
+						},
+						PassHostHeader: true,
+						BasicAuth:      []string{},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			got, err := provider.generateECSConfig(test.services)
+			assert.Equal(t, test.err, err)
+			assert.Equal(t, test.exp, got)
+		})
+	}
+}
+
+func TestEcsWithoutPort(t *testing.T) {
+	tests := []struct {
+		desc         string
+		expected     string
+		instanceInfo ecsInstance
+		provider     *Provider
+	}{
+		{
+			desc:     "Label should override network port",
+			expected: "4242",
+			instanceInfo: simpleEcsInstance(map[string]*string{
+				types.LabelPort: aws.String("4242"),
+			}),
+			provider: &Provider{},
+		},
+		{
+			desc:     "Label should provide exposed port",
+			expected: "80",
+			instanceInfo: simpleEcsInstanceNoNetwork(map[string]*string{
+				types.LabelPort: aws.String("80"),
+			}),
+			provider: &Provider{},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			actual := test.provider.getPort(test.instanceInfo)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

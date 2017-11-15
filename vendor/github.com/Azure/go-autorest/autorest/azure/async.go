@@ -17,12 +17,6 @@ const (
 )
 
 const (
-	methodDelete = "DELETE"
-	methodPatch  = "PATCH"
-	methodPost   = "POST"
-	methodPut    = "PUT"
-	methodGet    = "GET"
-
 	operationInProgress string = "InProgress"
 	operationCanceled   string = "Canceled"
 	operationFailed     string = "Failed"
@@ -226,7 +220,7 @@ func updatePollingState(resp *http.Response, ps *pollingState) error {
 		// Lastly, requests against an existing resource, use the last request URI
 		if ps.uri == "" {
 			m := strings.ToUpper(req.Method)
-			if m == methodPatch || m == methodPut || m == methodGet {
+			if m == http.MethodPatch || m == http.MethodPut || m == http.MethodGet {
 				ps.uri = req.URL.String()
 			}
 		}

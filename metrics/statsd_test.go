@@ -18,7 +18,7 @@ func TestStatsD(t *testing.T) {
 	defer StopStatsd()
 
 	if !statsdRegistry.IsEnabled() {
-		t.Errorf("PrometheusRegistry should return true for IsEnabled()")
+		t.Errorf("Statsd registry should return true for IsEnabled()")
 	}
 
 	expected := []string{

@@ -76,13 +76,13 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      CertFile = "integration/fixtures/https/snitest.com.cert"
-      KeyFile = "integration/fixtures/https/snitest.com.key"
+      certFile = "integration/fixtures/https/snitest.com.cert"
+      keyFile = "integration/fixtures/https/snitest.com.key"
       [[entryPoints.https.tls.certificates]]
-      CertFile = """-----BEGIN CERTIFICATE-----
+      certFile = """-----BEGIN CERTIFICATE-----
                       <cert file content>
                       -----END CERTIFICATE-----"""
-      KeyFile = """-----BEGIN CERTIFICATE-----
+      keyFile = """-----BEGIN CERTIFICATE-----
                       <key file content>
                       -----END CERTIFICATE-----"""
 
@@ -147,6 +147,37 @@ To specify a Consul ACL token for Traefik, we have to set a System Environment v
 This variable must be initialized with the ACL token value.
 
 If Traefik is launched into a Docker container, the variable `CONSUL_HTTP_TOKEN` can be initialized with the `-e` Docker option : `-e "CONSUL_HTTP_TOKEN=[consul-acl-token-value]"`
+
+If a Consul ACL is used to restrict Træfik read/write access, one of the following configurations is needed.
+
+- HCL format :
+
+```
+    key "traefik" {
+        policy = "write"
+    },
+    
+    session "" {
+        policy = "write"
+    }
+```
+
+- JSON format :
+
+```json
+{
+    "key": {
+        "traefik": {
+          "policy": "write"
+        }
+    },
+    "session": {
+        "": {
+        "policy": "write"
+        }
+    }
+}
+```
 
 ### TLS support
 
