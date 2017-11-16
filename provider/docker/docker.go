@@ -47,13 +47,13 @@ var _ provider.Provider = (*Provider)(nil)
 
 // Provider holds configurations of the provider.
 type Provider struct {
-	provider.BaseProvider `mapstructure:",squash" export:"true"`
-	Endpoint              string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
-	Domain                string           `description:"Default domain used"`
-	TLS                   *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
-	ExposedByDefault      bool             `description:"Expose containers by default" export:"true"`
-	UseBindPortIP         bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
-	SwarmMode             bool             `description:"Use Docker on Swarm Mode" export:"true"`
+	provider.BaseProvider             `mapstructure:",squash" export:"true"`
+	Endpoint         string           `description:"Docker server endpoint. Can be a tcp or a unix socket endpoint"`
+	Domain           string           `description:"Default domain used"`
+	TLS              *types.ClientTLS `description:"Enable Docker TLS support" export:"true"`
+	ExposedByDefault bool             `description:"Expose containers by default" export:"true"`
+	UseBindPortIP    bool             `description:"Use the ip address from the bound port, rather than from the inner network" export:"true"`
+	SwarmMode        bool             `description:"Use Docker on Swarm Mode" export:"true"`
 }
 
 // dockerData holds the need data to the Provider p
@@ -1025,13 +1025,13 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
-		dockerData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
+		dockerData := parseTasks(ctx, dockerClient, task, serviceDockerData, networkMap, isGlobalSvc)
 		dockerDataList = append(dockerDataList, dockerData)
 	}
 	return dockerDataList, err
 }
 
-func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
+func parseTasks(ctx context.Context, dockerClient client.APIClient, task swarmtypes.Task, serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
 	dockerData := dockerData{
 		ServiceName:     serviceDockerData.Name,
 		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
@@ -1043,7 +1043,7 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 		dockerData.Name = serviceDockerData.Name + "." + task.ID
 	}
 
-	if task.NetworksAttachments != nil {
+	if len(task.NetworksAttachments) > 0 {
 		dockerData.NetworkSettings.Networks = make(map[string]*networkData)
 		for _, virtualIP := range task.NetworksAttachments {
 			if networkService, present := networkMap[virtualIP.Network.ID]; present {
@@ -1056,6 +1056,20 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 						Addr: ip.String(),
 					}
 					dockerData.NetworkSettings.Networks[network.Name] = network
+				}
+			} else if virtualIP.Network.Spec.Name == "host" {
+				log.Debugf("Try load host network IP of container `%s` from swarm node...", dockerData.Name)
+				if label, _ := getLabel(dockerData, labelDockerNetwork); label == "host" {
+					node, _, err := dockerClient.NodeInspectWithRaw(ctx, task.NodeID)
+					if err == nil {
+						dockerData.NetworkSettings.Networks = make(map[string]*networkData)
+						network := &networkData{
+							ID:   "",
+							Name: "host",
+							Addr: node.Status.Addr,
+						}
+						dockerData.NetworkSettings.Networks[network.Name] = network
+					}
 				}
 			}
 		}
