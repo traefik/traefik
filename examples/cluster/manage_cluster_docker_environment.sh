@@ -114,7 +114,8 @@ start_storeconfig_etcd3() {
         [etcd]
         endpoint = "10.0.1.12:2379"
         watch = true
-        prefix = "/traefik"' >> $basedir/traefik.toml
+        prefix = "/traefik"
+        useAPIV3 = true' >> $basedir/traefik.toml
     up_environment traefik-storeconfig
     rm -f $basedir/traefik.toml && rm -f $basedir/acme.json
     # Delete acme-storage-file key
@@ -138,7 +139,7 @@ start_traefik() {
     waiting_counter=5
     echo "WAIT for traefik leader..."
     sleep 10
-    while [[ -z $(curl -s --connect-timeout 2 http://10.0.1.8:8080/ping) ]]; do
+    while [[ -z $(curl -s --connect-timeout 3 http://10.0.1.8:8080/ping) ]]; do
         sleep 2
         let waiting_counter-=1
         if [[ $waiting_counter -eq 0 ]]; then
@@ -151,7 +152,7 @@ start_traefik() {
     waiting_counter=5
     echo "WAIT for whoami..."
     sleep 10
-    while [[ -z $(curl -s --connect-timeout 2 http://10.0.1.10) ]]; do
+    while [[ -z $(curl -s --connect-timeout 3 http://10.0.1.10) ]]; do
         sleep 2
         let waiting_counter-=1
         if [[ $waiting_counter -eq 0 ]]; then
@@ -208,7 +209,7 @@ main() {
                 case $2 in
                     "--etcd3")
                         echo "USE ETCD V3 AS KV STORE"
-                        export TRAEFIK_CMD="--etcd --etcd.endpoint=10.0.1.12:2379"
+                        export TRAEFIK_CMD="--etcd --etcd.endpoint=10.0.1.12:2379 --etcd.useAPIV3=true"
                         start_boulder && \
                         start_etcd3 && \
                         start_storeconfig_etcd3 && \

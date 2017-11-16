@@ -45,10 +45,9 @@ import:
   - store
   - store/boltdb
   - store/consul
+  - store/etcd/v2
   - store/etcd/v3
   - store/zookeeper
-  subpackages:
-  - clientv3
 - package: github.com/elazarl/go-bindata-assetfs
 - package: github.com/containous/mux
 - package: github.com/hashicorp/consul
@@ -195,7 +194,7 @@ import:
 - package: github.com/googleapis/gax-go
   version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
 - package: google.golang.org/grpc
-  version: v1.2.0
+  version: v1.5.2
 - package: github.com/unrolled/secure
   version: 824e85271811af89640ea25620c67f6c2eed987e
 - package: github.com/Nvveen/Gotty

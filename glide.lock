@@ -1,5 +1,5 @@
-hash: e3737454bd7fe0a3572c3f73eaf4f1d7dd8534e6fce0006f4988cffa664e0ecc
-updated: 2017-11-08T14:21:55.148450413+01:00
+hash: 2a604d8b74e8659df7db72d063432fa0822fdee6c81bc6657efa3c1bf0d9cd8a
+updated: 2017-11-17T14:21:55.148450413+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -109,6 +109,10 @@ imports:
   - pkg/srv
   - pkg/types
   - version
+- name: github.com/coreos/go-semver
+  version: 8ab6407b697782a06568d4b7f1db25550ec2e4c6
+  subpackages:
+  - semver
 - name: github.com/coreos/go-oidc
   version: 5644a2f50e2d2d5ba0b474bc5bc55fea1925936d
   subpackages:
@@ -226,7 +230,6 @@ imports:
   - store/etcd
   - store/etcd/v2
   - store/etcd/v3
-  - store/redis
   - store/zookeeper
 - name: github.com/docker/libtrust
   version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
