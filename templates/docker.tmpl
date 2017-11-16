@@ -47,6 +47,7 @@
   [frontends."frontend-{{getServiceBackend $container $serviceName}}"]
   backend = "backend-{{getServiceBackend $container $serviceName}}"
   passHostHeader = {{getServicePassHostHeader $container $serviceName}}
+  redirect =  "{{getServiceRedirect $container $serviceName}}"
   {{if getWhitelistSourceRange $container}}
     whitelistSourceRange = [{{range getWhitelistSourceRange $container}}
       "{{.}}",
@@ -66,6 +67,7 @@
   [frontends."frontend-{{$frontend}}"]
   backend = "backend-{{getBackend $container}}"
   passHostHeader = {{getPassHostHeader $container}}
+  redirect = "{{getRedirect $container}}"
   {{if getWhitelistSourceRange $container}}
     whitelistSourceRange = [{{range getWhitelistSourceRange $container}}
       "{{.}}",

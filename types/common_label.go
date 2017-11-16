@@ -20,6 +20,7 @@ const (
 	LabelFrontendPriority                        = LabelPrefix + "frontend.priority"
 	LabelFrontendRule                            = LabelPrefix + "frontend.rule"
 	LabelFrontendRuleType                        = LabelPrefix + "frontend.rule.type"
+	LabelFrontendRedirect                        = LabelPrefix + "frontend.redirect"
 	LabelTraefikFrontendValue                    = LabelPrefix + "frontend.value"
 	LabelTraefikFrontendWhitelistSourceRange     = LabelPrefix + "frontend.whitelistSourceRange"
 	LabelBackend                                 = LabelPrefix + "backend"

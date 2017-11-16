@@ -271,6 +271,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getEntryPoints":              p.getEntryPoints,
 		"getBasicAuth":                p.getBasicAuth,
 		"getFrontendRule":             p.getFrontendRule,
+		"getRedirect":                 p.getRedirect,
 		"hasCircuitBreakerLabel":      p.hasCircuitBreakerLabel,
 		"getCircuitBreakerExpression": p.getCircuitBreakerExpression,
 		"hasLoadBalancerLabel":        p.hasLoadBalancerLabel,
@@ -293,6 +294,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServicePassHostHeader":    p.getServicePassHostHeader,
 		"getServicePriority":          p.getServicePriority,
 		"getServiceBackend":           p.getServiceBackend,
+		"getServiceRedirect":          p.getServiceRedirect,
 		"getWhitelistSourceRange":     p.getWhitelistSourceRange,
 		"getRequestHeaders":           p.getRequestHeaders,
 		"getResponseHeaders":          p.getResponseHeaders,
@@ -333,6 +335,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 	if err != nil {
 		log.Error(err)
 	}
+
 	return configuration
 }
 
@@ -468,6 +471,14 @@ func (p *Provider) getServiceProtocol(container dockerData, serviceName string) 
 		return value
 	}
 	return p.getProtocol(container)
+}
+
+// Extract protocol from labels for a given service and a given docker container
+func (p *Provider) getServiceRedirect(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.redirect"); ok {
+		return value
+	}
+	return p.getRedirect(container)
 }
 
 func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
@@ -831,6 +842,14 @@ func parseCustomHeaders(container dockerData, containerType string) map[string]s
 	}
 	return customHeaders
 }
+
+func (p *Provider) getRedirect(container dockerData) string {
+	if entryPointredirect, err := getLabel(container, types.LabelFrontendRedirect); err == nil {
+		return entryPointredirect
+	}
+	return ""
+}
+
 func isContainerEnabled(container dockerData, exposedByDefault bool) bool {
 	return exposedByDefault && container.Labels[types.LabelEnable] != "false" || container.Labels[types.LabelEnable] == "true"
 }
