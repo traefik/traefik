@@ -378,7 +378,10 @@ traefik storeconfig [flags] ...
 ```
 This command is here only to automate the [process which upload the configuration into the Key-value store](/user-guide/kv-config/#upload-the-configuration-in-the-key-value-store).
 Træfik will not start but the [static configuration](/basics/#static-trfk-configuration) will be uploaded into the Key-value store.  
+
 If you configured ACME (Let's Encrypt), your registration account and your certificates will also be uploaded.
+
+If you configured a file backend `[file]`, all your dynamic configuration (backends, frontends...) will be uploaded to the Key-value store.
 
 To upload your ACME certificates to the KV store, get your Traefik TOML file and add the new `storage` option in the `acme` section:
 
