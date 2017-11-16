@@ -95,3 +95,4 @@ pages:
     - 'Clustering/HA': 'user-guide/cluster.md'
     - 'gRPC Example': 'user-guide/grpc.md'
   - Benchmarks: benchmarks.md
+  - 'Archive': 'archive.md'
