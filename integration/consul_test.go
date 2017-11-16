@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -336,7 +335,7 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 	cmd.Wait()
 
 	//CHECK
-	checkmap := map[string]string{
+	checkExistsMap := map[string]string{
 		"/traefik/loglevel":                 "DEBUG",
 		"/traefik/defaultentrypoints/0":     "http",
 		"/traefik/entrypoints/http/address": ":8000",
@@ -344,7 +343,7 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 		"/traefik/consul/endpoint":          consulHost + ":8500",
 	}
 
-	for key, value := range checkmap {
+	for key, value := range checkExistsMap {
 		var p *store.KVPair
 		err = try.Do(60*time.Second, func() error {
 			p, err = s.kv.Get(key, nil)
@@ -374,32 +373,34 @@ func (s *ConsulSuite) TestCommandStoreConfigWithFile(c *check.C) {
 	cmd.Wait()
 
 	//CHECK
-	checkmap := map[string]string{
-		"!/traefik/file":                                  "",
+	checkExistsMap := map[string]string{
 		"/traefik/backends/backend1/servers/server1/url":  "http://172.17.0.2:80",
 		"/traefik/frontends/frontend1/backend":            "backend1",
 		"/traefik/frontends/frontend1/routes/test_1/rule": "Path:/test1",
 	}
 
-	for key, value := range checkmap {
+	for key, value := range checkExistsMap {
 		var p *store.KVPair
-		err = try.Do(60*time.Second, func() error {
-			inverse := strings.HasPrefix(key, "!")
-			if inverse {
-				key = strings.TrimLeft(key, "!")
-				if check, err := s.kv.Exists(key); err == nil && check {
-					return fmt.Errorf("%s key is not suppose to exist in KV", key)
-				}
-				p = &store.KVPair{Value: []byte("")}
-				return nil
-			}
-
-			p, err = s.kv.Get(key)
+		err = try.Do(10*time.Second, func() error {
+			p, err = s.kv.Get(key, nil)
 			return err
 		})
 		c.Assert(err, checker.IsNil)
-
 		c.Assert(string(p.Value), checker.Equals, value)
+	}
+
+	checkNotExistsMap := []string{
+		"/traefik/file",
+	}
+
+	for _, value := range checkNotExistsMap {
+		err = try.Do(10*time.Second, func() error {
+			if check, err := s.kv.Exists(value); err == nil && check {
+				return fmt.Errorf("%s key is not suppose to exist in KV", value)
+			}
+			return nil
+		})
+		c.Assert(err, checker.IsNil)
 	}
 }
 
