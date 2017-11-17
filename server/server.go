@@ -36,7 +36,7 @@ import (
 	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/containous/traefik/whitelist"
-	"github.com/streamrail/concurrent-map"
+	"github.com/eapache/channels"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/cbreaker"
@@ -67,8 +67,6 @@ type Server struct {
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
 	metricsRegistry               metrics.Registry
-	lastReceivedConfiguration     *safe.Safe
-	lastConfigs                   cmap.ConcurrentMap
 }
 
 type serverEntryPoints map[string]*serverEntryPoint
@@ -109,8 +107,6 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 
 	server.routinesPool = safe.NewPool(context.Background())
 	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
-	server.lastReceivedConfiguration = safe.New(time.Unix(0, 0))
-	server.lastConfigs = cmap.New()
 
 	server.metricsRegistry = metrics.NewVoidRegistry()
 	if globalConfiguration.Metrics != nil {
@@ -345,6 +341,8 @@ func (server *Server) listenProviders(stop chan bool) {
 }
 
 func (server *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
+	providerConfigUpdateMap := map[string]chan types.ConfigMessage{}
+	providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
 	server.defaultConfigurationValues(configMsg.Configuration)
 	currentConfigurations := server.currentConfigurations.Get().(types.Configurations)
 	jsonConf, _ := json.Marshal(configMsg.Configuration)
@@ -354,28 +352,43 @@ func (server *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 	} else if reflect.DeepEqual(currentConfigurations[configMsg.ProviderName], configMsg.Configuration) {
 		log.Infof("Skipping same configuration for provider %s", configMsg.ProviderName)
 	} else {
-		server.lastConfigs.Set(configMsg.ProviderName, &configMsg)
-		lastReceivedConfigurationValue := server.lastReceivedConfiguration.Get().(time.Time)
-		providersThrottleDuration := time.Duration(server.globalConfiguration.ProvidersThrottleDuration)
-		if time.Now().After(lastReceivedConfigurationValue.Add(providersThrottleDuration)) {
-			log.Debugf("Last %s configuration received more than %s, OK", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
-			// last config received more than n server ago
-			server.configurationValidatedChan <- configMsg
-		} else {
-			log.Debugf("Last %s configuration received less than %s, waiting...", configMsg.ProviderName, server.globalConfiguration.ProvidersThrottleDuration.String())
-			safe.Go(func() {
-				<-time.After(providersThrottleDuration)
-				lastReceivedConfigurationValue := server.lastReceivedConfiguration.Get().(time.Time)
-				if time.Now().After(lastReceivedConfigurationValue.Add(time.Duration(providersThrottleDuration))) {
-					log.Debugf("Waited for %s configuration, OK", configMsg.ProviderName)
-					if lastConfig, ok := server.lastConfigs.Get(configMsg.ProviderName); ok {
-						server.configurationValidatedChan <- *lastConfig.(*types.ConfigMessage)
-					}
-				}
+		if _, ok := providerConfigUpdateMap[configMsg.ProviderName]; !ok {
+			providerConfigUpdate := make(chan types.ConfigMessage)
+			providerConfigUpdateMap[configMsg.ProviderName] = providerConfigUpdate
+			server.routinesPool.Go(func(stop chan bool) {
+				throttleProviderConfigReload(providersThrottleDuration, server.configurationValidatedChan, providerConfigUpdate, stop)
 			})
 		}
-		// Update the last configuration loading time
-		server.lastReceivedConfiguration.Set(time.Now())
+		providerConfigUpdateMap[configMsg.ProviderName] <- configMsg
+	}
+}
+
+// throttleProviderConfigReload throttles the configuration reload speed for a single provider.
+// It will immediately publish a new configuration and then only publish the next configuration after the throttle duration.
+// Note that in the case it receives N new configs in the timeframe of the throttle duration after publishing,
+// it will publish the last of the newly received configurations.
+func throttleProviderConfigReload(throttle time.Duration, publish chan<- types.ConfigMessage, in <-chan types.ConfigMessage, stop chan bool) {
+	ring := channels.NewRingChannel(1)
+
+	safe.Go(func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case nextConfig := <-ring.Out():
+				publish <- nextConfig.(types.ConfigMessage)
+				time.Sleep(throttle)
+			}
+		}
+	})
+
+	for {
+		select {
+		case <-stop:
+			return
+		case nextConfig := <-in:
+			ring.In() <- nextConfig
+		}
 	}
 }
 

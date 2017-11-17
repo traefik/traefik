@@ -160,6 +160,189 @@ func TestPrepareServerTimeouts(t *testing.T) {
 	}
 }
 
+func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
+	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
+	defer invokeStopChan()
+
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case <-server.configurationValidatedChan:
+				t.Error("An empty configuration was published but it should not")
+			}
+		}
+	}()
+
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes"}
+
+	// give some time so that the configuration can be processed
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
+	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
+	defer invokeStopChan()
+
+	publishedConfigCount := 0
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case config := <-server.configurationValidatedChan:
+				// set the current configuration
+				// this is usually done in the processing part of the published configuration
+				// so we have to emulate the behaviour here
+				currentConfigurations := server.currentConfigurations.Get().(types.Configurations)
+				currentConfigurations[config.ProviderName] = config.Configuration
+				server.currentConfigurations.Set(currentConfigurations)
+
+				publishedConfigCount++
+				if publishedConfigCount > 1 {
+					t.Error("Same configuration should not be published multiple times")
+				}
+			}
+		}
+	}()
+
+	config := buildDynamicConfig(
+		withFrontend("frontend", buildFrontend()),
+		withBackend("backend", buildBackend()),
+	)
+
+	// provide a configuration
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+
+	// give some time so that the configuration can be processed
+	time.Sleep(20 * time.Millisecond)
+
+	// provide the same configuration a second time
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+
+	// give some time so that the configuration can be processed
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
+	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
+	defer invokeStopChan()
+
+	publishedProviderConfigCount := map[string]int{}
+	publishedConfigCount := 0
+	consumePublishedConfigsDone := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case newConfig := <-server.configurationValidatedChan:
+				publishedProviderConfigCount[newConfig.ProviderName]++
+				publishedConfigCount++
+				if publishedConfigCount == 2 {
+					consumePublishedConfigsDone <- true
+					return
+				}
+			}
+		}
+	}()
+
+	config := buildDynamicConfig(
+		withFrontend("frontend", buildFrontend()),
+		withBackend("backend", buildBackend()),
+	)
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+	server.configurationChan <- types.ConfigMessage{ProviderName: "marathon", Configuration: config}
+
+	select {
+	case <-consumePublishedConfigsDone:
+		if val := publishedProviderConfigCount["kubernetes"]; val != 1 {
+			t.Errorf("Got %d configuration publication(s) for provider %q, want 1", val, "kubernetes")
+		}
+		if val := publishedProviderConfigCount["marathon"]; val != 1 {
+			t.Errorf("Got %d configuration publication(s) for provider %q, want 1", val, "marathon")
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Errorf("Published configurations were not consumed in time")
+	}
+}
+
+// setupListenProvider configures the Server and starts listenProviders
+func setupListenProvider(throttleDuration time.Duration) (server *Server, stop chan bool, invokeStopChan func()) {
+	stop = make(chan bool)
+	invokeStopChan = func() {
+		stop <- true
+	}
+
+	globalConfig := configuration.GlobalConfiguration{
+		EntryPoints: configuration.EntryPoints{
+			"http": &configuration.EntryPoint{},
+		},
+		ProvidersThrottleDuration: flaeg.Duration(throttleDuration),
+	}
+
+	server = NewServer(globalConfig)
+	go server.listenProviders(stop)
+
+	return server, stop, invokeStopChan
+}
+
+func TestThrottleProviderConfigReload(t *testing.T) {
+	throttleDuration := 30 * time.Millisecond
+	publishConfig := make(chan types.ConfigMessage)
+	providerConfig := make(chan types.ConfigMessage)
+	stop := make(chan bool)
+	defer func() {
+		stop <- true
+	}()
+
+	go throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
+
+	publishedConfigCount := 0
+	stopConsumeConfigs := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case <-stopConsumeConfigs:
+				return
+			case <-publishConfig:
+				publishedConfigCount++
+			}
+		}
+	}()
+
+	// publish 5 new configs, one new config each 10 milliseconds
+	for i := 0; i < 5; i++ {
+		providerConfig <- types.ConfigMessage{}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// after 50 milliseconds 5 new configs were published
+	// with a throttle duration of 30 milliseconds this means, we should have received 2 new configs
+	wantPublishedConfigCount := 2
+	if publishedConfigCount != wantPublishedConfigCount {
+		t.Errorf("%d times configs were published, want %d times", publishedConfigCount, wantPublishedConfigCount)
+	}
+
+	stopConsumeConfigs <- true
+
+	select {
+	case <-publishConfig:
+		// There should be exactly one more message that we receive after ~60 milliseconds since the start of the test.
+		select {
+		case <-publishConfig:
+			t.Error("extra config publication found")
+		case <-time.After(100 * time.Millisecond):
+			return
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Error("Last config was not published in time")
+	}
+}
+
 func TestServerMultipleFrontendRules(t *testing.T) {
 	cases := []struct {
 		expression  string
