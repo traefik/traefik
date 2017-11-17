@@ -32,6 +32,9 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 		fileConfig := traefikConfiguration.GlobalConfiguration.File
 		if fileConfig != nil {
 			traefikConfiguration.GlobalConfiguration.File = nil
+			if len(fileConfig.Filename) == 0 && len(fileConfig.Directory) == 0 {
+				fileConfig.Filename = traefikConfiguration.ConfigFile
+			}
 		}
 		jsonConf, err := json.Marshal(traefikConfiguration.GlobalConfiguration)
 		if err != nil {
