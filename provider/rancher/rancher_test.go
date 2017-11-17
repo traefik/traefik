@@ -494,7 +494,7 @@ func TestRancherGetRedirect(t *testing.T) {
 		Domain: "rancher.localhost",
 	}
 
-	services := []struct {
+	testCases := []struct {
 		service  rancherData
 		expected string
 	}{
@@ -510,10 +510,10 @@ func TestRancherGetRedirect(t *testing.T) {
 		},
 	}
 
-	for _, e := range services {
-		actual := provider.getRedirect(e.service)
-		if actual != e.expected {
-			t.Fatalf("expected %q, got %q", e.expected, actual)
+	for _, test := range testCases {
+		actual := provider.getRedirect(test.service)
+		if actual != test.expected {
+			t.Fatalf("got %q, expected %q", actual, test.expected)
 		}
 	}
 }

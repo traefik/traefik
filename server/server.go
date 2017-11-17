@@ -1112,7 +1112,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						regex, replacement, err := server.buildRedirect(proto, entryPoint)
 						rewrite, err := middlewares.NewRewrite(regex, replacement, true)
 						if err != nil {
-							log.Fatalf("Error creating Frontend Redirect: %s", err)
+							log.Fatalf("Error creating Frontend Redirect: %v", err)
 						}
 						n.Use(rewrite)
 						log.Debugf("Creating frontend %s redirect to %s", frontendName, proto)
@@ -1289,12 +1289,12 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *co
 func (server *Server) buildRedirect(protocol string, entryPoint *configuration.EntryPoint) (string, string, error) {
 	regex := `^(?:https?:\/\/)?([\w\._-]+)(?::\d+)?(.*)$`
 	if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint] == nil {
-		return "", "", errors.New("Unknown target entrypoint " + entryPoint.Redirect.EntryPoint)
+		return "", "", fmt.Errorf("unknown target entrypoint %q", entryPoint.Redirect.EntryPoint)
 	}
 	r, _ := regexp.Compile(`(:\d+)`)
 	match := r.FindStringSubmatch(server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].Address)
 	if len(match) == 0 {
-		return "", "", errors.New("Bad Address format: " + server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].Address)
+		return "", "", fmt.Errorf("bad Address format %q", server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].Address)
 	}
 	replacement := protocol + "://$1" + match[0] + "$2"
 	return regex, replacement, nil

@@ -904,7 +904,7 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 }
 
 func TestServerLoadConfigBuildRedirect(t *testing.T) {
-	tests := []struct {
+	testCases := []struct {
 		desc                 string
 		replacementProtocol  string
 		globalConfiguration  configuration.GlobalConfiguration
@@ -954,23 +954,17 @@ func TestServerLoadConfigBuildRedirect(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
+	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			srv := Server{
-				globalConfiguration: test.globalConfiguration,
-			}
+			srv := Server{globalConfiguration: test.globalConfiguration}
 
 			_, replacement, err := srv.buildRedirect(test.replacementProtocol, srv.globalConfiguration.EntryPoints[test.originEntryPointName])
-			if err != nil {
-				t.Errorf("build redirect sent an unexpected error : %s", err.Error())
-			}
 
-			if replacement != test.expectedReplacement {
-				t.Errorf("build redirect does not return the right replacement pattern")
-			}
+			require.NoError(t, err, "build redirect sent an unexpected error")
+			assert.Equal(t, test.expectedReplacement, replacement, "build redirect does not return the right replacement pattern")
 		})
 	}
 }
