@@ -3,6 +3,7 @@ package servicefabric
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -10,42 +11,6 @@ import (
 	"github.com/containous/traefik/types"
 	sfsdk "github.com/jjcollinge/servicefabric"
 )
-
-type clientMock struct {
-	applications *sfsdk.ApplicationItemsPage
-	services     *sfsdk.ServiceItemsPage
-	partitions   *sfsdk.PartitionItemsPage
-	replicas     *sfsdk.ReplicaItemsPage
-	instances    *sfsdk.InstanceItemsPage
-	labels       map[string]string
-}
-
-func (c *clientMock) GetApplications() (*sfsdk.ApplicationItemsPage, error) {
-	return c.applications, nil
-}
-
-func (c *clientMock) GetServices(appName string) (*sfsdk.ServiceItemsPage, error) {
-	return c.services, nil
-}
-
-func (c *clientMock) GetPartitions(appName, serviceName string) (*sfsdk.PartitionItemsPage, error) {
-	return c.partitions, nil
-}
-
-func (c *clientMock) GetReplicas(appName, serviceName, partitionName string) (*sfsdk.ReplicaItemsPage, error) {
-	return c.replicas, nil
-}
-
-func (c *clientMock) GetInstances(appName, serviceName, partitionName string) (*sfsdk.InstanceItemsPage, error) {
-	return c.instances, nil
-}
-
-func (c *clientMock) GetServiceExtension(appType, applicationVersion, serviceTypeName, extensionKey string, response interface{}) error {
-	return nil
-}
-func (c *clientMock) GetProperties(name string) (bool, map[string]string, error) {
-	return true, c.labels, nil
-}
 
 func TestUpdateConfig(t *testing.T) {
 	apps := &sfsdk.ApplicationItemsPage{
@@ -59,7 +24,6 @@ func TestUpdateConfig(t *testing.T) {
 					Key   string `json:"Key"`
 					Value string `json:"Value"`
 				}{
-
 					{"TraefikPublish", "fabric:/TestApplication/TestService"},
 				},
 				Status:      "Ready",
@@ -194,8 +158,8 @@ func TestUpdateConfig(t *testing.T) {
 
 	select {
 	case actual := <-configurationChan:
-		isEqual := compareConfigurations(actual, expected)
-		if !isEqual {
+		err := compareConfigurations(actual, expected)
+		if err != nil {
 			res, _ := json.Marshal(actual)
 			t.Log(string(res))
 			t.Error("actual != expected")
@@ -246,7 +210,6 @@ func TestIsPrimaryWhenSecondary(t *testing.T) {
 }
 
 func TestIsHealthy(t *testing.T) {
-	provider := Provider{}
 	replica := &sfsdk.ReplicaItem{
 		ReplicaItemBase: &sfsdk.ReplicaItemBase{
 			Address:                      "{\"Endpoints\":{\"\":\"localhost:30001+bce46a8c-b62d-4996-89dc-7ffc00a96902-131496928082309293\"}}",
@@ -259,14 +222,13 @@ func TestIsHealthy(t *testing.T) {
 		},
 		ID: "131496928082309293",
 	}
-	isHealthy := provider.isHealthy(replica)
+	isHealthy := isHealthy(*replica.ReplicaItemBase)
 	if !isHealthy {
 		t.Error("Failed to identify replica as healthy")
 	}
 }
 
 func TestIsHealthyWhenError(t *testing.T) {
-	provider := Provider{}
 	replica := &sfsdk.ReplicaItem{
 		ReplicaItemBase: &sfsdk.ReplicaItemBase{
 			Address:                      "{\"Endpoints\":{\"\":\"localhost:30001+bce46a8c-b62d-4996-89dc-7ffc00a96902-131496928082309293\"}}",
@@ -279,48 +241,48 @@ func TestIsHealthyWhenError(t *testing.T) {
 		},
 		ID: "131496928082309293",
 	}
-	isHealthy := provider.isHealthy(replica)
+	isHealthy := isHealthy(*replica.ReplicaItemBase)
 	if isHealthy {
 		t.Error("Incorrectly identified replica as healthy")
 	}
 }
 
-func compareConfigurations(actual, expected types.ConfigMessage) bool {
+func compareConfigurations(actual, expected types.ConfigMessage) error {
 	if actual.ProviderName == expected.ProviderName {
 		if len(actual.Configuration.Frontends) == len(expected.Configuration.Frontends) {
 			if len(actual.Configuration.Backends) == len(expected.Configuration.Backends) {
 				actualFrontends, err := json.Marshal(actual.Configuration.Frontends)
 				if err != nil {
-					return false
+					return err
 				}
 				actualFrontendsStr := string(actualFrontends)
 				expectedFrontends, err := json.Marshal(expected.Configuration.Frontends)
 				if err != nil {
-					return false
+					return err
 				}
 				expectedFrontendsStr := string(expectedFrontends)
 
 				if actualFrontendsStr != expectedFrontendsStr {
-					return false
+					return errors.New("Backend configuration differs from expected configuration")
 				}
 
 				actualBackends, err := json.Marshal(actual.Configuration.Backends)
 				if err != nil {
-					return false
+					return err
 				}
 				actualBackendsStr := string(actualBackends)
 				expectedBackends, err := json.Marshal(expected.Configuration.Backends)
 				if err != nil {
-					return false
+					return err
 				}
 				expectedBackendsStr := string(expectedBackends)
 
 				if actualBackendsStr != expectedBackendsStr {
-					return false
+					return err
 				}
-				return true
+				return nil
 			}
 		}
 	}
-	return false
+	return errors.New("Provider name differs from expected")
 }

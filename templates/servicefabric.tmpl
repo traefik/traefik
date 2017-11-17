@@ -5,11 +5,9 @@
       {{range $service := $aggServices}}
         {{range $partition := $service.Partitions}}
           {{range $instance := $partition.Instances}}
-            {{if and (isHealthy $instance) (hasHTTPEndpoint $instance)}} 
-              [backends."{{$aggName}}".servers."{{$service.ID}}-{{$instance.ID}}"]
-              url = "{{getDefaultEndpoint $instance}}"
-              weight = {{getServiceLabelValueWithDefault $service "backend.group.weight" "1"}}
-            {{end}}
+            [backends."{{$aggName}}".servers."{{$service.ID}}-{{$instance.ID}}"]
+            url = "{{getDefaultEndpoint $instance}}"
+            weight = {{getServiceLabelValueWithDefault $service "backend.group.weight" "1"}}
           {{end}}
         {{end}}
       {{end}}
@@ -49,17 +47,13 @@
         {{end}}
 
         {{range $instance := $partition.Instances}}
-          {{if and (isHealthy $instance) (hasHTTPEndpoint $instance)}}
-            
-            [backends."{{$service.Name}}".servers."{{$instance.ID}}"]
-            url = "{{getDefaultEndpoint $instance}}"
-            weight = {{getServiceLabelValueWithDefault $service "backend.weight" "1"}}
-
-          {{end}}
+          [backends."{{$service.Name}}".servers."{{$instance.ID}}"]
+          url = "{{getDefaultEndpoint $instance}}"
+          weight = {{getServiceLabelValueWithDefault $service "backend.weight" "1"}}
         {{end}}
       {{else if eq $partition.ServiceKind "Stateful"}}
         {{range $replica := $partition.Replicas}}
-          {{if and (isPrimary $replica) (isHealthy $replica) (hasHTTPEndpoint $replica)}}
+          {{if isPrimary $replica}}
           
             {{$backendName := (print $service.Name $partition.PartitionInformation.ID)}}
             [backends."{{$backendName}}".servers."{{$replica.ID}}"]
