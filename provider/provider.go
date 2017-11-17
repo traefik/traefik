@@ -52,10 +52,6 @@ func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint)
 
 // GetConfiguration return the provider configuration using templating
 func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
-	var (
-		buf []byte
-		err error
-	)
 	configuration := new(types.Configuration)
 
 	var defaultFuncMap = sprig.TxtFuncMap()
@@ -68,18 +64,13 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 	}
 
 	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
-	if len(p.Filename) > 0 {
-		buf, err = ioutil.ReadFile(p.Filename)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		buf, err = autogen.Asset(defaultTemplateFile)
-		if err != nil {
-			return nil, err
-		}
+
+	tmplContent, err := p.getTemplateContent(defaultTemplateFile)
+	if err != nil {
+		return nil, err
 	}
-	_, err = tmpl.Parse(string(buf))
+
+	_, err = tmpl.Parse(tmplContent)
 	if err != nil {
 		return nil, err
 	}
@@ -98,6 +89,26 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 		return nil, err
 	}
 	return configuration, nil
+}
+
+func (p *BaseProvider) getTemplateContent(defaultTemplateFile string) (string, error) {
+	if len(p.Filename) > 0 {
+		buf, err := ioutil.ReadFile(p.Filename)
+		if err != nil {
+			return "", err
+		}
+		return string(buf), nil
+	}
+
+	if strings.HasSuffix(defaultTemplateFile, ".tmpl") {
+		buf, err := autogen.Asset(defaultTemplateFile)
+		if err != nil {
+			return "", err
+		}
+		return string(buf), nil
+	}
+
+	return defaultTemplateFile, nil
 }
 
 func split(sep, s string) []string {
