@@ -1,5 +1,5 @@
-hash: 6e35766dd261f1eb0c2dfaadb8e0bf235eb4f3f942de776f9b48faf8a868a2d0
-updated: 2017-11-15T18:39:20.364720581+02:00
+hash: 2a604d8b74e8659df7db72d063432fa0822fdee6c81bc6657efa3c1bf0d9cd8a
+updated: 2017-11-17T14:21:55.148450413+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -92,13 +92,27 @@ imports:
 - name: github.com/containous/mux
   version: 06ccd3e75091eb659b1d720cda0e16bc7057954c
 - name: github.com/containous/staert
-  version: 1e26a71803e428fd933f5f9c8e50a26878f53147
+  version: af517d5b70db9c4b0505e0144fcc62b054057d2a
+- name: github.com/coreos/bbolt
+  version: 3c6cbfb299c11444eb2f8c9d48f0d2ce09157423
 - name: github.com/coreos/etcd
-  version: c400d05d0aa73e21e431c16145e558d624098018
+  version: f1d7dd87da3e8feab4aaf675b8e29c6a5ed5f58b
   subpackages:
+  - auth/authpb
   - client
+  - clientv3
+  - clientv3/concurrency
+  - etcdserver/api/v3rpc/rpctypes
+  - etcdserver/etcdserverpb
+  - mvcc/mvccpb
   - pkg/pathutil
+  - pkg/srv
   - pkg/types
+  - version
+- name: github.com/coreos/go-semver
+  version: 8ab6407b697782a06568d4b7f1db25550ec2e4c6
+  subpackages:
+  - semver
 - name: github.com/coreos/go-oidc
   version: 5644a2f50e2d2d5ba0b474bc5bc55fea1925936d
   subpackages:
@@ -202,14 +216,20 @@ imports:
 - name: github.com/docker/go-units
   version: 9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1
 - name: github.com/docker/leadership
-  version: 0a913e2d71a12fd14a028452435cb71ac8d82cb6
+  version: af20da7d3e62be9259835e93261acf931b5adecf
+  repo: https://github.com/containous/leadership.git
+  vcs: git
 - name: github.com/docker/libkv
-  version: 93ab0e6c056d325dfbb11e1d58a3b4f5f62e7f3c
+  version: 5e4bb288a9a74320bb03f5c18d6bdbab0d8049de
+  repo: https://github.com/abronan/libkv.git
+  vcs: git
   subpackages:
   - store
   - store/boltdb
   - store/consul
   - store/etcd
+  - store/etcd/v2
+  - store/etcd/v3
   - store/zookeeper
 - name: github.com/docker/libtrust
   version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
@@ -278,9 +298,11 @@ imports:
 - name: github.com/golang/glog
   version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/golang/protobuf
-  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
+  version: 4bd1920723d7b7c925de087aa32e2187708897f7
   subpackages:
+  - jsonpb
   - proto
+  - ptypes/any
 - name: github.com/google/go-github
   version: fe7d11f8add400587b6718d9f39a62e42cb04c28
   subpackages:
@@ -552,7 +574,7 @@ imports:
   - pbkdf2
   - scrypt
 - name: golang.org/x/net
-  version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
+  version: c8c74377599bd978aee1cf3b9b63a8634051cec2
   subpackages:
   - context
   - context/ctxhttp
@@ -578,9 +600,10 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 2910a502d2bf9e43193af9d68ca516529614eed3
+  version: 4ee4af566555f5fbe026368b75596286a312663a
   subpackages:
   - cases
+  - internal
   - internal/tag
   - language
   - runes
@@ -613,11 +636,16 @@ imports:
   - internal/remote_api
   - internal/urlfetch
   - urlfetch
+- name: google.golang.org/genproto
+  version: 09f6ed296fc66555a25fe4ce95173148778dfa85
+  subpackages:
+  - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: cdee119ee21e61eef7093a41ba148fa83585e143
+  version: b8669c35455183da6d5c474ea6e72fbf55183274
   subpackages:
   - codes
   - credentials
+  - grpclb/grpc_lb_v1
   - grpclog
   - internal
   - keepalive
@@ -625,6 +653,7 @@ imports:
   - naming
   - peer
   - stats
+  - status
   - tap
   - transport
 - name: gopkg.in/fsnotify.v1

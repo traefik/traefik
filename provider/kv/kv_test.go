@@ -383,7 +383,7 @@ func TestKVHasStickinessLabel(t *testing.T) {
 			desc: "with cookie name without stickiness=true",
 			KVPairs: []*store.KVPair{
 				{
-					Key:   "loadbalancer/stickiness/cookiename",
+					Key:   "/loadbalancer/stickiness/cookiename",
 					Value: []byte("foo"),
 				},
 			},
@@ -393,7 +393,7 @@ func TestKVHasStickinessLabel(t *testing.T) {
 			desc: "stickiness=true",
 			KVPairs: []*store.KVPair{
 				{
-					Key:   "loadbalancer/stickiness",
+					Key:   "/loadbalancer/stickiness",
 					Value: []byte("true"),
 				},
 			},

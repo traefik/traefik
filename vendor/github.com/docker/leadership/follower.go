@@ -51,7 +51,7 @@ func (f *Follower) follow() {
 	defer close(f.leaderCh)
 	defer close(f.errCh)
 
-	ch, err := f.client.Watch(f.key, f.stopCh)
+	ch, err := f.client.Watch(f.key, f.stopCh, nil)
 	if err != nil {
 		f.errCh <- err
 	}

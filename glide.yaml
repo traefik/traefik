@@ -26,7 +26,7 @@ import:
 - package: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
 - package: github.com/containous/staert
-  version: 1e26a71803e428fd933f5f9c8e50a26878f53147
+  version: ^v2.0.0
 - package: github.com/docker/docker
   version: 75c7536d2e2e328b644bf69153de879d1d197988
 - package: github.com/docker/go-connections
@@ -36,12 +36,17 @@ import:
   - tlsconfig
 - package: github.com/docker/go-units
   version: 9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1
+- package: github.com/coreos/etcd
+  version: v3.2.9
 - package: github.com/docker/libkv
+  repo: https://github.com/abronan/libkv.git
+  vcs: git
   subpackages:
   - store
   - store/boltdb
   - store/consul
-  - store/etcd
+  - store/etcd/v2
+  - store/etcd/v3
   - store/zookeeper
 - package: github.com/elazarl/go-bindata-assetfs
 - package: github.com/containous/mux
@@ -83,6 +88,8 @@ import:
   repo: https://github.com/containous/gziphandler.git
   vcs: git
 - package: github.com/docker/leadership
+  repo: https://github.com/containous/leadership.git
+  vcs: git
 - package: github.com/satori/go.uuid
   version: ^1.1.0
 - package: k8s.io/client-go
@@ -187,7 +194,7 @@ import:
 - package: github.com/googleapis/gax-go
   version: 9af46dd5a1713e8b5cd71106287eba3cefdde50b
 - package: google.golang.org/grpc
-  version: v1.2.0
+  version: v1.5.2
 - package: github.com/unrolled/secure
   version: 824e85271811af89640ea25620c67f6c2eed987e
 - package: github.com/Nvveen/Gotty

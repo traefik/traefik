@@ -89,7 +89,7 @@ type DoCondition func() error
 // Verify if a Key exists in the store
 func KVExists(kv store.Store, key string) DoCondition {
 	return func() error {
-		_, err := kv.Exists(key)
+		_, err := kv.Exists(key, nil)
 		return err
 	}
 }

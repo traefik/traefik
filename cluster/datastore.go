@@ -76,7 +76,7 @@ func NewDataStore(ctx context.Context, kvSource staert.KvSource, object Object, 
 
 func (d *Datastore) watchChanges() error {
 	stopCh := make(chan struct{})
-	kvCh, err := d.kv.Watch(d.lockKey, stopCh)
+	kvCh, err := d.kv.Watch(d.lockKey, stopCh, nil)
 	if err != nil {
 		return err
 	}

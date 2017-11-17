@@ -346,7 +346,7 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 	for key, value := range checkmap {
 		var p *store.KVPair
 		err = try.Do(60*time.Second, func() error {
-			p, err = s.kv.Get(key)
+			p, err = s.kv.Get(key, nil)
 			return err
 		})
 		c.Assert(err, checker.IsNil)

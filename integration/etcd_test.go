@@ -11,7 +11,7 @@ import (
 	"github.com/containous/traefik/integration/try"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
-	"github.com/docker/libkv/store/etcd"
+	"github.com/docker/libkv/store/etcd/v2"
 	"github.com/go-check/check"
 
 	checker "github.com/vdemeester/shakers"
@@ -43,7 +43,7 @@ func (s *EtcdSuite) SetUpTest(c *check.C) {
 
 	// wait for etcd
 	err = try.Do(60*time.Second, func() error {
-		_, err := kv.Exists("test")
+		_, err := kv.Exists("test", nil)
 		return err
 	})
 	c.Assert(err, checker.IsNil)
@@ -61,7 +61,13 @@ func (s *EtcdSuite) TearDownSuite(c *check.C) {}
 func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 
-	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
+	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct {
+		EtcdHost string
+		UseAPIV3 bool
+	}{
+		etcdHost,
+		false,
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -79,7 +85,13 @@ func (s *EtcdSuite) TestSimpleConfiguration(c *check.C) {
 func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 
-	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct{ EtcdHost string }{etcdHost})
+	file := s.adaptFile(c, "fixtures/etcd/simple.toml", struct {
+		EtcdHost string
+		UseAPIV3 bool
+	}{
+		etcdHost,
+		false,
+	})
 	defer os.Remove(file)
 
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -138,7 +150,7 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 
 	// wait for etcd
 	err = try.Do(60*time.Second, func() error {
-		_, err := s.kv.Exists("/traefik/frontends/frontend2/routes/test_2/rule")
+		_, err := s.kv.Exists("/traefik/frontends/frontend2/routes/test_2/rule", nil)
 		return err
 	})
 	c.Assert(err, checker.IsNil)
@@ -196,7 +208,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 
 	// wait for etcd
 	err = try.Do(60*time.Second, func() error {
-		_, err := s.kv.Exists("/traefik/entrypoints/http/address")
+		_, err := s.kv.Exists("/traefik/entrypoints/http/address", nil)
 		return err
 	})
 	c.Assert(err, checker.IsNil)
@@ -261,7 +273,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 
 	// wait for etcd
 	err = try.Do(60*time.Second, func() error {
-		_, err := s.kv.Exists("/traefik/frontends/frontend2/routes/test_2/rule")
+		_, err := s.kv.Exists("/traefik/frontends/frontend2/routes/test_2/rule", nil)
 		return err
 	})
 	c.Assert(err, checker.IsNil)
@@ -414,7 +426,7 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 	for key, value := range checkmap {
 		var p *store.KVPair
 		err = try.Do(60*time.Second, func() error {
-			p, err = s.kv.Get(key)
+			p, err = s.kv.Get(key, nil)
 			return err
 		})
 		c.Assert(err, checker.IsNil)
