@@ -250,9 +250,7 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 	}
 
 	// filter services
-	filteredServices := fun.Filter(func(service rancherData) bool {
-		return p.serviceFilter(service)
-	}, services).([]rancherData)
+	filteredServices := fun.Filter(p.serviceFilter, services).([]rancherData)
 
 	frontends := map[string]rancherData{}
 	backends := map[string]rancherData{}
