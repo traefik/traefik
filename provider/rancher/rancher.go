@@ -126,7 +126,7 @@ func (p *Provider) hasStickinessLabel(service rancherData) bool {
 	return errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
 }
 
-func (p *Provider) getStickinessCookieName(service rancherData, backendName string) string {
+func (p *Provider) getStickinessCookieName(service rancherData) string {
 	if label, err := getServiceLabel(service, types.LabelBackendLoadbalancerStickinessCookieName); err == nil {
 		return label
 	}
