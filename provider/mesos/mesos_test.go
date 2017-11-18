@@ -213,6 +213,7 @@ func TestTaskRecords(t *testing.T) {
 }
 
 func TestMesosLoadConfig(t *testing.T) {
+	// FIXME this test is dead?
 	cases := []struct {
 		applicationsError bool
 		tasksError        bool
@@ -223,6 +224,7 @@ func TestMesosLoadConfig(t *testing.T) {
 		expectedFrontends map[string]*types.Frontend
 		expectedBackends  map[string]*types.Backend
 	}{}
+
 	for _, c := range cases {
 		provider := &Provider{
 			Domain:           "docker.localhost",
