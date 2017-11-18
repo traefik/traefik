@@ -56,7 +56,7 @@ type GlobalConfiguration struct {
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released" export:"true"`
 	AccessLogsFile            string                  `description:"(Deprecated) Access logs file" export:"true"` // Deprecated
 	AccessLog                 *types.AccessLog        `description:"Access log settings" export:"true"`
-	TraefikLogsFile           string                  `description:"Traefik logs file. Stdout is used when omitted or empty" export:"true"`
+	TraefikLogsFile           string                  `description:"(Deprecated) Traefik logs file. Stdout is used when omitted or empty" export:"true"` // Deprecated
 	TraefikLog                *types.TraefikLog       `description:"Traefik log settings" export:"true"`
 	Tracing                   *tracing.Tracing        `description:"OpenTracing configuration" export:"true"`
 	LogLevel                  string                  `short:"l" description:"Log level" export:"true"`
