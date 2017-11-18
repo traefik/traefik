@@ -42,4 +42,14 @@ func (s *TimeoutSuite) TestForwardingTimeouts(c *check.C) {
 	response, err = http.Get("http://127.0.0.1:8000/responseHeaderTimeout?sleep=1000")
 	c.Assert(err, checker.IsNil)
 	c.Assert(response.StatusCode, checker.Equals, http.StatusGatewayTimeout)
+
+	// This simulates the backend increasing the default ResponseHeaderTimeout and not timing out
+	response, err = http.Get("http://127.0.0.1:8000/backendResponseHeaderTimeout?sleep=700")
+	c.Assert(err, checker.IsNil)
+	c.Assert(response.StatusCode, checker.Equals, http.StatusOK)
+
+	// This simulates the backend increasing the default ResponseHeaderTimeout and timing out
+	response, err = http.Get("http://127.0.0.1:8000/backendResponseHeaderTimeout?sleep=1500")
+	c.Assert(err, checker.IsNil)
+	c.Assert(response.StatusCode, checker.Equals, http.StatusGatewayTimeout)
 }

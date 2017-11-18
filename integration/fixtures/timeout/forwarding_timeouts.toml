@@ -26,6 +26,11 @@ responseHeaderTimeout = "300ms"
   [backends.backend2]
     [backends.backend2.servers.server2]
     url = "http://{{.TimeoutEndpoint}}:9000"
+  [backends.backend3]
+    [backends.backend3.forwardingTimeouts]
+    responseHeaderTimeout = "1s"
+    [backends.backend3.servers.server3]
+    url = "http://{{.TimeoutEndpoint}}:9000"
 
 [frontends]
   [frontends.frontend1]
@@ -36,3 +41,7 @@ responseHeaderTimeout = "300ms"
   backend = "backend2"
     [frontends.frontend2.routes.test_2]
     rule = "Path:/responseHeaderTimeout"
+  [frontends.frontend3]
+  backend = "backend3"
+    [frontends.frontend3.routes.test_3]
+    rule = "Path:/backendResponseHeaderTimeout"
