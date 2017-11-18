@@ -69,6 +69,9 @@ domain = "marathon.localhost"
 # marathonLBCompatibility = true
 
 # Enable marathon constraints.
+# If enabled, Traefik will read Marathon constrains, as defined in https://mesosphere.github.io/marathon/docs/constraints.html
+# Each individual constraint will be treated as a verbatum compounded tag. 
+# i.e. "rack_id:CLUSTER:rack-1", with all constraint groups concatenated together using ":"
 #
 # Optional
 # Default: false

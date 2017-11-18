@@ -529,14 +529,12 @@ func TestMarathonApplicationFilterConstraints(t *testing.T) {
 			desc:                    "tags missing",
 			application:             application(),
 			marathonLBCompatibility: false,
-			marathonConstraints:     false,
 			expected:                false,
 		},
 		{
 			desc:                    "tag matching",
 			application:             application(label(types.LabelTags, "valid")),
 			marathonLBCompatibility: false,
-			marathonConstraints:     false,
 			expected:                true,
 		},
 		{
@@ -576,9 +574,9 @@ func TestMarathonApplicationFilterConstraints(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{
-				ExposedByDefault:        true,
-				MarathonLBCompatibility: c.marathonLBCompatibility,
-				MarathonConstraints:     c.marathonConstraints,
+				ExposedByDefault:          true,
+				MarathonLBCompatibility:   c.marathonLBCompatibility,
+				FilterMarathonConstraints: c.marathonConstraints,
 			}
 			constraint, err := types.NewConstraint("tag==valid")
 			if err != nil {
