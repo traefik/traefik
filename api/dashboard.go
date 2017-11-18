@@ -14,10 +14,10 @@ type DashboardHandler struct{}
 // AddRoutes add dashboard routes on a router
 func (g DashboardHandler) AddRoutes(router *mux.Router) {
 	// Expose dashboard
-	router.Methods("GET").Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+	router.Methods(http.MethodGet).Path("/").HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		http.Redirect(response, request, "/dashboard/", 302)
 	})
-	router.Methods("GET").PathPrefix("/dashboard/").
+	router.Methods(http.MethodGet).PathPrefix("/dashboard/").
 		Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
 
 }

@@ -87,7 +87,7 @@ func (s *DockerSuite) TestSimpleConfiguration(c *check.C) {
 
 	// TODO validate : run on 80
 	// Expected a 404 as we did not comfigure anything
-	err = try.GetRequest("http://127.0.0.1:8000/", 500*time.Millisecond, try.StatusCodeIs(404))
+	err = try.GetRequest("http://127.0.0.1:8000/", 500*time.Millisecond, try.StatusCodeIs(http.StatusNotFound))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -108,7 +108,7 @@ func (s *DockerSuite) TestDefaultDockerContainers(c *check.C) {
 	req.Host = fmt.Sprintf("%s.docker.localhost", strings.Replace(name, "_", "-", -1))
 
 	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
-	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, 200)
+	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
 	c.Assert(err, checker.IsNil)
 
 	body, err := ioutil.ReadAll(resp.Body)

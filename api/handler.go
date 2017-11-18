@@ -36,20 +36,20 @@ func (p Handler) AddRoutes(router *mux.Router) {
 		DebugHandler{}.AddRoutes(router)
 	}
 
-	router.Methods("GET").Path("/api").HandlerFunc(p.getConfigHandler)
-	router.Methods("GET").Path("/api/providers").HandlerFunc(p.getConfigHandler)
-	router.Methods("GET").Path("/api/providers/{provider}").HandlerFunc(p.getProviderHandler)
-	router.Methods("GET").Path("/api/providers/{provider}/backends").HandlerFunc(p.getBackendsHandler)
-	router.Methods("GET").Path("/api/providers/{provider}/backends/{backend}").HandlerFunc(p.getBackendHandler)
-	router.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers").HandlerFunc(p.getServersHandler)
-	router.Methods("GET").Path("/api/providers/{provider}/backends/{backend}/servers/{server}").HandlerFunc(p.getServerHandler)
-	router.Methods("GET").Path("/api/providers/{provider}/frontends").HandlerFunc(p.getFrontendsHandler)
-	router.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}").HandlerFunc(p.getFrontendHandler)
-	router.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes").HandlerFunc(p.getRoutesHandler)
-	router.Methods("GET").Path("/api/providers/{provider}/frontends/{frontend}/routes/{route}").HandlerFunc(p.getRouteHandler)
+	router.Methods(http.MethodGet).Path("/api").HandlerFunc(p.getConfigHandler)
+	router.Methods(http.MethodGet).Path("/api/providers").HandlerFunc(p.getConfigHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}").HandlerFunc(p.getProviderHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/backends").HandlerFunc(p.getBackendsHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/backends/{backend}").HandlerFunc(p.getBackendHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/backends/{backend}/servers").HandlerFunc(p.getServersHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/backends/{backend}/servers/{server}").HandlerFunc(p.getServerHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/frontends").HandlerFunc(p.getFrontendsHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/frontends/{frontend}").HandlerFunc(p.getFrontendHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/frontends/{frontend}/routes").HandlerFunc(p.getRoutesHandler)
+	router.Methods(http.MethodGet).Path("/api/providers/{provider}/frontends/{frontend}/routes/{route}").HandlerFunc(p.getRouteHandler)
 
 	// health route
-	router.Methods("GET").Path("/health").HandlerFunc(p.getHealthHandler)
+	router.Methods(http.MethodGet).Path("/health").HandlerFunc(p.getHealthHandler)
 
 	version.Handler{}.AddRoutes(router)
 

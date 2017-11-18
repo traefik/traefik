@@ -1,6 +1,8 @@
 package metrics
 
 import (
+	"net/http"
+
 	"github.com/containous/mux"
 	"github.com/containous/traefik/types"
 	"github.com/go-kit/kit/metrics/prometheus"
@@ -21,7 +23,7 @@ type PrometheusHandler struct{}
 
 // AddRoutes add Prometheus routes on a router
 func (h PrometheusHandler) AddRoutes(router *mux.Router) {
-	router.Methods("GET").Path("/metrics").Handler(promhttp.Handler())
+	router.Methods(http.MethodGet).Path("/metrics").Handler(promhttp.Handler())
 }
 
 // RegisterPrometheus registers all Prometheus metrics.
