@@ -1105,6 +1105,36 @@ func TestIngressAnnotations(t *testing.T) {
 								Paths: []v1beta1.HTTPIngressPath{
 									{
 										Path: "/auth-realm-customized",
+
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "service1",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+				Annotations: map[string]string{
+					"kubernetes.io/ingress.class": "traefik",
+					types.LabelFrontendRedirect:   "https",
+				},
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "redirect",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Path: "/https",
 										Backend: v1beta1.IngressBackend{
 											ServiceName: "service1",
 											ServicePort: intstr.FromInt(80),
@@ -1204,6 +1234,19 @@ func TestIngressAnnotations(t *testing.T) {
 					Method: "wrr",
 				},
 			},
+			"redirect/https": {
+				Servers: map[string]types.Server{
+					"http://example.com": {
+						URL:    "http://example.com",
+						Weight: 1,
+					},
+				},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Sticky: false,
+					Method: "wrr",
+				},
+			},
 			"test/whitelist-source-range": {
 				Servers: map[string]types.Server{
 					"http://example.com": {
@@ -1241,6 +1284,7 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:foo",
 					},
 				},
+				Redirect: "",
 			},
 			"other/stuff": {
 				Backend:        "other/stuff",
@@ -1253,6 +1297,7 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:other",
 					},
 				},
+				Redirect: "",
 			},
 			"basic/auth": {
 				Backend:        "basic/auth",
@@ -1266,7 +1311,22 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 				BasicAuth: []string{"myUser:myEncodedPW"},
+				Redirect:  "",
 			},
+			"redirect/https": {
+				Backend:        "redirect/https",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"/https": {
+						Rule: "PathPrefix:/https",
+					},
+					"redirect": {
+						Rule: "Host:redirect",
+					},
+				},
+				Redirect: "https",
+			},
+
 			"test/whitelist-source-range": {
 				Backend:        "test/whitelist-source-range",
 				PassHostHeader: true,
@@ -1282,6 +1342,7 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:test",
 					},
 				},
+				Redirect: "",
 			},
 			"rewrite/api": {
 				Backend:        "rewrite/api",
@@ -1294,6 +1355,7 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:rewrite",
 					},
 				},
+				Redirect: "",
 			},
 		},
 	}

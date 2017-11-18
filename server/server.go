@@ -1103,6 +1103,21 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						log.Infof("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
 					}
 
+					if len(frontend.Redirect) > 0 {
+						proto := "http"
+						if server.globalConfiguration.EntryPoints[frontend.Redirect].TLS != nil {
+							proto = "https"
+						}
+
+						regex, replacement, err := server.buildRedirect(proto, entryPoint)
+						rewrite, err := middlewares.NewRewrite(regex, replacement, true)
+						if err != nil {
+							log.Fatalf("Error creating Frontend Redirect: %v", err)
+						}
+						n.Use(rewrite)
+						log.Debugf("Creating frontend %s redirect to %s", frontendName, proto)
+					}
+
 					if len(frontend.BasicAuth) > 0 {
 						users := types.Users{}
 						for _, user := range frontend.BasicAuth {
@@ -1254,21 +1269,13 @@ func (server *Server) wireFrontendBackend(serverRoute *serverRoute, handler http
 func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *configuration.EntryPoint) (negroni.Handler, error) {
 	regex := entryPoint.Redirect.Regex
 	replacement := entryPoint.Redirect.Replacement
+	var err error
 	if len(entryPoint.Redirect.EntryPoint) > 0 {
-		regex = `^(?:https?:\/\/)?([\w\._-]+)(?::\d+)?(.*)$`
-		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint] == nil {
-			return nil, errors.New("Unknown entrypoint " + entryPoint.Redirect.EntryPoint)
-		}
-		protocol := "http"
+		var protocol = "http"
 		if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].TLS != nil {
 			protocol = "https"
 		}
-		r, _ := regexp.Compile(`(:\d+)`)
-		match := r.FindStringSubmatch(server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].Address)
-		if len(match) == 0 {
-			return nil, errors.New("Bad Address format: " + server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].Address)
-		}
-		replacement = protocol + "://$1" + match[0] + "$2"
+		regex, replacement, err = server.buildRedirect(protocol, entryPoint)
 	}
 	rewrite, err := middlewares.NewRewrite(regex, replacement, true)
 	if err != nil {
@@ -1277,6 +1284,20 @@ func (server *Server) loadEntryPointConfig(entryPointName string, entryPoint *co
 	log.Debugf("Creating entryPoint redirect %s -> %s : %s -> %s", entryPointName, entryPoint.Redirect.EntryPoint, regex, replacement)
 
 	return rewrite, nil
+}
+
+func (server *Server) buildRedirect(protocol string, entryPoint *configuration.EntryPoint) (string, string, error) {
+	regex := `^(?:https?:\/\/)?([\w\._-]+)(?::\d+)?(.*)$`
+	if server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint] == nil {
+		return "", "", fmt.Errorf("unknown target entrypoint %q", entryPoint.Redirect.EntryPoint)
+	}
+	r, _ := regexp.Compile(`(:\d+)`)
+	match := r.FindStringSubmatch(server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].Address)
+	if len(match) == 0 {
+		return "", "", fmt.Errorf("bad Address format %q", server.globalConfiguration.EntryPoints[entryPoint.Redirect.EntryPoint].Address)
+	}
+	replacement := protocol + "://$1" + match[0] + "$2"
+	return regex, replacement, nil
 }
 
 func (server *Server) buildDefaultHTTPRouter() *mux.Router {

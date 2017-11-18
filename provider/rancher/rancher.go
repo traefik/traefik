@@ -76,6 +76,13 @@ func (p *Provider) getBasicAuth(service rancherData) []string {
 	return []string{}
 }
 
+func (p *Provider) getRedirect(service rancherData) string {
+	if redirect, err := getServiceLabel(service, types.LabelFrontendRedirect); err == nil {
+		return redirect
+	}
+	return ""
+}
+
 func (p *Provider) getFrontendName(service rancherData) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 	return provider.Normalize(p.getFrontendRule(service))
@@ -239,6 +246,7 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 		"getSticky":                   p.getSticky,
 		"hasStickinessLabel":          p.hasStickinessLabel,
 		"getStickinessCookieName":     p.getStickinessCookieName,
+		"getRedirect":                 p.getRedirect,
 	}
 
 	// filter services
@@ -270,6 +278,7 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 	if err != nil {
 		log.Error(err)
 	}
+
 	return configuration
 
 }

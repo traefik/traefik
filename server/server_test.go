@@ -903,6 +903,72 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 	}
 }
 
+func TestServerLoadConfigBuildRedirect(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		replacementProtocol  string
+		globalConfiguration  configuration.GlobalConfiguration
+		originEntryPointName string
+		expectedReplacement  string
+	}{
+		{
+			desc:                 "Redirect endpoint http to https with HTTPS protocol",
+			replacementProtocol:  "https",
+			originEntryPointName: "http",
+			globalConfiguration: configuration.GlobalConfiguration{
+				EntryPoints: configuration.EntryPoints{
+					"http": &configuration.EntryPoint{
+						Address: ":80",
+						Redirect: &configuration.Redirect{
+							EntryPoint: "https",
+						},
+					},
+					"https": &configuration.EntryPoint{
+						Address: ":443",
+						TLS:     &tls.TLS{},
+					},
+				},
+			},
+
+			expectedReplacement: "https://$1:443$2",
+		},
+		{
+			desc:                 "Redirect endpoint http to http02 with HTTP protocol",
+			replacementProtocol:  "http",
+			originEntryPointName: "http",
+			globalConfiguration: configuration.GlobalConfiguration{
+				EntryPoints: configuration.EntryPoints{
+					"http": &configuration.EntryPoint{
+						Address: ":80",
+						Redirect: &configuration.Redirect{
+							EntryPoint: "http02",
+						},
+					},
+					"http02": &configuration.EntryPoint{
+						Address: ":88",
+					},
+				},
+			},
+
+			expectedReplacement: "http://$1:88$2",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			srv := Server{globalConfiguration: test.globalConfiguration}
+
+			_, replacement, err := srv.buildRedirect(test.replacementProtocol, srv.globalConfiguration.EntryPoints[test.originEntryPointName])
+
+			require.NoError(t, err, "build redirect sent an unexpected error")
+			assert.Equal(t, test.expectedReplacement, replacement, "build redirect does not return the right replacement pattern")
+		})
+	}
+}
+
 func buildDynamicConfig(dynamicConfigBuilders ...func(*types.Configuration)) *types.Configuration {
 	config := &types.Configuration{
 		Frontends: make(map[string]*types.Frontend),

@@ -34,6 +34,7 @@
     backend = "backend-{{getBackend $service}}"
     passHostHeader = {{getPassHostHeader $service}}
     priority = {{getPriority $service}}
+    redirect = "{{getRedirect $service}}"
     entryPoints = [{{range getEntryPoints $service}}
         "{{.}}",
     {{end}}]

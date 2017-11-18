@@ -88,6 +88,8 @@ Annotations can be used on containers to override default behaviour for the whol
     Override the default frontend rule type. Default: `PathPrefix`.
 - `traefik.frontend.priority: "3"`
     Override the default frontend rule priority.
+- `traefik.frontend.redirect: https`: 
+    Enables Redirect to another entryPoint for that frontend (e.g. HTTPS).
 
 Annotations can be used on the Kubernetes service to override default behaviour:
 

@@ -665,6 +665,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
+					Redirect:       "",
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test-docker-localhost-0": {
 							Rule: "Host:test.docker.localhost",
@@ -699,6 +700,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 						types.LabelBackend:             "foobar",
 						types.LabelFrontendEntryPoints: "http,https",
 						types.LabelFrontendAuthBasic:   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						types.LabelFrontendRedirect:    "https",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -719,6 +721,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+					Redirect:       "https",
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test1-docker-localhost-0": {
 							Rule: "Host:test1.docker.localhost",
@@ -730,6 +733,7 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
+					Redirect:       "",
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test2-docker-localhost-1": {
 							Rule: "Host:test2.docker.localhost",

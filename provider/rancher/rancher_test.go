@@ -489,6 +489,35 @@ func TestRancherGetPassHostHeader(t *testing.T) {
 	}
 }
 
+func TestRancherGetRedirect(t *testing.T) {
+	provider := &Provider{
+		Domain: "rancher.localhost",
+	}
+
+	testCases := []struct {
+		service  rancherData
+		expected string
+	}{
+		{
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.LabelFrontendRedirect: "https",
+				},
+			},
+
+			expected: "https",
+		},
+	}
+
+	for _, test := range testCases {
+		actual := provider.getRedirect(test.service)
+		if actual != test.expected {
+			t.Fatalf("got %q, expected %q", actual, test.expected)
+		}
+	}
+}
+
 func TestRancherGetLabel(t *testing.T) {
 	services := []struct {
 		service  rancherData
@@ -544,6 +573,7 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 					Labels: map[string]string{
 						types.LabelPort:              "80",
 						types.LabelFrontendAuthBasic: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						types.LabelFrontendRedirect:  "https",
 					},
 					Health:     "healthy",
 					Containers: []string{"127.0.0.1"},
@@ -556,6 +586,7 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 					EntryPoints:    []string{},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 					Priority:       0,
+					Redirect:       "https",
 
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test-service-rancher-localhost": {

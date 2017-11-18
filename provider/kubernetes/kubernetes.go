@@ -187,6 +187,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				whitelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
 				whitelistSourceRange := provider.SplitAndTrimString(whitelistSourceRangeAnnotation)
 
+				entryPointRedirect, _ := i.Annotations[types.LabelFrontendRedirect]
+
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
 					if err != nil {
@@ -203,6 +205,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Priority:             priority,
 						BasicAuth:            basicAuthCreds,
 						WhitelistSourceRange: whitelistSourceRange,
+						Redirect:             entryPointRedirect,
 					}
 				}
 				if len(r.Host) > 0 {
