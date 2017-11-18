@@ -384,6 +384,63 @@ func TestRancherGetPort(t *testing.T) {
 	}
 }
 
+func TestRancherGetServicePort(t *testing.T) {
+	provider := &Provider{
+		Domain: "rancher.localhost",
+	}
+
+	services := []struct {
+		service  rancherData
+		expected string
+	}{
+		{
+			service: rancherData{
+				Name: "test-service",
+			},
+			expected: "",
+		},
+		{
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.ServiceLabel(types.LabelPort, "servicename"): "5000",
+				},
+			},
+
+			expected: "5000",
+		},
+		{
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.LabelPort:                                    "1337",
+					types.ServiceLabel(types.LabelPort, "servicename"): "5000",
+				},
+			},
+
+			expected: "5000",
+		},
+		{
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.LabelPort:                                     "1337",
+					types.ServiceLabel(types.LabelPort, "otherservice"): "5000",
+				},
+			},
+
+			expected: "1337",
+		},
+	}
+
+	for _, e := range services {
+		actual := provider.getServicePort(e.service, "servicename")
+		if actual != e.expected {
+			t.Fatalf("expected %q, got %q", e.expected, actual)
+		}
+	}
+}
+
 func TestRancherGetDomain(t *testing.T) {
 	provider := &Provider{
 		Domain: "rancher.localhost",
@@ -569,6 +626,69 @@ func TestRancherLoadRancherConfig(t *testing.T) {
 					Servers: map[string]types.Server{
 						"server-0": {
 							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			services: []rancherData{
+				{
+					Name: "test/service",
+					Labels: map[string]string{
+						types.LabelPort:                                           "1000",
+						types.ServiceLabel(types.LabelFrontendRule, "serviceone"): "Host: serviceone.rancher.localhost",
+						types.ServiceLabel(types.LabelPort, "servicetwo"):         "2000",
+						types.ServiceLabel(types.LabelFrontendRule, "servicetwo"): "Host: servicetwo.rancher.localhost",
+					},
+					Health:     "healthy",
+					Containers: []string{"127.0.0.1"},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-service-rancher-localhost-serviceone": {
+					Backend:        "backend-test-service-serviceone",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Priority:       0,
+
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-service-rancher-localhost-serviceone": {
+							Rule: "Host: serviceone.rancher.localhost",
+						},
+					},
+				},
+				"frontend-Host-test-service-rancher-localhost-servicetwo": {
+					Backend:        "backend-test-service-servicetwo",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					Priority:       0,
+
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-service-rancher-localhost-servicetwo": {
+							Rule: "Host: servicetwo.rancher.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test-service-serviceone": {
+					Servers: map[string]types.Server{
+						"server-0": {
+							URL:    "http://127.0.0.1:1000",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+				"backend-test-service-servicetwo": {
+					Servers: map[string]types.Server{
+						"server-0": {
+							URL:    "http://127.0.0.1:2000",
 							Weight: 0,
 						},
 					},
