@@ -248,7 +248,7 @@ func (p *Provider) applicationFilter(app marathon.Application) bool {
 			constraintTags = append(constraintTags, label)
 		}
 	}
-	if p.FilterMarathonConstraints && app.Constraints != nil && len(*app.Constraints) > 0 {
+	if p.FilterMarathonConstraints && app.Constraints != nil {
 		for _, constraintParts := range *app.Constraints {
 			constraintTags = append(constraintTags, strings.Join(constraintParts, ":"))
 		}
