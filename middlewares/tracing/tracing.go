@@ -72,29 +72,29 @@ type statusCodeTracker struct {
 	status int
 }
 
-func (w *statusCodeTracker) WriteHeader(status int) {
-	w.status = status
-	w.ResponseWriter.WriteHeader(status)
+func (s *statusCodeTracker) WriteHeader(status int) {
+	s.status = status
+	s.ResponseWriter.WriteHeader(status)
 }
 
-type epMiddleware struct {
-	ep string
+type entryPointMiddleware struct {
+	entryPoint string
 	*Tracing
 }
 
 // NewEntryPoint creates a new middleware that the incoming request
 func (t *Tracing) NewEntryPoint(name string) negroni.Handler {
-	return &epMiddleware{Tracing: t, ep: name}
+	return &entryPointMiddleware{Tracing: t, entryPoint: name}
 }
 
-func (t *epMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (e *entryPointMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	opNameFunc := func(r *http.Request) string {
-		return fmt.Sprintf("entrypoint %s %s", t.ep, r.Host)
+		return fmt.Sprintf("entrypoint %s %s", e.entryPoint, r.Host)
 	}
 
-	ctx, _ := t.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	span := t.StartSpan(opNameFunc(r), ext.RPCServerOption(ctx))
-	ext.Component.Set(span, t.ServiceName)
+	ctx, _ := e.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+	span := e.StartSpan(opNameFunc(r), ext.RPCServerOption(ctx))
+	ext.Component.Set(span, e.ServiceName)
 	ext.HTTPMethod.Set(span, r.Method)
 	ext.HTTPUrl.Set(span, r.URL.String())
 	span.SetTag("http.host", r.Host)
@@ -130,11 +130,11 @@ func (t *Tracing) NewForwarder(frontend, backend string) negroni.Handler {
 	}
 }
 
-func (t *fwdMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (f *fwdMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	ctx := r.Context()
-	span, _ := opentracing.StartSpanFromContext(ctx, t.opName)
-	span.SetTag("frontend.name", t.frontend)
-	span.SetTag("backend.name", t.backend)
+	span, _ := opentracing.StartSpanFromContext(ctx, f.opName)
+	span.SetTag("frontend.name", f.frontend)
+	span.SetTag("backend.name", f.backend)
 	ext.HTTPMethod.Set(span, r.Method)
 	ext.HTTPUrl.Set(span, r.URL.String())
 	span.SetTag("http.host", r.Host)
@@ -161,14 +161,23 @@ func (t *fwdMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next h
 // LogEventf logs an event to the span in the request context.
 func LogEventf(r *http.Request, str string, vals ...interface{}) {
 	if span := opentracing.SpanFromContext(r.Context()); span != nil {
-		span.LogEvent(fmt.Sprintf(str, vals...))
+		span.LogKV("event", fmt.Sprintf(str, vals...))
+	}
+}
+
+// DebugEventf logs an event to the span in the request context, and additionally logs
+// to debug logging.
+func DebugEventf(r *http.Request, str string, vals ...interface{}) {
+	log.Debugf(str, vals...)
+	if span := opentracing.SpanFromContext(r.Context()); span != nil {
+		span.LogKV("event", fmt.Sprintf(str, vals...))
 	}
 }
 
 // LogFields logs the opentracing log fields to the span in the request context.
-func LogFields(r *http.Request, flds ...otlog.Field) {
+func LogFields(r *http.Request, fields ...otlog.Field) {
 	if span := opentracing.SpanFromContext(r.Context()); span != nil {
-		span.LogFields(flds...)
+		span.LogFields(fields...)
 	}
 }
 
@@ -182,12 +191,6 @@ func StartSpan(r *http.Request, operationName string, opts ...opentracing.StartS
 type baseMiddleware struct {
 	opName string
 	*Tracing
-}
-
-// NewSpanMiddleware creates a new middleware wraps a span around subsequent
-// middleware
-func (t *Tracing) NewSpanMiddleware(name string) negroni.Handler {
-	return &baseMiddleware{Tracing: t, opName: name}
 }
 
 func (t *baseMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
