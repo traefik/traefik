@@ -29,8 +29,6 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	defer span.Finish()
 	r = nr
 
-	httpClient := http.Client{}
-
 	if config.TLS != nil {
 		tlsConfig, err := config.TLS.CreateTLSConfig()
 		if err != nil {
