@@ -1,4 +1,3 @@
-hash: 2a604d8b74e8659df7db72d063432fa0822fdee6c81bc6657efa3c1bf0d9cd8a
 updated: 2017-11-17T14:21:55.148450413+01:00
 imports:
 - name: cloud.google.com/go
@@ -102,12 +101,9 @@ imports:
 - name: github.com/coreos/etcd
   version: f1d7dd87da3e8feab4aaf675b8e29c6a5ed5f58b
   subpackages:
-<<<<<<< HEAD
   - auth/authpb
-=======
   - Godeps/_workspace/src/github.com/ugorji/go/codec
   - Godeps/_workspace/src/golang.org/x/net/context
->>>>>>> Add glide deps for zipkin
   - client
   - clientv3
   - clientv3/concurrency
@@ -317,12 +313,9 @@ imports:
   subpackages:
   - jsonpb
   - proto
-<<<<<<< HEAD
   - ptypes/any
-=======
 - name: github.com/golang/snappy
   version: 553a641470496b2327abcac10b36396bd98e45c9
->>>>>>> Add glide deps for zipkin
 - name: github.com/google/go-github
   version: fe7d11f8add400587b6718d9f39a62e42cb04c28
   subpackages:
@@ -354,7 +347,6 @@ imports:
 - name: github.com/huandu/xstrings
   version: 3959339b333561bf62a38b424fd41517c2c90f40
 - name: github.com/imdario/mergo
-<<<<<<< HEAD
   version: 3e95a51e0639b4cf372f2ccf74c86749d747fbdc
 - name: github.com/influxdata/influxdb
   version: 2d474a3089bcfce6b472779be9470a1f0ef3d5e4
@@ -362,9 +354,6 @@ imports:
   - client/v2
   - models
   - pkg/escape
-=======
-  version: 7fe0c75c13abdee74b09fcacef5ea1c6bba6a874
->>>>>>> Add glide deps for zipkin
 - name: github.com/JamesClonk/vultr
   version: 2fd0705ce648e602e6c9c57329a174270a4f6688
   subpackages:
