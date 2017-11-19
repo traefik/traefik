@@ -123,6 +123,33 @@ networks:
     driver: bridge
 ```
 
+or, using environment variables
+
+```yaml
+version: '2'
+
+services:
+  proxy:
+    image: traefik
+    environment:
+      - TRAEFIK_WEB=true
+      - TRAEFIK_DOCKER=true
+      - TRAEFIK_DOCKER_DOMAIN=docker.localhost
+      - TRAEFIK_LOGLEVEL=DEBUG
+    networks:
+      - webgateway
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /dev/null:/traefik.toml
+
+networks:
+  webgateway:
+    driver: bridge
+```
+
 Start it from within the `traefik` folder:
 
 ```shell
