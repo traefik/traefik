@@ -1,5 +1,7 @@
 package servicefabric
 
+import "encoding/xml"
+
 // ApplicationItemsPage encapsulates the paged response
 // model for Applications in the Service Fabric API
 type ApplicationItemsPage struct {
@@ -168,4 +170,15 @@ type PropertiesListPage struct {
 type KeyValuePair struct {
 	Key   string `json:"Key"`
 	Value string `json:"Value"`
+}
+
+// ServiceExtensionLabels provides the structure for
+// deserialising the XML document used to store labels in an Extension
+type ServiceExtensionLabels struct {
+	XMLName xml.Name `xml:"Labels"`
+	Label   []struct {
+		XMLName xml.Name `xml:"Label"`
+		Value   string   `xml:",chardata"`
+		Key     string   `xml:"Key,attr"`
+	}
 }

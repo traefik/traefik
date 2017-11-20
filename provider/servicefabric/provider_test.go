@@ -96,10 +96,10 @@ func TestUpdateConfig(t *testing.T) {
 	}
 
 	labels := map[string]string{
-		"traefik.expose":                      "",
-		"traefik.frontend.rule.default":       "Path: /",
-		"traefik.backend.loadbalancer.method": "wrr",
-		"traefik.backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
+		"expose":                      "",
+		"frontend.rule.default":       "Path: /",
+		"backend.loadbalancer.method": "wrr",
+		"backend.circuitbreaker":      "NetworkErrorRatio() > 0.5",
 	}
 
 	client := &clientMock{

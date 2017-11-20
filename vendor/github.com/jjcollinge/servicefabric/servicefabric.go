@@ -9,6 +9,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
+
+	"github.com/cloudflare/cfssl/log"
 )
 
 // Client is an interface for Service Fabric client's
@@ -22,6 +25,7 @@ type Client interface {
 	GetInstances(appName, serviceName, partitionName string) (*InstanceItemsPage, error)
 	GetServiceExtension(appType, applicationVersion, serviceTypeName, extensionKey string, response interface{}) error
 	GetProperties(name string) (bool, map[string]string, error)
+	GetServiceLabels(service *ServiceItem, app *ApplicationItem, prefix string) (map[string]string, error)
 }
 
 type clientImpl struct {
@@ -240,7 +244,7 @@ func (c *clientImpl) GetServiceExtension(appType, applicationVersion, serviceTyp
 	for _, serviceTypeInfo := range serviceTypes {
 		if serviceTypeInfo.ServiceTypeDescription.ServiceTypeName == serviceTypeName {
 			for _, extension := range serviceTypeInfo.ServiceTypeDescription.Extensions {
-				if extension.Key == extensionKey {
+				if strings.EqualFold(extension.Key, extensionKey) {
 					xmlData := extension.Value
 					err = xml.Unmarshal([]byte(xmlData), &response)
 					if err != nil {
@@ -299,6 +303,45 @@ func (c *clientImpl) GetProperties(name string) (bool, map[string]string, error)
 	}
 
 	return true, properties, nil
+}
+
+// GetServiceLabels add labels from service manifest extensions and properties manager
+// expects extension xml in <Label key="key">value</Label>
+func (c *clientImpl) GetServiceLabels(service *ServiceItem, app *ApplicationItem, prefix string) (map[string]string, error) {
+	Labels := map[string]string{}
+	extensionData := ServiceExtensionLabels{}
+	err := c.GetServiceExtension(app.TypeName, app.TypeVersion, service.TypeName, prefix, &extensionData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	prefixPeriod := prefix + "."
+
+	if extensionData.Label != nil {
+		for _, label := range extensionData.Label {
+			if strings.HasPrefix(label.Key, prefixPeriod) {
+				labelKey := strings.Replace(label.Key, prefixPeriod, "", -1)
+				Labels[labelKey] = label.Value
+			}
+		}
+	}
+
+	exists, properties, err := c.GetProperties(service.ID)
+	if err != nil {
+		log.Error(err)
+	} else {
+		if exists {
+			for k, v := range properties {
+				if strings.HasPrefix(k, prefixPeriod) {
+					labelKey := strings.Replace(k, prefixPeriod, "", -1)
+					Labels[labelKey] = v
+				}
+			}
+		}
+	}
+
+	return Labels, nil
 }
 
 func (c *clientImpl) nameExists(propertyName string) (bool, error) {

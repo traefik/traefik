@@ -39,3 +39,7 @@ func (c *clientMock) GetServiceExtension(appType, applicationVersion, serviceTyp
 func (c *clientMock) GetProperties(name string) (bool, map[string]string, error) {
 	return true, c.labels, nil
 }
+
+func (c *clientMock) GetServiceLabels(service *sfsdk.ServiceItem, app *sfsdk.ApplicationItem, prefix string) (map[string]string, error) {
+	return c.labels, nil
+}

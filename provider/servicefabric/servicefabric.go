@@ -19,10 +19,7 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-const (
-	keyPrefix            = "traefik."
-	traefikExtensionName = "Traefik"
-)
+const traefikLabelPrefix = "traefik"
 
 // Provider holds for configuration for the provider
 type Provider struct {
@@ -53,8 +50,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		return err
 	}
 
-	p.updateConfig(configurationChan, pool, sfClient, time.Second*10)
-	return nil
+	return p.updateConfig(configurationChan, pool, sfClient, time.Second*10)
 }
 
 func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, sfClient sfsdk.Client, pollInterval time.Duration) error {
@@ -137,11 +133,15 @@ func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExten
 			item := ServiceItemExtended{
 				ServiceItem: service,
 				Application: app,
-				Labels:      make(map[string]string),
 			}
 
-			addLabelsFromServiceExtension(sfClient, service.TypeName, &app, &item)
-			addLabelsFromPropertyManager(sfClient, &item)
+			labels, err := sfClient.GetServiceLabels(&service, &app, traefikLabelPrefix)
+
+			if err != nil {
+				log.Error(err)
+			} else {
+				item.Labels = labels
+			}
 
 			partitions, err := sfClient.GetPartitions(app.ID, service.ID)
 			if err != nil {
@@ -199,8 +199,7 @@ func (p *Provider) hasServiceLabel(service ServiceItemExtended, key string) bool
 }
 
 func (p *Provider) getServiceLabelValue(service ServiceItemExtended, key string) string {
-	value, _ := service.Labels[key]
-	return value
+	return service.Labels[key]
 }
 
 func (p *Provider) getServicesWithLabelValueMap(services []ServiceItemExtended, key string) map[string][]ServiceItemExtended {
@@ -216,16 +215,6 @@ func (p *Provider) getServicesWithLabelValueMap(services []ServiceItemExtended, 
 		}
 	}
 	return result
-}
-
-func (p *Provider) getServicesWithLabel(services []ServiceItemExtended, key string) []ServiceItemExtended {
-	srvWithLabel := []ServiceItemExtended{}
-	for _, service := range services {
-		if p.hasServiceLabel(service, key) {
-			srvWithLabel = append(srvWithLabel, service)
-		}
-	}
-	return srvWithLabel
 }
 
 func (p *Provider) getServicesWithLabelValue(services []ServiceItemExtended, key, expectedValue string) []ServiceItemExtended {
@@ -357,48 +346,4 @@ func getNamedEndpoint(endpointData string, endpointName string) (string, error) 
 		return "", errors.New("endpoint doesn't exist")
 	}
 	return endpoint, nil
-}
-
-// Add labels from service manifest extensions
-func addLabelsFromServiceExtension(sfClient sfsdk.Client, serviceType string, app *sfsdk.ApplicationItem, service *ServiceItemExtended) error {
-	extensionData := ServiceExtensionLabels{}
-	err := sfClient.GetServiceExtension(app.TypeName, app.TypeVersion, serviceType, traefikExtensionName, &extensionData)
-
-	if err != nil {
-		return err
-	}
-
-	if extensionData.Label != nil {
-		for _, label := range extensionData.Label {
-			if strings.HasPrefix(label.Key, keyPrefix) {
-				labelKey := strings.Replace(label.Key, keyPrefix, "", -1)
-				log.Debugf("Extension label found for %s with key %s and value %s", service.ID, label.Key, label.Value)
-				service.Labels[labelKey] = label.Value
-			}
-		}
-	} else {
-		log.Debugf("No Extension found for %s", service.ID)
-	}
-
-	return nil
-}
-
-// Override labels with runtime values from properties store
-func addLabelsFromPropertyManager(sfClient sfsdk.Client, service *ServiceItemExtended) {
-	exists, labels, err := sfClient.GetProperties(service.ID)
-	if err != nil {
-		log.Error(err)
-	} else {
-		if !exists {
-			log.Debugf("Service %s doesn't have any property overrides in PropertyManager", service.ID)
-		} else {
-			for k, v := range labels {
-				if strings.HasPrefix(k, keyPrefix) {
-					labelKey := strings.Replace(k, keyPrefix, "", -1)
-					log.Debugf("Override label found for %s with key %s and value %s", service.ID, labelKey, v)
-					service.Labels[labelKey] = v
-				}
-			}
-		}
-	}
 }

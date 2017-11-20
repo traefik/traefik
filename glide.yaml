@@ -203,7 +203,7 @@ import:
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - package: github.com/mitchellh/copystructure
 - package: github.com/jjcollinge/servicefabric
-  version: 33a646f351757545d5dba6aa7a8a2b1754a0243e
+  version: be2b731fc787bca325d1601a5c9ff020d8f174e4
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose

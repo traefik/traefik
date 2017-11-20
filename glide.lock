@@ -1,5 +1,5 @@
-hash: 6a85336fc5641ab5861091182fc60ee4d1c4520f24d4703fd65c3a6618545fed
-updated: 2017-11-01T11:39:07.898818Z
+hash: 6a2169a3c35bd041f34f01fa526a52458bd8311573adfb27cb42dade98d90163
+updated: 2017-11-20T13:25:23.365446Z
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -82,6 +82,10 @@ imports:
   - fun
 - name: github.com/cenk/backoff
   version: 5d150e7eec023ce7a124856b37c68e54b4050ac7
+- name: github.com/cloudflare/cfssl
+  version: 9ada30affe7af7e87eb1c3056854b227a9a90998
+  subpackages:
+  - log
 - name: github.com/codahale/hdrhistogram
   version: 9208b142303c12d8899bae836fd524ac9338b4fd
 - name: github.com/codegangsta/cli
@@ -313,7 +317,7 @@ imports:
   subpackages:
   - lib
 - name: github.com/jjcollinge/servicefabric
-  version: 33a646f351757545d5dba6aa7a8a2b1754a0243e
+  version: be2b731fc787bca325d1601a5c9ff020d8f174e4
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jonboulle/clockwork
