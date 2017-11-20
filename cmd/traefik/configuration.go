@@ -20,6 +20,7 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
+	"github.com/containous/traefik/provider/remote"
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
@@ -48,6 +49,10 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	// default Rest
 	var defaultRest rest.Provider
 	defaultRest.EntryPoint = configuration.DefaultInternalEntryPointName
+
+	// default Remote
+	var defaultRemote remote.Provider
+	defaultRemote.Watch = true
 
 	// TODO: Deprecated - Web provider, use REST provider instead
 	var defaultWeb configuration.WebCompatibility
@@ -234,6 +239,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		File:               &defaultFile,
 		Web:                &defaultWeb,
 		Rest:               &defaultRest,
+		Remote:             &defaultRemote,
 		Marathon:           &defaultMarathon,
 		Consul:             &defaultConsul,
 		ConsulCatalog:      &defaultConsulCatalog,
