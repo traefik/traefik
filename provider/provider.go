@@ -9,7 +9,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/sprig"
-	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/autogen/gentemplates"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -101,7 +101,7 @@ func (p *BaseProvider) getTemplateContent(defaultTemplateFile string) (string, e
 	}
 
 	if strings.HasSuffix(defaultTemplateFile, ".tmpl") {
-		buf, err := autogen.Asset(defaultTemplateFile)
+		buf, err := gentemplates.Asset(defaultTemplateFile)
 		if err != nil {
 			return "", err
 		}
