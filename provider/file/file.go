@@ -58,7 +58,6 @@ func (p *Provider) LoadConfig() (*types.Configuration, error) {
 	if p.Directory != "" {
 		return loadFileConfigFromDirectory(p.Directory, nil)
 	}
-
 	return loadFileConfig(p.Filename)
 }
 
@@ -96,6 +95,27 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 	}
 
 	return nil
+}
+
+func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage, event fsnotify.Event) {
+	watchItem := p.Filename
+	if p.Directory != "" {
+		watchItem = p.Directory
+	}
+
+	if _, err := os.Stat(watchItem); err != nil {
+		log.Debugf("Unable to watch %s : %v", watchItem, err)
+		return
+	}
+
+	configuration, err := p.LoadConfig()
+
+	if err != nil {
+		log.Errorf("Error occurred during watcher callback: %s", err)
+		return
+	}
+
+	sendConfigToChannel(configurationChan, configuration)
 }
 
 func sendConfigToChannel(configurationChan chan<- types.ConfigMessage, configuration *types.Configuration) {
@@ -177,25 +197,4 @@ func loadFileConfigFromDirectory(directory string, configuration *types.Configur
 		configuration.TLSConfiguration = append(configuration.TLSConfiguration, conf)
 	}
 	return configuration, nil
-}
-
-func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage, event fsnotify.Event) {
-	watchItem := p.Filename
-	if p.Directory != "" {
-		watchItem = p.Directory
-	}
-
-	if _, err := os.Stat(watchItem); err != nil {
-		log.Debugf("Unable to watch %s : %v", watchItem, err)
-		return
-	}
-
-	configuration, err := p.LoadConfig()
-
-	if err != nil {
-		log.Errorf("Error occurred during watcher callback: %s", err)
-		return
-	}
-
-	sendConfigToChannel(configurationChan, configuration)
 }

@@ -332,10 +332,10 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik finish without error
-	cmd.Wait()
+	err = cmd.Wait()
+	c.Assert(err, checker.IsNil)
 
-	//CHECK
-	checkExistsMap := map[string]string{
+	expectedData := map[string]string{
 		"/traefik/loglevel":                 "DEBUG",
 		"/traefik/defaultentrypoints/0":     "http",
 		"/traefik/entrypoints/http/address": ":8000",
@@ -343,7 +343,7 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 		"/traefik/consul/endpoint":          consulHost + ":8500",
 	}
 
-	for key, value := range checkExistsMap {
+	for key, value := range expectedData {
 		var p *store.KVPair
 		err = try.Do(60*time.Second, func() error {
 			p, err = s.kv.Get(key, nil)
@@ -357,7 +357,6 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 
 func (s *ConsulSuite) TestCommandStoreConfigWithFile(c *check.C) {
 	s.setupConsul(c)
-
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 
 	cmd, display := s.traefikCmd(
@@ -370,16 +369,16 @@ func (s *ConsulSuite) TestCommandStoreConfigWithFile(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik finish without error
-	cmd.Wait()
+	err = cmd.Wait()
+	c.Assert(err, checker.IsNil)
 
-	//CHECK
-	checkExistsMap := map[string]string{
+	expectedData := map[string]string{
 		"/traefik/backends/backend1/servers/server1/url":  "http://172.17.0.2:80",
 		"/traefik/frontends/frontend1/backend":            "backend1",
 		"/traefik/frontends/frontend1/routes/test_1/rule": "Path:/test1",
 	}
 
-	for key, value := range checkExistsMap {
+	for key, value := range expectedData {
 		var p *store.KVPair
 		err = try.Do(10*time.Second, func() error {
 			p, err = s.kv.Get(key, nil)
@@ -395,7 +394,7 @@ func (s *ConsulSuite) TestCommandStoreConfigWithFile(c *check.C) {
 
 	for _, value := range checkNotExistsMap {
 		err = try.Do(10*time.Second, func() error {
-			if check, err := s.kv.Exists(value); err == nil && check {
+			if exists, err := s.kv.Exists(value); err == nil && exists {
 				return fmt.Errorf("%s key is not suppose to exist in KV", value)
 			}
 			return nil
