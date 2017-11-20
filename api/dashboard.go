@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/containous/mux"
-	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/autogen/genstatic"
 	"github.com/elazarl/go-bindata-assetfs"
 )
 
@@ -18,6 +18,5 @@ func (g DashboardHandler) AddRoutes(router *mux.Router) {
 		http.Redirect(response, request, "/dashboard/", 302)
 	})
 	router.Methods(http.MethodGet).PathPrefix("/dashboard/").
-		Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: autogen.Asset, AssetInfo: autogen.AssetInfo, AssetDir: autogen.AssetDir, Prefix: "static"})))
-
+		Handler(http.StripPrefix("/dashboard/", http.FileServer(&assetfs.AssetFS{Asset: genstatic.Asset, AssetInfo: genstatic.AssetInfo, AssetDir: genstatic.AssetDir, Prefix: "static"})))
 }

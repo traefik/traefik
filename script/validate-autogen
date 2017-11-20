@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"; export SCRIPTDIR
+source "${SCRIPTDIR}/.validate"
+
+# Iterate over all directories containing templates folders.
+IFS=$'\n' files=( $(validate_diff --diff-filter=ACMR --name-only -- templates || true) )
+
+if [[ ${#files[@]} -gt 0 ]]; then
+	echo "checking autogen is up-to-date with templates..."
+	go generate >/dev/null
+	# Let see if the working directory is clean
+	diffs="$(git status --porcelain -- autogen 2>/dev/null)"
+	if [[ "$diffs" ]]; then
+		{
+			echo "The result of 'go generate' differs"
+			echo
+			echo "$diffs"
+			echo
+			echo 'Please do "go generate" to update the `autogen` package.'
+			echo
+		} >&2
+		exit 2
+	fi
+fi
+
+echo 'Congratulations! All autogen changes are done the right way.'
