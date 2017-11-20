@@ -18,6 +18,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
+	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
@@ -140,8 +141,9 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	ingresses := k8sClient.GetIngresses()
 
 	templateObjects := types.Configuration{
-		Backends:  map[string]*types.Backend{},
-		Frontends: map[string]*types.Frontend{},
+		Backends:         map[string]*types.Backend{},
+		Frontends:        map[string]*types.Frontend{},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 	for _, i := range ingresses {
 		ingressClass := i.Annotations[annotationKubernetesIngressClass]
@@ -307,6 +309,50 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 			}
+		}
+
+		for _, t := range i.Spec.TLS {
+			tlsSecret, exists, err := k8sClient.GetSecret(i.Namespace, t.SecretName)
+			if err != nil {
+				log.Errorf("Unable to retrive secret %s/%s: %s", i.Namespace, t.SecretName, err)
+				continue
+			}
+			if !exists {
+				log.Warnf("Unable to find secret %s/%s", i.Namespace, t.SecretName)
+				continue
+			}
+			_, tlsCrtExists := tlsSecret.Data["tls.crt"]
+			_, tlsKeyExists := tlsSecret.Data["tls.key"]
+			if !tlsCrtExists || !tlsKeyExists {
+				log.Warnf("Secret %s/%s is not of type 'kubernetes.io/tls'", i.Namespace, t.SecretName)
+				continue
+			}
+
+			var hosts []string
+			if len(t.Hosts) > 0 {
+				hosts = t.Hosts
+			} else {
+				// If no hosts are provided the hosts property should default ot the wildcard host. To ensure that the
+				// tls config only matches rules in this ingress, add all the used hosts to simulate a wildcard like
+				// behavior.
+				hosts = []string{}
+
+				for _, r := range i.Spec.Rules {
+					if r.Host != "" {
+						hosts = append(hosts, r.Host)
+					}
+				}
+			}
+
+			tlsConfig := &traefikTls.Configuration{
+				EntryPoints: hosts,
+				Certificate: &traefikTls.Certificate{
+					CertFile: traefikTls.FileOrContent(tlsSecret.Data["tls.crt"]),
+					KeyFile:  traefikTls.FileOrContent(tlsSecret.Data["tls.key"]),
+				},
+			}
+
+			templateObjects.TLSConfiguration = append(templateObjects.TLSConfiguration, tlsConfig)
 		}
 	}
 	return &templateObjects, nil

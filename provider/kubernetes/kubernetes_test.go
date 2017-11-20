@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	traefikTls "github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/pkg/api/v1"
@@ -310,6 +311,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -503,6 +505,7 @@ func TestGetPassHostHeader(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -589,6 +592,7 @@ func TestGetPassTLSCert(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -688,6 +692,7 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -768,6 +773,7 @@ func TestHostlessIngress(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -998,6 +1004,7 @@ func TestServiceAnnotations(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.EqualValues(t, expected, actual)
@@ -1552,6 +1559,7 @@ func TestIngressAnnotations(t *testing.T) {
 				Redirect: "",
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -1653,6 +1661,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -1754,6 +1763,7 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -1854,6 +1864,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -2170,6 +2181,7 @@ func TestMissingResources(t *testing.T) {
 				},
 			},
 		},
+		TLSConfiguration: []*traefikTls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -2260,6 +2272,169 @@ func TestBasicAuthInTemplate(t *testing.T) {
 	if !reflect.DeepEqual(got, []string{"myUser:myEncodedPW"}) {
 		t.Fatalf("unexpected credentials: %+v", got)
 	}
+}
+
+func TestTlsSecret(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Namespace: "testing",
+			},
+			Spec: v1beta1.IngressSpec{
+				Rules: []v1beta1.IngressRule{
+					{
+						Host: "example.com",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "example-com",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+					{
+						Host: "example.org",
+						IngressRuleValue: v1beta1.IngressRuleValue{
+							HTTP: &v1beta1.HTTPIngressRuleValue{
+								Paths: []v1beta1.HTTPIngressPath{
+									{
+										Backend: v1beta1.IngressBackend{
+											ServiceName: "example-org",
+											ServicePort: intstr.FromInt(80),
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				TLS: []v1beta1.IngressTLS{
+					{
+						Hosts:      []string{"example.com"},
+						SecretName: "myTlsSecret",
+					},
+				},
+			},
+		},
+	}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "example-com",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Type:      "ClusterIP",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "example-org",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.2",
+				Type:      "ClusterIP",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 80,
+					},
+				},
+			},
+		},
+	}
+	secrets := []*v1.Secret{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "myTlsSecret",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Data: map[string][]byte{
+				"tls.crt": []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+				"tls.key": []byte("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+			},
+		},
+	}
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		secrets:   secrets,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{
+			"example.com": {
+				Servers:        map[string]types.Server{},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+				},
+			},
+			"example.org": {
+				Servers:        map[string]types.Server{},
+				CircuitBreaker: nil,
+				LoadBalancer: &types.LoadBalancer{
+					Method: "wrr",
+				},
+			},
+		},
+		Frontends: map[string]*types.Frontend{
+			"example.com": {
+				Backend:        "example.com",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"example.com": {
+						Rule: "Host:example.com",
+					},
+				},
+			},
+			"example.org": {
+				Backend:        "example.org",
+				PassHostHeader: true,
+				Routes: map[string]types.Route{
+					"example.org": {
+						Rule: "Host:example.org",
+					},
+				},
+			},
+		},
+		TLSConfiguration: []*traefikTls.Configuration{
+			{
+				EntryPoints: []string{"example.com"},
+				Certificate: &traefikTls.Certificate{
+					CertFile: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+					KeyFile:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, actual)
 }
 
 type clientMock struct {
