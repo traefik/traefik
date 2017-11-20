@@ -22,7 +22,7 @@ type DebugHandler struct{}
 
 // AddRoutes add debug routes on a router
 func (g DebugHandler) AddRoutes(router *mux.Router) {
-	router.Methods("GET").Path("/debug/vars").
+	router.Methods(http.MethodGet).Path("/debug/vars").
 		HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			fmt.Fprint(w, "{\n")

@@ -179,7 +179,7 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	req.Host = "test.localhost"
 
 	err = try.Request(req, 500*time.Millisecond,
-		try.StatusCodeIs(200),
+		try.StatusCodeIs(http.StatusOK),
 		try.BodyContainsOr(whoami3IP, whoami4IP))
 	c.Assert(err, checker.IsNil)
 
@@ -187,7 +187,7 @@ func (s *ConsulSuite) TestNominalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	err = try.Request(req, 500*time.Millisecond,
-		try.StatusCodeIs(200),
+		try.StatusCodeIs(http.StatusOK),
 		try.BodyContainsOr(whoami1IP, whoami2IP))
 	c.Assert(err, checker.IsNil)
 

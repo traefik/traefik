@@ -45,7 +45,7 @@ func TestRetry(t *testing.T) {
 			httpHandler = NewRetry(tc.attempts, httpHandler, tc.listener)
 
 			recorder := httptest.NewRecorder()
-			req, err := http.NewRequest("GET", "http://localhost:3000/ok", ioutil.NopCloser(nil))
+			req, err := http.NewRequest(http.MethodGet, "http://localhost:3000/ok", ioutil.NopCloser(nil))
 			if err != nil {
 				t.Fatalf("could not create request: %+v", err)
 			}

@@ -32,7 +32,7 @@ var (
 	testPath                = "testpath"
 	testPort                = 8181
 	testProto               = "HTTP/0.0"
-	testMethod              = "POST"
+	testMethod              = http.MethodPost
 	testReferer             = "testReferer"
 	testUserAgent           = "testUserAgent"
 	testRetryAttempts       = 2

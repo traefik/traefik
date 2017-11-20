@@ -365,7 +365,7 @@ func (s *WebsocketSuite) TestBasicAuth(c *check.C) {
 
 func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(401)
+		w.WriteHeader(http.StatusUnauthorized)
 	}))
 	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
@@ -387,7 +387,7 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
 
 	_, resp, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
 	c.Assert(err, checker.NotNil)
-	c.Assert(resp.StatusCode, check.Equals, 401)
+	c.Assert(resp.StatusCode, check.Equals, http.StatusUnauthorized)
 
 }
 

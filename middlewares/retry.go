@@ -131,7 +131,7 @@ func newRetryResponseRecorder() *retryResponseRecorder {
 	return &retryResponseRecorder{
 		HeaderMap: make(http.Header),
 		Body:      new(bytes.Buffer),
-		Code:      200,
+		Code:      http.StatusOK,
 	}
 }
 
