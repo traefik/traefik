@@ -57,6 +57,13 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # Default: false
 #
 # disablePassHostHeaders = true
+
+# Enable PassTLSCert Headers.
+#
+# Optional
+# Default: false
+#
+# enablePassTLSCert = true
 ```
 
 ### `endpoint`
@@ -90,6 +97,10 @@ Annotations can be used on containers to override default behaviour for the whol
     Override the default frontend rule priority.
 - `traefik.frontend.redirect: https`: 
     Enables Redirect to another entryPoint for that frontend (e.g. HTTPS).
+- `traefik.frontend.entryPoints: http,https`  
+    Override the default frontend endpoints.
+- `traefik.frontend.passTLSCert: true`  
+    Override the default frontend PassTLSCert value. Default: `false`.
 
 Annotations can be used on the Kubernetes service to override default behaviour:
 

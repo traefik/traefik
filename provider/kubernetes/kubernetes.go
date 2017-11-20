@@ -47,6 +47,7 @@ type Provider struct {
 	Token                  string     `description:"Kubernetes bearer token (not needed for in-cluster client)"`
 	CertAuthFilePath       string     `description:"Kubernetes certificate authority file path (not needed for in-cluster client)"`
 	DisablePassHostHeaders bool       `description:"Kubernetes disable PassHost Headers" export:"true"`
+	EnablePassTLSCert      bool       `description:"Kubernetes enable Pass TLS Client Certs" export:"true"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces" export:"true"`
 	LabelSelector          string     `description:"Kubernetes api label selector to use" export:"true"`
 	lastConfiguration      safe.Safe
@@ -165,24 +166,15 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				PassHostHeader := p.getPassHostHeader()
-
-				passHostHeaderAnnotation, ok := i.Annotations[types.LabelFrontendPassHostHeader]
-				switch {
-				case !ok:
-					// No op.
-				case passHostHeaderAnnotation == "false":
-					PassHostHeader = false
-				case passHostHeaderAnnotation == "true":
-					PassHostHeader = true
-				default:
-					log.Warnf("Unknown value '%s' for %s, falling back to %s", passHostHeaderAnnotation, types.LabelFrontendPassHostHeader, PassHostHeader)
-				}
+				passHostHeader := getAnnotationPassHostHeader(i, p)
+				passTLSCert := getAnnotationPassTLSCert(i, p)
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
 					log.Errorf("Value for annotation %q on ingress %s/%s invalid: no realm customization supported", annotationKubernetesAuthRealm, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
 					delete(templateObjects.Backends, r.Host+pa.Path)
 					continue
 				}
+
+				entryPoints := getEntrypoints(i)
 
 				whitelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
 				whitelistSourceRange := provider.SplitAndTrimString(whitelistSourceRangeAnnotation)
@@ -200,12 +192,14 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:              r.Host + pa.Path,
-						PassHostHeader:       PassHostHeader,
+						PassHostHeader:       passHostHeader,
+						PassTLSCert:          passTLSCert,
 						Routes:               make(map[string]types.Route),
 						Priority:             priority,
 						BasicAuth:            basicAuthCreds,
 						WhitelistSourceRange: whitelistSourceRange,
 						Redirect:             entryPointRedirect,
+						EntryPoints:          entryPoints,
 					}
 				}
 				if len(r.Host) > 0 {
@@ -316,6 +310,39 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		}
 	}
 	return &templateObjects, nil
+}
+
+func getEntrypoints(i *v1beta1.Ingress) []string {
+	entrypointsAnnotation, ok := i.Annotations[types.LabelFrontendEntryPoints]
+	if ok {
+		return strings.Split(entrypointsAnnotation, ",")
+	}
+	return nil
+
+}
+
+func getBoolAnnotation(meta v1.ObjectMeta, name string, defaultValue bool) bool {
+	annotationValue := defaultValue
+	annotationStringValue, ok := meta.Annotations[name]
+	switch {
+	case !ok:
+		// No op.
+	case annotationStringValue == "false":
+		annotationValue = false
+	case annotationStringValue == "true":
+		annotationValue = true
+	default:
+		log.Warnf("Unknown value '%s' for %s, falling back to %s", name, types.LabelFrontendPassTLSCert, defaultValue)
+	}
+	return annotationValue
+}
+
+func getAnnotationPassHostHeader(i *v1beta1.Ingress, p *Provider) bool {
+	return getBoolAnnotation(i.ObjectMeta, types.LabelFrontendPassHostHeader, p.getPassHostHeader())
+}
+
+func getAnnotationPassTLSCert(i *v1beta1.Ingress, p *Provider) bool {
+	return getBoolAnnotation(i.ObjectMeta, types.LabelFrontendPassTLSCert, p.getPassTLSCert())
 }
 
 func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
@@ -440,6 +467,10 @@ func shouldProcessIngress(ingressClass string) bool {
 
 func (p *Provider) getPassHostHeader() bool {
 	return !p.DisablePassHostHeaders
+}
+
+func (p *Provider) getPassTLSCert() bool {
+	return p.EnablePassTLSCert
 }
 
 func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {
