@@ -171,19 +171,19 @@ func TestDockerGetServiceBackend(t *testing.T) {
 	}{
 		{
 			container: containerJSON(name("foo")),
-			expected:  "foo-myservice",
+			expected:  "foo-foo-myservice",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelBackend: "another-backend",
 			})),
-			expected: "another-backend-myservice",
+			expected: "fake-another-backend-myservice",
 		},
 		{
 			container: containerJSON(labels(map[string]string{
 				"traefik.myservice.frontend.backend": "custom-backend",
 			})),
-			expected: "custom-backend",
+			expected: "fake-custom-backend",
 		},
 	}
 
@@ -341,8 +341,8 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-foo-service": {
-					Backend:        "backend-foo-service",
+				"frontend-foo-foo-service": {
+					Backend:        "backend-foo-foo-service",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
@@ -354,7 +354,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-foo-service": {
+				"backend-foo-foo-service": {
 					Servers: map[string]types.Server{
 						"service-0": {
 							URL:    "http://127.0.0.1:2503",
@@ -399,8 +399,8 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 				),
 			},
 			expectedFrontends: map[string]*types.Frontend{
-				"frontend-foobar": {
-					Backend:        "backend-foobar",
+				"frontend-test1-foobar": {
+					Backend:        "backend-test1-foobar",
 					PassHostHeader: false,
 					Priority:       5000,
 					EntryPoints:    []string{"http", "https", "ws"},
@@ -411,8 +411,8 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 						},
 					},
 				},
-				"frontend-test2-anotherservice": {
-					Backend:        "backend-test2-anotherservice",
+				"frontend-test2-test2-anotherservice": {
+					Backend:        "backend-test2-test2-anotherservice",
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
@@ -424,7 +424,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
-				"backend-foobar": {
+				"backend-test1-foobar": {
 					Servers: map[string]types.Server{
 						"service-0": {
 							URL:    "https://127.0.0.1:2503",
@@ -433,7 +433,7 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 					},
 					CircuitBreaker: nil,
 				},
-				"backend-test2-anotherservice": {
+				"backend-test2-test2-anotherservice": {
 					Servers: map[string]types.Server{
 						"service-0": {
 							URL:    "http://127.0.0.1:8079",
