@@ -1019,6 +1019,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						hcOpts := parseHealthCheckOptions(rebalancer, frontend.Backend, config.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
+							hcOpts.Transport = server.defaultForwardingRoundTripper
 							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
 						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
@@ -1040,6 +1041,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						hcOpts := parseHealthCheckOptions(rr, frontend.Backend, config.Backends[frontend.Backend].HealthCheck, globalConfiguration.HealthCheck)
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
+							hcOpts.Transport = server.defaultForwardingRoundTripper
 							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
 						lb = middlewares.NewEmptyBackendHandler(rr, lb)

@@ -195,6 +195,9 @@ func (p *Provider) generateECSConfig(services map[string][]ecsInstance) (*types.
 		"getPassHostHeader":       p.getPassHostHeader,
 		"getPriority":             p.getPriority,
 		"getEntryPoints":          p.getEntryPoints,
+		"hasHealthCheckLabels":    p.hasHealthCheckLabels,
+		"getHealthCheckPath":      p.getHealthCheckPath,
+		"getHealthCheckInterval":  p.getHealthCheckInterval,
 	}
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
 		Services map[string][]ecsInstance
@@ -524,6 +527,18 @@ func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {
 		}
 	}
 	return "wrr"
+}
+
+func (p *Provider) hasHealthCheckLabels(instances []ecsInstance) bool {
+	return p.getHealthCheckPath(instances) != ""
+}
+
+func (p *Provider) getHealthCheckPath(instances []ecsInstance) string {
+	return p.getFirstInstanceLabel(instances, types.LabelBackendHealthcheckPath)
+}
+
+func (p *Provider) getHealthCheckInterval(instances []ecsInstance) string {
+	return p.getFirstInstanceLabel(instances, types.LabelBackendHealthcheckInterval)
 }
 
 // Provider expects no more than 100 parameters be passed to a DescribeTask call; thus, pack

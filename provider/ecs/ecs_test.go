@@ -643,6 +643,65 @@ func TestGenerateECSConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "config parsed successfully with health check labels",
+			services: map[string][]ecsInstance{
+				"testing": {
+					{
+						Name: "instance-1",
+						containerDefinition: &ecs.ContainerDefinition{
+							DockerLabels: map[string]*string{
+								types.LabelBackendHealthcheckPath:     func(s string) *string { return &s }("/health"),
+								types.LabelBackendHealthcheckInterval: func(s string) *string { return &s }("1s"),
+							},
+						},
+						machine: &ec2.Instance{
+							PrivateIpAddress: func(s string) *string { return &s }("10.0.0.1"),
+						},
+						container: &ecs.Container{
+							NetworkBindings: []*ecs.NetworkBinding{
+								{
+									HostPort: func(i int64) *int64 { return &i }(1337),
+								},
+							},
+						},
+					},
+				},
+			},
+			exp: &types.Configuration{
+				Backends: map[string]*types.Backend{
+					"backend-instance-1": {
+						Servers: map[string]types.Server{
+							"server-instance-1": {
+								URL: "http://10.0.0.1:1337",
+							},
+						},
+					},
+					"backend-testing": {
+						LoadBalancer: &types.LoadBalancer{
+							Method: "wrr",
+						},
+						HealthCheck: &types.HealthCheck{
+							Path:     "/health",
+							Interval: "1s",
+						},
+					},
+				},
+				Frontends: map[string]*types.Frontend{
+					"frontend-testing": {
+						EntryPoints: []string{},
+						Backend:     "backend-testing",
+						Routes: map[string]types.Route{
+							"route-frontend-testing": {
+								Rule: "Host:instance-1.",
+							},
+						},
+						PassHostHeader: true,
+						BasicAuth:      []string{},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
