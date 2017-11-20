@@ -394,7 +394,7 @@ func (s *ConsulSuite) TestCommandStoreConfigWithFile(c *check.C) {
 
 	for _, value := range checkNotExistsMap {
 		err = try.Do(10*time.Second, func() error {
-			if exists, err := s.kv.Exists(value); err == nil && exists {
+			if exists, err := s.kv.Exists(value, nil); err == nil && exists {
 				return fmt.Errorf("%s key is not suppose to exist in KV", value)
 			}
 			return nil
