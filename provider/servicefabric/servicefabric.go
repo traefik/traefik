@@ -19,8 +19,10 @@ import (
 
 var _ provider.Provider = (*Provider)(nil)
 
-const keyPrefix = "traefik."
-const traefikExtensionName = "Traefik"
+const (
+	keyPrefix            = "traefik."
+	traefikExtensionName = "Traefik"
+)
 
 // Provider holds for configuration for the provider
 type Provider struct {
@@ -50,7 +52,6 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	if err != nil {
 		return err
 	}
-	// provider.Constraints = append(provider.Constraints, constraints...)
 
 	p.updateConfig(configurationChan, pool, sfClient, time.Second*10)
 	return nil
@@ -163,9 +164,6 @@ func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExten
 									partitionExt.Replicas = append(partitionExt.Replicas, instance)
 								}
 							}
-							if len(partitionExt.Replicas) > 0 {
-								partitionExt.HasReplicas = true
-							}
 						}
 					} else if partition.ServiceKind == "Stateless" {
 						instances, err := sfClient.GetInstances(app.ID, service.ID, partition.PartitionInformation.ID)
@@ -177,9 +175,6 @@ func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExten
 								if isHealthy(*instance.ReplicaItemBase) && hasHTTPEndpoint(*instance.ReplicaItemBase) {
 									partitionExt.Instances = append(partitionExt.Instances, instance)
 								}
-							}
-							if len(partitionExt.Instances) > 0 {
-								partitionExt.HasInstances = true
 							}
 						}
 					} else {
@@ -266,19 +261,12 @@ func (p *Provider) getServiceLabelsWithPrefix(service ServiceItemExtended, prefi
 
 func (p *Provider) isPrimary(instance sfsdk.ReplicaInstance) bool {
 	_, data := instance.GetReplicaData()
-	primaryString := "Primary"
-	if data.ReplicaRole == primaryString {
-		return true
-	}
-	return false
+	return data.ReplicaRole == "Primary"
 }
 
 func (p *Provider) doesAppParamContain(app sfsdk.ApplicationItem, key, shouldContain string) bool {
 	value := p.getApplicationParameter(app, key)
-	if strings.Contains(value, shouldContain) {
-		return true
-	}
-	return false
+	return strings.Contains(value, shouldContain)
 }
 
 func (p *Provider) getApplicationParameter(app sfsdk.ApplicationItem, key string) string {
@@ -312,10 +300,7 @@ func (p *Provider) getNamedEndpoint(instance sfsdk.ReplicaInstance, endpointName
 }
 
 func isHealthy(instanceData sfsdk.ReplicaItemBase) bool {
-	if instanceData.ReplicaStatus == "Ready" || instanceData.HealthState != "Error" {
-		return true
-	}
-	return false
+	return instanceData.ReplicaStatus == "Ready" || instanceData.HealthState != "Error"
 }
 
 func hasHTTPEndpoint(instanceData sfsdk.ReplicaItemBase) bool {
@@ -326,7 +311,7 @@ func decodeEndpointData(endpointData string) (map[string]string, error) {
 	var endpointsMap map[string]map[string]string
 
 	if endpointData == "" {
-		return nil, errors.New("Endpoint data is empty")
+		return nil, errors.New("endpoint data is empty")
 	}
 
 	err := json.Unmarshal([]byte(endpointData), &endpointsMap)
@@ -335,7 +320,7 @@ func decodeEndpointData(endpointData string) (map[string]string, error) {
 	}
 	endpoints, endpointsExist := endpointsMap["Endpoints"]
 	if !endpointsExist {
-		return nil, errors.New("Endpoint doesn't exist in endpoint data")
+		return nil, errors.New("endpoint doesn't exist in endpoint data")
 	}
 
 	return endpoints, nil
@@ -357,7 +342,7 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 		}
 	}
 	if !defaultHTTPEndpointExists {
-		return "", errors.New("No default endpoint found")
+		return "", errors.New("no default endpoint found")
 	}
 	return defaultHTTPEndpoint, nil
 }
@@ -369,7 +354,7 @@ func getNamedEndpoint(endpointData string, endpointName string) (string, error) 
 	}
 	endpoint, exists := endpoints[endpointName]
 	if !exists {
-		return "", errors.New("Endpoint doesn't exist")
+		return "", errors.New("endpoint doesn't exist")
 	}
 	return endpoint, nil
 }
@@ -380,7 +365,6 @@ func addLabelsFromServiceExtension(sfClient sfsdk.Client, serviceType string, ap
 	err := sfClient.GetServiceExtension(app.TypeName, app.TypeVersion, serviceType, traefikExtensionName, &extensionData)
 
 	if err != nil {
-		log.Error(err)
 		return err
 	}
 

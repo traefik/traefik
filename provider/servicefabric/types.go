@@ -22,10 +22,8 @@ type ServiceItemExtended struct {
 // of a services partitions
 type PartitionItemExtended struct {
 	sfsdk.PartitionItem
-	HasReplicas  bool
-	Replicas     []sfsdk.ReplicaItem
-	HasInstances bool
-	Instances    []sfsdk.InstanceItem
+	Replicas  []sfsdk.ReplicaItem
+	Instances []sfsdk.InstanceItem
 }
 
 // ServiceExtensionLabels provides the structure for
