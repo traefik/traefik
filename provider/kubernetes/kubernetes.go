@@ -314,7 +314,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		for _, t := range i.Spec.TLS {
 			tlsSecret, exists, err := k8sClient.GetSecret(i.Namespace, t.SecretName)
 			if err != nil {
-				log.Errorf("Unable to retrive secret %s/%s: %s", i.Namespace, t.SecretName, err)
+				log.Errorf("Unable to retrieve secret %s/%s: %s", i.Namespace, t.SecretName, err)
 				continue
 			}
 			if !exists {
