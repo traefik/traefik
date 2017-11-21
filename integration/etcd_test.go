@@ -155,7 +155,7 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	// wait for traefik
+	// wait for Træfik
 	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
@@ -213,7 +213,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	// start traefik
+	// start Træfik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
@@ -282,7 +282,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8001/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
@@ -293,7 +293,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 
 func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
-	// start traefik
+	// start Træfik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
@@ -305,7 +305,7 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
 	whoami4IP := s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
 
-	//Copy the contents of the certificate files into ETCD
+	// Copy the contents of the certificate files into ETCD
 	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
 	c.Assert(err, checker.IsNil)
 	snitestComKey, err := ioutil.ReadFile("fixtures/https/snitest.com.key")
@@ -383,7 +383,7 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         "snitest.com",
@@ -411,10 +411,10 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 
-	// wait for traefik finish without error
+	// wait for Træfik finish without error
 	cmd.Wait()
 
-	//CHECK
+	// CHECK
 	checkmap := map[string]string{
 		"/traefik/loglevel":                 "DEBUG",
 		"/traefik/defaultentrypoints/0":     "http",
@@ -437,7 +437,7 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 
 func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
-	//start traefik
+	// start Træfik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/etcd/simple_https.toml"),
 		"--etcd",
@@ -449,7 +449,7 @@ func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	//prepare to config
+	// prepare to config
 	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
 	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
@@ -504,7 +504,7 @@ func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 		"/traefik/tlsconfiguration/snitestorg/certificate/certfile": string(snitestOrgCert),
 	}
 
-	//config backends,frontends and first tls keypair
+	// config backends,frontends and first tls keypair
 	for key, value := range backend1 {
 		err := s.kv.Put(key, []byte(value), nil)
 		c.Assert(err, checker.IsNil)
@@ -547,7 +547,7 @@ func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	// wait for traefik
+	// wait for Træfik
 	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
@@ -563,7 +563,7 @@ func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	cn := resp.TLS.PeerCertificates[0].Subject.CommonName
 	c.Assert(cn, checker.Equals, "snitest.com")
 
-	//now we configure the second keypair in etcd,and the request for host "snitest.org" will use the second keypair
+	// now we configure the second keypair in etcd and the request for host "snitest.org" will use the second keypair
 
 	for key, value := range tlsconfigure2 {
 		err := s.kv.Put(key, []byte(value), nil)
@@ -577,7 +577,7 @@ func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	//waiting for traefik to pull configuration
+	// waiting for Træfik to pull configuration
 	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 30*time.Second, try.BodyContains("k5fvuuXbIc979pQOoO03zG0S7Wpmpsw+9dQB9TOxGITOLfCZwEuIhnv+M9lLqCks"))
 	c.Assert(err, checker.IsNil)
 

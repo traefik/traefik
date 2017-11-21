@@ -508,7 +508,7 @@ func datastoreContains(datastore *cluster.Datastore, expectedValue string) func(
 func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	s.setupConsul(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
-	//start traefik
+	// start Træfik
 	file := s.adaptFile(c, "fixtures/consul/simple_https.toml", struct{ ConsulHost string }{consulHost})
 	defer os.Remove(file)
 	cmd, display := s.traefikCmd(withConfigFile(file))
@@ -517,7 +517,7 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 	defer cmd.Process.Kill()
 
-	//prepare to config
+	// prepare to config
 	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
 	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
 	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
@@ -572,7 +572,7 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 		"traefik/tlsconfiguration/snitestorg/certificate/certfile": string(snitestOrgCert),
 	}
 
-	//config backends,frontends and first tls keypair
+	// config backends,frontends and first tls keypair
 	for key, value := range backend1 {
 		err := s.kv.Put(key, []byte(value), nil)
 		c.Assert(err, checker.IsNil)
@@ -631,8 +631,7 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	cn := resp.TLS.PeerCertificates[0].Subject.CommonName
 	c.Assert(cn, checker.Equals, "snitest.com")
 
-	//now we configure the second keypair in consul,and the request for host "snitest.org" will use the second keypair
-
+	// now we configure the second keypair in consul and the request for host "snitest.org" will use the second keypair
 	for key, value := range tlsconfigure2 {
 		err := s.kv.Put(key, []byte(value), nil)
 		c.Assert(err, checker.IsNil)
@@ -645,7 +644,7 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	//waiting for traefik to pull configuration
+	// waiting for traefik to pull configuration
 	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 30*time.Second, try.BodyContains("k5fvuuXbIc979pQOoO03zG0S7Wpmpsw+9dQB9TOxGITOLfCZwEuIhnv+M9lLqCks"))
 	c.Assert(err, checker.IsNil)
 
