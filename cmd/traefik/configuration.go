@@ -159,6 +159,13 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultDynamoDB.TableName = "traefik"
 	defaultDynamoDB.Watch = true
 
+	var defaultRety configuration.Retry
+	defaultRety.Attempts = 0
+	defaultRety.CacheInitialCapacity = 4 * 1024
+	defaultRety.CacheMaxCapacity = 32 * 1024
+	defaultRety.TempDir = "/tmp"
+	defaultRety.RetryInterval = 0
+
 	// default Eureka
 	var defaultEureka eureka.Provider
 	defaultEureka.Delay = "30s"
@@ -246,7 +253,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Rancher:            &defaultRancher,
 		Eureka:             &defaultEureka,
 		DynamoDB:           &defaultDynamoDB,
-		Retry:              &configuration.Retry{},
+		Retry:              &defaultRety,
 		HealthCheck:        &healthCheck,
 		RespondingTimeouts: &respondingTimeouts,
 		ForwardingTimeouts: &forwardingTimeouts,

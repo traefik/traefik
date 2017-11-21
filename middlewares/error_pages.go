@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -52,8 +53,10 @@ func NewErrorPagesHandler(errorPage types.ErrorPage, backendURL string) (*ErrorP
 }
 
 func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	recorder := newRetryResponseRecorder()
+	buf := make([]byte, 0, 16*1024)
+	recorder := newRetryResponseRecorder(buf, 64*1024, nil)
 	recorder.responseWriter = w
+	defer recorder.Reset()
 	next.ServeHTTP(recorder, req)
 
 	w.WriteHeader(recorder.Code)
@@ -73,5 +76,6 @@ func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request,
 
 	//did not catch a configured status code so proceed with the request
 	utils.CopyHeaders(w.Header(), recorder.Header())
-	w.Write(recorder.Body.Bytes())
+	recorder.Seek(0, 0)
+	io.Copy(w, recorder)
 }

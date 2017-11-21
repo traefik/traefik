@@ -283,12 +283,42 @@ For dynamic providers, the corresponding template file needs to be customized ac
 # Enable retry sending request if network error
 [retry]
 
+# Retry logic uses caching mechanism in order to download data fully from upstream server and supplies it to downstream when it receives all data
+
 # Number of attempts
 #
 # Optional
 # Default: (number servers in backend) -1
 #
 # attempts = 3
+
+# Initial capacity of cache when creating buffers (in bytes)
+#
+# Optional
+# Default: 4kb
+#
+# cacheinitialcapacity = 4096
+
+# Maximum allowed capacity for cache (in bytes), when upstream data is bigger than this value, retry starts caching data into file
+#
+# Optional
+# Default: 32kb
+#
+# cachemaxcapacity = 32768
+
+# Place to store temporary files
+#
+# Optional
+# Default: /tmp
+#
+# tempdir = /tmp
+
+# Retry interval in milliseconds before next try
+#
+# Optional
+# Default: 0
+#
+# retryinterval = 0
 ```
 
 
