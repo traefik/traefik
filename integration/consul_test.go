@@ -332,10 +332,10 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	// wait for traefik finish without error
-	cmd.Wait()
+	err = cmd.Wait()
+	c.Assert(err, checker.IsNil)
 
-	//CHECK
-	checkmap := map[string]string{
+	expectedData := map[string]string{
 		"/traefik/loglevel":                 "DEBUG",
 		"/traefik/defaultentrypoints/0":     "http",
 		"/traefik/entrypoints/http/address": ":8000",
@@ -343,7 +343,7 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 		"/traefik/consul/endpoint":          consulHost + ":8500",
 	}
 
-	for key, value := range checkmap {
+	for key, value := range expectedData {
 		var p *store.KVPair
 		err = try.Do(60*time.Second, func() error {
 			p, err = s.kv.Get(key, nil)
@@ -352,6 +352,54 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 		c.Assert(err, checker.IsNil)
 
 		c.Assert(string(p.Value), checker.Equals, value)
+	}
+}
+
+func (s *ConsulSuite) TestCommandStoreConfigWithFile(c *check.C) {
+	s.setupConsul(c)
+	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
+
+	cmd, display := s.traefikCmd(
+		"storeconfig",
+		withConfigFile("fixtures/simple_default.toml"),
+		"--consul.endpoint="+consulHost+":8500",
+		"--file.filename=fixtures/file/dir/simple1.toml")
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+
+	// wait for traefik finish without error
+	err = cmd.Wait()
+	c.Assert(err, checker.IsNil)
+
+	expectedData := map[string]string{
+		"/traefik/backends/backend1/servers/server1/url":  "http://172.17.0.2:80",
+		"/traefik/frontends/frontend1/backend":            "backend1",
+		"/traefik/frontends/frontend1/routes/test_1/rule": "Path:/test1",
+	}
+
+	for key, value := range expectedData {
+		var p *store.KVPair
+		err = try.Do(10*time.Second, func() error {
+			p, err = s.kv.Get(key, nil)
+			return err
+		})
+		c.Assert(err, checker.IsNil)
+		c.Assert(string(p.Value), checker.Equals, value)
+	}
+
+	checkNotExistsMap := []string{
+		"/traefik/file",
+	}
+
+	for _, value := range checkNotExistsMap {
+		err = try.Do(10*time.Second, func() error {
+			if exists, err := s.kv.Exists(value, nil); err == nil && exists {
+				return fmt.Errorf("%s key is not suppose to exist in KV", value)
+			}
+			return nil
+		})
+		c.Assert(err, checker.IsNil)
 	}
 }
 

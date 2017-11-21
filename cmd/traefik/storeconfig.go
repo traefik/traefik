@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	fmtlog "log"
+	stdlog "log"
 
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
@@ -29,14 +29,43 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 		if kv == nil {
 			return fmt.Errorf("error using command storeconfig, no Key-value store defined")
 		}
+
+		fileConfig := traefikConfiguration.GlobalConfiguration.File
+		if fileConfig != nil {
+			traefikConfiguration.GlobalConfiguration.File = nil
+			if len(fileConfig.Filename) == 0 && len(fileConfig.Directory) == 0 {
+				fileConfig.Filename = traefikConfiguration.ConfigFile
+			}
+		}
+
 		jsonConf, err := json.Marshal(traefikConfiguration.GlobalConfiguration)
 		if err != nil {
 			return err
 		}
-		fmtlog.Printf("Storing configuration: %s\n", jsonConf)
+		stdlog.Printf("Storing configuration: %s\n", jsonConf)
+
 		err = kv.StoreConfig(traefikConfiguration.GlobalConfiguration)
 		if err != nil {
 			return err
+		}
+
+		if fileConfig != nil {
+			jsonConf, err = json.Marshal(fileConfig)
+			if err != nil {
+				return err
+			}
+
+			stdlog.Printf("Storing file configuration: %s\n", jsonConf)
+			config, err := fileConfig.LoadConfig()
+			if err != nil {
+				return err
+			}
+
+			stdlog.Print("Writing config to KV")
+			err = kv.StoreConfig(config)
+			if err != nil {
+				return err
+			}
 		}
 		if traefikConfiguration.GlobalConfiguration.ACME != nil && len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
 			// convert ACME json file to KV store
@@ -45,11 +74,13 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 			if err != nil {
 				return err
 			}
+
 			meta := cluster.NewMetadata(object)
 			err = meta.Marshall()
 			if err != nil {
 				return err
 			}
+
 			source := staert.KvSource{
 				Store:  kv,
 				Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
