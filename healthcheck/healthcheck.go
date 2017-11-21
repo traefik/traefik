@@ -28,10 +28,11 @@ func GetHealthCheck() *HealthCheck {
 
 // Options are the public health check options.
 type Options struct {
-	Path     string
-	Port     int
-	Interval time.Duration
-	LB       LoadBalancer
+	Path      string
+	Port      int
+	Transport http.RoundTripper
+	Interval  time.Duration
+	LB        LoadBalancer
 }
 
 func (opt Options) String() string {
@@ -146,7 +147,8 @@ func (backend *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request
 
 func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) bool {
 	client := http.Client{
-		Timeout: backend.requestTimeout,
+		Timeout:   backend.requestTimeout,
+		Transport: backend.Options.Transport,
 	}
 	req, err := backend.newRequest(serverURL)
 	if err != nil {

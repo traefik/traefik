@@ -6,6 +6,11 @@
     [backends.backend-{{ $serviceName }}.loadbalancer.stickiness]
       cookieName = "{{getStickinessCookieName $instances}}"
     {{end}}
+    {{ if hasHealthCheckLabels $instances }}
+    [backends.backend-{{ $serviceName }}.healthcheck]
+      path = "{{getHealthCheckPath $instances }}"
+      interval = "{{getHealthCheckInterval $instances }}"
+    {{end}}
 
   {{range $index, $i := $instances}}
     [backends.backend-{{ $i.Name }}.servers.server-{{ $i.Name }}{{ $i.ID }}]
