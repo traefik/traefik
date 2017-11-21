@@ -266,31 +266,31 @@ func (rw *retryResponseRecorder) Write(buf []byte) (n int, err error) {
 			rw.writePos += int64(n)
 		}
 		return n, nil
-	} else {
-		// create file
-		if rw.fileDir == nil {
-			return 0, ErrorNotEnoughSpace
-		}
-		rw.file, err = ioutil.TempFile(*rw.fileDir, "traefik-")
-		if err != nil {
-			log.Errorf("Failed to open temp file in retryResponseRecorder in folder(%s): %s", *rw.fileDir, err.Error())
-			return 0, err
-		}
-		rw.fileWriter = bufio.NewWriter(rw.file)
-		rw.fileReader = bufio.NewReader(rw.file)
-
-		n, err := rw.fileWriter.Write(rw.hotMem[:rw.writePos])
-		if err != nil {
-			return 0, err
-		}
-		if int64(n) != rw.writePos {
-			return 0, ErrorInconsistentWrite
-		}
-		rw.fileWriter.Flush()
-		rw.writePos = 0
-
-		return rw.Write(buf)
 	}
+
+	// create file
+	if rw.fileDir == nil {
+		return 0, ErrorNotEnoughSpace
+	}
+	rw.file, err = ioutil.TempFile(*rw.fileDir, "traefik-")
+	if err != nil {
+		log.Errorf("Failed to open temp file in retryResponseRecorder in folder(%s): %s", *rw.fileDir, err.Error())
+		return 0, err
+	}
+	rw.fileWriter = bufio.NewWriter(rw.file)
+	rw.fileReader = bufio.NewReader(rw.file)
+
+	n, err = rw.fileWriter.Write(rw.hotMem[:rw.writePos])
+	if err != nil {
+		return 0, err
+	}
+	if int64(n) != rw.writePos {
+		return 0, ErrorInconsistentWrite
+	}
+	rw.fileWriter.Flush()
+	rw.writePos = 0
+
+	return rw.Write(buf)
 }
 
 // WriteHeader sets rw.Code.
