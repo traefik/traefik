@@ -2274,7 +2274,7 @@ func TestBasicAuthInTemplate(t *testing.T) {
 	}
 }
 
-func TestTlsSecret(t *testing.T) {
+func TestTLSSecret(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		{
 			ObjectMeta: v1.ObjectMeta{
