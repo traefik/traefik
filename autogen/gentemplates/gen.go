@@ -306,7 +306,7 @@ var _templatesEcsTmpl = []byte(`[backends]{{range $serviceName, $instances := .S
   [backends.backend-{{ $serviceName }}.loadbalancer]
     method = "{{ getLoadBalancerMethod $instances}}"
     sticky = {{ getLoadBalancerSticky $instances}}
-    {{if hasStickinessLabel $instances}} 
+    {{if hasStickinessLabel $instances}}
     [backends.backend-{{ $serviceName }}.loadbalancer.stickiness]
       cookieName = "{{getStickinessCookieName $instances}}"
     {{end}}
