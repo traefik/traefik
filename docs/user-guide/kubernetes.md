@@ -330,6 +330,45 @@ echo "$(minikube ip) traefik-ui.minikube" | sudo tee -a /etc/hosts
 
 We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube) in the browser and view the Træfik Web UI.
 
+### Add a TLS Certificate to the Ingress
+
+!!! note
+    For this example to work you need a tls entrypoint. You don't have to provide a tls certificate at this point. For more details see [here](/configuration/entrypoints/).
+
+To setup a https protected ingress, you can leverage the tls feature of the ingress resource.
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: traefik-web-ui
+  namespace: kube-system
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: traefik-ui.minikube
+    http:
+      paths:
+      - backend:
+          serviceName: traefik-web-ui
+          servicePort: 80
+  tls:
+  - hosts:
+    - traefik-ui.minikube
+    secretName: traefik-ui-tls-cert
+```
+
+In addition to the modified ingress you need to provide the tls certificate via a kubernetes secret in the same namespace as the ingress. The following two commands will generate a new certificate and create a secret containing the key and cert files.
+
+```shell
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=traefik-ui.minikube"
+kubectl -n kube-system create secret tls traefik-ui-tls-cert --key=/tmp/tls.key --cert=/tmp/tls.crt
+```
+
+!!! note
+    The secret must have two entries named `tls.key`and `tls.crt`. See the [kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) for more details.
+
 ## Basic Authentication
 
 It's possible to add additional authentication annotations in the Ingress rule.
