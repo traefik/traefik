@@ -519,10 +519,11 @@ func TestMarathonTaskFilter(t *testing.T) {
 
 func TestMarathonApplicationFilterConstraints(t *testing.T) {
 	cases := []struct {
-		desc                    string
-		application             marathon.Application
-		marathonLBCompatibility bool
-		expected                bool
+		desc                      string
+		application               marathon.Application
+		marathonLBCompatibility   bool
+		filterMarathonConstraints bool
+		expected                  bool
 	}{
 		{
 			desc:                    "tags missing",
@@ -535,6 +536,27 @@ func TestMarathonApplicationFilterConstraints(t *testing.T) {
 			application:             application(label(types.LabelTags, "valid")),
 			marathonLBCompatibility: false,
 			expected:                true,
+		},
+		{
+			desc:                      "constraint missing",
+			application:               application(),
+			marathonLBCompatibility:   false,
+			filterMarathonConstraints: true,
+			expected:                  false,
+		},
+		{
+			desc:                      "constraint invalid",
+			application:               application(constraint("service_cluster:CLUSTER:test")),
+			marathonLBCompatibility:   false,
+			filterMarathonConstraints: true,
+			expected:                  false,
+		},
+		{
+			desc:                      "constraint valid",
+			application:               application(constraint("valid")),
+			marathonLBCompatibility:   false,
+			filterMarathonConstraints: true,
+			expected:                  true,
 		},
 		{
 			desc: "LB compatibility tag matching",
@@ -552,8 +574,9 @@ func TestMarathonApplicationFilterConstraints(t *testing.T) {
 		t.Run(c.desc, func(t *testing.T) {
 			t.Parallel()
 			provider := &Provider{
-				ExposedByDefault:        true,
-				MarathonLBCompatibility: c.marathonLBCompatibility,
+				ExposedByDefault:          true,
+				MarathonLBCompatibility:   c.marathonLBCompatibility,
+				FilterMarathonConstraints: c.filterMarathonConstraints,
 			}
 			constraint, err := types.NewConstraint("tag==valid")
 			if err != nil {

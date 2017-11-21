@@ -44,6 +44,12 @@ func label(key, value string) func(*marathon.Application) {
 	}
 }
 
+func constraint(value string) func(*marathon.Application) {
+	return func(app *marathon.Application) {
+		app.AddConstraint(strings.Split(value, ":")...)
+	}
+}
+
 func labelWithService(key, value string, serviceName string) func(*marathon.Application) {
 	if len(serviceName) == 0 {
 		panic("serviceName can not be empty")
