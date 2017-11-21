@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	traefikTls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/pkg/api/v1"
@@ -311,7 +311,7 @@ func TestLoadIngresses(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -505,7 +505,7 @@ func TestGetPassHostHeader(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -592,7 +592,7 @@ func TestGetPassTLSCert(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -692,7 +692,7 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -773,7 +773,7 @@ func TestHostlessIngress(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -1004,7 +1004,7 @@ func TestServiceAnnotations(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.EqualValues(t, expected, actual)
@@ -1559,7 +1559,7 @@ func TestIngressAnnotations(t *testing.T) {
 				Redirect: "",
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -1661,7 +1661,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -1763,7 +1763,7 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -1864,7 +1864,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -2181,7 +2181,7 @@ func TestMissingResources(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{},
+		TLSConfiguration: []*tls.Configuration{},
 	}
 
 	assert.Equal(t, expected, actual)
@@ -2423,10 +2423,10 @@ func TestTlsSecret(t *testing.T) {
 				},
 			},
 		},
-		TLSConfiguration: []*traefikTls.Configuration{
+		TLSConfiguration: []*tls.Configuration{
 			{
 				EntryPoints: []string{"example.com"},
-				Certificate: &traefikTls.Certificate{
+				Certificate: &tls.Certificate{
 					CertFile: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 					KeyFile:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
 				},
