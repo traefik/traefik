@@ -71,9 +71,7 @@ func (c *RollingCounter) Clone() *RollingCounter {
 		lastBucket:  c.lastBucket,
 		lastUpdated: c.lastUpdated,
 	}
-	for i, v := range c.values {
-		other.values[i] = v
-	}
+	copy(other.values, c.values)
 	return other
 }
 

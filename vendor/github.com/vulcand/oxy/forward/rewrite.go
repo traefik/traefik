@@ -14,16 +14,25 @@ type HeaderRewriter struct {
 	Hostname           string
 }
 
+// clean up IP in case if it is ipv6 address and it has {zone} information in it, like "[fe80::d806:a55d:eb1b:49cc%vEthernet (vmxnet3 Ethernet Adapter - Virtual Switch)]:64692"
+func ipv6fix(clientIP string) string {
+	return strings.Split(clientIP, "%")[0]
+}
+
 func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 	if !rw.TrustForwardHeader {
 		utils.RemoveHeaders(req.Header, XHeaders...)
 	}
 
 	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
-		if prior, ok := req.Header[XForwardedFor]; ok {
-			req.Header.Set(XForwardedFor, strings.Join(prior, ", ")+", "+clientIP)
-		} else {
-			req.Header.Set(XForwardedFor, clientIP)
+		clientIP = ipv6fix(clientIP)
+		// If not websocket, done in http.ReverseProxy
+		if IsWebsocketRequest(req) {
+			if prior, ok := req.Header[XForwardedFor]; ok {
+				req.Header.Set(XForwardedFor, strings.Join(prior, ", ")+", "+clientIP)
+			} else {
+				req.Header.Set(XForwardedFor, clientIP)
+			}
 		}
 
 		if req.Header.Get(XRealIp) == "" {
@@ -40,7 +49,15 @@ func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 		}
 	}
 
-	if xfp := req.Header.Get(XForwardedPort); xfp == "" {
+	if IsWebsocketRequest(req) {
+		if req.Header.Get(XForwardedProto) == "https" {
+			req.Header.Set(XForwardedProto, "wss")
+		} else {
+			req.Header.Set(XForwardedProto, "ws")
+		}
+	}
+
+	if xfPort := req.Header.Get(XForwardedPort); xfPort == "" {
 		req.Header.Set(XForwardedPort, forwardedPort(req))
 	}
 
@@ -52,9 +69,11 @@ func (rw *HeaderRewriter) Rewrite(req *http.Request) {
 		req.Header.Set(XForwardedServer, rw.Hostname)
 	}
 
-	// Remove hop-by-hop headers to the backend.  Especially important is "Connection" because we want a persistent
-	// connection, regardless of what the client sent to us.
-	utils.RemoveHeaders(req.Header, HopHeaders...)
+	if !IsWebsocketRequest(req) {
+		// Remove hop-by-hop headers to the backend.  Especially important is "Connection" because we want a persistent
+		// connection, regardless of what the client sent to us.
+		utils.RemoveHeaders(req.Header, HopHeaders...)
+	}
 }
 
 func forwardedPort(req *http.Request) string {

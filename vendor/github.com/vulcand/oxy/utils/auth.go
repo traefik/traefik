@@ -22,18 +22,18 @@ func ParseAuthHeader(header string) (*BasicAuth, error) {
 		return nil, fmt.Errorf(fmt.Sprintf("Failed to parse header '%s'", header))
 	}
 
-	auth_type := strings.ToLower(values[0])
-	if auth_type != "basic" {
-		return nil, fmt.Errorf("Expected basic auth type, got '%s'", auth_type)
+	authType := strings.ToLower(values[0])
+	if authType != "basic" {
+		return nil, fmt.Errorf("Expected basic auth type, got '%s'", authType)
 	}
 
-	encoded_string := values[1]
-	decoded_string, err := base64.StdEncoding.DecodeString(encoded_string)
+	encodedString := values[1]
+	decodedString, err := base64.StdEncoding.DecodeString(encodedString)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse header '%s', base64 failed: %s", header, err)
 	}
 
-	values = strings.SplitN(string(decoded_string), ":", 2)
+	values = strings.SplitN(string(decodedString), ":", 2)
 	if len(values) != 2 {
 		return nil, fmt.Errorf("Failed to parse header '%s', expected separator ':'", header)
 	}
