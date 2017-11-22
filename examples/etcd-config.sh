@@ -64,7 +64,7 @@ function insert_etcd3_data() {
 
 function show_usage() {
         echo "USAGE : etcd-config.sh ETCD_API_VERSION [ETCD_IP_ADDRESS]"
-        echo "        ETCD_API_VERSION : Values v2 or V3 (v3 requires ETCD_IP_ADDRESS)"
+        echo "        ETCD_API_VERSION : Values V2 or V3 (V3 requires ETCD_IP_ADDRESS)"
         echo "        ETCD_IP_ADDRESS : Host ETCD IP address (not 127.0.0.1)"
 }
 
