@@ -546,6 +546,7 @@ The dynamic configuration concerns :
 - [Frontends](/basics/#frontends)
 - [Backends](/basics/#backends)
 - [Servers](/basics/#servers)
+- HTTPS Certificates
 
 Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/configuration/commons).
 

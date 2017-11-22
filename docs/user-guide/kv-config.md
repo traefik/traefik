@@ -212,7 +212,7 @@ Remember the command `traefik --help` to display the updated list of flags.
 
 ## Dynamic configuration in Key-value store
 
-Following our example, we will provide backends/frontends rules to Træfik.
+Following our example, we will provide backends/frontends  rules and HTTPS certificates to Træfik.
 
 !!! note
     This section is independent of the way Træfik got its static configuration.
@@ -265,6 +265,21 @@ Here is the toml configuration we would like to store in the store :
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
   rule = "Path:/test"
+
+[[tlsConfiguration]]
+entryPoints = ["https"]
+  [tlsConfiguration.certificate]
+    certFile = "path/to/your.cert"
+    keyFile = "path/to/your.key"
+[[tlsConfiguration]]
+entryPoints = ["http","https"]
+  [tlsConfiguration.certificate]
+    certFile = """-----BEGIN CERTIFICATE-----
+                      <cert file content>
+                      -----END CERTIFICATE-----"""
+    keyFile = """-----BEGIN CERTIFICATE-----
+                      <key file content>
+                      -----END CERTIFICATE-----"""
 ```
 
 And there, the same dynamic configuration in a KV Store (using `prefix = "traefik"`):
@@ -310,6 +325,21 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 | `/traefik/frontends/frontend2/entrypoints`         | `http,https`       |
 | `/traefik/frontends/frontend2/routes/test_2/rule`  | `PathPrefix:/test` |
 
+- certificate 1
+
+| Key                                                | Value              |
+|----------------------------------------------------|--------------------|
+| `/traefik/tlsconfiguration/1/entrypoints`          | `https`            |
+| `/traefik/tlsconfiguration/1/certificate/certfile` | `path/to/your.cert`|
+| `/traefik/tlsconfiguration/1/certificate/keyfile`  | `path/to/your.key` |
+
+- certificate 2
+
+| Key                                                | Value                 |
+|----------------------------------------------------|-----------------------|
+| `/traefik/tlsconfiguration/2/entrypoints`          | `http,https`          |
+| `/traefik/tlsconfiguration/2/certificate/certfile` | `<cert file content>` |
+| `/traefik/tlsconfiguration/2/certificate/certfile` | `<key file content>`  |
 ### Atomic configuration changes
 
 Træfik can watch the backends/frontends configuration changes and generate its configuration automatically.
