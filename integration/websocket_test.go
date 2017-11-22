@@ -395,7 +395,7 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.Assert(r.URL.Path, check.Equals, "/ws/http%3A%2F%2Ftest")
+		c.Assert(r.URL.EscapedPath(), check.Equals, "/ws/http%3A%2F%2Ftest")
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return

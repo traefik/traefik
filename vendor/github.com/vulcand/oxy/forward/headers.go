@@ -16,7 +16,6 @@ const (
 	TransferEncoding       = "Transfer-Encoding"
 	Upgrade                = "Upgrade"
 	ContentLength          = "Content-Length"
-	ContentType            = "Content-Type"
 	SecWebsocketKey        = "Sec-Websocket-Key"
 	SecWebsocketVersion    = "Sec-Websocket-Version"
 	SecWebsocketExtensions = "Sec-Websocket-Extensions"

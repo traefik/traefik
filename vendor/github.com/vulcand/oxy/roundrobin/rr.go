@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -29,9 +30,17 @@ func ErrorHandler(h utils.ErrorHandler) LBOption {
 	}
 }
 
-func EnableStickySession(ss *StickySession) LBOption {
+func EnableStickySession(stickySession *StickySession) LBOption {
 	return func(s *RoundRobin) error {
-		s.ss = ss
+		s.stickySession = stickySession
+		return nil
+	}
+}
+
+// ErrorHandler is a functional argument that sets error handler of the server
+func RoundRobinRequestRewriteListener(rrl RequestRewriteListener) LBOption {
+	return func(s *RoundRobin) error {
+		s.requestRewriteListener = rrl
 		return nil
 	}
 }
@@ -41,19 +50,20 @@ type RoundRobin struct {
 	next       http.Handler
 	errHandler utils.ErrorHandler
 	// Current index (starts from -1)
-	index         int
-	servers       []*server
-	currentWeight int
-	ss            *StickySession
+	index                  int
+	servers                []*server
+	currentWeight          int
+	stickySession          *StickySession
+	requestRewriteListener RequestRewriteListener
 }
 
 func New(next http.Handler, opts ...LBOption) (*RoundRobin, error) {
 	rr := &RoundRobin{
-		next:    next,
-		index:   -1,
-		mutex:   &sync.Mutex{},
-		servers: []*server{},
-		ss:      nil,
+		next:          next,
+		index:         -1,
+		mutex:         &sync.Mutex{},
+		servers:       []*server{},
+		stickySession: nil,
 	}
 	for _, o := range opts {
 		if err := o(rr); err != nil {
@@ -71,19 +81,24 @@ func (r *RoundRobin) Next() http.Handler {
 }
 
 func (r *RoundRobin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if log.GetLevel() >= log.DebugLevel {
+		logEntry := log.WithField("Request", utils.DumpHttpRequest(req))
+		logEntry.Debug("vulcand/oxy/roundrobin/rr: begin ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/roundrobin/rr: competed ServeHttp on request")
+	}
+
 	// make shallow copy of request before chaning anything to avoid side effects
 	newReq := *req
 	stuck := false
-	if r.ss != nil {
-		cookie_url, present, err := r.ss.GetBackend(&newReq, r.Servers())
+	if r.stickySession != nil {
+		cookieURL, present, err := r.stickySession.GetBackend(&newReq, r.Servers())
 
 		if err != nil {
-			r.errHandler.ServeHTTP(w, req, err)
-			return
+			log.Infof("vulcand/oxy/roundrobin/rr: error using server from cookie: %v", err)
 		}
 
 		if present {
-			newReq.URL = cookie_url
+			newReq.URL = cookieURL
 			stuck = true
 		}
 	}
@@ -95,11 +110,22 @@ func (r *RoundRobin) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if r.ss != nil {
-			r.ss.StickBackend(url, &w)
+		if r.stickySession != nil {
+			r.stickySession.StickBackend(url, &w)
 		}
 		newReq.URL = url
 	}
+
+	if log.GetLevel() >= log.DebugLevel {
+		//log which backend URL we're sending this request to
+		log.WithFields(log.Fields{"Request": utils.DumpHttpRequest(req), "ForwardURL": newReq.URL}).Debugf("vulcand/oxy/roundrobin/rr: Forwarding this request to URL")
+	}
+
+	//Emit event to a listener if one exists
+	if r.requestRewriteListener != nil {
+		r.requestRewriteListener(req, &newReq)
+	}
+
 	r.next.ServeHTTP(w, &newReq)
 }
 
@@ -144,8 +170,6 @@ func (r *RoundRobin) nextServer() (*server, error) {
 			return srv, nil
 		}
 	}
-	// We did full circle and found no available servers
-	return nil, fmt.Errorf("no available servers")
 }
 
 func (r *RoundRobin) RemoveServer(u *url.URL) error {

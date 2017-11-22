@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/mailgun/timetools"
 	"github.com/mailgun/ttlmap"
 	"github.com/vulcand/oxy/utils"
@@ -65,7 +66,6 @@ type TokenLimiter struct {
 	mutex        sync.Mutex
 	bucketSets   *ttlmap.TtlMap
 	errHandler   utils.ErrorHandler
-	log          utils.Logger
 	capacity     int
 	next         http.Handler
 }
@@ -110,7 +110,7 @@ func (tl *TokenLimiter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err := tl.consumeRates(req, source, amount); err != nil {
-		tl.log.Infof("limiting request %v %v, limit: %v", req.Method, req.URL, err)
+		log.Infof("limiting request %v %v, limit: %v", req.Method, req.URL, err)
 		tl.errHandler.ServeHTTP(w, req, err)
 		return
 	}
@@ -155,7 +155,7 @@ func (tl *TokenLimiter) resolveRates(req *http.Request) *RateSet {
 
 	rates, err := tl.extractRates.Extract(req)
 	if err != nil {
-		tl.log.Errorf("Failed to retrieve rates: %v", err)
+		log.Errorf("Failed to retrieve rates: %v", err)
 		return tl.defaultRates
 	}
 
@@ -189,14 +189,6 @@ func (e *RateErrHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, err
 }
 
 type TokenLimiterOption func(l *TokenLimiter) error
-
-// Logger sets the logger that will be used by this middleware.
-func Logger(l utils.Logger) TokenLimiterOption {
-	return func(cl *TokenLimiter) error {
-		cl.log = l
-		return nil
-	}
-}
 
 // ErrorHandler sets error handler of the server
 func ErrorHandler(h utils.ErrorHandler) TokenLimiterOption {
@@ -233,9 +225,6 @@ func Capacity(cap int) TokenLimiterOption {
 var defaultErrHandler = &RateErrHandler{}
 
 func setDefaults(tl *TokenLimiter) {
-	if tl.log == nil {
-		tl.log = utils.NullLogger
-	}
 	if tl.capacity <= 0 {
 		tl.capacity = DefaultCapacity
 	}
