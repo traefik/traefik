@@ -202,8 +202,7 @@ import:
 - package: github.com/armon/go-proxyproto
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - package: github.com/mitchellh/copystructure
-- package: github.com/jjcollinge/servicefabric
-  version: be2b731fc787bca325d1601a5c9ff020d8f174e4
+- package: github.com/containous/traefik-extra-service-fabric
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose

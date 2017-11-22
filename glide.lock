@@ -1,5 +1,5 @@
-hash: 6a2169a3c35bd041f34f01fa526a52458bd8311573adfb27cb42dade98d90163
-updated: 2017-11-20T13:25:23.365446Z
+hash: d896859fdb5b327bc1857f2707d9bf1e6fa9fb78dec39a28b8acf011fad26f20
+updated: 2017-11-22T15:59:09.002650953+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -96,6 +96,8 @@ imports:
   version: 06ccd3e75091eb659b1d720cda0e16bc7057954c
 - name: github.com/containous/staert
   version: 1e26a71803e428fd933f5f9c8e50a26878f53147
+- name: github.com/containous/traefik-extra-service-fabric
+  version: 552883c6e1f80d9c66098045c4c90d9a6a1967a8
 - name: github.com/coreos/etcd
   version: c400d05d0aa73e21e431c16145e558d624098018
   subpackages:

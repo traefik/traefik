@@ -1,3 +1,6 @@
+package servicefabric
+
+const tmpl = `
 [backends]
     {{$groupedServiceMap := getServicesWithLabelValueMap .Services "backend.group.name"}}
     {{range $aggName, $aggServices := $groupedServiceMap }}
@@ -11,7 +14,7 @@
           {{end}}
         {{end}}
       {{end}}
-    {{end}}    
+    {{end}}
   {{range $service := .Services}}
     {{range $partition := $service.Partitions}}
       {{if eq $partition.ServiceKind "Stateless"}}
@@ -23,7 +26,7 @@
           method = "drr"
         {{end}}
 
-        {{if hasServiceLabel $service "backend.healthcheck"}}              
+        {{if hasServiceLabel $service "backend.healthcheck"}}
           [backends."{{$service.Name}}".healthcheck]
           path = "{{getServiceLabelValue $service "backend.healthcheck"}}"
           interval = "{{getServiceLabelValueWithDefault $service "backend.healthcheck.interval" "10s"}}"
@@ -31,13 +34,13 @@
 
         {{if hasServiceLabel $service "backend.loadbalancer.stickiness"}}
           [backends."{{$service.Name}}".LoadBalancer.stickiness]
-        {{end}}    
+        {{end}}
 
         {{if hasServiceLabel $service "backend.circuitbreaker"}}
           [backends."{{$service.Name}}".circuitbreaker]
           expression = "{{getServiceLabelValue $service "backend.circuitbreaker"}}"
-        {{end}}    
-        
+        {{end}}
+
         {{if hasServiceLabel $service "backend.maxconn.amount"}}
           [backends."{{$service.Name}}".maxconn]
           amount = {{getServiceLabelValue $service "backend.maxconn.amount"}}
@@ -54,7 +57,7 @@
       {{else if eq $partition.ServiceKind "Stateful"}}
         {{range $replica := $partition.Replicas}}
           {{if isPrimary $replica}}
-          
+
             {{$backendName := (print $service.Name $partition.PartitionInformation.ID)}}
             [backends."{{$backendName}}".servers."{{$replica.ID}}"]
             url = "{{getDefaultEndpoint $replica}}"
@@ -62,11 +65,11 @@
 
             [backends."{{$backendName}}".LoadBalancer]
             method = "drr"
-                
+
             [backends."{{$backendName}}".circuitbreaker]
             expression = "NetworkErrorRatio() > 0.5"
-          
-          {{end}}    
+
+          {{end}}
         {{end}}
       {{end}}
     {{end}}
@@ -81,8 +84,8 @@
     {{if hasServiceLabel $service "frontend.priority"}}
     priority = 100
     {{end}}
-    
-    {{range $key, $value := getServiceLabelsWithPrefix $service "frontend.rule"}}  
+
+    {{range $key, $value := getServiceLabelsWithPrefix $service "frontend.rule"}}
     [frontends."{{$groupName}}".routes."{{$key}}"]
     rule = "{{$value}}"
     {{end}}
@@ -90,11 +93,11 @@
 {{range $service := .Services}}
   {{if hasServiceLabel $service "expose"}}
     {{if eq $service.ServiceKind "Stateless"}}
-    
+
     [frontends."{{$service.Name}}"]
     backend = "{{$service.Name}}"
 
-    
+
     {{if hasServiceLabel $service "frontend.passHostHeader"}}
       passHostHeader = {{getServiceLabelValue $service "frontend.passHostHeader" }}
     {{end}}
@@ -115,11 +118,11 @@
       entryPoints = {{getServiceLabelValue $service "frontend.entryPoints"}}
     {{end}}
 
-    {{range $key, $value := getServiceLabelsWithPrefix $service "frontend.rule"}}  
+    {{range $key, $value := getServiceLabelsWithPrefix $service "frontend.rule"}}
     [frontends."{{$service.Name}}".routes."{{$key}}"]
     rule = "{{$value}}"
     {{end}}
-    
+
     {{else if eq $service.ServiceKind "Stateful"}}
       {{range $partition := $service.Partitions}}
         {{$partitionId := $partition.PartitionInformation.ID}}
@@ -135,3 +138,4 @@
   {{end}}
 {{end}}
 {{end}}
+`

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/boltdb"
@@ -23,7 +24,6 @@ import (
 	"github.com/containous/traefik/provider/marathon"
 	"github.com/containous/traefik/provider/mesos"
 	"github.com/containous/traefik/provider/rancher"
-	"github.com/containous/traefik/provider/servicefabric"
 	"github.com/containous/traefik/provider/web"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"

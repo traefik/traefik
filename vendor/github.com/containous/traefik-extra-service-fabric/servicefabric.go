@@ -32,7 +32,7 @@ type Provider struct {
 	InsecureSkipVerify    bool   `description:"Skip verification of server ca certificate"`
 }
 
-// Provide allows the servicefabric provider to provide configurations to traefik
+// Provide allows the ServiceFabric provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	if p.APIVersion == "" {
@@ -93,7 +93,7 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 					"getServicesWithLabelValue":       p.getServicesWithLabelValue,
 				}
 
-				configuration, err := p.GetConfiguration("templates/servicefabric.tmpl", sfFuncMap, templateObjects)
+				configuration, err := p.GetConfiguration(tmpl, sfFuncMap, templateObjects)
 
 				if err != nil {
 					return err
@@ -106,6 +106,7 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 			}
 			return nil
 		}
+
 		notify := func(err error, time time.Duration) {
 			log.Errorf("Provider connection error: %s; retrying in %s", err, time)
 		}
@@ -118,11 +119,12 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 }
 
 func (p *Provider) getClusterServices(sfClient sfsdk.Client) ([]ServiceItemExtended, error) {
-	results := []ServiceItemExtended{}
 	apps, err := sfClient.GetApplications()
 	if err != nil {
 		return nil, err
 	}
+
+	var results []ServiceItemExtended
 	for _, app := range apps.Items {
 		services, err := sfClient.GetServices(app.ID)
 		if err != nil {
@@ -218,7 +220,7 @@ func (p *Provider) getServicesWithLabelValueMap(services []ServiceItemExtended, 
 }
 
 func (p *Provider) getServicesWithLabelValue(services []ServiceItemExtended, key, expectedValue string) []ServiceItemExtended {
-	srvWithLabel := []ServiceItemExtended{}
+	var srvWithLabel []ServiceItemExtended
 	for _, service := range services {
 		value, exists := service.Labels[key]
 		if exists && value == expectedValue {
@@ -296,6 +298,7 @@ func hasHTTPEndpoint(instanceData sfsdk.ReplicaItemBase) bool {
 	_, err := getDefaultEndpoint(instanceData.Address)
 	return err == nil
 }
+
 func decodeEndpointData(endpointData string) (map[string]string, error) {
 	var endpointsMap map[string]map[string]string
 
@@ -307,6 +310,7 @@ func decodeEndpointData(endpointData string) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	endpoints, endpointsExist := endpointsMap["Endpoints"]
 	if !endpointsExist {
 		return nil, errors.New("endpoint doesn't exist in endpoint data")
@@ -320,6 +324,7 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	var defaultHTTPEndpointExists bool
 	var defaultHTTPEndpoint string
 	for _, v := range endpoints {
@@ -330,6 +335,7 @@ func getDefaultEndpoint(endpointData string) (string, error) {
 			break
 		}
 	}
+
 	if !defaultHTTPEndpointExists {
 		return "", errors.New("no default endpoint found")
 	}
@@ -341,6 +347,7 @@ func getNamedEndpoint(endpointData string, endpointName string) (string, error) 
 	if err != nil {
 		return "", err
 	}
+
 	endpoint, exists := endpoints[endpointName]
 	if !exists {
 		return "", errors.New("endpoint doesn't exist")
