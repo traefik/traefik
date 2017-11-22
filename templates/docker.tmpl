@@ -80,6 +80,52 @@
   basicAuth = [{{range getBasicAuth $container}}
     "{{.}}",
   {{end}}]
+  [frontends."frontend-{{$frontend}}".headers]
+  {{if hasSSLRedirectHeaders $container}}
+  SSLRedirect = {{getSSLRedirectHeaders $container}}
+  {{end}}
+  {{if hasSSLTemporaryRedirectHeaders $container}}
+  SSLTemporaryRedirect = {{getSSLTemporaryRedirectHeaders $container}}
+  {{end}}
+  {{if hasSSLHostHeaders $container}}
+  SSLHost = {{getSSLHostHeaders $container}}
+  {{end}}
+  {{if hasSTSSecondsHeaders $container}}
+  STSSeconds = {{getSTSSecondsHeaders $container}}
+  {{end}}
+  {{if hasSTSIncludeSubdomainsHeaders $container}}
+  STSIncludeSubdomains = {{getSTSIncludeSubdomainsHeaders $container}}
+  {{end}}
+  {{if hasSTSPreloadHeaders $container}}
+  STSPreload = {{getSTSPreloadHeaders $container}}
+  {{end}}
+  {{if hasForceSTSHeaderHeaders $container}}
+  ForceSTSHeader = {{getForceSTSHeaderHeaders $container}}
+  {{end}}
+  {{if hasFrameDenyHeaders $container}}
+  FrameDeny = {{getFrameDenyHeaders $container}}
+  {{end}}
+  {{if hasCustomFrameOptionsValueHeaders $container}}
+  CustomFrameOptionsValue = {{getCustomFrameOptionsValueHeaders $container}}
+  {{end}}
+  {{if hasContentTypeNosniffHeaders $container}}
+  ContentTypeNosniff = {{getContentTypeNosniffHeaders $container}}
+  {{end}}
+  {{if hasBrowserXSSFilterHeaders $container}}
+  BrowserXSSFilter = {{getBrowserXSSFilterHeaders $container}}
+  {{end}}
+  {{if hasContentSecurityPolicyHeaders $container}}
+  ContentSecurityPolicy = {{getContentSecurityPolicyHeaders $container}}
+  {{end}}
+  {{if hasPublicKeyHeaders $container}}
+  PublicKey = {{getPublicKeyHeaders $container}}
+  {{end}}
+  {{if hasReferrerPolicyHeaders $container}}
+  ReferrerPolicy = {{getReferrerPolicyHeaders $container}}
+  {{end}}
+  {{if hasIsDevelopmentHeaders $container}}
+  IsDevelopment = {{getIsDevelopmentHeaders $container}}
+  {{end}}
   {{if hasRequestHeaders $container}}
     [frontends."frontend-{{$frontend}}".headers.customrequestheaders]
     {{range $k, $v := getRequestHeaders $container}}
@@ -89,6 +135,24 @@
   {{if hasResponseHeaders $container}}
     [frontends."frontend-{{$frontend}}".headers.customresponseheaders]
     {{range $k, $v := getResponseHeaders $container}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+  {{end}}
+  {{if hasAllowedHostsHeaders $container}}
+    [frontends."frontend-{{$frontend}}".headers.AllowedHosts]
+    {{range getAllowedHostsHeaders $container}}
+    "{{.}}"
+    {{end}}
+  {{end}}
+  {{if hasHostsProxyHeaders $container}}
+    [frontends."frontend-{{$frontend}}".headers.HostsProxyHeaders]
+    {{range getHostsProxyHeaders $container}}
+    "{{.}}"
+    {{end}}
+  {{end}}
+  {{if hasSSLProxyHeaders $container}}
+    [frontends."frontend-{{$frontend}}".headers.SSLProxyHeaders]
+    {{range $k, $v := getSSLProxyHeaders $container}}
     {{$k}} = "{{$v}}"
     {{end}}
   {{end}}
