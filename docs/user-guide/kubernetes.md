@@ -357,7 +357,7 @@ myusername:$apr1$78Jyn/1K$ERHKVRPPlzAX8eBtLuvRZ0
 B. Now use `kubectl` to create a secret in the monitoring namespace using the file created by `htpasswd`.
 
 ```shell
-kubectl create secret generic mysecret --from-file auth --namespace=monitoring
+kubectl create secret generic mysecret --from-file auth --namespace=kube-system
 ```
 
 !!! note
