@@ -30,6 +30,7 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
@@ -63,6 +64,7 @@ type Server struct {
 	currentConfigurations         safe.Safe
 	globalConfiguration           configuration.GlobalConfiguration
 	accessLoggerMiddleware        *accesslog.LogHandler
+	tracingMiddleware             *tracing.Tracing
 	routinesPool                  *safe.Pool
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
@@ -107,6 +109,11 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 
 	server.routinesPool = safe.NewPool(context.Background())
 	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
+
+	server.tracingMiddleware = globalConfiguration.Tracing
+	if globalConfiguration.Tracing != nil && globalConfiguration.Tracing.Backend != "" {
+		server.tracingMiddleware.Setup()
+	}
 
 	server.metricsRegistry = metrics.NewVoidRegistry()
 	if globalConfiguration.Metrics != nil {
@@ -281,6 +288,14 @@ func (server *Server) startHTTPServers() {
 func (server *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 	serverInternalMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
+
+	if server.tracingMiddleware.IsEnabled() {
+		serverMiddlewares = append(
+			serverMiddlewares,
+			server.tracingMiddleware.NewEntryPoint(newServerEntryPointName))
+		log.Debug("Added entrypoint tracing middleware")
+	}
+
 	if server.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, server.accessLoggerMiddleware)
 	}
@@ -958,7 +973,8 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
-					fwd, err := forward.New(
+					var fwd http.Handler
+					fwd, err = forward.New(
 						forward.Logger(oxyLogger),
 						forward.PassHostHeader(frontend.PassHostHeader),
 						forward.RoundTripper(roundTripper),
@@ -970,6 +986,15 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
+					}
+
+					if server.tracingMiddleware.IsEnabled() {
+						tm := server.tracingMiddleware.NewForwarder(frontendName, frontend.Backend)
+						next := fwd
+						fwd = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+							tm.ServeHTTP(w, r, next.ServeHTTP)
+						})
+						log.Debug("Added outgoing tracing middleware", frontendName, err)
 					}
 
 					var rr *roundrobin.RoundRobin
@@ -1151,7 +1176,17 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 
 					if config.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", config.Backends[frontend.Backend].CircuitBreaker.Expression)
-						circuitBreaker, err := middlewares.NewCircuitBreaker(lb, config.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
+						expression := config.Backends[frontend.Backend].CircuitBreaker.Expression
+						circuitBreaker, err := middlewares.NewCircuitBreaker(
+							lb,
+							expression,
+							cbreaker.Logger(oxyLogger),
+							cbreaker.Fallback(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+								tracing.LogEventf(r, "blocked by circuitbreaker (%q)", expression)
+								w.WriteHeader(http.StatusServiceUnavailable)
+								w.Write([]byte(http.StatusText(http.StatusServiceUnavailable)))
+							})),
+						)
 						if err != nil {
 							log.Errorf("Error creating circuit breaker: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)

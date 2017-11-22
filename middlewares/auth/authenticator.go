@@ -8,6 +8,7 @@ import (
 
 	goauth "github.com/abbot/go-http-auth"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/types"
 	"github.com/urfave/negroni"
 )
@@ -34,12 +35,14 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if username := basicAuth.CheckAuth(r); username == "" {
 				log.Debug("Basic auth failed...")
+				tracing.LogEventf(r, "Basic auth failed")
 				basicAuth.RequireAuth(w, r)
 			} else {
 				log.Debug("Basic auth success...")
 				if authConfig.HeaderField != "" {
 					r.Header[authConfig.HeaderField] = []string{username}
 				}
+				tracing.LogEventf(r, "Basic auth secceeded")
 				next.ServeHTTP(w, r)
 			}
 		})
@@ -52,9 +55,11 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if username, _ := digestAuth.CheckAuth(r); username == "" {
 				log.Debug("Digest auth failed...")
+				tracing.LogEventf(r, "Digest auth failed")
 				digestAuth.RequireAuth(w, r)
 			} else {
 				log.Debug("Digest auth success...")
+				tracing.LogEventf(r, "Digest auth succeeded")
 				if authConfig.HeaderField != "" {
 					r.Header[authConfig.HeaderField] = []string{username}
 				}

@@ -7,6 +7,9 @@ import (
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/middlewares/accesslog"
+	"github.com/containous/traefik/middlewares/tracing"
+	"github.com/containous/traefik/middlewares/tracing/jaeger"
+	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
@@ -195,6 +198,16 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		DialTimeout: flaeg.Duration(configuration.DefaultDialTimeout),
 	}
 
+	// default Tracing
+	defaultTracing := tracing.Tracing{
+		ServiceName: "traefik",
+		Jaeger:      &jaeger.Config{},
+		Zipkin: &zipkin.Config{
+			HTTPEndpoint: "http://localhost:9411/api/v1/spans",
+			SameSpan:     false,
+		},
+	}
+
 	// default LifeCycle
 	defaultLifeycle := configuration.LifeCycle{
 		GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
@@ -256,6 +269,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		Ping:               &defaultPing,
 		API:                &defaultAPI,
 		Metrics:            &defaultMetrics,
+		Tracing:            &defaultTracing,
 	}
 
 	return &TraefikConfiguration{
@@ -280,6 +294,14 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 				Interval: flaeg.Duration(configuration.DefaultHealthCheckInterval),
 			},
 			CheckNewVersion: true,
+			Tracing: &tracing.Tracing{
+				ServiceName: "traefik",
+				Jaeger:      &jaeger.Config{},
+				Zipkin: &zipkin.Config{
+					HTTPEndpoint: "http://localhost:9411/api/v1/spans",
+					SameSpan:     false,
+				},
+			},
 		},
 		ConfigFile: "",
 	}
