@@ -28,7 +28,7 @@ type Provider struct {
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	configuration, err := p.loadConfig()
+	configuration, err := p.LoadConfig()
 
 	if err != nil {
 		return err
@@ -50,6 +50,15 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 	sendConfigToChannel(configurationChan, configuration)
 	return nil
+}
+
+// LoadConfig loads configuration either from file or a directory specified by 'Filename'/'Directory'
+// and returns a 'Configuration' object
+func (p *Provider) LoadConfig() (*types.Configuration, error) {
+	if p.Directory != "" {
+		return loadFileConfigFromDirectory(p.Directory, nil)
+	}
+	return loadFileConfig(p.Filename)
 }
 
 func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationChan chan<- types.ConfigMessage, callback func(chan<- types.ConfigMessage, fsnotify.Event)) error {
@@ -86,6 +95,27 @@ func (p *Provider) addWatcher(pool *safe.Pool, directory string, configurationCh
 	}
 
 	return nil
+}
+
+func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage, event fsnotify.Event) {
+	watchItem := p.Filename
+	if p.Directory != "" {
+		watchItem = p.Directory
+	}
+
+	if _, err := os.Stat(watchItem); err != nil {
+		log.Debugf("Unable to watch %s : %v", watchItem, err)
+		return
+	}
+
+	configuration, err := p.LoadConfig()
+
+	if err != nil {
+		log.Errorf("Error occurred during watcher callback: %s", err)
+		return
+	}
+
+	sendConfigToChannel(configurationChan, configuration)
 }
 
 func sendConfigToChannel(configurationChan chan<- types.ConfigMessage, configuration *types.Configuration) {
@@ -167,33 +197,4 @@ func loadFileConfigFromDirectory(directory string, configuration *types.Configur
 		configuration.TLSConfiguration = append(configuration.TLSConfiguration, conf)
 	}
 	return configuration, nil
-}
-
-func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage, event fsnotify.Event) {
-	watchItem := p.Filename
-	if p.Directory != "" {
-		watchItem = p.Directory
-	}
-
-	if _, err := os.Stat(watchItem); err != nil {
-		log.Debugf("Unable to watch %s : %v", watchItem, err)
-		return
-	}
-
-	configuration, err := p.loadConfig()
-
-	if err != nil {
-		log.Errorf("Error occurred during watcher callback: %s", err)
-		return
-	}
-
-	sendConfigToChannel(configurationChan, configuration)
-}
-
-func (p *Provider) loadConfig() (*types.Configuration, error) {
-	if p.Directory != "" {
-		return loadFileConfigFromDirectory(p.Directory, nil)
-	}
-
-	return loadFileConfig(p.Filename)
 }
