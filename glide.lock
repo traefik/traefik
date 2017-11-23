@@ -83,10 +83,6 @@ imports:
   - fun
 - name: github.com/cenk/backoff
   version: 5d150e7eec023ce7a124856b37c68e54b4050ac7
-- name: github.com/cloudflare/cfssl
-  version: 9ada30affe7af7e87eb1c3056854b227a9a90998
-  subpackages:
-  - log
 - name: github.com/codahale/hdrhistogram
   version: 9208b142303c12d8899bae836fd524ac9338b4fd
 - name: github.com/codegangsta/cli
