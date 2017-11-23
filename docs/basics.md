@@ -261,6 +261,11 @@ Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
 Custom headers can be configured through the frontends, to add headers to either requests or responses that match the frontend's rules.
 This allows for setting headers such as `X-Script-Name` to be added to the request, or custom headers to be added to the response.
 
+!!! warning
+    If the custom header name is the same as one header name of the request or response, it will be replaced.
+
+In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+
 ```toml
 [frontends]
   [frontends.frontend1]
@@ -273,7 +278,20 @@ This allows for setting headers such as `X-Script-Name` to be added to the reque
     rule = "PathPrefixStrip:/cheese"
 ```
 
-In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+In this second  example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` removed to the request and the `X-Custom-Response-Header` removed to the response.
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers.customresponseheaders]
+    X-Custom-Response-Header = ""
+    [frontends.frontend1.headers.customrequestheaders]
+    X-Script-Name = "test"
+    X-Custom-Request-Header = ""
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheese"
+```
 
 #### Security headers
 
