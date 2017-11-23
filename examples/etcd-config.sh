@@ -27,6 +27,15 @@ function insert_etcd2_data() {
     curl -i -H "Accept: application/json" -X PUT -d value="http"                        http://localhost:2379/v2/keys/traefik/frontends/frontend2/entrypoints
     curl -i -H "Accept: application/json" -X PUT -d value="Path:/test"                  http://localhost:2379/v2/keys/traefik/frontends/frontend2/routes/test_2/rule
 
+    # certificate 1
+    curl -i -H "Accept: application/json" -X PUT -d value="https"                       http://localhost:2379/v2/keys/traefik/tlsconfiguration/pair1/entrypoints
+    curl -i -H "Accept: application/json" -X PUT -d value="/tmp/test1.crt"              http://localhost:2379/v2/keys/traefik/tlsconfiguration/pair1/certificate/certfile
+    curl -i -H "Accept: application/json" -X PUT -d value="/tmp/test1.key"              http://localhost:2379/v2/keys/traefik/tlsconfiguration/pair1/certificate/keyfile
+
+    # certificate 2
+    curl -i -H "Accept: application/json" -X PUT -d value="http,https"                  http://localhost:2379/v2/keys/traefik/tlsconfiguration/pair2/entrypoints
+    curl -i -H "Accept: application/json" -X PUT -d value="/tmp/test2.crt"              http://localhost:2379/v2/keys/traefik/tlsconfiguration/pair2/certificate/certfile
+    curl -i -H "Accept: application/json" -X PUT -d value="/tmp/test2.key"              http://localhost:2379/v2/keys/traefik/tlsconfiguration/pair2/certificate/keyfile
 }
 
 #
@@ -60,6 +69,16 @@ function insert_etcd3_data() {
     docker container run --rm -ti -e ETCDCTL_DIAL_="TIMEOUT 10s" -e ETCDCTL_API="3" tenstartups/etcdctl --endpoints=[$etcd_ip:2379] put "/traefik/frontends/frontend2/backend" "backend1"
     docker container run --rm -ti -e ETCDCTL_DIAL_="TIMEOUT 10s" -e ETCDCTL_API="3" tenstartups/etcdctl --endpoints=[$etcd_ip:2379] put "/traefik/frontends/frontend2/entrypoints" "http"
     docker container run --rm -ti -e ETCDCTL_DIAL_="TIMEOUT 10s" -e ETCDCTL_API="3" tenstartups/etcdctl --endpoints=[$etcd_ip:2379] put "/traefik/frontends/frontend2/routes/test_2/rule" "Path:/test"
+
+    # certificate 1
+    docker container run --rm -ti -e ETCDCTL_DIAL_="TIMEOUT 10s" -e ETCDCTL_API="3" tenstartups/etcdctl --endpoints=[$etcd_ip:2379] put "/traefik/tlsconfiguration/pair1/entrypoints" "https"
+    docker container run --rm -ti -e ETCDCTL_DIAL_="TIMEOUT 10s" -e ETCDCTL_API="3" tenstartups/etcdctl --endpoints=[$etcd_ip:2379] put "/traefik/tlsconfiguration/pair1/certificate/certfile" "/tmp/test1.crt"
+    docker container run --rm -ti -e ETCDCTL_DIAL_="TIMEOUT 10s" -e ETCDCTL_API="3" tenstartups/etcdctl --endpoints=[$etcd_ip:2379] put "/traefik/tlsconfiguration/pair1/certificate/keyfile" "/tmp/test1.key"
+
+    # certificate 2
+    docker container run --rm -ti -e ETCDCTL_DIAL_="TIMEOUT 10s" -e ETCDCTL_API="3" tenstartups/etcdctl --endpoints=[$etcd_ip:2379] put "/traefik/tlsconfiguration/pair2/entrypoints" "https"
+    docker container run --rm -ti -e ETCDCTL_DIAL_="TIMEOUT 10s" -e ETCDCTL_API="3" tenstartups/etcdctl --endpoints=[$etcd_ip:2379] put "/traefik/tlsconfiguration/pair2/certificate/certfile" "/tmp/test2.crt"
+    docker container run --rm -ti -e ETCDCTL_DIAL_="TIMEOUT 10s" -e ETCDCTL_API="3" tenstartups/etcdctl --endpoints=[$etcd_ip:2379] put "/traefik/tlsconfiguration/pair2/certificate/keyfile" "/tmp/test2.key"
 }
 
 function show_usage() {

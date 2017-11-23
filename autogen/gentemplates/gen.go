@@ -445,6 +445,7 @@ func templatesKubernetesTmpl() (*asset, error) {
 
 var _templatesKvTmpl = []byte(`{{$frontends := List .Prefix "/frontends/" }}
 {{$backends :=  List .Prefix "/backends/"}}
+{{$tlsconfiguration := List .Prefix "/tlsconfiguration/"}}
 
 [backends]{{range $backends}}
 {{$backend := .}}
@@ -508,6 +509,18 @@ var _templatesKvTmpl = []byte(`{{$frontends := List .Prefix "/frontends/" }}
         rule = "{{Get "" . "/rule"}}"
         {{end}}
 {{end}}
+
+{{range $tlsconfiguration}}
+{{$entryPoints := SplitGet . "/entrypoints"}}
+[[tlsConfiguration]]
+    entryPoints = [{{range $entryPoints}}
+      "{{.}}",
+    {{end}}]
+    [tlsConfiguration.certificate]
+        certFile = """{{Get "" . "/certificate" "/certfile"}}"""
+        keyFile = """{{Get "" . "/certificate" "/keyfile"}}"""
+{{end}}
+
 `)
 
 func templatesKvTmplBytes() ([]byte, error) {

@@ -1,0 +1,20 @@
+defaultEntryPoints = ["http","https"]
+
+logLevel = "DEBUG"
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+  [entryPoints.https]
+  address = ":4443"
+        [entryPoints.https.tls]
+
+
+
+#[etcd]
+#  endpoint = "{{.EtcdHost}}:2379"
+#  prefix = "/traefik"
+#  watch = true
+
+[web]
+  address = ":8081"

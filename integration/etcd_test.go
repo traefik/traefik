@@ -155,7 +155,7 @@ func (s *EtcdSuite) TestNominalConfiguration(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	// wait for traefik
+	// wait for Træfik
 	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
@@ -213,7 +213,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	})
 	c.Assert(err, checker.IsNil)
 
-	// start traefik
+	// start Træfik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
@@ -282,7 +282,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Path:/test"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8001/", nil)
 	c.Assert(err, checker.IsNil)
 	req.Host = "test.localhost"
@@ -293,7 +293,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 
 func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
-	// start traefik
+	// start Træfik
 	cmd, display := s.traefikCmd(
 		withConfigFile("fixtures/simple_web.toml"),
 		"--etcd",
@@ -305,7 +305,7 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
 	whoami4IP := s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
 
-	//Copy the contents of the certificate files into ETCD
+	// Copy the contents of the certificate files into ETCD
 	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
 	c.Assert(err, checker.IsNil)
 	snitestComKey, err := ioutil.ReadFile("fixtures/https/snitest.com.key")
@@ -383,7 +383,7 @@ func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) 
 	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 60*time.Second, try.BodyContains("Host:snitest.org"))
 	c.Assert(err, checker.IsNil)
 
-	//check
+	// check
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         "snitest.com",
@@ -411,10 +411,10 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 	err := cmd.Start()
 	c.Assert(err, checker.IsNil)
 
-	// wait for traefik finish without error
+	// wait for Træfik finish without error
 	cmd.Wait()
 
-	//CHECK
+	// CHECK
 	checkmap := map[string]string{
 		"/traefik/loglevel":                 "DEBUG",
 		"/traefik/defaultentrypoints/0":     "http",
@@ -433,4 +433,162 @@ func (s *EtcdSuite) TestCommandStoreConfig(c *check.C) {
 
 		c.Assert(string(p.Value), checker.Equals, value)
 	}
+}
+
+func (s *EtcdSuite) TestSNIDynamicTlsConfig(c *check.C) {
+	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
+	// start Træfik
+	cmd, display := s.traefikCmd(
+		withConfigFile("fixtures/etcd/simple_https.toml"),
+		"--etcd",
+		"--etcd.endpoint="+etcdHost+":4001",
+		"--etcd.watch=true",
+	)
+	defer display(c)
+
+	// prepare to config
+	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
+	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
+	whoami3IP := s.composeProject.Container(c, "whoami3").NetworkSettings.IPAddress
+	whoami4IP := s.composeProject.Container(c, "whoami4").NetworkSettings.IPAddress
+
+	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
+	c.Assert(err, checker.IsNil)
+	snitestComKey, err := ioutil.ReadFile("fixtures/https/snitest.com.key")
+	c.Assert(err, checker.IsNil)
+	snitestOrgCert, err := ioutil.ReadFile("fixtures/https/snitest.org.cert")
+	c.Assert(err, checker.IsNil)
+	snitestOrgKey, err := ioutil.ReadFile("fixtures/https/snitest.org.key")
+	c.Assert(err, checker.IsNil)
+
+	backend1 := map[string]string{
+		"/traefik/backends/backend1/circuitbreaker/expression": "NetworkErrorRatio() > 0.5",
+		"/traefik/backends/backend1/servers/server1/url":       "http://" + whoami1IP + ":80",
+		"/traefik/backends/backend1/servers/server1/weight":    "1",
+		"/traefik/backends/backend1/servers/server2/url":       "http://" + whoami2IP + ":80",
+		"/traefik/backends/backend1/servers/server2/weight":    "1",
+	}
+	backend2 := map[string]string{
+		"/traefik/backends/backend2/loadbalancer/method":    "drr",
+		"/traefik/backends/backend2/servers/server1/url":    "http://" + whoami3IP + ":80",
+		"/traefik/backends/backend2/servers/server1/weight": "1",
+		"/traefik/backends/backend2/servers/server2/url":    "http://" + whoami4IP + ":80",
+		"/traefik/backends/backend2/servers/server2/weight": "1",
+	}
+	frontend1 := map[string]string{
+		"/traefik/frontends/frontend1/backend":            "backend2",
+		"/traefik/frontends/frontend1/entrypoints":        "https",
+		"/traefik/frontends/frontend1/priority":           "1",
+		"/traefik/frontends/frontend1/routes/test_1/rule": "Host:snitest.com",
+	}
+
+	frontend2 := map[string]string{
+		"/traefik/frontends/frontend2/backend":            "backend1",
+		"/traefik/frontends/frontend2/entrypoints":        "https",
+		"/traefik/frontends/frontend2/priority":           "10",
+		"/traefik/frontends/frontend2/routes/test_2/rule": "Host:snitest.org",
+	}
+
+	tlsconfigure1 := map[string]string{
+		"/traefik/tlsconfiguration/snitestcom/entrypoints":          "https",
+		"/traefik/tlsconfiguration/snitestcom/certificate/keyfile":  string(snitestComKey),
+		"/traefik/tlsconfiguration/snitestcom/certificate/certfile": string(snitestComCert),
+	}
+
+	tlsconfigure2 := map[string]string{
+		"/traefik/tlsconfiguration/snitestorg/entrypoints":          "https",
+		"/traefik/tlsconfiguration/snitestorg/certificate/keyfile":  string(snitestOrgKey),
+		"/traefik/tlsconfiguration/snitestorg/certificate/certfile": string(snitestOrgCert),
+	}
+
+	// config backends,frontends and first tls keypair
+	for key, value := range backend1 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+	for key, value := range backend2 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+	for key, value := range frontend1 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+	for key, value := range frontend2 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+	for key, value := range tlsconfigure1 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+
+	tr1 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         "snitest.com",
+		},
+	}
+
+	tr2 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         "snitest.org",
+		},
+	}
+
+	// wait for etcd
+	err = try.Do(60*time.Second, func() error {
+		_, err := s.kv.Get("/traefik/tlsconfiguration/snitestcom/certificate/keyfile", nil)
+		return err
+	})
+	c.Assert(err, checker.IsNil)
+
+	err = cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	// wait for Træfik
+	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains(string("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h")))
+	c.Assert(err, checker.IsNil)
+
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
+	client := &http.Client{Transport: tr1}
+	req.Host = tr1.TLSClientConfig.ServerName
+	req.Header.Set("Host", tr1.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+	var resp *http.Response
+	resp, err = client.Do(req)
+	c.Assert(err, checker.IsNil)
+	cn := resp.TLS.PeerCertificates[0].Subject.CommonName
+	c.Assert(cn, checker.Equals, "snitest.com")
+
+	// now we configure the second keypair in etcd and the request for host "snitest.org" will use the second keypair
+
+	for key, value := range tlsconfigure2 {
+		err := s.kv.Put(key, []byte(value), nil)
+		c.Assert(err, checker.IsNil)
+	}
+
+	// wait for etcd
+	err = try.Do(60*time.Second, func() error {
+		_, err := s.kv.Get("/traefik/tlsconfiguration/snitestorg/certificate/keyfile", nil)
+		return err
+	})
+	c.Assert(err, checker.IsNil)
+
+	// waiting for Træfik to pull configuration
+	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 30*time.Second, try.BodyContains("MIIEogIBAAKCAQEAvG9kL+vF57+MICehzbqcQAUlAOSl5r"))
+	c.Assert(err, checker.IsNil)
+
+	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	c.Assert(err, checker.IsNil)
+	client = &http.Client{Transport: tr2}
+	req.Host = tr2.TLSClientConfig.ServerName
+	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+	resp, err = client.Do(req)
+	cn = resp.TLS.PeerCertificates[0].Subject.CommonName
+	c.Assert(cn, checker.Equals, "snitest.org")
 }
