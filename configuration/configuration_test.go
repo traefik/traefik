@@ -7,6 +7,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/file"
+	"github.com/containous/traefik/tls"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -133,7 +134,7 @@ func TestEntryPoints_Set(t *testing.T) {
 	}{
 		{
 			name:                   "all parameters camelcase",
-			expression:             "Name:foo Address::8000 TLS:goo,gii TLS CA:car Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol.TrustedIPs:192.168.0.1 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
+			expression:             "Name:foo Address::8000 TLS:goo,gii TLS CA:car CA.Optional:false Redirect.EntryPoint:RedirectEntryPoint Redirect.Regex:RedirectRegex Redirect.Replacement:RedirectReplacement Compress:true WhiteListSourceRange:Range ProxyProtocol.TrustedIPs:192.168.0.1 ForwardedHeaders.TrustedIPs:10.0.0.3/24,20.0.0.3/24",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
@@ -150,12 +151,15 @@ func TestEntryPoints_Set(t *testing.T) {
 					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
 				},
 				WhitelistSourceRange: []string{"Range"},
-				TLS: &TLS{
-					ClientCAFiles: []string{"car"},
-					Certificates: Certificates{
+				TLS: &tls.TLS{
+					ClientCA: tls.ClientCA{
+						Files:    []string{"car"},
+						Optional: false,
+					},
+					Certificates: tls.Certificates{
 						{
-							CertFile: FileOrContent("goo"),
-							KeyFile:  FileOrContent("gii"),
+							CertFile: tls.FileOrContent("goo"),
+							KeyFile:  tls.FileOrContent("gii"),
 						},
 					},
 				},
@@ -163,7 +167,7 @@ func TestEntryPoints_Set(t *testing.T) {
 		},
 		{
 			name:                   "all parameters lowercase",
-			expression:             "name:foo address::8000 tls:goo,gii tls ca:car redirect.entryPoint:RedirectEntryPoint redirect.regex:RedirectRegex redirect.replacement:RedirectReplacement compress:true whiteListSourceRange:Range proxyProtocol.trustedIPs:192.168.0.1 forwardedHeaders.trustedIPs:10.0.0.3/24,20.0.0.3/24",
+			expression:             "name:foo address::8000 tls:goo,gii tls ca:car ca.optional:true redirect.entryPoint:RedirectEntryPoint redirect.regex:RedirectRegex redirect.replacement:RedirectReplacement compress:true whiteListSourceRange:Range proxyProtocol.trustedIPs:192.168.0.1 forwardedHeaders.trustedIPs:10.0.0.3/24,20.0.0.3/24",
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
@@ -180,12 +184,15 @@ func TestEntryPoints_Set(t *testing.T) {
 					TrustedIPs: []string{"10.0.0.3/24", "20.0.0.3/24"},
 				},
 				WhitelistSourceRange: []string{"Range"},
-				TLS: &TLS{
-					ClientCAFiles: []string{"car"},
-					Certificates: Certificates{
+				TLS: &tls.TLS{
+					ClientCA: tls.ClientCA{
+						Files:    []string{"car"},
+						Optional: true,
+					},
+					Certificates: tls.Certificates{
 						{
-							CertFile: FileOrContent("goo"),
-							KeyFile:  FileOrContent("gii"),
+							CertFile: tls.FileOrContent("goo"),
+							KeyFile:  tls.FileOrContent("gii"),
 						},
 					},
 				},

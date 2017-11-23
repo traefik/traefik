@@ -16,12 +16,51 @@ import (
 	"github.com/containous/traefik/metrics"
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/testhelpers"
+	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/negroni"
 	"github.com/vulcand/oxy/roundrobin"
+)
+
+// LocalhostCert is a PEM-encoded TLS cert with SAN IPs
+// "127.0.0.1" and "[::1]", expiring at Jan 29 16:00:00 2084 GMT.
+// generated from src/crypto/tls:
+// go run generate_cert.go  --rsa-bits 1024 --host 127.0.0.1,::1,example.com --ca --start-date "Jan 1 00:00:00 1970" --duration=1000000h
+var (
+	localhostCert = tls.FileOrContent(`-----BEGIN CERTIFICATE-----
+MIICEzCCAXygAwIBAgIQMIMChMLGrR+QvmQvpwAU6zANBgkqhkiG9w0BAQsFADAS
+MRAwDgYDVQQKEwdBY21lIENvMCAXDTcwMDEwMTAwMDAwMFoYDzIwODQwMTI5MTYw
+MDAwWjASMRAwDgYDVQQKEwdBY21lIENvMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCB
+iQKBgQDuLnQAI3mDgey3VBzWnB2L39JUU4txjeVE6myuDqkM/uGlfjb9SjY1bIw4
+iA5sBBZzHi3z0h1YV8QPuxEbi4nW91IJm2gsvvZhIrCHS3l6afab4pZBl2+XsDul
+rKBxKKtD1rGxlG4LjncdabFn9gvLZad2bSysqz/qTAUStTvqJQIDAQABo2gwZjAO
+BgNVHQ8BAf8EBAMCAqQwEwYDVR0lBAwwCgYIKwYBBQUHAwEwDwYDVR0TAQH/BAUw
+AwEB/zAuBgNVHREEJzAlggtleGFtcGxlLmNvbYcEfwAAAYcQAAAAAAAAAAAAAAAA
+AAAAATANBgkqhkiG9w0BAQsFAAOBgQCEcetwO59EWk7WiJsG4x8SY+UIAA+flUI9
+tyC4lNhbcF2Idq9greZwbYCqTTTr2XiRNSMLCOjKyI7ukPoPjo16ocHj+P3vZGfs
+h1fIw3cSS2OolhloGw/XM6RWPWtPAlGykKLciQrBru5NAPvCMsb/I1DAceTiotQM
+fblo6RBxUQ==
+-----END CERTIFICATE-----`)
+
+	// LocalhostKey is the private key for localhostCert.
+	localhostKey = tls.FileOrContent(`-----BEGIN RSA PRIVATE KEY-----
+MIICXgIBAAKBgQDuLnQAI3mDgey3VBzWnB2L39JUU4txjeVE6myuDqkM/uGlfjb9
+SjY1bIw4iA5sBBZzHi3z0h1YV8QPuxEbi4nW91IJm2gsvvZhIrCHS3l6afab4pZB
+l2+XsDulrKBxKKtD1rGxlG4LjncdabFn9gvLZad2bSysqz/qTAUStTvqJQIDAQAB
+AoGAGRzwwir7XvBOAy5tM/uV6e+Zf6anZzus1s1Y1ClbjbE6HXbnWWF/wbZGOpet
+3Zm4vD6MXc7jpTLryzTQIvVdfQbRc6+MUVeLKwZatTXtdZrhu+Jk7hx0nTPy8Jcb
+uJqFk541aEw+mMogY/xEcfbWd6IOkp+4xqjlFLBEDytgbIECQQDvH/E6nk+hgN4H
+qzzVtxxr397vWrjrIgPbJpQvBsafG7b0dA4AFjwVbFLmQcj2PprIMmPcQrooz8vp
+jy4SHEg1AkEA/v13/5M47K9vCxmb8QeD/asydfsgS5TeuNi8DoUBEmiSJwma7FXY
+fFUtxuvL7XvjwjN5B30pNEbc6Iuyt7y4MQJBAIt21su4b3sjXNueLKH85Q+phy2U
+fQtuUE9txblTu14q3N7gHRZB4ZMhFYyDy8CKrN2cPg/Fvyt0Xlp/DoCzjA0CQQDU
+y2ptGsuSmgUtWj3NM9xuwYPm+Z/F84K6+ARYiZ6PYj013sovGKUFfYAqVXVlxtIX
+qyUBnu3X9ps8ZfjLZO7BAkEAlT4R5Yl6cGhaJQYZHOde3JEMhNRcVFMO8dJDaFeo
+f9Oeos0UUothgiDktdQHxdNEwLjQf7lJJBzV+5OtwswCWA==
+-----END RSA PRIVATE KEY-----`)
 )
 
 type testLoadBalancer struct{}
@@ -103,7 +142,7 @@ func TestPrepareServerTimeouts(t *testing.T) {
 			router := middlewares.NewHandlerSwitcher(mux.NewRouter())
 
 			srv := NewServer(test.globalConfig)
-			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router)
+			httpServer, _, err := srv.prepareServer(entryPointName, entryPoint, router, nil, nil)
 			if err != nil {
 				t.Fatalf("Unexpected error when preparing srv: %s", err)
 			}
@@ -118,6 +157,189 @@ func TestPrepareServerTimeouts(t *testing.T) {
 				t.Errorf("Got %s as WriteTimeout, want %s", httpServer.WriteTimeout, test.wantWriteTimeout)
 			}
 		})
+	}
+}
+
+func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
+	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
+	defer invokeStopChan()
+
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case <-server.configurationValidatedChan:
+				t.Error("An empty configuration was published but it should not")
+			}
+		}
+	}()
+
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes"}
+
+	// give some time so that the configuration can be processed
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
+	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
+	defer invokeStopChan()
+
+	publishedConfigCount := 0
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case config := <-server.configurationValidatedChan:
+				// set the current configuration
+				// this is usually done in the processing part of the published configuration
+				// so we have to emulate the behaviour here
+				currentConfigurations := server.currentConfigurations.Get().(types.Configurations)
+				currentConfigurations[config.ProviderName] = config.Configuration
+				server.currentConfigurations.Set(currentConfigurations)
+
+				publishedConfigCount++
+				if publishedConfigCount > 1 {
+					t.Error("Same configuration should not be published multiple times")
+				}
+			}
+		}
+	}()
+
+	config := buildDynamicConfig(
+		withFrontend("frontend", buildFrontend()),
+		withBackend("backend", buildBackend()),
+	)
+
+	// provide a configuration
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+
+	// give some time so that the configuration can be processed
+	time.Sleep(20 * time.Millisecond)
+
+	// provide the same configuration a second time
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+
+	// give some time so that the configuration can be processed
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
+	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
+	defer invokeStopChan()
+
+	publishedProviderConfigCount := map[string]int{}
+	publishedConfigCount := 0
+	consumePublishedConfigsDone := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case newConfig := <-server.configurationValidatedChan:
+				publishedProviderConfigCount[newConfig.ProviderName]++
+				publishedConfigCount++
+				if publishedConfigCount == 2 {
+					consumePublishedConfigsDone <- true
+					return
+				}
+			}
+		}
+	}()
+
+	config := buildDynamicConfig(
+		withFrontend("frontend", buildFrontend()),
+		withBackend("backend", buildBackend()),
+	)
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+	server.configurationChan <- types.ConfigMessage{ProviderName: "marathon", Configuration: config}
+
+	select {
+	case <-consumePublishedConfigsDone:
+		if val := publishedProviderConfigCount["kubernetes"]; val != 1 {
+			t.Errorf("Got %d configuration publication(s) for provider %q, want 1", val, "kubernetes")
+		}
+		if val := publishedProviderConfigCount["marathon"]; val != 1 {
+			t.Errorf("Got %d configuration publication(s) for provider %q, want 1", val, "marathon")
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Errorf("Published configurations were not consumed in time")
+	}
+}
+
+// setupListenProvider configures the Server and starts listenProviders
+func setupListenProvider(throttleDuration time.Duration) (server *Server, stop chan bool, invokeStopChan func()) {
+	stop = make(chan bool)
+	invokeStopChan = func() {
+		stop <- true
+	}
+
+	globalConfig := configuration.GlobalConfiguration{
+		EntryPoints: configuration.EntryPoints{
+			"http": &configuration.EntryPoint{},
+		},
+		ProvidersThrottleDuration: flaeg.Duration(throttleDuration),
+	}
+
+	server = NewServer(globalConfig)
+	go server.listenProviders(stop)
+
+	return server, stop, invokeStopChan
+}
+
+func TestThrottleProviderConfigReload(t *testing.T) {
+	throttleDuration := 30 * time.Millisecond
+	publishConfig := make(chan types.ConfigMessage)
+	providerConfig := make(chan types.ConfigMessage)
+	stop := make(chan bool)
+	defer func() {
+		stop <- true
+	}()
+
+	go throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
+
+	publishedConfigCount := 0
+	stopConsumeConfigs := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case <-stopConsumeConfigs:
+				return
+			case <-publishConfig:
+				publishedConfigCount++
+			}
+		}
+	}()
+
+	// publish 5 new configs, one new config each 10 milliseconds
+	for i := 0; i < 5; i++ {
+		providerConfig <- types.ConfigMessage{}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// after 50 milliseconds 5 new configs were published
+	// with a throttle duration of 30 milliseconds this means, we should have received 2 new configs
+	wantPublishedConfigCount := 2
+	if publishedConfigCount != wantPublishedConfigCount {
+		t.Errorf("%d times configs were published, want %d times", publishedConfigCount, wantPublishedConfigCount)
+	}
+
+	stopConsumeConfigs <- true
+
+	select {
+	case <-publishConfig:
+		// There should be exactly one more message that we receive after ~60 milliseconds since the start of the test.
+		select {
+		case <-publishConfig:
+			t.Error("extra config publication found")
+		case <-time.After(100 * time.Millisecond):
+			return
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Error("Last config was not published in time")
 	}
 }
 
@@ -239,6 +461,15 @@ func TestServerLoadConfigHealthCheckOptions(t *testing.T) {
 									Method: lbMethod,
 								},
 								HealthCheck: healthCheck,
+							},
+						},
+						TLSConfiguration: []*tls.Configuration{
+							{
+								Certificate: &tls.Certificate{
+									CertFile: localhostCert,
+									KeyFile:  localhostKey,
+								},
+								EntryPoints: []string{"http"},
 							},
 						},
 					},
@@ -413,6 +644,15 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 					},
 				},
 			},
+			TLSConfiguration: []*tls.Configuration{
+				{
+					Certificate: &tls.Certificate{
+						CertFile: localhostCert,
+						KeyFile:  localhostKey,
+					},
+					EntryPoints: []string{"http"},
+				},
+			},
 		},
 	}
 
@@ -540,7 +780,7 @@ func TestServerEntryPointWhitelistConfig(t *testing.T) {
 
 			srv.serverEntryPoints = srv.buildEntryPoints(srv.globalConfiguration)
 			srvEntryPoint := srv.setupServerEntryPoint("test", srv.serverEntryPoints["test"])
-			handler := srvEntryPoint.httpServer.Handler.(*negroni.Negroni)
+			handler := srvEntryPoint.httpServer.Handler.(*mux.Router).NotFoundHandler.(*negroni.Negroni)
 			found := false
 			for _, handler := range handler.Handlers() {
 				if reflect.TypeOf(handler) == reflect.TypeOf((*middlewares.IPWhiteLister)(nil)) {
@@ -659,6 +899,72 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			if responseRecorder.Result().StatusCode != test.wantStatusCode {
 				t.Errorf("got status code %d, want %d", responseRecorder.Result().StatusCode, test.wantStatusCode)
 			}
+		})
+	}
+}
+
+func TestServerLoadConfigBuildRedirect(t *testing.T) {
+	testCases := []struct {
+		desc                 string
+		replacementProtocol  string
+		globalConfiguration  configuration.GlobalConfiguration
+		originEntryPointName string
+		expectedReplacement  string
+	}{
+		{
+			desc:                 "Redirect endpoint http to https with HTTPS protocol",
+			replacementProtocol:  "https",
+			originEntryPointName: "http",
+			globalConfiguration: configuration.GlobalConfiguration{
+				EntryPoints: configuration.EntryPoints{
+					"http": &configuration.EntryPoint{
+						Address: ":80",
+						Redirect: &configuration.Redirect{
+							EntryPoint: "https",
+						},
+					},
+					"https": &configuration.EntryPoint{
+						Address: ":443",
+						TLS:     &tls.TLS{},
+					},
+				},
+			},
+
+			expectedReplacement: "https://$1:443$2",
+		},
+		{
+			desc:                 "Redirect endpoint http to http02 with HTTP protocol",
+			replacementProtocol:  "http",
+			originEntryPointName: "http",
+			globalConfiguration: configuration.GlobalConfiguration{
+				EntryPoints: configuration.EntryPoints{
+					"http": &configuration.EntryPoint{
+						Address: ":80",
+						Redirect: &configuration.Redirect{
+							EntryPoint: "http02",
+						},
+					},
+					"http02": &configuration.EntryPoint{
+						Address: ":88",
+					},
+				},
+			},
+
+			expectedReplacement: "http://$1:88$2",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			srv := Server{globalConfiguration: test.globalConfiguration}
+
+			_, replacement, err := srv.buildRedirect(test.replacementProtocol, srv.globalConfiguration.EntryPoints[test.originEntryPointName])
+
+			require.NoError(t, err, "build redirect sent an unexpected error")
+			assert.Equal(t, test.expectedReplacement, replacement, "build redirect does not return the right replacement pattern")
 		})
 	}
 }

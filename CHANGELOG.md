@@ -1,5 +1,56 @@
 # Change Log
 
+## [v1.4.4](https://github.com/containous/traefik/tree/v1.4.4) (2017-11-21)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.3...v1.4.4)
+
+**Enhancements:**
+- **[middleware]** Remove GzipHandler Fork ([#2436](https://github.com/containous/traefik/pull/2436) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[docker]** Fix problems about duplicated and missing Docker backends/frontends. ([#2434](https://github.com/containous/traefik/pull/2434) by [nmengin](https://github.com/nmengin))
+- **[middleware]** Fix raw path handling in strip prefix ([#2382](https://github.com/containous/traefik/pull/2382) by [marco-jantke](https://github.com/marco-jantke))
+- **[rancher]** Fix issue with label traefik.backend.loadbalancer.stickiness.cookieName ([#2423](https://github.com/containous/traefik/pull/2423) by [rawmind0](https://github.com/rawmind0))
+- http.Server log goes to Debug level. ([#2420](https://github.com/containous/traefik/pull/2420) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Documentation archive ([#2405](https://github.com/containous/traefik/pull/2405) by [ldez](https://github.com/ldez))
+
+## [v1.4.3](https://github.com/containous/traefik/tree/v1.4.3) (2017-11-14)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.2...v1.4.3)
+
+**Bug fixes:**
+- **[consulcatalog]** Fix Traefik reload if Consul Catalog tags change ([#2389](https://github.com/containous/traefik/pull/2389) by [mmatur](https://github.com/mmatur))
+- **[kv]** Add Traefik prefix to the KV key ([#2400](https://github.com/containous/traefik/pull/2400) by [nmengin](https://github.com/nmengin))
+- **[middleware]** Flush and Status code ([#2403](https://github.com/containous/traefik/pull/2403) by [ldez](https://github.com/ldez))
+- **[middleware]** Exclude GRPC from compress ([#2391](https://github.com/containous/traefik/pull/2391) by [ldez](https://github.com/ldez))
+- **[middleware]** Keep status when stream mode and compress ([#2380](https://github.com/containous/traefik/pull/2380) by [Juliens](https://github.com/Juliens))
+
+**Documentation:**
+- **[acme]** Fix some typos ([#2363](https://github.com/containous/traefik/pull/2363) by [tomsaleeba](https://github.com/tomsaleeba))
+- **[docker]** Minor fix for docker volume vs created directory ([#2372](https://github.com/containous/traefik/pull/2372) by [visibilityspots](https://github.com/visibilityspots))
+- **[k8s]** Link corrected ([#2385](https://github.com/containous/traefik/pull/2385) by [xlazex](https://github.com/xlazex))
+
+**Misc:**
+- **[k8s]** Add secret creation to docs for kubernetes backend ([#2374](https://github.com/containous/traefik/pull/2374) by [shadycuz](https://github.com/shadycuz))
+
+## [v1.4.2](https://github.com/containous/traefik/tree/v1.4.2) (2017-11-02)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.1...v1.4.2)
+
+**Bug fixes:**
+- **[cluster]** Fix datastore corruption on reload due to shrinking config size ([#2340](https://github.com/containous/traefik/pull/2340) by [else](https://github.com/else))
+- **[docker,docker/swarm]** Make frontend names differents for similar routes ([#2338](https://github.com/containous/traefik/pull/2338) by [nmengin](https://github.com/nmengin))
+- **[docker]** Fix IP address when Docker container network mode is container ([#2331](https://github.com/containous/traefik/pull/2331) by [nmengin](https://github.com/nmengin))
+- **[docker]** Make the traefik.port label optional when using service labels in Docker containers. ([#2330](https://github.com/containous/traefik/pull/2330) by [nmengin](https://github.com/nmengin))
+- **[docker]** Add unique ID to Docker services replicas ([#2314](https://github.com/containous/traefik/pull/2314) by [nmengin](https://github.com/nmengin))
+- **[marathon]** Missing Backend key in configuration when application has no tasks ([#2333](https://github.com/containous/traefik/pull/2333) by [aantono](https://github.com/aantono))
+- Remove hardcoded runtime.GOMAXPROCS. ([#2317](https://github.com/containous/traefik/pull/2317) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[k8s]** fixed dead link in kubernetes backend config docs ([#2337](https://github.com/containous/traefik/pull/2337) by [perplexa](https://github.com/perplexa))
+- **[k8s]** Fix the k8s docs example deployment yaml ([#2308](https://github.com/containous/traefik/pull/2308) by [gnur](https://github.com/gnur))
+- Minor grammar change ([#2350](https://github.com/containous/traefik/pull/2350) by [haxorjim](https://github.com/haxorjim))
+- Minor typo ([#2343](https://github.com/containous/traefik/pull/2343) by [burningTyger](https://github.com/burningTyger))
+
 ## [v1.4.1](https://github.com/containous/traefik/tree/v1.4.1) (2017-10-24)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.0...v1.4.1)
 
@@ -812,7 +863,7 @@
 - Chunk taskArns into groups of 100 [\#1209](https://github.com/containous/traefik/pull/1209) ([owen](https://github.com/owen))
 - Prepare release v1.2.0 rc2 [\#1204](https://github.com/containous/traefik/pull/1204) ([emilevauge](https://github.com/emilevauge))
 - Revert "Ensure that we don't add balancees with no health check runs … [\#1198](https://github.com/containous/traefik/pull/1198) ([jangie](https://github.com/jangie))
-- Small fixes and improvments [\#1173](https://github.com/containous/traefik/pull/1173) ([SantoDE](https://github.com/SantoDE))
+- Small fixes and improvements [\#1173](https://github.com/containous/traefik/pull/1173) ([SantoDE](https://github.com/SantoDE))
 - Fix docker issues with global and dead tasks [\#1167](https://github.com/containous/traefik/pull/1167) ([christopherobin](https://github.com/christopherobin))
 - Better ECS error checking [\#1143](https://github.com/containous/traefik/pull/1143) ([lpetre](https://github.com/lpetre))
 - Fix stats race condition [\#1141](https://github.com/containous/traefik/pull/1141) ([emilevauge](https://github.com/emilevauge))
@@ -912,7 +963,7 @@
 **Merged pull requests:**
 
 - Revert "Ensure that we don't add balancees with no health check runs … [\#1198](https://github.com/containous/traefik/pull/1198) ([jangie](https://github.com/jangie))
-- Small fixes and improvments [\#1173](https://github.com/containous/traefik/pull/1173) ([SantoDE](https://github.com/SantoDE))
+- Small fixes and improvements [\#1173](https://github.com/containous/traefik/pull/1173) ([SantoDE](https://github.com/SantoDE))
 - Fix docker issues with global and dead tasks [\#1167](https://github.com/containous/traefik/pull/1167) ([christopherobin](https://github.com/christopherobin))
 - Better ECS error checking [\#1143](https://github.com/containous/traefik/pull/1143) ([lpetre](https://github.com/lpetre))
 - Fix stats race condition [\#1141](https://github.com/containous/traefik/pull/1141) ([emilevauge](https://github.com/emilevauge))
@@ -1275,7 +1326,7 @@
 - \#504 Initial support for Docker 1.12 Swarm Mode [\#602](https://github.com/containous/traefik/pull/602) ([diegofernandes](https://github.com/diegofernandes))
 - Add Host cert ACME generation [\#601](https://github.com/containous/traefik/pull/601) ([emilevauge](https://github.com/emilevauge))
 - Fixed binary script so traefik version command doesn't just print default values [\#598](https://github.com/containous/traefik/pull/598) ([keiths-osc](https://github.com/keiths-osc))
-- Name servers after thier pods [\#596](https://github.com/containous/traefik/pull/596) ([errm](https://github.com/errm))
+- Name servers after their pods [\#596](https://github.com/containous/traefik/pull/596) ([errm](https://github.com/errm))
 - Fix Consul prefix [\#589](https://github.com/containous/traefik/pull/589) ([jippi](https://github.com/jippi))
 - Prioritize kubernetes routes by path length [\#588](https://github.com/containous/traefik/pull/588) ([philk](https://github.com/philk))
 - beautify help [\#580](https://github.com/containous/traefik/pull/580) ([cocap10](https://github.com/cocap10))
@@ -1498,7 +1549,7 @@
 - \#504 Initial support for Docker 1.12 Swarm Mode [\#602](https://github.com/containous/traefik/pull/602) ([diegofernandes](https://github.com/diegofernandes))
 - Add Host cert ACME generation [\#601](https://github.com/containous/traefik/pull/601) ([emilevauge](https://github.com/emilevauge))
 - Fixed binary script so traefik version command doesn't just print default values [\#598](https://github.com/containous/traefik/pull/598) ([keiths-osc](https://github.com/keiths-osc))
-- Name servers after thier pods [\#596](https://github.com/containous/traefik/pull/596) ([errm](https://github.com/errm))
+- Name servers after their pods [\#596](https://github.com/containous/traefik/pull/596) ([errm](https://github.com/errm))
 - Fix Consul prefix [\#589](https://github.com/containous/traefik/pull/589) ([jippi](https://github.com/jippi))
 - Prioritize kubernetes routes by path length [\#588](https://github.com/containous/traefik/pull/588) ([philk](https://github.com/philk))
 - beautify help [\#580](https://github.com/containous/traefik/pull/580) ([cocap10](https://github.com/cocap10))

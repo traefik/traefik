@@ -25,6 +25,7 @@
   backend = "{{$frontend.Backend}}"
   priority = {{$frontend.Priority}}
   passHostHeader = {{$frontend.PassHostHeader}}
+  redirect =  "{{$frontend.Redirect}}"
   basicAuth = [{{range $frontend.BasicAuth}}
       "{{.}}",
   {{end}}]

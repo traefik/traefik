@@ -77,9 +77,14 @@ func (a nodeSorter) Less(i int, j int) bool {
 	return lentr.Service.Port < rentr.Service.Port
 }
 
-func getChangedServiceKeys(currState map[string]Service, prevState map[string]Service) ([]string, []string) {
-	currKeySet := fun.Set(fun.Keys(currState).([]string)).(map[string]bool)
-	prevKeySet := fun.Set(fun.Keys(prevState).([]string)).(map[string]bool)
+func hasChanged(current map[string]Service, previous map[string]Service) bool {
+	addedServiceKeys, removedServiceKeys := getChangedServiceKeys(current, previous)
+	return len(removedServiceKeys) > 0 || len(addedServiceKeys) > 0 || hasNodeOrTagsChanged(current, previous)
+}
+
+func getChangedServiceKeys(current map[string]Service, previous map[string]Service) ([]string, []string) {
+	currKeySet := fun.Set(fun.Keys(current).([]string)).(map[string]bool)
+	prevKeySet := fun.Set(fun.Keys(previous).([]string)).(map[string]bool)
 
 	addedKeys := fun.Difference(currKeySet, prevKeySet).(map[string]bool)
 	removedKeys := fun.Difference(prevKeySet, currKeySet).(map[string]bool)
@@ -87,20 +92,23 @@ func getChangedServiceKeys(currState map[string]Service, prevState map[string]Se
 	return fun.Keys(addedKeys).([]string), fun.Keys(removedKeys).([]string)
 }
 
-func getChangedServiceNodeKeys(currState map[string]Service, prevState map[string]Service) ([]string, []string) {
-	var addedNodeKeys []string
-	var removedNodeKeys []string
-	for key, value := range currState {
-		if prevValue, ok := prevState[key]; ok {
-			addedKeys, removedKeys := getChangedHealthyKeys(value.Nodes, prevValue.Nodes)
-			addedNodeKeys = append(addedKeys)
-			removedNodeKeys = append(removedKeys)
+func hasNodeOrTagsChanged(current map[string]Service, previous map[string]Service) bool {
+	var added []string
+	var removed []string
+	for key, value := range current {
+		if prevValue, ok := previous[key]; ok {
+			addedNodesKeys, removedNodesKeys := getChangedStringKeys(value.Nodes, prevValue.Nodes)
+			added = append(added, addedNodesKeys...)
+			removed = append(removed, removedNodesKeys...)
+			addedTagsKeys, removedTagsKeys := getChangedStringKeys(value.Tags, prevValue.Tags)
+			added = append(added, addedTagsKeys...)
+			removed = append(removed, removedTagsKeys...)
 		}
 	}
-	return addedNodeKeys, removedNodeKeys
+	return len(added) > 0 || len(removed) > 0
 }
 
-func getChangedHealthyKeys(currState []string, prevState []string) ([]string, []string) {
+func getChangedStringKeys(currState []string, prevState []string) ([]string, []string) {
 	currKeySet := fun.Set(currState).(map[string]bool)
 	prevKeySet := fun.Set(prevState).(map[string]bool)
 
@@ -163,7 +171,7 @@ func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<
 				// A critical note is that the return of a blocking request is no guarantee of a change.
 				// It is possible that there was an idempotent write that does not affect the result of the query.
 				// Thus it is required to do extra check for changes...
-				addedKeys, removedKeys := getChangedHealthyKeys(current, flashback)
+				addedKeys, removedKeys := getChangedStringKeys(current, flashback)
 
 				if len(addedKeys) > 0 {
 					log.WithField("DiscoveredServices", addedKeys).Debug("Health State change detected.")
@@ -242,12 +250,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 				// A critical note is that the return of a blocking request is no guarantee of a change.
 				// It is possible that there was an idempotent write that does not affect the result of the query.
 				// Thus it is required to do extra check for changes...
-				addedServiceKeys, removedServiceKeys := getChangedServiceKeys(current, flashback)
-
-				addedServiceNodeKeys, removedServiceNodeKeys := getChangedServiceNodeKeys(current, flashback)
-
-				if len(removedServiceKeys) > 0 || len(removedServiceNodeKeys) > 0 || len(addedServiceKeys) > 0 || len(addedServiceNodeKeys) > 0 {
-					log.WithField("MissingServices", removedServiceKeys).WithField("DiscoveredServices", addedServiceKeys).Debug("Catalog Services change detected.")
+				if hasChanged(current, flashback) {
 					watchCh <- data
 					flashback = current
 				}
@@ -255,6 +258,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 		}
 	})
 }
+
 func getServiceIds(services []*api.CatalogService) []string {
 	var serviceIds []string
 	for _, service := range services {
@@ -271,7 +275,6 @@ func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
 		log.WithError(err).Errorf("Failed to fetch details of %s", service)
 		return catalogUpdate{}, err
 	}
-
 	nodes := fun.Filter(func(node *api.ServiceEntry) bool {
 		return p.nodeFilter(service, node)
 	}, data).([]*api.ServiceEntry)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/vulcand/oxy/utils"
 	"github.com/vulcand/predicate"
 )
 
@@ -17,7 +16,6 @@ type context struct {
 	r            *http.Request
 	attempt      int
 	responseCode int
-	log          utils.Logger
 }
 
 type hpredicate func(*context) bool

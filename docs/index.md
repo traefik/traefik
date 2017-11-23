@@ -44,7 +44,7 @@ Run it and forget it!
 - Hot-reloading of configuration. No need to restart the process
 - Circuit breakers, retry
 - Round Robin, rebalancer load-balancers
-- Metrics (Rest, Prometheus, Datadog, Statd)
+- Metrics (Rest, Prometheus, Datadog, Statsd, InfluxDB)
 - Clean AngularJS Web UI
 - Websocket, HTTP/2, GRPC ready
 - Access Logs (JSON, CLF)

@@ -23,3 +23,14 @@ curl -i -H "Accept: application/json" -X PUT -d "Host:test.localhost"         ht
 curl -i -H "Accept: application/json" -X PUT -d "backend1"                    http://localhost:8500/v1/kv/traefik/frontends/frontend2/backend
 curl -i -H "Accept: application/json" -X PUT -d "http"                  http://localhost:8500/v1/kv/traefik/frontends/frontend2/entrypoints
 curl -i -H "Accept: application/json" -X PUT -d "Path:/test"                  http://localhost:8500/v1/kv/traefik/frontends/frontend2/routes/test_2/rule
+
+
+# certificate 1
+curl -i -H "Accept: application/json" -X PUT -d "https"                  http://localhost:8500/v1/kv/traefik/tlsconfiguration/pair1/entrypoints
+curl -i -H "Accept: application/json" -X PUT -d "/tmp/test1.crt"                  http://localhost:8500/v1/kv/traefik/tlsconfiguration/pair1/certificate/certfile
+curl -i -H "Accept: application/json" -X PUT -d "/tmp/test1.key"                  http://localhost:8500/v1/kv/traefik/tlsconfiguration/pair1/certificate/keyfile
+
+# certificate 2
+curl -i -H "Accept: application/json" -X PUT -d "http,https"                  http://localhost:8500/v1/kv/traefik/tlsconfiguration/pair2/entrypoints
+curl -i -H "Accept: application/json" -X PUT -d "/tmp/test2.crt"                  http://localhost:8500/v1/kv/traefik/tlsconfiguration/pair2/certificate/certfile
+curl -i -H "Accept: application/json" -X PUT -d "/tmp/test2.key"                  http://localhost:8500/v1/kv/traefik/tlsconfiguration/pair2/certificate/keyfile

@@ -195,6 +195,9 @@ func (p *Provider) generateECSConfig(services map[string][]ecsInstance) (*types.
 		"getPassHostHeader":       p.getPassHostHeader,
 		"getPriority":             p.getPriority,
 		"getEntryPoints":          p.getEntryPoints,
+		"hasHealthCheckLabels":    p.hasHealthCheckLabels,
+		"getHealthCheckPath":      p.getHealthCheckPath,
+		"getHealthCheckInterval":  p.getHealthCheckInterval,
 	}
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
 		Services map[string][]ecsInstance
@@ -429,7 +432,7 @@ func (p *Provider) label(i ecsInstance, k string) string {
 }
 
 func (p *Provider) filterInstance(i ecsInstance) bool {
-	if len(i.container.NetworkBindings) == 0 {
+	if labelPort := p.label(i, types.LabelPort); len(i.container.NetworkBindings) == 0 && labelPort == "" {
 		log.Debugf("Filtering ecs instance without port %s (%s)", i.Name, i.ID)
 		return false
 	}
@@ -526,6 +529,18 @@ func (p *Provider) getLoadBalancerMethod(instances []ecsInstance) string {
 	return "wrr"
 }
 
+func (p *Provider) hasHealthCheckLabels(instances []ecsInstance) bool {
+	return p.getHealthCheckPath(instances) != ""
+}
+
+func (p *Provider) getHealthCheckPath(instances []ecsInstance) string {
+	return p.getFirstInstanceLabel(instances, types.LabelBackendHealthcheckPath)
+}
+
+func (p *Provider) getHealthCheckInterval(instances []ecsInstance) string {
+	return p.getFirstInstanceLabel(instances, types.LabelBackendHealthcheckInterval)
+}
+
 // Provider expects no more than 100 parameters be passed to a DescribeTask call; thus, pack
 // each string into an array capped at 100 elements
 func (p *Provider) chunkedTaskArns(tasks []*string) [][]*string {
@@ -554,6 +569,9 @@ func (p *Provider) getHost(i ecsInstance) string {
 }
 
 func (p *Provider) getPort(i ecsInstance) string {
+	if port := p.label(i, types.LabelPort); port != "" {
+		return port
+	}
 	return strconv.FormatInt(*i.container.NetworkBindings[0].HostPort, 10)
 }
 

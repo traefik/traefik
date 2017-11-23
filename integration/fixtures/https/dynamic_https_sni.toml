@@ -1,0 +1,16 @@
+logLevel = "DEBUG"
+
+defaultEntryPoints = ["https"]
+
+[entryPoints]
+  [entryPoints.https]
+  address = ":4443"
+  [entryPoints.https.tls]
+
+[web]
+  address = ":8080"
+
+[file]
+
+fileName = "{{.DynamicConfFileName}}"
+watch = true

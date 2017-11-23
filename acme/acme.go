@@ -18,6 +18,8 @@ import (
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
+	traefikTls "github.com/containous/traefik/tls"
+	"github.com/containous/traefik/tls/generate"
 	"github.com/containous/traefik/types"
 	"github.com/eapache/channels"
 	"github.com/xenolf/lego/acme"
@@ -49,6 +51,7 @@ type ACME struct {
 	checkOnDemandDomain func(domain string) bool
 	jobs                *channels.InfiniteChannel
 	TLSConfig           *tls.Config `description:"TLS config in case wildcard certs are used"`
+	dynamicCerts        *safe.Safe
 }
 
 //Domains parse []Domain
@@ -99,7 +102,7 @@ func (a *ACME) init() error {
 		acme.Logger = fmtlog.New(ioutil.Discard, "", 0)
 	}
 	// no certificates in TLS config, so we add a default one
-	cert, err := generateDefaultCertificate()
+	cert, err := generate.DefaultCertificate()
 	if err != nil {
 		return err
 	}
@@ -114,7 +117,7 @@ func (a *ACME) init() error {
 }
 
 // CreateClusterConfig creates a tls.config using ACME configuration in cluster mode
-func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tls.Config, checkOnDemandDomain func(domain string) bool) error {
+func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tls.Config, certs *safe.Safe, checkOnDemandDomain func(domain string) bool) error {
 	err := a.init()
 	if err != nil {
 		return err
@@ -123,6 +126,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 		return errors.New("Empty Store, please provide a key for certs storage")
 	}
 	a.checkOnDemandDomain = checkOnDemandDomain
+	a.dynamicCerts = certs
 	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
@@ -234,7 +238,7 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 }
 
 // CreateLocalConfig creates a tls.config using local ACME configuration
-func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func(domain string) bool) error {
+func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkOnDemandDomain func(domain string) bool) error {
 	err := a.init()
 	if err != nil {
 		return err
@@ -243,6 +247,7 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, checkOnDemandDomain func
 		return errors.New("Empty Store, please provide a filename for certs storage")
 	}
 	a.checkOnDemandDomain = checkOnDemandDomain
+	a.dynamicCerts = certs
 	tlsConfig.Certificates = append(tlsConfig.Certificates, *a.defaultCertificate)
 	tlsConfig.GetCertificate = a.getCertificate
 	a.TLSConfig = tlsConfig
@@ -583,11 +588,21 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 }
 
 // Get provided certificate which check a domains list (Main and SANs)
+// from static and dynamic provided certificates
 func (a *ACME) getProvidedCertificate(domains []string) *tls.Certificate {
+	log.Debugf("Look for provided certificate to validate %s...", domains)
+	cert := searchProvidedCertificateForDomains(domains, a.TLSConfig.NameToCertificate)
+	if cert == nil && a.dynamicCerts != nil && a.dynamicCerts.Get() != nil {
+		cert = searchProvidedCertificateForDomains(domains, a.dynamicCerts.Get().(*traefikTls.DomainsCertificates).Get().(map[string]*tls.Certificate))
+	}
+	log.Debugf("No provided certificate found for domains %s, get ACME certificate.", domains)
+	return cert
+}
+
+func searchProvidedCertificateForDomains(domains []string, certs map[string]*tls.Certificate) *tls.Certificate {
 	// Use regex to test for provided certs that might have been added into TLSConfig
 	providedCertMatch := false
-	log.Debugf("Look for provided certificate to validate %s...", domains)
-	for k := range a.TLSConfig.NameToCertificate {
+	for k := range certs {
 		selector := "^" + strings.Replace(k, "*.", "[^\\.]*\\.?", -1) + "$"
 		for _, domainToCheck := range domains {
 			providedCertMatch, _ = regexp.MatchString(selector, domainToCheck)
@@ -597,11 +612,10 @@ func (a *ACME) getProvidedCertificate(domains []string) *tls.Certificate {
 		}
 		if providedCertMatch {
 			log.Debugf("Got provided certificate for domains %s", domains)
-			return a.TLSConfig.NameToCertificate[k]
+			return certs[k]
 
 		}
 	}
-	log.Debugf("No provided certificate found for domains %s, get ACME certificate.", domains)
 	return nil
 }
 

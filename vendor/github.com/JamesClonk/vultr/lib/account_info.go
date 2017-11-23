@@ -35,19 +35,31 @@ func (a *AccountInfo) UnmarshalJSON(data []byte) (err error) {
 		return err
 	}
 
-	b, err := strconv.ParseFloat(fmt.Sprintf("%v", fields["balance"]), 64)
+	value := fmt.Sprintf("%v", fields["balance"])
+	if len(value) == 0 || value == "<nil>" {
+		value = "0"
+	}
+	b, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return err
 	}
 	a.Balance = b
 
-	pc, err := strconv.ParseFloat(fmt.Sprintf("%v", fields["pending_charges"]), 64)
+	value = fmt.Sprintf("%v", fields["pending_charges"])
+	if len(value) == 0 || value == "<nil>" {
+		value = "0"
+	}
+	pc, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return err
 	}
 	a.PendingCharges = pc
 
-	lpa, err := strconv.ParseFloat(fmt.Sprintf("%v", fields["last_payment_amount"]), 64)
+	value = fmt.Sprintf("%v", fields["last_payment_amount"])
+	if len(value) == 0 || value == "<nil>" {
+		value = "0"
+	}
+	lpa, err := strconv.ParseFloat(value, 64)
 	if err != nil {
 		return err
 	}

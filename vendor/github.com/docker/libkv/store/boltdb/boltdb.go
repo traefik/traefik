@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/boltdb/bolt"
+	"github.com/coreos/bbolt"
 	"github.com/docker/libkv"
 	"github.com/docker/libkv/store"
 )
@@ -127,7 +127,7 @@ func (b *BoltDB) releaseDBhandle() {
 
 // Get the value at "key". BoltDB doesn't provide an inbuilt last modified index with every kv pair. Its implemented by
 // by a atomic counter maintained by the libkv and appened to the value passed by the client.
-func (b *BoltDB) Get(key string) (*store.KVPair, error) {
+func (b *BoltDB) Get(key string, opts *store.ReadOptions) (*store.KVPair, error) {
 	var (
 		val []byte
 		db  *bolt.DB
@@ -229,7 +229,7 @@ func (b *BoltDB) Delete(key string) error {
 }
 
 // Exists checks if the key exists inside the store
-func (b *BoltDB) Exists(key string) (bool, error) {
+func (b *BoltDB) Exists(key string, opts *store.ReadOptions) (bool, error) {
 	var (
 		val []byte
 		db  *bolt.DB
@@ -261,7 +261,7 @@ func (b *BoltDB) Exists(key string) (bool, error) {
 }
 
 // List returns the range of keys starting with the passed in prefix
-func (b *BoltDB) List(keyPrefix string) ([]*store.KVPair, error) {
+func (b *BoltDB) List(keyPrefix string, opts *store.ReadOptions) ([]*store.KVPair, error) {
 	var (
 		db  *bolt.DB
 		err error
@@ -275,7 +275,7 @@ func (b *BoltDB) List(keyPrefix string) ([]*store.KVPair, error) {
 		return nil, err
 	}
 	defer b.releaseDBhandle()
-
+	hasResult := false
 	err = db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket(b.boltBucket)
 		if bucket == nil {
@@ -286,21 +286,23 @@ func (b *BoltDB) List(keyPrefix string) ([]*store.KVPair, error) {
 		prefix := []byte(keyPrefix)
 
 		for key, v := cursor.Seek(prefix); bytes.HasPrefix(key, prefix); key, v = cursor.Next() {
-
+			hasResult = true
 			dbIndex := binary.LittleEndian.Uint64(v[:libkvmetadatalen])
 			v = v[libkvmetadatalen:]
 			val := make([]byte, len(v))
 			copy(val, v)
 
-			kv = append(kv, &store.KVPair{
-				Key:       string(key),
-				Value:     val,
-				LastIndex: dbIndex,
-			})
+			if string(key) != keyPrefix {
+				kv = append(kv, &store.KVPair{
+					Key:       string(key),
+					Value:     val,
+					LastIndex: dbIndex,
+				})
+			}
 		}
 		return nil
 	})
-	if len(kv) == 0 {
+	if !hasResult {
 		return nil, store.ErrKeyNotFound
 	}
 	return kv, err
@@ -464,11 +466,11 @@ func (b *BoltDB) NewLock(key string, options *store.LockOptions) (store.Locker, 
 }
 
 // Watch has to implemented at the library level since its not supported by BoltDB
-func (b *BoltDB) Watch(key string, stopCh <-chan struct{}) (<-chan *store.KVPair, error) {
+func (b *BoltDB) Watch(key string, stopCh <-chan struct{}, opts *store.ReadOptions) (<-chan *store.KVPair, error) {
 	return nil, store.ErrCallNotSupported
 }
 
 // WatchTree has to implemented at the library level since its not supported by BoltDB
-func (b *BoltDB) WatchTree(directory string, stopCh <-chan struct{}) (<-chan []*store.KVPair, error) {
+func (b *BoltDB) WatchTree(directory string, stopCh <-chan struct{}, opts *store.ReadOptions) (<-chan []*store.KVPair, error) {
 	return nil, store.ErrCallNotSupported
 }

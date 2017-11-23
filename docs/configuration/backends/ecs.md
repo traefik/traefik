@@ -129,10 +129,13 @@ Labels can be used on task containers to override default behaviour:
 | `traefik.protocol=https`                                  | override the default `http` protocol                                                     |
 | `traefik.weight=10`                                       | assign this weight to the container                                                      |
 | `traefik.enable=false`                                    | disable this container in Træfik                                                         |
+| `traefik.port=80`                                         | override the default `port` value. Overrides `NetworkBindings` from Docker Container     |
 | `traefik.backend.loadbalancer.method=drr`                 | override the default `wrr` load balancer algorithm                                       |
 | `traefik.backend.loadbalancer.stickiness=true`            | enable backend sticky sessions                                                           |
 | `traefik.backend.loadbalancer.stickiness.cookieName=NAME` | Manually set the cookie name for sticky sessions                                         |
 | `traefik.backend.loadbalancer.sticky=true`                | enable backend sticky sessions (DEPRECATED)                                              |
+| `traefik.backend.healthcheck.path=/health`                | enable health checks for the backend, hitting the container at `path`                    |
+| `traefik.backend.healthcheck.interval=1s`                 | configure the health check interval                                                      |
 | `traefik.frontend.rule=Host:test.traefik.io`              | override the default frontend rule (Default: `Host:{containerName}.{domain}`).           |
 | `traefik.frontend.passHostHeader=true`                    | forward client `Host` header to the backend.                                             |
 | `traefik.frontend.priority=10`                            | override default frontend priority                                                       |

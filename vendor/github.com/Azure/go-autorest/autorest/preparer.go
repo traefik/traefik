@@ -426,18 +426,3 @@ func WithQueryParameters(queryParameters map[string]interface{}) PrepareDecorato
 		})
 	}
 }
-
-// Authorizer is the interface that provides a PrepareDecorator used to supply request
-// authorization. Most often, the Authorizer decorator runs last so it has access to the full
-// state of the formed HTTP request.
-type Authorizer interface {
-	WithAuthorization() PrepareDecorator
-}
-
-// NullAuthorizer implements a default, "do nothing" Authorizer.
-type NullAuthorizer struct{}
-
-// WithAuthorization returns a PrepareDecorator that does nothing.
-func (na NullAuthorizer) WithAuthorization() PrepareDecorator {
-	return WithNothing()
-}

@@ -14,7 +14,13 @@ import (
 
 // Forward the authentication to a external server
 func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	httpClient := http.Client{}
+
+	// Ensure our request client does not follow redirects
+	httpClient := http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
 
 	if config.TLS != nil {
 		tlsConfig, err := config.TLS.CreateTLSConfig()
@@ -52,8 +58,30 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 	}
 	defer forwardResponse.Body.Close()
 
+	// Pass the forward response's body and selected headers if it
+	// didn't return a response within the range of [200, 300).
 	if forwardResponse.StatusCode < http.StatusOK || forwardResponse.StatusCode >= http.StatusMultipleChoices {
 		log.Debugf("Remote error %s. StatusCode: %d", config.Address, forwardResponse.StatusCode)
+
+		// Grab the location header, if any.
+		redirectURL, err := forwardResponse.Location()
+
+		if err != nil {
+			if err != http.ErrNoLocation {
+				log.Debugf("Error reading response location header %s. Cause: %s", config.Address, err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		} else if redirectURL.String() != "" {
+			// Set the location in our response if one was sent back.
+			w.Header().Add("Location", redirectURL.String())
+		}
+
+		// Pass any Set-Cookie headers the forward auth server provides
+		for _, cookie := range forwardResponse.Cookies() {
+			w.Header().Add("Set-Cookie", cookie.String())
+		}
+
 		w.WriteHeader(forwardResponse.StatusCode)
 		w.Write(body)
 		return

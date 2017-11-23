@@ -15,6 +15,7 @@
 package ini
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
@@ -25,6 +26,7 @@ import (
 // Key represents a key under a section.
 type Key struct {
 	s               *Section
+	Comment         string
 	name            string
 	value           string
 	isAutoIncrement bool
@@ -32,8 +34,6 @@ type Key struct {
 
 	isShadow bool
 	shadows  []*Key
-
-	Comment string
 }
 
 // newKey simply return a key object with given values.
@@ -444,11 +444,39 @@ func (k *Key) Strings(delim string) []string {
 		return []string{}
 	}
 
-	vals := strings.Split(str, delim)
-	for i := range vals {
-		// vals[i] = k.transformValue(strings.TrimSpace(vals[i]))
-		vals[i] = strings.TrimSpace(vals[i])
+	runes := []rune(str)
+	vals := make([]string, 0, 2)
+	var buf bytes.Buffer
+	escape := false
+	idx := 0
+	for {
+		if escape {
+			escape = false
+			if runes[idx] != '\\' && !strings.HasPrefix(string(runes[idx:]), delim) {
+				buf.WriteRune('\\')
+			}
+			buf.WriteRune(runes[idx])
+		} else {
+			if runes[idx] == '\\' {
+				escape = true
+			} else if strings.HasPrefix(string(runes[idx:]), delim) {
+				idx += len(delim) - 1
+				vals = append(vals, strings.TrimSpace(buf.String()))
+				buf.Reset()
+			} else {
+				buf.WriteRune(runes[idx])
+			}
+		}
+		idx += 1
+		if idx == len(runes) {
+			break
+		}
 	}
+
+	if buf.Len() > 0 {
+		vals = append(vals, strings.TrimSpace(buf.String()))
+	}
+
 	return vals
 }
 

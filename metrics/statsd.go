@@ -17,6 +17,12 @@ var statsdClient = statsd.New("traefik.", kitlog.LoggerFunc(func(keyvals ...inte
 
 var statsdTicker *time.Ticker
 
+const (
+	statsdMetricsReqsName    = "requests.total"
+	statsdMetricsLatencyName = "request.duration"
+	statsdRetriesTotalName   = "backend.retries.total"
+)
+
 // RegisterStatsd registers the metrics pusher if this didn't happen yet and creates a statsd Registry instance.
 func RegisterStatsd(config *types.Statsd) Registry {
 	if statsdTicker == nil {
@@ -25,9 +31,9 @@ func RegisterStatsd(config *types.Statsd) Registry {
 
 	return &standardRegistry{
 		enabled:              true,
-		reqsCounter:          statsdClient.NewCounter(ddMetricsReqsName, 1.0),
-		reqDurationHistogram: statsdClient.NewTiming(ddMetricsLatencyName, 1.0),
-		retriesCounter:       statsdClient.NewCounter(ddRetriesTotalName, 1.0),
+		reqsCounter:          statsdClient.NewCounter(statsdMetricsReqsName, 1.0),
+		reqDurationHistogram: statsdClient.NewTiming(statsdMetricsLatencyName, 1.0),
+		retriesCounter:       statsdClient.NewCounter(statsdRetriesTotalName, 1.0),
 	}
 }
 

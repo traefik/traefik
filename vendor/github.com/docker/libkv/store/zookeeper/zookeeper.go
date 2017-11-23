@@ -14,6 +14,8 @@ const (
 	SOH = "\x01"
 
 	defaultTimeout = 10 * time.Second
+
+	syncRetryLimit = 5
 )
 
 // Zookeeper is the receiver type for
@@ -65,20 +67,11 @@ func (s *Zookeeper) setTimeout(time time.Duration) {
 
 // Get the value at "key", returns the last modified index
 // to use in conjunction to Atomic calls
-func (s *Zookeeper) Get(key string) (pair *store.KVPair, err error) {
-	resp, meta, err := s.client.Get(s.normalize(key))
+func (s *Zookeeper) Get(key string, opts *store.ReadOptions) (pair *store.KVPair, err error) {
 
+	resp, meta, err := s.get(key)
 	if err != nil {
-		if err == zk.ErrNoNode {
-			return nil, store.ErrKeyNotFound
-		}
 		return nil, err
-	}
-
-	// FIXME handle very rare cases where Get returns the
-	// SOH control character instead of the actual value
-	if string(resp) == SOH {
-		return s.Get(store.Normalize(key))
 	}
 
 	pair = &store.KVPair{
@@ -91,14 +84,21 @@ func (s *Zookeeper) Get(key string) (pair *store.KVPair, err error) {
 }
 
 // createFullPath creates the entire path for a directory
-// that does not exist
-func (s *Zookeeper) createFullPath(path []string, ephemeral bool) error {
+// that does not exist and sets the value of the last
+// znode to data
+func (s *Zookeeper) createFullPath(path []string, data []byte, ephemeral bool) error {
 	for i := 1; i <= len(path); i++ {
 		newpath := "/" + strings.Join(path[:i], "/")
-		if i == len(path) && ephemeral {
-			_, err := s.client.Create(newpath, []byte{}, zk.FlagEphemeral, zk.WorldACL(zk.PermAll))
+
+		if i == len(path) {
+			flag := 0
+			if ephemeral {
+				flag = zk.FlagEphemeral
+			}
+			_, err := s.client.Create(newpath, data, int32(flag), zk.WorldACL(zk.PermAll))
 			return err
 		}
+
 		_, err := s.client.Create(newpath, []byte{}, 0, zk.WorldACL(zk.PermAll))
 		if err != nil {
 			// Skip if node already exists
@@ -114,20 +114,21 @@ func (s *Zookeeper) createFullPath(path []string, ephemeral bool) error {
 func (s *Zookeeper) Put(key string, value []byte, opts *store.WriteOptions) error {
 	fkey := s.normalize(key)
 
-	exists, err := s.Exists(key)
+	exists, err := s.Exists(key, nil)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
 		if opts != nil && opts.TTL > 0 {
-			s.createFullPath(store.SplitKey(strings.TrimSuffix(key, "/")), true)
+			s.createFullPath(store.SplitKey(strings.TrimSuffix(key, "/")), value, true)
 		} else {
-			s.createFullPath(store.SplitKey(strings.TrimSuffix(key, "/")), false)
+			s.createFullPath(store.SplitKey(strings.TrimSuffix(key, "/")), value, false)
 		}
+	} else {
+		_, err = s.client.Set(fkey, value, -1)
 	}
 
-	_, err = s.client.Set(fkey, value, -1)
 	return err
 }
 
@@ -141,7 +142,7 @@ func (s *Zookeeper) Delete(key string) error {
 }
 
 // Exists checks if the key exists inside the store
-func (s *Zookeeper) Exists(key string) (bool, error) {
+func (s *Zookeeper) Exists(key string, opts *store.ReadOptions) (bool, error) {
 	exists, _, err := s.client.Exists(s.normalize(key))
 	if err != nil {
 		return false, err
@@ -154,33 +155,31 @@ func (s *Zookeeper) Exists(key string) (bool, error) {
 // on errors. Upon creation, the current value will first
 // be sent to the channel. Providing a non-nil stopCh can
 // be used to stop watching.
-func (s *Zookeeper) Watch(key string, stopCh <-chan struct{}) (<-chan *store.KVPair, error) {
-	// Get the key first
-	pair, err := s.Get(key)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *Zookeeper) Watch(key string, stopCh <-chan struct{}, opts *store.ReadOptions) (<-chan *store.KVPair, error) {
 	// Catch zk notifications and fire changes into the channel.
 	watchCh := make(chan *store.KVPair)
 	go func() {
 		defer close(watchCh)
 
-		// Get returns the current value to the channel prior
-		// to listening to any event that may occur on that key
-		watchCh <- pair
+		var fireEvt = true
 		for {
-			_, _, eventCh, err := s.client.GetW(s.normalize(key))
+			resp, meta, eventCh, err := s.getW(key)
 			if err != nil {
 				return
 			}
+			if fireEvt {
+				watchCh <- &store.KVPair{
+					Key:       key,
+					Value:     resp,
+					LastIndex: uint64(meta.Version),
+				}
+			}
 			select {
 			case e := <-eventCh:
-				if e.Type == zk.EventNodeDataChanged {
-					if entry, err := s.Get(key); err == nil {
-						watchCh <- entry
-					}
-				}
+				// Only fire an event if the data in the node changed.
+				// Simply reset the watch if this is any other event
+				// (e.g. a session event).
+				fireEvt = e.Type == zk.EventNodeDataChanged
 			case <-stopCh:
 				// There is no way to stop GetW so just quit
 				return
@@ -196,37 +195,36 @@ func (s *Zookeeper) Watch(key string, stopCh <-chan struct{}) (<-chan *store.KVP
 // on errors. Upon creating a watch, the current childs values
 // will be sent to the channel .Providing a non-nil stopCh can
 // be used to stop watching.
-func (s *Zookeeper) WatchTree(directory string, stopCh <-chan struct{}) (<-chan []*store.KVPair, error) {
-	// List the childrens first
-	entries, err := s.List(directory)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *Zookeeper) WatchTree(directory string, stopCh <-chan struct{}, opts *store.ReadOptions) (<-chan []*store.KVPair, error) {
 	// Catch zk notifications and fire changes into the channel.
 	watchCh := make(chan []*store.KVPair)
 	go func() {
 		defer close(watchCh)
 
-		// List returns the children values to the channel
-		// prior to listening to any events that may occur
-		// on those keys
-		watchCh <- entries
-
+		var fireEvt = true
 		for {
-			_, _, eventCh, err := s.client.ChildrenW(s.normalize(directory))
+		WATCH:
+			keys, _, eventCh, err := s.client.ChildrenW(s.normalize(directory))
 			if err != nil {
 				return
 			}
+			if fireEvt {
+				kvs, err := s.getListWithPath(directory, keys, opts)
+				if err != nil {
+					// Failed to get values for one or more of the keys,
+					// the list may be out of date so try again.
+					goto WATCH
+				}
+				watchCh <- kvs
+			}
 			select {
 			case e := <-eventCh:
-				if e.Type == zk.EventNodeChildrenChanged {
-					if kv, err := s.List(directory); err == nil {
-						watchCh <- kv
-					}
-				}
+				// Only fire an event if the children have changed.
+				// Simply reset the watch if this is any other event
+				// (e.g. a session event).
+				fireEvt = e.Type == zk.EventNodeChildrenChanged
 			case <-stopCh:
-				// There is no way to stop GetW so just quit
+				// There is no way to stop ChildrenW so just quit
 				return
 			}
 		}
@@ -235,51 +233,75 @@ func (s *Zookeeper) WatchTree(directory string, stopCh <-chan struct{}) (<-chan 
 	return watchCh, nil
 }
 
-// List child nodes of a given directory
-func (s *Zookeeper) List(directory string) ([]*store.KVPair, error) {
-	keys, stat, err := s.client.Children(s.normalize(directory))
+// listChildren lists the direct children of a directory
+func (s *Zookeeper) listChildren(directory string) ([]string, error) {
+	children, _, err := s.client.Children(s.normalize(directory))
 	if err != nil {
 		if err == zk.ErrNoNode {
 			return nil, store.ErrKeyNotFound
 		}
 		return nil, err
 	}
+	return children, nil
+}
 
-	kv := []*store.KVPair{}
-
-	// FIXME Costly Get request for each child key..
-	for _, key := range keys {
-		pair, err := s.Get(strings.TrimSuffix(directory, "/") + s.normalize(key))
-		if err != nil {
-			// If node is not found: List is out of date, retry
-			if err == store.ErrKeyNotFound {
-				return s.List(directory)
-			}
-			return nil, err
-		}
-
-		kv = append(kv, &store.KVPair{
-			Key:       key,
-			Value:     []byte(pair.Value),
-			LastIndex: uint64(stat.Version),
-		})
+// listChildrenRecursive lists the children of a directory as well as
+// all the descending childs from sub-folders in a recursive fashion.
+func (s *Zookeeper) listChildrenRecursive(list *[]string, directory string) error {
+	children, err := s.listChildren(directory)
+	if err != nil {
+		return err
 	}
 
-	return kv, nil
+	// We reached a leaf.
+	if len(children) == 0 {
+		return nil
+	}
+
+	for _, c := range children {
+		c = strings.TrimSuffix(directory, "/") + "/" + c
+		err := s.listChildrenRecursive(list, c)
+		if err != nil && err != zk.ErrNoChildrenForEphemerals {
+			return err
+		}
+		*list = append(*list, c)
+	}
+
+	return nil
+}
+
+// List child nodes of a given directory
+func (s *Zookeeper) List(directory string, opts *store.ReadOptions) ([]*store.KVPair, error) {
+	children := make([]string, 0)
+	err := s.listChildrenRecursive(&children, directory)
+	if err != nil {
+		return nil, err
+	}
+
+	kvs, err := s.getList(children, opts)
+	if err != nil {
+		// If node is not found: List is out of date, retry
+		if err == store.ErrKeyNotFound {
+			return s.List(directory, opts)
+		}
+		return nil, err
+	}
+
+	return kvs, nil
 }
 
 // DeleteTree deletes a range of keys under a given directory
 func (s *Zookeeper) DeleteTree(directory string) error {
-	pairs, err := s.List(directory)
+	children, err := s.listChildren(directory)
 	if err != nil {
 		return err
 	}
 
 	var reqs []interface{}
 
-	for _, pair := range pairs {
+	for _, c := range children {
 		reqs = append(reqs, &zk.DeleteRequest{
-			Path:    s.normalize(directory + "/" + pair.Key),
+			Path:    s.normalize(directory + "/" + c),
 			Version: -1,
 		})
 	}
@@ -313,7 +335,7 @@ func (s *Zookeeper) AtomicPut(key string, value []byte, previous *store.KVPair, 
 				// Create the directory
 				parts := store.SplitKey(strings.TrimSuffix(key, "/"))
 				parts = parts[:len(parts)-1]
-				if err = s.createFullPath(parts, false); err != nil {
+				if err = s.createFullPath(parts, []byte{}, false); err != nil {
 					// Failed to create the directory.
 					return false, nil, err
 				}
@@ -401,14 +423,16 @@ func (s *Zookeeper) NewLock(key string, options *store.LockOptions) (lock store.
 func (l *zookeeperLock) Lock(stopChan chan struct{}) (<-chan struct{}, error) {
 	err := l.lock.Lock()
 
+	lostCh := make(chan struct{})
 	if err == nil {
 		// We hold the lock, we can set our value
-		// FIXME: The value is left behind
-		// (problematic for leader election)
 		_, err = l.client.Set(l.key, l.value, -1)
+		if err == nil {
+			go l.monitorLock(stopChan, lostCh)
+		}
 	}
 
-	return make(chan struct{}), err
+	return lostCh, err
 }
 
 // Unlock the "key". Calling unlock while
@@ -426,4 +450,144 @@ func (s *Zookeeper) Close() {
 func (s *Zookeeper) normalize(key string) string {
 	key = store.Normalize(key)
 	return strings.TrimSuffix(key, "/")
+}
+
+func (l *zookeeperLock) monitorLock(stopCh <-chan struct{}, lostCh chan struct{}) {
+	defer close(lostCh)
+
+	for {
+		_, _, eventCh, err := l.client.GetW(l.key)
+		if err != nil {
+			// We failed to set watch, relinquish the lock
+			return
+		}
+		select {
+		case e := <-eventCh:
+			if e.Type == zk.EventNotWatching ||
+				(e.Type == zk.EventSession && e.State == zk.StateExpired) {
+				// Either the session has been closed and our watch has been
+				// invalidated or the session has expired.
+				return
+			} else if e.Type == zk.EventNodeDataChanged {
+				// Somemone else has written to the lock node and believes
+				// that they have the lock.
+				return
+			}
+		case <-stopCh:
+			// The caller has requested that we relinquish our lock
+			return
+		}
+	}
+}
+
+func (s *Zookeeper) get(key string) ([]byte, *zk.Stat, error) {
+	var resp []byte
+	var meta *zk.Stat
+	var err error
+
+	// To guard against older versions of libkv
+	// creating and writing to znodes non-atomically,
+	// We try to resync few times if we read SOH or
+	// an empty string
+	for i := 0; i <= syncRetryLimit; i++ {
+		resp, meta, err = s.client.Get(s.normalize(key))
+
+		if err != nil {
+			if err == zk.ErrNoNode {
+				return nil, nil, store.ErrKeyNotFound
+			}
+			return nil, nil, err
+		}
+
+		if string(resp) != SOH && string(resp) != "" {
+			return resp, meta, nil
+		}
+
+		if i < syncRetryLimit {
+			if _, err = s.client.Sync(s.normalize(key)); err != nil {
+				return nil, nil, err
+			}
+		}
+	}
+	return resp, meta, nil
+}
+
+func (s *Zookeeper) getW(key string) ([]byte, *zk.Stat, <-chan zk.Event, error) {
+	var resp []byte
+	var meta *zk.Stat
+	var ech <-chan zk.Event
+	var err error
+
+	// To guard against older versions of libkv
+	// creating and writing to znodes non-atomically,
+	// We try to resync few times if we read SOH or
+	// an empty string
+	for i := 0; i <= syncRetryLimit; i++ {
+		resp, meta, ech, err = s.client.GetW(s.normalize(key))
+
+		if err != nil {
+			if err == zk.ErrNoNode {
+				return nil, nil, nil, store.ErrKeyNotFound
+			}
+			return nil, nil, nil, err
+		}
+
+		if string(resp) != SOH && string(resp) != "" {
+			return resp, meta, ech, nil
+		}
+
+		if i < syncRetryLimit {
+			if _, err = s.client.Sync(s.normalize(key)); err != nil {
+				return nil, nil, nil, err
+			}
+		}
+	}
+	return resp, meta, ech, nil
+}
+
+// getListWithPath gets the key/value pairs for a list of keys under
+// a given path.
+//
+// This is generally used when we get a list of child keys which
+// are stripped out of their path (for example when using ChildrenW).
+func (s *Zookeeper) getListWithPath(path string, keys []string, opts *store.ReadOptions) ([]*store.KVPair, error) {
+	kvs := []*store.KVPair{}
+
+	for _, key := range keys {
+		pair, err := s.Get(strings.TrimSuffix(path, "/")+s.normalize(key), opts)
+		if err != nil {
+			return nil, err
+		}
+
+		kvs = append(kvs, &store.KVPair{
+			Key:       key,
+			Value:     pair.Value,
+			LastIndex: pair.LastIndex,
+		})
+	}
+
+	return kvs, nil
+}
+
+// getList returns key/value pairs from a list of keys.
+//
+// This is generally used when we have a full list of keys with
+// their full path included.
+func (s *Zookeeper) getList(keys []string, opts *store.ReadOptions) ([]*store.KVPair, error) {
+	kvs := []*store.KVPair{}
+
+	for _, key := range keys {
+		pair, err := s.Get(strings.TrimSuffix(key, "/"), nil)
+		if err != nil {
+			return nil, err
+		}
+
+		kvs = append(kvs, &store.KVPair{
+			Key:       key,
+			Value:     pair.Value,
+			LastIndex: pair.LastIndex,
+		})
+	}
+
+	return kvs, nil
 }

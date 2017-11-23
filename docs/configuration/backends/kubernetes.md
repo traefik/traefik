@@ -57,6 +57,13 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # Default: false
 #
 # disablePassHostHeaders = true
+
+# Enable PassTLSCert Headers.
+#
+# Optional
+# Default: false
+#
+# enablePassTLSCert = true
 ```
 
 ### `endpoint`
@@ -88,6 +95,12 @@ Annotations can be used on containers to override default behaviour for the whol
     Override the default frontend rule type. Default: `PathPrefix`.
 - `traefik.frontend.priority: "3"`
     Override the default frontend rule priority.
+- `traefik.frontend.redirect: https`: 
+    Enables Redirect to another entryPoint for that frontend (e.g. HTTPS).
+- `traefik.frontend.entryPoints: http,https`  
+    Override the default frontend endpoints.
+- `traefik.frontend.passTLSCert: true`  
+    Override the default frontend PassTLSCert value. Default: `false`.
 
 Annotations can be used on the Kubernetes service to override default behaviour:
 
@@ -118,10 +131,10 @@ If one of the Net-Specifications are invalid, the whole list is invalid and allo
 ### Authentication
 
 Is possible to add additional authentication annotations in the Ingress rule.
-The source of the authentication is a secret that contains usernames and passwords inside the the key auth.
+The source of the authentication is a secret that contains usernames and passwords inside the key auth.
 
 - `ingress.kubernetes.io/auth-type`: `basic`
-- `ingress.kubernetes.io/auth-secret`  
+- `ingress.kubernetes.io/auth-secret`: `mysecret`  
     Contains the usernames and passwords with access to the paths defined in the Ingress Rule.
 
 The secret must be created in the same namespace as the Ingress rule.

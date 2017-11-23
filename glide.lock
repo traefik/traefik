@@ -1,4 +1,4 @@
-hash: d896859fdb5b327bc1857f2707d9bf1e6fa9fb78dec39a28b8acf011fad26f20
+hash: 6fe124be296e5c2865b6eb1d87d5721a7d45f46f5747519c1c164d40930c7007
 updated: 2017-11-22T15:59:09.002650953+01:00
 imports:
 - name: cloud.google.com/go
@@ -56,13 +56,14 @@ imports:
   - service/route53
   - service/sts
 - name: github.com/Azure/azure-sdk-for-go
-  version: 088007b3b08cc02b27f2eadfdcd870958460ce7e
+  version: f7bb4db3ea4c73dc58bd284c38ea644a79324be0
   subpackages:
   - arm/dns
 - name: github.com/Azure/go-autorest
-  version: a2fdd780c9a50455cecd249b00bdc3eb73a78e31
+  version: f6be1abbb5abd0517522f850dd785990d373da7e
   subpackages:
   - autorest
+  - autorest/adal
   - autorest/azure
   - autorest/date
   - autorest/to
@@ -95,15 +96,29 @@ imports:
 - name: github.com/containous/mux
   version: 06ccd3e75091eb659b1d720cda0e16bc7057954c
 - name: github.com/containous/staert
-  version: 1e26a71803e428fd933f5f9c8e50a26878f53147
+  version: af517d5b70db9c4b0505e0144fcc62b054057d2a
 - name: github.com/containous/traefik-extra-service-fabric
   version: 552883c6e1f80d9c66098045c4c90d9a6a1967a8
+- name: github.com/coreos/bbolt
+  version: 3c6cbfb299c11444eb2f8c9d48f0d2ce09157423
 - name: github.com/coreos/etcd
-  version: c400d05d0aa73e21e431c16145e558d624098018
+  version: f1d7dd87da3e8feab4aaf675b8e29c6a5ed5f58b
   subpackages:
+  - auth/authpb
   - client
+  - clientv3
+  - clientv3/concurrency
+  - etcdserver/api/v3rpc/rpctypes
+  - etcdserver/etcdserverpb
+  - mvcc/mvccpb
   - pkg/pathutil
+  - pkg/srv
   - pkg/types
+  - version
+- name: github.com/coreos/go-semver
+  version: 8ab6407b697782a06568d4b7f1db25550ec2e4c6
+  subpackages:
+  - semver
 - name: github.com/coreos/go-oidc
   version: 5644a2f50e2d2d5ba0b474bc5bc55fea1925936d
   subpackages:
@@ -127,11 +142,11 @@ imports:
   subpackages:
   - spew
 - name: github.com/decker502/dnspod-go
-  version: 68650ee11e182e30773781d391c66a0c80ccf9f2
+  version: f33a2c6040fc2550a631de7b3a53bddccdcd73fb
 - name: github.com/dgrijalva/jwt-go
   version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/dnsimple/dnsimple-go
-  version: 5a5b427618a76f9eed5ede0f3e6306fbd9311d2e
+  version: f2d9b723cc9547d182e24ac2e527ae25d25fc93f
   subpackages:
   - dnsimple
 - name: github.com/docker/distribution
@@ -207,14 +222,20 @@ imports:
 - name: github.com/docker/go-units
   version: 9e638d38cf6977a37a8ea0078f3ee75a7cdb2dd1
 - name: github.com/docker/leadership
-  version: 0a913e2d71a12fd14a028452435cb71ac8d82cb6
+  version: af20da7d3e62be9259835e93261acf931b5adecf
+  repo: https://github.com/containous/leadership.git
+  vcs: git
 - name: github.com/docker/libkv
-  version: 93ab0e6c056d325dfbb11e1d58a3b4f5f62e7f3c
+  version: 5e4bb288a9a74320bb03f5c18d6bdbab0d8049de
+  repo: https://github.com/abronan/libkv.git
+  vcs: git
   subpackages:
   - store
   - store/boltdb
   - store/consul
   - store/etcd
+  - store/etcd/v2
+  - store/etcd/v3
   - store/zookeeper
 - name: github.com/docker/libtrust
   version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
@@ -225,7 +246,7 @@ imports:
 - name: github.com/eapache/queue
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/edeckers/auroradnsclient
-  version: 8b777c170cfd377aa16bb4368f093017dddef3f9
+  version: 398f53855ba258191157e20fabfaccca5e13cea9
   subpackages:
   - records
   - requests
@@ -239,6 +260,8 @@ imports:
   subpackages:
   - log
   - swagger
+- name: github.com/exoscale/egoscale
+  version: 325740036187ddae3a5b74be00fbbc70011c4d96
 - name: github.com/fatih/color
   version: 62e9147c64a1ed519147b62a56a14e83e2be02c1
 - name: github.com/gambol99/go-marathon
@@ -246,13 +269,15 @@ imports:
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
-  version: e7fea39b01aea8d5671f6858f0532f56e8bff3a5
+  version: f384f410798cbe7cdce40eec40b79ed32bb4f1ad
 - name: github.com/go-kit/kit
   version: f66b0e13579bfc5a48b9e2a94b1209c107ea1f41
   subpackages:
   - log
   - metrics
   - metrics/dogstatsd
+  - metrics/generic
+  - metrics/influx
   - metrics/internal/lv
   - metrics/internal/ratemap
   - metrics/multi
@@ -279,9 +304,11 @@ imports:
 - name: github.com/golang/glog
   version: 44145f04b68cf362d9c4df2182967c2275eaefed
 - name: github.com/golang/protobuf
-  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
+  version: 4bd1920723d7b7c925de087aa32e2187708897f7
   subpackages:
+  - jsonpb
   - proto
+  - ptypes/any
 - name: github.com/google/go-github
   version: fe7d11f8add400587b6718d9f39a62e42cb04c28
   subpackages:
@@ -314,8 +341,14 @@ imports:
   version: 3959339b333561bf62a38b424fd41517c2c90f40
 - name: github.com/imdario/mergo
   version: 7fe0c75c13abdee74b09fcacef5ea1c6bba6a874
+- name: github.com/influxdata/influxdb
+  version: 2d474a3089bcfce6b472779be9470a1f0ef3d5e4
+  subpackages:
+  - client/v2
+  - models
+  - pkg/escape
 - name: github.com/JamesClonk/vultr
-  version: 0f156dd232bc4ebf8a32ba83fec57c0e4c9db69f
+  version: 2fd0705ce648e602e6c9c57329a174270a4f6688
   subpackages:
   - lib
 - name: github.com/jjcollinge/servicefabric
@@ -395,7 +428,7 @@ imports:
   repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
-  version: 97ae7fbaf81620fe97840685304a78a306a39c64
+  version: d6f46609c7629af3a02d791a4666866eed3cbd3e
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/go-digest
@@ -406,7 +439,7 @@ imports:
   - specs-go
   - specs-go/v1
 - name: github.com/ovh/go-ovh
-  version: d2207178e10e4527e8f222fd8707982df8c3af17
+  version: 4b1fea467323b74c5f462f0947f402b428ca0626
   subpackages:
   - ovh
 - name: github.com/pborman/uuid
@@ -440,16 +473,12 @@ imports:
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
-- name: github.com/pyr/egoscale
-  version: 987e683a7552f34ee586217d1cc8507d52e80ab9
-  subpackages:
-  - src/egoscale
 - name: github.com/rancher/go-rancher
-  version: 5b8f6cc26b355ba03d7611fce3844155b7baf05b
+  version: 52e2f489534007ae843065468c5a1920d542afa4
   subpackages:
-  - client
+  - v2
 - name: github.com/rancher/go-rancher-metadata
-  version: 95d4962a8f0420be24fb49c2cb4f5491284c62f1
+  version: d2103caca5873119ff423d29cba09b4d03cd69b8
   subpackages:
   - metadata
 - name: github.com/ryanuber/go-glob
@@ -464,8 +493,6 @@ imports:
   version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - name: github.com/spf13/pflag
   version: cb88ea77998c3f024757528e3305022ab50b43be
-- name: github.com/streamrail/concurrent-map
-  version: 8bf1e9bacbf65b10c81d0f4314cf2b1ebef728b5
 - name: github.com/stretchr/objx
   version: cbeaeb16a013161a98496fad62933b1d21786672
 - name: github.com/stretchr/testify
@@ -492,8 +519,10 @@ imports:
   version: 824e85271811af89640ea25620c67f6c2eed987e
 - name: github.com/urfave/negroni
   version: 490e6a555d47ca891a89a150d0c1ef3922dfffe9
+- name: github.com/VividCortex/gohistogram
+  version: 51564d9861991fb0ad0f531c99ef602d0f9866e6
 - name: github.com/vulcand/oxy
-  version: 7e9763c4dc71b9758379da3581e6495c145caaab
+  version: 7b6e758ab449705195df638765c4ca472248908a
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -517,7 +546,7 @@ imports:
   - plugin/rewrite
   - router
 - name: github.com/xenolf/lego
-  version: 5dfe609afb1ebe9da97c9846d97a55415e5a5ccd
+  version: 67c86d860a797ce2483f50d9174d4ed24984bef2
   subpackages:
   - acme
   - providers/dns
@@ -535,6 +564,7 @@ imports:
   - providers/dns/linode
   - providers/dns/namecheap
   - providers/dns/ns1
+  - providers/dns/otc
   - providers/dns/ovh
   - providers/dns/pdns
   - providers/dns/rackspace
@@ -550,7 +580,7 @@ imports:
   - pbkdf2
   - scrypt
 - name: golang.org/x/net
-  version: 242b6b35177ec3909636b6cf6a47e8c2c6324b5d
+  version: c8c74377599bd978aee1cf3b9b63a8634051cec2
   subpackages:
   - context
   - context/ctxhttp
@@ -576,9 +606,10 @@ imports:
   - unix
   - windows
 - name: golang.org/x/text
-  version: 2910a502d2bf9e43193af9d68ca516529614eed3
+  version: 4ee4af566555f5fbe026368b75596286a312663a
   subpackages:
   - cases
+  - internal
   - internal/tag
   - language
   - runes
@@ -593,7 +624,7 @@ imports:
   subpackages:
   - rate
 - name: google.golang.org/api
-  version: 9bf6e6e569ff057f75d9604a46c52928f17d2b54
+  version: 1575df15c1bb8b18ad4d9bc5ca495cc85b0764fe
   subpackages:
   - dns/v1
   - gensupport
@@ -611,11 +642,16 @@ imports:
   - internal/remote_api
   - internal/urlfetch
   - urlfetch
+- name: google.golang.org/genproto
+  version: 09f6ed296fc66555a25fe4ce95173148778dfa85
+  subpackages:
+  - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: cdee119ee21e61eef7093a41ba148fa83585e143
+  version: b8669c35455183da6d5c474ea6e72fbf55183274
   subpackages:
   - codes
   - credentials
+  - grpclb/grpc_lb_v1
   - grpclog
   - internal
   - keepalive
@@ -623,6 +659,7 @@ imports:
   - naming
   - peer
   - stats
+  - status
   - tap
   - transport
 - name: gopkg.in/fsnotify.v1
@@ -630,9 +667,9 @@ imports:
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/ini.v1
-  version: e7fea39b01aea8d5671f6858f0532f56e8bff3a5
+  version: 5b3e00af70a9484542169a976dcab8d03e601a17
 - name: gopkg.in/ns1/ns1-go.v2
-  version: 2abc76c60bf88ba33b15d1d87a13f624d8dff956
+  version: c563826f4cbef9c11bebeb9f20a3f7afe9c1e2f4
   subpackages:
   - rest
   - rest/model/account
@@ -759,7 +796,7 @@ imports:
   - transport
 testImports:
 - name: github.com/Azure/go-ansiterm
-  version: 19f72df4d05d31cbe1c56bfc8045c96babff6c7e
+  version: d6e3b3328b783f23731bc4d058875b0371ff8109
   subpackages:
   - winterm
 - name: github.com/docker/cli
@@ -813,7 +850,7 @@ testImports:
   - libcontainer/system
   - libcontainer/user
 - name: github.com/stvp/go-udp-testing
-  version: 06eb4f886d9f8242b0c176cf0d3ce5ec2cedda05
+  version: c4434f09ec131ecf30f986d5dcb1636508bfa49a
 - name: github.com/vdemeester/shakers
   version: 24d7f1d6a71aa5d9cbe7390e4afb66b7eef9e1b3
 - name: github.com/xeipuuv/gojsonpointer
