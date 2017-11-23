@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	stdlog "log"
 	"net"
 	"net/http"
 	"net/url"
@@ -20,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/armon/go-proxyproto"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
@@ -45,6 +47,10 @@ import (
 	"github.com/vulcand/oxy/roundrobin"
 	"github.com/vulcand/oxy/utils"
 	"golang.org/x/net/http2"
+)
+
+var (
+	httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
 )
 
 // Server is the reverse-proxy/load-balancer engine
@@ -794,6 +800,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,
 			IdleTimeout:  idleTimeout,
+			ErrorLog:     httpServerLogger,
 		},
 		listener,
 		nil

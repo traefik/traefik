@@ -345,9 +345,15 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 	frontends := map[string][]dockerData{}
 	backends := map[string]dockerData{}
 	servers := map[string][]dockerData{}
+	serviceNames := make(map[string]struct{})
 	for idx, container := range filteredContainers {
-		frontendName := p.getFrontendName(container, idx)
-		frontends[frontendName] = append(frontends[frontendName], container)
+		if _, exists := serviceNames[container.ServiceName]; !exists {
+			frontendName := p.getFrontendName(container, idx)
+			frontends[frontendName] = append(frontends[frontendName], container)
+			if len(container.ServiceName) > 0 {
+				serviceNames[container.ServiceName] = struct{}{}
+			}
+		}
 		backendName := p.getBackend(container)
 		backends[backendName] = container
 		servers[backendName] = append(servers[backendName], container)
@@ -471,9 +477,9 @@ func (p *Provider) getServicePriority(container dockerData, serviceName string) 
 // Extract backend from labels for a given service and a given docker container
 func (p *Provider) getServiceBackend(container dockerData, serviceName string) string {
 	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.backend"); ok {
-		return value
+		return container.ServiceName + "-" + value
 	}
-	return p.getBackend(container) + "-" + provider.Normalize(serviceName)
+	return strings.TrimPrefix(container.ServiceName, "/") + "-" + p.getBackend(container) + "-" + provider.Normalize(serviceName)
 }
 
 // Extract rule from labels for a given service and a given docker container

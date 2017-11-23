@@ -1,4 +1,4 @@
-hash: fec4fec4363272870c49e10cea64cc51095ecd0987b9c020c9714d950cf38784
+hash: 6deb9adeca5f1724f9ef2b31b122f85a00cf47cf4308527d6d3ff68a6ac0e705
 updated: 2017-11-17T14:21:55.148450413+01:00
 imports:
 - name: cloud.google.com/go
@@ -420,9 +420,7 @@ imports:
   repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
-  version: 26a3f68265200656f31940bc15b191f7d10b5bbd
-  repo: https://github.com/containous/gziphandler.git
-  vcs: git
+  version: d6f46609c7629af3a02d791a4666866eed3cbd3e
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/go-digest
