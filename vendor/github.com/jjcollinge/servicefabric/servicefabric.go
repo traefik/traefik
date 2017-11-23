@@ -10,8 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-
-	"github.com/cloudflare/cfssl/log"
 )
 
 // Client is an interface for Service Fabric client's
@@ -329,14 +327,14 @@ func (c *clientImpl) GetServiceLabels(service *ServiceItem, app *ApplicationItem
 
 	exists, properties, err := c.GetProperties(service.ID)
 	if err != nil {
-		log.Error(err)
-	} else {
-		if exists {
-			for k, v := range properties {
-				if strings.HasPrefix(k, prefixPeriod) {
-					labelKey := strings.Replace(k, prefixPeriod, "", -1)
-					Labels[labelKey] = v
-				}
+		return nil, err
+	}
+
+	if exists {
+		for k, v := range properties {
+			if strings.HasPrefix(k, prefixPeriod) {
+				labelKey := strings.Replace(k, prefixPeriod, "", -1)
+				Labels[labelKey] = v
 			}
 		}
 	}

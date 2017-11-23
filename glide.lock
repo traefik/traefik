@@ -98,7 +98,7 @@ imports:
 - name: github.com/containous/staert
   version: af517d5b70db9c4b0505e0144fcc62b054057d2a
 - name: github.com/containous/traefik-extra-service-fabric
-  version: 552883c6e1f80d9c66098045c4c90d9a6a1967a8
+  version: d4f0ce4ff144fe7f486a264a527516eb67434f9e
 - name: github.com/coreos/bbolt
   version: 3c6cbfb299c11444eb2f8c9d48f0d2ce09157423
 - name: github.com/coreos/etcd
@@ -352,7 +352,7 @@ imports:
   subpackages:
   - lib
 - name: github.com/jjcollinge/servicefabric
-  version: be2b731fc787bca325d1601a5c9ff020d8f174e4
+  version: ad8404f6061cb76815324e58532f804ac44ec363
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jonboulle/clockwork
