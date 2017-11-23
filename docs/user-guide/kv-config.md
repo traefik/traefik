@@ -85,6 +85,9 @@ defaultEntryPoints = ["http", "https"]
       keyFile = """-----BEGIN CERTIFICATE-----
                       <key file content>
                       -----END CERTIFICATE-----"""
+    [entryPoints.other-https]
+    address = ":4443"
+      [entryPoints.other-https.tls]
 
 [consul]
   endpoint = "127.0.0.1:8500"
@@ -108,6 +111,7 @@ And there, the same global configuration in the Key-value Store (using `prefix =
 | `/traefik/entrypoints/https/tls/certificates/0/keyfile`   | `integration/fixtures/https/snitest.com.key`                  |
 | `/traefik/entrypoints/https/tls/certificates/1/certfile`  | `--BEGIN CERTIFICATE--<cert file content>--END CERTIFICATE--` |
 | `/traefik/entrypoints/https/tls/certificates/1/keyfile`   | `--BEGIN CERTIFICATE--<key file content>--END CERTIFICATE--`  |
+| `/traefik/entrypoints/other-https/address`                | `:4443`
 | `/traefik/consul/endpoint`                                | `127.0.0.1:8500`                                              |
 | `/traefik/consul/watch`                                   | `true`                                                        |
 | `/traefik/consul/prefix`                                  | `traefik`                                                     |
@@ -272,7 +276,7 @@ entryPoints = ["https"]
     certFile = "path/to/your.cert"
     keyFile = "path/to/your.key"
 [[tlsConfiguration]]
-entryPoints = ["http","https"]
+entryPoints = ["https","other-https"]
   [tlsConfiguration.certificate]
     certFile = """-----BEGIN CERTIFICATE-----
                       <cert file content>
@@ -337,7 +341,7 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 
 | Key                                                | Value                 |
 |----------------------------------------------------|-----------------------|
-| `/traefik/tlsconfiguration/2/entrypoints`          | `http,https`          |
+| `/traefik/tlsconfiguration/2/entrypoints`          | `https,other-https`          |
 | `/traefik/tlsconfiguration/2/certificate/certfile` | `<cert file content>` |
 | `/traefik/tlsconfiguration/2/certificate/certfile` | `<key file content>`  |
 ### Atomic configuration changes
