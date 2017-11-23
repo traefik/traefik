@@ -141,9 +141,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	ingresses := k8sClient.GetIngresses()
 
 	templateObjects := types.Configuration{
-		Backends:         map[string]*types.Backend{},
-		Frontends:        map[string]*types.Frontend{},
-		TLSConfiguration: []*tls.Configuration{},
+		Backends:  map[string]*types.Backend{},
+		Frontends: map[string]*types.Frontend{},
 	}
 	for _, i := range ingresses {
 		ingressClass := i.Annotations[annotationKubernetesIngressClass]
@@ -311,54 +310,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			}
 		}
 
-		for _, t := range i.Spec.TLS {
-			tlsSecret, exists, err := k8sClient.GetSecret(i.Namespace, t.SecretName)
-			if err != nil {
-				log.Errorf("Unable to retrieve secret %s/%s: %s", i.Namespace, t.SecretName, err)
-				continue
-			}
-			if !exists {
-				log.Warnf("Unable to find secret %s/%s", i.Namespace, t.SecretName)
-				continue
-			}
-
-			tlsCrtData, tlsCrtExists := tlsSecret.Data["tls.crt"]
-			tlsKeyData, tlsKeyExists := tlsSecret.Data["tls.key"]
-			if !tlsCrtExists || !tlsKeyExists {
-				if !tlsCrtExists {
-					log.Warnf("Secret %s/%s doesn't have an entry named 'tls.crt'", i.Namespace, t.SecretName)
-				}
-				if !tlsKeyExists {
-					log.Warnf("Secret %s/%s doesn't have an entry named 'tls.key'", i.Namespace, t.SecretName)
-				}
-				continue
-			}
-
-			var hosts []string
-			if len(t.Hosts) > 0 {
-				hosts = t.Hosts
-			} else {
-				// If no hosts are provided the hosts property should default ot the wildcard host. To ensure that the
-				// tls config only matches rules in this ingress, add all the used hosts to simulate a wildcard like
-				// behavior.
-				hosts = []string{}
-
-				for _, r := range i.Spec.Rules {
-					if r.Host != "" {
-						hosts = append(hosts, r.Host)
-					}
-				}
-			}
-
-			tlsConfig := &tls.Configuration{
-				EntryPoints: hosts,
-				Certificate: &tls.Certificate{
-					CertFile: tls.FileOrContent(tlsCrtData),
-					KeyFile:  tls.FileOrContent(tlsKeyData),
-				},
-			}
-
-			templateObjects.TLSConfiguration = append(templateObjects.TLSConfiguration, tlsConfig)
+		tlsConfigs, err := getTLSConfigurations(i, k8sClient)
+		if err != nil {
+			log.Errorf("Error configuring tls for ingress %s/%s: %s", i.Namespace, i.Name, err)
+		} else {
+			templateObjects.TLSConfiguration = append(templateObjects.TLSConfiguration, tlsConfigs...)
 		}
 	}
 	return &templateObjects, nil
@@ -482,6 +438,55 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 	}
 
 	return creds, nil
+}
+
+func getTLSConfigurations(ingress *v1beta1.Ingress, k8sClient Client) ([]*tls.Configuration, error) {
+	var tlsConfigs []*tls.Configuration
+
+	for _, t := range ingress.Spec.TLS {
+		tlsSecret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
+		if err != nil {
+			return nil, fmt.Errorf("secret %s/%s does not exist: %s", ingress.Namespace, t.SecretName, err)
+		}
+		if !exists {
+			return nil, fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName)
+		}
+
+		tlsCrtData, tlsCrtExists := tlsSecret.Data["tls.crt"]
+		tlsKeyData, tlsKeyExists := tlsSecret.Data["tls.key"]
+		if !tlsCrtExists {
+			return nil, fmt.Errorf("secret %s/%s must have two entries named 'tls.crt' and 'tls.key': missing entry 'tls.crt'", ingress.Namespace, t.SecretName)
+		}
+		if !tlsKeyExists {
+			return nil, fmt.Errorf("secret %s/%s must have two entries named 'tls.crt' and 'tls.key': missing entry 'tls.key'", ingress.Namespace, t.SecretName)
+		}
+
+		var hosts []string
+		if len(t.Hosts) > 0 {
+			hosts = t.Hosts
+		} else {
+			// If no hosts are provided the hosts property should default to the wildcard host. To ensure that the
+			// tls config only matches rules in this ingress, add all the used hosts to simulate a wildcard like
+			// behavior.
+			for _, r := range ingress.Spec.Rules {
+				if r.Host != "" {
+					hosts = append(hosts, r.Host)
+				}
+			}
+		}
+
+		tlsConfig := &tls.Configuration{
+			EntryPoints: hosts,
+			Certificate: &tls.Certificate{
+				CertFile: tls.FileOrContent(tlsCrtData),
+				KeyFile:  tls.FileOrContent(tlsKeyData),
+			},
+		}
+
+		tlsConfigs = append(tlsConfigs, tlsConfig)
+	}
+
+	return tlsConfigs, nil
 }
 
 func endpointPortNumber(servicePort v1.ServicePort, endpointPorts []v1.EndpointPort) int {
