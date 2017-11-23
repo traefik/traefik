@@ -593,10 +593,7 @@ func (s *ConsulSuite) TestSNIDynamicTlsConfig(c *check.C) {
 		err := s.kv.Put(key, []byte(value), nil)
 		c.Assert(err, checker.IsNil)
 	}
-	for key, value := range tlsconfigure2 {
-		err := s.kv.Put(key, []byte(value), nil)
-		c.Assert(err, checker.IsNil)
-	}
+
 	tr1 := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
