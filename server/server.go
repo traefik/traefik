@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	stdlog "log"
 	"net"
 	"net/http"
 	"net/url"
@@ -20,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/armon/go-proxyproto"
 	"github.com/containous/mux"
 	"github.com/containous/traefik/cluster"
@@ -39,7 +41,6 @@ import (
 	"github.com/eapache/channels"
 	thoas_stats "github.com/thoas/stats"
 	"github.com/urfave/negroni"
-	"github.com/vulcand/oxy/cbreaker"
 	"github.com/vulcand/oxy/connlimit"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/ratelimit"
@@ -49,7 +50,7 @@ import (
 )
 
 var (
-	oxyLogger = &OxyLogger{}
+	httpServerLogger = stdlog.New(log.WriterLevel(logrus.DebugLevel), "", 0)
 )
 
 // Server is the reverse-proxy/load-balancer engine
@@ -799,6 +800,7 @@ func (server *Server) prepareServer(entryPointName string, entryPoint *configura
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,
 			IdleTimeout:  idleTimeout,
+			ErrorLog:     httpServerLogger,
 		},
 		listener,
 		nil
@@ -958,12 +960,20 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						continue frontend
 					}
 
+					var headerMiddleware *middlewares.HeaderStruct
+					var responseModifier func(res *http.Response) error
+					if frontend.Headers.HasCustomHeadersDefined() {
+						headerMiddleware = middlewares.NewHeaderFromStruct(frontend.Headers)
+						responseModifier = headerMiddleware.ModifyResponseHeaders
+					}
+
 					fwd, err := forward.New(
-						forward.Logger(oxyLogger),
+						forward.Stream(true),
 						forward.PassHostHeader(frontend.PassHostHeader),
 						forward.RoundTripper(roundTripper),
 						forward.ErrorHandler(errorHandler),
 						forward.Rewriter(rewriter),
+						forward.ResponseModifier(responseModifier),
 					)
 
 					if err != nil {
@@ -1006,10 +1016,10 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 					switch lbMethod {
 					case types.Drr:
 						log.Debugf("Creating load-balancer drr")
-						rebalancer, _ := roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger))
+						rebalancer, _ := roundrobin.NewRebalancer(rr)
 						if sticky != nil {
 							log.Debugf("Sticky session with cookie %v", cookieName)
-							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerLogger(oxyLogger), roundrobin.RebalancerStickySession(sticky))
+							rebalancer, _ = roundrobin.NewRebalancer(rr, roundrobin.RebalancerStickySession(sticky))
 						}
 						lb = rebalancer
 						if err := configureLBServers(rebalancer, config, frontend); err != nil {
@@ -1080,7 +1090,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 							continue frontend
 						}
 						log.Debugf("Creating load-balancer connlimit")
-						lb, err = connlimit.New(lb, extractFunc, maxConns.Amount, connlimit.Logger(oxyLogger))
+						lb, err = connlimit.New(lb, extractFunc, maxConns.Amount)
 						if err != nil {
 							log.Errorf("Error creating connlimit: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)
@@ -1138,8 +1148,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						}
 					}
 
-					if frontend.Headers.HasCustomHeadersDefined() {
-						headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
+					if headerMiddleware != nil {
 						log.Debugf("Adding header middleware for frontend %s", frontendName)
 						n.Use(headerMiddleware)
 					}
@@ -1151,7 +1160,7 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 
 					if config.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", config.Backends[frontend.Backend].CircuitBreaker.Expression)
-						circuitBreaker, err := middlewares.NewCircuitBreaker(lb, config.Backends[frontend.Backend].CircuitBreaker.Expression, cbreaker.Logger(oxyLogger))
+						circuitBreaker, err := middlewares.NewCircuitBreaker(lb, config.Backends[frontend.Backend].CircuitBreaker.Expression)
 						if err != nil {
 							log.Errorf("Error creating circuit breaker: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)
@@ -1445,7 +1454,7 @@ func (server *Server) buildRateLimiter(handler http.Handler, rlConfig *types.Rat
 			return nil, err
 		}
 	}
-	return ratelimit.New(handler, extractFunc, rateSet, ratelimit.Logger(oxyLogger))
+	return ratelimit.New(handler, extractFunc, rateSet)
 }
 
 func (server *Server) buildRetryMiddleware(handler http.Handler, globalConfig configuration.GlobalConfiguration, countServers int, backendName string) http.Handler {

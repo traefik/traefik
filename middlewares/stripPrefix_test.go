@@ -16,6 +16,7 @@ func TestStripPrefix(t *testing.T) {
 		path               string
 		expectedStatusCode int
 		expectedPath       string
+		expectedRawPath    string
 		expectedHeader     string
 	}{
 		{
@@ -94,6 +95,15 @@ func TestStripPrefix(t *testing.T) {
 			expectedPath:       "/us",
 			expectedHeader:     "/stat",
 		},
+		{
+			desc:               "raw path is also stripped",
+			prefixes:           []string{"/stat"},
+			path:               "/stat/a%2Fb",
+			expectedStatusCode: http.StatusOK,
+			expectedPath:       "/a/b",
+			expectedRawPath:    "/a%2Fb",
+			expectedHeader:     "/stat",
+		},
 	}
 
 	for _, test := range tests {
@@ -101,11 +111,12 @@ func TestStripPrefix(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			var actualPath, actualHeader, requestURI string
+			var actualPath, actualRawPath, actualHeader, requestURI string
 			handler := &StripPrefix{
 				Prefixes: test.prefixes,
 				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					actualPath = r.URL.Path
+					actualRawPath = r.URL.RawPath
 					actualHeader = r.Header.Get(ForwardedPrefixHeader)
 					requestURI = r.RequestURI
 				}),
@@ -118,8 +129,15 @@ func TestStripPrefix(t *testing.T) {
 
 			assert.Equal(t, test.expectedStatusCode, resp.Code, "Unexpected status code.")
 			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
+			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
 			assert.Equal(t, test.expectedHeader, actualHeader, "Unexpected '%s' header.", ForwardedPrefixHeader)
-			assert.Equal(t, test.expectedPath, requestURI, "Unexpected request URI.")
+
+			expectedURI := test.expectedPath
+			if test.expectedRawPath != "" {
+				// go HTTP uses the raw path when existent in the RequestURI
+				expectedURI = test.expectedRawPath
+			}
+			assert.Equal(t, expectedURI, requestURI, "Unexpected request URI.")
 		})
 	}
 }

@@ -36,6 +36,7 @@ deploy:
     on:
       repo: containous/traefik
       tags: true
+      condition: ${TRAVIS_TAG} =~ ^v[0-9]+\.[0-9]+\.[0-9]+$
   - provider: releases
     api_key: ${GITHUB_TOKEN}
     file: dist/traefik*

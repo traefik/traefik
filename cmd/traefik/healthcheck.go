@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -33,22 +34,7 @@ func runHealthCheck(traefikConfiguration *TraefikConfiguration) func() error {
 			os.Exit(1)
 		}
 
-		pingEntryPoint, ok := traefikConfiguration.EntryPoints[traefikConfiguration.Ping.EntryPoint]
-		if !ok {
-			pingEntryPoint = &configuration.EntryPoint{Address: ":8080"}
-		}
-
-		client := &http.Client{Timeout: 5 * time.Second}
-		protocol := "http"
-		if pingEntryPoint.TLS != nil {
-			protocol = "https"
-			tr := &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			}
-			client.Transport = tr
-		}
-
-		resp, errPing := client.Head(protocol + "://" + pingEntryPoint.Address + traefikConfiguration.Web.Path + "ping")
+		resp, errPing := healthCheck(traefikConfiguration.GlobalConfiguration)
 		if errPing != nil {
 			fmt.Printf("Error calling healthcheck: %s\n", errPing)
 			os.Exit(1)
@@ -61,4 +47,23 @@ func runHealthCheck(traefikConfiguration *TraefikConfiguration) func() error {
 		os.Exit(0)
 		return nil
 	}
+}
+
+func healthCheck(globalConfiguration configuration.GlobalConfiguration) (*http.Response, error) {
+	pingEntryPoint, ok := globalConfiguration.EntryPoints[globalConfiguration.Ping.EntryPoint]
+	if !ok {
+		return nil, errors.New("missing ping entrypoint")
+	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	protocol := "http"
+	if pingEntryPoint.TLS != nil {
+		protocol = "https"
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client.Transport = tr
+	}
+
+	return client.Head(protocol + "://" + pingEntryPoint.Address + globalConfiguration.Web.Path + "ping")
 }

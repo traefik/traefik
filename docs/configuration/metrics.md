@@ -10,6 +10,13 @@
   # To enable Traefik to export internal metrics to Prometheus
   [metrics.prometheus]
 
+    # Name of the related entry point
+    #
+    # Optional
+    # Default: "traefik"
+    #
+    entryPoint = "traefik"
+
     # Buckets for latency metrics
     #
     # Optional
@@ -76,11 +83,11 @@
 ### InfluxDB
 
 ```toml
-[web]
+[metrics]
   # ...
 
   # InfluxDB metrics exporter type
-  [web.metrics.influxdb]
+  [metrics.influxdb]
 
     # InfluxDB's address.
     #

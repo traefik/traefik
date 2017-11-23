@@ -224,10 +224,12 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 	var client helloworld.Greeter_StreamExampleClient
 	client, closer, err := callStreamExampleClientGRPC()
 	defer closer()
+	c.Assert(err, check.IsNil)
 
 	received := make(chan bool)
 	go func() {
-		tr, _ := client.Recv()
+		tr, err := client.Recv()
+		c.Assert(err, check.IsNil)
 		c.Assert(len(tr.Data), check.Equals, 512)
 		received <- true
 	}()
