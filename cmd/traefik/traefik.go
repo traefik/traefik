@@ -153,10 +153,12 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 	svr := server.NewServer(*globalConfiguration)
 	svr.Start()
 	defer svr.Close()
+
 	sent, err := daemon.SdNotify(false, "READY=1")
 	if !sent && err != nil {
 		log.Error("Fail to notify", err)
 	}
+
 	t, err := daemon.SdWatchdogEnabled(false)
 	if err != nil {
 		log.Error("Problem with watchdog", err)
@@ -167,12 +169,18 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 		safe.Go(func() {
 			tick := time.Tick(t)
 			for range tick {
-				if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
-					log.Error("Fail to tick watchdog")
+				_, errHealthCheck := healthCheck(*globalConfiguration)
+				if globalConfiguration.Ping == nil || errHealthCheck == nil {
+					if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
+						log.Error("Fail to tick watchdog")
+					}
+				} else {
+					log.Error(errHealthCheck)
 				}
 			}
 		})
 	}
+
 	svr.Wait()
 	log.Info("Shutting down")
 	logrus.Exit(0)
