@@ -1,5 +1,20 @@
 # Change Log
 
+## [v1.4.4](https://github.com/containous/traefik/tree/v1.4.4) (2017-11-21)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.3...v1.4.4)
+
+**Enhancements:**
+- **[middleware]** Remove GzipHandler Fork ([#2436](https://github.com/containous/traefik/pull/2436) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[docker]** Fix problems about duplicated and missing Docker backends/frontends. ([#2434](https://github.com/containous/traefik/pull/2434) by [nmengin](https://github.com/nmengin))
+- **[middleware]** Fix raw path handling in strip prefix ([#2382](https://github.com/containous/traefik/pull/2382) by [marco-jantke](https://github.com/marco-jantke))
+- **[rancher]** Fix issue with label traefik.backend.loadbalancer.stickiness.cookieName ([#2423](https://github.com/containous/traefik/pull/2423) by [rawmind0](https://github.com/rawmind0))
+- http.Server log goes to Debug level. ([#2420](https://github.com/containous/traefik/pull/2420) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- Documentation archive ([#2405](https://github.com/containous/traefik/pull/2405) by [ldez](https://github.com/ldez))
+
 ## [v1.4.3](https://github.com/containous/traefik/tree/v1.4.3) (2017-11-14)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.2...v1.4.3)
 
