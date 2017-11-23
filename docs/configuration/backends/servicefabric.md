@@ -15,7 +15,7 @@ See [this repository for an example deployment package and further documentation
 [serviceFabric]
 
 # Service Fabric Management Endpoint
-clusterManagementurl = "https://localhost:19080"
+clusterManagementUrl = "https://localhost:19080"
 
 # Service Fabric Management Endpoint API Version
 apiVersion = "3.0"
@@ -32,11 +32,11 @@ insecureSkipVerify=true
 
 ## Labels
 
-The provider uses labels to configure how services are exposed through Traefik. These can be set using Extensions and the Property Manager API
+The provider uses labels to configure how services are exposed through Træfik. These can be set using Extensions and the Property Manager API
 
 #### Extensions
 
-Set labels with extensions through the services `ServiceManifest.xml` file. Here is an example of an extension setting Traefik labels:
+Set labels with extensions through the services `ServiceManifest.xml` file. Here is an example of an extension setting Træfik labels:
 
 ```xml
 <StatelessServiceType ServiceTypeName="WebServiceType">
@@ -54,7 +54,7 @@ Set labels with extensions through the services `ServiceManifest.xml` file. Here
 
 #### Property Manager 
 
-Set Labels with the property manager API to overwrite and add labels, while your service in running. Here is an example of adding a frontend rule using the property manager API. 
+Set Labels with the property manager API to overwrite and add labels, while your service is running. Here is an example of adding a frontend rule using the property manager API. 
 
 ```shell
 curl -X PUT \
@@ -85,14 +85,14 @@ Labels, set through extensions or the property manager, can be used on services 
 | `traefik.backend.loadbalancer.stickiness.cookieName=NAME` | Manually set the cookie name for sticky sessions                                                                                                                                                                       |
 | `traefik.backend.circuitbreaker.expression=EXPR`          | Create a [circuit breaker](/basics/#backends) to be used against the backend                                                                                                                                           |
 | `traefik.backend.weight=10`                               | Assign this weight to the container                                                                                                                                                                                    |
-| `traefik.expose=true`                                     | Expose this service using traefik                                                                                                                                                                                      |
+| `traefik.expose=true`                                     | Expose this service using træfik                                                                                                                                                                                      |
 | `traefik.frontend.rule=EXPR`                              | Override the default frontend rule. Defaults to SF address.                                                                                                                                                            |
 | `traefik.frontend.passHostHeader=true`                    | Forward client `Host` header to the backend.                                                                                                                                                                           |
 | `traefik.frontend.priority=10`                            | Override default frontend priority                                                                                                                                                                                     |
 | `traefik.frontend.entryPoints=http,https`                 | Assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`                                                                                                                                |
-| `traefik.frontend.auth.basic=EXPR`                        | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`                                                                                                                                       |
+| `traefik.frontend.auth.basic=EXPR`                        | Set basic authentication for that frontend in CSV format: `User:Hash,User:Hash`                                                                                                                                       |
 | `traefik.frontend.whitelistSourceRange:RANGE`             | List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access.<br>If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
-| `traefik.backend.group.name`                              | Groups all services with the same name into a single backend in Traefik                                                                                                                                                |
-| `traefik.backend.group.weight`                            | Sets the weighting of the current services nodes in the backend group                                                                                                                                                  |
+| `traefik.backend.group.name`                              | Group all services with the same name into a single backend in Træfik                                                                                                                                                |
+| `traefik.backend.group.weight`                            | Set the weighting of the current services nodes in the backend group                                                                                                                                                  |
 
 
