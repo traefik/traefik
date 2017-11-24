@@ -107,7 +107,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 	}
 
 	server.routinesPool = safe.NewPool(context.Background())
-	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
+	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration, nil)
 
 	server.metricsRegistry = metrics.NewVoidRegistry()
 	if globalConfiguration.Metrics != nil {
@@ -138,7 +138,7 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 // An exception to this is the MaxIdleConns setting as we only provide the option MaxIdleConnsPerHost
 // in Traefik at this point in time. Setting this value to the default of 100 could lead to confusing
 // behaviour and backwards compatibility issues.
-func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) *http.Transport {
+func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration, backendForwardingTimeouts *types.ForwardingTimeouts) *http.Transport {
 	dialer := &net.Dialer{
 		Timeout:   configuration.DefaultDialTimeout,
 		KeepAlive: 30 * time.Second,
@@ -146,6 +146,9 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 	}
 	if globalConfiguration.ForwardingTimeouts != nil {
 		dialer.Timeout = time.Duration(globalConfiguration.ForwardingTimeouts.DialTimeout)
+	}
+	if backendForwardingTimeouts != nil {
+		dialer.Timeout = time.Duration(backendForwardingTimeouts.DialTimeout)
 	}
 
 	transport := &http.Transport{
@@ -158,6 +161,9 @@ func createHTTPTransport(globalConfiguration configuration.GlobalConfiguration) 
 	}
 	if globalConfiguration.ForwardingTimeouts != nil {
 		transport.ResponseHeaderTimeout = time.Duration(globalConfiguration.ForwardingTimeouts.ResponseHeaderTimeout)
+	}
+	if backendForwardingTimeouts != nil {
+		transport.ResponseHeaderTimeout = time.Duration(backendForwardingTimeouts.ResponseHeaderTimeout)
 	}
 	if globalConfiguration.InsecureSkipVerify {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
@@ -864,21 +870,24 @@ func (server *Server) buildEntryPoints(globalConfiguration configuration.GlobalC
 }
 
 // getRoundTripper will either use server.defaultForwardingRoundTripper or create a new one
-// given a custom TLS configuration is passed and the passTLSCert option is set to true.
-func (server *Server) getRoundTripper(entryPointName string, globalConfiguration configuration.GlobalConfiguration, passTLSCert bool, tls *traefikTls.TLS) (http.RoundTripper, error) {
+// given a custom TLS configuration is passed and the passTLSCert option is set to true or if backend specific
+// round tripper timeouts have been configured
+func (server *Server) getRoundTripper(entryPointName string, globalConfiguration configuration.GlobalConfiguration, backendForwardingTimeouts *types.ForwardingTimeouts, passTLSCert bool, tls *traefikTls.TLS) (http.RoundTripper, error) {
+	if !passTLSCert && backendForwardingTimeouts == nil {
+		return server.defaultForwardingRoundTripper, nil
+	}
+
+	transport := createHTTPTransport(globalConfiguration, backendForwardingTimeouts)
 	if passTLSCert {
 		tlsConfig, err := createClientTLSConfig(entryPointName, tls)
 		if err != nil {
 			log.Errorf("Failed to create TLSClientConfig: %s", err)
 			return nil, err
 		}
-
-		transport := createHTTPTransport(globalConfiguration)
 		transport.TLSClientConfig = tlsConfig
-		return transport, nil
 	}
 
-	return server.defaultForwardingRoundTripper, nil
+	return transport, nil
 }
 
 // LoadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
@@ -944,9 +953,14 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 					}
 				}
 				if backends[entryPointName+frontend.Backend] == nil {
+					if config.Backends[frontend.Backend] == nil {
+						log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
 					log.Debugf("Creating backend %s", frontend.Backend)
 
-					roundTripper, err := server.getRoundTripper(entryPointName, globalConfiguration, frontend.PassTLSCert, entryPoint.TLS)
+					roundTripper, err := server.getRoundTripper(entryPointName, globalConfiguration, config.Backends[frontend.Backend].ForwardingTimeouts, frontend.PassTLSCert, entryPoint.TLS)
 					if err != nil {
 						log.Errorf("Failed to create RoundTripper for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
@@ -990,12 +1004,6 @@ func (server *Server) loadConfig(configurations types.Configurations, globalConf
 						rr, _ = roundrobin.New(saveFrontend)
 					} else {
 						rr, _ = roundrobin.New(fwd)
-					}
-
-					if config.Backends[frontend.Backend] == nil {
-						log.Errorf("Undefined backend '%s' for frontend %s", frontend.Backend, frontendName)
-						log.Errorf("Skipping frontend %s...", frontendName)
-						continue frontend
 					}
 
 					lbMethod, err := types.NewLoadBalancerMethod(config.Backends[frontend.Backend].LoadBalancer)

@@ -494,6 +494,23 @@ Here is an example of backends and servers definition:
 - `backend2` will forward the traffic to two servers: `http://172.17.0.4:80"` with weight `1` and `http://172.17.0.5:80` with weight `2` using `drr` load-balancing strategy.
 - a circuit breaker is added on `backend1` using the expression `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window
 
+### Forwarding Timeouts
+
+Global forwarding timeouts can be overridden per backend depending on your requirements. `dialTimeout` is the maximum amount of time that Traefik will spend waiting for a connection to be established, and the `responseHeaderTimeout` is the maximum amount of time that Traefik will spend waiting for a response from the server.
+
+Here is an example of backends with different forwarding timeouts:
+
+```toml
+[backends]
+  [backends.backend1]
+    [backends.backend1.forwardingTimeouts]
+    dialTimeout = "1s"
+    responseHeaderTimeout = "5s"
+  [backends.backend2]
+    [backends.backend2.forwardingTimeouts]
+    dialTimeout = "2s"
+    responseHeaderTimeout = "10s"
+```
 
 ## Configuration
 

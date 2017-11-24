@@ -20,11 +20,12 @@ import (
 
 // Backend holds backend configuration.
 type Backend struct {
-	Servers        map[string]Server `json:"servers,omitempty"`
-	CircuitBreaker *CircuitBreaker   `json:"circuitBreaker,omitempty"`
-	LoadBalancer   *LoadBalancer     `json:"loadBalancer,omitempty"`
-	MaxConn        *MaxConn          `json:"maxConn,omitempty"`
-	HealthCheck    *HealthCheck      `json:"healthCheck,omitempty"`
+	Servers            map[string]Server   `json:"servers,omitempty"`
+	CircuitBreaker     *CircuitBreaker     `json:"circuitBreaker,omitempty"`
+	LoadBalancer       *LoadBalancer       `json:"loadBalancer,omitempty"`
+	MaxConn            *MaxConn            `json:"maxConn,omitempty"`
+	HealthCheck        *HealthCheck        `json:"healthCheck,omitempty"`
+	ForwardingTimeouts *ForwardingTimeouts `json:"forwardingTimeouts,omitempty"`
 }
 
 // MaxConn holds maximum connection configuration
@@ -55,6 +56,12 @@ type HealthCheck struct {
 	Path     string `json:"path,omitempty"`
 	Port     int    `json:"port,omitempty"`
 	Interval string `json:"interval,omitempty"`
+}
+
+// ForwardingTimeouts contains timeout configurations for forwarding requests to the backend servers.
+type ForwardingTimeouts struct {
+	DialTimeout           flaeg.Duration `json:"dialTimeout,omitempty"`
+	ResponseHeaderTimeout flaeg.Duration `json:"responseHeaderTimeout,omitempty"`
 }
 
 // Server holds server configuration.
