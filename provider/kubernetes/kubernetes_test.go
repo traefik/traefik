@@ -1728,7 +1728,7 @@ func TestIngressAnnotations(t *testing.T) {
 				PassHostHeader: true,
 				Routes: map[string]types.Route{
 					"/api": {
-						Rule: "ReplacePath:/",
+						Rule: "PathPrefix:/api;ReplacePath:/",
 					},
 					"rewrite": {
 						Rule: "Host:rewrite",
