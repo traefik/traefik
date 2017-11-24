@@ -64,6 +64,13 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # Default: false
 #
 # enablePassTLSCert = true
+
+# Override default configuration template.
+#
+# Optional
+# Default: <built-in template>
+#
+# filename = "kubernetes.tmpl"
 ```
 
 ### `endpoint`
