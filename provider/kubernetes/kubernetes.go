@@ -30,12 +30,32 @@ const (
 	ruleTypePathPrefix  = "PathPrefix"
 	ruleTypeReplacePath = "ReplacePath"
 
-	annotationKubernetesIngressClass         = "kubernetes.io/ingress.class"
-	annotationKubernetesAuthRealm            = "ingress.kubernetes.io/auth-realm"
-	annotationKubernetesAuthType             = "ingress.kubernetes.io/auth-type"
-	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
-	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
-	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
+	annotationKubernetesIngressClass            = "kubernetes.io/ingress.class"
+	annotationKubernetesAuthRealm               = "ingress.kubernetes.io/auth-realm"
+	annotationKubernetesAuthType                = "ingress.kubernetes.io/auth-type"
+	annotationKubernetesAuthSecret              = "ingress.kubernetes.io/auth-secret"
+	annotationKubernetesRewriteTarget           = "ingress.kubernetes.io/rewrite-target"
+	annotationKubernetesWhitelistSourceRange    = "ingress.kubernetes.io/whitelist-source-range"
+	annotationKubernetesSSLRedirect             = "ingress.kubernetes.io/ssl-redirect"
+	annotationKubernetesHSTSMaxAge              = "ingress.kubernetes.io/hsts-max-age"
+	annotationKubernetesHSTSIncludeSubdomains   = "ingress.kubernetes.io/hsts-include-subdomains"
+	annotationKubernetesCustomRequestHeaders    = "ingress.kubernetes.io/custom-request-headers"
+	annotationKubernetesCustomResponseHeaders   = "ingress.kubernetes.io/custom-response-headers"
+	annotationKubernetesAllowedHosts            = "ingress.kubernetes.io/allowed-hosts"
+	annotationKubernetesProxyHeaders            = "ingress.kubernetes.io/proxy-headers"
+	annotationKubernetesSSLTemporaryRedirect    = "ingress.kubernetes.io/ssl-temporary-redirect"
+	annotationKubernetesSSLHost                 = "ingress.kubernetes.io/ssl-host"
+	annotationKubernetesSSLProxyHeaders         = "ingress.kubernetes.io/ssl-proxy-headers"
+	annotationKubernetesHSTSPreload             = "ingress.kubernetes.io/hsts-preload"
+	annotationKubernetesForceHSTSHeader         = "ingress.kubernetes.io/force-hsts"
+	annotationKubernetesFrameDeny               = "ingress.kubernetes.io/frame-deny"
+	annotationKubernetesCustomFrameOptionsValue = "ingress.kubernetes.io/custom-frame-options-value"
+	annotationKubernetesContentTypeNosniff      = "ingress.kubernetes.io/content-type-nosniff"
+	annotationKubernetesBrowserXSSFilter        = "ingress.kubernetes.io/browser-xss-filter"
+	annotationKubernetesContentSecurityPolicy   = "ingress.kubernetes.io/content-security-policy"
+	annotationKubernetesPublicKey               = "ingress.kubernetes.io/public-key"
+	annotationKubernetesReferrerPolicy          = "ingress.kubernetes.io/referrer-policy"
+	annotationKubernetesIsDevelopment           = "ingress.kubernetes.io/is-development"
 )
 
 const traefikDefaultRealm = "traefik"
@@ -200,6 +220,28 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						WhitelistSourceRange: whitelistSourceRange,
 						Redirect:             entryPointRedirect,
 						EntryPoints:          entryPoints,
+						Headers: types.Headers{
+							CustomRequestHeaders:    getCustomRequestHeaders(i),
+							CustomResponseHeaders:   getCustomResponseHeaders(i),
+							AllowedHosts:            getAllowedHosts(i),
+							HostsProxyHeaders:       getHostsProxyHeaders(i),
+							SSLRedirect:             getSSLRedirect(i),
+							SSLTemporaryRedirect:    getSSLTemporaryRedirect(i),
+							SSLHost:                 getSSLHost(i),
+							SSLProxyHeaders:         getSSLProxyHeaders(i),
+							STSSeconds:              getSTSSeconds(i),
+							STSIncludeSubdomains:    getSTSIncludeSubdomains(i),
+							STSPreload:              getSTSPreload(i),
+							ForceSTSHeader:          getForceSTSHeader(i),
+							FrameDeny:               getFrameDeny(i),
+							CustomFrameOptionsValue: getCustomFrameOptionsValue(i),
+							ContentTypeNosniff:      getContentTypeNosniff(i),
+							BrowserXSSFilter:        getBrowserXSSFilter(i),
+							ContentSecurityPolicy:   getContentSecurityPolicy(i),
+							PublicKey:               getPublicKey(i),
+							ReferrerPolicy:          getReferrerPolicy(i),
+							IsDevelopment:           getIsDevelopment(i),
+						},
 					}
 				}
 				if len(r.Host) > 0 {
@@ -321,28 +363,77 @@ func getEntrypoints(i *v1beta1.Ingress) []string {
 
 }
 
-func getBoolAnnotation(meta v1.ObjectMeta, name string, defaultValue bool) bool {
-	annotationValue := defaultValue
-	annotationStringValue, ok := meta.Annotations[name]
-	switch {
-	case !ok:
-		// No op.
-	case annotationStringValue == "false":
-		annotationValue = false
-	case annotationStringValue == "true":
-		annotationValue = true
-	default:
-		log.Warnf("Unknown value '%s' for %s, falling back to %s", name, types.LabelFrontendPassTLSCert, defaultValue)
-	}
-	return annotationValue
-}
-
 func getAnnotationPassHostHeader(i *v1beta1.Ingress, p *Provider) bool {
 	return getBoolAnnotation(i.ObjectMeta, types.LabelFrontendPassHostHeader, p.getPassHostHeader())
 }
 
 func getAnnotationPassTLSCert(i *v1beta1.Ingress, p *Provider) bool {
 	return getBoolAnnotation(i.ObjectMeta, types.LabelFrontendPassTLSCert, p.getPassTLSCert())
+}
+
+func getCustomRequestHeaders(i *v1beta1.Ingress) map[string]string {
+	return getMapAnnotation(i.ObjectMeta, annotationKubernetesCustomRequestHeaders)
+}
+func getCustomResponseHeaders(i *v1beta1.Ingress) map[string]string {
+	return getMapAnnotation(i.ObjectMeta, annotationKubernetesCustomResponseHeaders)
+}
+func getAllowedHosts(i *v1beta1.Ingress) []string {
+	return getSliceAnnotation(i.ObjectMeta, annotationKubernetesAllowedHosts)
+}
+func getHostsProxyHeaders(i *v1beta1.Ingress) []string {
+	return getSliceAnnotation(i.ObjectMeta, annotationKubernetesProxyHeaders)
+}
+func getSSLRedirect(i *v1beta1.Ingress) bool {
+	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesSSLRedirect, false)
+}
+func getSSLTemporaryRedirect(i *v1beta1.Ingress) bool {
+	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesSSLTemporaryRedirect, false)
+}
+func getSSLHost(i *v1beta1.Ingress) string {
+	return getStringAnnotation(i.ObjectMeta, annotationKubernetesSSLHost)
+}
+func getSSLProxyHeaders(i *v1beta1.Ingress) map[string]string {
+	return getMapAnnotation(i.ObjectMeta, annotationKubernetesSSLProxyHeaders)
+}
+func getSTSSeconds(i *v1beta1.Ingress) int64 {
+	value, err := strconv.ParseInt(i.ObjectMeta.Annotations[annotationKubernetesHSTSMaxAge], 10, 64)
+	if err == nil && value > 0 {
+		return value
+	}
+	return 0
+}
+func getSTSIncludeSubdomains(i *v1beta1.Ingress) bool {
+	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesHSTSIncludeSubdomains, false)
+}
+func getSTSPreload(i *v1beta1.Ingress) bool {
+	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesHSTSPreload, false)
+}
+func getForceSTSHeader(i *v1beta1.Ingress) bool {
+	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesForceHSTSHeader, false)
+}
+func getFrameDeny(i *v1beta1.Ingress) bool {
+	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesFrameDeny, false)
+}
+func getCustomFrameOptionsValue(i *v1beta1.Ingress) string {
+	return getStringAnnotation(i.ObjectMeta, annotationKubernetesCustomFrameOptionsValue)
+}
+func getContentTypeNosniff(i *v1beta1.Ingress) bool {
+	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesContentTypeNosniff, false)
+}
+func getBrowserXSSFilter(i *v1beta1.Ingress) bool {
+	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesBrowserXSSFilter, false)
+}
+func getContentSecurityPolicy(i *v1beta1.Ingress) string {
+	return getStringAnnotation(i.ObjectMeta, annotationKubernetesContentSecurityPolicy)
+}
+func getPublicKey(i *v1beta1.Ingress) string {
+	return getStringAnnotation(i.ObjectMeta, annotationKubernetesPublicKey)
+}
+func getReferrerPolicy(i *v1beta1.Ingress) string {
+	return getStringAnnotation(i.ObjectMeta, annotationKubernetesReferrerPolicy)
+}
+func getIsDevelopment(i *v1beta1.Ingress) bool {
+	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesIsDevelopment, false)
 }
 
 func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
