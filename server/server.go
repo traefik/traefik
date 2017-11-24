@@ -526,6 +526,9 @@ func (server *Server) configureProviders() {
 		server.providers = append(server.providers, server.globalConfiguration.Rest)
 		server.globalConfiguration.Rest.CurrentConfigurations = &server.currentConfigurations
 	}
+	if server.globalConfiguration.Remote != nil {
+		server.providers = append(server.providers, server.globalConfiguration.Remote)
+	}
 	if server.globalConfiguration.Consul != nil {
 		server.providers = append(server.providers, server.globalConfiguration.Consul)
 	}
