@@ -16,7 +16,8 @@ import (
 	"github.com/mitchellh/hashstructure"
 )
 
-const containousURL = "https://collect.traefik.io/619df80498b60f985d766ce62f912b7c"
+// collectorURL URL where the stats are send
+const collectorURL = "https://collect.traefik.io/619df80498b60f985d766ce62f912b7c"
 
 // Collected data
 type data struct {
@@ -34,7 +35,7 @@ func Collect(globalConfiguration *configuration.GlobalConfiguration) error {
 		return err
 	}
 
-	log.Infof("Stats sent on %s: %s", containousURL, anonConfig)
+	log.Infof("Anonymous stats sent to %s: %s", collectorURL, anonConfig)
 
 	hashConf, err := hashstructure.Hash(globalConfiguration, nil)
 	if err != nil {
@@ -55,7 +56,7 @@ func Collect(globalConfiguration *configuration.GlobalConfiguration) error {
 		return err
 	}
 
-	_, err = makeHTTPClient().Post(containousURL, "application/json; charset=utf-8", buf)
+	_, err = makeHTTPClient().Post(collectorURL, "application/json; charset=utf-8", buf)
 	return err
 }
 

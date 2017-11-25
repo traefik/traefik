@@ -247,11 +247,9 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 }
 
 func checkNewVersion() {
-	ticker := time.NewTicker(24 * time.Hour)
+	ticker := time.Tick(24 * time.Hour)
 	safe.Go(func() {
-		time.Sleep(10 * time.Minute)
-		version.CheckNewVersion()
-		for range ticker.C {
+		for time.Sleep(10 * time.Minute); ; <-ticker {
 			version.CheckNewVersion()
 		}
 	})
@@ -261,7 +259,7 @@ func stats(globalConfiguration *configuration.GlobalConfiguration) {
 	if globalConfiguration.SendAnonymousUsage {
 		log.Info(`
 Stats collection is enabled.
-Many thanks to contribute to Traefik improvement by allowing us to receive anonymous information from your configuration.
+Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.
 Help us improve Traefik by leaving this feature on :)
 More details on: https://docs.traefik.io/basic/#collected-data
 `)
@@ -276,16 +274,10 @@ More details on: https://docs.traefik.io/basic/#collected-data
 }
 
 func collect(globalConfiguration *configuration.GlobalConfiguration) {
-	ticker := time.NewTicker(24 * time.Hour)
+	ticker := time.Tick(24 * time.Hour)
 	safe.Go(func() {
-		time.Sleep(10 * time.Minute)
-		err := collector.Collect(globalConfiguration)
-		if err != nil {
-			log.Debug(err)
-		}
-		for range ticker.C {
-			err := collector.Collect(globalConfiguration)
-			if err != nil {
+		for time.Sleep(10 * time.Minute); ; <-ticker {
+			if err := collector.Collect(globalConfiguration); err != nil {
 				log.Debug(err)
 			}
 		}
