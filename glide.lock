@@ -1,5 +1,5 @@
-hash: 6deb9adeca5f1724f9ef2b31b122f85a00cf47cf4308527d6d3ff68a6ac0e705
-updated: 2017-11-17T14:21:55.148450413+01:00
+hash: 4ac4017b19d4a7355894a09cd6d1f2b92729f252578b6a044a3ff2dea22133c4
+updated: 2017-11-21T21:24:24.601164724+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -409,6 +409,8 @@ imports:
   version: 8060d9f51305bbe024b99679454e62f552cd0b0b
 - name: github.com/mitchellh/copystructure
   version: d23ffcb85de31694d6ccaa23ccb4a03e55c1303f
+- name: github.com/mitchellh/hashstructure
+  version: 2bca23e0e452137f789efbc8610126fd8b94f73b
 - name: github.com/mitchellh/mapstructure
   version: d0303fe809921458f417bcf828397a65db30a7e4
 - name: github.com/mitchellh/reflectwalk
