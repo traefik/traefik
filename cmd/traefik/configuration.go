@@ -163,6 +163,12 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultEureka eureka.Provider
 	defaultEureka.Delay = "30s"
 
+	// default ServiceFabric
+	// FIXME waiting the merge of https://github.com/containous/traefik-extra-service-fabric/pull/2
+	//var defaultServiceFabric servicefabric.Provider
+	//defaultServiceFabric.APIVersion = servicefabric.DefaultAPIVersion
+	//defaultServiceFabric.RefreshSeconds = 10
+
 	// default Ping
 	var defaultPing = ping.Handler{
 		EntryPoint: "traefik",
@@ -196,7 +202,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	}
 
 	// default LifeCycle
-	defaultLifeycle := configuration.LifeCycle{
+	defaultLifeCycle := configuration.LifeCycle{
 		GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
 	}
 
@@ -252,7 +258,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		ForwardingTimeouts: &forwardingTimeouts,
 		TraefikLog:         &defaultTraefikLog,
 		AccessLog:          &defaultAccessLog,
-		LifeCycle:          &defaultLifeycle,
+		LifeCycle:          &defaultLifeCycle,
 		Ping:               &defaultPing,
 		API:                &defaultAPI,
 		Metrics:            &defaultMetrics,
