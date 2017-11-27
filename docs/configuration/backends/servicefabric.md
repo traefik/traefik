@@ -27,6 +27,13 @@ clusterManagementUrl = "https://localhost:19080"
 #
 apiVersion = "3.0"
 
+# Service Fabric Polling Interval (in seconds)
+#
+# Required
+# Default: 10
+#
+refreshSeconds = 10
+
 # Enable TLS connection.
 #
 # Optional
