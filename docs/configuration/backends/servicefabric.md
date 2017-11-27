@@ -15,28 +15,38 @@ See [this repository for an example deployment package and further documentation
 [serviceFabric]
 
 # Service Fabric Management Endpoint
+#
+# Required
+#
 clusterManagementUrl = "https://localhost:19080"
 
 # Service Fabric Management Endpoint API Version
+#
+# Required
+# Default: "3.0"
+#
 apiVersion = "3.0"
 
-# Client certifcate file path
-clientCertFilePath = "certs/clientkey.cer"
-
-# Client certifcate key file path
-clientCertKeyFilePath = "certs/clientkey.key"
-
-# Skip TLS verify
-insecureSkipVerify=true
+# Enable TLS connection.
+#
+# Optional
+#
+# [serviceFabric.tls]
+#   ca = "/etc/ssl/ca.crt"
+#   cert = "/etc/ssl/servicefabric.crt"
+#   key = "/etc/ssl/servicefabric.key"
+#   insecureskipverify = true
 ```
 
 ## Labels
 
-The provider uses labels to configure how services are exposed through Træfik. These can be set using Extensions and the Property Manager API
+The provider uses labels to configure how services are exposed through Træfik.
+These can be set using Extensions and the Property Manager API
 
 #### Extensions
 
-Set labels with extensions through the services `ServiceManifest.xml` file. Here is an example of an extension setting Træfik labels:
+Set labels with extensions through the services `ServiceManifest.xml` file.
+Here is an example of an extension setting Træfik labels:
 
 ```xml
 <StatelessServiceType ServiceTypeName="WebServiceType">
@@ -54,7 +64,8 @@ Set labels with extensions through the services `ServiceManifest.xml` file. Here
 
 #### Property Manager 
 
-Set Labels with the property manager API to overwrite and add labels, while your service is running. Here is an example of adding a frontend rule using the property manager API. 
+Set Labels with the property manager API to overwrite and add labels, while your service is running.
+Here is an example of adding a frontend rule using the property manager API. 
 
 ```shell
 curl -X PUT \
@@ -94,5 +105,3 @@ Labels, set through extensions or the property manager, can be used on services 
 | `traefik.frontend.whitelistSourceRange:RANGE`             | List of IP-Ranges which are allowed to access. An unset or empty list allows all Source-IPs to access.<br>If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access. |
 | `traefik.backend.group.name`                              | Group all services with the same name into a single backend in Træfik                                                                                                                                                |
 | `traefik.backend.group.weight`                            | Set the weighting of the current services nodes in the backend group                                                                                                                                                  |
-
-
