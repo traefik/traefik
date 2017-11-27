@@ -2,7 +2,6 @@ package docker
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"net"
 	"net/http"
@@ -296,45 +295,45 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServiceBackend":                 p.getServiceBackend,
 		"getServiceRedirect":                p.getServiceRedirect,
 		"getWhitelistSourceRange":           p.getWhitelistSourceRange,
-		"hasRequestHeaders":                 p.hasLabel(types.LabelFrontendRequestHeader),
+		"hasRequestHeaders":                 hasLabel(types.LabelFrontendRequestHeader),
 		"getRequestHeaders":                 p.getRequestHeaders,
-		"hasResponseHeaders":                p.hasLabel(types.LabelFrontendResponseHeader),
+		"hasResponseHeaders":                hasLabel(types.LabelFrontendResponseHeader),
 		"getResponseHeaders":                p.getResponseHeaders,
-		"hasAllowedHostsHeaders":            p.hasLabel(types.LabelFrontendAllowedHosts),
+		"hasAllowedHostsHeaders":            hasLabel(types.LabelFrontendAllowedHosts),
 		"getAllowedHostsHeaders":            p.getAllowedHostsHeaders,
-		"hasHostsProxyHeaders":              p.hasLabel(types.LabelFrontendHostsProxyHeaders),
+		"hasHostsProxyHeaders":              hasLabel(types.LabelFrontendHostsProxyHeaders),
 		"getHostsProxyHeaders":              p.getHostsProxyHeaders,
-		"hasSSLRedirectHeaders":             p.hasLabel(types.LabelFrontendSSLRedirect),
+		"hasSSLRedirectHeaders":             hasLabel(types.LabelFrontendSSLRedirect),
 		"getSSLRedirectHeaders":             p.getSSLRedirectHeaders,
-		"hasSSLTemporaryRedirectHeaders":    p.hasLabel(types.LabelFrontendSSLTemporaryRedirect),
+		"hasSSLTemporaryRedirectHeaders":    hasLabel(types.LabelFrontendSSLTemporaryRedirect),
 		"getSSLTemporaryRedirectHeaders":    p.getSSLTemporaryRedirectHeaders,
-		"hasSSLHostHeaders":                 p.hasLabel(types.LabelFrontendSSLHost),
+		"hasSSLHostHeaders":                 hasLabel(types.LabelFrontendSSLHost),
 		"getSSLHostHeaders":                 p.getSSLHostHeaders,
-		"hasSSLProxyHeaders":                p.hasLabel(types.LabelFrontendSSLProxyHeaders),
+		"hasSSLProxyHeaders":                hasLabel(types.LabelFrontendSSLProxyHeaders),
 		"getSSLProxyHeaders":                p.getSSLProxyHeaders,
-		"hasSTSSecondsHeaders":              p.hasLabel(types.LabelFrontendSTSSeconds),
+		"hasSTSSecondsHeaders":              hasLabel(types.LabelFrontendSTSSeconds),
 		"getSTSSecondsHeaders":              p.getSTSSecondsHeaders,
-		"hasSTSIncludeSubdomainsHeaders":    p.hasLabel(types.LabelFrontendSTSIncludeSubdomains),
+		"hasSTSIncludeSubdomainsHeaders":    hasLabel(types.LabelFrontendSTSIncludeSubdomains),
 		"getSTSIncludeSubdomainsHeaders":    p.getSTSIncludeSubdomainsHeaders,
-		"hasSTSPreloadHeaders":              p.hasLabel(types.LabelFrontendSTSPreload),
+		"hasSTSPreloadHeaders":              hasLabel(types.LabelFrontendSTSPreload),
 		"getSTSPreloadHeaders":              p.getSTSPreloadHeaders,
-		"hasForceSTSHeaderHeaders":          p.hasLabel(types.LabelFrontendForceSTSHeader),
+		"hasForceSTSHeaderHeaders":          hasLabel(types.LabelFrontendForceSTSHeader),
 		"getForceSTSHeaderHeaders":          p.getForceSTSHeaderHeaders,
-		"hasFrameDenyHeaders":               p.hasLabel(types.LabelFrontendFrameDeny),
+		"hasFrameDenyHeaders":               hasLabel(types.LabelFrontendFrameDeny),
 		"getFrameDenyHeaders":               p.getFrameDenyHeaders,
-		"hasCustomFrameOptionsValueHeaders": p.hasLabel(types.LabelFrontendCustomFrameOptionsValue),
+		"hasCustomFrameOptionsValueHeaders": hasLabel(types.LabelFrontendCustomFrameOptionsValue),
 		"getCustomFrameOptionsValueHeaders": p.getCustomFrameOptionsValueHeaders,
-		"hasContentTypeNosniffHeaders":      p.hasLabel(types.LabelFrontendContentTypeNosniff),
+		"hasContentTypeNosniffHeaders":      hasLabel(types.LabelFrontendContentTypeNosniff),
 		"getContentTypeNosniffHeaders":      p.getContentTypeNosniffHeaders,
-		"hasBrowserXSSFilterHeaders":        p.hasLabel(types.LabelFrontendBrowserXSSFilter),
+		"hasBrowserXSSFilterHeaders":        hasLabel(types.LabelFrontendBrowserXSSFilter),
 		"getBrowserXSSFilterHeaders":        p.getBrowserXSSFilterHeaders,
-		"hasContentSecurityPolicyHeaders":   p.hasLabel(types.LabelFrontendContentSecurityPolicy),
+		"hasContentSecurityPolicyHeaders":   hasLabel(types.LabelFrontendContentSecurityPolicy),
 		"getContentSecurityPolicyHeaders":   p.getContentSecurityPolicyHeaders,
-		"hasPublicKeyHeaders":               p.hasLabel(types.LabelFrontendPublicKey),
+		"hasPublicKeyHeaders":               hasLabel(types.LabelFrontendPublicKey),
 		"getPublicKeyHeaders":               p.getPublicKeyHeaders,
-		"hasReferrerPolicyHeaders":          p.hasLabel(types.LabelFrontendReferrerPolicy),
+		"hasReferrerPolicyHeaders":          hasLabel(types.LabelFrontendReferrerPolicy),
 		"getReferrerPolicyHeaders":          p.getReferrerPolicyHeaders,
-		"hasIsDevelopmentHeaders":           p.hasLabel(types.LabelFrontendIsDevelopment),
+		"hasIsDevelopmentHeaders":           hasLabel(types.LabelFrontendIsDevelopment),
 		"getIsDevelopmentHeaders":           p.getIsDevelopmentHeaders,
 	}
 	// filter containers
@@ -397,36 +396,6 @@ type labelServiceProperties map[string]map[string]string
 // Check if for the given container, we find labels that are defining services
 func (p *Provider) hasServices(container dockerData) bool {
 	return len(extractServicesLabels(container.Labels)) > 0
-}
-
-// Extract the service labels from container labels of dockerData struct
-func extractServicesLabels(labels map[string]string) labelServiceProperties {
-	v := make(labelServiceProperties)
-
-	for index, serviceProperty := range labels {
-		matches := servicesPropertiesRegexp.FindStringSubmatch(index)
-		if matches != nil {
-			result := make(map[string]string)
-			for i, name := range servicesPropertiesRegexp.SubexpNames() {
-				if i != 0 {
-					result[name] = matches[i]
-				}
-			}
-			serviceName := result["service_name"]
-			if _, ok := v[serviceName]; !ok {
-				v[serviceName] = make(map[string]string)
-			}
-			v[serviceName][result["property_name"]] = serviceProperty
-		}
-	}
-
-	return v
-}
-
-// Gets the entry for a service label searching in all labels of the given container
-func getContainerServiceLabel(container dockerData, serviceName string, entry string) (string, bool) {
-	value, ok := extractServicesLabels(container.Labels)[serviceName][entry]
-	return value, ok
 }
 
 // Gets array of service names for a given container
@@ -682,7 +651,7 @@ func (p *Provider) getBackend(container dockerData) string {
 	return provider.Normalize(container.ServiceName)
 }
 
-func (p *Provider) getIPAddress(container dockerData) string {
+func (p Provider) getIPAddress(container dockerData) string {
 	if label, err := getLabel(container, labelDockerNetwork); err == nil && label != "" {
 		networkSettings := container.NetworkSettings
 		if networkSettings.Networks != nil {
@@ -737,7 +706,7 @@ func (p *Provider) getIPAddress(container dockerData) string {
 	return ""
 }
 
-func (p *Provider) getPort(container dockerData) string {
+func (p Provider) getPort(container dockerData) string {
 	if label, err := getLabel(container, types.LabelPort); err == nil {
 		return label
 	}
@@ -761,19 +730,19 @@ func (p *Provider) getPort(container dockerData) string {
 	return ""
 }
 
-func (p *Provider) getWeight(container dockerData) string {
+func (p Provider) getWeight(container dockerData) string {
 	if label, err := getLabel(container, types.LabelWeight); err == nil {
 		return label
 	}
 	return "0"
 }
 
-func (p *Provider) hasStickinessLabel(container dockerData) bool {
+func (p Provider) hasStickinessLabel(container dockerData) bool {
 	labelStickiness, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
 	return errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
 }
 
-func (p *Provider) getSticky(container dockerData) string {
+func (p Provider) getSticky(container dockerData) string {
 	if label, err := getLabel(container, types.LabelBackendLoadbalancerSticky); err == nil {
 		if len(label) > 0 {
 			log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
@@ -783,42 +752,42 @@ func (p *Provider) getSticky(container dockerData) string {
 	return "false"
 }
 
-func (p *Provider) getStickinessCookieName(container dockerData) string {
+func (p Provider) getStickinessCookieName(container dockerData) string {
 	if label, err := getLabel(container, types.LabelBackendLoadbalancerStickinessCookieName); err == nil {
 		return label
 	}
 	return ""
 }
 
-func (p *Provider) getIsBackendLBSwarm(container dockerData) string {
+func (p Provider) getIsBackendLBSwarm(container dockerData) string {
 	if label, err := getLabel(container, labelBackendLoadbalancerSwarm); err == nil {
 		return label
 	}
 	return "false"
 }
 
-func (p *Provider) getDomain(container dockerData) string {
+func (p Provider) getDomain(container dockerData) string {
 	if label, err := getLabel(container, types.LabelDomain); err == nil {
 		return label
 	}
 	return p.Domain
 }
 
-func (p *Provider) getProtocol(container dockerData) string {
+func (p Provider) getProtocol(container dockerData) string {
 	if label, err := getLabel(container, types.LabelProtocol); err == nil {
 		return label
 	}
 	return "http"
 }
 
-func (p *Provider) getPassHostHeader(container dockerData) string {
+func (p Provider) getPassHostHeader(container dockerData) string {
 	if passHostHeader, err := getLabel(container, types.LabelFrontendPassHostHeader); err == nil {
 		return passHostHeader
 	}
 	return "true"
 }
 
-func (p *Provider) getWhitelistSourceRange(container dockerData) []string {
+func (p Provider) getWhitelistSourceRange(container dockerData) []string {
 	var whitelistSourceRange []string
 
 	if whitelistSourceRangeLabel, err := getLabel(container, types.LabelTraefikFrontendWhitelistSourceRange); err == nil {
@@ -827,21 +796,21 @@ func (p *Provider) getWhitelistSourceRange(container dockerData) []string {
 	return whitelistSourceRange
 }
 
-func (p *Provider) getPriority(container dockerData) string {
+func (p Provider) getPriority(container dockerData) string {
 	if priority, err := getLabel(container, types.LabelFrontendPriority); err == nil {
 		return priority
 	}
 	return "0"
 }
 
-func (p *Provider) getEntryPoints(container dockerData) []string {
+func (p Provider) getEntryPoints(container dockerData) []string {
 	if entryPoints, err := getLabel(container, types.LabelFrontendEntryPoints); err == nil {
 		return strings.Split(entryPoints, ",")
 	}
 	return []string{}
 }
 
-func (p *Provider) getBasicAuth(container dockerData) []string {
+func (p Provider) getBasicAuth(container dockerData) []string {
 	if basicAuth, err := getLabel(container, types.LabelFrontendAuthBasic); err == nil {
 		return strings.Split(basicAuth, ",")
 	}
@@ -849,61 +818,36 @@ func (p *Provider) getBasicAuth(container dockerData) []string {
 	return []string{}
 }
 
-func (p *Provider) hasLabel(label string) func(container dockerData) bool {
-	return func(container dockerData) bool {
-		label, err := getLabel(container, label)
-		return err == nil && len(label) > 0
-	}
-}
-
-func (p *Provider) getRequestHeaders(container dockerData) map[string]string {
+func (p Provider) getRequestHeaders(container dockerData) map[string]string {
 	return parseCustomHeaders(container, types.LabelFrontendRequestHeader)
 }
 
-func (p *Provider) getResponseHeaders(container dockerData) map[string]string {
+func (p Provider) getResponseHeaders(container dockerData) map[string]string {
 	return parseCustomHeaders(container, types.LabelFrontendResponseHeader)
 }
 
-func parseCustomHeaders(container dockerData, containerType string) map[string]string {
-	customHeaders := make(map[string]string)
-	if label, err := getLabel(container, containerType); err == nil {
-		for _, headers := range strings.Split(label, ",") {
-			pair := strings.Split(headers, ":")
-			if len(pair) != 2 {
-				log.Warnf("Could not load header %v, skipping...", pair)
-			} else {
-				customHeaders[pair[0]] = pair[1]
-			}
-		}
-	}
-	if len(customHeaders) == 0 {
-		log.Errorf("Could not load any custom headers")
-	}
-	return customHeaders
-}
-
-func (p *Provider) getAllowedHostsHeaders(container dockerData) []string {
+func (p Provider) getAllowedHostsHeaders(container dockerData) []string {
 	return getSliceStringHeaders(container, types.LabelFrontendAllowedHosts)
 }
 
-func (p *Provider) getHostsProxyHeaders(container dockerData) []string {
+func (p Provider) getHostsProxyHeaders(container dockerData) []string {
 	return getSliceStringHeaders(container, types.LabelFrontendHostsProxyHeaders)
 }
 
-func (p *Provider) getSSLRedirectHeaders(container dockerData) bool {
+func (p Provider) getSSLRedirectHeaders(container dockerData) bool {
 	return getBoolHeader(container, types.LabelFrontendSSLRedirect)
 }
 
-func (p *Provider) getSSLTemporaryRedirectHeaders(container dockerData) bool {
+func (p Provider) getSSLTemporaryRedirectHeaders(container dockerData) bool {
 	return getBoolHeader(container, types.LabelFrontendSSLTemporaryRedirect)
 }
 
-func (p *Provider) getSSLHostHeaders(container dockerData) string {
+func (p Provider) getSSLHostHeaders(container dockerData) string {
 	label, _ := getLabel(container, types.LabelFrontendSSLHost)
 	return label
 }
 
-func (p *Provider) getSSLProxyHeaders(container dockerData) map[string]string {
+func (p Provider) getSSLProxyHeaders(container dockerData) map[string]string {
 	ProxyHeaders := make(map[string]string)
 	if label, err := getLabel(container, types.LabelFrontendSSLProxyHeaders); err == nil {
 		for _, headers := range strings.Split(label, ",") {
@@ -921,7 +865,7 @@ func (p *Provider) getSSLProxyHeaders(container dockerData) map[string]string {
 	return ProxyHeaders
 }
 
-func (p *Provider) getSTSSecondsHeaders(container dockerData) int64 {
+func (p Provider) getSTSSecondsHeaders(container dockerData) int64 {
 	label, _ := getLabel(container, types.LabelFrontendSTSSeconds)
 	i, err := strconv.ParseInt(label, 10, 64)
 	if err == nil && i > 0 {
@@ -930,77 +874,55 @@ func (p *Provider) getSTSSecondsHeaders(container dockerData) int64 {
 	return 0
 }
 
-func (p *Provider) getSTSIncludeSubdomainsHeaders(container dockerData) bool {
+func (p Provider) getSTSIncludeSubdomainsHeaders(container dockerData) bool {
 	return getBoolHeader(container, types.LabelFrontendSTSIncludeSubdomains)
 }
 
-func (p *Provider) getSTSPreloadHeaders(container dockerData) bool {
+func (p Provider) getSTSPreloadHeaders(container dockerData) bool {
 	return getBoolHeader(container, types.LabelFrontendSTSPreload)
 }
 
-func (p *Provider) getForceSTSHeaderHeaders(container dockerData) bool {
+func (p Provider) getForceSTSHeaderHeaders(container dockerData) bool {
 	return getBoolHeader(container, types.LabelFrontendForceSTSHeader)
 }
 
-func (p *Provider) getFrameDenyHeaders(container dockerData) bool {
+func (p Provider) getFrameDenyHeaders(container dockerData) bool {
 	return getBoolHeader(container, types.LabelFrontendFrameDeny)
 }
 
-func (p *Provider) getCustomFrameOptionsValueHeaders(container dockerData) string {
+func (p Provider) getCustomFrameOptionsValueHeaders(container dockerData) string {
 	label, _ := getLabel(container, types.LabelFrontendCustomFrameOptionsValue)
 	return label
 }
 
-func (p *Provider) getContentTypeNosniffHeaders(container dockerData) bool {
+func (p Provider) getContentTypeNosniffHeaders(container dockerData) bool {
 	return getBoolHeader(container, types.LabelFrontendContentTypeNosniff)
 }
 
-func (p *Provider) getBrowserXSSFilterHeaders(container dockerData) bool {
+func (p Provider) getBrowserXSSFilterHeaders(container dockerData) bool {
 	return getBoolHeader(container, types.LabelFrontendBrowserXSSFilter)
 }
 
-func (p *Provider) getContentSecurityPolicyHeaders(container dockerData) string {
+func (p Provider) getContentSecurityPolicyHeaders(container dockerData) string {
 	label, _ := getLabel(container, types.LabelFrontendContentSecurityPolicy)
 	return label
 }
 
-func (p *Provider) getPublicKeyHeaders(container dockerData) string {
+func (p Provider) getPublicKeyHeaders(container dockerData) string {
 	label, _ := getLabel(container, types.LabelFrontendPublicKey)
 	return label
 }
 
-func (p *Provider) getReferrerPolicyHeaders(container dockerData) string {
+func (p Provider) getReferrerPolicyHeaders(container dockerData) string {
 	label, _ := getLabel(container, types.LabelFrontendReferrerPolicy)
 	return label
 }
 
-func (p *Provider) getIsDevelopmentHeaders(container dockerData) bool {
+func (p Provider) getIsDevelopmentHeaders(container dockerData) bool {
 	return getBoolHeader(container, types.LabelFrontendIsDevelopment)
 }
 
-func getSliceStringHeaders(container dockerData, containerType string) []string {
-	value := []string{}
-	if label, err := getLabel(container, containerType); err == nil {
-		for _, sublabels := range strings.Split(label, ",") {
-			if len(sublabels) == 0 {
-				log.Warnf("Could not load header %v, skipping", sublabels)
-			} else {
-				value = append(value, sublabels)
-			}
-		}
-	}
-	if len(value) == 0 {
-		log.Errorf("Could not load %v headers", containerType)
-	}
-	return value
-}
-
-func getBoolHeader(container dockerData, containerType string) bool {
-	label, err := getLabel(container, containerType)
-	return err == nil && len(label) > 0 && strings.EqualFold(strings.TrimSpace(label), "true")
-}
-
-func (p *Provider) getRedirect(container dockerData) string {
+func (p Provider) getRedirect(container dockerData) string {
 	if entryPointredirect, err := getLabel(container, types.LabelFrontendRedirect); err == nil {
 		return entryPointredirect
 	}
@@ -1009,31 +931,6 @@ func (p *Provider) getRedirect(container dockerData) string {
 
 func isContainerEnabled(container dockerData, exposedByDefault bool) bool {
 	return exposedByDefault && container.Labels[types.LabelEnable] != "false" || container.Labels[types.LabelEnable] == "true"
-}
-
-func getLabel(container dockerData, label string) (string, error) {
-	for key, value := range container.Labels {
-		if key == label {
-			return value, nil
-		}
-	}
-	return "", fmt.Errorf("label not found: %s", label)
-}
-
-func getLabels(container dockerData, labels []string) (map[string]string, error) {
-	var globalErr error
-	foundLabels := map[string]string{}
-	for _, label := range labels {
-		foundLabel, err := getLabel(container, label)
-		// Error out only if one of them is defined.
-		if err != nil {
-			globalErr = fmt.Errorf("label not found: %s", label)
-			continue
-		}
-		foundLabels[label] = foundLabel
-
-	}
-	return foundLabels, globalErr
 }
 
 func listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
@@ -1104,7 +1001,7 @@ func getSubDomain(name string) string {
 	return strings.Replace(strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1), "_", "-", -1)
 }
 
-func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
+func (p Provider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
 	if err != nil {
 		return []dockerData{}, err
