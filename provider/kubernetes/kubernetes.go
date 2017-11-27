@@ -355,13 +355,13 @@ func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
 		ruleType = ruleTypePathPrefix
 	}
 
-	rule := ruleType + ":" + pa.Path
+	rules := []string{ruleType + ":" + pa.Path}
 
 	if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
-		rule = ruleTypeReplacePath + ":" + rewriteTarget
+		rules = append(rules, ruleTypeReplacePath+":"+rewriteTarget)
 	}
 
-	return rule
+	return strings.Join(rules, ";")
 }
 
 func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress) int {
