@@ -216,6 +216,7 @@ import:
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - package: github.com/mitchellh/copystructure
 - package: github.com/containous/traefik-extra-service-fabric
+  version: ^v1.0.0
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose
