@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/middlewares/accesslog"
@@ -23,6 +24,7 @@ import (
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
+	sf "github.com/jjcollinge/servicefabric"
 )
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff
@@ -164,10 +166,9 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultEureka.Delay = "30s"
 
 	// default ServiceFabric
-	// FIXME waiting the merge of https://github.com/containous/traefik-extra-service-fabric/pull/2
-	//var defaultServiceFabric servicefabric.Provider
-	//defaultServiceFabric.APIVersion = servicefabric.DefaultAPIVersion
-	//defaultServiceFabric.RefreshSeconds = 10
+	var defaultServiceFabric servicefabric.Provider
+	defaultServiceFabric.APIVersion = sf.DefaultAPIVersion
+	defaultServiceFabric.RefreshSeconds = 10
 
 	// default Ping
 	var defaultPing = ping.Handler{

@@ -9,19 +9,22 @@ type ApplicationItemsPage struct {
 	Items             []ApplicationItem `json:"Items"`
 }
 
+// AppParameter Application parameter
+type AppParameter struct {
+	Key   string `json:"Key"`
+	Value string `json:"Value"`
+}
+
 // ApplicationItem encapsulates the embedded model for
 // ApplicationItems within the ApplicationItemsPage model
 type ApplicationItem struct {
-	HealthState string `json:"HealthState"`
-	ID          string `json:"Id"`
-	Name        string `json:"Name"`
-	Parameters  []*struct {
-		Key   string `json:"Key"`
-		Value string `json:"Value"`
-	} `json:"Parameters"`
-	Status      string `json:"Status"`
-	TypeName    string `json:"TypeName"`
-	TypeVersion string `json:"TypeVersion"`
+	HealthState string          `json:"HealthState"`
+	ID          string          `json:"Id"`
+	Name        string          `json:"Name"`
+	Parameters  []*AppParameter `json:"Parameters"`
+	Status      string          `json:"Status"`
+	TypeName    string          `json:"TypeName"`
+	TypeVersion string          `json:"TypeVersion"`
 }
 
 // ServiceItemsPage encapsulates the paged response
@@ -32,7 +35,7 @@ type ServiceItemsPage struct {
 }
 
 // ServiceItem encapsulates the embedded model for
-// ServiceItems within the ServiceItemsPaage model
+// ServiceItems within the ServiceItemsPage model
 type ServiceItem struct {
 	HasPersistedState bool   `json:"HasPersistedState"`
 	HealthState       string `json:"HealthState"`
@@ -46,7 +49,7 @@ type ServiceItem struct {
 }
 
 // PartitionItemsPage encapsulates the paged response
-// model for ParititonItems in the Service Fabric API
+// model for PartitionItems in the Service Fabric API
 type PartitionItemsPage struct {
 	ContinuationToken *string         `json:"ContinuationToken"`
 	Items             []PartitionItem `json:"Items"`
@@ -55,21 +58,27 @@ type PartitionItemsPage struct {
 // PartitionItem encapsulates the service information
 // returned for each PartitionItem under the service
 type PartitionItem struct {
-	CurrentConfigurationEpoch struct {
-		ConfigurationVersion string `json:"ConfigurationVersion"`
-		DataLossVersion      string `json:"DataLossVersion"`
-	} `json:"CurrentConfigurationEpoch"`
-	HealthState          string `json:"HealthState"`
-	MinReplicaSetSize    int64  `json:"MinReplicaSetSize"`
-	PartitionInformation struct {
-		HighKey              string `json:"HighKey"`
-		ID                   string `json:"Id"`
-		LowKey               string `json:"LowKey"`
-		ServicePartitionKind string `json:"ServicePartitionKind"`
-	} `json:"PartitionInformation"`
-	PartitionStatus      string `json:"PartitionStatus"`
-	ServiceKind          string `json:"ServiceKind"`
-	TargetReplicaSetSize int64  `json:"TargetReplicaSetSize"`
+	CurrentConfigurationEpoch ConfigurationEpoch   `json:"CurrentConfigurationEpoch"`
+	HealthState               string               `json:"HealthState"`
+	MinReplicaSetSize         int64                `json:"MinReplicaSetSize"`
+	PartitionInformation      PartitionInformation `json:"PartitionInformation"`
+	PartitionStatus           string               `json:"PartitionStatus"`
+	ServiceKind               string               `json:"ServiceKind"`
+	TargetReplicaSetSize      int64                `json:"TargetReplicaSetSize"`
+}
+
+// ConfigurationEpoch Partition configuration epoch
+type ConfigurationEpoch struct {
+	ConfigurationVersion string `json:"ConfigurationVersion"`
+	DataLossVersion      string `json:"DataLossVersion"`
+}
+
+// PartitionInformation Partition information
+type PartitionInformation struct {
+	HighKey              string `json:"HighKey"`
+	ID                   string `json:"Id"`
+	LowKey               string `json:"LowKey"`
+	ServicePartitionKind string `json:"ServicePartitionKind"`
 }
 
 // ReplicaItemBase shared data used
@@ -95,12 +104,6 @@ type ReplicaItemsPage struct {
 type ReplicaItem struct {
 	*ReplicaItemBase
 	ID string `json:"ReplicaId"`
-}
-
-// ReplicaInstance interface provides a unified interface
-// over replicas and instances
-type ReplicaInstance interface {
-	GetReplicaData() (string, *ReplicaItemBase)
 }
 
 // GetReplicaData returns replica data
@@ -129,41 +132,53 @@ func (m *InstanceItem) GetReplicaData() (string, *ReplicaItemBase) {
 // ServiceType encapsulates the response model for
 // Service types in the Service Fabric API
 type ServiceType struct {
-	ServiceTypeDescription struct {
-		IsStateful               bool           `json:"IsStateful"`
-		ServiceTypeName          string         `json:"ServiceTypeName"`
-		PlacementConstraints     string         `json:"PlacementConstraints"`
-		HasPersistedState        bool           `json:"HasPersistedState"`
-		Kind                     string         `json:"Kind"`
-		Extensions               []KeyValuePair `json:"Extensions"`
-		LoadMetrics              []interface{}  `json:"LoadMetrics"`
-		ServicePlacementPolicies []interface{}  `json:"ServicePlacementPolicies"`
-	} `json:"ServiceTypeDescription"`
-	ServiceManifestVersion string `json:"ServiceManifestVersion"`
-	ServiceManifestName    string `json:"ServiceManifestName"`
-	IsServiceGroup         bool   `json:"IsServiceGroup"`
+	ServiceTypeDescription ServiceTypeDescription `json:"ServiceTypeDescription"`
+	ServiceManifestVersion string                 `json:"ServiceManifestVersion"`
+	ServiceManifestName    string                 `json:"ServiceManifestName"`
+	IsServiceGroup         bool                   `json:"IsServiceGroup"`
+}
+
+// ServiceTypeDescription Service Type Description
+type ServiceTypeDescription struct {
+	IsStateful               bool           `json:"IsStateful"`
+	ServiceTypeName          string         `json:"ServiceTypeName"`
+	PlacementConstraints     string         `json:"PlacementConstraints"`
+	HasPersistedState        bool           `json:"HasPersistedState"`
+	Kind                     string         `json:"Kind"`
+	Extensions               []KeyValuePair `json:"Extensions"`
+	LoadMetrics              []interface{}  `json:"LoadMetrics"`
+	ServicePlacementPolicies []interface{}  `json:"ServicePlacementPolicies"`
 }
 
 // PropertiesListPage encapsulates the response model for
 // PagedPropertyInfoList in the Service Fabric API
 type PropertiesListPage struct {
-	ContinuationToken string `json:"ContinuationToken"`
-	IsConsistent      bool   `json:"IsConsistent"`
-	Properties        []struct {
-		Metadata struct {
-			CustomTypeID             string `json:"CustomTypeId"`
-			LastModifiedUtcTimestamp string `json:"LastModifiedUtcTimestamp"`
-			Parent                   string `json:"Parent"`
-			SequenceNumber           string `json:"SequenceNumber"`
-			SizeInBytes              int64  `json:"SizeInBytes"`
-			TypeID                   string `json:"TypeId"`
-		} `json:"Metadata"`
-		Name  string `json:"Name"`
-		Value struct {
-			Data string `json:"Data"`
-			Kind string `json:"Kind"`
-		} `json:"Value"`
-	} `json:"Properties"`
+	ContinuationToken string     `json:"ContinuationToken"`
+	IsConsistent      bool       `json:"IsConsistent"`
+	Properties        []Property `json:"Properties"`
+}
+
+// Property Paged Property Info
+type Property struct {
+	Metadata Metadata  `json:"Metadata"`
+	Name     string    `json:"Name"`
+	Value    PropValue `json:"Value"`
+}
+
+// Metadata Property Metadata
+type Metadata struct {
+	CustomTypeID             string `json:"CustomTypeId"`
+	LastModifiedUtcTimestamp string `json:"LastModifiedUtcTimestamp"`
+	Parent                   string `json:"Parent"`
+	SequenceNumber           string `json:"SequenceNumber"`
+	SizeInBytes              int64  `json:"SizeInBytes"`
+	TypeID                   string `json:"TypeId"`
+}
+
+// PropValue Property value
+type PropValue struct {
+	Data string `json:"Data"`
+	Kind string `json:"Kind"`
 }
 
 // KeyValuePair represents a key value pair structure
