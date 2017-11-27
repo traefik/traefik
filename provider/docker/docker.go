@@ -37,10 +37,14 @@ const (
 	// SwarmDefaultWatchTime is the duration of the interval when polling docker
 	SwarmDefaultWatchTime = 15 * time.Second
 
-	labelDockerNetwork            = "traefik.docker.network"
-	labelBackendLoadbalancerSwarm = "traefik.backend.loadbalancer.swarm"
-	labelDockerComposeProject     = "com.docker.compose.project"
-	labelDockerComposeService     = "com.docker.compose.service"
+	defaultWeight                      = "0"
+	defaultProtocol                    = "http"
+	defaultPassHostHeader              = "true"
+	defaultFrontendPriority            = "0"
+	defaultCircuitBreakerExpression    = "NetworkErrorRatio() > 1"
+	defaultFrontendRedirect            = ""
+	defaultBackendLoadBalancerMethod   = "wrr"
+	defaultBackendMaxconnExtractorfunc = "request.host"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -82,11 +86,9 @@ type networkData struct {
 	ID       string
 }
 
-func (p *Provider) createClient() (client.APIClient, error) {
+func (p Provider) createClient() (client.APIClient, error) {
 	var httpClient *http.Client
-	httpHeaders := map[string]string{
-		"User-Agent": "Traefik " + version.Version,
-	}
+
 	if p.TLS != nil {
 		config, err := p.TLS.CreateTLSConfig()
 		if err != nil {
@@ -105,15 +107,20 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		httpClient = &http.Client{
 			Transport: tr,
 		}
+	}
 
+	httpHeaders := map[string]string{
+		"User-Agent": "Traefik " + version.Version,
 	}
-	var version string
+
+	var apiVersion string
 	if p.SwarmMode {
-		version = SwarmAPIVersion
+		apiVersion = SwarmAPIVersion
 	} else {
-		version = DockerAPIVersion
+		apiVersion = DockerAPIVersion
 	}
-	return client.NewClient(p.Endpoint, version, httpClient, httpHeaders)
+
+	return client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
 
 }
 
@@ -133,15 +140,15 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			}
 
 			ctx := context.Background()
-			version, err := dockerClient.ServerVersion(ctx)
+			serverVersion, err := dockerClient.ServerVersion(ctx)
 			if err != nil {
 				log.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
 				return err
 			}
-			log.Debugf("Provider connection established with docker %s (API %s)", version.Version, version.APIVersion)
+			log.Debugf("Provider connection established with docker %s (API %s)", serverVersion.Version, serverVersion.APIVersion)
 			var dockerDataList []dockerData
 			if p.SwarmMode {
-				dockerDataList, err = p.listServices(ctx, dockerClient)
+				dockerDataList, err = listServices(ctx, dockerClient)
 				if err != nil {
 					log.Errorf("Failed to list services for docker swarm mode, error %s", err)
 					return err
@@ -170,7 +177,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						for {
 							select {
 							case <-ticker.C:
-								services, err := p.listServices(ctx, dockerClient)
+								services, err := listServices(ctx, dockerClient)
 								if err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
 									errChan <- err
@@ -259,82 +266,84 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
-		"getBackend":                        p.getBackend,
-		"getIPAddress":                      p.getIPAddress,
-		"getPort":                           p.getPort,
-		"getWeight":                         p.getWeight,
-		"getDomain":                         p.getDomain,
-		"getProtocol":                       p.getProtocol,
-		"getPassHostHeader":                 p.getPassHostHeader,
-		"getPriority":                       p.getPriority,
-		"getEntryPoints":                    p.getEntryPoints,
-		"getBasicAuth":                      p.getBasicAuth,
-		"getFrontendRule":                   p.getFrontendRule,
-		"getRedirect":                       p.getRedirect,
-		"hasCircuitBreakerLabel":            p.hasCircuitBreakerLabel,
-		"getCircuitBreakerExpression":       p.getCircuitBreakerExpression,
-		"hasLoadBalancerLabel":              p.hasLoadBalancerLabel,
-		"getLoadBalancerMethod":             p.getLoadBalancerMethod,
-		"hasMaxConnLabels":                  p.hasMaxConnLabels,
-		"getMaxConnAmount":                  p.getMaxConnAmount,
-		"getMaxConnExtractorFunc":           p.getMaxConnExtractorFunc,
-		"getSticky":                         p.getSticky,
-		"getStickinessCookieName":           p.getStickinessCookieName,
-		"hasStickinessLabel":                p.hasStickinessLabel,
-		"getIsBackendLBSwarm":               p.getIsBackendLBSwarm,
-		"hasServices":                       p.hasServices,
-		"getServiceNames":                   p.getServiceNames,
-		"getServicePort":                    p.getServicePort,
-		"getServiceWeight":                  p.getServiceWeight,
-		"getServiceProtocol":                p.getServiceProtocol,
-		"getServiceEntryPoints":             p.getServiceEntryPoints,
-		"getServiceBasicAuth":               p.getServiceBasicAuth,
-		"getServiceFrontendRule":            p.getServiceFrontendRule,
-		"getServicePassHostHeader":          p.getServicePassHostHeader,
-		"getServicePriority":                p.getServicePriority,
-		"getServiceBackend":                 p.getServiceBackend,
-		"getServiceRedirect":                p.getServiceRedirect,
-		"getWhitelistSourceRange":           p.getWhitelistSourceRange,
+		"getBackend":                  getBackend,
+		"getIPAddress":                p.getIPAddress,
+		"getPort":                     getPort,
+		"getWeight":                   getFuncStringLabel(types.LabelWeight, defaultWeight),
+		"getDomain":                   getFuncStringLabel(types.LabelDomain, p.Domain),
+		"getProtocol":                 getFuncStringLabel(types.LabelProtocol, defaultProtocol),
+		"getPassHostHeader":           getFuncStringLabel(types.LabelFrontendPassHostHeader, defaultPassHostHeader),
+		"getPriority":                 getFuncStringLabel(types.LabelFrontendPriority, defaultFrontendPriority),
+		"getEntryPoints":              getFuncSliceStringLabel(types.LabelFrontendEntryPoints),
+		"getBasicAuth":                getFuncSliceStringLabel(types.LabelFrontendAuthBasic),
+		"getFrontendRule":             p.getFrontendRule,
+		"getRedirect":                 getFuncStringLabel(types.LabelFrontendRedirect, ""),
+		"hasCircuitBreakerLabel":      hasLabel(types.LabelBackendCircuitbreakerExpression),
+		"getCircuitBreakerExpression": getFuncStringLabel(types.LabelBackendCircuitbreakerExpression, defaultCircuitBreakerExpression),
+		"hasLoadBalancerLabel":        hasLoadBalancerLabel,
+		"getLoadBalancerMethod":       getFuncStringLabel(types.LabelBackendLoadbalancerMethod, defaultBackendLoadBalancerMethod),
+		"hasMaxConnLabels":            hasMaxConnLabels,
+		"getMaxConnAmount":            getFuncInt64Label(types.LabelBackendMaxconnAmount, math.MaxInt64),
+		"getMaxConnExtractorFunc":     getFuncStringLabel(types.LabelBackendMaxconnExtractorfunc, defaultBackendMaxconnExtractorfunc),
+		"getSticky":                   getSticky,
+		"hasStickinessLabel":          hasStickinessLabel,
+		"getStickinessCookieName":     getFuncStringLabel(types.LabelBackendLoadbalancerStickinessCookieName, ""),
+		"getIsBackendLBSwarm":         getIsBackendLBSwarm,
+		"getServiceBackend":           getServiceBackend,
+		"getServiceRedirect":          getFuncServiceStringLabel(types.SuffixFrontendRedirect, defaultFrontendRedirect),
+		"getWhitelistSourceRange":     getFuncSliceStringLabel(types.LabelTraefikFrontendWhitelistSourceRange),
+
 		"hasRequestHeaders":                 hasLabel(types.LabelFrontendRequestHeader),
-		"getRequestHeaders":                 p.getRequestHeaders,
+		"getRequestHeaders":                 getFuncMapLabel(types.LabelFrontendRequestHeader),
 		"hasResponseHeaders":                hasLabel(types.LabelFrontendResponseHeader),
-		"getResponseHeaders":                p.getResponseHeaders,
+		"getResponseHeaders":                getFuncMapLabel(types.LabelFrontendResponseHeader),
 		"hasAllowedHostsHeaders":            hasLabel(types.LabelFrontendAllowedHosts),
-		"getAllowedHostsHeaders":            p.getAllowedHostsHeaders,
+		"getAllowedHostsHeaders":            getFuncSliceStringLabel(types.LabelFrontendAllowedHosts),
 		"hasHostsProxyHeaders":              hasLabel(types.LabelFrontendHostsProxyHeaders),
-		"getHostsProxyHeaders":              p.getHostsProxyHeaders,
+		"getHostsProxyHeaders":              getFuncSliceStringLabel(types.LabelFrontendHostsProxyHeaders),
 		"hasSSLRedirectHeaders":             hasLabel(types.LabelFrontendSSLRedirect),
-		"getSSLRedirectHeaders":             p.getSSLRedirectHeaders,
+		"getSSLRedirectHeaders":             getFuncBoolLabel(types.LabelFrontendSSLRedirect),
 		"hasSSLTemporaryRedirectHeaders":    hasLabel(types.LabelFrontendSSLTemporaryRedirect),
-		"getSSLTemporaryRedirectHeaders":    p.getSSLTemporaryRedirectHeaders,
+		"getSSLTemporaryRedirectHeaders":    getFuncBoolLabel(types.LabelFrontendSSLTemporaryRedirect),
 		"hasSSLHostHeaders":                 hasLabel(types.LabelFrontendSSLHost),
-		"getSSLHostHeaders":                 p.getSSLHostHeaders,
+		"getSSLHostHeaders":                 getFuncStringLabel(types.LabelFrontendSSLHost, ""),
 		"hasSSLProxyHeaders":                hasLabel(types.LabelFrontendSSLProxyHeaders),
-		"getSSLProxyHeaders":                p.getSSLProxyHeaders,
+		"getSSLProxyHeaders":                getFuncMapLabel(types.LabelFrontendSSLProxyHeaders),
 		"hasSTSSecondsHeaders":              hasLabel(types.LabelFrontendSTSSeconds),
-		"getSTSSecondsHeaders":              p.getSTSSecondsHeaders,
+		"getSTSSecondsHeaders":              getFuncInt64Label(types.LabelFrontendSTSSeconds, 0),
 		"hasSTSIncludeSubdomainsHeaders":    hasLabel(types.LabelFrontendSTSIncludeSubdomains),
-		"getSTSIncludeSubdomainsHeaders":    p.getSTSIncludeSubdomainsHeaders,
+		"getSTSIncludeSubdomainsHeaders":    getFuncBoolLabel(types.LabelFrontendSTSIncludeSubdomains),
 		"hasSTSPreloadHeaders":              hasLabel(types.LabelFrontendSTSPreload),
-		"getSTSPreloadHeaders":              p.getSTSPreloadHeaders,
+		"getSTSPreloadHeaders":              getFuncBoolLabel(types.LabelFrontendSTSPreload),
 		"hasForceSTSHeaderHeaders":          hasLabel(types.LabelFrontendForceSTSHeader),
-		"getForceSTSHeaderHeaders":          p.getForceSTSHeaderHeaders,
+		"getForceSTSHeaderHeaders":          getFuncBoolLabel(types.LabelFrontendForceSTSHeader),
 		"hasFrameDenyHeaders":               hasLabel(types.LabelFrontendFrameDeny),
-		"getFrameDenyHeaders":               p.getFrameDenyHeaders,
+		"getFrameDenyHeaders":               getFuncBoolLabel(types.LabelFrontendFrameDeny),
 		"hasCustomFrameOptionsValueHeaders": hasLabel(types.LabelFrontendCustomFrameOptionsValue),
-		"getCustomFrameOptionsValueHeaders": p.getCustomFrameOptionsValueHeaders,
+		"getCustomFrameOptionsValueHeaders": getFuncStringLabel(types.LabelFrontendCustomFrameOptionsValue, ""),
 		"hasContentTypeNosniffHeaders":      hasLabel(types.LabelFrontendContentTypeNosniff),
-		"getContentTypeNosniffHeaders":      p.getContentTypeNosniffHeaders,
+		"getContentTypeNosniffHeaders":      getFuncBoolLabel(types.LabelFrontendContentTypeNosniff),
 		"hasBrowserXSSFilterHeaders":        hasLabel(types.LabelFrontendBrowserXSSFilter),
-		"getBrowserXSSFilterHeaders":        p.getBrowserXSSFilterHeaders,
+		"getBrowserXSSFilterHeaders":        getFuncBoolLabel(types.LabelFrontendBrowserXSSFilter),
 		"hasContentSecurityPolicyHeaders":   hasLabel(types.LabelFrontendContentSecurityPolicy),
-		"getContentSecurityPolicyHeaders":   p.getContentSecurityPolicyHeaders,
+		"getContentSecurityPolicyHeaders":   getFuncStringLabel(types.LabelFrontendContentSecurityPolicy, ""),
 		"hasPublicKeyHeaders":               hasLabel(types.LabelFrontendPublicKey),
-		"getPublicKeyHeaders":               p.getPublicKeyHeaders,
+		"getPublicKeyHeaders":               getFuncStringLabel(types.LabelFrontendPublicKey, ""),
 		"hasReferrerPolicyHeaders":          hasLabel(types.LabelFrontendReferrerPolicy),
-		"getReferrerPolicyHeaders":          p.getReferrerPolicyHeaders,
+		"getReferrerPolicyHeaders":          getFuncStringLabel(types.LabelFrontendReferrerPolicy, ""),
 		"hasIsDevelopmentHeaders":           hasLabel(types.LabelFrontendIsDevelopment),
-		"getIsDevelopmentHeaders":           p.getIsDevelopmentHeaders,
+		"getIsDevelopmentHeaders":           getFuncBoolLabel(types.LabelFrontendIsDevelopment),
+
+		"hasServices":              hasServices,
+		"getServiceNames":          getServiceNames,
+		"getServicePort":           getServicePort,
+		"getServiceWeight":         getFuncServiceStringLabel(types.SuffixWeight, defaultWeight),
+		"getServiceProtocol":       getFuncServiceStringLabel(types.SuffixProtocol, defaultProtocol),
+		"getServiceEntryPoints":    getFuncServiceSliceStringLabel(types.SuffixFrontendEntryPoints),
+		"getServiceBasicAuth":      getFuncServiceSliceStringLabel(types.SuffixFrontendAuthBasic),
+		"getServiceFrontendRule":   p.getServiceFrontendRule,
+		"getServicePassHostHeader": getFuncServiceStringLabel(types.SuffixFrontendPassHostHeader, defaultPassHostHeader),
+		"getServicePriority":       getFuncServiceStringLabel(types.SuffixFrontendPriority, defaultFrontendPriority),
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -353,7 +362,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 				serviceNames[container.ServiceName] = struct{}{}
 			}
 		}
-		backendName := p.getBackend(container)
+		backendName := getBackend(container)
 		backends[backendName] = container
 		servers[backendName] = append(servers[backendName], container)
 	}
@@ -380,26 +389,17 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 	return configuration
 }
 
-func (p *Provider) hasCircuitBreakerLabel(container dockerData) bool {
-	_, err := getLabel(container, types.LabelBackendCircuitbreakerExpression)
-	return err == nil
-}
-
 // Regexp used to extract the name of the service and the name of the property for this service
 // All properties are under the format traefik.<servicename>.frontent.*= except the port/weight/protocol directly after traefik.<servicename>.
 var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|weight|protocol|frontend\.(.*))$`)
 
-// Map of services properties
-// we can get it with label[serviceName][propertyName] and we got the propertyValue
-type labelServiceProperties map[string]map[string]string
-
 // Check if for the given container, we find labels that are defining services
-func (p *Provider) hasServices(container dockerData) bool {
+func hasServices(container dockerData) bool {
 	return len(extractServicesLabels(container.Labels)) > 0
 }
 
 // Gets array of service names for a given container
-func (p *Provider) getServiceNames(container dockerData) []string {
+func getServiceNames(container dockerData) []string {
 	labelServiceProperties := extractServicesLabels(container.Labels)
 	keys := make([]string, 0, len(labelServiceProperties))
 	for k := range labelServiceProperties {
@@ -408,91 +408,31 @@ func (p *Provider) getServiceNames(container dockerData) []string {
 	return keys
 }
 
-// Extract entrypoints from labels for a given service and a given docker container
-func (p *Provider) getServiceEntryPoints(container dockerData, serviceName string) []string {
-	if entryPoints, ok := getContainerServiceLabel(container, serviceName, "frontend.entryPoints"); ok {
-		return strings.Split(entryPoints, ",")
-	}
-	return p.getEntryPoints(container)
-
-}
-
-// Extract basic auth from labels for a given service and a given docker container
-func (p *Provider) getServiceBasicAuth(container dockerData, serviceName string) []string {
-	if basicAuth, ok := getContainerServiceLabel(container, serviceName, "frontend.auth.basic"); ok {
-		return strings.Split(basicAuth, ",")
-	}
-	return p.getBasicAuth(container)
-
-}
-
-// Extract passHostHeader from labels for a given service and a given docker container
-func (p *Provider) getServicePassHostHeader(container dockerData, serviceName string) string {
-	if servicePassHostHeader, ok := getContainerServiceLabel(container, serviceName, "frontend.passHostHeader"); ok {
-		return servicePassHostHeader
-	}
-	return p.getPassHostHeader(container)
-}
-
-// Extract priority from labels for a given service and a given docker container
-func (p *Provider) getServicePriority(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.priority"); ok {
-		return value
-	}
-	return p.getPriority(container)
-
-}
-
 // Extract backend from labels for a given service and a given docker container
-func (p *Provider) getServiceBackend(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.backend"); ok {
+func getServiceBackend(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, types.SuffixFrontendBackend); ok {
 		return container.ServiceName + "-" + value
 	}
-	return strings.TrimPrefix(container.ServiceName, "/") + "-" + p.getBackend(container) + "-" + provider.Normalize(serviceName)
+	return strings.TrimPrefix(container.ServiceName, "/") + "-" + getBackend(container) + "-" + provider.Normalize(serviceName)
 }
 
 // Extract rule from labels for a given service and a given docker container
-func (p *Provider) getServiceFrontendRule(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.rule"); ok {
+func (p Provider) getServiceFrontendRule(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, types.SuffixFrontendRule); ok {
 		return value
 	}
 	return p.getFrontendRule(container)
-
 }
 
 // Extract port from labels for a given service and a given docker container
-func (p *Provider) getServicePort(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "port"); ok {
+func getServicePort(container dockerData, serviceName string) string {
+	if value, ok := getContainerServiceLabel(container, serviceName, types.SuffixPort); ok {
 		return value
 	}
-	return p.getPort(container)
+	return getPort(container)
 }
 
-// Extract weight from labels for a given service and a given docker container
-func (p *Provider) getServiceWeight(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "weight"); ok {
-		return value
-	}
-	return p.getWeight(container)
-}
-
-// Extract protocol from labels for a given service and a given docker container
-func (p *Provider) getServiceProtocol(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "protocol"); ok {
-		return value
-	}
-	return p.getProtocol(container)
-}
-
-// Extract protocol from labels for a given service and a given docker container
-func (p *Provider) getServiceRedirect(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.redirect"); ok {
-		return value
-	}
-	return p.getRedirect(container)
-}
-
-func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
+func hasLoadBalancerLabel(container dockerData) bool {
 	_, errMethod := getLabel(container, types.LabelBackendLoadbalancerMethod)
 	_, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
 	_, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
@@ -501,7 +441,7 @@ func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
 	return errMethod == nil || errSticky == nil || errStickiness == nil || errCookieName == nil
 }
 
-func (p *Provider) hasMaxConnLabels(container dockerData) bool {
+func hasMaxConnLabels(container dockerData) bool {
 	if _, err := getLabel(container, types.LabelBackendMaxconnAmount); err != nil {
 		return false
 	}
@@ -511,40 +451,7 @@ func (p *Provider) hasMaxConnLabels(container dockerData) bool {
 	return true
 }
 
-func (p *Provider) getCircuitBreakerExpression(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendCircuitbreakerExpression); err == nil {
-		return label
-	}
-	return "NetworkErrorRatio() > 1"
-}
-
-func (p *Provider) getLoadBalancerMethod(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendLoadbalancerMethod); err == nil {
-		return label
-	}
-	return "wrr"
-}
-
-func (p *Provider) getMaxConnAmount(container dockerData) int64 {
-	if label, err := getLabel(container, types.LabelBackendMaxconnAmount); err == nil {
-		i, errConv := strconv.ParseInt(label, 10, 64)
-		if errConv != nil {
-			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
-			return math.MaxInt64
-		}
-		return i
-	}
-	return math.MaxInt64
-}
-
-func (p *Provider) getMaxConnExtractorFunc(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendMaxconnExtractorfunc); err == nil {
-		return label
-	}
-	return "request.host"
-}
-
-func (p *Provider) containerFilter(container dockerData) bool {
+func (p Provider) containerFilter(container dockerData) bool {
 	if !isContainerEnabled(container, p.ExposedByDefault) {
 		log.Debugf("Filtering disabled container %s", container.Name)
 		return false
@@ -552,7 +459,7 @@ func (p *Provider) containerFilter(container dockerData) bool {
 
 	var err error
 	portLabel := "traefik.port label"
-	if p.hasServices(container) {
+	if hasServices(container) {
 		portLabel = "traefik.<serviceName>.port or " + portLabel + "s"
 		err = checkServiceLabelPort(container)
 	} else {
@@ -621,14 +528,14 @@ func checkServiceLabelPort(container dockerData) error {
 	return err
 }
 
-func (p *Provider) getFrontendName(container dockerData, idx int) string {
+func (p Provider) getFrontendName(container dockerData, idx int) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 	return provider.Normalize(p.getFrontendRule(container) + "-" + strconv.Itoa(idx))
 }
 
 // GetFrontendRule returns the frontend rule for the specified container, using
 // it's label. It returns a default one (Host) if the label is not present.
-func (p *Provider) getFrontendRule(container dockerData) string {
+func (p Provider) getFrontendRule(container dockerData) string {
 	if label, err := getLabel(container, types.LabelFrontendRule); err == nil {
 		return label
 	}
@@ -641,7 +548,7 @@ func (p *Provider) getFrontendRule(container dockerData) string {
 	return ""
 }
 
-func (p *Provider) getBackend(container dockerData) string {
+func getBackend(container dockerData) string {
 	if label, err := getLabel(container, types.LabelBackend); err == nil {
 		return provider.Normalize(label)
 	}
@@ -670,7 +577,6 @@ func (p Provider) getIPAddress(container dockerData) string {
 				return container.Node.IPAddress
 			}
 		}
-
 		return "127.0.0.1"
 	}
 
@@ -690,9 +596,9 @@ func (p Provider) getIPAddress(container dockerData) string {
 	}
 
 	if p.UseBindPortIP {
-		port := p.getPort(container)
-		for netport, portBindings := range container.NetworkSettings.Ports {
-			if string(netport) == port+"/TCP" || string(netport) == port+"/UDP" {
+		port := getPort(container)
+		for netPort, portBindings := range container.NetworkSettings.Ports {
+			if string(netPort) == port+"/TCP" || string(netPort) == port+"/UDP" {
 				for _, p := range portBindings {
 					return p.HostIP
 				}
@@ -706,15 +612,15 @@ func (p Provider) getIPAddress(container dockerData) string {
 	return ""
 }
 
-func (p Provider) getPort(container dockerData) string {
+func getPort(container dockerData) string {
 	if label, err := getLabel(container, types.LabelPort); err == nil {
 		return label
 	}
 
 	// See iteration order in https://blog.golang.org/go-maps-in-action
 	var ports []nat.Port
-	for p := range container.NetworkSettings.Ports {
-		ports = append(ports, p)
+	for port := range container.NetworkSettings.Ports {
+		ports = append(ports, port)
 	}
 
 	less := func(i, j nat.Port) bool {
@@ -730,19 +636,13 @@ func (p Provider) getPort(container dockerData) string {
 	return ""
 }
 
-func (p Provider) getWeight(container dockerData) string {
-	if label, err := getLabel(container, types.LabelWeight); err == nil {
-		return label
-	}
-	return "0"
-}
-
-func (p Provider) hasStickinessLabel(container dockerData) bool {
+func hasStickinessLabel(container dockerData) bool {
 	labelStickiness, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
 	return errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
 }
 
-func (p Provider) getSticky(container dockerData) string {
+// Deprecated replaced by Stickiness
+func getSticky(container dockerData) string {
 	if label, err := getLabel(container, types.LabelBackendLoadbalancerSticky); err == nil {
 		if len(label) > 0 {
 			log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
@@ -752,181 +652,8 @@ func (p Provider) getSticky(container dockerData) string {
 	return "false"
 }
 
-func (p Provider) getStickinessCookieName(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendLoadbalancerStickinessCookieName); err == nil {
-		return label
-	}
-	return ""
-}
-
-func (p Provider) getIsBackendLBSwarm(container dockerData) string {
-	if label, err := getLabel(container, labelBackendLoadbalancerSwarm); err == nil {
-		return label
-	}
-	return "false"
-}
-
-func (p Provider) getDomain(container dockerData) string {
-	if label, err := getLabel(container, types.LabelDomain); err == nil {
-		return label
-	}
-	return p.Domain
-}
-
-func (p Provider) getProtocol(container dockerData) string {
-	if label, err := getLabel(container, types.LabelProtocol); err == nil {
-		return label
-	}
-	return "http"
-}
-
-func (p Provider) getPassHostHeader(container dockerData) string {
-	if passHostHeader, err := getLabel(container, types.LabelFrontendPassHostHeader); err == nil {
-		return passHostHeader
-	}
-	return "true"
-}
-
-func (p Provider) getWhitelistSourceRange(container dockerData) []string {
-	var whitelistSourceRange []string
-
-	if whitelistSourceRangeLabel, err := getLabel(container, types.LabelTraefikFrontendWhitelistSourceRange); err == nil {
-		whitelistSourceRange = provider.SplitAndTrimString(whitelistSourceRangeLabel)
-	}
-	return whitelistSourceRange
-}
-
-func (p Provider) getPriority(container dockerData) string {
-	if priority, err := getLabel(container, types.LabelFrontendPriority); err == nil {
-		return priority
-	}
-	return "0"
-}
-
-func (p Provider) getEntryPoints(container dockerData) []string {
-	if entryPoints, err := getLabel(container, types.LabelFrontendEntryPoints); err == nil {
-		return strings.Split(entryPoints, ",")
-	}
-	return []string{}
-}
-
-func (p Provider) getBasicAuth(container dockerData) []string {
-	if basicAuth, err := getLabel(container, types.LabelFrontendAuthBasic); err == nil {
-		return strings.Split(basicAuth, ",")
-	}
-
-	return []string{}
-}
-
-func (p Provider) getRequestHeaders(container dockerData) map[string]string {
-	return parseCustomHeaders(container, types.LabelFrontendRequestHeader)
-}
-
-func (p Provider) getResponseHeaders(container dockerData) map[string]string {
-	return parseCustomHeaders(container, types.LabelFrontendResponseHeader)
-}
-
-func (p Provider) getAllowedHostsHeaders(container dockerData) []string {
-	return getSliceStringHeaders(container, types.LabelFrontendAllowedHosts)
-}
-
-func (p Provider) getHostsProxyHeaders(container dockerData) []string {
-	return getSliceStringHeaders(container, types.LabelFrontendHostsProxyHeaders)
-}
-
-func (p Provider) getSSLRedirectHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendSSLRedirect)
-}
-
-func (p Provider) getSSLTemporaryRedirectHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendSSLTemporaryRedirect)
-}
-
-func (p Provider) getSSLHostHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendSSLHost)
-	return label
-}
-
-func (p Provider) getSSLProxyHeaders(container dockerData) map[string]string {
-	ProxyHeaders := make(map[string]string)
-	if label, err := getLabel(container, types.LabelFrontendSSLProxyHeaders); err == nil {
-		for _, headers := range strings.Split(label, ",") {
-			pair := strings.Split(headers, ":")
-			if len(pair) != 2 {
-				log.Warnf("Could not load header %v, skipping...", pair)
-			} else {
-				ProxyHeaders[pair[0]] = pair[1]
-			}
-		}
-	}
-	if len(ProxyHeaders) == 0 {
-		log.Errorf("Could not load any SSL Proxy Headers")
-	}
-	return ProxyHeaders
-}
-
-func (p Provider) getSTSSecondsHeaders(container dockerData) int64 {
-	label, _ := getLabel(container, types.LabelFrontendSTSSeconds)
-	i, err := strconv.ParseInt(label, 10, 64)
-	if err == nil && i > 0 {
-		return i
-	}
-	return 0
-}
-
-func (p Provider) getSTSIncludeSubdomainsHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendSTSIncludeSubdomains)
-}
-
-func (p Provider) getSTSPreloadHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendSTSPreload)
-}
-
-func (p Provider) getForceSTSHeaderHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendForceSTSHeader)
-}
-
-func (p Provider) getFrameDenyHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendFrameDeny)
-}
-
-func (p Provider) getCustomFrameOptionsValueHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendCustomFrameOptionsValue)
-	return label
-}
-
-func (p Provider) getContentTypeNosniffHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendContentTypeNosniff)
-}
-
-func (p Provider) getBrowserXSSFilterHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendBrowserXSSFilter)
-}
-
-func (p Provider) getContentSecurityPolicyHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendContentSecurityPolicy)
-	return label
-}
-
-func (p Provider) getPublicKeyHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendPublicKey)
-	return label
-}
-
-func (p Provider) getReferrerPolicyHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendReferrerPolicy)
-	return label
-}
-
-func (p Provider) getIsDevelopmentHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendIsDevelopment)
-}
-
-func (p Provider) getRedirect(container dockerData) string {
-	if entryPointredirect, err := getLabel(container, types.LabelFrontendRedirect); err == nil {
-		return entryPointredirect
-	}
-	return ""
+func getIsBackendLBSwarm(container dockerData) string {
+	return getStringLabel(container, labelBackendLoadBalancerSwarm, "false")
 }
 
 func isContainerEnabled(container dockerData, exposedByDefault bool) bool {
@@ -938,8 +665,8 @@ func listContainers(ctx context.Context, dockerClient client.ContainerAPIClient)
 	if err != nil {
 		return []dockerData{}, err
 	}
-	containersInspected := []dockerData{}
 
+	var containersInspected []dockerData
 	// get inspect containers
 	for _, container := range containerList {
 		containerInspected, err := dockerClient.ContainerInspect(ctx, container.ID)
@@ -990,9 +717,7 @@ func parseContainer(container dockertypes.ContainerJSON) dockerData {
 				}
 			}
 		}
-
 	}
-
 	return dockerData
 }
 
@@ -1001,7 +726,7 @@ func getSubDomain(name string) string {
 	return strings.Replace(strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1), "_", "-", -1)
 }
 
-func (p Provider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
+func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
 	if err != nil {
 		return []dockerData{}, err
@@ -1034,7 +759,7 @@ func (p Provider) listServices(ctx context.Context, dockerClient client.APIClien
 
 	for _, service := range serviceList {
 		dockerData := parseService(service, networkMap)
-		useSwarmLB, _ := strconv.ParseBool(p.getIsBackendLBSwarm(dockerData))
+		useSwarmLB, _ := strconv.ParseBool(getIsBackendLBSwarm(dockerData))
 		isGlobalSvc := service.Spec.Mode.Global != nil
 
 		if useSwarmLB {
@@ -1048,7 +773,6 @@ func (p Provider) listServices(ctx context.Context, dockerClient client.APIClien
 		}
 	}
 	return dockerDataList, err
-
 }
 
 func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) dockerData {
