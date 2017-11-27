@@ -35,46 +35,35 @@ func NewHeaderFromStruct(headers types.Headers) *HeaderStruct {
 	}
 }
 
-// NewHeader constructs a new header instance with supplied options.
-func NewHeader(options ...HeaderOptions) *HeaderStruct {
-	var o HeaderOptions
-	if len(options) == 0 {
-		o = HeaderOptions{}
-	} else {
-		o = options[0]
-	}
-
-	return &HeaderStruct{
-		opt: o,
-	}
-}
-
-// Handler implements the http.HandlerFunc for integration with the standard net/http lib.
-func (s *HeaderStruct) Handler(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Let headers process the request.
-		s.Process(w, r)
-		h.ServeHTTP(w, r)
-	})
-}
-
 func (s *HeaderStruct) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	s.Process(w, r)
+	s.ModifyRequestHeaders(r)
 	// If there is a next, call it.
 	if next != nil {
 		next(w, r)
 	}
 }
 
-// Process runs the actual checks and returns an error if the middleware chain should stop.
-func (s *HeaderStruct) Process(w http.ResponseWriter, r *http.Request) {
+// ModifyRequestHeaders set or delete request headers
+func (s *HeaderStruct) ModifyRequestHeaders(r *http.Request) {
 	// Loop through Custom request headers
 	for header, value := range s.opt.CustomRequestHeaders {
-		r.Header.Set(header, value)
+		if value == "" {
+			r.Header.Del(header)
+		} else {
+			r.Header.Set(header, value)
+		}
 	}
+}
 
+// ModifyResponseHeaders set or delete response headers
+func (s *HeaderStruct) ModifyResponseHeaders(res *http.Response) error {
 	// Loop through Custom response headers
 	for header, value := range s.opt.CustomResponseHeaders {
-		w.Header().Add(header, value)
+		if value == "" {
+			res.Header.Del(header)
+		} else {
+			res.Header.Set(header, value)
+		}
 	}
+	return nil
 }

@@ -64,6 +64,13 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # Default: false
 #
 # enablePassTLSCert = true
+
+# Override default configuration template.
+#
+# Optional
+# Default: <built-in template>
+#
+# filename = "kubernetes.tmpl"
 ```
 
 ### `endpoint`
@@ -112,8 +119,6 @@ Annotations can be used on the Kubernetes service to override default behaviour:
     Manually set the cookie name for sticky sessions
 - `traefik.backend.loadbalancer.sticky=true`      
     Enable backend sticky sessions (DEPRECATED)
-
-You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml).
 
 Additionally, an annotation can be used on Kubernetes services to set the [circuit breaker expression](/basics/#backends) for a backend.
 

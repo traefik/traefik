@@ -261,6 +261,11 @@ Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
 Custom headers can be configured through the frontends, to add headers to either requests or responses that match the frontend's rules.
 This allows for setting headers such as `X-Script-Name` to be added to the request, or custom headers to be added to the response.
 
+!!! warning
+    If the custom header name is the same as one header name of the request or response, it will be replaced.
+
+In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+
 ```toml
 [frontends]
   [frontends.frontend1]
@@ -273,7 +278,20 @@ This allows for setting headers such as `X-Script-Name` to be added to the reque
     rule = "PathPrefixStrip:/cheese"
 ```
 
-In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+In this second  example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` removed to the request and the `X-Custom-Response-Header` removed to the response.
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers.customresponseheaders]
+    X-Custom-Response-Header = ""
+    [frontends.frontend1.headers.customrequestheaders]
+    X-Script-Name = "test"
+    X-Custom-Request-Header = ""
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheese"
+```
 
 #### Security headers
 
@@ -609,4 +627,123 @@ traefik healthcheck
 ```
 ```bash
 OK: http://:8082/ping
+```
+
+
+## Collected Data
+
+**This feature is disabled by default.**
+
+You can read the public proposal on this topic [here](https://github.com/containous/traefik/issues/2369).
+
+### Why ?
+
+In order to help us learn more about how Træfik is being used and improve it, we collect anonymous usage statistics from running instances.
+Those data help us prioritize our developments and focus on what's more important (for example, which configuration backend is used and which is not used).
+
+### What ?
+
+Once a day (the first call begins 10 minutes after the start of Træfik), we collect:
+- the Træfik version
+- a hash of the configuration
+- an **anonymous version** of the static configuration:
+    - token, user name, password, URL, IP, domain, email, etc, are removed
+
+!!! note
+    We do not collect the dynamic configuration (frontends & backends).
+
+!!! note
+    We do not collect data behind the scenes to run advertising programs or to sell such data to third-party.
+
+#### Here is an example
+
+- Source configuration:
+
+```toml
+[entryPoints]
+    [entryPoints.http]
+       address = ":80"
+
+[web]
+  address = ":8080"
+
+[Docker]
+  endpoint = "tcp://10.10.10.10:2375"
+  domain = "foo.bir"
+  exposedByDefault = true
+  swarmMode = true
+
+  [Docker.TLS]
+    CA = "dockerCA"
+    Cert = "dockerCert"
+    Key = "dockerKey"
+    InsecureSkipVerify = true
+
+[ECS]
+  Domain = "foo.bar"
+  ExposedByDefault = true
+  Clusters = ["foo-bar"]
+  Region = "us-west-2"
+  AccessKeyID = "AccessKeyID"
+  SecretAccessKey = "SecretAccessKey"
+```
+
+- Obfuscated and anonymous configuration:
+
+```toml
+[entryPoints]
+    [entryPoints.http]
+       address = ":80"
+
+[web]
+  address = ":8080"
+
+[Docker]
+  Endpoint = "xxxx"
+  Domain = "xxxx"
+  ExposedByDefault = true
+  SwarmMode = true
+
+  [Docker.TLS]
+    CA = "xxxx"
+    Cert = "xxxx"
+    Key = "xxxx"
+    InsecureSkipVerify = false
+
+[ECS]
+  Domain = "xxxx"
+  ExposedByDefault = true
+  Clusters = []
+  Region = "us-west-2"
+  AccessKeyID = "xxxx"
+  SecretAccessKey = "xxxx"
+```
+
+### Show me the code !
+
+If you want to dig into more details, here is the source code of the collecting system: [collector.go](https://github.com/containous/traefik/blob/master/collector/collector.go)
+
+By default we anonymize all configuration fields, except fields tagged with `export=true`.
+
+You can check all fields in the [godoc](https://godoc.org/github.com/containous/traefik/configuration#GlobalConfiguration).
+
+### How to enable this ?
+
+You can enable the collecting system by:
+
+- adding this line in the configuration TOML file:
+
+```toml
+# Send anonymous usage data
+#
+# Optional
+# Default: false
+#
+sendAnonymousUsage = true
+```
+
+- adding this flag in the CLI:
+
+```bash
+./traefik --sendAnonymousUsage=true
 ```
