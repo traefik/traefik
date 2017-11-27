@@ -559,8 +559,8 @@ func (s *Server) configureProviders() {
 	if s.globalConfiguration.DynamoDB != nil {
 		s.providers = append(s.providers, s.globalConfiguration.DynamoDB)
 	}
-	if server.globalConfiguration.ServiceFabric != nil {
-		server.providers = append(server.providers, server.globalConfiguration.ServiceFabric)
+	if s.globalConfiguration.ServiceFabric != nil {
+		s.providers = append(s.providers, s.globalConfiguration.ServiceFabric)
 	}
 }
 
