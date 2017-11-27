@@ -1,5 +1,5 @@
-hash: 4ac4017b19d4a7355894a09cd6d1f2b92729f252578b6a044a3ff2dea22133c4
-updated: 2017-11-21T21:24:24.601164724+01:00
+hash: e17ccb5f089116a333c1d2ccba9f5d710bd28779b7d4461e37a1c301c2a00fba
+updated: 2017-11-22T15:59:09.002650953+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -93,6 +93,8 @@ imports:
   version: 06ccd3e75091eb659b1d720cda0e16bc7057954c
 - name: github.com/containous/staert
   version: af517d5b70db9c4b0505e0144fcc62b054057d2a
+- name: github.com/containous/traefik-extra-service-fabric
+  version: 43b41061088161b93413eb35bd1496f11347c43b
 - name: github.com/coreos/bbolt
   version: 3c6cbfb299c11444eb2f8c9d48f0d2ce09157423
 - name: github.com/coreos/etcd
@@ -334,7 +336,7 @@ imports:
 - name: github.com/huandu/xstrings
   version: 3959339b333561bf62a38b424fd41517c2c90f40
 - name: github.com/imdario/mergo
-  version: 3e95a51e0639b4cf372f2ccf74c86749d747fbdc
+  version: 7fe0c75c13abdee74b09fcacef5ea1c6bba6a874
 - name: github.com/influxdata/influxdb
   version: 2d474a3089bcfce6b472779be9470a1f0ef3d5e4
   subpackages:
@@ -345,6 +347,8 @@ imports:
   version: 2fd0705ce648e602e6c9c57329a174270a4f6688
   subpackages:
   - lib
+- name: github.com/jjcollinge/servicefabric
+  version: 93a44e59fc887cda489913c6fc5bda834989f3bd
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jonboulle/clockwork
@@ -368,7 +372,7 @@ imports:
 - name: github.com/Masterminds/semver
   version: 59c29afe1a994eacb71c833025ca7acf874bb1da
 - name: github.com/Masterminds/sprig
-  version: 9526be0327b26ad31aa70296a7b10704883976d5
+  version: e039e20e500c2c025d9145be375e27cf42a94174
 - name: github.com/mattn/go-colorable
   version: 5411d3eea5978e6cdc258b30de592b60df6aba96
   repo: https://github.com/mattn/go-colorable

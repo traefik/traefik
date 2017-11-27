@@ -183,6 +183,9 @@ var genericMap = map[string]interface{}{
 	"biggest": max,
 	"max":     max,
 	"min":     min,
+	"ceil":    ceil,
+	"floor":   floor,
+	"round":   round,
 
 	// string slices. Note that we reverse the order b/c that's better
 	// for template processing.
@@ -258,4 +261,12 @@ var genericMap = map[string]interface{}{
 
 	// Flow Control:
 	"fail": func(msg string) (string, error) { return "", errors.New(msg) },
+
+	// Regex
+	"regexMatch": regexMatch,
+	"regexFindAll": regexFindAll,
+	"regexFind": regexFind,
+	"regexReplaceAll": regexReplaceAll,
+	"regexReplaceAllLiteral": regexReplaceAllLiteral,
+	"regexSplit": regexSplit,
 }

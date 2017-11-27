@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
@@ -88,6 +89,7 @@ type GlobalConfiguration struct {
 	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings" export:"true"`
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings" export:"true"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
+	ServiceFabric             *servicefabric.Provider `description:"Enable Service Fabric backend with default settings" export:"true"`
 	Rest                      *rest.Provider          `description:"Enable Rest backend with default settings" export:"true"`
 	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
