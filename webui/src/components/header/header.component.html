@@ -1,17 +1,29 @@
-<nav class="navbar" role="navigation" aria-label="main navigation">
+<nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
   <div class="container">
-    <div class="navbar-brand">
-      <a class="navbar-item" routerLink="/">
-        <img src="/images/traefik.icon.png" alt="Traefik" class="navbar-logo">
-      </a>
-    </div>
     <div class="navbar-menu is-active">
-      <a class="navbar-item" routerLink="/" routerLinkActive="is-active">
-        Providers
-      </a>
-      <a class="navbar-item" routerLink="/status" routerLinkActive="is-active">
-        Health
-      </a>
+      <div class="navbar-brand">
+        <a class="navbar-item" routerLink="/">
+          <img src="/images/traefik.icon.png" alt="Traefik" class="navbar-logo">
+        </a>
+      </div>
+      <div class="navbar-start">
+        <div class="navbar-menu">
+          <a class="navbar-item" routerLink="/" routerLinkActive="is-active">
+            Providers
+          </a>
+          <a class="navbar-item" routerLink="/status" routerLinkActive="is-active">
+            Health
+          </a>
+        </div>
+      </div>
+      <div class="navbar-end is-hidden-mobile">
+        <a class="navbar-item" [href]="link" target="_blank">
+          {{ version }} / {{ codename }}
+        </a>
+        <a class="navbar-item" href="https://docs.traefik.io" target="_blank">
+          Docs
+        </a>
+      </div>
     </div>
   </div>
 </nav>

@@ -1,50 +1,14 @@
 .content
   background: transparent
-  border-radius: 4px
-  padding: 20px
+  margin: 50px 0
 
   .subtitle
-    font-size: 14px
+    font-size: 15px
     text-transform: uppercase
-    color: $text-dark
-    font-weight: $weight-light
+    color: $black
+    font-weight: $weight-bold
     text-transform: uppercase
     margin: 10px 0 0 0
-
-
-  .header-container
-    display: flex
-    justify-content: space-between
-
-    h1
-      font-size: 16px
-      color: $text-dark
-      padding: 5px 0
-
-    .search-container
-      display: inline-flex
-      align-items: center
-      background: $white
-      border: 1px solid $border-secondary
-      border-radius: 4px
-      width: 340px
-      height: 36px
-      position: relative
-
-      .search-input
-        border-radius: 4px
-        font-size: 14px
-        color: $text
-        outline: none
-        width: 100%
-        padding: 5px 10px 5px 40px
-        outline: none
-        border: none
-
-      .search-icon
-        position: absolute
-        left: 10px
-        top: 10px
 
   .list-title
     color: $text-dark
@@ -56,19 +20,14 @@
     display: block
     align-items: center
     font-size: 12px
-    padding: 10px
-    border-top: 1px solid $border
-    border-bottom: 1px solid $border
+    padding: 6px 10px
+    border-top: 1px solid $border-light
 
     .columns
 
       .column
         display: flex
         align-items: center
-
-        span
-          display: block
-          color: $text-dark
 
   .icon
     width: 22px
@@ -79,10 +38,10 @@
 
 .content-item
   background: $white
-  border-radius: 4px
   border: 1px solid $border-secondary
   margin: 10px 0
   border-radius: 4px
+  box-shadow: 1px 2px 5px rgba($border, 0.4)
 
   h2
     color: $text-dark
@@ -145,3 +104,30 @@
     width: 70px
     display: block
     margin: 15px auto
+
+.search-container
+  height: 50px
+  background: $white
+  border: 1px solid $border
+  border-radius: 4px
+  color: $black
+  margin: 10px 0
+  display: flex
+  align-items: center
+  position: relative
+
+  .icon
+    position: absolute
+    left: 10px
+    top: 13px
+
+  input
+    font-size: 16px
+    color: $text
+    width: 100%
+    height: 48px
+    padding-left: 50px
+    border: none
+    outline: none
+    font-weight: $weight-light
+    border-radius: 4px

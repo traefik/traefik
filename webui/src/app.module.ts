@@ -3,15 +3,14 @@ import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HttpModule } from '@angular/http';
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from './services/api.service';
 import { AppComponent } from './app.component';
 import { HeaderComponent } from './components/header';
 import { ProvidersComponent } from './components/providers';
 import { HealthComponent } from './components/health';
 import { LineChartComponent } from './charts/line-chart';
+import { KeysPipe } from './pipes/keys.pipe';
 
 @NgModule({
   declarations: [
@@ -19,14 +18,14 @@ import { LineChartComponent } from './charts/line-chart';
     HeaderComponent,
     ProvidersComponent,
     HealthComponent,
-    LineChartComponent
+    LineChartComponent,
+    KeysPipe
   ],
   imports: [
     BrowserModule,
     CommonModule,
     HttpModule,
-    NgxChartsModule,
-    BrowserAnimationsModule,
+    FormsModule,
     RouterModule.forRoot([
       { path: '', component: ProvidersComponent, pathMatch: 'full' },
       { path: 'status', component: HealthComponent }

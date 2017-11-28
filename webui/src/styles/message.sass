@@ -1,20 +1,25 @@
 .message
   display: block
   font-size: 14px
-  border-radius: 0
-  margin: 20px 0
+  margin: 20px 0 30px 0
   border: 1px solid $border
   background: $white
+  border-radius: 4px
+  box-shadow: 1px 2px 5px rgba($border, 0.4)
 
   .message-header
     color: $color-secondary
     border-bottom: 1px solid $border-secondary
-    padding: 10px
-    
+    padding: 20px 10px
+    background: #f8f9fa
+    border-top-left-radius: 4px
+    border-top-right-radius: 4px
+
     h2
       font-size: 14px
       weight: $weight-bold
-
+      display: flex
+      justify-content: space-between
 
     &.red
         background: rgba($red-secondary, 0.4)
@@ -49,4 +54,36 @@
         color: $blue-background !important
 
     img
-        margin-right: 10px
+        margin-right: 15px
+
+  .message-body
+
+    .field
+      margin: 5px 10px
+      padding-bottom: 10px
+
+    .tags-list
+      margin: 5px 10px
+
+      .control
+        width: 100%
+        margin: 5px 0
+
+        .tags
+          width: 100%
+
+          .tag
+            width: 50%
+
+    h2
+      margin: 10px 10px 0 10px
+      color: $black
+
+    hr
+      margin: 5px 0
+
+  .message-subheader
+    border-bottom: 1px solid $border-secondary
+    padding: 10px
+    margin-bottom: 5px
+
