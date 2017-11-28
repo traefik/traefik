@@ -49,6 +49,14 @@ func (s *DockerSuite) startContainerWithLabels(c *check.C, image string, labels 
 	})
 }
 
+func (s *DockerSuite) startContainerWithNameAndLabels(c *check.C, name string, image string, labels map[string]string, args ...string) string {
+	return s.startContainerWithConfig(c, image, d.ContainerConfig{
+		Name:   name,
+		Cmd:    args,
+		Labels: labels,
+	})
+}
+
 func (s *DockerSuite) startContainerWithConfig(c *check.C, image string, config d.ContainerConfig) string {
 	if config.Name == "" {
 		config.Name = namesgenerator.GetRandomName(10)
@@ -58,6 +66,11 @@ func (s *DockerSuite) startContainerWithConfig(c *check.C, image string, config 
 
 	// FIXME(vdemeester) this is ugly (it's because of the / in front of the name in docker..)
 	return strings.SplitAfter(container.Name, "/")[1]
+}
+
+func (s *DockerSuite) stopAndRemoveContainerByName(c *check.C, name string) {
+	s.project.Stop(c, name)
+	s.project.Remove(c, name)
 }
 
 func (s *DockerSuite) SetUpSuite(c *check.C) {
@@ -228,4 +241,54 @@ func (s *DockerSuite) TestDockerContainersWithServiceLabels(c *check.C) {
 
 	c.Assert(json.Unmarshal(body, &version), checker.IsNil)
 	c.Assert(version["Version"], checker.Equals, "swarm/1.0.0")
+}
+
+func (s *DockerSuite) TestRestartDockerContainers(c *check.C) {
+	file := s.adaptFileForHost(c, "fixtures/docker/simple.toml")
+	defer os.Remove(file)
+	// Start a container with some labels
+	labels := map[string]string{
+		types.LabelPrefix + "frontend.rule": "Host:my.super.host",
+		types.LabelPort:                     "2375",
+	}
+	s.startContainerWithNameAndLabels(c, "powpow", "swarm:1.0.0", labels, "manage", "token://blabla")
+
+	// Start traefik
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:8000/version", nil)
+	c.Assert(err, checker.IsNil)
+	req.Host = "my.super.host"
+
+	// FIXME Need to wait than 500 milliseconds more (for swarm or traefik to boot up ?)
+	resp, err := try.ResponseUntilStatusCode(req, 1500*time.Millisecond, http.StatusOK)
+	c.Assert(err, checker.IsNil)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	c.Assert(err, checker.IsNil)
+
+	var version map[string]interface{}
+
+	c.Assert(json.Unmarshal(body, &version), checker.IsNil)
+	c.Assert(version["Version"], checker.Equals, "swarm/1.0.0")
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/backends", 60*time.Second, try.BodyContains("powpow"))
+	c.Assert(err, checker.IsNil)
+
+	s.stopAndRemoveContainerByName(c, "powpow")
+	defer s.project.Remove(c, "powpow")
+
+	time.Sleep(5 * time.Second)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/backends", 10*time.Second, try.BodyContains("powpow"))
+	c.Assert(err, checker.NotNil)
+
+	s.startContainerWithNameAndLabels(c, "powpow", "swarm:1.0.0", labels, "manage", "token://blabla")
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/docker/backends", 60*time.Second, try.BodyContains("powpow"))
+	c.Assert(err, checker.IsNil)
 }
