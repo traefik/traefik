@@ -17,7 +17,6 @@ func TestDockerGetFuncStringLabel(t *testing.T) {
 		defaultValue string
 		expected     string
 	}{
-		// weight
 		{
 			container:    containerJSON(),
 			labelName:    types.LabelWeight,
@@ -31,51 +30,6 @@ func TestDockerGetFuncStringLabel(t *testing.T) {
 			labelName:    types.LabelWeight,
 			defaultValue: defaultWeight,
 			expected:     "10",
-		},
-		// Domain
-		{
-			container:    containerJSON(),
-			expected:     "docker.localhost",
-			labelName:    types.LabelDomain,
-			defaultValue: "docker.localhost",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelDomain: "foo.bar",
-			})),
-			labelName:    types.LabelDomain,
-			defaultValue: "docker.localhost",
-			expected:     "foo.bar",
-		},
-		// Protocol
-		{
-			container:    containerJSON(),
-			labelName:    types.LabelProtocol,
-			defaultValue: defaultProtocol,
-			expected:     "http",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelProtocol: "https",
-			})),
-			labelName:    types.LabelProtocol,
-			defaultValue: defaultProtocol,
-			expected:     "https",
-		},
-		// FrontendPassHostHeader
-		{
-			container:    containerJSON(),
-			labelName:    types.LabelFrontendPassHostHeader,
-			defaultValue: defaultPassHostHeader,
-			expected:     "true",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelFrontendPassHostHeader: "false",
-			})),
-			labelName:    types.LabelFrontendPassHostHeader,
-			defaultValue: defaultPassHostHeader,
-			expected:     "false",
 		},
 	}
 
@@ -170,7 +124,6 @@ func TestDockerGetFuncServiceStringLabel(t *testing.T) {
 		defaultValue string
 		expected     string
 	}{
-		// Weight
 		{
 			container:    containerJSON(),
 			suffixLabel:  types.SuffixWeight,
@@ -192,75 +145,6 @@ func TestDockerGetFuncServiceStringLabel(t *testing.T) {
 			suffixLabel:  types.SuffixWeight,
 			defaultValue: defaultWeight,
 			expected:     "31337",
-		},
-		// Protocol
-		{
-			container:    containerJSON(),
-			suffixLabel:  types.SuffixProtocol,
-			defaultValue: defaultProtocol,
-			expected:     "http",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelProtocol: "https",
-			})),
-			suffixLabel:  types.SuffixProtocol,
-			defaultValue: defaultProtocol,
-			expected:     "https",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.protocol": "https",
-			})),
-			suffixLabel:  types.SuffixProtocol,
-			defaultValue: defaultProtocol,
-			expected:     "https",
-		},
-		// Priority
-		{
-			container:    containerJSON(),
-			suffixLabel:  types.SuffixFrontendPriority,
-			defaultValue: defaultFrontendPriority,
-			expected:     "0",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelFrontendPriority: "33",
-			})),
-			suffixLabel:  types.SuffixFrontendPriority,
-			defaultValue: defaultFrontendPriority,
-			expected:     "33",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.frontend.priority": "2503",
-			})),
-			suffixLabel:  types.SuffixFrontendPriority,
-			defaultValue: defaultFrontendPriority,
-			expected:     "2503",
-		},
-		// FrontendPassHostHeader
-		{
-			container:    containerJSON(),
-			suffixLabel:  types.SuffixFrontendPassHostHeader,
-			defaultValue: defaultPassHostHeader,
-			expected:     "true",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelFrontendPassHostHeader: "false",
-			})),
-			suffixLabel:  types.SuffixFrontendPassHostHeader,
-			defaultValue: defaultPassHostHeader,
-			expected:     "false",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.frontend.passHostHeader": "false",
-			})),
-			suffixLabel:  types.SuffixFrontendPassHostHeader,
-			defaultValue: defaultPassHostHeader,
-			expected:     "false",
 		},
 	}
 
@@ -330,7 +214,6 @@ func TestSwarmGetFuncStringLabel(t *testing.T) {
 		networks     map[string]*docker.NetworkResource
 		expected     string
 	}{
-		// Weight
 		{
 			service:      swarmService(),
 			labelName:    types.LabelWeight,
@@ -346,57 +229,6 @@ func TestSwarmGetFuncStringLabel(t *testing.T) {
 			defaultValue: defaultWeight,
 			networks:     map[string]*docker.NetworkResource{},
 			expected:     "10",
-		},
-		// Domain
-		{
-			service:      swarmService(serviceName("foo")),
-			networks:     map[string]*docker.NetworkResource{},
-			labelName:    types.LabelDomain,
-			defaultValue: "docker.localhost",
-			expected:     "docker.localhost",
-		},
-		{
-			service: swarmService(serviceLabels(map[string]string{
-				types.LabelDomain: "foo.bar",
-			})),
-			labelName:    types.LabelDomain,
-			defaultValue: "docker.localhost",
-			networks:     map[string]*docker.NetworkResource{},
-			expected:     "foo.bar",
-		},
-		// Protocol
-		{
-			service:      swarmService(),
-			labelName:    types.LabelProtocol,
-			defaultValue: defaultProtocol,
-			networks:     map[string]*docker.NetworkResource{},
-			expected:     "http",
-		},
-		{
-			service: swarmService(serviceLabels(map[string]string{
-				types.LabelProtocol: "https",
-			})),
-			labelName:    types.LabelProtocol,
-			defaultValue: defaultProtocol,
-			networks:     map[string]*docker.NetworkResource{},
-			expected:     "https",
-		},
-		// FrontendPassHostHeader
-		{
-			service:      swarmService(),
-			networks:     map[string]*docker.NetworkResource{},
-			labelName:    types.LabelFrontendPassHostHeader,
-			defaultValue: defaultPassHostHeader,
-			expected:     "true",
-		},
-		{
-			service: swarmService(serviceLabels(map[string]string{
-				types.LabelFrontendPassHostHeader: "false",
-			})),
-			labelName:    types.LabelFrontendPassHostHeader,
-			defaultValue: defaultPassHostHeader,
-			networks:     map[string]*docker.NetworkResource{},
-			expected:     "false",
 		},
 	}
 
