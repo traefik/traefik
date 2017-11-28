@@ -4,11 +4,12 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
-	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
-func getBoolAnnotation(meta v1.ObjectMeta, name string, defaultValue bool) bool {
+func getBoolAnnotation(meta *v1beta1.Ingress, name string, defaultValue bool) bool {
 	annotationValue := defaultValue
 	annotationStringValue, ok := meta.Annotations[name]
 	switch {
@@ -24,21 +25,15 @@ func getBoolAnnotation(meta v1.ObjectMeta, name string, defaultValue bool) bool 
 	return annotationValue
 }
 
-func getStringAnnotation(meta v1.ObjectMeta, name string) string {
+func getStringAnnotation(meta *v1beta1.Ingress, name string) string {
 	value := meta.Annotations[name]
 	return value
 }
 
-func getSliceAnnotation(meta v1.ObjectMeta, name string) []string {
-	value := []string{}
-	if annotation := meta.Annotations[name]; annotation != "" {
-		for _, v := range strings.Split(annotation, ",") {
-			if len(v) == 0 {
-				log.Debugf("Could not load annotation (%v) with an empty value, skipping empty value...", name)
-			} else {
-				value = append(value, v)
-			}
-		}
+func getSliceAnnotation(meta *v1beta1.Ingress, name string) []string {
+	var value []string
+	if annotation, ok := meta.Annotations[name]; ok && annotation != "" {
+		value = provider.SplitAndTrimString(annotation)
 	}
 	if len(value) == 0 {
 		log.Debugf("Could not load %v annotation, skipping...", name)
@@ -47,7 +42,7 @@ func getSliceAnnotation(meta v1.ObjectMeta, name string) []string {
 	return value
 }
 
-func getMapAnnotation(meta v1.ObjectMeta, name string) map[string]string {
+func getMapAnnotation(meta *v1beta1.Ingress, name string) map[string]string {
 	value := make(map[string]string)
 	if annotation := meta.Annotations[name]; annotation != "" {
 		for _, v := range strings.Split(annotation, ",") {

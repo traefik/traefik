@@ -73,7 +73,7 @@ type Provider struct {
 	lastConfiguration      safe.Safe
 }
 
-func (p *Provider) newK8sClient() (Client, error) {
+func (p Provider) newK8sClient() (Client, error) {
 	withEndpoint := ""
 	if p.Endpoint != "" {
 		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
@@ -186,18 +186,18 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				passHostHeader := getAnnotationPassHostHeader(i, p)
-				passTLSCert := getAnnotationPassTLSCert(i, p)
+				passHostHeader := getBoolAnnotation(i, types.LabelFrontendPassHostHeader, !p.DisablePassHostHeaders)
+				passTLSCert := getBoolAnnotation(i, types.LabelFrontendPassTLSCert, p.EnablePassTLSCert)
+
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
 					log.Errorf("Value for annotation %q on ingress %s/%s invalid: no realm customization supported", annotationKubernetesAuthRealm, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
 					delete(templateObjects.Backends, r.Host+pa.Path)
 					continue
 				}
 
-				entryPoints := getEntrypoints(i)
+				entryPoints := getSliceAnnotation(i, types.LabelFrontendEntryPoints)
 
-				whitelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
-				whitelistSourceRange := provider.SplitAndTrimString(whitelistSourceRangeAnnotation)
+				whitelistSourceRange := getSliceAnnotation(i, annotationKubernetesWhitelistSourceRange)
 
 				entryPointRedirect, _ := i.Annotations[types.LabelFrontendRedirect]
 
@@ -208,7 +208,30 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						continue
 					}
 
-					priority := p.getPriority(pa, i)
+					priority := getPriority(i)
+
+					headers := types.Headers{
+						CustomRequestHeaders:    getMapAnnotation(i, annotationKubernetesCustomRequestHeaders),
+						CustomResponseHeaders:   getMapAnnotation(i, annotationKubernetesCustomResponseHeaders),
+						AllowedHosts:            getSliceAnnotation(i, annotationKubernetesAllowedHosts),
+						HostsProxyHeaders:       getSliceAnnotation(i, annotationKubernetesProxyHeaders),
+						SSLRedirect:             getBoolAnnotation(i, annotationKubernetesSSLRedirect, false),
+						SSLTemporaryRedirect:    getBoolAnnotation(i, annotationKubernetesSSLTemporaryRedirect, false),
+						SSLHost:                 getStringAnnotation(i, annotationKubernetesSSLHost),
+						SSLProxyHeaders:         getMapAnnotation(i, annotationKubernetesSSLProxyHeaders),
+						STSSeconds:              getSTSSeconds(i),
+						STSIncludeSubdomains:    getBoolAnnotation(i, annotationKubernetesHSTSIncludeSubdomains, false),
+						STSPreload:              getBoolAnnotation(i, annotationKubernetesHSTSPreload, false),
+						ForceSTSHeader:          getBoolAnnotation(i, annotationKubernetesForceHSTSHeader, false),
+						FrameDeny:               getBoolAnnotation(i, annotationKubernetesFrameDeny, false),
+						CustomFrameOptionsValue: getStringAnnotation(i, annotationKubernetesCustomFrameOptionsValue),
+						ContentTypeNosniff:      getBoolAnnotation(i, annotationKubernetesContentTypeNosniff, false),
+						BrowserXSSFilter:        getBoolAnnotation(i, annotationKubernetesBrowserXSSFilter, false),
+						ContentSecurityPolicy:   getStringAnnotation(i, annotationKubernetesContentSecurityPolicy),
+						PublicKey:               getStringAnnotation(i, annotationKubernetesPublicKey),
+						ReferrerPolicy:          getStringAnnotation(i, annotationKubernetesReferrerPolicy),
+						IsDevelopment:           getBoolAnnotation(i, annotationKubernetesIsDevelopment, false),
+					}
 
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:              r.Host + pa.Path,
@@ -220,28 +243,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						WhitelistSourceRange: whitelistSourceRange,
 						Redirect:             entryPointRedirect,
 						EntryPoints:          entryPoints,
-						Headers: types.Headers{
-							CustomRequestHeaders:    getCustomRequestHeaders(i),
-							CustomResponseHeaders:   getCustomResponseHeaders(i),
-							AllowedHosts:            getAllowedHosts(i),
-							HostsProxyHeaders:       getHostsProxyHeaders(i),
-							SSLRedirect:             getSSLRedirect(i),
-							SSLTemporaryRedirect:    getSSLTemporaryRedirect(i),
-							SSLHost:                 getSSLHost(i),
-							SSLProxyHeaders:         getSSLProxyHeaders(i),
-							STSSeconds:              getSTSSeconds(i),
-							STSIncludeSubdomains:    getSTSIncludeSubdomains(i),
-							STSPreload:              getSTSPreload(i),
-							ForceSTSHeader:          getForceSTSHeader(i),
-							FrameDeny:               getFrameDeny(i),
-							CustomFrameOptionsValue: getCustomFrameOptionsValue(i),
-							ContentTypeNosniff:      getContentTypeNosniff(i),
-							BrowserXSSFilter:        getBrowserXSSFilter(i),
-							ContentSecurityPolicy:   getContentSecurityPolicy(i),
-							PublicKey:               getPublicKey(i),
-							ReferrerPolicy:          getReferrerPolicy(i),
-							IsDevelopment:           getIsDevelopment(i),
-						},
+						Headers:              headers,
 					}
 				}
 				if len(r.Host) > 0 {
@@ -354,86 +356,21 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	return &templateObjects, nil
 }
 
-func getEntrypoints(i *v1beta1.Ingress) []string {
-	entrypointsAnnotation, ok := i.Annotations[types.LabelFrontendEntryPoints]
-	if ok {
-		return strings.Split(entrypointsAnnotation, ",")
+func (p Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {
+	var FuncMap = template.FuncMap{}
+	configuration, err := p.GetConfiguration("templates/kubernetes.tmpl", FuncMap, templateObjects)
+	if err != nil {
+		log.Error(err)
 	}
-	return nil
-
+	return configuration
 }
 
-func getAnnotationPassHostHeader(i *v1beta1.Ingress, p *Provider) bool {
-	return getBoolAnnotation(i.ObjectMeta, types.LabelFrontendPassHostHeader, p.getPassHostHeader())
-}
-
-func getAnnotationPassTLSCert(i *v1beta1.Ingress, p *Provider) bool {
-	return getBoolAnnotation(i.ObjectMeta, types.LabelFrontendPassTLSCert, p.getPassTLSCert())
-}
-
-func getCustomRequestHeaders(i *v1beta1.Ingress) map[string]string {
-	return getMapAnnotation(i.ObjectMeta, annotationKubernetesCustomRequestHeaders)
-}
-func getCustomResponseHeaders(i *v1beta1.Ingress) map[string]string {
-	return getMapAnnotation(i.ObjectMeta, annotationKubernetesCustomResponseHeaders)
-}
-func getAllowedHosts(i *v1beta1.Ingress) []string {
-	return getSliceAnnotation(i.ObjectMeta, annotationKubernetesAllowedHosts)
-}
-func getHostsProxyHeaders(i *v1beta1.Ingress) []string {
-	return getSliceAnnotation(i.ObjectMeta, annotationKubernetesProxyHeaders)
-}
-func getSSLRedirect(i *v1beta1.Ingress) bool {
-	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesSSLRedirect, false)
-}
-func getSSLTemporaryRedirect(i *v1beta1.Ingress) bool {
-	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesSSLTemporaryRedirect, false)
-}
-func getSSLHost(i *v1beta1.Ingress) string {
-	return getStringAnnotation(i.ObjectMeta, annotationKubernetesSSLHost)
-}
-func getSSLProxyHeaders(i *v1beta1.Ingress) map[string]string {
-	return getMapAnnotation(i.ObjectMeta, annotationKubernetesSSLProxyHeaders)
-}
 func getSTSSeconds(i *v1beta1.Ingress) int64 {
 	value, err := strconv.ParseInt(i.ObjectMeta.Annotations[annotationKubernetesHSTSMaxAge], 10, 64)
 	if err == nil && value > 0 {
 		return value
 	}
 	return 0
-}
-func getSTSIncludeSubdomains(i *v1beta1.Ingress) bool {
-	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesHSTSIncludeSubdomains, false)
-}
-func getSTSPreload(i *v1beta1.Ingress) bool {
-	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesHSTSPreload, false)
-}
-func getForceSTSHeader(i *v1beta1.Ingress) bool {
-	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesForceHSTSHeader, false)
-}
-func getFrameDeny(i *v1beta1.Ingress) bool {
-	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesFrameDeny, false)
-}
-func getCustomFrameOptionsValue(i *v1beta1.Ingress) string {
-	return getStringAnnotation(i.ObjectMeta, annotationKubernetesCustomFrameOptionsValue)
-}
-func getContentTypeNosniff(i *v1beta1.Ingress) bool {
-	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesContentTypeNosniff, false)
-}
-func getBrowserXSSFilter(i *v1beta1.Ingress) bool {
-	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesBrowserXSSFilter, false)
-}
-func getContentSecurityPolicy(i *v1beta1.Ingress) string {
-	return getStringAnnotation(i.ObjectMeta, annotationKubernetesContentSecurityPolicy)
-}
-func getPublicKey(i *v1beta1.Ingress) string {
-	return getStringAnnotation(i.ObjectMeta, annotationKubernetesPublicKey)
-}
-func getReferrerPolicy(i *v1beta1.Ingress) string {
-	return getStringAnnotation(i.ObjectMeta, annotationKubernetesReferrerPolicy)
-}
-func getIsDevelopment(i *v1beta1.Ingress) bool {
-	return getBoolAnnotation(i.ObjectMeta, annotationKubernetesIsDevelopment, false)
 }
 
 func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
@@ -455,7 +392,7 @@ func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
 	return strings.Join(rules, ";")
 }
 
-func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress) int {
+func getPriority(i *v1beta1.Ingress) int {
 	priority := 0
 
 	priorityRaw, ok := i.Annotations[types.LabelFrontendPriority]
@@ -554,21 +491,4 @@ func shouldProcessIngress(ingressClass string) bool {
 	default:
 		return false
 	}
-}
-
-func (p *Provider) getPassHostHeader() bool {
-	return !p.DisablePassHostHeaders
-}
-
-func (p *Provider) getPassTLSCert() bool {
-	return p.EnablePassTLSCert
-}
-
-func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {
-	var FuncMap = template.FuncMap{}
-	configuration, err := p.GetConfiguration("templates/kubernetes.tmpl", FuncMap, templateObjects)
-	if err != nil {
-		log.Error(err)
-	}
-	return configuration
 }
