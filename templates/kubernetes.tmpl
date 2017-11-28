@@ -32,6 +32,52 @@
   whitelistSourceRange = [{{range $frontend.WhitelistSourceRange}}
     "{{.}}",
   {{end}}]
+  [frontends."{{$frontendName}}".headers]
+  SSLRedirect = {{$frontend.Headers.SSLRedirect}}
+  SSLTemporaryRedirect = {{$frontend.Headers.SSLTemporaryRedirect}}
+  SSLHost = "{{$frontend.Headers.SSLHost}}"
+  STSSeconds = {{$frontend.Headers.STSSeconds}}
+  STSIncludeSubdomains = {{$frontend.Headers.STSIncludeSubdomains}}
+  STSPreload = {{$frontend.Headers.STSPreload}}
+  ForceSTSHeader = {{$frontend.Headers.ForceSTSHeader}}
+  FrameDeny = {{$frontend.Headers.FrameDeny}}
+  CustomFrameOptionsValue = "{{$frontend.Headers.CustomFrameOptionsValue}}"
+  ContentTypeNosniff = {{$frontend.Headers.ContentTypeNosniff}}
+  BrowserXSSFilter = {{$frontend.Headers.BrowserXSSFilter}}
+  ContentSecurityPolicy = "{{$frontend.Headers.ContentSecurityPolicy}}"
+  PublicKey = "{{$frontend.Headers.PublicKey}}"
+  ReferrerPolicy = "{{$frontend.Headers.ReferrerPolicy}}"
+  IsDevelopment = {{$frontend.Headers.IsDevelopment}}
+{{if $frontend.Headers.CustomRequestHeaders}}
+    [frontends."{{$frontendName}}".headers.customrequestheaders]
+    {{range $k, $v := $frontend.Headers.CustomRequestHeaders}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+{{end}}
+{{if $frontend.Headers.CustomResponseHeaders}}
+    [frontends."{{$frontendName}}".headers.customresponseheaders]
+    {{range $k, $v := $frontend.Headers.CustomResponseHeaders}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+{{end}}
+{{if $frontend.Headers.AllowedHosts}}
+    [frontends."{{$frontendName}}".headers.AllowedHosts]
+    {{range $frontend.Headers.AllowedHosts}}
+    "{{.}}"
+    {{end}}
+{{end}}
+{{if $frontend.Headers.HostsProxyHeaders}}
+    [frontends."{{$frontendName}}".headers.HostsProxyHeaders]
+    {{range $frontend.Headers.HostsProxyHeaders}}
+    "{{.}}"
+    {{end}}
+{{end}}
+{{if $frontend.Headers.SSLProxyHeaders}}
+    [frontends."{{$frontendName}}".headers.SSLProxyHeaders]
+    {{range $k, $v := $frontend.Headers.SSLProxyHeaders}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+{{end}}
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
     rule = "{{$route.Rule}}"
