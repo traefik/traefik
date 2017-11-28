@@ -1,5 +1,5 @@
-hash: e17ccb5f089116a333c1d2ccba9f5d710bd28779b7d4461e37a1c301c2a00fba
-updated: 2017-11-22T15:59:09.002650953+01:00
+hash: 03f8c75c2523eaea36cd61abc4d335ce68115c80404de7a10d8d4f0225957fc9
+updated: 2017-11-28T15:59:09.002650953+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -94,7 +94,7 @@ imports:
 - name: github.com/containous/staert
   version: af517d5b70db9c4b0505e0144fcc62b054057d2a
 - name: github.com/containous/traefik-extra-service-fabric
-  version: 43b41061088161b93413eb35bd1496f11347c43b
+  version: 8076098dbfe814cba9e895ecbd896f1896b6b2d5
 - name: github.com/coreos/bbolt
   version: 3c6cbfb299c11444eb2f8c9d48f0d2ce09157423
 - name: github.com/coreos/etcd
