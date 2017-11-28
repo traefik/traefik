@@ -1,9 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Http, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
-import 'rxjs/add/observable/of';
 import 'rxjs/add/operator/map';
-import { fakeData } from './fake-data';
 
 export interface ProviderType {
   [provider: string]: {
@@ -35,14 +33,9 @@ export class ApiService {
   }
 
   fetchProviders(): Observable<any> {
-    // TODO: remove this after done with the UI
-    return Observable.of(fakeData)
+    return this.http.get(`/api/providers`, { headers: this.headers })
+      .map(res => res.json())
       .map(this.parseProviders);
-
-    // return this.http.get(`/api/providers`, { headers: this.headers })
-    //   .map(res => res.json())
-    //   .map(this.parseProviders);
-
   }
 
   parseProviders(data: any): ProviderType {
