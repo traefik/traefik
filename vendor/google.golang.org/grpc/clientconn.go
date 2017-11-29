@@ -20,7 +20,6 @@ package grpc
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"strings"
 	"sync"
@@ -28,6 +27,7 @@ import (
 
 	"golang.org/x/net/context"
 	"golang.org/x/net/trace"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/grpclog"
 	"google.golang.org/grpc/keepalive"
@@ -312,8 +312,10 @@ func Dial(target string, opts ...DialOption) (*ClientConn, error) {
 func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *ClientConn, err error) {
 	cc := &ClientConn{
 		target: target,
+		csMgr:  &connectivityStateManager{},
 		conns:  make(map[Address]*addrConn),
 	}
+	cc.csEvltr = &connectivityStateEvaluator{csMgr: cc.csMgr}
 	cc.ctx, cc.cancel = context.WithCancel(context.Background())
 
 	for _, opt := range opts {
@@ -443,37 +445,95 @@ func DialContext(ctx context.Context, target string, opts ...DialOption) (conn *
 	return cc, nil
 }
 
-// ConnectivityState indicates the state of a client connection.
-type ConnectivityState int
+// connectivityStateEvaluator gets updated by addrConns when their
+// states transition, based on which it evaluates the state of
+// ClientConn.
+// Note: This code will eventually sit in the balancer in the new design.
+type connectivityStateEvaluator struct {
+	csMgr               *connectivityStateManager
+	mu                  sync.Mutex
+	numReady            uint64 // Number of addrConns in ready state.
+	numConnecting       uint64 // Number of addrConns in connecting state.
+	numTransientFailure uint64 // Number of addrConns in transientFailure.
+}
 
-const (
-	// Idle indicates the ClientConn is idle.
-	Idle ConnectivityState = iota
-	// Connecting indicates the ClienConn is connecting.
-	Connecting
-	// Ready indicates the ClientConn is ready for work.
-	Ready
-	// TransientFailure indicates the ClientConn has seen a failure but expects to recover.
-	TransientFailure
-	// Shutdown indicates the ClientConn has started shutting down.
-	Shutdown
-)
+// recordTransition records state change happening in every addrConn and based on
+// that it evaluates what state the ClientConn is in.
+// It can only transition between connectivity.Ready, connectivity.Connecting and connectivity.TransientFailure. Other states,
+// Idle and connectivity.Shutdown are transitioned into by ClientConn; in the begining of the connection
+// before any addrConn is created ClientConn is in idle state. In the end when ClientConn
+// closes it is in connectivity.Shutdown state.
+// TODO Note that in later releases, a ClientConn with no activity will be put into an Idle state.
+func (cse *connectivityStateEvaluator) recordTransition(oldState, newState connectivity.State) {
+	cse.mu.Lock()
+	defer cse.mu.Unlock()
 
-func (s ConnectivityState) String() string {
-	switch s {
-	case Idle:
-		return "IDLE"
-	case Connecting:
-		return "CONNECTING"
-	case Ready:
-		return "READY"
-	case TransientFailure:
-		return "TRANSIENT_FAILURE"
-	case Shutdown:
-		return "SHUTDOWN"
-	default:
-		panic(fmt.Sprintf("unknown connectivity state: %d", s))
+	// Update counters.
+	for idx, state := range []connectivity.State{oldState, newState} {
+		updateVal := 2*uint64(idx) - 1 // -1 for oldState and +1 for new.
+		switch state {
+		case connectivity.Ready:
+			cse.numReady += updateVal
+		case connectivity.Connecting:
+			cse.numConnecting += updateVal
+		case connectivity.TransientFailure:
+			cse.numTransientFailure += updateVal
+		}
 	}
+
+	// Evaluate.
+	if cse.numReady > 0 {
+		cse.csMgr.updateState(connectivity.Ready)
+		return
+	}
+	if cse.numConnecting > 0 {
+		cse.csMgr.updateState(connectivity.Connecting)
+		return
+	}
+	cse.csMgr.updateState(connectivity.TransientFailure)
+}
+
+// connectivityStateManager keeps the connectivity.State of ClientConn.
+// This struct will eventually be exported so the balancers can access it.
+type connectivityStateManager struct {
+	mu         sync.Mutex
+	state      connectivity.State
+	notifyChan chan struct{}
+}
+
+// updateState updates the connectivity.State of ClientConn.
+// If there's a change it notifies goroutines waiting on state change to
+// happen.
+func (csm *connectivityStateManager) updateState(state connectivity.State) {
+	csm.mu.Lock()
+	defer csm.mu.Unlock()
+	if csm.state == connectivity.Shutdown {
+		return
+	}
+	if csm.state == state {
+		return
+	}
+	csm.state = state
+	if csm.notifyChan != nil {
+		// There are other goroutines waiting on this channel.
+		close(csm.notifyChan)
+		csm.notifyChan = nil
+	}
+}
+
+func (csm *connectivityStateManager) getState() connectivity.State {
+	csm.mu.Lock()
+	defer csm.mu.Unlock()
+	return csm.state
+}
+
+func (csm *connectivityStateManager) getNotifyChan() <-chan struct{} {
+	csm.mu.Lock()
+	defer csm.mu.Unlock()
+	if csm.notifyChan == nil {
+		csm.notifyChan = make(chan struct{})
+	}
+	return csm.notifyChan
 }
 
 // ClientConn represents a client connection to an RPC server.
@@ -484,12 +544,36 @@ type ClientConn struct {
 	target    string
 	authority string
 	dopts     dialOptions
+	csMgr     *connectivityStateManager
+	csEvltr   *connectivityStateEvaluator // This will eventually be part of balancer.
 
 	mu    sync.RWMutex
 	sc    ServiceConfig
 	conns map[Address]*addrConn
 	// Keepalive parameter can be updated if a GoAway is received.
 	mkp keepalive.ClientParameters
+}
+
+// WaitForStateChange waits until the connectivity.State of ClientConn changes from sourceState or
+// ctx expires. A true value is returned in former case and false in latter.
+// This is an EXPERIMENTAL API.
+func (cc *ClientConn) WaitForStateChange(ctx context.Context, sourceState connectivity.State) bool {
+	ch := cc.csMgr.getNotifyChan()
+	if cc.csMgr.getState() != sourceState {
+		return true
+	}
+	select {
+	case <-ctx.Done():
+		return false
+	case <-ch:
+		return true
+	}
+}
+
+// GetState returns the connectivity.State of ClientConn.
+// This is an EXPERIMENTAL API.
+func (cc *ClientConn) GetState() connectivity.State {
+	return cc.csMgr.getState()
 }
 
 // lbWatcher watches the Notify channel of the balancer in cc and manages
@@ -522,14 +606,18 @@ func (cc *ClientConn) lbWatcher(doneChan chan struct{}) {
 		}
 		cc.mu.Unlock()
 		for _, a := range add {
+			var err error
 			if doneChan != nil {
-				err := cc.resetAddrConn(a, true, nil)
+				err = cc.resetAddrConn(a, true, nil)
 				if err == nil {
 					close(doneChan)
 					doneChan = nil
 				}
 			} else {
-				cc.resetAddrConn(a, false, nil)
+				err = cc.resetAddrConn(a, false, nil)
+			}
+			if err != nil {
+				grpclog.Warningf("Error creating connection to %v. Err: %v", a, err)
 			}
 		}
 		for _, c := range del {
@@ -570,7 +658,7 @@ func (cc *ClientConn) resetAddrConn(addr Address, block bool, tearDownErr error)
 		dopts: cc.dopts,
 	}
 	ac.ctx, ac.cancel = context.WithCancel(cc.ctx)
-	ac.stateCV = sync.NewCond(&ac.mu)
+	ac.csEvltr = cc.csEvltr
 	if EnableTracing {
 		ac.events = trace.NewEventLog("grpc.ClientConn", ac.addr.Addr)
 	}
@@ -727,6 +815,7 @@ func (cc *ClientConn) Close() error {
 	}
 	conns := cc.conns
 	cc.conns = nil
+	cc.csMgr.updateState(connectivity.Shutdown)
 	cc.mu.Unlock()
 	if cc.dopts.balancer != nil {
 		cc.dopts.balancer.Close()
@@ -747,10 +836,11 @@ type addrConn struct {
 	dopts  dialOptions
 	events trace.EventLog
 
-	mu      sync.Mutex
-	state   ConnectivityState
-	stateCV *sync.Cond
-	down    func(error) // the handler called when a connection is down.
+	csEvltr *connectivityStateEvaluator
+
+	mu    sync.Mutex
+	state connectivity.State
+	down  func(error) // the handler called when a connection is down.
 	// ready is closed and becomes nil when a new transport is up or failed
 	// due to timeout.
 	ready     chan struct{}
@@ -790,49 +880,13 @@ func (ac *addrConn) errorf(format string, a ...interface{}) {
 	}
 }
 
-// getState returns the connectivity state of the Conn
-func (ac *addrConn) getState() ConnectivityState {
-	ac.mu.Lock()
-	defer ac.mu.Unlock()
-	return ac.state
-}
-
-// waitForStateChange blocks until the state changes to something other than the sourceState.
-func (ac *addrConn) waitForStateChange(ctx context.Context, sourceState ConnectivityState) (ConnectivityState, error) {
-	ac.mu.Lock()
-	defer ac.mu.Unlock()
-	if sourceState != ac.state {
-		return ac.state, nil
-	}
-	done := make(chan struct{})
-	var err error
-	go func() {
-		select {
-		case <-ctx.Done():
-			ac.mu.Lock()
-			err = ctx.Err()
-			ac.stateCV.Broadcast()
-			ac.mu.Unlock()
-		case <-done:
-		}
-	}()
-	defer close(done)
-	for sourceState == ac.state {
-		ac.stateCV.Wait()
-		if err != nil {
-			return ac.state, err
-		}
-	}
-	return ac.state, nil
-}
-
 // resetTransport recreates a transport to the address for ac.
 // For the old transport:
 // - if drain is true, it will be gracefully closed.
 // - otherwise, it will be closed.
 func (ac *addrConn) resetTransport(drain bool) error {
 	ac.mu.Lock()
-	if ac.state == Shutdown {
+	if ac.state == connectivity.Shutdown {
 		ac.mu.Unlock()
 		return errConnClosing
 	}
@@ -841,24 +895,21 @@ func (ac *addrConn) resetTransport(drain bool) error {
 		ac.down(downErrorf(false, true, "%v", errNetworkIO))
 		ac.down = nil
 	}
-	ac.state = Connecting
-	ac.stateCV.Broadcast()
+	oldState := ac.state
+	ac.state = connectivity.Connecting
+	ac.csEvltr.recordTransition(oldState, ac.state)
 	t := ac.transport
 	ac.transport = nil
 	ac.mu.Unlock()
-	if t != nil {
-		if drain {
-			t.GracefulClose()
-		} else {
-			t.Close()
-		}
+	if t != nil && !drain {
+		t.Close()
 	}
 	ac.cc.mu.RLock()
 	ac.dopts.copts.KeepaliveParams = ac.cc.mkp
 	ac.cc.mu.RUnlock()
 	for retries := 0; ; retries++ {
 		ac.mu.Lock()
-		if ac.state == Shutdown {
+		if ac.state == connectivity.Shutdown {
 			// ac.tearDown(...) has been invoked.
 			ac.mu.Unlock()
 			return errConnClosing
@@ -886,14 +937,15 @@ func (ac *addrConn) resetTransport(drain bool) error {
 			}
 			grpclog.Warningf("grpc: addrConn.resetTransport failed to create client transport: %v; Reconnecting to %v", err, ac.addr)
 			ac.mu.Lock()
-			if ac.state == Shutdown {
+			if ac.state == connectivity.Shutdown {
 				// ac.tearDown(...) has been invoked.
 				ac.mu.Unlock()
 				return errConnClosing
 			}
 			ac.errorf("transient failure: %v", err)
-			ac.state = TransientFailure
-			ac.stateCV.Broadcast()
+			oldState = ac.state
+			ac.state = connectivity.TransientFailure
+			ac.csEvltr.recordTransition(oldState, ac.state)
 			if ac.ready != nil {
 				close(ac.ready)
 				ac.ready = nil
@@ -911,14 +963,15 @@ func (ac *addrConn) resetTransport(drain bool) error {
 		}
 		ac.mu.Lock()
 		ac.printf("ready")
-		if ac.state == Shutdown {
+		if ac.state == connectivity.Shutdown {
 			// ac.tearDown(...) has been invoked.
 			ac.mu.Unlock()
 			newTransport.Close()
 			return errConnClosing
 		}
-		ac.state = Ready
-		ac.stateCV.Broadcast()
+		oldState = ac.state
+		ac.state = connectivity.Ready
+		ac.csEvltr.recordTransition(oldState, ac.state)
 		ac.transport = newTransport
 		if ac.ready != nil {
 			close(ac.ready)
@@ -988,13 +1041,14 @@ func (ac *addrConn) transportMonitor() {
 			default:
 			}
 			ac.mu.Lock()
-			if ac.state == Shutdown {
+			if ac.state == connectivity.Shutdown {
 				// ac has been shutdown.
 				ac.mu.Unlock()
 				return
 			}
-			ac.state = TransientFailure
-			ac.stateCV.Broadcast()
+			oldState := ac.state
+			ac.state = connectivity.TransientFailure
+			ac.csEvltr.recordTransition(oldState, ac.state)
 			ac.mu.Unlock()
 			if err := ac.resetTransport(false); err != nil {
 				grpclog.Infof("get error from resetTransport %v, transportMonitor returning", err)
@@ -1013,12 +1067,12 @@ func (ac *addrConn) transportMonitor() {
 }
 
 // wait blocks until i) the new transport is up or ii) ctx is done or iii) ac is closed or
-// iv) transport is in TransientFailure and there is a balancer/failfast is true.
+// iv) transport is in connectivity.TransientFailure and there is a balancer/failfast is true.
 func (ac *addrConn) wait(ctx context.Context, hasBalancer, failfast bool) (transport.ClientTransport, error) {
 	for {
 		ac.mu.Lock()
 		switch {
-		case ac.state == Shutdown:
+		case ac.state == connectivity.Shutdown:
 			if failfast || !hasBalancer {
 				// RPC is failfast or balancer is nil. This RPC should fail with ac.tearDownErr.
 				err := ac.tearDownErr
@@ -1027,11 +1081,11 @@ func (ac *addrConn) wait(ctx context.Context, hasBalancer, failfast bool) (trans
 			}
 			ac.mu.Unlock()
 			return nil, errConnClosing
-		case ac.state == Ready:
+		case ac.state == connectivity.Ready:
 			ct := ac.transport
 			ac.mu.Unlock()
 			return ct, nil
-		case ac.state == TransientFailure:
+		case ac.state == connectivity.TransientFailure:
 			if failfast || hasBalancer {
 				ac.mu.Unlock()
 				return nil, errConnUnavailable
@@ -1073,12 +1127,13 @@ func (ac *addrConn) tearDown(err error) {
 		// address removal and GoAway.
 		ac.transport.GracefulClose()
 	}
-	if ac.state == Shutdown {
+	if ac.state == connectivity.Shutdown {
 		return
 	}
-	ac.state = Shutdown
+	oldState := ac.state
+	ac.state = connectivity.Shutdown
 	ac.tearDownErr = err
-	ac.stateCV.Broadcast()
+	ac.csEvltr.recordTransition(oldState, ac.state)
 	if ac.events != nil {
 		ac.events.Finish()
 		ac.events = nil

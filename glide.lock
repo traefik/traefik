@@ -1,5 +1,5 @@
-hash: 03f8c75c2523eaea36cd61abc4d335ce68115c80404de7a10d8d4f0225957fc9
-updated: 2017-11-28T15:59:09.002650953+01:00
+hash: 4595cac0a682ce8e36b78630f12a3cfab75307fc58cb4a1f5e416017d3ae20d6
+updated: 2017-11-29T12:05:49.613148632+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -111,10 +111,6 @@ imports:
   - pkg/srv
   - pkg/types
   - version
-- name: github.com/coreos/go-semver
-  version: 8ab6407b697782a06568d4b7f1db25550ec2e4c6
-  subpackages:
-  - semver
 - name: github.com/coreos/go-oidc
   version: 5644a2f50e2d2d5ba0b474bc5bc55fea1925936d
   subpackages:
@@ -123,6 +119,10 @@ imports:
   - key
   - oauth2
   - oidc
+- name: github.com/coreos/go-semver
+  version: 8ab6407b697782a06568d4b7f1db25550ec2e4c6
+  subpackages:
+  - semver
 - name: github.com/coreos/go-systemd
   version: 48702e0da86bd25e76cfef347e2adeb434a0d0a6
   subpackages:
@@ -645,9 +645,10 @@ imports:
   subpackages:
   - googleapis/rpc/status
 - name: google.golang.org/grpc
-  version: b8669c35455183da6d5c474ea6e72fbf55183274
+  version: b3ddf786825de56a4178401b7e174ee332173b66
   subpackages:
   - codes
+  - connectivity
   - credentials
   - grpclb/grpc_lb_v1
   - grpclog
