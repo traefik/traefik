@@ -91,12 +91,11 @@ const tmpl = `
     {{end}}
 {{end}}
 {{range $service := .Services}}
-  {{if hasServiceLabel $service "expose"}}
+  {{if isExposed $service}}
     {{if eq $service.ServiceKind "Stateless"}}
 
     [frontends."{{$service.Name}}"]
     backend = "{{$service.Name}}"
-
 
     {{if hasServiceLabel $service "frontend.passHostHeader"}}
       passHostHeader = {{getServiceLabelValue $service "frontend.passHostHeader" }}

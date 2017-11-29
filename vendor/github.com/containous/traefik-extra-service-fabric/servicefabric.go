@@ -92,6 +92,7 @@ func (p *Provider) updateConfig(configurationChan chan<- types.ConfigMessage, po
 					"getServiceLabelsWithPrefix":      getServiceLabelsWithPrefix,
 					"getServicesWithLabelValueMap":    getServicesWithLabelValueMap,
 					"getServicesWithLabelValue":       getServicesWithLabelValue,
+					"isExposed":                       getFuncBoolLabel("expose"),
 				}
 
 				configuration, err := p.GetConfiguration(tmpl, sfFuncMap, templateObjects)
@@ -233,15 +234,6 @@ func getValidInstances(sfClient sfClient, app sf.ApplicationItem, service sf.Ser
 		}
 	}
 	return validInstances
-}
-
-func hasServiceLabel(service ServiceItemExtended, key string) bool {
-	_, exists := service.Labels[key]
-	return exists
-}
-
-func getServiceLabelValue(service ServiceItemExtended, key string) string {
-	return service.Labels[key]
 }
 
 func getServicesWithLabelValueMap(services []ServiceItemExtended, key string) map[string][]ServiceItemExtended {
