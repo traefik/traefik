@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
@@ -20,7 +19,7 @@ func getBoolAnnotation(meta *v1beta1.Ingress, name string, defaultValue bool) bo
 	case annotationStringValue == "true":
 		annotationValue = true
 	default:
-		log.Warnf("Unknown value '%s' for %s, falling back to %s", name, types.LabelFrontendPassTLSCert, defaultValue)
+		log.Warnf("Unknown value %q for %q, falling back to %q", annotationStringValue, name, defaultValue)
 	}
 	return annotationValue
 }
@@ -33,7 +32,7 @@ func getStringAnnotation(meta *v1beta1.Ingress, name string) string {
 func getSliceAnnotation(meta *v1beta1.Ingress, name string) []string {
 	var value []string
 	if annotation, ok := meta.Annotations[name]; ok && annotation != "" {
-		value = provider.SplitAndTrimString(annotation)
+		value = types.SplitAndTrimString(annotation)
 	}
 	if len(value) == 0 {
 		log.Debugf("Could not load %v annotation, skipping...", name)
