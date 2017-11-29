@@ -1131,6 +1131,14 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 						n.Use(rewrite)
 						log.Debugf("Creating frontend %s redirect to %s", frontendName, proto)
+					} else if len(frontend.RedirectRegex) > 0 && len(frontend.RedirectReplacement) > 0 {
+						rewrite, err := middlewares.NewRewrite(frontend.RedirectRegex, frontend.RedirectReplacement, true)
+						if err != nil {
+							log.Fatalf("Error creating Frontend Redirect: %v", err)
+						}
+						n.Use(rewrite)
+						s.wireFrontendBackend(newServerRoute, backends[entryPointName+frontend.Backend])
+						log.Debugf("Creating frontend %s redirect to %s", frontendName, frontend.RedirectReplacement)
 					}
 
 					if len(frontend.BasicAuth) > 0 {
