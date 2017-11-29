@@ -289,10 +289,14 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(s.metricsRegistry, newServerEntryPointName))
 	}
 	if s.globalConfiguration.API != nil {
-		s.globalConfiguration.API.Stats = thoas_stats.New()
+		if s.globalConfiguration.API.Stats == nil {
+			s.globalConfiguration.API.Stats = thoas_stats.New()
+		}
 		serverMiddlewares = append(serverMiddlewares, s.globalConfiguration.API.Stats)
 		if s.globalConfiguration.API.Statistics != nil {
-			s.globalConfiguration.API.StatsRecorder = middlewares.NewStatsRecorder(s.globalConfiguration.API.Statistics.RecentErrors)
+			if s.globalConfiguration.API.StatsRecorder == nil {
+				s.globalConfiguration.API.StatsRecorder = middlewares.NewStatsRecorder(s.globalConfiguration.API.Statistics.RecentErrors)
+			}
 			serverMiddlewares = append(serverMiddlewares, s.globalConfiguration.API.StatsRecorder)
 		}
 
