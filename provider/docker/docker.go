@@ -749,7 +749,7 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 
 	networkMap := make(map[string]*dockertypes.NetworkResource)
 	if err != nil {
-		log.Debug("Failed to network inspect on client for docker, error: %s", err)
+		log.Debugf("Failed to network inspect on client for docker, error: %s", err)
 		return []dockerData{}, err
 	}
 	for _, network := range networkList {
@@ -762,16 +762,18 @@ func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerD
 
 	for _, service := range serviceList {
 		dockerData := parseService(service, networkMap)
-		useSwarmLB, _ := strconv.ParseBool(getIsBackendLBSwarm(dockerData))
-		isGlobalSvc := service.Spec.Mode.Global != nil
+		if len(dockerData.NetworkSettings.Networks) > 0 {
+			useSwarmLB, _ := strconv.ParseBool(getIsBackendLBSwarm(dockerData))
 
-		if useSwarmLB {
-			dockerDataList = append(dockerDataList, dockerData)
-		} else {
-			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dockerData, networkMap, isGlobalSvc)
+			if useSwarmLB {
+				dockerDataList = append(dockerDataList, dockerData)
+			} else {
+				isGlobalSvc := service.Spec.Mode.Global != nil
+				dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dockerData, networkMap, isGlobalSvc)
 
-			for _, dockerDataTask := range dockerDataListTasks {
-				dockerDataList = append(dockerDataList, dockerDataTask)
+				for _, dockerDataTask := range dockerDataListTasks {
+					dockerDataList = append(dockerDataList, dockerDataTask)
+				}
 			}
 		}
 	}
@@ -787,10 +789,9 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 	}
 
 	if service.Spec.EndpointSpec != nil {
-		switch service.Spec.EndpointSpec.Mode {
-		case swarmtypes.ResolutionModeDNSRR:
-			log.Debug("Ignored endpoint-mode not supported, service name: %s", dockerData.Name)
-		case swarmtypes.ResolutionModeVIP:
+		if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeDNSRR {
+			log.Warnf("Ignored endpoint-mode not supported, service name: %s", service.Spec.Annotations.Name)
+		} else if service.Spec.EndpointSpec.Mode == swarmtypes.ResolutionModeVIP {
 			dockerData.NetworkSettings.Networks = make(map[string]*networkData)
 			for _, virtualIP := range service.Endpoint.VirtualIPs {
 				networkService := networkMap[virtualIP.NetworkID]
@@ -803,7 +804,7 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 					}
 					dockerData.NetworkSettings.Networks[network.Name] = network
 				} else {
-					log.Debug("Network not found, id: %s", virtualIP.NetworkID)
+					log.Debugf("Network not found, id: %s", virtualIP.NetworkID)
 				}
 			}
 		}
