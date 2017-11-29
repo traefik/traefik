@@ -8,6 +8,8 @@ You have three choices:
 - [Rules in a Separate File](/configuration/backends/file/#rules-in-a-separate-file)
 - [Multiple `.toml` Files](/configuration/backends/file/#multiple-toml-files)
 
+To enable the file backend, you must either pass the `--file` option to the Træfik binary or put the `[file]` section (with or without inner settings) in the configuration file.
+
 ## Simple
 
 Add your configuration at the end of the global configuration file `traefik.toml`:
