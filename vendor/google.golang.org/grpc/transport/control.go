@@ -74,6 +74,8 @@ func (*resetStream) item() {}
 type goAway struct {
 	code      http2.ErrCode
 	debugData []byte
+	headsUp   bool
+	closeConn bool
 }
 
 func (*goAway) item() {}
