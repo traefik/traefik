@@ -329,8 +329,10 @@ func run(c *cli.Context) error {
 }
 
 func revoke(c *cli.Context) error {
-
-	conf, _, client := setup(c)
+	conf, acc, client := setup(c)
+	if acc.Registration == nil {
+		logger().Fatalf("Account %s is not registered. Use 'run' to register a new account.\n", acc.Email)
+	}
 
 	err := checkFolder(conf.CertPath())
 	if err != nil {
@@ -355,7 +357,10 @@ func revoke(c *cli.Context) error {
 }
 
 func renew(c *cli.Context) error {
-	conf, _, client := setup(c)
+	conf, acc, client := setup(c)
+	if acc.Registration == nil {
+		logger().Fatalf("Account %s is not registered. Use 'run' to register a new account.\n", acc.Email)
+	}
 
 	if len(c.GlobalStringSlice("domains")) <= 0 {
 		logger().Fatal("Please specify at least one domain.")
