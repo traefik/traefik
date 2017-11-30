@@ -47,7 +47,7 @@ func NewIPWhitelister(whitelistStrings []string, whitelistTrustProxy []string) (
 }
 
 func (wl *IPWhiteLister) handle(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if ip, err := whitelist.GetRemoteIp(r, wl.trustProxy); err == nil {
+	if ip, err := whitelist.GetRemoteIP(r, wl.trustProxy); err == nil {
 		allowed, _ := wl.whiteLister.ContainsIP(ip)
 		if allowed {
 			log.Debugf("source-IP %s matched whitelist %s - passing", ip.String(), wl.whiteLister)

@@ -318,7 +318,7 @@ func TestBrokenIPs(t *testing.T) {
 
 }
 
-func TestGetRemoteIp(t *testing.T) {
+func TestGetRemoteIP(t *testing.T) {
 	cases := []struct {
 		remoteip   string
 		xfwdfor    string
@@ -357,18 +357,17 @@ func TestGetRemoteIp(t *testing.T) {
 				trustProxy, err := NewIP(test.trustproxy, false)
 				require.NoError(t, err)
 				return trustProxy
-			} else {
-				return nil
 			}
+			return nil
 		}()
 
 		req := new(http.Request)
 		req.RemoteAddr = test.remoteip + ":1234"
 		req.Header = map[string][]string{
-			"X-Forwarded-For": []string{test.xfwdfor},
+			"X-Forwarded-For": {test.xfwdfor},
 		}
 
-		ip, err := GetRemoteIp(req, trustProxy)
+		ip, err := GetRemoteIP(req, trustProxy)
 		require.NoError(t, err)
 		assert.Equal(t, test.answer, ip.String())
 	}

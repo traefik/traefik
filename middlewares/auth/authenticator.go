@@ -51,7 +51,7 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		basicAuth := goauth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if authenticator.whiteLister != nil {
-				if ip, err := whitelist.GetRemoteIp(r, authenticator.trustProxy); err == nil {
+				if ip, err := whitelist.GetRemoteIP(r, authenticator.trustProxy); err == nil {
 					if contains, _ := authenticator.whiteLister.ContainsIP(ip); contains {
 						log.Debug("Basic auth success via whitelist...")
 						next.ServeHTTP(w, r)
@@ -78,7 +78,7 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 		digestAuth := goauth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
 		authenticator.handler = negroni.HandlerFunc(func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			if authenticator.whiteLister != nil {
-				if ip, err := whitelist.GetRemoteIp(r, authenticator.trustProxy); err == nil {
+				if ip, err := whitelist.GetRemoteIP(r, authenticator.trustProxy); err == nil {
 					if contains, _ := authenticator.whiteLister.ContainsIP(ip); contains {
 						log.Debug("Basic auth success via whitelist...")
 						next.ServeHTTP(w, r)
