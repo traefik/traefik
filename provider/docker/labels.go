@@ -2,12 +2,10 @@ package docker
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 
 	"github.com/containous/traefik/log"
-	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/types"
 )
 
@@ -26,13 +24,12 @@ type labelServiceProperties map[string]map[string]string
 
 func getFuncInt64Label(labelName string, defaultValue int64) func(container dockerData) int64 {
 	return func(container dockerData) int64 {
-		if label, err := getLabel(container, labelName); err == nil {
-			i, errConv := strconv.ParseInt(label, 10, 64)
-			if errConv != nil {
-				log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
-				return math.MaxInt64
+		if rawValue, err := getLabel(container, labelName); err == nil {
+			value, errConv := strconv.ParseInt(rawValue, 10, 64)
+			if errConv == nil {
+				return value
 			}
-			return i
+			log.Errorf("Unable to parse %q: %q", labelName, rawValue)
 		}
 		return defaultValue
 	}
@@ -96,7 +93,7 @@ func getSliceStringLabel(container dockerData, labelName string) []string {
 	var value []string
 
 	if label, err := getLabel(container, labelName); err == nil {
-		value = provider.SplitAndTrimString(label)
+		value = types.SplitAndTrimString(label)
 	}
 
 	if len(value) == 0 {
@@ -173,10 +170,8 @@ func hasLabel(label string) func(container dockerData) bool {
 }
 
 func getLabel(container dockerData, label string) (string, error) {
-	for key, value := range container.Labels {
-		if key == label {
-			return value, nil
-		}
+	if value, ok := container.Labels[label]; ok {
+		return value, nil
 	}
 	return "", fmt.Errorf("label not found: %s", label)
 }

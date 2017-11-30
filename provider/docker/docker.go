@@ -121,7 +121,6 @@ func (p Provider) createClient() (client.APIClient, error) {
 	}
 
 	return client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
-
 }
 
 // Provide allows the docker provider to provide configurations to traefik
