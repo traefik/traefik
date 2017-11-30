@@ -189,6 +189,41 @@ func (s *SimpleSuite) TestApiOnSameEntryPoint(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
+func (s *SimpleSuite) TestStatsWithMultipleEntryPoint(c *check.C) {
+	s.createComposeProject(c, "stats")
+	s.composeProject.Start(c)
+
+	whoami1 := "http://" + s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress + ":80"
+	whoami2 := "http://" + s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress + ":80"
+
+	file := s.adaptFile(c, "fixtures/simple_stats.toml", struct {
+		Server1 string
+		Server2 string
+	}{whoami1, whoami2})
+	cmd, output := s.traefikCmd(withConfigFile(file))
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8080/health", 1*time.Second, try.BodyContains(`"total_status_code_count":{"200":2}`))
+	c.Assert(err, checker.IsNil)
+
+}
+
 func (s *SimpleSuite) TestNoAuthOnPing(c *check.C) {
 	s.createComposeProject(c, "base")
 	s.composeProject.Start(c)
@@ -258,6 +293,44 @@ func (s *SimpleSuite) TestWebCompatibilityWithPath(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8080/test/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestDefaultEntrypointHTTP(c *check.C) {
+
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	cmd, output := s.traefikCmd("--entryPoints=Name:http Address::8000", "--debug", "--docker", "--api")
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))
+	c.Assert(err, checker.IsNil)
+}
+
+func (s *SimpleSuite) TestWithUnexistingEntrypoint(c *check.C) {
+
+	s.createComposeProject(c, "base")
+	s.composeProject.Start(c)
+
+	cmd, output := s.traefikCmd("--defaultEntryPoints=https,http", "--entryPoints=Name:http Address::8000", "--debug", "--docker", "--api")
+	defer output(c)
+
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("PathPrefix"))
 	c.Assert(err, checker.IsNil)
 
 	err = try.GetRequest("http://127.0.0.1:8000/whoami", 1*time.Second, try.StatusCodeIs(http.StatusOK))

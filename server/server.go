@@ -289,10 +289,14 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		serverMiddlewares = append(serverMiddlewares, middlewares.NewMetricsWrapper(s.metricsRegistry, newServerEntryPointName))
 	}
 	if s.globalConfiguration.API != nil {
-		s.globalConfiguration.API.Stats = thoas_stats.New()
+		if s.globalConfiguration.API.Stats == nil {
+			s.globalConfiguration.API.Stats = thoas_stats.New()
+		}
 		serverMiddlewares = append(serverMiddlewares, s.globalConfiguration.API.Stats)
 		if s.globalConfiguration.API.Statistics != nil {
-			s.globalConfiguration.API.StatsRecorder = middlewares.NewStatsRecorder(s.globalConfiguration.API.Statistics.RecentErrors)
+			if s.globalConfiguration.API.StatsRecorder == nil {
+				s.globalConfiguration.API.StatsRecorder = middlewares.NewStatsRecorder(s.globalConfiguration.API.Statistics.RecentErrors)
+			}
 			serverMiddlewares = append(serverMiddlewares, s.globalConfiguration.API.StatsRecorder)
 		}
 
@@ -906,13 +910,17 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 				log.Errorf("Skipping frontend %s...", frontendName)
 				continue frontend
 			}
-
+			var failedEntrypoints int
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
 				if _, ok := serverEntryPoints[entryPointName]; !ok {
 					log.Errorf("Undefined entrypoint '%s' for frontend %s", entryPointName, frontendName)
-					log.Errorf("Skipping frontend %s...", frontendName)
-					continue frontend
+					failedEntrypoints++
+					if failedEntrypoints == len(frontend.EntryPoints) {
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
+					continue
 				}
 
 				newServerRoute := &serverRoute{route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
