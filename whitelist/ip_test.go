@@ -2,6 +2,7 @@ package whitelist
 
 import (
 	"net"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -313,6 +314,63 @@ func TestBrokenIPs(t *testing.T) {
 		_, ip, err := whiteLister.Contains(testIP)
 		assert.Error(t, err)
 		require.Nil(t, ip, err)
+	}
+
+}
+
+func TestGetRemoteIp(t *testing.T) {
+	cases := []struct {
+		remoteip   string
+		xfwdfor    string
+		trustproxy []string
+		answer     string
+	}{
+		{
+			remoteip:   "1.2.3.4",
+			xfwdfor:    "5.6.7.8",
+			trustproxy: nil,
+			answer:     "1.2.3.4",
+		},
+		{
+			remoteip:   "1.2.3.4",
+			xfwdfor:    "5.6.7.8",
+			trustproxy: []string{"1.2.3.4"},
+			answer:     "5.6.7.8",
+		},
+		{
+			remoteip:   "1.2.3.4",
+			xfwdfor:    "1.1.1.1, 5.6.7.8",
+			trustproxy: []string{"1.2.3.4"},
+			answer:     "5.6.7.8",
+		},
+		{
+			remoteip:   "1.2.3.4",
+			xfwdfor:    "7.7.7.7, 1.1.1.1, 5.6.7.8",
+			trustproxy: []string{"1.2.3.4", "5.6.7.8"},
+			answer:     "1.1.1.1",
+		},
+	}
+
+	for _, test := range cases {
+		trustProxy := func() *IP {
+			if len(test.trustproxy) > 0 {
+				trustProxy, err := NewIP(test.trustproxy, false)
+				require.NoError(t, err)
+				return trustProxy
+			} else {
+				return nil
+			}
+		}()
+
+		req := new(http.Request)
+		req.RemoteAddr = test.remoteip + ":1234"
+		req.Header = map[string][]string{
+			"X-Forwarded-For": []string{test.xfwdfor},
+		}
+
+		ip, err := GetRemoteIp(req, trustProxy)
+		require.NoError(t, err)
+		assert.Equal(t, test.answer, ip.String())
 	}
 
 }

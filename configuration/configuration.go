@@ -330,7 +330,8 @@ func (ep *EntryPoints) Set(value string) error {
 	if len(result["whitelistsourcerange"]) > 0 {
 		whiteListSourceRange = strings.Split(result["whitelistsourcerange"], ",")
 	}
-	whiteListTrustProxy := []string{}
+
+	whiteListTrustProxy := []string(nil)
 	if len(result["whitelisttrustproxy"]) > 0 {
 		whiteListTrustProxy = strings.Split(result["whitelisttrustproxy"], ",")
 	}
