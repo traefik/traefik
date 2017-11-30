@@ -330,6 +330,10 @@ func (ep *EntryPoints) Set(value string) error {
 	if len(result["whitelistsourcerange"]) > 0 {
 		whiteListSourceRange = strings.Split(result["whitelistsourcerange"], ",")
 	}
+	whiteListTrustProxy := []string{}
+	if len(result["whitelisttrustproxy"]) > 0 {
+		whiteListTrustProxy = strings.Split(result["whitelisttrustproxy"], ",")
+	}
 
 	compress := toBool(result, "compress")
 
@@ -367,6 +371,7 @@ func (ep *EntryPoints) Set(value string) error {
 		Redirect:             redirect,
 		Compress:             compress,
 		WhitelistSourceRange: whiteListSourceRange,
+		WhitelistTrustProxy:  whiteListTrustProxy,
 		ProxyProtocol:        proxyProtocol,
 		ForwardedHeaders:     forwardedHeaders,
 	}
@@ -426,6 +431,7 @@ type EntryPoint struct {
 	Redirect             *Redirect   `export:"true"`
 	Auth                 *types.Auth `export:"true"`
 	WhitelistSourceRange []string
+	WhitelistTrustProxy  []string
 	Compress             bool              `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`

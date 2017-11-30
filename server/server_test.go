@@ -599,7 +599,7 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
-			middleware, err := configureIPWhitelistMiddleware(tc.whitelistStrings)
+			middleware, err := configureIPWhitelistMiddleware(tc.whitelistStrings, nil)
 
 			if tc.errMessage != "" {
 				require.EqualError(t, err, tc.errMessage)

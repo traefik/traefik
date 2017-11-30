@@ -309,7 +309,7 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		serverMiddlewares = append(serverMiddlewares, &middlewares.Compress{})
 	}
 	if len(s.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange) > 0 {
-		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(s.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange)
+		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(s.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistSourceRange, s.globalConfiguration.EntryPoints[newServerEntryPointName].WhitelistTrustProxy)
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
@@ -1224,7 +1224,7 @@ func configureLBServers(lb healthcheck.LoadBalancer, config *types.Configuration
 func configureIPWhitelistMiddleware(whitelistSourceRanges []string) (negroni.Handler, error) {
 	if len(whitelistSourceRanges) > 0 {
 		ipSourceRanges := whitelistSourceRanges
-		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(ipSourceRanges)
+		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(ipSourceRanges, nil)
 
 		if err != nil {
 			return nil, err
