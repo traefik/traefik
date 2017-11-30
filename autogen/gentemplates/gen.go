@@ -213,7 +213,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   SSLTemporaryRedirect = {{getSSLTemporaryRedirectHeaders $container}}
   {{end}}
   {{if hasSSLHostHeaders $container}}
-  SSLHost = {{getSSLHostHeaders $container}}
+  SSLHost = "{{getSSLHostHeaders $container}}"
   {{end}}
   {{if hasSTSSecondsHeaders $container}}
   STSSeconds = {{getSTSSecondsHeaders $container}}
@@ -231,7 +231,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   FrameDeny = {{getFrameDenyHeaders $container}}
   {{end}}
   {{if hasCustomFrameOptionsValueHeaders $container}}
-  CustomFrameOptionsValue = {{getCustomFrameOptionsValueHeaders $container}}
+  CustomFrameOptionsValue = "{{getCustomFrameOptionsValueHeaders $container}}"
   {{end}}
   {{if hasContentTypeNosniffHeaders $container}}
   ContentTypeNosniff = {{getContentTypeNosniffHeaders $container}}
@@ -240,13 +240,13 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   BrowserXSSFilter = {{getBrowserXSSFilterHeaders $container}}
   {{end}}
   {{if hasContentSecurityPolicyHeaders $container}}
-  ContentSecurityPolicy = {{getContentSecurityPolicyHeaders $container}}
+  ContentSecurityPolicy = "{{getContentSecurityPolicyHeaders $container}}"
   {{end}}
   {{if hasPublicKeyHeaders $container}}
-  PublicKey = {{getPublicKeyHeaders $container}}
+  PublicKey = "{{getPublicKeyHeaders $container}}"
   {{end}}
   {{if hasReferrerPolicyHeaders $container}}
-  ReferrerPolicy = {{getReferrerPolicyHeaders $container}}
+  ReferrerPolicy = "{{getReferrerPolicyHeaders $container}}"
   {{end}}
   {{if hasIsDevelopmentHeaders $container}}
   IsDevelopment = {{getIsDevelopmentHeaders $container}}
