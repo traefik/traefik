@@ -1,4 +1,4 @@
-hash: 4595cac0a682ce8e36b78630f12a3cfab75307fc58cb4a1f5e416017d3ae20d6
+hash: 8c5908b11f5078edd9ed93e2710ebb3a29b7e02d1259fddd679f8c46540becc9
 updated: 2017-11-29T12:05:49.613148632+01:00
 imports:
 - name: cloud.google.com/go
@@ -544,7 +544,7 @@ imports:
   - plugin/rewrite
   - router
 - name: github.com/xenolf/lego
-  version: 67c86d860a797ce2483f50d9174d4ed24984bef2
+  version: b929aa5aab5ad2e197bb3d74ef99fac61bfa47bc
   subpackages:
   - acme
   - providers/dns
@@ -558,6 +558,7 @@ imports:
   - providers/dns/dyn
   - providers/dns/exoscale
   - providers/dns/gandi
+  - providers/dns/godaddy
   - providers/dns/googlecloud
   - providers/dns/linode
   - providers/dns/namecheap
