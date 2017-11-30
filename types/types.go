@@ -328,10 +328,12 @@ type Cluster struct {
 
 // Auth holds authentication configuration (BASIC, DIGEST, users)
 type Auth struct {
-	Basic       *Basic   `export:"true"`
-	Digest      *Digest  `export:"true"`
-	Forward     *Forward `export:"true"`
-	HeaderField string   `export:"true"`
+	Basic                *Basic   `export:"true"`
+	Digest               *Digest  `export:"true"`
+	Forward              *Forward `export:"true"`
+	WhitelistSourceRange []string `export:"true" mapstructure:","`
+	WhitelistTrustProxy  []string `export:"true" mapstructure:","`
+	HeaderField          string   `export:"true"`
 }
 
 // Users authentication users
