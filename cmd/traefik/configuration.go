@@ -279,7 +279,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*configuration.EntryPoint{},
 			Constraints:               types.Constraints{},
-			DefaultEntryPoints:        []string{},
+			DefaultEntryPoints:        []string{"http"},
 			ProvidersThrottleDuration: flaeg.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
 			IdleTimeout:               flaeg.Duration(0),
