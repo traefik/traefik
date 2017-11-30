@@ -910,13 +910,17 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 				log.Errorf("Skipping frontend %s...", frontendName)
 				continue frontend
 			}
-
+			var failedEntrypoints int
 			for _, entryPointName := range frontend.EntryPoints {
 				log.Debugf("Wiring frontend %s to entryPoint %s", frontendName, entryPointName)
 				if _, ok := serverEntryPoints[entryPointName]; !ok {
 					log.Errorf("Undefined entrypoint '%s' for frontend %s", entryPointName, frontendName)
-					log.Errorf("Skipping frontend %s...", frontendName)
-					continue frontend
+					failedEntrypoints++
+					if failedEntrypoints == len(frontend.EntryPoints) {
+						log.Errorf("Skipping frontend %s...", frontendName)
+						continue frontend
+					}
+					continue
 				}
 
 				newServerRoute := &serverRoute{route: serverEntryPoints[entryPointName].httpRouter.GetHandler().NewRoute().Name(frontendName)}
