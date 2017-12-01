@@ -32,8 +32,8 @@ const (
 	LabelFrontendRedirect                        = LabelPrefix + SuffixFrontendRedirect
 	LabelTraefikFrontendValue                    = LabelPrefix + "frontend.value"
 	LabelTraefikFrontendWhitelistSourceRange     = LabelPrefix + "frontend.whitelistSourceRange"
-	LabelFrontendRequestHeader                   = LabelPrefix + "frontend.headers.customrequestheaders"
-	LabelFrontendResponseHeader                  = LabelPrefix + "frontend.headers.customresponseheaders"
+	LabelFrontendRequestHeader                   = LabelPrefix + "frontend.headers.customRequestHeaders"
+	LabelFrontendResponseHeader                  = LabelPrefix + "frontend.headers.customResponseHeaders"
 	LabelFrontendAllowedHosts                    = LabelPrefix + "frontend.headers.allowedHosts"
 	LabelFrontendHostsProxyHeaders               = LabelPrefix + "frontend.headers.hostsProxyHeaders"
 	LabelFrontendSSLRedirect                     = LabelPrefix + "frontend.headers.SSLRedirect"
