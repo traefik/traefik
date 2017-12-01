@@ -22,6 +22,23 @@ const (
 // we can get it with label[serviceName][propertyName] and we got the propertyValue
 type labelServiceProperties map[string]map[string]string
 
+// Common functions
+
+func parseMapString(value string) map[string]string {
+	pairs := make(map[string]string)
+	if len(value) > 0 {
+		for _, s := range strings.Split(value, ",") {
+			p := strings.SplitN(s, ":", 2)
+			if k := strings.TrimSpace(p[0]); len(p) != 2 || len(k) == 0 {
+				log.Warnf("Could not parse %q into a map, skipping...", s)
+			} else {
+				pairs[k] = strings.TrimSpace(p[1])
+			}
+		}
+	}
+	return pairs
+}
+
 // Label functions
 
 func getFuncInt64Label(labelName string, defaultValue int64) func(container dockerData) int64 {
@@ -45,21 +62,14 @@ func getFuncMapLabel(labelName string) func(container dockerData) map[string]str
 }
 
 func parseMapLabel(container dockerData, labelName string) map[string]string {
-	customHeaders := make(map[string]string)
+	var result map[string]string
 	if label, err := getLabel(container, labelName); err == nil {
-		for _, headers := range strings.Split(label, ",") {
-			pair := strings.Split(headers, ":")
-			if len(pair) != 2 {
-				log.Warnf("Could not load header %q: %v, skipping...", labelName, pair)
-			} else {
-				customHeaders[pair[0]] = pair[1]
-			}
-		}
+		result = parseMapString(label)
 	}
-	if len(customHeaders) == 0 {
+	if result == nil || len(result) == 0 {
 		log.Errorf("Could not load %q", labelName)
 	}
-	return customHeaders
+	return result
 }
 
 func getFuncStringLabel(label string, defaultValue string) func(container dockerData) string {
@@ -106,6 +116,33 @@ func getSliceStringLabel(container dockerData, labelName string) []string {
 }
 
 // Service label functions
+
+func hasServiceLabel(labelSuffix string) func(container dockerData, serviceName string) bool {
+	return func(container dockerData, serviceName string) bool {
+		if value, ok := getContainerServiceLabel(container, serviceName, labelSuffix); ok && len(value) > 0 {
+			return true
+		}
+		value, err := getLabel(container, types.LabelPrefix+labelSuffix)
+		return err == nil && len(value) > 0
+	}
+}
+
+func getFuncServiceMapLabel(labelSuffix string) func(container dockerData, serviceName string) map[string]string {
+	return func(container dockerData, serviceName string) map[string]string {
+		return parseServiceMapLabel(container, serviceName, labelSuffix)
+	}
+}
+
+func parseServiceMapLabel(container dockerData, serviceName, labelSuffix string) map[string]string {
+	var result map[string]string
+	if label, ok := getContainerServiceLabel(container, serviceName, labelSuffix); ok {
+		result = parseMapString(label)
+	}
+	if result == nil || len(result) == 0 {
+		result = parseMapLabel(container, types.LabelPrefix+labelSuffix)
+	}
+	return result
+}
 
 func getFuncServiceSliceStringLabel(labelSuffix string) func(container dockerData, serviceName string) []string {
 	return func(container dockerData, serviceName string) []string {
