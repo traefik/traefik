@@ -3,7 +3,7 @@
 {{range $app := $apps}}
 {{range $task := $app.Tasks}}
 {{range $serviceIndex, $serviceName := getServiceNames $app}}
-    [backends."backend{{getBackend $app $serviceName}}".servers."server-{{$task.ID | replace "." "-"}}{{getServiceNameSuffix $serviceName }}"]
+    [backends."{{getBackend $app $serviceName}}".servers."server-{{$task.ID | replace "." "-"}}{{getServiceNameSuffix $serviceName }}"]
     url = "{{getProtocol $app $serviceName}}://{{getBackendServer $task $app}}:{{getPort $task $app $serviceName}}"
     weight = {{getWeight $app $serviceName}}
 {{end}}
@@ -12,27 +12,27 @@
 
 {{range $app := $apps}}
 {{range $serviceIndex, $serviceName := getServiceNames $app}}
-[backends."backend{{getBackend $app $serviceName }}"]
+[backends."{{getBackend $app $serviceName }}"]
 {{ if hasMaxConnLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".maxconn]
+      [backends."{{getBackend $app $serviceName }}".maxconn]
         amount = {{getMaxConnAmount $app }}
         extractorfunc = "{{getMaxConnExtractorFunc $app }}"
 {{end}}
 {{ if hasLoadBalancerLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".loadbalancer]
+      [backends."{{getBackend $app $serviceName }}".loadbalancer]
         method = "{{getLoadBalancerMethod $app }}"
         sticky = {{getSticky $app}}
         {{if hasStickinessLabel $app}}
-        [backends."backend{{getBackend $app $serviceName }}".loadbalancer.stickiness]
+        [backends."{{getBackend $app $serviceName }}".loadbalancer.stickiness]
           cookieName = "{{getStickinessCookieName $app}}"
         {{end}}
 {{end}}
 {{ if hasCircuitBreakerLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".circuitbreaker]
+      [backends."{{getBackend $app $serviceName }}".circuitbreaker]
         expression = "{{getCircuitBreakerExpression $app }}"
 {{end}}
 {{ if hasHealthCheckLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".healthcheck]
+      [backends."{{getBackend $app $serviceName }}".healthcheck]
         path = "{{getHealthCheckPath $app }}"
         interval = "{{getHealthCheckInterval $app }}"
 {{end}}
@@ -41,7 +41,7 @@
 
 [frontends]{{range $app := $apps}}{{range $serviceIndex, $serviceName := getServiceNames .}}
   [frontends."{{ getFrontendName $app $serviceName }}"]
-  backend = "backend{{getBackend $app $serviceName}}"
+  backend = "{{getBackend $app $serviceName}}"
   passHostHeader = {{getPassHostHeader $app $serviceName}}
   priority = {{getPriority $app $serviceName}}
   entryPoints = [{{range getEntryPoints $app $serviceName}}
