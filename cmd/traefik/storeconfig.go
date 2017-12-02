@@ -56,7 +56,7 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 			}
 
 			stdlog.Printf("Storing file configuration: %s\n", jsonConf)
-			config, err := fileConfig.LoadConfig()
+			config, err := fileConfig.BuildConfiguration()
 			if err != nil {
 				return err
 			}
