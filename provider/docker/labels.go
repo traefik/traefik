@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -49,12 +50,12 @@ func parseMapLabel(container dockerData, labelName string) map[string]string {
 		}
 
 		values := make(map[string]string)
-		for _, headers := range strings.Split(parts, "🧀") {
+		for _, headers := range strings.Split(parts, "||") {
 			pair := strings.SplitN(headers, ":", 2)
 			if len(pair) != 2 {
 				log.Warnf("Could not load %q: %v, skipping...", labelName, pair)
 			} else {
-				values[pair[0]] = pair[1]
+				values[http.CanonicalHeaderKey(strings.TrimSpace(pair[0]))] = strings.TrimSpace(pair[1])
 			}
 		}
 
