@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/client-go/pkg/api/v1"
@@ -372,7 +373,7 @@ func TestRuleType(t *testing.T) {
 
 			if test.ingressRuleType != "" {
 				ingress.ObjectMeta.Annotations = map[string]string{
-					types.LabelFrontendRuleType: test.ingressRuleType,
+					label.TraefikFrontendRuleType: test.ingressRuleType,
 				}
 			}
 
@@ -821,8 +822,8 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "1",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					types.LabelTraefikBackendCircuitbreaker: "NetworkErrorRatio() > 0.5",
-					types.LabelBackendLoadbalancerMethod:    "drr",
+					label.TraefikBackendCircuitBreaker:     "NetworkErrorRatio() > 0.5",
+					label.TraefikBackendLoadBalancerMethod: "drr",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -840,8 +841,8 @@ func TestServiceAnnotations(t *testing.T) {
 				UID:       "2",
 				Namespace: "testing",
 				Annotations: map[string]string{
-					types.LabelTraefikBackendCircuitbreaker: "",
-					types.LabelBackendLoadbalancerSticky:    "true",
+					label.TraefikBackendCircuitBreaker:     "",
+					label.TraefikBackendLoadBalancerSticky: "true",
 				},
 			},
 			Spec: v1.ServiceSpec{
@@ -1009,7 +1010,7 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					types.LabelFrontendPassHostHeader: "false",
+					label.TraefikFrontendPassHostHeader: "false",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1037,8 +1038,8 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"kubernetes.io/ingress.class":     "traefik",
-					types.LabelFrontendPassHostHeader: "true",
+					"kubernetes.io/ingress.class":       "traefik",
+					label.TraefikFrontendPassHostHeader: "true",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1066,8 +1067,8 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"kubernetes.io/ingress.class":  "traefik",
-					types.LabelFrontendPassTLSCert: "true",
+					"kubernetes.io/ingress.class":    "traefik",
+					label.TraefikFrontendPassTLSCert: "true",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1095,8 +1096,8 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"kubernetes.io/ingress.class":  "traefik",
-					types.LabelFrontendEntryPoints: "http,https",
+					"kubernetes.io/ingress.class":    "traefik",
+					label.TraefikFrontendEntryPoints: "http,https",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1267,7 +1268,7 @@ func TestIngressAnnotations(t *testing.T) {
 				Namespace: "testing",
 				Annotations: map[string]string{
 					"kubernetes.io/ingress.class": "traefik",
-					types.LabelFrontendRedirect:   "https",
+					label.TraefikFrontendRedirect: "https",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1563,7 +1564,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					types.LabelFrontendPriority: "1337",
+					label.TraefikFrontendPriority: "1337",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1664,7 +1665,7 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					types.LabelFrontendPassTLSCert: "herpderp",
+					label.TraefikFrontendPassTLSCert: "herpderp",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1765,7 +1766,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					types.LabelFrontendPassHostHeader: "herpderp",
+					label.TraefikFrontendPassHostHeader: "herpderp",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -2260,64 +2261,4 @@ func TestBasicAuthInTemplate(t *testing.T) {
 	if !reflect.DeepEqual(got, []string{"myUser:myEncodedPW"}) {
 		t.Fatalf("unexpected credentials: %+v", got)
 	}
-}
-
-type clientMock struct {
-	ingresses []*v1beta1.Ingress
-	services  []*v1.Service
-	secrets   []*v1.Secret
-	endpoints []*v1.Endpoints
-	watchChan chan interface{}
-
-	apiServiceError   error
-	apiSecretError    error
-	apiEndpointsError error
-}
-
-func (c clientMock) GetIngresses() []*v1beta1.Ingress {
-	return c.ingresses
-}
-
-func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error) {
-	if c.apiServiceError != nil {
-		return nil, false, c.apiServiceError
-	}
-
-	for _, service := range c.services {
-		if service.Namespace == namespace && service.Name == name {
-			return service, true, nil
-		}
-	}
-	return nil, false, nil
-}
-
-func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
-	if c.apiEndpointsError != nil {
-		return nil, false, c.apiEndpointsError
-	}
-
-	for _, endpoints := range c.endpoints {
-		if endpoints.Namespace == namespace && endpoints.Name == name {
-			return endpoints, true, nil
-		}
-	}
-
-	return &v1.Endpoints{}, false, nil
-}
-
-func (c clientMock) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
-	if c.apiSecretError != nil {
-		return nil, false, c.apiSecretError
-	}
-
-	for _, secret := range c.secrets {
-		if secret.Namespace == namespace && secret.Name == name {
-			return secret, true, nil
-		}
-	}
-	return nil, false, nil
-}
-
-func (c clientMock) WatchAll(namespaces Namespaces, labelString string, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	return c.watchChan, nil
 }
