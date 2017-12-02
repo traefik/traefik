@@ -305,7 +305,7 @@ func templatesDockerTmpl() (*asset, error) {
 var _templatesEcsTmpl = []byte(`[backends]{{range $serviceName, $instances := .Services}}
   [backends.backend-{{ $serviceName }}.loadbalancer]
     method = "{{ getLoadBalancerMethod $instances}}"
-    sticky = {{ getLoadBalancerSticky $instances}}
+    sticky = {{ getSticky $instances}}
     {{if hasStickinessLabel $instances}} 
     [backends.backend-{{ $serviceName }}.loadbalancer.stickiness]
       cookieName = "{{getStickinessCookieName $instances}}"
