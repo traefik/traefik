@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"github.com/ArthurHlt/go-eureka-client/eureka"
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/provider/label"
 )
 
-func TestEurekaGetPort(t *testing.T) {
+func TestGetPort(t *testing.T) {
 	cases := []struct {
 		expectedPort string
 		instanceInfo eureka.InstanceInfo
@@ -36,16 +36,15 @@ func TestEurekaGetPort(t *testing.T) {
 		},
 	}
 
-	eurekaProvider := &Provider{}
 	for _, c := range cases {
-		port := eurekaProvider.getPort(c.instanceInfo)
+		port := getPort(c.instanceInfo)
 		if port != c.expectedPort {
 			t.Fatalf("Should have been %s, got %s", c.expectedPort, port)
 		}
 	}
 }
 
-func TestEurekaGetProtocol(t *testing.T) {
+func TestGetProtocol(t *testing.T) {
 	cases := []struct {
 		expectedProtocol string
 		instanceInfo     eureka.InstanceInfo
@@ -73,17 +72,15 @@ func TestEurekaGetProtocol(t *testing.T) {
 			},
 		},
 	}
-
-	eurekaProvider := &Provider{}
 	for _, c := range cases {
-		protocol := eurekaProvider.getProtocol(c.instanceInfo)
+		protocol := getProtocol(c.instanceInfo)
 		if protocol != c.expectedProtocol {
 			t.Fatalf("Should have been %s, got %s", c.expectedProtocol, protocol)
 		}
 	}
 }
 
-func TestEurekaGetWeight(t *testing.T) {
+func TestGetWeight(t *testing.T) {
 	cases := []struct {
 		expectedWeight string
 		instanceInfo   eureka.InstanceInfo
@@ -107,23 +104,22 @@ func TestEurekaGetWeight(t *testing.T) {
 				},
 				Metadata: &eureka.MetaData{
 					Map: map[string]string{
-						types.LabelWeight: "10",
+						label.TraefikWeight: "10",
 					},
 				},
 			},
 		},
 	}
 
-	eurekaProvider := &Provider{}
 	for _, c := range cases {
-		weight := eurekaProvider.getWeight(c.instanceInfo)
+		weight := getWeight(c.instanceInfo)
 		if weight != c.expectedWeight {
 			t.Fatalf("Should have been %s, got %s", c.expectedWeight, weight)
 		}
 	}
 }
 
-func TestEurekaGetInstanceId(t *testing.T) {
+func TestGetInstanceId(t *testing.T) {
 	cases := []struct {
 		expectedID   string
 		instanceInfo eureka.InstanceInfo
@@ -140,7 +136,7 @@ func TestEurekaGetInstanceId(t *testing.T) {
 				},
 				Metadata: &eureka.MetaData{
 					Map: map[string]string{
-						types.LabelBackendID: "MyInstanceId",
+						label.TraefikBackendID: "MyInstanceId",
 					},
 				},
 			},
@@ -162,9 +158,8 @@ func TestEurekaGetInstanceId(t *testing.T) {
 		},
 	}
 
-	eurekaProvider := &Provider{}
 	for _, c := range cases {
-		id := eurekaProvider.getInstanceID(c.instanceInfo)
+		id := getInstanceID(c.instanceInfo)
 		if id != c.expectedID {
 			t.Fatalf("Should have been %s, got %s", c.expectedID, id)
 		}
