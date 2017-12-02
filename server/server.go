@@ -888,7 +888,7 @@ func (s *Server) getRoundTripper(entryPointName string, globalConfiguration conf
 	return s.defaultForwardingRoundTripper, nil
 }
 
-// LoadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
+// loadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
 func (s *Server) loadConfig(configurations types.Configurations, globalConfiguration configuration.GlobalConfiguration) (map[string]*serverEntryPoint, error) {
 	serverEntryPoints := s.buildEntryPoints(globalConfiguration)
