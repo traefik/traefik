@@ -1,9 +1,9 @@
 package rancher
 
 import (
-	"strings"
 	"testing"
 
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -26,7 +26,7 @@ func TestProviderServiceFilter(t *testing.T) {
 			desc: "missing Port labels, don't respect constraint",
 			service: rancherData{
 				Labels: map[string]string{
-					types.LabelEnable: "true",
+					label.TraefikEnable: "true",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -37,8 +37,8 @@ func TestProviderServiceFilter(t *testing.T) {
 			desc: "don't respect constraint",
 			service: rancherData{
 				Labels: map[string]string{
-					types.LabelPort:   "80",
-					types.LabelEnable: "false",
+					label.TraefikPort:   "80",
+					label.TraefikEnable: "false",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -49,9 +49,9 @@ func TestProviderServiceFilter(t *testing.T) {
 			desc: "unhealthy",
 			service: rancherData{
 				Labels: map[string]string{
-					types.LabelTags:   "cheese",
-					types.LabelPort:   "80",
-					types.LabelEnable: "true",
+					label.TraefikTags:   "cheese",
+					label.TraefikPort:   "80",
+					label.TraefikEnable: "true",
 				},
 				Health: "unhealthy",
 				State:  "active",
@@ -62,9 +62,9 @@ func TestProviderServiceFilter(t *testing.T) {
 			desc: "inactive",
 			service: rancherData{
 				Labels: map[string]string{
-					types.LabelTags:   "not-cheesy",
-					types.LabelPort:   "80",
-					types.LabelEnable: "true",
+					label.TraefikTags:   "not-cheesy",
+					label.TraefikPort:   "80",
+					label.TraefikEnable: "true",
 				},
 				Health: "healthy",
 				State:  "inactive",
@@ -75,9 +75,9 @@ func TestProviderServiceFilter(t *testing.T) {
 			desc: "healthy & active, tag: cheese",
 			service: rancherData{
 				Labels: map[string]string{
-					types.LabelTags:   "cheese",
-					types.LabelPort:   "80",
-					types.LabelEnable: "true",
+					label.TraefikTags:   "cheese",
+					label.TraefikPort:   "80",
+					label.TraefikEnable: "true",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -88,9 +88,9 @@ func TestProviderServiceFilter(t *testing.T) {
 			desc: "healthy & active, tag: chose",
 			service: rancherData{
 				Labels: map[string]string{
-					types.LabelTags:   "chose",
-					types.LabelPort:   "80",
-					types.LabelEnable: "true",
+					label.TraefikTags:   "chose",
+					label.TraefikPort:   "80",
+					label.TraefikEnable: "true",
 				},
 				Health: "healthy",
 				State:  "active",
@@ -101,9 +101,9 @@ func TestProviderServiceFilter(t *testing.T) {
 			desc: "healthy & upgraded",
 			service: rancherData{
 				Labels: map[string]string{
-					types.LabelTags:   "cheeeeese",
-					types.LabelPort:   "80",
-					types.LabelEnable: "true",
+					label.TraefikTags:   "cheeeeese",
+					label.TraefikPort:   "80",
+					label.TraefikEnable: "true",
 				},
 				Health: "healthy",
 				State:  "upgraded",
@@ -187,7 +187,7 @@ func TestProviderGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					types.LabelFrontendRule: "Headers:User-Agent,bat/0.1.0",
+					label.TraefikFrontendRule: "Headers:User-Agent,bat/0.1.0",
 				},
 			},
 			expected: "Headers-User-Agent-bat-0-1-0",
@@ -197,7 +197,7 @@ func TestProviderGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					types.LabelFrontendRule: "Host:foo.bar",
+					label.TraefikFrontendRule: "Host:foo.bar",
 				},
 			},
 			expected: "Host-foo-bar",
@@ -207,7 +207,7 @@ func TestProviderGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					types.LabelFrontendRule: "Path:/test",
+					label.TraefikFrontendRule: "Path:/test",
 				},
 			},
 			expected: "Path-test",
@@ -217,7 +217,7 @@ func TestProviderGetFrontendName(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					types.LabelFrontendRule: "PathPrefix:/test2",
+					label.TraefikFrontendRule: "PathPrefix:/test2",
 				},
 			},
 			expected: "PathPrefix-test2",
@@ -262,7 +262,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					types.LabelFrontendRule: "Host:foo.bar.com",
+					label.TraefikFrontendRule: "Host:foo.bar.com",
 				},
 			},
 			expected: "Host:foo.bar.com",
@@ -272,7 +272,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					types.LabelFrontendRule: "Path:/test",
+					label.TraefikFrontendRule: "Path:/test",
 				},
 			},
 			expected: "Path:/test",
@@ -282,7 +282,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					types.LabelFrontendRule: "PathPrefix:/test2",
+					label.TraefikFrontendRule: "PathPrefix:/test2",
 				},
 			},
 			expected: "PathPrefix:/test2",
@@ -300,9 +300,7 @@ func TestProviderGetFrontendRule(t *testing.T) {
 	}
 }
 
-func TestProviderGetBackend(t *testing.T) {
-	provider := &Provider{Domain: "rancher.localhost"}
-
+func TestGetBackend(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		service  rancherData
@@ -320,7 +318,7 @@ func TestProviderGetBackend(t *testing.T) {
 			service: rancherData{
 				Name: "test-service",
 				Labels: map[string]string{
-					types.LabelBackend: "foobar",
+					label.TraefikBackend: "foobar",
 				},
 			},
 
@@ -333,279 +331,8 @@ func TestProviderGetBackend(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := provider.getBackend(test.service)
+			actual := getBackend(test.service)
 			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestProviderGetWeight(t *testing.T) {
-	provider := &Provider{Domain: "rancher.localhost"}
-
-	testCases := []struct {
-		desc     string
-		service  rancherData
-		expected string
-	}{
-		{
-			desc: "without label",
-			service: rancherData{
-				Name: "test-service",
-			},
-			expected: "0",
-		},
-		{
-			desc: "with label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelWeight: "5",
-				},
-			},
-			expected: "5",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getWeight(test.service)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestProviderGetPort(t *testing.T) {
-	provider := &Provider{Domain: "rancher.localhost"}
-
-	testCases := []struct {
-		desc     string
-		service  rancherData
-		expected string
-	}{
-		{
-			desc: "without label",
-			service: rancherData{
-				Name: "test-service",
-			},
-			expected: "",
-		},
-		{
-			desc: "with label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelPort: "1337",
-				},
-			},
-			expected: "1337",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getPort(test.service)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestProviderGetDomain(t *testing.T) {
-	provider := &Provider{Domain: "rancher.localhost"}
-
-	testCases := []struct {
-		desc     string
-		service  rancherData
-		expected string
-	}{
-		{
-			desc: "without label",
-			service: rancherData{
-				Name: "test-service",
-			},
-			expected: "rancher.localhost",
-		},
-		{
-			desc: "with label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelDomain: "foo.bar",
-				},
-			},
-			expected: "foo.bar",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getDomain(test.service)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestProviderGetProtocol(t *testing.T) {
-	provider := &Provider{Domain: "rancher.localhost"}
-
-	testCases := []struct {
-		desc     string
-		service  rancherData
-		expected string
-	}{
-		{
-			desc: "without label",
-			service: rancherData{
-				Name: "test-service",
-			},
-			expected: "http",
-		},
-		{
-			desc: "with label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelProtocol: "https",
-				},
-			},
-			expected: "https",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getProtocol(test.service)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestProviderGetPassHostHeader(t *testing.T) {
-	provider := &Provider{Domain: "rancher.localhost"}
-
-	testCases := []struct {
-		desc     string
-		service  rancherData
-		expected string
-	}{
-		{
-			desc: "without label",
-			service: rancherData{
-				Name: "test-service",
-			},
-			expected: "true",
-		},
-		{
-			desc: "with label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelFrontendPassHostHeader: "false",
-				},
-			},
-			expected: "false",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getPassHostHeader(test.service)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestProviderGetRedirect(t *testing.T) {
-	provider := &Provider{Domain: "rancher.localhost"}
-
-	testCases := []struct {
-		desc     string
-		service  rancherData
-		expected string
-	}{
-		{
-			desc: "without label",
-			service: rancherData{
-				Name: "test-service",
-			},
-			expected: "",
-		},
-		{
-			desc: "with label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelFrontendRedirect: "https",
-				},
-			},
-			expected: "https",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getRedirect(test.service)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestProviderGetLabel(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		service  rancherData
-		expected string
-	}{
-		{
-			desc: "without label",
-			service: rancherData{
-				Name: "test-service",
-			},
-			expected: "label not found",
-		},
-		{
-			desc: "with label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					"foo": "bar",
-				},
-			},
-			expected: "",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run("", func(t *testing.T) {
-			t.Parallel()
-
-			label, err := getServiceLabel(test.service, "foo")
-
-			if test.expected != "" {
-				if err == nil || !strings.Contains(err.Error(), test.expected) {
-					t.Fatalf("expected an error with %q, got %v", test.expected, err)
-				}
-			} else {
-				assert.Equal(t, "bar", label)
-			}
 		})
 	}
 }
@@ -634,9 +361,9 @@ func TestProviderLoadRancherConfig(t *testing.T) {
 				{
 					Name: "test/service",
 					Labels: map[string]string{
-						types.LabelPort:              "80",
-						types.LabelFrontendAuthBasic: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						types.LabelFrontendRedirect:  "https",
+						label.TraefikPort:              "80",
+						label.TraefikFrontendAuthBasic: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendRedirect:  "https",
 					},
 					Health:     "healthy",
 					Containers: []string{"127.0.0.1"},
@@ -677,58 +404,10 @@ func TestProviderLoadRancherConfig(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actualConfig := provider.loadRancherConfig(test.services)
+			actualConfig := provider.buildConfiguration(test.services)
 
 			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
 			assert.EqualValues(t, test.expectedFrontends, actualConfig.Frontends)
-		})
-	}
-}
-
-func TestProviderHasStickinessLabel(t *testing.T) {
-	provider := &Provider{Domain: "rancher.localhost"}
-
-	testCases := []struct {
-		desc     string
-		service  rancherData
-		expected bool
-	}{
-		{
-			desc: "no labels",
-			service: rancherData{
-				Name: "test-service",
-			},
-			expected: false,
-		},
-		{
-			desc: "stickiness=true",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelBackendLoadbalancerStickiness: "true",
-				},
-			},
-			expected: true,
-		},
-		{
-			desc: "stickiness=true",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelBackendLoadbalancerStickiness: "false",
-				},
-			},
-			expected: false,
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.hasStickinessLabel(test.service)
-			assert.Equal(t, actual, test.expected)
 		})
 	}
 }
