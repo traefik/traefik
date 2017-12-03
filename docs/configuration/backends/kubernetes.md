@@ -71,6 +71,13 @@ See also [Kubernetes user guide](/user-guide/kubernetes).
 # Default: <built-in template>
 #
 # filename = "kubernetes.tmpl"
+
+# Default backend name to use when ingress has no endpoint.
+#
+# Optional
+# Default: empty (no backend servers)
+#
+# defaultBackend = "default-backend"
 ```
 
 ### `endpoint`

@@ -70,6 +70,7 @@ type Provider struct {
 	EnablePassTLSCert      bool       `description:"Kubernetes enable Pass TLS Client Certs" export:"true"`
 	Namespaces             Namespaces `description:"Kubernetes namespaces" export:"true"`
 	LabelSelector          string     `description:"Kubernetes api label selector to use" export:"true"`
+	DefaultBackend         string     `description:"Default backend name to use when ingress has no endpoint" export:"true"`
 	lastConfiguration      safe.Safe
 }
 
@@ -275,7 +276,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				if !exists {
 					log.Errorf("Service not found for %s/%s", i.ObjectMeta.Namespace, pa.Backend.ServiceName)
-					delete(templateObjects.Frontends, r.Host+pa.Path)
+					if p.DefaultBackend == "" {
+						delete(templateObjects.Frontends, r.Host+pa.Path)
+					} else {
+						templateObjects.Frontends[r.Host+pa.Path].Backend = p.DefaultBackend
+					}
 					continue
 				}
 
@@ -349,6 +354,11 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						}
 						break
 					}
+				}
+
+				if p.DefaultBackend != "" && len(templateObjects.Backends[r.Host+pa.Path].Servers) == 0 {
+					delete(templateObjects.Backends, r.Host+pa.Path)
+					templateObjects.Frontends[r.Host+pa.Path].Backend = p.DefaultBackend
 				}
 			}
 		}

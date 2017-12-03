@@ -773,6 +773,82 @@ func TestHostlessIngress(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestDefaultBackend(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: "awesome",
+		},
+		Spec: v1beta1.IngressSpec{
+			Rules: []v1beta1.IngressRule{
+				{
+					IngressRuleValue: v1beta1.IngressRuleValue{
+						HTTP: &v1beta1.HTTPIngressRuleValue{
+							Paths: []v1beta1.HTTPIngressPath{
+								{
+									Path: "/bar",
+									Backend: v1beta1.IngressBackend{
+										ServiceName: "service1",
+										ServicePort: intstr.FromInt(801),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+	services := []*v1.Service{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "service1",
+				Namespace: "awesome",
+				UID:       "1",
+			},
+			Spec: v1.ServiceSpec{
+				ClusterIP: "10.0.0.1",
+				Ports: []v1.ServicePort{
+					{
+						Name: "http",
+						Port: 801,
+					},
+				},
+			},
+		},
+	}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Provider{
+		DisablePassHostHeaders: true,
+		DefaultBackend:         "default-backend",
+	}
+
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := &types.Configuration{
+		Backends: map[string]*types.Backend{},
+		Frontends: map[string]*types.Frontend{
+			"/bar": {
+				Backend: "default-backend",
+				Routes: map[string]types.Route{
+					"/bar": {
+						Rule: "PathPrefix:/bar",
+					},
+				},
+			},
+		},
+	}
+
+	assert.Equal(t, expected, actual)
+}
+
 func TestServiceAnnotations(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{{
 		ObjectMeta: v1.ObjectMeta{
