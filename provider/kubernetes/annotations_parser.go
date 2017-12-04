@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/containous/traefik/log"
@@ -50,12 +51,12 @@ func getMapAnnotation(meta *v1beta1.Ingress, annotName string) map[string]string
 		}
 
 		mapValue := make(map[string]string)
-		for _, parts := range strings.Split(values, ",") {
-			pair := strings.Split(parts, ":")
+		for _, parts := range strings.Split(values, "||") {
+			pair := strings.SplitN(parts, ":", 2)
 			if len(pair) != 2 {
 				log.Warnf("Could not load %q: %v, skipping...", annotName, pair)
 			} else {
-				mapValue[pair[0]] = pair[1]
+				mapValue[http.CanonicalHeaderKey(strings.TrimSpace(pair[0]))] = strings.TrimSpace(pair[1])
 			}
 		}
 

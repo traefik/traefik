@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -42,21 +43,30 @@ func getFuncMapLabel(labelName string) func(container dockerData) map[string]str
 }
 
 func parseMapLabel(container dockerData, labelName string) map[string]string {
-	customHeaders := make(map[string]string)
-	if label, err := getLabel(container, labelName); err == nil {
-		for _, headers := range strings.Split(label, ",") {
-			pair := strings.Split(headers, ":")
+	if parts, err := getLabel(container, labelName); err == nil {
+		if len(parts) == 0 {
+			log.Errorf("Could not load %q", labelName)
+			return nil
+		}
+
+		values := make(map[string]string)
+		for _, headers := range strings.Split(parts, "||") {
+			pair := strings.SplitN(headers, ":", 2)
 			if len(pair) != 2 {
-				log.Warnf("Could not load header %q: %v, skipping...", labelName, pair)
+				log.Warnf("Could not load %q: %v, skipping...", labelName, pair)
 			} else {
-				customHeaders[pair[0]] = pair[1]
+				values[http.CanonicalHeaderKey(strings.TrimSpace(pair[0]))] = strings.TrimSpace(pair[1])
 			}
 		}
+
+		if len(values) == 0 {
+			log.Errorf("Could not load %q", labelName)
+			return nil
+		}
+		return values
 	}
-	if len(customHeaders) == 0 {
-		log.Errorf("Could not load %q", labelName)
-	}
-	return customHeaders
+
+	return nil
 }
 
 func getFuncStringLabel(label string, defaultValue string) func(container dockerData) string {

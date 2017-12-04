@@ -86,7 +86,7 @@ type networkData struct {
 	ID       string
 }
 
-func (p Provider) createClient() (client.APIClient, error) {
+func (p *Provider) createClient() (client.APIClient, error) {
 	var httpClient *http.Client
 
 	if p.TLS != nil {
@@ -292,10 +292,10 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServiceRedirect":          getFuncServiceStringLabel(types.SuffixFrontendRedirect, defaultFrontendRedirect),
 		"getWhitelistSourceRange":     getFuncSliceStringLabel(types.LabelTraefikFrontendWhitelistSourceRange),
 
-		"hasRequestHeaders":                 hasLabel(types.LabelFrontendRequestHeader),
-		"getRequestHeaders":                 getFuncMapLabel(types.LabelFrontendRequestHeader),
-		"hasResponseHeaders":                hasLabel(types.LabelFrontendResponseHeader),
-		"getResponseHeaders":                getFuncMapLabel(types.LabelFrontendResponseHeader),
+		"hasRequestHeaders":                 hasLabel(types.LabelFrontendRequestHeaders),
+		"getRequestHeaders":                 getFuncMapLabel(types.LabelFrontendRequestHeaders),
+		"hasResponseHeaders":                hasLabel(types.LabelFrontendResponseHeaders),
+		"getResponseHeaders":                getFuncMapLabel(types.LabelFrontendResponseHeaders),
 		"hasAllowedHostsHeaders":            hasLabel(types.LabelFrontendAllowedHosts),
 		"getAllowedHostsHeaders":            getFuncSliceStringLabel(types.LabelFrontendAllowedHosts),
 		"hasHostsProxyHeaders":              hasLabel(types.LabelFrontendHostsProxyHeaders),
