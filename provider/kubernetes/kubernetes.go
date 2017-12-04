@@ -73,7 +73,7 @@ type Provider struct {
 	lastConfiguration      safe.Safe
 }
 
-func (p Provider) newK8sClient() (Client, error) {
+func (p *Provider) newK8sClient() (Client, error) {
 	withEndpoint := ""
 	if p.Endpoint != "" {
 		withEndpoint = fmt.Sprintf(" with endpoint %v", p.Endpoint)
@@ -356,7 +356,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	return &templateObjects, nil
 }
 
-func (p Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {
+func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {
 	var FuncMap = template.FuncMap{}
 	configuration, err := p.GetConfiguration("templates/kubernetes.tmpl", FuncMap, templateObjects)
 	if err != nil {
