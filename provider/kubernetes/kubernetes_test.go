@@ -2414,7 +2414,6 @@ func TestTLSSecretLoad(t *testing.T) {
 		},
 		TLSConfiguration: []*tls.Configuration{
 			{
-				EntryPoints: []string{"example.com"},
 				Certificate: &tls.Certificate{
 					CertFile: "-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 					KeyFile:  "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----",
@@ -2427,7 +2426,7 @@ func TestTLSSecretLoad(t *testing.T) {
 }
 
 func TestGetTLSConfigurations(t *testing.T) {
-	testIngress := v1beta1.Ingress{
+	testIngressWithoutHostname := v1beta1.Ingress{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "test-ingress",
 			Namespace: "testing",
@@ -2453,22 +2452,22 @@ func TestGetTLSConfigurations(t *testing.T) {
 		errResult string
 	}{
 		{
-			desc:    "error_api_client",
-			ingress: &testIngress,
+			desc:    "api client returns error",
+			ingress: &testIngressWithoutHostname,
 			client: clientMock{
 				apiSecretError: errors.New("api secret error"),
 			},
-			errResult: "secret testing/test-secret does not exist: api secret error",
+			errResult: "failed to fetch secret testing/test-secret: api secret error",
 		},
 		{
-			desc:      "secret_not_found",
-			ingress:   &testIngress,
+			desc:      "api client doesn't find secret",
+			ingress:   &testIngressWithoutHostname,
 			client:    clientMock{},
 			errResult: "secret testing/test-secret does not exist",
 		},
 		{
-			desc:    "secret_crt_missing",
-			ingress: &testIngress,
+			desc:    "entry 'tls.crt' in secret missing",
+			ingress: &testIngressWithoutHostname,
 			client: clientMock{
 				secrets: []*v1.Secret{
 					{
@@ -2485,8 +2484,8 @@ func TestGetTLSConfigurations(t *testing.T) {
 			errResult: "secret testing/test-secret must have two entries named 'tls.crt' and 'tls.key': missing entry 'tls.crt'",
 		},
 		{
-			desc:    "secret_key_missing",
-			ingress: &testIngress,
+			desc:    "entry 'tls.key' in secret missing",
+			ingress: &testIngressWithoutHostname,
 			client: clientMock{
 				secrets: []*v1.Secret{
 					{
@@ -2503,8 +2502,34 @@ func TestGetTLSConfigurations(t *testing.T) {
 			errResult: "secret testing/test-secret must have two entries named 'tls.crt' and 'tls.key': missing entry 'tls.key'",
 		},
 		{
-			desc:    "default_wildcard_behavior",
-			ingress: &testIngress,
+			desc: "add certificates to the configuration",
+			ingress: &v1beta1.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test-ingress",
+					Namespace: "testing",
+				},
+				Spec: v1beta1.IngressSpec{
+					Rules: []v1beta1.IngressRule{
+						{
+							Host: "ep1.example.com",
+						},
+						{
+							Host: "ep2.example.com",
+						},
+						{
+							Host: "ep3.example.com",
+						},
+					},
+					TLS: []v1beta1.IngressTLS{
+						{
+							SecretName: "test-secret",
+						},
+						{
+							SecretName: "test-secret",
+						},
+					},
+				},
+			},
 			client: clientMock{
 				secrets: []*v1.Secret{
 					{
@@ -2525,9 +2550,11 @@ func TestGetTLSConfigurations(t *testing.T) {
 						CertFile: tls.FileOrContent("tls-crt"),
 						KeyFile:  tls.FileOrContent("tls-key"),
 					},
-					EntryPoints: []string{
-						"ep1.example.com",
-						"ep2.example.com",
+				},
+				{
+					Certificate: &tls.Certificate{
+						CertFile: tls.FileOrContent("tls-crt"),
+						KeyFile:  tls.FileOrContent("tls-key"),
 					},
 				},
 			},
@@ -2541,14 +2568,11 @@ func TestGetTLSConfigurations(t *testing.T) {
 
 			tlsConfigs, err := getTLSConfigurations(test.ingress, test.client)
 
-			if test.errResult == "" {
-				assert.Nil(t, err)
-			} else {
+			if test.errResult != "" {
 				assert.EqualError(t, err, test.errResult)
-			}
-
-			if !reflect.DeepEqual(tlsConfigs, test.result) {
-				t.Errorf("Result should be %+v but was %+v", test.result, tlsConfigs)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, test.result, tlsConfigs)
 			}
 		})
 	}

@@ -333,9 +333,9 @@ We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube)
 ### Add a TLS Certificate to the Ingress
 
 !!! note
-    For this example to work you need a tls entrypoint. You don't have to provide a tls certificate at this point. For more details see [here](/configuration/entrypoints/).
+    For this example to work you need a TLS entrypoint. You don't have to provide a TLS certificate at this point. For more details see [here](/configuration/entrypoints/).
 
-To setup a https protected ingress, you can leverage the tls feature of the ingress resource.
+To setup a https protected ingress, you can leverage the TLS feature of the ingress resource.
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -359,7 +359,7 @@ spec:
     secretName: traefik-ui-tls-cert
 ```
 
-In addition to the modified ingress you need to provide the tls certificate via a kubernetes secret in the same namespace as the ingress. The following two commands will generate a new certificate and create a secret containing the key and cert files.
+In addition to the modified ingress you need to provide the TLS certificate via a kubernetes secret in the same namespace as the ingress. The following two commands will generate a new certificate and create a secret containing the key and cert files.
 
 ```shell
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj "/CN=traefik-ui.minikube"
