@@ -1133,6 +1133,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 
 						regex, replacement, err := s.buildRedirect(proto, entryPoint)
+						if err != nil {
+							log.Fatalf("Error creating Frontend Redirect: %v", err)
+						}
 						rewrite, err := middlewares.NewRewrite(regex, replacement, true)
 						if err != nil {
 							log.Fatalf("Error creating Frontend Redirect: %v", err)
@@ -1298,6 +1301,9 @@ func (s *Server) loadEntryPointConfig(entryPointName string, entryPoint *configu
 			protocol = "https"
 		}
 		regex, replacement, err = s.buildRedirect(protocol, entryPoint)
+		if err != nil {
+			return nil, err
+		}
 	}
 	rewrite, err := middlewares.NewRewrite(regex, replacement, true)
 	if err != nil {

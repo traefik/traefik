@@ -140,8 +140,8 @@ func (s *AcmeSuite) retrieveAcmeCertificate(c *check.C, testCase AcmeTestCase) {
 
 	// wait for traefik (generating acme account take some seconds)
 	err = try.Do(90*time.Second, func() error {
-		_, err := client.Get("https://127.0.0.1:5001")
-		return err
+		_, errGet := client.Get("https://127.0.0.1:5001")
+		return errGet
 	})
 	c.Assert(err, checker.IsNil)
 
