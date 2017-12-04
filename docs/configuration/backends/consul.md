@@ -62,7 +62,6 @@ To enable constraints see [backend-specific constraints section](/configuration/
 
 Please refer to the [Key Value storage structure](/user-guide/kv-config/#key-value-storage-structure) section to get documentation on Traefik KV structure.
 
-
 ## Consul Catalog backend
 
 Træfik can be configured to use service discovery catalog of Consul as a backend configuration.
@@ -134,3 +133,19 @@ Additional settings can be defined using Consul Catalog tags.
 | `traefik.backend.loadbalancer.stickiness=true`            | enable backend sticky sessions                                                                                                                                                     |
 | `traefik.backend.loadbalancer.stickiness.cookieName=NAME` | Manually set the cookie name for sticky sessions                                                                                                                                   |
 | `traefik.backend.loadbalancer.sticky=true`                | enable backend sticky sessions (DEPRECATED)                                                                                                                                        |
+
+### Examples
+
+If you want that Træfik uses Consul tags correctly you need to defined them like that:
+```json
+traefik.enable=true
+traefik.tags=api
+traefik.tags=external
+```
+
+If the prefix defined in Træfik configuration is `bla`, tags need to be defined like that:
+```json
+bla.enable=true
+bla.tags=api
+bla.tags=external
+```

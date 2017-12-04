@@ -1,0 +1,30 @@
+debug=true
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":8000"
+
+[api]
+[file]
+   [backends]
+     [backends.backend1]
+       [backends.backend1.servers.server1]
+       url = "{{ .Server1 }}"
+    [backends.backend2]
+       [backends.backend2.servers.server1]
+       url = "{{ .Server2 }}"
+
+   [frontends]
+     [frontends.frontend1]
+            entrypoints=["http"]
+
+     backend = "backend1"
+       [frontends.frontend1.routes.test_1]
+       rule = "PathPrefix:/whoami"
+
+   [frontends.frontend2]
+     backend = "backend2"
+            entrypoints=["traefik"]
+
+       [frontends.frontend2.routes.test_1]
+       rule = "PathPrefix:/whoami"
