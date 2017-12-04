@@ -31,7 +31,7 @@ type BaseProvider struct {
 	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template." export:"true"`
 }
 
-// MatchConstraints must match with EVERY single contraint
+// MatchConstraints must match with EVERY single constraint
 // returns first constraint that do not match or nil
 func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint) {
 	// if there is no tags and no constraints, filtering is disabled
@@ -116,6 +116,7 @@ func split(sep, s string) []string {
 }
 
 // Normalize transform a string that work with the rest of traefik
+// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 func Normalize(name string) string {
 	fargs := func(c rune) bool {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c)

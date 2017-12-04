@@ -107,7 +107,7 @@ func (a *ACME) init() error {
 		return err
 	}
 	a.defaultCertificate = cert
-	// TODO: to remove in the futurs
+	// TODO: to remove in the future
 	if len(a.StorageFile) > 0 && len(a.Storage) == 0 {
 		log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
 		a.Storage = a.StorageFile
