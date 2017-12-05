@@ -17,6 +17,7 @@ import (
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
@@ -31,12 +32,32 @@ const (
 	ruleTypePathPrefix  = "PathPrefix"
 	ruleTypeReplacePath = "ReplacePath"
 
-	annotationKubernetesIngressClass         = "kubernetes.io/ingress.class"
-	annotationKubernetesAuthRealm            = "ingress.kubernetes.io/auth-realm"
-	annotationKubernetesAuthType             = "ingress.kubernetes.io/auth-type"
-	annotationKubernetesAuthSecret           = "ingress.kubernetes.io/auth-secret"
-	annotationKubernetesRewriteTarget        = "ingress.kubernetes.io/rewrite-target"
-	annotationKubernetesWhitelistSourceRange = "ingress.kubernetes.io/whitelist-source-range"
+	annotationKubernetesIngressClass            = "kubernetes.io/ingress.class"
+	annotationKubernetesAuthRealm               = "ingress.kubernetes.io/auth-realm"
+	annotationKubernetesAuthType                = "ingress.kubernetes.io/auth-type"
+	annotationKubernetesAuthSecret              = "ingress.kubernetes.io/auth-secret"
+	annotationKubernetesRewriteTarget           = "ingress.kubernetes.io/rewrite-target"
+	annotationKubernetesWhitelistSourceRange    = "ingress.kubernetes.io/whitelist-source-range"
+	annotationKubernetesSSLRedirect             = "ingress.kubernetes.io/ssl-redirect"
+	annotationKubernetesHSTSMaxAge              = "ingress.kubernetes.io/hsts-max-age"
+	annotationKubernetesHSTSIncludeSubdomains   = "ingress.kubernetes.io/hsts-include-subdomains"
+	annotationKubernetesCustomRequestHeaders    = "ingress.kubernetes.io/custom-request-headers"
+	annotationKubernetesCustomResponseHeaders   = "ingress.kubernetes.io/custom-response-headers"
+	annotationKubernetesAllowedHosts            = "ingress.kubernetes.io/allowed-hosts"
+	annotationKubernetesProxyHeaders            = "ingress.kubernetes.io/proxy-headers"
+	annotationKubernetesSSLTemporaryRedirect    = "ingress.kubernetes.io/ssl-temporary-redirect"
+	annotationKubernetesSSLHost                 = "ingress.kubernetes.io/ssl-host"
+	annotationKubernetesSSLProxyHeaders         = "ingress.kubernetes.io/ssl-proxy-headers"
+	annotationKubernetesHSTSPreload             = "ingress.kubernetes.io/hsts-preload"
+	annotationKubernetesForceHSTSHeader         = "ingress.kubernetes.io/force-hsts"
+	annotationKubernetesFrameDeny               = "ingress.kubernetes.io/frame-deny"
+	annotationKubernetesCustomFrameOptionsValue = "ingress.kubernetes.io/custom-frame-options-value"
+	annotationKubernetesContentTypeNosniff      = "ingress.kubernetes.io/content-type-nosniff"
+	annotationKubernetesBrowserXSSFilter        = "ingress.kubernetes.io/browser-xss-filter"
+	annotationKubernetesContentSecurityPolicy   = "ingress.kubernetes.io/content-security-policy"
+	annotationKubernetesPublicKey               = "ingress.kubernetes.io/public-key"
+	annotationKubernetesReferrerPolicy          = "ingress.kubernetes.io/referrer-policy"
+	annotationKubernetesIsDevelopment           = "ingress.kubernetes.io/is-development"
 )
 
 const traefikDefaultRealm = "traefik"
@@ -76,7 +97,10 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	// certain kinds of API errors getting logged into a directory not
 	// available in a `FROM scratch` Docker container, causing glog to abort
 	// hard with an exit code > 0.
-	flag.Set("logtostderr", "true")
+	err := flag.Set("logtostderr", "true")
+	if err != nil {
+		return err
+	}
 
 	k8sClient, err := p.newK8sClient()
 	if err != nil {
@@ -167,20 +191,20 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				passHostHeader := getAnnotationPassHostHeader(i, p)
-				passTLSCert := getAnnotationPassTLSCert(i, p)
+				passHostHeader := label.GetBoolValue(i.Annotations, label.TraefikFrontendPassHostHeader, !p.DisablePassHostHeaders)
+				passTLSCert := label.GetBoolValue(i.Annotations, label.TraefikFrontendPassTLSCert, p.EnablePassTLSCert)
+
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
 					log.Errorf("Value for annotation %q on ingress %s/%s invalid: no realm customization supported", annotationKubernetesAuthRealm, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
 					delete(templateObjects.Backends, r.Host+pa.Path)
 					continue
 				}
 
-				entryPoints := getEntrypoints(i)
+				entryPoints := label.GetSliceStringValue(i.Annotations, label.TraefikFrontendEntryPoints)
 
-				whitelistSourceRangeAnnotation := i.Annotations[annotationKubernetesWhitelistSourceRange]
-				whitelistSourceRange := provider.SplitAndTrimString(whitelistSourceRangeAnnotation)
+				whitelistSourceRange := label.GetSliceStringValue(i.Annotations, annotationKubernetesWhitelistSourceRange)
 
-				entryPointRedirect, _ := i.Annotations[types.LabelFrontendRedirect]
+				entryPointRedirect := i.Annotations[label.TraefikFrontendRedirect]
 
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
@@ -189,7 +213,30 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						continue
 					}
 
-					priority := p.getPriority(pa, i)
+					priority := label.GetIntValue(i.Annotations, label.TraefikFrontendPriority, 0)
+
+					headers := types.Headers{
+						CustomRequestHeaders:    label.GetMapValue(i.Annotations, annotationKubernetesCustomRequestHeaders),
+						CustomResponseHeaders:   label.GetMapValue(i.Annotations, annotationKubernetesCustomResponseHeaders),
+						AllowedHosts:            label.GetSliceStringValue(i.Annotations, annotationKubernetesAllowedHosts),
+						HostsProxyHeaders:       label.GetSliceStringValue(i.Annotations, annotationKubernetesProxyHeaders),
+						SSLRedirect:             label.GetBoolValue(i.Annotations, annotationKubernetesSSLRedirect, false),
+						SSLTemporaryRedirect:    label.GetBoolValue(i.Annotations, annotationKubernetesSSLTemporaryRedirect, false),
+						SSLHost:                 label.GetStringValue(i.Annotations, annotationKubernetesSSLHost, ""),
+						SSLProxyHeaders:         label.GetMapValue(i.Annotations, annotationKubernetesSSLProxyHeaders),
+						STSSeconds:              label.GetInt64Value(i.Annotations, annotationKubernetesHSTSMaxAge, 0),
+						STSIncludeSubdomains:    label.GetBoolValue(i.Annotations, annotationKubernetesHSTSIncludeSubdomains, false),
+						STSPreload:              label.GetBoolValue(i.Annotations, annotationKubernetesHSTSPreload, false),
+						ForceSTSHeader:          label.GetBoolValue(i.Annotations, annotationKubernetesForceHSTSHeader, false),
+						FrameDeny:               label.GetBoolValue(i.Annotations, annotationKubernetesFrameDeny, false),
+						CustomFrameOptionsValue: label.GetStringValue(i.Annotations, annotationKubernetesCustomFrameOptionsValue, ""),
+						ContentTypeNosniff:      label.GetBoolValue(i.Annotations, annotationKubernetesContentTypeNosniff, false),
+						BrowserXSSFilter:        label.GetBoolValue(i.Annotations, annotationKubernetesBrowserXSSFilter, false),
+						ContentSecurityPolicy:   label.GetStringValue(i.Annotations, annotationKubernetesContentSecurityPolicy, ""),
+						PublicKey:               label.GetStringValue(i.Annotations, annotationKubernetesPublicKey, ""),
+						ReferrerPolicy:          label.GetStringValue(i.Annotations, annotationKubernetesReferrerPolicy, ""),
+						IsDevelopment:           label.GetBoolValue(i.Annotations, annotationKubernetesIsDevelopment, false),
+					}
 
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:              r.Host + pa.Path,
@@ -201,6 +248,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						WhitelistSourceRange: whitelistSourceRange,
 						Redirect:             entryPointRedirect,
 						EntryPoints:          entryPoints,
+						Headers:              headers,
 					}
 				}
 				if len(r.Host) > 0 {
@@ -236,29 +284,29 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					continue
 				}
 
-				if expression := service.Annotations[types.LabelTraefikBackendCircuitbreaker]; expression != "" {
+				if expression := service.Annotations[label.TraefikBackendCircuitBreaker]; expression != "" {
 					templateObjects.Backends[r.Host+pa.Path].CircuitBreaker = &types.CircuitBreaker{
 						Expression: expression,
 					}
 				}
 
-				if service.Annotations[types.LabelBackendLoadbalancerMethod] == "drr" {
+				if service.Annotations[label.TraefikBackendLoadBalancerMethod] == "drr" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Method = "drr"
 				}
 
-				if sticky := service.Annotations[types.LabelBackendLoadbalancerSticky]; len(sticky) > 0 {
-					log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
+				if sticky := service.Annotations[label.TraefikBackendLoadBalancerSticky]; len(sticky) > 0 {
+					log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancerSticky, label.TraefikBackendLoadBalancerStickiness)
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Sticky = strings.EqualFold(strings.TrimSpace(sticky), "true")
 				}
 
-				if service.Annotations[types.LabelBackendLoadbalancerStickiness] == "true" {
+				if service.Annotations[label.TraefikBackendLoadBalancerStickiness] == "true" {
 					templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Stickiness = &types.Stickiness{}
-					if cookieName := service.Annotations[types.LabelBackendLoadbalancerStickinessCookieName]; len(cookieName) > 0 {
+					if cookieName := service.Annotations[label.TraefikBackendLoadBalancerStickinessCookieName]; len(cookieName) > 0 {
 						templateObjects.Backends[r.Host+pa.Path].LoadBalancer.Stickiness.CookieName = cookieName
 					}
 				}
 
-				protocol := "http"
+				protocol := label.DefaultProtocol
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {
 						if port.Port == 443 {
@@ -320,37 +368,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 	return &templateObjects, nil
 }
 
-func getEntrypoints(i *v1beta1.Ingress) []string {
-	entrypointsAnnotation, ok := i.Annotations[types.LabelFrontendEntryPoints]
-	if ok {
-		return strings.Split(entrypointsAnnotation, ",")
+func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {
+	var FuncMap = template.FuncMap{}
+	configuration, err := p.GetConfiguration("templates/kubernetes.tmpl", FuncMap, templateObjects)
+	if err != nil {
+		log.Error(err)
 	}
-	return nil
-
-}
-
-func getBoolAnnotation(meta v1.ObjectMeta, name string, defaultValue bool) bool {
-	annotationValue := defaultValue
-	annotationStringValue, ok := meta.Annotations[name]
-	switch {
-	case !ok:
-		// No op.
-	case annotationStringValue == "false":
-		annotationValue = false
-	case annotationStringValue == "true":
-		annotationValue = true
-	default:
-		log.Warnf("Unknown value '%s' for %s, falling back to %s", name, types.LabelFrontendPassTLSCert, defaultValue)
-	}
-	return annotationValue
-}
-
-func getAnnotationPassHostHeader(i *v1beta1.Ingress, p *Provider) bool {
-	return getBoolAnnotation(i.ObjectMeta, types.LabelFrontendPassHostHeader, p.getPassHostHeader())
-}
-
-func getAnnotationPassTLSCert(i *v1beta1.Ingress, p *Provider) bool {
-	return getBoolAnnotation(i.ObjectMeta, types.LabelFrontendPassTLSCert, p.getPassTLSCert())
+	return configuration
 }
 
 func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
@@ -358,35 +382,18 @@ func getRuleForPath(pa v1beta1.HTTPIngressPath, i *v1beta1.Ingress) string {
 		return ""
 	}
 
-	ruleType := i.Annotations[types.LabelFrontendRuleType]
+	ruleType := i.Annotations[label.TraefikFrontendRuleType]
 	if ruleType == "" {
 		ruleType = ruleTypePathPrefix
 	}
 
-	rule := ruleType + ":" + pa.Path
+	rules := []string{ruleType + ":" + pa.Path}
 
 	if rewriteTarget := i.Annotations[annotationKubernetesRewriteTarget]; rewriteTarget != "" {
-		rule = ruleTypeReplacePath + ":" + rewriteTarget
+		rules = append(rules, ruleTypeReplacePath+":"+rewriteTarget)
 	}
 
-	return rule
-}
-
-func (p *Provider) getPriority(path v1beta1.HTTPIngressPath, i *v1beta1.Ingress) int {
-	priority := 0
-
-	priorityRaw, ok := i.Annotations[types.LabelFrontendPriority]
-	if ok {
-		priorityParsed, err := strconv.Atoi(priorityRaw)
-
-		if err == nil {
-			priority = priorityParsed
-		} else {
-			log.Errorf("Error in ingress: failed to parse %q value %q.", types.LabelFrontendPriority, priorityRaw)
-		}
-	}
-
-	return priority
+	return strings.Join(rules, ";")
 }
 
 func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, error) {
@@ -394,17 +401,21 @@ func handleBasicAuthConfig(i *v1beta1.Ingress, k8sClient Client) ([]string, erro
 	if !exists {
 		return nil, nil
 	}
+
 	if strings.ToLower(authType) != "basic" {
 		return nil, fmt.Errorf("unsupported auth-type on annotation ingress.kubernetes.io/auth-type: %q", authType)
 	}
+
 	authSecret := i.Annotations[annotationKubernetesAuthSecret]
 	if authSecret == "" {
 		return nil, errors.New("auth-secret annotation ingress.kubernetes.io/auth-secret must be set")
 	}
+
 	basicAuthCreds, err := loadAuthCredentials(i.Namespace, authSecret, k8sClient)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load auth credentials: %s", err)
 	}
+
 	return basicAuthCreds, nil
 }
 
@@ -499,27 +510,5 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 }
 
 func shouldProcessIngress(ingressClass string) bool {
-	switch ingressClass {
-	case "", "traefik":
-		return true
-	default:
-		return false
-	}
-}
-
-func (p *Provider) getPassHostHeader() bool {
-	return !p.DisablePassHostHeaders
-}
-
-func (p *Provider) getPassTLSCert() bool {
-	return p.EnablePassTLSCert
-}
-
-func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Configuration {
-	var FuncMap = template.FuncMap{}
-	configuration, err := p.GetConfiguration("templates/kubernetes.tmpl", FuncMap, templateObjects)
-	if err != nil {
-		log.Error(err)
-	}
-	return configuration
+	return ingressClass == "" || ingressClass == "traefik"
 }

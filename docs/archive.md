@@ -1,8 +1,14 @@
-## Previous documentation
+## Current versions documentation
 
 - [Latest stable](https://docs.traefik.io)
 
+## Future version documentation
+
 - [Experimental](https://master--traefik-docs.netlify.com/)
+
+## Previous versions documentation
+
+- [v1.5 aka Cancoillotte](http://v1-5.archive.docs.traefik.io/) 
 
 - [v1.4 aka Roquefort](http://v1-4.archive.docs.traefik.io/) 
 

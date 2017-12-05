@@ -46,11 +46,6 @@ func RegisterInfluxDB(config *types.InfluxDB) Registry {
 
 // initInfluxDBTicker initializes metrics pusher and creates a influxDBClient if not created already
 func initInfluxDBTicker(config *types.InfluxDB) *time.Ticker {
-	address := config.Address
-	if len(address) == 0 {
-		address = "localhost:8089"
-	}
-
 	pushInterval, err := time.ParseDuration(config.PushInterval)
 	if err != nil {
 		log.Warnf("Unable to parse %s into pushInterval, using 10s as default value", config.PushInterval)

@@ -5,91 +5,14 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 )
 
-func TestDockerGetServiceProtocol(t *testing.T) {
-	provider := &Provider{}
-
-	containers := []struct {
-		container docker.ContainerJSON
-		expected  string
-	}{
-		{
-			container: containerJSON(),
-			expected:  "http",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelProtocol: "https",
-			})),
-			expected: "https",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.protocol": "https",
-			})),
-			expected: "https",
-		},
-	}
-
-	for containerID, e := range containers {
-		e := e
-		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
-			t.Parallel()
-			dockerData := parseContainer(e.container)
-			actual := provider.getServiceProtocol(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
-		})
-	}
-}
-
-func TestDockerGetServiceWeight(t *testing.T) {
-	provider := &Provider{}
-
-	containers := []struct {
-		container docker.ContainerJSON
-		expected  string
-	}{
-		{
-			container: containerJSON(),
-			expected:  "0",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelWeight: "200",
-			})),
-			expected: "200",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.weight": "31337",
-			})),
-			expected: "31337",
-		},
-	}
-
-	for containerID, e := range containers {
-		e := e
-		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
-			t.Parallel()
-			dockerData := parseContainer(e.container)
-			actual := provider.getServiceWeight(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
-		})
-	}
-}
-
 func TestDockerGetServicePort(t *testing.T) {
-	provider := &Provider{}
-
-	containers := []struct {
+	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
 	}{
@@ -99,7 +22,7 @@ func TestDockerGetServicePort(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				types.LabelPort: "2500",
+				label.TraefikPort: "2500",
 			})),
 			expected: "2500",
 		},
@@ -111,14 +34,14 @@ func TestDockerGetServicePort(t *testing.T) {
 		},
 	}
 
-	for containerID, e := range containers {
-		e := e
+	for containerID, test := range testCases {
+		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-			dockerData := parseContainer(e.container)
-			actual := provider.getServicePort(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
+			dData := parseContainer(test.container)
+			actual := getServicePort(dData, "myservice")
+			if actual != test.expected {
+				t.Fatalf("expected %q, got %q", test.expected, actual)
 			}
 		})
 	}
@@ -127,7 +50,7 @@ func TestDockerGetServicePort(t *testing.T) {
 func TestDockerGetServiceFrontendRule(t *testing.T) {
 	provider := &Provider{}
 
-	containers := []struct {
+	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
 	}{
@@ -137,7 +60,7 @@ func TestDockerGetServiceFrontendRule(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				types.LabelFrontendRule: "Path:/helloworld",
+				label.TraefikFrontendRule: "Path:/helloworld",
 			})),
 			expected: "Path:/helloworld",
 		},
@@ -149,23 +72,21 @@ func TestDockerGetServiceFrontendRule(t *testing.T) {
 		},
 	}
 
-	for containerID, e := range containers {
-		e := e
+	for containerID, test := range testCases {
+		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-			dockerData := parseContainer(e.container)
-			actual := provider.getServiceFrontendRule(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
+			dData := parseContainer(test.container)
+			actual := provider.getServiceFrontendRule(dData, "myservice")
+			if actual != test.expected {
+				t.Fatalf("expected %q, got %q", test.expected, actual)
 			}
 		})
 	}
 }
 
 func TestDockerGetServiceBackend(t *testing.T) {
-	provider := &Provider{}
-
-	containers := []struct {
+	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
 	}{
@@ -175,7 +96,7 @@ func TestDockerGetServiceBackend(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				types.LabelBackend: "another-backend",
+				label.TraefikBackend: "another-backend",
 			})),
 			expected: "fake-another-backend-myservice",
 		},
@@ -187,135 +108,21 @@ func TestDockerGetServiceBackend(t *testing.T) {
 		},
 	}
 
-	for containerID, e := range containers {
-		e := e
+	for containerID, test := range testCases {
+		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-			dockerData := parseContainer(e.container)
-			actual := provider.getServiceBackend(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
-		})
-	}
-}
-
-func TestDockerGetServicePriority(t *testing.T) {
-	provider := &Provider{}
-
-	containers := []struct {
-		container docker.ContainerJSON
-		expected  string
-	}{
-		{
-			container: containerJSON(),
-			expected:  "0",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelFrontendPriority: "33",
-			})),
-			expected: "33",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.frontend.priority": "2503",
-			})),
-			expected: "2503",
-		},
-	}
-
-	for containerID, e := range containers {
-		e := e
-		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
-			t.Parallel()
-			dockerData := parseContainer(e.container)
-			actual := provider.getServicePriority(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
-		})
-	}
-}
-
-func TestDockerGetServicePassHostHeader(t *testing.T) {
-	provider := &Provider{}
-
-	containers := []struct {
-		container docker.ContainerJSON
-		expected  string
-	}{
-		{
-			container: containerJSON(),
-			expected:  "true",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelFrontendPassHostHeader: "false",
-			})),
-			expected: "false",
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.frontend.passHostHeader": "false",
-			})),
-			expected: "false",
-		},
-	}
-
-	for containerID, e := range containers {
-		e := e
-		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
-			t.Parallel()
-			dockerData := parseContainer(e.container)
-			actual := provider.getServicePassHostHeader(dockerData, "myservice")
-			if actual != e.expected {
-				t.Fatalf("expected %q, got %q", e.expected, actual)
-			}
-		})
-	}
-}
-
-func TestDockerGetServiceEntryPoints(t *testing.T) {
-	provider := &Provider{}
-
-	containers := []struct {
-		container docker.ContainerJSON
-		expected  []string
-	}{
-		{
-			container: containerJSON(),
-			expected:  []string{},
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				types.LabelFrontendEntryPoints: "http,https",
-			})),
-			expected: []string{"http", "https"},
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				"traefik.myservice.frontend.entryPoints": "http,https",
-			})),
-			expected: []string{"http", "https"},
-		},
-	}
-
-	for containerID, e := range containers {
-		e := e
-		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
-			t.Parallel()
-			dockerData := parseContainer(e.container)
-			actual := provider.getServiceEntryPoints(dockerData, "myservice")
-			if !reflect.DeepEqual(actual, e.expected) {
-				t.Fatalf("expected %q, got %q for container %q", e.expected, actual, dockerData.Name)
+			dData := parseContainer(test.container)
+			actual := getServiceBackend(dData, "myservice")
+			if actual != test.expected {
+				t.Fatalf("expected %q, got %q", test.expected, actual)
 			}
 		})
 	}
 }
 
 func TestDockerLoadDockerServiceConfig(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		containers        []docker.ContainerJSON
 		expectedFrontends map[string]*types.Frontend
 		expectedBackends  map[string]*types.Backend
@@ -456,23 +263,23 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 		ExposedByDefault: true,
 	}
 
-	for caseID, c := range cases {
-		c := c
+	for caseID, test := range testCases {
+		test := test
 		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
 			t.Parallel()
 			var dockerDataList []dockerData
-			for _, container := range c.containers {
-				dockerData := parseContainer(container)
-				dockerDataList = append(dockerDataList, dockerData)
+			for _, container := range test.containers {
+				dData := parseContainer(container)
+				dockerDataList = append(dockerDataList, dData)
 			}
 
-			actualConfig := provider.loadDockerConfig(dockerDataList)
+			actualConfig := provider.buildConfiguration(dockerDataList)
 			// Compare backends
-			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-				t.Fatalf("expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
+			if !reflect.DeepEqual(actualConfig.Backends, test.expectedBackends) {
+				t.Fatalf("expected %#v, got %#v", test.expectedBackends, actualConfig.Backends)
 			}
-			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-				t.Fatalf("expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
+			if !reflect.DeepEqual(actualConfig.Frontends, test.expectedFrontends) {
+				t.Fatalf("expected %#v, got %#v", test.expectedFrontends, actualConfig.Frontends)
 			}
 		})
 	}

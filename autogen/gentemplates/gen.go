@@ -213,7 +213,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   SSLTemporaryRedirect = {{getSSLTemporaryRedirectHeaders $container}}
   {{end}}
   {{if hasSSLHostHeaders $container}}
-  SSLHost = {{getSSLHostHeaders $container}}
+  SSLHost = "{{getSSLHostHeaders $container}}"
   {{end}}
   {{if hasSTSSecondsHeaders $container}}
   STSSeconds = {{getSTSSecondsHeaders $container}}
@@ -231,7 +231,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   FrameDeny = {{getFrameDenyHeaders $container}}
   {{end}}
   {{if hasCustomFrameOptionsValueHeaders $container}}
-  CustomFrameOptionsValue = {{getCustomFrameOptionsValueHeaders $container}}
+  CustomFrameOptionsValue = "{{getCustomFrameOptionsValueHeaders $container}}"
   {{end}}
   {{if hasContentTypeNosniffHeaders $container}}
   ContentTypeNosniff = {{getContentTypeNosniffHeaders $container}}
@@ -240,13 +240,13 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   BrowserXSSFilter = {{getBrowserXSSFilterHeaders $container}}
   {{end}}
   {{if hasContentSecurityPolicyHeaders $container}}
-  ContentSecurityPolicy = {{getContentSecurityPolicyHeaders $container}}
+  ContentSecurityPolicy = "{{getContentSecurityPolicyHeaders $container}}"
   {{end}}
   {{if hasPublicKeyHeaders $container}}
-  PublicKey = {{getPublicKeyHeaders $container}}
+  PublicKey = "{{getPublicKeyHeaders $container}}"
   {{end}}
   {{if hasReferrerPolicyHeaders $container}}
-  ReferrerPolicy = {{getReferrerPolicyHeaders $container}}
+  ReferrerPolicy = "{{getReferrerPolicyHeaders $container}}"
   {{end}}
   {{if hasIsDevelopmentHeaders $container}}
   IsDevelopment = {{getIsDevelopmentHeaders $container}}
@@ -305,7 +305,7 @@ func templatesDockerTmpl() (*asset, error) {
 var _templatesEcsTmpl = []byte(`[backends]{{range $serviceName, $instances := .Services}}
   [backends.backend-{{ $serviceName }}.loadbalancer]
     method = "{{ getLoadBalancerMethod $instances}}"
-    sticky = {{ getLoadBalancerSticky $instances}}
+    sticky = {{ getSticky $instances}}
     {{if hasStickinessLabel $instances}} 
     [backends.backend-{{ $serviceName }}.loadbalancer.stickiness]
       cookieName = "{{getStickinessCookieName $instances}}"
@@ -421,6 +421,52 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
   whitelistSourceRange = [{{range $frontend.WhitelistSourceRange}}
     "{{.}}",
   {{end}}]
+  [frontends."{{$frontendName}}".headers]
+  SSLRedirect = {{$frontend.Headers.SSLRedirect}}
+  SSLTemporaryRedirect = {{$frontend.Headers.SSLTemporaryRedirect}}
+  SSLHost = "{{$frontend.Headers.SSLHost}}"
+  STSSeconds = {{$frontend.Headers.STSSeconds}}
+  STSIncludeSubdomains = {{$frontend.Headers.STSIncludeSubdomains}}
+  STSPreload = {{$frontend.Headers.STSPreload}}
+  ForceSTSHeader = {{$frontend.Headers.ForceSTSHeader}}
+  FrameDeny = {{$frontend.Headers.FrameDeny}}
+  CustomFrameOptionsValue = "{{$frontend.Headers.CustomFrameOptionsValue}}"
+  ContentTypeNosniff = {{$frontend.Headers.ContentTypeNosniff}}
+  BrowserXSSFilter = {{$frontend.Headers.BrowserXSSFilter}}
+  ContentSecurityPolicy = "{{$frontend.Headers.ContentSecurityPolicy}}"
+  PublicKey = "{{$frontend.Headers.PublicKey}}"
+  ReferrerPolicy = "{{$frontend.Headers.ReferrerPolicy}}"
+  IsDevelopment = {{$frontend.Headers.IsDevelopment}}
+{{if $frontend.Headers.CustomRequestHeaders}}
+    [frontends."{{$frontendName}}".headers.customrequestheaders]
+    {{range $k, $v := $frontend.Headers.CustomRequestHeaders}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+{{end}}
+{{if $frontend.Headers.CustomResponseHeaders}}
+    [frontends."{{$frontendName}}".headers.customresponseheaders]
+    {{range $k, $v := $frontend.Headers.CustomResponseHeaders}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+{{end}}
+{{if $frontend.Headers.AllowedHosts}}
+    [frontends."{{$frontendName}}".headers.AllowedHosts]
+    {{range $frontend.Headers.AllowedHosts}}
+    "{{.}}"
+    {{end}}
+{{end}}
+{{if $frontend.Headers.HostsProxyHeaders}}
+    [frontends."{{$frontendName}}".headers.HostsProxyHeaders]
+    {{range $frontend.Headers.HostsProxyHeaders}}
+    "{{.}}"
+    {{end}}
+{{end}}
+{{if $frontend.Headers.SSLProxyHeaders}}
+    [frontends."{{$frontendName}}".headers.SSLProxyHeaders]
+    {{range $k, $v := $frontend.Headers.SSLProxyHeaders}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+{{end}}
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
     rule = "{{$route.Rule}}"
@@ -553,7 +599,7 @@ var _templatesMarathonTmpl = []byte(`{{$apps := .Applications}}
 {{range $app := $apps}}
 {{range $task := $app.Tasks}}
 {{range $serviceIndex, $serviceName := getServiceNames $app}}
-    [backends."backend{{getBackend $app $serviceName}}".servers."server-{{$task.ID | replace "." "-"}}{{getServiceNameSuffix $serviceName }}"]
+    [backends."{{getBackend $app $serviceName}}".servers."server-{{$task.ID | replace "." "-"}}{{getServiceNameSuffix $serviceName }}"]
     url = "{{getProtocol $app $serviceName}}://{{getBackendServer $task $app}}:{{getPort $task $app $serviceName}}"
     weight = {{getWeight $app $serviceName}}
 {{end}}
@@ -562,27 +608,27 @@ var _templatesMarathonTmpl = []byte(`{{$apps := .Applications}}
 
 {{range $app := $apps}}
 {{range $serviceIndex, $serviceName := getServiceNames $app}}
-[backends."backend{{getBackend $app $serviceName }}"]
+[backends."{{getBackend $app $serviceName }}"]
 {{ if hasMaxConnLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".maxconn]
+      [backends."{{getBackend $app $serviceName }}".maxconn]
         amount = {{getMaxConnAmount $app }}
         extractorfunc = "{{getMaxConnExtractorFunc $app }}"
 {{end}}
 {{ if hasLoadBalancerLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".loadbalancer]
+      [backends."{{getBackend $app $serviceName }}".loadbalancer]
         method = "{{getLoadBalancerMethod $app }}"
         sticky = {{getSticky $app}}
         {{if hasStickinessLabel $app}}
-        [backends."backend{{getBackend $app $serviceName }}".loadbalancer.stickiness]
+        [backends."{{getBackend $app $serviceName }}".loadbalancer.stickiness]
           cookieName = "{{getStickinessCookieName $app}}"
         {{end}}
 {{end}}
 {{ if hasCircuitBreakerLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".circuitbreaker]
+      [backends."{{getBackend $app $serviceName }}".circuitbreaker]
         expression = "{{getCircuitBreakerExpression $app }}"
 {{end}}
 {{ if hasHealthCheckLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".healthcheck]
+      [backends."{{getBackend $app $serviceName }}".healthcheck]
         path = "{{getHealthCheckPath $app }}"
         interval = "{{getHealthCheckInterval $app }}"
 {{end}}
@@ -591,7 +637,7 @@ var _templatesMarathonTmpl = []byte(`{{$apps := .Applications}}
 
 [frontends]{{range $app := $apps}}{{range $serviceIndex, $serviceName := getServiceNames .}}
   [frontends."{{ getFrontendName $app $serviceName }}"]
-  backend = "backend{{getBackend $app $serviceName}}"
+  backend = "{{getBackend $app $serviceName}}"
   passHostHeader = {{getPassHostHeader $app $serviceName}}
   priority = {{getPriority $app $serviceName}}
   entryPoints = [{{range getEntryPoints $app $serviceName}}
@@ -848,17 +894,17 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
-	"templates": &bintree{nil, map[string]*bintree{
-		"consul_catalog.tmpl": &bintree{templatesConsul_catalogTmpl, map[string]*bintree{}},
-		"docker.tmpl":         &bintree{templatesDockerTmpl, map[string]*bintree{}},
-		"ecs.tmpl":            &bintree{templatesEcsTmpl, map[string]*bintree{}},
-		"eureka.tmpl":         &bintree{templatesEurekaTmpl, map[string]*bintree{}},
-		"kubernetes.tmpl":     &bintree{templatesKubernetesTmpl, map[string]*bintree{}},
-		"kv.tmpl":             &bintree{templatesKvTmpl, map[string]*bintree{}},
-		"marathon.tmpl":       &bintree{templatesMarathonTmpl, map[string]*bintree{}},
-		"mesos.tmpl":          &bintree{templatesMesosTmpl, map[string]*bintree{}},
-		"notFound.tmpl":       &bintree{templatesNotfoundTmpl, map[string]*bintree{}},
-		"rancher.tmpl":        &bintree{templatesRancherTmpl, map[string]*bintree{}},
+	"templates": {nil, map[string]*bintree{
+		"consul_catalog.tmpl": {templatesConsul_catalogTmpl, map[string]*bintree{}},
+		"docker.tmpl":         {templatesDockerTmpl, map[string]*bintree{}},
+		"ecs.tmpl":            {templatesEcsTmpl, map[string]*bintree{}},
+		"eureka.tmpl":         {templatesEurekaTmpl, map[string]*bintree{}},
+		"kubernetes.tmpl":     {templatesKubernetesTmpl, map[string]*bintree{}},
+		"kv.tmpl":             {templatesKvTmpl, map[string]*bintree{}},
+		"marathon.tmpl":       {templatesMarathonTmpl, map[string]*bintree{}},
+		"mesos.tmpl":          {templatesMesosTmpl, map[string]*bintree{}},
+		"notFound.tmpl":       {templatesNotfoundTmpl, map[string]*bintree{}},
+		"rancher.tmpl":        {templatesRancherTmpl, map[string]*bintree{}},
 	}},
 }}
 

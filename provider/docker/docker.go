@@ -2,17 +2,12 @@ package docker
 
 import (
 	"context"
-	"fmt"
-	"math"
 	"net"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
-	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
@@ -29,7 +24,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/go-connections/sockets"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -37,11 +31,6 @@ const (
 	SwarmAPIVersion = "1.24"
 	// SwarmDefaultWatchTime is the duration of the interval when polling docker
 	SwarmDefaultWatchTime = 15 * time.Second
-
-	labelDockerNetwork            = "traefik.docker.network"
-	labelBackendLoadbalancerSwarm = "traefik.backend.loadbalancer.swarm"
-	labelDockerComposeProject     = "com.docker.compose.project"
-	labelDockerComposeService     = "com.docker.compose.service"
 )
 
 var _ provider.Provider = (*Provider)(nil)
@@ -85,9 +74,7 @@ type networkData struct {
 
 func (p *Provider) createClient() (client.APIClient, error) {
 	var httpClient *http.Client
-	httpHeaders := map[string]string{
-		"User-Agent": "Traefik " + version.Version,
-	}
+
 	if p.TLS != nil {
 		config, err := p.TLS.CreateTLSConfig()
 		if err != nil {
@@ -106,16 +93,20 @@ func (p *Provider) createClient() (client.APIClient, error) {
 		httpClient = &http.Client{
 			Transport: tr,
 		}
-
 	}
-	var version string
+
+	httpHeaders := map[string]string{
+		"User-Agent": "Traefik " + version.Version,
+	}
+
+	var apiVersion string
 	if p.SwarmMode {
-		version = SwarmAPIVersion
+		apiVersion = SwarmAPIVersion
 	} else {
-		version = DockerAPIVersion
+		apiVersion = DockerAPIVersion
 	}
-	return client.NewClient(p.Endpoint, version, httpClient, httpHeaders)
 
+	return client.NewClient(p.Endpoint, apiVersion, httpClient, httpHeaders)
 }
 
 // Provide allows the docker provider to provide configurations to traefik
@@ -134,15 +125,15 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 			}
 
 			ctx := context.Background()
-			version, err := dockerClient.ServerVersion(ctx)
+			serverVersion, err := dockerClient.ServerVersion(ctx)
 			if err != nil {
 				log.Errorf("Failed to retrieve information of the docker client and server host: %s", err)
 				return err
 			}
-			log.Debugf("Provider connection established with docker %s (API %s)", version.Version, version.APIVersion)
+			log.Debugf("Provider connection established with docker %s (API %s)", serverVersion.Version, serverVersion.APIVersion)
 			var dockerDataList []dockerData
 			if p.SwarmMode {
-				dockerDataList, err = p.listServices(ctx, dockerClient)
+				dockerDataList, err = listServices(ctx, dockerClient)
 				if err != nil {
 					log.Errorf("Failed to list services for docker swarm mode, error %s", err)
 					return err
@@ -155,7 +146,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				}
 			}
 
-			configuration := p.loadDockerConfig(dockerDataList)
+			configuration := p.buildConfiguration(dockerDataList)
 			configurationChan <- types.ConfigMessage{
 				ProviderName:  "docker",
 				Configuration: configuration,
@@ -171,13 +162,13 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 						for {
 							select {
 							case <-ticker.C:
-								services, err := p.listServices(ctx, dockerClient)
+								services, err := listServices(ctx, dockerClient)
 								if err != nil {
 									log.Errorf("Failed to list services for docker, error %s", err)
 									errChan <- err
 									return
 								}
-								configuration := p.loadDockerConfig(services)
+								configuration := p.buildConfiguration(services)
 								if configuration != nil {
 									configurationChan <- types.ConfigMessage{
 										ProviderName:  "docker",
@@ -222,7 +213,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 							cancel()
 							return
 						}
-						configuration := p.loadDockerConfig(containers)
+						configuration := p.buildConfiguration(containers)
 						if configuration != nil {
 							configurationChan <- types.ConfigMessage{
 								ProviderName:  "docker",
@@ -258,859 +249,81 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	return nil
 }
 
-func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Configuration {
-	var DockerFuncMap = template.FuncMap{
-		"getBackend":                        p.getBackend,
-		"getIPAddress":                      p.getIPAddress,
-		"getPort":                           p.getPort,
-		"getWeight":                         p.getWeight,
-		"getDomain":                         p.getDomain,
-		"getProtocol":                       p.getProtocol,
-		"getPassHostHeader":                 p.getPassHostHeader,
-		"getPriority":                       p.getPriority,
-		"getEntryPoints":                    p.getEntryPoints,
-		"getBasicAuth":                      p.getBasicAuth,
-		"getFrontendRule":                   p.getFrontendRule,
-		"getRedirect":                       p.getRedirect,
-		"hasCircuitBreakerLabel":            p.hasCircuitBreakerLabel,
-		"getCircuitBreakerExpression":       p.getCircuitBreakerExpression,
-		"hasLoadBalancerLabel":              p.hasLoadBalancerLabel,
-		"getLoadBalancerMethod":             p.getLoadBalancerMethod,
-		"hasMaxConnLabels":                  p.hasMaxConnLabels,
-		"getMaxConnAmount":                  p.getMaxConnAmount,
-		"getMaxConnExtractorFunc":           p.getMaxConnExtractorFunc,
-		"getSticky":                         p.getSticky,
-		"getStickinessCookieName":           p.getStickinessCookieName,
-		"hasStickinessLabel":                p.hasStickinessLabel,
-		"getIsBackendLBSwarm":               p.getIsBackendLBSwarm,
-		"hasServices":                       p.hasServices,
-		"getServiceNames":                   p.getServiceNames,
-		"getServicePort":                    p.getServicePort,
-		"getServiceWeight":                  p.getServiceWeight,
-		"getServiceProtocol":                p.getServiceProtocol,
-		"getServiceEntryPoints":             p.getServiceEntryPoints,
-		"getServiceBasicAuth":               p.getServiceBasicAuth,
-		"getServiceFrontendRule":            p.getServiceFrontendRule,
-		"getServicePassHostHeader":          p.getServicePassHostHeader,
-		"getServicePriority":                p.getServicePriority,
-		"getServiceBackend":                 p.getServiceBackend,
-		"getServiceRedirect":                p.getServiceRedirect,
-		"getWhitelistSourceRange":           p.getWhitelistSourceRange,
-		"hasRequestHeaders":                 p.hasLabel(types.LabelFrontendRequestHeader),
-		"getRequestHeaders":                 p.getRequestHeaders,
-		"hasResponseHeaders":                p.hasLabel(types.LabelFrontendResponseHeader),
-		"getResponseHeaders":                p.getResponseHeaders,
-		"hasAllowedHostsHeaders":            p.hasLabel(types.LabelFrontendAllowedHosts),
-		"getAllowedHostsHeaders":            p.getAllowedHostsHeaders,
-		"hasHostsProxyHeaders":              p.hasLabel(types.LabelFrontendHostsProxyHeaders),
-		"getHostsProxyHeaders":              p.getHostsProxyHeaders,
-		"hasSSLRedirectHeaders":             p.hasLabel(types.LabelFrontendSSLRedirect),
-		"getSSLRedirectHeaders":             p.getSSLRedirectHeaders,
-		"hasSSLTemporaryRedirectHeaders":    p.hasLabel(types.LabelFrontendSSLTemporaryRedirect),
-		"getSSLTemporaryRedirectHeaders":    p.getSSLTemporaryRedirectHeaders,
-		"hasSSLHostHeaders":                 p.hasLabel(types.LabelFrontendSSLHost),
-		"getSSLHostHeaders":                 p.getSSLHostHeaders,
-		"hasSSLProxyHeaders":                p.hasLabel(types.LabelFrontendSSLProxyHeaders),
-		"getSSLProxyHeaders":                p.getSSLProxyHeaders,
-		"hasSTSSecondsHeaders":              p.hasLabel(types.LabelFrontendSTSSeconds),
-		"getSTSSecondsHeaders":              p.getSTSSecondsHeaders,
-		"hasSTSIncludeSubdomainsHeaders":    p.hasLabel(types.LabelFrontendSTSIncludeSubdomains),
-		"getSTSIncludeSubdomainsHeaders":    p.getSTSIncludeSubdomainsHeaders,
-		"hasSTSPreloadHeaders":              p.hasLabel(types.LabelFrontendSTSPreload),
-		"getSTSPreloadHeaders":              p.getSTSPreloadHeaders,
-		"hasForceSTSHeaderHeaders":          p.hasLabel(types.LabelFrontendForceSTSHeader),
-		"getForceSTSHeaderHeaders":          p.getForceSTSHeaderHeaders,
-		"hasFrameDenyHeaders":               p.hasLabel(types.LabelFrontendFrameDeny),
-		"getFrameDenyHeaders":               p.getFrameDenyHeaders,
-		"hasCustomFrameOptionsValueHeaders": p.hasLabel(types.LabelFrontendCustomFrameOptionsValue),
-		"getCustomFrameOptionsValueHeaders": p.getCustomFrameOptionsValueHeaders,
-		"hasContentTypeNosniffHeaders":      p.hasLabel(types.LabelFrontendContentTypeNosniff),
-		"getContentTypeNosniffHeaders":      p.getContentTypeNosniffHeaders,
-		"hasBrowserXSSFilterHeaders":        p.hasLabel(types.LabelFrontendBrowserXSSFilter),
-		"getBrowserXSSFilterHeaders":        p.getBrowserXSSFilterHeaders,
-		"hasContentSecurityPolicyHeaders":   p.hasLabel(types.LabelFrontendContentSecurityPolicy),
-		"getContentSecurityPolicyHeaders":   p.getContentSecurityPolicyHeaders,
-		"hasPublicKeyHeaders":               p.hasLabel(types.LabelFrontendPublicKey),
-		"getPublicKeyHeaders":               p.getPublicKeyHeaders,
-		"hasReferrerPolicyHeaders":          p.hasLabel(types.LabelFrontendReferrerPolicy),
-		"getReferrerPolicyHeaders":          p.getReferrerPolicyHeaders,
-		"hasIsDevelopmentHeaders":           p.hasLabel(types.LabelFrontendIsDevelopment),
-		"getIsDevelopmentHeaders":           p.getIsDevelopmentHeaders,
-	}
-	// filter containers
-	filteredContainers := fun.Filter(func(container dockerData) bool {
-		return p.containerFilter(container)
-	}, containersInspected).([]dockerData)
-
-	frontends := map[string][]dockerData{}
-	backends := map[string]dockerData{}
-	servers := map[string][]dockerData{}
-	serviceNames := make(map[string]struct{})
-	for idx, container := range filteredContainers {
-		if _, exists := serviceNames[container.ServiceName]; !exists {
-			frontendName := p.getFrontendName(container, idx)
-			frontends[frontendName] = append(frontends[frontendName], container)
-			if len(container.ServiceName) > 0 {
-				serviceNames[container.ServiceName] = struct{}{}
-			}
-		}
-		backendName := p.getBackend(container)
-		backends[backendName] = container
-		servers[backendName] = append(servers[backendName], container)
-	}
-
-	templateObjects := struct {
-		Containers []dockerData
-		Frontends  map[string][]dockerData
-		Backends   map[string]dockerData
-		Servers    map[string][]dockerData
-		Domain     string
-	}{
-		filteredContainers,
-		frontends,
-		backends,
-		servers,
-		p.Domain,
-	}
-
-	configuration, err := p.GetConfiguration("templates/docker.tmpl", DockerFuncMap, templateObjects)
-	if err != nil {
-		log.Error(err)
-	}
-
-	return configuration
-}
-
-func (p *Provider) hasCircuitBreakerLabel(container dockerData) bool {
-	_, err := getLabel(container, types.LabelBackendCircuitbreakerExpression)
-	return err == nil
-}
-
-// Regexp used to extract the name of the service and the name of the property for this service
-// All properties are under the format traefik.<servicename>.frontent.*= except the port/weight/protocol directly after traefik.<servicename>.
-var servicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|weight|protocol|frontend\.(.*))$`)
-
-// Map of services properties
-// we can get it with label[serviceName][propertyName] and we got the propertyValue
-type labelServiceProperties map[string]map[string]string
-
-// Check if for the given container, we find labels that are defining services
-func (p *Provider) hasServices(container dockerData) bool {
-	return len(extractServicesLabels(container.Labels)) > 0
-}
-
-// Extract the service labels from container labels of dockerData struct
-func extractServicesLabels(labels map[string]string) labelServiceProperties {
-	v := make(labelServiceProperties)
-
-	for index, serviceProperty := range labels {
-		matches := servicesPropertiesRegexp.FindStringSubmatch(index)
-		if matches != nil {
-			result := make(map[string]string)
-			for i, name := range servicesPropertiesRegexp.SubexpNames() {
-				if i != 0 {
-					result[name] = matches[i]
-				}
-			}
-			serviceName := result["service_name"]
-			if _, ok := v[serviceName]; !ok {
-				v[serviceName] = make(map[string]string)
-			}
-			v[serviceName][result["property_name"]] = serviceProperty
-		}
-	}
-
-	return v
-}
-
-// Gets the entry for a service label searching in all labels of the given container
-func getContainerServiceLabel(container dockerData, serviceName string, entry string) (string, bool) {
-	value, ok := extractServicesLabels(container.Labels)[serviceName][entry]
-	return value, ok
-}
-
-// Gets array of service names for a given container
-func (p *Provider) getServiceNames(container dockerData) []string {
-	labelServiceProperties := extractServicesLabels(container.Labels)
-	keys := make([]string, 0, len(labelServiceProperties))
-	for k := range labelServiceProperties {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
-// Extract entrypoints from labels for a given service and a given docker container
-func (p *Provider) getServiceEntryPoints(container dockerData, serviceName string) []string {
-	if entryPoints, ok := getContainerServiceLabel(container, serviceName, "frontend.entryPoints"); ok {
-		return strings.Split(entryPoints, ",")
-	}
-	return p.getEntryPoints(container)
-
-}
-
-// Extract basic auth from labels for a given service and a given docker container
-func (p *Provider) getServiceBasicAuth(container dockerData, serviceName string) []string {
-	if basicAuth, ok := getContainerServiceLabel(container, serviceName, "frontend.auth.basic"); ok {
-		return strings.Split(basicAuth, ",")
-	}
-	return p.getBasicAuth(container)
-
-}
-
-// Extract passHostHeader from labels for a given service and a given docker container
-func (p *Provider) getServicePassHostHeader(container dockerData, serviceName string) string {
-	if servicePassHostHeader, ok := getContainerServiceLabel(container, serviceName, "frontend.passHostHeader"); ok {
-		return servicePassHostHeader
-	}
-	return p.getPassHostHeader(container)
-}
-
-// Extract priority from labels for a given service and a given docker container
-func (p *Provider) getServicePriority(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.priority"); ok {
-		return value
-	}
-	return p.getPriority(container)
-
-}
-
-// Extract backend from labels for a given service and a given docker container
-func (p *Provider) getServiceBackend(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.backend"); ok {
-		return container.ServiceName + "-" + value
-	}
-	return strings.TrimPrefix(container.ServiceName, "/") + "-" + p.getBackend(container) + "-" + provider.Normalize(serviceName)
-}
-
-// Extract rule from labels for a given service and a given docker container
-func (p *Provider) getServiceFrontendRule(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.rule"); ok {
-		return value
-	}
-	return p.getFrontendRule(container)
-
-}
-
-// Extract port from labels for a given service and a given docker container
-func (p *Provider) getServicePort(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "port"); ok {
-		return value
-	}
-	return p.getPort(container)
-}
-
-// Extract weight from labels for a given service and a given docker container
-func (p *Provider) getServiceWeight(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "weight"); ok {
-		return value
-	}
-	return p.getWeight(container)
-}
-
-// Extract protocol from labels for a given service and a given docker container
-func (p *Provider) getServiceProtocol(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "protocol"); ok {
-		return value
-	}
-	return p.getProtocol(container)
-}
-
-// Extract protocol from labels for a given service and a given docker container
-func (p *Provider) getServiceRedirect(container dockerData, serviceName string) string {
-	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.redirect"); ok {
-		return value
-	}
-	return p.getRedirect(container)
-}
-
-func (p *Provider) hasLoadBalancerLabel(container dockerData) bool {
-	_, errMethod := getLabel(container, types.LabelBackendLoadbalancerMethod)
-	_, errSticky := getLabel(container, types.LabelBackendLoadbalancerSticky)
-	_, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
-	_, errCookieName := getLabel(container, types.LabelBackendLoadbalancerStickinessCookieName)
-
-	return errMethod == nil || errSticky == nil || errStickiness == nil || errCookieName == nil
-}
-
-func (p *Provider) hasMaxConnLabels(container dockerData) bool {
-	if _, err := getLabel(container, types.LabelBackendMaxconnAmount); err != nil {
-		return false
-	}
-	if _, err := getLabel(container, types.LabelBackendMaxconnExtractorfunc); err != nil {
-		return false
-	}
-	return true
-}
-
-func (p *Provider) getCircuitBreakerExpression(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendCircuitbreakerExpression); err == nil {
-		return label
-	}
-	return "NetworkErrorRatio() > 1"
-}
-
-func (p *Provider) getLoadBalancerMethod(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendLoadbalancerMethod); err == nil {
-		return label
-	}
-	return "wrr"
-}
-
-func (p *Provider) getMaxConnAmount(container dockerData) int64 {
-	if label, err := getLabel(container, types.LabelBackendMaxconnAmount); err == nil {
-		i, errConv := strconv.ParseInt(label, 10, 64)
-		if errConv != nil {
-			log.Errorf("Unable to parse traefik.backend.maxconn.amount %s", label)
-			return math.MaxInt64
-		}
-		return i
-	}
-	return math.MaxInt64
-}
-
-func (p *Provider) getMaxConnExtractorFunc(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendMaxconnExtractorfunc); err == nil {
-		return label
-	}
-	return "request.host"
-}
-
-func (p *Provider) containerFilter(container dockerData) bool {
-	if !isContainerEnabled(container, p.ExposedByDefault) {
-		log.Debugf("Filtering disabled container %s", container.Name)
-		return false
-	}
-
-	var err error
-	portLabel := "traefik.port label"
-	if p.hasServices(container) {
-		portLabel = "traefik.<serviceName>.port or " + portLabel + "s"
-		err = checkServiceLabelPort(container)
-	} else {
-		_, err = strconv.Atoi(container.Labels[types.LabelPort])
-	}
-	if len(container.NetworkSettings.Ports) == 0 && err != nil {
-		log.Debugf("Filtering container without port and no %s %s : %s", portLabel, container.Name, err.Error())
-		return false
-	}
-
-	constraintTags := strings.Split(container.Labels[types.LabelTags], ",")
-	if ok, failingConstraint := p.MatchConstraints(constraintTags); !ok {
-		if failingConstraint != nil {
-			log.Debugf("Container %v pruned by '%v' constraint", container.Name, failingConstraint.String())
-		}
-		return false
-	}
-
-	if container.Health != "" && container.Health != "healthy" {
-		log.Debugf("Filtering unhealthy or starting container %s", container.Name)
-		return false
-	}
-
-	if len(p.getFrontendRule(container)) == 0 {
-		log.Debugf("Filtering container with empty frontend rule %s", container.Name)
-		return false
-	}
-
-	return true
-}
-
-// checkServiceLabelPort checks if all service names have a port service label
-// or if port container label exists for default value
-func checkServiceLabelPort(container dockerData) error {
-	// If port container label is present, there is a default values for all ports, use it for the check
-	_, err := strconv.Atoi(container.Labels[types.LabelPort])
-	if err != nil {
-		serviceLabelPorts := make(map[string]struct{})
-		serviceLabels := make(map[string]struct{})
-		portRegexp := regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.port$`)
-		for label := range container.Labels {
-			// Get all port service labels
-			portLabel := portRegexp.FindStringSubmatch(label)
-			if portLabel != nil && len(portLabel) > 0 {
-				serviceLabelPorts[portLabel[0]] = struct{}{}
-			}
-			// Get only one instance of all service names from service labels
-			servicesLabelNames := servicesPropertiesRegexp.FindStringSubmatch(label)
-			if servicesLabelNames != nil && len(servicesLabelNames) > 0 {
-				serviceLabels[strings.Split(servicesLabelNames[0], ".")[1]] = struct{}{}
-			}
-		}
-		// If the number of service labels is different than the number of port services label
-		// there is an error
-		if len(serviceLabels) == len(serviceLabelPorts) {
-			for labelPort := range serviceLabelPorts {
-				_, err = strconv.Atoi(container.Labels[labelPort])
-				if err != nil {
-					break
-				}
-			}
-		} else {
-			err = errors.New("Port service labels missing, please use traefik.port as default value or define all port service labels")
-		}
-	}
-	return err
-}
-
-func (p *Provider) getFrontendName(container dockerData, idx int) string {
-	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
-	return provider.Normalize(p.getFrontendRule(container) + "-" + strconv.Itoa(idx))
-}
-
-// GetFrontendRule returns the frontend rule for the specified container, using
-// it's label. It returns a default one (Host) if the label is not present.
-func (p *Provider) getFrontendRule(container dockerData) string {
-	if label, err := getLabel(container, types.LabelFrontendRule); err == nil {
-		return label
-	}
-	if labels, err := getLabels(container, []string{labelDockerComposeProject, labelDockerComposeService}); err == nil {
-		return "Host:" + getSubDomain(labels[labelDockerComposeService]+"."+labels[labelDockerComposeProject]) + "." + p.Domain
-	}
-	if len(p.Domain) > 0 {
-		return "Host:" + getSubDomain(container.ServiceName) + "." + p.Domain
-	}
-	return ""
-}
-
-func (p *Provider) getBackend(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackend); err == nil {
-		return provider.Normalize(label)
-	}
-	if labels, err := getLabels(container, []string{labelDockerComposeProject, labelDockerComposeService}); err == nil {
-		return provider.Normalize(labels[labelDockerComposeService] + "_" + labels[labelDockerComposeProject])
-	}
-	return provider.Normalize(container.ServiceName)
-}
-
-func (p *Provider) getIPAddress(container dockerData) string {
-	if label, err := getLabel(container, labelDockerNetwork); err == nil && label != "" {
-		networkSettings := container.NetworkSettings
-		if networkSettings.Networks != nil {
-			network := networkSettings.Networks[label]
-			if network != nil {
-				return network.Addr
-			}
-
-			log.Warnf("Could not find network named '%s' for container '%s'! Maybe you're missing the project's prefix in the label? Defaulting to first available network.", label, container.Name)
-		}
-	}
-
-	if container.NetworkSettings.NetworkMode.IsHost() {
-		if container.Node != nil {
-			if container.Node.IPAddress != "" {
-				return container.Node.IPAddress
-			}
-		}
-
-		return "127.0.0.1"
-	}
-
-	if container.NetworkSettings.NetworkMode.IsContainer() {
-		dockerClient, err := p.createClient()
-		if err != nil {
-			log.Warnf("Unable to get IP address for container %s, error: %s", container.Name, err)
-			return ""
-		}
-		ctx := context.Background()
-		containerInspected, err := dockerClient.ContainerInspect(ctx, container.NetworkSettings.NetworkMode.ConnectedContainer())
-		if err != nil {
-			log.Warnf("Unable to get IP address for container %s : Failed to inspect container ID %s, error: %s", container.Name, container.NetworkSettings.NetworkMode.ConnectedContainer(), err)
-			return ""
-		}
-		return p.getIPAddress(parseContainer(containerInspected))
-	}
-
-	if p.UseBindPortIP {
-		port := p.getPort(container)
-		for netport, portBindings := range container.NetworkSettings.Ports {
-			if string(netport) == port+"/TCP" || string(netport) == port+"/UDP" {
-				for _, p := range portBindings {
-					return p.HostIP
-				}
-			}
-		}
-	}
-
-	for _, network := range container.NetworkSettings.Networks {
-		return network.Addr
-	}
-	return ""
-}
-
-func (p *Provider) getPort(container dockerData) string {
-	if label, err := getLabel(container, types.LabelPort); err == nil {
-		return label
-	}
-
-	// See iteration order in https://blog.golang.org/go-maps-in-action
-	var ports []nat.Port
-	for p := range container.NetworkSettings.Ports {
-		ports = append(ports, p)
-	}
-
-	less := func(i, j nat.Port) bool {
-		return i.Int() < j.Int()
-	}
-	nat.Sort(ports, less)
-
-	if len(ports) > 0 {
-		min := ports[0]
-		return min.Port()
-	}
-
-	return ""
-}
-
-func (p *Provider) getWeight(container dockerData) string {
-	if label, err := getLabel(container, types.LabelWeight); err == nil {
-		return label
-	}
-	return "0"
-}
-
-func (p *Provider) hasStickinessLabel(container dockerData) bool {
-	labelStickiness, errStickiness := getLabel(container, types.LabelBackendLoadbalancerStickiness)
-	return errStickiness == nil && len(labelStickiness) > 0 && strings.EqualFold(strings.TrimSpace(labelStickiness), "true")
-}
-
-func (p *Provider) getSticky(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendLoadbalancerSticky); err == nil {
-		if len(label) > 0 {
-			log.Warnf("Deprecated configuration found: %s. Please use %s.", types.LabelBackendLoadbalancerSticky, types.LabelBackendLoadbalancerStickiness)
-		}
-		return label
-	}
-	return "false"
-}
-
-func (p *Provider) getStickinessCookieName(container dockerData) string {
-	if label, err := getLabel(container, types.LabelBackendLoadbalancerStickinessCookieName); err == nil {
-		return label
-	}
-	return ""
-}
-
-func (p *Provider) getIsBackendLBSwarm(container dockerData) string {
-	if label, err := getLabel(container, labelBackendLoadbalancerSwarm); err == nil {
-		return label
-	}
-	return "false"
-}
-
-func (p *Provider) getDomain(container dockerData) string {
-	if label, err := getLabel(container, types.LabelDomain); err == nil {
-		return label
-	}
-	return p.Domain
-}
-
-func (p *Provider) getProtocol(container dockerData) string {
-	if label, err := getLabel(container, types.LabelProtocol); err == nil {
-		return label
-	}
-	return "http"
-}
-
-func (p *Provider) getPassHostHeader(container dockerData) string {
-	if passHostHeader, err := getLabel(container, types.LabelFrontendPassHostHeader); err == nil {
-		return passHostHeader
-	}
-	return "true"
-}
-
-func (p *Provider) getWhitelistSourceRange(container dockerData) []string {
-	var whitelistSourceRange []string
-
-	if whitelistSourceRangeLabel, err := getLabel(container, types.LabelTraefikFrontendWhitelistSourceRange); err == nil {
-		whitelistSourceRange = provider.SplitAndTrimString(whitelistSourceRangeLabel)
-	}
-	return whitelistSourceRange
-}
-
-func (p *Provider) getPriority(container dockerData) string {
-	if priority, err := getLabel(container, types.LabelFrontendPriority); err == nil {
-		return priority
-	}
-	return "0"
-}
-
-func (p *Provider) getEntryPoints(container dockerData) []string {
-	if entryPoints, err := getLabel(container, types.LabelFrontendEntryPoints); err == nil {
-		return strings.Split(entryPoints, ",")
-	}
-	return []string{}
-}
-
-func (p *Provider) getBasicAuth(container dockerData) []string {
-	if basicAuth, err := getLabel(container, types.LabelFrontendAuthBasic); err == nil {
-		return strings.Split(basicAuth, ",")
-	}
-
-	return []string{}
-}
-
-func (p *Provider) hasLabel(label string) func(container dockerData) bool {
-	return func(container dockerData) bool {
-		label, err := getLabel(container, label)
-		return err == nil && len(label) > 0
-	}
-}
-
-func (p *Provider) getRequestHeaders(container dockerData) map[string]string {
-	return parseCustomHeaders(container, types.LabelFrontendRequestHeader)
-}
-
-func (p *Provider) getResponseHeaders(container dockerData) map[string]string {
-	return parseCustomHeaders(container, types.LabelFrontendResponseHeader)
-}
-
-func parseCustomHeaders(container dockerData, containerType string) map[string]string {
-	customHeaders := make(map[string]string)
-	if label, err := getLabel(container, containerType); err == nil {
-		for _, headers := range strings.Split(label, ",") {
-			pair := strings.Split(headers, ":")
-			if len(pair) != 2 {
-				log.Warnf("Could not load header %v, skipping...", pair)
-			} else {
-				customHeaders[pair[0]] = pair[1]
-			}
-		}
-	}
-	if len(customHeaders) == 0 {
-		log.Errorf("Could not load any custom headers")
-	}
-	return customHeaders
-}
-
-func (p *Provider) getAllowedHostsHeaders(container dockerData) []string {
-	return getSliceStringHeaders(container, types.LabelFrontendAllowedHosts)
-}
-
-func (p *Provider) getHostsProxyHeaders(container dockerData) []string {
-	return getSliceStringHeaders(container, types.LabelFrontendHostsProxyHeaders)
-}
-
-func (p *Provider) getSSLRedirectHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendSSLRedirect)
-}
-
-func (p *Provider) getSSLTemporaryRedirectHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendSSLTemporaryRedirect)
-}
-
-func (p *Provider) getSSLHostHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendSSLHost)
-	return label
-}
-
-func (p *Provider) getSSLProxyHeaders(container dockerData) map[string]string {
-	ProxyHeaders := make(map[string]string)
-	if label, err := getLabel(container, types.LabelFrontendSSLProxyHeaders); err == nil {
-		for _, headers := range strings.Split(label, ",") {
-			pair := strings.Split(headers, ":")
-			if len(pair) != 2 {
-				log.Warnf("Could not load header %v, skipping...", pair)
-			} else {
-				ProxyHeaders[pair[0]] = pair[1]
-			}
-		}
-	}
-	if len(ProxyHeaders) == 0 {
-		log.Errorf("Could not load any SSL Proxy Headers")
-	}
-	return ProxyHeaders
-}
-
-func (p *Provider) getSTSSecondsHeaders(container dockerData) int64 {
-	label, _ := getLabel(container, types.LabelFrontendSTSSeconds)
-	i, err := strconv.ParseInt(label, 10, 64)
-	if err == nil && i > 0 {
-		return i
-	}
-	return 0
-}
-
-func (p *Provider) getSTSIncludeSubdomainsHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendSTSIncludeSubdomains)
-}
-
-func (p *Provider) getSTSPreloadHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendSTSPreload)
-}
-
-func (p *Provider) getForceSTSHeaderHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendForceSTSHeader)
-}
-
-func (p *Provider) getFrameDenyHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendFrameDeny)
-}
-
-func (p *Provider) getCustomFrameOptionsValueHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendCustomFrameOptionsValue)
-	return label
-}
-
-func (p *Provider) getContentTypeNosniffHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendContentTypeNosniff)
-}
-
-func (p *Provider) getBrowserXSSFilterHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendBrowserXSSFilter)
-}
-
-func (p *Provider) getContentSecurityPolicyHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendContentSecurityPolicy)
-	return label
-}
-
-func (p *Provider) getPublicKeyHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendPublicKey)
-	return label
-}
-
-func (p *Provider) getReferrerPolicyHeaders(container dockerData) string {
-	label, _ := getLabel(container, types.LabelFrontendReferrerPolicy)
-	return label
-}
-
-func (p *Provider) getIsDevelopmentHeaders(container dockerData) bool {
-	return getBoolHeader(container, types.LabelFrontendIsDevelopment)
-}
-
-func getSliceStringHeaders(container dockerData, containerType string) []string {
-	value := []string{}
-	if label, err := getLabel(container, containerType); err == nil {
-		for _, sublabels := range strings.Split(label, ",") {
-			if len(sublabels) == 0 {
-				log.Warnf("Could not load header %v, skipping", sublabels)
-			} else {
-				value = append(value, sublabels)
-			}
-		}
-	}
-	if len(value) == 0 {
-		log.Errorf("Could not load %v headers", containerType)
-	}
-	return value
-}
-
-func getBoolHeader(container dockerData, containerType string) bool {
-	label, err := getLabel(container, containerType)
-	return err == nil && len(label) > 0 && strings.EqualFold(strings.TrimSpace(label), "true")
-}
-
-func (p *Provider) getRedirect(container dockerData) string {
-	if entryPointredirect, err := getLabel(container, types.LabelFrontendRedirect); err == nil {
-		return entryPointredirect
-	}
-	return ""
-}
-
-func isContainerEnabled(container dockerData, exposedByDefault bool) bool {
-	return exposedByDefault && container.Labels[types.LabelEnable] != "false" || container.Labels[types.LabelEnable] == "true"
-}
-
-func getLabel(container dockerData, label string) (string, error) {
-	for key, value := range container.Labels {
-		if key == label {
-			return value, nil
-		}
-	}
-	return "", fmt.Errorf("label not found: %s", label)
-}
-
-func getLabels(container dockerData, labels []string) (map[string]string, error) {
-	var globalErr error
-	foundLabels := map[string]string{}
-	for _, label := range labels {
-		foundLabel, err := getLabel(container, label)
-		// Error out only if one of them is defined.
-		if err != nil {
-			globalErr = fmt.Errorf("label not found: %s", label)
-			continue
-		}
-		foundLabels[label] = foundLabel
-
-	}
-	return foundLabels, globalErr
-}
-
 func listContainers(ctx context.Context, dockerClient client.ContainerAPIClient) ([]dockerData, error) {
 	containerList, err := dockerClient.ContainerList(ctx, dockertypes.ContainerListOptions{})
 	if err != nil {
-		return []dockerData{}, err
+		return nil, err
 	}
-	containersInspected := []dockerData{}
 
+	var containersInspected []dockerData
 	// get inspect containers
 	for _, container := range containerList {
 		containerInspected, err := dockerClient.ContainerInspect(ctx, container.ID)
 		if err != nil {
 			log.Warnf("Failed to inspect container %s, error: %s", container.ID, err)
 		} else {
-			dockerData := parseContainer(containerInspected)
-			containersInspected = append(containersInspected, dockerData)
+			// This condition is here to avoid to have empty IP https://github.com/containous/traefik/issues/2459
+			// We register only container which are running
+			if containerInspected.ContainerJSONBase != nil && containerInspected.ContainerJSONBase.State != nil && containerInspected.ContainerJSONBase.State.Running {
+				dData := parseContainer(containerInspected)
+				containersInspected = append(containersInspected, dData)
+			}
 		}
 	}
 	return containersInspected, nil
 }
 
 func parseContainer(container dockertypes.ContainerJSON) dockerData {
-	dockerData := dockerData{
+	dData := dockerData{
 		NetworkSettings: networkSettings{},
 	}
 
 	if container.ContainerJSONBase != nil {
-		dockerData.Name = container.ContainerJSONBase.Name
-		dockerData.ServiceName = dockerData.Name //Default ServiceName to be the container's Name.
-		dockerData.Node = container.ContainerJSONBase.Node
+		dData.Name = container.ContainerJSONBase.Name
+		dData.ServiceName = dData.Name //Default ServiceName to be the container's Name.
+		dData.Node = container.ContainerJSONBase.Node
 
 		if container.ContainerJSONBase.HostConfig != nil {
-			dockerData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
+			dData.NetworkSettings.NetworkMode = container.ContainerJSONBase.HostConfig.NetworkMode
 		}
 
 		if container.State != nil && container.State.Health != nil {
-			dockerData.Health = container.State.Health.Status
+			dData.Health = container.State.Health.Status
 		}
 	}
 
 	if container.Config != nil && container.Config.Labels != nil {
-		dockerData.Labels = container.Config.Labels
+		dData.Labels = container.Config.Labels
 	}
 
 	if container.NetworkSettings != nil {
 		if container.NetworkSettings.Ports != nil {
-			dockerData.NetworkSettings.Ports = container.NetworkSettings.Ports
+			dData.NetworkSettings.Ports = container.NetworkSettings.Ports
 		}
 		if container.NetworkSettings.Networks != nil {
-			dockerData.NetworkSettings.Networks = make(map[string]*networkData)
+			dData.NetworkSettings.Networks = make(map[string]*networkData)
 			for name, containerNetwork := range container.NetworkSettings.Networks {
-				dockerData.NetworkSettings.Networks[name] = &networkData{
+				dData.NetworkSettings.Networks[name] = &networkData{
 					ID:   containerNetwork.NetworkID,
 					Name: name,
 					Addr: containerNetwork.IPAddress,
 				}
 			}
 		}
-
 	}
-
-	return dockerData
+	return dData
 }
 
-// Escape beginning slash "/", convert all others to dash "-", and convert underscores "_" to dash "-"
-func getSubDomain(name string) string {
-	return strings.Replace(strings.Replace(strings.TrimPrefix(name, "/"), "/", "-", -1), "_", "-", -1)
-}
-
-func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
+func listServices(ctx context.Context, dockerClient client.APIClient) ([]dockerData, error) {
 	serviceList, err := dockerClient.ServiceList(ctx, dockertypes.ServiceListOptions{})
 	if err != nil {
-		return []dockerData{}, err
+		return nil, err
 	}
 
 	serverVersion, err := dockerClient.ServerVersion(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	networkListArgs := filters.NewArgs()
 	// https://docs.docker.com/engine/api/v1.29/#tag/Network (Docker 17.06)
@@ -1121,12 +334,12 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 	}
 
 	networkList, err := dockerClient.NetworkList(ctx, dockertypes.NetworkListOptions{Filters: networkListArgs})
+	if err != nil {
+		log.Debugf("Failed to network inspect on client for docker, error: %s", err)
+		return nil, err
+	}
 
 	networkMap := make(map[string]*dockertypes.NetworkResource)
-	if err != nil {
-		log.Debug("Failed to network inspect on client for docker, error: %s", err)
-		return []dockerData{}, err
-	}
 	for _, network := range networkList {
 		networkToAdd := network
 		networkMap[network.ID] = &networkToAdd
@@ -1136,26 +349,29 @@ func (p *Provider) listServices(ctx context.Context, dockerClient client.APIClie
 	var dockerDataListTasks []dockerData
 
 	for _, service := range serviceList {
-		dockerData := parseService(service, networkMap)
-		useSwarmLB, _ := strconv.ParseBool(p.getIsBackendLBSwarm(dockerData))
-		isGlobalSvc := service.Spec.Mode.Global != nil
+		dData := parseService(service, networkMap)
+		if len(dData.NetworkSettings.Networks) > 0 {
+			useSwarmLB := isBackendLBSwarm(dData)
 
-		if useSwarmLB {
-			dockerDataList = append(dockerDataList, dockerData)
-		} else {
-			dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dockerData, networkMap, isGlobalSvc)
+			if useSwarmLB {
+				dockerDataList = append(dockerDataList, dData)
+			} else {
+				isGlobalSvc := service.Spec.Mode.Global != nil
 
-			for _, dockerDataTask := range dockerDataListTasks {
-				dockerDataList = append(dockerDataList, dockerDataTask)
+				dockerDataListTasks, err = listTasks(ctx, dockerClient, service.ID, dData, networkMap, isGlobalSvc)
+				if err != nil {
+					log.Warn(err)
+				} else {
+					dockerDataList = append(dockerDataList, dockerDataListTasks...)
+				}
 			}
 		}
 	}
 	return dockerDataList, err
-
 }
 
 func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes.NetworkResource) dockerData {
-	dockerData := dockerData{
+	dData := dockerData{
 		ServiceName:     service.Spec.Annotations.Name,
 		Name:            service.Spec.Annotations.Name,
 		Labels:          service.Spec.Annotations.Labels,
@@ -1165,9 +381,9 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 	if service.Spec.EndpointSpec != nil {
 		switch service.Spec.EndpointSpec.Mode {
 		case swarmtypes.ResolutionModeDNSRR:
-			log.Debug("Ignored endpoint-mode not supported, service name: %s", dockerData.Name)
+			log.Warnf("Ignored endpoint-mode not supported, service name: %s", service.Spec.Annotations.Name)
 		case swarmtypes.ResolutionModeVIP:
-			dockerData.NetworkSettings.Networks = make(map[string]*networkData)
+			dData.NetworkSettings.Networks = make(map[string]*networkData)
 			for _, virtualIP := range service.Endpoint.VirtualIPs {
 				networkService := networkMap[virtualIP.NetworkID]
 				if networkService != nil {
@@ -1177,14 +393,14 @@ func parseService(service swarmtypes.Service, networkMap map[string]*dockertypes
 						ID:   virtualIP.NetworkID,
 						Addr: ip.String(),
 					}
-					dockerData.NetworkSettings.Networks[network.Name] = network
+					dData.NetworkSettings.Networks[network.Name] = network
 				} else {
-					log.Debug("Network not found, id: %s", virtualIP.NetworkID)
+					log.Debugf("Network not found, id: %s", virtualIP.NetworkID)
 				}
 			}
 		}
 	}
-	return dockerData
+	return dData
 }
 
 func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID string,
@@ -1192,25 +408,25 @@ func listTasks(ctx context.Context, dockerClient client.APIClient, serviceID str
 	serviceIDFilter := filters.NewArgs()
 	serviceIDFilter.Add("service", serviceID)
 	serviceIDFilter.Add("desired-state", "running")
+
 	taskList, err := dockerClient.TaskList(ctx, dockertypes.TaskListOptions{Filters: serviceIDFilter})
-
 	if err != nil {
-		return []dockerData{}, err
+		return nil, err
 	}
-	var dockerDataList []dockerData
 
+	var dockerDataList []dockerData
 	for _, task := range taskList {
 		if task.Status.State != swarmtypes.TaskStateRunning {
 			continue
 		}
-		dockerData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
-		dockerDataList = append(dockerDataList, dockerData)
+		dData := parseTasks(task, serviceDockerData, networkMap, isGlobalSvc)
+		dockerDataList = append(dockerDataList, dData)
 	}
 	return dockerDataList, err
 }
 
 func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap map[string]*dockertypes.NetworkResource, isGlobalSvc bool) dockerData {
-	dockerData := dockerData{
+	dData := dockerData{
 		ServiceName:     serviceDockerData.Name,
 		Name:            serviceDockerData.Name + "." + strconv.Itoa(task.Slot),
 		Labels:          serviceDockerData.Labels,
@@ -1218,11 +434,11 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 	}
 
 	if isGlobalSvc {
-		dockerData.Name = serviceDockerData.Name + "." + task.ID
+		dData.Name = serviceDockerData.Name + "." + task.ID
 	}
 
 	if task.NetworksAttachments != nil {
-		dockerData.NetworkSettings.Networks = make(map[string]*networkData)
+		dData.NetworkSettings.Networks = make(map[string]*networkData)
 		for _, virtualIP := range task.NetworksAttachments {
 			if networkService, present := networkMap[virtualIP.Network.ID]; present {
 				// Not sure about this next loop - when would a task have multiple IP's for the same network?
@@ -1233,10 +449,10 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 						Name: networkService.Name,
 						Addr: ip.String(),
 					}
-					dockerData.NetworkSettings.Networks[network.Name] = network
+					dData.NetworkSettings.Networks[network.Name] = network
 				}
 			}
 		}
 	}
-	return dockerData
+	return dData
 }

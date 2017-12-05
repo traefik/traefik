@@ -189,6 +189,7 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 	stopStreamExample := make(chan bool)
 	defer func() { stopStreamExample <- true }()
 	lis, err := net.Listen("tcp", ":0")
+	c.Assert(err, check.IsNil)
 	_, port, err := net.SplitHostPort(lis.Addr().String())
 	c.Assert(err, check.IsNil)
 
