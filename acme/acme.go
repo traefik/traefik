@@ -398,10 +398,10 @@ func (a *ACME) renewCertificates() {
 		account := a.store.Get().(*Account)
 		for _, certificateResource := range account.DomainsCertificate.Certs {
 			if certificateResource.needRenew() {
-				log.Infof("Renewing certificate %+v from LE", certificateResource.Domains)
+				log.Infof("Renewing certificate from LE : %+v", certificateResource.Domains)
 				renewedACMECert, err := a.renewACMECertificate(certificateResource)
 				if err != nil {
-					log.Errorf("Error renewing from LE certificate: %v", err)
+					log.Errorf("Error renewing certificate from LE: %v", err)
 					continue
 				}
 				operation := func() error {
@@ -414,7 +414,7 @@ func (a *ACME) renewCertificates() {
 				ebo.MaxElapsedTime = 60 * time.Second
 				err = backoff.RetryNotify(safe.OperationWithRecover(operation), ebo, notify)
 				if err != nil {
-					log.Errorf("datastore cannot sync: %v", err)
+					log.Errorf("Datastore cannot sync: %v", err)
 					continue
 				}
 			}
@@ -433,7 +433,7 @@ func (a *ACME) renewACMECertificate(certificateResource *DomainsCertificate) (*C
 	if err != nil {
 		return nil, err
 	}
-	log.Infof("Renewed certificate %+v from  LE", certificateResource.Domains)
+	log.Infof("Renewed certificate from  LE: %+v", certificateResource.Domains)
 	return &Certificate{
 		Domain:        renewedCert.Domain,
 		CertURL:       renewedCert.CertURL,
@@ -446,25 +446,29 @@ func (a *ACME) renewACMECertificate(certificateResource *DomainsCertificate) (*C
 func (a *ACME) storeRenewedCertificate(account *Account, certificateResource *DomainsCertificate, renewedACMECert *Certificate) error {
 	transaction, object, err := a.store.Begin()
 	if err != nil {
-		return fmt.Errorf("Error during transaction initialization for renewing certificate: %v", err)
+		return fmt.Errorf("error during transaction initialization for renewing certificate: %v", err)
 	}
+
+	log.Infof("Renewing certificate in data store : %+v ", certificateResource.Domains)
 	account = object.(*Account)
-	log.Infof("Renewing certificate %+v in data store", certificateResource.Domains)
 	err = account.DomainsCertificate.renewCertificates(renewedACMECert, certificateResource.Domains)
 	if err != nil {
-		return fmt.Errorf("error renewing certificate: %v in datastore", err)
+		return fmt.Errorf("error renewing certificate in datastore: %v ", err)
 	}
-	log.Infof("Commit Certificate %+v renewed in data store", certificateResource.Domains)
+
+	log.Infof("Commit certificate renewed in data store : %+v", certificateResource.Domains)
 	if err = transaction.Commit(account); err != nil {
-		return fmt.Errorf("error Saving ACME account %+v: %s", account, err.Error())
+		return fmt.Errorf("error saving ACME account %+v: %v", account, err)
 	}
+
 	oldAccount := a.store.Get().(*Account)
 	for _, oldCertificateResource := range oldAccount.DomainsCertificate.Certs {
 		if oldCertificateResource.Domains.Main == certificateResource.Domains.Main && strings.Join(oldCertificateResource.Domains.SANs, ",") == strings.Join(certificateResource.Domains.SANs, ",") && certificateResource.Certificate != renewedACMECert {
-			return fmt.Errorf("renewed certificate %+v not stored", certificateResource.Domains)
+			return fmt.Errorf("renewed certificate not stored: %+v", certificateResource.Domains)
 		}
 	}
-	log.Infof("Certificate %+v successfully renewed in data store", certificateResource.Domains)
+
+	log.Infof("Certificate successfully renewed in data store: %+v", certificateResource.Domains)
 	return nil
 }
 
