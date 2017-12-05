@@ -21,6 +21,9 @@ If your cluster is configured with RBAC, you will need to authorize Træfik to u
 
 RoleBindings per namespace enable to restrict granted permissions to the very namespaces only that Træfik is watching over, thereby following the least-privileges principle. This is the preferred approach if Træfik is not supposed to watch all namespaces, and the set of namespaces does not change dynamically. Otherwise, a single ClusterRoleBinding must be employed.
 
+!!! note
+    RoleBindings per namespace are available in Træfik 1.5 and later. Please use ClusterRoleBindings for older versions.
+
 For the sake of simplicity, this guide will use a ClusterRoleBinding:
 
 ```yaml
@@ -75,7 +78,7 @@ For namespaced restrictions, one RoleBinding is required per watched namespace a
 
 It is possible to use Træfik with a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) object,
  whereas both options have their own pros and cons:
- 
+
 - The scalability is much better when using a Deployment, because you will have a Single-Pod-per-Node model when using the DeaemonSet.  
 - It is possible to exclusively run a Service on a dedicated set of machines using taints and tolerations with a DaemonSet.  
 - On the other hand the DaemonSet allows you to access any Node directly on Port 80 and 443, where you have to setup a [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object with a Deployment.
