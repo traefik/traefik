@@ -1191,87 +1191,40 @@ func TestBasicAuthInTemplate(t *testing.T) {
 
 func TestTLSSecretLoad(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "example.com",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "example-com",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-					{
-						Host: "example.org",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "example-org",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				TLS: []v1beta1.IngressTLS{
-					{
-						Hosts:      []string{"example.com"},
-						SecretName: "myTlsSecret",
-					},
-				},
-			},
-		},
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(iHost("example.com"), iPaths(
+					onePath(iBackend("example-com", intstr.FromInt(80))),
+				)),
+				iRule(iHost("example.org"), iPaths(
+					onePath(iBackend("example-org", intstr.FromInt(80))),
+				)),
+			),
+			iTLSs(
+				iTLS("myTlsSecret", "example.com"),
+			),
+		),
 	}
 	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "example-com",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Type:      "ClusterIP",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 80,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "example-org",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.2",
-				Type:      "ClusterIP",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 80,
-					},
-				},
-			},
-		},
+		buildService(
+			sName("example-com"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sType("ClusterIP"),
+				sPorts(sPort(80, "http"))),
+		),
+		buildService(
+			sName("example-org"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.2"),
+				sType("ClusterIP"),
+				sPorts(sPort(80, "http"))),
+		),
 	}
 	secrets := []*v1.Secret{
 		{
@@ -1339,23 +1292,16 @@ func TestTLSSecretLoad(t *testing.T) {
 }
 
 func TestGetTLSConfigurations(t *testing.T) {
-	testIngressWithoutHostname := v1beta1.Ingress{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "test-ingress",
-			Namespace: "testing",
-		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
-				{
-					Host: "ep1.example.com",
-				},
-				{
-					Host: "ep2.example.com",
-				},
-			},
-			TLS: []v1beta1.IngressTLS{{SecretName: "test-secret"}},
-		},
-	}
+	testIngressWithoutHostname := buildIngress(
+		iNamespace("testing"),
+		iRules(
+			iRule(iHost("ep1.example.com")),
+			iRule(iHost("ep2.example.com")),
+		),
+		iTLSs(
+			iTLS("test-secret"),
+		),
+	)
 
 	tests := []struct {
 		desc      string
@@ -1366,7 +1312,7 @@ func TestGetTLSConfigurations(t *testing.T) {
 	}{
 		{
 			desc:    "api client returns error",
-			ingress: &testIngressWithoutHostname,
+			ingress: testIngressWithoutHostname,
 			client: clientMock{
 				apiSecretError: errors.New("api secret error"),
 			},
@@ -1374,13 +1320,13 @@ func TestGetTLSConfigurations(t *testing.T) {
 		},
 		{
 			desc:      "api client doesn't find secret",
-			ingress:   &testIngressWithoutHostname,
+			ingress:   testIngressWithoutHostname,
 			client:    clientMock{},
 			errResult: "secret testing/test-secret does not exist",
 		},
 		{
 			desc:    "entry 'tls.crt' in secret missing",
-			ingress: &testIngressWithoutHostname,
+			ingress: testIngressWithoutHostname,
 			client: clientMock{
 				secrets: []*v1.Secret{
 					{
@@ -1398,7 +1344,7 @@ func TestGetTLSConfigurations(t *testing.T) {
 		},
 		{
 			desc:    "entry 'tls.key' in secret missing",
-			ingress: &testIngressWithoutHostname,
+			ingress: testIngressWithoutHostname,
 			client: clientMock{
 				secrets: []*v1.Secret{
 					{
@@ -1416,33 +1362,18 @@ func TestGetTLSConfigurations(t *testing.T) {
 		},
 		{
 			desc: "add certificates to the configuration",
-			ingress: &v1beta1.Ingress{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "test-ingress",
-					Namespace: "testing",
-				},
-				Spec: v1beta1.IngressSpec{
-					Rules: []v1beta1.IngressRule{
-						{
-							Host: "ep1.example.com",
-						},
-						{
-							Host: "ep2.example.com",
-						},
-						{
-							Host: "ep3.example.com",
-						},
-					},
-					TLS: []v1beta1.IngressTLS{
-						{
-							SecretName: "test-secret",
-						},
-						{
-							SecretName: "test-secret",
-						},
-					},
-				},
-			},
+			ingress: buildIngress(
+				iNamespace("testing"),
+				iRules(
+					iRule(iHost("ep1.example.com")),
+					iRule(iHost("ep2.example.com")),
+					iRule(iHost("ep3.example.com")),
+				),
+				iTLSs(
+					iTLS("test-secret"),
+					iTLS("test-secret"),
+				),
+			),
 			client: clientMock{
 				secrets: []*v1.Secret{
 					{
