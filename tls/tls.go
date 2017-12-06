@@ -96,6 +96,7 @@ func SortTLSConfigurationPerEntryPoints(configurations []*Configuration, epConfi
 	for _, conf := range configurations {
 		if conf.EntryPoints == nil || len(conf.EntryPoints) == 0 {
 			certName := conf.Certificate.CertFile.String()
+			// Keep only 50 characters to generate a readable log
 			if len(certName) > 50 {
 				certName = certName[0:50]
 			}

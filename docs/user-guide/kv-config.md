@@ -271,7 +271,6 @@ Here is the toml configuration we would like to store in the store :
   rule = "Path:/test"
 
 [[tlsConfiguration]]
-entryPoints = ["https"]
   [tlsConfiguration.certificate]
     certFile = "path/to/your.cert"
     keyFile = "path/to/your.key"
@@ -333,9 +332,11 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 
 | Key                                                | Value              |
 |----------------------------------------------------|--------------------|
-| `/traefik/tlsconfiguration/1/entrypoints`          | `https`            |
 | `/traefik/tlsconfiguration/1/certificate/certfile` | `path/to/your.cert`|
 | `/traefik/tlsconfiguration/1/certificate/keyfile`  | `path/to/your.key` |
+
+!!! note
+    As `/traefik/tlsconfiguration/1/entrypoints` is not defined, the certificate will be attached to all `defaulEntryPoints` with a TLS configuration (in the example, the entryPoint `https`)
 
 - certificate 2
 
