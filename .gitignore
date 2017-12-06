@@ -1,6 +1,5 @@
 /dist
 /autogen/genstatic/gen.go
-/autogen/gentemplates/gen.go
 .idea/
 .intellij/
 *.iml
