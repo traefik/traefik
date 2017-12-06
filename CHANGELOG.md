@@ -1,5 +1,30 @@
 # Change Log
 
+## [v1.5.0-rc2](https://github.com/containous/traefik/tree/v1.5.0-rc2) (2017-12-06)
+[All Commits](https://github.com/containous/traefik/compare/v1.5.0-rc1...v1.5.0-rc2)
+
+**Bug fixes:**
+- **[acme]** Modify the ACME renewing logs level ([#2520](https://github.com/containous/traefik/pull/2520) by [nmengin](https://github.com/nmengin))
+- **[api]** Fix pprof route order. ([#2523](https://github.com/containous/traefik/pull/2523) by [timoreimann](https://github.com/timoreimann))
+- **[docker,k8s]** Change custom headers separator ([#2509](https://github.com/containous/traefik/pull/2509) by [ldez](https://github.com/ldez))
+- **[docker,k8s]** Fix Labels/annotation logs and values. ([#2488](https://github.com/containous/traefik/pull/2488) by [ldez](https://github.com/ldez))
+- **[docker]** Quote template strings ([#2496](https://github.com/containous/traefik/pull/2496) by [dtomcej](https://github.com/dtomcej))
+- **[docker]** Fix empty IP for backend when dnsrr in Docker swarm mode ([#2490](https://github.com/containous/traefik/pull/2490) by [mmatur](https://github.com/mmatur))
+- **[healthcheck]** Fix healthcheck when web is not specified ([#2529](https://github.com/containous/traefik/pull/2529) by [Juliens](https://github.com/Juliens))
+- **[k8s]** Reduce logs with new Kubernetes security annotations ([#2506](https://github.com/containous/traefik/pull/2506) by [ldez](https://github.com/ldez))
+- **[metrics]** Do not ignore web params when web.metrics.prometheus is set ([#2499](https://github.com/containous/traefik/pull/2499) by [Juliens](https://github.com/Juliens))
+- **[metrics]** Fix metrics problem on multiple entrypoints ([#2492](https://github.com/containous/traefik/pull/2492) by [Juliens](https://github.com/Juliens))
+- Close ring buffer used in throttling function. ([#2532](https://github.com/containous/traefik/pull/2532) by [timoreimann](https://github.com/timoreimann))
+- Fix wrong default entrypoint and non-existing entrypoint issue ([#2501](https://github.com/containous/traefik/pull/2501) by [Juliens](https://github.com/Juliens))
+
+**Documentation:**
+- **[consul]** Improve Consul documentation ([#2485](https://github.com/containous/traefik/pull/2485) by [mmatur](https://github.com/mmatur))
+- **[docker]** Fix Docker labels documentation render. ([#2505](https://github.com/containous/traefik/pull/2505) by [ldez](https://github.com/ldez))
+- **[k8s]** Add note to Kubernetes RBAC docs about RoleBindings and namespaces ([#2498](https://github.com/containous/traefik/pull/2498) by [jmara](https://github.com/jmara))
+
+**Misc:**
+- Merge v1.4.5 into v1.5 ([#2530](https://github.com/containous/traefik/pull/2530) by [mmatur](https://github.com/mmatur))
+
 ## [v1.4.5](https://github.com/containous/traefik/tree/v1.4.5) (2017-12-05)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.4...v1.4.5)
 
