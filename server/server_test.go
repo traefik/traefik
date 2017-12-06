@@ -619,15 +619,16 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 	globalConfig := configuration.GlobalConfiguration{
 		EntryPoints: configuration.EntryPoints{
-			"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
+			"https": &configuration.EntryPoint{TLS: &tls.TLS{}, ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
 		},
+		DefaultEntryPoints: []string{"https"},
 	}
 
 	dynamicConfigs := types.Configurations{
 		"config": &types.Configuration{
 			Frontends: map[string]*types.Frontend{
 				"frontend": {
-					EntryPoints: []string{"http"},
+					EntryPoints: []string{"https"},
 					Backend:     "backend",
 					BasicAuth:   []string{""},
 				},
@@ -636,7 +637,7 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 				"backend": {
 					Servers: map[string]types.Server{
 						"server": {
-							URL: "http://localhost",
+							URL: "https://localhost",
 						},
 					},
 					LoadBalancer: &types.LoadBalancer{
@@ -650,7 +651,6 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 						CertFile: localhostCert,
 						KeyFile:  localhostKey,
 					},
-					EntryPoints: []string{"http"},
 				},
 			},
 		},

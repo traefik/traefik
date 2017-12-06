@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"strings"
+
+	"github.com/containous/traefik/log"
 )
 
 // ClientCA defines traefik CA files for a entryPoint
@@ -87,11 +89,19 @@ func (r *RootCAs) Type() string {
 }
 
 // SortTLSConfigurationPerEntryPoints converts TLS configuration sorted by Certificates into TLS configuration sorted by EntryPoints
-func SortTLSConfigurationPerEntryPoints(configurations []*Configuration, epConfiguration map[string]*DomainsCertificates) error {
+func SortTLSConfigurationPerEntryPoints(configurations []*Configuration, epConfiguration map[string]*DomainsCertificates, defaultEntryPoints []string) error {
 	if epConfiguration == nil {
 		epConfiguration = make(map[string]*DomainsCertificates)
 	}
 	for _, conf := range configurations {
+		if conf.EntryPoints == nil || len(conf.EntryPoints) == 0 {
+			certName := conf.Certificate.CertFile.String()
+			if len(certName) > 50 {
+				certName = certName[0:50]
+			}
+			log.Debugf("No entryPoint is defined to add the certificate %s, it will be added to the default entryPoints: %s", certName, strings.Join(defaultEntryPoints, ","))
+			conf.EntryPoints = append(conf.EntryPoints, defaultEntryPoints...)
+		}
 		for _, ep := range conf.EntryPoints {
 			if err := conf.Certificate.AppendCertificates(epConfiguration, ep); err != nil {
 				return err

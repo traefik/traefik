@@ -160,7 +160,7 @@ func (c *Certificate) AppendCertificates(certs map[string]*DomainsCertificates, 
 		}
 	}
 	if certExists {
-		log.Warnf("Into EntryPoint %s, try to add certificate for domains which already have a certificate (%s). The new certificate will not be append to the EntryPoint.", ep, certKey)
+		log.Warnf("Into EntryPoint %s, try to add certificate for domains which already have this certificate (%s). The new certificate will not be append to the EntryPoint.", ep, certKey)
 	} else {
 		log.Debugf("Add certificate for domains %s", certKey)
 		err = certs[ep].add(certKey, &tlsCert)
