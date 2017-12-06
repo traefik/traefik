@@ -1110,7 +1110,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						n.Use(middlewares.NewMetricsWrapper(s.metricsRegistry, frontend.Backend))
 					}
 
-					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange)
+					ipWhitelistMiddleware, err := configureIPWhitelistMiddleware(frontend.WhitelistSourceRange, frontend.WhitelistTrustProxy)
 					if err != nil {
 						log.Fatalf("Error creating IP Whitelister: %s", err)
 					} else if ipWhitelistMiddleware != nil {
@@ -1221,10 +1221,10 @@ func configureLBServers(lb healthcheck.LoadBalancer, config *types.Configuration
 	return nil
 }
 
-func configureIPWhitelistMiddleware(whitelistSourceRanges []string) (negroni.Handler, error) {
+func configureIPWhitelistMiddleware(whitelistSourceRanges []string, whitelistTrustProxy []string) (negroni.Handler, error) {
 	if len(whitelistSourceRanges) > 0 {
 		ipSourceRanges := whitelistSourceRanges
-		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(ipSourceRanges, nil)
+		ipWhitelistMiddleware, err := middlewares.NewIPWhitelister(ipSourceRanges, whitelistTrustProxy)
 
 		if err != nil {
 			return nil, err

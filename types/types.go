@@ -150,6 +150,7 @@ type Frontend struct {
 	Priority             int                  `json:"priority"`
 	BasicAuth            []string             `json:"basicAuth"`
 	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
+	WhitelistTrustProxy  []string             `json:"whitelistTrustProxy,omitempty"`
 	Headers              Headers              `json:"headers,omitempty"`
 	Errors               map[string]ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
