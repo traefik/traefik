@@ -1419,6 +1419,38 @@ func TestGetTLSConfigurations(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "pass the endpoints defined in the annotation to the certificate",
+			ingress: buildIngress(
+				iNamespace("testing"),
+				iAnnotation(label.TraefikFrontendEntryPoints, "https,api-secure"),
+				iRules(iRule(iHost("example.com"))),
+				iTLSs(iTLS("test-secret")),
+			),
+			client: clientMock{
+				secrets: []*v1.Secret{
+					{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{
+							"tls.crt": []byte("tls-crt"),
+							"tls.key": []byte("tls-key"),
+						},
+					},
+				},
+			},
+			result: []*tls.Configuration{
+				{
+					EntryPoints: []string{"https", "api-secure"},
+					Certificate: &tls.Certificate{
+						CertFile: tls.FileOrContent("tls-crt"),
+						KeyFile:  tls.FileOrContent("tls-key"),
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

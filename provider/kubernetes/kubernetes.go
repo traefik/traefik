@@ -477,7 +477,10 @@ func getTLSConfigurations(ingress *v1beta1.Ingress, k8sClient Client) ([]*tls.Co
 			return nil, fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s", ingress.Namespace, t.SecretName, strings.Join(missingEntries, ", "))
 		}
 
+		entryPoints := label.GetSliceStringValue(ingress.Annotations, label.TraefikFrontendEntryPoints)
+
 		tlsConfig := &tls.Configuration{
+			EntryPoints: entryPoints,
 			Certificate: &tls.Certificate{
 				CertFile: tls.FileOrContent(tlsCrtData),
 				KeyFile:  tls.FileOrContent(tlsKeyData),
