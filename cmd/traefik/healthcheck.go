@@ -64,6 +64,9 @@ func healthCheck(globalConfiguration configuration.GlobalConfiguration) (*http.R
 		}
 		client.Transport = tr
 	}
-
-	return client.Head(protocol + "://" + pingEntryPoint.Address + globalConfiguration.Web.Path + "ping")
+	path := "/"
+	if globalConfiguration.Web != nil {
+		path = globalConfiguration.Web.Path
+	}
+	return client.Head(protocol + "://" + pingEntryPoint.Address + path + "ping")
 }
