@@ -12,42 +12,66 @@ import (
 func TestDockerGetFuncMapLabel(t *testing.T) {
 	serviceName := "myservice"
 	testCases := []struct {
-		container     docker.ContainerJSON
-		suffixLabel   string
-		expectedKey   string
-		expectedValue string
+		container   docker.ContainerJSON
+		suffixLabel string
+		expectedKey string
+		expected    map[string]string
 	}{
 		{
 			container: containerJSON(labels(map[string]string{
-				label.TraefikFrontendRequestHeaders: "X-Custom-Header: TEST",
+				label.TraefikFrontendRequestHeaders: "X-Custom-Header: ContainerRequestHeader",
 			})),
-			suffixLabel:   label.SuffixFrontendRequestHeaders,
-			expectedKey:   "X-Custom-Header",
-			expectedValue: "TEST",
+			suffixLabel: label.SuffixFrontendRequestHeaders,
+			expected: map[string]string{
+				"X-Custom-Header": "ContainerRequestHeader",
+			},
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				label.GetServiceLabel(label.SuffixFrontendRequestHeaders, serviceName): "X-Custom-Header: TEST",
+				label.GetServiceLabel(label.SuffixFrontendRequestHeaders, serviceName): "X-Custom-Header: ServiceRequestHeader",
 			})),
-			suffixLabel:   label.SuffixFrontendRequestHeaders,
-			expectedKey:   "X-Custom-Header",
-			expectedValue: "TEST",
+			suffixLabel: label.SuffixFrontendRequestHeaders,
+			expected: map[string]string{
+				"X-Custom-Header": "ServiceRequestHeader",
+			},
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				label.TraefikFrontendResponseHeaders: "X-Custom-Header: TEST",
+				label.TraefikFrontendResponseHeaders: "X-Custom-Header: ServiceResponseHeader",
 			})),
-			suffixLabel:   label.SuffixFrontendResponseHeaders,
-			expectedKey:   "X-Custom-Header",
-			expectedValue: "TEST",
+			suffixLabel: label.SuffixFrontendResponseHeaders,
+			expected: map[string]string{
+				"X-Custom-Header": "ServiceResponseHeader",
+			},
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				label.GetServiceLabel(label.SuffixFrontendResponseHeaders, serviceName): "X-Custom-Header: TEST",
+				label.GetServiceLabel(label.SuffixFrontendResponseHeaders, serviceName): "X-Custom-Header: ServiceResponseHeader",
 			})),
-			suffixLabel:   label.SuffixFrontendResponseHeaders,
-			expectedKey:   "X-Custom-Header",
-			expectedValue: "TEST",
+			suffixLabel: label.SuffixFrontendResponseHeaders,
+			expected: map[string]string{
+				"X-Custom-Header": "ServiceResponseHeader",
+			},
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendRequestHeaders: "X-Custom-Header: MutliRequestHeaders || Authorization: Basic YWRtaW46YWRtaW4=",
+			})),
+			suffixLabel: label.SuffixFrontendRequestHeaders,
+			expected: map[string]string{
+				"X-Custom-Header": "MutliRequestHeaders",
+				"Authorization":   "Basic YWRtaW46YWRtaW4=",
+			},
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendRequestHeaders: "X-Custom-Header: MutliResponseHeaders || Cache-Control: no-cache",
+			})),
+			suffixLabel: label.SuffixFrontendRequestHeaders,
+			expected: map[string]string{
+				"X-Custom-Header": "MutliResponseHeaders",
+				"Cache-Control":   "no-cache",
+			},
 		},
 	}
 
@@ -59,8 +83,10 @@ func TestDockerGetFuncMapLabel(t *testing.T) {
 			dData := parseContainer(test.container)
 
 			values := getFuncServiceMapLabel(test.suffixLabel)(dData, serviceName)
-			if values[test.expectedKey] != test.expectedValue {
-				t.Fatalf("got %q, expected %q", values[test.expectedKey], test.expectedValue)
+			for k, v := range values {
+				if v != test.expected[k] {
+					t.Fatalf("got %q, expected %q", v, test.expected[k])
+				}
 			}
 		})
 	}

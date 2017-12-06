@@ -122,7 +122,8 @@ func hasServiceLabel(container dockerData, serviceName string, labelSuffix strin
 
 func getServiceMapLabel(container dockerData, serviceName string, labelSuffix string) map[string]string {
 	if value, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
-		return label.ParseMapValue(label.GetServiceLabel(labelSuffix, serviceName), value)
+		lblName := label.GetServiceLabel(labelSuffix, serviceName)
+		return label.ParseMapValue(lblName, value)
 	}
 	return label.GetMapValue(container.Labels, label.Prefix+labelSuffix)
 }
