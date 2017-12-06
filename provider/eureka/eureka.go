@@ -1,13 +1,8 @@
 package eureka
 
 import (
-	"io/ioutil"
-	"strconv"
-	"strings"
-	"text/template"
 	"time"
 
-	"github.com/ArthurHlt/go-eureka-client/eureka"
 	"github.com/cenk/backoff"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
@@ -55,7 +50,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		safe.Go(func() {
 			for t := range ticker.C {
 
-				log.Debug("Refreshing Provider " + t.String())
+				log.Debugf("Refreshing Provider %s", t.String())
 
 				configuration, err := p.buildConfiguration()
 				if err != nil {
@@ -81,65 +76,4 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		return err
 	}
 	return nil
-}
-
-// Build the configuration from Provider server
-func (p *Provider) buildConfiguration() (*types.Configuration, error) {
-	var EurekaFuncMap = template.FuncMap{
-		"getPort":       p.getPort,
-		"getProtocol":   p.getProtocol,
-		"getWeight":     p.getWeight,
-		"getInstanceID": p.getInstanceID,
-	}
-
-	eureka.GetLogger().SetOutput(ioutil.Discard)
-
-	client := eureka.NewClient([]string{
-		p.Endpoint,
-	})
-
-	applications, err := client.GetApplications()
-	if err != nil {
-		return nil, err
-	}
-
-	templateObjects := struct {
-		Applications []eureka.Application
-	}{
-		applications.Applications,
-	}
-
-	configuration, err := p.GetConfiguration("templates/eureka.tmpl", EurekaFuncMap, templateObjects)
-	if err != nil {
-		log.Error(err)
-	}
-	return configuration, nil
-}
-
-func (p *Provider) getPort(instance eureka.InstanceInfo) string {
-	if instance.SecurePort.Enabled {
-		return strconv.Itoa(instance.SecurePort.Port)
-	}
-	return strconv.Itoa(instance.Port.Port)
-}
-
-func (p *Provider) getProtocol(instance eureka.InstanceInfo) string {
-	if instance.SecurePort.Enabled {
-		return "https"
-	}
-	return "http"
-}
-
-func (p *Provider) getWeight(instance eureka.InstanceInfo) string {
-	if val, ok := instance.Metadata.Map[types.LabelWeight]; ok {
-		return val
-	}
-	return "0"
-}
-
-func (p *Provider) getInstanceID(instance eureka.InstanceInfo) string {
-	if val, ok := instance.Metadata.Map[types.LabelBackendID]; ok {
-		return val
-	}
-	return strings.Replace(instance.IpAddr, ".", "-", -1) + "-" + p.getPort(instance)
 }

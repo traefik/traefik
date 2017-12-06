@@ -6,12 +6,60 @@ import (
 	"text/template"
 
 	"github.com/BurntSushi/ty/fun"
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConsulCatalogGetFrontendRule(t *testing.T) {
+func TestGetPrefixedName(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		name     string
+		prefix   string
+		expected string
+	}{
+		{
+			desc:     "empty name with prefix",
+			name:     "",
+			prefix:   "foo",
+			expected: "",
+		},
+		{
+			desc:     "empty name without prefix",
+			name:     "",
+			prefix:   "",
+			expected: "",
+		},
+		{
+			desc:     "with prefix",
+			name:     "bar",
+			prefix:   "foo",
+			expected: "foo.bar",
+		},
+		{
+			desc:     "without prefix",
+			name:     "bar",
+			prefix:   "",
+			expected: "bar",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			pro := &CatalogProvider{Prefix: test.prefix}
+
+			actual := pro.getPrefixedName(test.name)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+
+}
+
+func TestGetFrontendRule(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain:               "localhost",
 		Prefix:               "traefik",
@@ -77,12 +125,7 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 	}
 }
 
-func TestConsulCatalogGetTag(t *testing.T) {
-	provider := &CatalogProvider{
-		Domain: "localhost",
-		Prefix: "traefik",
-	}
-
+func TestGetTag(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		tags         []string
@@ -101,23 +144,69 @@ func TestConsulCatalogGetTag(t *testing.T) {
 			defaultValue: "0",
 			expected:     "random",
 		},
+		{
+			desc: "Should return default value when nonexistent key",
+			tags: []string{
+				"foo.bar.foo.bar=random",
+				"traefik.backend.weight=42",
+				"management",
+			},
+			key:          "foo.bar",
+			defaultValue: "0",
+			expected:     "0",
+		},
 	}
-
-	assert.Equal(t, true, provider.hasTag("management", []string{"management"}))
-	assert.Equal(t, true, provider.hasTag("management", []string{"management=yes"}))
 
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := provider.getTag(test.key, test.tags, test.defaultValue)
+			actual := getTag(test.key, test.tags, test.defaultValue)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
-func TestConsulCatalogGetAttribute(t *testing.T) {
+func TestHasTag(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		name     string
+		tags     []string
+		expected bool
+	}{
+		{
+			desc:     "tag without value",
+			name:     "foo",
+			tags:     []string{"foo"},
+			expected: true,
+		},
+		{
+			desc:     "tag with value",
+			name:     "foo",
+			tags:     []string{"foo=true"},
+			expected: true,
+		},
+		{
+			desc:     "missing tag",
+			name:     "foo",
+			tags:     []string{"foobar=true"},
+			expected: false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := hasTag(test.name, test.tags)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetAttribute(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain: "localhost",
 		Prefix: "traefik",
@@ -152,8 +241,6 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, provider.Prefix+".foo", provider.getPrefixedName("foo"))
-
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
@@ -165,7 +252,7 @@ func TestConsulCatalogGetAttribute(t *testing.T) {
 	}
 }
 
-func TestConsulCatalogGetAttributeWithEmptyPrefix(t *testing.T) {
+func TestGetAttributeWithEmptyPrefix(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain: "localhost",
 		Prefix: "",
@@ -210,8 +297,6 @@ func TestConsulCatalogGetAttributeWithEmptyPrefix(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, "foo", provider.getPrefixedName("foo"))
-
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
@@ -223,12 +308,7 @@ func TestConsulCatalogGetAttributeWithEmptyPrefix(t *testing.T) {
 	}
 }
 
-func TestConsulCatalogGetBackendAddress(t *testing.T) {
-	provider := &CatalogProvider{
-		Domain: "localhost",
-		Prefix: "traefik",
-	}
-
+func TestGetBackendAddress(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		node     *api.ServiceEntry
@@ -265,18 +345,13 @@ func TestConsulCatalogGetBackendAddress(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := provider.getBackendAddress(test.node)
+			actual := getBackendAddress(test.node)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
-func TestConsulCatalogGetBackendName(t *testing.T) {
-	provider := &CatalogProvider{
-		Domain: "localhost",
-		Prefix: "traefik",
-	}
-
+func TestGetBackendName(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		node     *api.ServiceEntry
@@ -326,13 +401,13 @@ func TestConsulCatalogGetBackendName(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := provider.getBackendName(test.node, i)
+			actual := getBackendName(test.node, i)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
-func TestConsulCatalogBuildConfig(t *testing.T) {
+func TestBuildConfiguration(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain:               "localhost",
 		Prefix:               "traefik",
@@ -441,14 +516,14 @@ func TestConsulCatalogBuildConfig(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actualConfig := provider.buildConfig(test.nodes)
+			actualConfig := provider.buildConfiguration(test.nodes)
 			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
 			assert.Equal(t, test.expectedFrontends, actualConfig.Frontends)
 		})
 	}
 }
 
-func TestConsulCatalogNodeSorter(t *testing.T) {
+func TestNodeSorter(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		nodes    []*api.ServiceEntry
@@ -648,7 +723,7 @@ func TestConsulCatalogNodeSorter(t *testing.T) {
 	}
 }
 
-func TestConsulCatalogGetChangedKeys(t *testing.T) {
+func TestGetChangedKeys(t *testing.T) {
 	type Input struct {
 		currState map[string]Service
 		prevState map[string]Service
@@ -794,7 +869,7 @@ func TestConsulCatalogGetChangedKeys(t *testing.T) {
 	}
 }
 
-func TestConsulCatalogFilterEnabled(t *testing.T) {
+func TestFilterEnabled(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		exposedByDefault bool
@@ -896,7 +971,7 @@ func TestConsulCatalogFilterEnabled(t *testing.T) {
 	}
 }
 
-func TestConsulCatalogGetBasicAuth(t *testing.T) {
+func TestGetBasicAuth(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		tags     []string
@@ -929,7 +1004,7 @@ func TestConsulCatalogGetBasicAuth(t *testing.T) {
 	}
 }
 
-func TestConsulCatalogHasStickinessLabel(t *testing.T) {
+func TestHasStickinessLabel(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		tags     []string
@@ -943,21 +1018,17 @@ func TestConsulCatalogHasStickinessLabel(t *testing.T) {
 		{
 			desc: "stickiness=true",
 			tags: []string{
-				types.LabelBackendLoadbalancerStickiness + "=true",
+				label.TraefikBackendLoadBalancerStickiness + "=true",
 			},
 			expected: true,
 		},
 		{
 			desc: "stickiness=false",
 			tags: []string{
-				types.LabelBackendLoadbalancerStickiness + "=false",
+				label.TraefikBackendLoadBalancerStickiness + "=false",
 			},
 			expected: false,
 		},
-	}
-
-	provider := &CatalogProvider{
-		Prefix: "traefik",
 	}
 
 	for _, test := range testCases {
@@ -965,13 +1036,13 @@ func TestConsulCatalogHasStickinessLabel(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := provider.hasStickinessLabel(test.tags)
+			actual := hasStickinessLabel(test.tags)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
-func TestConsulCatalogGetChangedStringKeys(t *testing.T) {
+func TestGetChangedStringKeys(t *testing.T) {
 	testCases := []struct {
 		desc            string
 		current         []string
@@ -1020,7 +1091,7 @@ func TestConsulCatalogGetChangedStringKeys(t *testing.T) {
 	}
 }
 
-func TestConsulCatalogHasNodeOrTagschanged(t *testing.T) {
+func TestHasNodeOrTagschanged(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		current  map[string]Service
@@ -1124,7 +1195,7 @@ func TestConsulCatalogHasNodeOrTagschanged(t *testing.T) {
 	}
 }
 
-func TestConsulCatalogHasChanged(t *testing.T) {
+func TestHasChanged(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		current  map[string]Service
@@ -1236,6 +1307,63 @@ func TestConsulCatalogHasChanged(t *testing.T) {
 
 			actual := hasChanged(test.current, test.previous)
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetConstraintTags(t *testing.T) {
+	provider := &CatalogProvider{
+		Domain: "localhost",
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected []string
+	}{
+		{
+			desc: "nil tags",
+		},
+		{
+			desc:     "invalid tag",
+			tags:     []string{"tags=foobar"},
+			expected: nil,
+		},
+		{
+			desc:     "wrong tag",
+			tags:     []string{"traefik_tags=foobar"},
+			expected: nil,
+		},
+		{
+			desc:     "empty value",
+			tags:     []string{"traefik.tags="},
+			expected: nil,
+		},
+		{
+			desc:     "simple tag",
+			tags:     []string{"traefik.tags=foobar "},
+			expected: []string{"foobar"},
+		},
+		{
+			desc:     "multiple values tag",
+			tags:     []string{"traefik.tags=foobar, fiibir"},
+			expected: []string{"foobar", "fiibir"},
+		},
+		{
+			desc:     "multiple tags",
+			tags:     []string{"traefik.tags=foobar", "traefik.tags=foobor"},
+			expected: []string{"foobar", "foobor"},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			constraints := provider.getConstraintTags(test.tags)
+			assert.EqualValues(t, test.expected, constraints)
 		})
 	}
 }

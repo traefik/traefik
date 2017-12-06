@@ -45,7 +45,7 @@ func (p *Provider) metadataProvide(configurationChan chan<- types.ConfigMessage,
 				}
 
 				rancherData := parseMetadataSourcedRancherData(stacks)
-				configuration := p.loadRancherConfig(rancherData)
+				configuration := p.buildConfiguration(rancherData)
 				configurationChan <- types.ConfigMessage{
 					ProviderName:  "rancher",
 					Configuration: configuration,
