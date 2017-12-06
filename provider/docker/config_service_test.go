@@ -27,7 +27,7 @@ func TestDockerGetFuncMapLabel(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				label.Prefix + serviceName + "." + label.SuffixFrontendRequestHeaders: "X-Custom-Header: TEST",
+				label.GetServiceLabel(label.SuffixFrontendRequestHeaders, serviceName): "X-Custom-Header: TEST",
 			})),
 			suffixLabel:   label.SuffixFrontendRequestHeaders,
 			expectedKey:   "X-Custom-Header",
@@ -43,7 +43,7 @@ func TestDockerGetFuncMapLabel(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				label.Prefix + serviceName + "." + label.SuffixFrontendResponseHeaders: "X-Custom-Header: TEST",
+				label.GetServiceLabel(label.SuffixFrontendResponseHeaders, serviceName): "X-Custom-Header: TEST",
 			})),
 			suffixLabel:   label.SuffixFrontendResponseHeaders,
 			expectedKey:   "X-Custom-Header",
