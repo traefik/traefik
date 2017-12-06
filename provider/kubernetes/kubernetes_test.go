@@ -1340,7 +1340,7 @@ func TestGetTLSConfigurations(t *testing.T) {
 					},
 				},
 			},
-			errResult: "secret testing/test-secret must have two entries named 'tls.crt' and 'tls.key': missing entry 'tls.crt'",
+			errResult: "secret testing/test-secret is missing the following TLS data entries: tls.crt",
 		},
 		{
 			desc:    "entry 'tls.key' in secret missing",
@@ -1358,7 +1358,23 @@ func TestGetTLSConfigurations(t *testing.T) {
 					},
 				},
 			},
-			errResult: "secret testing/test-secret must have two entries named 'tls.crt' and 'tls.key': missing entry 'tls.key'",
+			errResult: "secret testing/test-secret is missing the following TLS data entries: tls.key",
+		},
+		{
+			desc:    "secret doesn't provide any of the required fields",
+			ingress: testIngressWithoutHostname,
+			client: clientMock{
+				secrets: []*v1.Secret{
+					{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{},
+					},
+				},
+			},
+			errResult: "secret testing/test-secret is missing the following TLS data entries: tls.crt, tls.key",
 		},
 		{
 			desc: "add certificates to the configuration",

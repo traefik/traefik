@@ -360,7 +360,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 		tlsConfigs, err := getTLSConfigurations(i, k8sClient)
 		if err != nil {
-			log.Errorf("Error configuring TLS for ingress %s/%s: %s", i.Namespace, i.Name, err)
+			log.Errorf("Error configuring TLS for ingress %s/%s: %v", i.Namespace, i.Name, err)
 		} else {
 			templateObjects.TLSConfiguration = append(templateObjects.TLSConfiguration, tlsConfigs...)
 		}
@@ -457,7 +457,7 @@ func getTLSConfigurations(ingress *v1beta1.Ingress, k8sClient Client) ([]*tls.Co
 	for _, t := range ingress.Spec.TLS {
 		tlsSecret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch secret %s/%s: %s", ingress.Namespace, t.SecretName, err)
+			return nil, fmt.Errorf("failed to fetch secret %s/%s: %v", ingress.Namespace, t.SecretName, err)
 		}
 		if !exists {
 			return nil, fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName)
@@ -465,11 +465,16 @@ func getTLSConfigurations(ingress *v1beta1.Ingress, k8sClient Client) ([]*tls.Co
 
 		tlsCrtData, tlsCrtExists := tlsSecret.Data["tls.crt"]
 		tlsKeyData, tlsKeyExists := tlsSecret.Data["tls.key"]
+
+		var missingEntries []string
 		if !tlsCrtExists {
-			return nil, fmt.Errorf("secret %s/%s must have two entries named 'tls.crt' and 'tls.key': missing entry 'tls.crt'", ingress.Namespace, t.SecretName)
+			missingEntries = append(missingEntries, "tls.crt")
 		}
 		if !tlsKeyExists {
-			return nil, fmt.Errorf("secret %s/%s must have two entries named 'tls.crt' and 'tls.key': missing entry 'tls.key'", ingress.Namespace, t.SecretName)
+			missingEntries = append(missingEntries, "tls.key")
+		}
+		if len(missingEntries) > 0 {
+			return nil, fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s", ingress.Namespace, t.SecretName, strings.Join(missingEntries, ", "))
 		}
 
 		tlsConfig := &tls.Configuration{

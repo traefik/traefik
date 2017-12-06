@@ -335,7 +335,7 @@ We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube)
 !!! note
     For this example to work you need a TLS entrypoint. You don't have to provide a TLS certificate at this point. For more details see [here](/configuration/entrypoints/).
 
-To setup a https protected ingress, you can leverage the TLS feature of the ingress resource.
+To setup a HTTPS protected ingress, you can leverage the TLS feature of the ingress resource.
 
 ```yaml
 apiVersion: extensions/v1beta1
