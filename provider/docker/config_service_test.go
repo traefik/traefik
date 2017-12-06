@@ -7,87 +7,76 @@ import (
 
 	"github.com/containous/traefik/provider/label"
 	docker "github.com/docker/docker/api/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDockerGetFuncMapLabel(t *testing.T) {
 	serviceName := "myservice"
+	fakeSuffix := "frontend.foo"
+	fakeLabel := label.Prefix + fakeSuffix
+
 	testCases := []struct {
+		desc        string
 		container   docker.ContainerJSON
 		suffixLabel string
 		expectedKey string
 		expected    map[string]string
 	}{
 		{
+			desc: "fallback to container label value",
 			container: containerJSON(labels(map[string]string{
-				label.TraefikFrontendRequestHeaders: "X-Custom-Header: ContainerRequestHeader",
+				fakeLabel: "X-Custom-Header: ContainerRequestHeader",
 			})),
-			suffixLabel: label.SuffixFrontendRequestHeaders,
+			suffixLabel: fakeSuffix,
 			expected: map[string]string{
 				"X-Custom-Header": "ContainerRequestHeader",
 			},
 		},
 		{
+			desc: "use service label instead of container label",
 			container: containerJSON(labels(map[string]string{
-				label.GetServiceLabel(label.SuffixFrontendRequestHeaders, serviceName): "X-Custom-Header: ServiceRequestHeader",
+				fakeLabel: "X-Custom-Header: ContainerRequestHeader",
+				label.GetServiceLabel(fakeLabel, serviceName): "X-Custom-Header: ServiceRequestHeader",
 			})),
-			suffixLabel: label.SuffixFrontendRequestHeaders,
+			suffixLabel: fakeSuffix,
 			expected: map[string]string{
 				"X-Custom-Header": "ServiceRequestHeader",
 			},
 		},
 		{
+			desc: "use service label with an empty value instead of container label",
 			container: containerJSON(labels(map[string]string{
-				label.TraefikFrontendResponseHeaders: "X-Custom-Header: ServiceResponseHeader",
+				fakeLabel: "X-Custom-Header: ContainerRequestHeader",
+				label.GetServiceLabel(fakeLabel, serviceName): "X-Custom-Header: ",
 			})),
-			suffixLabel: label.SuffixFrontendResponseHeaders,
+			suffixLabel: fakeSuffix,
 			expected: map[string]string{
-				"X-Custom-Header": "ServiceResponseHeader",
+				"X-Custom-Header": "",
 			},
 		},
 		{
+			desc: "multiple values",
 			container: containerJSON(labels(map[string]string{
-				label.GetServiceLabel(label.SuffixFrontendResponseHeaders, serviceName): "X-Custom-Header: ServiceResponseHeader",
+				fakeLabel: "X-Custom-Header: MultiHeaders || Authorization: Basic YWRtaW46YWRtaW4=",
 			})),
-			suffixLabel: label.SuffixFrontendResponseHeaders,
+			suffixLabel: fakeSuffix,
 			expected: map[string]string{
-				"X-Custom-Header": "ServiceResponseHeader",
-			},
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				label.TraefikFrontendRequestHeaders: "X-Custom-Header: MutliRequestHeaders || Authorization: Basic YWRtaW46YWRtaW4=",
-			})),
-			suffixLabel: label.SuffixFrontendRequestHeaders,
-			expected: map[string]string{
-				"X-Custom-Header": "MutliRequestHeaders",
+				"X-Custom-Header": "MultiHeaders",
 				"Authorization":   "Basic YWRtaW46YWRtaW4=",
-			},
-		},
-		{
-			container: containerJSON(labels(map[string]string{
-				label.TraefikFrontendRequestHeaders: "X-Custom-Header: MutliResponseHeaders || Cache-Control: no-cache",
-			})),
-			suffixLabel: label.SuffixFrontendRequestHeaders,
-			expected: map[string]string{
-				"X-Custom-Header": "MutliResponseHeaders",
-				"Cache-Control":   "no-cache",
 			},
 		},
 	}
 
-	for containerID, test := range testCases {
+	for _, test := range testCases {
 		test := test
-		t.Run(test.suffixLabel+strconv.Itoa(containerID), func(t *testing.T) {
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			dData := parseContainer(test.container)
 
 			values := getFuncServiceMapLabel(test.suffixLabel)(dData, serviceName)
-			for k, v := range values {
-				if v != test.expected[k] {
-					t.Fatalf("got %q, expected %q", v, test.expected[k])
-				}
-			}
+
+			assert.EqualValues(t, test.expected, values)
 		})
 	}
 }
