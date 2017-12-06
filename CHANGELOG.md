@@ -1,5 +1,16 @@
 # Change Log
 
+## [v1.4.5](https://github.com/containous/traefik/tree/v1.4.5) (2017-12-05)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.4...v1.4.5)
+
+**Bug fixes:**
+- **[docker]** Fix empty ip when container is stopped ([#2478](https://github.com/containous/traefik/pull/2478) by [mmatur](https://github.com/mmatur))
+- **[k8s]** Fix kubernetes path prefix rule with rewrite-target ([#2461](https://github.com/containous/traefik/pull/2461) by [cheungpat](https://github.com/cheungpat))
+
+**Documentation:**
+- **[file]** Emphasize the necessity of enabling file backend ([#2483](https://github.com/containous/traefik/pull/2483) by [mvasin](https://github.com/mvasin))
+- Add link to future 1.5 documentation. ([#2477](https://github.com/containous/traefik/pull/2477) by [ldez](https://github.com/ldez))
+
 ## [v1.4.4](https://github.com/containous/traefik/tree/v1.4.4) (2017-11-21)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.3...v1.4.4)
 
