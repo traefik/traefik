@@ -9,6 +9,63 @@ import (
 	docker "github.com/docker/docker/api/types"
 )
 
+func TestDockerGetFuncMapLabel(t *testing.T) {
+	serviceName := "myservice"
+	testCases := []struct {
+		container     docker.ContainerJSON
+		suffixLabel   string
+		expectedKey   string
+		expectedValue string
+	}{
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendRequestHeaders: "X-Custom-Header: TEST",
+			})),
+			suffixLabel:   label.SuffixFrontendRequestHeaders,
+			expectedKey:   "X-Custom-Header",
+			expectedValue: "TEST",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.Prefix + serviceName + "." + label.SuffixFrontendRequestHeaders: "X-Custom-Header: TEST",
+			})),
+			suffixLabel:   label.SuffixFrontendRequestHeaders,
+			expectedKey:   "X-Custom-Header",
+			expectedValue: "TEST",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikFrontendResponseHeaders: "X-Custom-Header: TEST",
+			})),
+			suffixLabel:   label.SuffixFrontendResponseHeaders,
+			expectedKey:   "X-Custom-Header",
+			expectedValue: "TEST",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.Prefix + serviceName + "." + label.SuffixFrontendResponseHeaders: "X-Custom-Header: TEST",
+			})),
+			suffixLabel:   label.SuffixFrontendResponseHeaders,
+			expectedKey:   "X-Custom-Header",
+			expectedValue: "TEST",
+		},
+	}
+
+	for containerID, test := range testCases {
+		test := test
+		t.Run(test.suffixLabel+strconv.Itoa(containerID), func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			values := getFuncServiceMapLabel(test.suffixLabel)(dData, serviceName)
+			if values[test.expectedKey] != test.expectedValue {
+				t.Fatalf("got %q, expected %q", values[test.expectedKey], test.expectedValue)
+			}
+		})
+	}
+}
+
 func TestDockerGetFuncServiceStringLabel(t *testing.T) {
 	testCases := []struct {
 		container    docker.ContainerJSON

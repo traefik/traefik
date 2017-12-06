@@ -134,6 +134,26 @@ func GetSliceStringValueP(labels *map[string]string, labelName string) []string 
 	return GetSliceStringValue(*labels, labelName)
 }
 
+// ParseMapValue get Map value for a label value
+func ParseMapValue(labelName, values string) map[string]string {
+	mapValue := make(map[string]string)
+
+	for _, parts := range strings.Split(values, mapEntrySeparator) {
+		pair := strings.SplitN(parts, mapValueSeparator, 2)
+		if len(pair) != 2 {
+			log.Warnf("Could not load %q: %q, skipping...", labelName, parts)
+		} else {
+			mapValue[http.CanonicalHeaderKey(strings.TrimSpace(pair[0]))] = strings.TrimSpace(pair[1])
+		}
+	}
+
+	if len(mapValue) == 0 {
+		log.Errorf("Could not load %q, skipping...", labelName)
+		return nil
+	}
+	return mapValue
+}
+
 // GetMapValue get Map value associated to a label
 func GetMapValue(labels map[string]string, labelName string) map[string]string {
 	if values, ok := labels[labelName]; ok {
@@ -143,22 +163,7 @@ func GetMapValue(labels map[string]string, labelName string) map[string]string {
 			return nil
 		}
 
-		mapValue := make(map[string]string)
-
-		for _, parts := range strings.Split(values, mapEntrySeparator) {
-			pair := strings.SplitN(parts, mapValueSeparator, 2)
-			if len(pair) != 2 {
-				log.Warnf("Could not load %q: %q, skipping...", labelName, parts)
-			} else {
-				mapValue[http.CanonicalHeaderKey(strings.TrimSpace(pair[0]))] = strings.TrimSpace(pair[1])
-			}
-		}
-
-		if len(mapValue) == 0 {
-			log.Errorf("Could not load %q, skipping...", labelName)
-			return nil
-		}
-		return mapValue
+		return ParseMapValue(labelName, values)
 	}
 
 	return nil
