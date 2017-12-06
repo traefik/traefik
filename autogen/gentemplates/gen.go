@@ -187,6 +187,18 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   {{end}}]
     [frontends."frontend-{{getServiceBackend $container $serviceName}}".routes."service-{{$serviceName | replace "/" "" | replace "." "-"}}"]
     rule = "{{getServiceFrontendRule $container $serviceName}}"
+  {{if hasServiceRequestHeaders $container $serviceName}}
+    [frontends."frontend-{{getServiceBackend $container $serviceName}}".headers.customrequestheaders]
+    {{range $k, $v := getServiceRequestHeaders $container $serviceName}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+  {{end}}
+  {{if hasServiceResponseHeaders $container $serviceName}}
+    [frontends."frontend-{{getServiceBackend $container $serviceName}}".headers.customresponseheaders]
+    {{range $k, $v := getServiceResponseHeaders $container $serviceName}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+  {{end}}
   {{end}}
   {{else}}
   [frontends."frontend-{{$frontend}}"]

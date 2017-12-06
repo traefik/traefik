@@ -7,7 +7,79 @@ import (
 
 	"github.com/containous/traefik/provider/label"
 	docker "github.com/docker/docker/api/types"
+	"github.com/stretchr/testify/assert"
 )
+
+func TestDockerGetFuncMapLabel(t *testing.T) {
+	serviceName := "myservice"
+	fakeSuffix := "frontend.foo"
+	fakeLabel := label.Prefix + fakeSuffix
+
+	testCases := []struct {
+		desc        string
+		container   docker.ContainerJSON
+		suffixLabel string
+		expectedKey string
+		expected    map[string]string
+	}{
+		{
+			desc: "fallback to container label value",
+			container: containerJSON(labels(map[string]string{
+				fakeLabel: "X-Custom-Header: ContainerRequestHeader",
+			})),
+			suffixLabel: fakeSuffix,
+			expected: map[string]string{
+				"X-Custom-Header": "ContainerRequestHeader",
+			},
+		},
+		{
+			desc: "use service label instead of container label",
+			container: containerJSON(labels(map[string]string{
+				fakeLabel: "X-Custom-Header: ContainerRequestHeader",
+				label.GetServiceLabel(fakeLabel, serviceName): "X-Custom-Header: ServiceRequestHeader",
+			})),
+			suffixLabel: fakeSuffix,
+			expected: map[string]string{
+				"X-Custom-Header": "ServiceRequestHeader",
+			},
+		},
+		{
+			desc: "use service label with an empty value instead of container label",
+			container: containerJSON(labels(map[string]string{
+				fakeLabel: "X-Custom-Header: ContainerRequestHeader",
+				label.GetServiceLabel(fakeLabel, serviceName): "X-Custom-Header: ",
+			})),
+			suffixLabel: fakeSuffix,
+			expected: map[string]string{
+				"X-Custom-Header": "",
+			},
+		},
+		{
+			desc: "multiple values",
+			container: containerJSON(labels(map[string]string{
+				fakeLabel: "X-Custom-Header: MultiHeaders || Authorization: Basic YWRtaW46YWRtaW4=",
+			})),
+			suffixLabel: fakeSuffix,
+			expected: map[string]string{
+				"X-Custom-Header": "MultiHeaders",
+				"Authorization":   "Basic YWRtaW46YWRtaW4=",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			values := getFuncServiceMapLabel(test.suffixLabel)(dData, serviceName)
+
+			assert.EqualValues(t, test.expected, values)
+		})
+	}
+}
 
 func TestDockerGetFuncServiceStringLabel(t *testing.T) {
 	testCases := []struct {
