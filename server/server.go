@@ -374,6 +374,7 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 // it will publish the last of the newly received configurations.
 func throttleProviderConfigReload(throttle time.Duration, publish chan<- types.ConfigMessage, in <-chan types.ConfigMessage, stop chan bool) {
 	ring := channels.NewRingChannel(1)
+	defer ring.Close()
 
 	safe.Go(func() {
 		for {
