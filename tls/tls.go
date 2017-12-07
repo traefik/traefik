@@ -101,11 +101,7 @@ func SortTLSConfigurationPerEntryPoints(configurations []*Configuration, epConfi
 				if conf.Certificate.CertFile.Path() {
 					certName = conf.Certificate.CertFile.String()
 				} else {
-					content, err := conf.Certificate.CertFile.GetBeginContent()
-					if err != nil {
-						return err
-					}
-					certName = content
+					certName = strings.TrimPrefix(conf.Certificate.CertFile.String(), "-----BEGIN CERTIFICATE-----\n")[:50]
 				}
 				log.Debugf("No entryPoint is defined to add the certificate %s, it will be added to the default entryPoints: %s", certName, strings.Join(defaultEntryPoints, ", "))
 			}

@@ -67,18 +67,10 @@ func (f FileOrContent) String() string {
 	return string(f)
 }
 
+// Path returns true if the FileOrContent is a file path, otherwise returns false
 func (f FileOrContent) Path() bool {
 	_, err := os.Stat(f.String())
 	return err == nil
-}
-
-func (f FileOrContent) GetBeginContent() (string, error) {
-	content, err := f.Read()
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimPrefix(string(content), "-----BEGIN CERTIFICATE-----\n")[:50], nil
-
 }
 
 func (f FileOrContent) Read() ([]byte, error) {

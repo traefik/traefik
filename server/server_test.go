@@ -619,16 +619,15 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 	globalConfig := configuration.GlobalConfiguration{
 		EntryPoints: configuration.EntryPoints{
-			"https": &configuration.EntryPoint{TLS: &tls.TLS{}, ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
+			"http": &configuration.EntryPoint{ForwardedHeaders: &configuration.ForwardedHeaders{Insecure: true}},
 		},
-		DefaultEntryPoints: []string{"https"},
 	}
 
 	dynamicConfigs := types.Configurations{
 		"config": &types.Configuration{
 			Frontends: map[string]*types.Frontend{
 				"frontend": {
-					EntryPoints: []string{"https"},
+					EntryPoints: []string{"http"},
 					Backend:     "backend",
 					BasicAuth:   []string{""},
 				},
@@ -637,7 +636,7 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 				"backend": {
 					Servers: map[string]types.Server{
 						"server": {
-							URL: "https://localhost",
+							URL: "http://localhost",
 						},
 					},
 					LoadBalancer: &types.LoadBalancer{
@@ -645,6 +644,26 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 					},
 				},
 			},
+		},
+	}
+
+	srv := NewServer(globalConfig)
+	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
+		t.Fatalf("got error: %s", err)
+	}
+}
+
+func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
+	globalConfig := configuration.GlobalConfiguration{
+		EntryPoints: configuration.EntryPoints{
+			"https": &configuration.EntryPoint{TLS: &tls.TLS{}},
+			"http":  &configuration.EntryPoint{},
+		},
+		DefaultEntryPoints: []string{"http", "https"},
+	}
+
+	dynamicConfigs := types.Configurations{
+		"config": &types.Configuration{
 			TLSConfiguration: []*tls.Configuration{
 				{
 					Certificate: &tls.Certificate{
@@ -657,8 +676,10 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 	}
 
 	srv := NewServer(globalConfig)
-	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
+	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
+	} else if mapEntryPoints["https"].certs.Get() == nil {
+		t.Fatal("got error: https entryPoint must have TLS certificates.")
 	}
 }
 
