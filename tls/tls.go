@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/containous/traefik/log"
 )
 
@@ -95,12 +96,14 @@ func SortTLSConfigurationPerEntryPoints(configurations []*Configuration, epConfi
 	}
 	for _, conf := range configurations {
 		if conf.EntryPoints == nil || len(conf.EntryPoints) == 0 {
-			certName := conf.Certificate.CertFile.String()
-			// Keep only 50 characters to generate a readable log
-			if len(certName) > 50 {
-				certName = certName[0:50]
+			if log.GetLevel() >= logrus.DebugLevel {
+				certName := conf.Certificate.CertFile.String()
+				// Keep only 50 characters to generate a readable log
+				if len(certName) > 50 {
+					certName = certName[:50]
+				}
+				log.Debugf("No entryPoint is defined to add the certificate %s, it will be added to the default entryPoints: %s", certName, strings.Join(defaultEntryPoints, ", "))
 			}
-			log.Debugf("No entryPoint is defined to add the certificate %s, it will be added to the default entryPoints: %s", certName, strings.Join(defaultEntryPoints, ","))
 			conf.EntryPoints = append(conf.EntryPoints, defaultEntryPoints...)
 		}
 		for _, ep := range conf.EntryPoints {
