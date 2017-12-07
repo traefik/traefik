@@ -374,8 +374,8 @@ It can be configured using:
 For example:
 
 - `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window for a frontend
-- `LatencyAtQuantileMS(50.0) > 50`:  watch latency at quantile in milliseconds.
-- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in range [500-600) to  [0-600)
+- `LatencyAtQuantileMS(50.0) > 50`:  watch latency at quantile in milliseconds
+- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in ranges 500-600 and 0-600 (effectively 0-600)
 
 To proactively prevent backends from being overwhelmed with high load, a maximum connection limit can
 also be applied to each backend.
@@ -499,8 +499,8 @@ Here is an example of backends and servers definition:
 
 Træfik's configuration has two parts:
 
-- The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning.
-- The [dynamic Træfik configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
+- The [static Træfik configuration](/basics#static-trfik-configuration) which is loaded only at the beginning.
+- The [dynamic Træfik configuration](/basics#dynamic-trfik-configuration) which can be hot-reloaded (no need to restart the process).
 
 ### Static Træfik configuration
 
