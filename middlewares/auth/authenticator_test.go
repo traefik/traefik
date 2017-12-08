@@ -156,6 +156,37 @@ func TestDigestAuthFail(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
 }
 
+func TestBasicAuthWhitelistBypassSuccess(t *testing.T) {
+	_, err := NewAuthenticator(&types.Auth{
+		WhitelistSourceRange: []string{"127.0.0.0/8"},
+		Basic: &types.Basic{
+			Users: []string{"test"},
+		},
+	})
+	assert.Contains(t, err.Error(), "Error parsing Authenticator user", "should contains")
+
+	authMiddleware, err := NewAuthenticator(&types.Auth{
+		Basic: &types.Basic{
+			Users: []string{"test:test"},
+		},
+	})
+	assert.NoError(t, err, "there should be no error")
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "traefik")
+	})
+	n := negroni.New(authMiddleware)
+	n.UseHandler(handler)
+	ts := httptest.NewServer(n)
+	defer ts.Close()
+
+	client := &http.Client{}
+	req := testhelpers.MustNewRequest(http.MethodGet, ts.URL, nil)
+	res, err := client.Do(req)
+	assert.NoError(t, err, "there should be no error")
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode, "they should be equal")
+}
+
 func TestBasicAuthUserHeader(t *testing.T) {
 	middleware, err := NewAuthenticator(&types.Auth{
 		Basic: &types.Basic{

@@ -3,6 +3,8 @@ package whitelist
 import (
 	"fmt"
 	"net"
+	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -83,4 +85,40 @@ func ipFromRemoteAddr(addr string) (net.IP, error) {
 	}
 
 	return userIP, nil
+}
+
+// GetRemoteIP retrieves the requests remote IP, optinoally based if we should
+// trust the  proxy's Forwarded headers.
+func GetRemoteIP(req *http.Request, trustProxy *IP) (net.IP, error) {
+	remoteIP, _, err := net.SplitHostPort(req.RemoteAddr)
+	if err != nil {
+		return net.IP{}, err
+	}
+
+	ip := net.ParseIP(remoteIP)
+	if ip == nil {
+		return nil, fmt.Errorf("can't parse IP from address %s", remoteIP)
+	}
+
+	// if we trust the upstream host, we can filter based on the
+	// client ip it reports
+	if trustProxy != nil {
+		if contains, _ := trustProxy.ContainsIP(ip); contains {
+			if remoteIP := req.Header.Get("X-Forwarded-For"); remoteIP != "" {
+				ips := strings.Split(remoteIP, ",")
+				for i := len(ips) - 1; i >= 0; i-- {
+					if ip := net.ParseIP(strings.TrimSpace(ips[i])); ip != nil {
+						// if we trust this host, and there are more upstream hosts
+						// then we can report the upstream host
+						if contains, _ := trustProxy.ContainsIP(ip); contains && i > 0 {
+							continue
+						}
+						return ip, nil
+					}
+				}
+			}
+		}
+	}
+
+	return ip, nil
 }

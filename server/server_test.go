@@ -567,10 +567,11 @@ func TestServerParseHealthCheckOptions(t *testing.T) {
 
 func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 	cases := []struct {
-		desc                 string
-		whitelistStrings     []string
-		middlewareConfigured bool
-		errMessage           string
+		desc                       string
+		whitelistStrings           []string
+		whitelistTrustProxyStrings []string
+		middlewareConfigured       bool
+		errMessage                 string
 	}{
 		{
 			desc:                 "no whitelists configued",
@@ -582,6 +583,9 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 			whitelistStrings: []string{
 				"1.2.3.4/24",
 				"fe80::/16",
+			},
+			whitelistTrustProxyStrings: []string{
+				"1.2.3.4/24",
 			},
 			middlewareConfigured: true,
 			errMessage:           "",
@@ -599,7 +603,7 @@ func TestNewServerWithWhitelistSourceRange(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
-			middleware, err := configureIPWhitelistMiddleware(tc.whitelistStrings)
+			middleware, err := configureIPWhitelistMiddleware(tc.whitelistStrings, tc.whitelistTrustProxyStrings)
 
 			if tc.errMessage != "" {
 				require.EqualError(t, err, tc.errMessage)

@@ -140,6 +140,24 @@ Users can be specified directly in the toml file, or indirectly by referencing a
   usersFile = "/path/to/.htdigest"
 ```
 
+### IP Whitelist Bypass
+
+You can optionally setup certain IP ranges to bypass Basic and Digest authentication. A request from
+a whitelisted IP will not have to authenticate.
+
+```toml
+# To enable digest auth on an entrypoint with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+  [entryPoints.http.auth]
+    whitelistSourceRange = ["172.17.0.1"]
+    whitelistTrustProxy = ["127.0.0.1/8"]
+    [entryPoints.http.auth.basic]
+    users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+    usersFile = "/path/to/.htdigest"
+```
+
 ### Forward Authentication
 
 This configuration will first forward the request to `http://authserver.com/auth`.
@@ -154,7 +172,7 @@ Otherwise, the response from the auth server is returned.
     # To enable forward auth on an entrypoint
     [entryPoints.http.auth.forward]
     address = "https://authserver.com/auth"
-    
+
     # Trust existing X-Forwarded-* headers.
     # Useful with another reverse proxy in front of Traefik.
     #
@@ -162,7 +180,7 @@ Otherwise, the response from the auth server is returned.
     # Default: false
     #
     trustForwardHeader = true
-    
+
     # Enable forward auth TLS connection.
     #
     # Optional
@@ -210,13 +228,16 @@ Responses are compressed when:
 
 ## Whitelisting
 
-To enable IP whitelisting at the entrypoint level.
+To enable IP whitelisting at the entrypoint level. You can also set the `whitelistTrustProxy` option to have whitelisting
+be done on the IP provided by the `X-Forwarded-For` header, this is useful if Traefik is behind another proxy or load
+balancer and you want to filter by the client's IP.
 
 ```toml
 [entryPoints]
   [entryPoints.http]
   address = ":80"
   whiteListSourceRange = ["127.0.0.1/32", "192.168.1.7"]
+  # whitelistTrustProxy = ["127.0.0.1/32"]
 ```
 
 ## ProxyProtocol
@@ -226,7 +247,7 @@ Only IPs in `trustedIPs` will lead to remote client address replacement: you sho
 
 !!! danger
     When queuing Træfik behind another load-balancer, be sure to carefully configure Proxy Protocol on both sides.
-    Otherwise, it could introduce a security risk in your system by forging requests. 
+    Otherwise, it could introduce a security risk in your system by forging requests.
 
 ```toml
 [entryPoints]

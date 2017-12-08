@@ -150,6 +150,7 @@ type Frontend struct {
 	Priority             int                  `json:"priority"`
 	BasicAuth            []string             `json:"basicAuth"`
 	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
+	WhitelistTrustProxy  []string             `json:"whitelistTrustProxy,omitempty"`
 	Headers              Headers              `json:"headers,omitempty"`
 	Errors               map[string]ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
@@ -328,10 +329,12 @@ type Cluster struct {
 
 // Auth holds authentication configuration (BASIC, DIGEST, users)
 type Auth struct {
-	Basic       *Basic   `export:"true"`
-	Digest      *Digest  `export:"true"`
-	Forward     *Forward `export:"true"`
-	HeaderField string   `export:"true"`
+	Basic                *Basic   `export:"true"`
+	Digest               *Digest  `export:"true"`
+	Forward              *Forward `export:"true"`
+	WhitelistSourceRange []string `export:"true" mapstructure:","`
+	WhitelistTrustProxy  []string `export:"true" mapstructure:","`
+	HeaderField          string   `export:"true"`
 }
 
 // Users authentication users
