@@ -903,13 +903,151 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 	}
 }
 
+func TestBuildEntryPointRedirect(t *testing.T) {
+	srv := Server{
+		globalConfiguration: configuration.GlobalConfiguration{
+			EntryPoints: configuration.EntryPoints{
+				"http":  &configuration.EntryPoint{Address: ":80"},
+				"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
+			},
+		},
+	}
+
+	testCases := []struct {
+		desc              string
+		srcEntryPointName string
+		url               string
+		entryPoint        *configuration.EntryPoint
+		expectedURL       string
+	}{
+		{
+			desc:              "redirect regex",
+			srcEntryPointName: "http",
+			url:               "http://foo.com",
+			entryPoint: &configuration.EntryPoint{
+				Address: ":80",
+				Redirect: &configuration.Redirect{
+					Regex:       `^(?:http?:\/\/)(foo)(\.com)$`,
+					Replacement: "https://$1{{\"bar\"}}$2",
+				},
+			},
+			expectedURL: "https://foobar.com",
+		},
+		{
+			desc:              "redirect entry point",
+			srcEntryPointName: "http",
+			url:               "http://foo:80",
+			entryPoint: &configuration.EntryPoint{
+				Address: ":80",
+				Redirect: &configuration.Redirect{
+					EntryPoint: "https",
+				},
+			},
+			expectedURL: "https://foo:443",
+		},
+		{
+			desc:              "redirect entry point with regex (ignored)",
+			srcEntryPointName: "http",
+			url:               "http://foo.com:80",
+			entryPoint: &configuration.EntryPoint{
+				Address: ":80",
+				Redirect: &configuration.Redirect{
+					EntryPoint:  "https",
+					Regex:       `^(?:http?:\/\/)(foo)(\.com)$`,
+					Replacement: "https://$1{{\"bar\"}}$2",
+				},
+			},
+			expectedURL: "https://foo.com:443",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rewrite, err := srv.buildEntryPointRedirect(test.srcEntryPointName, test.entryPoint)
+			require.NoError(t, err)
+
+			req := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
+			recorder := httptest.NewRecorder()
+
+			rewrite.ServeHTTP(recorder, req, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Location", "fail")
+			}))
+
+			location, err := recorder.Result().Location()
+			require.NoError(t, err)
+			assert.Equal(t, test.expectedURL, location.String())
+		})
+	}
+}
+
+func TestServerBuildRedirectRewrite(t *testing.T) {
+	srv := Server{
+		globalConfiguration: configuration.GlobalConfiguration{
+			EntryPoints: configuration.EntryPoints{
+				"http":  &configuration.EntryPoint{Address: ":80"},
+				"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
+			},
+		},
+	}
+
+	testCases := []struct {
+		desc               string
+		srcEntryPointName  string
+		redirectEntryPoint string
+		url                string
+		expectedURL        string
+		errorExpected      bool
+	}{
+		{
+			desc:               "existing redirect entry point",
+			srcEntryPointName:  "http",
+			redirectEntryPoint: "https",
+			url:                "http://foo:80",
+			expectedURL:        "https://foo:443",
+		},
+		{
+			desc:               "non-existing redirect entry point",
+			srcEntryPointName:  "http",
+			redirectEntryPoint: "foo",
+			url:                "http://foo:80",
+			errorExpected:      true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rewrite, err := srv.buildRedirectRewrite(test.srcEntryPointName, test.redirectEntryPoint)
+			if test.errorExpected {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+
+				recorder := httptest.NewRecorder()
+				r := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
+				rewrite.ServeHTTP(recorder, r, nil)
+
+				location, err := recorder.Result().Location()
+				require.NoError(t, err)
+
+				assert.Equal(t, test.expectedURL, location.String())
+			}
+		})
+	}
+}
+
 func TestServerBuildRedirect(t *testing.T) {
 	testCases := []struct {
 		desc                   string
 		globalConfiguration    configuration.GlobalConfiguration
 		redirectEntryPointName string
 		expectedReplacement    string
-		expectedError          bool
+		errorExpected          bool
 	}{
 		{
 			desc: "Redirect endpoint http to https with HTTPS protocol",
@@ -942,7 +1080,7 @@ func TestServerBuildRedirect(t *testing.T) {
 					"http02": &configuration.EntryPoint{Address: ":88"},
 				},
 			},
-			expectedError: true,
+			errorExpected: true,
 		},
 		{
 			desc: "Redirect endpoint to an entry point with a malformed address",
@@ -953,7 +1091,7 @@ func TestServerBuildRedirect(t *testing.T) {
 					"http02": &configuration.EntryPoint{Address: "88"},
 				},
 			},
-			expectedError: true,
+			errorExpected: true,
 		},
 	}
 
@@ -966,7 +1104,7 @@ func TestServerBuildRedirect(t *testing.T) {
 
 			_, replacement, err := srv.buildRedirect(test.redirectEntryPointName)
 
-			require.Equal(t, test.expectedError, err != nil, "Expected an error but don't have error, or Expected no error but have an error: %v", err)
+			require.Equal(t, test.errorExpected, err != nil, "Expected an error but don't have error, or Expected no error but have an error: %v", err)
 			assert.Equal(t, test.expectedReplacement, replacement, "build redirect does not return the right replacement pattern")
 		})
 	}

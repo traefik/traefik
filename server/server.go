@@ -1132,7 +1132,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					if len(frontend.Redirect) > 0 {
-						rewrite, err := s.buildFrontendRedirect(entryPointName, frontend)
+						rewrite, err := s.buildRedirectRewrite(entryPointName, frontend.Redirect)
 						if err != nil {
 							log.Errorf("Error creating Frontend Redirect: %v", err)
 						}
@@ -1287,36 +1287,34 @@ func (s *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Hand
 	serverRoute.route.Handler(handler)
 }
 
-func (s *Server) buildFrontendRedirect(srcEntryPointName string, frontend *types.Frontend) (*middlewares.Rewrite, error) {
-	regex, replacement, err := s.buildRedirect(frontend.Redirect)
-	if err != nil {
-		return nil, err
-	}
-
-	rewrite, err := middlewares.NewRewrite(regex, replacement, true)
-	if err != nil {
-		return nil, err
-	}
-	log.Debugf("Creating entryPoint redirect %s -> %s : %s -> %s", srcEntryPointName, frontend.Redirect, regex, replacement)
-
-	return rewrite, nil
-}
-
 func (s *Server) buildEntryPointRedirect(srcEntryPointName string, entryPoint *configuration.EntryPoint) (*middlewares.Rewrite, error) {
+	if len(entryPoint.Redirect.EntryPoint) > 0 {
+		return s.buildRedirectRewrite(srcEntryPointName, entryPoint.Redirect.EntryPoint)
+	}
+
 	regex := entryPoint.Redirect.Regex
 	replacement := entryPoint.Redirect.Replacement
-	var err error
-	if len(entryPoint.Redirect.EntryPoint) > 0 {
-		regex, replacement, err = s.buildRedirect(entryPoint.Redirect.EntryPoint)
-		if err != nil {
-			return nil, err
-		}
-	}
 	rewrite, err := middlewares.NewRewrite(regex, replacement, true)
 	if err != nil {
 		return nil, err
 	}
 	log.Debugf("Creating entryPoint redirect %s -> %s : %s -> %s", srcEntryPointName, entryPoint.Redirect.EntryPoint, regex, replacement)
+
+	return rewrite, nil
+}
+
+func (s *Server) buildRedirectRewrite(srcEntryPointName string, redirectEntryPoint string) (*middlewares.Rewrite, error) {
+	regex, replacement, err := s.buildRedirect(redirectEntryPoint)
+	if err != nil {
+		return nil, err
+	}
+
+	rewrite, err := middlewares.NewRewrite(regex, replacement, true)
+	if err != nil {
+		// Impossible case because error is always nil
+		return nil, err
+	}
+	log.Debugf("Creating entryPoint redirect %s -> %s : %s -> %s", srcEntryPointName, redirectEntryPoint, regex, replacement)
 
 	return rewrite, nil
 }
@@ -1327,7 +1325,7 @@ func (s *Server) buildRedirect(entryPointName string) (string, string, error) {
 		return "", "", fmt.Errorf("unknown target entrypoint %q", entryPointName)
 	}
 
-	exp, _ := regexp.Compile(`(:\d+)`)
+	exp := regexp.MustCompile(`(:\d+)`)
 	match := exp.FindStringSubmatch(entryPoint.Address)
 	if len(match) == 0 {
 		return "", "", fmt.Errorf("bad Address format %q", entryPoint.Address)
