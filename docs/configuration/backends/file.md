@@ -92,7 +92,10 @@ entryPoints = ["https"]
 ```
 
 !!! note
-    adding certificates directly to the entrypoint is still maintained but certificates declared in this way cannot be managed dynamically.
+    If `tlsConfiguration.entryPoints` is not defined, the certificate is attached to all the `defaultEntryPoints` with a TLS configuration.
+
+!!! note
+    Adding certificates directly to the entryPoint is still maintained but certificates declared in this way cannot be managed dynamically.
     It's recommended to use the file provider to declare certificates.
 
 ## Rules in a Separate File
