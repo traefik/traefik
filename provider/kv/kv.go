@@ -134,7 +134,7 @@ func (p *Provider) loadConfig() *types.Configuration {
 	templateObjects := struct {
 		Prefix string
 	}{
-		// Allow `/traefik/alias` to superesede `p.Prefix`
+		// Allow `/traefik/alias` to supersede `p.Prefix`
 		strings.TrimSuffix(p.get(p.Prefix, p.Prefix+"/alias"), "/"),
 	}
 

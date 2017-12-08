@@ -374,6 +374,7 @@ func (s *Server) preLoadConfiguration(configMsg types.ConfigMessage) {
 // it will publish the last of the newly received configurations.
 func throttleProviderConfigReload(throttle time.Duration, publish chan<- types.ConfigMessage, in <-chan types.ConfigMessage, stop chan bool) {
 	ring := channels.NewRingChannel(1)
+	defer ring.Close()
 
 	safe.Go(func() {
 		for {
@@ -434,8 +435,12 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 	if err == nil {
 		for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 			s.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
-			if &newServerEntryPoint.certs != nil {
-				s.serverEntryPoints[newServerEntryPointName].certs.Set(newServerEntryPoint.certs.Get())
+			if newServerEntryPoint.certs.Get() != nil {
+				if s.globalConfiguration.EntryPoints[newServerEntryPointName].TLS == nil {
+					log.Debugf("Certificates not added to non-TLS entryPoint %s.", newServerEntryPointName)
+				} else {
+					s.serverEntryPoints[newServerEntryPointName].certs.Set(newServerEntryPoint.certs.Get())
+				}
 			}
 			log.Infof("Server configuration reloaded on %s", s.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 		}
@@ -447,12 +452,12 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 }
 
 // loadHTTPSConfiguration add/delete HTTPS certificate managed dynamically
-func (s *Server) loadHTTPSConfiguration(configurations types.Configurations) (map[string]*traefikTls.DomainsCertificates, error) {
+func (s *Server) loadHTTPSConfiguration(configurations types.Configurations, defaultEntryPoints configuration.DefaultEntryPoints) (map[string]*traefikTls.DomainsCertificates, error) {
 	newEPCertificates := make(map[string]*traefikTls.DomainsCertificates)
 	// Get all certificates
 	for _, configuration := range configurations {
 		if configuration.TLSConfiguration != nil && len(configuration.TLSConfiguration) > 0 {
-			if err := traefikTls.SortTLSConfigurationPerEntryPoints(configuration.TLSConfiguration, newEPCertificates); err != nil {
+			if err := traefikTls.SortTLSConfigurationPerEntryPoints(configuration.TLSConfiguration, newEPCertificates, defaultEntryPoints); err != nil {
 				return nil, err
 			}
 		}
@@ -888,7 +893,7 @@ func (s *Server) getRoundTripper(entryPointName string, globalConfiguration conf
 	return s.defaultForwardingRoundTripper, nil
 }
 
-// LoadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
+// loadConfig returns a new gorilla.mux Route from the specified global configuration and the dynamic
 // provider configurations.
 func (s *Server) loadConfig(configurations types.Configurations, globalConfiguration configuration.GlobalConfiguration) (map[string]*serverEntryPoint, error) {
 	serverEntryPoints := s.buildEntryPoints(globalConfiguration)
@@ -1133,6 +1138,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 
 						regex, replacement, err := s.buildRedirect(proto, entryPoint)
+						if err != nil {
+							log.Fatalf("Error creating Frontend Redirect: %v", err)
+						}
 						rewrite, err := middlewares.NewRewrite(regex, replacement, true)
 						if err != nil {
 							log.Fatalf("Error creating Frontend Redirect: %v", err)
@@ -1208,7 +1216,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 	healthcheck.GetHealthCheck().SetBackendsConfiguration(s.routinesPool.Ctx(), backendsHealthCheck)
 	// Get new certificates list sorted per entrypoints
 	// Update certificates
-	entryPointsCertificates, err := s.loadHTTPSConfiguration(configurations)
+	entryPointsCertificates, err := s.loadHTTPSConfiguration(configurations, globalConfiguration.DefaultEntryPoints)
 	//sort routes and update certificates
 	for serverEntryPointName, serverEntryPoint := range serverEntryPoints {
 		serverEntryPoint.httpRouter.GetHandler().SortRoutes()
@@ -1306,6 +1314,9 @@ func (s *Server) loadEntryPointConfig(entryPointName string, entryPoint *configu
 			protocol = "https"
 		}
 		regex, replacement, err = s.buildRedirect(protocol, entryPoint)
+		if err != nil {
+			return nil, err
+		}
 	}
 	rewrite, err := middlewares.NewRewrite(regex, replacement, true)
 	if err != nil {

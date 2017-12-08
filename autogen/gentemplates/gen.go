@@ -187,6 +187,18 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   {{end}}]
     [frontends."frontend-{{getServiceBackend $container $serviceName}}".routes."service-{{$serviceName | replace "/" "" | replace "." "-"}}"]
     rule = "{{getServiceFrontendRule $container $serviceName}}"
+  {{if hasServiceRequestHeaders $container $serviceName}}
+    [frontends."frontend-{{getServiceBackend $container $serviceName}}".headers.customrequestheaders]
+    {{range $k, $v := getServiceRequestHeaders $container $serviceName}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+  {{end}}
+  {{if hasServiceResponseHeaders $container $serviceName}}
+    [frontends."frontend-{{getServiceBackend $container $serviceName}}".headers.customresponseheaders]
+    {{range $k, $v := getServiceResponseHeaders $container $serviceName}}
+    {{$k}} = "{{$v}}"
+    {{end}}
+  {{end}}
   {{end}}
   {{else}}
   [frontends."frontend-{{$frontend}}"]
@@ -305,7 +317,7 @@ func templatesDockerTmpl() (*asset, error) {
 var _templatesEcsTmpl = []byte(`[backends]{{range $serviceName, $instances := .Services}}
   [backends.backend-{{ $serviceName }}.loadbalancer]
     method = "{{ getLoadBalancerMethod $instances}}"
-    sticky = {{ getLoadBalancerSticky $instances}}
+    sticky = {{ getSticky $instances}}
     {{if hasStickinessLabel $instances}} 
     [backends.backend-{{ $serviceName }}.loadbalancer.stickiness]
       cookieName = "{{getStickinessCookieName $instances}}"
@@ -589,7 +601,7 @@ var _templatesMarathonTmpl = []byte(`{{$apps := .Applications}}
 {{range $app := $apps}}
 {{range $task := $app.Tasks}}
 {{range $serviceIndex, $serviceName := getServiceNames $app}}
-    [backends."backend{{getBackend $app $serviceName}}".servers."server-{{$task.ID | replace "." "-"}}{{getServiceNameSuffix $serviceName }}"]
+    [backends."{{getBackend $app $serviceName}}".servers."server-{{$task.ID | replace "." "-"}}{{getServiceNameSuffix $serviceName }}"]
     url = "{{getProtocol $app $serviceName}}://{{getBackendServer $task $app}}:{{getPort $task $app $serviceName}}"
     weight = {{getWeight $app $serviceName}}
 {{end}}
@@ -598,27 +610,27 @@ var _templatesMarathonTmpl = []byte(`{{$apps := .Applications}}
 
 {{range $app := $apps}}
 {{range $serviceIndex, $serviceName := getServiceNames $app}}
-[backends."backend{{getBackend $app $serviceName }}"]
+[backends."{{getBackend $app $serviceName }}"]
 {{ if hasMaxConnLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".maxconn]
+      [backends."{{getBackend $app $serviceName }}".maxconn]
         amount = {{getMaxConnAmount $app }}
         extractorfunc = "{{getMaxConnExtractorFunc $app }}"
 {{end}}
 {{ if hasLoadBalancerLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".loadbalancer]
+      [backends."{{getBackend $app $serviceName }}".loadbalancer]
         method = "{{getLoadBalancerMethod $app }}"
         sticky = {{getSticky $app}}
         {{if hasStickinessLabel $app}}
-        [backends."backend{{getBackend $app $serviceName }}".loadbalancer.stickiness]
+        [backends."{{getBackend $app $serviceName }}".loadbalancer.stickiness]
           cookieName = "{{getStickinessCookieName $app}}"
         {{end}}
 {{end}}
 {{ if hasCircuitBreakerLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".circuitbreaker]
+      [backends."{{getBackend $app $serviceName }}".circuitbreaker]
         expression = "{{getCircuitBreakerExpression $app }}"
 {{end}}
 {{ if hasHealthCheckLabels $app }}
-      [backends."backend{{getBackend $app $serviceName }}".healthcheck]
+      [backends."{{getBackend $app $serviceName }}".healthcheck]
         path = "{{getHealthCheckPath $app }}"
         interval = "{{getHealthCheckInterval $app }}"
 {{end}}
@@ -627,7 +639,7 @@ var _templatesMarathonTmpl = []byte(`{{$apps := .Applications}}
 
 [frontends]{{range $app := $apps}}{{range $serviceIndex, $serviceName := getServiceNames .}}
   [frontends."{{ getFrontendName $app $serviceName }}"]
-  backend = "backend{{getBackend $app $serviceName}}"
+  backend = "{{getBackend $app $serviceName}}"
   passHostHeader = {{getPassHostHeader $app $serviceName}}
   priority = {{getPriority $app $serviceName}}
   entryPoints = [{{range getEntryPoints $app $serviceName}}

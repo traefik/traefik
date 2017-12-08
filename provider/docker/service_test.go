@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
@@ -21,7 +22,7 @@ func TestDockerGetServicePort(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				types.LabelPort: "2500",
+				label.TraefikPort: "2500",
 			})),
 			expected: "2500",
 		},
@@ -37,8 +38,8 @@ func TestDockerGetServicePort(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-			dockerData := parseContainer(test.container)
-			actual := getServicePort(dockerData, "myservice")
+			dData := parseContainer(test.container)
+			actual := getServicePort(dData, "myservice")
 			if actual != test.expected {
 				t.Fatalf("expected %q, got %q", test.expected, actual)
 			}
@@ -59,7 +60,7 @@ func TestDockerGetServiceFrontendRule(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				types.LabelFrontendRule: "Path:/helloworld",
+				label.TraefikFrontendRule: "Path:/helloworld",
 			})),
 			expected: "Path:/helloworld",
 		},
@@ -75,8 +76,8 @@ func TestDockerGetServiceFrontendRule(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-			dockerData := parseContainer(test.container)
-			actual := provider.getServiceFrontendRule(dockerData, "myservice")
+			dData := parseContainer(test.container)
+			actual := provider.getServiceFrontendRule(dData, "myservice")
 			if actual != test.expected {
 				t.Fatalf("expected %q, got %q", test.expected, actual)
 			}
@@ -95,7 +96,7 @@ func TestDockerGetServiceBackend(t *testing.T) {
 		},
 		{
 			container: containerJSON(labels(map[string]string{
-				types.LabelBackend: "another-backend",
+				label.TraefikBackend: "another-backend",
 			})),
 			expected: "fake-another-backend-myservice",
 		},
@@ -111,8 +112,8 @@ func TestDockerGetServiceBackend(t *testing.T) {
 		test := test
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
-			dockerData := parseContainer(test.container)
-			actual := getServiceBackend(dockerData, "myservice")
+			dData := parseContainer(test.container)
+			actual := getServiceBackend(dData, "myservice")
 			if actual != test.expected {
 				t.Fatalf("expected %q, got %q", test.expected, actual)
 			}
@@ -268,11 +269,11 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 			t.Parallel()
 			var dockerDataList []dockerData
 			for _, container := range test.containers {
-				dockerData := parseContainer(container)
-				dockerDataList = append(dockerDataList, dockerData)
+				dData := parseContainer(container)
+				dockerDataList = append(dockerDataList, dData)
 			}
 
-			actualConfig := provider.loadDockerConfig(dockerDataList)
+			actualConfig := provider.buildConfiguration(dockerDataList)
 			// Compare backends
 			if !reflect.DeepEqual(actualConfig.Backends, test.expectedBackends) {
 				t.Fatalf("expected %#v, got %#v", test.expectedBackends, actualConfig.Backends)

@@ -95,8 +95,8 @@ func (p *Provider) scanTable(client *dynamoClient) ([]map[string]*dynamodb.Attri
 	return items, nil
 }
 
-// loadDynamoConfig retrieves items from dynamodb and converts them into Backends and Frontends in a Configuration
-func (p *Provider) loadDynamoConfig(client *dynamoClient) (*types.Configuration, error) {
+// buildConfiguration retrieves items from dynamodb and converts them into Backends and Frontends in a Configuration
+func (p *Provider) buildConfiguration(client *dynamoClient) (*types.Configuration, error) {
 	items, err := p.scanTable(client)
 	if err != nil {
 		return nil, err
@@ -155,10 +155,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	pool.Go(func(stop chan bool) {
 		ctx, cancel := context.WithCancel(context.Background())
 		safe.Go(func() {
-			select {
-			case <-stop:
-				cancel()
-			}
+			<-stop
+			cancel()
 		})
 
 		operation := func() error {
@@ -167,7 +165,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				return handleCanceled(ctx, err)
 			}
 
-			configuration, err := p.loadDynamoConfig(awsClient)
+			configuration, err := p.buildConfiguration(awsClient)
 			if err != nil {
 				return handleCanceled(ctx, err)
 			}
@@ -184,7 +182,7 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					log.Debug("Watching Provider...")
 					select {
 					case <-reload.C:
-						configuration, err := p.loadDynamoConfig(awsClient)
+						configuration, err := p.buildConfiguration(awsClient)
 						if err != nil {
 							return handleCanceled(ctx, err)
 						}

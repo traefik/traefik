@@ -67,6 +67,12 @@ func (f FileOrContent) String() string {
 	return string(f)
 }
 
+// IsPath returns true if the FileOrContent is a file path, otherwise returns false
+func (f FileOrContent) IsPath() bool {
+	_, err := os.Stat(f.String())
+	return err == nil
+}
+
 func (f FileOrContent) Read() ([]byte, error) {
 	var content []byte
 	if _, err := os.Stat(f.String()); err == nil {
@@ -160,7 +166,7 @@ func (c *Certificate) AppendCertificates(certs map[string]*DomainsCertificates, 
 		}
 	}
 	if certExists {
-		log.Warnf("Into EntryPoint %s, try to add certificate for domains which already have a certificate (%s). The new certificate will not be append to the EntryPoint.", ep, certKey)
+		log.Warnf("Into EntryPoint %s, try to add certificate for domains which already have this certificate (%s). The new certificate will not be append to the EntryPoint.", ep, certKey)
 	} else {
 		log.Debugf("Add certificate for domains %s", certKey)
 		err = certs[ep].add(certKey, &tlsCert)

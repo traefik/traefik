@@ -573,6 +573,7 @@ func (s *Etcd3Suite) TestSNIDynamicTlsConfig(c *check.C) {
 	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
 	req.Header.Set("Accept", "*/*")
 	resp, err = client.Do(req)
+	c.Assert(err, checker.IsNil)
 	cn = resp.TLS.PeerCertificates[0].Subject.CommonName
 	c.Assert(cn, checker.Equals, "snitest.org")
 }

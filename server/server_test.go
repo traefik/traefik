@@ -644,21 +644,42 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 					},
 				},
 			},
-			TLSConfiguration: []*tls.Configuration{
-				{
-					Certificate: &tls.Certificate{
-						CertFile: localhostCert,
-						KeyFile:  localhostKey,
-					},
-					EntryPoints: []string{"http"},
-				},
-			},
 		},
 	}
 
 	srv := NewServer(globalConfig)
 	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
+	}
+}
+
+func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
+	globalConfig := configuration.GlobalConfiguration{
+		EntryPoints: configuration.EntryPoints{
+			"https": &configuration.EntryPoint{TLS: &tls.TLS{}},
+			"http":  &configuration.EntryPoint{},
+		},
+		DefaultEntryPoints: []string{"http", "https"},
+	}
+
+	dynamicConfigs := types.Configurations{
+		"config": &types.Configuration{
+			TLSConfiguration: []*tls.Configuration{
+				{
+					Certificate: &tls.Certificate{
+						CertFile: localhostCert,
+						KeyFile:  localhostKey,
+					},
+				},
+			},
+		},
+	}
+
+	srv := NewServer(globalConfig)
+	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
+		t.Fatalf("got error: %s", err)
+	} else if mapEntryPoints["https"].certs.Get() == nil {
+		t.Fatal("got error: https entryPoint must have TLS certificates.")
 	}
 }
 

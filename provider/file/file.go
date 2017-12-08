@@ -28,7 +28,7 @@ type Provider struct {
 // Provide allows the file provider to provide configurations to traefik
 // using the given configuration channel.
 func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
-	configuration, err := p.LoadConfig()
+	configuration, err := p.BuildConfiguration()
 
 	if err != nil {
 		return err
@@ -52,9 +52,9 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 	return nil
 }
 
-// LoadConfig loads configuration either from file or a directory specified by 'Filename'/'Directory'
+// BuildConfiguration loads configuration either from file or a directory specified by 'Filename'/'Directory'
 // and returns a 'Configuration' object
-func (p *Provider) LoadConfig() (*types.Configuration, error) {
+func (p *Provider) BuildConfiguration() (*types.Configuration, error) {
 	if p.Directory != "" {
 		return loadFileConfigFromDirectory(p.Directory, nil)
 	}
@@ -108,7 +108,7 @@ func (p *Provider) watcherCallback(configurationChan chan<- types.ConfigMessage,
 		return
 	}
 
-	configuration, err := p.LoadConfig()
+	configuration, err := p.BuildConfiguration()
 
 	if err != nil {
 		log.Errorf("Error occurred during watcher callback: %s", err)

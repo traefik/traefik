@@ -40,8 +40,8 @@ func (s *AccessLogSuite) TestAccessLog(c *check.C) {
 	defer os.Remove(traefikTestLogFile)
 
 	err = try.Do(1*time.Second, func() error {
-		if _, err := os.Stat(traefikTestLogFile); err != nil {
-			return fmt.Errorf("could not get stats for log file: %s", err)
+		if _, errStat := os.Stat(traefikTestLogFile); errStat != nil {
+			return fmt.Errorf("could not get stats for log file: %s", errStat)
 		}
 		return nil
 	})

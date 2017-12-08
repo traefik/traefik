@@ -620,7 +620,7 @@ This command allows to check the health of Traefik. Its exit status is `0` if Tr
 This can be used with Docker [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction or any other health check orchestration mechanism.
 
 !!! note
-    The [`web` provider](/configuration/backends/web) must be enabled to allow `/ping` calls by the `healthcheck` command.
+    The [`ping`](/configuration/ping) must be enabled to allow the `healthcheck` command to call `/ping`.
 
 ```bash
 traefik healthcheck
