@@ -356,7 +356,7 @@ A backend is responsible to load-balance the traffic coming from one or more fro
 
 Various methods of load-balancing are supported:
 
-- `wrr`: Weighted Round Robin
+- `wrr`: Weighted Round Robin.
 - `drr`: Dynamic Round Robin: increases weights on servers that perform better than others.
     It also rolls back to original weights if the servers have changed.
 
@@ -373,16 +373,13 @@ It can be configured using:
 
 For example:
 
-- `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window for a frontend
-- `LatencyAtQuantileMS(50.0) > 50`:  watch latency at quantile in milliseconds
-- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in ranges 500-600 and 0-600 (effectively 0-600)
+- `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window for a frontend.
+- `LatencyAtQuantileMS(50.0) > 50`:  watch latency at quantile in milliseconds.
+- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in ranges [500-600) and [0-600).
 
-To proactively prevent backends from being overwhelmed with high load, a maximum connection limit can
-also be applied to each backend.
+To proactively prevent backends from being overwhelmed with high load, a maximum connection limit can also be applied to each backend.
 
-Maximum connections can be configured by specifying an integer value for `maxconn.amount` and
-`maxconn.extractorfunc` which is a strategy used to determine how to categorize requests in order to
-evaluate the maximum connections.
+Maximum connections can be configured by specifying an integer value for `maxconn.amount` and `maxconn.extractorfunc` which is a strategy used to determine how to categorize requests in order to evaluate the maximum connections.
 
 For example:
 ```toml
