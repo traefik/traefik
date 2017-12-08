@@ -67,8 +67,8 @@ func (f FileOrContent) String() string {
 	return string(f)
 }
 
-// Path returns true if the FileOrContent is a file path, otherwise returns false
-func (f FileOrContent) Path() bool {
+// IsPath returns true if the FileOrContent is a file path, otherwise returns false
+func (f FileOrContent) IsPath() bool {
 	_, err := os.Stat(f.String())
 	return err == nil
 }
