@@ -1520,7 +1520,7 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 	return handler
 }
 
-func (server *Server) buildBufferingMiddleware(handler http.Handler, config *types.Buffering) (http.Handler, error) {
+func (s *Server) buildBufferingMiddleware(handler http.Handler, config *types.Buffering) (http.Handler, error) {
 	var lb *buffer.Buffer
 	var err error
 
