@@ -12,6 +12,10 @@ import (
 	"github.com/vulcand/oxy/utils"
 )
 
+const (
+	xForwardedURI = "X-Forwarded-Uri"
+)
+
 // Forward the authentication to a external server
 func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 
@@ -121,5 +125,13 @@ func writeHeader(req *http.Request, forwardReq *http.Request, trustForwardHeader
 		forwardReq.Header.Set(forward.XForwardedHost, req.Host)
 	} else {
 		forwardReq.Header.Del(forward.XForwardedHost)
+	}
+
+	if xfURI := req.Header.Get(xForwardedURI); xfURI != "" && trustForwardHeader {
+		forwardReq.Header.Set(xForwardedURI, xfURI)
+	} else if req.URL.RequestURI() != "" {
+		forwardReq.Header.Set(xForwardedURI, req.URL.RequestURI())
+	} else {
+		forwardReq.Header.Del(xForwardedURI)
 	}
 }
