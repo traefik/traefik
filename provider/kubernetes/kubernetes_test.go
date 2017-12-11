@@ -1194,6 +1194,7 @@ func TestTLSSecretLoad(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
 		buildIngress(
 			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendEntryPoints, "ep1,ep2"),
 			iRules(
 				iRule(iHost("example.com"), iPaths(
 					onePath(iBackend("example-com", intstr.FromInt(80))),
@@ -1203,7 +1204,7 @@ func TestTLSSecretLoad(t *testing.T) {
 				)),
 			),
 			iTLSs(
-				iTLS("myTlsSecret", "example.com"),
+				iTLS("myTlsSecret"),
 			),
 		),
 	}
@@ -1268,12 +1269,14 @@ func TestTLSSecretLoad(t *testing.T) {
 		),
 		frontends(
 			frontend("example.com",
+				entryPoints("ep1", "ep2"),
 				passHostHeader(),
 				routes(
 					route("example.com", "Host:example.com"),
 				),
 			),
 			frontend("example.org",
+				entryPoints("ep1", "ep2"),
 				passHostHeader(),
 				routes(
 					route("example.org", "Host:example.org"),
@@ -1282,6 +1285,7 @@ func TestTLSSecretLoad(t *testing.T) {
 		),
 		tlsConfigurations(
 			tlsConfiguration(
+				tlsEntryPoints("ep1", "ep2"),
 				certificate(
 					"-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
 					"-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
