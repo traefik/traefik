@@ -12,7 +12,7 @@ import:
 - package: github.com/cenk/backoff
 - package: github.com/containous/flaeg
 - package: github.com/containous/traefik-extra-service-fabric
-  version: v1.0.1
+  version: v1.0.4
 - package: github.com/vulcand/oxy
   version: 7b6e758ab449705195df638765c4ca472248908a
   repo: https://github.com/containous/oxy.git
