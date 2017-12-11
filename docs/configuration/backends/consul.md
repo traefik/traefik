@@ -88,6 +88,12 @@ endpoint = "127.0.0.1:8500"
 #
 exposedByDefault = false
 
+# Default domain used.
+#
+# Optional
+#
+domain = "consul.localhost"
+
 # Prefix for Consul catalog tags.
 #
 # Optional
