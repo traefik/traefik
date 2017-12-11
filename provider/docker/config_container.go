@@ -167,6 +167,11 @@ func isBackendLBSwarm(container dockerData) bool {
 	return label.GetBoolValue(container.Labels, labelBackendLoadBalancerSwarm, false)
 }
 
+func hasRedirect(container dockerData) bool {
+	return label.Has(container.Labels, label.TraefikFrontendRedirectEntryPoint) ||
+		label.Has(container.Labels, label.TraefikFrontendRedirectReplacement) && label.Has(container.Labels, label.TraefikFrontendRedirectRegex)
+}
+
 // Label functions
 
 func getFuncInt64Label(labelName string, defaultValue int64) func(container dockerData) int64 {

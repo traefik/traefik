@@ -8,6 +8,8 @@ You have three choices:
 - [Rules in a Separate File](/configuration/backends/file/#rules-in-a-separate-file)
 - [Multiple `.toml` Files](/configuration/backends/file/#multiple-toml-files)
 
+To enable the file backend, you must either pass the `--file` option to the Træfik binary or put the `[file]` section (with or without inner settings) in the configuration file.
+
 The configuration file allows managing both backends/frontends and HTTPS certificates (which are not [Let's Encrypt](https://letsencrypt.org) certificates generated through Træfik).
 
 ## Simple
@@ -25,8 +27,8 @@ defaultEntryPoints = ["http", "https"]
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
-      [[entryPoints.https.tls.certificates]]		
-      certFile = "integration/fixtures/https/snitest.org.cert"		
+      [[entryPoints.https.tls.certificates]]
+      certFile = "integration/fixtures/https/snitest.org.cert"
       keyFile = "integration/fixtures/https/snitest.org.key"
 
 [file]
@@ -90,7 +92,10 @@ entryPoints = ["https"]
 ```
 
 !!! note
-    adding certificates directly to the entrypoint is still maintained but certificates declared in this way cannot be managed dynamically.
+    If `tlsConfiguration.entryPoints` is not defined, the certificate is attached to all the `defaultEntryPoints` with a TLS configuration.
+
+!!! note
+    Adding certificates directly to the entryPoint is still maintained but certificates declared in this way cannot be managed dynamically.
     It's recommended to use the file provider to declare certificates.
 
 ## Rules in a Separate File
@@ -153,15 +158,16 @@ filename = "rules.toml"
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
   rule = "Path:/test"
+  
 # HTTPS certificate
 [[tlsConfiguration]]
-entryPoints = ["https"]
+  entryPoints = ["https"]
   [tlsConfiguration.certificate]
     certFile = "integration/fixtures/https/snitest.com.cert"
     keyFile = "integration/fixtures/https/snitest.com.key"
 
 [[tlsConfiguration]]
-entryPoints = ["https"]
+  entryPoints = ["https"]
   [[tlsConfiguration.certificates]]
   certFile = "integration/fixtures/https/snitest.org.cert"
   keyFile = "integration/fixtures/https/snitest.org.key"

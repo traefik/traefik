@@ -236,7 +236,7 @@ func (dc *DomainsCertificate) needRenew() bool {
 			return true
 		}
 		// <= 30 days left, renew certificate
-		if crt.NotAfter.Before(time.Now().Add(time.Duration(24 * 30 * time.Hour))) {
+		if crt.NotAfter.Before(time.Now().Add(24 * 30 * time.Hour)) {
 			return true
 		}
 	}

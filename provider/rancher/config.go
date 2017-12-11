@@ -27,15 +27,18 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getFrontendRule":             p.getFrontendRule,
 		"hasCircuitBreakerLabel":      hasFunc(label.TraefikBackendCircuitBreakerExpression),
 		"getCircuitBreakerExpression": getFuncString(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
-		"hasLoadBalancerLabel":        hasLoadBalancerLabel, // OK
-		"getLoadBalancerMethod":       getFuncString(label.TraefikFrontendRedirect, label.DefaultBackendLoadBalancerMethod),
-		"hasMaxConnLabels":            hasMaxConnLabels, // OK
+		"hasLoadBalancerLabel":        hasLoadBalancerLabel,
+		"getLoadBalancerMethod":       getFuncString(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
+		"hasMaxConnLabels":            hasMaxConnLabels,
 		"getMaxConnAmount":            getFuncInt64(label.TraefikBackendMaxConnAmount, math.MaxInt64),
 		"getMaxConnExtractorFunc":     getFuncString(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
 		"getSticky":                   getSticky, // deprecated
 		"hasStickinessLabel":          hasFunc(label.TraefikBackendLoadBalancerStickiness),
 		"getStickinessCookieName":     getFuncString(label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName),
-		"getRedirect":                 getFuncString(label.TraefikFrontendRedirect, label.DefaultFrontendRedirect),
+		"hasRedirect":                 hasRedirect,
+		"getRedirectEntryPoint":       getFuncString(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+		"getRedirectRegex":            getFuncString(label.TraefikFrontendRedirectRegex, ""),
+		"getRedirectReplacement":      getFuncString(label.TraefikFrontendRedirectReplacement, ""),
 	}
 
 	// filter services
@@ -116,7 +119,8 @@ func (p *Provider) getFrontendName(service rancherData) string {
 }
 
 // TODO: Deprecated
-// Deprecated replaced by Stickiness
+// replaced by Stickiness
+// Deprecated
 func getSticky(service rancherData) string {
 	if label.Has(service.Labels, label.TraefikBackendLoadBalancerSticky) {
 		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancerSticky, label.TraefikBackendLoadBalancerStickiness)
@@ -141,6 +145,11 @@ func hasMaxConnLabels(service rancherData) bool {
 func getBackend(service rancherData) string {
 	backend := label.GetStringValue(service.Labels, label.TraefikBackend, service.Name)
 	return provider.Normalize(backend)
+}
+
+func hasRedirect(service rancherData) bool {
+	return label.Has(service.Labels, label.TraefikFrontendRedirectEntryPoint) ||
+		label.Has(service.Labels, label.TraefikFrontendRedirectRegex) && label.Has(service.Labels, label.TraefikFrontendRedirectReplacement)
 }
 
 // Label functions

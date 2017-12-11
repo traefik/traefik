@@ -609,7 +609,7 @@ func TestIngressAnnotations(t *testing.T) {
 		buildIngress(
 			iNamespace("testing"),
 			iAnnotation(annotationKubernetesIngressClass, "traefik"),
-			iAnnotation(label.TraefikFrontendRedirect, "https"),
+			iAnnotation(label.TraefikFrontendRedirectEntryPoint, "https"),
 			iRules(
 				iRule(
 					iHost("redirect"),
@@ -753,7 +753,7 @@ func TestIngressAnnotations(t *testing.T) {
 			),
 			frontend("redirect/https",
 				passHostHeader(),
-				redirect("https"),
+				redirectEntryPoint("https"),
 				routes(
 					route("/https", "PathPrefix:/https"),
 					route("redirect", "Host:redirect")),
@@ -1183,6 +1183,7 @@ func TestBasicAuthInTemplate(t *testing.T) {
 	require.NoError(t, err, "error loading ingresses")
 
 	actual = provider.loadConfig(*actual)
+	require.NotNil(t, actual)
 	got := actual.Frontends["basic/auth"].BasicAuth
 	if !reflect.DeepEqual(got, []string{"myUser:myEncodedPW"}) {
 		t.Fatalf("unexpected credentials: %+v", got)

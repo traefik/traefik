@@ -267,12 +267,12 @@ func (dep *DefaultEntryPoints) Set(value string) error {
 
 // Get return the EntryPoints map
 func (dep *DefaultEntryPoints) Get() interface{} {
-	return DefaultEntryPoints(*dep)
+	return *dep
 }
 
 // SetValue sets the EntryPoints map with val
 func (dep *DefaultEntryPoints) SetValue(val interface{}) {
-	*dep = DefaultEntryPoints(val.(DefaultEntryPoints))
+	*dep = val.(DefaultEntryPoints)
 }
 
 // Type is type of the struct
@@ -317,9 +317,9 @@ func (ep *EntryPoints) Set(value string) error {
 			Optional: optional,
 		}
 	}
-	var redirect *Redirect
+	var redirect *types.Redirect
 	if len(result["redirect_entrypoint"]) > 0 || len(result["redirect_regex"]) > 0 || len(result["redirect_replacement"]) > 0 {
-		redirect = &Redirect{
+		redirect = &types.Redirect{
 			EntryPoint:  result["redirect_entrypoint"],
 			Regex:       result["redirect_regex"],
 			Replacement: result["redirect_replacement"],
@@ -405,12 +405,12 @@ func toBool(conf map[string]string, key string) bool {
 
 // Get return the EntryPoints map
 func (ep *EntryPoints) Get() interface{} {
-	return EntryPoints(*ep)
+	return *ep
 }
 
 // SetValue sets the EntryPoints map with val
 func (ep *EntryPoints) SetValue(val interface{}) {
-	*ep = EntryPoints(val.(EntryPoints))
+	*ep = val.(EntryPoints)
 }
 
 // Type is type of the struct
@@ -422,20 +422,13 @@ func (ep *EntryPoints) Type() string {
 type EntryPoint struct {
 	Network              string
 	Address              string
-	TLS                  *tls.TLS    `export:"true"`
-	Redirect             *Redirect   `export:"true"`
-	Auth                 *types.Auth `export:"true"`
+	TLS                  *tls.TLS        `export:"true"`
+	Redirect             *types.Redirect `export:"true"`
+	Auth                 *types.Auth     `export:"true"`
 	WhitelistSourceRange []string
 	Compress             bool              `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`
-}
-
-// Redirect configures a redirection of an entry point to another, or to an URL
-type Redirect struct {
-	EntryPoint  string
-	Regex       string
-	Replacement string
 }
 
 // Retry contains request retry config

@@ -86,7 +86,23 @@ func getServicePort(container dockerData, serviceName string) string {
 	return getPort(container)
 }
 
+func hasServiceRedirect(container dockerData, serviceName string) bool {
+	serviceLabels := getServiceLabels(container, serviceName)
+	if len(serviceLabels) == 0 {
+		return false
+	}
+
+	return label.Has(serviceLabels, label.SuffixFrontendRedirectEntryPoint) ||
+		label.Has(serviceLabels, label.SuffixFrontendRedirectRegex) && label.Has(serviceLabels, label.SuffixFrontendRedirectReplacement)
+}
+
 // Service label functions
+
+func getFuncServiceMapLabel(labelSuffix string) func(container dockerData, serviceName string) map[string]string {
+	return func(container dockerData, serviceName string) map[string]string {
+		return getServiceMapLabel(container, serviceName, labelSuffix)
+	}
+}
 
 func getFuncServiceSliceStringLabel(labelSuffix string) func(container dockerData, serviceName string) []string {
 	return func(container dockerData, serviceName string) []string {
@@ -112,6 +128,14 @@ func hasServiceLabel(container dockerData, serviceName string, labelSuffix strin
 		return true
 	}
 	return label.Has(container.Labels, label.Prefix+labelSuffix)
+}
+
+func getServiceMapLabel(container dockerData, serviceName string, labelSuffix string) map[string]string {
+	if value, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
+		lblName := label.GetServiceLabel(labelSuffix, serviceName)
+		return label.ParseMapValue(lblName, value)
+	}
+	return label.GetMapValue(container.Labels, label.Prefix+labelSuffix)
 }
 
 func getServiceSliceStringLabel(container dockerData, serviceName string, labelSuffix string) []string {

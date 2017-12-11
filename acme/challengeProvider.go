@@ -143,7 +143,7 @@ func pemEncode(data interface{}) []byte {
 	case *x509.CertificateRequest:
 		pemBlock = &pem.Block{Type: "CERTIFICATE REQUEST", Bytes: key.Raw}
 	case []byte:
-		pemBlock = &pem.Block{Type: "CERTIFICATE", Bytes: []byte(data.([]byte))}
+		pemBlock = &pem.Block{Type: "CERTIFICATE", Bytes: data.([]byte)}
 	}
 
 	return pem.EncodeToMemory(pemBlock)

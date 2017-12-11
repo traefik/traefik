@@ -34,13 +34,20 @@
     backend = "backend-{{getBackend $service}}"
     passHostHeader = {{getPassHostHeader $service}}
     priority = {{getPriority $service}}
-    redirect = "{{getRedirect $service}}"
     entryPoints = [{{range getEntryPoints $service}}
         "{{.}}",
     {{end}}]
     basicAuth = [{{range getBasicAuth $service}}
         "{{.}}",
     {{end}}]
+
+    {{if hasRedirect $service}}
+    [frontends."frontend-{{$frontendName}}".redirect]
+    entryPoint = "{{getRedirectEntryPoint $service}}"
+    regex = "{{getRedirectRegex $service}}"
+    replacement = "{{getRedirectReplacement $service}}"
+    {{end}}
+
     [frontends."frontend-{{$frontendName}}".routes."route-frontend-{{$frontendName}}"]
     rule = "{{getFrontendRule $service}}"
 {{end}}

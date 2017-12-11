@@ -9,6 +9,8 @@ import (
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSwarmGetFrontendName(t *testing.T) {
@@ -416,7 +418,6 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
-					Redirect:       "",
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test-docker-localhost-0": {
 							Rule: "Host:test.docker.localhost",
@@ -447,11 +448,11 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				swarmService(
 					serviceName("test1"),
 					serviceLabels(map[string]string{
-						label.TraefikPort:                "80",
-						label.TraefikBackend:             "foobar",
-						label.TraefikFrontendEntryPoints: "http,https",
-						label.TraefikFrontendAuthBasic:   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendRedirect:    "https",
+						label.TraefikPort:                       "80",
+						label.TraefikBackend:                    "foobar",
+						label.TraefikFrontendEntryPoints:        "http,https",
+						label.TraefikFrontendAuthBasic:          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendRedirectEntryPoint: "https",
 					}),
 					withEndpointSpec(modeVIP),
 					withEndpoint(virtualIP("1", "127.0.0.1/24")),
@@ -472,7 +473,9 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-					Redirect:       "https",
+					Redirect: &types.Redirect{
+						EntryPoint: "https",
+					},
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test1-docker-localhost-0": {
 							Rule: "Host:test1.docker.localhost",
@@ -484,7 +487,6 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
-					Redirect:       "",
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test2-docker-localhost-1": {
 							Rule: "Host:test2.docker.localhost",
@@ -531,14 +533,12 @@ func TestSwarmLoadDockerConfig(t *testing.T) {
 				ExposedByDefault: true,
 				SwarmMode:        true,
 			}
+
 			actualConfig := provider.buildConfiguration(dockerDataList)
-			// Compare backends
-			if !reflect.DeepEqual(actualConfig.Backends, test.expectedBackends) {
-				t.Errorf("expected %#v, got %#v", test.expectedBackends, actualConfig.Backends)
-			}
-			if !reflect.DeepEqual(actualConfig.Frontends, test.expectedFrontends) {
-				t.Errorf("expected %#v, got %#v", test.expectedFrontends, actualConfig.Frontends)
-			}
+			require.NotNil(t, actualConfig, "actualConfig")
+
+			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
+			assert.EqualValues(t, test.expectedFrontends, actualConfig.Frontends)
 		})
 	}
 }

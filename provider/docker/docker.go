@@ -190,13 +190,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 
 				} else {
 					pool.Go(func(stop chan bool) {
-						for {
-							select {
-							case <-stop:
-								cancel()
-								return
-							}
-						}
+						<-stop
+						cancel()
 					})
 					f := filters.NewArgs()
 					f.Add("type", "container")
