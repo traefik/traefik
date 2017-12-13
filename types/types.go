@@ -154,6 +154,8 @@ type Frontend struct {
 	Errors               map[string]ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
 	Redirect             string               `json:"redirect,omitempty"`
+	RedirectRegex        string               `json:"redirectregex,omitempty"`
+	RedirectReplacement  string               `json:"redirectreplacement,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
