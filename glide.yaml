@@ -84,9 +84,7 @@ import:
   vcs: git
 - package: github.com/abbot/go-http-auth
 - package: github.com/NYTimes/gziphandler
-  version: fork-containous
-  repo: https://github.com/containous/gziphandler.git
-  vcs: git
+  version: 1.0.0
 - package: github.com/docker/leadership
   repo: https://github.com/containous/leadership.git
   vcs: git
