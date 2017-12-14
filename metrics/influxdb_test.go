@@ -31,11 +31,11 @@ func TestInfluxDB(t *testing.T) {
 	}
 
 	msg := udp.ReceiveString(t, func() {
-		influxDBRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
-		influxDBRegistry.ReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
-		influxDBRegistry.RetriesCounter().With("service", "test").Add(1)
-		influxDBRegistry.RetriesCounter().With("service", "test").Add(1)
-		influxDBRegistry.ReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
+		influxDBRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusOK), "method", http.MethodGet).Add(1)
+		influxDBRegistry.BackendReqsCounter().With("service", "test", "code", strconv.Itoa(http.StatusNotFound), "method", http.MethodGet).Add(1)
+		influxDBRegistry.BackendRetriesCounter().With("service", "test").Add(1)
+		influxDBRegistry.BackendRetriesCounter().With("service", "test").Add(1)
+		influxDBRegistry.BackendReqDurationHistogram().With("service", "test", "code", strconv.Itoa(http.StatusOK)).Observe(10000)
 	})
 
 	assertMessage(t, msg, expected)

@@ -31,10 +31,10 @@ func RegisterDatadog(config *types.Datadog) Registry {
 	}
 
 	registry := &standardRegistry{
-		enabled:              true,
-		reqsCounter:          datadogClient.NewCounter(ddMetricsReqsName, 1.0),
-		reqDurationHistogram: datadogClient.NewHistogram(ddMetricsLatencyName, 1.0),
-		retriesCounter:       datadogClient.NewCounter(ddRetriesTotalName, 1.0),
+		enabled:                     true,
+		backendReqsCounter:          datadogClient.NewCounter(ddMetricsReqsName, 1.0),
+		backendReqDurationHistogram: datadogClient.NewHistogram(ddMetricsLatencyName, 1.0),
+		backendRetriesCounter:       datadogClient.NewCounter(ddRetriesTotalName, 1.0),
 	}
 
 	return registry

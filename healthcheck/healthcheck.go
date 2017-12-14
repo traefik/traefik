@@ -12,6 +12,7 @@ import (
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
+	"github.com/go-kit/kit/metrics"
 	"github.com/vulcand/oxy/roundrobin"
 )
 
@@ -19,9 +20,9 @@ var singleton *HealthCheck
 var once sync.Once
 
 // GetHealthCheck returns the health check which is guaranteed to be a singleton.
-func GetHealthCheck() *HealthCheck {
+func GetHealthCheck(metrics metricsRegistry) *HealthCheck {
 	once.Do(func() {
-		singleton = newHealthCheck()
+		singleton = newHealthCheck(metrics)
 	})
 	return singleton
 }
@@ -50,6 +51,7 @@ type BackendHealthCheck struct {
 //HealthCheck struct
 type HealthCheck struct {
 	Backends map[string]*BackendHealthCheck
+	metrics  metricsRegistry
 	cancel   context.CancelFunc
 }
 
@@ -60,10 +62,17 @@ type LoadBalancer interface {
 	Servers() []*url.URL
 }
 
-func newHealthCheck() *HealthCheck {
+func newHealthCheck(metrics metricsRegistry) *HealthCheck {
 	return &HealthCheck{
 		Backends: make(map[string]*BackendHealthCheck),
+		metrics:  metrics,
 	}
+}
+
+// metricsRegistry is a local interface in the healthcheck package, exposing only the required metrics
+// necessary for the healthcheck package. This makes it easier for the tests.
+type metricsRegistry interface {
+	BackendServerUpGauge() metrics.Gauge
 }
 
 // NewBackendHealthCheck Instantiate a new BackendHealthCheck
@@ -113,22 +122,30 @@ func (hc *HealthCheck) checkBackend(backend *BackendHealthCheck) {
 	enabledURLs := backend.LB.Servers()
 	var newDisabledURLs []*url.URL
 	for _, url := range backend.disabledURLs {
+		serverUpMetricValue := float64(0)
 		if err := checkHealth(url, backend); err == nil {
 			log.Warnf("Health check up: Returning to server list. Backend: %q URL: %q", backend.name, url.String())
 			backend.LB.UpsertServer(url, roundrobin.Weight(1))
+			serverUpMetricValue = 1
 		} else {
 			log.Warnf("Health check still failing. Backend: %q URL: %q Reason: %s", backend.name, url.String(), err)
 			newDisabledURLs = append(newDisabledURLs, url)
 		}
+		labelValues := []string{"backend", backend.name, "url", url.String()}
+		hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 	backend.disabledURLs = newDisabledURLs
 
 	for _, url := range enabledURLs {
+		serverUpMetricValue := float64(1)
 		if err := checkHealth(url, backend); err != nil {
 			log.Warnf("Health check failed: Remove from server list. Backend: %q URL: %q Reason: %s", backend.name, url.String(), err)
 			backend.LB.RemoveServer(url)
 			backend.disabledURLs = append(backend.disabledURLs, url)
+			serverUpMetricValue = 0
 		}
+		labelValues := []string{"backend", backend.name, "url", url.String()}
+		hc.metrics.BackendServerUpGauge().With(labelValues...).Set(serverUpMetricValue)
 	}
 }
 

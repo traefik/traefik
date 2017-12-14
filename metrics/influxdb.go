@@ -37,10 +37,10 @@ func RegisterInfluxDB(config *types.InfluxDB) Registry {
 	}
 
 	return &standardRegistry{
-		enabled:              true,
-		reqsCounter:          influxDBClient.NewCounter(influxDBMetricsReqsName),
-		reqDurationHistogram: influxDBClient.NewHistogram(influxDBMetricsLatencyName),
-		retriesCounter:       influxDBClient.NewCounter(influxDBRetriesTotalName),
+		enabled:                     true,
+		backendReqsCounter:          influxDBClient.NewCounter(influxDBMetricsReqsName),
+		backendReqDurationHistogram: influxDBClient.NewHistogram(influxDBMetricsLatencyName),
+		backendRetriesCounter:       influxDBClient.NewCounter(influxDBRetriesTotalName),
 	}
 }
 
