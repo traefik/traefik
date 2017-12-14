@@ -42,7 +42,7 @@ func NewAuthenticator(authConfig *types.Auth) (*Authenticator, error) {
 				if authConfig.HeaderField != "" {
 					r.Header[authConfig.HeaderField] = []string{username}
 				}
-				tracing.LogEventf(r, "Basic auth secceeded")
+				tracing.LogEventf(r, "Basic auth succeeded")
 				next.ServeHTTP(w, r)
 			}
 		})

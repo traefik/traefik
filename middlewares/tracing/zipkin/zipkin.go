@@ -10,7 +10,7 @@ import (
 // Name sets the name of this tracer
 const Name = "zipkin"
 
-// Config provides configuration settings for a jaeger tracer
+// Config provides configuration settings for a zipkin tracer
 type Config struct {
 	HTTPEndpoint string `description:"HTTP Endpoint to report traces to." export:"true"`
 	SameSpan     bool   `description:"Use ZipKin SameSpan RPC stule traces." export:"true"`

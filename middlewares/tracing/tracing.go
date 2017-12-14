@@ -40,7 +40,7 @@ func (t *Tracing) Setup() {
 	case zipkin.Name:
 		t.Tracer, t.closer, err = t.Zipkin.Setup(t.ServiceName)
 	default:
-		log.Warnf("unknown tracer %q", t.Backend)
+		log.Warnf("Unknown tracer %q", t.Backend)
 		return
 	}
 
