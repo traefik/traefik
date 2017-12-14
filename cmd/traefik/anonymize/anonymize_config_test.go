@@ -57,7 +57,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 					Optional: false,
 				},
 			},
-			Redirect: &configuration.Redirect{
+			Redirect: &types.Redirect{
 				Replacement: "foo Replacement",
 				Regex:       "foo Regex",
 				EntryPoint:  "foo EntryPoint",
@@ -103,7 +103,7 @@ func TestDo_globalConfiguration(t *testing.T) {
 					Optional: false,
 				},
 			},
-			Redirect: &configuration.Redirect{
+			Redirect: &types.Redirect{
 				Replacement: "fii Replacement",
 				Regex:       "fii Regex",
 				EntryPoint:  "fii EntryPoint",

@@ -944,7 +944,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 				if entryPoint.Redirect != nil {
 					if redirectHandlers[entryPointName] != nil {
 						n.Use(redirectHandlers[entryPointName])
-					} else if handler, err := s.buildEntryPointRedirect(entryPointName, entryPoint); err != nil {
+					} else if handler, err := s.buildRedirectHandler(entryPointName, entryPoint.Redirect); err != nil {
 						log.Errorf("Error loading entrypoint configuration for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
@@ -1131,8 +1131,8 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						log.Infof("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
 					}
 
-					if len(frontend.Redirect) > 0 {
-						rewrite, err := s.buildRedirectRewrite(entryPointName, frontend.Redirect)
+					if frontend.Redirect != nil {
+						rewrite, err := s.buildRedirectHandler(entryPointName, frontend.Redirect)
 						if err != nil {
 							log.Errorf("Error creating Frontend Redirect: %v", err)
 						}
@@ -1287,23 +1287,23 @@ func (s *Server) wireFrontendBackend(serverRoute *serverRoute, handler http.Hand
 	serverRoute.route.Handler(handler)
 }
 
-func (s *Server) buildEntryPointRedirect(srcEntryPointName string, entryPoint *configuration.EntryPoint) (*middlewares.Rewrite, error) {
-	if len(entryPoint.Redirect.EntryPoint) > 0 {
-		return s.buildRedirectRewrite(srcEntryPointName, entryPoint.Redirect.EntryPoint)
+func (s *Server) buildRedirectHandler(srcEntryPointName string, redirect *types.Redirect) (*middlewares.Rewrite, error) {
+	// entry point redirect
+	if len(redirect.EntryPoint) > 0 {
+		return s.buildEntryPointRedirect(srcEntryPointName, redirect.EntryPoint)
 	}
 
-	regex := entryPoint.Redirect.Regex
-	replacement := entryPoint.Redirect.Replacement
-	rewrite, err := middlewares.NewRewrite(regex, replacement, true)
+	// regex redirect
+	rewrite, err := middlewares.NewRewrite(redirect.Regex, redirect.Replacement, true)
 	if err != nil {
 		return nil, err
 	}
-	log.Debugf("Creating entryPoint redirect %s -> %s : %s -> %s", srcEntryPointName, entryPoint.Redirect.EntryPoint, regex, replacement)
+	log.Debugf("Creating entryPoint redirect %s -> %s -> %s", srcEntryPointName, redirect.Regex, redirect.Replacement)
 
 	return rewrite, nil
 }
 
-func (s *Server) buildRedirectRewrite(srcEntryPointName string, redirectEntryPoint string) (*middlewares.Rewrite, error) {
+func (s *Server) buildEntryPointRedirect(srcEntryPointName string, redirectEntryPoint string) (*middlewares.Rewrite, error) {
 	regex, replacement, err := s.buildRedirect(redirectEntryPoint)
 	if err != nil {
 		return nil, err

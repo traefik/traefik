@@ -76,13 +76,6 @@ func (p *Provider) getBasicAuth(service rancherData) []string {
 	return []string{}
 }
 
-func (p *Provider) getRedirect(service rancherData) string {
-	if redirect, err := getServiceLabel(service, types.LabelFrontendRedirect); err == nil {
-		return redirect
-	}
-	return ""
-}
-
 func (p *Provider) getFrontendName(service rancherData) string {
 	// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 	return provider.Normalize(p.getFrontendRule(service))
@@ -246,7 +239,10 @@ func (p *Provider) loadRancherConfig(services []rancherData) *types.Configuratio
 		"getSticky":                   p.getSticky,
 		"hasStickinessLabel":          p.hasStickinessLabel,
 		"getStickinessCookieName":     p.getStickinessCookieName,
-		"getRedirect":                 p.getRedirect,
+		"hasRedirect":                 hasRedirect,
+		"getRedirectEntryPoint":       getRedirectEntryPoint,
+		"getRedirectRegex":            getRedirectRegex,
+		"getRedirectReplacement":      getRedirectReplacement,
 	}
 
 	// filter services
@@ -339,4 +335,43 @@ func isServiceEnabled(service rancherData, exposedByDefault bool) bool {
 		return exposedByDefault && v != "false" || v == "true"
 	}
 	return exposedByDefault
+}
+
+// TODO will be rewrite when merge on master
+func hasRedirect(service rancherData) bool {
+	value, err := getServiceLabel(service, types.LabelFrontendRedirectEntryPoint)
+	frep := err == nil && len(value) > 0
+	value, err = getServiceLabel(service, types.LabelFrontendRedirectRegex)
+	frrg := err == nil && len(value) > 0
+	value, err = getServiceLabel(service, types.LabelFrontendRedirectReplacement)
+	frrp := err == nil && len(value) > 0
+
+	return frep || frrg && frrp
+}
+
+// TODO will be rewrite when merge on master
+func getRedirectEntryPoint(service rancherData) string {
+	value, err := getServiceLabel(service, types.LabelFrontendRedirectEntryPoint)
+	if err != nil || len(value) == 0 {
+		return ""
+	}
+	return value
+}
+
+// TODO will be rewrite when merge on master
+func getRedirectRegex(service rancherData) string {
+	value, err := getServiceLabel(service, types.LabelFrontendRedirectRegex)
+	if err != nil || len(value) == 0 {
+		return ""
+	}
+	return value
+}
+
+// TODO will be rewrite when merge on master
+func getRedirectReplacement(service rancherData) string {
+	value, err := getServiceLabel(service, types.LabelFrontendRedirectReplacement)
+	if err != nil || len(value) == 0 {
+		return ""
+	}
+	return value
 }

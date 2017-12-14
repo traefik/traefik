@@ -317,9 +317,9 @@ func (ep *EntryPoints) Set(value string) error {
 			Optional: optional,
 		}
 	}
-	var redirect *Redirect
+	var redirect *types.Redirect
 	if len(result["redirect_entrypoint"]) > 0 || len(result["redirect_regex"]) > 0 || len(result["redirect_replacement"]) > 0 {
-		redirect = &Redirect{
+		redirect = &types.Redirect{
 			EntryPoint:  result["redirect_entrypoint"],
 			Regex:       result["redirect_regex"],
 			Replacement: result["redirect_replacement"],
@@ -422,20 +422,13 @@ func (ep *EntryPoints) Type() string {
 type EntryPoint struct {
 	Network              string
 	Address              string
-	TLS                  *tls.TLS    `export:"true"`
-	Redirect             *Redirect   `export:"true"`
-	Auth                 *types.Auth `export:"true"`
+	TLS                  *tls.TLS        `export:"true"`
+	Redirect             *types.Redirect `export:"true"`
+	Auth                 *types.Auth     `export:"true"`
 	WhitelistSourceRange []string
 	Compress             bool              `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`
-}
-
-// Redirect configures a redirection of an entry point to another, or to an URL
-type Redirect struct {
-	EntryPoint  string
-	Regex       string
-	Replacement string
 }
 
 // Retry contains request retry config

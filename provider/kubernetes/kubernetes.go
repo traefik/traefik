@@ -199,8 +199,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				whitelistSourceRange := getSliceAnnotation(i, annotationKubernetesWhitelistSourceRange)
 
-				entryPointRedirect, _ := i.Annotations[types.LabelFrontendRedirect]
-
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
 					if err != nil {
@@ -241,7 +239,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Priority:             priority,
 						BasicAuth:            basicAuthCreds,
 						WhitelistSourceRange: whitelistSourceRange,
-						Redirect:             entryPointRedirect,
+						Redirect:             getFrontendRedirect(i),
 						EntryPoints:          entryPoints,
 						Headers:              headers,
 					}
@@ -491,4 +489,23 @@ func shouldProcessIngress(ingressClass string) bool {
 	default:
 		return false
 	}
+}
+
+// TODO will be rewrite when merge on master
+func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
+	frontendRedirectEntryPoint, ok := i.Annotations[types.LabelFrontendRedirectEntryPoint]
+	frep := ok && len(frontendRedirectEntryPoint) > 0
+	frontendRedirectRegex, ok := i.Annotations[types.LabelFrontendRedirectRegex]
+	frrg := ok && len(frontendRedirectRegex) > 0
+	frontendRedirectReplacement, ok := i.Annotations[types.LabelFrontendRedirectReplacement]
+	frrp := ok && len(frontendRedirectReplacement) > 0
+
+	if frep || frrg && frrp {
+		return &types.Redirect{
+			EntryPoint:  frontendRedirectEntryPoint,
+			Regex:       frontendRedirectRegex,
+			Replacement: frontendRedirectReplacement,
+		}
+	}
+	return nil
 }

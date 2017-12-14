@@ -6,6 +6,7 @@ import (
 
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProviderServiceFilter(t *testing.T) {
@@ -529,44 +530,6 @@ func TestProviderGetPassHostHeader(t *testing.T) {
 	}
 }
 
-func TestProviderGetRedirect(t *testing.T) {
-	provider := &Provider{Domain: "rancher.localhost"}
-
-	testCases := []struct {
-		desc     string
-		service  rancherData
-		expected string
-	}{
-		{
-			desc: "without label",
-			service: rancherData{
-				Name: "test-service",
-			},
-			expected: "",
-		},
-		{
-			desc: "with label",
-			service: rancherData{
-				Name: "test-service",
-				Labels: map[string]string{
-					types.LabelFrontendRedirect: "https",
-				},
-			},
-			expected: "https",
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actual := provider.getRedirect(test.service)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
 func TestProviderGetLabel(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -634,9 +597,9 @@ func TestProviderLoadRancherConfig(t *testing.T) {
 				{
 					Name: "test/service",
 					Labels: map[string]string{
-						types.LabelPort:              "80",
-						types.LabelFrontendAuthBasic: "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						types.LabelFrontendRedirect:  "https",
+						types.LabelPort:                       "80",
+						types.LabelFrontendAuthBasic:          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						types.LabelFrontendRedirectEntryPoint: "https",
 					},
 					Health:     "healthy",
 					Containers: []string{"127.0.0.1"},
@@ -649,7 +612,9 @@ func TestProviderLoadRancherConfig(t *testing.T) {
 					EntryPoints:    []string{},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 					Priority:       0,
-					Redirect:       "https",
+					Redirect: &types.Redirect{
+						EntryPoint: "https",
+					},
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test-service-rancher-localhost": {
 							Rule: "Host:test.service.rancher.localhost",
@@ -679,6 +644,7 @@ func TestProviderLoadRancherConfig(t *testing.T) {
 
 			actualConfig := provider.loadRancherConfig(test.services)
 
+			require.NotNil(t, actualConfig)
 			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
 			assert.EqualValues(t, test.expectedFrontends, actualConfig.Frontends)
 		})
@@ -729,6 +695,73 @@ func TestProviderHasStickinessLabel(t *testing.T) {
 
 			actual := provider.hasStickinessLabel(test.service)
 			assert.Equal(t, actual, test.expected)
+		})
+	}
+}
+
+func TestHasRedirect(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		service  rancherData
+		expected bool
+	}{
+		{
+			desc: "without redirect labels",
+			service: rancherData{
+				Name: "test-service",
+			},
+			expected: false,
+		},
+		{
+			desc: "with Redirect EntryPoint label",
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.LabelFrontendRedirectEntryPoint: "https",
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "with Redirect regex label",
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.LabelFrontendRedirectRegex: `(.+)`,
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "with Redirect replacement label",
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.LabelFrontendRedirectReplacement: "$1",
+				},
+			},
+			expected: false,
+		},
+		{
+			desc: "with Redirect regex & replacement labels",
+			service: rancherData{
+				Name: "test-service",
+				Labels: map[string]string{
+					types.LabelFrontendRedirectRegex:       `(.+)`,
+					types.LabelFrontendRedirectReplacement: "$1",
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := hasRedirect(test.service)
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

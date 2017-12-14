@@ -13,7 +13,9 @@ const (
 	SuffixFrontendEntryPoints                    = "frontend.entryPoints"
 	SuffixFrontendPassHostHeader                 = "frontend.passHostHeader"
 	SuffixFrontendPriority                       = "frontend.priority"
-	SuffixFrontendRedirect                       = "frontend.redirect"
+	SuffixFrontendRedirectEntryPoint             = "frontend.redirect.entryPoint"
+	SuffixFrontendRedirectRegex                  = "frontend.redirect.regex"
+	SuffixFrontendRedirectReplacement            = "frontend.redirect.replacement"
 	SuffixFrontendRule                           = "frontend.rule"
 	LabelDomain                                  = LabelPrefix + "domain"
 	LabelEnable                                  = LabelPrefix + "enable"
@@ -29,7 +31,9 @@ const (
 	LabelFrontendPriority                        = LabelPrefix + SuffixFrontendPriority
 	LabelFrontendRule                            = LabelPrefix + SuffixFrontendRule
 	LabelFrontendRuleType                        = LabelPrefix + "frontend.rule.type"
-	LabelFrontendRedirect                        = LabelPrefix + SuffixFrontendRedirect
+	LabelFrontendRedirectEntryPoint              = LabelPrefix + SuffixFrontendRedirectEntryPoint
+	LabelFrontendRedirectRegex                   = LabelPrefix + SuffixFrontendRedirectRegex
+	LabelFrontendRedirectReplacement             = LabelPrefix + SuffixFrontendRedirectReplacement
 	LabelTraefikFrontendValue                    = LabelPrefix + "frontend.value"
 	LabelTraefikFrontendWhitelistSourceRange     = LabelPrefix + "frontend.whitelistSourceRange"
 	LabelFrontendRequestHeaders                  = LabelPrefix + "frontend.headers.customRequestHeaders"
