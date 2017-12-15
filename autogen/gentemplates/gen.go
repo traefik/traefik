@@ -172,7 +172,6 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   [frontends."frontend-{{getServiceBackend $container $serviceName}}"]
   backend = "backend-{{getServiceBackend $container $serviceName}}"
   passHostHeader = {{getServicePassHostHeader $container $serviceName}}
-  redirect =  "{{getServiceRedirect $container $serviceName}}"
   {{if getWhitelistSourceRange $container}}
     whitelistSourceRange = [{{range getWhitelistSourceRange $container}}
       "{{.}}",
@@ -185,14 +184,21 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   basicAuth = [{{range getServiceBasicAuth $container $serviceName}}
     "{{.}}",
   {{end}}]
-    [frontends."frontend-{{getServiceBackend $container $serviceName}}".routes."service-{{$serviceName | replace "/" "" | replace "." "-"}}"]
+
+  {{if hasServiceRedirect $container $serviceName}}
+  [frontends."frontend-{{getServiceBackend $container $serviceName}}".redirect]
+  entryPoint = "{{getServiceRedirectEntryPoint $container $serviceName}}"
+  regex = "{{getServiceRedirectRegex $container $serviceName}}"
+  replacement = "{{getServiceRedirectReplacement $container $serviceName}}"
+  {{end}}
+
+  [frontends."frontend-{{getServiceBackend $container $serviceName}}".routes."service-{{$serviceName | replace "/" "" | replace "." "-"}}"]
     rule = "{{getServiceFrontendRule $container $serviceName}}"
   {{end}}
   {{else}}
   [frontends."frontend-{{$frontend}}"]
   backend = "backend-{{getBackend $container}}"
   passHostHeader = {{getPassHostHeader $container}}
-  redirect = "{{getRedirect $container}}"
   {{if getWhitelistSourceRange $container}}
     whitelistSourceRange = [{{range getWhitelistSourceRange $container}}
       "{{.}}",
@@ -205,6 +211,14 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   basicAuth = [{{range getBasicAuth $container}}
     "{{.}}",
   {{end}}]
+
+  {{if hasRedirect $container}}
+  [frontends."frontend-{{$frontend}}".redirect]
+  entryPoint = "{{getRedirectEntryPoint $container}}"
+  regex = "{{getRedirectRegex $container}}"
+  replacement = "{{getRedirectReplacement $container}}"
+  {{end}}
+
   [frontends."frontend-{{$frontend}}".headers]
   {{if hasSSLRedirectHeaders $container}}
   SSLRedirect = {{getSSLRedirectHeaders $container}}
@@ -414,13 +428,20 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
   backend = "{{$frontend.Backend}}"
   priority = {{$frontend.Priority}}
   passHostHeader = {{$frontend.PassHostHeader}}
-  redirect =  "{{$frontend.Redirect}}"
   basicAuth = [{{range $frontend.BasicAuth}}
       "{{.}}",
   {{end}}]
   whitelistSourceRange = [{{range $frontend.WhitelistSourceRange}}
     "{{.}}",
   {{end}}]
+
+  {{if $frontend.Redirect}}
+  [frontends."{{$frontendName}}".redirect]
+  entryPoint = "{{$frontend.RedirectEntryPoint}}"
+  regex = "{{$frontend.RedirectRegex}}"
+  replacement = "{{$frontend.RedirectReplacement}}"
+  {{end}}
+
   [frontends."{{$frontendName}}".headers]
   SSLRedirect = {{$frontend.Headers.SSLRedirect}}
   SSLTemporaryRedirect = {{$frontend.Headers.SSLTemporaryRedirect}}
@@ -752,13 +773,20 @@ var _templatesRancherTmpl = []byte(`{{$backendServers := .Backends}}
     backend = "backend-{{getBackend $service}}"
     passHostHeader = {{getPassHostHeader $service}}
     priority = {{getPriority $service}}
-    redirect = "{{getRedirect $service}}"
     entryPoints = [{{range getEntryPoints $service}}
         "{{.}}",
     {{end}}]
     basicAuth = [{{range getBasicAuth $service}}
         "{{.}}",
     {{end}}]
+
+    {{if hasRedirect $service}}
+    [frontends."frontend-{{$frontendName}}".redirect]
+    entryPoint = "{{getRedirectEntryPoint $service}}"
+    regex = "{{getRedirectRegex $service}}"
+    replacement = "{{getRedirectReplacement $service}}"
+    {{end}}
+
     [frontends."frontend-{{$frontendName}}".routes."route-frontend-{{$frontendName}}"]
     rule = "{{getFrontendRule $service}}"
 {{end}}

@@ -42,7 +42,7 @@ const (
 	defaultPassHostHeader              = "true"
 	defaultFrontendPriority            = "0"
 	defaultCircuitBreakerExpression    = "NetworkErrorRatio() > 1"
-	defaultFrontendRedirect            = ""
+	defaultFrontendRedirectEntryPoint  = ""
 	defaultBackendLoadBalancerMethod   = "wrr"
 	defaultBackendMaxconnExtractorfunc = "request.host"
 )
@@ -276,7 +276,6 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getEntryPoints":              getFuncSliceStringLabel(types.LabelFrontendEntryPoints),
 		"getBasicAuth":                getFuncSliceStringLabel(types.LabelFrontendAuthBasic),
 		"getFrontendRule":             p.getFrontendRule,
-		"getRedirect":                 getFuncStringLabel(types.LabelFrontendRedirect, ""),
 		"hasCircuitBreakerLabel":      hasLabel(types.LabelBackendCircuitbreakerExpression),
 		"getCircuitBreakerExpression": getFuncStringLabel(types.LabelBackendCircuitbreakerExpression, defaultCircuitBreakerExpression),
 		"hasLoadBalancerLabel":        hasLoadBalancerLabel,
@@ -289,7 +288,6 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getStickinessCookieName":     getFuncStringLabel(types.LabelBackendLoadbalancerStickinessCookieName, ""),
 		"getIsBackendLBSwarm":         getIsBackendLBSwarm,
 		"getServiceBackend":           getServiceBackend,
-		"getServiceRedirect":          getFuncServiceStringLabel(types.SuffixFrontendRedirect, defaultFrontendRedirect),
 		"getWhitelistSourceRange":     getFuncSliceStringLabel(types.LabelTraefikFrontendWhitelistSourceRange),
 
 		"hasRequestHeaders":                 hasLabel(types.LabelFrontendRequestHeaders),
@@ -343,6 +341,15 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServiceFrontendRule":   p.getServiceFrontendRule,
 		"getServicePassHostHeader": getFuncServiceStringLabel(types.SuffixFrontendPassHostHeader, defaultPassHostHeader),
 		"getServicePriority":       getFuncServiceStringLabel(types.SuffixFrontendPriority, defaultFrontendPriority),
+
+		"hasRedirect":                   hasRedirect,
+		"getRedirectEntryPoint":         getFuncStringLabel(types.LabelFrontendRedirectEntryPoint, defaultFrontendRedirectEntryPoint),
+		"getRedirectRegex":              getFuncStringLabel(types.LabelFrontendRedirectRegex, ""),
+		"getRedirectReplacement":        getFuncStringLabel(types.LabelFrontendRedirectReplacement, ""),
+		"hasServiceRedirect":            hasServiceRedirect,
+		"getServiceRedirectEntryPoint":  getFuncServiceStringLabel(types.SuffixFrontendRedirectEntryPoint, defaultFrontendRedirectEntryPoint),
+		"getServiceRedirectReplacement": getFuncServiceStringLabel(types.SuffixFrontendRedirectReplacement, ""),
+		"getServiceRedirectRegex":       getFuncServiceStringLabel(types.SuffixFrontendRedirectRegex, ""),
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -864,4 +871,27 @@ func parseTasks(task swarmtypes.Task, serviceDockerData dockerData, networkMap m
 		}
 	}
 	return dockerData
+}
+
+// TODO will be rewrite when merge on master
+func hasServiceRedirect(container dockerData, serviceName string) bool {
+	serviceLabels, ok := extractServicesLabels(container.Labels)[serviceName]
+	if !ok || len(serviceLabels) == 0 {
+		return false
+	}
+
+	value, ok := serviceLabels[types.SuffixFrontendRedirectEntryPoint]
+	frep := ok && len(value) > 0
+	value, ok = serviceLabels[types.SuffixFrontendRedirectRegex]
+	frrg := ok && len(value) > 0
+	value, ok = serviceLabels[types.SuffixFrontendRedirectReplacement]
+	frrp := ok && len(value) > 0
+
+	return frep || frrg && frrp
+}
+
+// TODO will be rewrite when merge on master
+func hasRedirect(container dockerData) bool {
+	return hasLabel(types.LabelFrontendRedirectEntryPoint)(container) ||
+		hasLabel(types.LabelFrontendRedirectReplacement)(container) && hasLabel(types.LabelFrontendRedirectRegex)(container)
 }

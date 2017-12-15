@@ -8,6 +8,7 @@ import (
 
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
@@ -1266,8 +1267,8 @@ func TestIngressAnnotations(t *testing.T) {
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "testing",
 				Annotations: map[string]string{
-					"kubernetes.io/ingress.class": "traefik",
-					types.LabelFrontendRedirect:   "https",
+					"kubernetes.io/ingress.class":         "traefik",
+					types.LabelFrontendRedirectEntryPoint: "https",
 				},
 			},
 			Spec: v1beta1.IngressSpec{
@@ -1452,7 +1453,6 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:foo",
 					},
 				},
-				Redirect: "",
 			},
 			"other/stuff": {
 				Backend:        "other/stuff",
@@ -1465,7 +1465,6 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:other",
 					},
 				},
-				Redirect: "",
 			},
 			"other/": {
 				Backend:        "other/",
@@ -1505,7 +1504,6 @@ func TestIngressAnnotations(t *testing.T) {
 					},
 				},
 				BasicAuth: []string{"myUser:myEncodedPW"},
-				Redirect:  "",
 			},
 			"redirect/https": {
 				Backend:        "redirect/https",
@@ -1518,7 +1516,9 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:redirect",
 					},
 				},
-				Redirect: "https",
+				Redirect: &types.Redirect{
+					EntryPoint: "https",
+				},
 			},
 
 			"test/whitelist-source-range": {
@@ -1536,7 +1536,6 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:test",
 					},
 				},
-				Redirect: "",
 			},
 			"rewrite/api": {
 				Backend:        "rewrite/api",
@@ -1549,7 +1548,6 @@ func TestIngressAnnotations(t *testing.T) {
 						Rule: "Host:rewrite",
 					},
 				},
-				Redirect: "",
 			},
 		},
 	}
@@ -2256,6 +2254,7 @@ func TestBasicAuthInTemplate(t *testing.T) {
 	}
 
 	actual = provider.loadConfig(*actual)
+	require.NotNil(t, actual)
 	got := actual.Frontends["basic/auth"].BasicAuth
 	if !reflect.DeepEqual(got, []string{"myUser:myEncodedPW"}) {
 		t.Fatalf("unexpected credentials: %+v", got)
