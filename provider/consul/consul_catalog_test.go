@@ -1094,7 +1094,7 @@ func TestConsulCatalogHasNodeOrTagschanged(t *testing.T) {
 			expected: false,
 		},
 		{
-			desc: "Change detected con tags",
+			desc: "Change detected on tags",
 			current: map[string]Service{
 				"foo-service": {
 					Name:  "foo",
@@ -1111,6 +1111,66 @@ func TestConsulCatalogHasNodeOrTagschanged(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			desc: "Change detected on ports",
+			current: map[string]Service{
+				"foo-service": {
+					Name:  "foo",
+					Nodes: []string{"node1"},
+					Tags:  []string{"foo=bar"},
+					Ports: []int{80},
+				},
+			},
+			previous: map[string]Service{
+				"foo-service": {
+					Name:  "foo",
+					Nodes: []string{"node1"},
+					Tags:  []string{"foo"},
+					Ports: []int{81},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "Change detected on ports",
+			current: map[string]Service{
+				"foo-service": {
+					Name:  "foo",
+					Nodes: []string{"node1"},
+					Tags:  []string{"foo=bar"},
+					Ports: []int{80},
+				},
+			},
+			previous: map[string]Service{
+				"foo-service": {
+					Name:  "foo",
+					Nodes: []string{"node1"},
+					Tags:  []string{"foo"},
+					Ports: []int{81, 82},
+				},
+			},
+			expected: true,
+		},
+		{
+			desc: "No Change detected",
+			current: map[string]Service{
+				"foo-service": {
+					Name:  "foo",
+					Nodes: []string{"node1"},
+					Tags:  []string{"foo"},
+					Ports: []int{80},
+				},
+			},
+			previous: map[string]Service{
+				"foo-service": {
+					Name:  "foo",
+					Nodes: []string{"node1"},
+					Tags:  []string{"foo"},
+					Ports: []int{80},
+				},
+			},
+			expected: false,
+		},
 	}
 
 	for _, test := range testCases {
@@ -1118,7 +1178,7 @@ func TestConsulCatalogHasNodeOrTagschanged(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := hasNodeOrTagsChanged(test.current, test.previous)
+			actual := hasServiceChanged(test.current, test.previous)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
