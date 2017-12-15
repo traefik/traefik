@@ -203,8 +203,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 				whitelistSourceRange := label.GetSliceStringValue(i.Annotations, annotationKubernetesWhitelistSourceRange)
 
-				entryPointRedirect := i.Annotations[label.TraefikFrontendRedirect]
-
 				if _, exists := templateObjects.Frontends[r.Host+pa.Path]; !exists {
 					basicAuthCreds, err := handleBasicAuthConfig(i, k8sClient)
 					if err != nil {
@@ -245,7 +243,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Priority:             priority,
 						BasicAuth:            basicAuthCreds,
 						WhitelistSourceRange: whitelistSourceRange,
-						Redirect:             entryPointRedirect,
+						Redirect:             getFrontendRedirect(i),
 						EntryPoints:          entryPoints,
 						Headers:              headers,
 					}
@@ -469,4 +467,24 @@ func equalPorts(servicePort v1.ServicePort, ingressPort intstr.IntOrString) bool
 
 func shouldProcessIngress(ingressClass string) bool {
 	return ingressClass == "" || ingressClass == "traefik"
+}
+
+func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
+	frontendRedirectEntryPoint, ok := i.Annotations[label.TraefikFrontendRedirectEntryPoint]
+	frep := ok && len(frontendRedirectEntryPoint) > 0
+
+	frontendRedirectRegex, ok := i.Annotations[label.TraefikFrontendRedirectRegex]
+	frrg := ok && len(frontendRedirectRegex) > 0
+
+	frontendRedirectReplacement, ok := i.Annotations[label.TraefikFrontendRedirectReplacement]
+	frrp := ok && len(frontendRedirectReplacement) > 0
+
+	if frep || frrg && frrp {
+		return &types.Redirect{
+			EntryPoint:  frontendRedirectEntryPoint,
+			Regex:       frontendRedirectRegex,
+			Replacement: frontendRedirectReplacement,
+		}
+	}
+	return nil
 }

@@ -13,18 +13,22 @@ import (
 
 func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
-		"getBackend":                  getBackend,
-		"getIPAddress":                p.getIPAddress,
-		"getPort":                     getPort,
-		"getWeight":                   getFuncStringLabel(label.TraefikWeight, label.DefaultWeight),
-		"getDomain":                   getFuncStringLabel(label.TraefikDomain, p.Domain),
-		"getProtocol":                 getFuncStringLabel(label.TraefikProtocol, label.DefaultProtocol),
-		"getPassHostHeader":           getFuncStringLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPriority":                 getFuncStringLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getEntryPoints":              getFuncSliceStringLabel(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":                getFuncSliceStringLabel(label.TraefikFrontendAuthBasic),
-		"getFrontendRule":             p.getFrontendRule,
-		"getRedirect":                 getFuncStringLabel(label.TraefikFrontendRedirect, label.DefaultFrontendRedirect),
+		"getBackend":             getBackend,
+		"getIPAddress":           p.getIPAddress,
+		"getPort":                getPort,
+		"getWeight":              getFuncStringLabel(label.TraefikWeight, label.DefaultWeight),
+		"getDomain":              getFuncStringLabel(label.TraefikDomain, p.Domain),
+		"getProtocol":            getFuncStringLabel(label.TraefikProtocol, label.DefaultProtocol),
+		"getPassHostHeader":      getFuncStringLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPriority":            getFuncStringLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getEntryPoints":         getFuncSliceStringLabel(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":           getFuncSliceStringLabel(label.TraefikFrontendAuthBasic),
+		"getFrontendRule":        p.getFrontendRule,
+		"hasRedirect":            hasRedirect,
+		"getRedirectEntryPoint":  getFuncStringLabel(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+		"getRedirectRegex":       getFuncStringLabel(label.TraefikFrontendRedirectRegex, ""),
+		"getRedirectReplacement": getFuncStringLabel(label.TraefikFrontendRedirectReplacement, ""),
+
 		"hasCircuitBreakerLabel":      hasFunc(label.TraefikBackendCircuitBreakerExpression),
 		"getCircuitBreakerExpression": getFuncStringLabel(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
 		"hasLoadBalancerLabel":        hasLoadBalancerLabel,
@@ -36,8 +40,6 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"hasStickinessLabel":          hasFunc(label.TraefikBackendLoadBalancerStickiness),
 		"getStickinessCookieName":     getFuncStringLabel(label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName),
 		"isBackendLBSwarm":            isBackendLBSwarm, // FIXME DEAD ?
-		"getServiceBackend":           getServiceBackend,
-		"getServiceRedirect":          getFuncServiceStringLabel(label.SuffixFrontendRedirect, label.DefaultFrontendRedirect),
 		"getWhitelistSourceRange":     getFuncSliceStringLabel(label.TraefikFrontendWhitelistSourceRange),
 
 		"hasRequestHeaders":                 hasFunc(label.TraefikFrontendRequestHeaders),
@@ -81,20 +83,25 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"hasIsDevelopmentHeaders":           hasFunc(label.TraefikFrontendIsDevelopment),
 		"getIsDevelopmentHeaders":           getFuncBoolLabel(label.TraefikFrontendIsDevelopment, false),
 
-		"hasServices":               hasServices,
-		"getServiceNames":           getServiceNames,
-		"getServicePort":            getServicePort,
-		"hasServiceRequestHeaders":  hasFuncServiceLabel(label.SuffixFrontendRequestHeaders),
-		"getServiceRequestHeaders":  getFuncServiceMapLabel(label.SuffixFrontendRequestHeaders),
-		"hasServiceResponseHeaders": hasFuncServiceLabel(label.SuffixFrontendResponseHeaders),
-		"getServiceResponseHeaders": getFuncServiceMapLabel(label.SuffixFrontendResponseHeaders),
-		"getServiceWeight":          getFuncServiceStringLabel(label.SuffixWeight, label.DefaultWeight),
-		"getServiceProtocol":        getFuncServiceStringLabel(label.SuffixProtocol, label.DefaultProtocol),
-		"getServiceEntryPoints":     getFuncServiceSliceStringLabel(label.SuffixFrontendEntryPoints),
-		"getServiceBasicAuth":       getFuncServiceSliceStringLabel(label.SuffixFrontendAuthBasic),
-		"getServiceFrontendRule":    p.getServiceFrontendRule,
-		"getServicePassHostHeader":  getFuncServiceStringLabel(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getServicePriority":        getFuncServiceStringLabel(label.SuffixFrontendPriority, label.DefaultFrontendPriority),
+		"hasServices":                   hasServices,
+		"getServiceBackend":             getServiceBackend,
+		"getServiceNames":               getServiceNames,
+		"getServicePort":                getServicePort,
+		"hasServiceRequestHeaders":      hasFuncServiceLabel(label.SuffixFrontendRequestHeaders),
+		"getServiceRequestHeaders":      getFuncServiceMapLabel(label.SuffixFrontendRequestHeaders),
+		"hasServiceResponseHeaders":     hasFuncServiceLabel(label.SuffixFrontendResponseHeaders),
+		"getServiceResponseHeaders":     getFuncServiceMapLabel(label.SuffixFrontendResponseHeaders),
+		"getServiceWeight":              getFuncServiceStringLabel(label.SuffixWeight, label.DefaultWeight),
+		"getServiceProtocol":            getFuncServiceStringLabel(label.SuffixProtocol, label.DefaultProtocol),
+		"getServiceEntryPoints":         getFuncServiceSliceStringLabel(label.SuffixFrontendEntryPoints),
+		"getServiceBasicAuth":           getFuncServiceSliceStringLabel(label.SuffixFrontendAuthBasic),
+		"getServiceFrontendRule":        p.getServiceFrontendRule,
+		"getServicePassHostHeader":      getFuncServiceStringLabel(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getServicePriority":            getFuncServiceStringLabel(label.SuffixFrontendPriority, label.DefaultFrontendPriority),
+		"hasServiceRedirect":            hasServiceRedirect,
+		"getServiceRedirectEntryPoint":  getFuncServiceStringLabel(label.SuffixFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+		"getServiceRedirectReplacement": getFuncServiceStringLabel(label.SuffixFrontendRedirectReplacement, ""),
+		"getServiceRedirectRegex":       getFuncServiceStringLabel(label.SuffixFrontendRedirectRegex, ""),
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -125,11 +132,11 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		Servers    map[string][]dockerData
 		Domain     string
 	}{
-		filteredContainers,
-		frontends,
-		backends,
-		servers,
-		p.Domain,
+		Containers: filteredContainers,
+		Frontends:  frontends,
+		Backends:   backends,
+		Servers:    servers,
+		Domain:     p.Domain,
 	}
 
 	configuration, err := p.GetConfiguration("templates/docker.tmpl", DockerFuncMap, templateObjects)

@@ -152,9 +152,22 @@ func priority(value int) func(*types.Frontend) {
 	}
 }
 
-func redirect(value string) func(*types.Frontend) {
+func redirectEntryPoint(name string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
-		f.Redirect = value
+		if f.Redirect == nil {
+			f.Redirect = &types.Redirect{}
+		}
+		f.Redirect.EntryPoint = name
+	}
+}
+
+func redirectRegex(regex, replacement string) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		if f.Redirect == nil {
+			f.Redirect = &types.Redirect{}
+		}
+		f.Redirect.Regex = regex
+		f.Redirect.Replacement = replacement
 	}
 }
 

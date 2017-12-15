@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// DefaultAPIVersion is a default Service Fabric REST API version
 const DefaultAPIVersion = "3.0"
 
 // Client for Service Fabric.

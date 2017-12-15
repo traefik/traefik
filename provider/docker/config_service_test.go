@@ -121,7 +121,7 @@ func TestDockerGetFuncServiceStringLabel(t *testing.T) {
 
 			actual := getFuncServiceStringLabel(test.suffixLabel, test.defaultValue)(dData, "myservice")
 			if actual != test.expected {
-				t.Fatalf("got %q, expected %q", actual, test.expected)
+				t.Errorf("got %q, expected %q", actual, test.expected)
 			}
 		})
 	}
@@ -164,7 +164,7 @@ func TestDockerGetFuncServiceSliceStringLabel(t *testing.T) {
 			actual := getFuncServiceSliceStringLabel(test.suffixLabel)(dData, "myservice")
 
 			if !reflect.DeepEqual(actual, test.expected) {
-				t.Fatalf("for container %q: got %q, expected %q", dData.Name, actual, test.expected)
+				t.Errorf("for container %q: got %q, expected %q", dData.Name, actual, test.expected)
 			}
 		})
 	}

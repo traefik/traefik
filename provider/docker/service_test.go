@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"reflect"
 	"strconv"
 	"testing"
 
@@ -9,6 +8,8 @@ import (
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDockerGetServicePort(t *testing.T) {
@@ -41,7 +42,7 @@ func TestDockerGetServicePort(t *testing.T) {
 			dData := parseContainer(test.container)
 			actual := getServicePort(dData, "myservice")
 			if actual != test.expected {
-				t.Fatalf("expected %q, got %q", test.expected, actual)
+				t.Errorf("expected %q, got %q", test.expected, actual)
 			}
 		})
 	}
@@ -79,7 +80,7 @@ func TestDockerGetServiceFrontendRule(t *testing.T) {
 			dData := parseContainer(test.container)
 			actual := provider.getServiceFrontendRule(dData, "myservice")
 			if actual != test.expected {
-				t.Fatalf("expected %q, got %q", test.expected, actual)
+				t.Errorf("expected %q, got %q", test.expected, actual)
 			}
 		})
 	}
@@ -115,7 +116,7 @@ func TestDockerGetServiceBackend(t *testing.T) {
 			dData := parseContainer(test.container)
 			actual := getServiceBackend(dData, "myservice")
 			if actual != test.expected {
-				t.Fatalf("expected %q, got %q", test.expected, actual)
+				t.Errorf("expected %q, got %q", test.expected, actual)
 			}
 		})
 	}
@@ -137,10 +138,10 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 				containerJSON(
 					name("foo"),
 					labels(map[string]string{
-						"traefik.service.port":                 "2503",
-						"traefik.service.frontend.entryPoints": "http,https",
-						"traefik.service.frontend.auth.basic":  "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						"traefik.service.frontend.redirect":    "https",
+						"traefik.service.port":                         "2503",
+						"traefik.service.frontend.entryPoints":         "http,https",
+						"traefik.service.frontend.auth.basic":          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						"traefik.service.frontend.redirect.entryPoint": "https",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -154,7 +155,9 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-					Redirect:       "https",
+					Redirect: &types.Redirect{
+						EntryPoint: "https",
+					},
 					Routes: map[string]types.Route{
 						"service-service": {
 							Rule: "Host:foo.docker.localhost",
@@ -179,16 +182,16 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 				containerJSON(
 					name("test1"),
 					labels(map[string]string{
-						"traefik.service.port":                    "2503",
-						"traefik.service.protocol":                "https",
-						"traefik.service.weight":                  "80",
-						"traefik.service.frontend.backend":        "foobar",
-						"traefik.service.frontend.passHostHeader": "false",
-						"traefik.service.frontend.rule":           "Path:/mypath",
-						"traefik.service.frontend.priority":       "5000",
-						"traefik.service.frontend.entryPoints":    "http,https,ws",
-						"traefik.service.frontend.auth.basic":     "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						"traefik.service.frontend.redirect":       "https",
+						"traefik.service.port":                         "2503",
+						"traefik.service.protocol":                     "https",
+						"traefik.service.weight":                       "80",
+						"traefik.service.frontend.backend":             "foobar",
+						"traefik.service.frontend.passHostHeader":      "false",
+						"traefik.service.frontend.rule":                "Path:/mypath",
+						"traefik.service.frontend.priority":            "5000",
+						"traefik.service.frontend.entryPoints":         "http,https,ws",
+						"traefik.service.frontend.auth.basic":          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						"traefik.service.frontend.redirect.entryPoint": "https",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -215,7 +218,9 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 					Priority:       5000,
 					EntryPoints:    []string{"http", "https", "ws"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-					Redirect:       "https",
+					Redirect: &types.Redirect{
+						EntryPoint: "https",
+					},
 					Routes: map[string]types.Route{
 						"service-service": {
 							Rule: "Path:/mypath",
@@ -227,7 +232,6 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
-					Redirect:       "",
 					Routes: map[string]types.Route{
 						"service-anotherservice": {
 							Rule: "Path:/anotherpath",
@@ -274,13 +278,10 @@ func TestDockerLoadDockerServiceConfig(t *testing.T) {
 			}
 
 			actualConfig := provider.buildConfiguration(dockerDataList)
-			// Compare backends
-			if !reflect.DeepEqual(actualConfig.Backends, test.expectedBackends) {
-				t.Fatalf("expected %#v, got %#v", test.expectedBackends, actualConfig.Backends)
-			}
-			if !reflect.DeepEqual(actualConfig.Frontends, test.expectedFrontends) {
-				t.Fatalf("expected %#v, got %#v", test.expectedFrontends, actualConfig.Frontends)
-			}
+			require.NotNil(t, actualConfig, "actualConfig")
+
+			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
+			assert.EqualValues(t, test.expectedFrontends, actualConfig.Frontends)
 		})
 	}
 }

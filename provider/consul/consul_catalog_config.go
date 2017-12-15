@@ -28,7 +28,7 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		"getTag":                  getTag,
 		"hasTag":                  hasTag,
 		"getEntryPoints":          getEntryPoints,
-		"hasMaxconnAttributes":    p.hasMaxconnAttributes,
+		"hasMaxconnAttributes":    p.hasMaxConnAttributes,
 	}
 
 	var allNodes []*api.ServiceEntry
@@ -69,7 +69,7 @@ func (p *CatalogProvider) setupFrontEndTemplate() {
 }
 
 func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
-	customFrontendRule := p.getAttribute("frontend.rule", service.Attributes, "")
+	customFrontendRule := p.getAttribute(label.SuffixFrontendRule, service.Attributes, "")
 	if customFrontendRule == "" {
 		customFrontendRule = p.FrontEndRule
 	}
@@ -102,16 +102,16 @@ func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
 }
 
 func (p *CatalogProvider) getBasicAuth(tags []string) []string {
-	list := p.getAttribute("frontend.auth.basic", tags, "")
+	list := p.getAttribute(label.SuffixFrontendAuthBasic, tags, "")
 	if list != "" {
 		return strings.Split(list, ",")
 	}
 	return []string{}
 }
 
-func (p *CatalogProvider) hasMaxconnAttributes(attributes []string) bool {
-	amount := p.getAttribute("backend.maxconn.amount", attributes, "")
-	extractorfunc := p.getAttribute("backend.maxconn.extractorfunc", attributes, "")
+func (p *CatalogProvider) hasMaxConnAttributes(attributes []string) bool {
+	amount := p.getAttribute(label.SuffixBackendMaxConnAmount, attributes, "")
+	extractorfunc := p.getAttribute(label.SuffixBackendMaxConnExtractorFunc, attributes, "")
 	return amount != "" && extractorfunc != ""
 }
 

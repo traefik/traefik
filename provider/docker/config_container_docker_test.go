@@ -10,6 +10,8 @@ import (
 	docker "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDockerLoadDockerConfig(t *testing.T) {
@@ -39,7 +41,6 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
-					Redirect:       "",
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test-docker-localhost-0": {
 							Rule: "Host:test.docker.localhost",
@@ -64,10 +65,10 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				containerJSON(
 					name("test1"),
 					labels(map[string]string{
-						label.TraefikBackend:             "foobar",
-						label.TraefikFrontendEntryPoints: "http,https",
-						label.TraefikFrontendAuthBasic:   "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendRedirect:    "https",
+						label.TraefikBackend:                    "foobar",
+						label.TraefikFrontendEntryPoints:        "http,https",
+						label.TraefikFrontendAuthBasic:          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendRedirectEntryPoint: "https",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -91,7 +92,9 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-					Redirect:       "https",
+					Redirect: &types.Redirect{
+						EntryPoint: "https",
+					},
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test1-docker-localhost-0": {
 							Rule: "Host:test1.docker.localhost",
@@ -103,7 +106,6 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{},
 					BasicAuth:      []string{},
-					Redirect:       "",
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test2-docker-localhost-1": {
 							Rule: "Host:test2.docker.localhost",
@@ -151,7 +153,6 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
 					BasicAuth:      []string{},
-					Redirect:       "",
 					Routes: map[string]types.Route{
 						"route-frontend-Host-test1-docker-localhost-0": {
 							Rule: "Host:test1.docker.localhost",
@@ -197,13 +198,10 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 				ExposedByDefault: true,
 			}
 			actualConfig := provider.buildConfiguration(dockerDataList)
-			// Compare backends
-			if !reflect.DeepEqual(actualConfig.Backends, test.expectedBackends) {
-				t.Errorf("expected %#v, got %#v", test.expectedBackends, actualConfig.Backends)
-			}
-			if !reflect.DeepEqual(actualConfig.Frontends, test.expectedFrontends) {
-				t.Errorf("expected %#v, got %#v", test.expectedFrontends, actualConfig.Frontends)
-			}
+			require.NotNil(t, actualConfig, "actualConfig")
+
+			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
+			assert.EqualValues(t, test.expectedFrontends, actualConfig.Frontends)
 		})
 	}
 }

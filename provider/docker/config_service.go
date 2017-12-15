@@ -86,6 +86,16 @@ func getServicePort(container dockerData, serviceName string) string {
 	return getPort(container)
 }
 
+func hasServiceRedirect(container dockerData, serviceName string) bool {
+	serviceLabels := getServiceLabels(container, serviceName)
+	if len(serviceLabels) == 0 {
+		return false
+	}
+
+	return label.Has(serviceLabels, label.SuffixFrontendRedirectEntryPoint) ||
+		label.Has(serviceLabels, label.SuffixFrontendRedirectRegex) && label.Has(serviceLabels, label.SuffixFrontendRedirectReplacement)
+}
+
 // Service label functions
 
 func getFuncServiceMapLabel(labelSuffix string) func(container dockerData, serviceName string) map[string]string {

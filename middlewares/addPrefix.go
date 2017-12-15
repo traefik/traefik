@@ -12,6 +12,9 @@ type AddPrefix struct {
 
 func (s *AddPrefix) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r.URL.Path = s.Prefix + r.URL.Path
+	if r.URL.RawPath != "" {
+		r.URL.RawPath = s.Prefix + r.URL.RawPath
+	}
 	r.RequestURI = r.URL.RequestURI()
 	s.Handler.ServeHTTP(w, r)
 }

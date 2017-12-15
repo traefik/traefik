@@ -25,13 +25,20 @@
   backend = "{{$frontend.Backend}}"
   priority = {{$frontend.Priority}}
   passHostHeader = {{$frontend.PassHostHeader}}
-  redirect =  "{{$frontend.Redirect}}"
   basicAuth = [{{range $frontend.BasicAuth}}
       "{{.}}",
   {{end}}]
   whitelistSourceRange = [{{range $frontend.WhitelistSourceRange}}
     "{{.}}",
   {{end}}]
+
+  {{if $frontend.Redirect}}
+  [frontends."{{$frontendName}}".redirect]
+  entryPoint = "{{$frontend.RedirectEntryPoint}}"
+  regex = "{{$frontend.RedirectRegex}}"
+  replacement = "{{$frontend.RedirectReplacement}}"
+  {{end}}
+
   [frontends."{{$frontendName}}".headers]
   SSLRedirect = {{$frontend.Headers.SSLRedirect}}
   SSLTemporaryRedirect = {{$frontend.Headers.SSLTemporaryRedirect}}

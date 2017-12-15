@@ -356,7 +356,7 @@ A backend is responsible to load-balance the traffic coming from one or more fro
 
 Various methods of load-balancing are supported:
 
-- `wrr`: Weighted Round Robin
+- `wrr`: Weighted Round Robin.
 - `drr`: Dynamic Round Robin: increases weights on servers that perform better than others.
     It also rolls back to original weights if the servers have changed.
 
@@ -373,16 +373,13 @@ It can be configured using:
 
 For example:
 
-- `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window for a frontend
+- `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window for a frontend.
 - `LatencyAtQuantileMS(50.0) > 50`:  watch latency at quantile in milliseconds.
-- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in range [500-600) to  [0-600)
+- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in ranges [500-600) and [0-600).
 
-To proactively prevent backends from being overwhelmed with high load, a maximum connection limit can
-also be applied to each backend.
+To proactively prevent backends from being overwhelmed with high load, a maximum connection limit can also be applied to each backend.
 
-Maximum connections can be configured by specifying an integer value for `maxconn.amount` and
-`maxconn.extractorfunc` which is a strategy used to determine how to categorize requests in order to
-evaluate the maximum connections.
+Maximum connections can be configured by specifying an integer value for `maxconn.amount` and `maxconn.extractorfunc` which is a strategy used to determine how to categorize requests in order to evaluate the maximum connections.
 
 For example:
 ```toml
@@ -499,8 +496,8 @@ Here is an example of backends and servers definition:
 
 Træfik's configuration has two parts:
 
-- The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning.
-- The [dynamic Træfik configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
+- The [static Træfik configuration](/basics#static-trfik-configuration) which is loaded only at the beginning.
+- The [dynamic Træfik configuration](/basics#dynamic-trfik-configuration) which can be hot-reloaded (no need to restart the process).
 
 ### Static Træfik configuration
 
@@ -585,7 +582,7 @@ traefik [command] [--flag=flag_argument]
 List of Træfik available commands with description :
 
 - `version` : Print version
-- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
+- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
 - `bug`: The easiest way to submit a pre-filled issue.
 - `healthcheck`: Calls Traefik `/ping` to check health.
 

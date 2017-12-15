@@ -102,12 +102,20 @@ Annotations can be used on containers to override default behaviour for the whol
     Override the default frontend rule type. Default: `PathPrefix`.
 - `traefik.frontend.priority: "3"`
     Override the default frontend rule priority.
-- `traefik.frontend.redirect: https`:
+- `traefik.frontend.redirect.entryPoint: https`:
     Enables Redirect to another entryPoint for that frontend (e.g. HTTPS).
+- `traefik.frontend.redirect.regex: ^http://localhost/(.*)`:
+    Redirect to another URL for that frontend. Must be set with `traefik.frontend.redirect.replacement`.
+- `traefik.frontend.redirect.replacement: http://mydomain/$1`:
+    Redirect to another URL for that frontend. Must be set with `traefik.frontend.redirect.regex`.
 - `traefik.frontend.entryPoints: http,https`  
     Override the default frontend endpoints.
 - `traefik.frontend.passTLSCert: true`  
     Override the default frontend PassTLSCert value. Default: `false`.
+
+!!! note
+    Please note that `traefik.frontend.redirect.regex` and `traefik.frontend.redirect.replacement` do not have to be set if `traefik.frontend.redirect.entryPoint` is defined for the redirection (they will not be used in this case).
+
 
 Annotations can be used on the Kubernetes service to override default behaviour:
 

@@ -153,7 +153,14 @@ type Frontend struct {
 	Headers              Headers              `json:"headers,omitempty"`
 	Errors               map[string]ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
-	Redirect             string               `json:"redirect,omitempty"`
+	Redirect             *Redirect            `json:"redirect,omitempty"`
+}
+
+// Redirect configures a redirection of an entry point to another, or to an URL
+type Redirect struct {
+	EntryPoint  string `json:"entryPoint,omitempty"`
+	Regex       string `json:"regex,omitempty"`
+	Replacement string `json:"replacement,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.

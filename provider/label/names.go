@@ -48,7 +48,9 @@ const (
 	SuffixFrontendPassHostHeader                   = "frontend.passHostHeader"
 	SuffixFrontendPassTLSCert                      = "frontend.passTLSCert"
 	SuffixFrontendPriority                         = "frontend.priority"
-	SuffixFrontendRedirect                         = "frontend.redirect"
+	SuffixFrontendRedirectEntryPoint               = "frontend.redirect.entryPoint"
+	SuffixFrontendRedirectRegex                    = "frontend.redirect.regex"
+	SuffixFrontendRedirectReplacement              = "frontend.redirect.replacement"
 	SuffixFrontendRule                             = "frontend.rule"
 	SuffixFrontendRuleType                         = "frontend.rule.type"
 	SuffixFrontendWhitelistSourceRange             = "frontend.whitelistSourceRange"
@@ -79,7 +81,9 @@ const (
 	TraefikFrontendPriority                        = Prefix + SuffixFrontendPriority
 	TraefikFrontendRule                            = Prefix + SuffixFrontendRule
 	TraefikFrontendRuleType                        = Prefix + SuffixFrontendRuleType
-	TraefikFrontendRedirect                        = Prefix + SuffixFrontendRedirect
+	TraefikFrontendRedirectEntryPoint              = Prefix + SuffixFrontendRedirectEntryPoint
+	TraefikFrontendRedirectRegex                   = Prefix + SuffixFrontendRedirectRegex
+	TraefikFrontendRedirectReplacement             = Prefix + SuffixFrontendRedirectReplacement
 	TraefikFrontendValue                           = Prefix + SuffixFrontendValue
 	TraefikFrontendWhitelistSourceRange            = Prefix + SuffixFrontendWhitelistSourceRange
 	TraefikFrontendRequestHeaders                  = Prefix + SuffixFrontendRequestHeaders

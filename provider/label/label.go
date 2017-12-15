@@ -22,7 +22,7 @@ const (
 	DefaultPassHostHeader                          = "true"
 	DefaultFrontendPriority                        = "0"
 	DefaultCircuitBreakerExpression                = "NetworkErrorRatio() > 1"
-	DefaultFrontendRedirect                        = ""
+	DefaultFrontendRedirectEntryPoint              = ""
 	DefaultBackendLoadBalancerMethod               = "wrr"
 	DefaultBackendMaxconnExtractorFunc             = "request.host"
 	DefaultBackendLoadbalancerStickinessCookieName = ""
