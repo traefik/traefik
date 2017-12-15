@@ -1,5 +1,5 @@
-hash: 798765d68f54df534f091b4963f76f3e26d8dac2cb444368c2fa1c572e3c1ea6
-updated: 2017-11-30T10:34:41.246378337+01:00
+hash: 03cd7f5ecab087e73cc395cb61b58b82cefef55969aa368f93fc17095b92815f
+updated: 2017-12-15T10:34:41.246378337+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -94,7 +94,7 @@ imports:
 - name: github.com/containous/staert
   version: af517d5b70db9c4b0505e0144fcc62b054057d2a
 - name: github.com/containous/traefik-extra-service-fabric
-  version: 8076098dbfe814cba9e895ecbd896f1896b6b2d5
+  version: c01c1ef60ed612c5e42c1ceae0c6f92e67619cc3
 - name: github.com/coreos/bbolt
   version: 3c6cbfb299c11444eb2f8c9d48f0d2ce09157423
 - name: github.com/coreos/etcd
@@ -348,7 +348,7 @@ imports:
   subpackages:
   - lib
 - name: github.com/jjcollinge/servicefabric
-  version: 93a44e59fc887cda489913c6fc5bda834989f3bd
+  version: 8026935326c842b71dee8e2329c1fda41a7a92f4
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jonboulle/clockwork
