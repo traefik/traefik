@@ -262,7 +262,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 func getServiceIds(services []*api.CatalogService) []string {
 	var serviceIds []string
 	for _, service := range services {
-		serviceIds = append(serviceIds, service.ServiceID)
+		serviceIds = append(serviceIds, service.ID)
 	}
 	return serviceIds
 }
