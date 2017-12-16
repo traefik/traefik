@@ -45,6 +45,47 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getHealthCheckPath":          getFuncString(label.TraefikBackendHealthCheckPath, ""),
 		"getHealthCheckPort":          getFuncInt(label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort),
 		"getHealthCheckInterval":      getFuncString(label.TraefikBackendHealthCheckInterval, ""),
+
+		"hasRequestHeaders":                 hasFunc(label.TraefikFrontendRequestHeaders),
+		"getRequestHeaders":                 getFuncMap(label.TraefikFrontendRequestHeaders),
+		"hasResponseHeaders":                hasFunc(label.TraefikFrontendResponseHeaders),
+		"getResponseHeaders":                getFuncMap(label.TraefikFrontendResponseHeaders),
+		"hasAllowedHostsHeaders":            hasFunc(label.TraefikFrontendAllowedHosts),
+		"getAllowedHostsHeaders":            getFuncSliceString(label.TraefikFrontendAllowedHosts),
+		"hasHostsProxyHeaders":              hasFunc(label.TraefikFrontendHostsProxyHeaders),
+		"getHostsProxyHeaders":              getFuncSliceString(label.TraefikFrontendHostsProxyHeaders),
+		"hasSSLRedirectHeaders":             hasFunc(label.TraefikFrontendSSLRedirect),
+		"getSSLRedirectHeaders":             getFuncBool(label.TraefikFrontendSSLRedirect, false),
+		"hasSSLTemporaryRedirectHeaders":    hasFunc(label.TraefikFrontendSSLTemporaryRedirect),
+		"getSSLTemporaryRedirectHeaders":    getFuncBool(label.TraefikFrontendSSLTemporaryRedirect, false),
+		"hasSSLHostHeaders":                 hasFunc(label.TraefikFrontendSSLHost),
+		"getSSLHostHeaders":                 getFuncString(label.TraefikFrontendSSLHost, ""),
+		"hasSSLProxyHeaders":                hasFunc(label.TraefikFrontendSSLProxyHeaders),
+		"getSSLProxyHeaders":                getFuncMap(label.TraefikFrontendSSLProxyHeaders),
+		"hasSTSSecondsHeaders":              hasFunc(label.TraefikFrontendSTSSeconds),
+		"getSTSSecondsHeaders":              getFuncInt64(label.TraefikFrontendSTSSeconds, 0),
+		"hasSTSIncludeSubdomainsHeaders":    hasFunc(label.TraefikFrontendSTSIncludeSubdomains),
+		"getSTSIncludeSubdomainsHeaders":    getFuncBool(label.TraefikFrontendSTSIncludeSubdomains, false),
+		"hasSTSPreloadHeaders":              hasFunc(label.TraefikFrontendSTSPreload),
+		"getSTSPreloadHeaders":              getFuncBool(label.TraefikFrontendSTSPreload, false),
+		"hasForceSTSHeaderHeaders":          hasFunc(label.TraefikFrontendForceSTSHeader),
+		"getForceSTSHeaderHeaders":          getFuncBool(label.TraefikFrontendForceSTSHeader, false),
+		"hasFrameDenyHeaders":               hasFunc(label.TraefikFrontendFrameDeny),
+		"getFrameDenyHeaders":               getFuncBool(label.TraefikFrontendFrameDeny, false),
+		"hasCustomFrameOptionsValueHeaders": hasFunc(label.TraefikFrontendCustomFrameOptionsValue),
+		"getCustomFrameOptionsValueHeaders": getFuncString(label.TraefikFrontendCustomFrameOptionsValue, ""),
+		"hasContentTypeNosniffHeaders":      hasFunc(label.TraefikFrontendContentTypeNosniff),
+		"getContentTypeNosniffHeaders":      getFuncBool(label.TraefikFrontendContentTypeNosniff, false),
+		"hasBrowserXSSFilterHeaders":        hasFunc(label.TraefikFrontendBrowserXSSFilter),
+		"getBrowserXSSFilterHeaders":        getFuncBool(label.TraefikFrontendBrowserXSSFilter, false),
+		"hasContentSecurityPolicyHeaders":   hasFunc(label.TraefikFrontendContentSecurityPolicy),
+		"getContentSecurityPolicyHeaders":   getFuncString(label.TraefikFrontendContentSecurityPolicy, ""),
+		"hasPublicKeyHeaders":               hasFunc(label.TraefikFrontendPublicKey),
+		"getPublicKeyHeaders":               getFuncString(label.TraefikFrontendPublicKey, ""),
+		"hasReferrerPolicyHeaders":          hasFunc(label.TraefikFrontendReferrerPolicy),
+		"getReferrerPolicyHeaders":          getFuncString(label.TraefikFrontendReferrerPolicy, ""),
+		"hasIsDevelopmentHeaders":           hasFunc(label.TraefikFrontendIsDevelopment),
+		"getIsDevelopmentHeaders":           getFuncBool(label.TraefikFrontendIsDevelopment, false),
 	}
 
 	// filter services
@@ -65,9 +106,9 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		Backends  map[string]rancherData
 		Domain    string
 	}{
-		frontends,
-		backends,
-		p.Domain,
+		Frontends: frontends,
+		Backends:  backends,
+		Domain:    p.Domain,
 	}
 
 	configuration, err := p.GetConfiguration("templates/rancher.tmpl", RancherFuncMap, templateObjects)
@@ -187,6 +228,12 @@ func getFuncInt64(labelName string, defaultValue int64) func(service rancherData
 func getFuncSliceString(labelName string) func(service rancherData) []string {
 	return func(service rancherData) []string {
 		return label.GetSliceStringValue(service.Labels, labelName)
+	}
+}
+
+func getFuncMap(labelName string) func(service rancherData) map[string]string {
+	return func(service rancherData) map[string]string {
+		return label.GetMapValue(service.Labels, labelName)
 	}
 }
 
