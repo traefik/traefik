@@ -27,6 +27,7 @@ const (
 	DefaultBackendLoadBalancerMethod               = "wrr"
 	DefaultBackendMaxconnExtractorFunc             = "request.host"
 	DefaultBackendLoadbalancerStickinessCookieName = ""
+	DefaultBackendHealthCheckPort                  = 0
 )
 
 // ServicesPropertiesRegexp used to extract the name of the service and the name of the property for this service

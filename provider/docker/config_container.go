@@ -192,6 +192,12 @@ func getFuncStringLabel(labelName string, defaultValue string) func(container do
 	}
 }
 
+func getFuncIntLabel(labelName string, defaultValue int) func(container dockerData) int {
+	return func(container dockerData) int {
+		return label.GetIntValue(container.Labels, labelName, defaultValue)
+	}
+}
+
 func getFuncBoolLabel(labelName string, defaultValue bool) func(container dockerData) bool {
 	return func(container dockerData) bool {
 		return label.GetBoolValue(container.Labels, labelName, defaultValue)

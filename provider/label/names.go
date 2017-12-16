@@ -15,6 +15,7 @@ const (
 	SuffixBackendCircuitBreaker                    = "backend.circuitbreaker"
 	SuffixBackendCircuitBreakerExpression          = "backend.circuitbreaker.expression"
 	SuffixBackendHealthCheckPath                   = "backend.healthcheck.path"
+	SuffixBackendHealthCheckPort                   = "backend.healthcheck.port"
 	SuffixBackendHealthCheckInterval               = "backend.healthcheck.interval"
 	SuffixBackendLoadBalancerMethod                = "backend.loadbalancer.method"
 	SuffixBackendLoadBalancerSticky                = "backend.loadbalancer.sticky"
@@ -67,6 +68,7 @@ const (
 	TraefikBackendCircuitBreaker                   = Prefix + SuffixBackendCircuitBreaker
 	TraefikBackendCircuitBreakerExpression         = Prefix + SuffixBackendCircuitBreakerExpression
 	TraefikBackendHealthCheckPath                  = Prefix + SuffixBackendHealthCheckPath
+	TraefikBackendHealthCheckPort                  = Prefix + SuffixBackendHealthCheckPort
 	TraefikBackendHealthCheckInterval              = Prefix + SuffixBackendHealthCheckInterval
 	TraefikBackendLoadBalancerMethod               = Prefix + SuffixBackendLoadBalancerMethod
 	TraefikBackendLoadBalancerSticky               = Prefix + SuffixBackendLoadBalancerSticky
