@@ -9,6 +9,84 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestProviderBuildConfiguration(t *testing.T) {
+	provider := &Provider{
+		Domain:           "rancher.localhost",
+		ExposedByDefault: true,
+	}
+
+	testCases := []struct {
+		desc              string
+		services          []rancherData
+		expectedFrontends map[string]*types.Frontend
+		expectedBackends  map[string]*types.Backend
+	}{
+		{
+			desc:              "without services",
+			services:          []rancherData{},
+			expectedFrontends: map[string]*types.Frontend{},
+			expectedBackends:  map[string]*types.Backend{},
+		},
+		{
+			desc: "with services",
+			services: []rancherData{
+				{
+					Name: "test/service",
+					Labels: map[string]string{
+						label.TraefikPort:                       "80",
+						label.TraefikFrontendAuthBasic:          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.TraefikFrontendRedirectEntryPoint: "https",
+					},
+					Health:     "healthy",
+					Containers: []string{"127.0.0.1"},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-service-rancher-localhost": {
+					Backend:        "backend-test-service",
+					PassHostHeader: true,
+					EntryPoints:    []string{},
+					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+					Priority:       0,
+					Redirect: &types.Redirect{
+						EntryPoint: "https",
+					},
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-service-rancher-localhost": {
+							Rule: "Host:test.service.rancher.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test-service": {
+					Servers: map[string]types.Server{
+						"server-0": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actualConfig := provider.buildConfiguration(test.services)
+			require.NotNil(t, actualConfig)
+
+			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
+			assert.EqualValues(t, test.expectedFrontends, actualConfig.Frontends)
+		})
+	}
+}
+
 func TestProviderServiceFilter(t *testing.T) {
 	provider := &Provider{
 		Domain: "rancher.localhost",
@@ -334,84 +412,6 @@ func TestGetBackend(t *testing.T) {
 
 			actual := getBackend(test.service)
 			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestProviderLoadRancherConfig(t *testing.T) {
-	provider := &Provider{
-		Domain:           "rancher.localhost",
-		ExposedByDefault: true,
-	}
-
-	testCases := []struct {
-		desc              string
-		services          []rancherData
-		expectedFrontends map[string]*types.Frontend
-		expectedBackends  map[string]*types.Backend
-	}{
-		{
-			desc:              "without services",
-			services:          []rancherData{},
-			expectedFrontends: map[string]*types.Frontend{},
-			expectedBackends:  map[string]*types.Backend{},
-		},
-		{
-			desc: "with services",
-			services: []rancherData{
-				{
-					Name: "test/service",
-					Labels: map[string]string{
-						label.TraefikPort:                       "80",
-						label.TraefikFrontendAuthBasic:          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						label.TraefikFrontendRedirectEntryPoint: "https",
-					},
-					Health:     "healthy",
-					Containers: []string{"127.0.0.1"},
-				},
-			},
-			expectedFrontends: map[string]*types.Frontend{
-				"frontend-Host-test-service-rancher-localhost": {
-					Backend:        "backend-test-service",
-					PassHostHeader: true,
-					EntryPoints:    []string{},
-					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-					Priority:       0,
-					Redirect: &types.Redirect{
-						EntryPoint: "https",
-					},
-					Routes: map[string]types.Route{
-						"route-frontend-Host-test-service-rancher-localhost": {
-							Rule: "Host:test.service.rancher.localhost",
-						},
-					},
-				},
-			},
-			expectedBackends: map[string]*types.Backend{
-				"backend-test-service": {
-					Servers: map[string]types.Server{
-						"server-0": {
-							URL:    "http://127.0.0.1:80",
-							Weight: 0,
-						},
-					},
-					CircuitBreaker: nil,
-				},
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			actualConfig := provider.buildConfiguration(test.services)
-			require.NotNil(t, actualConfig)
-
-			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
-			assert.EqualValues(t, test.expectedFrontends, actualConfig.Frontends)
 		})
 	}
 }
