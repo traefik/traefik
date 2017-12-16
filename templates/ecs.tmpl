@@ -51,6 +51,12 @@
       "{{.}}",
       {{end}}]
 
+    {{if getWhitelistSourceRange .}}
+    whitelistSourceRange = [{{range getWhitelistSourceRange .}}
+      "{{.}}",
+      {{end}}]
+    {{end}}
+
     basicAuth = [{{range getBasicAuth .}}
       "{{.}}",
       {{end}}]
