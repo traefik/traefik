@@ -125,7 +125,7 @@ Labels can be used on task containers to override default behaviour:
 | `traefik.protocol=https`                                              | Override the default `http` protocol                                                                    |
 | `traefik.weight=10`                                                   | Assign this weight to the container                                                                     |
 | `traefik.enable=false`                                                | Disable this container in Træfik                                                                        |
-| `traefik.frontend.rule=Host:test.traefik.io`                          | Override the default frontend rule (Default: `Host:{containerName}.{domain}`).                          |
+| `traefik.frontend.rule=Host:test.traefik.io`                          | Override the default frontend rule (Default: `Host:{service}.{project_name}.{domain}`).                          |
 | `traefik.frontend.passHostHeader=true`                                | Forward client `Host` header to the backend.                                                            |
 | `traefik.frontend.priority=10`                                        | Override default frontend priority                                                                      |
 | `traefik.frontend.entryPoints=http,https`                             | Assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.                |
