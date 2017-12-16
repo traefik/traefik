@@ -45,6 +45,47 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getRedirectEntryPoint":       getFuncStringValue(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
 		"getRedirectRegex":            getFuncStringValue(label.TraefikFrontendRedirectRegex, ""),
 		"getRedirectReplacement":      getFuncStringValue(label.TraefikFrontendRedirectReplacement, ""),
+
+		"hasRequestHeaders":                 hasFuncLabel(label.TraefikFrontendRequestHeaders),
+		"getRequestHeaders":                 getFuncMapValue(label.TraefikFrontendRequestHeaders),
+		"hasResponseHeaders":                hasFuncLabel(label.TraefikFrontendResponseHeaders),
+		"getResponseHeaders":                getFuncMapValue(label.TraefikFrontendResponseHeaders),
+		"hasAllowedHostsHeaders":            hasFuncLabel(label.TraefikFrontendAllowedHosts),
+		"getAllowedHostsHeaders":            getFuncSliceString(label.TraefikFrontendAllowedHosts),
+		"hasHostsProxyHeaders":              hasFuncLabel(label.TraefikFrontendHostsProxyHeaders),
+		"getHostsProxyHeaders":              getFuncSliceString(label.TraefikFrontendHostsProxyHeaders),
+		"hasSSLRedirectHeaders":             hasFuncLabel(label.TraefikFrontendSSLRedirect),
+		"getSSLRedirectHeaders":             getFuncBoolValue(label.TraefikFrontendSSLRedirect, false),
+		"hasSSLTemporaryRedirectHeaders":    hasFuncLabel(label.TraefikFrontendSSLTemporaryRedirect),
+		"getSSLTemporaryRedirectHeaders":    getFuncBoolValue(label.TraefikFrontendSSLTemporaryRedirect, false),
+		"hasSSLHostHeaders":                 hasFuncLabel(label.TraefikFrontendSSLHost),
+		"getSSLHostHeaders":                 getFuncStringValue(label.TraefikFrontendSSLHost, ""),
+		"hasSSLProxyHeaders":                hasFuncLabel(label.TraefikFrontendSSLProxyHeaders),
+		"getSSLProxyHeaders":                getFuncMapValue(label.TraefikFrontendSSLProxyHeaders),
+		"hasSTSSecondsHeaders":              hasFuncLabel(label.TraefikFrontendSTSSeconds),
+		"getSTSSecondsHeaders":              getFuncInt64Value(label.TraefikFrontendSTSSeconds, 0),
+		"hasSTSIncludeSubdomainsHeaders":    hasFuncLabel(label.TraefikFrontendSTSIncludeSubdomains),
+		"getSTSIncludeSubdomainsHeaders":    getFuncBoolValue(label.TraefikFrontendSTSIncludeSubdomains, false),
+		"hasSTSPreloadHeaders":              hasFuncLabel(label.TraefikFrontendSTSPreload),
+		"getSTSPreloadHeaders":              getFuncBoolValue(label.TraefikFrontendSTSPreload, false),
+		"hasForceSTSHeaderHeaders":          hasFuncLabel(label.TraefikFrontendForceSTSHeader),
+		"getForceSTSHeaderHeaders":          getFuncBoolValue(label.TraefikFrontendForceSTSHeader, false),
+		"hasFrameDenyHeaders":               hasFuncLabel(label.TraefikFrontendFrameDeny),
+		"getFrameDenyHeaders":               getFuncBoolValue(label.TraefikFrontendFrameDeny, false),
+		"hasCustomFrameOptionsValueHeaders": hasFuncLabel(label.TraefikFrontendCustomFrameOptionsValue),
+		"getCustomFrameOptionsValueHeaders": getFuncStringValue(label.TraefikFrontendCustomFrameOptionsValue, ""),
+		"hasContentTypeNosniffHeaders":      hasFuncLabel(label.TraefikFrontendContentTypeNosniff),
+		"getContentTypeNosniffHeaders":      getFuncBoolValue(label.TraefikFrontendContentTypeNosniff, false),
+		"hasBrowserXSSFilterHeaders":        hasFuncLabel(label.TraefikFrontendBrowserXSSFilter),
+		"getBrowserXSSFilterHeaders":        getFuncBoolValue(label.TraefikFrontendBrowserXSSFilter, false),
+		"hasContentSecurityPolicyHeaders":   hasFuncLabel(label.TraefikFrontendContentSecurityPolicy),
+		"getContentSecurityPolicyHeaders":   getFuncStringValue(label.TraefikFrontendContentSecurityPolicy, ""),
+		"hasPublicKeyHeaders":               hasFuncLabel(label.TraefikFrontendPublicKey),
+		"getPublicKeyHeaders":               getFuncStringValue(label.TraefikFrontendPublicKey, ""),
+		"hasReferrerPolicyHeaders":          hasFuncLabel(label.TraefikFrontendReferrerPolicy),
+		"getReferrerPolicyHeaders":          getFuncStringValue(label.TraefikFrontendReferrerPolicy, ""),
+		"hasIsDevelopmentHeaders":           hasFuncLabel(label.TraefikFrontendIsDevelopment),
+		"getIsDevelopmentHeaders":           getFuncBoolValue(label.TraefikFrontendIsDevelopment, false),
 	}
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
 		Services map[string][]ecsInstance
@@ -112,6 +153,12 @@ func hasRedirect(instance ecsInstance) bool {
 
 // Label functions
 
+func hasFuncLabel(labelName string) func(i ecsInstance) bool {
+	return func(i ecsInstance) bool {
+		return hasLabel(i, labelName)
+	}
+}
+
 func getFuncStringValue(labelName string, defaultValue string) func(i ecsInstance) string {
 	return func(i ecsInstance) string {
 		return getStringValue(i, labelName, defaultValue)
@@ -124,9 +171,21 @@ func getFuncBoolValue(labelName string, defaultValue bool) func(i ecsInstance) b
 	}
 }
 
+func getFuncInt64Value(labelName string, defaultValue int64) func(i ecsInstance) int64 {
+	return func(i ecsInstance) int64 {
+		return getInt64Value(i, labelName, defaultValue)
+	}
+}
+
 func getFuncSliceString(labelName string) func(i ecsInstance) []string {
 	return func(i ecsInstance) []string {
 		return getSliceString(i, labelName)
+	}
+}
+
+func getFuncMapValue(labelName string) func(i ecsInstance) map[string]string {
+	return func(i ecsInstance) map[string]string {
+		return getMapString(i, labelName)
 	}
 }
 
@@ -239,12 +298,24 @@ func getSliceString(i ecsInstance, labelName string) []string {
 	return nil
 }
 
-func hasFirst(instances []ecsInstance, labelName string) bool {
-	if len(instances) > 0 {
-		v, ok := instances[0].containerDefinition.DockerLabels[labelName]
-		return ok && v != nil && len(*v) != 0
+func getMapString(i ecsInstance, labelName string) map[string]string {
+	if value, ok := i.containerDefinition.DockerLabels[labelName]; ok {
+		if value == nil {
+			return nil
+		}
+		if len(*value) == 0 {
+			return nil
+		}
+		return label.ParseMapValue(labelName, *value)
 	}
-	return false
+	return nil
+}
+
+func hasFirst(instances []ecsInstance, labelName string) bool {
+	if len(instances) == 0 {
+		return false
+	}
+	return hasLabel(instances[0], labelName)
 }
 
 func getFirstStringValue(instances []ecsInstance, labelName string, defaultValue string) string {
