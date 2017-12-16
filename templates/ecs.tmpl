@@ -45,6 +45,7 @@
     backend = "backend-{{ $serviceName }}"
     priority = {{ getPriority .}}
     passHostHeader = {{ getPassHostHeader .}}
+    passTLSCert = {{ getPassTLSCert .}}
 
     entryPoints = [{{range  getEntryPoints .}}
       "{{.}}",
