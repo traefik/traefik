@@ -1,37 +1,47 @@
-[backends]{{range $serviceName, $instances := .Services}}
-  [backends.backend-{{ $serviceName }}.loadbalancer]
+[backends]
+{{range $serviceName, $instances := .Services}}
+
+  [backends.backend-{{ $serviceName }}.loadBalancer]
     method = "{{ getLoadBalancerMethod $instances}}"
     sticky = {{ getSticky $instances}}
-    {{if hasStickinessLabel $instances}} 
-    [backends.backend-{{ $serviceName }}.loadbalancer.stickiness]
+    {{if hasStickinessLabel $instances}}
+    [backends.backend-{{ $serviceName }}.loadBalancer.stickiness]
       cookieName = "{{getStickinessCookieName $instances}}"
     {{end}}
-    {{ if hasHealthCheckLabels $instances }}
-    [backends.backend-{{ $serviceName }}.healthcheck]
-      path = "{{getHealthCheckPath $instances }}"
-      interval = "{{getHealthCheckInterval $instances }}"
-    {{end}}
 
-  {{range $index, $i := $instances}}
-    [backends.backend-{{ $i.Name }}.servers.server-{{ $i.Name }}{{ $i.ID }}]
-      url = "{{ getProtocol $i }}://{{ getHost $i }}:{{ getPort $i }}"
-      weight = {{ getWeight $i}}
+  {{ if hasHealthCheckLabels $instances }}
+  [backends.backend-{{ $serviceName }}.healthCheck]
+    path = "{{getHealthCheckPath $instances }}"
+    interval = "{{getHealthCheckInterval $instances }}"
   {{end}}
+
+  {{range $index, $instance := $instances}}
+  [backends.backend-{{ $instance.Name }}.servers.server-{{ $instance.Name }}{{ $instance.ID }}]
+    url = "{{ getProtocol $instance }}://{{ getHost $instance }}:{{ getPort $instance }}"
+    weight = {{ getWeight $instance}}
+  {{end}}
+
 {{end}}
 
-[frontends]{{range $serviceName, $instances := .Services}}
-  {{range filterFrontends $instances}}
-    [frontends.frontend-{{ $serviceName }}]
-      backend = "backend-{{ $serviceName }}"
-      passHostHeader = {{ getPassHostHeader .}}
-      priority = {{ getPriority .}}
-      entryPoints = [{{range  getEntryPoints .}}
+[frontends]
+{{range $serviceName, $instances := .Services}}
+{{range filterFrontends $instances}}
+
+  [frontends.frontend-{{ $serviceName }}]
+    backend = "backend-{{ $serviceName }}"
+    priority = {{ getPriority .}}
+    passHostHeader = {{ getPassHostHeader .}}
+
+    entryPoints = [{{range  getEntryPoints .}}
       "{{.}}",
-    {{end}}]
-      basicAuth = [{{range getBasicAuth .}}
+      {{end}}]
+
+    basicAuth = [{{range getBasicAuth .}}
       "{{.}}",
-    {{end}}]
+      {{end}}]
+
     [frontends.frontend-{{ $serviceName }}.routes.route-frontend-{{ $serviceName }}]
       rule = "{{getFrontendRule .}}"
-  {{end}}
+
+{{end}}
 {{end}}

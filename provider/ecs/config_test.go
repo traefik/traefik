@@ -12,7 +12,6 @@ import (
 )
 
 func TestBuildConfiguration(t *testing.T) {
-	provider := &Provider{}
 	tests := []struct {
 		desc     string
 		services map[string][]ecsInstance
@@ -134,6 +133,9 @@ func TestBuildConfiguration(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			provider := &Provider{}
 			got, err := provider.buildConfiguration(test.services)
 			assert.Equal(t, test.err, err)
 			assert.Equal(t, test.expected, got)
@@ -317,6 +319,8 @@ func TestChunkedTaskArns(t *testing.T) {
 	for _, test := range tests {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
 			var tasks []*string
 			for v := 0; v < test.count; v++ {
 				tasks = append(tasks, &testVal)
@@ -331,7 +335,6 @@ func TestChunkedTaskArns(t *testing.T) {
 
 			assert.Equal(t, test.expectedLengths, outCount, "Chunking %d elements", test.count)
 		})
-
 	}
 }
 
@@ -352,6 +355,7 @@ func TestGetHost(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			actual := getHost(test.instanceInfo)
 			assert.Equal(t, test.expected, actual)
 		})
@@ -389,6 +393,7 @@ func TestGetPort(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			actual := getPort(test.instanceInfo)
 			assert.Equal(t, test.expected, actual)
 		})
@@ -464,6 +469,7 @@ func TestGetFuncSliceString(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
 			actual := getFuncSliceString(label.TraefikFrontendEntryPoints)(test.instanceInfo)
 			assert.Equal(t, test.expected, actual)
 		})
