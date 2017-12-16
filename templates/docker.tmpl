@@ -53,6 +53,7 @@
     backend = "backend-{{getServiceBackend $container $serviceName}}"
     priority = {{getServicePriority $container $serviceName}}
     passHostHeader = {{getServicePassHostHeader $container $serviceName}}
+    passTLSCert = {{getServicePassTLSCert $container $serviceName}}
 
     entryPoints = [{{range getServiceEntryPoints $container $serviceName}}
       "{{.}}",
@@ -100,6 +101,7 @@
     backend = "backend-{{getBackend $container}}"
     priority = {{getPriority $container}}
     passHostHeader = {{getPassHostHeader $container}}
+    passTLSCert = {{getPassTLSCert $container}}
 
     entryPoints = [{{range getEntryPoints $container}}
       "{{.}}",

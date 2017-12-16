@@ -116,6 +116,12 @@ func getFuncServiceStringLabel(labelSuffix string, defaultValue string) func(con
 	}
 }
 
+func getFuncServiceBoolLabel(labelSuffix string, defaultValue bool) func(container dockerData, serviceName string) bool {
+	return func(container dockerData, serviceName string) bool {
+		return getServiceBoolLabel(container, serviceName, labelSuffix, defaultValue)
+	}
+}
+
 func hasFuncServiceLabel(labelSuffix string) func(container dockerData, serviceName string) bool {
 	return func(container dockerData, serviceName string) bool {
 		return hasServiceLabel(container, serviceName, labelSuffix)
@@ -150,6 +156,16 @@ func getServiceStringLabel(container dockerData, serviceName string, labelSuffix
 		return value
 	}
 	return label.GetStringValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
+}
+
+func getServiceBoolLabel(container dockerData, serviceName string, labelSuffix string, defaultValue bool) bool {
+	if rawValue, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
+		value, err := strconv.ParseBool(rawValue)
+		if err == nil {
+			return value
+		}
+	}
+	return label.GetBoolValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
 }
 
 func getServiceLabels(container dockerData, serviceName string) label.ServicePropertyValues {
