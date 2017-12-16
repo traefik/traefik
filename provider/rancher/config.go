@@ -40,6 +40,7 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getRedirectEntryPoint":       getFuncString(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
 		"getRedirectRegex":            getFuncString(label.TraefikFrontendRedirectRegex, ""),
 		"getRedirectReplacement":      getFuncString(label.TraefikFrontendRedirectReplacement, ""),
+		"getWhitelistSourceRange":     getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
 	}
 
 	// filter services
