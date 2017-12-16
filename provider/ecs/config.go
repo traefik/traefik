@@ -17,6 +17,7 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"filterFrontends":         filterFrontends,
 		"getFrontendRule":         p.getFrontendRule,
 		"getBasicAuth":            getFuncSliceString(label.TraefikFrontendAuthBasic),
+		"hasLoadBalancerLabel":    hasLoadBalancerLabel,
 		"getLoadBalancerMethod":   getFuncFirstStringValue(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
 		"getSticky":               getSticky,
 		"hasStickinessLabel":      getFuncFirstBoolValue(label.TraefikBackendLoadBalancerStickiness, false),
@@ -75,6 +76,15 @@ func filterFrontends(instances []ecsInstance) []ecsInstance {
 		}
 		return !found
 	}, instances).([]ecsInstance)
+}
+
+func hasLoadBalancerLabel(instances []ecsInstance) bool {
+	method := hasFirst(instances, label.TraefikBackendLoadBalancerMethod)
+	sticky := hasFirst(instances, label.TraefikBackendLoadBalancerSticky)
+	stickiness := hasFirst(instances, label.TraefikBackendLoadBalancerStickiness)
+	cookieName := hasFirst(instances, label.TraefikBackendLoadBalancerStickinessCookieName)
+
+	return method || sticky || stickiness || cookieName
 }
 
 // Label functions

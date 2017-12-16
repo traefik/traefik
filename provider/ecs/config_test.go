@@ -105,9 +105,6 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					"backend-testing": {
-						LoadBalancer: &types.LoadBalancer{
-							Method: "wrr",
-						},
 						HealthCheck: &types.HealthCheck{
 							Path:     "/health",
 							Interval: "1s",
