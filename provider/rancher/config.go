@@ -21,6 +21,7 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getDomain":                   getFuncString(label.TraefikDomain, p.Domain),
 		"getProtocol":                 getFuncString(label.TraefikProtocol, label.DefaultProtocol),
 		"getPassHostHeader":           getFuncString(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":              getFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPriority":                 getFuncString(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getEntryPoints":              getFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":                getFuncSliceString(label.TraefikFrontendAuthBasic),
@@ -157,6 +158,12 @@ func hasRedirect(service rancherData) bool {
 func getFuncString(labelName string, defaultValue string) func(service rancherData) string {
 	return func(service rancherData) string {
 		return label.GetStringValue(service.Labels, labelName, defaultValue)
+	}
+}
+
+func getFuncBool(labelName string, defaultValue bool) func(service rancherData) bool {
+	return func(service rancherData) bool {
+		return label.GetBoolValue(service.Labels, labelName, defaultValue)
 	}
 }
 
