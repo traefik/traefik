@@ -61,12 +61,89 @@
       "{{.}}",
       {{end}}]
 
-    {{if hasRedirect $service}}
+    {{if hasRedirect .}}
     [frontends."frontend-{{ $serviceName }}".redirect]
       entryPoint = "{{getRedirectEntryPoint .}}"
       regex = "{{getRedirectRegex .}}"
       replacement = "{{getRedirectReplacement .}}"
     {{end}}
+
+    [frontends."frontend-{{ $serviceName }}".headers]
+      {{if hasSSLRedirectHeaders .}}
+      SSLRedirect = {{getSSLRedirectHeaders .}}
+      {{end}}
+      {{if hasSSLTemporaryRedirectHeaders .}}
+      SSLTemporaryRedirect = {{getSSLTemporaryRedirectHeaders .}}
+      {{end}}
+      {{if hasSSLHostHeaders .}}
+      SSLHost = "{{getSSLHostHeaders .}}"
+      {{end}}
+      {{if hasSTSSecondsHeaders .}}
+      STSSeconds = {{getSTSSecondsHeaders .}}
+      {{end}}
+      {{if hasSTSIncludeSubdomainsHeaders .}}
+      STSIncludeSubdomains = {{getSTSIncludeSubdomainsHeaders .}}
+      {{end}}
+      {{if hasSTSPreloadHeaders .}}
+      STSPreload = {{getSTSPreloadHeaders .}}
+      {{end}}
+      {{if hasForceSTSHeaderHeaders .}}
+      ForceSTSHeader = {{getForceSTSHeaderHeaders .}}
+      {{end}}
+      {{if hasFrameDenyHeaders .}}
+      FrameDeny = {{getFrameDenyHeaders .}}
+      {{end}}
+      {{if hasCustomFrameOptionsValueHeaders .}}
+      CustomFrameOptionsValue = "{{getCustomFrameOptionsValueHeaders .}}"
+      {{end}}
+      {{if hasContentTypeNosniffHeaders .}}
+      ContentTypeNosniff = {{getContentTypeNosniffHeaders .}}
+      {{end}}
+      {{if hasBrowserXSSFilterHeaders .}}
+      BrowserXSSFilter = {{getBrowserXSSFilterHeaders .}}
+      {{end}}
+      {{if hasContentSecurityPolicyHeaders .}}
+      ContentSecurityPolicy = "{{getContentSecurityPolicyHeaders .}}"
+      {{end}}
+      {{if hasPublicKeyHeaders .}}
+      PublicKey = "{{getPublicKeyHeaders .}}"
+      {{end}}
+      {{if hasReferrerPolicyHeaders .}}
+      ReferrerPolicy = "{{getReferrerPolicyHeaders .}}"
+      {{end}}
+      {{if hasIsDevelopmentHeaders .}}
+      IsDevelopment = {{getIsDevelopmentHeaders .}}
+      {{end}}
+      {{if hasRequestHeaders .}}
+        [frontends."frontend-{{ $serviceName }}".headers.customRequestHeaders]
+        {{range $k, $v := getRequestHeaders .}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+      {{if hasResponseHeaders .}}
+      [frontends."frontend-{{ $serviceName }}".headers.customResponseHeaders]
+        {{range $k, $v := getResponseHeaders .}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+      {{if hasAllowedHostsHeaders .}}
+      [frontends."frontend-{{ $serviceName }}".headers.AllowedHosts]
+        {{range getAllowedHostsHeaders .}}
+        "{{.}}"
+        {{end}}
+      {{end}}
+      {{if hasHostsProxyHeaders .}}
+      [frontends."frontend-{{ $serviceName }}".headers.HostsProxyHeaders]
+        {{range getHostsProxyHeaders .}}
+        "{{.}}"
+        {{end}}
+      {{end}}
+      {{if hasSSLProxyHeaders .}}
+      [frontends."frontend-{{ $serviceName }}".headers.SSLProxyHeaders]
+        {{range $k, $v := getSSLProxyHeaders .}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
 
     [frontends.frontend-{{ $serviceName }}.routes.route-frontend-{{ $serviceName }}]
       rule = "{{getFrontendRule .}}"
