@@ -28,6 +28,7 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getPort":                     getPort,
 		"getWeight":                   getFuncStringValue(label.TraefikWeight, label.DefaultWeight),
 		"getPassHostHeader":           getFuncStringValue(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":              getFuncBoolValue(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPriority":                 getFuncStringValue(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getEntryPoints":              getFuncSliceString(label.TraefikFrontendEntryPoints),
 		"hasHealthCheckLabels":        hasFuncFirst(label.TraefikBackendHealthCheckPath),
@@ -104,6 +105,12 @@ func hasMaxConnLabels(instances []ecsInstance) bool {
 func getFuncStringValue(labelName string, defaultValue string) func(i ecsInstance) string {
 	return func(i ecsInstance) string {
 		return getStringValue(i, labelName, defaultValue)
+	}
+}
+
+func getFuncBoolValue(labelName string, defaultValue bool) func(i ecsInstance) bool {
+	return func(i ecsInstance) bool {
+		return getBoolValue(i, labelName, defaultValue)
 	}
 }
 
