@@ -1,6 +1,11 @@
 [backends]
 {{range $serviceName, $instances := .Services}}
 
+  {{if hasCircuitBreakerLabel $instances}}
+  [backends.backend-{{ $serviceName }}.circuitBreaker]
+    expression = "{{getCircuitBreakerExpression $instances}}"
+  {{end}}
+
   {{if hasLoadBalancerLabel $instances}}
   [backends.backend-{{ $serviceName }}.loadBalancer]
     method = "{{ getLoadBalancerMethod $instances}}"
