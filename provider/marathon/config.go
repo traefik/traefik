@@ -27,6 +27,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getSubDomain":                p.getSubDomain,                                      // FIXME DEAD ?
 		"getProtocol":                 getFuncStringService(label.TraefikProtocol, label.DefaultProtocol),
 		"getPassHostHeader":           getFuncStringService(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":              getFuncBoolService(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getPriority":                 getFuncStringService(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getEntryPoints":              getFuncSliceStringService(label.TraefikFrontendEntryPoints),
 		"getFrontendRule":             p.getFrontendRule,
@@ -394,6 +395,14 @@ func getFuncStringService(labelName string, defaultValue string) func(applicatio
 		labels := getLabels(application, serviceName)
 		lbName := getLabelName(serviceName, labelName)
 		return label.GetStringValue(labels, lbName, defaultValue)
+	}
+}
+
+func getFuncBoolService(labelName string, defaultValue bool) func(application marathon.Application, serviceName string) bool {
+	return func(application marathon.Application, serviceName string) bool {
+		labels := getLabels(application, serviceName)
+		lbName := getLabelName(serviceName, labelName)
+		return label.GetBoolValue(labels, lbName, defaultValue)
 	}
 }
 
