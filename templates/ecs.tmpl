@@ -16,6 +16,12 @@
     {{end}}
   {{end}}
 
+  {{if hasMaxConnLabels $instances}}
+  [backends.backend-{{ $serviceName }}.maxConn]
+    amount = {{getMaxConnAmount $instances}}
+    extractorFunc = "{{getMaxConnExtractorFunc $instances}}"
+  {{end}}
+
   {{ if hasHealthCheckLabels $instances }}
   [backends.backend-{{ $serviceName }}.healthCheck]
     path = "{{getHealthCheckPath $instances }}"

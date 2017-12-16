@@ -1,6 +1,7 @@
 package ecs
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"text/template"
@@ -35,6 +36,9 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getHealthCheckInterval":      getFuncFirstStringValue(label.TraefikBackendHealthCheckInterval, ""),
 		"hasCircuitBreakerLabel":      hasFuncFirst(label.TraefikBackendCircuitBreakerExpression),
 		"getCircuitBreakerExpression": getFuncFirstStringValue(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
+		"hasMaxConnLabels":            hasMaxConnLabels,
+		"getMaxConnAmount":            getFuncFirstInt64Value(label.TraefikBackendMaxConnAmount, math.MaxInt64),
+		"getMaxConnExtractorFunc":     getFuncFirstStringValue(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
 	}
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
 		Services map[string][]ecsInstance
@@ -89,6 +93,12 @@ func hasLoadBalancerLabel(instances []ecsInstance) bool {
 	return method || sticky || stickiness || cookieName
 }
 
+func hasMaxConnLabels(instances []ecsInstance) bool {
+	mca := hasFirst(instances, label.TraefikBackendMaxConnAmount)
+	mcef := hasFirst(instances, label.TraefikBackendMaxConnExtractorFunc)
+	return mca && mcef
+}
+
 // Label functions
 
 func getFuncStringValue(labelName string, defaultValue string) func(i ecsInstance) string {
@@ -121,6 +131,15 @@ func getFuncFirstIntValue(labelName string, defaultValue int) func(instances []e
 			return defaultValue
 		}
 		return getIntValue(instances[0], labelName, defaultValue)
+	}
+}
+
+func getFuncFirstInt64Value(labelName string, defaultValue int64) func(instances []ecsInstance) int64 {
+	return func(instances []ecsInstance) int64 {
+		if len(instances) < 0 {
+			return defaultValue
+		}
+		return getInt64Value(instances[0], labelName, defaultValue)
 	}
 }
 
@@ -164,6 +183,19 @@ func getIntValue(i ecsInstance, labelName string, defaultValue int) int {
 	if ok {
 		if rawValue != nil {
 			v, err := strconv.Atoi(*rawValue)
+			if err == nil {
+				return v
+			}
+		}
+	}
+	return defaultValue
+}
+
+func getInt64Value(i ecsInstance, labelName string, defaultValue int64) int64 {
+	rawValue, ok := i.containerDefinition.DockerLabels[labelName]
+	if ok {
+		if rawValue != nil {
+			v, err := strconv.ParseInt(*rawValue, 10, 64)
 			if err == nil {
 				return v
 			}
