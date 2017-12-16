@@ -30,6 +30,7 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getEntryPoints":          getFuncSliceString(label.TraefikFrontendEntryPoints),
 		"hasHealthCheckLabels":    hasFuncFirst(label.TraefikBackendHealthCheckPath),
 		"getHealthCheckPath":      getFuncFirstStringValue(label.TraefikBackendHealthCheckPath, ""),
+		"getHealthCheckPort":      getFuncFirstIntValue(label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort),
 		"getHealthCheckInterval":  getFuncFirstStringValue(label.TraefikBackendHealthCheckInterval, ""),
 	}
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
@@ -102,6 +103,15 @@ func getFuncFirstStringValue(labelName string, defaultValue string) func(instanc
 	}
 }
 
+func getFuncFirstIntValue(labelName string, defaultValue int) func(instances []ecsInstance) int {
+	return func(instances []ecsInstance) int {
+		if len(instances) < 0 {
+			return defaultValue
+		}
+		return getIntValue(instances[0], labelName, defaultValue)
+	}
+}
+
 func getFuncFirstBoolValue(labelName string, defaultValue bool) func(instances []ecsInstance) bool {
 	return func(instances []ecsInstance) bool {
 		if len(instances) < 0 {
@@ -129,6 +139,19 @@ func getBoolValue(i ecsInstance, labelName string, defaultValue bool) bool {
 	if ok {
 		if rawValue != nil {
 			v, err := strconv.ParseBool(*rawValue)
+			if err == nil {
+				return v
+			}
+		}
+	}
+	return defaultValue
+}
+
+func getIntValue(i ecsInstance, labelName string, defaultValue int) int {
+	rawValue, ok := i.containerDefinition.DockerLabels[labelName]
+	if ok {
+		if rawValue != nil {
+			v, err := strconv.Atoi(*rawValue)
 			if err == nil {
 				return v
 			}

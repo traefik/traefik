@@ -12,6 +12,7 @@
   {{ if hasHealthCheckLabels $instances }}
   [backends.backend-{{ $serviceName }}.healthCheck]
     path = "{{getHealthCheckPath $instances }}"
+    port = {{getHealthCheckPort $instances}}
     interval = "{{getHealthCheckInterval $instances }}"
   {{end}}
 
