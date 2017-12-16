@@ -41,6 +41,10 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getMaxConnAmount":            getFuncFirstInt64Value(label.TraefikBackendMaxConnAmount, math.MaxInt64),
 		"getMaxConnExtractorFunc":     getFuncFirstStringValue(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
 		"getWhitelistSourceRange":     getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
+		"hasRedirect":                 hasRedirect,
+		"getRedirectEntryPoint":       getFuncStringValue(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+		"getRedirectRegex":            getFuncStringValue(label.TraefikFrontendRedirectRegex, ""),
+		"getRedirectReplacement":      getFuncStringValue(label.TraefikFrontendRedirectReplacement, ""),
 	}
 	return p.GetConfiguration("templates/ecs.tmpl", ecsFuncMap, struct {
 		Services map[string][]ecsInstance
@@ -101,6 +105,11 @@ func hasMaxConnLabels(instances []ecsInstance) bool {
 	return mca && mcef
 }
 
+func hasRedirect(instance ecsInstance) bool {
+	return hasLabel(instance, label.TraefikFrontendRedirectEntryPoint) ||
+		hasLabel(instance, label.TraefikFrontendRedirectRegex) && hasLabel(instance, label.TraefikFrontendRedirectReplacement)
+}
+
 // Label functions
 
 func getFuncStringValue(labelName string, defaultValue string) func(i ecsInstance) string {
@@ -158,6 +167,11 @@ func getFuncFirstBoolValue(labelName string, defaultValue bool) func(instances [
 		}
 		return getBoolValue(instances[0], labelName, defaultValue)
 	}
+}
+
+func hasLabel(i ecsInstance, labelName string) bool {
+	value, ok := i.containerDefinition.DockerLabels[labelName]
+	return ok && value != nil && len(*value) > 0
 }
 
 func getStringValue(i ecsInstance, labelName string, defaultValue string) string {
