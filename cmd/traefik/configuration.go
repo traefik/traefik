@@ -112,7 +112,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultZookeeper zk.Provider
 	defaultZookeeper.Watch = true
 	defaultZookeeper.Endpoint = "127.0.0.1:2181"
-	defaultZookeeper.Prefix = "/traefik"
+	defaultZookeeper.Prefix = "traefik"
 	defaultZookeeper.Constraints = types.Constraints{}
 
 	//default Boltdb
