@@ -44,6 +44,12 @@
       "{{.}}",
       {{end}}]
 
+    {{if getWhitelistSourceRange $service}}
+    whitelistSourceRange = [{{range getWhitelistSourceRange $service}}
+      "{{.}}",
+      {{end}}]
+    {{end}}
+
     basicAuth = [{{range getBasicAuth $service}}
       "{{.}}",
       {{end}}]
