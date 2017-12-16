@@ -23,6 +23,13 @@
     extractorFunc = "{{getMaxConnExtractorFunc $backend}}"
   {{end}}
 
+  {{if hasHealthCheckLabels $backend}}
+  [backends.backend-{{$backendName}}.healthCheck]
+    path = "{{getHealthCheckPath $backend}}"
+    port = {{getHealthCheckPort $backend}}
+    interval = "{{getHealthCheckInterval $backend}}"
+  {{end}}
+
   {{range $index, $ip := $backend.Containers}}
   [backends.backend-{{$backendName}}.servers.server-{{$index}}]
     url = "{{getProtocol $backend}}://{{$ip}}:{{getPort $backend}}"
