@@ -79,6 +79,83 @@
       replacement = "{{getRedirectReplacement $app $serviceName}}"
     {{end}}
 
+    [frontends."{{ getFrontendName $app $serviceName }}".headers]
+      {{if hasSSLRedirectHeaders $app $serviceName}}
+      SSLRedirect = {{getSSLRedirectHeaders $app $serviceName}}
+      {{end}}
+      {{if hasSSLTemporaryRedirectHeaders $app $serviceName}}
+      SSLTemporaryRedirect = {{getSSLTemporaryRedirectHeaders $app $serviceName}}
+      {{end}}
+      {{if hasSSLHostHeaders $app $serviceName}}
+      SSLHost = "{{getSSLHostHeaders $app $serviceName}}"
+      {{end}}
+      {{if hasSTSSecondsHeaders $app $serviceName}}
+      STSSeconds = {{getSTSSecondsHeaders $app $serviceName}}
+      {{end}}
+      {{if hasSTSIncludeSubdomainsHeaders $app $serviceName}}
+      STSIncludeSubdomains = {{getSTSIncludeSubdomainsHeaders $app $serviceName}}
+      {{end}}
+      {{if hasSTSPreloadHeaders $app $serviceName}}
+      STSPreload = {{getSTSPreloadHeaders $app $serviceName}}
+      {{end}}
+      {{if hasForceSTSHeaderHeaders $app $serviceName}}
+      ForceSTSHeader = {{getForceSTSHeaderHeaders $app $serviceName}}
+      {{end}}
+      {{if hasFrameDenyHeaders $app $serviceName}}
+      FrameDeny = {{getFrameDenyHeaders $app $serviceName}}
+      {{end}}
+      {{if hasCustomFrameOptionsValueHeaders $app $serviceName}}
+      CustomFrameOptionsValue = "{{getCustomFrameOptionsValueHeaders $app $serviceName}}"
+      {{end}}
+      {{if hasContentTypeNosniffHeaders $app $serviceName}}
+      ContentTypeNosniff = {{getContentTypeNosniffHeaders $app $serviceName}}
+      {{end}}
+      {{if hasBrowserXSSFilterHeaders $app $serviceName}}
+      BrowserXSSFilter = {{getBrowserXSSFilterHeaders $app $serviceName}}
+      {{end}}
+      {{if hasContentSecurityPolicyHeaders $app $serviceName}}
+      ContentSecurityPolicy = "{{getContentSecurityPolicyHeaders $app $serviceName}}"
+      {{end}}
+      {{if hasPublicKeyHeaders $app $serviceName}}
+      PublicKey = "{{getPublicKeyHeaders $app $serviceName}}"
+      {{end}}
+      {{if hasReferrerPolicyHeaders $app $serviceName}}
+      ReferrerPolicy = "{{getReferrerPolicyHeaders $app $serviceName}}"
+      {{end}}
+      {{if hasIsDevelopmentHeaders $app $serviceName}}
+      IsDevelopment = {{getIsDevelopmentHeaders $app $serviceName}}
+      {{end}}
+      {{if hasRequestHeaders $app $serviceName}}
+      [frontends."{{ getFrontendName $app $serviceName }}".headers.customRequestHeaders]
+        {{range $k, $v := getRequestHeaders $app $serviceName}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+      {{if hasResponseHeaders $app $serviceName}}
+      [frontends."{{ getFrontendName $app $serviceName }}".headers.customResponseHeaders]
+        {{range $k, $v := getResponseHeaders $app $serviceName}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+      {{if hasAllowedHostsHeaders $app $serviceName}}
+      [frontends."{{ getFrontendName $app $serviceName }}".headers.AllowedHosts]
+        {{range getAllowedHostsHeaders $app $serviceName}}
+        "{{.}}"
+        {{end}}
+      {{end}}
+      {{if hasHostsProxyHeaders $app $serviceName}}
+      [frontends."{{ getFrontendName $app $serviceName }}".headers.HostsProxyHeaders]
+        {{range getHostsProxyHeaders $app $serviceName}}
+        "{{.}}"
+        {{end}}
+      {{end}}
+      {{if hasSSLProxyHeaders $app $serviceName}}
+      [frontends."{{ getFrontendName $app $serviceName }}".headers.SSLProxyHeaders]
+        {{range $k, $v := getSSLProxyHeaders $app $serviceName}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
     [frontends."{{ getFrontendName $app $serviceName }}".routes."route-host{{$app.ID | replace "/" "-"}}{{getServiceNameSuffix $serviceName }}"]
       rule = "{{getFrontendRule $app $serviceName}}"
 

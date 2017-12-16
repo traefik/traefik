@@ -54,6 +54,47 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getRedirectEntryPoint":       getFuncStringService(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
 		"getRedirectRegex":            getFuncStringService(label.TraefikFrontendRedirectRegex, ""),
 		"getRedirectReplacement":      getFuncStringService(label.TraefikFrontendRedirectReplacement, ""),
+
+		"hasRequestHeaders":                 hasFuncService(label.TraefikFrontendRequestHeaders),
+		"getRequestHeaders":                 getFuncMapService(label.TraefikFrontendRequestHeaders),
+		"hasResponseHeaders":                hasFuncService(label.TraefikFrontendResponseHeaders),
+		"getResponseHeaders":                getFuncMapService(label.TraefikFrontendResponseHeaders),
+		"hasAllowedHostsHeaders":            hasFuncService(label.TraefikFrontendAllowedHosts),
+		"getAllowedHostsHeaders":            getFuncSliceStringService(label.TraefikFrontendAllowedHosts),
+		"hasHostsProxyHeaders":              hasFuncService(label.TraefikFrontendHostsProxyHeaders),
+		"getHostsProxyHeaders":              getFuncSliceStringService(label.TraefikFrontendHostsProxyHeaders),
+		"hasSSLRedirectHeaders":             hasFuncService(label.TraefikFrontendSSLRedirect),
+		"getSSLRedirectHeaders":             getFuncBoolService(label.TraefikFrontendSSLRedirect, false),
+		"hasSSLTemporaryRedirectHeaders":    hasFuncService(label.TraefikFrontendSSLTemporaryRedirect),
+		"getSSLTemporaryRedirectHeaders":    getFuncBoolService(label.TraefikFrontendSSLTemporaryRedirect, false),
+		"hasSSLHostHeaders":                 hasFuncService(label.TraefikFrontendSSLHost),
+		"getSSLHostHeaders":                 getFuncStringService(label.TraefikFrontendSSLHost, ""),
+		"hasSSLProxyHeaders":                hasFuncService(label.TraefikFrontendSSLProxyHeaders),
+		"getSSLProxyHeaders":                getFuncMapService(label.TraefikFrontendSSLProxyHeaders),
+		"hasSTSSecondsHeaders":              hasFuncService(label.TraefikFrontendSTSSeconds),
+		"getSTSSecondsHeaders":              getFuncInt64Service(label.TraefikFrontendSTSSeconds, 0),
+		"hasSTSIncludeSubdomainsHeaders":    hasFuncService(label.TraefikFrontendSTSIncludeSubdomains),
+		"getSTSIncludeSubdomainsHeaders":    getFuncBoolService(label.TraefikFrontendSTSIncludeSubdomains, false),
+		"hasSTSPreloadHeaders":              hasFuncService(label.TraefikFrontendSTSPreload),
+		"getSTSPreloadHeaders":              getFuncBoolService(label.TraefikFrontendSTSPreload, false),
+		"hasForceSTSHeaderHeaders":          hasFuncService(label.TraefikFrontendForceSTSHeader),
+		"getForceSTSHeaderHeaders":          getFuncBoolService(label.TraefikFrontendForceSTSHeader, false),
+		"hasFrameDenyHeaders":               hasFuncService(label.TraefikFrontendFrameDeny),
+		"getFrameDenyHeaders":               getFuncBoolService(label.TraefikFrontendFrameDeny, false),
+		"hasCustomFrameOptionsValueHeaders": hasFuncService(label.TraefikFrontendCustomFrameOptionsValue),
+		"getCustomFrameOptionsValueHeaders": getFuncStringService(label.TraefikFrontendCustomFrameOptionsValue, ""),
+		"hasContentTypeNosniffHeaders":      hasFuncService(label.TraefikFrontendContentTypeNosniff),
+		"getContentTypeNosniffHeaders":      getFuncBoolService(label.TraefikFrontendContentTypeNosniff, false),
+		"hasBrowserXSSFilterHeaders":        hasFuncService(label.TraefikFrontendBrowserXSSFilter),
+		"getBrowserXSSFilterHeaders":        getFuncBoolService(label.TraefikFrontendBrowserXSSFilter, false),
+		"hasContentSecurityPolicyHeaders":   hasFuncService(label.TraefikFrontendContentSecurityPolicy),
+		"getContentSecurityPolicyHeaders":   getFuncStringService(label.TraefikFrontendContentSecurityPolicy, ""),
+		"hasPublicKeyHeaders":               hasFuncService(label.TraefikFrontendPublicKey),
+		"getPublicKeyHeaders":               getFuncStringService(label.TraefikFrontendPublicKey, ""),
+		"hasReferrerPolicyHeaders":          hasFuncService(label.TraefikFrontendReferrerPolicy),
+		"getReferrerPolicyHeaders":          getFuncStringService(label.TraefikFrontendReferrerPolicy, ""),
+		"hasIsDevelopmentHeaders":           hasFuncService(label.TraefikFrontendIsDevelopment),
+		"getIsDevelopmentHeaders":           getFuncBoolService(label.TraefikFrontendIsDevelopment, false),
 	}
 
 	v := url.Values{}
@@ -405,6 +446,16 @@ func hasFunc(labelName string) func(application marathon.Application) bool {
 	}
 }
 
+func hasFuncService(labelName string) func(application marathon.Application, serviceName string) bool {
+	return func(application marathon.Application, serviceName string) bool {
+		labels := getLabels(application, serviceName)
+		lbName := getLabelName(serviceName, labelName)
+
+		value, ok := labels[lbName]
+		return ok && len(value) > 0
+	}
+}
+
 func getFuncStringService(labelName string, defaultValue string) func(application marathon.Application, serviceName string) string {
 	return func(application marathon.Application, serviceName string) string {
 		labels := getLabels(application, serviceName)
@@ -421,10 +472,25 @@ func getFuncBoolService(labelName string, defaultValue bool) func(application ma
 	}
 }
 
+func getFuncInt64Service(labelName string, defaultValue int64) func(application marathon.Application, serviceName string) int64 {
+	return func(application marathon.Application, serviceName string) int64 {
+		labels := getLabels(application, serviceName)
+		lbName := getLabelName(serviceName, labelName)
+		return label.GetInt64Value(labels, lbName, defaultValue)
+	}
+}
+
 func getFuncSliceStringService(labelName string) func(application marathon.Application, serviceName string) []string {
 	return func(application marathon.Application, serviceName string) []string {
 		labels := getLabels(application, serviceName)
 		return label.GetSliceStringValue(labels, getLabelName(serviceName, labelName))
+	}
+}
+
+func getFuncMapService(labelName string) func(application marathon.Application, serviceName string) map[string]string {
+	return func(application marathon.Application, serviceName string) map[string]string {
+		labels := getLabels(application, serviceName)
+		return label.GetMapValue(labels, getLabelName(serviceName, labelName))
 	}
 }
 
