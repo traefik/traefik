@@ -41,6 +41,10 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getRedirectRegex":            getFuncString(label.TraefikFrontendRedirectRegex, ""),
 		"getRedirectReplacement":      getFuncString(label.TraefikFrontendRedirectReplacement, ""),
 		"getWhitelistSourceRange":     getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
+		"hasHealthCheckLabels":        hasFunc(label.TraefikBackendHealthCheckPath),
+		"getHealthCheckPath":          getFuncString(label.TraefikBackendHealthCheckPath, ""),
+		"getHealthCheckPort":          getFuncInt(label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort),
+		"getHealthCheckInterval":      getFuncString(label.TraefikBackendHealthCheckInterval, ""),
 	}
 
 	// filter services
@@ -159,6 +163,12 @@ func hasRedirect(service rancherData) bool {
 func getFuncString(labelName string, defaultValue string) func(service rancherData) string {
 	return func(service rancherData) string {
 		return label.GetStringValue(service.Labels, labelName, defaultValue)
+	}
+}
+
+func getFuncInt(labelName string, defaultValue int) func(service rancherData) int {
+	return func(service rancherData) int {
+		return label.GetIntValue(service.Labels, labelName, defaultValue)
 	}
 }
 
