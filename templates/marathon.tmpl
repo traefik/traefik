@@ -72,6 +72,13 @@
       "{{.}}",
       {{end}}]
 
+    {{if hasRedirect $app $serviceName}}
+    [frontends."{{ getFrontendName $app $serviceName }}".redirect]
+      entryPoint = "{{getRedirectEntryPoint $app $serviceName}}"
+      regex = "{{getRedirectRegex $app $serviceName}}"
+      replacement = "{{getRedirectReplacement $app $serviceName}}"
+    {{end}}
+
     [frontends."{{ getFrontendName $app $serviceName }}".routes."route-host{{$app.ID | replace "/" "-"}}{{getServiceNameSuffix $serviceName }}"]
       rule = "{{getFrontendRule $app $serviceName}}"
 

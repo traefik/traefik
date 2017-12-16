@@ -50,6 +50,10 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getServiceNames":             getServiceNames,
 		"getServiceNameSuffix":        getServiceNameSuffix,
 		"getWhitelistSourceRange":     getFuncSliceStringService(label.TraefikFrontendWhitelistSourceRange),
+		"hasRedirect":                 hasRedirect,
+		"getRedirectEntryPoint":       getFuncStringService(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+		"getRedirectRegex":            getFuncStringService(label.TraefikFrontendRedirectRegex, ""),
+		"getRedirectReplacement":      getFuncStringService(label.TraefikFrontendRedirectReplacement, ""),
 	}
 
 	v := url.Values{}
@@ -362,6 +366,16 @@ func retrieveAvailablePorts(application marathon.Application, task marathon.Task
 	}
 
 	return []int{}
+}
+
+func hasRedirect(application marathon.Application, serviceName string) bool {
+	labels := getLabels(application, serviceName)
+
+	frep := label.Has(labels, getLabelName(serviceName, label.TraefikFrontendRedirectEntryPoint))
+	frrg := label.Has(labels, getLabelName(serviceName, label.TraefikFrontendRedirectRegex))
+	frrp := label.Has(labels, getLabelName(serviceName, label.TraefikFrontendRedirectReplacement))
+
+	return frep || frrg && frrp
 }
 
 // Label functions
