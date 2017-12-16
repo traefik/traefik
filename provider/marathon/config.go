@@ -43,6 +43,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getStickinessCookieName":     getFuncString(label.TraefikBackendLoadBalancerStickinessCookieName, ""),
 		"hasHealthCheckLabels":        hasFunc(label.TraefikBackendHealthCheckPath),
 		"getHealthCheckPath":          getFuncString(label.TraefikBackendHealthCheckPath, ""),
+		"getHealthCheckPort":          getFuncInt(label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort),
 		"getHealthCheckInterval":      getFuncString(label.TraefikBackendHealthCheckInterval, ""),
 		"getBasicAuth":                getFuncSliceStringService(label.TraefikFrontendAuthBasic),
 		"getServiceNames":             getServiceNames,
@@ -412,5 +413,11 @@ func getFuncString(labelName string, defaultValue string) func(application marat
 func getFuncInt64(labelName string, defaultValue int64) func(application marathon.Application) int64 {
 	return func(application marathon.Application) int64 {
 		return label.GetInt64ValueP(application.Labels, labelName, defaultValue)
+	}
+}
+
+func getFuncInt(labelName string, defaultValue int) func(application marathon.Application) int {
+	return func(application marathon.Application) int {
+		return label.GetIntValueP(application.Labels, labelName, defaultValue)
 	}
 }
