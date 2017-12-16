@@ -49,6 +49,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getBasicAuth":                getFuncSliceStringService(label.TraefikFrontendAuthBasic),
 		"getServiceNames":             getServiceNames,
 		"getServiceNameSuffix":        getServiceNameSuffix,
+		"getWhitelistSourceRange":     getFuncSliceStringService(label.TraefikFrontendWhitelistSourceRange),
 	}
 
 	v := url.Values{}
