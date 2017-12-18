@@ -4,7 +4,9 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
@@ -221,6 +223,65 @@ func TestDockerBuildConfiguration(t *testing.T) {
 							Status:  []string{"500", "600"},
 							Query:   "bar_query",
 							Backend: "foobar",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-foobar": {
+					Servers: map[string]types.Server{
+						"server-test1": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+				},
+			},
+		},
+		{
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test1"),
+					labels(map[string]string{
+						label.TraefikBackend:                                                               "foobar",
+						label.TraefikFrontendRateLimitExtractorFunc:                                        "client.ip",
+						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
+						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
+						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
+						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
+						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
+						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test1-docker-localhost-0": {
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					PassHostHeader: true,
+					Backend:        "backend-foobar",
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test1-docker-localhost-0": {
+							Rule: "Host:test1.docker.localhost",
+						},
+					},
+					RateLimit: &types.RateLimit{
+						ExtractorFunc: "client.ip",
+						RateSet: map[string]*types.Rate{
+							"foo": {
+								Period:  flaeg.Duration(6 * time.Second),
+								Average: 12,
+								Burst:   18,
+							},
+							"bar": {
+								Period:  flaeg.Duration(3 * time.Second),
+								Average: 6,
+								Burst:   9,
+							},
 						},
 					},
 				},

@@ -182,6 +182,11 @@ func getErrorPages(container dockerData) map[string]*types.ErrorPage {
 	return label.ParseErrorPages(container.Labels, prefix, label.RegexpFrontendErrorPage)
 }
 
+func getRateLimits(container dockerData) map[string]*types.Rate {
+	prefix := label.Prefix + label.BaseFrontendRateLimit
+	return label.ParseRateSets(container.Labels, prefix, label.RegexpFrontendRateLimit)
+}
+
 // Label functions
 
 func getFuncInt64Label(labelName string, defaultValue int64) func(container dockerData) int64 {

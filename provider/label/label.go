@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
 )
@@ -44,6 +45,12 @@ var (
 
 	// RegexpFrontendErrorPage used to extract error pages from label
 	RegexpFrontendErrorPage = regexp.MustCompile(`^traefik\.frontend\.errors\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
+
+	// RegexpBaseFrontendRateLimit used to extract rate limits from service's label
+	RegexpBaseFrontendRateLimit = regexp.MustCompile(`^frontend\.rateLimit\.rateSet\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
+
+	// RegexpFrontendRateLimit used to extract rate limits from label
+	RegexpFrontendRateLimit = regexp.MustCompile(`^traefik\.frontend\.rateLimit\.rateSet\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
 )
 
 // ServicePropertyValues is a map of services properties
@@ -293,6 +300,58 @@ func ParseErrorPages(labels map[string]string, labelPrefix string, labelRegex *r
 	}
 
 	return errorPages
+}
+
+// ParseRateSets parse rate limits to create Rate struct
+func ParseRateSets(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.Rate {
+	rateSets := make(map[string]*types.Rate)
+
+	for lblName, rawValue := range labels {
+		if strings.HasPrefix(lblName, labelPrefix) && len(rawValue) > 0 {
+			submatch := labelRegex.FindStringSubmatch(lblName)
+			if len(submatch) != 3 {
+				log.Errorf("Invalid rate limit label: %s, sub-match: %v", lblName, submatch)
+				continue
+			}
+
+			limitName := submatch[1]
+
+			ep, ok := rateSets[limitName]
+			if !ok {
+				ep = &types.Rate{}
+				rateSets[limitName] = ep
+			}
+
+			switch submatch[2] {
+			case "period":
+				var d flaeg.Duration
+				err := d.Set(rawValue)
+				if err != nil {
+					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
+					continue
+				}
+				ep.Period = d
+			case "average":
+				value, err := strconv.ParseInt(rawValue, 10, 64)
+				if err != nil {
+					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
+					continue
+				}
+				ep.Average = value
+			case "burst":
+				value, err := strconv.ParseInt(rawValue, 10, 64)
+				if err != nil {
+					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
+					continue
+				}
+				ep.Burst = value
+			default:
+				log.Errorf("Invalid rate limit label: %s", lblName)
+				continue
+			}
+		}
+	}
+	return rateSets
 }
 
 // IsEnabled Check if a container is enabled in Træfik
