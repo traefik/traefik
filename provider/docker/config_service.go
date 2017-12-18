@@ -7,6 +7,7 @@ import (
 
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/types"
 )
 
 // Specific functions
@@ -50,7 +51,8 @@ func checkServiceLabelPort(container dockerData) error {
 			}
 			// Get only one instance of all service names from service labels
 			servicesLabelNames := label.ServicesPropertiesRegexp.FindStringSubmatch(lbl)
-			if len(servicesLabelNames) > 0 {
+
+			if len(servicesLabelNames) > 0 && !strings.HasPrefix(lbl, label.TraefikFrontend) {
 				serviceLabels[strings.Split(servicesLabelNames[0], ".")[1]] = struct{}{}
 			}
 		}
@@ -94,6 +96,16 @@ func hasServiceRedirect(container dockerData, serviceName string) bool {
 
 	return label.Has(serviceLabels, label.SuffixFrontendRedirectEntryPoint) ||
 		label.Has(serviceLabels, label.SuffixFrontendRedirectRegex) && label.Has(serviceLabels, label.SuffixFrontendRedirectReplacement)
+}
+
+func hasServiceErrorPages(container dockerData, serviceName string) bool {
+	serviceLabels := getServiceLabels(container, serviceName)
+	return label.HasPrefix(serviceLabels, label.BaseFrontendErrorPage)
+}
+
+func getServiceErrorPages(container dockerData, serviceName string) map[string]*types.ErrorPage {
+	serviceLabels := getServiceLabels(container, serviceName)
+	return label.ParseErrorPages(serviceLabels, label.BaseFrontendErrorPage, label.RegexpBaseFrontendErrorPage)
 }
 
 // Service label functions

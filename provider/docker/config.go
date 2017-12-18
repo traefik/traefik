@@ -49,6 +49,8 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getRedirectEntryPoint":   getFuncStringLabel(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
 		"getRedirectRegex":        getFuncStringLabel(label.TraefikFrontendRedirectRegex, ""),
 		"getRedirectReplacement":  getFuncStringLabel(label.TraefikFrontendRedirectReplacement, ""),
+		"hasErrorPages":           hasErrorPages,
+		"getErrorPages":           getErrorPages,
 		// Headers
 		"hasRequestHeaders":                 hasFunc(label.TraefikFrontendRequestHeaders),
 		"getRequestHeaders":                 getFuncMapLabel(label.TraefikFrontendRequestHeaders),
@@ -114,6 +116,8 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getServiceRequestHeaders":      getFuncServiceMapLabel(label.SuffixFrontendRequestHeaders),
 		"hasServiceResponseHeaders":     hasFuncServiceLabel(label.SuffixFrontendResponseHeaders),
 		"getServiceResponseHeaders":     getFuncServiceMapLabel(label.SuffixFrontendResponseHeaders),
+		"hasServiceErrorPages":          hasServiceErrorPages,
+		"getServiceErrorPages":          getServiceErrorPages,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {

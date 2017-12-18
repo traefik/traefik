@@ -23,6 +23,7 @@ const (
 	SuffixBackendLoadBalancerStickinessCookieName  = "backend.loadbalancer.stickiness.cookieName"
 	SuffixBackendMaxConnAmount                     = "backend.maxconn.amount"
 	SuffixBackendMaxConnExtractorFunc              = "backend.maxconn.extractorfunc"
+	SuffixFrontend                                 = "frontend"
 	SuffixFrontendAuthBasic                        = "frontend.auth.basic"
 	SuffixFrontendBackend                          = "frontend.backend"
 	SuffixFrontendEntryPoints                      = "frontend.entryPoints"
@@ -76,6 +77,7 @@ const (
 	TraefikBackendLoadBalancerStickinessCookieName = Prefix + SuffixBackendLoadBalancerStickinessCookieName
 	TraefikBackendMaxConnAmount                    = Prefix + SuffixBackendMaxConnAmount
 	TraefikBackendMaxConnExtractorFunc             = Prefix + SuffixBackendMaxConnExtractorFunc
+	TraefikFrontend                                = Prefix + SuffixFrontend
 	TraefikFrontendAuthBasic                       = Prefix + SuffixFrontendAuthBasic
 	TraefikFrontendEntryPoints                     = Prefix + SuffixFrontendEntryPoints
 	TraefikFrontendPassHostHeader                  = Prefix + SuffixFrontendPassHostHeader
@@ -108,4 +110,8 @@ const (
 	TraefikFrontendPublicKey                       = Prefix + SuffixFrontendHeadersPublicKey
 	TraefikFrontendReferrerPolicy                  = Prefix + SuffixFrontendHeadersReferrerPolicy
 	TraefikFrontendIsDevelopment                   = Prefix + SuffixFrontendHeadersIsDevelopment
+	BaseFrontendErrorPage                          = "frontend.errors."
+	SuffixErrorPageBackend                         = "backend"
+	SuffixErrorPageQuery                           = "query"
+	SuffixErrorPageStatus                          = "status"
 )

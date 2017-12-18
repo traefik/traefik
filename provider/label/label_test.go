@@ -3,6 +3,7 @@ package label
 import (
 	"testing"
 
+	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -739,22 +740,24 @@ func TestExtractServiceProperties(t *testing.T) {
 			labels: map[string]string{
 				"traefik.foo.port":         "bar",
 				"traefik.foo.frontend.bar": "1bar",
-				"traefik.foo.frontend.":    "2bar",
+				"traefik.foo.backend":      "3bar",
 			},
 			expected: ServiceProperties{
 				"foo": ServicePropertyValues{
 					"port":         "bar",
 					"frontend.bar": "1bar",
+					"backend":      "3bar",
 				},
 			},
 		},
 		{
 			desc: "invalid label names",
 			labels: map[string]string{
-				"foo.frontend.bar":      "1bar",
-				"traefik.foo.frontend.": "2bar",
-				"traefik.foo.port.bar":  "barbar",
-				"traefik.foo.frontend":  "0bar",
+				"foo.frontend.bar":             "1bar",
+				"traefik.foo.frontend.":        "2bar",
+				"traefik.foo.port.bar":         "barbar",
+				"traefik.foo.frontend":         "0bar",
+				"traefik.frontend.foo.backend": "0bar",
 			},
 			expected: ServiceProperties{},
 		},
@@ -785,22 +788,24 @@ func TestExtractServicePropertiesP(t *testing.T) {
 			labels: &map[string]string{
 				"traefik.foo.port":         "bar",
 				"traefik.foo.frontend.bar": "1bar",
-				"traefik.foo.frontend.":    "2bar",
+				"traefik.foo.backend":      "3bar",
 			},
 			expected: ServiceProperties{
 				"foo": ServicePropertyValues{
 					"port":         "bar",
 					"frontend.bar": "1bar",
+					"backend":      "3bar",
 				},
 			},
 		},
 		{
 			desc: "invalid label names",
 			labels: &map[string]string{
-				"foo.frontend.bar":      "1bar",
-				"traefik.foo.frontend.": "2bar",
-				"traefik.foo.port.bar":  "barbar",
-				"traefik.foo.frontend":  "0bar",
+				"foo.frontend.bar":             "1bar",
+				"traefik.foo.frontend.":        "2bar",
+				"traefik.foo.port.bar":         "barbar",
+				"traefik.foo.frontend":         "0bar",
+				"traefik.frontend.foo.backend": "0bar",
 			},
 			expected: ServiceProperties{},
 		},
@@ -964,6 +969,115 @@ func TestGetServiceLabel(t *testing.T) {
 
 			got := GetServiceLabel(test.labelName, test.serviceName)
 			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func TestHasPrefix(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		labels   map[string]string
+		prefix   string
+		expected bool
+	}{
+		{
+			desc:     "nil labels map",
+			prefix:   "foo",
+			expected: false,
+		},
+		{
+			desc: "nonexistent prefix",
+			labels: map[string]string{
+				"foo.carotte": "bar",
+			},
+			prefix:   "fii",
+			expected: false,
+		},
+		{
+			desc: "existent prefix",
+			labels: map[string]string{
+				"foo.carotte": "bar",
+			},
+			prefix:   "foo",
+			expected: true,
+		},
+		{
+			desc: "existent prefix with empty value",
+			labels: map[string]string{
+				"foo.carotte": "",
+			},
+			prefix:   "foo",
+			expected: false,
+		},
+	}
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			got := HasPrefix(test.labels, test.prefix)
+			assert.Equal(t, test.expected, got)
+		})
+	}
+}
+
+func TestParseErrorPages(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		labels   map[string]string
+		expected map[string]*types.ErrorPage
+	}{
+		{
+			desc: "2 errors pages",
+			labels: map[string]string{
+				Prefix + BaseFrontendErrorPage + "foo." + SuffixErrorPageStatus:  "404",
+				Prefix + BaseFrontendErrorPage + "foo." + SuffixErrorPageBackend: "foo_backend",
+				Prefix + BaseFrontendErrorPage + "foo." + SuffixErrorPageQuery:   "foo_query",
+				Prefix + BaseFrontendErrorPage + "bar." + SuffixErrorPageStatus:  "500,600",
+				Prefix + BaseFrontendErrorPage + "bar." + SuffixErrorPageBackend: "bar_backend",
+				Prefix + BaseFrontendErrorPage + "bar." + SuffixErrorPageQuery:   "bar_query",
+			},
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Status:  []string{"404"},
+					Query:   "foo_query",
+					Backend: "foo_backend",
+				},
+				"bar": {
+					Status:  []string{"500", "600"},
+					Query:   "bar_query",
+					Backend: "bar_backend",
+				},
+			},
+		},
+		{
+			desc: "only status field",
+			labels: map[string]string{
+				Prefix + BaseFrontendErrorPage + "foo." + SuffixErrorPageStatus: "404",
+			},
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Status: []string{"404"},
+				},
+			},
+		},
+		{
+			desc: "invalid field",
+			labels: map[string]string{
+				Prefix + BaseFrontendErrorPage + "foo." + "courgette": "404",
+			},
+			expected: map[string]*types.ErrorPage{"foo": {}},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			pages := ParseErrorPages(test.labels, Prefix+BaseFrontendErrorPage, RegexpFrontendErrorPage)
+
+			assert.EqualValues(t, test.expected, pages)
 		})
 	}
 }
