@@ -267,12 +267,12 @@ func (dep *DefaultEntryPoints) Set(value string) error {
 
 // Get return the EntryPoints map
 func (dep *DefaultEntryPoints) Get() interface{} {
-	return DefaultEntryPoints(*dep)
+	return *dep
 }
 
 // SetValue sets the EntryPoints map with val
 func (dep *DefaultEntryPoints) SetValue(val interface{}) {
-	*dep = DefaultEntryPoints(val.(DefaultEntryPoints))
+	*dep = val.(DefaultEntryPoints)
 }
 
 // Type is type of the struct
@@ -405,12 +405,12 @@ func toBool(conf map[string]string, key string) bool {
 
 // Get return the EntryPoints map
 func (ep *EntryPoints) Get() interface{} {
-	return EntryPoints(*ep)
+	return *ep
 }
 
 // SetValue sets the EntryPoints map with val
 func (ep *EntryPoints) SetValue(val interface{}) {
-	*ep = EntryPoints(val.(EntryPoints))
+	*ep = val.(EntryPoints)
 }
 
 // Type is type of the struct

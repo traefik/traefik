@@ -80,12 +80,12 @@ func (r *RootCAs) Set(value string) error {
 
 // Get return the RootCAs list
 func (r *RootCAs) Get() interface{} {
-	return RootCAs(*r)
+	return *r
 }
 
 // SetValue sets the RootCAs with val
 func (r *RootCAs) SetValue(val interface{}) {
-	*r = RootCAs(val.(RootCAs))
+	*r = val.(RootCAs)
 }
 
 // Type is type of the struct

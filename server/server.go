@@ -862,7 +862,7 @@ func buildServerTimeouts(globalConfig configuration.GlobalConfiguration) (readTi
 	} else if globalConfig.RespondingTimeouts != nil {
 		idleTimeout = time.Duration(globalConfig.RespondingTimeouts.IdleTimeout)
 	} else {
-		idleTimeout = time.Duration(configuration.DefaultIdleTimeout)
+		idleTimeout = configuration.DefaultIdleTimeout
 	}
 
 	return readTimeout, writeTimeout, idleTimeout

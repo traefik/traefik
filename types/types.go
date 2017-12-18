@@ -312,7 +312,7 @@ func (cs *Constraints) String() string { return fmt.Sprintf("%+v", *cs) }
 
 //SetValue sets []*Constraint into the parser
 func (cs *Constraints) SetValue(val interface{}) {
-	*cs = Constraints(val.(Constraints))
+	*cs = val.(Constraints)
 }
 
 // Type exports the Constraints type as a string
@@ -427,14 +427,14 @@ func (b *Buckets) Set(str string) error {
 }
 
 //Get []float64
-func (b *Buckets) Get() interface{} { return Buckets(*b) }
+func (b *Buckets) Get() interface{} { return *b }
 
 //String return slice in a string
 func (b *Buckets) String() string { return fmt.Sprintf("%v", *b) }
 
 //SetValue sets []float64 into the parser
 func (b *Buckets) SetValue(val interface{}) {
-	*b = Buckets(val.(Buckets))
+	*b = val.(Buckets)
 }
 
 // TraefikLog holds the configuration settings for the traefik logger.
