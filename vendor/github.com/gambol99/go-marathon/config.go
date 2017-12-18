@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,8 +50,10 @@ type Config struct {
 	DCOSToken string
 	// LogOutput the output for debug log messages
 	LogOutput io.Writer
-	// HTTPClient is the http client
+	// HTTPClient is the HTTP client
 	HTTPClient *http.Client
+	// HTTPSSEClient is the HTTP client used for SSE subscriptions, can't have client.Timeout set
+	HTTPSSEClient *http.Client
 	// wait time (in milliseconds) between repetitive requests to the API during polling
 	PollingWaitTime time.Duration
 }
