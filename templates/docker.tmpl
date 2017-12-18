@@ -95,6 +95,18 @@
       {{end}}
     {{end}}
 
+    {{ if hasServiceRateLimits $container $serviceName }}
+    [frontends."frontend-{{getServiceBackend $container $serviceName}}".rateLimit]
+      extractorFunc = "{{ getRateLimitsExtractorFunc $container $serviceName }}"
+      [frontends."frontend-{{getServiceBackend $container $serviceName}}".rateLimit.rateSet]
+        {{ range $limitName, $rateLimit := getServiceRateLimits $container $serviceName }}
+        [frontends."frontend-{{getServiceBackend $container $serviceName}}".rateLimit.rateSet.{{ $limitName }}]
+          period = "{{ $rateLimit.Period }}"
+          average = {{ $rateLimit.Average }}
+          burst = {{ $rateLimit.Burst }}
+        {{end}}
+    {{end}}
+
   [frontends."frontend-{{getServiceBackend $container $serviceName}}".routes."service-{{$serviceName | replace "/" "" | replace "." "-"}}"]
     rule = "{{getServiceFrontendRule $container $serviceName}}"
 
@@ -153,6 +165,18 @@
         backend = "{{$page.Backend}}"
         query = "{{$page.Query}}"
       {{end}}
+    {{end}}
+
+    {{ if hasRateLimits $container }}
+    [frontends."frontend-{{$frontend}}".rateLimit]
+      extractorFunc = "{{ getRateLimitsExtractorFunc $container }}"
+      [frontends."frontend-{{$frontend}}".rateLimit.rateSet]
+        {{ range $limitName, $rateLimit := getRateLimits $container }}
+        [frontends."frontend-{{$frontend}}".rateLimit.rateSet.{{ $limitName }}]
+          period = "{{ $rateLimit.Period }}"
+          average = {{ $rateLimit.Average }}
+          burst = {{ $rateLimit.Burst }}
+        {{end}}
     {{end}}
 
     [frontends."frontend-{{$frontend}}".headers]

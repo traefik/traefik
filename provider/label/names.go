@@ -50,6 +50,7 @@ const (
 	SuffixFrontendPassHostHeader                   = "frontend.passHostHeader"
 	SuffixFrontendPassTLSCert                      = "frontend.passTLSCert"
 	SuffixFrontendPriority                         = "frontend.priority"
+	SuffixFrontendRateLimitExtractorFunc           = "frontend.rateLimit.extractorFunc"
 	SuffixFrontendRedirectEntryPoint               = "frontend.redirect.entryPoint"
 	SuffixFrontendRedirectRegex                    = "frontend.redirect.regex"
 	SuffixFrontendRedirectReplacement              = "frontend.redirect.replacement"
@@ -83,11 +84,12 @@ const (
 	TraefikFrontendPassHostHeader                  = Prefix + SuffixFrontendPassHostHeader
 	TraefikFrontendPassTLSCert                     = Prefix + SuffixFrontendPassTLSCert
 	TraefikFrontendPriority                        = Prefix + SuffixFrontendPriority
-	TraefikFrontendRule                            = Prefix + SuffixFrontendRule
-	TraefikFrontendRuleType                        = Prefix + SuffixFrontendRuleType
+	TraefikFrontendRateLimitExtractorFunc          = Prefix + SuffixFrontendRateLimitExtractorFunc
 	TraefikFrontendRedirectEntryPoint              = Prefix + SuffixFrontendRedirectEntryPoint
 	TraefikFrontendRedirectRegex                   = Prefix + SuffixFrontendRedirectRegex
 	TraefikFrontendRedirectReplacement             = Prefix + SuffixFrontendRedirectReplacement
+	TraefikFrontendRule                            = Prefix + SuffixFrontendRule
+	TraefikFrontendRuleType                        = Prefix + SuffixFrontendRuleType
 	TraefikFrontendValue                           = Prefix + SuffixFrontendValue
 	TraefikFrontendWhitelistSourceRange            = Prefix + SuffixFrontendWhitelistSourceRange
 	TraefikFrontendRequestHeaders                  = Prefix + SuffixFrontendRequestHeaders
@@ -114,4 +116,8 @@ const (
 	SuffixErrorPageBackend                         = "backend"
 	SuffixErrorPageQuery                           = "query"
 	SuffixErrorPageStatus                          = "status"
+	BaseFrontendRateLimit                          = "frontend.rateLimit.rateSet."
+	SuffixRateLimitPeriod                          = "period"
+	SuffixRateLimitAverage                         = "average"
+	SuffixRateLimitBurst                           = "burst"
 )

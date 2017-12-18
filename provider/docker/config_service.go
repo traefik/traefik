@@ -108,6 +108,11 @@ func getServiceErrorPages(container dockerData, serviceName string) map[string]*
 	return label.ParseErrorPages(serviceLabels, label.BaseFrontendErrorPage, label.RegexpBaseFrontendErrorPage)
 }
 
+func getServiceRateLimits(container dockerData, serviceName string) map[string]*types.Rate {
+	serviceLabels := getServiceLabels(container, serviceName)
+	return label.ParseRateSets(serviceLabels, label.BaseFrontendRateLimit, label.RegexpBaseFrontendRateLimit)
+}
+
 // Service label functions
 
 func getFuncServiceMapLabel(labelSuffix string) func(container dockerData, serviceName string) map[string]string {

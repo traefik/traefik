@@ -2,7 +2,9 @@ package label
 
 import (
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -1078,6 +1080,49 @@ func TestParseErrorPages(t *testing.T) {
 			pages := ParseErrorPages(test.labels, Prefix+BaseFrontendErrorPage, RegexpFrontendErrorPage)
 
 			assert.EqualValues(t, test.expected, pages)
+		})
+	}
+}
+
+func TestParseRateSets(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		labels   map[string]string
+		expected map[string]*types.Rate
+	}{
+		{
+			desc: "2 rate limits",
+			labels: map[string]string{
+				Prefix + BaseFrontendRateLimit + "foo." + SuffixRateLimitPeriod:  "6",
+				Prefix + BaseFrontendRateLimit + "foo." + SuffixRateLimitAverage: "12",
+				Prefix + BaseFrontendRateLimit + "foo." + SuffixRateLimitBurst:   "18",
+				Prefix + BaseFrontendRateLimit + "bar." + SuffixRateLimitPeriod:  "3",
+				Prefix + BaseFrontendRateLimit + "bar." + SuffixRateLimitAverage: "6",
+				Prefix + BaseFrontendRateLimit + "bar." + SuffixRateLimitBurst:   "9",
+			},
+			expected: map[string]*types.Rate{
+				"foo": {
+					Period:  flaeg.Duration(6 * time.Second),
+					Average: 12,
+					Burst:   18,
+				},
+				"bar": {
+					Period:  flaeg.Duration(3 * time.Second),
+					Average: 6,
+					Burst:   9,
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rateSets := ParseRateSets(test.labels, Prefix+BaseFrontendRateLimit, RegexpFrontendRateLimit)
+
+			assert.EqualValues(t, test.expected, rateSets)
 		})
 	}
 }
