@@ -408,7 +408,7 @@ func (p *Provider) taskRecords(sj state.State) []state.Task {
 		for _, task := range f.Tasks {
 			for _, slave := range sj.Slaves {
 				if task.SlaveID == slave.ID {
-					task.SlaveIP = slave.Hostname
+					task.SlaveIP = slave.PID.Host
 				}
 			}
 
