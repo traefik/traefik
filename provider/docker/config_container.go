@@ -8,6 +8,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/types"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -170,6 +171,15 @@ func isBackendLBSwarm(container dockerData) bool {
 func hasRedirect(container dockerData) bool {
 	return label.Has(container.Labels, label.TraefikFrontendRedirectEntryPoint) ||
 		label.Has(container.Labels, label.TraefikFrontendRedirectReplacement) && label.Has(container.Labels, label.TraefikFrontendRedirectRegex)
+}
+
+func hasErrorPages(container dockerData) bool {
+	return label.HasPrefix(container.Labels, label.Prefix+label.BaseFrontendErrorPage)
+}
+
+func getErrorPages(container dockerData) map[string]*types.ErrorPage {
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+	return label.ParseErrorPages(container.Labels, prefix, label.RegexpFrontendErrorPage)
 }
 
 // Label functions

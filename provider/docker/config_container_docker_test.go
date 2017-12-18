@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDockerLoadDockerConfig(t *testing.T) {
+func TestDockerBuildConfiguration(t *testing.T) {
 	testCases := []struct {
 		containers        []docker.ContainerJSON
 		expectedFrontends map[string]*types.Frontend
@@ -177,6 +177,61 @@ func TestDockerLoadDockerConfig(t *testing.T) {
 					MaxConn: &types.MaxConn{
 						Amount:        1000,
 						ExtractorFunc: "somethingelse",
+					},
+				},
+			},
+		},
+		{
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("test1"),
+					labels(map[string]string{
+						label.TraefikBackend: "foobar",
+						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
+						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
+						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
+						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test1-docker-localhost-0": {
+					EntryPoints:    []string{},
+					BasicAuth:      []string{},
+					PassHostHeader: true,
+					Backend:        "backend-foobar",
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test1-docker-localhost-0": {
+							Rule: "Host:test1.docker.localhost",
+						},
+					},
+					Errors: map[string]types.ErrorPage{
+						"foo": {
+							Status:  []string{"404"},
+							Query:   "foo_query",
+							Backend: "foobar",
+						},
+						"bar": {
+							Status:  []string{"500", "600"},
+							Query:   "bar_query",
+							Backend: "foobar",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-foobar": {
+					Servers: map[string]types.Server{
+						"server-test1": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
 					},
 				},
 			},
@@ -894,6 +949,62 @@ func TestDockerGetPort(t *testing.T) {
 			if actual != e.expected {
 				t.Errorf("expected %q, got %q", e.expected, actual)
 			}
+		})
+	}
+}
+
+func TestGetErrorPages(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		data     dockerData
+		expected map[string]*types.ErrorPage
+	}{
+		{
+			desc: "2 errors pages",
+			data: parseContainer(containerJSON(
+				labels(map[string]string{
+					label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
+					label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foo_backend",
+					label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
+					label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
+					label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "bar_backend",
+					label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
+				}))),
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Status:  []string{"404"},
+					Query:   "foo_query",
+					Backend: "foo_backend",
+				},
+				"bar": {
+					Status:  []string{"500", "600"},
+					Query:   "bar_query",
+					Backend: "bar_backend",
+				},
+			},
+		},
+		{
+			desc: "only status field",
+			data: parseContainer(containerJSON(
+				labels(map[string]string{
+					label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus: "404",
+				}))),
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Status: []string{"404"},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			pages := getErrorPages(test.data)
+
+			assert.EqualValues(t, test.expected, pages)
 		})
 	}
 }

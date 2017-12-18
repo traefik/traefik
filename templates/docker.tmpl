@@ -83,6 +83,18 @@
       replacement = "{{getServiceRedirectReplacement $container $serviceName}}"
     {{end}}
 
+    {{ if hasServiceErrorPages $container $serviceName }}
+    [frontends."frontend-{{getServiceBackend $container $serviceName}}".errors]
+      {{ range $pageName, $page := getServiceErrorPages $container $serviceName }}
+      [frontends."frontend-{{getServiceBackend $container $serviceName}}".errors.{{$pageName}}]
+        status = [{{range $page.Status}}
+          "{{.}}",
+          {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
+    {{end}}
+
   [frontends."frontend-{{getServiceBackend $container $serviceName}}".routes."service-{{$serviceName | replace "/" "" | replace "." "-"}}"]
     rule = "{{getServiceFrontendRule $container $serviceName}}"
 
@@ -129,6 +141,18 @@
       entryPoint = "{{getRedirectEntryPoint $container}}"
       regex = "{{getRedirectRegex $container}}"
       replacement = "{{getRedirectReplacement $container}}"
+    {{end}}
+
+    {{ if hasErrorPages $container }}
+    [frontends."frontend-{{$frontend}}".errors]
+      {{ range $pageName, $page := getErrorPages $container }}
+      [frontends."frontend-{{$frontend}}".errors.{{ $pageName }}]
+        status = [{{range $page.Status}}
+          "{{.}}",
+          {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
     {{end}}
 
     [frontends."frontend-{{$frontend}}".headers]

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -216,6 +217,63 @@ func TestDockerCheckPortLabels(t *testing.T) {
 			} else if !test.expectedError && err != nil {
 				t.Errorf("expected no error, got %q", err)
 			}
+		})
+	}
+}
+
+func TestGetServiceErrorPages(t *testing.T) {
+	service := "courgette"
+	testCases := []struct {
+		desc     string
+		data     dockerData
+		expected map[string]*types.ErrorPage
+	}{
+		{
+			desc: "2 errors pages",
+			data: parseContainer(containerJSON(
+				labels(map[string]string{
+					label.Prefix + service + "." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
+					label.Prefix + service + "." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foo_backend",
+					label.Prefix + service + "." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
+					label.Prefix + service + "." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
+					label.Prefix + service + "." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "bar_backend",
+					label.Prefix + service + "." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
+				}))),
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Status:  []string{"404"},
+					Query:   "foo_query",
+					Backend: "foo_backend",
+				},
+				"bar": {
+					Status:  []string{"500", "600"},
+					Query:   "bar_query",
+					Backend: "bar_backend",
+				},
+			},
+		},
+		{
+			desc: "only status field",
+			data: parseContainer(containerJSON(
+				labels(map[string]string{
+					label.Prefix + service + ".frontend.errors.foo.status": "404",
+				}))),
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Status: []string{"404"},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			pages := getServiceErrorPages(test.data, service)
+
+			assert.EqualValues(t, test.expected, pages)
 		})
 	}
 }
