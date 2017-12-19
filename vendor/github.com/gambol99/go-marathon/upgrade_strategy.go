@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ type UpgradeStrategy struct {
 }
 
 // SetMinimumHealthCapacity sets the minimum health capacity.
-func (us UpgradeStrategy) SetMinimumHealthCapacity(cap float64) UpgradeStrategy {
+func (us *UpgradeStrategy) SetMinimumHealthCapacity(cap float64) *UpgradeStrategy {
 	us.MinimumHealthCapacity = &cap
 	return us
 }
 
 // SetMaximumOverCapacity sets the maximum over capacity.
-func (us UpgradeStrategy) SetMaximumOverCapacity(cap float64) UpgradeStrategy {
+func (us *UpgradeStrategy) SetMaximumOverCapacity(cap float64) *UpgradeStrategy {
 	us.MaximumOverCapacity = &cap
 	return us
 }

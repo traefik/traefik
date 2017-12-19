@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -56,15 +56,16 @@ type Port struct {
 
 // Application is the definition for an application in marathon
 type Application struct {
-	ID                         string              `json:"id,omitempty"`
-	Cmd                        *string             `json:"cmd,omitempty"`
-	Args                       *[]string           `json:"args,omitempty"`
-	Constraints                *[][]string         `json:"constraints,omitempty"`
-	Container                  *Container          `json:"container,omitempty"`
-	CPUs                       float64             `json:"cpus,omitempty"`
-	GPUs                       *float64            `json:"gpus,omitempty"`
-	Disk                       *float64            `json:"disk,omitempty"`
-	Env                        *map[string]string  `json:"env,omitempty"`
+	ID          string      `json:"id,omitempty"`
+	Cmd         *string     `json:"cmd,omitempty"`
+	Args        *[]string   `json:"args,omitempty"`
+	Constraints *[][]string `json:"constraints,omitempty"`
+	Container   *Container  `json:"container,omitempty"`
+	CPUs        float64     `json:"cpus,omitempty"`
+	GPUs        *float64    `json:"gpus,omitempty"`
+	Disk        *float64    `json:"disk,omitempty"`
+	// Contains non-secret environment variables. Secrets environment variables are part of the Secrets map.
+	Env                        *map[string]string  `json:"-"`
 	Executor                   *string             `json:"executor,omitempty"`
 	HealthChecks               *[]HealthCheck      `json:"healthChecks,omitempty"`
 	ReadinessChecks            *[]ReadinessCheck   `json:"readinessChecks,omitempty"`
@@ -99,6 +100,8 @@ type Application struct {
 	LastTaskFailure       *LastTaskFailure        `json:"lastTaskFailure,omitempty"`
 	Fetch                 *[]Fetch                `json:"fetch,omitempty"`
 	IPAddressPerTask      *IPAddressPerTask       `json:"ipAddress,omitempty"`
+	Residency             *Residency              `json:"residency,omitempty"`
+	Secrets               *map[string]Secret      `json:"-"`
 }
 
 // ApplicationVersions is a collection of application versions for a specific app in marathon
@@ -147,6 +150,14 @@ type TaskStats struct {
 type Stats struct {
 	Counts   map[string]int     `json:"counts"`
 	LifeTime map[string]float64 `json:"lifeTime"`
+}
+
+// Secret is the environment variable and secret store path associated with a secret.
+// The value for EnvVar is populated from the env field, and Source is populated from
+// the secrets field of the application json.
+type Secret struct {
+	EnvVar string
+	Source string
 }
 
 // SetIPAddressPerTask defines that the application will have a IP address defines by a external agent.
@@ -355,8 +366,8 @@ func (r *Application) EmptyLabels() *Application {
 }
 
 // AddEnv adds an environment variable to the application
-//		name:	the name of the variable
-//		value:	go figure, the value associated to the above
+// name:	the name of the variable
+// value:	go figure, the value associated to the above
 func (r *Application) AddEnv(name, value string) *Application {
 	if r.Env == nil {
 		r.EmptyEnvs()
@@ -371,6 +382,28 @@ func (r *Application) AddEnv(name, value string) *Application {
 // keep the current value)
 func (r *Application) EmptyEnvs() *Application {
 	r.Env = &map[string]string{}
+
+	return r
+}
+
+// AddSecret adds a secret declaration
+// envVar: the name of the environment variable
+// name:	the name of the secret
+// source:	the source ID of the secret
+func (r *Application) AddSecret(envVar, name, source string) *Application {
+	if r.Secrets == nil {
+		r.EmptySecrets()
+	}
+	(*r.Secrets)[name] = Secret{EnvVar: envVar, Source: source}
+
+	return r
+}
+
+// EmptySecrets explicitly empties the secrets -- use this if you need to empty
+// the secrets of an application that already has secrets set (setting secrets to nil will
+// keep the current value)
+func (r *Application) EmptySecrets() *Application {
+	r.Secrets = &map[string]Secret{}
 
 	return r
 }
@@ -571,6 +604,23 @@ func (r *Application) EmptyUnreachableStrategy() *Application {
 	return r
 }
 
+// SetResidency sets behavior for resident applications, an application is resident when
+// it has local persistent volumes set
+func (r *Application) SetResidency(whenLost TaskLostBehaviorType) *Application {
+	r.Residency = &Residency{
+		TaskLostBehavior: whenLost,
+	}
+	return r
+}
+
+// EmptyResidency explicitly empties the residency -- use this if
+// you need to empty the residency of an application that already has
+// the residency set (setting it to nil will keep the current value).
+func (r *Application) EmptyResidency() *Application {
+	r.Residency = &Residency{}
+	return r
+}
+
 // String returns the json representation of this application
 func (r *Application) String() string {
 	s, err := json.MarshalIndent(r, "", "  ")
@@ -639,7 +689,7 @@ func (r *marathonClient) ApplicationVersions(name string) (*ApplicationVersions,
 // 		name: 		the id used to identify the application
 //		version: 	the version (normally a timestamp) you wish to change to
 func (r *marathonClient) SetApplicationVersion(name string, version *ApplicationVersion) (*DeploymentID, error) {
-	path := fmt.Sprintf(buildPath(name))
+	path := buildPath(name)
 	deploymentID := new(DeploymentID)
 	if err := r.apiPut(path, version, deploymentID); err != nil {
 		return nil, err

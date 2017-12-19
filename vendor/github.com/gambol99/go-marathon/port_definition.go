@@ -1,5 +1,5 @@
 /*
-Copyright 2016 Rohith All rights reserved.
+Copyright 2016 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,15 +27,39 @@ type PortDefinition struct {
 }
 
 // SetPort sets the given port for the PortDefinition
-func (p PortDefinition) SetPort(port int) PortDefinition {
+func (p *PortDefinition) SetPort(port int) *PortDefinition {
+	if p.Port == nil {
+		p.EmptyPort()
+	}
 	p.Port = &port
+	return p
+}
+
+// EmptyPort sets the port to 0 for the PortDefinition
+func (p *PortDefinition) EmptyPort() *PortDefinition {
+	port := 0
+	p.Port = &port
+	return p
+}
+
+// SetProtocol sets the protocol for the PortDefinition
+// protocol: the protocol as a string
+func (p *PortDefinition) SetProtocol(protocol string) *PortDefinition {
+	p.Protocol = protocol
+	return p
+}
+
+// SetName sets the name for the PortDefinition
+// name: the name of the PortDefinition
+func (p *PortDefinition) SetName(name string) *PortDefinition {
+	p.Name = name
 	return p
 }
 
 // AddLabel adds a label to the PortDefinition
 //		name: the name of the label
 //		value: value for this label
-func (p PortDefinition) AddLabel(name, value string) PortDefinition {
+func (p *PortDefinition) AddLabel(name, value string) *PortDefinition {
 	if p.Labels == nil {
 		p.EmptyLabels()
 	}

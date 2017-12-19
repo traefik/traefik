@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,37 +31,37 @@ type HealthCheck struct {
 }
 
 // SetCommand sets the given command on the health check.
-func (h HealthCheck) SetCommand(c Command) HealthCheck {
+func (h *HealthCheck) SetCommand(c Command) *HealthCheck {
 	h.Command = &c
 	return h
 }
 
 // SetPortIndex sets the given port index on the health check.
-func (h HealthCheck) SetPortIndex(i int) HealthCheck {
+func (h *HealthCheck) SetPortIndex(i int) *HealthCheck {
 	h.PortIndex = &i
 	return h
 }
 
 // SetPort sets the given port on the health check.
-func (h HealthCheck) SetPort(i int) HealthCheck {
+func (h *HealthCheck) SetPort(i int) *HealthCheck {
 	h.Port = &i
 	return h
 }
 
 // SetPath sets the given path on the health check.
-func (h HealthCheck) SetPath(p string) HealthCheck {
+func (h *HealthCheck) SetPath(p string) *HealthCheck {
 	h.Path = &p
 	return h
 }
 
 // SetMaxConsecutiveFailures sets the maximum consecutive failures on the health check.
-func (h HealthCheck) SetMaxConsecutiveFailures(i int) HealthCheck {
+func (h *HealthCheck) SetMaxConsecutiveFailures(i int) *HealthCheck {
 	h.MaxConsecutiveFailures = &i
 	return h
 }
 
 // SetIgnoreHTTP1xx sets ignore http 1xx on the health check.
-func (h HealthCheck) SetIgnoreHTTP1xx(ignore bool) HealthCheck {
+func (h *HealthCheck) SetIgnoreHTTP1xx(ignore bool) *HealthCheck {
 	h.IgnoreHTTP1xx = &ignore
 	return h
 }

@@ -261,7 +261,7 @@ imports:
 - name: github.com/fatih/color
   version: 62e9147c64a1ed519147b62a56a14e83e2be02c1
 - name: github.com/gambol99/go-marathon
-  version: dd6cbd4c2d71294a19fb89158f2a00d427f174ab
+  version: 03b46169666c53b9cc953b875ac5714e5103e064
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
