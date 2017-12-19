@@ -532,7 +532,7 @@ var _templatesKvTmpl = []byte(`{{$frontends := List .Prefix "/frontends/" }}
     sticky = {{ getSticky . }}
     {{if hasStickinessLabel $backend}}
     [backends."{{$backendName}}".loadBalancer.stickiness]
-      cookieName = {{getStickinessCookieName $backend}}
+      cookieName = "{{getStickinessCookieName $backend}}"
     {{end}}
 {{end}}
 
