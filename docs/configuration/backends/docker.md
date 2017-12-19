@@ -237,6 +237,7 @@ Services labels can be used for overriding default behaviour
 | `traefik.<service-name>.frontend.redirect.regex=^http://localhost/(.*)`   | Overrides `traefik.frontend.redirect.regex`.                                                     |
 | `traefik.<service-name>.frontend.redirect.replacement=http://mydomain/$1` | Overrides `traefik.frontend.redirect.replacement`.                                               |
 | `traefik.<service-name>.frontend.rule`                                    | Overrides `traefik.frontend.rule`.                                                               |
+| `traefik.<service-name>.frontend.whitelistSourceRange:RANGE`              | Overrides `traefik.frontend.whitelistSourceRange`.                                               |
 
 #### Security Headers
 
