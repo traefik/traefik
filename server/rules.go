@@ -54,9 +54,30 @@ func (r *Rules) path(paths ...string) *mux.Route {
 func (r *Rules) pathPrefix(paths ...string) *mux.Route {
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(strings.TrimSpace(path))
+		buildPath(path, router)
 	}
 	return r.route.route
+}
+
+func buildPath(path string, router *mux.Router) {
+	cleanPath := strings.TrimSpace(path)
+	// {} are used to define a regex pattern in http://www.gorillatoolkit.org/pkg/mux.
+	// if we find a { in the path, that means we use regex, then the gorilla/mux implementation is chosen
+	// otherwise, we use a lightweight implementation
+	if strings.Contains(cleanPath, "{") {
+		router.PathPrefix(cleanPath)
+	} else {
+		m := &prefixMatcher{prefix: cleanPath}
+		router.NewRoute().MatcherFunc(m.Match)
+	}
+}
+
+type prefixMatcher struct {
+	prefix string
+}
+
+func (m *prefixMatcher) Match(r *http.Request, _ *mux.RouteMatch) bool {
+	return strings.HasPrefix(r.URL.Path, m.prefix) || strings.HasPrefix(r.URL.Path, m.prefix+"/")
 }
 
 type bySize []string
@@ -111,7 +132,7 @@ func (r *Rules) pathPrefixStrip(paths ...string) *mux.Route {
 	r.route.stripPrefixes = paths
 	router := r.route.route.Subrouter()
 	for _, path := range paths {
-		router.PathPrefix(strings.TrimSpace(path))
+		buildPath(path, router)
 	}
 	return r.route.route
 }
