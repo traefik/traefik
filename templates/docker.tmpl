@@ -66,8 +66,8 @@
       "{{.}}",
       {{end}}]
 
-    {{if getWhitelistSourceRange $container}}
-    whitelistSourceRange = [{{range getWhitelistSourceRange $container}}
+    {{if getServiceWhitelistSourceRange $container $serviceName}}
+    whitelistSourceRange = [{{range getServiceWhitelistSourceRange $container $serviceName}}
       "{{.}}",
       {{end}}]
     {{end}}
