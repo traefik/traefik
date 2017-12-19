@@ -508,12 +508,12 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
 
 {{range $tlsConfiguration := .TLSConfiguration}}
 [[tlsConfiguration]]
-  endPoints = [{{range $tlsConfiguration.EntryPoints}}
+  entryPoints = [{{range $tlsConfiguration.EntryPoints}}
     "{{.}}",
    {{end}}]
   [tlsConfiguration.certificate]
-    certFile = "{{$tlsConfiguration.Certificate.CertFile}}"
-    keyFile = "{{$tlsConfiguration.Certificate.KeyFile}}"
+    certFile = """{{$tlsConfiguration.Certificate.CertFile}}"""
+    keyFile = """{{$tlsConfiguration.Certificate.KeyFile}}"""
 {{end}}
 `)
 
