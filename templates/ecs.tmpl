@@ -39,114 +39,138 @@
 
 [frontends]
 {{range $serviceName, $instances := .Services}}
-{{range filterFrontends $instances}}
+{{range $instance := filterFrontends $instances}}
 
   [frontends.frontend-{{ $serviceName }}]
     backend = "backend-{{ $serviceName }}"
-    priority = {{ getPriority .}}
-    passHostHeader = {{ getPassHostHeader .}}
-    passTLSCert = {{ getPassTLSCert .}}
+    priority = {{ getPriority $instance}}
+    passHostHeader = {{ getPassHostHeader $instance}}
+    passTLSCert = {{ getPassTLSCert $instance}}
 
-    entryPoints = [{{range  getEntryPoints .}}
+    entryPoints = [{{range  getEntryPoints $instance}}
       "{{.}}",
       {{end}}]
 
-    {{if getWhitelistSourceRange .}}
-    whitelistSourceRange = [{{range getWhitelistSourceRange .}}
+    {{if getWhitelistSourceRange $instance}}
+    whitelistSourceRange = [{{range getWhitelistSourceRange $instance}}
       "{{.}}",
       {{end}}]
     {{end}}
 
-    basicAuth = [{{range getBasicAuth .}}
+    basicAuth = [{{range getBasicAuth $instance}}
       "{{.}}",
       {{end}}]
 
-    {{if hasRedirect .}}
+    {{if hasRedirect $instance}}
     [frontends."frontend-{{ $serviceName }}".redirect]
-      entryPoint = "{{getRedirectEntryPoint .}}"
-      regex = "{{getRedirectRegex .}}"
-      replacement = "{{getRedirectReplacement .}}"
+      entryPoint = "{{getRedirectEntryPoint $instance}}"
+      regex = "{{getRedirectRegex $instance}}"
+      replacement = "{{getRedirectReplacement $instance}}"
+    {{end}}
+
+    {{ if hasErrorPages $instance }}
+    [frontends."frontend-{{ $serviceName }}".errors]
+      {{ range $pageName, $page := getErrorPages $instance }}
+      [frontends."frontend-{{ $serviceName }}".errors.{{ $pageName }}]
+        status = [{{range $page.Status}}
+          "{{.}}",
+          {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
+    {{end}}
+
+    {{ if hasRateLimits $instance }}
+    [frontends."frontend-{{ $serviceName }}".rateLimit]
+      extractorFunc = "{{ getRateLimitsExtractorFunc $instance }}"
+      [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet]
+        {{ range $limitName, $rateLimit := getRateLimits $instance }}
+        [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet.{{ $limitName }}]
+          period = "{{ $rateLimit.Period }}"
+          average = {{ $rateLimit.Average }}
+          burst = {{ $rateLimit.Burst }}
+        {{end}}
     {{end}}
 
     [frontends."frontend-{{ $serviceName }}".headers]
-      {{if hasSSLRedirectHeaders .}}
-      SSLRedirect = {{getSSLRedirectHeaders .}}
+      {{if hasSSLRedirectHeaders $instance}}
+      SSLRedirect = {{getSSLRedirectHeaders $instance}}
       {{end}}
-      {{if hasSSLTemporaryRedirectHeaders .}}
-      SSLTemporaryRedirect = {{getSSLTemporaryRedirectHeaders .}}
+      {{if hasSSLTemporaryRedirectHeaders $instance}}
+      SSLTemporaryRedirect = {{getSSLTemporaryRedirectHeaders $instance}}
       {{end}}
-      {{if hasSSLHostHeaders .}}
-      SSLHost = "{{getSSLHostHeaders .}}"
+      {{if hasSSLHostHeaders $instance}}
+      SSLHost = "{{getSSLHostHeaders $instance}}"
       {{end}}
-      {{if hasSTSSecondsHeaders .}}
-      STSSeconds = {{getSTSSecondsHeaders .}}
+      {{if hasSTSSecondsHeaders $instance}}
+      STSSeconds = {{getSTSSecondsHeaders $instance}}
       {{end}}
-      {{if hasSTSIncludeSubdomainsHeaders .}}
-      STSIncludeSubdomains = {{getSTSIncludeSubdomainsHeaders .}}
+      {{if hasSTSIncludeSubdomainsHeaders $instance}}
+      STSIncludeSubdomains = {{getSTSIncludeSubdomainsHeaders $instance}}
       {{end}}
-      {{if hasSTSPreloadHeaders .}}
-      STSPreload = {{getSTSPreloadHeaders .}}
+      {{if hasSTSPreloadHeaders $instance}}
+      STSPreload = {{getSTSPreloadHeaders $instance}}
       {{end}}
-      {{if hasForceSTSHeaderHeaders .}}
-      ForceSTSHeader = {{getForceSTSHeaderHeaders .}}
+      {{if hasForceSTSHeaderHeaders $instance}}
+      ForceSTSHeader = {{getForceSTSHeaderHeaders $instance}}
       {{end}}
-      {{if hasFrameDenyHeaders .}}
-      FrameDeny = {{getFrameDenyHeaders .}}
+      {{if hasFrameDenyHeaders $instance}}
+      FrameDeny = {{getFrameDenyHeaders $instance}}
       {{end}}
-      {{if hasCustomFrameOptionsValueHeaders .}}
-      CustomFrameOptionsValue = "{{getCustomFrameOptionsValueHeaders .}}"
+      {{if hasCustomFrameOptionsValueHeaders $instance}}
+      CustomFrameOptionsValue = "{{getCustomFrameOptionsValueHeaders $instance}}"
       {{end}}
-      {{if hasContentTypeNosniffHeaders .}}
-      ContentTypeNosniff = {{getContentTypeNosniffHeaders .}}
+      {{if hasContentTypeNosniffHeaders $instance}}
+      ContentTypeNosniff = {{getContentTypeNosniffHeaders $instance}}
       {{end}}
-      {{if hasBrowserXSSFilterHeaders .}}
-      BrowserXSSFilter = {{getBrowserXSSFilterHeaders .}}
+      {{if hasBrowserXSSFilterHeaders $instance}}
+      BrowserXSSFilter = {{getBrowserXSSFilterHeaders $instance}}
       {{end}}
-      {{if hasContentSecurityPolicyHeaders .}}
-      ContentSecurityPolicy = "{{getContentSecurityPolicyHeaders .}}"
+      {{if hasContentSecurityPolicyHeaders $instance}}
+      ContentSecurityPolicy = "{{getContentSecurityPolicyHeaders $instance}}"
       {{end}}
-      {{if hasPublicKeyHeaders .}}
-      PublicKey = "{{getPublicKeyHeaders .}}"
+      {{if hasPublicKeyHeaders $instance}}
+      PublicKey = "{{getPublicKeyHeaders $instance}}"
       {{end}}
-      {{if hasReferrerPolicyHeaders .}}
-      ReferrerPolicy = "{{getReferrerPolicyHeaders .}}"
+      {{if hasReferrerPolicyHeaders $instance}}
+      ReferrerPolicy = "{{getReferrerPolicyHeaders $instance}}"
       {{end}}
-      {{if hasIsDevelopmentHeaders .}}
-      IsDevelopment = {{getIsDevelopmentHeaders .}}
+      {{if hasIsDevelopmentHeaders $instance}}
+      IsDevelopment = {{getIsDevelopmentHeaders $instance}}
       {{end}}
-      {{if hasRequestHeaders .}}
+      {{if hasRequestHeaders $instance}}
         [frontends."frontend-{{ $serviceName }}".headers.customRequestHeaders]
-        {{range $k, $v := getRequestHeaders .}}
+        {{range $k, $v := getRequestHeaders $instance}}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
-      {{if hasResponseHeaders .}}
+      {{if hasResponseHeaders $instance}}
       [frontends."frontend-{{ $serviceName }}".headers.customResponseHeaders]
-        {{range $k, $v := getResponseHeaders .}}
+        {{range $k, $v := getResponseHeaders $instance}}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
-      {{if hasAllowedHostsHeaders .}}
+      {{if hasAllowedHostsHeaders $instance}}
       [frontends."frontend-{{ $serviceName }}".headers.AllowedHosts]
-        {{range getAllowedHostsHeaders .}}
+        {{range getAllowedHostsHeaders $instance}}
         "{{.}}"
         {{end}}
       {{end}}
-      {{if hasHostsProxyHeaders .}}
+      {{if hasHostsProxyHeaders $instance}}
       [frontends."frontend-{{ $serviceName }}".headers.HostsProxyHeaders]
-        {{range getHostsProxyHeaders .}}
+        {{range getHostsProxyHeaders $instance}}
         "{{.}}"
         {{end}}
       {{end}}
-      {{if hasSSLProxyHeaders .}}
+      {{if hasSSLProxyHeaders $instance}}
       [frontends."frontend-{{ $serviceName }}".headers.SSLProxyHeaders]
-        {{range $k, $v := getSSLProxyHeaders .}}
+        {{range $k, $v := getSSLProxyHeaders $instance}}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
     [frontends.frontend-{{ $serviceName }}.routes.route-frontend-{{ $serviceName }}]
-      rule = "{{getFrontendRule .}}"
+      rule = "{{getFrontendRule $instance}}"
 
 {{end}}
 {{end}}

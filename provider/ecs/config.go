@@ -36,18 +36,23 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getMaxConnExtractorFunc":     getFuncFirstStringValue(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
 
 		// Frontend functions
-		"filterFrontends":         filterFrontends,
-		"getFrontendRule":         p.getFrontendRule,
-		"getPassHostHeader":       getFuncStringValue(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":          getFuncBoolValue(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":             getFuncStringValue(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getBasicAuth":            getFuncSliceString(label.TraefikFrontendAuthBasic),
-		"getEntryPoints":          getFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getWhitelistSourceRange": getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
-		"hasRedirect":             hasRedirect,
-		"getRedirectEntryPoint":   getFuncStringValue(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
-		"getRedirectRegex":        getFuncStringValue(label.TraefikFrontendRedirectRegex, ""),
-		"getRedirectReplacement":  getFuncStringValue(label.TraefikFrontendRedirectReplacement, ""),
+		"filterFrontends":            filterFrontends,
+		"getFrontendRule":            p.getFrontendRule,
+		"getPassHostHeader":          getFuncStringValue(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":             getFuncBoolValue(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPriority":                getFuncStringValue(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getBasicAuth":               getFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getEntryPoints":             getFuncSliceString(label.TraefikFrontendEntryPoints),
+		"getWhitelistSourceRange":    getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
+		"hasRedirect":                hasRedirect,
+		"getRedirectEntryPoint":      getFuncStringValue(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+		"getRedirectRegex":           getFuncStringValue(label.TraefikFrontendRedirectRegex, ""),
+		"getRedirectReplacement":     getFuncStringValue(label.TraefikFrontendRedirectReplacement, ""),
+		"hasErrorPages":              hasPrefixFuncLabel(label.Prefix + label.BaseFrontendErrorPage),
+		"getErrorPages":              getErrorPages,
+		"hasRateLimits":              hasFuncLabel(label.TraefikFrontendRateLimitExtractorFunc),
+		"getRateLimitsExtractorFunc": getFuncStringValue(label.TraefikFrontendRateLimitExtractorFunc, ""),
+		"getRateLimits":              getRateLimits,
 		// Headers
 		"hasRequestHeaders":                 hasFuncLabel(label.TraefikFrontendRequestHeaders),
 		"getRequestHeaders":                 getFuncMapValue(label.TraefikFrontendRequestHeaders),
@@ -154,11 +159,31 @@ func hasRedirect(instance ecsInstance) bool {
 		hasLabel(instance, label.TraefikFrontendRedirectRegex) && hasLabel(instance, label.TraefikFrontendRedirectReplacement)
 }
 
+func getErrorPages(instance ecsInstance) map[string]*types.ErrorPage {
+	labels := mapPToMap(instance.containerDefinition.DockerLabels)
+
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func getRateLimits(instance ecsInstance) map[string]*types.Rate {
+	labels := mapPToMap(instance.containerDefinition.DockerLabels)
+
+	prefix := label.Prefix + label.BaseFrontendRateLimit
+	return label.ParseRateSets(labels, prefix, label.RegexpFrontendRateLimit)
+}
+
 // Label functions
 
 func hasFuncLabel(labelName string) func(i ecsInstance) bool {
 	return func(i ecsInstance) bool {
 		return hasLabel(i, labelName)
+	}
+}
+
+func hasPrefixFuncLabel(prefix string) func(i ecsInstance) bool {
+	return func(i ecsInstance) bool {
+		return hasPrefix(i, prefix)
 	}
 }
 
@@ -234,6 +259,15 @@ func getFuncFirstBoolValue(labelName string, defaultValue bool) func(instances [
 func hasLabel(i ecsInstance, labelName string) bool {
 	value, ok := i.containerDefinition.DockerLabels[labelName]
 	return ok && value != nil && len(*value) > 0
+}
+
+func hasPrefix(i ecsInstance, prefix string) bool {
+	for name, value := range i.containerDefinition.DockerLabels {
+		if strings.HasPrefix(name, prefix) && value != nil && len(*value) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func getStringValue(i ecsInstance, labelName string, defaultValue string) string {
@@ -326,6 +360,16 @@ func getFirstStringValue(instances []ecsInstance, labelName string, defaultValue
 		return defaultValue
 	}
 	return getStringValue(instances[0], labelName, defaultValue)
+}
+
+func mapPToMap(src map[string]*string) map[string]string {
+	result := make(map[string]string)
+	for key, value := range src {
+		if value != nil && len(*value) > 0 {
+			result[key] = *value
+		}
+	}
+	return result
 }
 
 func isEnabled(i ecsInstance, exposedByDefault bool) bool {
