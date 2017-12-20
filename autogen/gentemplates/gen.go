@@ -409,42 +409,183 @@ func templatesDockerTmpl() (*asset, error) {
 	return a, nil
 }
 
-var _templatesEcsTmpl = []byte(`[backends]{{range $serviceName, $instances := .Services}}
-  [backends.backend-{{ $serviceName }}.loadbalancer]
+var _templatesEcsTmpl = []byte(`[backends]
+{{range $serviceName, $instances := .Services}}
+
+  {{if hasCircuitBreakerLabel $instances}}
+  [backends.backend-{{ $serviceName }}.circuitBreaker]
+    expression = "{{getCircuitBreakerExpression $instances}}"
+  {{end}}
+
+  {{if hasLoadBalancerLabel $instances}}
+  [backends.backend-{{ $serviceName }}.loadBalancer]
     method = "{{ getLoadBalancerMethod $instances}}"
     sticky = {{ getSticky $instances}}
-    {{if hasStickinessLabel $instances}} 
-    [backends.backend-{{ $serviceName }}.loadbalancer.stickiness]
+    {{if hasStickinessLabel $instances}}
+    [backends.backend-{{ $serviceName }}.loadBalancer.stickiness]
       cookieName = "{{getStickinessCookieName $instances}}"
     {{end}}
-    {{ if hasHealthCheckLabels $instances }}
-    [backends.backend-{{ $serviceName }}.healthcheck]
-      path = "{{getHealthCheckPath $instances }}"
-      interval = "{{getHealthCheckInterval $instances }}"
-    {{end}}
-
-  {{range $index, $i := $instances}}
-    [backends.backend-{{ $i.Name }}.servers.server-{{ $i.Name }}{{ $i.ID }}]
-      url = "{{ getProtocol $i }}://{{ getHost $i }}:{{ getPort $i }}"
-      weight = {{ getWeight $i}}
   {{end}}
+
+  {{if hasMaxConnLabels $instances}}
+  [backends.backend-{{ $serviceName }}.maxConn]
+    amount = {{getMaxConnAmount $instances}}
+    extractorFunc = "{{getMaxConnExtractorFunc $instances}}"
+  {{end}}
+
+  {{ if hasHealthCheckLabels $instances }}
+  [backends.backend-{{ $serviceName }}.healthCheck]
+    path = "{{getHealthCheckPath $instances }}"
+    port = {{getHealthCheckPort $instances}}
+    interval = "{{getHealthCheckInterval $instances }}"
+  {{end}}
+
+  {{range $index, $instance := $instances}}
+  [backends.backend-{{ $instance.Name }}.servers.server-{{ $instance.Name }}{{ $instance.ID }}]
+    url = "{{ getProtocol $instance }}://{{ getHost $instance }}:{{ getPort $instance }}"
+    weight = {{ getWeight $instance}}
+  {{end}}
+
 {{end}}
 
-[frontends]{{range $serviceName, $instances := .Services}}
-  {{range filterFrontends $instances}}
-    [frontends.frontend-{{ $serviceName }}]
-      backend = "backend-{{ $serviceName }}"
-      passHostHeader = {{ getPassHostHeader .}}
-      priority = {{ getPriority .}}
-      entryPoints = [{{range  getEntryPoints .}}
+[frontends]
+{{range $serviceName, $instances := .Services}}
+{{range $instance := filterFrontends $instances}}
+
+  [frontends.frontend-{{ $serviceName }}]
+    backend = "backend-{{ $serviceName }}"
+    priority = {{ getPriority $instance}}
+    passHostHeader = {{ getPassHostHeader $instance}}
+    passTLSCert = {{ getPassTLSCert $instance}}
+
+    entryPoints = [{{range  getEntryPoints $instance}}
       "{{.}}",
-    {{end}}]
-      basicAuth = [{{range getBasicAuth .}}
+      {{end}}]
+
+    {{if getWhitelistSourceRange $instance}}
+    whitelistSourceRange = [{{range getWhitelistSourceRange $instance}}
       "{{.}}",
-    {{end}}]
+      {{end}}]
+    {{end}}
+
+    basicAuth = [{{range getBasicAuth $instance}}
+      "{{.}}",
+      {{end}}]
+
+    {{if hasRedirect $instance}}
+    [frontends."frontend-{{ $serviceName }}".redirect]
+      entryPoint = "{{getRedirectEntryPoint $instance}}"
+      regex = "{{getRedirectRegex $instance}}"
+      replacement = "{{getRedirectReplacement $instance}}"
+    {{end}}
+
+    {{ if hasErrorPages $instance }}
+    [frontends."frontend-{{ $serviceName }}".errors]
+      {{ range $pageName, $page := getErrorPages $instance }}
+      [frontends."frontend-{{ $serviceName }}".errors.{{ $pageName }}]
+        status = [{{range $page.Status}}
+          "{{.}}",
+          {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
+    {{end}}
+
+    {{ if hasRateLimits $instance }}
+    [frontends."frontend-{{ $serviceName }}".rateLimit]
+      extractorFunc = "{{ getRateLimitsExtractorFunc $instance }}"
+      [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet]
+        {{ range $limitName, $rateLimit := getRateLimits $instance }}
+        [frontends."frontend-{{ $serviceName }}".rateLimit.rateSet.{{ $limitName }}]
+          period = "{{ $rateLimit.Period }}"
+          average = {{ $rateLimit.Average }}
+          burst = {{ $rateLimit.Burst }}
+        {{end}}
+    {{end}}
+
+    {{if hasHeaders $instance }}
+    [frontends."frontend-{{ $serviceName }}".headers]
+      {{if hasSSLRedirectHeaders $instance}}
+      SSLRedirect = {{getSSLRedirectHeaders $instance}}
+      {{end}}
+      {{if hasSSLTemporaryRedirectHeaders $instance}}
+      SSLTemporaryRedirect = {{getSSLTemporaryRedirectHeaders $instance}}
+      {{end}}
+      {{if hasSSLHostHeaders $instance}}
+      SSLHost = "{{getSSLHostHeaders $instance}}"
+      {{end}}
+      {{if hasSTSSecondsHeaders $instance}}
+      STSSeconds = {{getSTSSecondsHeaders $instance}}
+      {{end}}
+      {{if hasSTSIncludeSubdomainsHeaders $instance}}
+      STSIncludeSubdomains = {{getSTSIncludeSubdomainsHeaders $instance}}
+      {{end}}
+      {{if hasSTSPreloadHeaders $instance}}
+      STSPreload = {{getSTSPreloadHeaders $instance}}
+      {{end}}
+      {{if hasForceSTSHeaderHeaders $instance}}
+      ForceSTSHeader = {{getForceSTSHeaderHeaders $instance}}
+      {{end}}
+      {{if hasFrameDenyHeaders $instance}}
+      FrameDeny = {{getFrameDenyHeaders $instance}}
+      {{end}}
+      {{if hasCustomFrameOptionsValueHeaders $instance}}
+      CustomFrameOptionsValue = "{{getCustomFrameOptionsValueHeaders $instance}}"
+      {{end}}
+      {{if hasContentTypeNosniffHeaders $instance}}
+      ContentTypeNosniff = {{getContentTypeNosniffHeaders $instance}}
+      {{end}}
+      {{if hasBrowserXSSFilterHeaders $instance}}
+      BrowserXSSFilter = {{getBrowserXSSFilterHeaders $instance}}
+      {{end}}
+      {{if hasContentSecurityPolicyHeaders $instance}}
+      ContentSecurityPolicy = "{{getContentSecurityPolicyHeaders $instance}}"
+      {{end}}
+      {{if hasPublicKeyHeaders $instance}}
+      PublicKey = "{{getPublicKeyHeaders $instance}}"
+      {{end}}
+      {{if hasReferrerPolicyHeaders $instance}}
+      ReferrerPolicy = "{{getReferrerPolicyHeaders $instance}}"
+      {{end}}
+      {{if hasIsDevelopmentHeaders $instance}}
+      IsDevelopment = {{getIsDevelopmentHeaders $instance}}
+      {{end}}
+      {{if hasRequestHeaders $instance}}
+        [frontends."frontend-{{ $serviceName }}".headers.customRequestHeaders]
+        {{range $k, $v := getRequestHeaders $instance}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+      {{if hasResponseHeaders $instance}}
+      [frontends."frontend-{{ $serviceName }}".headers.customResponseHeaders]
+        {{range $k, $v := getResponseHeaders $instance}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+      {{if hasAllowedHostsHeaders $instance}}
+      [frontends."frontend-{{ $serviceName }}".headers.AllowedHosts]
+        {{range getAllowedHostsHeaders $instance}}
+        "{{.}}"
+        {{end}}
+      {{end}}
+      {{if hasHostsProxyHeaders $instance}}
+      [frontends."frontend-{{ $serviceName }}".headers.HostsProxyHeaders]
+        {{range getHostsProxyHeaders $instance}}
+        "{{.}}"
+        {{end}}
+      {{end}}
+      {{if hasSSLProxyHeaders $instance}}
+      [frontends."frontend-{{ $serviceName }}".headers.SSLProxyHeaders]
+        {{range $k, $v := getSSLProxyHeaders $instance}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+    {{end}}
+
     [frontends.frontend-{{ $serviceName }}.routes.route-frontend-{{ $serviceName }}]
-      rule = "{{getFrontendRule .}}"
-  {{end}}
+      rule = "{{getFrontendRule $instance}}"
+
+{{end}}
 {{end}}`)
 
 func templatesEcsTmplBytes() ([]byte, error) {
