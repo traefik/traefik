@@ -2,7 +2,9 @@ package rancher
 
 import (
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -67,6 +69,118 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						},
 					},
 					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "with Error Pages",
+			services: []rancherData{
+				{
+					Name: "test/service",
+					Labels: map[string]string{
+						label.TraefikPort: "80",
+						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
+						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
+						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
+						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
+					},
+					Health:     "healthy",
+					Containers: []string{"127.0.0.1"},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test-service": {
+					Servers: map[string]types.Server{
+						"server-0": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-service-rancher-localhost": {
+					EntryPoints: []string{},
+					BasicAuth:   []string{},
+					Backend:     "backend-test-service",
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-service-rancher-localhost": {
+							Rule: "Host:test.service.rancher.localhost",
+						},
+					},
+					PassHostHeader: true,
+					Errors: map[string]*types.ErrorPage{
+						"foo": {
+							Status:  []string{"404"},
+							Query:   "foo_query",
+							Backend: "foobar",
+						},
+						"bar": {
+							Status:  []string{"500", "600"},
+							Query:   "bar_query",
+							Backend: "foobar",
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "with rate Limits",
+			services: []rancherData{
+				{
+					Name: "test/service",
+					Labels: map[string]string{
+						label.TraefikPort:                                                                  "80",
+						label.TraefikFrontendRateLimitExtractorFunc:                                        "client.ip",
+						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
+						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
+						label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
+						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
+						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
+						label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
+					},
+					Health:     "healthy",
+					Containers: []string{"127.0.0.1"},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-test-service": {
+					Servers: map[string]types.Server{
+						"server-0": {
+							URL:    "http://127.0.0.1:80",
+							Weight: 0,
+						},
+					},
+				},
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-Host-test-service-rancher-localhost": {
+					EntryPoints: []string{},
+					BasicAuth:   []string{},
+					Backend:     "backend-test-service",
+					Routes: map[string]types.Route{
+						"route-frontend-Host-test-service-rancher-localhost": {
+							Rule: "Host:test.service.rancher.localhost",
+						},
+					},
+					PassHostHeader: true,
+					RateLimit: &types.RateLimit{
+						ExtractorFunc: "client.ip",
+						RateSet: map[string]*types.Rate{
+							"foo": {
+								Period:  flaeg.Duration(6 * time.Second),
+								Average: 12,
+								Burst:   18,
+							},
+							"bar": {
+								Period:  flaeg.Duration(3 * time.Second),
+								Average: 6,
+								Burst:   9,
+							},
+						},
+					},
 				},
 			},
 		},

@@ -2,6 +2,8 @@
 [backends]
 {{range $backendName, $backend := .Backends}}
 
+  [backends.backend-{{$backendName}}]
+
   {{if hasCircuitBreakerLabel $backend}}
   [backends.backend-{{$backendName}}.circuitBreaker]
     expression = "{{getCircuitBreakerExpression $backend}}"
@@ -68,7 +70,31 @@
       replacement = "{{getRedirectReplacement $service}}"
     {{end}}
 
-    [frontends."frontend-{{$frontendName}}".headers]
+    {{ if hasErrorPages $service }}
+    [frontends."frontend-{{$frontendName}}".errors]
+      {{ range $pageName, $page := getErrorPages $service }}
+      [frontends."frontend-{{$frontendName}}".errors.{{ $pageName }}]
+        status = [{{range $page.Status}}
+        "{{.}}",
+        {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
+    {{end}}
+
+    {{ if hasRateLimits $service }}
+    [frontends."frontend-{{$frontendName}}".rateLimit]
+      extractorFunc = "{{ getRateLimitsExtractorFunc $service }}"
+      [frontends."frontend-{{$frontendName}}".rateLimit.rateSet]
+        {{ range $limitName, $rateLimit := getRateLimits $service }}
+        [frontends."frontend-{{$frontendName}}".rateLimit.rateSet.{{ $limitName }}]
+        period = "{{ $rateLimit.Period }}"
+        average = {{ $rateLimit.Average }}
+        burst = {{ $rateLimit.Burst }}
+      {{end}}
+    {{end}}
+
+  [frontends."frontend-{{$frontendName}}".headers]
       {{if hasSSLRedirectHeaders $service}}
       SSLRedirect = {{getSSLRedirectHeaders $service}}
       {{end}}
