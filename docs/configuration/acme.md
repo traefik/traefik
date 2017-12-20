@@ -108,7 +108,7 @@ storage = "acme.json"
 # ...
 ```
 
-File or key used for certificates storage. 
+File or key used for certificates storage.
 
 **WARNING** If you use Træfik in Docker, you have 2 options:
 
@@ -117,7 +117,7 @@ File or key used for certificates storage.
 storage = "acme.json"
 ```
 ```bash
-docker run -v "/my/host/acme.json:acme.json" træfik
+docker run -v "/my/host/acme.json:acme.json" traefik
 ```
 
 - mount the folder containing the file as a volume
@@ -125,7 +125,7 @@ docker run -v "/my/host/acme.json:acme.json" træfik
 storage = "/etc/traefik/acme/acme.json"
 ```
 ```bash
-docker run -v "/my/host/acme:/etc/traefik/acme" træfik
+docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ```
 
 !!! note
