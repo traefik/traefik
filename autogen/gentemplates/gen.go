@@ -428,6 +428,9 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
   backend = "{{$frontend.Backend}}"
   priority = {{$frontend.Priority}}
   passHostHeader = {{$frontend.PassHostHeader}}
+  entryPoints = [{{range $frontend.EntryPoints}}
+    "{{.}}",
+    {{end}}]
   basicAuth = [{{range $frontend.BasicAuth}}
       "{{.}}",
   {{end}}]
