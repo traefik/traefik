@@ -192,3 +192,67 @@ type fakeHandler struct {
 }
 
 func (h *fakeHandler) ServeHTTP(http.ResponseWriter, *http.Request) {}
+
+func TestPathPrefix(t *testing.T) {
+	testCases := []struct {
+		desc string
+		path string
+		urls map[string]bool
+	}{
+		{
+			desc: "leading slash",
+			path: "/bar",
+			urls: map[string]bool{
+				"http://foo.com/bar":  true,
+				"http://foo.com/bar/": true,
+			},
+		},
+		{
+			desc: "leading trailing slash",
+			path: "/bar/",
+			urls: map[string]bool{
+				"http://foo.com/bar":  false,
+				"http://foo.com/bar/": true,
+			},
+		},
+		{
+			desc: "no slash",
+			path: "bar",
+			urls: map[string]bool{
+				"http://foo.com/bar":  false,
+				"http://foo.com/bar/": false,
+			},
+		},
+		{
+			desc: "trailing slash",
+			path: "bar/",
+			urls: map[string]bool{
+				"http://foo.com/bar":  false,
+				"http://foo.com/bar/": false,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rls := &Rules{
+				route: &serverRoute{
+					route: &mux.Route{},
+				},
+			}
+
+			rt := rls.pathPrefix(test.path)
+
+			for testURL, expectedMatch := range test.urls {
+				req := testhelpers.MustNewRequest(http.MethodGet, testURL, nil)
+				match := rt.Match(req, &mux.RouteMatch{})
+				if match != expectedMatch {
+					t.Errorf("Error matching %s with %s, got %v expected %v", test.path, testURL, match, expectedMatch)
+				}
+			}
+		})
+	}
+}

@@ -25,6 +25,9 @@
   backend = "{{$frontend.Backend}}"
   priority = {{$frontend.Priority}}
   passHostHeader = {{$frontend.PassHostHeader}}
+  entryPoints = [{{range $frontend.EntryPoints}}
+    "{{.}}",
+    {{end}}]
   basicAuth = [{{range $frontend.BasicAuth}}
       "{{.}}",
   {{end}}]

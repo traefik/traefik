@@ -1,5 +1,32 @@
 # Change Log
 
+## [v1.5.0-rc3](https://github.com/containous/traefik/tree/v1.5.0-rc3) (2017-12-20)
+[All Commits](https://github.com/containous/traefik/compare/v1.5.0-rc2...v1.5.0-rc3)
+
+**Enhancements:**
+- **[docker,k8s,rancher]** Support regex redirect by frontend ([#2570](https://github.com/containous/traefik/pull/2570) by [ldez](https://github.com/ldez))
+
+**Bug fixes:**
+- **[acme,docker]** Modify ACME configuration migration into KV store ([#2598](https://github.com/containous/traefik/pull/2598) by [nmengin](https://github.com/nmengin))
+- **[consulcatalog]** Reload configuration when port change for one service ([#2574](https://github.com/containous/traefik/pull/2574) by [mmatur](https://github.com/mmatur))
+- **[consulcatalog]** Fix bad Træfik update on Consul Catalog ([#2573](https://github.com/containous/traefik/pull/2573) by [mmatur](https://github.com/mmatur))
+- **[k8s]** Add missing entrypoints template. ([#2594](https://github.com/containous/traefik/pull/2594) by [ldez](https://github.com/ldez))
+- **[kv]** Fix stickiness bug due to template syntax error ([#2591](https://github.com/containous/traefik/pull/2591) by [dahefanteng](https://github.com/dahefanteng))
+- **[marathon]** Update go-marathon ([#2585](https://github.com/containous/traefik/pull/2585) by [timoreimann](https://github.com/timoreimann))
+- **[mesos]** Mesos: Use slave.PID.Host as task SlaveIP. ([#2590](https://github.com/containous/traefik/pull/2590) by [nemosupremo](https://github.com/nemosupremo))
+- **[middleware]** Fix RawPath handling in addPrefix ([#2560](https://github.com/containous/traefik/pull/2560) by [risdenk](https://github.com/risdenk))
+- **[rules]** Add non regex pathPrefix ([#2592](https://github.com/containous/traefik/pull/2592) by [emilevauge](https://github.com/emilevauge))
+- **[servicefabric]** Fix backend name for Stateful services. (Service Fabric) ([#2559](https://github.com/containous/traefik/pull/2559) by [ldez](https://github.com/ldez))
+- **[servicefabric]** Fix isHealthy logic. ([#2577](https://github.com/containous/traefik/pull/2577) by [ldez](https://github.com/ldez))
+- **[zk]** Change Zookeeper default prefix. ([#2580](https://github.com/containous/traefik/pull/2580) by [ldez](https://github.com/ldez))
+- Fix frontend redirect ([#2544](https://github.com/containous/traefik/pull/2544) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[acme]** Improve documentation for Cloudflare API key ([#2558](https://github.com/containous/traefik/pull/2558) by [mmatur](https://github.com/mmatur))
+- Move rate limit documentation. ([#2588](https://github.com/containous/traefik/pull/2588) by [ldez](https://github.com/ldez))
+- Grammar ([#2562](https://github.com/containous/traefik/pull/2562) by [geraldcroes](https://github.com/geraldcroes))
+- Fix broken links and improve ResponseCodeRatio() description ([#2538](https://github.com/containous/traefik/pull/2538) by [mvasin](https://github.com/mvasin))
+
 ## [v1.5.0-rc2](https://github.com/containous/traefik/tree/v1.5.0-rc2) (2017-12-06)
 [All Commits](https://github.com/containous/traefik/compare/v1.5.0-rc1...v1.5.0-rc2)
 

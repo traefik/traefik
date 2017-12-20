@@ -38,16 +38,7 @@ services:
 
   etcdctl-ping:
       image: tenstartups/etcdctl
-      command: --endpoints=[10.0.1.12:2379] get "traefik/acme/storagefile"
-      environment:
-          ETCDCTL_DIAL_: "TIMEOUT 10s"
-          ETCDCTL_API : "3"
-      networks:
-        - net
-
-  etcdctl-rm:
-      image: tenstartups/etcdctl
-      command: --endpoints=[10.0.1.12:2379] del "/traefik/acme/storagefile"
+      command: --endpoints=[10.0.1.12:2379] get "traefik/acme/storage"
       environment:
           ETCDCTL_DIAL_: "TIMEOUT 10s"
           ETCDCTL_API : "3"
@@ -129,7 +120,6 @@ services:
       image: containous/traefik
       volumes:
         - "./traefik.toml:/traefik.toml:ro"
-        - "./acme.json:/acme.json:ro"
       command: storeconfig --debug
       networks:
         - net

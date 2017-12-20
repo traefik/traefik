@@ -303,7 +303,7 @@ func isPrimary(instance replicaInstance) bool {
 }
 
 func isHealthy(instanceData *sf.ReplicaItemBase) bool {
-	return instanceData != nil && (instanceData.ReplicaStatus == "Ready" || instanceData.HealthState != "Error")
+	return instanceData != nil && (instanceData.ReplicaStatus == "Ready" && instanceData.HealthState != "Error")
 }
 
 func hasHTTPEndpoint(instanceData *sf.ReplicaItemBase) bool {

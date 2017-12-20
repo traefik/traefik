@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -46,10 +46,71 @@ type Parameters struct {
 
 // Volume is the docker volume details associated to the container
 type Volume struct {
-	ContainerPath string          `json:"containerPath,omitempty"`
-	HostPath      string          `json:"hostPath,omitempty"`
-	External      *ExternalVolume `json:"external,omitempty"`
-	Mode          string          `json:"mode,omitempty"`
+	ContainerPath string            `json:"containerPath,omitempty"`
+	HostPath      string            `json:"hostPath,omitempty"`
+	External      *ExternalVolume   `json:"external,omitempty"`
+	Mode          string            `json:"mode,omitempty"`
+	Persistent    *PersistentVolume `json:"persistent,omitempty"`
+}
+
+type PersistentVolumeType string
+
+const (
+	PersistentVolumeTypeRoot  PersistentVolumeType = "root"
+	PersistentVolumeTypePath  PersistentVolumeType = "path"
+	PersistentVolumeTypeMount PersistentVolumeType = "mount"
+)
+
+// PersistentVolume declares a Volume to be Persistent, and sets
+// the size (in MiB) and optional type, max size (MiB) and constraints for the Volume.
+type PersistentVolume struct {
+	Type        PersistentVolumeType `json:"type,omitempty"`
+	Size        int                  `json:"size"`
+	MaxSize     int                  `json:"maxSize,omitempty"`
+	Constraints *[][]string          `json:"constraints,omitempty"`
+}
+
+// SetType sets the type of mesos disk resource to use
+//		type:	       PersistentVolumeType enum
+func (p *PersistentVolume) SetType(tp PersistentVolumeType) *PersistentVolume {
+	p.Type = tp
+	return p
+}
+
+// SetSize sets size of the persistent volume
+//		size:	        size in MiB
+func (p *PersistentVolume) SetSize(size int) *PersistentVolume {
+	p.Size = size
+	return p
+}
+
+// SetMaxSize sets maximum size of an exclusive mount-disk resource to consider;
+// does not apply to root or path disk resource types
+//		maxSize:	size in MiB
+func (p *PersistentVolume) SetMaxSize(maxSize int) *PersistentVolume {
+	p.MaxSize = maxSize
+	return p
+}
+
+// AddConstraint adds a new constraint
+//		constraints:	the constraint definition, one constraint per array element
+func (p *PersistentVolume) AddConstraint(constraints ...string) *PersistentVolume {
+	if p.Constraints == nil {
+		p.EmptyConstraints()
+	}
+
+	c := *p.Constraints
+	c = append(c, constraints)
+	p.Constraints = &c
+	return p
+}
+
+// EmptyConstraints explicitly empties constraints -- use this if you need to empty
+// constraints of an application that already has constraints set (setting constraints to nil will
+// keep the current value)
+func (p *PersistentVolume) EmptyConstraints() *PersistentVolume {
+	p.Constraints = &[][]string{}
+	return p
 }
 
 // ExternalVolume is an external volume definition
@@ -96,6 +157,19 @@ func (container *Container) Volume(hostPath, containerPath, mode string) *Contai
 func (container *Container) EmptyVolumes() *Container {
 	container.Volumes = &[]Volume{}
 	return container
+}
+
+// SetPersistentVolume defines persistent properties for volume
+func (v *Volume) SetPersistentVolume() *PersistentVolume {
+	ev := &PersistentVolume{}
+	v.Persistent = ev
+	return ev
+}
+
+// EmptyPersistentVolume empties the persistent volume definition
+func (v *Volume) EmptyPersistentVolume() *Volume {
+	v.Persistent = &PersistentVolume{}
+	return v
 }
 
 // SetExternalVolume define external elements for a volume

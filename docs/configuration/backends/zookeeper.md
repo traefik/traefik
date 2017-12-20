@@ -27,9 +27,9 @@ watch = true
 # Prefix used for KV store.
 #
 # Optional
-# Default: "/traefik"
+# Default: "traefik"
 #
-prefix = "/traefik"
+prefix = "traefik"
 
 # Override default configuration template.
 # For advanced users :)

@@ -516,6 +516,9 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
   backend = "{{$frontend.Backend}}"
   priority = {{$frontend.Priority}}
   passHostHeader = {{$frontend.PassHostHeader}}
+  entryPoints = [{{range $frontend.EntryPoints}}
+    "{{.}}",
+    {{end}}]
   basicAuth = [{{range $frontend.BasicAuth}}
       "{{.}}",
   {{end}}]
@@ -620,7 +623,7 @@ var _templatesKvTmpl = []byte(`{{$frontends := List .Prefix "/frontends/" }}
     sticky = {{ getSticky . }}
     {{if hasStickinessLabel $backend}}
     [backends."{{$backendName}}".loadBalancer.stickiness]
-      cookieName = {{getStickinessCookieName $backend}}
+      cookieName = "{{getStickinessCookieName $backend}}"
     {{end}}
 {{end}}
 
