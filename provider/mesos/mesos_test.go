@@ -6,6 +6,7 @@ import (
 
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/types"
+	"github.com/mesos/mesos-go/upid"
 	"github.com/mesosphere/mesos-dns/records/state"
 )
 
@@ -194,6 +195,9 @@ func TestTaskRecords(t *testing.T) {
 		ID:       "s_id",
 		Hostname: "127.0.0.1",
 	}
+
+	slave.PID.UPID = &upid.UPID{}
+	slave.PID.Host = slave.Hostname
 	var state = state.State{
 		Slaves:     []state.Slave{slave},
 		Frameworks: []state.Framework{framework},
