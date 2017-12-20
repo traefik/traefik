@@ -19,42 +19,51 @@ import (
 
 func (p *Provider) buildConfiguration() *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
-		"getBackend":                  p.getBackend,
+		"getBackend":   p.getBackend,
+		"getDomain":    getFuncStringService(label.TraefikDomain, p.Domain), // see https://github.com/containous/traefik/pull/1693
+		"getSubDomain": p.getSubDomain,                                      // see https://github.com/containous/traefik/pull/1693
+
+		// Backend functions
 		"getBackendServer":            p.getBackendServer,
 		"getPort":                     getPort,
 		"getWeight":                   getFuncStringService(label.TraefikWeight, label.DefaultWeight),
-		"getDomain":                   getFuncStringService(label.TraefikDomain, p.Domain), // FIXME DEAD?
-		"getSubDomain":                p.getSubDomain,                                      // FIXME DEAD ?
 		"getProtocol":                 getFuncStringService(label.TraefikProtocol, label.DefaultProtocol),
-		"getPassHostHeader":           getFuncStringService(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":              getFuncBoolService(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":                 getFuncStringService(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getEntryPoints":              getFuncSliceStringService(label.TraefikFrontendEntryPoints),
-		"getFrontendRule":             p.getFrontendRule,
-		"getFrontendName":             p.getFrontendName,
 		"hasCircuitBreakerLabels":     hasFunc(label.TraefikBackendCircuitBreakerExpression),
-		"hasLoadBalancerLabels":       hasLoadBalancerLabels,
-		"hasMaxConnLabels":            hasMaxConnLabels,
-		"getMaxConnExtractorFunc":     getFuncString(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
-		"getMaxConnAmount":            getFuncInt64(label.TraefikBackendMaxConnAmount, math.MaxInt64),
-		"getLoadBalancerMethod":       getFuncString(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
 		"getCircuitBreakerExpression": getFuncString(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
+		"hasLoadBalancerLabels":       hasLoadBalancerLabels,
+		"getLoadBalancerMethod":       getFuncString(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
 		"getSticky":                   getSticky,
 		"hasStickinessLabel":          hasFunc(label.TraefikBackendLoadBalancerStickiness),
 		"getStickinessCookieName":     getFuncString(label.TraefikBackendLoadBalancerStickinessCookieName, ""),
+		"hasMaxConnLabels":            hasMaxConnLabels,
+		"getMaxConnExtractorFunc":     getFuncString(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
+		"getMaxConnAmount":            getFuncInt64(label.TraefikBackendMaxConnAmount, math.MaxInt64),
 		"hasHealthCheckLabels":        hasFunc(label.TraefikBackendHealthCheckPath),
 		"getHealthCheckPath":          getFuncString(label.TraefikBackendHealthCheckPath, ""),
 		"getHealthCheckPort":          getFuncInt(label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort),
 		"getHealthCheckInterval":      getFuncString(label.TraefikBackendHealthCheckInterval, ""),
-		"getBasicAuth":                getFuncSliceStringService(label.TraefikFrontendAuthBasic),
-		"getServiceNames":             getServiceNames,
-		"getServiceNameSuffix":        getServiceNameSuffix,
-		"getWhitelistSourceRange":     getFuncSliceStringService(label.TraefikFrontendWhitelistSourceRange),
-		"hasRedirect":                 hasRedirect,
-		"getRedirectEntryPoint":       getFuncStringService(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
-		"getRedirectRegex":            getFuncStringService(label.TraefikFrontendRedirectRegex, ""),
-		"getRedirectReplacement":      getFuncStringService(label.TraefikFrontendRedirectReplacement, ""),
 
+		// Frontend functions
+		"getPassHostHeader":          getFuncStringService(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":             getFuncBoolService(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPriority":                getFuncStringService(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getEntryPoints":             getFuncSliceStringService(label.TraefikFrontendEntryPoints),
+		"getFrontendRule":            p.getFrontendRule,
+		"getFrontendName":            p.getFrontendName,
+		"getBasicAuth":               getFuncSliceStringService(label.TraefikFrontendAuthBasic),
+		"getServiceNames":            getServiceNames,
+		"getServiceNameSuffix":       getServiceNameSuffix,
+		"getWhitelistSourceRange":    getFuncSliceStringService(label.TraefikFrontendWhitelistSourceRange),
+		"hasRedirect":                hasRedirect,
+		"getRedirectEntryPoint":      getFuncStringService(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+		"getRedirectRegex":           getFuncStringService(label.TraefikFrontendRedirectRegex, ""),
+		"getRedirectReplacement":     getFuncStringService(label.TraefikFrontendRedirectReplacement, ""),
+		"hasErrorPages":              hasErrorPages,
+		"getErrorPages":              getErrorPages,
+		"hasRateLimits":              hasFuncService(label.TraefikFrontendRateLimitExtractorFunc),
+		"getRateLimitsExtractorFunc": getFuncStringService(label.TraefikFrontendRateLimitExtractorFunc, ""),
+		"getRateLimits":              getRateLimits,
+		// Headers
 		"hasRequestHeaders":                 hasFuncService(label.TraefikFrontendRequestHeaders),
 		"getRequestHeaders":                 getFuncMapService(label.TraefikFrontendRequestHeaders),
 		"hasResponseHeaders":                hasFuncService(label.TraefikFrontendResponseHeaders),
@@ -120,10 +129,10 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 
 	templateObjects := struct {
 		Applications []marathon.Application
-		Domain       string // FIXME DEAD ?
+		Domain       string
 	}{
 		Applications: filteredApps,
-		Domain:       p.Domain, // FIXME DEAD ?
+		Domain:       p.Domain,
 	}
 
 	configuration, err := p.GetConfiguration("templates/marathon.tmpl", MarathonFuncMap, templateObjects)
@@ -417,6 +426,25 @@ func hasRedirect(application marathon.Application, serviceName string) bool {
 	frrp := label.Has(labels, getLabelName(serviceName, label.TraefikFrontendRedirectReplacement))
 
 	return frep || frrg && frrp
+}
+
+func hasErrorPages(application marathon.Application, serviceName string) bool {
+	labels := getLabels(application, serviceName)
+	return label.HasPrefix(labels, label.Prefix+label.BaseFrontendErrorPage)
+}
+
+func getErrorPages(application marathon.Application, serviceName string) map[string]*types.ErrorPage {
+	labels := getLabels(application, serviceName)
+
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func getRateLimits(application marathon.Application, serviceName string) map[string]*types.Rate {
+	labels := getLabels(application, serviceName)
+
+	prefix := label.Prefix + label.BaseFrontendRateLimit
+	return label.ParseRateSets(labels, prefix, label.RegexpFrontendRateLimit)
 }
 
 // Label functions

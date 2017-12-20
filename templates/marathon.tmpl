@@ -79,7 +79,31 @@
       replacement = "{{getRedirectReplacement $app $serviceName}}"
     {{end}}
 
-    [frontends."{{ getFrontendName $app $serviceName }}".headers]
+    {{ if hasErrorPages $app $serviceName }}
+    [frontends."{{ getFrontendName $app $serviceName }}".errors]
+      {{ range $pageName, $page := getErrorPages $app $serviceName }}
+      [frontends."{{ getFrontendName $app $serviceName }}".errors.{{ $pageName }}]
+        status = [{{range $page.Status}}
+        "{{.}}",
+        {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
+    {{end}}
+
+    {{ if hasRateLimits $app $serviceName }}
+    [frontends."{{ getFrontendName $app $serviceName }}".rateLimit]
+      extractorFunc = "{{ getRateLimitsExtractorFunc $app $serviceName }}"
+      [frontends."{{ getFrontendName $app $serviceName }}".rateLimit.rateSet]
+        {{ range $limitName, $rateLimit := getRateLimits $app $serviceName }}
+        [frontends."{{ getFrontendName $app $serviceName }}".rateLimit.rateSet.{{ $limitName }}]
+        period = "{{ $rateLimit.Period }}"
+        average = {{ $rateLimit.Average }}
+        burst = {{ $rateLimit.Burst }}
+        {{end}}
+    {{end}}
+
+  [frontends."{{ getFrontendName $app $serviceName }}".headers]
       {{if hasSSLRedirectHeaders $app $serviceName}}
       SSLRedirect = {{getSSLRedirectHeaders $app $serviceName}}
       {{end}}
