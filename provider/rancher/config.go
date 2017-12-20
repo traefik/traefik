@@ -15,17 +15,12 @@ import (
 func (p *Provider) buildConfiguration(services []rancherData) *types.Configuration {
 
 	var RancherFuncMap = template.FuncMap{
+		"getDomain": getFuncString(label.TraefikDomain, p.Domain), // FIXME dead ?
+
+		// Backend functions
 		"getPort":                     getFuncString(label.TraefikPort, ""),
-		"getBackend":                  getBackend,
-		"getWeight":                   getFuncString(label.TraefikWeight, label.DefaultWeight),
-		"getDomain":                   getFuncString(label.TraefikDomain, p.Domain),
 		"getProtocol":                 getFuncString(label.TraefikProtocol, label.DefaultProtocol),
-		"getPassHostHeader":           getFuncString(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":              getFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":                 getFuncString(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getEntryPoints":              getFuncSliceString(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":                getFuncSliceString(label.TraefikFrontendAuthBasic),
-		"getFrontendRule":             p.getFrontendRule,
+		"getWeight":                   getFuncString(label.TraefikWeight, label.DefaultWeight),
 		"hasCircuitBreakerLabel":      hasFunc(label.TraefikBackendCircuitBreakerExpression),
 		"getCircuitBreakerExpression": getFuncString(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
 		"hasLoadBalancerLabel":        hasLoadBalancerLabel,
@@ -33,19 +28,33 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"hasMaxConnLabels":            hasMaxConnLabels,
 		"getMaxConnAmount":            getFuncInt64(label.TraefikBackendMaxConnAmount, math.MaxInt64),
 		"getMaxConnExtractorFunc":     getFuncString(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
-		"getSticky":                   getSticky, // deprecated
+		"getSticky":                   getSticky,
 		"hasStickinessLabel":          hasFunc(label.TraefikBackendLoadBalancerStickiness),
 		"getStickinessCookieName":     getFuncString(label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName),
-		"hasRedirect":                 hasRedirect,
-		"getRedirectEntryPoint":       getFuncString(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
-		"getRedirectRegex":            getFuncString(label.TraefikFrontendRedirectRegex, ""),
-		"getRedirectReplacement":      getFuncString(label.TraefikFrontendRedirectReplacement, ""),
-		"getWhitelistSourceRange":     getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
 		"hasHealthCheckLabels":        hasFunc(label.TraefikBackendHealthCheckPath),
 		"getHealthCheckPath":          getFuncString(label.TraefikBackendHealthCheckPath, ""),
 		"getHealthCheckPort":          getFuncInt(label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort),
 		"getHealthCheckInterval":      getFuncString(label.TraefikBackendHealthCheckInterval, ""),
 
+		// Frontend functions
+		"getBackend":                 getBackend,
+		"getPriority":                getFuncString(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
+		"getPassHostHeader":          getFuncString(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassTLSCert":             getFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getEntryPoints":             getFuncSliceString(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":               getFuncSliceString(label.TraefikFrontendAuthBasic),
+		"getWhitelistSourceRange":    getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
+		"getFrontendRule":            p.getFrontendRule,
+		"hasRedirect":                hasRedirect,
+		"getRedirectEntryPoint":      getFuncString(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+		"getRedirectRegex":           getFuncString(label.TraefikFrontendRedirectRegex, ""),
+		"getRedirectReplacement":     getFuncString(label.TraefikFrontendRedirectReplacement, ""),
+		"hasErrorPages":              hasPrefixFunc(label.Prefix + label.BaseFrontendErrorPage),
+		"getErrorPages":              getErrorPages,
+		"hasRateLimits":              hasFunc(label.TraefikFrontendRateLimitExtractorFunc),
+		"getRateLimitsExtractorFunc": getFuncString(label.TraefikFrontendRateLimitExtractorFunc, ""),
+		"getRateLimits":              getRateLimits,
+		// Headers
 		"hasRequestHeaders":                 hasFunc(label.TraefikFrontendRequestHeaders),
 		"getRequestHeaders":                 getFuncMap(label.TraefikFrontendRequestHeaders),
 		"hasResponseHeaders":                hasFunc(label.TraefikFrontendResponseHeaders),
@@ -195,8 +204,21 @@ func getBackend(service rancherData) string {
 }
 
 func hasRedirect(service rancherData) bool {
-	return label.Has(service.Labels, label.TraefikFrontendRedirectEntryPoint) ||
-		label.Has(service.Labels, label.TraefikFrontendRedirectRegex) && label.Has(service.Labels, label.TraefikFrontendRedirectReplacement)
+	frep := label.Has(service.Labels, label.TraefikFrontendRedirectEntryPoint)
+	frrg := label.Has(service.Labels, label.TraefikFrontendRedirectRegex)
+	frrp := label.Has(service.Labels, label.TraefikFrontendRedirectReplacement)
+
+	return frep || frrg && frrp
+}
+
+func getErrorPages(service rancherData) map[string]*types.ErrorPage {
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+	return label.ParseErrorPages(service.Labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func getRateLimits(service rancherData) map[string]*types.Rate {
+	prefix := label.Prefix + label.BaseFrontendRateLimit
+	return label.ParseRateSets(service.Labels, prefix, label.RegexpFrontendRateLimit)
 }
 
 // Label functions
@@ -240,5 +262,11 @@ func getFuncMap(labelName string) func(service rancherData) map[string]string {
 func hasFunc(labelName string) func(service rancherData) bool {
 	return func(service rancherData) bool {
 		return label.Has(service.Labels, labelName)
+	}
+}
+
+func hasPrefixFunc(prefix string) func(service rancherData) bool {
+	return func(service rancherData) bool {
+		return label.HasPrefix(service.Labels, prefix)
 	}
 }
