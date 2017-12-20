@@ -372,6 +372,9 @@ kubectl -n kube-system create secret tls traefik-ui-tls-cert --key=/tmp/tls.key 
 !!! note
     The secret must have two entries named `tls.key`and `tls.crt`. See the [kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) for more details.
 
+!!! note
+    The TLS certificates will be added to all entrypoints defined by the ingress annotation `traefik.frontend.entryPoints`. If no such annotation is provided, the TLS certificates will be added to all TLS enabled `defaultEntryPoints`.
+
 ## Basic Authentication
 
 It's possible to add additional authentication annotations in the Ingress rule.
