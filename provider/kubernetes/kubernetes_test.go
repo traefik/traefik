@@ -673,6 +673,18 @@ func TestIngressAnnotations(t *testing.T) {
 					iPaths(onePath(iPath("/https"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "/bar"),
+			iAnnotation(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "123,456"),
+			iAnnotation(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "bar"),
+			iRules(
+				iRule(
+					iHost("error-pages"),
+					iPaths(onePath(iPath("/errorpages"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
 	services := []*v1.Service{
@@ -767,6 +779,12 @@ func TestIngressAnnotations(t *testing.T) {
 					server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
+			backend("error-pages/errorpages",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -836,6 +854,14 @@ func TestIngressAnnotations(t *testing.T) {
 				routes(
 					route("/api", "PathPrefix:/api;ReplacePath:/"),
 					route("rewrite", "Host:rewrite")),
+			),
+			frontend("error-pages/errorpages",
+				headers(),
+				passHostHeader(),
+				errorPage("foo", errorQuery("/bar"), errorStatus("123", "456"), errorBackend("bar")),
+				routes(
+					route("/errorpages", "PathPrefix:/errorpages"),
+					route("error-pages", "Host:error-pages")),
 			),
 		),
 	)
