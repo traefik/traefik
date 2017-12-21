@@ -1070,6 +1070,11 @@ func TestParseErrorPages(t *testing.T) {
 			},
 			expected: map[string]*types.ErrorPage{"foo": {}},
 		},
+		{
+			desc:     "no error pages labels",
+			labels:   map[string]string{},
+			expected: nil,
+		},
 	}
 
 	for _, test := range testCases {

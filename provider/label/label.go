@@ -267,7 +267,7 @@ func ExtractServicePropertiesP(labels *map[string]string) ServiceProperties {
 
 // ParseErrorPages parse error pages to create ErrorPage struct
 func ParseErrorPages(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.ErrorPage {
-	errorPages := make(map[string]*types.ErrorPage)
+	var errorPages map[string]*types.ErrorPage
 
 	for lblName, value := range labels {
 		if strings.HasPrefix(lblName, labelPrefix) {
@@ -275,6 +275,10 @@ func ParseErrorPages(labels map[string]string, labelPrefix string, labelRegex *r
 			if len(submatch) != 3 {
 				log.Errorf("Invalid page error label: %s, sub-match: %v", lblName, submatch)
 				continue
+			}
+
+			if errorPages == nil {
+				errorPages = make(map[string]*types.ErrorPage)
 			}
 
 			pageName := submatch[1]
