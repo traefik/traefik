@@ -93,8 +93,6 @@ import:
   version: ^1.1.0
 - package: k8s.io/client-go
   version: v2.0.0
-- package: github.com/serialx/hashring
-  version: 6a9381c5a83e926b9f1fd907395a581e69747e96
 - package: github.com/influxdata/influxdb
   version: v1.3.7
   subpackages:

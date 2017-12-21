@@ -1,5 +1,5 @@
-hash: b5fe240f5783b9574b83241152f0c3f0a0d3e82a04a80153b972add9dcbc9aba
-updated: 2017-12-21T08:16:02.315494759-05:00
+hash: d7f811ac4a011308c6e1f73b618215dee90dae6cace9511f66d4b63d916a337a
+updated: 2017-12-15T10:34:41.246378337+01:00
 imports:
 - name: cloud.google.com/go
   version: 2e6a95edb1071d750f6d7db777bf66cd2997af6c
@@ -487,8 +487,6 @@ imports:
   - zk
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
-- name: github.com/serialx/hashring
-  version: 6a9381c5a83e926b9f1fd907395a581e69747e96
 - name: github.com/Sirupsen/logrus
   version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - name: github.com/spf13/pflag
