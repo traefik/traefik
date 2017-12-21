@@ -34,6 +34,25 @@ func BodyContains(values ...string) ResponseCondition {
 	}
 }
 
+// BodyNotContains returns a retry condition function.
+// The condition returns an error if the request body  contain one of the given
+// strings.
+func BodyNotContains(values ...string) ResponseCondition {
+	return func(res *http.Response) error {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body: %s", err)
+		}
+
+		for _, value := range values {
+			if strings.Contains(string(body), value) {
+				return fmt.Errorf("find '%s' in body '%s'", value, string(body))
+			}
+		}
+		return nil
+	}
+}
+
 // BodyContainsOr returns a retry condition function.
 // The condition returns an error if the request body does not contain one of the given
 // strings.
