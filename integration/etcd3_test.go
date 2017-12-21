@@ -588,9 +588,6 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 	defer display(c)
 
 	// prepare to config
-	whoami1IP := s.composeProject.Container(c, "whoami1").NetworkSettings.IPAddress
-	whoami2IP := s.composeProject.Container(c, "whoami2").NetworkSettings.IPAddress
-
 	snitestComCert, err := ioutil.ReadFile("fixtures/https/snitest.com.cert")
 	c.Assert(err, checker.IsNil)
 	snitestComKey, err := ioutil.ReadFile("fixtures/https/snitest.com.key")
@@ -598,9 +595,9 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 
 	backend1 := map[string]string{
 		"/traefik/backends/backend1/circuitbreaker/expression": "NetworkErrorRatio() > 0.5",
-		"/traefik/backends/backend1/servers/server1/url":       "http://" + whoami1IP + ":80",
+		"/traefik/backends/backend1/servers/server1/url":       "http://" + ipWhoami01 + ":80",
 		"/traefik/backends/backend1/servers/server1/weight":    "1",
-		"/traefik/backends/backend1/servers/server2/url":       "http://" + whoami2IP + ":80",
+		"/traefik/backends/backend1/servers/server2/url":       "http://" + ipWhoami02 + ":80",
 		"/traefik/backends/backend1/servers/server2/weight":    "1",
 	}
 
@@ -650,7 +647,7 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 	defer cmd.Process.Kill()
 
 	// wait for Træfik
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 60*time.Second, try.BodyContains(string("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h")))
+	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 60*time.Second, try.BodyContains(string("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h")))
 	c.Assert(err, checker.IsNil)
 
 	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
@@ -672,7 +669,7 @@ func (s *Etcd3Suite) TestDeleteSNIDynamicTlsConfig(c *check.C) {
 	}
 
 	// waiting for Træfik to pull configuration
-	err = try.GetRequest("http://127.0.0.1:8081/api/providers", 30*time.Second, try.BodyNotContains("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h"))
+	err = try.GetRequest(traefikWebEtcdURL+"api/providers", 30*time.Second, try.BodyNotContains("MIIEpQIBAAKCAQEA1RducBK6EiFDv3TYB8ZcrfKWRVaSfHzWicO3J5WdST9oS7h"))
 	c.Assert(err, checker.IsNil)
 
 	req, err = http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
