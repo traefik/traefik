@@ -273,6 +273,10 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 				templateObjects.Backends[r.Host+pa.Path].LoadBalancer = getLoadBalancer(service)
 				templateObjects.Backends[r.Host+pa.Path].Buffering = getBuffering(service)
 
+				if maxConn := getMaxConn(service); maxConn != nil {
+					templateObjects.Backends[r.Host+pa.Path].MaxConn = maxConn
+				}
+
 				protocol := label.DefaultProtocol
 				for _, port := range service.Spec.Ports {
 					if equalPorts(port, pa.Backend.ServicePort) {
@@ -583,6 +587,18 @@ func getRateLimit(i *v1beta1.Ingress) *types.RateLimit {
 		return &types.RateLimit{
 			ExtractorFunc: rlExtractFunc,
 			RateSet:       label.ParseRateSets(i.Annotations, label.Prefix+label.BaseFrontendRateLimit, label.RegexpFrontendRateLimit),
+		}
+	}
+	return nil
+}
+
+func getMaxConn(service *v1.Service) *types.MaxConn {
+	amount := label.GetInt64Value(service.Annotations, label.TraefikBackendMaxConnAmount, -1)
+	extractorFunc := service.Annotations[label.TraefikBackendMaxConnExtractorFunc]
+	if amount >= 0 && len(extractorFunc) > 0 {
+		return &types.MaxConn{
+			ExtractorFunc: extractorFunc,
+			Amount:        amount,
 		}
 	}
 	return nil

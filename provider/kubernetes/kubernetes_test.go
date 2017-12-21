@@ -435,6 +435,9 @@ func TestServiceAnnotations(t *testing.T) {
 				iRule(
 					iHost("baz"),
 					iPaths(onePath(iBackend("service3", intstr.FromInt(803))))),
+				iRule(
+					iHost("max-conn"),
+					iPaths(onePath(iBackend("service4", intstr.FromInt(804))))),
 			),
 		),
 	}
@@ -473,6 +476,16 @@ func TestServiceAnnotations(t *testing.T) {
 				clusterIP("10.0.0.3"),
 				sPorts(sPort(803, ""))),
 		),
+		buildService(
+			sName("service4"),
+			sNamespace("testing"),
+			sUID("4"),
+			sAnnotation(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+			sAnnotation(label.TraefikBackendMaxConnAmount, "6"),
+			sSpec(
+				clusterIP("10.0.0.4"),
+				sPorts(sPort(804, ""))),
+		),
 	}
 
 	endpoints := []*v1.Endpoints{
@@ -507,6 +520,17 @@ func TestServiceAnnotations(t *testing.T) {
 				ePorts(ePort(8080, "http"))),
 			subset(
 				eAddresses(eAddress("10.12.0.1")),
+				ePorts(ePort(8080, "http"))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service4"),
+			eUID("4"),
+			subset(
+				eAddresses(eAddress("10.4.0.1")),
+				ePorts(ePort(8080, "http"))),
+			subset(
+				eAddresses(eAddress("10.4.0.2")),
 				ePorts(ePort(8080, "http"))),
 		),
 	}
@@ -551,6 +575,14 @@ func TestServiceAnnotations(t *testing.T) {
 					retrying("IsNetworkError() && Attempts() <= 2"),
 				),
 			),
+			backend("max-conn",
+				servers(
+					server("http://10.4.0.1:8080", weight(1)),
+					server("http://10.4.0.2:8080", weight(1))),
+				maxConnExtractorFunc("client.ip"),
+				maxConnAmount(6),
+				lbMethod("wrr"),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -563,13 +595,16 @@ func TestServiceAnnotations(t *testing.T) {
 			frontend("bar",
 				headers(),
 				passHostHeader(),
-				routes(route("bar", "Host:bar")),
-			),
+				routes(route("bar", "Host:bar"))),
 			frontend("baz",
 				headers(),
 				passHostHeader(),
-				routes(route("baz", "Host:baz")),
-			),
+				routes(route("baz", "Host:baz"))),
+			frontend("max-conn",
+				headers(),
+				passHostHeader(),
+				routes(
+					route("max-conn", "Host:max-conn"))),
 		),
 	)
 

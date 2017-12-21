@@ -18,6 +18,12 @@
         cookieName = "{{$backend.LoadBalancer.Stickiness.CookieName}}"
       {{end}}
 
+    {{if $backend.MaxConn}}
+    [backends.backend-{{$backendName}}.maxConn]
+      amount = {{ $backend.MaxConn.Amount }}
+      extractorFunc = "{{ $backend.MaxConn.ExtractorFunc }}"
+    {{end}}
+
     {{if $backend.Buffering }}
     [backends."{{ $backendName }}".buffering]
       maxRequestBodyBytes = {{ $backend.Buffering.MaxRequestBodyBytes }}

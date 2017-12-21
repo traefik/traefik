@@ -133,6 +133,24 @@ func retrying(exp string) func(*types.Buffering) {
 	}
 }
 
+func maxConnExtractorFunc(exp string) func(*types.Backend) {
+	return func(b *types.Backend) {
+		if b.MaxConn == nil {
+			b.MaxConn = &types.MaxConn{}
+		}
+		b.MaxConn.ExtractorFunc = exp
+	}
+}
+
+func maxConnAmount(value int64) func(*types.Backend) {
+	return func(b *types.Backend) {
+		if b.MaxConn == nil {
+			b.MaxConn = &types.MaxConn{}
+		}
+		b.MaxConn.Amount = value
+	}
+}
+
 // Frontend
 
 func buildFrontends(opts ...func(*types.Frontend) string) map[string]*types.Frontend {
