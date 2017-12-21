@@ -1,4 +1,4 @@
-hash: 929364465b74114d3860b1301b9015f5badb731f21f9b74d40e100f763a6ee3f
+hash: d576f5f32f21d03008e87767f5fabd6cdd8b298d8480f7280b7dc03656e73f9c
 updated: 2017-12-15T10:34:41.246378337+01:00
 imports:
 - name: cloud.google.com/go
@@ -10,6 +10,10 @@ imports:
   version: 0ddd408d5d60ea76e320503cc7dd091992dee608
 - name: github.com/aokoli/goutils
   version: 3391d3790d23d03408670993e957e8f408993c34
+- name: github.com/apache/thrift
+  version: b2a4d4ae21c789b689dd162deb819665567f481c
+  subpackages:
+  - lib/go/thrift
 - name: github.com/armon/go-proxyproto
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - name: github.com/ArthurHlt/go-eureka-client
@@ -239,6 +243,12 @@ imports:
   version: b8f31a59085e69dd2678cf51840db2ac625cb741
 - name: github.com/eapache/channels
   version: 47238d5aae8c0fefd518ef2bee46290909cf8263
+- name: github.com/eapache/go-resiliency
+  version: b1fe83b5b03f624450823b751b662259ffc6af70
+  subpackages:
+  - breaker
+- name: github.com/eapache/go-xerial-snappy
+  version: bb955e01b9346ac19dc29eb16586c90ded99a98c
 - name: github.com/eapache/queue
   version: 44cc805cf13205b55f69e14bcb69867d1ae92f98
 - name: github.com/edeckers/auroradnsclient
@@ -305,6 +315,8 @@ imports:
   - jsonpb
   - proto
   - ptypes/any
+- name: github.com/golang/snappy
+  version: 553a641470496b2327abcac10b36396bd98e45c9
 - name: github.com/google/go-github
   version: fe7d11f8add400587b6718d9f39a62e42cb04c28
   subpackages:
@@ -436,12 +448,37 @@ imports:
   subpackages:
   - specs-go
   - specs-go/v1
+- name: github.com/opentracing-contrib/go-observer
+  version: a52f2342449246d5bcc273e65cbdcfa5f7d6c63c
+- name: github.com/opentracing-contrib/go-stdlib
+  version: 48e4d763b2fbcd10e666e6a1742acdf8cc2286ef
+  subpackages:
+  - nethttp
+- name: github.com/opentracing/opentracing-go
+  version: 1949ddbfd147afd4d964a9f00b24eb291e0e7c38
+  subpackages:
+  - ext
+  - log
+- name: github.com/openzipkin/zipkin-go-opentracing
+  version: 1f5c07e90700ae93ddcba0c7af7d9c7201646ccc
+  subpackages:
+  - flag
+  - thrift/gen-go/scribe
+  - thrift/gen-go/zipkincore
+  - types
+  - wire
 - name: github.com/ovh/go-ovh
   version: 4b1fea467323b74c5f462f0947f402b428ca0626
   subpackages:
   - ovh
 - name: github.com/pborman/uuid
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
+- name: github.com/pierrec/lz4
+  version: 08c27939df1bd95e881e2c2367a749964ad1fceb
+- name: github.com/pierrec/xxHash
+  version: a0006b13c722f7f12368c00a3d3c2ae8a999a0c6
+  subpackages:
+  - xxHash32
 - name: github.com/pkg/errors
   version: c605e284fe17294bda444b34710735b29d1a9d90
 - name: github.com/pmezard/go-difflib
@@ -479,6 +516,8 @@ imports:
   version: d2103caca5873119ff423d29cba09b4d03cd69b8
   subpackages:
   - metadata
+- name: github.com/rcrowley/go-metrics
+  version: 1f30fe9094a513ce4c700b9a54458bbb0c96996c
 - name: github.com/ryanuber/go-glob
   version: 256dc444b735e061061cf46c809487313d5b0065
 - name: github.com/samuel/go-zookeeper
@@ -487,6 +526,8 @@ imports:
   - zk
 - name: github.com/satori/go.uuid
   version: 879c5887cd475cd7864858769793b2ceb0d44feb
+- name: github.com/Shopify/sarama
+  version: 70f6a705d4a17af059acbc6946fb2bd30762acd7
 - name: github.com/Sirupsen/logrus
   version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - name: github.com/spf13/pflag
@@ -507,6 +548,22 @@ imports:
   - dns
 - name: github.com/tv42/zbase32
   version: 03389da7e0bf9844767f82690f4d68fc097a1306
+- name: github.com/uber/jaeger-client-go
+  version: 3e3870040def0ebdaf65a003863fa64f5cb26139
+  subpackages:
+  - config
+  - internal/spanlog
+  - log
+  - rpcmetrics
+  - thrift-gen/agent
+  - thrift-gen/jaeger
+  - thrift-gen/sampling
+  - thrift-gen/zipkincore
+  - utils
+- name: github.com/uber/jaeger-lib
+  version: 3b2a9ad2a045881ab7a0f81d465be54c8292ee4f
+  subpackages:
+  - metrics
 - name: github.com/ugorji/go
   version: ea9cd21fa0bc41ee4bdd50ac7ed8cbc7ea2ed960
   subpackages:
