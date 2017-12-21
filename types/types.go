@@ -142,18 +142,18 @@ func (h Headers) HasSecureHeadersDefined() bool {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
-	EntryPoints          []string             `json:"entryPoints,omitempty"`
-	Backend              string               `json:"backend,omitempty"`
-	Routes               map[string]Route     `json:"routes,omitempty"`
-	PassHostHeader       bool                 `json:"passHostHeader,omitempty"`
-	PassTLSCert          bool                 `json:"passTLSCert,omitempty"`
-	Priority             int                  `json:"priority"`
-	BasicAuth            []string             `json:"basicAuth"`
-	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
-	Headers              Headers              `json:"headers,omitempty"`
-	Errors               map[string]ErrorPage `json:"errors,omitempty"`
-	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
-	Redirect             *Redirect            `json:"redirect,omitempty"`
+	EntryPoints          []string              `json:"entryPoints,omitempty"`
+	Backend              string                `json:"backend,omitempty"`
+	Routes               map[string]Route      `json:"routes,omitempty"`
+	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
+	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
+	Priority             int                   `json:"priority"`
+	BasicAuth            []string              `json:"basicAuth"`
+	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"`
+	Headers              Headers               `json:"headers,omitempty"`
+	Errors               map[string]*ErrorPage `json:"errors,omitempty"`
+	RateLimit            *RateLimit            `json:"ratelimit,omitempty"`
+	Redirect             *Redirect             `json:"redirect,omitempty"`
 }
 
 // Redirect configures a redirection of an entry point to another, or to an URL

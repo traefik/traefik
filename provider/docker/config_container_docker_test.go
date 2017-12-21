@@ -213,7 +213,7 @@ func TestDockerBuildConfiguration(t *testing.T) {
 							Rule: "Host:test1.docker.localhost",
 						},
 					},
-					Errors: map[string]types.ErrorPage{
+					Errors: map[string]*types.ErrorPage{
 						"foo": {
 							Status:  []string{"404"},
 							Query:   "foo_query",
