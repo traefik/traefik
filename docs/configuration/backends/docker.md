@@ -145,6 +145,20 @@ To enable constraints see [backend-specific constraints section](/configuration/
 
 ## Labels: overriding default behaviour
 
+!!! note
+    If you use a compose file, labels should be defined in the `deploy` part of your service.
+
+    This behavior is only enabled for docker-compose version 3+ ([Compose file reference](https://docs.docker.com/compose/compose-file/#labels-1)).
+
+```yaml
+version: "3"
+services:
+  whoami:
+    deploy:
+      labels:
+        traefik.docker.network: traefik
+```
+
 ### On Containers
 
 Labels can be used on containers to override default behaviour.
@@ -224,11 +238,13 @@ Services labels can be used for overriding default behaviour
 
 
 !!! note
-    if a label is defined both as a `container label` and a `service label` (for example `traefik.<service-name>.port=PORT` and `traefik.port=PORT` ), the `service label` is used to defined the `<service-name>` property (`port` in the example).
+    If a label is defined both as a `container label` and a `service label` (for example `traefik.<service-name>.port=PORT` and `traefik.port=PORT` ), the `service label` is used to defined the `<service-name>` property (`port` in the example).
+
     It's possible to mix `container labels` and `service labels`, in this case `container labels` are used as default value for missing `service labels` but no frontends are going to be created with the `container labels`.
+
     More details in this [example](/user-guide/docker-and-lets-encrypt/#labels).
 
 !!! warning
-    when running inside a container, Træfik will need network access through:
+    When running inside a container, Træfik will need network access through:
 
     `docker network connect <network> <traefik-container>`
