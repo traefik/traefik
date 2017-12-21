@@ -12,3 +12,4 @@
 *.exe
 .DS_Store
 /example/acme/acme.json
+debug.test

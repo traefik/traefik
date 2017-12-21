@@ -74,3 +74,13 @@ func (m DataMap) GetString(key string) string {
 
 	return ""
 }
+
+// GetDataMap gets a element whose value is expected to be a DataMap
+// returning either the value or empty if it's not present
+func (m DataMap) GetDataMap(key string) DataMap {
+	var i = m.Get(key)
+	if sm, ok := i.(DataMap); ok {
+		return sm
+	}
+	return DataMap{}
+}
