@@ -1026,9 +1026,12 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					var sticky *roundrobin.StickySession
+					var stickinessParsed *middlewares.StickinessParsed
 					var cookieName string
-					if stickiness := config.Backends[frontend.Backend].LoadBalancer.Stickiness; stickiness != nil {
+					stickiness := config.Backends[frontend.Backend].LoadBalancer.Stickiness
+					if stickiness != nil {
 						cookieName = cookie.GetName(stickiness.CookieName, frontend.Backend)
+						stickinessParsed = middlewares.NewStickinessParsed(stickiness, frontend.Backend, cookieName)
 						sticky = roundrobin.NewStickySession(cookieName)
 					}
 
@@ -1052,6 +1055,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 							hcOpts.Transport = s.defaultForwardingRoundTripper
 							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
 						}
+						if stickiness != nil {
+							lb = middlewares.NewStickyBackendHandler(rr, lb, stickinessParsed)
+						}
 						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
 					case types.Wrr:
 						log.Debugf("Creating load-balancer wrr")
@@ -1073,6 +1079,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							hcOpts.Transport = s.defaultForwardingRoundTripper
 							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
+						}
+						if stickiness != nil {
+							lb = middlewares.NewStickyBackendHandler(rr, lb, stickinessParsed)
 						}
 						lb = middlewares.NewEmptyBackendHandler(rr, lb)
 					}
