@@ -273,9 +273,6 @@ Instead, the query parameter can also be set to some generic error page like so:
 Now the `500s.html` error page is returned for the configured code range.
 The configured status code ranges are inclusive; that is, in the above example, the `500s.html` page will be returned for status codes `500` through, and including, `599`.
 
-Custom error pages are easiest to implement using the file provider.
-For dynamic providers, the corresponding template file needs to be customized accordingly and referenced in the Traefik configuration.
-
 
 ## Rate limiting
 
