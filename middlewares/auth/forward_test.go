@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/testhelpers"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,7 @@ func TestForwardAuthFail(t *testing.T) {
 		Forward: &types.Forward{
 			Address: server.URL,
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -55,7 +56,7 @@ func TestForwardAuthSuccess(t *testing.T) {
 		Forward: &types.Forward{
 			Address: server.URL,
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +88,7 @@ func TestForwardAuthRedirect(t *testing.T) {
 		Forward: &types.Forward{
 			Address: authTs.URL,
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +131,7 @@ func TestForwardAuthCookie(t *testing.T) {
 		Forward: &types.Forward{
 			Address: authTs.URL,
 		},
-	})
+	}, &tracing.Tracing{})
 	assert.NoError(t, err, "there should be no error")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
