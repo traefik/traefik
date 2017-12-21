@@ -590,7 +590,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 	c.Assert(err, checker.IsNil)
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusResetContent)
 	// Change certificates configuration file content
-	modifyCertificateConfFileContent(c, "snitest.com", dynamicConfFileName, "https02")
+	modifyCertificateConfFileContent(c, "", dynamicConfFileName, "https02")
 
 	err = try.Do(60*time.Second, func() error {
 		resp, err = client.Do(req)
@@ -615,28 +615,31 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c
 
 // modifyCertificateConfFileContent replaces the content of a HTTPS configuration file.
 func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, entryPoint string) {
-	tlsConf := types.Configuration{
-		TLSConfiguration: []*traefikTls.Configuration{
-			{
-				Certificate: &traefikTls.Certificate{
-					CertFile: traefikTls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
-					KeyFile:  traefikTls.FileOrContent("fixtures/https/" + certFileName + ".key"),
-				},
-				EntryPoints: []string{entryPoint},
-			},
-		},
-	}
-	var confBuffer bytes.Buffer
-	e := toml.NewEncoder(&confBuffer)
-	err := e.Encode(tlsConf)
-	c.Assert(err, checker.IsNil)
-
 	f, err := os.OpenFile("./"+confFileName, os.O_WRONLY, os.ModeExclusive)
 	c.Assert(err, checker.IsNil)
 	defer func() {
 		f.Close()
 	}()
 	f.Truncate(0)
-	_, err = f.Write(confBuffer.Bytes())
-	c.Assert(err, checker.IsNil)
+	// If certificate file is not provided, just truncate the configuration file
+	if len(certFileName) > 0 {
+		tlsConf := types.Configuration{
+			TLSConfiguration: []*traefikTls.Configuration{
+				{
+					Certificate: &traefikTls.Certificate{
+						CertFile: traefikTls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
+						KeyFile:  traefikTls.FileOrContent("fixtures/https/" + certFileName + ".key"),
+					},
+					EntryPoints: []string{entryPoint},
+				},
+			},
+		}
+		var confBuffer bytes.Buffer
+		e := toml.NewEncoder(&confBuffer)
+		err := e.Encode(tlsConf)
+		c.Assert(err, checker.IsNil)
+
+		_, err = f.Write(confBuffer.Bytes())
+		c.Assert(err, checker.IsNil)
+	}
 }
