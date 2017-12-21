@@ -2,7 +2,9 @@ package kubernetes
 
 import (
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
@@ -249,6 +251,57 @@ func errorQuery(query string) func(*types.ErrorPage) {
 func errorBackend(backend string) func(*types.ErrorPage) {
 	return func(page *types.ErrorPage) {
 		page.Backend = backend
+	}
+}
+
+func rateLimit(opts ...func(*types.RateLimit)) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		if f.RateLimit == nil {
+			f.RateLimit = &types.RateLimit{}
+		}
+
+		for _, opt := range opts {
+			opt(f.RateLimit)
+		}
+	}
+}
+
+func rateExtractorFunc(exp string) func(*types.RateLimit) {
+	return func(limit *types.RateLimit) {
+		limit.ExtractorFunc = exp
+	}
+}
+
+func rateSet(name string, opts ...func(*types.Rate)) func(*types.RateLimit) {
+	return func(limit *types.RateLimit) {
+		if limit.RateSet == nil {
+			limit.RateSet = make(map[string]*types.Rate)
+		}
+
+		if len(name) > 0 {
+			limit.RateSet[name] = &types.Rate{}
+			for _, opt := range opts {
+				opt(limit.RateSet[name])
+			}
+		}
+	}
+}
+
+func limitAverage(avg int64) func(*types.Rate) {
+	return func(rate *types.Rate) {
+		rate.Average = avg
+	}
+}
+
+func limitBurst(burst int64) func(*types.Rate) {
+	return func(rate *types.Rate) {
+		rate.Burst = burst
+	}
+}
+
+func limitPeriod(period time.Duration) func(*types.Rate) {
+	return func(rate *types.Rate) {
+		rate.Period = flaeg.Duration(period)
 	}
 }
 

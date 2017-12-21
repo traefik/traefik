@@ -75,6 +75,18 @@
       {{end}}
     {{end}}
 
+    {{ if $frontend.RateLimit }}
+    [frontends."frontend-{{$frontendName}}".rateLimit]
+      extractorFunc = "{{ $frontend.RateLimit.ExtractorFunc }}"
+      [frontends."frontend-{{$frontendName}}".rateLimit.rateSet]
+        {{ range $limitName, $limit := $frontend.RateLimit.RateSet }}
+        [frontends."frontend-{{$frontendName}}".rateLimit.rateSet.{{ $limitName }}]
+          period = "{{ $limit.Period }}"
+          average = {{ $limit.Average }}
+          burst = {{ $limit.Burst }}
+        {{end}}
+    {{end}}
+
   {{if $frontend.Headers }}
   [frontends."{{$frontendName}}".headers]
     SSLRedirect = {{$frontend.Headers.SSLRedirect}}
