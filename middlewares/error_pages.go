@@ -19,7 +19,7 @@ type ErrorPagesHandler struct {
 }
 
 //NewErrorPagesHandler initializes the utils.ErrorHandler for the custom error pages
-func NewErrorPagesHandler(errorPage types.ErrorPage, backendURL string) (*ErrorPagesHandler, error) {
+func NewErrorPagesHandler(errorPage *types.ErrorPage, backendURL string) (*ErrorPagesHandler, error) {
 	fwd, err := forward.New()
 	if err != nil {
 		return nil, err

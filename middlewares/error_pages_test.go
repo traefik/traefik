@@ -21,7 +21,7 @@ func TestErrorPage(t *testing.T) {
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/test", Status: []string{"500-501", "503-599"}}
 
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	testHandler, err := NewErrorPagesHandler(testErrorPage, ts.URL)
 	require.NoError(t, err)
 
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/test", "Should be equal")
@@ -39,8 +39,10 @@ func TestErrorPage(t *testing.T) {
 
 	n.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, recorder.Code, "HTTP statusOK")
+	assert.Equal(t, http.StatusOK, recorder.Code, "HTTP status")
 	assert.Contains(t, recorder.Body.String(), "traefik")
+
+	// ----
 
 	handler500 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -86,7 +88,7 @@ func TestErrorPageQuery(t *testing.T) {
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503-503"}}
 
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	testHandler, err := NewErrorPagesHandler(testErrorPage, ts.URL)
 	require.NoError(t, err)
 
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/{status}", "Should be equal")
@@ -125,7 +127,7 @@ func TestErrorPageSingleCode(t *testing.T) {
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503"}}
 
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	testHandler, err := NewErrorPagesHandler(testErrorPage, ts.URL)
 	require.NoError(t, err)
 
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/{status}", "Should be equal")
