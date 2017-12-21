@@ -42,6 +42,7 @@
     backend = "{{$frontend.Backend}}"
     priority = {{$frontend.Priority}}
     passHostHeader = {{$frontend.PassHostHeader}}
+    passTLSCert = {{$frontend.PassTLSCert}}
 
     entryPoints = [{{range $frontend.EntryPoints}}
       "{{.}}",
