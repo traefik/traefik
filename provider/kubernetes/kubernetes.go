@@ -198,9 +198,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 
-				passHostHeader := label.GetBoolValue(i.Annotations, label.TraefikFrontendPassHostHeader, !p.DisablePassHostHeaders)
-				passTLSCert := label.GetBoolValue(i.Annotations, label.TraefikFrontendPassTLSCert, p.EnablePassTLSCert)
-
 				if realm := i.Annotations[annotationKubernetesAuthRealm]; realm != "" && realm != traefikDefaultRealm {
 					log.Errorf("Value for annotation %q on ingress %s/%s invalid: no realm customization supported", annotationKubernetesAuthRealm, i.ObjectMeta.Namespace, i.ObjectMeta.Name)
 					delete(templateObjects.Backends, r.Host+pa.Path)
@@ -213,6 +210,9 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						log.Errorf("Failed to retrieve basic auth configuration for ingress %s/%s: %s", i.ObjectMeta.Namespace, i.ObjectMeta.Name, err)
 						continue
 					}
+
+					passHostHeader := label.GetBoolValue(i.Annotations, label.TraefikFrontendPassHostHeader, !p.DisablePassHostHeaders)
+					passTLSCert := label.GetBoolValue(i.Annotations, label.TraefikFrontendPassTLSCert, p.EnablePassTLSCert)
 
 					priority := label.GetIntValue(i.Annotations, label.TraefikFrontendPriority, 0)
 
