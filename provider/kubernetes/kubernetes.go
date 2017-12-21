@@ -220,6 +220,8 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					whitelistSourceRange := label.GetSliceStringValue(i.Annotations, annotationKubernetesWhitelistSourceRange)
 
+					errorPages := label.ParseErrorPages(i.Annotations, label.Prefix+label.BaseFrontendErrorPage, label.RegexpFrontendErrorPage)
+
 					templateObjects.Frontends[r.Host+pa.Path] = &types.Frontend{
 						Backend:              r.Host + pa.Path,
 						PassHostHeader:       passHostHeader,
@@ -231,6 +233,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						Redirect:             getFrontendRedirect(i),
 						EntryPoints:          entryPoints,
 						Headers:              getHeader(i),
+						Errors:               errorPages,
 					}
 				}
 

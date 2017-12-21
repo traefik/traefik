@@ -63,6 +63,18 @@
       replacement = "{{$frontend.RedirectReplacement}}"
     {{end}}
 
+    {{ if $frontend.Errors }}
+    [frontends."frontend-{{$frontendName}}".errors]
+      {{ range $pageName, $page := $frontend.Errors }}
+      [frontends."frontend-{{$frontendName}}".errors.{{ $pageName }}]
+        status = [{{range $page.Status}}
+          "{{.}}",
+          {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
+    {{end}}
+
   {{if $frontend.Headers }}
   [frontends."{{$frontendName}}".headers]
     SSLRedirect = {{$frontend.Headers.SSLRedirect}}

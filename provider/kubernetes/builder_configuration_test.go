@@ -219,6 +219,39 @@ func redirectRegex(regex, replacement string) func(*types.Frontend) {
 	}
 }
 
+func errorPage(name string, opts ...func(*types.ErrorPage)) func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		if f.Errors == nil {
+			f.Errors = make(map[string]*types.ErrorPage)
+		}
+
+		if len(name) > 0 {
+			f.Errors[name] = &types.ErrorPage{}
+			for _, opt := range opts {
+				opt(f.Errors[name])
+			}
+		}
+	}
+}
+
+func errorStatus(status ...string) func(*types.ErrorPage) {
+	return func(page *types.ErrorPage) {
+		page.Status = status
+	}
+}
+
+func errorQuery(query string) func(*types.ErrorPage) {
+	return func(page *types.ErrorPage) {
+		page.Query = query
+	}
+}
+
+func errorBackend(backend string) func(*types.ErrorPage) {
+	return func(page *types.ErrorPage) {
+		page.Backend = backend
+	}
+}
+
 func passTLSCert() func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		f.PassTLSCert = true
