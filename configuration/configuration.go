@@ -10,6 +10,7 @@ import (
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
@@ -60,6 +61,7 @@ type GlobalConfiguration struct {
 	AccessLog                 *types.AccessLog        `description:"Access log settings" export:"true"`
 	TraefikLogsFile           string                  `description:"(Deprecated) Traefik logs file. Stdout is used when omitted or empty" export:"true"` // Deprecated
 	TraefikLog                *types.TraefikLog       `description:"Traefik log settings" export:"true"`
+	Tracing                   *tracing.Tracing        `description:"OpenTracing configuration" export:"true"`
 	LogLevel                  string                  `short:"l" description:"Log level" export:"true"`
 	EntryPoints               EntryPoints             `description:"Entrypoints definition using format: --entryPoints='Name:http Address::8000 Redirect.EntryPoint:https' --entryPoints='Name:https Address::4442 TLS:tests/traefik.crt,tests/traefik.key;prod/traefik.crt,prod/traefik.key'" export:"true"`
 	Cluster                   *types.Cluster          `description:"Enable clustering" export:"true"`
