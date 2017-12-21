@@ -353,7 +353,7 @@ func startTestServer(port string, statusCode int) (ts *httptest.Server) {
 	return ts
 }
 
-// TestWithSNIConfigRoute involves a client sending HTTPS requests with
+// TestWithSNIDynamicConfigRouteWithNoChange involves a client sending HTTPS requests with
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik routes the requests to the expected backends thanks to given certificate if possible
 // otherwise thanks to the default one.
@@ -424,7 +424,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithNoChange(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNoContent)
 }
 
-// TestWithSNIConfigRoute involves a client sending HTTPS requests with
+// TestWithSNIDynamicConfigRouteWithChange involves a client sending HTTPS requests with
 // SNI hostnames of "snitest.org" and "snitest.com". The test verifies
 // that traefik updates its configuration when the HTTPS configuration is modified and
 // it routes the requests to the expected backends thanks to given certificate if possible
@@ -479,7 +479,7 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	req.Header.Set("Accept", "*/*")
 
 	// Change certificates configuration file content
-	modifyCertificateConfFileContent(c, tr1.TLSClientConfig.ServerName, dynamicConfFileName)
+	modifyCertificateConfFileContent(c, tr1.TLSClientConfig.ServerName, dynamicConfFileName, "https")
 	var resp *http.Response
 	err = try.Do(30*time.Second, func() error {
 		resp, err = client.Do(req)
@@ -525,8 +525,96 @@ func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithChange(c *check.C) {
 	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
+// TestWithSNIDynamicConfigRouteWithChangeForEmptyTlsConfiguration involves a client sending HTTPS requests with
+// SNI hostnames of "snitest.org" and "snitest.com". The test verifies
+// that traefik updates its configuration when the HTTPS configuration is modified, even if it totally deleted, and
+// it routes the requests to the expected backends thanks to given certificate if possible
+// otherwise thanks to the default one.
+func (s *HTTPSSuite) TestWithSNIDynamicConfigRouteWithTlsConfigurationDeletion(c *check.C) {
+	dynamicConfFileName := s.adaptFile(c, "fixtures/https/dynamic_https.toml", struct{}{})
+	defer os.Remove(dynamicConfFileName)
+	confFileName := s.adaptFile(c, "fixtures/https/dynamic_https_sni.toml", struct {
+		DynamicConfFileName string
+	}{
+		DynamicConfFileName: dynamicConfFileName,
+	})
+	defer os.Remove(confFileName)
+	cmd, display := s.traefikCmd(withConfigFile(confFileName))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	tr2 := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         "snitest.org",
+		},
+	}
+
+	// wait for Traefik
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers", 1*time.Second, try.BodyContains("Host:"+tr2.TLSClientConfig.ServerName))
+	c.Assert(err, checker.IsNil)
+
+	backend2 := startTestServer("9020", http.StatusResetContent)
+
+	defer backend2.Close()
+
+	err = try.GetRequest(backend2.URL, 500*time.Millisecond, try.StatusCodeIs(http.StatusResetContent))
+	c.Assert(err, checker.IsNil)
+
+	req, err := http.NewRequest(http.MethodGet, "https://127.0.0.1:4443/", nil)
+	client := &http.Client{Transport: tr2}
+	req.Host = tr2.TLSClientConfig.ServerName
+	req.Header.Set("Host", tr2.TLSClientConfig.ServerName)
+	req.Header.Set("Accept", "*/*")
+
+	var resp *http.Response
+	err = try.Do(30*time.Second, func() error {
+		resp, err = client.Do(req)
+
+		// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\
+		req.Close = true
+
+		if err != nil {
+			return err
+		}
+
+		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
+		if cn != tr2.TLSClientConfig.ServerName {
+			return fmt.Errorf("domain %s found in place of %s", cn, tr2.TLSClientConfig.ServerName)
+		}
+
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusResetContent)
+	// Change certificates configuration file content
+	modifyCertificateConfFileContent(c, "snitest.com", dynamicConfFileName, "https02")
+
+	err = try.Do(60*time.Second, func() error {
+		resp, err = client.Do(req)
+
+		// /!\ If connection is not closed, SSLHandshake will only be done during the first trial /!\
+		req.Close = true
+
+		if err != nil {
+			return err
+		}
+
+		cn := resp.TLS.PeerCertificates[0].Subject.CommonName
+		if cn == tr2.TLSClientConfig.ServerName {
+			return fmt.Errorf("domain %s found in place of default one", tr2.TLSClientConfig.ServerName)
+		}
+
+		return nil
+	})
+	c.Assert(err, checker.IsNil)
+	c.Assert(resp.StatusCode, checker.Equals, http.StatusNotFound)
+}
+
 // modifyCertificateConfFileContent replaces the content of a HTTPS configuration file.
-func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName string) {
+func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName, entryPoint string) {
 	tlsConf := types.Configuration{
 		TLSConfiguration: []*traefikTls.Configuration{
 			{
@@ -534,7 +622,7 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName str
 					CertFile: traefikTls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
 					KeyFile:  traefikTls.FileOrContent("fixtures/https/" + certFileName + ".key"),
 				},
-				EntryPoints: []string{"https"},
+				EntryPoints: []string{entryPoint},
 			},
 		},
 	}

@@ -439,7 +439,11 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 	if err == nil {
 		for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 			s.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
-			if &newServerEntryPoint.certs != nil {
+			if s.globalConfiguration.EntryPoints[newServerEntryPointName].TLS == nil {
+				if newServerEntryPoint.certs.Get() != nil {
+					log.Debugf("Certificates not added to non-TLS entryPoint %s.", newServerEntryPointName)
+				}
+			} else {
 				s.serverEntryPoints[newServerEntryPointName].certs.Set(newServerEntryPoint.certs.Get())
 			}
 			log.Infof("Server configuration reloaded on %s", s.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
