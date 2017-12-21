@@ -234,6 +234,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 						EntryPoints:          entryPoints,
 						Headers:              getHeader(i),
 						Errors:               errorPages,
+						RateLimit:            getRateLimit(i),
 					}
 				}
 
@@ -507,6 +508,19 @@ func getFrontendRedirect(i *v1beta1.Ingress) *types.Redirect {
 	return nil
 }
 
+func getBuffering(service *v1.Service) *types.Buffering {
+	if label.HasPrefix(service.Annotations, label.TraefikBackendBuffering) {
+		return &types.Buffering{
+			MaxRequestBodyBytes:  label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
+			MemRequestBodyBytes:  label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMemRequestBodyBytes, 0),
+			MaxResponseBodyBytes: label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
+			MemResponseBodyBytes: label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMemResponseBodyBytes, 0),
+			RetryExpression:      label.GetStringValue(service.Annotations, label.TraefikBackendBufferingRetryExpression, ""),
+		}
+	}
+	return nil
+}
+
 func getLoadBalancer(service *v1.Service) *types.LoadBalancer {
 	loadBalancer := &types.LoadBalancer{
 		Method: "wrr",
@@ -564,14 +578,11 @@ func getHeader(i *v1beta1.Ingress) *types.Headers {
 	}
 }
 
-func getBuffering(service *v1.Service) *types.Buffering {
-	if label.HasPrefix(service.Annotations, label.TraefikBackendBuffering) {
-		return &types.Buffering{
-			MaxRequestBodyBytes:  label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMaxRequestBodyBytes, 0),
-			MemRequestBodyBytes:  label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMemRequestBodyBytes, 0),
-			MaxResponseBodyBytes: label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMaxResponseBodyBytes, 0),
-			MemResponseBodyBytes: label.GetInt64Value(service.Annotations, label.TraefikBackendBufferingMemResponseBodyBytes, 0),
-			RetryExpression:      label.GetStringValue(service.Annotations, label.TraefikBackendBufferingRetryExpression, ""),
+func getRateLimit(i *v1beta1.Ingress) *types.RateLimit {
+	if rlExtractFunc := i.Annotations[label.TraefikFrontendRateLimitExtractorFunc]; len(rlExtractFunc) > 0 {
+		return &types.RateLimit{
+			ExtractorFunc: rlExtractFunc,
+			RateSet:       label.ParseRateSets(i.Annotations, label.Prefix+label.BaseFrontendRateLimit, label.RegexpFrontendRateLimit),
 		}
 	}
 	return nil

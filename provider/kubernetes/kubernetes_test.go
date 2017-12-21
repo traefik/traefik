@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
@@ -685,6 +686,22 @@ func TestIngressAnnotations(t *testing.T) {
 					iPaths(onePath(iPath("/errorpages"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(label.TraefikFrontendRateLimitExtractorFunc, "client.ip"),
+			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+			iAnnotation(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
+			iRules(
+				iRule(
+					iHost("rate-limit"),
+					iPaths(onePath(iPath("/ratelimit"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
 	services := []*v1.Service{
@@ -785,6 +802,12 @@ func TestIngressAnnotations(t *testing.T) {
 					server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
+			backend("rate-limit/ratelimit",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
@@ -862,6 +885,16 @@ func TestIngressAnnotations(t *testing.T) {
 				routes(
 					route("/errorpages", "PathPrefix:/errorpages"),
 					route("error-pages", "Host:error-pages")),
+			),
+			frontend("rate-limit/ratelimit",
+				headers(),
+				passHostHeader(),
+				rateLimit(rateExtractorFunc("client.ip"),
+					rateSet("foo", limitPeriod(6*time.Second), limitAverage(12), limitBurst(18)),
+					rateSet("bar", limitPeriod(3*time.Second), limitAverage(6), limitBurst(9))),
+				routes(
+					route("/ratelimit", "PathPrefix:/ratelimit"),
+					route("rate-limit", "Host:rate-limit")),
 			),
 		),
 	)
