@@ -308,7 +308,7 @@ func ParseErrorPages(labels map[string]string, labelPrefix string, labelRegex *r
 
 // ParseRateSets parse rate limits to create Rate struct
 func ParseRateSets(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.Rate {
-	rateSets := make(map[string]*types.Rate)
+	var rateSets map[string]*types.Rate
 
 	for lblName, rawValue := range labels {
 		if strings.HasPrefix(lblName, labelPrefix) && len(rawValue) > 0 {
@@ -316,6 +316,10 @@ func ParseRateSets(labels map[string]string, labelPrefix string, labelRegex *reg
 			if len(submatch) != 3 {
 				log.Errorf("Invalid rate limit label: %s, sub-match: %v", lblName, submatch)
 				continue
+			}
+
+			if rateSets == nil {
+				rateSets = make(map[string]*types.Rate)
 			}
 
 			limitName := submatch[1]
