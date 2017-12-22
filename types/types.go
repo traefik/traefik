@@ -453,27 +453,23 @@ type AccessLog struct {
 // HeaderRedactions holds a list of HTTP header names
 type HeaderRedactions []string
 
-//Set adds strings elem into the the parser
-//it splits str on "," and ";" and apply ParseFloat to string
+// Set splits string on , and adds the items to the list of headers to
+// be redacted
 func (b *HeaderRedactions) Set(str string) error {
-	fargs := func(c rune) bool {
-		return c == ',' || c == ';'
-	}
-	// get function
-	slice := strings.FieldsFunc(str, fargs)
-	for _, header := range slice {
+	headers := strings.Split(str, ",")
+	for _, header := range headers {
 		*b = append(*b, header)
 	}
 	return nil
 }
 
-//Get []string
+// Get returns a list of headers to be redacted
 func (b *HeaderRedactions) Get() interface{} { return HeaderRedactions(*b) }
 
-//String return slice in a string
+// String return slice in a string
 func (b *HeaderRedactions) String() string { return fmt.Sprintf("%v", *b) }
 
-//SetValue sets []string into the parser
+// SetValue sets []string into the parser
 func (b *HeaderRedactions) SetValue(val interface{}) {
 	*b = HeaderRedactions(val.(HeaderRedactions))
 }

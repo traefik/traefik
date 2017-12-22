@@ -234,11 +234,11 @@ func (l *LogHandler) logTheRoundTrip(logDataTable *LogData, crr *captureRequestR
 	}
 
 	for k := range logDataTable.Request {
+		headerContent := logDataTable.Request.Get(k)
 		if _, shouldredact := l.redact[k]; shouldredact {
-			fields["request_"+k] = "REDACTED_BY_TRAEFIK"
-		} else {
-			fields["request_"+k] = logDataTable.Request.Get(k)
+			headerContent = "REDACTED_BY_TRAEFIK"
 		}
+		fields["request_"+k] = headerContent
 	}
 
 	for k := range logDataTable.OriginResponse {
