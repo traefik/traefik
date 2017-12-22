@@ -21,13 +21,13 @@ func TestErrorPage(t *testing.T) {
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/test", Status: []string{"500-501", "503-599"}}
 
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	testHandler, err := NewErrorPagesHandler(testErrorPage, ts.URL)
 	require.NoError(t, err)
 
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/test", "Should be equal")
 
 	recorder := httptest.NewRecorder()
-	req, err := http.NewRequest("GET", ts.URL+"/test", nil)
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/test", nil)
 	require.NoError(t, err)
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -39,11 +39,13 @@ func TestErrorPage(t *testing.T) {
 
 	n.ServeHTTP(recorder, req)
 
-	assert.Equal(t, http.StatusOK, recorder.Code, "HTTP statusOK")
+	assert.Equal(t, http.StatusOK, recorder.Code, "HTTP status")
 	assert.Contains(t, recorder.Body.String(), "traefik")
 
+	// ----
+
 	handler500 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "oops")
 	})
 	recorder500 := httptest.NewRecorder()
@@ -58,7 +60,7 @@ func TestErrorPage(t *testing.T) {
 	assert.NotContains(t, recorder500.Body.String(), "oops", "Should not return the oops page")
 
 	handler502 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(502)
+		w.WriteHeader(http.StatusBadGateway)
 		fmt.Fprintln(w, "oops")
 	})
 	recorder502 := httptest.NewRecorder()
@@ -86,19 +88,19 @@ func TestErrorPageQuery(t *testing.T) {
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503-503"}}
 
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	testHandler, err := NewErrorPagesHandler(testErrorPage, ts.URL)
 	require.NoError(t, err)
 
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/{status}", "Should be equal")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(503)
+		w.WriteHeader(http.StatusServiceUnavailable)
 		fmt.Fprintln(w, "oops")
 	})
 
 	recorder := httptest.NewRecorder()
 
-	req, err := http.NewRequest("GET", ts.URL+"/test", nil)
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/test", nil)
 	require.NoError(t, err)
 
 	n := negroni.New()
@@ -125,19 +127,19 @@ func TestErrorPageSingleCode(t *testing.T) {
 
 	testErrorPage := &types.ErrorPage{Backend: "error", Query: "/{status}", Status: []string{"503"}}
 
-	testHandler, err := NewErrorPagesHandler(*testErrorPage, ts.URL)
+	testHandler, err := NewErrorPagesHandler(testErrorPage, ts.URL)
 	require.NoError(t, err)
 
 	assert.Equal(t, testHandler.BackendURL, ts.URL+"/{status}", "Should be equal")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(503)
+		w.WriteHeader(http.StatusServiceUnavailable)
 		fmt.Fprintln(w, "oops")
 	})
 
 	recorder := httptest.NewRecorder()
 
-	req, err := http.NewRequest("GET", ts.URL+"/test", nil)
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/test", nil)
 	require.NoError(t, err)
 
 	n := negroni.New()

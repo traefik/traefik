@@ -5,19 +5,20 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/containous/flaeg"
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
-	"github.com/mitchellh/mapstructure"
 	"reflect"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/containous/flaeg"
+	"github.com/docker/libkv"
+	"github.com/docker/libkv/store"
+	"github.com/mitchellh/mapstructure"
 )
 
 // KvSource implements Source
-// It handles all mapstructure features(Squashed Embeded Sub-Structures, Maps, Pointers)
-// It supports Slices (and maybe Arraies). They must be sorted in the KvStore like this :
+// It handles all mapstructure features(Squashed Embedded Sub-Structures, Maps, Pointers)
+// It supports Slices (and maybe Arrays). They must be sorted in the KvStore like this :
 // Key : ".../[sliceIndex]" -> Value
 type KvSource struct {
 	store.Store
@@ -26,8 +27,8 @@ type KvSource struct {
 
 // NewKvSource creates a new KvSource
 func NewKvSource(backend store.Backend, addrs []string, options *store.Config, prefix string) (*KvSource, error) {
-	store, err := libkv.NewStore(backend, addrs, options)
-	return &KvSource{Store: store, Prefix: prefix}, err
+	kvStore, err := libkv.NewStore(backend, addrs, options)
+	return &KvSource{Store: kvStore, Prefix: prefix}, err
 }
 
 // Parse uses libkv and mapstructure to fill the structure
@@ -46,11 +47,11 @@ func (kv *KvSource) LoadConfig(config interface{}) error {
 		return err
 	}
 	// fmt.Printf("pairs : %#v\n", pairs)
-	mapstruct, err := generateMapstructure(convertPairs(pairs), kv.Prefix)
+	mapStruct, err := generateMapstructure(convertPairs(pairs), kv.Prefix)
 	if err != nil {
 		return err
 	}
-	// fmt.Printf("mapstruct : %#v\n", mapstruct)
+	// fmt.Printf("mapStruct : %#v\n", mapStruct)
 	configDecoder := &mapstructure.DecoderConfig{
 		Metadata:         nil,
 		Result:           config,
@@ -61,7 +62,7 @@ func (kv *KvSource) LoadConfig(config interface{}) error {
 	if err != nil {
 		return err
 	}
-	if err := decoder.Decode(mapstruct); err != nil {
+	if err := decoder.Decode(mapStruct); err != nil {
 		return err
 	}
 	return nil
@@ -82,8 +83,8 @@ func generateMapstructure(pairs []*store.KVPair, prefix string) (map[string]inte
 }
 
 func processKV(key string, v []byte, raw map[string]interface{}) (map[string]interface{}, error) {
-	// Determine which map we're writing the value to. We split by '/'
-	// to determine any sub-maps that need to be created.
+	// Determine which map we're writing the value to.
+	// We split by '/' to determine any sub-maps that need to be created.
 	m := raw
 	children := strings.Split(key, "/")
 	if len(children) > 0 {
@@ -113,7 +114,7 @@ func decodeHook(fromType reflect.Type, toType reflect.Type, data interface{}) (i
 		object := reflect.New(toType.Elem()).Interface()
 		err := object.(encoding.TextUnmarshaler).UnmarshalText([]byte(data.(string)))
 		if err != nil {
-			return nil, fmt.Errorf("Error unmarshaling %v: %v", data, err)
+			return nil, fmt.Errorf("error unmarshaling %v: %v", data, err)
 		}
 		return object, nil
 	}
@@ -170,7 +171,7 @@ func (kv *KvSource) StoreConfig(config interface{}) error {
 	if err := collateKvRecursive(reflect.ValueOf(config), kvMap, kv.Prefix); err != nil {
 		return err
 	}
-	keys := []string{}
+	var keys []string
 	for key := range kvMap {
 		keys = append(keys, key)
 	}
@@ -198,7 +199,7 @@ func collateKvRecursive(objValue reflect.Value, kv map[string]string, key string
 	if marshaler, ok := objValue.Interface().(encoding.TextMarshaler); ok {
 		test, err := marshaler.MarshalText()
 		if err != nil {
-			return fmt.Errorf("Error marshaling key %s: %v", name, err)
+			return fmt.Errorf("error marshaling key %s: %v", name, err)
 		}
 		kv[name] = string(test)
 		return nil
@@ -252,7 +253,7 @@ func collateKvRecursive(objValue reflect.Value, kv map[string]string, key string
 	case reflect.Map:
 		for _, k := range objValue.MapKeys() {
 			if k.Kind() == reflect.Struct {
-				return errors.New("Struct as key not supported")
+				return errors.New("struct as key not supported")
 			}
 			name = key + "/" + fmt.Sprint(k)
 			if err := collateKvRecursive(objValue.MapIndex(k), kv, name); err != nil {
@@ -280,14 +281,14 @@ func collateKvRecursive(objValue reflect.Value, kv map[string]string, key string
 		kv[name] = fmt.Sprint(objValue)
 
 	default:
-		return fmt.Errorf("Kind %s not supported", kind.String())
+		return fmt.Errorf("kind %s not supported", kind.String())
 	}
 	return nil
 }
 
-// ListRecursive lists all key value childrens under key
+// ListRecursive lists all key value children under key
 func (kv *KvSource) ListRecursive(key string, pairs map[string][]byte) error {
-	pairsN1, err := kv.List(key)
+	pairsN1, err := kv.List(key, nil)
 	if err == store.ErrKeyNotFound {
 		return nil
 	}
@@ -295,7 +296,7 @@ func (kv *KvSource) ListRecursive(key string, pairs map[string][]byte) error {
 		return err
 	}
 	if len(pairsN1) == 0 {
-		pairLeaf, err := kv.Get(key)
+		pairLeaf, err := kv.Get(key, nil)
 		if err != nil {
 			return err
 		}

@@ -9,7 +9,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/Masterminds/sprig"
-	"github.com/containous/traefik/autogen"
+	"github.com/containous/traefik/autogen/gentemplates"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
@@ -31,7 +31,7 @@ type BaseProvider struct {
 	DebugLogGeneratedTemplate bool              `description:"Enable debug logging of generated configuration template." export:"true"`
 }
 
-// MatchConstraints must match with EVERY single contraint
+// MatchConstraints must match with EVERY single constraint
 // returns first constraint that do not match or nil
 func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint) {
 	// if there is no tags and no constraints, filtering is disabled
@@ -52,10 +52,6 @@ func (p *BaseProvider) MatchConstraints(tags []string) (bool, *types.Constraint)
 
 // GetConfiguration return the provider configuration using templating
 func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap template.FuncMap, templateObjects interface{}) (*types.Configuration, error) {
-	var (
-		buf []byte
-		err error
-	)
 	configuration := new(types.Configuration)
 
 	var defaultFuncMap = sprig.TxtFuncMap()
@@ -68,18 +64,13 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 	}
 
 	tmpl := template.New(p.Filename).Funcs(defaultFuncMap)
-	if len(p.Filename) > 0 {
-		buf, err = ioutil.ReadFile(p.Filename)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		buf, err = autogen.Asset(defaultTemplateFile)
-		if err != nil {
-			return nil, err
-		}
+
+	tmplContent, err := p.getTemplateContent(defaultTemplateFile)
+	if err != nil {
+		return nil, err
 	}
-	_, err = tmpl.Parse(string(buf))
+
+	_, err = tmpl.Parse(tmplContent)
 	if err != nil {
 		return nil, err
 	}
@@ -100,11 +91,32 @@ func (p *BaseProvider) GetConfiguration(defaultTemplateFile string, funcMap temp
 	return configuration, nil
 }
 
+func (p *BaseProvider) getTemplateContent(defaultTemplateFile string) (string, error) {
+	if len(p.Filename) > 0 {
+		buf, err := ioutil.ReadFile(p.Filename)
+		if err != nil {
+			return "", err
+		}
+		return string(buf), nil
+	}
+
+	if strings.HasSuffix(defaultTemplateFile, ".tmpl") {
+		buf, err := gentemplates.Asset(defaultTemplateFile)
+		if err != nil {
+			return "", err
+		}
+		return string(buf), nil
+	}
+
+	return defaultTemplateFile, nil
+}
+
 func split(sep, s string) []string {
 	return strings.Split(s, sep)
 }
 
 // Normalize transform a string that work with the rest of traefik
+// Replace '.' with '-' in quoted keys because of this issue https://github.com/BurntSushi/toml/issues/78
 func Normalize(name string) string {
 	fargs := func(c rune) bool {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c)

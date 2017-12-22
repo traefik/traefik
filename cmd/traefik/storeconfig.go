@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	fmtlog "log"
+	stdlog "log"
 
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
@@ -29,32 +29,77 @@ func runStoreConfig(kv *staert.KvSource, traefikConfiguration *TraefikConfigurat
 		if kv == nil {
 			return fmt.Errorf("error using command storeconfig, no Key-value store defined")
 		}
+
+		fileConfig := traefikConfiguration.GlobalConfiguration.File
+		if fileConfig != nil {
+			traefikConfiguration.GlobalConfiguration.File = nil
+			if len(fileConfig.Filename) == 0 && len(fileConfig.Directory) == 0 {
+				fileConfig.Filename = traefikConfiguration.ConfigFile
+			}
+		}
+
 		jsonConf, err := json.Marshal(traefikConfiguration.GlobalConfiguration)
 		if err != nil {
 			return err
 		}
-		fmtlog.Printf("Storing configuration: %s\n", jsonConf)
+		stdlog.Printf("Storing configuration: %s\n", jsonConf)
+
 		err = kv.StoreConfig(traefikConfiguration.GlobalConfiguration)
 		if err != nil {
 			return err
 		}
-		if traefikConfiguration.GlobalConfiguration.ACME != nil && len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
-			// convert ACME json file to KV store
-			localStore := acme.NewLocalStore(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
-			object, err := localStore.Load()
+
+		if fileConfig != nil {
+			jsonConf, err = json.Marshal(fileConfig)
 			if err != nil {
 				return err
 			}
+
+			stdlog.Printf("Storing file configuration: %s\n", jsonConf)
+			config, err := fileConfig.BuildConfiguration()
+			if err != nil {
+				return err
+			}
+
+			stdlog.Print("Writing config to KV")
+			err = kv.StoreConfig(config)
+			if err != nil {
+				return err
+			}
+		}
+		if traefikConfiguration.GlobalConfiguration.ACME != nil {
+			var object cluster.Object
+			if len(traefikConfiguration.GlobalConfiguration.ACME.StorageFile) > 0 {
+				// convert ACME json file to KV store
+				localStore := acme.NewLocalStore(traefikConfiguration.GlobalConfiguration.ACME.StorageFile)
+				object, err = localStore.Load()
+				if err != nil {
+					return err
+				}
+
+			} else {
+				// Create an empty account to create all the keys into the KV store
+				account := &acme.Account{}
+				account.Init()
+				object = account
+			}
+
 			meta := cluster.NewMetadata(object)
 			err = meta.Marshall()
 			if err != nil {
 				return err
 			}
+
 			source := staert.KvSource{
 				Store:  kv,
 				Prefix: traefikConfiguration.GlobalConfiguration.ACME.Storage,
 			}
 			err = source.StoreConfig(meta)
+			if err != nil {
+				return err
+			}
+			// Force to delete storagefile
+			err = kv.Delete(kv.Prefix + "/acme/storagefile")
 			if err != nil {
 				return err
 			}

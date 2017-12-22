@@ -8,6 +8,7 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/file"
 	"github.com/containous/traefik/tls"
+	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -138,7 +139,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
-				Redirect: &Redirect{
+				Redirect: &types.Redirect{
 					EntryPoint:  "RedirectEntryPoint",
 					Regex:       "RedirectRegex",
 					Replacement: "RedirectReplacement",
@@ -171,7 +172,7 @@ func TestEntryPoints_Set(t *testing.T) {
 			expectedEntryPointName: "foo",
 			expectedEntryPoint: &EntryPoint{
 				Address: ":8000",
-				Redirect: &Redirect{
+				Redirect: &types.Redirect{
 					EntryPoint:  "RedirectEntryPoint",
 					Regex:       "RedirectRegex",
 					Replacement: "RedirectReplacement",

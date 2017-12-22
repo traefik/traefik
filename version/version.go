@@ -32,7 +32,7 @@ var (
 
 // AddRoutes add version routes on a router
 func (v Handler) AddRoutes(router *mux.Router) {
-	router.Methods("GET").Path("/api/version").
+	router.Methods(http.MethodGet).Path("/api/version").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			v := struct {
 				Version  string
@@ -63,7 +63,7 @@ func CheckNewVersion() {
 		return
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		log.Warnf("Error checking new version: status=%s", resp.Status)
 		return
 	}

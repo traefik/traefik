@@ -8,6 +8,8 @@ import (
 	"text/template"
 
 	"github.com/containous/traefik/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type myProvider struct {
@@ -430,4 +432,82 @@ func TestSprigFunctions(t *testing.T) {
 	if _, ok := configuration.Frontends["frontend-1"]; !ok {
 		t.Fatal("Frontend frontend-1 should exists, but it not")
 	}
+}
+
+func TestBaseProvider_GetConfiguration(t *testing.T) {
+	baseProvider := BaseProvider{}
+
+	testCases := []struct {
+		name                string
+		defaultTemplateFile string
+		expectedContent     string
+	}{
+		{
+			defaultTemplateFile: "templates/docker.tmpl",
+			expectedContent:     readTemplateFile(t, "./../templates/docker.tmpl"),
+		},
+		{
+			defaultTemplateFile: `template content`,
+			expectedContent:     `template content`,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+
+			content, err := baseProvider.getTemplateContent(test.defaultTemplateFile)
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedContent, content)
+		})
+	}
+}
+
+func TestNormalize(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		name     string
+		expected string
+	}{
+		{
+			desc:     "without special chars",
+			name:     "foobar",
+			expected: "foobar",
+		},
+		{
+			desc:     "with special chars",
+			name:     "foo.foo.foo;foo:foo!foo/foo\\foo)foo_123-ç_àéè",
+			expected: "foo-foo-foo-foo-foo-foo-foo-foo-foo-123-ç-àéè",
+		},
+		{
+			desc:     "starts with special chars",
+			name:     ".foo.foo",
+			expected: "foo-foo",
+		},
+		{
+			desc:     "ends with special chars",
+			name:     "foo.foo.",
+			expected: "foo-foo",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := Normalize(test.name)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func readTemplateFile(t *testing.T, path string) string {
+	t.Helper()
+	expectedContent, err := ioutil.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(expectedContent)
 }

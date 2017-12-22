@@ -40,7 +40,7 @@ func SplitRatios(values []float64) (good map[float64]bool, bad map[float64]bool)
 }
 
 // SplitFloat64 provides simple anomaly detection for skewed data sets with no particular distribution.
-// In essense it applies the formula if(v > median(values) + threshold * medianAbsoluteDeviation) -> anomaly
+// In essence it applies the formula if(v > median(values) + threshold * medianAbsoluteDeviation) -> anomaly
 // There's a corner case where there are just 2 values, so by definition there's no value that exceeds the threshold.
 // This case is solved by introducing additional value that we know is good, e.g. 0. That helps to improve the detection results
 // on such data sets.

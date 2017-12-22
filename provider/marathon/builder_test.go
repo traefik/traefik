@@ -4,11 +4,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/provider/label"
 	"github.com/gambol99/go-marathon"
 )
 
-const testTaskName string = "taskID"
+const testTaskName = "taskID"
 
 // Functions related to building applications.
 
@@ -38,9 +38,15 @@ func appPorts(ports ...int) func(*marathon.Application) {
 	}
 }
 
-func label(key, value string) func(*marathon.Application) {
+func withLabel(key, value string) func(*marathon.Application) {
 	return func(app *marathon.Application) {
 		app.AddLabel(key, value)
+	}
+}
+
+func constraint(value string) func(*marathon.Application) {
+	return func(app *marathon.Application) {
+		app.AddConstraint(strings.Split(value, ":")...)
 	}
 }
 
@@ -49,9 +55,9 @@ func labelWithService(key, value string, serviceName string) func(*marathon.Appl
 		panic("serviceName can not be empty")
 	}
 
-	property := strings.TrimPrefix(key, types.LabelPrefix)
+	property := strings.TrimPrefix(key, label.Prefix)
 	return func(app *marathon.Application) {
-		app.AddLabel(types.LabelPrefix+serviceName+"."+property, value)
+		app.AddLabel(label.Prefix+serviceName+"."+property, value)
 	}
 }
 

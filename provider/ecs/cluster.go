@@ -21,12 +21,12 @@ func (c *Clusters) Set(str string) error {
 }
 
 // Get Clusters
-func (c *Clusters) Get() interface{} { return Clusters(*c) }
+func (c *Clusters) Get() interface{} { return *c }
 
 // String return slice in a string
 func (c *Clusters) String() string { return fmt.Sprintf("%v", *c) }
 
 // SetValue sets Clusters into the parser
 func (c *Clusters) SetValue(val interface{}) {
-	*c = Clusters(val.(Clusters))
+	*c = val.(Clusters)
 }

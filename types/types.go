@@ -142,17 +142,25 @@ func (h Headers) HasSecureHeadersDefined() bool {
 
 // Frontend holds frontend configuration.
 type Frontend struct {
-	EntryPoints          []string             `json:"entryPoints,omitempty"`
-	Backend              string               `json:"backend,omitempty"`
-	Routes               map[string]Route     `json:"routes,omitempty"`
-	PassHostHeader       bool                 `json:"passHostHeader,omitempty"`
-	PassTLSCert          bool                 `json:"passTLSCert,omitempty"`
-	Priority             int                  `json:"priority"`
-	BasicAuth            []string             `json:"basicAuth"`
-	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
-	Headers              Headers              `json:"headers,omitempty"`
-	Errors               map[string]ErrorPage `json:"errors,omitempty"`
-	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
+	EntryPoints          []string              `json:"entryPoints,omitempty"`
+	Backend              string                `json:"backend,omitempty"`
+	Routes               map[string]Route      `json:"routes,omitempty"`
+	PassHostHeader       bool                  `json:"passHostHeader,omitempty"`
+	PassTLSCert          bool                  `json:"passTLSCert,omitempty"`
+	Priority             int                   `json:"priority"`
+	BasicAuth            []string              `json:"basicAuth"`
+	WhitelistSourceRange []string              `json:"whitelistSourceRange,omitempty"`
+	Headers              Headers               `json:"headers,omitempty"`
+	Errors               map[string]*ErrorPage `json:"errors,omitempty"`
+	RateLimit            *RateLimit            `json:"ratelimit,omitempty"`
+	Redirect             *Redirect             `json:"redirect,omitempty"`
+}
+
+// Redirect configures a redirection of an entry point to another, or to an URL
+type Redirect struct {
+	EntryPoint  string `json:"entryPoint,omitempty"`
+	Regex       string `json:"regex,omitempty"`
+	Replacement string `json:"replacement,omitempty"`
 }
 
 // LoadBalancerMethod holds the method of load balancing to use.
@@ -304,7 +312,7 @@ func (cs *Constraints) String() string { return fmt.Sprintf("%+v", *cs) }
 
 //SetValue sets []*Constraint into the parser
 func (cs *Constraints) SetValue(val interface{}) {
-	*cs = Constraints(val.(Constraints))
+	*cs = val.(Constraints)
 }
 
 // Type exports the Constraints type as a string
@@ -419,14 +427,14 @@ func (b *Buckets) Set(str string) error {
 }
 
 //Get []float64
-func (b *Buckets) Get() interface{} { return Buckets(*b) }
+func (b *Buckets) Get() interface{} { return *b }
 
 //String return slice in a string
 func (b *Buckets) String() string { return fmt.Sprintf("%v", *b) }
 
 //SetValue sets []float64 into the parser
 func (b *Buckets) SetValue(val interface{}) {
-	*b = Buckets(val.(Buckets))
+	*b = val.(Buckets)
 }
 
 // TraefikLog holds the configuration settings for the traefik logger.

@@ -2,12 +2,13 @@ package staert
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/containous/flaeg"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
+
+	"github.com/BurntSushi/toml"
+	"github.com/containous/flaeg"
 )
 
 // Source interface must be satisfy to Add any kink of Source to Staert as like as TomlFile or Flaeg
@@ -21,7 +22,7 @@ type Staert struct {
 	sources []Source
 }
 
-// NewStaert creats and return a pointer on Staert. Need defaultConfig and defaultPointersConfig given by references
+// NewStaert creates and return a pointer on Staert. Need defaultConfig and defaultPointersConfig given by references
 func NewStaert(rootCommand *flaeg.Command) *Staert {
 	s := Staert{
 		command: rootCommand,
@@ -62,7 +63,7 @@ func (s *Staert) LoadConfig() (interface{}, error) {
 					fCmdConfigType := reflect.TypeOf(fCmd.Config)
 					sCmdConfigType := reflect.TypeOf(s.command.Config)
 					if fCmdConfigType != sCmdConfigType {
-						return nil, fmt.Errorf("Command %s : Config type doesn't match with root command config type. Expected %s got %s", fCmd.Name, sCmdConfigType.Name(), fCmdConfigType.Name())
+						return nil, fmt.Errorf("command %s : Config type doesn't match with root command config type. Expected %s got %s", fCmd.Name, sCmdConfigType.Name(), fCmdConfigType.Name())
 					}
 					s.command = fCmd
 				} else {
@@ -90,7 +91,7 @@ type TomlSource struct {
 	fullpath     string
 }
 
-// NewTomlSource creats and return a pointer on TomlSource.
+// NewTomlSource creates and return a pointer on TomlSource.
 // Parameter filename is the file name (without extension type, ".toml" will be added)
 // dirNfullpath may contain directories or fullpath to the file.
 func NewTomlSource(filename string, dirNfullpath []string) *TomlSource {
@@ -118,13 +119,13 @@ func preprocessDir(dirIn string) (string, error) {
 func findFile(filename string, dirNfile []string) string {
 	for _, df := range dirNfile {
 		if df != "" {
-			fullpath, _ := preprocessDir(df)
-			if fileinfo, err := os.Stat(fullpath); err == nil && !fileinfo.IsDir() {
-				return fullpath
+			fullPath, _ := preprocessDir(df)
+			if fileInfo, err := os.Stat(fullPath); err == nil && !fileInfo.IsDir() {
+				return fullPath
 			}
-			fullpath = fullpath + "/" + filename + ".toml"
-			if fileinfo, err := os.Stat(fullpath); err == nil && !fileinfo.IsDir() {
-				return fullpath
+			fullPath = fullPath + "/" + filename + ".toml"
+			if fileInfo, err := os.Stat(fullPath); err == nil && !fileInfo.IsDir() {
+				return fullPath
 			}
 		}
 	}
@@ -167,7 +168,7 @@ func (ts *TomlSource) Parse(cmd *flaeg.Command) (*flaeg.Command, error) {
 }
 
 func generateArgs(metadata toml.MetaData, flags []string) ([]string, bool, error) {
-	flaegArgs := []string{}
+	var flaegArgs []string
 	keys := metadata.Keys()
 	hasUnderField := false
 	for i, key := range keys {

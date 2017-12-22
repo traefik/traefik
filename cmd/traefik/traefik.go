@@ -15,6 +15,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/acme"
+	"github.com/containous/traefik/collector"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/job"
 	"github.com/containous/traefik/log"
@@ -150,14 +151,18 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 		checkNewVersion()
 	}
 
+	stats(globalConfiguration)
+
 	log.Debugf("Global configuration loaded %s", string(jsonConf))
 	svr := server.NewServer(*globalConfiguration)
 	svr.Start()
 	defer svr.Close()
+
 	sent, err := daemon.SdNotify(false, "READY=1")
 	if !sent && err != nil {
 		log.Error("Fail to notify", err)
 	}
+
 	t, err := daemon.SdWatchdogEnabled(false)
 	if err != nil {
 		log.Error("Problem with watchdog", err)
@@ -168,12 +173,18 @@ func run(globalConfiguration *configuration.GlobalConfiguration, configFile stri
 		safe.Go(func() {
 			tick := time.Tick(t)
 			for range tick {
-				if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
-					log.Error("Fail to tick watchdog")
+				_, errHealthCheck := healthCheck(*globalConfiguration)
+				if globalConfiguration.Ping == nil || errHealthCheck == nil {
+					if ok, _ := daemon.SdNotify(false, "WATCHDOG=1"); !ok {
+						log.Error("Fail to tick watchdog")
+					}
+				} else {
+					log.Error(errHealthCheck)
 				}
 			}
 		})
 	}
+
 	svr.Wait()
 	log.Info("Shutting down")
 	logrus.Exit(0)
@@ -237,14 +248,38 @@ func configureLogging(globalConfiguration *configuration.GlobalConfiguration) {
 }
 
 func checkNewVersion() {
-	ticker := time.NewTicker(24 * time.Hour)
+	ticker := time.Tick(24 * time.Hour)
 	safe.Go(func() {
-		time.Sleep(10 * time.Minute)
-		version.CheckNewVersion()
-		for {
-			select {
-			case <-ticker.C:
-				version.CheckNewVersion()
+		for time.Sleep(10 * time.Minute); ; <-ticker {
+			version.CheckNewVersion()
+		}
+	})
+}
+
+func stats(globalConfiguration *configuration.GlobalConfiguration) {
+	if globalConfiguration.SendAnonymousUsage {
+		log.Info(`
+Stats collection is enabled.
+Many thanks for contributing to Traefik's improvement by allowing us to receive anonymous information from your configuration.
+Help us improve Traefik by leaving this feature on :)
+More details on: https://docs.traefik.io/basic/#collected-data
+`)
+		collect(globalConfiguration)
+	} else {
+		log.Info(`
+Stats collection is disabled.
+Help us improve Traefik by turning this feature on :)
+More details on: https://docs.traefik.io/basic/#collected-data
+`)
+	}
+}
+
+func collect(globalConfiguration *configuration.GlobalConfiguration) {
+	ticker := time.Tick(24 * time.Hour)
+	safe.Go(func() {
+		for time.Sleep(10 * time.Minute); ; <-ticker {
+			if err := collector.Collect(globalConfiguration); err != nil {
+				log.Debug(err)
 			}
 		}
 	})

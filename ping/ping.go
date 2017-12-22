@@ -14,7 +14,7 @@ type Handler struct {
 
 // AddRoutes add ping routes on a router
 func (g Handler) AddRoutes(router *mux.Router) {
-	router.Methods("GET", "HEAD").Path("/ping").
+	router.Methods(http.MethodGet, http.MethodHead).Path("/ping").
 		HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 			fmt.Fprint(response, "OK")
 		})

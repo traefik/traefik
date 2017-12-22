@@ -261,6 +261,11 @@ Here, `frontend1` will be matched before `frontend2` (`10 > 5`).
 Custom headers can be configured through the frontends, to add headers to either requests or responses that match the frontend's rules.
 This allows for setting headers such as `X-Script-Name` to be added to the request, or custom headers to be added to the response.
 
+!!! warning
+    If the custom header name is the same as one header name of the request or response, it will be replaced.
+
+In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+
 ```toml
 [frontends]
   [frontends.frontend1]
@@ -273,7 +278,20 @@ This allows for setting headers such as `X-Script-Name` to be added to the reque
     rule = "PathPrefixStrip:/cheese"
 ```
 
-In this example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, and the `X-Custom-Response-Header` added to the response.
+In this second  example, all matches to the path `/cheese` will have the `X-Script-Name` header added to the proxied request, the `X-Custom-Request-Header` removed to the request and the `X-Custom-Response-Header` removed to the response.
+
+```toml
+[frontends]
+  [frontends.frontend1]
+  backend = "backend1"
+    [frontends.frontend1.headers.customresponseheaders]
+    X-Custom-Response-Header = ""
+    [frontends.frontend1.headers.customrequestheaders]
+    X-Script-Name = "test"
+    X-Custom-Request-Header = ""
+    [frontends.frontend1.routes.test_1]
+    rule = "PathPrefixStrip:/cheese"
+```
 
 #### Security headers
 
@@ -303,42 +321,13 @@ In this example, traffic routed through the first frontend will have the `X-Fram
 !!! note
     The detailed documentation for those security headers can be found in [unrolled/secure](https://github.com/unrolled/secure#available-options).
 
-#### Rate limiting
-
-Rate limiting can be configured per frontend.  
-Multiple sets of rates can be added to each frontend, but the time periods must be unique.
-
-```toml
-[frontends]
-    [frontends.frontend1]
-    passHostHeader = true
-    entrypoints = ["http"]
-    backend = "backend1"
-        [frontends.frontend1.routes.test_1]
-        rule = "Path:/"
-    [frontends.frontend1.ratelimit]
-    extractorfunc = "client.ip"
-        [frontends.frontend1.ratelimit.rateset.rateset1]
-        period = "10s"
-        average = 100
-        burst = 200
-        [frontends.frontend1.ratelimit.rateset.rateset2]
-        period = "3s"
-        average = 5
-        burst = 10
-```
-
-In the above example, frontend1 is configured to limit requests by the client's ip address.  
-An average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.  
-These can "burst" up to 10 and 200 in each period respectively.
-
 ### Backends
 
 A backend is responsible to load-balance the traffic coming from one or more frontends to a set of http servers.
 
 Various methods of load-balancing are supported:
 
-- `wrr`: Weighted Round Robin
+- `wrr`: Weighted Round Robin.
 - `drr`: Dynamic Round Robin: increases weights on servers that perform better than others.
     It also rolls back to original weights if the servers have changed.
 
@@ -355,16 +344,13 @@ It can be configured using:
 
 For example:
 
-- `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window for a frontend
+- `NetworkErrorRatio() > 0.5`: watch error ratio over 10 second sliding window for a frontend.
 - `LatencyAtQuantileMS(50.0) > 50`:  watch latency at quantile in milliseconds.
-- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in range [500-600) to  [0-600)
+- `ResponseCodeRatio(500, 600, 0, 600) > 0.5`: ratio of response codes in ranges [500-600) and [0-600).
 
-To proactively prevent backends from being overwhelmed with high load, a maximum connection limit can
-also be applied to each backend.
+To proactively prevent backends from being overwhelmed with high load, a maximum connection limit can also be applied to each backend.
 
-Maximum connections can be configured by specifying an integer value for `maxconn.amount` and
-`maxconn.extractorfunc` which is a strategy used to determine how to categorize requests in order to
-evaluate the maximum connections.
+Maximum connections can be configured by specifying an integer value for `maxconn.amount` and `maxconn.extractorfunc` which is a strategy used to determine how to categorize requests in order to evaluate the maximum connections.
 
 For example:
 ```toml
@@ -481,8 +467,8 @@ Here is an example of backends and servers definition:
 
 Træfik's configuration has two parts:
 
-- The [static Træfik configuration](/basics#static-trfk-configuration) which is loaded only at the beginning.
-- The [dynamic Træfik configuration](/basics#dynamic-trfk-configuration) which can be hot-reloaded (no need to restart the process).
+- The [static Træfik configuration](/basics#static-trfik-configuration) which is loaded only at the beginning.
+- The [dynamic Træfik configuration](/basics#dynamic-trfik-configuration) which can be hot-reloaded (no need to restart the process).
 
 ### Static Træfik configuration
 
@@ -546,6 +532,7 @@ The dynamic configuration concerns :
 - [Frontends](/basics/#frontends)
 - [Backends](/basics/#backends)
 - [Servers](/basics/#servers)
+- HTTPS Certificates
 
 Træfik can hot-reload those rules which could be provided by [multiple configuration backends](/configuration/commons).
 
@@ -566,7 +553,7 @@ traefik [command] [--flag=flag_argument]
 List of Træfik available commands with description :
 
 - `version` : Print version
-- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-trfk-configuration) section to get documentation on it.
+- `storeconfig` : Store the static Traefik configuration into a Key-value stores. Please refer to the [Store Træfik configuration](/user-guide/kv-config/#store-configuration-in-key-value-store) section to get documentation on it.
 - `bug`: The easiest way to submit a pre-filled issue.
 - `healthcheck`: Calls Traefik `/ping` to check health.
 
@@ -601,11 +588,130 @@ This command allows to check the health of Traefik. Its exit status is `0` if Tr
 This can be used with Docker [HEALTHCHECK](https://docs.docker.com/engine/reference/builder/#healthcheck) instruction or any other health check orchestration mechanism.
 
 !!! note
-    The [`web` provider](/configuration/backends/web) must be enabled to allow `/ping` calls by the `healthcheck` command.
+    The [`ping`](/configuration/ping) must be enabled to allow the `healthcheck` command to call `/ping`.
 
 ```bash
 traefik healthcheck
 ```
 ```bash
 OK: http://:8082/ping
+```
+
+
+## Collected Data
+
+**This feature is disabled by default.**
+
+You can read the public proposal on this topic [here](https://github.com/containous/traefik/issues/2369).
+
+### Why ?
+
+In order to help us learn more about how Træfik is being used and improve it, we collect anonymous usage statistics from running instances.
+Those data help us prioritize our developments and focus on what's more important (for example, which configuration backend is used and which is not used).
+
+### What ?
+
+Once a day (the first call begins 10 minutes after the start of Træfik), we collect:
+- the Træfik version
+- a hash of the configuration
+- an **anonymous version** of the static configuration:
+    - token, user name, password, URL, IP, domain, email, etc, are removed
+
+!!! note
+    We do not collect the dynamic configuration (frontends & backends).
+
+!!! note
+    We do not collect data behind the scenes to run advertising programs or to sell such data to third-party.
+
+#### Here is an example
+
+- Source configuration:
+
+```toml
+[entryPoints]
+    [entryPoints.http]
+       address = ":80"
+
+[web]
+  address = ":8080"
+
+[Docker]
+  endpoint = "tcp://10.10.10.10:2375"
+  domain = "foo.bir"
+  exposedByDefault = true
+  swarmMode = true
+
+  [Docker.TLS]
+    CA = "dockerCA"
+    Cert = "dockerCert"
+    Key = "dockerKey"
+    InsecureSkipVerify = true
+
+[ECS]
+  Domain = "foo.bar"
+  ExposedByDefault = true
+  Clusters = ["foo-bar"]
+  Region = "us-west-2"
+  AccessKeyID = "AccessKeyID"
+  SecretAccessKey = "SecretAccessKey"
+```
+
+- Obfuscated and anonymous configuration:
+
+```toml
+[entryPoints]
+    [entryPoints.http]
+       address = ":80"
+
+[web]
+  address = ":8080"
+
+[Docker]
+  Endpoint = "xxxx"
+  Domain = "xxxx"
+  ExposedByDefault = true
+  SwarmMode = true
+
+  [Docker.TLS]
+    CA = "xxxx"
+    Cert = "xxxx"
+    Key = "xxxx"
+    InsecureSkipVerify = false
+
+[ECS]
+  Domain = "xxxx"
+  ExposedByDefault = true
+  Clusters = []
+  Region = "us-west-2"
+  AccessKeyID = "xxxx"
+  SecretAccessKey = "xxxx"
+```
+
+### Show me the code !
+
+If you want to dig into more details, here is the source code of the collecting system: [collector.go](https://github.com/containous/traefik/blob/master/collector/collector.go)
+
+By default we anonymize all configuration fields, except fields tagged with `export=true`.
+
+You can check all fields in the [godoc](https://godoc.org/github.com/containous/traefik/configuration#GlobalConfiguration).
+
+### How to enable this ?
+
+You can enable the collecting system by:
+
+- adding this line in the configuration TOML file:
+
+```toml
+# Send anonymous usage data
+#
+# Optional
+# Default: false
+#
+sendAnonymousUsage = true
+```
+
+- adding this flag in the CLI:
+
+```bash
+./traefik --sendAnonymousUsage=true
 ```

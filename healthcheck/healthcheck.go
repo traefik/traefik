@@ -28,10 +28,11 @@ func GetHealthCheck() *HealthCheck {
 
 // Options are the public health check options.
 type Options struct {
-	Path     string
-	Port     int
-	Interval time.Duration
-	LB       LoadBalancer
+	Path      string
+	Port      int
+	Transport http.RoundTripper
+	Interval  time.Duration
+	LB        LoadBalancer
 }
 
 func (opt Options) String() string {
@@ -132,7 +133,7 @@ func checkBackend(currentBackend *BackendHealthCheck) {
 
 func (backend *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request, error) {
 	if backend.Port == 0 {
-		return http.NewRequest("GET", serverURL.String()+backend.Path, nil)
+		return http.NewRequest(http.MethodGet, serverURL.String()+backend.Path, nil)
 	}
 
 	// copy the url and add the port to the host
@@ -141,12 +142,13 @@ func (backend *BackendHealthCheck) newRequest(serverURL *url.URL) (*http.Request
 	u.Host = net.JoinHostPort(u.Hostname(), strconv.Itoa(backend.Port))
 	u.Path = u.Path + backend.Path
 
-	return http.NewRequest("GET", u.String(), nil)
+	return http.NewRequest(http.MethodGet, u.String(), nil)
 }
 
 func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) bool {
 	client := http.Client{
-		Timeout: backend.requestTimeout,
+		Timeout:   backend.requestTimeout,
+		Transport: backend.Options.Transport,
 	}
 	req, err := backend.newRequest(serverURL)
 	if err != nil {
@@ -159,5 +161,5 @@ func checkHealth(serverURL *url.URL, backend *BackendHealthCheck) bool {
 	if err == nil {
 		defer resp.Body.Close()
 	}
-	return err == nil && resp.StatusCode == 200
+	return err == nil && resp.StatusCode == http.StatusOK
 }

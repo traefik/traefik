@@ -1,10 +1,15 @@
 [backends]{{range $serviceName, $instances := .Services}}
   [backends.backend-{{ $serviceName }}.loadbalancer]
     method = "{{ getLoadBalancerMethod $instances}}"
-    sticky = {{ getLoadBalancerSticky $instances}}
+    sticky = {{ getSticky $instances}}
     {{if hasStickinessLabel $instances}} 
     [backends.backend-{{ $serviceName }}.loadbalancer.stickiness]
       cookieName = "{{getStickinessCookieName $instances}}"
+    {{end}}
+    {{ if hasHealthCheckLabels $instances }}
+    [backends.backend-{{ $serviceName }}.healthcheck]
+      path = "{{getHealthCheckPath $instances }}"
+      interval = "{{getHealthCheckInterval $instances }}"
     {{end}}
 
   {{range $index, $i := $instances}}

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/configuration"
 	"github.com/containous/traefik/middlewares/accesslog"
@@ -23,6 +24,7 @@ import (
 	"github.com/containous/traefik/provider/rest"
 	"github.com/containous/traefik/provider/zk"
 	"github.com/containous/traefik/types"
+	sf "github.com/jjcollinge/servicefabric"
 )
 
 // TraefikConfiguration holds GlobalConfiguration and other stuff
@@ -110,7 +112,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultZookeeper zk.Provider
 	defaultZookeeper.Watch = true
 	defaultZookeeper.Endpoint = "127.0.0.1:2181"
-	defaultZookeeper.Prefix = "/traefik"
+	defaultZookeeper.Prefix = "traefik"
 	defaultZookeeper.Constraints = types.Constraints{}
 
 	//default Boltdb
@@ -163,6 +165,11 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultEureka eureka.Provider
 	defaultEureka.Delay = "30s"
 
+	// default ServiceFabric
+	var defaultServiceFabric servicefabric.Provider
+	defaultServiceFabric.APIVersion = sf.DefaultAPIVersion
+	defaultServiceFabric.RefreshSeconds = 10
+
 	// default Ping
 	var defaultPing = ping.Handler{
 		EntryPoint: "traefik",
@@ -197,7 +204,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	}
 
 	// default LifeCycle
-	defaultLifeycle := configuration.LifeCycle{
+	defaultLifeCycle := configuration.LifeCycle{
 		GraceTimeOut: flaeg.Duration(configuration.DefaultGraceTimeout),
 	}
 
@@ -253,7 +260,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 		ForwardingTimeouts: &forwardingTimeouts,
 		TraefikLog:         &defaultTraefikLog,
 		AccessLog:          &defaultAccessLog,
-		LifeCycle:          &defaultLifeycle,
+		LifeCycle:          &defaultLifeCycle,
 		Ping:               &defaultPing,
 		API:                &defaultAPI,
 		Metrics:            &defaultMetrics,
@@ -273,7 +280,7 @@ func NewTraefikConfiguration() *TraefikConfiguration {
 			LogLevel:                  "ERROR",
 			EntryPoints:               map[string]*configuration.EntryPoint{},
 			Constraints:               types.Constraints{},
-			DefaultEntryPoints:        []string{},
+			DefaultEntryPoints:        []string{"http"},
 			ProvidersThrottleDuration: flaeg.Duration(2 * time.Second),
 			MaxIdleConnsPerHost:       200,
 			IdleTimeout:               flaeg.Duration(0),

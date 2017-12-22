@@ -4,6 +4,7 @@ import (
 	"expvar"
 	"fmt"
 	"net/http"
+	"net/http/pprof"
 	"runtime"
 
 	"github.com/containous/mux"
@@ -22,7 +23,7 @@ type DebugHandler struct{}
 
 // AddRoutes add debug routes on a router
 func (g DebugHandler) AddRoutes(router *mux.Router) {
-	router.Methods("GET").Path("/debug/vars").
+	router.Methods(http.MethodGet).Path("/debug/vars").
 		HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			fmt.Fprint(w, "{\n")
@@ -36,4 +37,10 @@ func (g DebugHandler) AddRoutes(router *mux.Router) {
 			})
 			fmt.Fprint(w, "\n}\n")
 		})
+
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/cmdline").HandlerFunc(pprof.Cmdline)
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/profile").HandlerFunc(pprof.Profile)
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/symbol").HandlerFunc(pprof.Symbol)
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/trace").HandlerFunc(pprof.Trace)
+	router.Methods(http.MethodGet).PathPrefix("/debug/pprof/").HandlerFunc(pprof.Index)
 }

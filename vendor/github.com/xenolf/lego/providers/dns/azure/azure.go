@@ -30,7 +30,7 @@ type DNSProvider struct {
 
 // NewDNSProvider returns a DNSProvider instance configured for azure.
 // Credentials must be passed in the environment variables: AZURE_CLIENT_ID,
-// AZURE_CLIENT_SECRET, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID
+// AZURE_CLIENT_SECRET, AZURE_SUBSCRIPTION_ID, AZURE_TENANT_ID, AZURE_RESOURCE_GROUP
 func NewDNSProvider() (*DNSProvider, error) {
 	clientId := os.Getenv("AZURE_CLIENT_ID")
 	clientSecret := os.Getenv("AZURE_CLIENT_SECRET")

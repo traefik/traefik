@@ -189,6 +189,7 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 	stopStreamExample := make(chan bool)
 	defer func() { stopStreamExample <- true }()
 	lis, err := net.Listen("tcp", ":0")
+	c.Assert(err, check.IsNil)
 	_, port, err := net.SplitHostPort(lis.Addr().String())
 	c.Assert(err, check.IsNil)
 
@@ -224,10 +225,12 @@ func (s *GRPCSuite) TestGRPCBuffer(c *check.C) {
 	var client helloworld.Greeter_StreamExampleClient
 	client, closer, err := callStreamExampleClientGRPC()
 	defer closer()
+	c.Assert(err, check.IsNil)
 
 	received := make(chan bool)
 	go func() {
-		tr, _ := client.Recv()
+		tr, err := client.Recv()
+		c.Assert(err, check.IsNil)
 		c.Assert(len(tr.Data), check.Equals, 512)
 		received <- true
 	}()

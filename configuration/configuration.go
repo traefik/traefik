@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/containous/flaeg"
+	"github.com/containous/traefik-extra-service-fabric"
 	"github.com/containous/traefik/acme"
 	"github.com/containous/traefik/api"
 	"github.com/containous/traefik/log"
@@ -53,6 +54,7 @@ type GlobalConfiguration struct {
 	GraceTimeOut              flaeg.Duration          `short:"g" description:"(Deprecated) Duration to give active requests a chance to finish before Traefik stops" export:"true"` // Deprecated
 	Debug                     bool                    `short:"d" description:"Enable debug mode" export:"true"`
 	CheckNewVersion           bool                    `description:"Periodically check if a new version has been released" export:"true"`
+	SendAnonymousUsage        bool                    `description:"send periodically anonymous usage statistics" export:"true"`
 	AccessLogsFile            string                  `description:"(Deprecated) Access logs file" export:"true"` // Deprecated
 	AccessLog                 *types.AccessLog        `description:"Access log settings" export:"true"`
 	TraefikLogsFile           string                  `description:"(Deprecated) Traefik logs file. Stdout is used when omitted or empty" export:"true"` // Deprecated
@@ -87,6 +89,7 @@ type GlobalConfiguration struct {
 	ECS                       *ecs.Provider           `description:"Enable ECS backend with default settings" export:"true"`
 	Rancher                   *rancher.Provider       `description:"Enable Rancher backend with default settings" export:"true"`
 	DynamoDB                  *dynamodb.Provider      `description:"Enable DynamoDB backend with default settings" export:"true"`
+	ServiceFabric             *servicefabric.Provider `description:"Enable Service Fabric backend with default settings" export:"true"`
 	Rest                      *rest.Provider          `description:"Enable Rest backend with default settings" export:"true"`
 	API                       *api.Handler            `description:"Enable api/dashboard" export:"true"`
 	Metrics                   *types.Metrics          `description:"Enable a metrics exporter" export:"true"`
@@ -264,12 +267,12 @@ func (dep *DefaultEntryPoints) Set(value string) error {
 
 // Get return the EntryPoints map
 func (dep *DefaultEntryPoints) Get() interface{} {
-	return DefaultEntryPoints(*dep)
+	return *dep
 }
 
 // SetValue sets the EntryPoints map with val
 func (dep *DefaultEntryPoints) SetValue(val interface{}) {
-	*dep = DefaultEntryPoints(val.(DefaultEntryPoints))
+	*dep = val.(DefaultEntryPoints)
 }
 
 // Type is type of the struct
@@ -314,9 +317,9 @@ func (ep *EntryPoints) Set(value string) error {
 			Optional: optional,
 		}
 	}
-	var redirect *Redirect
+	var redirect *types.Redirect
 	if len(result["redirect_entrypoint"]) > 0 || len(result["redirect_regex"]) > 0 || len(result["redirect_replacement"]) > 0 {
-		redirect = &Redirect{
+		redirect = &types.Redirect{
 			EntryPoint:  result["redirect_entrypoint"],
 			Regex:       result["redirect_regex"],
 			Replacement: result["redirect_replacement"],
@@ -402,12 +405,12 @@ func toBool(conf map[string]string, key string) bool {
 
 // Get return the EntryPoints map
 func (ep *EntryPoints) Get() interface{} {
-	return EntryPoints(*ep)
+	return *ep
 }
 
 // SetValue sets the EntryPoints map with val
 func (ep *EntryPoints) SetValue(val interface{}) {
-	*ep = EntryPoints(val.(EntryPoints))
+	*ep = val.(EntryPoints)
 }
 
 // Type is type of the struct
@@ -419,20 +422,13 @@ func (ep *EntryPoints) Type() string {
 type EntryPoint struct {
 	Network              string
 	Address              string
-	TLS                  *tls.TLS    `export:"true"`
-	Redirect             *Redirect   `export:"true"`
-	Auth                 *types.Auth `export:"true"`
+	TLS                  *tls.TLS        `export:"true"`
+	Redirect             *types.Redirect `export:"true"`
+	Auth                 *types.Auth     `export:"true"`
 	WhitelistSourceRange []string
 	Compress             bool              `export:"true"`
 	ProxyProtocol        *ProxyProtocol    `export:"true"`
 	ForwardedHeaders     *ForwardedHeaders `export:"true"`
-}
-
-// Redirect configures a redirection of an entry point to another, or to an URL
-type Redirect struct {
-	EntryPoint  string
-	Regex       string
-	Replacement string
 }
 
 // Retry contains request retry config

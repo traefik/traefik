@@ -160,6 +160,189 @@ func TestPrepareServerTimeouts(t *testing.T) {
 	}
 }
 
+func TestListenProvidersSkipsEmptyConfigs(t *testing.T) {
+	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
+	defer invokeStopChan()
+
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case <-server.configurationValidatedChan:
+				t.Error("An empty configuration was published but it should not")
+			}
+		}
+	}()
+
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes"}
+
+	// give some time so that the configuration can be processed
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestListenProvidersSkipsSameConfigurationForProvider(t *testing.T) {
+	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
+	defer invokeStopChan()
+
+	publishedConfigCount := 0
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case config := <-server.configurationValidatedChan:
+				// set the current configuration
+				// this is usually done in the processing part of the published configuration
+				// so we have to emulate the behaviour here
+				currentConfigurations := server.currentConfigurations.Get().(types.Configurations)
+				currentConfigurations[config.ProviderName] = config.Configuration
+				server.currentConfigurations.Set(currentConfigurations)
+
+				publishedConfigCount++
+				if publishedConfigCount > 1 {
+					t.Error("Same configuration should not be published multiple times")
+				}
+			}
+		}
+	}()
+
+	config := buildDynamicConfig(
+		withFrontend("frontend", buildFrontend()),
+		withBackend("backend", buildBackend()),
+	)
+
+	// provide a configuration
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+
+	// give some time so that the configuration can be processed
+	time.Sleep(20 * time.Millisecond)
+
+	// provide the same configuration a second time
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+
+	// give some time so that the configuration can be processed
+	time.Sleep(100 * time.Millisecond)
+}
+
+func TestListenProvidersPublishesConfigForEachProvider(t *testing.T) {
+	server, stop, invokeStopChan := setupListenProvider(10 * time.Millisecond)
+	defer invokeStopChan()
+
+	publishedProviderConfigCount := map[string]int{}
+	publishedConfigCount := 0
+	consumePublishedConfigsDone := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case newConfig := <-server.configurationValidatedChan:
+				publishedProviderConfigCount[newConfig.ProviderName]++
+				publishedConfigCount++
+				if publishedConfigCount == 2 {
+					consumePublishedConfigsDone <- true
+					return
+				}
+			}
+		}
+	}()
+
+	config := buildDynamicConfig(
+		withFrontend("frontend", buildFrontend()),
+		withBackend("backend", buildBackend()),
+	)
+	server.configurationChan <- types.ConfigMessage{ProviderName: "kubernetes", Configuration: config}
+	server.configurationChan <- types.ConfigMessage{ProviderName: "marathon", Configuration: config}
+
+	select {
+	case <-consumePublishedConfigsDone:
+		if val := publishedProviderConfigCount["kubernetes"]; val != 1 {
+			t.Errorf("Got %d configuration publication(s) for provider %q, want 1", val, "kubernetes")
+		}
+		if val := publishedProviderConfigCount["marathon"]; val != 1 {
+			t.Errorf("Got %d configuration publication(s) for provider %q, want 1", val, "marathon")
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Errorf("Published configurations were not consumed in time")
+	}
+}
+
+// setupListenProvider configures the Server and starts listenProviders
+func setupListenProvider(throttleDuration time.Duration) (server *Server, stop chan bool, invokeStopChan func()) {
+	stop = make(chan bool)
+	invokeStopChan = func() {
+		stop <- true
+	}
+
+	globalConfig := configuration.GlobalConfiguration{
+		EntryPoints: configuration.EntryPoints{
+			"http": &configuration.EntryPoint{},
+		},
+		ProvidersThrottleDuration: flaeg.Duration(throttleDuration),
+	}
+
+	server = NewServer(globalConfig)
+	go server.listenProviders(stop)
+
+	return server, stop, invokeStopChan
+}
+
+func TestThrottleProviderConfigReload(t *testing.T) {
+	throttleDuration := 30 * time.Millisecond
+	publishConfig := make(chan types.ConfigMessage)
+	providerConfig := make(chan types.ConfigMessage)
+	stop := make(chan bool)
+	defer func() {
+		stop <- true
+	}()
+
+	go throttleProviderConfigReload(throttleDuration, publishConfig, providerConfig, stop)
+
+	publishedConfigCount := 0
+	stopConsumeConfigs := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			case <-stopConsumeConfigs:
+				return
+			case <-publishConfig:
+				publishedConfigCount++
+			}
+		}
+	}()
+
+	// publish 5 new configs, one new config each 10 milliseconds
+	for i := 0; i < 5; i++ {
+		providerConfig <- types.ConfigMessage{}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// after 50 milliseconds 5 new configs were published
+	// with a throttle duration of 30 milliseconds this means, we should have received 2 new configs
+	wantPublishedConfigCount := 2
+	if publishedConfigCount != wantPublishedConfigCount {
+		t.Errorf("%d times configs were published, want %d times", publishedConfigCount, wantPublishedConfigCount)
+	}
+
+	stopConsumeConfigs <- true
+
+	select {
+	case <-publishConfig:
+		// There should be exactly one more message that we receive after ~60 milliseconds since the start of the test.
+		select {
+		case <-publishConfig:
+			t.Error("extra config publication found")
+		case <-time.After(100 * time.Millisecond):
+			return
+		}
+	case <-time.After(100 * time.Millisecond):
+		t.Error("Last config was not published in time")
+	}
+}
+
 func TestServerMultipleFrontendRules(t *testing.T) {
 	cases := []struct {
 		expression  string
@@ -461,21 +644,42 @@ func TestServerLoadConfigEmptyBasicAuth(t *testing.T) {
 					},
 				},
 			},
-			TLSConfiguration: []*tls.Configuration{
-				{
-					Certificate: &tls.Certificate{
-						CertFile: localhostCert,
-						KeyFile:  localhostKey,
-					},
-					EntryPoints: []string{"http"},
-				},
-			},
 		},
 	}
 
 	srv := NewServer(globalConfig)
 	if _, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
 		t.Fatalf("got error: %s", err)
+	}
+}
+
+func TestServerLoadCertificateWithDefaultEntryPoint(t *testing.T) {
+	globalConfig := configuration.GlobalConfiguration{
+		EntryPoints: configuration.EntryPoints{
+			"https": &configuration.EntryPoint{TLS: &tls.TLS{}},
+			"http":  &configuration.EntryPoint{},
+		},
+		DefaultEntryPoints: []string{"http", "https"},
+	}
+
+	dynamicConfigs := types.Configurations{
+		"config": &types.Configuration{
+			TLSConfiguration: []*tls.Configuration{
+				{
+					Certificate: &tls.Certificate{
+						CertFile: localhostCert,
+						KeyFile:  localhostKey,
+					},
+				},
+			},
+		},
+	}
+
+	srv := NewServer(globalConfig)
+	if mapEntryPoints, err := srv.loadConfig(dynamicConfigs, globalConfig); err != nil {
+		t.Fatalf("got error: %s", err)
+	} else if mapEntryPoints["https"].certs.Get() == nil {
+		t.Fatal("got error: https entryPoint must have TLS certificates.")
 	}
 }
 
@@ -716,6 +920,226 @@ func TestServerResponseEmptyBackend(t *testing.T) {
 			if responseRecorder.Result().StatusCode != test.wantStatusCode {
 				t.Errorf("got status code %d, want %d", responseRecorder.Result().StatusCode, test.wantStatusCode)
 			}
+		})
+	}
+}
+
+func TestBuildEntryPointRedirect(t *testing.T) {
+	srv := Server{
+		globalConfiguration: configuration.GlobalConfiguration{
+			EntryPoints: configuration.EntryPoints{
+				"http":  &configuration.EntryPoint{Address: ":80"},
+				"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
+			},
+		},
+	}
+
+	testCases := []struct {
+		desc              string
+		srcEntryPointName string
+		url               string
+		entryPoint        *configuration.EntryPoint
+		redirect          *types.Redirect
+		expectedURL       string
+	}{
+		{
+			desc:              "redirect regex",
+			srcEntryPointName: "http",
+			url:               "http://foo.com",
+			redirect: &types.Redirect{
+				Regex:       `^(?:http?:\/\/)(foo)(\.com)$`,
+				Replacement: "https://$1{{\"bar\"}}$2",
+			},
+			entryPoint: &configuration.EntryPoint{
+				Address: ":80",
+				Redirect: &types.Redirect{
+					Regex:       `^(?:http?:\/\/)(foo)(\.com)$`,
+					Replacement: "https://$1{{\"bar\"}}$2",
+				},
+			},
+			expectedURL: "https://foobar.com",
+		},
+		{
+			desc:              "redirect entry point",
+			srcEntryPointName: "http",
+			url:               "http://foo:80",
+			redirect: &types.Redirect{
+				EntryPoint: "https",
+			},
+			entryPoint: &configuration.EntryPoint{
+				Address: ":80",
+				Redirect: &types.Redirect{
+					EntryPoint: "https",
+				},
+			},
+			expectedURL: "https://foo:443",
+		},
+		{
+			desc:              "redirect entry point with regex (ignored)",
+			srcEntryPointName: "http",
+			url:               "http://foo.com:80",
+			redirect: &types.Redirect{
+				EntryPoint:  "https",
+				Regex:       `^(?:http?:\/\/)(foo)(\.com)$`,
+				Replacement: "https://$1{{\"bar\"}}$2",
+			},
+			entryPoint: &configuration.EntryPoint{
+				Address: ":80",
+				Redirect: &types.Redirect{
+					EntryPoint:  "https",
+					Regex:       `^(?:http?:\/\/)(foo)(\.com)$`,
+					Replacement: "https://$1{{\"bar\"}}$2",
+				},
+			},
+			expectedURL: "https://foo.com:443",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rewrite, err := srv.buildRedirectHandler(test.srcEntryPointName, test.redirect)
+			require.NoError(t, err)
+
+			req := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
+			recorder := httptest.NewRecorder()
+
+			rewrite.ServeHTTP(recorder, req, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Add("Location", "fail")
+			}))
+
+			location, err := recorder.Result().Location()
+			require.NoError(t, err)
+			assert.Equal(t, test.expectedURL, location.String())
+		})
+	}
+}
+
+func TestServerBuildEntryPointRedirect(t *testing.T) {
+	srv := Server{
+		globalConfiguration: configuration.GlobalConfiguration{
+			EntryPoints: configuration.EntryPoints{
+				"http":  &configuration.EntryPoint{Address: ":80"},
+				"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
+			},
+		},
+	}
+
+	testCases := []struct {
+		desc               string
+		srcEntryPointName  string
+		redirectEntryPoint string
+		url                string
+		expectedURL        string
+		errorExpected      bool
+	}{
+		{
+			desc:               "existing redirect entry point",
+			srcEntryPointName:  "http",
+			redirectEntryPoint: "https",
+			url:                "http://foo:80",
+			expectedURL:        "https://foo:443",
+		},
+		{
+			desc:               "non-existing redirect entry point",
+			srcEntryPointName:  "http",
+			redirectEntryPoint: "foo",
+			url:                "http://foo:80",
+			errorExpected:      true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rewrite, err := srv.buildEntryPointRedirect(test.srcEntryPointName, test.redirectEntryPoint)
+			if test.errorExpected {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+
+				recorder := httptest.NewRecorder()
+				r := testhelpers.MustNewRequest(http.MethodGet, test.url, nil)
+				rewrite.ServeHTTP(recorder, r, nil)
+
+				location, err := recorder.Result().Location()
+				require.NoError(t, err)
+
+				assert.Equal(t, test.expectedURL, location.String())
+			}
+		})
+	}
+}
+
+func TestServerBuildRedirect(t *testing.T) {
+	testCases := []struct {
+		desc                   string
+		globalConfiguration    configuration.GlobalConfiguration
+		redirectEntryPointName string
+		expectedReplacement    string
+		errorExpected          bool
+	}{
+		{
+			desc: "Redirect endpoint http to https with HTTPS protocol",
+			redirectEntryPointName: "https",
+			globalConfiguration: configuration.GlobalConfiguration{
+				EntryPoints: configuration.EntryPoints{
+					"http":  &configuration.EntryPoint{Address: ":80"},
+					"https": &configuration.EntryPoint{Address: ":443", TLS: &tls.TLS{}},
+				},
+			},
+			expectedReplacement: "https://$1:443$2",
+		},
+		{
+			desc: "Redirect endpoint http to http02 with HTTP protocol",
+			redirectEntryPointName: "http02",
+			globalConfiguration: configuration.GlobalConfiguration{
+				EntryPoints: configuration.EntryPoints{
+					"http":   &configuration.EntryPoint{Address: ":80"},
+					"http02": &configuration.EntryPoint{Address: ":88"},
+				},
+			},
+			expectedReplacement: "http://$1:88$2",
+		},
+		{
+			desc: "Redirect endpoint to non-existent entry point",
+			redirectEntryPointName: "foobar",
+			globalConfiguration: configuration.GlobalConfiguration{
+				EntryPoints: configuration.EntryPoints{
+					"http":   &configuration.EntryPoint{Address: ":80"},
+					"http02": &configuration.EntryPoint{Address: ":88"},
+				},
+			},
+			errorExpected: true,
+		},
+		{
+			desc: "Redirect endpoint to an entry point with a malformed address",
+			redirectEntryPointName: "http02",
+			globalConfiguration: configuration.GlobalConfiguration{
+				EntryPoints: configuration.EntryPoints{
+					"http":   &configuration.EntryPoint{Address: ":80"},
+					"http02": &configuration.EntryPoint{Address: "88"},
+				},
+			},
+			errorExpected: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			srv := Server{globalConfiguration: test.globalConfiguration}
+
+			_, replacement, err := srv.buildRedirect(test.redirectEntryPointName)
+
+			require.Equal(t, test.errorExpected, err != nil, "Expected an error but don't have error, or Expected no error but have an error: %v", err)
+			assert.Equal(t, test.expectedReplacement, replacement, "build redirect does not return the right replacement pattern")
 		})
 	}
 }

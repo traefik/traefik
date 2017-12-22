@@ -174,7 +174,7 @@ Otherwise, the response from the auth server is returned.
 
 ## Specify Minimum TLS Version
 
-To specify an https entry point with a minimum TLS version, and specifying an array of cipher suites (from crypto/tls).
+To specify an https entry point with a minimum TLS version, and specifying an array of cipher suites (from [crypto/tls](https://godoc.org/crypto/tls#pkg-constants)).
 
 ```toml
 [entryPoints]

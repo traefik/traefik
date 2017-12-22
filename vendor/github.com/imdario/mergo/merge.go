@@ -12,6 +12,18 @@ import (
 	"reflect"
 )
 
+func hasExportedField(dst reflect.Value) (exported bool) {
+	for i, n := 0, dst.NumField(); i < n; i++ {
+		field := dst.Type().Field(i)
+		if field.Anonymous {
+			exported = exported || hasExportedField(dst.Field(i))
+		} else {
+			exported = exported || len(field.PkgPath) == 0
+		}
+	}
+	return
+}
+
 // Traverses recursively both values, assigning src's fields values to dst.
 // The map argument tracks comparisons that have already been seen, which allows
 // short circuiting on recursive types.
@@ -34,12 +46,22 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, ov
 	}
 	switch dst.Kind() {
 	case reflect.Struct:
-		for i, n := 0, dst.NumField(); i < n; i++ {
-			if err = deepMerge(dst.Field(i), src.Field(i), visited, depth+1, overwrite); err != nil {
-				return
+		if hasExportedField(dst) {
+			for i, n := 0, dst.NumField(); i < n; i++ {
+				if err = deepMerge(dst.Field(i), src.Field(i), visited, depth+1, overwrite); err != nil {
+					return
+				}
+			}
+		} else {
+			if dst.CanSet() && !isEmptyValue(src) && (overwrite || isEmptyValue(dst)) {
+				dst.Set(src)
 			}
 		}
 	case reflect.Map:
+		if len(src.MapKeys()) == 0 && !src.IsNil() && len(dst.MapKeys()) == 0 {
+			dst.Set(reflect.MakeMap(dst.Type()))
+			return
+		}
 		for _, key := range src.MapKeys() {
 			srcElement := src.MapIndex(key)
 			if !srcElement.IsValid() {
@@ -67,6 +89,10 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, ov
 					}
 				}
 			}
+			if dstElement.IsValid() && reflect.TypeOf(srcElement.Interface()).Kind() == reflect.Map {
+				continue
+			}
+
 			if !isEmptyValue(srcElement) && (overwrite || (!dstElement.IsValid() || isEmptyValue(dst))) {
 				if dst.IsNil() {
 					dst.Set(reflect.MakeMap(dst.Type()))
@@ -77,9 +103,27 @@ func deepMerge(dst, src reflect.Value, visited map[uintptr]*visit, depth int, ov
 	case reflect.Ptr:
 		fallthrough
 	case reflect.Interface:
+		if src.Kind() != reflect.Interface {
+			if dst.IsNil() || overwrite {
+				if dst.CanSet() && (overwrite || isEmptyValue(dst)) {
+					dst.Set(src)
+				}
+			} else if src.Kind() == reflect.Ptr {
+				if err = deepMerge(dst.Elem(), src.Elem(), visited, depth+1, overwrite); err != nil {
+					return
+				}
+			} else if dst.Elem().Type() == src.Type() {
+				if err = deepMerge(dst.Elem(), src, visited, depth+1, overwrite); err != nil {
+					return
+				}
+			} else {
+				return ErrDifferentArgumentsTypes
+			}
+			break
+		}
 		if src.IsNil() {
 			break
-		} else if dst.IsNil() {
+		} else if dst.IsNil() || overwrite {
 			if dst.CanSet() && (overwrite || isEmptyValue(dst)) {
 				dst.Set(src)
 			}

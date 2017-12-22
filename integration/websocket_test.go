@@ -282,6 +282,7 @@ func (s *WebsocketSuite) TestSSLTermination(c *check.C) {
 	//Add client self-signed cert
 	roots := x509.NewCertPool()
 	certContent, err := ioutil.ReadFile("./resources/tls/local.cert")
+	c.Assert(err, checker.IsNil)
 	roots.AppendCertsFromPEM(certContent)
 	gorillawebsocket.DefaultDialer.TLSClientConfig = &tls.Config{
 		RootCAs: roots,
@@ -365,7 +366,7 @@ func (s *WebsocketSuite) TestBasicAuth(c *check.C) {
 
 func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(401)
+		w.WriteHeader(http.StatusUnauthorized)
 	}))
 	file := s.adaptFile(c, "fixtures/websocket/config.toml", struct {
 		WebsocketServer string
@@ -387,7 +388,7 @@ func (s *WebsocketSuite) TestSpecificResponseFromBackend(c *check.C) {
 
 	_, resp, err := gorillawebsocket.DefaultDialer.Dial("ws://127.0.0.1:8000/ws", nil)
 	c.Assert(err, checker.NotNil)
-	c.Assert(resp.StatusCode, check.Equals, 401)
+	c.Assert(resp.StatusCode, check.Equals, http.StatusUnauthorized)
 
 }
 
@@ -395,7 +396,7 @@ func (s *WebsocketSuite) TestURLWithURLEncodedChar(c *check.C) {
 	var upgrader = gorillawebsocket.Upgrader{} // use default options
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c.Assert(r.URL.Path, check.Equals, "/ws/http%3A%2F%2Ftest")
+		c.Assert(r.URL.EscapedPath(), check.Equals, "/ws/http%3A%2F%2Ftest")
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
@@ -489,6 +490,7 @@ func (s *WebsocketSuite) TestSSLhttp2(c *check.C) {
 	//Add client self-signed cert
 	roots := x509.NewCertPool()
 	certContent, err := ioutil.ReadFile("./resources/tls/local.cert")
+	c.Assert(err, checker.IsNil)
 	roots.AppendCertsFromPEM(certContent)
 	gorillawebsocket.DefaultDialer.TLSClientConfig = &tls.Config{
 		RootCAs: roots,

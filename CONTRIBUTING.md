@@ -66,6 +66,9 @@ cd ~/go/src/github.com/containous/traefik
 go get github.com/jteeuwen/go-bindata/...
 
 # Start build
+
+# generate
+# (required to merge non-code components into the final binary, such as the web dashboard and provider's Go templates)
 go generate
 
 # Standard go build
@@ -74,6 +77,10 @@ go build ./cmd/traefik
 ```
 
 You will find the Træfik executable in the `~/go/src/github.com/containous/traefik` folder as `traefik`.
+
+### Updating the templates
+
+If you happen to update the provider templates (in `/templates`), you need to run `go generate` to update the `autogen` package.
 
 ### Setting up `glide` and `glide-vc` for dependency management
 

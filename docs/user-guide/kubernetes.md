@@ -21,6 +21,9 @@ If your cluster is configured with RBAC, you will need to authorize Træfik to u
 
 RoleBindings per namespace enable to restrict granted permissions to the very namespaces only that Træfik is watching over, thereby following the least-privileges principle. This is the preferred approach if Træfik is not supposed to watch all namespaces, and the set of namespaces does not change dynamically. Otherwise, a single ClusterRoleBinding must be employed.
 
+!!! note
+    RoleBindings per namespace are available in Træfik 1.5 and later. Please use ClusterRoleBindings for older versions.
+
 For the sake of simplicity, this guide will use a ClusterRoleBinding:
 
 ```yaml
@@ -75,14 +78,14 @@ For namespaced restrictions, one RoleBinding is required per watched namespace a
 
 It is possible to use Træfik with a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) object,
  whereas both options have their own pros and cons:
- 
+
 - The scalability is much better when using a Deployment, because you will have a Single-Pod-per-Node model when using the DeaemonSet.  
 - It is possible to exclusively run a Service on a dedicated set of machines using taints and tolerations with a DaemonSet.  
 - On the other hand the DaemonSet allows you to access any Node directly on Port 80 and 443, where you have to setup a [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object with a Deployment.
 
 The Deployment objects looks like this:
 
-```yml
+```yaml
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -329,6 +332,72 @@ echo "$(minikube ip) traefik-ui.minikube" | sudo tee -a /etc/hosts
 ```
 
 We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube) in the browser and view the Træfik Web UI.
+
+## Basic Authentication
+
+It's possible to add additional authentication annotations in the Ingress rule.
+The source of the authentication is a secret that contains usernames and passwords inside the key auth.
+To read about basic auth limitations see the [Kubernetes Ingress](/configuration/backends/kubernetes) configuration page.
+
+#### Creating the Secret
+
+A. Use `htpasswd` to create a file containing the username and the base64-encoded password:
+
+```shell
+htpasswd -c ./auth myusername
+```
+
+You will be prompted for a password which you will have to enter twice.
+`htpasswd` will create a file with the following:
+
+```shell
+cat auth
+```
+```
+myusername:$apr1$78Jyn/1K$ERHKVRPPlzAX8eBtLuvRZ0
+```
+
+B. Now use `kubectl` to create a secret in the monitoring namespace using the file created by `htpasswd`.
+
+```shell
+kubectl create secret generic mysecret --from-file auth --namespace=monitoring
+```
+
+!!! note
+    Secret must be in same namespace as the ingress rule.
+
+C. Create the ingress using the following annotations to specify basic auth and that the username and password is stored in `mysecret`.
+
+- `ingress.kubernetes.io/auth-type: "basic"`
+- `ingress.kubernetes.io/auth-secret: "mysecret"`
+
+Following is a full ingress example based on Prometheus:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+ name: prometheus-dashboard
+ namespace: monitoring
+ annotations:
+   kubernetes.io/ingress.class: traefik
+   ingress.kubernetes.io/auth-type: "basic"
+   ingress.kubernetes.io/auth-secret: "mysecret"
+spec:
+ rules:
+ - host: dashboard.prometheus.example.com
+   http:
+     paths:
+     - backend:
+         serviceName: prometheus
+         servicePort: 9090
+```
+
+You can apply the example ingress as following:
+
+```shell
+kubectl create -f prometheus-ingress.yaml -n monitoring
+```
 
 ## Name based routing
 

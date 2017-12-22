@@ -9,21 +9,56 @@ import (
 )
 
 func TestAddPrefix(t *testing.T) {
-
-	path := "/bar"
-	prefix := "/foo"
-
-	var expectedPath string
-	handler := &AddPrefix{
-		Prefix: prefix,
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			expectedPath = r.URL.Path
-		}),
+	tests := []struct {
+		desc            string
+		prefix          string
+		path            string
+		expectedPath    string
+		expectedRawPath string
+	}{
+		{
+			desc:         "regular path",
+			prefix:       "/a",
+			path:         "/b",
+			expectedPath: "/a/b",
+		},
+		{
+			desc:            "raw path is supported",
+			prefix:          "/a",
+			path:            "/b%2Fc",
+			expectedPath:    "/a/b/c",
+			expectedRawPath: "/a/b%2Fc",
+		},
 	}
 
-	req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+path, nil)
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
 
-	handler.ServeHTTP(nil, req)
+			var actualPath, actualRawPath, requestURI string
+			handler := &AddPrefix{
+				Prefix: test.prefix,
+				Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					actualPath = r.URL.Path
+					actualRawPath = r.URL.RawPath
+					requestURI = r.RequestURI
+				}),
+			}
 
-	assert.Equal(t, expectedPath, "/foo/bar", "Unexpected path.")
+			req := testhelpers.MustNewRequest(http.MethodGet, "http://localhost"+test.path, nil)
+
+			handler.ServeHTTP(nil, req)
+
+			assert.Equal(t, test.expectedPath, actualPath, "Unexpected path.")
+			assert.Equal(t, test.expectedRawPath, actualRawPath, "Unexpected raw path.")
+
+			expectedURI := test.expectedPath
+			if test.expectedRawPath != "" {
+				// go HTTP uses the raw path when existent in the RequestURI
+				expectedURI = test.expectedRawPath
+			}
+			assert.Equal(t, expectedURI, requestURI, "Unexpected request URI.")
+		})
+	}
 }

@@ -294,7 +294,7 @@ func (s *HTTPSSuite) TestWithClientCertificateAuthenticationMultipeCAsMultipleFi
 
 func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend(c *check.C) {
 	backend := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 	}))
 	defer backend.Close()
 
@@ -316,7 +316,7 @@ func (s *HTTPSSuite) TestWithRootCAsContentForHTTPSOnBackend(c *check.C) {
 
 func (s *HTTPSSuite) TestWithRootCAsFileForHTTPSOnBackend(c *check.C) {
 	backend := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+		w.WriteHeader(http.StatusOK)
 	}))
 	defer backend.Close()
 
@@ -534,7 +534,6 @@ func modifyCertificateConfFileContent(c *check.C, certFileName, confFileName str
 					CertFile: traefikTls.FileOrContent("fixtures/https/" + certFileName + ".cert"),
 					KeyFile:  traefikTls.FileOrContent("fixtures/https/" + certFileName + ".key"),
 				},
-				EntryPoints: []string{"https"},
 			},
 		},
 	}

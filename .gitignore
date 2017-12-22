@@ -1,7 +1,7 @@
 /dist
-/autogen/gen.go
-.idea
-.intellij
+/autogen/genstatic/gen.go
+.idea/
+.intellij/
 *.iml
 /traefik
 /traefik.toml

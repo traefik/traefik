@@ -2,7 +2,7 @@
 
 Træfik can be configured to use Kubernetes Ingress as a backend configuration.
 
-See also [Kubernetes user guide](/docs/user-guide/kubernetes). 
+See also [Kubernetes user guide](/user-guide/kubernetes).
 
 
 ## Configuration
@@ -57,6 +57,20 @@ See also [Kubernetes user guide](/docs/user-guide/kubernetes).
 # Default: false
 #
 # disablePassHostHeaders = true
+
+# Enable PassTLSCert Headers.
+#
+# Optional
+# Default: false
+#
+# enablePassTLSCert = true
+
+# Override default configuration template.
+#
+# Optional
+# Default: <built-in template>
+#
+# filename = "kubernetes.tmpl"
 ```
 
 ### `endpoint`
@@ -88,6 +102,20 @@ Annotations can be used on containers to override default behaviour for the whol
     Override the default frontend rule type. Default: `PathPrefix`.
 - `traefik.frontend.priority: "3"`
     Override the default frontend rule priority.
+- `traefik.frontend.redirect.entryPoint: https`:
+    Enables Redirect to another entryPoint for that frontend (e.g. HTTPS).
+- `traefik.frontend.redirect.regex: ^http://localhost/(.*)`:
+    Redirect to another URL for that frontend. Must be set with `traefik.frontend.redirect.replacement`.
+- `traefik.frontend.redirect.replacement: http://mydomain/$1`:
+    Redirect to another URL for that frontend. Must be set with `traefik.frontend.redirect.regex`.
+- `traefik.frontend.entryPoints: http,https`  
+    Override the default frontend endpoints.
+- `traefik.frontend.passTLSCert: true`  
+    Override the default frontend PassTLSCert value. Default: `false`.
+
+!!! note
+    Please note that `traefik.frontend.redirect.regex` and `traefik.frontend.redirect.replacement` do not have to be set if `traefik.frontend.redirect.entryPoint` is defined for the redirection (they will not be used in this case).
+
 
 Annotations can be used on the Kubernetes service to override default behaviour:
 
@@ -99,8 +127,6 @@ Annotations can be used on the Kubernetes service to override default behaviour:
     Manually set the cookie name for sticky sessions
 - `traefik.backend.loadbalancer.sticky=true`      
     Enable backend sticky sessions (DEPRECATED)
-
-You can find here an example [ingress](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-ingress.yaml) and [replication controller](https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/traefik.yaml).
 
 Additionally, an annotation can be used on Kubernetes services to set the [circuit breaker expression](/basics/#backends) for a backend.
 
@@ -114,14 +140,40 @@ As known from nginx when used as Kubernetes Ingress Controller, a list of IP-Ran
 An unset or empty list allows all Source-IPs to access.
 If one of the Net-Specifications are invalid, the whole list is invalid and allows all Source-IPs to access.
 
+#### Security annotations
+
+The following security annotations can be applied to the ingress object to add security features:
+
+| Annotation                                               | Description                                                                                                                                                                                         |
+|----------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ingress.kubernetes.io/allowed-hosts:EXPR`               | Provides a list of allowed hosts that requests will be processed. Format: `Host1,Host2`                                                                                                             |
+| `ingress.kubernetes.io/custom-request-headers:EXPR `     | Provides the container with custom request headers that will be appended to each request forwarded to the container. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>                    |
+| `ingress.kubernetes.io/custom-response-headers:EXPR`     | Appends the headers to each response returned by the container, before forwarding the response to the client. Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>                           |
+| `ingress.kubernetes.io/proxy-headers:EXPR `              | Provides a list of headers that the proxied hostname may be stored. Format:  `HEADER1,HEADER2`                                                                                                      |
+| `ingress.kubernetes.io/ssl-redirect:true`                | Forces the frontend to redirect to SSL if a non-SSL request is sent.                                                                                                                                |
+| `ingress.kubernetes.io/ssl-temporary-redirect:true`      | Forces the frontend to redirect to SSL if a non-SSL request is sent, but by sending a 302 instead of a 301.                                                                                         |
+| `ingress.kubernetes.io/ssl-host:HOST`                    | This setting configures the hostname that redirects will be based on. Default is "", which is the same host as the request.                                                                         |
+| `ingress.kubernetes.io/ssl-proxy-headers:EXPR`           | Header combinations that would signify a proper SSL Request (Such as `X-Forwarded-For:https`). Format: <code>HEADER:value&vert;&vert;HEADER2:value2</code>                                          |
+| `ingress.kubernetes.io/hsts-max-age:315360000`           | Sets the max-age of the HSTS header.                                                                                                                                                                |
+| `ngress.kubernetes.io/hsts-include-subdomains:true`      | Adds the IncludeSubdomains section of the STS  header.                                                                                                                                              |
+| `ingress.kubernetes.io/hsts-preload:true`                | Adds the preload flag to the HSTS  header.                                                                                                                                                          |
+| `ingress.kubernetes.io/force-hsts:false`                 | Adds the STS  header to non-SSL requests.                                                                                                                                                           |
+| `ingress.kubernetes.io/frame-deny:false`                 | Adds the `X-Frame-Options` header with the value of `DENY`.                                                                                                                                         |
+| `ingress.kubernetes.io/custom-frame-options-value:VALUE` | Overrides the `X-Frame-Options` header with the custom value.                                                                                                                                       |
+| `ingress.kubernetes.io/content-type-nosniff:true`        | Adds the `X-Content-Type-Options` header with the value `nosniff`.                                                                                                                                  |
+| `ingress.kubernetes.io/browser-xss-filter:true`          | Adds the X-XSS-Protection header with the value `1; mode=block`.                                                                                                                                    |
+| `ingress.kubernetes.io/content-security-policy:VALUE`    | Adds CSP Header with the custom value.                                                                                                                                                              |
+| `ingress.kubernetes.io/public-key:VALUE`                 | Adds pinned HTST public key header.                                                                                                                                                                 |
+| `ingress.kubernetes.io/referrer-policy:VALUE`            | Adds referrer policy  header.                                                                                                                                                                       |
+| `ingress.kubernetes.io/is-development:false`             | This will cause the `AllowedHosts`, `SSLRedirect`, and `STSSeconds`/`STSIncludeSubdomains` options to be ignored during development.<br>When deploying to production, be sure to set this to false. |
 
 ### Authentication
 
 Is possible to add additional authentication annotations in the Ingress rule.
-The source of the authentication is a secret that contains usernames and passwords inside the the key auth.
+The source of the authentication is a secret that contains usernames and passwords inside the key auth.
 
 - `ingress.kubernetes.io/auth-type`: `basic`
-- `ingress.kubernetes.io/auth-secret`  
+- `ingress.kubernetes.io/auth-secret`: `mysecret`  
     Contains the usernames and passwords with access to the paths defined in the Ingress Rule.
 
 The secret must be created in the same namespace as the Ingress rule.

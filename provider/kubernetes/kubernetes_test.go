@@ -6,215 +6,104 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/containous/traefik/types"
+	"github.com/containous/traefik/provider/label"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/pkg/util/intstr"
 )
 
 func TestLoadIngresses(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "testing",
-		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
-				{
-					Host: "foo",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Path: "/bar",
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "service1",
-										ServicePort: intstr.FromInt(80),
-									},
-								},
-								{
-									Path: "/namedthing",
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "service4",
-										ServicePort: intstr.FromString("https"),
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					Host: "bar",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "service3",
-										ServicePort: intstr.FromString("https"),
-									},
-								},
-								{
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "service2",
-										ServicePort: intstr.FromInt(802),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}}
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(iHost("foo"),
+					iPaths(
+						onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))),
+						onePath(iPath("/namedthing"), iBackend("service4", intstr.FromString("https")))),
+				),
+				iRule(iHost("bar"),
+					iPaths(
+						onePath(iBackend("service3", intstr.FromString("https"))),
+						onePath(iBackend("service2", intstr.FromInt(802)))),
+				),
+			),
+		),
+	}
+
 	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Port: 80,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service2",
-				UID:       "2",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.2",
-				Ports: []v1.ServicePort{
-					{
-						Port: 802,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service3",
-				UID:       "3",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.3",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 80,
-					},
-					{
-						Name: "https",
-						Port: 443,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service4",
-				UID:       "4",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP:    "10.0.0.4",
-				Type:         "ExternalName",
-				ExternalName: "example.com",
-				Ports: []v1.ServicePort{
-					{
-						Name: "https",
-						Port: 443,
-					},
-				},
-			},
-		},
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, ""))),
+		),
+		buildService(
+			sName("service2"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.2"),
+				sPorts(sPort(802, ""))),
+		),
+		buildService(
+			sName("service3"),
+			sNamespace("testing"),
+			sUID("3"),
+			sSpec(
+				clusterIP("10.0.0.3"),
+				sPorts(
+					sPort(80, "http"),
+					sPort(443, "https")),
+			),
+		),
+		buildService(
+			sName("service4"),
+			sNamespace("testing"),
+			sUID("4"),
+			sSpec(
+				clusterIP("10.0.0.4"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(443, "https"))),
+		),
 	}
+
 	endpoints := []*v1.Endpoints{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Subsets: []v1.EndpointSubset{
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.10.0.1",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Port: 8080,
-						},
-					},
-				},
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.21.0.1",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Port: 8080,
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service3",
-				UID:       "3",
-				Namespace: "testing",
-			},
-			Subsets: []v1.EndpointSubset{
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.15.0.1",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Name: "http",
-							Port: 8080,
-						},
-						{
-							Name: "https",
-							Port: 8443,
-						},
-					},
-				},
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.15.0.2",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Name: "http",
-							Port: 9080,
-						},
-						{
-							Name: "https",
-							Port: 9443,
-						},
-					},
-				},
-			},
-		},
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(eAddress("10.10.0.1")),
+				ePorts(ePort(8080, ""))),
+			subset(
+				eAddresses(eAddress("10.21.0.1")),
+				ePorts(ePort(8080, ""))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service3"),
+			eUID("3"),
+			subset(
+				eAddresses(eAddress("10.15.0.1")),
+				ePorts(
+					ePort(8080, "http"),
+					ePort(8443, "https")),
+			),
+			subset(
+				eAddresses(eAddress("10.15.0.2")),
+				ePorts(
+					ePort(9080, "http"),
+					ePort(9443, "https")),
+			),
+		),
 	}
+
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -223,94 +112,48 @@ func TestLoadIngresses(t *testing.T) {
 		watchChan: watchChan,
 	}
 	provider := Provider{}
-	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
 
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"foo/bar": {
-				Servers: map[string]types.Server{
-					"http://10.10.0.1:8080": {
-						URL:    "http://10.10.0.1:8080",
-						Weight: 1,
-					},
-					"http://10.21.0.1:8080": {
-						URL:    "http://10.21.0.1:8080",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-			"foo/namedthing": {
-				Servers: map[string]types.Server{
-					"https://example.com": {
-						URL:    "https://example.com",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-			"bar": {
-				Servers: map[string]types.Server{
-					"https://10.15.0.1:8443": {
-						URL:    "https://10.15.0.1:8443",
-						Weight: 1,
-					},
-					"https://10.15.0.2:9443": {
-						URL:    "https://10.15.0.2:9443",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"foo/bar": {
-				Backend:        "foo/bar",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/bar": {
-						Rule: "PathPrefix:/bar",
-					},
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-			"foo/namedthing": {
-				Backend:        "foo/namedthing",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/namedthing": {
-						Rule: "PathPrefix:/namedthing",
-					},
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-			"bar": {
-				Backend:        "bar",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"bar": {
-						Rule: "Host:bar",
-					},
-				},
-			},
-		},
-	}
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("foo/bar",
+				lbMethod("wrr"),
+				servers(
+					server("http://10.10.0.1:8080", weight(1)),
+					server("http://10.21.0.1:8080", weight(1))),
+			),
+			backend("foo/namedthing",
+				lbMethod("wrr"),
+				servers(server("https://example.com", weight(1))),
+			),
+			backend("bar",
+				lbMethod("wrr"),
+				servers(
+					server("https://10.15.0.1:8443", weight(1)),
+					server("https://10.15.0.2:9443", weight(1))),
+			),
+		),
+		frontends(
+			frontend("foo/bar",
+				passHostHeader(),
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("foo", "Host:foo")),
+			),
+			frontend("foo/namedthing",
+				passHostHeader(),
+				routes(
+					route("/namedthing", "PathPrefix:/namedthing"),
+					route("foo", "Host:foo")),
+			),
+			frontend("bar",
+				passHostHeader(),
+				routes(route("bar", "Host:bar")),
+			),
+		),
+	)
 
 	assert.Equal(t, expected, actual)
 }
@@ -347,50 +190,25 @@ func TestRuleType(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			ingress := &v1beta1.Ingress{
-				Spec: v1beta1.IngressSpec{
-					Rules: []v1beta1.IngressRule{
-						{
-							Host: "host",
-							IngressRuleValue: v1beta1.IngressRuleValue{
-								HTTP: &v1beta1.HTTPIngressRuleValue{
-									Paths: []v1beta1.HTTPIngressPath{
-										{
-											Path: "/path",
-											Backend: v1beta1.IngressBackend{
-												ServiceName: "service",
-												ServicePort: intstr.FromInt(80),
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			}
+
+			ingress := buildIngress(iRules(iRule(
+				iHost("host"),
+				iPaths(
+					onePath(iPath("/path"), iBackend("service", intstr.FromInt(80))),
+				),
+			)))
 
 			if test.ingressRuleType != "" {
 				ingress.ObjectMeta.Annotations = map[string]string{
-					types.LabelFrontendRuleType: test.ingressRuleType,
+					label.TraefikFrontendRuleType: test.ingressRuleType,
 				}
 			}
 
-			service := &v1.Service{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "service",
-					UID:  "1",
-				},
-				Spec: v1.ServiceSpec{
-					ClusterIP: "10.0.0.1",
-					Ports: []v1.ServicePort{
-						{
-							Name: "http",
-							Port: 801,
-						},
-					},
-				},
-			}
+			service := buildService(
+				sName("service"),
+				sUID("1"),
+				sSpec(sPorts(sPort(801, "http"))),
+			)
 
 			watchChan := make(chan interface{})
 			client := clientMock{
@@ -399,75 +217,41 @@ func TestRuleType(t *testing.T) {
 				watchChan: watchChan,
 			}
 			provider := Provider{DisablePassHostHeaders: true}
+
 			actualConfig, err := provider.loadIngresses(client)
-			if err != nil {
-				t.Fatalf("error loading ingresses: %+v", err)
-			}
+			require.NoError(t, err, "error loading ingresses")
 
-			actual := actualConfig.Frontends
-			expected := map[string]*types.Frontend{
-				"host/path": {
-					Backend: "host/path",
-					Routes: map[string]types.Route{
-						"/path": {
-							Rule: fmt.Sprintf("%s:/path", test.frontendRuleType),
-						},
-						"host": {
-							Rule: "Host:host",
-						},
-					},
-				},
-			}
+			expected := buildFrontends(frontend("host/path",
+				routes(
+					route("/path", fmt.Sprintf("%s:/path", test.frontendRuleType)),
+					route("host", "Host:host")),
+			))
 
-			assert.Equal(t, expected, actual)
+			assert.Equal(t, expected, actualConfig.Frontends)
 		})
 	}
 }
 
 func TestGetPassHostHeader(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "awesome",
-		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
-				{
-					Host: "foo",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Path: "/bar",
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "service1",
-										ServicePort: intstr.FromInt(801),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				Namespace: "awesome",
-				UID:       "1",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 801,
-					},
-				},
-			},
-		},
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(
+			iNamespace("awesome"),
+			iRules(iRule(
+				iHost("foo"),
+				iPaths(onePath(
+					iPath("/bar"),
+					iBackend("service1", intstr.FromInt(801)))),
+			)),
+		),
 	}
+
+	services := []*v1.Service{
+		buildService(
+			sNamespace("awesome"), sName("service1"), sUID("1"),
+			sSpec(sPorts(sPort(801, "http"))),
+		),
+	}
+
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -475,100 +259,97 @@ func TestGetPassHostHeader(t *testing.T) {
 		watchChan: watchChan,
 	}
 	provider := Provider{DisablePassHostHeaders: true}
+
 	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(backend("foo/bar", lbMethod("wrr"), servers())),
+		frontends(
+			frontend("foo/bar",
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("foo", "Host:foo")),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestGetPassTLSCert(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(iNamespace("awesome"),
+			iRules(iRule(
+				iHost("foo"),
+				iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"foo/bar": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"foo/bar": {
-				Backend: "foo/bar",
-				Routes: map[string]types.Route{
-					"/bar": {
-						Rule: "PathPrefix:/bar",
-					},
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-		},
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("awesome"),
+			sUID("1"),
+			sSpec(sPorts(sPort(801, "http"))),
+		),
 	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Provider{EnablePassTLSCert: true}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(backend("foo/bar", lbMethod("wrr"), servers())),
+		frontends(frontend("foo/bar",
+			passHostHeader(),
+			passTLSCert(),
+			routes(
+				route("/bar", "PathPrefix:/bar"),
+				route("foo", "Host:foo")),
+		)),
+	)
 
 	assert.Equal(t, expected, actual)
 }
 
 func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "awesome",
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		buildIngress(iNamespace("awesome"),
+			iRules(iRule(
+				iHost("foo"),
+				iPaths(onePath(iBackend("service", intstr.FromInt(80))))),
+			),
+		),
 	}
+
 	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service",
-				UID:       "1",
-				Namespace: "awesome",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 80,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service",
-				UID:       "2",
-				Namespace: "not-awesome",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.2",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 80,
-					},
-				},
-			},
-		},
+		buildService(
+			sNamespace("awesome"),
+			sName("service"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, "http"))),
+		),
+		buildService(
+			sNamespace("not-awesome"),
+			sName("service"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.2"),
+				sPorts(sPort(80, "http"))),
+		),
 	}
+
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -576,80 +357,41 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 		watchChan: watchChan,
 	}
 	provider := Provider{}
-	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
 
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"foo": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"foo": {
-				Backend:        "foo",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-		},
-	}
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(backend("foo", lbMethod("wrr"), servers())),
+		frontends(frontend("foo",
+			passHostHeader(),
+			routes(route("foo", "Host:foo")),
+		)),
+	)
 
 	assert.Equal(t, expected, actual)
 }
 
 func TestHostlessIngress(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "awesome",
-		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
-				{
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Path: "/bar",
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "service1",
-										ServicePort: intstr.FromInt(801),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				Namespace: "awesome",
-				UID:       "1",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 801,
-					},
-				},
-			},
-		},
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(iNamespace("awesome"),
+			iRules(iRule(
+				iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(801))))),
+			),
+		),
 	}
+
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("awesome"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(801, "http"))),
+		),
+	}
+
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -657,187 +399,80 @@ func TestHostlessIngress(t *testing.T) {
 		watchChan: watchChan,
 	}
 	provider := Provider{DisablePassHostHeaders: true}
-	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
 
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"/bar": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"/bar": {
-				Backend: "/bar",
-				Routes: map[string]types.Route{
-					"/bar": {
-						Rule: "PathPrefix:/bar",
-					},
-				},
-			},
-		},
-	}
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(backend("/bar", lbMethod("wrr"), servers())),
+		frontends(frontend("/bar", routes(route("/bar", "PathPrefix:/bar")))),
+	)
 
 	assert.Equal(t, expected, actual)
 }
 
 func TestServiceAnnotations(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "testing",
-		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
-				{
-					Host: "foo",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Path: "/bar",
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "service1",
-										ServicePort: intstr.FromInt(80),
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					Host: "bar",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "service2",
-										ServicePort: intstr.FromInt(802),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}}
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+				iRule(
+					iHost("bar"),
+					iPaths(onePath(iBackend("service2", intstr.FromInt(802))))),
+			),
+		),
+	}
+
 	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				UID:       "1",
-				Namespace: "testing",
-				Annotations: map[string]string{
-					types.LabelTraefikBackendCircuitbreaker: "NetworkErrorRatio() > 0.5",
-					types.LabelBackendLoadbalancerMethod:    "drr",
-				},
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Port: 80,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service2",
-				UID:       "2",
-				Namespace: "testing",
-				Annotations: map[string]string{
-					types.LabelTraefikBackendCircuitbreaker: "",
-					types.LabelBackendLoadbalancerSticky:    "true",
-				},
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.2",
-				Ports: []v1.ServicePort{
-					{
-						Port: 802,
-					},
-				},
-			},
-		},
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sAnnotation(label.TraefikBackendCircuitBreaker, "NetworkErrorRatio() > 0.5"),
+			sAnnotation(label.TraefikBackendLoadBalancerMethod, "drr"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, ""))),
+		),
+		buildService(
+			sName("service2"),
+			sNamespace("testing"),
+			sUID("2"),
+			sAnnotation(label.TraefikBackendCircuitBreaker, ""),
+			sAnnotation(label.TraefikBackendLoadBalancerSticky, "true"),
+			sSpec(
+				clusterIP("10.0.0.2"),
+				sPorts(sPort(802, ""))),
+		),
 	}
+
 	endpoints := []*v1.Endpoints{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Subsets: []v1.EndpointSubset{
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.10.0.1",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Port: 8080,
-						},
-					},
-				},
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.21.0.1",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Port: 8080,
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service2",
-				UID:       "2",
-				Namespace: "testing",
-			},
-			Subsets: []v1.EndpointSubset{
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.15.0.1",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Name: "http",
-							Port: 8080,
-						},
-					},
-				},
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.15.0.2",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Name: "http",
-							Port: 8080,
-						},
-					},
-				},
-			},
-		},
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service1"),
+			eUID("1"),
+			subset(
+				eAddresses(eAddress("10.10.0.1")),
+				ePorts(ePort(8080, ""))),
+			subset(
+				eAddresses(eAddress("10.21.0.1")),
+				ePorts(ePort(8080, ""))),
+		),
+		buildEndpoint(
+			eNamespace("testing"),
+			eName("service2"),
+			eUID("2"),
+			subset(
+				eAddresses(eAddress("10.15.0.1")),
+				ePorts(ePort(8080, "http"))),
+			subset(
+				eAddresses(eAddress("10.15.0.2")),
+				ePorts(ePort(8080, "http"))),
+		),
 	}
+
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -846,514 +481,328 @@ func TestServiceAnnotations(t *testing.T) {
 		watchChan: watchChan,
 	}
 	provider := Provider{}
-	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
 
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"foo/bar": {
-				Servers: map[string]types.Server{
-					"http://10.10.0.1:8080": {
-						URL:    "http://10.10.0.1:8080",
-						Weight: 1,
-					},
-					"http://10.21.0.1:8080": {
-						URL:    "http://10.21.0.1:8080",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: &types.CircuitBreaker{
-					Expression: "NetworkErrorRatio() > 0.5",
-				},
-				LoadBalancer: &types.LoadBalancer{
-					Method: "drr",
-				},
-			},
-			"bar": {
-				Servers: map[string]types.Server{
-					"http://10.15.0.1:8080": {
-						URL:    "http://10.15.0.1:8080",
-						Weight: 1,
-					},
-					"http://10.15.0.2:8080": {
-						URL:    "http://10.15.0.2:8080",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-					Sticky: true,
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"foo/bar": {
-				Backend:        "foo/bar",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/bar": {
-						Rule: "PathPrefix:/bar",
-					},
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-			"bar": {
-				Backend:        "bar",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"bar": {
-						Rule: "Host:bar",
-					},
-				},
-			},
-		},
-	}
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("foo/bar",
+				servers(
+					server("http://10.10.0.1:8080", weight(1)),
+					server("http://10.21.0.1:8080", weight(1))),
+				lbMethod("drr"),
+				circuitBreaker("NetworkErrorRatio() > 0.5"),
+			),
+			backend("bar",
+				servers(
+					server("http://10.15.0.1:8080", weight(1)),
+					server("http://10.15.0.2:8080", weight(1))),
+				lbMethod("wrr"), lbSticky(),
+			),
+		),
+		frontends(
+			frontend("foo/bar",
+				passHostHeader(),
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("foo", "Host:foo")),
+			),
+			frontend("bar",
+				passHostHeader(),
+				routes(route("bar", "Host:bar"))),
+		),
+	)
 
 	assert.EqualValues(t, expected, actual)
 }
 
 func TestIngressAnnotations(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					types.LabelFrontendPassHostHeader: "false",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					"kubernetes.io/ingress.class":     "traefik",
-					types.LabelFrontendPassHostHeader: "true",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "other",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/stuff",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					"ingress.kubernetes.io/auth-type":   "basic",
-					"ingress.kubernetes.io/auth-secret": "mySecret",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "basic",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/auth",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					"kubernetes.io/ingress.class": "somethingOtherThanTraefik",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "herp",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/derp",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service2",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					"kubernetes.io/ingress.class":                  "traefik",
-					"ingress.kubernetes.io/whitelist-source-range": "1.1.1.1/24, 1234:abcd::42/32",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "test",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/whitelist-source-range",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}, {
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					"ingress.kubernetes.io/rewrite-target": "/",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "rewrite",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/api",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					"ingress.kubernetes.io/auth-realm": "customized",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "auth-realm-customized",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/auth-realm-customized",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP:    "10.0.0.1",
-				Type:         "ExternalName",
-				ExternalName: "example.com",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 80,
-					},
-				},
-			},
-		},
-	}
-	secrets := []*v1.Secret{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "mySecret",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Data: map[string][]byte{
-				"auth": []byte("myUser:myEncodedPW"),
-			},
-		},
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendPassHostHeader, "false"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendPassHostHeader, "true"),
+			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iRules(
+				iRule(
+					iHost("other"),
+					iPaths(onePath(iPath("/stuff"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendPassTLSCert, "true"),
+			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iRules(
+				iRule(
+					iHost("other"),
+					iPaths(onePath(iPath("/sslstuff"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendEntryPoints, "http,https"),
+			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iRules(
+				iRule(
+					iHost("other"),
+					iPaths(onePath(iPath("/"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesAuthType, "basic"),
+			iAnnotation(annotationKubernetesAuthSecret, "mySecret"),
+			iRules(
+				iRule(
+					iHost("basic"),
+					iPaths(onePath(iPath("/auth"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "somethingOtherThanTraefik"),
+			iRules(
+				iRule(
+					iHost("herp"),
+					iPaths(onePath(iPath("/derp"), iBackend("service2", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesWhitelistSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
+			iRules(
+				iRule(
+					iHost("test"),
+					iPaths(onePath(iPath("/whitelist-source-range"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesRewriteTarget, "/"),
+			iRules(
+				iRule(
+					iHost("rewrite"),
+					iPaths(onePath(iPath("/api"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesAuthRealm, "customized"),
+			iRules(
+				iRule(
+					iHost("auth-realm-customized"),
+					iPaths(onePath(iPath("/auth-realm-customized"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(label.TraefikFrontendRedirectEntryPoint, "https"),
+			iRules(
+				iRule(
+					iHost("redirect"),
+					iPaths(onePath(iPath("/https"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
-	endpoints := []*v1.Endpoints{}
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(80, "http"))),
+		),
+		buildService(
+			sName("service2"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.2"),
+				sPorts(sPort(802, ""))),
+		),
+	}
+
+	secrets := []*v1.Secret{{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "mySecret",
+			UID:       "1",
+			Namespace: "testing",
+		},
+		Data: map[string][]byte{"auth": []byte("myUser:myEncodedPW")},
+	}}
+
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
 		secrets:   secrets,
-		endpoints: endpoints,
 		watchChan: watchChan,
 	}
 	provider := Provider{}
-	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
 
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"foo/bar": {
-				Servers: map[string]types.Server{
-					"http://example.com": {
-						URL:    "http://example.com",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-			"other/stuff": {
-				Servers: map[string]types.Server{
-					"http://example.com": {
-						URL:    "http://example.com",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-			"basic/auth": {
-				Servers: map[string]types.Server{
-					"http://example.com": {
-						URL:    "http://example.com",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-			"test/whitelist-source-range": {
-				Servers: map[string]types.Server{
-					"http://example.com": {
-						URL:    "http://example.com",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-			"rewrite/api": {
-				Servers: map[string]types.Server{
-					"http://example.com": {
-						URL:    "http://example.com",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"foo/bar": {
-				Backend:        "foo/bar",
-				PassHostHeader: false,
-				Routes: map[string]types.Route{
-					"/bar": {
-						Rule: "PathPrefix:/bar",
-					},
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-			"other/stuff": {
-				Backend:        "other/stuff",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/stuff": {
-						Rule: "PathPrefix:/stuff",
-					},
-					"other": {
-						Rule: "Host:other",
-					},
-				},
-			},
-			"basic/auth": {
-				Backend:        "basic/auth",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/auth": {
-						Rule: "PathPrefix:/auth",
-					},
-					"basic": {
-						Rule: "Host:basic",
-					},
-				},
-				BasicAuth: []string{"myUser:myEncodedPW"},
-			},
-			"test/whitelist-source-range": {
-				Backend:        "test/whitelist-source-range",
-				PassHostHeader: true,
-				WhitelistSourceRange: []string{
-					"1.1.1.1/24",
-					"1234:abcd::42/32",
-				},
-				Routes: map[string]types.Route{
-					"/whitelist-source-range": {
-						Rule: "PathPrefix:/whitelist-source-range",
-					},
-					"test": {
-						Rule: "Host:test",
-					},
-				},
-			},
-			"rewrite/api": {
-				Backend:        "rewrite/api",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/api": {
-						Rule: "ReplacePath:/",
-					},
-					"rewrite": {
-						Rule: "Host:rewrite",
-					},
-				},
-			},
-		},
-	}
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("foo/bar",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("other/stuff",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("other/",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("other/sslstuff",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("basic/auth",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("redirect/https",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("test/whitelist-source-range",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("rewrite/api",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("foo/bar",
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("foo", "Host:foo")),
+			),
+			frontend("other/stuff",
+				passHostHeader(),
+				routes(
+					route("/stuff", "PathPrefix:/stuff"),
+					route("other", "Host:other")),
+			),
+			frontend("other/",
+				passHostHeader(),
+				entryPoints("http", "https"),
+				routes(
+					route("/", "PathPrefix:/"),
+					route("other", "Host:other")),
+			),
+			frontend("other/sslstuff",
+				passHostHeader(),
+				passTLSCert(),
+				routes(
+					route("/sslstuff", "PathPrefix:/sslstuff"),
+					route("other", "Host:other")),
+			),
+			frontend("other/sslstuff",
+				passHostHeader(),
+				passTLSCert(),
+				routes(
+					route("/sslstuff", "PathPrefix:/sslstuff"),
+					route("other", "Host:other")),
+			),
+			frontend("basic/auth",
+				passHostHeader(),
+				basicAuth("myUser:myEncodedPW"),
+				routes(
+					route("/auth", "PathPrefix:/auth"),
+					route("basic", "Host:basic")),
+			),
+			frontend("redirect/https",
+				passHostHeader(),
+				redirectEntryPoint("https"),
+				routes(
+					route("/https", "PathPrefix:/https"),
+					route("redirect", "Host:redirect")),
+			),
+			frontend("test/whitelist-source-range",
+				passHostHeader(),
+				whitelistSourceRange("1.1.1.1/24", "1234:abcd::42/32"),
+				routes(
+					route("/whitelist-source-range", "PathPrefix:/whitelist-source-range"),
+					route("test", "Host:test")),
+			),
+			frontend("rewrite/api",
+				passHostHeader(),
+				routes(
+					route("/api", "PathPrefix:/api;ReplacePath:/"),
+					route("rewrite", "Host:rewrite")),
+			),
+		),
+	)
 
 	assert.Equal(t, expected, actual)
 }
 
 func TestPriorityHeaderValue(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					types.LabelFrontendPriority: "1337",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP:    "10.0.0.1",
-				Type:         "ExternalName",
-				ExternalName: "example.com",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 80,
-					},
-				},
-			},
-		},
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendPriority, "1337"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
-	endpoints := []*v1.Endpoints{}
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(80, "http"))),
+		),
+	}
+
+	var endpoints []*v1.Endpoints
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -1362,190 +811,168 @@ func TestPriorityHeaderValue(t *testing.T) {
 		watchChan: watchChan,
 	}
 	provider := Provider{}
+
 	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("foo/bar",
+				servers(server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("foo/bar",
+				passHostHeader(),
+				priority(1337),
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("foo", "Host:foo")),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestInvalidPassTLSCertValue(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendPassTLSCert, "herpderp"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"foo/bar": {
-				Servers: map[string]types.Server{
-					"http://example.com": {
-						URL:    "http://example.com",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"foo/bar": {
-				Backend:        "foo/bar",
-				PassHostHeader: true,
-				Priority:       1337,
-				Routes: map[string]types.Route{
-					"/bar": {
-						Rule: "PathPrefix:/bar",
-					},
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-		},
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(80, "http"))),
+		),
 	}
+
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("foo/bar",
+				servers(server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("foo/bar",
+				passHostHeader(),
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("foo", "Host:foo")),
+			),
+		),
+	)
 
 	assert.Equal(t, expected, actual)
 }
 
 func TestInvalidPassHostHeaderValue(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					types.LabelFrontendPassHostHeader: "herpderp",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "foo",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/bar",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP:    "10.0.0.1",
-				Type:         "ExternalName",
-				ExternalName: "example.com",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 80,
-					},
-				},
-			},
-		},
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendPassHostHeader, "herpderp"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
-	endpoints := []*v1.Endpoints{}
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(80, "http"))),
+		),
+	}
+
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
 		services:  services,
-		endpoints: endpoints,
 		watchChan: watchChan,
 	}
 	provider := Provider{}
-	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
 
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"foo/bar": {
-				Servers: map[string]types.Server{
-					"http://example.com": {
-						URL:    "http://example.com",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"foo/bar": {
-				Backend:        "foo/bar",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"/bar": {
-						Rule: "PathPrefix:/bar",
-					},
-					"foo": {
-						Rule: "Host:foo",
-					},
-				},
-			},
-		},
-	}
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("foo/bar",
+				servers(server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("foo/bar",
+				passHostHeader(),
+				routes(
+					route("/bar", "PathPrefix:/bar"),
+					route("foo", "Host:foo")),
+			),
+		),
+	)
 
 	assert.Equal(t, expected, actual)
 }
 
 func TestKubeAPIErrors(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "testing",
-		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
-				{
-					Host: "foo",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Path: "/bar",
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "service1",
-										ServicePort: intstr.FromInt(80),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}}
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("foo"),
+					iPaths(onePath(iPath("/bar"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
+	}
 
-	services := []*v1.Service{{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "service1",
-			UID:       "1",
-			Namespace: "testing",
-		},
-		Spec: v1.ServiceSpec{
-			ClusterIP: "10.0.0.1",
-			Ports: []v1.ServicePort{
-				{
-					Port: 80,
-				},
-			},
-		},
-	}}
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, ""))),
+		),
+	}
 
-	endpoints := []*v1.Endpoints{}
 	watchChan := make(chan interface{})
 	apiErr := errors.New("failed kube api call")
 
@@ -1572,13 +999,13 @@ func TestKubeAPIErrors(t *testing.T) {
 			client := clientMock{
 				ingresses:         ingresses,
 				services:          services,
-				endpoints:         endpoints,
 				watchChan:         watchChan,
 				apiServiceError:   tc.apiServiceErr,
 				apiEndpointsError: tc.apiEndpointsErr,
 			}
 
 			provider := Provider{}
+
 			if _, err := provider.loadIngresses(client); err != apiErr {
 				t.Errorf("Got error %v, wanted error %v", err, apiErr)
 			}
@@ -1587,152 +1014,68 @@ func TestKubeAPIErrors(t *testing.T) {
 }
 
 func TestMissingResources(t *testing.T) {
-	ingresses := []*v1beta1.Ingress{{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "testing",
-		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
-				{
-					Host: "fully_working",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "fully_working_service",
-										ServicePort: intstr.FromInt(80),
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					Host: "missing_service",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "missing_service_service",
-										ServicePort: intstr.FromInt(80),
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					Host: "missing_endpoints",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "missing_endpoints_service",
-										ServicePort: intstr.FromInt(80),
-									},
-								},
-							},
-						},
-					},
-				},
-				{
-					Host: "missing_endpoint_subsets",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
-								{
-									Backend: v1beta1.IngressBackend{
-										ServiceName: "missing_endpoint_subsets_service",
-										ServicePort: intstr.FromInt(80),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "fully_working_service",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.1",
-				Ports: []v1.ServicePort{
-					{
-						Port: 80,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "missing_endpoints_service",
-				UID:       "3",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.3",
-				Ports: []v1.ServicePort{
-					{
-						Port: 80,
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "missing_endpoint_subsets_service",
-				UID:       "4",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP: "10.0.0.4",
-				Ports: []v1.ServicePort{
-					{
-						Port: 80,
-					},
-				},
-			},
-		},
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iRules(
+				iRule(
+					iHost("fully_working"),
+					iPaths(onePath(iBackend("fully_working_service", intstr.FromInt(80))))),
+				iRule(
+					iHost("missing_service"),
+					iPaths(onePath(iBackend("missing_service_service", intstr.FromInt(80))))),
+				iRule(
+					iHost("missing_endpoints"),
+					iPaths(onePath(iBackend("missing_endpoints_service", intstr.FromInt(80))))),
+				iRule(
+					iHost("missing_endpoint_subsets"),
+					iPaths(onePath(iBackend("missing_endpoint_subsets_service", intstr.FromInt(80))))),
+			),
+		),
 	}
+
+	services := []*v1.Service{
+		buildService(
+			sName("fully_working_service"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sPorts(sPort(80, ""))),
+		),
+		buildService(
+			sName("missing_endpoints_service"),
+			sNamespace("testing"),
+			sUID("3"),
+			sSpec(
+				clusterIP("10.0.0.3"),
+				sPorts(sPort(80, ""))),
+		),
+		buildService(
+			sName("missing_endpoint_subsets_service"),
+			sNamespace("testing"),
+			sUID("4"),
+			sSpec(
+				clusterIP("10.0.0.4"),
+				sPorts(sPort(80, ""))),
+		),
+	}
+
 	endpoints := []*v1.Endpoints{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "fully_working_service",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Subsets: []v1.EndpointSubset{
-				{
-					Addresses: []v1.EndpointAddress{
-						{
-							IP: "10.10.0.1",
-						},
-					},
-					Ports: []v1.EndpointPort{
-						{
-							Port: 8080,
-						},
-					},
-				},
-			},
-		},
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "missing_endpoint_subsets_service",
-				UID:       "4",
-				Namespace: "testing",
-			},
-			Subsets: []v1.EndpointSubset{},
-		},
+		buildEndpoint(
+			eName("fully_working_service"),
+			eUID("1"),
+			eNamespace("testing"),
+			subset(
+				eAddresses(eAddress("10.10.0.1")),
+				ePorts(ePort(8080, ""))),
+		),
+		buildEndpoint(
+			eName("missing_endpoint_subsets_service"),
+			eUID("4"),
+			eNamespace("testing"),
+			subset(),
+		),
 	}
 
 	watchChan := make(chan interface{})
@@ -1744,146 +1087,87 @@ func TestMissingResources(t *testing.T) {
 	}
 
 	provider := Provider{}
-	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
 
-	expected := &types.Configuration{
-		Backends: map[string]*types.Backend{
-			"fully_working": {
-				Servers: map[string]types.Server{
-					"http://10.10.0.1:8080": {
-						URL:    "http://10.10.0.1:8080",
-						Weight: 1,
-					},
-				},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-			"missing_service": {
-				Servers: map[string]types.Server{},
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-			"missing_endpoints": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-			"missing_endpoint_subsets": {
-				Servers:        map[string]types.Server{},
-				CircuitBreaker: nil,
-				LoadBalancer: &types.LoadBalancer{
-					Method: "wrr",
-				},
-			},
-		},
-		Frontends: map[string]*types.Frontend{
-			"fully_working": {
-				Backend:        "fully_working",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"fully_working": {
-						Rule: "Host:fully_working",
-					},
-				},
-			},
-			"missing_endpoints": {
-				Backend:        "missing_endpoints",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"missing_endpoints": {
-						Rule: "Host:missing_endpoints",
-					},
-				},
-			},
-			"missing_endpoint_subsets": {
-				Backend:        "missing_endpoint_subsets",
-				PassHostHeader: true,
-				Routes: map[string]types.Route{
-					"missing_endpoint_subsets": {
-						Rule: "Host:missing_endpoint_subsets",
-					},
-				},
-			},
-		},
-	}
+	actual, err := provider.loadIngresses(client)
+	require.NoError(t, err, "error loading ingresses")
+
+	expected := buildConfiguration(
+		backends(
+			backend("fully_working",
+				servers(server("http://10.10.0.1:8080", weight(1))),
+				lbMethod("wrr"),
+			),
+			backend("missing_service",
+				servers(),
+				lbMethod("wrr"),
+			),
+			backend("missing_endpoints",
+				servers(),
+				lbMethod("wrr"),
+			),
+			backend("missing_endpoint_subsets",
+				servers(),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("fully_working",
+				passHostHeader(),
+				routes(route("fully_working", "Host:fully_working")),
+			),
+			frontend("missing_endpoints",
+				passHostHeader(),
+				routes(route("missing_endpoints", "Host:missing_endpoints")),
+			),
+			frontend("missing_endpoint_subsets",
+				passHostHeader(),
+				routes(route("missing_endpoint_subsets", "Host:missing_endpoint_subsets")),
+			),
+		),
+	)
 
 	assert.Equal(t, expected, actual)
 }
 
 func TestBasicAuthInTemplate(t *testing.T) {
 	ingresses := []*v1beta1.Ingress{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "testing",
-				Annotations: map[string]string{
-					"ingress.kubernetes.io/auth-type":   "basic",
-					"ingress.kubernetes.io/auth-secret": "mySecret",
-				},
-			},
-			Spec: v1beta1.IngressSpec{
-				Rules: []v1beta1.IngressRule{
-					{
-						Host: "basic",
-						IngressRuleValue: v1beta1.IngressRuleValue{
-							HTTP: &v1beta1.HTTPIngressRuleValue{
-								Paths: []v1beta1.HTTPIngressPath{
-									{
-										Path: "/auth",
-										Backend: v1beta1.IngressBackend{
-											ServiceName: "service1",
-											ServicePort: intstr.FromInt(80),
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	services := []*v1.Service{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "service1",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Spec: v1.ServiceSpec{
-				ClusterIP:    "10.0.0.1",
-				Type:         "ExternalName",
-				ExternalName: "example.com",
-				Ports: []v1.ServicePort{
-					{
-						Name: "http",
-						Port: 80,
-					},
-				},
-			},
-		},
-	}
-	secrets := []*v1.Secret{
-		{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      "mySecret",
-				UID:       "1",
-				Namespace: "testing",
-			},
-			Data: map[string][]byte{
-				"auth": []byte("myUser:myEncodedPW"),
-			},
-		},
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesAuthType, "basic"),
+			iAnnotation(annotationKubernetesAuthSecret, "mySecret"),
+			iRules(
+				iRule(
+					iHost("basic"),
+					iPaths(onePath(iPath("/auth"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
-	endpoints := []*v1.Endpoints{}
+	services := []*v1.Service{
+		buildService(
+			sName("service1"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sType("ExternalName"),
+				sExternalName("example.com"),
+				sPorts(sPort(80, "http"))),
+		),
+	}
+
+	secrets := []*v1.Secret{{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "mySecret",
+			UID:       "1",
+			Namespace: "testing",
+		},
+		Data: map[string][]byte{
+			"auth": []byte("myUser:myEncodedPW"),
+		},
+	}}
+
+	var endpoints []*v1.Endpoints
 	watchChan := make(chan interface{})
 	client := clientMock{
 		ingresses: ingresses,
@@ -1893,74 +1177,14 @@ func TestBasicAuthInTemplate(t *testing.T) {
 		watchChan: watchChan,
 	}
 	provider := Provider{}
+
 	actual, err := provider.loadIngresses(client)
-	if err != nil {
-		t.Fatalf("error %+v", err)
-	}
+	require.NoError(t, err, "error loading ingresses")
 
 	actual = provider.loadConfig(*actual)
+	require.NotNil(t, actual)
 	got := actual.Frontends["basic/auth"].BasicAuth
 	if !reflect.DeepEqual(got, []string{"myUser:myEncodedPW"}) {
 		t.Fatalf("unexpected credentials: %+v", got)
 	}
-}
-
-type clientMock struct {
-	ingresses []*v1beta1.Ingress
-	services  []*v1.Service
-	secrets   []*v1.Secret
-	endpoints []*v1.Endpoints
-	watchChan chan interface{}
-
-	apiServiceError   error
-	apiSecretError    error
-	apiEndpointsError error
-}
-
-func (c clientMock) GetIngresses() []*v1beta1.Ingress {
-	return c.ingresses
-}
-
-func (c clientMock) GetService(namespace, name string) (*v1.Service, bool, error) {
-	if c.apiServiceError != nil {
-		return nil, false, c.apiServiceError
-	}
-
-	for _, service := range c.services {
-		if service.Namespace == namespace && service.Name == name {
-			return service, true, nil
-		}
-	}
-	return nil, false, nil
-}
-
-func (c clientMock) GetEndpoints(namespace, name string) (*v1.Endpoints, bool, error) {
-	if c.apiEndpointsError != nil {
-		return nil, false, c.apiEndpointsError
-	}
-
-	for _, endpoints := range c.endpoints {
-		if endpoints.Namespace == namespace && endpoints.Name == name {
-			return endpoints, true, nil
-		}
-	}
-
-	return &v1.Endpoints{}, false, nil
-}
-
-func (c clientMock) GetSecret(namespace, name string) (*v1.Secret, bool, error) {
-	if c.apiSecretError != nil {
-		return nil, false, c.apiSecretError
-	}
-
-	for _, secret := range c.secrets {
-		if secret.Namespace == namespace && secret.Name == name {
-			return secret, true, nil
-		}
-	}
-	return nil, false, nil
-}
-
-func (c clientMock) WatchAll(namespaces Namespaces, labelString string, stopCh <-chan struct{}) (<-chan interface{}, error) {
-	return c.watchChan, nil
 }

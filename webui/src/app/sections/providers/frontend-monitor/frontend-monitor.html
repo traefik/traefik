@@ -18,6 +18,7 @@
     <span data-ng-repeat="entryPoint in frontendCtrl.frontend.entryPoints">
       <span class="label label-primary">{{entryPoint}}</span><span data-ng-hide="$last">&nbsp;</span>
     </span>
+    <span data-ng-show="frontendCtrl.frontend.redirect" class="label label-success">Redirect to {{frontendCtrl.frontend.redirect}}</span>
     <span class="label label-warning" role="button" data-toggle="collapse" href="#{{frontendCtrl.frontend.backend}}" aria-expanded="false">Backend:{{frontendCtrl.frontend.backend}}</span>
     <span data-ng-show="frontendCtrl.frontend.passHostHeader" class="label label-warning">PassHostHeader</span>
     <span data-ng-repeat="whitelistSourceRange in frontendCtrl.frontend.whitelistSourceRange">

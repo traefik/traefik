@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ func (r *marathonClient) GroupBy(name string, opts *GetGroupOpts) (*Group, error
 // 		name:			the identifier for the group
 func (r *marathonClient) HasGroup(name string) (bool, error) {
 	path := fmt.Sprintf("%s/%s", marathonAPIGroups, trimRootPath(name))
-	err := r.apiCall("GET", path, "", nil)
+	err := r.apiGet(path, "", nil)
 	if err != nil {
 		if apiErr, ok := err.(*APIError); ok && apiErr.ErrCode == ErrCodeNotFound {
 			return false, nil

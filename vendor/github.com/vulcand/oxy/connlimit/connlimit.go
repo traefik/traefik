@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/vulcand/oxy/utils"
 )
 
@@ -20,7 +21,6 @@ type ConnLimiter struct {
 	next             http.Handler
 
 	errHandler utils.ErrorHandler
-	log        utils.Logger
 }
 
 func New(next http.Handler, extract utils.SourceExtractor, maxConnections int64, options ...ConnLimitOption) (*ConnLimiter, error) {
@@ -40,9 +40,6 @@ func New(next http.Handler, extract utils.SourceExtractor, maxConnections int64,
 			return nil, err
 		}
 	}
-	if cl.log == nil {
-		cl.log = utils.NullLogger
-	}
 	if cl.errHandler == nil {
 		cl.errHandler = defaultErrHandler
 	}
@@ -56,12 +53,12 @@ func (cl *ConnLimiter) Wrap(h http.Handler) {
 func (cl *ConnLimiter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	token, amount, err := cl.extract.Extract(r)
 	if err != nil {
-		cl.log.Errorf("failed to extract source of the connection: %v", err)
+		log.Errorf("failed to extract source of the connection: %v", err)
 		cl.errHandler.ServeHTTP(w, r, err)
 		return
 	}
 	if err := cl.acquire(token, amount); err != nil {
-		cl.log.Infof("limiting request source %s: %v", token, err)
+		log.Infof("limiting request source %s: %v", token, err)
 		cl.errHandler.ServeHTTP(w, r, err)
 		return
 	}
@@ -81,7 +78,7 @@ func (cl *ConnLimiter) acquire(token string, amount int64) error {
 	}
 
 	cl.connections[token] += amount
-	cl.totalConnections += int64(amount)
+	cl.totalConnections += amount
 	return nil
 }
 
@@ -90,7 +87,7 @@ func (cl *ConnLimiter) release(token string, amount int64) {
 	defer cl.mutex.Unlock()
 
 	cl.connections[token] -= amount
-	cl.totalConnections -= int64(amount)
+	cl.totalConnections -= amount
 
 	// Otherwise it would grow forever
 	if cl.connections[token] == 0 {
@@ -110,6 +107,12 @@ type ConnErrHandler struct {
 }
 
 func (e *ConnErrHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, err error) {
+	if log.GetLevel() >= log.DebugLevel {
+		logEntry := log.WithField("Request", utils.DumpHttpRequest(req))
+		logEntry.Debug("vulcand/oxy/connlimit: begin ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/connlimit: competed ServeHttp on request")
+	}
+
 	if _, ok := err.(*MaxConnError); ok {
 		w.WriteHeader(429)
 		w.Write([]byte(err.Error()))
@@ -119,14 +122,6 @@ func (e *ConnErrHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, err
 }
 
 type ConnLimitOption func(l *ConnLimiter) error
-
-// Logger sets the logger that will be used by this middleware.
-func Logger(l utils.Logger) ConnLimitOption {
-	return func(cl *ConnLimiter) error {
-		cl.log = l
-		return nil
-	}
-}
 
 // ErrorHandler sets error handler of the server
 func ErrorHandler(h utils.ErrorHandler) ConnLimitOption {

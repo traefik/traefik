@@ -213,7 +213,7 @@ func (c *clientImpl) WatchObjects(namespace, kind string, object runtime.Object,
 	return informer
 }
 
-func loadInformer(listWatch *cache.ListWatch, object runtime.Object, watchCh chan<- interface{}) cache.SharedInformer {
+func loadInformer(listWatch cache.ListerWatcher, object runtime.Object, watchCh chan<- interface{}) cache.SharedInformer {
 	informer := cache.NewSharedInformer(
 		listWatch,
 		object,

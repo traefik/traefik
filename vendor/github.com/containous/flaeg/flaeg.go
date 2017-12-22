@@ -343,7 +343,7 @@ func fillStructRecursive(objValue reflect.Value, defaultPointerValmap map[string
 		contains := false
 		for flag := range valmap {
 			// TODO replace by regexp
-			if strings.Contains(flag, name+".") {
+			if strings.HasPrefix(flag, name+".") {
 				contains = true
 				break
 			}

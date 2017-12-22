@@ -1,6 +1,6 @@
 package middlewares
 
-//Middleware tests based on https://github.com/unrolled/secure
+// Middleware tests based on https://github.com/unrolled/secure
 
 import (
 	"net/http"
@@ -15,36 +15,66 @@ var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("bar"))
 })
 
+// newHeader constructs a new header instance with supplied options.
+func newHeader(options ...HeaderOptions) *HeaderStruct {
+	var o HeaderOptions
+	if len(options) == 0 {
+		o = HeaderOptions{}
+	} else {
+		o = options[0]
+	}
+
+	return &HeaderStruct{
+		opt: o,
+	}
+}
+
 func TestNoConfig(t *testing.T) {
-	s := NewHeader()
+	header := newHeader()
 
 	res := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "http://example.com/foo", nil)
 
-	s.Handler(myHandler).ServeHTTP(res, req)
+	header.ServeHTTP(res, req, myHandler)
 
 	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
 	assert.Equal(t, "bar", res.Body.String(), "Body not the expected")
 }
 
-func TestCustomResponseHeader(t *testing.T) {
-	s := NewHeader(HeaderOptions{
+func TestModifyResponseHeaders(t *testing.T) {
+	header := newHeader(HeaderOptions{
 		CustomResponseHeaders: map[string]string{
 			"X-Custom-Response-Header": "test_response",
 		},
 	})
 
 	res := httptest.NewRecorder()
-	req := testhelpers.MustNewRequest(http.MethodGet, "/foo", nil)
+	res.HeaderMap.Add("X-Custom-Response-Header", "test_response")
 
-	s.Handler(myHandler).ServeHTTP(res, req)
+	header.ModifyResponseHeaders(res.Result())
 
 	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
 	assert.Equal(t, "test_response", res.Header().Get("X-Custom-Response-Header"), "Did not get expected header")
+
+	res = httptest.NewRecorder()
+	res.HeaderMap.Add("X-Custom-Response-Header", "")
+
+	header.ModifyResponseHeaders(res.Result())
+
+	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
+	assert.Equal(t, "", res.Header().Get("X-Custom-Response-Header"), "Did not get expected header")
+
+	res = httptest.NewRecorder()
+	res.HeaderMap.Add("X-Custom-Response-Header", "test_override")
+
+	header.ModifyResponseHeaders(res.Result())
+
+	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
+	assert.Equal(t, "test_override", res.Header().Get("X-Custom-Response-Header"), "Did not get expected header")
 }
 
 func TestCustomRequestHeader(t *testing.T) {
-	s := NewHeader(HeaderOptions{
+	header := newHeader(HeaderOptions{
 		CustomRequestHeaders: map[string]string{
 			"X-Custom-Request-Header": "test_request",
 		},
@@ -53,8 +83,35 @@ func TestCustomRequestHeader(t *testing.T) {
 	res := httptest.NewRecorder()
 	req := testhelpers.MustNewRequest(http.MethodGet, "/foo", nil)
 
-	s.Handler(myHandler).ServeHTTP(res, req)
+	header.ServeHTTP(res, req, nil)
 
 	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
 	assert.Equal(t, "test_request", req.Header.Get("X-Custom-Request-Header"), "Did not get expected header")
+}
+
+func TestCustomRequestHeaderEmptyValue(t *testing.T) {
+	header := newHeader(HeaderOptions{
+		CustomRequestHeaders: map[string]string{
+			"X-Custom-Request-Header": "test_request",
+		},
+	})
+
+	res := httptest.NewRecorder()
+	req := testhelpers.MustNewRequest(http.MethodGet, "/foo", nil)
+
+	header.ServeHTTP(res, req, nil)
+
+	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
+	assert.Equal(t, "test_request", req.Header.Get("X-Custom-Request-Header"), "Did not get expected header")
+
+	header = newHeader(HeaderOptions{
+		CustomRequestHeaders: map[string]string{
+			"X-Custom-Request-Header": "",
+		},
+	})
+
+	header.ServeHTTP(res, req, nil)
+
+	assert.Equal(t, http.StatusOK, res.Code, "Status not OK")
+	assert.Equal(t, "", req.Header.Get("X-Custom-Request-Header"), "This header is not expected")
 }

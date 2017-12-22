@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/whitelist"
 	"github.com/vulcand/oxy/forward"
 )
@@ -39,10 +40,18 @@ type headerRewriter struct {
 func (h *headerRewriter) Rewrite(req *http.Request) {
 	clientIP, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err != nil {
+		log.Error(err)
 		h.secureRewriter.Rewrite(req)
+		return
 	}
 
 	authorized, _, err := h.ips.Contains(clientIP)
+	if err != nil {
+		log.Error(err)
+		h.secureRewriter.Rewrite(req)
+		return
+	}
+
 	if h.insecure || authorized {
 		h.secureRewriter.Rewrite(req)
 	} else {

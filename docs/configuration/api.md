@@ -17,7 +17,10 @@
   #
   dashboard = true
   
-  # Enabled debug mode
+  # Enable debug mode.
+  # This will install HTTP handlers to expose Go expvars under /debug/vars and
+  # pprof profiling data under /debug/pprof.
+  # Additionally, the log level will be set to DEBUG.
   #
   # Optional
   # Default: false
