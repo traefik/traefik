@@ -7,12 +7,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"fmt"
+
 	"github.com/beevik/etree"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/types"
+	"github.com/containous/traefik/middlewares/audittap/xmlutils"
 )
 
 // RATEAuditDetail is the detail section of the event
@@ -26,6 +30,7 @@ type RATEAuditDetail struct {
 	SoftwareVersion string `json:"softwareVersion,omitempty"`
 	TransactionID   string `json:"transactionID,omitempty"`
 	UserType        string `json:"userType,omitempty"`
+	IsRepayment     string `json:"isRepayment,omitempty"` // Boolean values as string so it can be empty
 }
 
 // RATEAuditEvent is the audit event created for RATE calls
@@ -41,10 +46,7 @@ type contentExtractor interface {
 	populateDetail(ev *RATEAuditDetail)
 	populateIdentifiers(ev *RATEAuditEvent)
 	populateEnrolments(ev *RATEAuditEvent)
-}
-
-type xmlFragment struct {
-	InnerXML []byte `xml:",innerxml"`
+	populateMessageSpecificInfo(ev *RATEAuditEvent)
 }
 
 // AppendRequest appends information about the request to the audit event
@@ -56,17 +58,18 @@ func (ev *RATEAuditEvent) AppendRequest(req *http.Request) {
 func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
 
 	body, err := copyBody(req)
+	url, err := url.ParseRequestURI(req.RequestURI)
 
 	if err != nil {
 		log.Errorf("Error reading request body: %v", err)
 	}
 
 	decoder := xml.NewDecoder(body)
-	if root, err := scrollToRootElement(decoder); err == nil {
+	if root, err := xmlutils.ScrollToNextElement(decoder); err == nil {
 		var extractor contentExtractor
 		switch root.Name.Local {
 		case "GovTalkMessage":
-			extractor, err = gtmGetMessageParts(decoder)
+			extractor, err = gtmGetMessageParts(decoder, url.Path)
 		case "ChRISEnvelope":
 			extractor, err = ceGetMessageParts(decoder)
 		default:
@@ -78,6 +81,7 @@ func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
 			extractor.populateDetail(&ev.Detail)
 			extractor.populateIdentifiers(ev)
 			extractor.populateEnrolments(ev)
+			extractor.populateMessageSpecificInfo(ev)
 		} else {
 			log.Debugf("Error processing RATE message: %v", err)
 		}
@@ -122,13 +126,13 @@ func copyBody(req *http.Request) (io.ReadCloser, error) {
 type partialGovTalkMessage struct {
 	Header  *etree.Document
 	Details *etree.Document
+	Body    *etree.Document
 }
 
-func gtmGetMessageParts(decoder *xml.Decoder) (*partialGovTalkMessage, error) {
-	var header xmlFragment
-	var details xmlFragment
-	haveHeader := false
-	haveDetails := false
+func gtmGetMessageParts(decoder *xml.Decoder, path string) (*partialGovTalkMessage, error) {
+
+	partial := partialGovTalkMessage{}
+	isSaSubmission := false
 
 	for {
 		t, _ := decoder.Token()
@@ -138,55 +142,59 @@ func gtmGetMessageParts(decoder *xml.Decoder) (*partialGovTalkMessage, error) {
 		switch se := t.(type) {
 		case xml.StartElement:
 			if se.Name.Local == "Header" {
-				if err := decoder.DecodeElement(&header, &se); err == nil {
-					haveHeader = true
+				if doc, err := xmlutils.ElementInnerToDocument(&se, decoder); err == nil {
+					partial.Header = doc
+					if el := doc.FindElementPath(gtmClass); el != nil {
+						isSaSubmission = strings.HasPrefix(el.Text(), "HMRC-SA-") && path == "/submission"
+					}
 				}
 			} else if se.Name.Local == "GovTalkDetails" {
-				if err := decoder.DecodeElement(&details, &se); err == nil {
-					haveDetails = true
+				if doc, err := xmlutils.ElementInnerToDocument(&se, decoder); err == nil {
+					partial.Details = doc
+				}
+			} else if isSaSubmission && se.Name.Local == "Body" {
+				if doc, err := xmlutils.ElementInnerToDocument(&se, decoder); err == nil {
+					partial.Body = doc
 				}
 			}
 		}
 
-		// Stop parsing when required data is obtained
-		if haveHeader && haveDetails {
-			partial := partialGovTalkMessage{}
-			headerDoc := etree.NewDocument()
-			if err := headerDoc.ReadFromBytes(header.InnerXML); err != nil {
-				return nil, err
-			}
-			detailsDoc := etree.NewDocument()
-			if err := detailsDoc.ReadFromBytes(details.InnerXML); err != nil {
-				return nil, err
-			}
-			partial.Header = headerDoc
-			partial.Details = detailsDoc
-			return &partial, nil
+		// For non SA events halt parsing when required data is obtained otherwise need to continue parsing to the end
+		if !isSaSubmission && partial.Header != nil && partial.Details != nil {
+			break // For non SA events halt parsing when required data is obtained
 		}
 	}
 
+	if partial.Header != nil && partial.Details != nil {
+		return &partial, nil
+	}
 	return nil, errors.New("Unexpected message structure. Headers/GovTalkDetails not present")
 }
 
 // Headers XPaths
-var gtmClass = etree.MustCompilePath("./MessageDetails/Class")
-var gtmPathFunction = etree.MustCompilePath("./MessageDetails/Function")
-var gtmPathQualifier = etree.MustCompilePath("./MessageDetails/Qualifier")
-var gtmCorrelationID = etree.MustCompilePath("./MessageDetails/CorrelationID")
-var gtmTransactionID = etree.MustCompilePath("./MessageDetails/TransactionID")
-var gtmEmailAddress = etree.MustCompilePath("./SenderDetails/EmailAddress")
-var gtmSenderID = etree.MustCompilePath("./SenderDetails/IDAuthentication/SenderID")
+var gtmClass = etree.MustCompilePath("./Header/MessageDetails/Class")
+var gtmPathFunction = etree.MustCompilePath("./Header/MessageDetails/Function")
+var gtmPathQualifier = etree.MustCompilePath("./Header/MessageDetails/Qualifier")
+var gtmCorrelationID = etree.MustCompilePath("./Header/MessageDetails/CorrelationID")
+var gtmTransactionID = etree.MustCompilePath("./Header/MessageDetails/TransactionID")
+var gtmEmailAddress = etree.MustCompilePath("./Header/SenderDetails/EmailAddress")
+var gtmSenderID = etree.MustCompilePath("./Header/SenderDetails/IDAuthentication/SenderID")
 
 // GovTalkDetails XPaths
-var gtmAgentGroupCode = etree.MustCompilePath("./GatewayAdditions/Submitter/AgentDetails/AgentGroupCode")
-var gtmAgentEnrolments = etree.MustCompilePath("./GatewayAdditions/Submitter/AgentDetails/AgentEnrolments/Enrolment/ServiceName")
+var gtmAgentGroupCode = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submitter/AgentDetails/AgentGroupCode")
+var gtmAgentEnrolments = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submitter/AgentDetails/AgentEnrolments/Enrolment/ServiceName")
 var gtmAgentEnrolmentIds = etree.MustCompilePath("./Identifiers/Identifier")
-var gtmCredentialID = etree.MustCompilePath("./GatewayAdditions/Submitter/SubmitterDetails/CredentialIdentifier")
-var gtmSoftwareFamily = etree.MustCompilePath("./ChannelRouting/Channel/Product")
-var gtmSoftwareVersion = etree.MustCompilePath("./ChannelRouting/Channel/Version")
-var gtmIdentifiers = etree.MustCompilePath("./Keys/Key")
-var gtmRole = etree.MustCompilePath("./GatewayAdditions/Submitter/SubmitterDetails/CredentialRole")
-var gtmUserType = etree.MustCompilePath("./GatewayAdditions/Submitter/SubmitterDetails/RegistrationCategory")
+var gtmCredentialID = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submitter/SubmitterDetails/CredentialIdentifier")
+var gtmSoftwareFamily = etree.MustCompilePath("./GovTalkDetails/ChannelRouting/Channel/Product")
+var gtmSoftwareVersion = etree.MustCompilePath("./GovTalkDetails/ChannelRouting/Channel/Version")
+var gtmIdentifiers = etree.MustCompilePath("./GovTalkDetails/Keys/Key")
+var gtmRole = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submitter/SubmitterDetails/CredentialRole")
+var gtmUserType = etree.MustCompilePath("./GovTalkDetails/GatewayAdditions/Submitter/SubmitterDetails/RegistrationCategory")
+
+// SA Specific Data
+var gtmSa110Repayment = etree.MustCompilePath("./Body/IRenvelope/MTR/SA110/SelfAssessment/TotalTaxEtcDue")
+var gtmSa900Claim = etree.MustCompilePath("./Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/ClaimRepaymentForNextYear")
+var gtmSa900Repayment = etree.MustCompilePath("./Body/IRenvelope/SAtrust/TrustEstate/TaxCalculation/RepaymentForNextYear")
 
 func (partial *partialGovTalkMessage) populateAuditEvent(ae *AuditEvent) {
 	extractIfPresent(partial.Header, gtmClass, &ae.AuditType)
@@ -233,7 +241,6 @@ func (partial *partialGovTalkMessage) populateIdentifiers(ev *RATEAuditEvent) {
 }
 
 func (partial *partialGovTalkMessage) populateEnrolments(ev *RATEAuditEvent) {
-
 	if nodes := partial.Details.FindElementsPath(gtmAgentEnrolments); len(nodes) > 0 {
 		ev.Enrolments = types.DataMap{}
 		for _, service := range nodes {
@@ -246,6 +253,40 @@ func (partial *partialGovTalkMessage) populateEnrolments(ev *RATEAuditEvent) {
 	}
 }
 
+func (partial *partialGovTalkMessage) populateMessageSpecificInfo(ev *RATEAuditEvent) {
+	partial.populateSelfAssessmentData(ev)
+}
+
+func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEvent) {
+	if strings.HasPrefix(ev.AuditType, "HMRC-SA-") && partial.Body != nil {
+		payload := xmlutils.XMLToDataMap(partial.Body.ChildElements(), []string{"AttachedFiles", "Attachment"})
+		body := payload.GetDataMap("Body")
+		if ev.RequestPayload != nil {
+			ev.RequestPayload = types.DataMap{}
+		}
+		ev.RequestPayload["details"] = (body)
+		if strings.HasPrefix(ev.AuditType, "HMRC-SA-SA100") {
+			if el := partial.Body.FindElementPath(gtmSa110Repayment); el != nil {
+				if amount, err := strconv.ParseFloat(el.Text(), 64); err == nil {
+					ev.Detail.IsRepayment = strconv.FormatBool(amount < 0.00)
+				}
+
+			}
+		}
+		if strings.HasPrefix(ev.AuditType, "HMRC-SA-SA900") {
+			claim := partial.Body.FindElementPath(gtmSa900Claim)
+			amount := partial.Body.FindElementPath(gtmSa900Repayment)
+
+			if claim != nil && amount != nil {
+				if amount, err := strconv.ParseFloat(amount.Text(), 64); err == nil {
+					ev.Detail.IsRepayment = strconv.FormatBool(strings.ToLower(strings.TrimSpace(claim.Text())) == "yes" && amount > 0.00)
+				}
+
+			}
+		}
+	}
+}
+
 // ChRISEnvelope Processing
 type partialChrisEnvelope struct {
 	Header     *etree.Document
@@ -253,8 +294,8 @@ type partialChrisEnvelope struct {
 }
 
 func ceGetMessageParts(decoder *xml.Decoder) (*partialChrisEnvelope, error) {
-	var header xmlFragment
-	var irEnv xmlFragment
+	var header xmlutils.XMLFragment
+	var irEnv xmlutils.XMLFragment
 	haveHeader := false
 	haveIrEnv := false
 
@@ -338,6 +379,10 @@ func (partial *partialChrisEnvelope) populateEnrolments(ev *RATEAuditEvent) {
 	ev.Enrolments = types.DataMap{}
 }
 
+func (partial *partialChrisEnvelope) populateMessageSpecificInfo(ev *RATEAuditEvent) {
+	// Noop
+}
+
 func extractIfPresent(doc *etree.Document, path etree.Path, dest *string) {
 	if node := doc.FindElementPath(path); node != nil {
 		*dest = node.Text()
@@ -356,19 +401,4 @@ func translateRequestType(function string, qualifier string) string {
 	}
 
 	return ""
-}
-
-func scrollToRootElement(decoder *xml.Decoder) (xml.StartElement, error) {
-	for {
-		t, _ := decoder.Token()
-		if t == nil {
-			break
-		}
-		switch se := t.(type) {
-		case xml.StartElement:
-			return se, nil
-		}
-	}
-	return xml.StartElement{}, errors.New("No root XML element found")
-
 }

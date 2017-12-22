@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
+	<EnvelopeVersion>2.0</EnvelopeVersion>
+	<Header>
+		<MessageDetails>
+			<Class>HMRC-SA-SA100-ATT</Class>
+			<Qualifier>request</Qualifier>
+			<Function>submit</Function>
+			<TransactionID>141500000000000000000000100113</TransactionID>
+			<CorrelationID/>
+			<Transformation>XML</Transformation>
+			<GatewayTimestamp>2016-08-05T16:30:11</GatewayTimestamp>
+		</MessageDetails>
+		<SenderDetails/>
+	</Header>
+	<GovTalkDetails>
+		<Keys>
+			<Key Type="UTR">1121766916</Key>
+		</Keys>
+		<ChannelRouting>
+			<Channel>
+				<URI>0046</URI>
+				<Product>EzGov HMRC-SA-SA100-ATT</Product>
+				<Version>3.4</Version>
+			</Channel>
+		</ChannelRouting>
+		<GatewayAdditions>
+			<Submitter xmlns="http://www.govtalk.gov.uk/gateway/submitterdetails">
+				<AgentDetails/>
+				<SubmitterDetails>
+					<RegistrationCategory>Organisation</RegistrationCategory>
+					<UserType>Principal</UserType>
+					<CredentialRole>User</CredentialRole>
+					<CredentialIdentifier>0000001874127216</CredentialIdentifier>
+				</SubmitterDetails>
+			</Submitter>
+		</GatewayAdditions>
+	</GovTalkDetails>
+	<Body>
+		<IRenvelope xmlns="http://www.govtalk.gov.uk/taxation/SA/SA100/14-15/1">
+			<IRheader>
+				<Keys>
+					<Key Type="UTR">1121766916</Key>
+				</Keys>
+				<PeriodEnd>2015-04-05</PeriodEnd>
+				<IRmark Type="generic">AyjZgharoSbuTFAhQvNo9ebpLO4=</IRmark>
+				<Sender>Individual</Sender>
+			</IRheader>
+			<MTR>
+				<SA100>
+					<YourPersonalDetails>
+						<DateOfBirth>1974-03-31</DateOfBirth>
+						<NewAddress>
+							<AddressLine1>GY001093 ENTERPRISE HOUSE   </AddressLine1>
+							<AddressLine2>DO NOT DELIVER           </AddressLine2>
+							<AddressLine3>ENTERPRISE GARDENS       </AddressLine3>
+							<AddressLine4>NORFOLK</AddressLine4>
+							<Postcode>TF2 9TZ</Postcode>
+						</NewAddress>
+						<NationalInsuranceNumber>GY001093A</NationalInsuranceNumber>
+					</YourPersonalDetails>
+					<YourTaxReturn>
+						<CapitalGainsSchedule>yes</CapitalGainsSchedule>
+						<CapitalGainsComputationAttached>yes</CapitalGainsComputationAttached>
+						<AdditionalInformationSchedule>yes</AdditionalInformationSchedule>
+					</YourTaxReturn>
+					<StudentLoanRepayments/>
+					<Income>
+						<UKInterestAndDividends/>
+						<OtherUKIncome/>
+					</Income>
+					<TaxReliefs>
+						<Pensions/>
+						<BlindPersonsAllowance/>
+					</TaxReliefs>
+					<FinishingYourTaxReturn>
+						<NotPaidEnough>
+							<TaxOwedNotToBeCodedOut>yes</TaxOwedNotToBeCodedOut>
+							<NonPAYEIncomeNotToBeCodedOut>yes</NonPAYEIncomeNotToBeCodedOut>
+						</NotPaidEnough>
+						<PaidTooMuch>
+							<PaymentDetails/>
+							<NoBankOrBuildingSocietyAccount>yes</NoBankOrBuildingSocietyAccount>
+						</PaidTooMuch>
+						<SigningYourForm>
+							<OtherInformationSpace>Tell us about you -  why have you answered no to student loan   bnhttyhty</OtherInformationSpace>
+						</SigningYourForm>
+					</FinishingYourTaxReturn>
+				</SA100>
+				<SA101>
+					<SharesEmploymentCompensationsAndDeductions/>
+					<OtherInformation/>
+				</SA101>
+				<SA108>
+					<SummaryOfEnclosedComputations>
+						<TotalGainsInTheYear>0.00</TotalGainsInTheYear>
+						<TotalLossesForTheYear>0.00</TotalLossesForTheYear>
+					</SummaryOfEnclosedComputations>
+					<QuotedSharedAndOtherSecurities/>
+					<UnquotedSharesAndOtherSecurities/>
+					<PropertyAndOtherAssetsAndGains/>
+					<AnyOtherInformationSpace>asdasd</AnyOtherInformationSpace>
+				</SA108>
+				<SA110>
+					<SelfAssessment>
+						<TotalTaxEtcDue>0.00</TotalTaxEtcDue>
+						<Class4NICsDue>0.00</Class4NICsDue>
+					</SelfAssessment>
+					<UnderpaidTax>
+						<UnderpaidTaxForEarlierYearsIncludedInCode>0.00</UnderpaidTaxForEarlierYearsIncludedInCode>
+						<UnderpaidTaxForYearIncludedInFutureCode>0.00</UnderpaidTaxForYearIncludedInFutureCode>
+						<OutstandingDebtCodedOutAmount>0.00</OutstandingDebtCodedOutAmount>
+					</UnderpaidTax>
+					<AdjustmentsToTaxDue/>
+				</SA110>
+				<TaxpayerName>aaaa bbb</TaxpayerName>
+				<Declaration>
+					<IndividualDeclaration>yes</IndividualDeclaration>
+				</Declaration>
+				<AttachedFiles>
+					<Attachment FileFormat="pdf" Filename="tubemap.pdf" Description="TubeMap" Size="315001">NOTREALLLYBASE64DATA</Attachment>
+				</AttachedFiles>
+			</MTR>
+		</IRenvelope>
+	</Body>
+</GovTalkMessage>

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"encoding/xml"
+
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -394,7 +395,7 @@ func TestGetMessageParts(t *testing.T) {
 	`
 
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
-	parts, _ := gtmGetMessageParts(decoder)
+	parts, _ := gtmGetMessageParts(decoder, "")
 	assert.NotEmpty(t, parts.Header)
 	assert.NotEmpty(t, parts.Details)
 }
@@ -409,7 +410,7 @@ func TestXmlMissingHeader(t *testing.T) {
 	`
 
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
-	_, err := gtmGetMessageParts(decoder)
+	_, err := gtmGetMessageParts(decoder, "")
 	assert.Error(t, err)
 }
 
@@ -423,7 +424,7 @@ func TestXmlMissingDetails(t *testing.T) {
 	`
 
 	decoder := xml.NewDecoder(bytes.NewReader([]byte(x)))
-	_, err := gtmGetMessageParts(decoder)
+	_, err := gtmGetMessageParts(decoder, "")
 	assert.Error(t, err)
 }
 
