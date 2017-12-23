@@ -4,17 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"
 )
-
-type KvMock struct {
-	Provider
-}
-
-func (provider *KvMock) loadConfig() *types.Configuration {
-	return nil
-}
 
 // Override Get/List to return a error
 type KvError struct {
@@ -27,6 +18,20 @@ type Mock struct {
 	Error           KvError
 	KVPairs         []*store.KVPair
 	WatchTreeMethod func() <-chan []*store.KVPair
+}
+
+func newKvClientMock(kvPairs []*store.KVPair, err error) *Mock {
+	mock := &Mock{
+		KVPairs: kvPairs,
+	}
+
+	if err != nil {
+		mock.Error = KvError{
+			Get:  err,
+			List: err,
+		}
+	}
+	return mock
 }
 
 func (s *Mock) Put(key string, value []byte, opts *store.WriteOptions) error {
@@ -82,9 +87,9 @@ func (s *Mock) List(prefix string, options *store.ReadOptions) ([]*store.KVPair,
 	if err := s.Error.List; err != nil {
 		return nil, err
 	}
-	kv := []*store.KVPair{}
+	var kv []*store.KVPair
 	for _, kvPair := range s.KVPairs {
-		if strings.HasPrefix(kvPair.Key, prefix) && !strings.ContainsAny(strings.TrimPrefix(kvPair.Key, prefix), "/") {
+		if strings.HasPrefix(kvPair.Key, prefix) && !strings.ContainsAny(strings.TrimPrefix(kvPair.Key, prefix), pathSeparator) {
 			kv = append(kv, kvPair)
 		}
 	}

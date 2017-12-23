@@ -291,7 +291,7 @@ func (s *EtcdSuite) TestGlobalConfiguration(c *check.C) {
 	c.Assert(err, checker.IsNil)
 }
 
-func (s *EtcdSuite) TestCertificatesContentstWithSNIConfigHandshake(c *check.C) {
+func (s *EtcdSuite) TestCertificatesContentWithSNIConfigHandshake(c *check.C) {
 	etcdHost := s.composeProject.Container(c, "etcd").NetworkSettings.IPAddress
 	// start Træfik
 	cmd, display := s.traefikCmd(
