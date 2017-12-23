@@ -162,7 +162,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultRety configuration.Retry
 	defaultRety.Attempts = 0
 	defaultRety.CacheInitialCapacity = 4 * 1024
-	defaultRety.CacheMaxCapacity = 32 * 1024
+	defaultRety.CacheMaxCapacity = 0
 	defaultRety.TempDir = "/tmp"
 	defaultRety.RetryInterval = 0
 

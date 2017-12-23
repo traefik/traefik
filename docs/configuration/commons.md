@@ -299,12 +299,12 @@ For dynamic providers, the corresponding template file needs to be customized ac
 #
 # cacheinitialcapacity = 4096
 
-# Maximum allowed capacity for cache (in bytes), when upstream data is bigger than this value, retry starts caching data into file
+# Maximum allowed capacity for cache (in bytes), when upstream data is bigger than this value, retry starts caching data into file. if set to 0 all data will be cached in memory
 #
 # Optional
-# Default: 32kb
+# Default: 0
 #
-# cachemaxcapacity = 32768
+# cachemaxcapacity = 0
 
 # Place to store temporary files
 #

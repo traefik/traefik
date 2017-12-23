@@ -53,8 +53,7 @@ func NewErrorPagesHandler(errorPage types.ErrorPage, backendURL string) (*ErrorP
 }
 
 func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	buf := make([]byte, 0, 16*1024)
-	recorder := newRetryResponseRecorder(buf, 64*1024, nil)
+	recorder := newRetryResponseRecorder(0, 0, nil)
 	recorder.responseWriter = w
 	defer recorder.Reset()
 	next.ServeHTTP(recorder, req)

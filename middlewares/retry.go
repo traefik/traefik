@@ -9,7 +9,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/containous/traefik/log"
@@ -28,34 +27,25 @@ var (
 type RetrySettings struct {
 	Attempts             int           // Number of attempts
 	CacheInitialCapacity int           // Initial capacity of cache when creating (in bytes)
-	CacheMaxCapacity     int           // Maximum allowed capacity for cache (in bytes) when upstream data is bigger than this value, retry starts caching data into file
+	CacheMaxCapacity     int           // Maximum allowed capacity for cache (in bytes) when upstream data is bigger than this value, retry starts caching data into file. if set to 0 all data will be cached in memory
 	TempDir              string        // Place to store temporary files
 	RetryInterval        time.Duration // Retry interval in milliseconds before next try
 }
 
 // Retry is a middleware that retries requests
 type Retry struct {
-	next       http.Handler
-	listener   RetryListener
-	hotMemPool sync.Pool
-	conf       *RetrySettings
+	next     http.Handler
+	listener RetryListener
+	conf     *RetrySettings
 }
 
 // NewRetry returns a new Retry instance
 func NewRetry(conf *RetrySettings, next http.Handler, listener RetryListener) *Retry {
-	retry := &Retry{
+	return &Retry{
 		next:     next,
 		listener: listener,
 		conf:     conf,
 	}
-
-	retry.hotMemPool = sync.Pool{
-		New: func() interface{} {
-			return make([]byte, 0, retry.conf.CacheInitialCapacity)
-		},
-	}
-
-	return retry
 }
 
 func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -68,10 +58,7 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	attempts := 1
 
-	buf := retry.hotMemPool.Get().([]byte)
-	defer retry.hotMemPool.Put(buf)
-
-	recorder := newRetryResponseRecorder(buf, int64(retry.conf.CacheMaxCapacity), &retry.conf.TempDir)
+	recorder := newRetryResponseRecorder(int64(retry.conf.CacheInitialCapacity), int64(retry.conf.CacheMaxCapacity), &retry.conf.TempDir)
 	recorder.responseWriter = rw
 	defer recorder.Reset()
 
@@ -161,9 +148,10 @@ type retryResponseRecorder struct {
 	streamingResponseStarted bool
 
 	// hot
-	hotMem            []byte
-	hotMemCapacity    int64
-	writePos, readPos int64
+	hotMem          []byte
+	initialCapacity int64
+	hotMemCapacity  int64
+	readPos         int64
 
 	// cold
 	fileReader *bufio.Reader
@@ -173,19 +161,19 @@ type retryResponseRecorder struct {
 }
 
 // newRetryResponseRecorder returns an initialized retryResponseRecorder.
-func newRetryResponseRecorder(buff []byte, maxCapacity int64, fileDir *string) *retryResponseRecorder {
+func newRetryResponseRecorder(initialCapacity int64, maxCapacity int64, fileDir *string) *retryResponseRecorder {
 	if fileDir == nil {
-		maxCapacity *= 100
+		maxCapacity = 0
 	}
 
 	return &retryResponseRecorder{
-		HeaderMap:      make(http.Header),
-		Code:           http.StatusOK,
-		hotMemCapacity: maxCapacity,
-		hotMem:         buff,
-		writePos:       0,
-		readPos:        0,
-		fileDir:        fileDir,
+		HeaderMap:       make(http.Header),
+		Code:            http.StatusOK,
+		initialCapacity: initialCapacity,
+		hotMemCapacity:  maxCapacity,
+		hotMem:          make([]byte, 0, initialCapacity),
+		readPos:         0,
+		fileDir:         fileDir,
 	}
 }
 
@@ -209,16 +197,18 @@ func (rw *retryResponseRecorder) Seek(offset int64, whence int) (int64, error) {
 		return rw.file.Seek(offset, whence)
 	}
 
+	hotMemLen := int64(len(rw.hotMem))
+
 	if whence == io.SeekStart {
 		rw.readPos = offset
 	} else if whence == io.SeekCurrent {
 		rw.readPos = rw.readPos + offset
 	} else if whence == io.SeekEnd {
-		rw.readPos = rw.writePos + offset
+		rw.readPos = hotMemLen + offset
 	}
 
-	if rw.readPos > rw.writePos {
-		rw.readPos = rw.writePos
+	if rw.readPos > hotMemLen {
+		rw.readPos = hotMemLen
 	} else if rw.readPos < 0 {
 		rw.readPos = 0
 	}
@@ -230,10 +220,10 @@ func (rw *retryResponseRecorder) Read(buf []byte) (n int, err error) {
 		return rw.fileReader.Read(buf)
 	}
 
-	n = copy(buf, rw.hotMem[rw.readPos:rw.writePos])
+	n = copy(buf, rw.hotMem[rw.readPos:])
 	rw.readPos += int64(n)
 	err = nil
-	if rw.readPos == rw.writePos {
+	if rw.readPos == int64(len(rw.hotMem)) {
 		err = io.EOF
 	}
 	return n, err
@@ -251,21 +241,11 @@ func (rw *retryResponseRecorder) Write(buf []byte) (n int, err error) {
 	}
 
 	// still writing to hot mem
-	if int64(len(buf))+rw.writePos < rw.hotMemCapacity {
+	if rw.hotMemCapacity == 0 || int64(len(buf)+len(rw.hotMem)) < rw.hotMemCapacity {
 		// enough capacity for buf in hotMem
-		if int64(len(buf)) > int64(len(rw.hotMem))-rw.writePos {
-			// not enough space in current hotMem
-			prevPos := rw.writePos
-			n = copy(rw.hotMem[rw.writePos:], buf)
-			rw.writePos += int64(n)
-			rw.hotMem = append(rw.hotMem, buf[n:]...)
-			rw.writePos = int64(len(rw.hotMem))
-			n = int(rw.writePos - prevPos)
-		} else {
-			n = copy(rw.hotMem[rw.writePos:], buf)
-			rw.writePos += int64(n)
-		}
-		return n, nil
+		oldLen := len(rw.hotMem)
+		rw.hotMem = append(rw.hotMem, buf...)
+		return len(rw.hotMem) - oldLen, nil
 	}
 
 	// create file
@@ -280,15 +260,15 @@ func (rw *retryResponseRecorder) Write(buf []byte) (n int, err error) {
 	rw.fileWriter = bufio.NewWriter(rw.file)
 	rw.fileReader = bufio.NewReader(rw.file)
 
-	n, err = rw.fileWriter.Write(rw.hotMem[:rw.writePos])
+	n, err = rw.fileWriter.Write(rw.hotMem)
 	if err != nil {
 		return 0, err
 	}
-	if int64(n) != rw.writePos {
+	if n != len(rw.hotMem) {
 		return 0, ErrorInconsistentWrite
 	}
 	rw.fileWriter.Flush()
-	rw.writePos = 0
+	rw.hotMem = make([]byte, 0, 0)
 
 	return rw.Write(buf)
 }
@@ -333,7 +313,7 @@ func (rw *retryResponseRecorder) Flush() {
 }
 
 func (rw *retryResponseRecorder) Reset() {
-	rw.writePos = 0
+	rw.hotMem = make([]byte, 0, rw.initialCapacity)
 	rw.readPos = 0
 
 	rw.fileReader = nil
