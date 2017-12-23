@@ -62,12 +62,26 @@ domain = "mesos.localhost"
 #
 # ZkDetectionTimeout = 30
 
-# Polling interval (in seconds).
+# Polling interval (in seconds). If the polling interval is set to 0, polling is disabled.
 #
 # Optional
 # Default: 30
 #
 # RefreshSeconds = 30
+
+# Subscribe to events from the mesos master when tasks are added and destroyed. Requires Mesos >1.1.
+#
+# Optional
+# Default: false
+#
+# Subscribe = true
+
+# Only update the configuration in response to changes from tasks with the following labels (comma separated)
+#
+# Optional
+# Default: ""
+#
+# SubscribeLabels = "traefik.frontend.rule"
 
 # IP sources (e.g. host, docker, mesos, rkt).
 #
