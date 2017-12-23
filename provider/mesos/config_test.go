@@ -29,7 +29,7 @@ func TestBuildConfiguration(t *testing.T) {
 			Domain:           "docker.localhost",
 			ExposedByDefault: true,
 		}
-		actualConfig := provider.buildConfiguration()
+		actualConfig, _ := provider.buildConfiguration()
 		if c.expectedNil {
 			if actualConfig != nil {
 				t.Fatalf("Should have been nil, got %v", actualConfig)

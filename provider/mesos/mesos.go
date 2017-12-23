@@ -49,7 +49,7 @@ type mesosEvent struct {
 	Type      string `json:"type"`
 	TaskAdded struct {
 		Task struct {
-			TaskId struct {
+			TaskID struct {
 				Value string `json:"value"`
 			} `json:"task_id"`
 			Labels struct {
@@ -61,15 +61,15 @@ type mesosEvent struct {
 		} `json:"task"`
 	} `json:"task_added"`
 	TaskUpdated struct {
-		FrameworkId struct {
+		FrameworkID struct {
 			Value string `json:"value"`
 		} `json:"framework_id"`
 		State  string `json:"state"`
 		Status struct {
-			TaskId struct {
+			TaskID struct {
 				Value string `json:"value"`
 			} `json:"task_id"`
-			AgentId struct {
+			AgentID struct {
 				Value string `json:"value"`
 			} `json:"agent_id"`
 		} `json:"status"`
@@ -258,16 +258,16 @@ func detectMasters(zk string, masters []string) <-chan []string {
 
 func (p *Provider) subscribeMesos(masters []string) (<-chan state.Task, <-chan state.Task) {
 	var subscribeResp *http.Response
-	var masterUri url.URL
+	var masterURI url.URL
 
 	for _, master := range masters {
 		log.Debugf("Attempting to connect to master %v", master)
-		masterUri = url.URL{
+		masterURI = url.URL{
 			Scheme: "http",
 			Host:   master,
 			Path:   "api/v1",
 		}
-		r, err := http.NewRequest("POST", masterUri.String(), strings.NewReader(`{"type":"SUBSCRIBE"}`))
+		r, err := http.NewRequest("POST", masterURI.String(), strings.NewReader(`{"type":"SUBSCRIBE"}`))
 		r.Header.Set("Content-Type", "application/json")
 		r.Header.Set("Accept", "application/json")
 		if err != nil {
@@ -280,6 +280,7 @@ func (p *Provider) subscribeMesos(masters []string) (<-chan state.Task, <-chan s
 			continue
 		}
 		subscribeResp = resp
+		break
 	}
 	if subscribeResp == nil {
 		return nil, nil
@@ -292,7 +293,7 @@ func (p *Provider) subscribeMesos(masters []string) (<-chan state.Task, <-chan s
 			close(taskAdded)
 			close(taskUpdated)
 		}()
-		log.Debugf("Starting mesos task subscription on %v", masterUri.String())
+		log.Debugf("Starting mesos task subscription on %v", masterURI.String())
 		reader := bufio.NewReader(resp.Body)
 		readBuff := []byte{}
 		for {
@@ -325,7 +326,7 @@ func (p *Provider) subscribeMesos(masters []string) (<-chan state.Task, <-chan s
 								for _, taskLabel := range event.TaskAdded.Task.Labels.Labels {
 									if taskLabel.Key == label {
 										taskAdded <- state.Task{
-											ID: event.TaskAdded.Task.TaskId.Value,
+											ID: event.TaskAdded.Task.TaskID.Value,
 										}
 										break matchLabel
 									}
@@ -334,7 +335,7 @@ func (p *Provider) subscribeMesos(masters []string) (<-chan state.Task, <-chan s
 						}
 					} else if event.Type == "TASK_UPDATED" {
 						t := state.Task{
-							ID: event.TaskUpdated.Status.TaskId.Value,
+							ID: event.TaskUpdated.Status.TaskID.Value,
 						}
 						switch event.TaskUpdated.State {
 						case "TASK_RUNNING":
