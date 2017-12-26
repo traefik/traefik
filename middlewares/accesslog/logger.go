@@ -36,7 +36,7 @@ type LogHandler struct {
 	file     *os.File
 	filePath string
 	mu       sync.Mutex
-	redact   map[string]int
+	redact   map[string]bool
 }
 
 // NewLogHandler creates a new LogHandler
@@ -68,9 +68,9 @@ func NewLogHandler(config *types.AccessLog) (*LogHandler, error) {
 		Level:     logrus.InfoLevel,
 	}
 
-	headerredactions := make(map[string]int)
+	headerredactions := make(map[string]bool)
 	for _, header := range config.HeaderRedactions {
-		headerredactions[header] = 1
+		headerredactions[header] = true
 	}
 
 	return &LogHandler{
