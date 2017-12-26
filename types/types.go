@@ -447,18 +447,20 @@ type TraefikLog struct {
 type AccessLog struct {
 	FilePath         string           `json:"file,omitempty" description:"Access log file path. Stdout is used when omitted or empty" export:"true"`
 	Format           string           `json:"format,omitempty" description:"Access log format: json | common" export:"true"`
-	HeaderRedactions HeaderRedactions `json:"headerredactions,omitempty" description:"List of names of sensitive headers to redact" export:"true"`
+	HeaderRedactions HeaderRedactions `json:"headerredactions,omitempty" description:"List of names of sensitive headers to redact" export:"false"`
 }
 
 // HeaderRedactions holds a list of HTTP header names
 type HeaderRedactions []string
 
-// Set splits string on , and adds the items to the list of headers to
-// be redacted
+// Set splits string on "," and adds the substrings to the
+// list of headers to be redacted. Whitespace is removed
 func (b *HeaderRedactions) Set(str string) error {
 	headers := strings.Split(str, ",")
 	for _, header := range headers {
-		*b = append(*b, header)
+		if trimmed := strings.TrimSpace(header); trimmed != "" {
+			*b = append(*b, strings.TrimSpace(header))
+		}
 	}
 	return nil
 }
