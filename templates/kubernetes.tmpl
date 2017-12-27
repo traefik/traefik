@@ -58,6 +58,16 @@
   PublicKey = "{{$frontend.Headers.PublicKey}}"
   ReferrerPolicy = "{{$frontend.Headers.ReferrerPolicy}}"
   IsDevelopment = {{$frontend.Headers.IsDevelopment}}
+  {{if $frontend.Headers.AllowedHosts}}
+  AllowedHosts = [{{range $frontend.Headers.AllowedHosts}}
+    "{{.}}",
+    {{end}}]
+  {{end}}
+  {{if $frontend.Headers.HostsProxyHeaders}}
+  HostsProxyHeaders = [{{range $frontend.Headers.HostsProxyHeaders}}
+    "{{.}}",
+    {{end}}]
+  {{end}}
 {{if $frontend.Headers.CustomRequestHeaders}}
     [frontends."{{$frontendName}}".headers.customrequestheaders]
     {{range $k, $v := $frontend.Headers.CustomRequestHeaders}}
@@ -68,18 +78,6 @@
     [frontends."{{$frontendName}}".headers.customresponseheaders]
     {{range $k, $v := $frontend.Headers.CustomResponseHeaders}}
     {{$k}} = "{{$v}}"
-    {{end}}
-{{end}}
-{{if $frontend.Headers.AllowedHosts}}
-    [frontends."{{$frontendName}}".headers.AllowedHosts]
-    {{range $frontend.Headers.AllowedHosts}}
-    "{{.}}"
-    {{end}}
-{{end}}
-{{if $frontend.Headers.HostsProxyHeaders}}
-    [frontends."{{$frontendName}}".headers.HostsProxyHeaders]
-    {{range $frontend.Headers.HostsProxyHeaders}}
-    "{{.}}"
     {{end}}
 {{end}}
 {{if $frontend.Headers.SSLProxyHeaders}}

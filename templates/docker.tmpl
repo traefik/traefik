@@ -225,30 +225,33 @@
       {{if hasIsDevelopmentHeaders $container}}
       IsDevelopment = {{getIsDevelopmentHeaders $container}}
       {{end}}
+
+      {{if hasAllowedHostsHeaders $container}}
+      AllowedHosts = [{{range getAllowedHostsHeaders $container}}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{if hasHostsProxyHeaders $container}}
+      HostsProxyHeaders = [{{range getHostsProxyHeaders $container}}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
       {{if hasRequestHeaders $container}}
         [frontends."frontend-{{$frontend}}".headers.customRequestHeaders]
         {{range $k, $v := getRequestHeaders $container}}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
+
       {{if hasResponseHeaders $container}}
       [frontends."frontend-{{$frontend}}".headers.customResponseHeaders]
         {{range $k, $v := getResponseHeaders $container}}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
-      {{if hasAllowedHostsHeaders $container}}
-      [frontends."frontend-{{$frontend}}".headers.AllowedHosts]
-        {{range getAllowedHostsHeaders $container}}
-        "{{.}}"
-        {{end}}
-      {{end}}
-      {{if hasHostsProxyHeaders $container}}
-      [frontends."frontend-{{$frontend}}".headers.HostsProxyHeaders]
-        {{range getHostsProxyHeaders $container}}
-        "{{.}}"
-        {{end}}
-      {{end}}
+
       {{if hasSSLProxyHeaders $container}}
       [frontends."frontend-{{$frontend}}".headers.SSLProxyHeaders]
         {{range $k, $v := getSSLProxyHeaders $container}}
