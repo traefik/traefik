@@ -290,6 +290,7 @@ func (p *Provider) loadDockerConfig(containersInspected []dockerData) *types.Con
 		"getServiceBackend":           getServiceBackend,
 		"getWhitelistSourceRange":     getFuncSliceStringLabel(types.LabelTraefikFrontendWhitelistSourceRange),
 
+		"hasHeaders":                        hasHeaders,
 		"hasRequestHeaders":                 hasLabel(types.LabelFrontendRequestHeaders),
 		"getRequestHeaders":                 getFuncMapLabel(types.LabelFrontendRequestHeaders),
 		"hasResponseHeaders":                hasLabel(types.LabelFrontendResponseHeaders),
@@ -894,4 +895,16 @@ func hasServiceRedirect(container dockerData, serviceName string) bool {
 func hasRedirect(container dockerData) bool {
 	return hasLabel(types.LabelFrontendRedirectEntryPoint)(container) ||
 		hasLabel(types.LabelFrontendRedirectReplacement)(container) && hasLabel(types.LabelFrontendRedirectRegex)(container)
+}
+
+// TODO will be rewrite when merge on master
+func hasHeaders(container dockerData) bool {
+	// LabelPrefix + "frontend.headers.
+
+	for key := range container.Labels {
+		if strings.HasPrefix(key, types.LabelPrefix+"frontend.headers.") {
+			return true
+		}
+	}
+	return false
 }

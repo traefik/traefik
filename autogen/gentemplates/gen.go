@@ -219,6 +219,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   replacement = "{{getRedirectReplacement $container}}"
   {{end}}
 
+  {{ if hasHeaders $container}}
   [frontends."frontend-{{$frontend}}".headers]
   {{if hasSSLRedirectHeaders $container}}
   SSLRedirect = {{getSSLRedirectHeaders $container}}
@@ -295,6 +296,8 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     {{$k}} = "{{$v}}"
     {{end}}
   {{end}}
+  {{end}}
+
     [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
     rule = "{{getFrontendRule $container}}"
   {{end}}
@@ -445,6 +448,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
   replacement = "{{$frontend.RedirectReplacement}}"
   {{end}}
 
+  {{ if $frontend.Headers }}
   [frontends."{{$frontendName}}".headers]
   SSLRedirect = {{$frontend.Headers.SSLRedirect}}
   SSLTemporaryRedirect = {{$frontend.Headers.SSLTemporaryRedirect}}
@@ -490,6 +494,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
     {{range $k, $v := $frontend.Headers.SSLProxyHeaders}}
     {{$k}} = "{{$v}}"
     {{end}}
+  {{end}}
 {{end}}
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]

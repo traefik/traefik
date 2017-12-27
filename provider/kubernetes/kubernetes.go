@@ -208,7 +208,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					priority := getPriority(i)
 
-					headers := types.Headers{
+					headers := &types.Headers{
 						CustomRequestHeaders:    getMapAnnotation(i, annotationKubernetesCustomRequestHeaders),
 						CustomResponseHeaders:   getMapAnnotation(i, annotationKubernetesCustomResponseHeaders),
 						AllowedHosts:            getSliceAnnotation(i, annotationKubernetesAllowedHosts),
@@ -364,7 +364,7 @@ func (p *Provider) loadConfig(templateObjects types.Configuration) *types.Config
 }
 
 func getSTSSeconds(i *v1beta1.Ingress) int64 {
-	value, err := strconv.ParseInt(i.ObjectMeta.Annotations[annotationKubernetesHSTSMaxAge], 10, 64)
+	value, err := strconv.ParseInt(i.Annotations[annotationKubernetesHSTSMaxAge], 10, 64)
 	if err == nil && value > 0 {
 		return value
 	}

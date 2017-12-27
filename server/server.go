@@ -980,10 +980,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						continue frontend
 					}
 
-					var headerMiddleware *middlewares.HeaderStruct
+					headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
 					var responseModifier func(res *http.Response) error
-					if frontend.Headers.HasCustomHeadersDefined() {
-						headerMiddleware = middlewares.NewHeaderFromStruct(frontend.Headers)
+					if headerMiddleware != nil {
 						responseModifier = headerMiddleware.ModifyResponseHeaders
 					}
 
@@ -1166,8 +1165,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						log.Debugf("Adding header middleware for frontend %s", frontendName)
 						n.Use(headerMiddleware)
 					}
-					if frontend.Headers.HasSecureHeadersDefined() {
-						secureMiddleware := middlewares.NewSecure(frontend.Headers)
+
+					secureMiddleware := middlewares.NewSecure(frontend.Headers)
+					if secureMiddleware != nil {
 						log.Debugf("Adding secure middleware for frontend %s", frontendName)
 						n.UseFunc(secureMiddleware.HandlerFuncWithNext)
 					}

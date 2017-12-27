@@ -6,7 +6,11 @@ import (
 )
 
 // NewSecure constructs a new Secure instance with supplied options.
-func NewSecure(headers types.Headers) *secure.Secure {
+func NewSecure(headers *types.Headers) *secure.Secure {
+	if headers == nil || !headers.HasSecureHeadersDefined() {
+		return nil
+	}
+
 	opt := secure.Options{
 		AllowedHosts:            headers.AllowedHosts,
 		HostsProxyHeaders:       headers.HostsProxyHeaders,

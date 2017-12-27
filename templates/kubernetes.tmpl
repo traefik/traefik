@@ -42,6 +42,7 @@
   replacement = "{{$frontend.RedirectReplacement}}"
   {{end}}
 
+  {{ if $frontend.Headers }}
   [frontends."{{$frontendName}}".headers]
   SSLRedirect = {{$frontend.Headers.SSLRedirect}}
   SSLTemporaryRedirect = {{$frontend.Headers.SSLTemporaryRedirect}}
@@ -87,6 +88,7 @@
     {{range $k, $v := $frontend.Headers.SSLProxyHeaders}}
     {{$k}} = "{{$v}}"
     {{end}}
+  {{end}}
 {{end}}
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
