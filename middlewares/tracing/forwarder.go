@@ -9,17 +9,17 @@ import (
 	"github.com/urfave/negroni"
 )
 
-type fwdMiddleware struct {
+type forwarderMiddleware struct {
 	frontend string
 	backend  string
 	opName   string
 	*Tracing
 }
 
-// NewForwarder creates a new forwarder middleware that the final outgoing request
-func (t *Tracing) NewForwarder(frontend, backend string) negroni.Handler {
+// NewForwarderMiddleware creates a new forwarder middleware that traces the outgoing request
+func (t *Tracing) NewForwarderMiddleware(frontend, backend string) negroni.Handler {
 	log.Debugf("Added outgoing tracing middleware %s", frontend)
-	return &fwdMiddleware{
+	return &forwarderMiddleware{
 		Tracing:  t,
 		frontend: frontend,
 		backend:  backend,
@@ -27,7 +27,7 @@ func (t *Tracing) NewForwarder(frontend, backend string) negroni.Handler {
 	}
 }
 
-func (f *fwdMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	span, r, finish := StartSpan(r, f.opName, true)
 	defer finish()
 	span.SetTag("frontend.name", f.frontend)

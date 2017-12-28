@@ -87,9 +87,8 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 			w.Header().Add("Set-Cookie", cookie.String())
 		}
 
-		statusCode := forwardResponse.StatusCode
-		tracing.LogResponseCode(tracing.GetSpan(r), statusCode)
-		w.WriteHeader(statusCode)
+		tracing.LogResponseCode(tracing.GetSpan(r), forwardResponse.StatusCode)
+		w.WriteHeader(forwardResponse.StatusCode)
 		w.Write(body)
 		return
 	}

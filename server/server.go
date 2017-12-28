@@ -1016,7 +1016,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					if s.tracingMiddleware.IsEnabled() {
-						tm := s.tracingMiddleware.NewForwarder(frontendName, frontend.Backend)
+						tm := s.tracingMiddleware.NewForwarderMiddleware(frontendName, frontend.Backend)
 
 						next := fwd
 						fwd = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
