@@ -1511,7 +1511,9 @@ func (s *Server) buildRateLimiter(handler http.Handler, rlConfig *types.RateLimi
 			return nil, err
 		}
 	}
-	return ratelimit.New(handler, extractFunc, rateSet)
+	rateLimiter, err := ratelimit.New(handler, extractFunc, rateSet)
+	return s.tracingMiddleware.NewHTTPHandlerWrapper("Rate limit", rateLimiter, false), err
+
 }
 
 func (s *Server) buildRetryMiddleware(handler http.Handler, globalConfig configuration.GlobalConfiguration, countServers int, backendName string) http.Handler {

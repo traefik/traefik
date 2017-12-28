@@ -19,6 +19,12 @@ type Authenticator struct {
 	users   map[string]string
 }
 
+type tracingAuthenticator struct {
+	name           string
+	handler        negroni.Handler
+	clientSpanKind bool
+}
+
 // NewAuthenticator builds a new Authenticator given a config
 func NewAuthenticator(authConfig *types.Auth, tracingMiddleware *tracing.Tracing) (*Authenticator, error) {
 	if authConfig == nil {
@@ -26,22 +32,34 @@ func NewAuthenticator(authConfig *types.Auth, tracingMiddleware *tracing.Tracing
 	}
 	var err error
 	authenticator := Authenticator{}
+	tracingAuthenticator := tracingAuthenticator{}
 	if authConfig.Basic != nil {
 		authenticator.users, err = parserBasicUsers(authConfig.Basic)
 		if err != nil {
 			return nil, err
 		}
 		basicAuth := goauth.NewBasicAuthenticator("traefik", authenticator.secretBasic)
-		authenticator.handler = tracingMiddleware.NewNegroniHandlerWrapper("Auth Basic", createAuthBasicHandler(basicAuth, authConfig), false)
+		tracingAuthenticator.handler = createAuthBasicHandler(basicAuth, authConfig)
+		tracingAuthenticator.name = "Auth Basic"
+		tracingAuthenticator.clientSpanKind = false
 	} else if authConfig.Digest != nil {
 		authenticator.users, err = parserDigestUsers(authConfig.Digest)
 		if err != nil {
 			return nil, err
 		}
 		digestAuth := goauth.NewDigestAuthenticator("traefik", authenticator.secretDigest)
-		authenticator.handler = tracingMiddleware.NewNegroniHandlerWrapper("Auth Digest", createAuthDigestHandler(digestAuth, authConfig), false)
+		tracingAuthenticator.handler = createAuthDigestHandler(digestAuth, authConfig)
+		tracingAuthenticator.name = "Auth Digest"
+		tracingAuthenticator.clientSpanKind = false
 	} else if authConfig.Forward != nil {
-		authenticator.handler = tracingMiddleware.NewNegroniHandlerWrapper("Auth Forward", createAuthForwardHandler(authConfig), true)
+		tracingAuthenticator.handler = createAuthForwardHandler(authConfig)
+		tracingAuthenticator.name = "Auth Forward"
+		tracingAuthenticator.clientSpanKind = true
+	}
+	if tracingMiddleware != nil {
+		authenticator.handler = tracingMiddleware.NewNegroniHandlerWrapper(tracingAuthenticator.name, tracingAuthenticator.handler, tracingAuthenticator.clientSpanKind)
+	} else {
+		authenticator.handler = tracingAuthenticator.handler
 	}
 	return &authenticator, nil
 }

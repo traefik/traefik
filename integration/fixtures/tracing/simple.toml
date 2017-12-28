@@ -24,29 +24,29 @@ debug = true
 
 [backends]
   [backends.backend1]
-    [backends.backend1.servers.ratelimit]
-    url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+    [backends.backend1.servers.server-ratelimit]
+      url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
   [backends.backend2]
-    [backends.backend2.servers.retry]
+    [backends.backend2.servers.server-retry]
       url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
 [frontends]
-    [frontends.frontend1]
+  [frontends.frontend1]
     passHostHeader = true
     backend = "backend1"
     [frontends.frontend1.routes.test_ratelimit]
-    rule = "Path:/ratelimit"
+      rule = "Path:/ratelimit"
     [frontends.frontend1.ratelimit]
-    extractorfunc = "client.ip"
+      extractorfunc = "client.ip"
         [frontends.frontend1.ratelimit.rateset.rateset1]
-        period = "60s"
-        average = 4
-        burst = 5
+          period = "60s"
+          average = 4
+          burst = 5
         [frontends.frontend1.ratelimit.rateset.rateset2]
-        period = "3s"
-        average = 1
-        burst = 2
-    [frontends.frontend2]
-        passHostHeader = true
-        backend = "backend2"
-        [frontends.frontend2.routes.test_retry]
-        rule = "Path:/retry"
+          period = "3s"
+          average = 1
+          burst = 2
+  [frontends.frontend2]
+    passHostHeader = true
+    backend = "backend2"
+    [frontends.frontend2.routes.test_retry]
+      rule = "Path:/retry"
