@@ -16,19 +16,23 @@ import (
 
 func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Configuration {
 	var FuncMap = template.FuncMap{
+		"getAttribute": p.getAttribute,
+		"getTag":       getTag,
+		"hasTag":       hasTag,
+
+		// Backend functions
 		"getBackend":              getBackend,
-		"getFrontendRule":         p.getFrontendRule,
-		"getBackendName":          getBackendName,
 		"getBackendAddress":       getBackendAddress,
-		"getBasicAuth":            p.getBasicAuth,
+		"hasMaxconnAttributes":    p.hasMaxConnAttributes,
 		"getSticky":               p.getSticky,
 		"hasStickinessLabel":      p.hasStickinessLabel,
 		"getStickinessCookieName": p.getStickinessCookieName,
-		"getAttribute":            p.getAttribute,
-		"getTag":                  getTag,
-		"hasTag":                  hasTag,
-		"getEntryPoints":          getEntryPoints,
-		"hasMaxconnAttributes":    p.hasMaxConnAttributes,
+
+		// Frontend functions
+		"getBackendName":  getBackendName,
+		"getFrontendRule": p.getFrontendRule,
+		"getBasicAuth":    p.getBasicAuth,
+		"getEntryPoints":  getEntryPoints,
 	}
 
 	var allNodes []*api.ServiceEntry
@@ -58,7 +62,7 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 	return configuration
 }
 
-func (p *CatalogProvider) setupFrontEndTemplate() {
+func (p *CatalogProvider) setupFrontEndRuleTemplate() {
 	var FuncMap = template.FuncMap{
 		"getAttribute": p.getAttribute,
 		"getTag":       getTag,
@@ -67,6 +71,8 @@ func (p *CatalogProvider) setupFrontEndTemplate() {
 	tmpl := template.New("consul catalog frontend rule").Funcs(FuncMap)
 	p.frontEndRuleTemplate = tmpl
 }
+
+// Specific functions
 
 func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
 	customFrontendRule := p.getAttribute(label.SuffixFrontendRule, service.Attributes, "")
@@ -102,19 +108,16 @@ func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
 }
 
 func (p *CatalogProvider) getBasicAuth(tags []string) []string {
-	list := p.getAttribute(label.SuffixFrontendAuthBasic, tags, "")
-	if list != "" {
-		return strings.Split(list, ",")
-	}
-	return []string{}
+	return p.getSliceAttribute(label.SuffixFrontendAuthBasic, tags)
 }
 
 func (p *CatalogProvider) hasMaxConnAttributes(attributes []string) bool {
 	amount := p.getAttribute(label.SuffixBackendMaxConnAmount, attributes, "")
-	extractorfunc := p.getAttribute(label.SuffixBackendMaxConnExtractorFunc, attributes, "")
-	return amount != "" && extractorfunc != ""
+	extractorFunc := p.getAttribute(label.SuffixBackendMaxConnExtractorFunc, attributes, "")
+	return amount != "" && extractorFunc != ""
 }
 
+// Deprecated
 func getEntryPoints(list string) []string {
 	return strings.Split(list, ",")
 }
@@ -146,7 +149,8 @@ func getBackendName(node *api.ServiceEntry, index int) string {
 }
 
 // TODO: Deprecated
-// Deprecated replaced by Stickiness
+// replaced by Stickiness
+// Deprecated
 func (p *CatalogProvider) getSticky(tags []string) string {
 	stickyTag := p.getAttribute(label.SuffixBackendLoadBalancerSticky, tags, "")
 	if len(stickyTag) > 0 {
@@ -164,4 +168,78 @@ func (p *CatalogProvider) hasStickinessLabel(tags []string) bool {
 
 func (p *CatalogProvider) getStickinessCookieName(tags []string) string {
 	return p.getAttribute(label.SuffixBackendLoadBalancerStickinessCookieName, tags, "")
+}
+
+// Base functions
+
+func (p *CatalogProvider) getSliceAttribute(name string, tags []string) []string {
+	rawValue := getTag(p.getPrefixedName(name), tags, "")
+
+	if len(rawValue) == 0 {
+		return nil
+	}
+	return label.SplitAndTrimString(rawValue, ",")
+}
+
+func (p *CatalogProvider) getBoolAttribute(name string, tags []string, defaultValue bool) bool {
+	rawValue := getTag(p.getPrefixedName(name), tags, "")
+
+	if len(rawValue) == 0 {
+		return defaultValue
+	}
+
+	value, err := strconv.ParseBool(rawValue)
+	if err != nil {
+		log.Errorf("Invalid value for %s: %s", name, rawValue)
+		return defaultValue
+	}
+	return value
+}
+
+func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {
+	return getTag(p.getPrefixedName(name), tags, defaultValue)
+}
+
+func (p *CatalogProvider) getPrefixedName(name string) string {
+	if len(p.Prefix) > 0 && len(name) > 0 {
+		return p.Prefix + "." + name
+	}
+	return name
+}
+
+func hasTag(name string, tags []string) bool {
+	lowerName := strings.ToLower(name)
+
+	for _, tag := range tags {
+		lowerTag := strings.ToLower(tag)
+
+		// Given the nature of Consul tags, which could be either singular markers, or key=value pairs
+		if strings.HasPrefix(lowerTag, lowerName+"=") || lowerTag == lowerName {
+			return true
+		}
+	}
+	return false
+}
+
+func getTag(name string, tags []string, defaultValue string) string {
+	lowerName := strings.ToLower(name)
+
+	for _, tag := range tags {
+		lowerTag := strings.ToLower(tag)
+
+		// Given the nature of Consul tags, which could be either singular markers, or key=value pairs
+		if strings.HasPrefix(lowerTag, lowerName+"=") || lowerTag == lowerName {
+			// In case, where a tag might be a key=value, try to split it by the first '='
+			kv := strings.SplitN(tag, "=", 2)
+
+			// If the returned result is a key=value pair, return the 'value' component
+			if len(kv) == 2 {
+				return kv[1]
+			}
+			// If the returned result is a singular marker, return the 'key' component
+			return kv[0]
+		}
+
+	}
+	return defaultValue
 }
