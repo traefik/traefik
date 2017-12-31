@@ -1,52 +1,56 @@
 [backends]
-{{range $index, $node := .Nodes}}
-  [backends."backend-{{getBackend $node}}".servers."{{getBackendName $node $index}}"]
-    url = "{{getAttribute "protocol" $node.Service.Tags "http"}}://{{getBackendAddress $node}}:{{$node.Service.Port}}"
-    {{$weight := getAttribute "backend.weight" $node.Service.Tags "0"}}
-    {{with $weight}}
-      weight = {{$weight}}
-    {{end}}
-{{end}}
+{{range $service := .Services}}
+  {{$sname := $service.ServiceName}}
 
-{{range .Services}}
-  {{$service := .ServiceName}}
-  {{$circuitBreaker := getAttribute "backend.circuitbreaker" .Attributes ""}}
+  {{$circuitBreaker := getAttribute "backend.circuitbreaker" $service.Attributes ""}}
   {{with $circuitBreaker}}
-  [backends."backend-{{$service}}".circuitbreaker]
+  [backends."backend-{{$sname}}".circuitBreaker]
     expression = "{{$circuitBreaker}}"
   {{end}}
 
-  [backends."backend-{{$service}}".loadbalancer]
-    method = "{{getAttribute "backend.loadbalancer" .Attributes "wrr"}}"
-    sticky = {{getSticky .Attributes}}
-    {{if hasStickinessLabel .Attributes}}
-    [backends."backend-{{$service}}".loadbalancer.stickiness]
-      cookieName = "{{getStickinessCookieName .Attributes}}"
+  [backends."backend-{{$sname}}".loadBalancer]
+    method = "{{getAttribute "backend.loadbalancer" $service.Attributes "wrr"}}"
+    sticky = {{getSticky $service.Attributes}}
+    {{if hasStickinessLabel $service.Attributes}}
+    [backends."backend-{{$sname}}".loadBalancer.stickiness]
+      cookieName = "{{getStickinessCookieName $service.Attributes}}"
     {{end}}
 
-  {{if hasMaxconnAttributes .Attributes}}
-  [backends."backend-{{$service}}".maxconn]
-    amount = {{getAttribute "backend.maxconn.amount" .Attributes "" }}
-    extractorfunc = "{{getAttribute "backend.maxconn.extractorfunc" .Attributes "" }}"
+  {{if hasMaxconnAttributes $service.Attributes}}
+  [backends."backend-{{$sname}}".maxConn]
+    amount = {{getAttribute "backend.maxconn.amount" $service.Attributes "" }}
+    extractorFunc = "{{getAttribute "backend.maxconn.extractorfunc" $service.Attributes "" }}"
   {{end}}
+
+{{end}}
+{{range $index, $node := .Nodes}}
+
+  [backends."backend-{{getBackend $node}}".servers."{{getBackendName $node $index}}"]
+    url = "{{getAttribute "protocol" $node.Service.Tags "http"}}://{{getBackendAddress $node}}:{{$node.Service.Port}}"
+    weight = {{ getAttribute "backend.weight" $node.Service.Tags "0" }}
 
 {{end}}
 
 [frontends]
-{{range .Services}}
-  [frontends."frontend-{{.ServiceName}}"]
-  backend = "backend-{{.ServiceName}}"
-  passHostHeader = {{getAttribute "frontend.passHostHeader" .Attributes "true"}}
-  priority = {{getAttribute "frontend.priority" .Attributes "0"}}
-  {{$entryPoints := getAttribute "frontend.entrypoints" .Attributes ""}}
-  {{with $entryPoints}}
-    entrypoints = [{{range getEntryPoints $entryPoints}}
+{{range $service := .Services}}
+
+  [frontends."frontend-{{$service.ServiceName}}"]
+    backend = "backend-{{$service.ServiceName}}"
+    priority = {{getAttribute "frontend.priority" $service.Attributes "0"}}
+    passHostHeader = {{getAttribute "frontend.passHostHeader" $service.Attributes "true"}}
+
+    {{$entryPoints := getAttribute "frontend.entrypoints" $service.Attributes ""}}
+    {{with $entryPoints}}
+    entryPoints = [{{range getEntryPoints $entryPoints}}
       "{{.}}",
-    {{end}}]
-  {{end}}
-  basicAuth = [{{range getBasicAuth .Attributes}}
-  "{{.}}",
-  {{end}}]
-  [frontends."frontend-{{.ServiceName}}".routes."route-host-{{.ServiceName}}"]
-    rule = "{{getFrontendRule .}}"
+      {{end}}]
+    {{end}}
+
+    basicAuth = [{{range getBasicAuth $service.Attributes}}
+      "{{.}}",
+      {{end}}]
+
+    [frontends."frontend-{{$service.ServiceName}}".routes."route-host-{{$service.ServiceName}}"]
+      rule = "{{getFrontendRule $service}}"
+
 {{end}}
