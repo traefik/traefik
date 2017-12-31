@@ -2,7 +2,6 @@ package consul
 
 import (
 	"errors"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -95,7 +94,7 @@ func (p *CatalogProvider) Provide(configurationChan chan<- types.ConfigMessage, 
 	}
 	p.client = client
 	p.Constraints = append(p.Constraints, constraints...)
-	p.setupFrontEndTemplate()
+	p.setupFrontEndRuleTemplate()
 
 	pool.Go(func(stop chan bool) {
 		notify := func(err error, time time.Duration) {
@@ -431,48 +430,7 @@ func (p *CatalogProvider) nodeFilter(service string, node *api.ServiceEntry) boo
 }
 
 func (p *CatalogProvider) isServiceEnabled(node *api.ServiceEntry) bool {
-	enable, err := strconv.ParseBool(p.getAttribute(label.SuffixEnable, node.Service.Tags, strconv.FormatBool(p.ExposedByDefault)))
-	if err != nil {
-		log.Debugf("Invalid value for enable, set to %b", p.ExposedByDefault)
-		return p.ExposedByDefault
-	}
-	return enable
-}
-
-func (p *CatalogProvider) getPrefixedName(name string) string {
-	if len(p.Prefix) > 0 && len(name) > 0 {
-		return p.Prefix + "." + name
-	}
-	return name
-}
-
-func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {
-	return getTag(p.getPrefixedName(name), tags, defaultValue)
-}
-
-func hasTag(name string, tags []string) bool {
-	// Very-very unlikely that a Consul tag would ever start with '=!='
-	tag := getTag(name, tags, "=!=")
-	return tag != "=!="
-}
-
-func getTag(name string, tags []string, defaultValue string) string {
-	for _, tag := range tags {
-		// Given the nature of Consul tags, which could be either singular markers, or key=value pairs, we check if the consul tag starts with 'name'
-		if strings.HasPrefix(strings.ToLower(tag), strings.ToLower(name)) {
-			// In case, where a tag might be a key=value, try to split it by the first '='
-			// - If the first element (which would always be there, even if the tag is a singular marker without '=' in it
-			if kv := strings.SplitN(tag, "=", 2); strings.ToLower(kv[0]) == strings.ToLower(name) {
-				// If the returned result is a key=value pair, return the 'value' component
-				if len(kv) == 2 {
-					return kv[1]
-				}
-				// If the returned result is a singular marker, return the 'key' component
-				return kv[0]
-			}
-		}
-	}
-	return defaultValue
+	return p.getBoolAttribute(label.SuffixEnable, node.Service.Tags, p.ExposedByDefault)
 }
 
 func (p *CatalogProvider) getConstraintTags(tags []string) []string {
