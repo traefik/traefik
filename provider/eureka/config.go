@@ -35,7 +35,7 @@ func (p *Provider) buildConfiguration() (*types.Configuration, error) {
 	templateObjects := struct {
 		Applications []eureka.Application
 	}{
-		applications.Applications,
+		Applications: applications.Applications,
 	}
 
 	configuration, err := p.GetConfiguration("templates/eureka.tmpl", EurekaFuncMap, templateObjects)
