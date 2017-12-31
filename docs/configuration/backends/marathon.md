@@ -150,12 +150,15 @@ domain = "marathon.localhost"
 
 To enable constraints see [backend-specific constraints section](/configuration/commons/#backend-specific).
 
-
 ## Labels: overriding default behaviour
 
-### On Containers
+Marathon labels may be used to dynamically change the routing and forwarding behaviour.
 
-Labels can be used on containers to override default behaviour:
+They may be specified on one of two levels: Application or service.
+
+### Application Level
+
+The following labels can be defined on Marathon applications. They adjust the behaviour for the entire application.
 
 | Label                                                                 | Description                                                                                                                                                                        |
 |-----------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -180,9 +183,9 @@ Labels can be used on containers to override default behaviour:
 | `traefik.frontend.entryPoints=http,https`                             | assign this frontend to entry points `http` and `https`. Overrides `defaultEntryPoints`.                                                                                           |
 | `traefik.frontend.auth.basic=EXPR`                                    | Sets basic authentication for that frontend in CSV format: `User:Hash,User:Hash`.                                                                                                  |
 
-### On Services
+### Service Level
 
-If several ports need to be exposed from a container, the services labels can be used:
+For applications that expose multiple ports, specific labels can be used to extract one frontend/backend configuration pair per port. Each such pair is called a _service_. The (freely choosable) name of the service is an integral part of the service label name.
 
 | Label                                                  | Description                                                                                          |
 |--------------------------------------------------------|------------------------------------------------------------------------------------------------------|
