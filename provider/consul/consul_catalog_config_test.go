@@ -996,3 +996,63 @@ func TestCatalogProviderGetHealthCheck(t *testing.T) {
 		})
 	}
 }
+
+func TestCatalogProviderGetRedirect(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected *types.Redirect
+	}{
+		{
+			desc:     "should return nil when no tags",
+			tags:     []string{},
+			expected: nil,
+		},
+		{
+			desc: "should use only entry point tag when mix regex redirect and entry point redirect",
+			tags: []string{
+				label.TraefikFrontendRedirectEntryPoint + "=https",
+				label.TraefikFrontendRedirectRegex + "=(.*)",
+				label.TraefikFrontendRedirectReplacement + "=$1",
+			},
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when entry point redirect tag",
+			tags: []string{
+				label.TraefikFrontendRedirectEntryPoint + "=https",
+			},
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect tags",
+			tags: []string{
+				label.TraefikFrontendRedirectRegex + "=(.*)",
+				label.TraefikFrontendRedirectReplacement + "=$1",
+			},
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getRedirect(test.tags)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
