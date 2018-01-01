@@ -49,6 +49,10 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		"getPassTLSCert":          p.getFuncBoolAttribute(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getWhitelistSourceRange": p.getFuncSliceAttribute(label.SuffixFrontendWhitelistSourceRange),
 		"getRedirect":             p.getRedirect,
+		"hasErrorPages":           p.getFuncHasAttributePrefix(label.BaseFrontendErrorPage),
+		"getErrorPages":           p.getErrorPages,
+		"hasRateLimit":            p.getFuncHasAttributePrefix(label.BaseFrontendRateLimit),
+		"getRateLimit":            p.getRateLimit,
 	}
 
 	var allNodes []*api.ServiceEntry
@@ -302,7 +306,53 @@ func (p *CatalogProvider) getRedirect(tags []string) *types.Redirect {
 	return nil
 }
 
+func (p *CatalogProvider) getErrorPages(tags []string) map[string]*types.ErrorPage {
+	labels := p.parseTagsToNeutralLabels(tags)
+
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func (p *CatalogProvider) getRateLimit(tags []string) *types.RateLimit {
+	extractorFunc := p.getAttribute(label.SuffixFrontendRateLimitExtractorFunc, tags, "")
+	if len(extractorFunc) == 0 {
+		return nil
+	}
+
+	labels := p.parseTagsToNeutralLabels(tags)
+
+	prefix := label.Prefix + label.BaseFrontendRateLimit
+	limits := label.ParseRateSets(labels, prefix, label.RegexpFrontendRateLimit)
+
+	return &types.RateLimit{
+		ExtractorFunc: extractorFunc,
+		RateSet:       limits,
+	}
+}
+
 // Base functions
+
+func (p *CatalogProvider) parseTagsToNeutralLabels(tags []string) map[string]string {
+	var labels map[string]string
+
+	for _, tag := range tags {
+		if strings.HasPrefix(tag, p.Prefix) {
+
+			parts := strings.SplitN(tag, "=", 2)
+			if len(parts) == 2 {
+				if labels == nil {
+					labels = make(map[string]string)
+				}
+
+				// replace custom prefix by the generic prefix
+				key := label.Prefix + strings.TrimPrefix(parts[0], p.Prefix+".")
+				labels[key] = parts[1]
+			}
+		}
+	}
+
+	return labels
+}
 
 func (p *CatalogProvider) getFuncStringAttribute(name string, defaultValue string) func(tags []string) string {
 	return func(tags []string) string {
@@ -325,6 +375,12 @@ func (p *CatalogProvider) getFuncIntAttribute(name string, defaultValue int) fun
 func (p *CatalogProvider) getFuncBoolAttribute(name string, defaultValue bool) func(tags []string) bool {
 	return func(tags []string) bool {
 		return p.getBoolAttribute(name, tags, defaultValue)
+	}
+}
+
+func (p *CatalogProvider) getFuncHasAttributePrefix(name string) func(tags []string) bool {
+	return func(tags []string) bool {
+		return p.hasAttributePrefix(name, tags)
 	}
 }
 
@@ -386,6 +442,10 @@ func (p *CatalogProvider) hasAttribute(name string, tags []string) bool {
 	return hasTag(p.getPrefixedName(name), tags)
 }
 
+func (p *CatalogProvider) hasAttributePrefix(name string, tags []string) bool {
+	return hasTagPrefix(p.getPrefixedName(name), tags)
+}
+
 func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {
 	return getTag(p.getPrefixedName(name), tags, defaultValue)
 }
@@ -405,6 +465,19 @@ func hasTag(name string, tags []string) bool {
 
 		// Given the nature of Consul tags, which could be either singular markers, or key=value pairs
 		if strings.HasPrefix(lowerTag, lowerName+"=") || lowerTag == lowerName {
+			return true
+		}
+	}
+	return false
+}
+
+func hasTagPrefix(name string, tags []string) bool {
+	lowerName := strings.ToLower(name)
+
+	for _, tag := range tags {
+		lowerTag := strings.ToLower(tag)
+
+		if strings.HasPrefix(lowerTag, lowerName) {
 			return true
 		}
 	}

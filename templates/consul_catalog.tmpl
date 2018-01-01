@@ -75,6 +75,33 @@
       replacement = "{{ $redirect.Replacement }}"
     {{end}}
 
+    {{ if hasErrorPages $service.Attributes }}
+    [frontends."frontend-{{ $service.ServiceName }}".errors]
+      {{ range $pageName, $page := getErrorPages $service.Attributes }}
+      [frontends."frontend-{{ $service.ServiceName }}".errors.{{ $pageName }}]
+        status = [{{range $page.Status }}
+        "{{.}}",
+        {{end}}]
+        backend = "{{ $page.Backend }}"
+        query = "{{ $page.Query }}"
+      {{end}}
+    {{end}}
+
+    {{ if hasRateLimit $service.Attributes }}
+    {{ $rateLimit := getRateLimit $service.Attributes }}
+    [frontends."frontend-{{ $service.ServiceName }}".rateLimit]
+      extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
+
+      [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet]
+        {{ range $limitName, $limit := $rateLimit.RateSet }}
+        [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet.{{ $limitName }}]
+          period = "{{ $limit.Period }}"
+          average = {{ $limit.Average }}
+          burst = {{ $limit.Burst }}
+        {{end}}
+
+    {{end}}
+
     [frontends."frontend-{{$service.ServiceName}}".routes."route-host-{{$service.ServiceName}}"]
       rule = "{{ getFrontendRule $service }}"
 
