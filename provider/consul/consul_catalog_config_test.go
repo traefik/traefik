@@ -946,3 +946,53 @@ func TestCatalogProviderGetMaxConn(t *testing.T) {
 		})
 	}
 }
+
+func TestCatalogProviderGetHealthCheck(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected *types.HealthCheck
+	}{
+		{
+			desc:     "should return nil when no tags",
+			tags:     []string{},
+			expected: nil,
+		},
+		{
+			desc: "should return nil when Path tag is missing",
+			tags: []string{
+				label.TraefikBackendHealthCheckPort + "=80",
+				label.TraefikBackendHealthCheckInterval + "=7",
+			},
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when has tags",
+			tags: []string{
+				label.TraefikBackendHealthCheckPath + "=/health",
+				label.TraefikBackendHealthCheckPort + "=80",
+				label.TraefikBackendHealthCheckInterval + "=7",
+			},
+			expected: &types.HealthCheck{
+				Path:     "/health",
+				Port:     80,
+				Interval: "7",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getHeathCheck(test.tags)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
