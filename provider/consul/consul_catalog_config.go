@@ -48,6 +48,7 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		"getPassHostHeader":       p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, true),
 		"getPassTLSCert":          p.getFuncBoolAttribute(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getWhitelistSourceRange": p.getFuncSliceAttribute(label.SuffixFrontendWhitelistSourceRange),
+		"getRedirect":             p.getRedirect,
 	}
 
 	var allNodes []*api.ServiceEntry
@@ -284,6 +285,23 @@ func (p *CatalogProvider) getHealthCheck(tags []string) *types.HealthCheck {
 	}
 }
 
+func (p *CatalogProvider) getRedirect(tags []string) *types.Redirect {
+	if p.hasAttribute(label.SuffixFrontendRedirectEntryPoint, tags) {
+		return &types.Redirect{
+			EntryPoint: p.getAttribute(label.SuffixFrontendRedirectEntryPoint, tags, ""),
+		}
+	}
+
+	if p.hasAttribute(label.SuffixFrontendRedirectRegex, tags) && p.hasAttribute(label.SuffixFrontendRedirectReplacement, tags) {
+		return &types.Redirect{
+			Regex:       p.getAttribute(label.SuffixFrontendRedirectRegex, tags, ""),
+			Replacement: p.getAttribute(label.SuffixFrontendRedirectReplacement, tags, ""),
+		}
+	}
+
+	return nil
+}
+
 // Base functions
 
 func (p *CatalogProvider) getFuncStringAttribute(name string, defaultValue string) func(tags []string) string {
@@ -362,6 +380,10 @@ func (p *CatalogProvider) getBoolAttribute(name string, tags []string, defaultVa
 		return defaultValue
 	}
 	return value
+}
+
+func (p *CatalogProvider) hasAttribute(name string, tags []string) bool {
+	return hasTag(p.getPrefixedName(name), tags)
 }
 
 func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {

@@ -67,6 +67,14 @@
       "{{.}}",
       {{end}}]
 
+    {{ $redirect := getRedirect $service.Attributes }}
+    {{if $redirect }}
+    [frontends."frontend-{{ $service.ServiceName }}".redirect]
+      entryPoint = "{{ $redirect.EntryPoint }}"
+      regex = "{{ $redirect.Regex }}"
+      replacement = "{{ $redirect.Replacement }}"
+    {{end}}
+
     [frontends."frontend-{{$service.ServiceName}}".routes."route-host-{{$service.ServiceName}}"]
       rule = "{{ getFrontendRule $service }}"
 
