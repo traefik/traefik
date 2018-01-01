@@ -45,6 +45,7 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		"getFrontEndEntryPoints": p.getFuncSliceAttribute(label.SuffixFrontendEntryPoints), // TODO [breaking] rename to getEntryPoints when getEntryPoints will be removed
 		"getPriority":            p.getFuncIntAttribute(label.SuffixFrontendPriority, 0),
 		"getPassHostHeader":      p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, true),
+		"getPassTLSCert":         p.getFuncBoolAttribute(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
 	}
 
 	var allNodes []*api.ServiceEntry
