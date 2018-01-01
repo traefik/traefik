@@ -48,6 +48,13 @@
       "{{.}}",
       {{end}}]
 
+    {{ $whitelistSourceRange := getWhitelistSourceRange $service.Attributes }}
+    {{if $whitelistSourceRange }}
+    whitelistSourceRange = [{{range $whitelistSourceRange}}
+      "{{.}}",
+      {{end}}]
+    {{end}}
+
     basicAuth = [{{range getBasicAuth $service.Attributes }}
       "{{.}}",
       {{end}}]

@@ -39,13 +39,14 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		"getMaxConn":              p.getMaxConn,
 
 		// Frontend functions
-		"getFrontendRule":        p.getFrontendRule,
-		"getBasicAuth":           p.getFuncSliceAttribute(label.SuffixFrontendAuthBasic),
-		"getEntryPoints":         getEntryPoints,                                           // Deprecated [breaking]
-		"getFrontEndEntryPoints": p.getFuncSliceAttribute(label.SuffixFrontendEntryPoints), // TODO [breaking] rename to getEntryPoints when getEntryPoints will be removed
-		"getPriority":            p.getFuncIntAttribute(label.SuffixFrontendPriority, 0),
-		"getPassHostHeader":      p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, true),
-		"getPassTLSCert":         p.getFuncBoolAttribute(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getFrontendRule":         p.getFrontendRule,
+		"getBasicAuth":            p.getFuncSliceAttribute(label.SuffixFrontendAuthBasic),
+		"getEntryPoints":          getEntryPoints,                                           // Deprecated [breaking]
+		"getFrontEndEntryPoints":  p.getFuncSliceAttribute(label.SuffixFrontendEntryPoints), // TODO [breaking] rename to getEntryPoints when getEntryPoints will be removed
+		"getPriority":             p.getFuncIntAttribute(label.SuffixFrontendPriority, 0),
+		"getPassHostHeader":       p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, true),
+		"getPassTLSCert":          p.getFuncBoolAttribute(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getWhitelistSourceRange": p.getFuncSliceAttribute(label.SuffixFrontendWhitelistSourceRange),
 	}
 
 	var allNodes []*api.ServiceEntry
