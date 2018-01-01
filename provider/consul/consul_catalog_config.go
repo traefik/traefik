@@ -2,6 +2,9 @@ package consul
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/base64"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -23,16 +26,25 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		// Backend functions
 		"getBackend":              getBackend,
 		"getBackendAddress":       getBackendAddress,
-		"hasMaxconnAttributes":    p.hasMaxConnAttributes,
-		"getSticky":               p.getSticky,
-		"hasStickinessLabel":      p.hasStickinessLabel,
-		"getStickinessCookieName": p.getStickinessCookieName,
+		"getBackendName":          getServerName, // Deprecated [breaking] getBackendName -> getServerName
+		"getServerName":           getServerName,
+		"hasMaxconnAttributes":    p.hasMaxConnAttributes,    // Deprecated [breaking]
+		"getSticky":               p.getSticky,               // Deprecated [breaking]
+		"hasStickinessLabel":      p.hasStickinessLabel,      // Deprecated [breaking]
+		"getStickinessCookieName": p.getStickinessCookieName, // Deprecated [breaking]
+		"getWeight":               p.getWeight,               // Deprecated [breaking] Must replaced by a simple: "getWeight": p.getFuncIntAttribute(label.SuffixWeight, 0)
+		"getProtocol":             p.getFuncStringAttribute(label.SuffixProtocol, label.DefaultProtocol),
+		"getCircuitBreaker":       p.getCircuitBreaker,
+		"getLoadBalancer":         p.getLoadBalancer,
+		"getMaxConn":              p.getMaxConn,
 
 		// Frontend functions
-		"getBackendName":  getBackendName,
-		"getFrontendRule": p.getFrontendRule,
-		"getBasicAuth":    p.getBasicAuth,
-		"getEntryPoints":  getEntryPoints,
+		"getFrontendRule":        p.getFrontendRule,
+		"getBasicAuth":           p.getFuncSliceAttribute(label.SuffixFrontendAuthBasic),
+		"getEntryPoints":         getEntryPoints,                                           // Deprecated [breaking]
+		"getFrontEndEntryPoints": p.getFuncSliceAttribute(label.SuffixFrontendEntryPoints), // TODO [breaking] rename to getEntryPoints when getEntryPoints will be removed
+		"getPriority":            p.getFuncIntAttribute(label.SuffixFrontendPriority, 0),
+		"getPassHostHeader":      p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, true),
 	}
 
 	var allNodes []*api.ServiceEntry
@@ -107,10 +119,7 @@ func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
 	return buffer.String()
 }
 
-func (p *CatalogProvider) getBasicAuth(tags []string) []string {
-	return p.getSliceAttribute(label.SuffixFrontendAuthBasic, tags)
-}
-
+// Deprecated
 func (p *CatalogProvider) hasMaxConnAttributes(attributes []string) bool {
 	amount := p.getAttribute(label.SuffixBackendMaxConnAmount, attributes, "")
 	extractorFunc := p.getAttribute(label.SuffixBackendMaxConnExtractorFunc, attributes, "")
@@ -133,19 +142,22 @@ func getBackendAddress(node *api.ServiceEntry) string {
 	return node.Node.Address
 }
 
-func getBackendName(node *api.ServiceEntry, index int) string {
-	serviceName := strings.ToLower(node.Service.Service) + "--" + node.Service.Address + "--" + strconv.Itoa(node.Service.Port)
+func getServerName(node *api.ServiceEntry, index int) string {
+	serviceName := node.Service.Service + node.Service.Address + strconv.Itoa(node.Service.Port)
+	// TODO sort tags ?
+	serviceName += strings.Join(node.Service.Tags, "")
 
-	for _, tag := range node.Service.Tags {
-		serviceName += "--" + provider.Normalize(tag)
+	hash := sha1.New()
+	_, err := hash.Write([]byte(serviceName))
+	if err != nil {
+		// Impossible case
+		log.Error(err)
+	} else {
+		serviceName = base64.URLEncoding.EncodeToString(hash.Sum(nil))
 	}
 
-	serviceName = strings.Replace(serviceName, ".", "-", -1)
-	serviceName = strings.Replace(serviceName, "=", "-", -1)
-
 	// unique int at the end
-	serviceName += "--" + strconv.Itoa(index)
-	return serviceName
+	return provider.Normalize(node.Service.Service + "-" + strconv.Itoa(index) + "-" + serviceName)
 }
 
 // TODO: Deprecated
@@ -161,16 +173,152 @@ func (p *CatalogProvider) getSticky(tags []string) string {
 	return stickyTag
 }
 
+// Deprecated
 func (p *CatalogProvider) hasStickinessLabel(tags []string) bool {
 	stickinessTag := p.getAttribute(label.SuffixBackendLoadBalancerStickiness, tags, "")
 	return len(stickinessTag) > 0 && strings.EqualFold(strings.TrimSpace(stickinessTag), "true")
 }
 
+// Deprecated
 func (p *CatalogProvider) getStickinessCookieName(tags []string) string {
 	return p.getAttribute(label.SuffixBackendLoadBalancerStickinessCookieName, tags, "")
 }
 
+// Deprecated
+func (p *CatalogProvider) getWeight(tags []string) int {
+	weight := p.getIntAttribute(label.SuffixWeight, tags, 0)
+
+	// Deprecated
+	deprecatedWeightTag := "backend." + label.SuffixWeight
+	if p.hasAttribute(deprecatedWeightTag, tags) {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.",
+			p.getPrefixedName(deprecatedWeightTag), p.getPrefixedName(label.SuffixWeight))
+
+		weight = p.getIntAttribute(deprecatedWeightTag, tags, 0)
+	}
+
+	return weight
+}
+
+func (p *CatalogProvider) getCircuitBreaker(tags []string) *types.CircuitBreaker {
+	circuitBreaker := p.getAttribute(label.SuffixBackendCircuitBreakerExpression, tags, "")
+
+	if p.hasAttribute(label.SuffixBackendCircuitBreaker, tags) {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.",
+			p.getPrefixedName(label.SuffixBackendCircuitBreaker), p.getPrefixedName(label.SuffixBackendCircuitBreakerExpression))
+
+		circuitBreaker = p.getAttribute(label.SuffixBackendCircuitBreaker, tags, "")
+	}
+
+	if len(circuitBreaker) == 0 {
+		return nil
+	}
+
+	return &types.CircuitBreaker{Expression: circuitBreaker}
+}
+
+func (p *CatalogProvider) getLoadBalancer(tags []string) *types.LoadBalancer {
+	rawSticky := p.getSticky(tags)
+	sticky, err := strconv.ParseBool(rawSticky)
+	if err != nil {
+		log.Debugf("Invalid sticky value: %s", rawSticky)
+		sticky = false
+	}
+
+	method := p.getAttribute(label.SuffixBackendLoadBalancerMethod, tags, label.DefaultBackendLoadBalancerMethod)
+
+	// Deprecated
+	deprecatedMethodTag := "backend.loadbalancer"
+	if p.hasAttribute(deprecatedMethodTag, tags) {
+		log.Warnf("Deprecated configuration found: %s. Please use %s.",
+			p.getPrefixedName(deprecatedMethodTag), p.getPrefixedName(label.SuffixWeight))
+
+		method = p.getAttribute(deprecatedMethodTag, tags, label.SuffixBackendLoadBalancerMethod)
+	}
+
+	lb := &types.LoadBalancer{
+		Method: method,
+		Sticky: sticky,
+	}
+
+	if p.getBoolAttribute(label.SuffixBackendLoadBalancerStickiness, tags, false) {
+		lb.Stickiness = &types.Stickiness{
+			CookieName: p.getAttribute(label.SuffixBackendLoadBalancerStickinessCookieName, tags, ""),
+		}
+	}
+
+	return lb
+}
+
+func (p *CatalogProvider) getMaxConn(tags []string) *types.MaxConn {
+	amount := p.getInt64Attribute(label.SuffixBackendMaxConnAmount, tags, math.MinInt64)
+	extractorFunc := p.getAttribute(label.SuffixBackendMaxConnExtractorFunc, tags, label.DefaultBackendMaxconnExtractorFunc)
+
+	if amount == math.MinInt64 || len(extractorFunc) == 0 {
+		return nil
+	}
+
+	return &types.MaxConn{
+		Amount:        amount,
+		ExtractorFunc: extractorFunc,
+	}
+}
+
 // Base functions
+
+func (p *CatalogProvider) getFuncStringAttribute(name string, defaultValue string) func(tags []string) string {
+	return func(tags []string) string {
+		return p.getAttribute(name, tags, defaultValue)
+	}
+}
+
+func (p *CatalogProvider) getFuncSliceAttribute(name string) func(tags []string) []string {
+	return func(tags []string) []string {
+		return p.getSliceAttribute(name, tags)
+	}
+}
+
+func (p *CatalogProvider) getFuncIntAttribute(name string, defaultValue int) func(tags []string) int {
+	return func(tags []string) int {
+		return p.getIntAttribute(name, tags, defaultValue)
+	}
+}
+
+func (p *CatalogProvider) getFuncBoolAttribute(name string, defaultValue bool) func(tags []string) bool {
+	return func(tags []string) bool {
+		return p.getBoolAttribute(name, tags, defaultValue)
+	}
+}
+
+func (p *CatalogProvider) getInt64Attribute(name string, tags []string, defaultValue int64) int64 {
+	rawValue := getTag(p.getPrefixedName(name), tags, "")
+
+	if len(rawValue) == 0 {
+		return defaultValue
+	}
+
+	value, err := strconv.ParseInt(rawValue, 10, 64)
+	if err != nil {
+		log.Errorf("Invalid value for %s: %s", name, rawValue)
+		return defaultValue
+	}
+	return value
+}
+
+func (p *CatalogProvider) getIntAttribute(name string, tags []string, defaultValue int) int {
+	rawValue := getTag(p.getPrefixedName(name), tags, "")
+
+	if len(rawValue) == 0 {
+		return defaultValue
+	}
+
+	value, err := strconv.Atoi(rawValue)
+	if err != nil {
+		log.Errorf("Invalid value for %s: %s", name, rawValue)
+		return defaultValue
+	}
+	return value
+}
 
 func (p *CatalogProvider) getSliceAttribute(name string, tags []string) []string {
 	rawValue := getTag(p.getPrefixedName(name), tags, "")

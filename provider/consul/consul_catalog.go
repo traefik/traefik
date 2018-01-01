@@ -385,12 +385,12 @@ func getServicePorts(services []*api.CatalogService) []int {
 
 func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
 	health := p.client.Health()
-	opts := &api.QueryOptions{}
-	data, _, err := health.Service(service, "", true, opts)
+	data, _, err := health.Service(service, "", true, &api.QueryOptions{})
 	if err != nil {
 		log.WithError(err).Errorf("Failed to fetch details of %s", service)
 		return catalogUpdate{}, err
 	}
+
 	nodes := fun.Filter(func(node *api.ServiceEntry) bool {
 		return p.nodeFilter(service, node)
 	}, data).([]*api.ServiceEntry)
