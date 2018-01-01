@@ -26,6 +26,14 @@
     amount = {{ $maxConn.Amount }}
   {{end}}
 
+  {{ $healthCheck := getHealthCheck $service.Attributes }}
+  {{if $healthCheck }}
+  [backends.backend-{{ $sname }}.healthCheck]
+    path = "{{ $healthCheck.Path }}"
+    port = {{ $healthCheck.Port }}
+    interval = "{{ $healthCheck.Interval }}"
+  {{end}}
+
 {{end}}
 {{range $index, $node := .Nodes}}
 

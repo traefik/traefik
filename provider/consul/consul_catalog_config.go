@@ -37,6 +37,7 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		"getCircuitBreaker":       p.getCircuitBreaker,
 		"getLoadBalancer":         p.getLoadBalancer,
 		"getMaxConn":              p.getMaxConn,
+		"getHealthCheck":          p.getHealthCheck,
 
 		// Frontend functions
 		"getFrontendRule":         p.getFrontendRule,
@@ -263,6 +264,23 @@ func (p *CatalogProvider) getMaxConn(tags []string) *types.MaxConn {
 	return &types.MaxConn{
 		Amount:        amount,
 		ExtractorFunc: extractorFunc,
+	}
+}
+
+func (p *CatalogProvider) getHealthCheck(tags []string) *types.HealthCheck {
+	path := p.getAttribute(label.SuffixBackendHealthCheckPath, tags, "")
+
+	if len(path) == 0 {
+		return nil
+	}
+
+	port := p.getIntAttribute(label.SuffixBackendHealthCheckPort, tags, label.DefaultBackendHealthCheckPort)
+	interval := p.getAttribute(label.SuffixBackendHealthCheckInterval, tags, "")
+
+	return &types.HealthCheck{
+		Path:     path,
+		Port:     port,
+		Interval: interval,
 	}
 }
 
