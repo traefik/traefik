@@ -3,7 +3,9 @@ package consul
 import (
 	"testing"
 	"text/template"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/hashicorp/consul/api"
@@ -1051,6 +1053,114 @@ func TestCatalogProviderGetRedirect(t *testing.T) {
 			t.Parallel()
 
 			result := p.getRedirect(test.tags)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCatalogProviderGetErrorPages(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected map[string]*types.ErrorPage
+	}{
+		{
+			desc:     "should return nil when no tags",
+			tags:     []string{},
+			expected: nil,
+		},
+		{
+			desc: "should return a map when tags are present",
+			tags: []string{
+				label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus + "=404",
+				label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend + "=foo_backend",
+				label.Prefix + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery + "=foo_query",
+				label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus + "=500,600",
+				label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend + "=bar_backend",
+				label.Prefix + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery + "=bar_query",
+			},
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Status:  []string{"404"},
+					Query:   "foo_query",
+					Backend: "foo_backend",
+				},
+				"bar": {
+					Status:  []string{"500", "600"},
+					Query:   "bar_query",
+					Backend: "bar_backend",
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getErrorPages(test.tags)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCatalogProviderGetRateLimit(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected *types.RateLimit
+	}{
+		{
+			desc:     "should return nil when no tags",
+			tags:     []string{},
+			expected: nil,
+		},
+		{
+			desc: "should return a map when tags are present",
+			tags: []string{
+				label.TraefikFrontendRateLimitExtractorFunc + "=client.ip",
+				label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod + "=6",
+				label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage + "=12",
+				label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst + "=18",
+				label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod + "=3",
+				label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage + "=6",
+				label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst + "=9",
+			},
+			expected: &types.RateLimit{
+				ExtractorFunc: "client.ip",
+				RateSet: map[string]*types.Rate{
+					"foo": {
+						Period:  flaeg.Duration(6 * time.Second),
+						Average: 12,
+						Burst:   18,
+					},
+					"bar": {
+						Period:  flaeg.Duration(3 * time.Second),
+						Average: 6,
+						Burst:   9,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getRateLimit(test.tags)
 
 			assert.Equal(t, test.expected, result)
 		})
