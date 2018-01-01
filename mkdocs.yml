@@ -71,6 +71,7 @@ pages:
     - 'Backend: Web': 'configuration/backends/web.md'
     - 'Backend: BoltDB': 'configuration/backends/boltdb.md'
     - 'Backend: Consul': 'configuration/backends/consul.md'
+    - 'Backend: Consul Catalog': 'configuration/backends/consulcatalog.md'
     - 'Backend: Docker': 'configuration/backends/docker.md'
     - 'Backend: DynamoDB': 'configuration/backends/dynamodb.md'
     - 'Backend: ECS': 'configuration/backends/ecs.md'
