@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuildConfiguration(t *testing.T) {
+func TestCatalogProviderBuildConfiguration(t *testing.T) {
 	provider := &CatalogProvider{
 		Domain:               "localhost",
 		Prefix:               "traefik",
@@ -50,12 +50,12 @@ func TestBuildConfiguration(t *testing.T) {
 					Service: &serviceUpdate{
 						ServiceName: "test",
 						Attributes: []string{
-							"traefik.backend.loadbalancer=drr",
-							"traefik.backend.circuitbreaker=NetworkErrorRatio() > 0.5",
 							"random.foo=bar",
-							"traefik.backend.maxconn.amount=1000",
-							"traefik.backend.maxconn.extractorfunc=client.ip",
-							"traefik.frontend.auth.basic=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+							label.Prefix + "backend.loadbalancer=drr",
+							label.TraefikBackendCircuitBreaker + "=NetworkErrorRatio() > 0.5",
+							label.TraefikBackendMaxConnAmount + "=1000",
+							label.TraefikBackendMaxConnExtractorFunc + "=client.ip",
+							label.TraefikFrontendAuthBasic + "=test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
 						},
 					},
 					Nodes: []*api.ServiceEntry{
@@ -65,10 +65,10 @@ func TestBuildConfiguration(t *testing.T) {
 								Address: "127.0.0.1",
 								Port:    80,
 								Tags: []string{
-									"traefik.backend.weight=42",
 									"random.foo=bar",
-									"traefik.backend.passHostHeader=true",
-									"traefik.protocol=https",
+									label.Prefix + "backend.weight=42",
+									label.TraefikFrontendPassHostHeader + "=true",
+									label.TraefikProtocol + "=https",
 								},
 							},
 							Node: &api.Node{
@@ -88,13 +88,14 @@ func TestBuildConfiguration(t *testing.T) {
 							Rule: "Host:test.localhost",
 						},
 					},
-					BasicAuth: []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+					EntryPoints: []string{},
+					BasicAuth:   []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
 				"backend-test": {
 					Servers: map[string]types.Server{
-						"test--127-0-0-1--80--traefik-backend-weight-42--random-foo-bar--traefik-backend-passHostHeader-true--traefik-protocol-https--0": {
+						"test-0-us4-27hAOu2ARV7nNrmv6GoKlcA": {
 							URL:    "https://127.0.0.1:80",
 							Weight: 42,
 						},
@@ -208,7 +209,7 @@ func TestHasTag(t *testing.T) {
 	}
 }
 
-func TestGetPrefixedName(t *testing.T) {
+func TestCatalogProviderGetPrefixedName(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		name     string
@@ -255,7 +256,7 @@ func TestGetPrefixedName(t *testing.T) {
 
 }
 
-func TestGetAttribute(t *testing.T) {
+func TestCatalogProviderGetAttribute(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		tags         []string
@@ -334,7 +335,212 @@ func TestGetAttribute(t *testing.T) {
 	}
 }
 
-func TestGetFrontendRule(t *testing.T) {
+func TestCatalogProviderGetIntAttribute(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc         string
+		name         string
+		tags         []string
+		defaultValue int
+		expected     int
+	}{
+		{
+			desc:     "should return default value when empty name",
+			name:     "",
+			tags:     []string{"traefik.foo=10"},
+			expected: 0,
+		},
+		{
+			desc:     "should return default value when empty tags",
+			name:     "traefik.foo",
+			tags:     nil,
+			expected: 0,
+		},
+		{
+			desc:     "should return default value when value is not a int",
+			name:     "foo",
+			tags:     []string{"traefik.foo=bar"},
+			expected: 0,
+		},
+		{
+			desc:     "should return a value when tag exist",
+			name:     "foo",
+			tags:     []string{"traefik.foo=10"},
+			expected: 10,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getIntAttribute(test.name, test.tags, test.defaultValue)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCatalogProviderGetInt64Attribute(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc         string
+		name         string
+		tags         []string
+		defaultValue int64
+		expected     int64
+	}{
+		{
+			desc:     "should return default value when empty name",
+			name:     "",
+			tags:     []string{"traefik.foo=10"},
+			expected: 0,
+		},
+		{
+			desc:     "should return default value when empty tags",
+			name:     "traefik.foo",
+			tags:     nil,
+			expected: 0,
+		},
+		{
+			desc:     "should return default value when value is not a int",
+			name:     "foo",
+			tags:     []string{"traefik.foo=bar"},
+			expected: 0,
+		},
+		{
+			desc:     "should return a value when tag exist",
+			name:     "foo",
+			tags:     []string{"traefik.foo=10"},
+			expected: 10,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getInt64Attribute(test.name, test.tags, test.defaultValue)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCatalogProviderGetBoolAttribute(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc         string
+		name         string
+		tags         []string
+		defaultValue bool
+		expected     bool
+	}{
+		{
+			desc:     "should return default value when empty name",
+			name:     "",
+			tags:     []string{"traefik.foo=10"},
+			expected: false,
+		},
+		{
+			desc:     "should return default value when empty tags",
+			name:     "traefik.foo",
+			tags:     nil,
+			expected: false,
+		},
+		{
+			desc:     "should return default value when value is not a bool",
+			name:     "foo",
+			tags:     []string{"traefik.foo=bar"},
+			expected: false,
+		},
+		{
+			desc:     "should return a value when tag exist",
+			name:     "foo",
+			tags:     []string{"traefik.foo=true"},
+			expected: true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getBoolAttribute(test.name, test.tags, test.defaultValue)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCatalogProviderGetSliceAttribute(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		name     string
+		tags     []string
+		expected []string
+	}{
+		{
+			desc:     "should return nil when empty name",
+			name:     "",
+			tags:     []string{"traefik.foo=bar,bor,bir"},
+			expected: nil,
+		},
+		{
+			desc:     "should return nil when empty tags",
+			name:     "foo",
+			tags:     nil,
+			expected: nil,
+		},
+		{
+			desc:     "should return nil when tag doesn't have value",
+			name:     "",
+			tags:     []string{"traefik.foo="},
+			expected: nil,
+		},
+		{
+			desc:     "should return a slice when tag contains comma separated values",
+			name:     "foo",
+			tags:     []string{"traefik.foo=bar,bor,bir"},
+			expected: []string{"bar", "bor", "bir"},
+		},
+		{
+			desc:     "should return a slice when tag contains one value",
+			name:     "foo",
+			tags:     []string{"traefik.foo=bar"},
+			expected: []string{"bar"},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getSliceAttribute(test.name, test.tags)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCatalogProviderGetFrontendRule(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		service  serviceUpdate
@@ -386,15 +592,15 @@ func TestGetFrontendRule(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			provider := &CatalogProvider{
+			p := &CatalogProvider{
 				Domain:               "localhost",
 				Prefix:               "traefik",
 				FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
 				frontEndRuleTemplate: template.New("consul catalog frontend rule"),
 			}
-			provider.setupFrontEndRuleTemplate()
+			p.setupFrontEndRuleTemplate()
 
-			actual := provider.getFrontendRule(test.service)
+			actual := p.getFrontendRule(test.service)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -443,7 +649,7 @@ func TestGetBackendAddress(t *testing.T) {
 	}
 }
 
-func TestGetBackendName(t *testing.T) {
+func TestCatalogProviderGetServerName(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		node     *api.ServiceEntry
@@ -459,7 +665,7 @@ func TestGetBackendName(t *testing.T) {
 					Tags:    []string{},
 				},
 			},
-			expected: "api--10-0-0-1--80--0",
+			expected: "api-0-eUSiqD6uNvvh6zxsY-OeRi8ZbaE",
 		},
 		{
 			desc: "Should create backend name with multiple tags",
@@ -471,7 +677,7 @@ func TestGetBackendName(t *testing.T) {
 					Tags:    []string{"traefik.weight=42", "traefik.enable=true"},
 				},
 			},
-			expected: "api--10-0-0-1--80--traefik-weight-42--traefik-enable-true--1",
+			expected: "api-1-eJ8MR2JxjXyZgs1bhurVa0-9OI8",
 		},
 		{
 			desc: "Should create backend name with one tag",
@@ -483,7 +689,7 @@ func TestGetBackendName(t *testing.T) {
 					Tags:    []string{"a funny looking tag"},
 				},
 			},
-			expected: "api--10-0-0-1--80--a-funny-looking-tag--2",
+			expected: "api-2-lMCDCsG7sh0SCXOHo4oBOQB-9D4",
 		},
 	}
 
@@ -493,46 +699,17 @@ func TestGetBackendName(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := getBackendName(test.node, i)
-			assert.Equal(t, test.expected, actual)
-		})
-	}
-}
-
-func TestGetBasicAuth(t *testing.T) {
-	testCases := []struct {
-		desc     string
-		tags     []string
-		expected []string
-	}{
-		{
-			desc:     "label missing",
-			tags:     []string{},
-			expected: []string{},
-		},
-		{
-			desc: "label existing",
-			tags: []string{
-				"traefik.frontend.auth.basic=user:password",
-			},
-			expected: []string{"user:password"},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-			provider := &CatalogProvider{
-				Prefix: "traefik",
-			}
-			actual := provider.getBasicAuth(test.tags)
+			actual := getServerName(test.node, i)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
 func TestHasStickinessLabel(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
 	testCases := []struct {
 		desc     string
 		tags     []string
@@ -564,8 +741,208 @@ func TestHasStickinessLabel(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := hasStickinessLabel(test.tags)
+			actual := p.hasStickinessLabel(test.tags)
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestCatalogProviderGetCircuitBreaker(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected *types.CircuitBreaker
+	}{
+		{
+			desc:     "should return nil when no tags",
+			tags:     []string{},
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when has tag",
+			tags: []string{label.Prefix + label.SuffixBackendCircuitBreaker + "=foo"},
+			expected: &types.CircuitBreaker{
+				Expression: "foo",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getCircuitBreaker(test.tags)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCatalogProviderGetLoadBalancer(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected *types.LoadBalancer
+	}{
+		{
+			desc: "should return a default struct when no tags",
+			tags: []string{},
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+			},
+		},
+		{
+			desc: "should return a struct when has Method tag",
+			tags: []string{label.Prefix + "backend.loadbalancer" + "=drr"},
+			expected: &types.LoadBalancer{
+				Method: "drr",
+			},
+		},
+		{
+			desc: "should return a struct when has Sticky tag",
+			tags: []string{
+				label.Prefix + label.SuffixBackendLoadBalancerSticky + "=true",
+			},
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+				Sticky: true,
+			},
+		},
+		{
+			desc: "should skip Sticky when Sticky tag has invalid value",
+			tags: []string{
+				label.Prefix + label.SuffixBackendLoadBalancerSticky + "=goo",
+			},
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+			},
+		},
+		{
+			desc: "should return a struct when has Stickiness tag",
+			tags: []string{
+				label.Prefix + label.SuffixBackendLoadBalancerStickiness + "=true",
+			},
+			expected: &types.LoadBalancer{
+				Method:     "wrr",
+				Stickiness: &types.Stickiness{},
+			},
+		},
+		{
+			desc: "should skip Stickiness when Stickiness tag has invalid value",
+			tags: []string{
+				label.Prefix + label.SuffixBackendLoadBalancerStickiness + "=goo",
+			},
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+			},
+		},
+		{
+			desc: "should return a struct when has Stickiness tag",
+			tags: []string{
+				label.Prefix + label.SuffixBackendLoadBalancerStickiness + "=true",
+				label.Prefix + label.SuffixBackendLoadBalancerStickinessCookieName + "=bar",
+			},
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+				Stickiness: &types.Stickiness{
+					CookieName: "bar",
+				},
+			},
+		},
+		{
+			desc: "should skip Stickiness when Stickiness tag has false as value",
+			tags: []string{
+				label.Prefix + label.SuffixBackendLoadBalancerStickiness + "=false",
+				label.Prefix + label.SuffixBackendLoadBalancerStickinessCookieName + "=bar",
+			},
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getLoadBalancer(test.tags)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestCatalogProviderGetMaxConn(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected *types.MaxConn
+	}{
+		{
+			desc:     "should return nil when no tags",
+			tags:     []string{},
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when Amount & ExtractorFunc tags",
+			tags: []string{
+				label.Prefix + label.SuffixBackendMaxConnAmount + "=10",
+				label.Prefix + label.SuffixBackendMaxConnExtractorFunc + "=bar",
+			},
+			expected: &types.MaxConn{
+				ExtractorFunc: "bar",
+				Amount:        10,
+			},
+		},
+		{
+			desc: "should return nil when Amount tags is missing",
+			tags: []string{
+				label.Prefix + label.SuffixBackendMaxConnExtractorFunc + "=bar",
+			},
+			expected: nil,
+		},
+		{
+			desc: "should return nil when ExtractorFunc tags is empty",
+			tags: []string{
+				label.Prefix + label.SuffixBackendMaxConnAmount + "=10",
+				label.Prefix + label.SuffixBackendMaxConnExtractorFunc + "=",
+			},
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when ExtractorFunc tags is missing",
+			tags: []string{
+				label.Prefix + label.SuffixBackendMaxConnAmount + "=10",
+			},
+			expected: &types.MaxConn{
+				ExtractorFunc: label.DefaultBackendMaxconnExtractorFunc,
+				Amount:        10,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getMaxConn(test.tags)
+
+			assert.Equal(t, test.expected, result)
 		})
 	}
 }

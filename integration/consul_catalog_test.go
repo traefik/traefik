@@ -250,9 +250,9 @@ func (s *ConsulCatalogSuite) TestExposedByDefaultTrueSimpleServiceMultipleNode(c
 	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second, try.BodyContains("nginx1", "nginx2"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second,
+		try.BodyContains(nginx.NetworkSettings.IPAddress, nginx2.NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
-
 }
 
 func (s *ConsulCatalogSuite) TestRefreshConfigWithMultipleNodeWithoutHealthCheck(c *check.C) {
@@ -285,27 +285,30 @@ func (s *ConsulCatalogSuite) TestRefreshConfigWithMultipleNodeWithoutHealthCheck
 	err = try.Request(req, 5*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second, try.BodyContains("nginx1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second,
+		try.BodyContains(nginx.NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
 
 	err = s.registerService("test", nginx2.NetworkSettings.IPAddress, 80, []string{"name=nginx2"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second, try.BodyContains("nginx1", "nginx2"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second,
+		try.BodyContains(nginx.NetworkSettings.IPAddress, nginx2.NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
 
 	s.deregisterService("test", nginx2.NetworkSettings.IPAddress)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second, try.BodyContains("nginx1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second,
+		try.BodyContains(nginx.NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
 
 	err = s.registerService("test", nginx2.NetworkSettings.IPAddress, 80, []string{"name=nginx2"})
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx2.NetworkSettings.IPAddress)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second, try.BodyContains("nginx1", "nginx2"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second,
+		try.BodyContains(nginx.NetworkSettings.IPAddress, nginx2.NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
-
 }
 
 func (s *ConsulCatalogSuite) TestBasicAuthSimpleService(c *check.C) {
@@ -363,7 +366,8 @@ func (s *ConsulCatalogSuite) TestRefreshConfigTagChange(c *check.C) {
 	c.Assert(err, checker.IsNil, check.Commentf("Error registering service"))
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 5*time.Second, try.BodyContains("nginx1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 5*time.Second,
+		try.BodyContains(nginx.NetworkSettings.IPAddress))
 	c.Assert(err, checker.NotNil)
 
 	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{"name=nginx1", "traefik.enable=true", "traefik.backend.circuitbreaker=ResponseCodeRatio(500, 600, 0, 600) > 0.5"})
@@ -376,7 +380,8 @@ func (s *ConsulCatalogSuite) TestRefreshConfigTagChange(c *check.C) {
 	err = try.Request(req, 20*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second, try.BodyContains("nginx1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second,
+		try.BodyContains(nginx.NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
 }
 
@@ -444,7 +449,7 @@ func (s *ConsulCatalogSuite) TestRefreshConfigPortChange(c *check.C) {
 	err = try.Request(req, 20*time.Second, try.StatusCodeIs(http.StatusBadGateway))
 	c.Assert(err, checker.IsNil)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 5*time.Second, try.BodyContains("nginx1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 5*time.Second, try.BodyContains(nginx.NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
 
 	err = s.registerService("test", nginx.NetworkSettings.IPAddress, 80, []string{"name=nginx1", "traefik.enable=true"})
@@ -452,7 +457,7 @@ func (s *ConsulCatalogSuite) TestRefreshConfigPortChange(c *check.C) {
 
 	defer s.deregisterService("test", nginx.NetworkSettings.IPAddress)
 
-	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second, try.BodyContains("nginx1"))
+	err = try.GetRequest("http://127.0.0.1:8080/api/providers/consul_catalog/backends", 60*time.Second, try.BodyContains(nginx.NetworkSettings.IPAddress))
 	c.Assert(err, checker.IsNil)
 
 	err = try.Request(req, 20*time.Second, try.StatusCodeIs(http.StatusOK), try.HasBody())

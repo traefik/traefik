@@ -2,55 +2,56 @@
 {{range $service := .Services}}
   {{$sname := $service.ServiceName}}
 
-  {{$circuitBreaker := getAttribute "backend.circuitbreaker" $service.Attributes ""}}
-  {{with $circuitBreaker}}
-  [backends."backend-{{$sname}}".circuitBreaker]
-    expression = "{{$circuitBreaker}}"
+  {{ $circuitBreaker := getCircuitBreaker $service.Attributes }}
+  {{if $circuitBreaker }}
+  [backends."backend-{{ $sname }}".circuitBreaker]
+    expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
-  [backends."backend-{{$sname}}".loadBalancer]
-    method = "{{getAttribute "backend.loadbalancer" $service.Attributes "wrr"}}"
-    sticky = {{getSticky $service.Attributes}}
-    {{if hasStickinessLabel $service.Attributes}}
-    [backends."backend-{{$sname}}".loadBalancer.stickiness]
-      cookieName = "{{getStickinessCookieName $service.Attributes}}"
+  {{ $loadBalancer := getLoadBalancer $service.Attributes }}
+  {{if $loadBalancer }}
+  [backends."backend-{{ $sname }}".loadBalancer]
+    method = "{{ $loadBalancer.Method }}"
+    sticky = {{ $loadBalancer.Sticky }}
+    {{if $loadBalancer.Stickiness }}
+    [backends."backend-{{ $sname }}".loadBalancer.stickiness]
+      cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
     {{end}}
+  {{end}}
 
-  {{if hasMaxconnAttributes $service.Attributes}}
-  [backends."backend-{{$sname}}".maxConn]
-    amount = {{getAttribute "backend.maxconn.amount" $service.Attributes "" }}
-    extractorFunc = "{{getAttribute "backend.maxconn.extractorfunc" $service.Attributes "" }}"
+  {{ $maxConn := getMaxConn $service.Attributes }}
+  {{if $maxConn }}
+  [backends."backend-{{ $sname }}".maxConn]
+    extractorFunc = "{{ $maxConn.ExtractorFunc }}"
+    amount = {{ $maxConn.Amount }}
   {{end}}
 
 {{end}}
 {{range $index, $node := .Nodes}}
 
-  [backends."backend-{{getBackend $node}}".servers."{{getBackendName $node $index}}"]
-    url = "{{getAttribute "protocol" $node.Service.Tags "http"}}://{{getBackendAddress $node}}:{{$node.Service.Port}}"
-    weight = {{ getAttribute "backend.weight" $node.Service.Tags "0" }}
+  [backends."backend-{{ getBackend $node }}".servers."{{ getServerName $node $index }}"]
+    url = "{{ getProtocol $node.Service.Tags }}://{{ getBackendAddress $node }}:{{ $node.Service.Port }}"
+    weight = {{ getWeight $node.Service.Tags }}
 
 {{end}}
 
 [frontends]
 {{range $service := .Services}}
 
-  [frontends."frontend-{{$service.ServiceName}}"]
-    backend = "backend-{{$service.ServiceName}}"
-    priority = {{getAttribute "frontend.priority" $service.Attributes "0"}}
-    passHostHeader = {{getAttribute "frontend.passHostHeader" $service.Attributes "true"}}
+  [frontends."frontend-{{ $service.ServiceName }}"]
+    backend = "backend-{{ $service.ServiceName }}"
+    priority = {{ getPriority $service.Attributes }}
+    passHostHeader = {{ getPassHostHeader $service.Attributes }}
 
-    {{$entryPoints := getAttribute "frontend.entrypoints" $service.Attributes ""}}
-    {{with $entryPoints}}
-    entryPoints = [{{range getEntryPoints $entryPoints}}
+    entryPoints = [{{range getFrontEndEntryPoints $service.Attributes }}
       "{{.}}",
       {{end}}]
-    {{end}}
 
-    basicAuth = [{{range getBasicAuth $service.Attributes}}
+    basicAuth = [{{range getBasicAuth $service.Attributes }}
       "{{.}}",
       {{end}}]
 
     [frontends."frontend-{{$service.ServiceName}}".routes."route-host-{{$service.ServiceName}}"]
-      rule = "{{getFrontendRule $service}}"
+      rule = "{{ getFrontendRule $service }}"
 
 {{end}}
