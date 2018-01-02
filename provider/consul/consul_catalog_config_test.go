@@ -1166,3 +1166,88 @@ func TestCatalogProviderGetRateLimit(t *testing.T) {
 		})
 	}
 }
+
+func TestCatalogProviderGetHeaders(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
+	testCases := []struct {
+		desc     string
+		tags     []string
+		expected *types.Headers
+	}{
+		{
+			desc:     "should return nil when no tags",
+			tags:     []string{},
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when has tags",
+			tags: []string{
+				label.TraefikFrontendRequestHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+				label.TraefikFrontendResponseHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+				label.TraefikFrontendSSLProxyHeaders + "=Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+				label.TraefikFrontendAllowedHosts + "=foo,bar,bor",
+				label.TraefikFrontendHostsProxyHeaders + "=foo,bar,bor",
+				label.TraefikFrontendSSLHost + "=foo",
+				label.TraefikFrontendCustomFrameOptionsValue + "=foo",
+				label.TraefikFrontendContentSecurityPolicy + "=foo",
+				label.TraefikFrontendPublicKey + "=foo",
+				label.TraefikFrontendReferrerPolicy + "=foo",
+				label.TraefikFrontendSTSSeconds + "=666",
+				label.TraefikFrontendSSLRedirect + "=true",
+				label.TraefikFrontendSSLTemporaryRedirect + "=true",
+				label.TraefikFrontendSTSIncludeSubdomains + "=true",
+				label.TraefikFrontendSTSPreload + "=true",
+				label.TraefikFrontendForceSTSHeader + "=true",
+				label.TraefikFrontendFrameDeny + "=true",
+				label.TraefikFrontendContentTypeNosniff + "=true",
+				label.TraefikFrontendBrowserXSSFilter + "=true",
+				label.TraefikFrontendIsDevelopment + "=true",
+			},
+			expected: &types.Headers{
+				CustomRequestHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				CustomResponseHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				SSLProxyHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				AllowedHosts:            []string{"foo", "bar", "bor"},
+				HostsProxyHeaders:       []string{"foo", "bar", "bor"},
+				SSLHost:                 "foo",
+				CustomFrameOptionsValue: "foo",
+				ContentSecurityPolicy:   "foo",
+				PublicKey:               "foo",
+				ReferrerPolicy:          "foo",
+				STSSeconds:              666,
+				SSLRedirect:             true,
+				SSLTemporaryRedirect:    true,
+				STSIncludeSubdomains:    true,
+				STSPreload:              true,
+				ForceSTSHeader:          true,
+				FrameDeny:               true,
+				ContentTypeNosniff:      true,
+				BrowserXSSFilter:        true,
+				IsDevelopment:           true,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			result := p.getHeaders(test.tags)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
