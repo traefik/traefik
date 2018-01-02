@@ -558,7 +558,7 @@ func getStickiness(service *v1.Service) *types.Stickiness {
 }
 
 func getHeader(i *v1beta1.Ingress) *types.Headers {
-	return &types.Headers{
+	headers := &types.Headers{
 		CustomRequestHeaders:    label.GetMapValue(i.Annotations, annotationKubernetesCustomRequestHeaders),
 		CustomResponseHeaders:   label.GetMapValue(i.Annotations, annotationKubernetesCustomResponseHeaders),
 		AllowedHosts:            label.GetSliceStringValue(i.Annotations, annotationKubernetesAllowedHosts),
@@ -580,6 +580,12 @@ func getHeader(i *v1beta1.Ingress) *types.Headers {
 		ReferrerPolicy:          label.GetStringValue(i.Annotations, annotationKubernetesReferrerPolicy, ""),
 		IsDevelopment:           label.GetBoolValue(i.Annotations, annotationKubernetesIsDevelopment, false),
 	}
+
+	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
+		return nil
+	}
+
+	return headers
 }
 
 func getRateLimit(i *v1beta1.Ingress) *types.RateLimit {
