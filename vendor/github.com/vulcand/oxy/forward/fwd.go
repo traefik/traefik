@@ -315,22 +315,29 @@ func (f *websocketForwarder) serveHTTP(w http.ResponseWriter, req *http.Request,
 	defer targetConn.Close()
 
 	errc := make(chan error, 2)
-	replicate := func(dst io.Writer, src io.Reader) {
-		_, err := io.Copy(dst, src)
+
+	replicateWebsocketConn := func(dst, src *websocket.Conn, dstName, srcName string) {
+		var err error
+		for {
+			msgType, msg, err := src.ReadMessage()
+			if err != nil {
+				ctx.log.Errorf("vulcand/oxy/forward/websocket: Error when copying from %s to %s using ReadMessage: %v", srcName, dstName, err)
+				break
+			}
+			err = dst.WriteMessage(msgType, msg)
+			if err != nil {
+				ctx.log.Errorf("vulcand/oxy/forward/websocket: Error when copying from %s to %s using WriteMessage: %v", srcName, dstName, err)
+				break
+			} else {
+				ctx.log.Infof("vulcand/oxy/forward/websocket: Copying from %s to %s completed without error.", srcName, dstName)
+			}
+		}
 		errc <- err
 	}
 
-	go replicate(targetConn.UnderlyingConn(), underlyingConn.UnderlyingConn())
+	go replicateWebsocketConn(underlyingConn, targetConn, "client", "backend")
+	go replicateWebsocketConn(targetConn, underlyingConn, "backend", "client")
 
-	// Try to read the first message
-	t, msg, err := targetConn.ReadMessage()
-	if err != nil {
-		ctx.log.Errorf("Couldn't read first message : %v", err)
-	} else {
-		underlyingConn.WriteMessage(t, msg)
-	}
-
-	go replicate(underlyingConn.UnderlyingConn(), targetConn.UnderlyingConn())
 	<-errc
 
 }
