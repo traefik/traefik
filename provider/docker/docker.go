@@ -435,7 +435,7 @@ func (p *Provider) getServiceBackend(container dockerData, serviceName string) s
 	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.backend"); ok {
 		return provider.Normalize(container.ServiceName + "-" + value)
 	}
-	return provider.Normalize(strings.TrimPrefix(container.ServiceName, "/") + "-" + p.getBackend(container) + "-" + serviceName)
+	return provider.Normalize(container.ServiceName + "-" + p.getBackend(container) + "-" + serviceName)
 }
 
 // Extract rule from labels for a given service and a given docker container
