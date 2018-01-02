@@ -134,3 +134,21 @@ type countingRetryListener struct {
 func (l *countingRetryListener) Retried(req *http.Request, attempt int) {
 	l.timesCalled++
 }
+
+func TestRetryWithFlush(t *testing.T) {
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(200)
+		rw.Write([]byte("FULL "))
+		rw.(http.Flusher).Flush()
+		rw.Write([]byte("DATA"))
+	})
+
+	retry := NewRetry(1, next, &countingRetryListener{})
+	responseRecorder := httptest.NewRecorder()
+
+	retry.ServeHTTP(responseRecorder, &http.Request{})
+
+	if responseRecorder.Body.String() != "FULL DATA" {
+		t.Errorf("Wrong body %q want %q", responseRecorder.Body.String(), "FULL DATA")
+	}
+}
