@@ -7,24 +7,14 @@ dev_addr: 0.0.0.0:8000
 repo_name: 'GitHub'
 repo_url: 'https://github.com/containous/traefik'
 
-# Documentation
 docs_dir: 'docs'
 
-#theme: united
-#theme: readthedocs
-theme: 'material'
-#theme: bootstrap
-
-site_favicon: 'img/traefik.icon.png'
-
-copyright: "Copyright &copy; 2016-2017 Containous SAS"
-
-google_analytics:
-  - 'UA-51880359-3'
-  - 'docs.traefik.io'
-
-# Options
-extra:
+theme:
+  name: 'material'
+  custom_dir: 'docs/theme'
+  language: en
+  include_sidebar: true
+  favicon: img/traefik.icon.png
   logo: img/traefik.logo.png
   palette:
     primary: 'blue'
@@ -37,7 +27,16 @@ extra:
   i18n:
     prev: 'Previous'
     next: 'Next'
+
+copyright: "Copyright &copy; 2016-2018 Containous SAS"
+
+google_analytics:
+  - 'UA-51880359-3'
+  - 'docs.traefik.io'
+
+# Options
 # Comment because the call of the CDN is very slow.
+#extra:
 #  social:
 #    - type: 'github'
 #      link: 'https://github.com/containous/traefik'
@@ -47,8 +46,6 @@ extra:
 #      link: 'https://traefik.herokuapp.com'
 #    - type: 'twitter'
 #      link: 'https://twitter.com/traefikproxy'
-
-theme_dir: docs/theme/
 
 extra_css:
   - theme/styles/extra.css
@@ -60,8 +57,8 @@ extra_javascript:
 
 markdown_extensions:
   - admonition
-#  - codehilite(guess_lang=false)
-  - toc(permalink=true)
+  - toc:
+      permalink: true
 
 # Page tree
 pages:
