@@ -56,6 +56,7 @@ func (retry *Retry) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		// It's a stream request and the body gets already sent to the client.
 		// Therefore we should not send the response a second time.
 		if recorder.streamingResponseStarted {
+			recorder.Flush()
 			break
 		}
 
