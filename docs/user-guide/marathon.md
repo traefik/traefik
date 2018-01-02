@@ -28,6 +28,24 @@ Following is the order by which Traefik tries to identify the port (the first on
 1. The port from the application's `portDefinitions` field (possibly indexed through the `traefik.portIndex` label, otherwise the first one).
 1. The port from the application's `ipAddressPerTask` field (possibly indexed through the `traefik.portIndex` label, otherwise the first one).
 
+## Applications with multiple ports
+
+Some Marathon applications may expose multiple ports. Traefik supports creating one so-called _service_ per port using [specific labels](/configuration/backends/marathon#service-level).
+
+For instance, assume that a Marathon application exposes a web API on port 80 and an admin interface on port 8080. It would then be possible to make each service available by specifying the following Marathon labels:
+
+```
+traefik.web.port=80
+```
+
+```
+traefik.admin.port=8080
+```
+
+(Note that the service names `web` and `admin` can be chosen arbitrarily.)
+
+Technically, Traefik will create one pair of frontend and backend configurations for each service.
+
 ## Achieving high availability
 
 ### Scenarios
