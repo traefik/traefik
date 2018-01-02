@@ -54,6 +54,7 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		"getRateLimitsExtractorFunc": getFuncStringValue(label.TraefikFrontendRateLimitExtractorFunc, ""),
 		"getRateLimits":              getRateLimits,
 		// Headers
+		"hasHeaders":                        hasPrefixFuncLabel(label.TraefikFrontendHeaders),
 		"hasRequestHeaders":                 hasFuncLabel(label.TraefikFrontendRequestHeaders),
 		"getRequestHeaders":                 getFuncMapValue(label.TraefikFrontendRequestHeaders),
 		"hasResponseHeaders":                hasFuncLabel(label.TraefikFrontendResponseHeaders),
