@@ -1,34 +1,33 @@
 [backends]
 {{range $service := .Services}}
-  {{$sname := $service.ServiceName}}
 
   {{ $circuitBreaker := getCircuitBreaker $service.Attributes }}
   {{if $circuitBreaker }}
-  [backends."backend-{{ $sname }}".circuitBreaker]
+  [backends."backend-{{ getServiceBackendName $service }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $service.Attributes }}
   {{if $loadBalancer }}
-  [backends."backend-{{ $sname }}".loadBalancer]
+  [backends."backend-{{ getServiceBackendName $service }}".loadBalancer]
     method = "{{ $loadBalancer.Method }}"
     sticky = {{ $loadBalancer.Sticky }}
     {{if $loadBalancer.Stickiness }}
-    [backends."backend-{{ $sname }}".loadBalancer.stickiness]
+    [backends."backend-{{ getServiceBackendName $service }}".loadBalancer.stickiness]
       cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
     {{end}}
   {{end}}
 
   {{ $maxConn := getMaxConn $service.Attributes }}
   {{if $maxConn }}
-  [backends."backend-{{ $sname }}".maxConn]
+  [backends."backend-{{ getServiceBackendName $service }}".maxConn]
     extractorFunc = "{{ $maxConn.ExtractorFunc }}"
     amount = {{ $maxConn.Amount }}
   {{end}}
 
   {{ $healthCheck := getHealthCheck $service.Attributes }}
   {{if $healthCheck }}
-  [backends.backend-{{ $sname }}.healthCheck]
+  [backends.backend-{{ getServiceBackendName $service }}.healthCheck]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -37,7 +36,7 @@
 {{end}}
 {{range $index, $node := .Nodes}}
 
-  [backends."backend-{{ getBackend $node }}".servers."{{ getServerName $node $index }}"]
+  [backends."backend-{{ getNodeBackendName $node }}".servers."{{ getServerName $node $index }}"]
     url = "{{ getProtocol $node.Service.Tags }}://{{ getBackendAddress $node }}:{{ $node.Service.Port }}"
     weight = {{ getWeight $node.Service.Tags }}
 
@@ -47,7 +46,7 @@
 {{range $service := .Services}}
 
   [frontends."frontend-{{ $service.ServiceName }}"]
-    backend = "backend-{{ $service.ServiceName }}"
+    backend = "backend-{{ getServiceBackendName $service }}"
     priority = {{ getPriority $service.Attributes }}
     passHostHeader = {{ getPassHostHeader $service.Attributes }}
     passTLSCert = {{ getPassTLSCert $service.Attributes }}
@@ -102,7 +101,7 @@
 
     {{end}}
 
-    [frontends."frontend-{{$service.ServiceName}}".routes."route-host-{{$service.ServiceName}}"]
+    [frontends."frontend-{{ $service.ServiceName }}".routes."route-host-{{ $service.ServiceName }}"]
       rule = "{{ getFrontendRule $service }}"
 
 {{end}}
