@@ -55,6 +55,7 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		"getErrorPages":           p.getErrorPages,
 		"hasRateLimit":            p.getFuncHasAttributePrefix(label.BaseFrontendRateLimit),
 		"getRateLimit":            p.getRateLimit,
+		"getHeaders":              p.getHeaders,
 	}
 
 	var allNodes []*api.ServiceEntry
@@ -336,6 +337,37 @@ func (p *CatalogProvider) getRateLimit(tags []string) *types.RateLimit {
 	}
 }
 
+func (p *CatalogProvider) getHeaders(tags []string) *types.Headers {
+	headers := &types.Headers{
+		CustomRequestHeaders:    p.getMapAttribute(label.SuffixFrontendRequestHeaders, tags),
+		CustomResponseHeaders:   p.getMapAttribute(label.SuffixFrontendResponseHeaders, tags),
+		SSLProxyHeaders:         p.getMapAttribute(label.SuffixFrontendHeadersSSLProxyHeaders, tags),
+		AllowedHosts:            p.getSliceAttribute(label.SuffixFrontendHeadersAllowedHosts, tags),
+		HostsProxyHeaders:       p.getSliceAttribute(label.SuffixFrontendHeadersHostsProxyHeaders, tags),
+		SSLHost:                 p.getAttribute(label.SuffixFrontendHeadersSSLHost, tags, ""),
+		CustomFrameOptionsValue: p.getAttribute(label.SuffixFrontendHeadersCustomFrameOptionsValue, tags, ""),
+		ContentSecurityPolicy:   p.getAttribute(label.SuffixFrontendHeadersContentSecurityPolicy, tags, ""),
+		PublicKey:               p.getAttribute(label.SuffixFrontendHeadersPublicKey, tags, ""),
+		ReferrerPolicy:          p.getAttribute(label.SuffixFrontendHeadersReferrerPolicy, tags, ""),
+		STSSeconds:              p.getInt64Attribute(label.SuffixFrontendHeadersSTSSeconds, tags, 0),
+		SSLRedirect:             p.getBoolAttribute(label.SuffixFrontendHeadersSSLRedirect, tags, false),
+		SSLTemporaryRedirect:    p.getBoolAttribute(label.SuffixFrontendHeadersSSLTemporaryRedirect, tags, false),
+		STSIncludeSubdomains:    p.getBoolAttribute(label.SuffixFrontendHeadersSTSIncludeSubdomains, tags, false),
+		STSPreload:              p.getBoolAttribute(label.SuffixFrontendHeadersSTSPreload, tags, false),
+		ForceSTSHeader:          p.getBoolAttribute(label.SuffixFrontendHeadersForceSTSHeader, tags, false),
+		FrameDeny:               p.getBoolAttribute(label.SuffixFrontendHeadersFrameDeny, tags, false),
+		ContentTypeNosniff:      p.getBoolAttribute(label.SuffixFrontendHeadersContentTypeNosniff, tags, false),
+		BrowserXSSFilter:        p.getBoolAttribute(label.SuffixFrontendHeadersBrowserXSSFilter, tags, false),
+		IsDevelopment:           p.getBoolAttribute(label.SuffixFrontendHeadersIsDevelopment, tags, false),
+	}
+
+	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
+		return nil
+	}
+
+	return headers
+}
+
 // Base functions
 
 func (p *CatalogProvider) parseTagsToNeutralLabels(tags []string) map[string]string {
@@ -370,6 +402,16 @@ func (p *CatalogProvider) getFuncSliceAttribute(name string) func(tags []string)
 	return func(tags []string) []string {
 		return p.getSliceAttribute(name, tags)
 	}
+}
+
+func (p *CatalogProvider) getMapAttribute(name string, tags []string) map[string]string {
+	rawValue := getTag(p.getPrefixedName(name), tags, "")
+
+	if len(rawValue) == 0 {
+		return nil
+	}
+
+	return label.ParseMapValue(p.getPrefixedName(name), rawValue)
 }
 
 func (p *CatalogProvider) getFuncIntAttribute(name string, defaultValue int) func(tags []string) int {
