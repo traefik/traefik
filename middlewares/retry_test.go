@@ -151,5 +151,4 @@ func TestRetryWithFlush(t *testing.T) {
 	if responseRecorder.Body.String() != "FULL DATA" {
 		t.Errorf("Wrong body %q want %q", responseRecorder.Body.String(), "FULL DATA")
 	}
-
 }
