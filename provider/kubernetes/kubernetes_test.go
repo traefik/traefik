@@ -9,6 +9,7 @@ import (
 
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
+	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/pkg/api/v1"
@@ -139,21 +140,18 @@ func TestLoadIngresses(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
-				headers(),
 				passHostHeader(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
 			),
 			frontend("foo/namedthing",
-				headers(),
 				passHostHeader(),
 				routes(
 					route("/namedthing", "PathPrefix:/namedthing"),
 					route("foo", "Host:foo")),
 			),
 			frontend("bar",
-				headers(),
 				passHostHeader(),
 				routes(route("bar", "Host:bar")),
 			),
@@ -227,7 +225,6 @@ func TestRuleType(t *testing.T) {
 			require.NoError(t, err, "error loading ingresses")
 
 			expected := buildFrontends(frontend("host/path",
-				headers(),
 				routes(
 					route("/path", fmt.Sprintf("%s:/path", test.frontendRuleType)),
 					route("host", "Host:host")),
@@ -273,7 +270,6 @@ func TestGetPassHostHeader(t *testing.T) {
 		backends(backend("foo/bar", lbMethod("wrr"), servers())),
 		frontends(
 			frontend("foo/bar",
-				headers(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
@@ -317,7 +313,6 @@ func TestGetPassTLSCert(t *testing.T) {
 	expected := buildConfiguration(
 		backends(backend("foo/bar", lbMethod("wrr"), servers())),
 		frontends(frontend("foo/bar",
-			headers(),
 			passHostHeader(),
 			passTLSCert(),
 			routes(
@@ -372,7 +367,6 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 	expected := buildConfiguration(
 		backends(backend("foo", lbMethod("wrr"), servers())),
 		frontends(frontend("foo",
-			headers(),
 			passHostHeader(),
 			routes(route("foo", "Host:foo")),
 		)),
@@ -415,7 +409,6 @@ func TestHostlessIngress(t *testing.T) {
 	expected := buildConfiguration(
 		backends(backend("/bar", lbMethod("wrr"), servers())),
 		frontends(frontend("/bar",
-			headers(),
 			routes(route("/bar", "PathPrefix:/bar")))),
 	)
 
@@ -586,14 +579,12 @@ func TestServiceAnnotations(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
-				headers(),
 				passHostHeader(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
 			),
 			frontend("bar",
-				headers(),
 				passHostHeader(),
 				routes(route("bar", "Host:bar"))),
 			frontend("baz",
@@ -601,7 +592,6 @@ func TestServiceAnnotations(t *testing.T) {
 				passHostHeader(),
 				routes(route("baz", "Host:baz"))),
 			frontend("max-conn",
-				headers(),
 				passHostHeader(),
 				routes(
 					route("max-conn", "Host:max-conn"))),
@@ -737,6 +727,35 @@ func TestIngressAnnotations(t *testing.T) {
 					iPaths(onePath(iPath("/ratelimit"), iBackend("service1", intstr.FromInt(80))))),
 			),
 		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(annotationKubernetesIngressClass, "traefik"),
+			iAnnotation(annotationKubernetesCustomRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+			iAnnotation(annotationKubernetesCustomResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+			iAnnotation(annotationKubernetesSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+			iAnnotation(annotationKubernetesAllowedHosts, "foo, fii, fuu"),
+			iAnnotation(annotationKubernetesProxyHeaders, "foo, fii, fuu"),
+			iAnnotation(annotationKubernetesHSTSMaxAge, "666"),
+			iAnnotation(annotationKubernetesSSLRedirect, "true"),
+			iAnnotation(annotationKubernetesSSLTemporaryRedirect, "true"),
+			iAnnotation(annotationKubernetesHSTSIncludeSubdomains, "true"),
+			iAnnotation(annotationKubernetesForceHSTSHeader, "true"),
+			iAnnotation(annotationKubernetesHSTSPreload, "true"),
+			iAnnotation(annotationKubernetesFrameDeny, "true"),
+			iAnnotation(annotationKubernetesContentTypeNosniff, "true"),
+			iAnnotation(annotationKubernetesBrowserXSSFilter, "true"),
+			iAnnotation(annotationKubernetesIsDevelopment, "true"),
+			iAnnotation(annotationKubernetesSSLHost, "foo"),
+			iAnnotation(annotationKubernetesCustomFrameOptionsValue, "foo"),
+			iAnnotation(annotationKubernetesContentSecurityPolicy, "foo"),
+			iAnnotation(annotationKubernetesPublicKey, "foo"),
+			iAnnotation(annotationKubernetesReferrerPolicy, "foo"),
+			iRules(
+				iRule(
+					iHost("custom-headers"),
+					iPaths(onePath(iPath("/customheaders"), iBackend("service1", intstr.FromInt(80))))),
+			),
+		),
 	}
 
 	services := []*v1.Service{
@@ -843,23 +862,26 @@ func TestIngressAnnotations(t *testing.T) {
 					server("http://example.com", weight(1))),
 				lbMethod("wrr"),
 			),
+			backend("custom-headers/customheaders",
+				servers(
+					server("http://example.com", weight(1)),
+					server("http://example.com", weight(1))),
+				lbMethod("wrr"),
+			),
 		),
 		frontends(
 			frontend("foo/bar",
-				headers(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
 			),
 			frontend("other/stuff",
-				headers(),
 				passHostHeader(),
 				routes(
 					route("/stuff", "PathPrefix:/stuff"),
 					route("other", "Host:other")),
 			),
 			frontend("other/",
-				headers(),
 				passHostHeader(),
 				entryPoints("http", "https"),
 				routes(
@@ -867,7 +889,6 @@ func TestIngressAnnotations(t *testing.T) {
 					route("other", "Host:other")),
 			),
 			frontend("other/sslstuff",
-				headers(),
 				passHostHeader(),
 				passTLSCert(),
 				routes(
@@ -875,7 +896,6 @@ func TestIngressAnnotations(t *testing.T) {
 					route("other", "Host:other")),
 			),
 			frontend("other/sslstuff",
-				headers(),
 				passHostHeader(),
 				passTLSCert(),
 				routes(
@@ -883,7 +903,6 @@ func TestIngressAnnotations(t *testing.T) {
 					route("other", "Host:other")),
 			),
 			frontend("basic/auth",
-				headers(),
 				passHostHeader(),
 				basicAuth("myUser:myEncodedPW"),
 				routes(
@@ -891,7 +910,6 @@ func TestIngressAnnotations(t *testing.T) {
 					route("basic", "Host:basic")),
 			),
 			frontend("redirect/https",
-				headers(),
 				passHostHeader(),
 				redirectEntryPoint("https"),
 				routes(
@@ -899,7 +917,6 @@ func TestIngressAnnotations(t *testing.T) {
 					route("redirect", "Host:redirect")),
 			),
 			frontend("test/whitelist-source-range",
-				headers(),
 				passHostHeader(),
 				whitelistSourceRange("1.1.1.1/24", "1234:abcd::42/32"),
 				routes(
@@ -907,14 +924,12 @@ func TestIngressAnnotations(t *testing.T) {
 					route("test", "Host:test")),
 			),
 			frontend("rewrite/api",
-				headers(),
 				passHostHeader(),
 				routes(
 					route("/api", "PathPrefix:/api;ReplacePath:/"),
 					route("rewrite", "Host:rewrite")),
 			),
 			frontend("error-pages/errorpages",
-				headers(),
 				passHostHeader(),
 				errorPage("foo", errorQuery("/bar"), errorStatus("123", "456"), errorBackend("bar")),
 				routes(
@@ -922,7 +937,6 @@ func TestIngressAnnotations(t *testing.T) {
 					route("error-pages", "Host:error-pages")),
 			),
 			frontend("rate-limit/ratelimit",
-				headers(),
 				passHostHeader(),
 				rateLimit(rateExtractorFunc("client.ip"),
 					rateSet("foo", limitPeriod(6*time.Second), limitAverage(12), limitBurst(18)),
@@ -930,6 +944,43 @@ func TestIngressAnnotations(t *testing.T) {
 				routes(
 					route("/ratelimit", "PathPrefix:/ratelimit"),
 					route("rate-limit", "Host:rate-limit")),
+			),
+			frontend("custom-headers/customheaders",
+				passHostHeader(),
+				headers(&types.Headers{
+					CustomRequestHeaders: map[string]string{
+						"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+						"Content-Type":                 "application/json; charset=utf-8",
+					},
+					CustomResponseHeaders: map[string]string{
+						"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+						"Content-Type":                 "application/json; charset=utf-8",
+					},
+					SSLProxyHeaders: map[string]string{
+						"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+						"Content-Type":                 "application/json; charset=utf-8",
+					},
+					AllowedHosts:            []string{"foo", "fii", "fuu"},
+					HostsProxyHeaders:       []string{"foo", "fii", "fuu"},
+					STSSeconds:              666,
+					SSLRedirect:             true,
+					SSLTemporaryRedirect:    true,
+					STSIncludeSubdomains:    true,
+					STSPreload:              true,
+					ForceSTSHeader:          true,
+					FrameDeny:               true,
+					ContentTypeNosniff:      true,
+					BrowserXSSFilter:        true,
+					IsDevelopment:           true,
+					CustomFrameOptionsValue: "foo",
+					SSLHost:                 "foo",
+					ContentSecurityPolicy:   "foo",
+					PublicKey:               "foo",
+					ReferrerPolicy:          "foo",
+				}),
+				routes(
+					route("/customheaders", "PathPrefix:/customheaders"),
+					route("custom-headers", "Host:custom-headers")),
 			),
 		),
 	)
@@ -985,7 +1036,6 @@ func TestPriorityHeaderValue(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
-				headers(),
 				passHostHeader(),
 				priority(1337),
 				routes(
@@ -1044,7 +1094,6 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
-				headers(),
 				passHostHeader(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
@@ -1102,7 +1151,6 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
-				headers(),
 				passHostHeader(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
@@ -1276,17 +1324,14 @@ func TestMissingResources(t *testing.T) {
 		),
 		frontends(
 			frontend("fully_working",
-				headers(),
 				passHostHeader(),
 				routes(route("fully_working", "Host:fully_working")),
 			),
 			frontend("missing_endpoints",
-				headers(),
 				passHostHeader(),
 				routes(route("missing_endpoints", "Host:missing_endpoints")),
 			),
 			frontend("missing_endpoint_subsets",
-				headers(),
 				passHostHeader(),
 				routes(route("missing_endpoint_subsets", "Host:missing_endpoint_subsets")),
 			),
@@ -1447,7 +1492,6 @@ func TestTLSSecretLoad(t *testing.T) {
 		),
 		frontends(
 			frontend("example.com",
-				headers(),
 				entryPoints("ep1", "ep2"),
 				passHostHeader(),
 				routes(
@@ -1455,7 +1499,6 @@ func TestTLSSecretLoad(t *testing.T) {
 				),
 			),
 			frontend("example.org",
-				headers(),
 				entryPoints("ep1", "ep2"),
 				passHostHeader(),
 				routes(

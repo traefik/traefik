@@ -214,9 +214,9 @@ func priority(value int) func(*types.Frontend) {
 	}
 }
 
-func headers() func(*types.Frontend) {
+func headers(h *types.Headers) func(*types.Frontend) {
 	return func(f *types.Frontend) {
-		f.Headers = &types.Headers{}
+		f.Headers = h
 	}
 }
 
