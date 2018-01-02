@@ -280,6 +280,7 @@ func TestLoadIngresses(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -292,6 +293,7 @@ func TestLoadIngresses(t *testing.T) {
 			"foo/namedthing": {
 				Backend:        "foo/namedthing",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/namedthing": {
 						Rule: "PathPrefix:/namedthing",
@@ -304,6 +306,7 @@ func TestLoadIngresses(t *testing.T) {
 			"bar": {
 				Backend:        "bar",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"bar": {
 						Rule: "Host:bar",
@@ -409,6 +412,7 @@ func TestRuleType(t *testing.T) {
 			expected := map[string]*types.Frontend{
 				"host/path": {
 					Backend: "host/path",
+					Headers: &types.Headers{},
 					Routes: map[string]types.Route{
 						"/path": {
 							Rule: fmt.Sprintf("%s:/path", test.frontendRuleType),
@@ -494,6 +498,7 @@ func TestGetPassHostHeader(t *testing.T) {
 		Frontends: map[string]*types.Frontend{
 			"foo/bar": {
 				Backend: "foo/bar",
+				Headers: &types.Headers{},
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -580,6 +585,7 @@ func TestGetPassTLSCert(t *testing.T) {
 				Backend:        "foo/bar",
 				PassTLSCert:    true,
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -682,6 +688,7 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 			"foo": {
 				Backend:        "foo",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"foo": {
 						Rule: "Host:foo",
@@ -762,6 +769,7 @@ func TestHostlessIngress(t *testing.T) {
 		Frontends: map[string]*types.Frontend{
 			"/bar": {
 				Backend: "/bar",
+				Headers: &types.Headers{},
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -980,6 +988,7 @@ func TestServiceAnnotations(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -992,6 +1001,7 @@ func TestServiceAnnotations(t *testing.T) {
 			"bar": {
 				Backend:        "bar",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"bar": {
 						Rule: "Host:bar",
@@ -1445,6 +1455,7 @@ func TestIngressAnnotations(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: false,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1457,6 +1468,7 @@ func TestIngressAnnotations(t *testing.T) {
 			"other/stuff": {
 				Backend:        "other/stuff",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/stuff": {
 						Rule: "PathPrefix:/stuff",
@@ -1469,6 +1481,7 @@ func TestIngressAnnotations(t *testing.T) {
 			"other/": {
 				Backend:        "other/",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				EntryPoints:    []string{"http", "https"},
 				Routes: map[string]types.Route{
 					"/": {
@@ -1483,6 +1496,7 @@ func TestIngressAnnotations(t *testing.T) {
 				Backend:        "other/sslstuff",
 				PassHostHeader: true,
 				PassTLSCert:    true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/sslstuff": {
 						Rule: "PathPrefix:/sslstuff",
@@ -1495,6 +1509,7 @@ func TestIngressAnnotations(t *testing.T) {
 			"basic/auth": {
 				Backend:        "basic/auth",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/auth": {
 						Rule: "PathPrefix:/auth",
@@ -1508,6 +1523,7 @@ func TestIngressAnnotations(t *testing.T) {
 			"redirect/https": {
 				Backend:        "redirect/https",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/https": {
 						Rule: "PathPrefix:/https",
@@ -1524,6 +1540,7 @@ func TestIngressAnnotations(t *testing.T) {
 			"test/whitelist-source-range": {
 				Backend:        "test/whitelist-source-range",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				WhitelistSourceRange: []string{
 					"1.1.1.1/24",
 					"1234:abcd::42/32",
@@ -1540,6 +1557,7 @@ func TestIngressAnnotations(t *testing.T) {
 			"rewrite/api": {
 				Backend:        "rewrite/api",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/api": {
 						Rule: "PathPrefix:/api;ReplacePath:/",
@@ -1641,6 +1659,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
 				Priority:       1337,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1742,6 +1761,7 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 				Backend:        "foo/bar",
 				PassTLSCert:    false,
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -1842,6 +1862,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 			"foo/bar": {
 				Backend:        "foo/bar",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"/bar": {
 						Rule: "PathPrefix:/bar",
@@ -2143,6 +2164,7 @@ func TestMissingResources(t *testing.T) {
 			"fully_working": {
 				Backend:        "fully_working",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"fully_working": {
 						Rule: "Host:fully_working",
@@ -2152,6 +2174,7 @@ func TestMissingResources(t *testing.T) {
 			"missing_endpoints": {
 				Backend:        "missing_endpoints",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"missing_endpoints": {
 						Rule: "Host:missing_endpoints",
@@ -2161,6 +2184,7 @@ func TestMissingResources(t *testing.T) {
 			"missing_endpoint_subsets": {
 				Backend:        "missing_endpoint_subsets",
 				PassHostHeader: true,
+				Headers:        &types.Headers{},
 				Routes: map[string]types.Route{
 					"missing_endpoint_subsets": {
 						Rule: "Host:missing_endpoint_subsets",

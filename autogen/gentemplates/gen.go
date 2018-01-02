@@ -219,6 +219,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   replacement = "{{getRedirectReplacement $container}}"
   {{end}}
 
+  {{ if hasHeaders $container}}
   [frontends."frontend-{{$frontend}}".headers]
   {{if hasSSLRedirectHeaders $container}}
   SSLRedirect = {{getSSLRedirectHeaders $container}}
@@ -265,6 +266,16 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
   {{if hasIsDevelopmentHeaders $container}}
   IsDevelopment = {{getIsDevelopmentHeaders $container}}
   {{end}}
+  {{if hasAllowedHostsHeaders $container}}
+  AllowedHosts = [{{range getAllowedHostsHeaders $container}}
+    "{{.}}",
+    {{end}}]
+  {{end}}
+  {{if hasHostsProxyHeaders $container}}
+  HostsProxyHeaders = [{{range getHostsProxyHeaders $container}}
+    "{{.}}",
+    {{end}}]
+  {{end}}
   {{if hasRequestHeaders $container}}
     [frontends."frontend-{{$frontend}}".headers.customrequestheaders]
     {{range $k, $v := getRequestHeaders $container}}
@@ -277,24 +288,14 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     {{$k}} = "{{$v}}"
     {{end}}
   {{end}}
-  {{if hasAllowedHostsHeaders $container}}
-    [frontends."frontend-{{$frontend}}".headers.AllowedHosts]
-    {{range getAllowedHostsHeaders $container}}
-    "{{.}}"
-    {{end}}
-  {{end}}
-  {{if hasHostsProxyHeaders $container}}
-    [frontends."frontend-{{$frontend}}".headers.HostsProxyHeaders]
-    {{range getHostsProxyHeaders $container}}
-    "{{.}}"
-    {{end}}
-  {{end}}
   {{if hasSSLProxyHeaders $container}}
     [frontends."frontend-{{$frontend}}".headers.SSLProxyHeaders]
     {{range $k, $v := getSSLProxyHeaders $container}}
     {{$k}} = "{{$v}}"
     {{end}}
   {{end}}
+  {{end}}
+
     [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
     rule = "{{getFrontendRule $container}}"
   {{end}}
@@ -445,6 +446,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
   replacement = "{{$frontend.RedirectReplacement}}"
   {{end}}
 
+  {{ if $frontend.Headers }}
   [frontends."{{$frontendName}}".headers]
   SSLRedirect = {{$frontend.Headers.SSLRedirect}}
   SSLTemporaryRedirect = {{$frontend.Headers.SSLTemporaryRedirect}}
@@ -461,40 +463,45 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
   PublicKey = "{{$frontend.Headers.PublicKey}}"
   ReferrerPolicy = "{{$frontend.Headers.ReferrerPolicy}}"
   IsDevelopment = {{$frontend.Headers.IsDevelopment}}
-{{if $frontend.Headers.CustomRequestHeaders}}
-    [frontends."{{$frontendName}}".headers.customrequestheaders]
+
+  {{if $frontend.Headers.AllowedHosts}}
+  AllowedHosts = [{{range $frontend.Headers.AllowedHosts}}
+    "{{.}}",
+    {{end}}]
+  {{end}}
+
+  {{if $frontend.Headers.HostsProxyHeaders}}
+  HostsProxyHeaders = [{{range $frontend.Headers.HostsProxyHeaders}}
+    "{{.}}",
+    {{end}}]
+  {{end}}
+
+  {{if $frontend.Headers.CustomRequestHeaders}}
+  [frontends."{{$frontendName}}".headers.customrequestheaders]
     {{range $k, $v := $frontend.Headers.CustomRequestHeaders}}
     {{$k}} = "{{$v}}"
     {{end}}
-{{end}}
-{{if $frontend.Headers.CustomResponseHeaders}}
-    [frontends."{{$frontendName}}".headers.customresponseheaders]
+  {{end}}
+
+  {{if $frontend.Headers.CustomResponseHeaders}}
+  [frontends."{{$frontendName}}".headers.customresponseheaders]
     {{range $k, $v := $frontend.Headers.CustomResponseHeaders}}
     {{$k}} = "{{$v}}"
     {{end}}
-{{end}}
-{{if $frontend.Headers.AllowedHosts}}
-    [frontends."{{$frontendName}}".headers.AllowedHosts]
-    {{range $frontend.Headers.AllowedHosts}}
-    "{{.}}"
-    {{end}}
-{{end}}
-{{if $frontend.Headers.HostsProxyHeaders}}
-    [frontends."{{$frontendName}}".headers.HostsProxyHeaders]
-    {{range $frontend.Headers.HostsProxyHeaders}}
-    "{{.}}"
-    {{end}}
-{{end}}
-{{if $frontend.Headers.SSLProxyHeaders}}
-    [frontends."{{$frontendName}}".headers.SSLProxyHeaders]
+  {{end}}
+
+  {{if $frontend.Headers.SSLProxyHeaders}}
+  [frontends."{{$frontendName}}".headers.SSLProxyHeaders]
     {{range $k, $v := $frontend.Headers.SSLProxyHeaders}}
     {{$k}} = "{{$v}}"
     {{end}}
+  {{end}}
 {{end}}
-    {{range $routeName, $route := $frontend.Routes}}
-    [frontends."{{$frontendName}}".routes."{{$routeName}}"]
+
+  {{range $routeName, $route := $frontend.Routes}}
+  [frontends."{{$frontendName}}".routes."{{$routeName}}"]
     rule = "{{$route.Rule}}"
-    {{end}}
+  {{end}}
 {{end}}
 `)
 

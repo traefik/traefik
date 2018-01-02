@@ -113,14 +113,14 @@ type Headers struct {
 }
 
 // HasCustomHeadersDefined checks to see if any of the custom header elements have been set
-func (h Headers) HasCustomHeadersDefined() bool {
-	return len(h.CustomResponseHeaders) != 0 ||
-		len(h.CustomRequestHeaders) != 0
+func (h *Headers) HasCustomHeadersDefined() bool {
+	return h != nil && (len(h.CustomResponseHeaders) != 0 ||
+		len(h.CustomRequestHeaders) != 0)
 }
 
 // HasSecureHeadersDefined checks to see if any of the secure header elements have been set
-func (h Headers) HasSecureHeadersDefined() bool {
-	return len(h.AllowedHosts) != 0 ||
+func (h *Headers) HasSecureHeadersDefined() bool {
+	return h != nil && (len(h.AllowedHosts) != 0 ||
 		len(h.HostsProxyHeaders) != 0 ||
 		h.SSLRedirect ||
 		h.SSLTemporaryRedirect ||
@@ -137,7 +137,7 @@ func (h Headers) HasSecureHeadersDefined() bool {
 		h.ContentSecurityPolicy != "" ||
 		h.PublicKey != "" ||
 		h.ReferrerPolicy != "" ||
-		h.IsDevelopment
+		h.IsDevelopment)
 }
 
 // Frontend holds frontend configuration.
@@ -150,7 +150,7 @@ type Frontend struct {
 	Priority             int                  `json:"priority"`
 	BasicAuth            []string             `json:"basicAuth"`
 	WhitelistSourceRange []string             `json:"whitelistSourceRange,omitempty"`
-	Headers              Headers              `json:"headers,omitempty"`
+	Headers              *Headers             `json:"headers,omitempty"`
 	Errors               map[string]ErrorPage `json:"errors,omitempty"`
 	RateLimit            *RateLimit           `json:"ratelimit,omitempty"`
 	Redirect             *Redirect            `json:"redirect,omitempty"`

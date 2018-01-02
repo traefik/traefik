@@ -94,6 +94,7 @@
   replacement = "{{getRedirectReplacement $container}}"
   {{end}}
 
+  {{ if hasHeaders $container}}
   [frontends."frontend-{{$frontend}}".headers]
   {{if hasSSLRedirectHeaders $container}}
   SSLRedirect = {{getSSLRedirectHeaders $container}}
@@ -140,6 +141,16 @@
   {{if hasIsDevelopmentHeaders $container}}
   IsDevelopment = {{getIsDevelopmentHeaders $container}}
   {{end}}
+  {{if hasAllowedHostsHeaders $container}}
+  AllowedHosts = [{{range getAllowedHostsHeaders $container}}
+    "{{.}}",
+    {{end}}]
+  {{end}}
+  {{if hasHostsProxyHeaders $container}}
+  HostsProxyHeaders = [{{range getHostsProxyHeaders $container}}
+    "{{.}}",
+    {{end}}]
+  {{end}}
   {{if hasRequestHeaders $container}}
     [frontends."frontend-{{$frontend}}".headers.customrequestheaders]
     {{range $k, $v := getRequestHeaders $container}}
@@ -152,24 +163,14 @@
     {{$k}} = "{{$v}}"
     {{end}}
   {{end}}
-  {{if hasAllowedHostsHeaders $container}}
-    [frontends."frontend-{{$frontend}}".headers.AllowedHosts]
-    {{range getAllowedHostsHeaders $container}}
-    "{{.}}"
-    {{end}}
-  {{end}}
-  {{if hasHostsProxyHeaders $container}}
-    [frontends."frontend-{{$frontend}}".headers.HostsProxyHeaders]
-    {{range getHostsProxyHeaders $container}}
-    "{{.}}"
-    {{end}}
-  {{end}}
   {{if hasSSLProxyHeaders $container}}
     [frontends."frontend-{{$frontend}}".headers.SSLProxyHeaders]
     {{range $k, $v := getSSLProxyHeaders $container}}
     {{$k}} = "{{$v}}"
     {{end}}
   {{end}}
+  {{end}}
+
     [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
     rule = "{{getFrontendRule $container}}"
   {{end}}
