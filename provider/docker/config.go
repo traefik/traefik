@@ -55,6 +55,7 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getRateLimitsExtractorFunc": getFuncStringLabel(label.TraefikFrontendRateLimitExtractorFunc, ""),
 		"getRateLimits":              getRateLimits,
 		// Headers
+		"hasHeaders":                        hasHeaders,
 		"hasRequestHeaders":                 hasFunc(label.TraefikFrontendRequestHeaders),
 		"getRequestHeaders":                 getFuncMapLabel(label.TraefikFrontendRequestHeaders),
 		"hasResponseHeaders":                hasFunc(label.TraefikFrontendResponseHeaders),

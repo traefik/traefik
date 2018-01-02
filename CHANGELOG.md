@@ -1,5 +1,13 @@
 # Change Log
 
+## [v1.4.6](https://github.com/containous/traefik/tree/v1.4.6) (2018-01-02)
+[All Commits](https://github.com/containous/traefik/compare/v1.4.5...v1.4.6)
+
+**Bug fixes:**
+- **[docker]** Normalize serviceName added to the service backend names ([#2631](https://github.com/containous/traefik/pull/2631) by [mmatur](https://github.com/mmatur))
+- **[websocket]** Use gorilla readMessage and writeMessage instead of just an io.Copy ([#2640](https://github.com/containous/traefik/pull/2640) by [Juliens](https://github.com/Juliens))
+- Fix bug report command ([#2638](https://github.com/containous/traefik/pull/2638) by [ldez](https://github.com/ldez))
+
 ## [v1.5.0-rc3](https://github.com/containous/traefik/tree/v1.5.0-rc3) (2017-12-20)
 [All Commits](https://github.com/containous/traefik/compare/v1.5.0-rc2...v1.5.0-rc3)
 

@@ -84,7 +84,7 @@ Add more configuration information here.
 )
 
 // newBugCmd builds a new Bug command
-func newBugCmd(traefikConfiguration interface{}, traefikPointersConfiguration interface{}) *flaeg.Command {
+func newBugCmd(traefikConfiguration *TraefikConfiguration, traefikPointersConfiguration *TraefikConfiguration) *flaeg.Command {
 
 	//version Command init
 	return &flaeg.Command{
@@ -99,7 +99,7 @@ func newBugCmd(traefikConfiguration interface{}, traefikPointersConfiguration in
 	}
 }
 
-func runBugCmd(traefikConfiguration interface{}) func() error {
+func runBugCmd(traefikConfiguration *TraefikConfiguration) func() error {
 	return func() error {
 
 		body, err := createBugReport(traefikConfiguration)
@@ -113,7 +113,7 @@ func runBugCmd(traefikConfiguration interface{}) func() error {
 	}
 }
 
-func createBugReport(traefikConfiguration interface{}) (string, error) {
+func createBugReport(traefikConfiguration *TraefikConfiguration) (string, error) {
 	var version bytes.Buffer
 	if err := getVersionPrint(&version); err != nil {
 		return "", err
@@ -124,7 +124,7 @@ func createBugReport(traefikConfiguration interface{}) (string, error) {
 		return "", err
 	}
 
-	config, err := anonymize.Do(&traefikConfiguration, true)
+	config, err := anonymize.Do(traefikConfiguration, true)
 	if err != nil {
 		return "", err
 	}

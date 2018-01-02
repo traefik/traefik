@@ -179,6 +179,7 @@
         {{end}}
     {{end}}
 
+    {{ if hasHeaders $container}}
     [frontends."frontend-{{$frontend}}".headers]
       {{if hasSSLRedirectHeaders $container}}
       SSLRedirect = {{getSSLRedirectHeaders $container}}
@@ -258,6 +259,7 @@
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
+    {{end}}
 
     [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
       rule = "{{getFrontendRule $container}}"

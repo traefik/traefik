@@ -152,6 +152,12 @@ func priority(value int) func(*types.Frontend) {
 	}
 }
 
+func headers() func(*types.Frontend) {
+	return func(f *types.Frontend) {
+		f.Headers = &types.Headers{}
+	}
+}
+
 func redirectEntryPoint(name string) func(*types.Frontend) {
 	return func(f *types.Frontend) {
 		if f.Redirect == nil {

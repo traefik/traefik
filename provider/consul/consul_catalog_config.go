@@ -21,9 +21,9 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		"getBackendName":          getBackendName,
 		"getBackendAddress":       getBackendAddress,
 		"getBasicAuth":            p.getBasicAuth,
-		"getSticky":               getSticky,
-		"hasStickinessLabel":      hasStickinessLabel,
-		"getStickinessCookieName": getStickinessCookieName,
+		"getSticky":               p.getSticky,
+		"hasStickinessLabel":      p.hasStickinessLabel,
+		"getStickinessCookieName": p.getStickinessCookieName,
 		"getAttribute":            p.getAttribute,
 		"getTag":                  getTag,
 		"hasTag":                  hasTag,
@@ -147,8 +147,8 @@ func getBackendName(node *api.ServiceEntry, index int) string {
 
 // TODO: Deprecated
 // Deprecated replaced by Stickiness
-func getSticky(tags []string) string {
-	stickyTag := getTag(label.TraefikBackendLoadBalancerSticky, tags, "")
+func (p *CatalogProvider) getSticky(tags []string) string {
+	stickyTag := p.getAttribute(label.SuffixBackendLoadBalancerSticky, tags, "")
 	if len(stickyTag) > 0 {
 		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancerSticky, label.TraefikBackendLoadBalancerStickiness)
 	} else {
@@ -157,11 +157,11 @@ func getSticky(tags []string) string {
 	return stickyTag
 }
 
-func hasStickinessLabel(tags []string) bool {
-	stickinessTag := getTag(label.TraefikBackendLoadBalancerStickiness, tags, "")
+func (p *CatalogProvider) hasStickinessLabel(tags []string) bool {
+	stickinessTag := p.getAttribute(label.SuffixBackendLoadBalancerStickiness, tags, "")
 	return len(stickinessTag) > 0 && strings.EqualFold(strings.TrimSpace(stickinessTag), "true")
 }
 
-func getStickinessCookieName(tags []string) string {
-	return getTag(label.TraefikBackendLoadBalancerStickinessCookieName, tags, "")
+func (p *CatalogProvider) getStickinessCookieName(tags []string) string {
+	return p.getAttribute(label.SuffixBackendLoadBalancerStickinessCookieName, tags, "")
 }

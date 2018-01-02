@@ -20,7 +20,7 @@
   IN THE SOFTWARE.
 -->
 
-{% import "partials/language.html" as lang %}
+{% import "partials/language.html" as lang with context %}
 
 <!-- Application footer -->
 <footer class="md-footer">
@@ -97,7 +97,7 @@
 
             <!-- Social links -->
             {% block social %}
-            {% include "partials/social.html" %}
+                {% include "partials/social.html" %}
             {% endblock %}
         </div>
     </div>

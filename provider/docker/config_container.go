@@ -187,6 +187,15 @@ func getRateLimits(container dockerData) map[string]*types.Rate {
 	return label.ParseRateSets(container.Labels, prefix, label.RegexpFrontendRateLimit)
 }
 
+func hasHeaders(container dockerData) bool {
+	for key := range container.Labels {
+		if strings.HasPrefix(key, label.TraefikFrontendHeaders) {
+			return true
+		}
+	}
+	return false
+}
+
 // Label functions
 
 func getFuncInt64Label(labelName string, defaultValue int64) func(container dockerData) int64 {

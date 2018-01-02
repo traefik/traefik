@@ -403,10 +403,20 @@ func TestDockerGetServiceBackend(t *testing.T) {
 			expected: "fake-another-backend-myservice",
 		},
 		{
+			container: containerJSON(name("foo.bar")),
+			expected:  "foo-bar-foo-bar-myservice",
+		},
+		{
 			container: containerJSON(labels(map[string]string{
 				"traefik.myservice.frontend.backend": "custom-backend",
 			})),
 			expected: "fake-custom-backend",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				label.TraefikBackend: "another.backend",
+			})),
+			expected: "fake-another-backend-myservice",
 		},
 	}
 

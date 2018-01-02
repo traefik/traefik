@@ -304,6 +304,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
         {{end}}
     {{end}}
 
+    {{ if hasHeaders $container}}
     [frontends."frontend-{{$frontend}}".headers]
       {{if hasSSLRedirectHeaders $container}}
       SSLRedirect = {{getSSLRedirectHeaders $container}}
@@ -383,6 +384,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
+    {{end}}
 
     [frontends."frontend-{{$frontend}}".routes."route-frontend-{{$frontend}}"]
       rule = "{{getFrontendRule $container}}"
@@ -536,6 +538,7 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
   replacement = "{{$frontend.RedirectReplacement}}"
   {{end}}
 
+  {{if $frontend.Headers }}
   [frontends."{{$frontendName}}".headers]
   SSLRedirect = {{$frontend.Headers.SSLRedirect}}
   SSLTemporaryRedirect = {{$frontend.Headers.SSLTemporaryRedirect}}
@@ -580,12 +583,12 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
     {{$k}} = "{{$v}}"
     {{end}}
 {{end}}
+{{end}}
     {{range $routeName, $route := $frontend.Routes}}
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
     rule = "{{$route.Rule}}"
     {{end}}
-{{end}}
-`)
+{{end}}`)
 
 func templatesKubernetesTmplBytes() ([]byte, error) {
 	return _templatesKubernetesTmpl, nil
@@ -805,6 +808,7 @@ var _templatesMarathonTmpl = []byte(`{{$apps := .Applications}}
         {{end}}
     {{end}}
 
+  {{if hasHeaders $app $serviceName }}
   [frontends."{{ getFrontendName $app $serviceName }}".headers]
     {{if hasSSLRedirectHeaders $app $serviceName}}
     SSLRedirect = {{getSSLRedirectHeaders $app $serviceName}}
@@ -884,6 +888,7 @@ var _templatesMarathonTmpl = []byte(`{{$apps := .Applications}}
       {{$k}} = "{{$v}}"
       {{end}}
     {{end}}
+  {{end}}
 
   [frontends."{{ getFrontendName $app $serviceName }}".routes."route-host{{$app.ID | replace "/" "-"}}{{getServiceNameSuffix $serviceName }}"]
     rule = "{{getFrontendRule $app $serviceName}}"

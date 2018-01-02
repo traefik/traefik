@@ -126,7 +126,10 @@ func sendConfigToChannel(configurationChan chan<- types.ConfigMessage, configura
 }
 
 func loadFileConfig(filename string) (*types.Configuration, error) {
-	configuration := new(types.Configuration)
+	configuration := &types.Configuration{
+		Frontends: make(map[string]*types.Frontend),
+		Backends:  make(map[string]*types.Backend),
+	}
 	if _, err := toml.DecodeFile(filename, configuration); err != nil {
 		return nil, fmt.Errorf("error reading configuration file: %s", err)
 	}
@@ -142,9 +145,8 @@ func loadFileConfigFromDirectory(directory string, configuration *types.Configur
 
 	if configuration == nil {
 		configuration = &types.Configuration{
-			Frontends:        make(map[string]*types.Frontend),
-			Backends:         make(map[string]*types.Backend),
-			TLSConfiguration: make([]*tls.Configuration, 0),
+			Frontends: make(map[string]*types.Frontend),
+			Backends:  make(map[string]*types.Backend),
 		}
 	}
 

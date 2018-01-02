@@ -1006,6 +1006,10 @@ func TestGetBasicAuth(t *testing.T) {
 }
 
 func TestHasStickinessLabel(t *testing.T) {
+	p := &CatalogProvider{
+		Prefix: "traefik",
+	}
+
 	testCases := []struct {
 		desc     string
 		tags     []string
@@ -1037,7 +1041,7 @@ func TestHasStickinessLabel(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := hasStickinessLabel(test.tags)
+			actual := p.hasStickinessLabel(test.tags)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

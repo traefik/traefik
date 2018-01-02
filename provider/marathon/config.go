@@ -64,6 +64,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getRateLimitsExtractorFunc": getFuncStringService(label.SuffixFrontendRateLimitExtractorFunc, ""),
 		"getRateLimits":              getRateLimits,
 		// Headers
+		"hasHeaders":                        hasPrefixFuncService(label.TraefikFrontendHeaders),
 		"hasRequestHeaders":                 hasFuncService(label.SuffixFrontendRequestHeaders),
 		"getRequestHeaders":                 getFuncMapService(label.SuffixFrontendRequestHeaders),
 		"hasResponseHeaders":                hasFuncService(label.SuffixFrontendResponseHeaders),

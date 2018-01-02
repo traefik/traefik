@@ -24,14 +24,16 @@ type HeaderStruct struct {
 }
 
 // NewHeaderFromStruct constructs a new header instance from supplied frontend header struct.
-func NewHeaderFromStruct(headers types.Headers) *HeaderStruct {
-	o := HeaderOptions{
-		CustomRequestHeaders:  headers.CustomRequestHeaders,
-		CustomResponseHeaders: headers.CustomResponseHeaders,
+func NewHeaderFromStruct(headers *types.Headers) *HeaderStruct {
+	if headers == nil || !headers.HasCustomHeadersDefined() {
+		return nil
 	}
 
 	return &HeaderStruct{
-		opt: o,
+		opt: HeaderOptions{
+			CustomRequestHeaders:  headers.CustomRequestHeaders,
+			CustomResponseHeaders: headers.CustomResponseHeaders,
+		},
 	}
 }
 

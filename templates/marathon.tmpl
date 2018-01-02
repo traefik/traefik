@@ -103,6 +103,7 @@
         {{end}}
     {{end}}
 
+  {{if hasHeaders $app $serviceName }}
   [frontends."{{ getFrontendName $app $serviceName }}".headers]
     {{if hasSSLRedirectHeaders $app $serviceName}}
     SSLRedirect = {{getSSLRedirectHeaders $app $serviceName}}
@@ -182,6 +183,7 @@
       {{$k}} = "{{$v}}"
       {{end}}
     {{end}}
+  {{end}}
 
   [frontends."{{ getFrontendName $app $serviceName }}".routes."route-host{{$app.ID | replace "/" "-"}}{{getServiceNameSuffix $serviceName }}"]
     rule = "{{getFrontendRule $app $serviceName}}"

@@ -212,7 +212,7 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 
 					priority := label.GetIntValue(i.Annotations, label.TraefikFrontendPriority, 0)
 
-					headers := types.Headers{
+					headers := &types.Headers{
 						CustomRequestHeaders:    label.GetMapValue(i.Annotations, annotationKubernetesCustomRequestHeaders),
 						CustomResponseHeaders:   label.GetMapValue(i.Annotations, annotationKubernetesCustomResponseHeaders),
 						AllowedHosts:            label.GetSliceStringValue(i.Annotations, annotationKubernetesAllowedHosts),
