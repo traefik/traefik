@@ -28,7 +28,7 @@ theme:
     prev: 'Previous'
     next: 'Next'
 
-copyright: "Copyright &copy; 2016-2017 Containous SAS"
+copyright: "Copyright &copy; 2016-2018 Containous SAS"
 
 google_analytics:
   - 'UA-51880359-3'
