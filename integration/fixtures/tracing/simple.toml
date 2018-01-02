@@ -29,6 +29,9 @@ debug = true
   [backends.backend2]
     [backends.backend2.servers.server-retry]
       url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
+  [backends.backend3]
+    [backends.backend3.servers.server-auth]
+      url = "http://{{.WhoAmiIP}}:{{.WhoAmiPort}}"
 [frontends]
   [frontends.frontend1]
     passHostHeader = true
@@ -50,3 +53,9 @@ debug = true
     backend = "backend2"
     [frontends.frontend2.routes.test_retry]
       rule = "Path:/retry"
+  [frontends.frontend3]
+    passHostHeader = true
+    backend = "backend3"
+    basicAuth = ["test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"]
+    [frontends.frontend3.routes.test_auth]
+      rule = "Path:/auth"

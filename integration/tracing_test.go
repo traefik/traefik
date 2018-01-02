@@ -112,3 +112,26 @@ func (s *TracingSuite) TestZipkinRetry(c *check.C) {
 	err = try.GetRequest("http://"+s.ZipkinIP+":9411/api/v2/spans?serviceName=tracing", 10*time.Second, try.BodyContains("forward frontend2/backend2", "retry"))
 	c.Assert(err, checker.IsNil)
 }
+
+func (s *TracingSuite) TestZipkinAuth(c *check.C) {
+	s.startZipkin(c)
+	file := s.adaptFile(c, "fixtures/tracing/simple.toml", TracingTemplate{
+		WhoAmiIP:       s.WhoAmiIP,
+		WhoAmiPort:     s.WhoAmiPort,
+		ZipkinIP:       s.ZipkinIP,
+		TracingBackend: s.TracingBackend,
+	})
+	defer os.Remove(file)
+
+	cmd, display := s.traefikCmd(withConfigFile(file))
+	defer display(c)
+	err := cmd.Start()
+	c.Assert(err, checker.IsNil)
+	defer cmd.Process.Kill()
+
+	err = try.GetRequest("http://127.0.0.1:8000/auth", 500*time.Millisecond, try.StatusCodeIs(http.StatusUnauthorized))
+	c.Assert(err, checker.IsNil)
+
+	err = try.GetRequest("http://"+s.ZipkinIP+":9411/api/v2/spans?serviceName=tracing", 10*time.Second, try.BodyContains("entrypoint http", "auth basic"))
+	c.Assert(err, checker.IsNil)
+}
