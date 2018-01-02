@@ -12,14 +12,6 @@ import (
 )
 
 func TestConsulCatalogGetFrontendRule(t *testing.T) {
-	provider := &CatalogProvider{
-		Domain:               "localhost",
-		Prefix:               "traefik",
-		FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
-		frontEndRuleTemplate: template.New("consul catalog frontend rule"),
-	}
-	provider.setupFrontEndTemplate()
-
 	testCases := []struct {
 		desc     string
 		service  serviceUpdate
@@ -70,6 +62,14 @@ func TestConsulCatalogGetFrontendRule(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
+
+			provider := &CatalogProvider{
+				Domain:               "localhost",
+				Prefix:               "traefik",
+				FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
+				frontEndRuleTemplate: template.New("consul catalog frontend rule"),
+			}
+			provider.setupFrontEndTemplate()
 
 			actual := provider.getFrontendRule(test.service)
 			assert.Equal(t, test.expected, actual)
