@@ -24,7 +24,9 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 		"hasTag":       hasTag,
 
 		// Backend functions
-		"getBackend":              getBackend,
+		"getBackend":              getNodeBackendName, // Deprecated [breaking] getBackend -> getNodeBackendName
+		"getNodeBackendName":      getNodeBackendName,
+		"getServiceBackendName":   getServiceBackendName,
 		"getBackendAddress":       getBackendAddress,
 		"getBackendName":          getServerName, // Deprecated [breaking] getBackendName -> getServerName
 		"getServerName":           getServerName,
@@ -139,8 +141,12 @@ func getEntryPoints(list string) []string {
 	return strings.Split(list, ",")
 }
 
-func getBackend(node *api.ServiceEntry) string {
+func getNodeBackendName(node *api.ServiceEntry) string {
 	return strings.ToLower(node.Service.Service)
+}
+
+func getServiceBackendName(service *serviceUpdate) string {
+	return strings.ToLower(service.ServiceName)
 }
 
 func getBackendAddress(node *api.ServiceEntry) string {
