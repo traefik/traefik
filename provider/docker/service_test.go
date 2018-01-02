@@ -174,8 +174,18 @@ func TestDockerGetServiceBackend(t *testing.T) {
 			expected:  "foo-foo-myservice",
 		},
 		{
+			container: containerJSON(name("foo.bar")),
+			expected:  "foo-bar-foo-bar-myservice",
+		},
+		{
 			container: containerJSON(labels(map[string]string{
 				types.LabelBackend: "another-backend",
+			})),
+			expected: "fake-another-backend-myservice",
+		},
+		{
+			container: containerJSON(labels(map[string]string{
+				types.LabelBackend: "another.backend",
 			})),
 			expected: "fake-another-backend-myservice",
 		},

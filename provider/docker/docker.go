@@ -433,9 +433,9 @@ func (p *Provider) getServicePriority(container dockerData, serviceName string) 
 // Extract backend from labels for a given service and a given docker container
 func (p *Provider) getServiceBackend(container dockerData, serviceName string) string {
 	if value, ok := getContainerServiceLabel(container, serviceName, "frontend.backend"); ok {
-		return container.ServiceName + "-" + value
+		return provider.Normalize(container.ServiceName + "-" + value)
 	}
-	return strings.TrimPrefix(container.ServiceName, "/") + "-" + p.getBackend(container) + "-" + provider.Normalize(serviceName)
+	return provider.Normalize(container.ServiceName + "-" + p.getBackend(container) + "-" + serviceName)
 }
 
 // Extract rule from labels for a given service and a given docker container
