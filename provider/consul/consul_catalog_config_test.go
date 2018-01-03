@@ -350,10 +350,11 @@ func TestCatalogProviderGetIntAttribute(t *testing.T) {
 		expected     int
 	}{
 		{
-			desc:     "should return default value when empty name",
-			name:     "",
-			tags:     []string{"traefik.foo=10"},
-			expected: 0,
+			desc:         "should return default value when empty name",
+			name:         "",
+			tags:         []string{"traefik.foo=10"},
+			defaultValue: 666,
+			expected:     666,
 		},
 		{
 			desc:     "should return default value when empty tags",
@@ -400,10 +401,11 @@ func TestCatalogProviderGetInt64Attribute(t *testing.T) {
 		expected     int64
 	}{
 		{
-			desc:     "should return default value when empty name",
-			name:     "",
-			tags:     []string{"traefik.foo=10"},
-			expected: 0,
+			desc:         "should return default value when empty name",
+			name:         "",
+			tags:         []string{"traefik.foo=10"},
+			defaultValue: 666,
+			expected:     666,
 		},
 		{
 			desc:     "should return default value when empty tags",
@@ -450,10 +452,11 @@ func TestCatalogProviderGetBoolAttribute(t *testing.T) {
 		expected     bool
 	}{
 		{
-			desc:     "should return default value when empty name",
-			name:     "",
-			tags:     []string{"traefik.foo=10"},
-			expected: false,
+			desc:         "should return default value when empty name",
+			name:         "",
+			tags:         []string{"traefik.foo=true"},
+			defaultValue: true,
+			expected:     true,
 		},
 		{
 			desc:     "should return default value when empty tags",
@@ -992,7 +995,7 @@ func TestCatalogProviderGetHealthCheck(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			result := p.getHeathCheck(test.tags)
+			result := p.getHealthCheck(test.tags)
 
 			assert.Equal(t, test.expected, result)
 		})
