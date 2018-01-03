@@ -33,6 +33,8 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"Last":        p.last,
 		"Has":         p.has,
 
+		// Frontend functions
+		"getRedirect":   p.getRedirect,
 		// Backend functions
 		"getSticky":               p.getSticky,
 		"hasStickinessLabel":      p.hasStickinessLabel,
@@ -75,6 +77,23 @@ func (p *Provider) hasStickinessLabel(rootPath string) bool {
 
 func (p *Provider) getStickinessCookieName(rootPath string) string {
 	return p.get("", rootPath, pathBackendLoadBalancerStickinessCookieName)
+}
+
+func (p *Provider) getRedirect(rootPath string) *types.Redirect {
+	if p.has(rootPath, pathFrontendRedirectEntryPoint) {
+		return &types.Redirect{
+			EntryPoint: p.get("", rootPath, pathFrontendRedirectEntryPoint),
+		}
+	}
+
+	if p.has(rootPath, pathFrontendRedirectRegex) && p.has(rootPath, pathFrontendRedirectReplacement) {
+		return &types.Redirect{
+			Regex:       p.get("", rootPath, pathFrontendRedirectRegex),
+			Replacement: p.get("", rootPath, pathFrontendRedirectReplacement),
+		}
+	}
+
+	return nil
 }
 
 func (p *Provider) listServers(backend string) []string {

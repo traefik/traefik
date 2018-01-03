@@ -7,6 +7,15 @@ import (
 	"github.com/docker/libkv/store"
 )
 
+func newProviderMock(kvPairs []*store.KVPair) *Provider {
+	return &Provider{
+		Prefix: "traefik",
+		kvClient: &Mock{
+			KVPairs: kvPairs,
+		},
+	}
+}
+
 // Override Get/List to return a error
 type KvError struct {
 	Get  error

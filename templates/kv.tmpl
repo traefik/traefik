@@ -70,6 +70,14 @@
       "{{.}}",
       {{end}}]
 
+    {{$redirect := getRedirect $frontend }}
+    {{ if $redirect }}
+    [frontends."{{$frontendName}}".redirect]
+      entryPoint = "{{ $redirect.EntryPoint }}"
+      regex = "{{ $redirect.Regex }}"
+      replacement = "{{ $redirect.Replacement }}"
+    {{end}}
+
     {{range $route := List $frontend "/routes/"}}
     [frontends."{{$frontendName}}".routes."{{Last $route}}"]
       rule = "{{Get "" $route "/rule"}}"
