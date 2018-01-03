@@ -52,6 +52,7 @@
     backend = "{{Get "" $frontend "/backend"}}"
     priority = {{Get "0" $frontend "/priority"}}
     passHostHeader = {{Get "true" $frontend "/passHostHeader"}}
+    passTLSCert = {{Get "false" $frontend "/passtlscert"}}
 
     {{$entryPoints := SplitGet $frontend "/entrypoints"}}
     entryPoints = [{{range $entryPoints}}
