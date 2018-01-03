@@ -889,6 +889,7 @@ var _templatesKvTmpl = []byte(`[backends]
   {{with $healthCheck}}
   [backends."{{$backendName}}".healthCheck]
     path = "{{$healthCheck}}"
+    port = {{ Get "0" $backend "/healthcheck/port" }}
     interval = "{{ Get "30s" $backend "/healthcheck/interval" }}"
   {{end}}
 
@@ -908,11 +909,109 @@ var _templatesKvTmpl = []byte(`[backends]
     backend = "{{Get "" $frontend "/backend"}}"
     priority = {{Get "0" $frontend "/priority"}}
     passHostHeader = {{Get "true" $frontend "/passHostHeader"}}
+    passTLSCert = {{Get "false" $frontend "/passtlscert"}}
 
     {{$entryPoints := SplitGet $frontend "/entrypoints"}}
     entryPoints = [{{range $entryPoints}}
       "{{.}}",
       {{end}}]
+
+    {{$whitelistSourceRange := SplitGet $frontend "/whitelistsourcerange"}}
+    whitelistSourceRange = [{{range $whitelistSourceRange}}
+      "{{.}}",
+      {{end}}]
+
+    {{$basicAuth := SplitGet $frontend "/basicauth"}}
+    basicAuth = [{{range $basicAuth}}
+      "{{.}}",
+      {{end}}]
+
+    {{$redirect := getRedirect $frontend }}
+    {{ if $redirect }}
+    [frontends."{{$frontendName}}".redirect]
+      entryPoint = "{{ $redirect.EntryPoint }}"
+      regex = "{{ $redirect.Regex }}"
+      replacement = "{{ $redirect.Replacement }}"
+    {{end}}
+
+    {{ $errorPages := getErrorPages $frontend }}
+    {{ if $errorPages }}
+    [frontends."{{$frontendName}}".errors]
+      {{ range $pageName, $page := $errorPages }}
+      [frontends."{{$frontendName}}".errors.{{ $pageName }}]
+        status = [{{range $page.Status}}
+          "{{.}}",
+          {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
+    {{end}}
+
+    {{ $rateLimit := getRateLimit $frontend }}
+    {{ if $rateLimit }}
+    [frontends."{{$frontendName}}".rateLimit]
+      extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
+      [frontends."{{$frontendName}}".rateLimit.rateSet]
+        {{ range $limitName, $rateLimit := $rateLimit.RateSet }}
+        [frontends."{{$frontendName}}".rateLimit.rateSet.{{ $limitName }}]
+          period = "{{ $rateLimit.Period }}"
+          average = {{ $rateLimit.Average }}
+          burst = {{ $rateLimit.Burst }}
+        {{end}}
+    {{end}}
+
+    {{ $headers := getHeaders $frontend }}
+    {{ if $headers }}
+    [frontends."{{ $frontendName }}".headers]
+      SSLRedirect = {{ $headers.SSLRedirect }}
+      SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
+      SSLHost = "{{ $headers.SSLHost }}"
+      STSSeconds = {{ $headers.STSSeconds }}
+      STSIncludeSubdomains = {{ $headers.STSIncludeSubdomains }}
+      STSPreload = {{ $headers.STSPreload }}
+      ForceSTSHeader = {{ $headers.ForceSTSHeader }}
+      FrameDeny = {{ $headers.FrameDeny }}
+      CustomFrameOptionsValue = "{{ $headers.CustomFrameOptionsValue }}"
+      ContentTypeNosniff = {{ $headers.ContentTypeNosniff }}
+      BrowserXSSFilter = {{ $headers.BrowserXSSFilter }}
+      ContentSecurityPolicy = "{{ $headers.ContentSecurityPolicy }}"
+      PublicKey = "{{ $headers.PublicKey }}"
+      ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
+      IsDevelopment = {{ $headers.IsDevelopment }}
+
+      {{ if $headers.AllowedHosts }}
+      AllowedHosts = [{{ range $headers.AllowedHosts }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{ if $headers.HostsProxyHeaders }}
+      HostsProxyHeaders = [{{ range $headers.HostsProxyHeaders }}
+        "{{.}}",
+        {{end}}]
+      {{end}}
+
+      {{ if $headers.CustomRequestHeaders }}
+      [frontends."{{ $frontendName }}".headers.customRequestHeaders]
+        {{ range $k, $v := $headers.CustomRequestHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{ if $headers.CustomResponseHeaders }}
+      [frontends."{{ $frontendName }}".headers.customResponseHeaders]
+        {{ range $k, $v := $headers.CustomResponseHeaders }}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+
+      {{ if $headers.SSLProxyHeaders }}
+      [frontends."{{ $frontendName }}".headers.SSLProxyHeaders]
+        {{range $k, $v := $headers.SSLProxyHeaders}}
+        {{$k}} = "{{$v}}"
+        {{end}}
+      {{end}}
+    {{end}}
 
     {{range $route := List $frontend "/routes/"}}
     [frontends."{{$frontendName}}".routes."{{Last $route}}"]
