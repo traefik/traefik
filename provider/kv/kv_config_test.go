@@ -62,16 +62,16 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			desc: "all parameters",
 			kvPairs: filler("traefik",
 				backend("backend1",
-					withPair("healthcheck/path", "/health"),
-					withPair("healthcheck/port", "80"),
-					withPair("healthcheck/interval", "30s"),
-					withPair("maxconn/amount", "5"),
-					withPair("maxconn/extractorfunc", "client.ip"),
 					withPair(pathBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
 					withPair(pathBackendLoadBalancerMethod, "drr"),
 					withPair(pathBackendLoadBalancerSticky, "true"),
 					withPair(pathBackendLoadBalancerStickiness, "true"),
 					withPair(pathBackendLoadBalancerStickinessCookieName, "tomate"),
+					withPair(pathBackendHealthCheckPath, "/health"),
+					withPair(pathBackendHealthCheckPort, "80"),
+					withPair(pathBackendHealthCheckInterval, "30s"),
+					withPair(pathBackendMaxConnAmount, "5"),
+					withPair(pathBackendMaxConnExtractorFunc, "client.ip"),
 					withPair("servers/server1/url", "http://172.17.0.2:80"),
 					withPair("servers/server1/weight", "0"),
 					withPair("servers/server2/weight", "0")),
@@ -519,6 +519,136 @@ func TestProviderGetBool(t *testing.T) {
 			}
 
 			actual := p.getBool(false, test.keyParts...)
+
+			assert.Equal(t, test.expected, actual, "key: %v", test.keyParts)
+		})
+	}
+}
+
+func TestProviderGetInt(t *testing.T) {
+	defaultValue := 666
+
+	testCases := []struct {
+		desc     string
+		kvPairs  []*store.KVPair
+		kvError  error
+		keyParts []string
+		expected int
+	}{
+		{
+			desc: "when has value",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", "6"),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/bar"},
+			expected: 6,
+		},
+		{
+			desc: "when empty value",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", ""),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/bar"},
+			expected: defaultValue,
+		},
+		{
+			desc:     "when not existing key",
+			kvPairs:  nil,
+			keyParts: []string{"traefik/frontends/foo/bar"},
+			expected: defaultValue,
+		},
+		{
+			desc:    "when KV error",
+			kvError: store.ErrNotReachable,
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", "true"),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/bar"},
+			expected: defaultValue,
+		},
+	}
+
+	for i, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
+
+			p := &Provider{
+				kvClient: newKvClientMock(test.kvPairs, test.kvError),
+			}
+
+			actual := p.getInt(defaultValue, test.keyParts...)
+
+			assert.Equal(t, test.expected, actual, "key: %v", test.keyParts)
+		})
+	}
+}
+
+func TestProviderGetInt64(t *testing.T) {
+	var defaultValue int64 = 666
+
+	testCases := []struct {
+		desc     string
+		kvPairs  []*store.KVPair
+		kvError  error
+		keyParts []string
+		expected int64
+	}{
+		{
+			desc: "when has value",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", "6"),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/bar"},
+			expected: 6,
+		},
+		{
+			desc: "when empty value",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", ""),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/bar"},
+			expected: defaultValue,
+		},
+		{
+			desc:     "when not existing key",
+			kvPairs:  nil,
+			keyParts: []string{"traefik/frontends/foo/bar"},
+			expected: defaultValue,
+		},
+		{
+			desc:    "when KV error",
+			kvError: store.ErrNotReachable,
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", "true"),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/bar"},
+			expected: defaultValue,
+		},
+	}
+
+	for i, test := range testCases {
+		test := test
+		t.Run(strconv.Itoa(i), func(t *testing.T) {
+			t.Parallel()
+
+			p := &Provider{
+				kvClient: newKvClientMock(test.kvPairs, test.kvError),
+			}
+
+			actual := p.getInt64(defaultValue, test.keyParts...)
 
 			assert.Equal(t, test.expected, actual, "key: %v", test.keyParts)
 		})

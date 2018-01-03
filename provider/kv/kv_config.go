@@ -26,8 +26,12 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"List":        p.list,
 		"ListServers": p.listServers,
 		"Get":         p.get,
+		"GetBool":     p.getBool,
+		"GetInt":      p.getInt,
+		"GetInt64":    p.getInt64,
 		"SplitGet":    p.splitGet,
 		"Last":        p.last,
+		"Has":         p.has,
 
 		// Backend functions
 		"getSticky":               p.getSticky,
@@ -136,6 +140,41 @@ func (p *Provider) getBool(defaultValue bool, keyParts ...string) bool {
 	}
 
 	value, err := strconv.ParseBool(rawValue)
+	if err != nil {
+		log.Errorf("Invalid value for %v: %s", keyParts, rawValue)
+		return defaultValue
+	}
+	return value
+}
+
+func (p *Provider) has(keyParts ...string) bool {
+	value := p.get("", keyParts...)
+	return len(value) > 0
+}
+
+func (p *Provider) getInt(defaultValue int, keyParts ...string) int {
+	rawValue := p.get("", keyParts...)
+
+	if len(rawValue) == 0 {
+		return defaultValue
+	}
+
+	value, err := strconv.Atoi(rawValue)
+	if err != nil {
+		log.Errorf("Invalid value for %v: %s", keyParts, rawValue)
+		return defaultValue
+	}
+	return value
+}
+
+func (p *Provider) getInt64(defaultValue int64, keyParts ...string) int64 {
+	rawValue := p.get("", keyParts...)
+
+	if len(rawValue) == 0 {
+		return defaultValue
+	}
+
+	value, err := strconv.ParseInt(rawValue, 10, 64)
 	if err != nil {
 		log.Errorf("Invalid value for %v: %s", keyParts, rawValue)
 		return defaultValue
