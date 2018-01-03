@@ -33,6 +33,7 @@
   {{with $healthCheck}}
   [backends."{{$backendName}}".healthCheck]
     path = "{{$healthCheck}}"
+    port = {{ Get "0" $backend "/healthcheck/port" }}
     interval = "{{ Get "30s" $backend "/healthcheck/interval" }}"
   {{end}}
 
