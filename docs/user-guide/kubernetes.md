@@ -257,7 +257,7 @@ curl $(minikube ip)
 404 page not found
 ```
 
-If you decided to use the deployment, then you need to target the correct NodePort, which can be seen then you execute `kubectl get services --namespace=kube-system`.
+If you decided to use the deployment, then you need to target the correct NodePort, which can be seen when you execute `kubectl get services --namespace=kube-system`.
 
 ```sh
 curl $(minikube ip):<NODEPORT>
@@ -268,6 +268,8 @@ curl $(minikube ip):<NODEPORT>
 
 !!! note
     We expect to see a 404 response here as we haven't yet given Træfik any configuration.
+
+All further examples below assume a DaemonSet installation. Deployment users will need to append the NodePort when constructing requests.
 
 ## Deploy Træfik using Helm Chart
 
