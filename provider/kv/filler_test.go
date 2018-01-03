@@ -81,6 +81,18 @@ func withPair(key string, value string) func(map[string]string) {
 	}
 }
 
+func withErrorPage(name string, backend, query, status string) func(map[string]string) {
+	return func(pairs map[string]string) {
+		if len(name) == 0 {
+			return
+		}
+
+		withPair(pathFrontendErrorPages+name+pathFrontendErrorPagesBackend, backend)(pairs)
+		withPair(pathFrontendErrorPages+name+pathFrontendErrorPagesQuery, query)(pairs)
+		withPair(pathFrontendErrorPages+name+pathFrontendErrorPagesStatus, status)(pairs)
+	}
+}
+
 func TestFiller(t *testing.T) {
 	expected := []*store.KVPair{
 		{Key: "traefik/backends/backend.with.dot.too", Value: []byte("")},

@@ -770,3 +770,52 @@ func TestProviderGetRedirect(t *testing.T) {
 		})
 	}
 }
+
+func TestProviderGetErrorPages(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected map[string]*types.ErrorPage
+	}{
+		{
+			desc:     "2 errors pages",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withErrorPage("foo", "error", "/test1", "500-501, 503-599"),
+					withErrorPage("bar", "error", "/test2", "400-405"))),
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Backend: "error",
+					Query:   "/test1",
+					Status:  []string{"500-501", "503-599"},
+				},
+				"bar": {
+					Backend: "error",
+					Query:   "/test2",
+					Status:  []string{"400-405"},
+				},
+			},
+		},
+		{
+			desc:     "return nil when no errors pages",
+			rootPath: "traefik/frontends/foo",
+			kvPairs:  filler("traefik", frontend("foo")),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			actual := p.getErrorPages(test.rootPath)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
