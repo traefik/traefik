@@ -91,6 +91,19 @@
       {{end}}
     {{end}}
 
+    {{ $rateLimit := getRateLimit $frontend }}
+    {{ if $rateLimit }}
+    [frontends."{{$frontendName}}".rateLimit]
+      extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
+      [frontends."{{$frontendName}}".rateLimit.rateSet]
+        {{ range $limitName, $rateLimit := $rateLimit.RateSet }}
+        [frontends."{{$frontendName}}".rateLimit.rateSet.{{ $limitName }}]
+          period = "{{ $rateLimit.Period }}"
+          average = {{ $rateLimit.Average }}
+          burst = {{ $rateLimit.Burst }}
+        {{end}}
+    {{end}}
+
     {{range $route := List $frontend "/routes/"}}
     [frontends."{{$frontendName}}".routes."{{Last $route}}"]
       rule = "{{Get "" $route "/rule"}}"

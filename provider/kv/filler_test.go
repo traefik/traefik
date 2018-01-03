@@ -93,6 +93,23 @@ func withErrorPage(name string, backend, query, status string) func(map[string]s
 	}
 }
 
+func withRateLimit(extractorFunc string, opts ...func(map[string]string)) func(map[string]string) {
+	return func(pairs map[string]string) {
+		pairs[pathFrontendRateLimitExtractorFunc] = extractorFunc
+		for _, opt := range opts {
+			opt(pairs)
+		}
+	}
+}
+
+func withLimit(name string, average, burst, period string) func(map[string]string) {
+	return func(pairs map[string]string) {
+		pairs[pathFrontendRateLimitRateSet+name+pathFrontendRateLimitAverage] = average
+		pairs[pathFrontendRateLimitRateSet+name+pathFrontendRateLimitBurst] = burst
+		pairs[pathFrontendRateLimitRateSet+name+pathFrontendRateLimitPeriod] = period
+	}
+}
+
 func TestFiller(t *testing.T) {
 	expected := []*store.KVPair{
 		{Key: "traefik/backends/backend.with.dot.too", Value: []byte("")},
