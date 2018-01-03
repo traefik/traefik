@@ -655,6 +655,51 @@ func TestProviderGetInt64(t *testing.T) {
 	}
 }
 
+func TestProviderGetMap(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		keyParts []string
+		kvPairs  []*store.KVPair
+		expected map[string]string
+	}{
+		{
+			desc:     "when several keys",
+			keyParts: []string{"traefik/frontends/foo", pathFrontendCustomRequestHeaders},
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendCustomRequestHeaders+"Access-Control-Allow-Methods", "POST,GET,OPTIONS"),
+					withPair(pathFrontendCustomRequestHeaders+"Content-Type", "application/json; charset=utf-8"),
+					withPair(pathFrontendCustomRequestHeaders+"X-Custom-Header", "test"),
+				),
+			),
+			expected: map[string]string{
+				"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+				"Content-Type":                 "application/json; charset=utf-8",
+				"X-Custom-Header":              "test",
+			},
+		},
+		{
+			desc:     "when no keys",
+			keyParts: []string{"traefik/frontends/foo", pathFrontendCustomRequestHeaders},
+			kvPairs:  filler("traefik", frontend("foo")),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getMap(test.keyParts...)
+
+			assert.EqualValues(t, test.expected, result)
+		})
+	}
+}
+
 func TestProviderHasStickinessLabel(t *testing.T) {
 	testCases := []struct {
 		desc     string
@@ -879,6 +924,261 @@ func TestProviderGetRateLimit(t *testing.T) {
 			actual := p.getRateLimit(test.rootPath)
 
 			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestProviderGetHeaders(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.Headers
+	}{
+		{
+			desc:     "Custom Request Headers",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendCustomRequestHeaders+"Access-Control-Allow-Methods", "POST,GET,OPTIONS"),
+					withPair(pathFrontendCustomRequestHeaders+"Content-Type", "application/json; charset=utf-8"),
+					withPair(pathFrontendCustomRequestHeaders+"X-Custom-Header", "test"))),
+			expected: &types.Headers{
+				CustomRequestHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+					"X-Custom-Header":              "test",
+				},
+			},
+		},
+		{
+			desc:     "Custom esponse Headers",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendCustomResponseHeaders+"Access-Control-Allow-Methods", "POST,GET,OPTIONS"),
+					withPair(pathFrontendCustomResponseHeaders+"Content-Type", "application/json; charset=utf-8"),
+					withPair(pathFrontendCustomResponseHeaders+"X-Custom-Header", "test"))),
+			expected: &types.Headers{
+				CustomResponseHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+					"X-Custom-Header":              "test",
+				},
+			},
+		},
+		{
+			desc:     "SSL Proxy Headers",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendSSLProxyHeaders+"Access-Control-Allow-Methods", "POST,GET,OPTIONS"),
+					withPair(pathFrontendSSLProxyHeaders+"Content-Type", "application/json; charset=utf-8"),
+					withPair(pathFrontendSSLProxyHeaders+"X-Custom-Header", "test"))),
+			expected: &types.Headers{
+				SSLProxyHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+					"X-Custom-Header":              "test",
+				},
+			},
+		},
+		{
+			desc:     "Allowed Hosts",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendAllowedHosts, "foo, bar, goo, hor"))),
+			expected: &types.Headers{
+				AllowedHosts: []string{"foo", "bar", "goo", "hor"},
+			},
+		},
+		{
+			desc:     "Hosts Proxy Headers",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendHostsProxyHeaders, "foo, bar, goo, hor"))),
+			expected: &types.Headers{
+				HostsProxyHeaders: []string{"foo", "bar", "goo", "hor"},
+			},
+		},
+		{
+			desc:     "SSL Redirect",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendSSLRedirect, "true"))),
+			expected: &types.Headers{
+				SSLRedirect: true,
+			},
+		},
+		{
+			desc:     "SSL Temporary Redirect",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendSSLTemporaryRedirect, "true"))),
+			expected: &types.Headers{
+				SSLTemporaryRedirect: true,
+			},
+		},
+		{
+			desc:     "SSL Host",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendSSLHost, "foo"))),
+			expected: &types.Headers{
+				SSLHost: "foo",
+			},
+		},
+		{
+			desc:     "STS Seconds",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendSTSSeconds, "666"))),
+			expected: &types.Headers{
+				STSSeconds: 666,
+			},
+		},
+		{
+			desc:     "STS Include Subdomains",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendSTSIncludeSubdomains, "true"))),
+			expected: &types.Headers{
+				STSIncludeSubdomains: true,
+			},
+		},
+		{
+			desc:     "STS Preload",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendSTSPreload, "true"))),
+			expected: &types.Headers{
+				STSPreload: true,
+			},
+		},
+		{
+			desc:     "Force STS Header",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendForceSTSHeader, "true"))),
+			expected: &types.Headers{
+				ForceSTSHeader: true,
+			},
+		},
+		{
+			desc:     "Frame Deny",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendFrameDeny, "true"))),
+			expected: &types.Headers{
+				FrameDeny: true,
+			},
+		},
+		{
+			desc:     "Custom Frame Options Value",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendCustomFrameOptionsValue, "foo"))),
+			expected: &types.Headers{
+				CustomFrameOptionsValue: "foo",
+			},
+		},
+		{
+			desc:     "Content Type Nosniff",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendContentTypeNosniff, "true"))),
+			expected: &types.Headers{
+				ContentTypeNosniff: true,
+			},
+		},
+		{
+			desc:     "Browser XSS Filter",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendBrowserXSSFilter, "true"))),
+			expected: &types.Headers{
+				BrowserXSSFilter: true,
+			},
+		},
+		{
+			desc:     "Content Security Policy",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendContentSecurityPolicy, "foo"))),
+			expected: &types.Headers{
+				ContentSecurityPolicy: "foo",
+			},
+		},
+		{
+			desc:     "Public Key",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendPublicKey, "foo"))),
+			expected: &types.Headers{
+				PublicKey: "foo",
+			},
+		},
+		{
+			desc:     "Referrer Policy",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendReferrerPolicy, "foo"))),
+			expected: &types.Headers{
+				ReferrerPolicy: "foo",
+			},
+		},
+		{
+			desc:     "Is Development",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendIsDevelopment, "true"))),
+			expected: &types.Headers{
+				IsDevelopment: true,
+			},
+		},
+		{
+			desc:     "should return nil when not significant configuration",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendIsDevelopment, "false"))),
+			expected: nil,
+		},
+		{
+			desc:     "should return nil when no headers configuration",
+			rootPath: "traefik/frontends/foo",
+			kvPairs:  filler("traefik", frontend("foo")),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			headers := p.getHeaders(test.rootPath)
+
+			assert.Equal(t, test.expected, headers)
 		})
 	}
 }

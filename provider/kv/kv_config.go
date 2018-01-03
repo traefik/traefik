@@ -2,6 +2,7 @@ package kv
 
 import (
 	"fmt"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,6 +39,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getRedirect":   p.getRedirect,
 		"getErrorPages": p.getErrorPages,
 		"getRateLimit":  p.getRateLimit,
+		"getHeaders":    p.getHeaders,
 
 		// Backend functions
 		"getSticky":               p.getSticky,
@@ -158,6 +160,37 @@ func (p *Provider) getRateLimit(rootPath string) *types.RateLimit {
 		ExtractorFunc: extractorFunc,
 		RateSet:       limits,
 	}
+}
+
+func (p *Provider) getHeaders(rootPath string) *types.Headers {
+	headers := &types.Headers{
+		CustomRequestHeaders:    p.getMap(rootPath, pathFrontendCustomRequestHeaders),
+		CustomResponseHeaders:   p.getMap(rootPath, pathFrontendCustomResponseHeaders),
+		SSLProxyHeaders:         p.getMap(rootPath, pathFrontendSSLProxyHeaders),
+		AllowedHosts:            p.splitGet("", rootPath, pathFrontendAllowedHosts),
+		HostsProxyHeaders:       p.splitGet(rootPath, pathFrontendHostsProxyHeaders),
+		SSLRedirect:             p.getBool(false, rootPath, pathFrontendSSLRedirect),
+		SSLTemporaryRedirect:    p.getBool(false, rootPath, pathFrontendSSLTemporaryRedirect),
+		SSLHost:                 p.get("", rootPath, pathFrontendSSLHost),
+		STSSeconds:              p.getInt64(0, rootPath, pathFrontendSTSSeconds),
+		STSIncludeSubdomains:    p.getBool(false, rootPath, pathFrontendSTSIncludeSubdomains),
+		STSPreload:              p.getBool(false, rootPath, pathFrontendSTSPreload),
+		ForceSTSHeader:          p.getBool(false, rootPath, pathFrontendForceSTSHeader),
+		FrameDeny:               p.getBool(false, rootPath, pathFrontendFrameDeny),
+		CustomFrameOptionsValue: p.get("", rootPath, pathFrontendCustomFrameOptionsValue),
+		ContentTypeNosniff:      p.getBool(false, rootPath, pathFrontendContentTypeNosniff),
+		BrowserXSSFilter:        p.getBool(false, rootPath, pathFrontendBrowserXSSFilter),
+		ContentSecurityPolicy:   p.get("", rootPath, pathFrontendContentSecurityPolicy),
+		PublicKey:               p.get("", rootPath, pathFrontendPublicKey),
+		ReferrerPolicy:          p.get("", rootPath, pathFrontendReferrerPolicy),
+		IsDevelopment:           p.getBool(false, rootPath, pathFrontendIsDevelopment),
+	}
+
+	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
+		return nil
+	}
+
+	return headers
 }
 
 func (p *Provider) listServers(backend string) []string {
@@ -297,4 +330,19 @@ func (p *Provider) splitGet(keyParts ...string) []string {
 func (p *Provider) last(key string) string {
 	index := strings.LastIndex(key, pathSeparator)
 	return key[index+1:]
+}
+
+func (p *Provider) getMap(keyParts ...string) map[string]string {
+	var mapData map[string]string
+
+	list := p.list(keyParts...)
+	for _, name := range list {
+		if mapData == nil {
+			mapData = make(map[string]string)
+		}
+
+		mapData[http.CanonicalHeaderKey(p.last(name))] = p.get("", name)
+	}
+
+	return mapData
 }
