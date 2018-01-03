@@ -35,6 +35,8 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 
 		// Frontend functions
 		"getRedirect":   p.getRedirect,
+		"getErrorPages": p.getErrorPages,
+
 		// Backend functions
 		"getSticky":               p.getSticky,
 		"hasStickinessLabel":      p.hasStickinessLabel,
@@ -94,6 +96,28 @@ func (p *Provider) getRedirect(rootPath string) *types.Redirect {
 	}
 
 	return nil
+}
+
+func (p *Provider) getErrorPages(rootPath string) map[string]*types.ErrorPage {
+	var errorPages map[string]*types.ErrorPage
+
+	pathErrors := p.list(rootPath, pathFrontendErrorPages)
+
+	for _, pathPage := range pathErrors {
+		if errorPages == nil {
+			errorPages = make(map[string]*types.ErrorPage)
+		}
+
+		pageName := p.last(pathPage)
+
+		errorPages[pageName] = &types.ErrorPage{
+			Backend: p.get("", pathPage, pathFrontendErrorPagesBackend),
+			Query:   p.get("", pathPage, pathFrontendErrorPagesQuery),
+			Status:  p.splitGet(pathPage, pathFrontendErrorPagesStatus),
+		}
+	}
+
+	return errorPages
 }
 
 func (p *Provider) listServers(backend string) []string {

@@ -78,6 +78,19 @@
       replacement = "{{ $redirect.Replacement }}"
     {{end}}
 
+    {{ $errorPages := getErrorPages $frontend }}
+    {{ if $errorPages }}
+    [frontends."{{$frontendName}}".errors]
+      {{ range $pageName, $page := $errorPages }}
+      [frontends."{{$frontendName}}".errors.{{ $pageName }}]
+        status = [{{range $page.Status}}
+          "{{.}}",
+          {{end}}]
+        backend = "{{$page.Backend}}"
+        query = "{{$page.Query}}"
+      {{end}}
+    {{end}}
+
     {{range $route := List $frontend "/routes/"}}
     [frontends."{{$frontendName}}".routes."{{Last $route}}"]
       rule = "{{Get "" $route "/rule"}}"
