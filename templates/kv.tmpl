@@ -65,6 +65,11 @@
       "{{.}}",
       {{end}}]
 
+    {{$basicAuth := SplitGet $frontend "/basicauth"}}
+    basicAuth = [{{range $basicAuth}}
+      "{{.}}",
+      {{end}}]
+
     {{range $route := List $frontend "/routes/"}}
     [frontends."{{$frontendName}}".routes."{{Last $route}}"]
       rule = "{{Get "" $route "/rule"}}"
