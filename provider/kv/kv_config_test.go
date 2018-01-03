@@ -707,3 +707,66 @@ func TestProviderHasStickinessLabel(t *testing.T) {
 		})
 	}
 }
+
+func TestProviderGetRedirect(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.Redirect
+	}{
+		{
+			desc:     "should use entry point when entry point key is valued in the store",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendRedirectEntryPoint, "https"))),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc:     "should use regex when regex keys are valued in the store",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendRedirectRegex, "(.*)"),
+					withPair(pathFrontendRedirectReplacement, "$1"))),
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+			},
+		},
+		{
+			desc:     "should only use entry point when entry point and regex base are valued in the store",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendRedirectEntryPoint, "https"),
+					withPair(pathFrontendRedirectRegex, "nope"),
+					withPair(pathFrontendRedirectReplacement, "nope"))),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc:     "should return when redirect keys are not valued in the store",
+			rootPath: "traefik/frontends/foo",
+			kvPairs:  filler("traefik", frontend("foo")),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			actual := p.getRedirect(test.rootPath)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
