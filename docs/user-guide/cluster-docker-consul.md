@@ -2,7 +2,7 @@
 
 This guide explains how to use Træfik in high availability mode in a Docker Swarm and with Let's Encrypt.
 
-Why we need Traefik in cluster mode? Running multiple instances should work out of the box?
+Why do we need Traefik in cluster mode? Running multiple instances should work out of the box?
 
 If you want to use Let's Encrypt with Traefik, sharing configuration or TLS certificates between many Træfik instances, you need Traefik cluster/HA.
 
@@ -54,13 +54,13 @@ $ traefik \
     --acme.email=contact@mydomain.ca
 ```
 
-Let's Encrypt needs 3 parameters: an entryPoint to listen to, a storage for certificates, and en email for the registration.
+Let's Encrypt needs 3 parameters: an entryPoint to listen to, a storage for certificates, and an email for the registration.
 
 To enable Let's Encrypt support, you need to add `--acme` flag.
 
 Now, Traefik needs to know where to store the certificates, we can choose between a key in a Key-Value store, or a file path: `--acme.storage=my/key` or `--acme.storage=/path/to/acme.json`.
 
-For your email and the entrypoints, it's `--acme.entryPoint` and `--acme.email` flags.
+For your email and the entryPoint, it's `--acme.entryPoint` and `--acme.email` flags.
 
 ### Docker configuration
 
@@ -72,8 +72,8 @@ $ traefik \
     --docker.domain=mydomain.ca \
     --docker.watch
 ```
-To enable docker and support, you need to add `--docker` and `--docker.swarmmode` flags.
-To enable watch docker changes, add `--docker.watch`.
+To enable docker and swarm-mode support, you need to add `--docker` and `--docker.swarmmode` flags.
+To watch docker events, add `--docker.watch`.
 
 ### Full docker-compose file
 
