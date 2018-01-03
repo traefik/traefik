@@ -819,3 +819,66 @@ func TestProviderGetErrorPages(t *testing.T) {
 		})
 	}
 }
+
+func TestProviderGetRateLimit(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.RateLimit
+	}{
+		{
+			desc:     "with several limits",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withRateLimit("client.ip",
+						withLimit("foo", "6", "12", "18"),
+						withLimit("bar", "3", "6", "9")))),
+			expected: &types.RateLimit{
+				ExtractorFunc: "client.ip",
+				RateSet: map[string]*types.Rate{
+					"foo": {
+						Average: 6,
+						Burst:   12,
+						Period:  flaeg.Duration(18 * time.Second),
+					},
+					"bar": {
+						Average: 3,
+						Burst:   6,
+						Period:  flaeg.Duration(9 * time.Second),
+					},
+				},
+			},
+		},
+		{
+			desc:     "return nil when no extractor func",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withRateLimit("",
+						withLimit("foo", "6", "12", "18"),
+						withLimit("bar", "3", "6", "9")))),
+			expected: nil,
+		},
+		{
+			desc:     "return nil when no rate limit keys",
+			rootPath: "traefik/frontends/foo",
+			kvPairs:  filler("traefik", frontend("foo")),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			actual := p.getRateLimit(test.rootPath)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}

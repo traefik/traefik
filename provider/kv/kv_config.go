@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/BurntSushi/ty/fun"
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
@@ -36,6 +37,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		// Frontend functions
 		"getRedirect":   p.getRedirect,
 		"getErrorPages": p.getErrorPages,
+		"getRateLimit":  p.getRateLimit,
 
 		// Backend functions
 		"getSticky":               p.getSticky,
@@ -118,6 +120,44 @@ func (p *Provider) getErrorPages(rootPath string) map[string]*types.ErrorPage {
 	}
 
 	return errorPages
+}
+
+func (p *Provider) getRateLimit(rootPath string) *types.RateLimit {
+	extractorFunc := p.get("", rootPath, pathFrontendRateLimitExtractorFunc)
+	if len(extractorFunc) == 0 {
+		return nil
+	}
+
+	var limits map[string]*types.Rate
+
+	pathRateSet := p.list(rootPath, pathFrontendRateLimitRateSet)
+	for _, pathLimits := range pathRateSet {
+		if limits == nil {
+			limits = make(map[string]*types.Rate)
+		}
+
+		rawPeriod := p.get("", pathLimits+pathFrontendRateLimitPeriod)
+
+		var period flaeg.Duration
+		err := period.Set(rawPeriod)
+		if err != nil {
+			log.Errorf("Invalid %q value: %q", pathLimits+pathFrontendRateLimitPeriod, rawPeriod)
+			continue
+		}
+
+		limitName := p.last(pathLimits)
+
+		limits[limitName] = &types.Rate{
+			Average: p.getInt64(0, pathLimits+pathFrontendRateLimitAverage),
+			Burst:   p.getInt64(0, pathLimits+pathFrontendRateLimitBurst),
+			Period:  period,
+		}
+	}
+
+	return &types.RateLimit{
+		ExtractorFunc: extractorFunc,
+		RateSet:       limits,
+	}
 }
 
 func (p *Provider) listServers(backend string) []string {
