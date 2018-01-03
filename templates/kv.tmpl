@@ -60,6 +60,11 @@
       "{{.}}",
       {{end}}]
 
+    {{$whitelistSourceRange := SplitGet $frontend "/whitelistsourcerange"}}
+    whitelistSourceRange = [{{range $whitelistSourceRange}}
+      "{{.}}",
+      {{end}}]
+
     {{range $route := List $frontend "/routes/"}}
     [frontends."{{$frontendName}}".routes."{{Last $route}}"]
       rule = "{{Get "" $route "/rule"}}"
