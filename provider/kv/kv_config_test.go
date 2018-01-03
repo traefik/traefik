@@ -4,7 +4,9 @@ import (
 	"sort"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
@@ -46,9 +48,11 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				},
 				Frontends: map[string]*types.Frontend{
 					"frontend.with.dot": {
-						Backend:        "backend.with.dot.too",
-						PassHostHeader: true,
-						EntryPoints:    []string{},
+						Backend:              "backend.with.dot.too",
+						PassHostHeader:       true,
+						EntryPoints:          []string{},
+						WhitelistSourceRange: []string{},
+						BasicAuth:            []string{},
 						Routes: map[string]types.Route{
 							"route.with.dot": {
 								Rule: "Host:test.localhost",
@@ -79,7 +83,46 @@ func TestProviderBuildConfiguration(t *testing.T) {
 					withPair(pathFrontendBackend, "backend1"),
 					withPair(pathFrontendPriority, "6"),
 					withPair(pathFrontendPassHostHeader, "false"),
+					withPair(pathFrontendPassTLSCert, "true"),
 					withPair(pathFrontendEntryPoints, "http,https"),
+					withPair(pathFrontendWhiteListSourceRange, "1.1.1.1/24, 1234:abcd::42/32"),
+					withPair(pathFrontendBasicAuth, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/, test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+					withPair(pathFrontendRedirectEntryPoint, "https"),
+					withPair(pathFrontendRedirectRegex, "nope"),
+					withPair(pathFrontendRedirectReplacement, "nope"),
+					withErrorPage("foo", "error", "/test1", "500-501, 503-599"),
+					withErrorPage("bar", "error", "/test2", "400-405"),
+					withRateLimit("client.ip",
+						withLimit("foo", "6", "12", "18"),
+						withLimit("bar", "3", "6", "9")),
+
+					withPair(pathFrontendCustomRequestHeaders+"Access-Control-Allow-Methods", "POST,GET,OPTIONS"),
+					withPair(pathFrontendCustomRequestHeaders+"Content-Type", "application/json; charset=utf-8"),
+					withPair(pathFrontendCustomRequestHeaders+"X-Custom-Header", "test"),
+					withPair(pathFrontendCustomResponseHeaders+"Access-Control-Allow-Methods", "POST,GET,OPTIONS"),
+					withPair(pathFrontendCustomResponseHeaders+"Content-Type", "application/json; charset=utf-8"),
+					withPair(pathFrontendCustomResponseHeaders+"X-Custom-Header", "test"),
+					withPair(pathFrontendSSLProxyHeaders+"Access-Control-Allow-Methods", "POST,GET,OPTIONS"),
+					withPair(pathFrontendSSLProxyHeaders+"Content-Type", "application/json; charset=utf-8"),
+					withPair(pathFrontendSSLProxyHeaders+"X-Custom-Header", "test"),
+					withPair(pathFrontendAllowedHosts, "example.com, ssl.example.com"),
+					withPair(pathFrontendHostsProxyHeaders, "foo, bar, goo, hor"),
+					withPair(pathFrontendSTSSeconds, "666"),
+					withPair(pathFrontendSSLHost, "foo"),
+					withPair(pathFrontendCustomFrameOptionsValue, "foo"),
+					withPair(pathFrontendContentSecurityPolicy, "foo"),
+					withPair(pathFrontendPublicKey, "foo"),
+					withPair(pathFrontendReferrerPolicy, "foo"),
+					withPair(pathFrontendSSLRedirect, "true"),
+					withPair(pathFrontendSSLTemporaryRedirect, "true"),
+					withPair(pathFrontendSTSIncludeSubdomains, "true"),
+					withPair(pathFrontendSTSPreload, "true"),
+					withPair(pathFrontendForceSTSHeader, "true"),
+					withPair(pathFrontendFrameDeny, "true"),
+					withPair(pathFrontendContentTypeNosniff, "true"),
+					withPair(pathFrontendBrowserXSSFilter, "true"),
+					withPair(pathFrontendIsDevelopment, "true"),
+
 					withPair("routes/route1/rule", "Host:test.localhost"),
 					withPair("routes/route2/rule", "Path:/foo")),
 				entry("tlsconfiguration/foo",
@@ -116,16 +159,49 @@ func TestProviderBuildConfiguration(t *testing.T) {
 						},
 						HealthCheck: &types.HealthCheck{
 							Path:     "/health",
-							Port:     0,
+							Port:     80,
 							Interval: "30s",
 						},
 					},
 				},
 				Frontends: map[string]*types.Frontend{
 					"frontend1": {
-						Priority:    6,
-						EntryPoints: []string{"http", "https"},
-						Backend:     "backend1",
+						Priority:             6,
+						EntryPoints:          []string{"http", "https"},
+						Backend:              "backend1",
+						PassTLSCert:          true,
+						WhitelistSourceRange: []string{"1.1.1.1/24", "1234:abcd::42/32"},
+						BasicAuth:            []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
+						Redirect: &types.Redirect{
+							EntryPoint: "https",
+						},
+						Errors: map[string]*types.ErrorPage{
+							"foo": {
+								Backend: "error",
+								Query:   "/test1",
+								Status:  []string{"500-501", "503-599"},
+							},
+							"bar": {
+								Backend: "error",
+								Query:   "/test2",
+								Status:  []string{"400-405"},
+							},
+						},
+						RateLimit: &types.RateLimit{
+							ExtractorFunc: "client.ip",
+							RateSet: map[string]*types.Rate{
+								"foo": {
+									Average: 6,
+									Burst:   12,
+									Period:  flaeg.Duration(18 * time.Second),
+								},
+								"bar": {
+									Average: 3,
+									Burst:   6,
+									Period:  flaeg.Duration(9 * time.Second),
+								},
+							},
+						},
 						Routes: map[string]types.Route{
 							"route1": {
 								Rule: "Host:test.localhost",
@@ -133,6 +209,40 @@ func TestProviderBuildConfiguration(t *testing.T) {
 							"route2": {
 								Rule: "Path:/foo",
 							},
+						},
+						Headers: &types.Headers{
+							CustomRequestHeaders: map[string]string{
+								"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+								"Content-Type":                 "application/json; charset=utf-8",
+								"X-Custom-Header":              "test",
+							},
+							CustomResponseHeaders: map[string]string{
+								"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+								"Content-Type":                 "application/json; charset=utf-8",
+								"X-Custom-Header":              "test",
+							},
+							SSLProxyHeaders: map[string]string{
+								"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+								"Content-Type":                 "application/json; charset=utf-8",
+								"X-Custom-Header":              "test",
+							},
+							AllowedHosts:            []string{"example.com", "ssl.example.com"},
+							HostsProxyHeaders:       []string{"foo", "bar", "goo", "hor"},
+							STSSeconds:              666,
+							SSLHost:                 "foo",
+							CustomFrameOptionsValue: "foo",
+							ContentSecurityPolicy:   "foo",
+							PublicKey:               "foo",
+							ReferrerPolicy:          "foo",
+							SSLRedirect:             true,
+							SSLTemporaryRedirect:    true,
+							STSIncludeSubdomains:    true,
+							STSPreload:              true,
+							ForceSTSHeader:          true,
+							FrameDeny:               true,
+							ContentTypeNosniff:      true,
+							BrowserXSSFilter:        true,
+							IsDevelopment:           true,
 						},
 					},
 				},
