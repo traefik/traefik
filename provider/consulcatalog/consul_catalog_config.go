@@ -1,4 +1,4 @@
-package consul
+package consulcatalog
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/consul/api"
 )
 
-func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Configuration {
+func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configuration {
 	var FuncMap = template.FuncMap{
 		"getAttribute": p.getAttribute,
 		"getTag":       getTag,
@@ -85,7 +85,7 @@ func (p *CatalogProvider) buildConfiguration(catalog []catalogUpdate) *types.Con
 	return configuration
 }
 
-func (p *CatalogProvider) setupFrontEndRuleTemplate() {
+func (p *Provider) setupFrontEndRuleTemplate() {
 	var FuncMap = template.FuncMap{
 		"getAttribute": p.getAttribute,
 		"getTag":       getTag,
@@ -97,7 +97,7 @@ func (p *CatalogProvider) setupFrontEndRuleTemplate() {
 
 // Specific functions
 
-func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
+func (p *Provider) getFrontendRule(service serviceUpdate) string {
 	customFrontendRule := p.getAttribute(label.SuffixFrontendRule, service.Attributes, "")
 	if customFrontendRule == "" {
 		customFrontendRule = p.FrontEndRule
@@ -131,7 +131,7 @@ func (p *CatalogProvider) getFrontendRule(service serviceUpdate) string {
 }
 
 // Deprecated
-func (p *CatalogProvider) hasMaxConnAttributes(attributes []string) bool {
+func (p *Provider) hasMaxConnAttributes(attributes []string) bool {
 	amount := p.getAttribute(label.SuffixBackendMaxConnAmount, attributes, "")
 	extractorFunc := p.getAttribute(label.SuffixBackendMaxConnExtractorFunc, attributes, "")
 	return amount != "" && extractorFunc != ""
@@ -178,7 +178,7 @@ func getServerName(node *api.ServiceEntry, index int) string {
 // TODO: Deprecated
 // replaced by Stickiness
 // Deprecated
-func (p *CatalogProvider) getSticky(tags []string) string {
+func (p *Provider) getSticky(tags []string) string {
 	stickyTag := p.getAttribute(label.SuffixBackendLoadBalancerSticky, tags, "")
 	if len(stickyTag) > 0 {
 		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancerSticky, label.TraefikBackendLoadBalancerStickiness)
@@ -189,18 +189,18 @@ func (p *CatalogProvider) getSticky(tags []string) string {
 }
 
 // Deprecated
-func (p *CatalogProvider) hasStickinessLabel(tags []string) bool {
+func (p *Provider) hasStickinessLabel(tags []string) bool {
 	stickinessTag := p.getAttribute(label.SuffixBackendLoadBalancerStickiness, tags, "")
 	return len(stickinessTag) > 0 && strings.EqualFold(strings.TrimSpace(stickinessTag), "true")
 }
 
 // Deprecated
-func (p *CatalogProvider) getStickinessCookieName(tags []string) string {
+func (p *Provider) getStickinessCookieName(tags []string) string {
 	return p.getAttribute(label.SuffixBackendLoadBalancerStickinessCookieName, tags, "")
 }
 
 // Deprecated
-func (p *CatalogProvider) getWeight(tags []string) int {
+func (p *Provider) getWeight(tags []string) int {
 	weight := p.getIntAttribute(label.SuffixWeight, tags, 0)
 
 	// Deprecated
@@ -215,7 +215,7 @@ func (p *CatalogProvider) getWeight(tags []string) int {
 	return weight
 }
 
-func (p *CatalogProvider) getCircuitBreaker(tags []string) *types.CircuitBreaker {
+func (p *Provider) getCircuitBreaker(tags []string) *types.CircuitBreaker {
 	circuitBreaker := p.getAttribute(label.SuffixBackendCircuitBreakerExpression, tags, "")
 
 	if p.hasAttribute(label.SuffixBackendCircuitBreaker, tags) {
@@ -232,7 +232,7 @@ func (p *CatalogProvider) getCircuitBreaker(tags []string) *types.CircuitBreaker
 	return &types.CircuitBreaker{Expression: circuitBreaker}
 }
 
-func (p *CatalogProvider) getLoadBalancer(tags []string) *types.LoadBalancer {
+func (p *Provider) getLoadBalancer(tags []string) *types.LoadBalancer {
 	rawSticky := p.getSticky(tags)
 	sticky, err := strconv.ParseBool(rawSticky)
 	if err != nil {
@@ -265,7 +265,7 @@ func (p *CatalogProvider) getLoadBalancer(tags []string) *types.LoadBalancer {
 	return lb
 }
 
-func (p *CatalogProvider) getMaxConn(tags []string) *types.MaxConn {
+func (p *Provider) getMaxConn(tags []string) *types.MaxConn {
 	amount := p.getInt64Attribute(label.SuffixBackendMaxConnAmount, tags, math.MinInt64)
 	extractorFunc := p.getAttribute(label.SuffixBackendMaxConnExtractorFunc, tags, label.DefaultBackendMaxconnExtractorFunc)
 
@@ -279,7 +279,7 @@ func (p *CatalogProvider) getMaxConn(tags []string) *types.MaxConn {
 	}
 }
 
-func (p *CatalogProvider) getHealthCheck(tags []string) *types.HealthCheck {
+func (p *Provider) getHealthCheck(tags []string) *types.HealthCheck {
 	path := p.getAttribute(label.SuffixBackendHealthCheckPath, tags, "")
 
 	if len(path) == 0 {
@@ -296,7 +296,7 @@ func (p *CatalogProvider) getHealthCheck(tags []string) *types.HealthCheck {
 	}
 }
 
-func (p *CatalogProvider) getRedirect(tags []string) *types.Redirect {
+func (p *Provider) getRedirect(tags []string) *types.Redirect {
 	if p.hasAttribute(label.SuffixFrontendRedirectEntryPoint, tags) {
 		return &types.Redirect{
 			EntryPoint: p.getAttribute(label.SuffixFrontendRedirectEntryPoint, tags, ""),
@@ -313,14 +313,14 @@ func (p *CatalogProvider) getRedirect(tags []string) *types.Redirect {
 	return nil
 }
 
-func (p *CatalogProvider) getErrorPages(tags []string) map[string]*types.ErrorPage {
+func (p *Provider) getErrorPages(tags []string) map[string]*types.ErrorPage {
 	labels := p.parseTagsToNeutralLabels(tags)
 
 	prefix := label.Prefix + label.BaseFrontendErrorPage
 	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
 }
 
-func (p *CatalogProvider) getRateLimit(tags []string) *types.RateLimit {
+func (p *Provider) getRateLimit(tags []string) *types.RateLimit {
 	extractorFunc := p.getAttribute(label.SuffixFrontendRateLimitExtractorFunc, tags, "")
 	if len(extractorFunc) == 0 {
 		return nil
@@ -337,7 +337,7 @@ func (p *CatalogProvider) getRateLimit(tags []string) *types.RateLimit {
 	}
 }
 
-func (p *CatalogProvider) getHeaders(tags []string) *types.Headers {
+func (p *Provider) getHeaders(tags []string) *types.Headers {
 	headers := &types.Headers{
 		CustomRequestHeaders:    p.getMapAttribute(label.SuffixFrontendRequestHeaders, tags),
 		CustomResponseHeaders:   p.getMapAttribute(label.SuffixFrontendResponseHeaders, tags),
@@ -370,7 +370,7 @@ func (p *CatalogProvider) getHeaders(tags []string) *types.Headers {
 
 // Base functions
 
-func (p *CatalogProvider) parseTagsToNeutralLabels(tags []string) map[string]string {
+func (p *Provider) parseTagsToNeutralLabels(tags []string) map[string]string {
 	var labels map[string]string
 
 	for _, tag := range tags {
@@ -392,19 +392,19 @@ func (p *CatalogProvider) parseTagsToNeutralLabels(tags []string) map[string]str
 	return labels
 }
 
-func (p *CatalogProvider) getFuncStringAttribute(name string, defaultValue string) func(tags []string) string {
+func (p *Provider) getFuncStringAttribute(name string, defaultValue string) func(tags []string) string {
 	return func(tags []string) string {
 		return p.getAttribute(name, tags, defaultValue)
 	}
 }
 
-func (p *CatalogProvider) getFuncSliceAttribute(name string) func(tags []string) []string {
+func (p *Provider) getFuncSliceAttribute(name string) func(tags []string) []string {
 	return func(tags []string) []string {
 		return p.getSliceAttribute(name, tags)
 	}
 }
 
-func (p *CatalogProvider) getMapAttribute(name string, tags []string) map[string]string {
+func (p *Provider) getMapAttribute(name string, tags []string) map[string]string {
 	rawValue := getTag(p.getPrefixedName(name), tags, "")
 
 	if len(rawValue) == 0 {
@@ -414,25 +414,25 @@ func (p *CatalogProvider) getMapAttribute(name string, tags []string) map[string
 	return label.ParseMapValue(p.getPrefixedName(name), rawValue)
 }
 
-func (p *CatalogProvider) getFuncIntAttribute(name string, defaultValue int) func(tags []string) int {
+func (p *Provider) getFuncIntAttribute(name string, defaultValue int) func(tags []string) int {
 	return func(tags []string) int {
 		return p.getIntAttribute(name, tags, defaultValue)
 	}
 }
 
-func (p *CatalogProvider) getFuncBoolAttribute(name string, defaultValue bool) func(tags []string) bool {
+func (p *Provider) getFuncBoolAttribute(name string, defaultValue bool) func(tags []string) bool {
 	return func(tags []string) bool {
 		return p.getBoolAttribute(name, tags, defaultValue)
 	}
 }
 
-func (p *CatalogProvider) getFuncHasAttributePrefix(name string) func(tags []string) bool {
+func (p *Provider) getFuncHasAttributePrefix(name string) func(tags []string) bool {
 	return func(tags []string) bool {
 		return p.hasAttributePrefix(name, tags)
 	}
 }
 
-func (p *CatalogProvider) getInt64Attribute(name string, tags []string, defaultValue int64) int64 {
+func (p *Provider) getInt64Attribute(name string, tags []string, defaultValue int64) int64 {
 	rawValue := getTag(p.getPrefixedName(name), tags, "")
 
 	if len(rawValue) == 0 {
@@ -447,7 +447,7 @@ func (p *CatalogProvider) getInt64Attribute(name string, tags []string, defaultV
 	return value
 }
 
-func (p *CatalogProvider) getIntAttribute(name string, tags []string, defaultValue int) int {
+func (p *Provider) getIntAttribute(name string, tags []string, defaultValue int) int {
 	rawValue := getTag(p.getPrefixedName(name), tags, "")
 
 	if len(rawValue) == 0 {
@@ -462,7 +462,7 @@ func (p *CatalogProvider) getIntAttribute(name string, tags []string, defaultVal
 	return value
 }
 
-func (p *CatalogProvider) getSliceAttribute(name string, tags []string) []string {
+func (p *Provider) getSliceAttribute(name string, tags []string) []string {
 	rawValue := getTag(p.getPrefixedName(name), tags, "")
 
 	if len(rawValue) == 0 {
@@ -471,7 +471,7 @@ func (p *CatalogProvider) getSliceAttribute(name string, tags []string) []string
 	return label.SplitAndTrimString(rawValue, ",")
 }
 
-func (p *CatalogProvider) getBoolAttribute(name string, tags []string, defaultValue bool) bool {
+func (p *Provider) getBoolAttribute(name string, tags []string, defaultValue bool) bool {
 	rawValue := getTag(p.getPrefixedName(name), tags, "")
 
 	if len(rawValue) == 0 {
@@ -486,19 +486,19 @@ func (p *CatalogProvider) getBoolAttribute(name string, tags []string, defaultVa
 	return value
 }
 
-func (p *CatalogProvider) hasAttribute(name string, tags []string) bool {
+func (p *Provider) hasAttribute(name string, tags []string) bool {
 	return hasTag(p.getPrefixedName(name), tags)
 }
 
-func (p *CatalogProvider) hasAttributePrefix(name string, tags []string) bool {
+func (p *Provider) hasAttributePrefix(name string, tags []string) bool {
 	return hasTagPrefix(p.getPrefixedName(name), tags)
 }
 
-func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {
+func (p *Provider) getAttribute(name string, tags []string, defaultValue string) string {
 	return getTag(p.getPrefixedName(name), tags, defaultValue)
 }
 
-func (p *CatalogProvider) getPrefixedName(name string) string {
+func (p *Provider) getPrefixedName(name string) string {
 	if len(p.Prefix) > 0 && len(name) > 0 {
 		return p.Prefix + "." + name
 	}

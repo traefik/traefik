@@ -1,4 +1,4 @@
-package consul
+package consulcatalog
 
 import (
 	"errors"
@@ -22,10 +22,10 @@ const (
 	DefaultWatchWaitTime = 15 * time.Second
 )
 
-var _ provider.Provider = (*CatalogProvider)(nil)
+var _ provider.Provider = (*Provider)(nil)
 
-// CatalogProvider holds configurations of the Consul catalog provider.
-type CatalogProvider struct {
+// Provider holds configurations of the Consul catalog provider.
+type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string `description:"Consul server endpoint"`
 	Domain                string `description:"Default domain used"`
@@ -85,7 +85,7 @@ func (a nodeSorter) Less(i int, j int) bool {
 
 // Provide allows the consul catalog provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *CatalogProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	config := api.DefaultConfig()
 	config.Address = p.Endpoint
 	client, err := api.NewClient(config)
@@ -112,7 +112,7 @@ func (p *CatalogProvider) Provide(configurationChan chan<- types.ConfigMessage, 
 	return err
 }
 
-func (p *CatalogProvider) watch(configurationChan chan<- types.ConfigMessage, stop chan bool) error {
+func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan bool) error {
 	stopCh := make(chan struct{})
 	watchCh := make(chan map[string][]string)
 	errorCh := make(chan error)
@@ -147,7 +147,7 @@ func (p *CatalogProvider) watch(configurationChan chan<- types.ConfigMessage, st
 	}
 }
 
-func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
+func (p *Provider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
 	catalog := p.client.Catalog()
 
 	safe.Go(func() {
@@ -216,7 +216,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 	})
 }
 
-func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
+func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
 	health := p.client.Health()
 	catalog := p.client.Catalog()
 
@@ -287,7 +287,7 @@ func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<
 	})
 }
 
-func (p *CatalogProvider) getNodes(index map[string][]string) ([]catalogUpdate, error) {
+func (p *Provider) getNodes(index map[string][]string) ([]catalogUpdate, error) {
 	visited := make(map[string]bool)
 
 	var nodes []catalogUpdate
@@ -383,7 +383,7 @@ func getServicePorts(services []*api.CatalogService) []int {
 	return servicePorts
 }
 
-func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
+func (p *Provider) healthyNodes(service string) (catalogUpdate, error) {
 	health := p.client.Health()
 	data, _, err := health.Service(service, "", true, &api.QueryOptions{})
 	if err != nil {
@@ -412,7 +412,7 @@ func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
 	}, nil
 }
 
-func (p *CatalogProvider) nodeFilter(service string, node *api.ServiceEntry) bool {
+func (p *Provider) nodeFilter(service string, node *api.ServiceEntry) bool {
 	// Filter disabled application.
 	if !p.isServiceEnabled(node) {
 		log.Debugf("Filtering disabled Consul service %s", service)
@@ -429,11 +429,11 @@ func (p *CatalogProvider) nodeFilter(service string, node *api.ServiceEntry) boo
 	return true
 }
 
-func (p *CatalogProvider) isServiceEnabled(node *api.ServiceEntry) bool {
+func (p *Provider) isServiceEnabled(node *api.ServiceEntry) bool {
 	return p.getBoolAttribute(label.SuffixEnable, node.Service.Tags, p.ExposedByDefault)
 }
 
-func (p *CatalogProvider) getConstraintTags(tags []string) []string {
+func (p *Provider) getConstraintTags(tags []string) []string {
 	var values []string
 
 	prefix := p.getPrefixedName("tags=")
