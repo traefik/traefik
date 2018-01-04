@@ -114,35 +114,12 @@ func (l RetryListeners) Retried(req *http.Request, attempt int) {
 	}
 }
 
-type retryResponseRecorderWithCloseNotify struct {
-	*retryResponseRecorderWithoutCloseNotify
-}
-
-// CloseNotify returns a channel that receives at most a
-// single value (true) when the client connection has gone
-// away.
-func (rw *retryResponseRecorderWithCloseNotify) CloseNotify() <-chan bool {
-	return rw.responseWriter.(http.CloseNotifier).CloseNotify()
-}
-
 type retryResponseRecorder interface {
 	http.ResponseWriter
 	http.Flusher
 	GetCode() int
 	GetBody() *bytes.Buffer
 	IsStreamingResponseStarted() bool
-}
-
-// retryResponseRecorderWithoutCloseNotify is an implementation of http.ResponseWriter that
-// records its mutations for later inspection.
-type retryResponseRecorderWithoutCloseNotify struct {
-	Code      int           // the HTTP response code from WriteHeader
-	HeaderMap http.Header   // the HTTP response headers
-	Body      *bytes.Buffer // if non-nil, the bytes.Buffer to append written data to
-
-	responseWriter           http.ResponseWriter
-	err                      error
-	streamingResponseStarted bool
 }
 
 // newRetryResponseRecorder returns an initialized retryResponseRecorder.
@@ -157,6 +134,29 @@ func newRetryResponseRecorder(rw http.ResponseWriter) retryResponseRecorder {
 		return &retryResponseRecorderWithCloseNotify{recorder}
 	}
 	return recorder
+}
+
+// retryResponseRecorderWithoutCloseNotify is an implementation of http.ResponseWriter that
+// records its mutations for later inspection.
+type retryResponseRecorderWithoutCloseNotify struct {
+	Code      int           // the HTTP response code from WriteHeader
+	HeaderMap http.Header   // the HTTP response headers
+	Body      *bytes.Buffer // if non-nil, the bytes.Buffer to append written data to
+
+	responseWriter           http.ResponseWriter
+	err                      error
+	streamingResponseStarted bool
+}
+
+type retryResponseRecorderWithCloseNotify struct {
+	*retryResponseRecorderWithoutCloseNotify
+}
+
+// CloseNotify returns a channel that receives at most a
+// single value (true) when the client connection has gone
+// away.
+func (rw *retryResponseRecorderWithCloseNotify) CloseNotify() <-chan bool {
+	return rw.responseWriter.(http.CloseNotifier).CloseNotify()
 }
 
 // Header returns the response headers.
