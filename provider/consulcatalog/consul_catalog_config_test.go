@@ -1,4 +1,4 @@
-package consul
+package consulcatalog
 
 import (
 	"testing"
@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCatalogProviderBuildConfiguration(t *testing.T) {
-	provider := &CatalogProvider{
+func TestProviderBuildConfiguration(t *testing.T) {
+	provider := &Provider{
 		Domain:               "localhost",
 		Prefix:               "traefik",
 		ExposedByDefault:     false,
@@ -211,7 +211,7 @@ func TestHasTag(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetPrefixedName(t *testing.T) {
+func TestProviderGetPrefixedName(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		name     string
@@ -249,7 +249,7 @@ func TestCatalogProviderGetPrefixedName(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			pro := &CatalogProvider{Prefix: test.prefix}
+			pro := &Provider{Prefix: test.prefix}
 
 			actual := pro.getPrefixedName(test.name)
 			assert.Equal(t, test.expected, actual)
@@ -258,7 +258,7 @@ func TestCatalogProviderGetPrefixedName(t *testing.T) {
 
 }
 
-func TestCatalogProviderGetAttribute(t *testing.T) {
+func TestProviderGetAttribute(t *testing.T) {
 	testCases := []struct {
 		desc         string
 		tags         []string
@@ -326,7 +326,7 @@ func TestCatalogProviderGetAttribute(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			p := &CatalogProvider{
+			p := &Provider{
 				Domain: "localhost",
 				Prefix: test.prefix,
 			}
@@ -337,8 +337,8 @@ func TestCatalogProviderGetAttribute(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetIntAttribute(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetIntAttribute(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -388,8 +388,8 @@ func TestCatalogProviderGetIntAttribute(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetInt64Attribute(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetInt64Attribute(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -439,8 +439,8 @@ func TestCatalogProviderGetInt64Attribute(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetBoolAttribute(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetBoolAttribute(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -490,8 +490,8 @@ func TestCatalogProviderGetBoolAttribute(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetSliceAttribute(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetSliceAttribute(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -545,7 +545,7 @@ func TestCatalogProviderGetSliceAttribute(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetFrontendRule(t *testing.T) {
+func TestProviderGetFrontendRule(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		service  serviceUpdate
@@ -597,7 +597,7 @@ func TestCatalogProviderGetFrontendRule(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			p := &CatalogProvider{
+			p := &Provider{
 				Domain:               "localhost",
 				Prefix:               "traefik",
 				FrontEndRule:         "Host:{{.ServiceName}}.{{.Domain}}",
@@ -654,7 +654,7 @@ func TestGetBackendAddress(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetServerName(t *testing.T) {
+func TestProviderGetServerName(t *testing.T) {
 	testCases := []struct {
 		desc     string
 		node     *api.ServiceEntry
@@ -711,7 +711,7 @@ func TestCatalogProviderGetServerName(t *testing.T) {
 }
 
 func TestHasStickinessLabel(t *testing.T) {
-	p := &CatalogProvider{
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -752,8 +752,8 @@ func TestHasStickinessLabel(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetCircuitBreaker(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetCircuitBreaker(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -788,8 +788,8 @@ func TestCatalogProviderGetCircuitBreaker(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetLoadBalancer(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetLoadBalancer(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -887,8 +887,8 @@ func TestCatalogProviderGetLoadBalancer(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetMaxConn(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetMaxConn(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -952,8 +952,8 @@ func TestCatalogProviderGetMaxConn(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetHealthCheck(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetHealthCheck(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -1002,8 +1002,8 @@ func TestCatalogProviderGetHealthCheck(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetRedirect(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetRedirect(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -1062,8 +1062,8 @@ func TestCatalogProviderGetRedirect(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetErrorPages(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetErrorPages(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -1114,8 +1114,8 @@ func TestCatalogProviderGetErrorPages(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetRateLimit(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetRateLimit(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 
@@ -1170,8 +1170,8 @@ func TestCatalogProviderGetRateLimit(t *testing.T) {
 	}
 }
 
-func TestCatalogProviderGetHeaders(t *testing.T) {
-	p := &CatalogProvider{
+func TestProviderGetHeaders(t *testing.T) {
+	p := &Provider{
 		Prefix: "traefik",
 	}
 

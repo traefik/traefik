@@ -1,4 +1,4 @@
-package consul
+package consulcatalog
 
 import (
 	"sort"
@@ -446,7 +446,7 @@ func TestFilterEnabled(t *testing.T) {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			provider := &CatalogProvider{
+			provider := &Provider{
 				Domain:           "localhost",
 				Prefix:           "traefik",
 				ExposedByDefault: test.exposedByDefault,
@@ -787,7 +787,7 @@ func TestHasChanged(t *testing.T) {
 }
 
 func TestGetConstraintTags(t *testing.T) {
-	provider := &CatalogProvider{
+	provider := &Provider{
 		Domain: "localhost",
 		Prefix: "traefik",
 	}

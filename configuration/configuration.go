@@ -13,6 +13,7 @@ import (
 	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
+	"github.com/containous/traefik/provider/consulcatalog"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/dynamodb"
 	"github.com/containous/traefik/provider/ecs"
@@ -79,7 +80,7 @@ type GlobalConfiguration struct {
 	File                      *file.Provider          `description:"Enable File backend with default settings" export:"true"`
 	Marathon                  *marathon.Provider      `description:"Enable Marathon backend with default settings" export:"true"`
 	Consul                    *consul.Provider        `description:"Enable Consul backend with default settings" export:"true"`
-	ConsulCatalog             *consul.CatalogProvider `description:"Enable Consul catalog backend with default settings" export:"true"`
+	ConsulCatalog             *consulcatalog.Provider `description:"Enable Consul catalog backend with default settings" export:"true"`
 	Etcd                      *etcd.Provider          `description:"Enable Etcd backend with default settings" export:"true"`
 	Zookeeper                 *zk.Provider            `description:"Enable Zookeeper backend with default settings" export:"true"`
 	Boltdb                    *boltdb.Provider        `description:"Enable Boltdb backend with default settings" export:"true"`
