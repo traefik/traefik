@@ -52,18 +52,18 @@ func NewErrorPagesHandler(errorPage types.ErrorPage, backendURL string) (*ErrorP
 }
 
 func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	recorder := newRetryResponseRecorder()
-	recorder.responseWriter = w
+	recorder := newRetryResponseRecorder(w)
+
 	next.ServeHTTP(recorder, req)
 
-	w.WriteHeader(recorder.Code)
+	w.WriteHeader(recorder.GetCode())
 	//check the recorder code against the configured http status code ranges
 	for _, block := range ep.HTTPCodeRanges {
-		if recorder.Code >= block[0] && recorder.Code <= block[1] {
-			log.Errorf("Caught HTTP Status Code %d, returning error page", recorder.Code)
-			finalURL := strings.Replace(ep.BackendURL, "{status}", strconv.Itoa(recorder.Code), -1)
+		if recorder.GetCode() >= block[0] && recorder.GetCode() <= block[1] {
+			log.Errorf("Caught HTTP Status Code %d, returning error page", recorder.GetCode())
+			finalURL := strings.Replace(ep.BackendURL, "{status}", strconv.Itoa(recorder.GetCode()), -1)
 			if newReq, err := http.NewRequest(http.MethodGet, finalURL, nil); err != nil {
-				w.Write([]byte(http.StatusText(recorder.Code)))
+				w.Write([]byte(http.StatusText(recorder.GetCode())))
 			} else {
 				ep.errorPageForwarder.ServeHTTP(w, newReq)
 			}
@@ -73,5 +73,5 @@ func (ep *ErrorPagesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request,
 
 	//did not catch a configured status code so proceed with the request
 	utils.CopyHeaders(w.Header(), recorder.Header())
-	w.Write(recorder.Body.Bytes())
+	w.Write(recorder.GetBody().Bytes())
 }
