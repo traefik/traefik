@@ -38,6 +38,7 @@ func TestProviderBuildConfiguration(t *testing.T) {
 			expected: &types.Configuration{
 				Backends: map[string]*types.Backend{
 					"backend.with.dot.too": {
+						LoadBalancer: &types.LoadBalancer{Method: label.DefaultBackendLoadBalancerMethod},
 						Servers: map[string]types.Server{
 							"server.with.dot": {
 								URL:    "http://172.17.0.2:80",
@@ -48,11 +49,10 @@ func TestProviderBuildConfiguration(t *testing.T) {
 				},
 				Frontends: map[string]*types.Frontend{
 					"frontend.with.dot": {
-						Backend:              "backend.with.dot.too",
-						PassHostHeader:       true,
-						EntryPoints:          []string{},
-						WhitelistSourceRange: []string{},
-						BasicAuth:            []string{},
+						Backend:        "backend.with.dot.too",
+						PassHostHeader: true,
+						EntryPoints:    []string{},
+						BasicAuth:      []string{},
 						Routes: map[string]types.Route{
 							"route.with.dot": {
 								Rule: "Host:test.localhost",
@@ -1289,6 +1289,453 @@ func TestProviderGetHeaders(t *testing.T) {
 			headers := p.getHeaders(test.rootPath)
 
 			assert.Equal(t, test.expected, headers)
+		})
+	}
+}
+
+func TestProviderGetLoadBalancer(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.LoadBalancer
+	}{
+		{
+			desc:     "when all keys",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendLoadBalancerMethod, "drr"),
+					withPair(pathBackendLoadBalancerSticky, "true"),
+					withPair(pathBackendLoadBalancerStickiness, "true"),
+					withPair(pathBackendLoadBalancerStickinessCookieName, "aubergine"))),
+			expected: &types.LoadBalancer{
+				Method: "drr",
+				Sticky: true,
+				Stickiness: &types.Stickiness{
+					CookieName: "aubergine",
+				},
+			},
+		},
+		{
+			desc:     "when no specific configuration",
+			rootPath: "traefik/backends/foo",
+			kvPairs:  filler("traefik", backend("foo")),
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+			},
+		},
+		{
+			desc:     "when method is set",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendLoadBalancerMethod, "drr"))),
+			expected: &types.LoadBalancer{
+				Method: "drr",
+			},
+		},
+		{
+			desc:     "when sticky is set",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendLoadBalancerSticky, "true"))),
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+				Sticky: true,
+			},
+		},
+		{
+			desc:     "when stickiness is set",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendLoadBalancerStickiness, "true"))),
+			expected: &types.LoadBalancer{
+				Method:     "wrr",
+				Stickiness: &types.Stickiness{},
+			},
+		},
+		{
+			desc:     "when stickiness cookie name is set",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendLoadBalancerStickiness, "true"),
+					withPair(pathBackendLoadBalancerStickinessCookieName, "aubergine"))),
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+				Stickiness: &types.Stickiness{
+					CookieName: "aubergine",
+				},
+			},
+		},
+		{
+			desc:     "when stickiness cookie name is set but not stickiness",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendLoadBalancerStickinessCookieName, "aubergine"))),
+			expected: &types.LoadBalancer{
+				Method: "wrr",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getLoadBalancer(test.rootPath)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestProviderGetCircuitBreaker(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.CircuitBreaker
+	}{
+		{
+			desc:     "when cb expression defined",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression))),
+			expected: &types.CircuitBreaker{
+				Expression: label.DefaultCircuitBreakerExpression,
+			},
+		},
+		{
+			desc:     "when no cb expression",
+			rootPath: "traefik/backends/foo",
+			kvPairs:  filler("traefik", backend("foo")),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getCircuitBreaker(test.rootPath)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestProviderGetMaxConn(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.MaxConn
+	}{
+		{
+			desc:     "when max conn keys are defined",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendMaxConnAmount, "5"),
+					withPair(pathBackendMaxConnExtractorFunc, "client.ip"))),
+			expected: &types.MaxConn{
+				Amount:        5,
+				ExtractorFunc: "client.ip",
+			},
+		},
+		{
+			desc:     "should return nil when only extractor func is defined",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendMaxConnExtractorFunc, "client.ip"))),
+			expected: nil,
+		},
+		{
+			desc:     "when only amount is defined",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendMaxConnAmount, "5"))),
+			expected: &types.MaxConn{
+				Amount:        5,
+				ExtractorFunc: "request.host",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getMaxConn(test.rootPath)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestProviderGetHealthCheck(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected *types.HealthCheck
+	}{
+		{
+			desc:     "when all configuration keys defined",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendHealthCheckPath, "/health"),
+					withPair(pathBackendHealthCheckPort, "80"),
+					withPair(pathBackendHealthCheckInterval, "10s"))),
+			expected: &types.HealthCheck{
+				Interval: "10s",
+				Path:     "/health",
+				Port:     80,
+			},
+		},
+		{
+			desc:     "when only path defined",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendHealthCheckPath, "/health"))),
+			expected: &types.HealthCheck{
+				Interval: "30s",
+				Path:     "/health",
+				Port:     0,
+			},
+		},
+		{
+			desc:     "should return nil when no path",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendHealthCheckPort, "80"),
+					withPair(pathBackendHealthCheckInterval, "30s"))),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getHealthCheck(test.rootPath)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestProviderGetTLSConfigurations(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		kvPairs  []*store.KVPair
+		expected []*tls.Configuration
+	}{
+		{
+			desc: "when several TLS configuration defined",
+			kvPairs: filler("traefik",
+				entry("tlsconfiguration/foo",
+					withPair("entrypoints", "http,https"),
+					withPair("certificate/certfile", "certfile1"),
+					withPair("certificate/keyfile", "keyfile1")),
+				entry("tlsconfiguration/bar",
+					withPair("entrypoints", "http,https"),
+					withPair("certificate/certfile", "certfile2"),
+					withPair("certificate/keyfile", "keyfile2"))),
+			expected: []*tls.Configuration{
+				{
+					EntryPoints: []string{"http", "https"},
+					Certificate: &tls.Certificate{
+						CertFile: "certfile2",
+						KeyFile:  "keyfile2",
+					},
+				},
+				{
+					EntryPoints: []string{"http", "https"},
+					Certificate: &tls.Certificate{
+						CertFile: "certfile1",
+						KeyFile:  "keyfile1",
+					},
+				},
+			},
+		},
+		{
+			desc:     "should return nil when no TLS configuration",
+			kvPairs:  filler("traefik", entry("tlsconfiguration/foo")),
+			expected: nil,
+		},
+		{
+			desc: "should return nil when no entry points",
+			kvPairs: filler("traefik",
+				entry("tlsconfiguration/foo",
+					withPair("certificate/certfile", "certfile2"),
+					withPair("certificate/keyfile", "keyfile2"))),
+			expected: nil,
+		},
+		{
+			desc: "should return nil when no cert file and no key file",
+			kvPairs: filler("traefik",
+				entry("tlsconfiguration/foo",
+					withPair("entrypoints", "http,https"))),
+			expected: nil,
+		},
+	}
+	prefix := "traefik"
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getTLSConfigurations(prefix)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestProviderGetRoutes(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected map[string]types.Route
+	}{
+		{
+			desc:     "should return nil when no data",
+			expected: nil,
+		},
+		{
+			desc:     "should return nil when route key exists but without rule key",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendRoutes+"bar", "test1"),
+					withPair(pathFrontendRoutes+"bir", "test2"))),
+			expected: nil,
+		},
+		{
+			desc:     "should return a map when configuration keys are defined",
+			rootPath: "traefik/frontends/foo",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair(pathFrontendRoutes+"bar"+pathFrontendRule, "test1"),
+					withPair(pathFrontendRoutes+"bir"+pathFrontendRule, "test2"))),
+			expected: map[string]types.Route{
+				"bar": {
+					Rule: "test1",
+				},
+				"bir": {
+					Rule: "test2",
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getRoutes(test.rootPath)
+
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestProviderGetServers(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rootPath string
+		kvPairs  []*store.KVPair
+		expected map[string]types.Server
+	}{
+		{
+			desc:     "should return nil when no data",
+			expected: nil,
+		},
+		{
+			desc:     "should return nil when server has no URL",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendServers+"server1/weight", "7"),
+					withPair(pathBackendServers+"server2/weight", "6"))),
+			expected: nil,
+		},
+		{
+			desc:     "should use default weight when invalid weight value",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendServers+"server1/url", "http://172.17.0.2:80"),
+					withPair(pathBackendServers+"server1/weight", "kls"))),
+			expected: map[string]types.Server{
+				"server1": {
+					URL:    "http://172.17.0.2:80",
+					Weight: 0,
+				},
+			},
+		},
+		{
+			desc:     "should return a map when configuration keys are defined",
+			rootPath: "traefik/backends/foo",
+			kvPairs: filler("traefik",
+				backend("foo",
+					withPair(pathBackendServers+"server1/url", "http://172.17.0.2:80"),
+					withPair(pathBackendServers+"server2/url", "http://172.17.0.3:80"),
+					withPair(pathBackendServers+"server2/weight", "6"))),
+			expected: map[string]types.Server{
+				"server1": {
+					URL:    "http://172.17.0.2:80",
+					Weight: 0,
+				},
+				"server2": {
+					URL:    "http://172.17.0.3:80",
+					Weight: 6,
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := newProviderMock(test.kvPairs)
+
+			result := p.getServers(test.rootPath)
+
+			assert.Equal(t, test.expected, result)
 		})
 	}
 }

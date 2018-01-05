@@ -2,6 +2,7 @@ package kv
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"sort"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/docker/libkv/store"
 )
@@ -35,16 +37,31 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"Last":        p.last,
 		"Has":         p.has,
 
+		"getTLSConfigurations": p.getTLSConfigurations,
+
 		// Frontend functions
-		"getRedirect":   p.getRedirect,
-		"getErrorPages": p.getErrorPages,
-		"getRateLimit":  p.getRateLimit,
-		"getHeaders":    p.getHeaders,
+		"getBackendName":          p.getFuncString(pathFrontendBackend, ""),
+		"getPriority":             p.getFuncInt(pathFrontendPriority, 0),
+		"getPassHostHeader":       p.getFuncBool(pathFrontendPassHostHeader, true),
+		"getPassTLSCert":          p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getEntryPoints":          p.getFuncSlice(pathFrontendEntryPoints),
+		"getWhitelistSourceRange": p.getFuncSlice(pathFrontendWhiteListSourceRange),
+		"getBasicAuth":            p.getFuncSlice(pathFrontendBasicAuth),
+		"getRoutes":               p.getRoutes,
+		"getRedirect":             p.getRedirect,
+		"getErrorPages":           p.getErrorPages,
+		"getRateLimit":            p.getRateLimit,
+		"getHeaders":              p.getHeaders,
 
 		// Backend functions
-		"getSticky":               p.getSticky,
-		"hasStickinessLabel":      p.hasStickinessLabel,
-		"getStickinessCookieName": p.getStickinessCookieName,
+		"getServers":              p.getServers,
+		"getCircuitBreaker":       p.getCircuitBreaker,
+		"getLoadBalancer":         p.getLoadBalancer,
+		"getMaxConn":              p.getMaxConn,
+		"getHealthCheck":          p.getHealthCheck,
+		"getSticky":               p.getSticky,               // Deprecated [breaking]
+		"hasStickinessLabel":      p.hasStickinessLabel,      // Deprecated [breaking]
+		"getStickinessCookieName": p.getStickinessCookieName, // Deprecated [breaking]
 	}
 
 	configuration, err := p.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -61,6 +78,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 	return configuration
 }
 
+// Deprecated
 func (p *Provider) getSticky(rootPath string) bool {
 	stickyValue := p.get("", rootPath, pathBackendLoadBalancerSticky)
 	if len(stickyValue) > 0 {
@@ -77,10 +95,12 @@ func (p *Provider) getSticky(rootPath string) bool {
 	return sticky
 }
 
+// Deprecated
 func (p *Provider) hasStickinessLabel(rootPath string) bool {
 	return p.getBool(false, rootPath, pathBackendLoadBalancerStickiness)
 }
 
+// Deprecated
 func (p *Provider) getStickinessCookieName(rootPath string) string {
 	return p.get("", rootPath, pathBackendLoadBalancerStickinessCookieName)
 }
@@ -193,6 +213,145 @@ func (p *Provider) getHeaders(rootPath string) *types.Headers {
 	return headers
 }
 
+func (p *Provider) getLoadBalancer(rootPath string) *types.LoadBalancer {
+	lb := &types.LoadBalancer{
+		Method: p.get(label.DefaultBackendLoadBalancerMethod, rootPath, pathBackendLoadBalancerMethod),
+		Sticky: p.getSticky(rootPath),
+	}
+
+	if p.getBool(false, rootPath, pathBackendLoadBalancerStickiness) {
+		lb.Stickiness = &types.Stickiness{
+			CookieName: p.get("", rootPath, pathBackendLoadBalancerStickinessCookieName),
+		}
+	}
+
+	return lb
+}
+
+func (p *Provider) getCircuitBreaker(rootPath string) *types.CircuitBreaker {
+	if !p.has(rootPath, pathBackendCircuitBreakerExpression) {
+		return nil
+	}
+
+	circuitBreaker := p.get(label.DefaultCircuitBreakerExpression, rootPath, pathBackendCircuitBreakerExpression)
+	if len(circuitBreaker) == 0 {
+		return nil
+	}
+
+	return &types.CircuitBreaker{Expression: circuitBreaker}
+}
+
+func (p *Provider) getMaxConn(rootPath string) *types.MaxConn {
+	amount := p.getInt64(math.MinInt64, rootPath, pathBackendMaxConnAmount)
+	extractorFunc := p.get(label.DefaultBackendMaxconnExtractorFunc, rootPath, pathBackendMaxConnExtractorFunc)
+
+	if amount == math.MinInt64 || len(extractorFunc) == 0 {
+		return nil
+	}
+
+	return &types.MaxConn{
+		Amount:        amount,
+		ExtractorFunc: extractorFunc,
+	}
+}
+
+func (p *Provider) getHealthCheck(rootPath string) *types.HealthCheck {
+	path := p.get("", rootPath, pathBackendHealthCheckPath)
+
+	if len(path) == 0 {
+		return nil
+	}
+
+	port := p.getInt(label.DefaultBackendHealthCheckPort, rootPath, pathBackendHealthCheckPort)
+	interval := p.get("30s", rootPath, pathBackendHealthCheckInterval)
+
+	return &types.HealthCheck{
+		Path:     path,
+		Port:     port,
+		Interval: interval,
+	}
+}
+
+func (p *Provider) getTLSConfigurations(prefix string) []*tls.Configuration {
+	var tlsConfiguration []*tls.Configuration
+
+	for _, tlsConfPath := range p.list(prefix, pathTLSConfiguration) {
+		certFile := p.get("", tlsConfPath, pathTLSConfigurationCertFile)
+		keyFile := p.get("", tlsConfPath, pathTLSConfigurationKeyFile)
+
+		if len(certFile) == 0 && len(keyFile) == 0 {
+			log.Warnf("Invalid TLS configuration (no cert and no key): %s", tlsConfPath)
+			continue
+		}
+
+		entryPoints := p.splitGet(tlsConfPath, pathTLSConfigurationEntryPoints)
+		if len(entryPoints) == 0 {
+			log.Warnf("Invalid TLS configuration (no entry points): %s", tlsConfPath)
+			continue
+		}
+
+		tlsConf := &tls.Configuration{
+			EntryPoints: entryPoints,
+			Certificate: &tls.Certificate{
+				CertFile: tls.FileOrContent(certFile),
+				KeyFile:  tls.FileOrContent(keyFile),
+			},
+		}
+
+		tlsConfiguration = append(tlsConfiguration, tlsConf)
+	}
+
+	return tlsConfiguration
+}
+
+func (p *Provider) getRoutes(rootPath string) map[string]types.Route {
+	var routes map[string]types.Route
+
+	rts := p.list(rootPath, pathFrontendRoutes)
+	for _, rt := range rts {
+
+		rule := p.get("", rt, pathFrontendRule)
+		if len(rule) == 0 {
+			continue
+		}
+
+		if routes == nil {
+			routes = make(map[string]types.Route)
+		}
+
+		routeName := p.last(rt)
+		routes[routeName] = types.Route{
+			Rule: rule,
+		}
+	}
+
+	return routes
+}
+
+func (p *Provider) getServers(rootPath string) map[string]types.Server {
+	var servers map[string]types.Server
+
+	serverKeys := p.listServers(rootPath)
+	for _, serverKey := range serverKeys {
+		serverURL := p.get("", serverKey, pathBackendServerURL)
+		if len(serverURL) == 0 {
+			continue
+		}
+
+		if servers == nil {
+			servers = make(map[string]types.Server)
+		}
+
+		serverName := p.last(serverKey)
+		servers[serverName] = types.Server{
+			URL:    serverURL,
+			Weight: p.getInt(0, serverKey, pathBackendServerWeight),
+		}
+	}
+
+	return servers
+}
+
 func (p *Provider) listServers(backend string) []string {
 	serverNames := p.list(backend, pathBackendServers)
 	return fun.Filter(p.serverFilter, serverNames).([]string)
@@ -227,6 +386,30 @@ func (p *Provider) checkConstraints(keys ...string) bool {
 		return false
 	}
 	return true
+}
+
+func (p *Provider) getFuncString(key string, defaultValue string) func(rootPath string) string {
+	return func(rootPath string) string {
+		return p.get(defaultValue, rootPath, key)
+	}
+}
+
+func (p *Provider) getFuncBool(key string, defaultValue bool) func(rootPath string) bool {
+	return func(rootPath string) bool {
+		return p.getBool(defaultValue, rootPath, key)
+	}
+}
+
+func (p *Provider) getFuncInt(key string, defaultValue int) func(rootPath string) int {
+	return func(rootPath string) int {
+		return p.getInt(defaultValue, rootPath, key)
+	}
+}
+
+func (p *Provider) getFuncSlice(key string) func(rootPath string) []string {
+	return func(rootPath string) []string {
+		return p.splitGet(rootPath, key)
+	}
 }
 
 func (p *Provider) get(defaultValue string, keyParts ...string) string {
