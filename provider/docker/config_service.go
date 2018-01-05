@@ -50,9 +50,9 @@ func checkServiceLabelPort(container dockerData) error {
 				serviceLabelPorts[portLabel[0]] = struct{}{}
 			}
 			// Get only one instance of all service names from service labels
-			servicesLabelNames := label.ServicesPropertiesRegexp.FindStringSubmatch(lbl)
+			servicesLabelNames := label.FindServiceSubmatch(lbl)
 
-			if len(servicesLabelNames) > 0 && !strings.HasPrefix(lbl, label.TraefikFrontend) {
+			if len(servicesLabelNames) > 0 {
 				serviceLabels[strings.Split(servicesLabelNames[0], ".")[1]] = struct{}{}
 			}
 		}
@@ -88,101 +88,142 @@ func getServicePort(container dockerData, serviceName string) string {
 	return getPort(container)
 }
 
-func hasServiceRedirect(container dockerData, serviceName string) bool {
+func getServiceRedirect(container dockerData, serviceName string) *types.Redirect {
 	serviceLabels := getServiceLabels(container, serviceName)
-	if len(serviceLabels) == 0 {
-		return false
+
+	if hasStrictServiceLabel(serviceLabels, label.SuffixFrontendRedirectEntryPoint) {
+		return &types.Redirect{
+			EntryPoint: getStrictServiceStringValue(serviceLabels, label.SuffixFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
+		}
 	}
 
-	return label.Has(serviceLabels, label.SuffixFrontendRedirectEntryPoint) ||
-		label.Has(serviceLabels, label.SuffixFrontendRedirectRegex) && label.Has(serviceLabels, label.SuffixFrontendRedirectReplacement)
-}
+	if hasStrictServiceLabel(serviceLabels, label.SuffixFrontendRedirectRegex) &&
+		hasStrictServiceLabel(serviceLabels, label.SuffixFrontendRedirectReplacement) {
+		return &types.Redirect{
+			Regex:       getStrictServiceStringValue(serviceLabels, label.SuffixFrontendRedirectRegex, ""),
+			Replacement: getStrictServiceStringValue(serviceLabels, label.SuffixFrontendRedirectReplacement, ""),
+		}
+	}
 
-func hasServiceErrorPages(container dockerData, serviceName string) bool {
-	serviceLabels := getServiceLabels(container, serviceName)
-	return label.HasPrefix(serviceLabels, label.BaseFrontendErrorPage)
+	return getRedirect(container)
 }
 
 func getServiceErrorPages(container dockerData, serviceName string) map[string]*types.ErrorPage {
 	serviceLabels := getServiceLabels(container, serviceName)
-	return label.ParseErrorPages(serviceLabels, label.BaseFrontendErrorPage, label.RegexpBaseFrontendErrorPage)
+
+	if label.HasPrefix(serviceLabels, label.BaseFrontendErrorPage) {
+		return label.ParseErrorPages(serviceLabels, label.BaseFrontendErrorPage, label.RegexpBaseFrontendErrorPage)
+	}
+
+	return getErrorPages(container)
 }
 
-func getServiceRateLimits(container dockerData, serviceName string) map[string]*types.Rate {
+func getServiceRateLimit(container dockerData, serviceName string) *types.RateLimit {
 	serviceLabels := getServiceLabels(container, serviceName)
-	return label.ParseRateSets(serviceLabels, label.BaseFrontendRateLimit, label.RegexpBaseFrontendRateLimit)
+
+	if hasStrictServiceLabel(serviceLabels, label.SuffixFrontendRateLimitExtractorFunc) {
+		extractorFunc := getStrictServiceStringValue(serviceLabels, label.SuffixFrontendRateLimitExtractorFunc, label.DefaultBackendMaxconnExtractorFunc)
+		return &types.RateLimit{
+			ExtractorFunc: extractorFunc,
+			RateSet:       label.ParseRateSets(serviceLabels, label.BaseFrontendRateLimit, label.RegexpBaseFrontendRateLimit),
+		}
+	}
+
+	return getRateLimit(container)
+}
+
+func getServiceHeaders(container dockerData, serviceName string) *types.Headers {
+	serviceLabels := getServiceLabels(container, serviceName)
+
+	headers := &types.Headers{
+		CustomRequestHeaders:    getServiceMapValue(container, serviceLabels, serviceName, label.SuffixFrontendRequestHeaders),
+		CustomResponseHeaders:   getServiceMapValue(container, serviceLabels, serviceName, label.SuffixFrontendResponseHeaders),
+		SSLProxyHeaders:         getServiceMapValue(container, serviceLabels, serviceName, label.SuffixFrontendHeadersSSLProxyHeaders),
+		AllowedHosts:            getServiceSliceValue(container, serviceLabels, label.SuffixFrontendHeadersAllowedHosts),
+		HostsProxyHeaders:       getServiceSliceValue(container, serviceLabels, label.SuffixFrontendHeadersHostsProxyHeaders),
+		STSSeconds:              getServiceInt64Value(container, serviceLabels, label.SuffixFrontendHeadersSTSSeconds, 0),
+		SSLRedirect:             getServiceBoolValue(container, serviceLabels, label.SuffixFrontendHeadersSSLRedirect, false),
+		SSLTemporaryRedirect:    getServiceBoolValue(container, serviceLabels, label.SuffixFrontendHeadersSSLTemporaryRedirect, false),
+		STSIncludeSubdomains:    getServiceBoolValue(container, serviceLabels, label.SuffixFrontendHeadersSTSIncludeSubdomains, false),
+		STSPreload:              getServiceBoolValue(container, serviceLabels, label.SuffixFrontendHeadersSTSPreload, false),
+		ForceSTSHeader:          getServiceBoolValue(container, serviceLabels, label.SuffixFrontendHeadersForceSTSHeader, false),
+		FrameDeny:               getServiceBoolValue(container, serviceLabels, label.SuffixFrontendHeadersFrameDeny, false),
+		ContentTypeNosniff:      getServiceBoolValue(container, serviceLabels, label.SuffixFrontendHeadersContentTypeNosniff, false),
+		BrowserXSSFilter:        getServiceBoolValue(container, serviceLabels, label.SuffixFrontendHeadersBrowserXSSFilter, false),
+		IsDevelopment:           getServiceBoolValue(container, serviceLabels, label.SuffixFrontendHeadersIsDevelopment, false),
+		SSLHost:                 getServiceStringValue(container, serviceLabels, label.SuffixFrontendHeadersSSLHost, ""),
+		CustomFrameOptionsValue: getServiceStringValue(container, serviceLabels, label.SuffixFrontendHeadersCustomFrameOptionsValue, ""),
+		ContentSecurityPolicy:   getServiceStringValue(container, serviceLabels, label.SuffixFrontendHeadersContentSecurityPolicy, ""),
+		PublicKey:               getServiceStringValue(container, serviceLabels, label.SuffixFrontendHeadersPublicKey, ""),
+		ReferrerPolicy:          getServiceStringValue(container, serviceLabels, label.SuffixFrontendHeadersReferrerPolicy, ""),
+	}
+
+	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
+		return nil
+	}
+
+	return headers
 }
 
 // Service label functions
 
-func getFuncServiceMapLabel(labelSuffix string) func(container dockerData, serviceName string) map[string]string {
-	return func(container dockerData, serviceName string) map[string]string {
-		return getServiceMapLabel(container, serviceName, labelSuffix)
-	}
-}
-
 func getFuncServiceSliceStringLabel(labelSuffix string) func(container dockerData, serviceName string) []string {
 	return func(container dockerData, serviceName string) []string {
-		return getServiceSliceStringLabel(container, serviceName, labelSuffix)
+		serviceLabels := getServiceLabels(container, serviceName)
+		return getServiceSliceValue(container, serviceLabels, labelSuffix)
 	}
 }
 
 func getFuncServiceStringLabel(labelSuffix string, defaultValue string) func(container dockerData, serviceName string) string {
 	return func(container dockerData, serviceName string) string {
-		return getServiceStringLabel(container, serviceName, labelSuffix, defaultValue)
+		serviceLabels := getServiceLabels(container, serviceName)
+		return getServiceStringValue(container, serviceLabels, labelSuffix, defaultValue)
 	}
 }
 
 func getFuncServiceBoolLabel(labelSuffix string, defaultValue bool) func(container dockerData, serviceName string) bool {
 	return func(container dockerData, serviceName string) bool {
-		return getServiceBoolLabel(container, serviceName, labelSuffix, defaultValue)
+		serviceLabels := getServiceLabels(container, serviceName)
+		return getServiceBoolValue(container, serviceLabels, labelSuffix, defaultValue)
 	}
 }
 
-func getFuncServiceIntLabel(labelSuffix string, defaultValue int) func(container dockerData, serviceName string) int {
-	return func(container dockerData, serviceName string) int {
-		return getServiceIntLabel(container, serviceName, labelSuffix, defaultValue)
-	}
+func hasStrictServiceLabel(serviceLabels map[string]string, labelSuffix string) bool {
+	value, ok := serviceLabels[labelSuffix]
+	return ok && len(value) > 0
 }
 
-func hasFuncServiceLabel(labelSuffix string) func(container dockerData, serviceName string) bool {
-	return func(container dockerData, serviceName string) bool {
-		return hasServiceLabel(container, serviceName, labelSuffix)
+func getServiceStringValue(container dockerData, serviceLabels map[string]string, labelSuffix string, defaultValue string) string {
+	if value, ok := serviceLabels[labelSuffix]; ok {
+		return value
 	}
+	return label.GetStringValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
 }
 
-func hasServiceLabel(container dockerData, serviceName string, labelSuffix string) bool {
-	value, ok := getServiceLabels(container, serviceName)[labelSuffix]
-	if ok && len(value) > 0 {
-		return true
+func getStrictServiceStringValue(serviceLabels map[string]string, labelSuffix string, defaultValue string) string {
+	if value, ok := serviceLabels[labelSuffix]; ok {
+		return value
 	}
-	return label.Has(container.Labels, label.Prefix+labelSuffix)
+	return defaultValue
 }
 
-func getServiceMapLabel(container dockerData, serviceName string, labelSuffix string) map[string]string {
-	if value, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
+func getServiceMapValue(container dockerData, serviceLabels map[string]string, serviceName string, labelSuffix string) map[string]string {
+	if value, ok := serviceLabels[labelSuffix]; ok {
 		lblName := label.GetServiceLabel(labelSuffix, serviceName)
 		return label.ParseMapValue(lblName, value)
 	}
 	return label.GetMapValue(container.Labels, label.Prefix+labelSuffix)
 }
 
-func getServiceSliceStringLabel(container dockerData, serviceName string, labelSuffix string) []string {
-	if value, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
+func getServiceSliceValue(container dockerData, serviceLabels map[string]string, labelSuffix string) []string {
+	if value, ok := serviceLabels[labelSuffix]; ok {
 		return label.SplitAndTrimString(value, ",")
 	}
 	return label.GetSliceStringValue(container.Labels, label.Prefix+labelSuffix)
 }
 
-func getServiceStringLabel(container dockerData, serviceName string, labelSuffix string, defaultValue string) string {
-	if value, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
-		return value
-	}
-	return label.GetStringValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
-}
-
-func getServiceBoolLabel(container dockerData, serviceName string, labelSuffix string, defaultValue bool) bool {
-	if rawValue, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
+func getServiceBoolValue(container dockerData, serviceLabels map[string]string, labelSuffix string, defaultValue bool) bool {
+	if rawValue, ok := serviceLabels[labelSuffix]; ok {
 		value, err := strconv.ParseBool(rawValue)
 		if err == nil {
 			return value
@@ -191,14 +232,14 @@ func getServiceBoolLabel(container dockerData, serviceName string, labelSuffix s
 	return label.GetBoolValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
 }
 
-func getServiceIntLabel(container dockerData, serviceName string, labelSuffix string, defaultValue int) int {
-	if rawValue, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
-		value, err := strconv.Atoi(rawValue)
+func getServiceInt64Value(container dockerData, serviceLabels map[string]string, labelSuffix string, defaultValue int64) int64 {
+	if rawValue, ok := serviceLabels[labelSuffix]; ok {
+		value, err := strconv.ParseInt(rawValue, 10, 64)
 		if err == nil {
 			return value
 		}
 	}
-	return label.GetIntValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
+	return label.GetInt64Value(container.Labels, label.Prefix+labelSuffix, defaultValue)
 }
 
 func getServiceLabels(container dockerData, serviceName string) label.ServicePropertyValues {
