@@ -1,89 +1,86 @@
 [backends]
-{{range $backend := List .Prefix "/backends/"}}
-  {{$backendName := Last $backend}}
+{{range $backend := List .Prefix "/backends/" }}
+  {{ $backendName := Last $backend }}
 
-  {{$circuitBreaker := Get "" $backend "/circuitbreaker/expression"}}
-  {{with $circuitBreaker}}
-  [backends."{{$backendName}}".circuitBreaker]
-    expression = "{{$circuitBreaker}}"
+  {{ $circuitBreaker := getCircuitBreaker $backend }}
+  {{if $circuitBreaker }}
+  [backends."{{ $backendName }}".circuitBreaker]
+    expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
-  {{$loadBalancer := Get "" $backend "/loadbalancer/method"}}
-  {{with $loadBalancer}}
-  [backends."{{$backendName}}".loadBalancer]
-    method = "{{$loadBalancer}}"
-    sticky = {{ getSticky $backend }}
-    {{if hasStickinessLabel $backend}}
-    [backends."{{$backendName}}".loadBalancer.stickiness]
-      cookieName = "{{getStickinessCookieName $backend}}"
-    {{end}}
+  {{ $loadBalancer := getLoadBalancer $backend }}
+  {{if $loadBalancer }}
+    [backends."{{ $backendName }}".loadBalancer]
+      method = "{{ $loadBalancer.Method }}"
+      sticky = {{ $loadBalancer.Sticky }}
+      {{if $loadBalancer.Stickiness }}
+      [backends."{{ $backendName }}".loadBalancer.stickiness]
+        cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
+      {{end}}
   {{end}}
 
-  {{$maxConnAmt := Get "" $backend "/maxconn/amount"}}
-  {{$maxConnExtractorFunc := Get "" $backend "/maxconn/extractorfunc"}}
-  {{with $maxConnAmt}}
-  {{with $maxConnExtractorFunc}}
-  [backends."{{$backendName}}".maxConn]
-    amount = {{$maxConnAmt}}
-    extractorFunc = "{{$maxConnExtractorFunc}}"
-  {{end}}
+  {{ $maxConn := getMaxConn $backend }}
+  {{if $maxConn }}
+  [backends."{{ $backendName }}".maxConn]
+    extractorFunc = "{{ $maxConn.ExtractorFunc }}"
+    amount = {{ $maxConn.Amount }}
   {{end}}
 
-  {{$healthCheck := Get "" $backend "/healthcheck/path"}}
-  {{with $healthCheck}}
-  [backends."{{$backendName}}".healthCheck]
-    path = "{{$healthCheck}}"
-    port = {{ Get "0" $backend "/healthcheck/port" }}
-    interval = "{{ Get "30s" $backend "/healthcheck/interval" }}"
+  {{ $healthCheck := getHealthCheck $backend }}
+  {{if $healthCheck }}
+  [backends.{{ $backendName }}.healthCheck]
+    path = "{{ $healthCheck.Path }}"
+    port = {{ $healthCheck.Port }}
+    interval = "{{ $healthCheck.Interval }}"
   {{end}}
 
-  {{range $server := ListServers $backend}}
-  [backends."{{$backendName}}".servers."{{Last $server}}"]
-    url = "{{Get "" $server "/url"}}"
-    weight = {{Get "0"  $server "/weight"}}
+  {{range $serverName, $server := getServers $backend}}
+  [backends."{{ $backendName }}".servers."{{ $serverName }}"]
+    url = "{{ $server.URL }}"
+    weight = {{ $server.Weight }}
   {{end}}
 
 {{end}}
 
 [frontends]
 {{range $frontend := List .Prefix "/frontends/" }}
-  {{$frontendName := Last $frontend}}
+  {{ $frontendName := Last $frontend }}
 
-  [frontends."{{$frontendName}}"]
-    backend = "{{Get "" $frontend "/backend"}}"
-    priority = {{Get "0" $frontend "/priority"}}
-    passHostHeader = {{Get "true" $frontend "/passHostHeader"}}
-    passTLSCert = {{Get "false" $frontend "/passtlscert"}}
+  [frontends."{{ $frontendName }}"]
+    backend = "{{ getBackendName $frontend }}"
+    priority = {{ getPriority $frontend }}
+    passHostHeader = {{ getPassHostHeader $frontend }}
+    passTLSCert = {{ getPassTLSCert $frontend }}
 
-    {{$entryPoints := SplitGet $frontend "/entrypoints"}}
-    entryPoints = [{{range $entryPoints}}
+    entryPoints = [{{range getEntryPoints $frontend }}
       "{{.}}",
       {{end}}]
 
-    {{$whitelistSourceRange := SplitGet $frontend "/whitelistsourcerange"}}
-    whitelistSourceRange = [{{range $whitelistSourceRange}}
+    {{ $whitelistSourceRange := getWhitelistSourceRange $frontend }}
+    {{if $whitelistSourceRange }}
+    whitelistSourceRange = [{{range $whitelistSourceRange }}
+      "{{.}}",
+      {{end}}]
+    {{end}}
+
+    basicAuth = [{{range getBasicAuth $frontend }}
       "{{.}}",
       {{end}}]
 
-    {{$basicAuth := SplitGet $frontend "/basicauth"}}
-    basicAuth = [{{range $basicAuth}}
-      "{{.}}",
-      {{end}}]
-
-    {{$redirect := getRedirect $frontend }}
-    {{ if $redirect }}
-    [frontends."{{$frontendName}}".redirect]
+    {{ $redirect := getRedirect $frontend }}
+    {{if $redirect }}
+    [frontends."{{ $frontendName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
     {{end}}
 
     {{ $errorPages := getErrorPages $frontend }}
-    {{ if $errorPages }}
-    [frontends."{{$frontendName}}".errors]
-      {{ range $pageName, $page := $errorPages }}
+    {{if $errorPages }}
+    [frontends."{{ $frontendName }}".errors]
+      {{range $pageName, $page := $errorPages }}
       [frontends."{{$frontendName}}".errors.{{ $pageName }}]
-        status = [{{range $page.Status}}
+        status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
         backend = "{{$page.Backend}}"
@@ -92,12 +89,12 @@
     {{end}}
 
     {{ $rateLimit := getRateLimit $frontend }}
-    {{ if $rateLimit }}
-    [frontends."{{$frontendName}}".rateLimit]
+    {{if $rateLimit }}
+    [frontends."{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
-      [frontends."{{$frontendName}}".rateLimit.rateSet]
-        {{ range $limitName, $rateLimit := $rateLimit.RateSet }}
-        [frontends."{{$frontendName}}".rateLimit.rateSet.{{ $limitName }}]
+      [frontends."{{ $frontendName }}".rateLimit.rateSet]
+        {{range $limitName, $rateLimit := $rateLimit.RateSet }}
+        [frontends."{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
           period = "{{ $rateLimit.Period }}"
           average = {{ $rateLimit.Average }}
           burst = {{ $rateLimit.Burst }}
@@ -105,7 +102,7 @@
     {{end}}
 
     {{ $headers := getHeaders $frontend }}
-    {{ if $headers }}
+    {{if $headers }}
     [frontends."{{ $frontendName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
@@ -123,33 +120,33 @@
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
 
-      {{ if $headers.AllowedHosts }}
-      AllowedHosts = [{{ range $headers.AllowedHosts }}
+      {{if $headers.AllowedHosts }}
+      AllowedHosts = [{{range $headers.AllowedHosts }}
         "{{.}}",
         {{end}}]
       {{end}}
 
-      {{ if $headers.HostsProxyHeaders }}
-      HostsProxyHeaders = [{{ range $headers.HostsProxyHeaders }}
+      {{if $headers.HostsProxyHeaders }}
+      HostsProxyHeaders = [{{range $headers.HostsProxyHeaders }}
         "{{.}}",
         {{end}}]
       {{end}}
 
-      {{ if $headers.CustomRequestHeaders }}
+      {{if $headers.CustomRequestHeaders }}
       [frontends."{{ $frontendName }}".headers.customRequestHeaders]
-        {{ range $k, $v := $headers.CustomRequestHeaders }}
+        {{range $k, $v := $headers.CustomRequestHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
-      {{ if $headers.CustomResponseHeaders }}
+      {{if $headers.CustomResponseHeaders }}
       [frontends."{{ $frontendName }}".headers.customResponseHeaders]
-        {{ range $k, $v := $headers.CustomResponseHeaders }}
+        {{range $k, $v := $headers.CustomResponseHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
-      {{ if $headers.SSLProxyHeaders }}
+      {{if $headers.SSLProxyHeaders }}
       [frontends."{{ $frontendName }}".headers.SSLProxyHeaders]
         {{range $k, $v := $headers.SSLProxyHeaders}}
         {{$k}} = "{{$v}}"
@@ -157,24 +154,22 @@
       {{end}}
     {{end}}
 
-    {{range $route := List $frontend "/routes/"}}
-    [frontends."{{$frontendName}}".routes."{{Last $route}}"]
-      rule = "{{Get "" $route "/rule"}}"
+    {{range $routeName, $route := getRoutes $frontend }}
+    [frontends."{{ $frontendName }}".routes."{{ $routeName }}"]
+      rule = "{{ $route.Rule }}"
     {{end}}
 
 {{end}}
 
-{{range $tlsConfiguration := List .Prefix "/tlsconfiguration/"}}
-
+{{range $tlsConfiguration := getTLSConfigurations .Prefix }}
 [[tlsConfiguration]]
 
-  {{$entryPoints := SplitGet $tlsConfiguration "/entrypoints"}}
-  entryPoints = [{{range $entryPoints}}
+  entryPoints = [{{range $tlsConfiguration.EntryPoints }}
     "{{.}}",
     {{end}}]
 
   [tlsConfiguration.certificate]
-    certFile = """{{Get "" $tlsConfiguration "/certificate/certfile"}}"""
-    keyFile = """{{Get "" $tlsConfiguration "/certificate/keyfile"}}"""
+    certFile = """{{ $tlsConfiguration.Certificate.CertFile }}"""
+    keyFile = """{{ $tlsConfiguration.Certificate.KeyFile }}"""
 
 {{end}}
