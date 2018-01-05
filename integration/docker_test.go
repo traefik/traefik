@@ -184,7 +184,7 @@ func (s *DockerSuite) TestDockerContainersWithOneMissingLabels(c *check.C) {
 	defer os.Remove(file)
 	// Start a container with some labels
 	labels := map[string]string{
-		label.TraefikFrontendValue: "my.super.host",
+		"traefik.frontend.value": "my.super.host",
 	}
 	s.startContainerWithLabels(c, "swarm:1.0.0", labels, "manage", "token://blabla")
 

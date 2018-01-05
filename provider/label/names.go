@@ -59,7 +59,6 @@ const (
 	SuffixFrontendRule                             = "frontend.rule"
 	SuffixFrontendRuleType                         = "frontend.rule.type"
 	SuffixFrontendWhitelistSourceRange             = "frontend.whitelistSourceRange"
-	SuffixFrontendValue                            = "frontend.value"
 	TraefikDomain                                  = Prefix + SuffixDomain
 	TraefikEnable                                  = Prefix + SuffixEnable
 	TraefikPort                                    = Prefix + SuffixPort
@@ -69,7 +68,7 @@ const (
 	TraefikWeight                                  = Prefix + SuffixWeight
 	TraefikBackend                                 = Prefix + SuffixBackend
 	TraefikBackendID                               = Prefix + SuffixBackendID
-	TraefikBackendCircuitBreaker                   = Prefix + SuffixBackendCircuitBreaker // TODO suppress ?
+	TraefikBackendCircuitBreaker                   = Prefix + SuffixBackendCircuitBreaker
 	TraefikBackendCircuitBreakerExpression         = Prefix + SuffixBackendCircuitBreakerExpression
 	TraefikBackendHealthCheckPath                  = Prefix + SuffixBackendHealthCheckPath
 	TraefikBackendHealthCheckPort                  = Prefix + SuffixBackendHealthCheckPort
@@ -81,7 +80,7 @@ const (
 	TraefikBackendLoadBalancerStickinessCookieName = Prefix + SuffixBackendLoadBalancerStickinessCookieName
 	TraefikBackendMaxConnAmount                    = Prefix + SuffixBackendMaxConnAmount
 	TraefikBackendMaxConnExtractorFunc             = Prefix + SuffixBackendMaxConnExtractorFunc
-	TraefikFrontend                                = Prefix + SuffixFrontend // TODO rename to TraefikPrefixFrontend
+	TraefikFrontend                                = Prefix + SuffixFrontend
 	TraefikFrontendAuthBasic                       = Prefix + SuffixFrontendAuthBasic
 	TraefikFrontendEntryPoints                     = Prefix + SuffixFrontendEntryPoints
 	TraefikFrontendPassHostHeader                  = Prefix + SuffixFrontendPassHostHeader
@@ -92,10 +91,9 @@ const (
 	TraefikFrontendRedirectRegex                   = Prefix + SuffixFrontendRedirectRegex
 	TraefikFrontendRedirectReplacement             = Prefix + SuffixFrontendRedirectReplacement
 	TraefikFrontendRule                            = Prefix + SuffixFrontendRule
-	TraefikFrontendRuleType                        = Prefix + SuffixFrontendRuleType // TODO k8s only
-	TraefikFrontendValue                           = Prefix + SuffixFrontendValue    // FIXME REMOVE
+	TraefikFrontendRuleType                        = Prefix + SuffixFrontendRuleType // k8s only
 	TraefikFrontendWhitelistSourceRange            = Prefix + SuffixFrontendWhitelistSourceRange
-	TraefikFrontendHeaders                         = Prefix + SuffixFrontendHeaders // TODO REMOVE after
+	TraefikFrontendHeaders                         = Prefix + SuffixFrontendHeaders
 	TraefikFrontendRequestHeaders                  = Prefix + SuffixFrontendRequestHeaders
 	TraefikFrontendResponseHeaders                 = Prefix + SuffixFrontendResponseHeaders
 	TraefikFrontendAllowedHosts                    = Prefix + SuffixFrontendHeadersAllowedHosts
