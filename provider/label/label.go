@@ -20,10 +20,13 @@ const (
 // Default values
 const (
 	DefaultWeight                                  = "0" // TODO [breaking] use int value
+	DefaultWeightInt                               = 0   // TODO rename to DefaultWeight
 	DefaultProtocol                                = "http"
 	DefaultPassHostHeader                          = "true" // TODO [breaking] use bool value
+	DefaultPassHostHeaderBool                      = true   // TODO rename to DefaultPassHostHeader
 	DefaultPassTLSCert                             = false
 	DefaultFrontendPriority                        = "0" // TODO [breaking] int value
+	DefaultFrontendPriorityInt                     = 0   // TODO rename to DefaultFrontendPriority
 	DefaultCircuitBreakerExpression                = "NetworkErrorRatio() > 1"
 	DefaultFrontendRedirectEntryPoint              = ""
 	DefaultBackendLoadBalancerMethod               = "wrr"

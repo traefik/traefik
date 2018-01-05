@@ -14,12 +14,13 @@ import (
 func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
 		"getDomain":        getFuncStringLabel(label.TraefikDomain, p.Domain),
+		"getSubDomain":     getSubDomain,
 		"isBackendLBSwarm": isBackendLBSwarm, // FIXME dead ?
 
 		// Backend functions
 		"getIPAddress":      p.getIPAddress,
 		"getPort":           getPort,
-		"getWeight":         getFuncStringLabel(label.TraefikWeight, label.DefaultWeight),
+		"getWeight":         getFuncIntLabel(label.TraefikWeight, label.DefaultWeightInt),
 		"getProtocol":       getFuncStringLabel(label.TraefikProtocol, label.DefaultProtocol),
 		"getMaxConn":        getMaxConn,
 		"getHealthCheck":    getHealthCheck,
@@ -49,8 +50,8 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 
 		// Frontend functions
 		"getBackend":              getBackend,
-		"getPriority":             getFuncStringLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader":       getFuncStringLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPriority":             getFuncIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader":       getFuncBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getPassTLSCert":          getFuncBoolLabel(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":          getFuncSliceStringLabel(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":            getFuncSliceStringLabel(label.TraefikFrontendAuthBasic),
@@ -75,9 +76,9 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getServiceWhitelistSourceRange": getFuncServiceSliceStringLabel(label.SuffixFrontendWhitelistSourceRange),
 		"getServiceBasicAuth":            getFuncServiceSliceStringLabel(label.SuffixFrontendAuthBasic),
 		"getServiceFrontendRule":         p.getServiceFrontendRule,
-		"getServicePassHostHeader":       getFuncServiceStringLabel(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getServicePassHostHeader":       getFuncServiceBoolLabel(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getServicePassTLSCert":          getFuncServiceBoolLabel(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getServicePriority":             getFuncServiceStringLabel(label.SuffixFrontendPriority, label.DefaultFrontendPriority),
+		"getServicePriority":             getFuncServiceIntLabel(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
 
 		"getServiceRedirect":   getServiceRedirect,
 		"getServiceErrorPages": getServiceErrorPages,

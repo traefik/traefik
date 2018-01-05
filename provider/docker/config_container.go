@@ -319,6 +319,12 @@ func getFuncSliceStringLabel(labelName string) func(container dockerData) []stri
 	}
 }
 
+func getFuncIntLabel(labelName string, defaultValue int) func(container dockerData) int {
+	return func(container dockerData) int {
+		return label.GetIntValue(container.Labels, labelName, defaultValue)
+	}
+}
+
 func getFuncInt64Label(labelName string, defaultValue int64) func(container dockerData) int64 {
 	return func(container dockerData) int64 {
 		return label.GetInt64Value(container.Labels, labelName, defaultValue)

@@ -188,6 +188,12 @@ func getFuncServiceBoolLabel(labelSuffix string, defaultValue bool) func(contain
 	}
 }
 
+func getFuncServiceIntLabel(labelSuffix string, defaultValue int) func(container dockerData, serviceName string) int {
+	return func(container dockerData, serviceName string) int {
+		return getServiceIntLabel(container, serviceName, labelSuffix, defaultValue)
+	}
+}
+
 func hasStrictServiceLabel(serviceLabels map[string]string, labelSuffix string) bool {
 	value, ok := serviceLabels[labelSuffix]
 	return ok && len(value) > 0
@@ -230,6 +236,16 @@ func getServiceBoolValue(container dockerData, serviceLabels map[string]string, 
 		}
 	}
 	return label.GetBoolValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
+}
+
+func getServiceIntLabel(container dockerData, serviceName string, labelSuffix string, defaultValue int) int {
+	if rawValue, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
+		value, err := strconv.Atoi(rawValue)
+		if err == nil {
+			return value
+		}
+	}
+	return label.GetIntValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
 }
 
 func getServiceInt64Value(container dockerData, serviceLabels map[string]string, labelSuffix string, defaultValue int64) int64 {
