@@ -75,7 +75,7 @@ type SaveNegroniFrontend struct {
 	frontendName string
 }
 
-// NewSaveNegroniFrontend creates a SaveFrontend handler.
+// NewSaveNegroniFrontend creates a SaveNegroniFrontend handler.
 func NewSaveNegroniFrontend(next negroni.Handler, frontendName string) negroni.Handler {
 	return &SaveNegroniFrontend{next, frontendName}
 }
@@ -88,3 +88,33 @@ func (sb *SaveNegroniFrontend) ServeHTTP(rw http.ResponseWriter, r *http.Request
 }
 
 //-------------------------------------------------------------------------------------------------
+// SaveNegroniBackend sends the backend name to the logger. These are always used with a corresponding
+// SaveNegroniFrontend handler.
+type SaveNegroniBackend struct {
+	next        negroni.Handler
+	backendName string
+}
+
+// NewSaveNegroniBackend creates a SaveBackend handler.
+func NewSaveNegroniBackend(next negroni.Handler, backendName string) negroni.Handler {
+	return &SaveNegroniBackend{next, backendName}
+}
+
+func (sb *SaveNegroniBackend) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	table := GetLogDataTable(r)
+	table.Core[BackendName] = sb.backendName
+
+	crw := &captureResponseWriter{rw: rw}
+	start := time.Now().UTC()
+
+	sb.next.ServeHTTP(crw, r, next)
+
+	// use UTC to handle switchover of daylight saving correctly
+	table.Core[OriginDuration] = time.Now().UTC().Sub(start)
+	table.Core[OriginStatus] = crw.Status()
+	table.Core[OriginStatusLine] = fmt.Sprintf("%03d %s", crw.Status(), http.StatusText(crw.Status()))
+	// make copy of headers so we can ensure there is no subsequent mutation during response processing
+	table.OriginResponse = make(http.Header)
+	utils.CopyHeaders(table.OriginResponse, crw.Header())
+	table.Core[OriginContentSize] = crw.Size()
+}
