@@ -273,8 +273,35 @@ Instead, the query parameter can also be set to some generic error page like so:
 Now the `500s.html` error page is returned for the configured code range.
 The configured status code ranges are inclusive; that is, in the above example, the `500s.html` page will be returned for status codes `500` through, and including, `599`.
 
-Custom error pages are easiest to implement using the file provider.
-For dynamic providers, the corresponding template file needs to be customized accordingly and referenced in the Traefik configuration.
+
+## Rate limiting
+
+Rate limiting can be configured per frontend.  
+Multiple sets of rates can be added to each frontend, but the time periods must be unique.
+
+```toml
+[frontends]
+    [frontends.frontend1]
+    passHostHeader = true
+    entrypoints = ["http"]
+    backend = "backend1"
+        [frontends.frontend1.routes.test_1]
+        rule = "Path:/"
+    [frontends.frontend1.ratelimit]
+    extractorfunc = "client.ip"
+        [frontends.frontend1.ratelimit.rateset.rateset1]
+        period = "10s"
+        average = 100
+        burst = 200
+        [frontends.frontend1.ratelimit.rateset.rateset2]
+        period = "3s"
+        average = 5
+        burst = 10
+```
+
+In the above example, frontend1 is configured to limit requests by the client's ip address.  
+An average of 5 requests every 3 seconds is allowed and an average of 100 requests every 10 seconds.  
+These can "burst" up to 10 and 200 in each period respectively.
 
 
 ## Retry Configuration

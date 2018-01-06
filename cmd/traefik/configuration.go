@@ -11,6 +11,7 @@ import (
 	"github.com/containous/traefik/ping"
 	"github.com/containous/traefik/provider/boltdb"
 	"github.com/containous/traefik/provider/consul"
+	"github.com/containous/traefik/provider/consulcatalog"
 	"github.com/containous/traefik/provider/docker"
 	"github.com/containous/traefik/provider/dynamodb"
 	"github.com/containous/traefik/provider/ecs"
@@ -94,7 +95,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	defaultConsul.Constraints = types.Constraints{}
 
 	// default CatalogProvider
-	var defaultConsulCatalog consul.CatalogProvider
+	var defaultConsulCatalog consulcatalog.Provider
 	defaultConsulCatalog.Endpoint = "127.0.0.1:8500"
 	defaultConsulCatalog.ExposedByDefault = true
 	defaultConsulCatalog.Constraints = types.Constraints{}
@@ -112,7 +113,7 @@ func NewTraefikDefaultPointersConfiguration() *TraefikConfiguration {
 	var defaultZookeeper zk.Provider
 	defaultZookeeper.Watch = true
 	defaultZookeeper.Endpoint = "127.0.0.1:2181"
-	defaultZookeeper.Prefix = "/traefik"
+	defaultZookeeper.Prefix = "traefik"
 	defaultZookeeper.Constraints = types.Constraints{}
 
 	//default Boltdb

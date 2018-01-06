@@ -17,16 +17,14 @@ var myHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 // newHeader constructs a new header instance with supplied options.
 func newHeader(options ...HeaderOptions) *HeaderStruct {
-	var o HeaderOptions
+	var opt HeaderOptions
 	if len(options) == 0 {
-		o = HeaderOptions{}
+		opt = HeaderOptions{}
 	} else {
-		o = options[0]
+		opt = options[0]
 	}
 
-	return &HeaderStruct{
-		opt: o,
-	}
+	return &HeaderStruct{opt: opt}
 }
 
 func TestNoConfig(t *testing.T) {

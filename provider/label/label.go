@@ -7,7 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/log"
+	"github.com/containous/traefik/types"
 )
 
 const (
@@ -20,20 +22,36 @@ const (
 	DefaultWeight                                  = "0"
 	DefaultProtocol                                = "http"
 	DefaultPassHostHeader                          = "true"
+	DefaultPassTLSCert                             = false
 	DefaultFrontendPriority                        = "0"
 	DefaultCircuitBreakerExpression                = "NetworkErrorRatio() > 1"
 	DefaultFrontendRedirectEntryPoint              = ""
 	DefaultBackendLoadBalancerMethod               = "wrr"
 	DefaultBackendMaxconnExtractorFunc             = "request.host"
 	DefaultBackendLoadbalancerStickinessCookieName = ""
+	DefaultBackendHealthCheckPort                  = 0
 )
 
-// ServicesPropertiesRegexp used to extract the name of the service and the name of the property for this service
-// All properties are under the format traefik.<servicename>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<servicename>.
-var ServicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.+))$`)
+var (
+	// ServicesPropertiesRegexp used to extract the name of the service and the name of the property for this service
+	// All properties are under the format traefik.<servicename>.frontend.*= except the port/portIndex/weight/protocol/backend directly after traefik.<servicename>.
+	ServicesPropertiesRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.(?P<property_name>port|portIndex|weight|protocol|backend|frontend\.(.+))$`)
 
-// PortRegexp used to extract the port label of the service
-var PortRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.port$`)
+	// PortRegexp used to extract the port label of the service
+	PortRegexp = regexp.MustCompile(`^traefik\.(?P<service_name>.+?)\.port$`)
+
+	// RegexpBaseFrontendErrorPage used to extract error pages from service's label
+	RegexpBaseFrontendErrorPage = regexp.MustCompile(`^frontend\.errors\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
+
+	// RegexpFrontendErrorPage used to extract error pages from label
+	RegexpFrontendErrorPage = regexp.MustCompile(`^traefik\.frontend\.errors\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
+
+	// RegexpBaseFrontendRateLimit used to extract rate limits from service's label
+	RegexpBaseFrontendRateLimit = regexp.MustCompile(`^frontend\.rateLimit\.rateSet\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
+
+	// RegexpFrontendRateLimit used to extract rate limits from label
+	RegexpFrontendRateLimit = regexp.MustCompile(`^traefik\.frontend\.rateLimit\.rateSet\.(?P<name>[^ .]+)\.(?P<field>[^ .]+)$`)
+)
 
 // ServicePropertyValues is a map of services properties
 // an example value is: weight=42
@@ -198,13 +216,23 @@ func HasP(labels *map[string]string, labelName string) bool {
 	return Has(*labels, labelName)
 }
 
+// HasPrefix Check if a value is associated to a less one label with a prefix
+func HasPrefix(labels map[string]string, prefix string) bool {
+	for name, value := range labels {
+		if strings.HasPrefix(name, prefix) && len(value) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
 // ExtractServiceProperties Extract services labels
 func ExtractServiceProperties(labels map[string]string) ServiceProperties {
 	v := make(ServiceProperties)
 
 	for name, value := range labels {
 		matches := ServicesPropertiesRegexp.FindStringSubmatch(name)
-		if matches == nil {
+		if matches == nil || strings.HasPrefix(name, TraefikFrontend) {
 			continue
 		}
 
@@ -235,6 +263,103 @@ func ExtractServicePropertiesP(labels *map[string]string) ServiceProperties {
 		return make(ServiceProperties)
 	}
 	return ExtractServiceProperties(*labels)
+}
+
+// ParseErrorPages parse error pages to create ErrorPage struct
+func ParseErrorPages(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.ErrorPage {
+	var errorPages map[string]*types.ErrorPage
+
+	for lblName, value := range labels {
+		if strings.HasPrefix(lblName, labelPrefix) {
+			submatch := labelRegex.FindStringSubmatch(lblName)
+			if len(submatch) != 3 {
+				log.Errorf("Invalid page error label: %s, sub-match: %v", lblName, submatch)
+				continue
+			}
+
+			if errorPages == nil {
+				errorPages = make(map[string]*types.ErrorPage)
+			}
+
+			pageName := submatch[1]
+
+			ep, ok := errorPages[pageName]
+			if !ok {
+				ep = &types.ErrorPage{}
+				errorPages[pageName] = ep
+			}
+
+			switch submatch[2] {
+			case SuffixErrorPageStatus:
+				ep.Status = SplitAndTrimString(value, ",")
+			case SuffixErrorPageQuery:
+				ep.Query = value
+			case SuffixErrorPageBackend:
+				ep.Backend = value
+			default:
+				log.Errorf("Invalid page error label: %s", lblName)
+				continue
+			}
+		}
+	}
+
+	return errorPages
+}
+
+// ParseRateSets parse rate limits to create Rate struct
+func ParseRateSets(labels map[string]string, labelPrefix string, labelRegex *regexp.Regexp) map[string]*types.Rate {
+	var rateSets map[string]*types.Rate
+
+	for lblName, rawValue := range labels {
+		if strings.HasPrefix(lblName, labelPrefix) && len(rawValue) > 0 {
+			submatch := labelRegex.FindStringSubmatch(lblName)
+			if len(submatch) != 3 {
+				log.Errorf("Invalid rate limit label: %s, sub-match: %v", lblName, submatch)
+				continue
+			}
+
+			if rateSets == nil {
+				rateSets = make(map[string]*types.Rate)
+			}
+
+			limitName := submatch[1]
+
+			ep, ok := rateSets[limitName]
+			if !ok {
+				ep = &types.Rate{}
+				rateSets[limitName] = ep
+			}
+
+			switch submatch[2] {
+			case "period":
+				var d flaeg.Duration
+				err := d.Set(rawValue)
+				if err != nil {
+					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
+					continue
+				}
+				ep.Period = d
+			case "average":
+				value, err := strconv.ParseInt(rawValue, 10, 64)
+				if err != nil {
+					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
+					continue
+				}
+				ep.Average = value
+			case "burst":
+				value, err := strconv.ParseInt(rawValue, 10, 64)
+				if err != nil {
+					log.Errorf("Unable to parse %q: %q. %v", lblName, rawValue, err)
+					continue
+				}
+				ep.Burst = value
+			default:
+				log.Errorf("Invalid rate limit label: %s", lblName)
+				continue
+			}
+		}
+	}
+	return rateSets
 }
 
 // IsEnabled Check if a container is enabled in Træfik

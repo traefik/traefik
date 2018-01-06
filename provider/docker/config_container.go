@@ -8,6 +8,7 @@ import (
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/types"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -172,6 +173,29 @@ func hasRedirect(container dockerData) bool {
 		label.Has(container.Labels, label.TraefikFrontendRedirectReplacement) && label.Has(container.Labels, label.TraefikFrontendRedirectRegex)
 }
 
+func hasErrorPages(container dockerData) bool {
+	return label.HasPrefix(container.Labels, label.Prefix+label.BaseFrontendErrorPage)
+}
+
+func getErrorPages(container dockerData) map[string]*types.ErrorPage {
+	prefix := label.Prefix + label.BaseFrontendErrorPage
+	return label.ParseErrorPages(container.Labels, prefix, label.RegexpFrontendErrorPage)
+}
+
+func getRateLimits(container dockerData) map[string]*types.Rate {
+	prefix := label.Prefix + label.BaseFrontendRateLimit
+	return label.ParseRateSets(container.Labels, prefix, label.RegexpFrontendRateLimit)
+}
+
+func hasHeaders(container dockerData) bool {
+	for key := range container.Labels {
+		if strings.HasPrefix(key, label.TraefikFrontendHeaders) {
+			return true
+		}
+	}
+	return false
+}
+
 // Label functions
 
 func getFuncInt64Label(labelName string, defaultValue int64) func(container dockerData) int64 {
@@ -189,6 +213,12 @@ func getFuncMapLabel(labelName string) func(container dockerData) map[string]str
 func getFuncStringLabel(labelName string, defaultValue string) func(container dockerData) string {
 	return func(container dockerData) string {
 		return label.GetStringValue(container.Labels, labelName, defaultValue)
+	}
+}
+
+func getFuncIntLabel(labelName string, defaultValue int) func(container dockerData) int {
+	return func(container dockerData) int {
+		return label.GetIntValue(container.Labels, labelName, defaultValue)
 	}
 }
 

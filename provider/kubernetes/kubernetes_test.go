@@ -138,18 +138,21 @@ func TestLoadIngresses(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
+				headers(),
 				passHostHeader(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
 			),
 			frontend("foo/namedthing",
+				headers(),
 				passHostHeader(),
 				routes(
 					route("/namedthing", "PathPrefix:/namedthing"),
 					route("foo", "Host:foo")),
 			),
 			frontend("bar",
+				headers(),
 				passHostHeader(),
 				routes(route("bar", "Host:bar")),
 			),
@@ -223,6 +226,7 @@ func TestRuleType(t *testing.T) {
 			require.NoError(t, err, "error loading ingresses")
 
 			expected := buildFrontends(frontend("host/path",
+				headers(),
 				routes(
 					route("/path", fmt.Sprintf("%s:/path", test.frontendRuleType)),
 					route("host", "Host:host")),
@@ -268,6 +272,7 @@ func TestGetPassHostHeader(t *testing.T) {
 		backends(backend("foo/bar", lbMethod("wrr"), servers())),
 		frontends(
 			frontend("foo/bar",
+				headers(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
@@ -311,6 +316,7 @@ func TestGetPassTLSCert(t *testing.T) {
 	expected := buildConfiguration(
 		backends(backend("foo/bar", lbMethod("wrr"), servers())),
 		frontends(frontend("foo/bar",
+			headers(),
 			passHostHeader(),
 			passTLSCert(),
 			routes(
@@ -365,6 +371,7 @@ func TestOnlyReferencesServicesFromOwnNamespace(t *testing.T) {
 	expected := buildConfiguration(
 		backends(backend("foo", lbMethod("wrr"), servers())),
 		frontends(frontend("foo",
+			headers(),
 			passHostHeader(),
 			routes(route("foo", "Host:foo")),
 		)),
@@ -406,7 +413,9 @@ func TestHostlessIngress(t *testing.T) {
 
 	expected := buildConfiguration(
 		backends(backend("/bar", lbMethod("wrr"), servers())),
-		frontends(frontend("/bar", routes(route("/bar", "PathPrefix:/bar")))),
+		frontends(frontend("/bar",
+			headers(),
+			routes(route("/bar", "PathPrefix:/bar")))),
 	)
 
 	assert.Equal(t, expected, actual)
@@ -504,12 +513,14 @@ func TestServiceAnnotations(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
+				headers(),
 				passHostHeader(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
 			),
 			frontend("bar",
+				headers(),
 				passHostHeader(),
 				routes(route("bar", "Host:bar"))),
 		),
@@ -713,17 +724,20 @@ func TestIngressAnnotations(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
+				headers(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
 					route("foo", "Host:foo")),
 			),
 			frontend("other/stuff",
+				headers(),
 				passHostHeader(),
 				routes(
 					route("/stuff", "PathPrefix:/stuff"),
 					route("other", "Host:other")),
 			),
 			frontend("other/",
+				headers(),
 				passHostHeader(),
 				entryPoints("http", "https"),
 				routes(
@@ -731,6 +745,7 @@ func TestIngressAnnotations(t *testing.T) {
 					route("other", "Host:other")),
 			),
 			frontend("other/sslstuff",
+				headers(),
 				passHostHeader(),
 				passTLSCert(),
 				routes(
@@ -738,6 +753,7 @@ func TestIngressAnnotations(t *testing.T) {
 					route("other", "Host:other")),
 			),
 			frontend("other/sslstuff",
+				headers(),
 				passHostHeader(),
 				passTLSCert(),
 				routes(
@@ -745,6 +761,7 @@ func TestIngressAnnotations(t *testing.T) {
 					route("other", "Host:other")),
 			),
 			frontend("basic/auth",
+				headers(),
 				passHostHeader(),
 				basicAuth("myUser:myEncodedPW"),
 				routes(
@@ -752,6 +769,7 @@ func TestIngressAnnotations(t *testing.T) {
 					route("basic", "Host:basic")),
 			),
 			frontend("redirect/https",
+				headers(),
 				passHostHeader(),
 				redirectEntryPoint("https"),
 				routes(
@@ -759,6 +777,7 @@ func TestIngressAnnotations(t *testing.T) {
 					route("redirect", "Host:redirect")),
 			),
 			frontend("test/whitelist-source-range",
+				headers(),
 				passHostHeader(),
 				whitelistSourceRange("1.1.1.1/24", "1234:abcd::42/32"),
 				routes(
@@ -766,6 +785,7 @@ func TestIngressAnnotations(t *testing.T) {
 					route("test", "Host:test")),
 			),
 			frontend("rewrite/api",
+				headers(),
 				passHostHeader(),
 				routes(
 					route("/api", "PathPrefix:/api;ReplacePath:/"),
@@ -825,6 +845,7 @@ func TestPriorityHeaderValue(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
+				headers(),
 				passHostHeader(),
 				priority(1337),
 				routes(
@@ -883,6 +904,7 @@ func TestInvalidPassTLSCertValue(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
+				headers(),
 				passHostHeader(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
@@ -940,6 +962,7 @@ func TestInvalidPassHostHeaderValue(t *testing.T) {
 		),
 		frontends(
 			frontend("foo/bar",
+				headers(),
 				passHostHeader(),
 				routes(
 					route("/bar", "PathPrefix:/bar"),
@@ -1113,14 +1136,17 @@ func TestMissingResources(t *testing.T) {
 		),
 		frontends(
 			frontend("fully_working",
+				headers(),
 				passHostHeader(),
 				routes(route("fully_working", "Host:fully_working")),
 			),
 			frontend("missing_endpoints",
+				headers(),
 				passHostHeader(),
 				routes(route("missing_endpoints", "Host:missing_endpoints")),
 			),
 			frontend("missing_endpoint_subsets",
+				headers(),
 				passHostHeader(),
 				routes(route("missing_endpoint_subsets", "Host:missing_endpoint_subsets")),
 			),

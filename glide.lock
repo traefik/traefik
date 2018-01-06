@@ -1,4 +1,4 @@
-hash: f0d5ef854a4c115306c63c15320b595c29f715950eaf5f18418149886ecda400
+hash: d7f811ac4a011308c6e1f73b618215dee90dae6cace9511f66d4b63d916a337a
 updated: 2017-12-15T10:34:41.246378337+01:00
 imports:
 - name: cloud.google.com/go
@@ -94,7 +94,7 @@ imports:
 - name: github.com/containous/staert
   version: af517d5b70db9c4b0505e0144fcc62b054057d2a
 - name: github.com/containous/traefik-extra-service-fabric
-  version: c01c1ef60ed612c5e42c1ceae0c6f92e67619cc3
+  version: ca1fb57108293caad285b1c366b763f6c6ab71c9
 - name: github.com/coreos/bbolt
   version: 3c6cbfb299c11444eb2f8c9d48f0d2ce09157423
 - name: github.com/coreos/etcd
@@ -261,7 +261,7 @@ imports:
 - name: github.com/fatih/color
   version: 62e9147c64a1ed519147b62a56a14e83e2be02c1
 - name: github.com/gambol99/go-marathon
-  version: dd6cbd4c2d71294a19fb89158f2a00d427f174ab
+  version: 03b46169666c53b9cc953b875ac5714e5103e064
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini

@@ -7,6 +7,7 @@ import (
 
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/types"
 )
 
 // Specific functions
@@ -50,7 +51,8 @@ func checkServiceLabelPort(container dockerData) error {
 			}
 			// Get only one instance of all service names from service labels
 			servicesLabelNames := label.ServicesPropertiesRegexp.FindStringSubmatch(lbl)
-			if len(servicesLabelNames) > 0 {
+
+			if len(servicesLabelNames) > 0 && !strings.HasPrefix(lbl, label.TraefikFrontend) {
 				serviceLabels[strings.Split(servicesLabelNames[0], ".")[1]] = struct{}{}
 			}
 		}
@@ -73,9 +75,9 @@ func checkServiceLabelPort(container dockerData) error {
 // Extract backend from labels for a given service and a given docker container
 func getServiceBackend(container dockerData, serviceName string) string {
 	if value, ok := getServiceLabels(container, serviceName)[label.SuffixFrontendBackend]; ok {
-		return container.ServiceName + "-" + value
+		return provider.Normalize(container.ServiceName + "-" + value)
 	}
-	return strings.TrimPrefix(container.ServiceName, "/") + "-" + getBackend(container) + "-" + provider.Normalize(serviceName)
+	return provider.Normalize(container.ServiceName + "-" + getBackend(container) + "-" + serviceName)
 }
 
 // Extract port from labels for a given service and a given docker container
@@ -96,6 +98,21 @@ func hasServiceRedirect(container dockerData, serviceName string) bool {
 		label.Has(serviceLabels, label.SuffixFrontendRedirectRegex) && label.Has(serviceLabels, label.SuffixFrontendRedirectReplacement)
 }
 
+func hasServiceErrorPages(container dockerData, serviceName string) bool {
+	serviceLabels := getServiceLabels(container, serviceName)
+	return label.HasPrefix(serviceLabels, label.BaseFrontendErrorPage)
+}
+
+func getServiceErrorPages(container dockerData, serviceName string) map[string]*types.ErrorPage {
+	serviceLabels := getServiceLabels(container, serviceName)
+	return label.ParseErrorPages(serviceLabels, label.BaseFrontendErrorPage, label.RegexpBaseFrontendErrorPage)
+}
+
+func getServiceRateLimits(container dockerData, serviceName string) map[string]*types.Rate {
+	serviceLabels := getServiceLabels(container, serviceName)
+	return label.ParseRateSets(serviceLabels, label.BaseFrontendRateLimit, label.RegexpBaseFrontendRateLimit)
+}
+
 // Service label functions
 
 func getFuncServiceMapLabel(labelSuffix string) func(container dockerData, serviceName string) map[string]string {
@@ -113,6 +130,18 @@ func getFuncServiceSliceStringLabel(labelSuffix string) func(container dockerDat
 func getFuncServiceStringLabel(labelSuffix string, defaultValue string) func(container dockerData, serviceName string) string {
 	return func(container dockerData, serviceName string) string {
 		return getServiceStringLabel(container, serviceName, labelSuffix, defaultValue)
+	}
+}
+
+func getFuncServiceBoolLabel(labelSuffix string, defaultValue bool) func(container dockerData, serviceName string) bool {
+	return func(container dockerData, serviceName string) bool {
+		return getServiceBoolLabel(container, serviceName, labelSuffix, defaultValue)
+	}
+}
+
+func getFuncServiceIntLabel(labelSuffix string, defaultValue int) func(container dockerData, serviceName string) int {
+	return func(container dockerData, serviceName string) int {
+		return getServiceIntLabel(container, serviceName, labelSuffix, defaultValue)
 	}
 }
 
@@ -150,6 +179,26 @@ func getServiceStringLabel(container dockerData, serviceName string, labelSuffix
 		return value
 	}
 	return label.GetStringValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
+}
+
+func getServiceBoolLabel(container dockerData, serviceName string, labelSuffix string, defaultValue bool) bool {
+	if rawValue, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
+		value, err := strconv.ParseBool(rawValue)
+		if err == nil {
+			return value
+		}
+	}
+	return label.GetBoolValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
+}
+
+func getServiceIntLabel(container dockerData, serviceName string, labelSuffix string, defaultValue int) int {
+	if rawValue, ok := getServiceLabels(container, serviceName)[labelSuffix]; ok {
+		value, err := strconv.Atoi(rawValue)
+		if err == nil {
+			return value
+		}
+	}
+	return label.GetIntValue(container.Labels, label.Prefix+labelSuffix, defaultValue)
 }
 
 func getServiceLabels(container dockerData, serviceName string) label.ServicePropertyValues {

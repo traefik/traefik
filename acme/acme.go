@@ -405,7 +405,7 @@ func (a *ACME) renewCertificates() {
 					continue
 				}
 				operation := func() error {
-					return a.storeRenewedCertificate(account, certificateResource, renewedACMECert)
+					return a.storeRenewedCertificate(certificateResource, renewedACMECert)
 				}
 				notify := func(err error, time time.Duration) {
 					log.Warnf("Renewed certificate storage error: %v, retrying in %s", err, time)
@@ -443,14 +443,14 @@ func (a *ACME) renewACMECertificate(certificateResource *DomainsCertificate) (*C
 	}, nil
 }
 
-func (a *ACME) storeRenewedCertificate(account *Account, certificateResource *DomainsCertificate, renewedACMECert *Certificate) error {
+func (a *ACME) storeRenewedCertificate(certificateResource *DomainsCertificate, renewedACMECert *Certificate) error {
 	transaction, object, err := a.store.Begin()
 	if err != nil {
 		return fmt.Errorf("error during transaction initialization for renewing certificate: %v", err)
 	}
 
 	log.Infof("Renewing certificate in data store : %+v ", certificateResource.Domains)
-	account = object.(*Account)
+	account := object.(*Account)
 	err = account.DomainsCertificate.renewCertificates(renewedACMECert, certificateResource.Domains)
 	if err != nil {
 		return fmt.Errorf("error renewing certificate in datastore: %v ", err)

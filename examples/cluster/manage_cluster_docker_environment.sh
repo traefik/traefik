@@ -32,15 +32,6 @@ delete_services() {
     return 0
 }
 
-# Init the environment : get IP address and create needed files
-init_acme_json() {
-    echo "CREATE empty acme.json file"
-    rm -f $basedir/acme.json && \
-    touch $basedir/acme.json && \
-    echo "{}" > $basedir/acme.json && \
-    chmod 600 $basedir/acme.json # Needed for ACME
-}
-
 start_consul() {
     up_environment consul
     waiting_counter=12
@@ -76,7 +67,6 @@ start_etcd3() {
 }
 
 start_storeconfig_consul() {
-    init_acme_json
     # Create traefik.toml with consul provider
     cp $basedir/traefik.toml.tmpl $basedir/traefik.toml
     echo '
@@ -85,29 +75,13 @@ start_storeconfig_consul() {
         watch = true
         prefix = "traefik"' >> $basedir/traefik.toml
     up_environment traefik-storeconfig
-    rm -f $basedir/traefik.toml && rm -f $basedir/acme.json
-    # Delete acme-storage-file key
+    rm -f $basedir/traefik.toml
     waiting_counter=5
-    # Not start Traefik store config if consul is not started
-    echo "Delete storage file key..."
-    while [[ -z $(curl -s http://10.0.1.2:8500/v1/kv/traefik/acme/storagefile)  &&  $waiting_counter -gt 0 ]]; do
-        sleep 5
-        let waiting_counter-=1
-    done
-    if [[ $waiting_counter -eq 0 ]]; then
-        echo "[WARN] Unable to get storagefile key in consul"
-    else
-        curl -s --request DELETE http://10.0.1.2:8500/v1/kv/traefik/acme/storagefile
-        ret=$1
-        if [[ $ret -ne 0 ]]; then
-            echo "[ERROR] Unable to delete storagefile key from consul kv."
-        fi
-    fi
+    delete_services traefik-storeconfig
 
 }
 
 start_storeconfig_etcd3() {
-    init_acme_json
     # Create traefik.toml with consul provider
     cp $basedir/traefik.toml.tmpl $basedir/traefik.toml
     echo '
@@ -117,20 +91,15 @@ start_storeconfig_etcd3() {
         prefix = "/traefik"
         useAPIV3 = true' >> $basedir/traefik.toml
     up_environment traefik-storeconfig
-    rm -f $basedir/traefik.toml && rm -f $basedir/acme.json
-    # Delete acme-storage-file key
+    rm -f $basedir/traefik.toml
     waiting_counter=5
-    # Not start Traefik store config if consul is not started
+    # Don't start Traefik store config if ETCD3 is not started
     echo "Delete storage file key..."
     while [[ $(docker-compose -f $doc_file up --exit-code-from etcdctl-ping etcdctl-ping &>/dev/null) -ne 0 &&  $waiting_counter -gt 0 ]]; do
         sleep 5
         let waiting_counter-=1
     done
-    # Not start Traefik store config if consul is not started
-    echo "Delete storage file key from ETCD3..."
-
-    up_environment etcdctl-rm && \
-    delete_services etcdctl-rm traefik-storeconfig etcdctl-ping
+    delete_services traefik-storeconfig etcdctl-ping
 }
 
 start_traefik() {

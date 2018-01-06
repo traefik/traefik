@@ -1,8 +1,7 @@
-package consul
+package consulcatalog
 
 import (
 	"errors"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -23,10 +22,10 @@ const (
 	DefaultWatchWaitTime = 15 * time.Second
 )
 
-var _ provider.Provider = (*CatalogProvider)(nil)
+var _ provider.Provider = (*Provider)(nil)
 
-// CatalogProvider holds configurations of the Consul catalog provider.
-type CatalogProvider struct {
+// Provider holds configurations of the Consul catalog provider.
+type Provider struct {
 	provider.BaseProvider `mapstructure:",squash" export:"true"`
 	Endpoint              string `description:"Consul server endpoint"`
 	Domain                string `description:"Default domain used"`
@@ -86,7 +85,7 @@ func (a nodeSorter) Less(i int, j int) bool {
 
 // Provide allows the consul catalog provider to provide configurations to traefik
 // using the given configuration channel.
-func (p *CatalogProvider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
+func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *safe.Pool, constraints types.Constraints) error {
 	config := api.DefaultConfig()
 	config.Address = p.Endpoint
 	client, err := api.NewClient(config)
@@ -95,7 +94,7 @@ func (p *CatalogProvider) Provide(configurationChan chan<- types.ConfigMessage, 
 	}
 	p.client = client
 	p.Constraints = append(p.Constraints, constraints...)
-	p.setupFrontEndTemplate()
+	p.setupFrontEndRuleTemplate()
 
 	pool.Go(func(stop chan bool) {
 		notify := func(err error, time time.Duration) {
@@ -113,7 +112,7 @@ func (p *CatalogProvider) Provide(configurationChan chan<- types.ConfigMessage, 
 	return err
 }
 
-func (p *CatalogProvider) watch(configurationChan chan<- types.ConfigMessage, stop chan bool) error {
+func (p *Provider) watch(configurationChan chan<- types.ConfigMessage, stop chan bool) error {
 	stopCh := make(chan struct{})
 	watchCh := make(chan map[string][]string)
 	errorCh := make(chan error)
@@ -148,7 +147,7 @@ func (p *CatalogProvider) watch(configurationChan chan<- types.ConfigMessage, st
 	}
 }
 
-func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
+func (p *Provider) watchCatalogServices(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
 	catalog := p.client.Catalog()
 
 	safe.Go(func() {
@@ -217,7 +216,7 @@ func (p *CatalogProvider) watchCatalogServices(stopCh <-chan struct{}, watchCh c
 	})
 }
 
-func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
+func (p *Provider) watchHealthState(stopCh <-chan struct{}, watchCh chan<- map[string][]string, errorCh chan<- error) {
 	health := p.client.Health()
 	catalog := p.client.Catalog()
 
@@ -288,7 +287,7 @@ func (p *CatalogProvider) watchHealthState(stopCh <-chan struct{}, watchCh chan<
 	})
 }
 
-func (p *CatalogProvider) getNodes(index map[string][]string) ([]catalogUpdate, error) {
+func (p *Provider) getNodes(index map[string][]string) ([]catalogUpdate, error) {
 	visited := make(map[string]bool)
 
 	var nodes []catalogUpdate
@@ -384,14 +383,14 @@ func getServicePorts(services []*api.CatalogService) []int {
 	return servicePorts
 }
 
-func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
+func (p *Provider) healthyNodes(service string) (catalogUpdate, error) {
 	health := p.client.Health()
-	opts := &api.QueryOptions{}
-	data, _, err := health.Service(service, "", true, opts)
+	data, _, err := health.Service(service, "", true, &api.QueryOptions{})
 	if err != nil {
 		log.WithError(err).Errorf("Failed to fetch details of %s", service)
 		return catalogUpdate{}, err
 	}
+
 	nodes := fun.Filter(func(node *api.ServiceEntry) bool {
 		return p.nodeFilter(service, node)
 	}, data).([]*api.ServiceEntry)
@@ -413,7 +412,7 @@ func (p *CatalogProvider) healthyNodes(service string) (catalogUpdate, error) {
 	}, nil
 }
 
-func (p *CatalogProvider) nodeFilter(service string, node *api.ServiceEntry) bool {
+func (p *Provider) nodeFilter(service string, node *api.ServiceEntry) bool {
 	// Filter disabled application.
 	if !p.isServiceEnabled(node) {
 		log.Debugf("Filtering disabled Consul service %s", service)
@@ -430,52 +429,11 @@ func (p *CatalogProvider) nodeFilter(service string, node *api.ServiceEntry) boo
 	return true
 }
 
-func (p *CatalogProvider) isServiceEnabled(node *api.ServiceEntry) bool {
-	enable, err := strconv.ParseBool(p.getAttribute(label.SuffixEnable, node.Service.Tags, strconv.FormatBool(p.ExposedByDefault)))
-	if err != nil {
-		log.Debugf("Invalid value for enable, set to %b", p.ExposedByDefault)
-		return p.ExposedByDefault
-	}
-	return enable
+func (p *Provider) isServiceEnabled(node *api.ServiceEntry) bool {
+	return p.getBoolAttribute(label.SuffixEnable, node.Service.Tags, p.ExposedByDefault)
 }
 
-func (p *CatalogProvider) getPrefixedName(name string) string {
-	if len(p.Prefix) > 0 && len(name) > 0 {
-		return p.Prefix + "." + name
-	}
-	return name
-}
-
-func (p *CatalogProvider) getAttribute(name string, tags []string, defaultValue string) string {
-	return getTag(p.getPrefixedName(name), tags, defaultValue)
-}
-
-func hasTag(name string, tags []string) bool {
-	// Very-very unlikely that a Consul tag would ever start with '=!='
-	tag := getTag(name, tags, "=!=")
-	return tag != "=!="
-}
-
-func getTag(name string, tags []string, defaultValue string) string {
-	for _, tag := range tags {
-		// Given the nature of Consul tags, which could be either singular markers, or key=value pairs, we check if the consul tag starts with 'name'
-		if strings.HasPrefix(strings.ToLower(tag), strings.ToLower(name)) {
-			// In case, where a tag might be a key=value, try to split it by the first '='
-			// - If the first element (which would always be there, even if the tag is a singular marker without '=' in it
-			if kv := strings.SplitN(tag, "=", 2); strings.ToLower(kv[0]) == strings.ToLower(name) {
-				// If the returned result is a key=value pair, return the 'value' component
-				if len(kv) == 2 {
-					return kv[1]
-				}
-				// If the returned result is a singular marker, return the 'key' component
-				return kv[0]
-			}
-		}
-	}
-	return defaultValue
-}
-
-func (p *CatalogProvider) getConstraintTags(tags []string) []string {
+func (p *Provider) getConstraintTags(tags []string) []string {
 	var values []string
 
 	prefix := p.getPrefixedName("tags=")

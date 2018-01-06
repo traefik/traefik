@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/provider/marathon/mocks"
 	"github.com/containous/traefik/types"
@@ -998,6 +1000,281 @@ func TestGetBackendServer(t *testing.T) {
 			if actualServer != c.expectedServer {
 				t.Errorf("actual %q, expected %q", actualServer, c.expectedServer)
 			}
+		})
+	}
+}
+
+func TestHasRedirect(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		serviceName string
+		expected    bool
+	}{
+		{
+			desc:        "without redirect labels",
+			application: application(),
+			expected:    false,
+		},
+		{
+			desc: "with entry point redirect label",
+			application: application(
+				withLabel(label.TraefikFrontendRedirectEntryPoint, "bar"),
+			),
+			expected: true,
+		},
+		{
+			desc: "with regex redirect labels",
+			application: application(
+				withLabel(label.TraefikFrontendRedirectRegex, "bar"),
+				withLabel(label.TraefikFrontendRedirectReplacement, "bar"),
+			),
+			expected: true,
+		},
+		{
+			desc: "with entry point redirect label on service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectEntryPoint, "bar"),
+			),
+			serviceName: "foo",
+			expected:    true,
+		},
+		{
+			desc: "with entry point redirect label on service but not the same service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectEntryPoint, "bar"),
+			),
+			serviceName: "foofoo",
+			expected:    false,
+		},
+		{
+			desc: "with regex redirect label on service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectRegex, "bar"),
+				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectReplacement, "bar"),
+			),
+			serviceName: "foo",
+			expected:    true,
+		},
+		{
+			desc: "with regex redirect label on service but not the same service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectRegex, "bar"),
+				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectReplacement, "bar"),
+			),
+			serviceName: "foofoo",
+			expected:    false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := hasRedirect(test.application, test.serviceName)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestHasPrefixFuncService(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		serviceName string
+		expected    bool
+	}{
+		{
+			desc: "with one label",
+			application: application(
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"goo"+label.SuffixErrorPageBackend, "bar"),
+			),
+			expected: true,
+		},
+		{
+			desc: "with one label on service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo"+label.SuffixErrorPageBackend, "bar"),
+			),
+			serviceName: "foo",
+			expected:    true,
+		},
+		{
+			desc: "with one label on service but not the same service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo"+label.SuffixErrorPageBackend, "bar"),
+			),
+			serviceName: "foofoo",
+			expected:    false,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := hasPrefixFuncService(label.BaseFrontendErrorPage)(test.application, test.serviceName)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetErrorPages(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		serviceName string
+		expected    map[string]*types.ErrorPage
+	}{
+		{
+			desc: "with 2 error pages",
+			application: application(
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"goo."+label.SuffixErrorPageBackend, "bar1"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"goo."+label.SuffixErrorPageStatus, "bar2"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"goo."+label.SuffixErrorPageQuery, "bar3"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"hoo."+label.SuffixErrorPageBackend, "bar4"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"hoo."+label.SuffixErrorPageStatus, "bar5"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"hoo."+label.SuffixErrorPageQuery, "bar6"),
+			),
+			expected: map[string]*types.ErrorPage{
+				"goo": {
+					Backend: "bar1",
+					Query:   "bar3",
+					Status:  []string{"bar2"},
+				},
+				"hoo": {
+					Backend: "bar4",
+					Query:   "bar6",
+					Status:  []string{"bar5"},
+				},
+			},
+		},
+		{
+			desc: "with 2 error pages on service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo."+label.SuffixErrorPageBackend, "bar1"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo."+label.SuffixErrorPageStatus, "bar2"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo."+label.SuffixErrorPageQuery, "bar3"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"hoo."+label.SuffixErrorPageBackend, "bar4"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"hoo."+label.SuffixErrorPageStatus, "bar5"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"hoo."+label.SuffixErrorPageQuery, "bar6"),
+			),
+			serviceName: "foo",
+			expected: map[string]*types.ErrorPage{
+				"goo": {
+					Backend: "bar1",
+					Query:   "bar3",
+					Status:  []string{"bar2"},
+				},
+				"hoo": {
+					Backend: "bar4",
+					Query:   "bar6",
+					Status:  []string{"bar5"},
+				},
+			},
+		},
+		{
+			desc: "with 1 error page on service but not the same service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo."+label.SuffixErrorPageBackend, "bar1"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo."+label.SuffixErrorPageStatus, "bar2"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo."+label.SuffixErrorPageQuery, "bar3"),
+			),
+			serviceName: "foofoo",
+			expected:    nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			pages := getErrorPages(test.application, test.serviceName)
+
+			assert.EqualValues(t, test.expected, pages)
+		})
+	}
+}
+
+func TestGetRateLimits(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		serviceName string
+		expected    map[string]*types.Rate
+	}{
+		{
+			desc: "with 2 rate limits",
+			application: application(
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitAverage, "1"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitPeriod, "2"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitBurst, "3"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitAverage, "4"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitPeriod, "5"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitBurst, "6"),
+			),
+			expected: map[string]*types.Rate{
+				"goo": {
+					Average: 1,
+					Period:  flaeg.Duration(2 * time.Second),
+					Burst:   3,
+				},
+				"hoo": {
+					Average: 4,
+					Period:  flaeg.Duration(5 * time.Second),
+					Burst:   6,
+				},
+			},
+		},
+		{
+			desc: "with 2 rate limits on service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitAverage, "1"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitPeriod, "2"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitBurst, "3"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitAverage, "4"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitPeriod, "5"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitBurst, "6"),
+			),
+			serviceName: "foo",
+			expected: map[string]*types.Rate{
+				"goo": {
+					Average: 1,
+					Period:  flaeg.Duration(2 * time.Second),
+					Burst:   3,
+				},
+				"hoo": {
+					Average: 4,
+					Period:  flaeg.Duration(5 * time.Second),
+					Burst:   6,
+				},
+			},
+		},
+		{
+			desc: "with 1 rate limit on service but not the same service",
+			application: application(
+				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitAverage, "1"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitPeriod, "2"),
+				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitBurst, "3"),
+			),
+			serviceName: "foofoo",
+			expected:    nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			limits := getRateLimits(test.application, test.serviceName)
+
+			assert.EqualValues(t, test.expected, limits)
 		})
 	}
 }

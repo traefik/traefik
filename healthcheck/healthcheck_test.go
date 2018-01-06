@@ -81,7 +81,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 				Path:     "/path",
 				Interval: healthCheckInterval,
 				LB:       lb,
-			})
+			}, "backendName")
 			serverURL := testhelpers.MustParseURL(ts.URL)
 			if test.startHealthy {
 				lb.servers = append(lb.servers, serverURL)
@@ -95,7 +95,7 @@ func TestSetBackendsConfiguration(t *testing.T) {
 			wg := sync.WaitGroup{}
 			wg.Add(1)
 			go func() {
-				check.execute(ctx, "id", backend)
+				check.execute(ctx, backend)
 				wg.Done()
 			}()
 
@@ -168,7 +168,7 @@ func TestNewRequest(t *testing.T) {
 				Options{
 					Path: test.path,
 					Port: test.port,
-				})
+				}, "backendName")
 
 			u := &url.URL{
 				Scheme: "http",

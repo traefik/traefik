@@ -20,6 +20,12 @@ See also [Let's Encrypt examples](/user-guide/examples/#lets-encrypt-support) an
 #
 email = "test@traefik.io"
 
+# File used for certificates storage.
+#
+# Optional (Deprecated)
+#
+#storageFile = "acme.json"
+
 # File or key used for certificates storage.
 #
 # Required
@@ -55,7 +61,7 @@ entryPoint = "https"
 #
 # acmeLogging = true
 
-# Enable on demand certificate.
+# Enable on demand certificate. (Deprecated)
 #
 # Optional
 #
@@ -89,6 +95,10 @@ entryPoint = "https"
 # main = "local4.com"
 ```
 
+!!! note
+    ACME entryPoint has to be relied to the port 443, otherwise ACME Challenges can not be done.
+    It's a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
+
 ### `storage`
 
 ```toml
@@ -100,7 +110,7 @@ storage = "acme.json"
 
 File or key used for certificates storage.
 
-**WARNING** If you use Traefik in Docker, you have 2 options:
+**WARNING** If you use Træfik in Docker, you have 2 options:
 
 - create a file on your host and mount it as a volume:
 ```toml
@@ -117,6 +127,14 @@ storage = "/etc/traefik/acme/acme.json"
 ```bash
 docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 ```
+
+!!! note
+    `storage` replaces `storageFile` which is deprecated.
+
+!!! note
+    During Træfik configuration migration from a configuration file to a KV store (thanks to `storeconfig` subcommand as described [here](/user-guide/kv-config/#store-configuration-in-key-value-store)), if ACME certificates have to be migrated too, use both `storageFile` and `storage`.
+    `storageFile` will contain the path to the `acme.json` file to migrate.
+    `storage` will contain the key where the certificates will be stored.
 
 ### `dnsProvider`
 
@@ -146,7 +164,7 @@ Select the provider that matches the DNS domain that will host the challenge TXT
 | [GoDaddy](https://godaddy.com/domains)                 | `godaddy`      | `GODADDY_API_KEY`, `GODADDY_API_SECRET`                                                                                   |
 | [Google Cloud DNS](https://cloud.google.com/dns/docs/) | `gcloud`       | `GCE_PROJECT`, `GCE_SERVICE_ACCOUNT_FILE`                                                                                 |
 | [Linode](https://www.linode.com)                       | `linode`       | `LINODE_API_KEY`                                                                                                          |
-| manual                                                 | -              | none, but run Traefik interactively & turn on `acmeLogging` to see instructions & press <kbd>Enter</kbd>.                 |
+| manual                                                 | -              | none, but run Træfik interactively & turn on `acmeLogging` to see instructions & press <kbd>Enter</kbd>.                 |
 | [Namecheap](https://www.namecheap.com)                 | `namecheap`    | `NAMECHEAP_API_USER`, `NAMECHEAP_API_KEY`                                                                                 |
 | [Ns1](https://ns1.com/)                                | `ns1`          | `NS1_API_KEY`                                                                                                             |
 | [Open Telekom Cloud](https://cloud.telekom.de/en/)     | `otc`          | `OTC_DOMAIN_NAME`, `OTC_USER_NAME`, `OTC_PASSWORD`, `OTC_PROJECT_NAME`, `OTC_IDENTITY_ENDPOINT`                           |
@@ -171,7 +189,7 @@ If `delayDontCheckDNS` is greater than zero, avoid this & instead just wait so m
 
 Useful if internal networks block external DNS queries.
 
-### `onDemand`
+### `onDemand` (Deprecated)
 
 ```toml
 [acme]
@@ -188,7 +206,10 @@ This will request a certificate from Let's Encrypt during the first TLS handshak
     TLS handshakes will be slow when requesting a hostname certificate for the first time, this can lead to DoS attacks.
     
 !!! warning
-    Take note that Let's Encrypt have [rate limiting](https://letsencrypt.org/docs/rate-limits)
+    Take note that Let's Encrypt have [rate limiting](https://letsencrypt.org/docs/rate-limits).
+
+!!! warning
+    This option is deprecated.
 
 ### `onHostRule`
 
@@ -238,7 +259,7 @@ main = "local4.com"
 ```
 
 You can provide SANs (alternative domains) to each main domain.
-All domains must have A/AAAA records pointing to Traefik.
+All domains must have A/AAAA records pointing to Træfik.
 
 !!! warning
     Take note that Let's Encrypt have [rate limiting](https://letsencrypt.org/docs/rate-limits).

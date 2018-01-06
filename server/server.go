@@ -439,12 +439,12 @@ func (s *Server) loadConfiguration(configMsg types.ConfigMessage) {
 	if err == nil {
 		for newServerEntryPointName, newServerEntryPoint := range newServerEntryPoints {
 			s.serverEntryPoints[newServerEntryPointName].httpRouter.UpdateHandler(newServerEntryPoint.httpRouter.GetHandler())
-			if newServerEntryPoint.certs.Get() != nil {
-				if s.globalConfiguration.EntryPoints[newServerEntryPointName].TLS == nil {
+			if s.globalConfiguration.EntryPoints[newServerEntryPointName].TLS == nil {
+				if newServerEntryPoint.certs.Get() != nil {
 					log.Debugf("Certificates not added to non-TLS entryPoint %s.", newServerEntryPointName)
-				} else {
-					s.serverEntryPoints[newServerEntryPointName].certs.Set(newServerEntryPoint.certs.Get())
 				}
+			} else {
+				s.serverEntryPoints[newServerEntryPointName].certs.Set(newServerEntryPoint.certs.Get())
 			}
 			log.Infof("Server configuration reloaded on %s", s.serverEntryPoints[newServerEntryPointName].httpServer.Addr)
 		}
@@ -500,15 +500,15 @@ func (s *Server) postLoadConfiguration() {
 
 				// check if one of the frontend entrypoints is configured with TLS
 				// and is configured with ACME
-				ACMEEnabled := false
+				acmeEnabled := false
 				for _, entryPoint := range frontend.EntryPoints {
 					if s.globalConfiguration.ACME.EntryPoint == entryPoint && s.globalConfiguration.EntryPoints[entryPoint].TLS != nil {
-						ACMEEnabled = true
+						acmeEnabled = true
 						break
 					}
 				}
 
-				if ACMEEnabled {
+				if acmeEnabled {
 					for _, route := range frontend.Routes {
 						rules := Rules{}
 						domains, err := rules.ParseDomains(route.Rule)
@@ -980,10 +980,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						continue frontend
 					}
 
-					var headerMiddleware *middlewares.HeaderStruct
+					headerMiddleware := middlewares.NewHeaderFromStruct(frontend.Headers)
 					var responseModifier func(res *http.Response) error
-					if frontend.Headers.HasCustomHeadersDefined() {
-						headerMiddleware = middlewares.NewHeaderFromStruct(frontend.Headers)
+					if headerMiddleware != nil {
 						responseModifier = headerMiddleware.ModifyResponseHeaders
 					}
 
@@ -1050,7 +1049,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							hcOpts.Transport = s.defaultForwardingRoundTripper
-							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
+							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts, frontend.Backend)
 						}
 						lb = middlewares.NewEmptyBackendHandler(rebalancer, lb)
 					case types.Wrr:
@@ -1072,7 +1071,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						if hcOpts != nil {
 							log.Debugf("Setting up backend health check %s", *hcOpts)
 							hcOpts.Transport = s.defaultForwardingRoundTripper
-							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts)
+							backendsHealthCheck[entryPointName+frontend.Backend] = healthcheck.NewBackendHealthCheck(*hcOpts, frontend.Backend)
 						}
 						lb = middlewares.NewEmptyBackendHandler(rr, lb)
 					}
@@ -1166,8 +1165,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						log.Debugf("Adding header middleware for frontend %s", frontendName)
 						n.Use(headerMiddleware)
 					}
-					if frontend.Headers.HasSecureHeadersDefined() {
-						secureMiddleware := middlewares.NewSecure(frontend.Headers)
+
+					secureMiddleware := middlewares.NewSecure(frontend.Headers)
+					if secureMiddleware != nil {
 						log.Debugf("Adding secure middleware for frontend %s", frontendName)
 						n.UseFunc(secureMiddleware.HandlerFuncWithNext)
 					}
