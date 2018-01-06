@@ -92,7 +92,7 @@ func iBackend(name string, port intstr.IntOrString) func(*v1beta1.HTTPIngressPat
 	}
 }
 
-func iTLSs(opts ...func(*v1beta1.IngressTLS)) func(*v1beta1.Ingress) {
+func iTLSes(opts ...func(*v1beta1.IngressTLS)) func(*v1beta1.Ingress) {
 	return func(i *v1beta1.Ingress) {
 		for _, opt := range opts {
 			iTLS := v1beta1.IngressTLS{}
@@ -125,7 +125,7 @@ func TestBuildIngress(t *testing.T) {
 			),
 			),
 		),
-		iTLSs(
+		iTLSes(
 			iTLS("tls-secret", "foo"),
 		),
 	)

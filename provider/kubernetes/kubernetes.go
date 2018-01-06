@@ -175,6 +175,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 			continue
 		}
 
+		tlsConfigs, err := getTLSConfigurations(i, k8sClient)
+		if err != nil {
+			log.Errorf("Error configuring TLS for ingress %s/%s: %v", i.Namespace, i.Name, err)
+			continue
+		}
+		templateObjects.TLSConfiguration = append(templateObjects.TLSConfiguration, tlsConfigs...)
+
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
 				log.Warn("Error in ingress: HTTP is nil")
@@ -354,13 +361,6 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 					}
 				}
 			}
-		}
-
-		tlsConfigs, err := getTLSConfigurations(i, k8sClient)
-		if err != nil {
-			log.Errorf("Error configuring TLS for ingress %s/%s: %v", i.Namespace, i.Name, err)
-		} else {
-			templateObjects.TLSConfiguration = append(templateObjects.TLSConfiguration, tlsConfigs...)
 		}
 	}
 	return &templateObjects, nil

@@ -1203,7 +1203,7 @@ func TestTLSSecretLoad(t *testing.T) {
 					onePath(iBackend("example-org", intstr.FromInt(80))),
 				)),
 			),
-			iTLSs(
+			iTLSes(
 				iTLS("myTlsSecret"),
 			),
 		),
@@ -1303,7 +1303,7 @@ func TestGetTLSConfigurations(t *testing.T) {
 			iRule(iHost("ep1.example.com")),
 			iRule(iHost("ep2.example.com")),
 		),
-		iTLSs(
+		iTLSes(
 			iTLS("test-secret"),
 		),
 	)
@@ -1390,7 +1390,7 @@ func TestGetTLSConfigurations(t *testing.T) {
 					iRule(iHost("ep2.example.com")),
 					iRule(iHost("ep3.example.com")),
 				),
-				iTLSs(
+				iTLSes(
 					iTLS("test-secret"),
 					iTLS("test-secret"),
 				),
@@ -1430,7 +1430,7 @@ func TestGetTLSConfigurations(t *testing.T) {
 				iNamespace("testing"),
 				iAnnotation(label.TraefikFrontendEntryPoints, "https,api-secure"),
 				iRules(iRule(iHost("example.com"))),
-				iTLSs(iTLS("test-secret")),
+				iTLSes(iTLS("test-secret")),
 			),
 			client: clientMock{
 				secrets: []*v1.Secret{
