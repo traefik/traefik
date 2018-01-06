@@ -30,20 +30,23 @@ func newFakeClient(applicationsError bool, applications marathon.Applications) *
 	return fakeClient
 }
 
-func TestLoadConfigAPIErrors(t *testing.T) {
+func TestBuildConfigurationAPIErrors(t *testing.T) {
 	fakeClient := newFakeClient(true, marathon.Applications{})
-	provider := &Provider{
+
+	p := &Provider{
 		marathonClient: fakeClient,
 	}
-	actualConfig := provider.buildConfiguration()
+
+	actualConfig := p.buildConfiguration()
 	fakeClient.AssertExpectations(t)
+
 	if actualConfig != nil {
 		t.Errorf("configuration should have been nil, got %v", actualConfig)
 	}
 }
 
-func TestLoadConfigNonAPIErrors(t *testing.T) {
-	cases := []struct {
+func TestBuildConfigurationNonAPIErrors(t *testing.T) {
+	testCases := []struct {
 		desc              string
 		application       marathon.Application
 		task              marathon.Task
@@ -62,6 +65,9 @@ func TestLoadConfigNonAPIErrors(t *testing.T) {
 							Rule: "Host:app.docker.localhost",
 						},
 					},
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+					EntryPoints:    []string{},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
@@ -91,107 +97,13 @@ func TestLoadConfigNonAPIErrors(t *testing.T) {
 							Rule: "Host:app.docker.localhost",
 						},
 					},
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+					EntryPoints:    []string{},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
 				"backend-app": {},
-			},
-		},
-		{
-			desc: "load balancer / circuit breaker labels",
-			application: application(
-				appPorts(80),
-				withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
-				withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
-			),
-			task: localhostTask(taskPorts(80)),
-			expectedFrontends: map[string]*types.Frontend{
-				"frontend-app": {
-					Backend: "backend-app",
-					Routes: map[string]types.Route{
-						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
-						},
-					},
-				},
-			},
-			expectedBackends: map[string]*types.Backend{
-				"backend-app": {
-					Servers: map[string]types.Server{
-						"server-task": {
-							URL:    "http://localhost:80",
-							Weight: 0,
-						},
-					},
-					CircuitBreaker: &types.CircuitBreaker{
-						Expression: "NetworkErrorRatio() > 0.5",
-					},
-					LoadBalancer: &types.LoadBalancer{
-						Method: "drr",
-					},
-				},
-			},
-		},
-		{
-			desc: "general max connection labels",
-			application: application(
-				appPorts(80),
-				withLabel(label.TraefikBackendMaxConnAmount, "1000"),
-				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-			),
-			task: localhostTask(taskPorts(80)),
-			expectedFrontends: map[string]*types.Frontend{
-				"frontend-app": {
-					Backend: "backend-app",
-					Routes: map[string]types.Route{
-						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
-						},
-					},
-				},
-			},
-			expectedBackends: map[string]*types.Backend{
-				"backend-app": {
-					Servers: map[string]types.Server{
-						"server-task": {
-							URL:    "http://localhost:80",
-							Weight: 0,
-						},
-					},
-					MaxConn: &types.MaxConn{
-						Amount:        1000,
-						ExtractorFunc: "client.ip",
-					},
-				},
-			},
-		},
-		{
-			desc: "max connection amount label only",
-			application: application(
-				appPorts(80),
-				withLabel(label.TraefikBackendMaxConnAmount, "1000"),
-			),
-			task: localhostTask(taskPorts(80)),
-			expectedFrontends: map[string]*types.Frontend{
-				"frontend-app": {
-					Backend: "backend-app",
-					Routes: map[string]types.Route{
-						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
-						},
-					},
-				},
-			},
-			expectedBackends: map[string]*types.Backend{
-				"backend-app": {
-					Servers: map[string]types.Server{
-						"server-task": {
-							URL:    "http://localhost:80",
-							Weight: 0,
-						},
-					},
-					MaxConn: nil,
-				},
 			},
 		},
 		{
@@ -209,6 +121,9 @@ func TestLoadConfigNonAPIErrors(t *testing.T) {
 							Rule: "Host:app.docker.localhost",
 						},
 					},
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+					EntryPoints:    []string{},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
@@ -220,42 +135,6 @@ func TestLoadConfigNonAPIErrors(t *testing.T) {
 						},
 					},
 					MaxConn: nil,
-				},
-			},
-		},
-		{
-			desc: "health check labels",
-			application: application(
-				appPorts(80),
-				withLabel(label.TraefikBackendHealthCheckPath, "/path"),
-				withLabel(label.TraefikBackendHealthCheckInterval, "5m"),
-			),
-			task: task(
-				host("127.0.0.1"),
-				taskPorts(80),
-			),
-			expectedFrontends: map[string]*types.Frontend{
-				"frontend-app": {
-					Backend: "backend-app",
-					Routes: map[string]types.Route{
-						"route-host-app": {
-							Rule: "Host:app.docker.localhost",
-						},
-					},
-				},
-			},
-			expectedBackends: map[string]*types.Backend{
-				"backend-app": {
-					Servers: map[string]types.Server{
-						"server-task": {
-							URL:    "http://127.0.0.1:80",
-							Weight: 0,
-						},
-					},
-					HealthCheck: &types.HealthCheck{
-						Path:     "/path",
-						Interval: "5m",
-					},
 				},
 			},
 		},
@@ -275,6 +154,9 @@ func TestLoadConfigNonAPIErrors(t *testing.T) {
 							Rule: "Host:app.docker.localhost",
 						},
 					},
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+					EntryPoints:    []string{},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
@@ -289,16 +171,257 @@ func TestLoadConfigNonAPIErrors(t *testing.T) {
 			},
 		},
 		{
+			desc: "with all labels",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikPort, "666"),
+				withLabel(label.TraefikProtocol, "https"),
+				withLabel(label.TraefikWeight, "12"),
+
+				withLabel(label.TraefikBackend, "foobar"),
+
+				withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+				withLabel(label.TraefikBackendHealthCheckPath, "/health"),
+				withLabel(label.TraefikBackendHealthCheckPort, "880"),
+				withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+				withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
+				withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
+				withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
+				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
+				withLabel(label.TraefikBackendMaxConnAmount, "666"),
+				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+
+				withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
+				withLabel(label.TraefikFrontendEntryPoints, "http,https"),
+				withLabel(label.TraefikFrontendPassHostHeader, "true"),
+				withLabel(label.TraefikFrontendPassTLSCert, "true"),
+				withLabel(label.TraefikFrontendPriority, "666"),
+				withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
+				withLabel(label.TraefikFrontendRedirectRegex, "nope"),
+				withLabel(label.TraefikFrontendRedirectReplacement, "nope"),
+				withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
+				withLabel(label.TraefikFrontendWhitelistSourceRange, "10.10.10.10"),
+
+				withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor"),
+				withLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor"),
+				withLabel(label.TraefikFrontendSSLHost, "foo"),
+				withLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo"),
+				withLabel(label.TraefikFrontendContentSecurityPolicy, "foo"),
+				withLabel(label.TraefikFrontendPublicKey, "foo"),
+				withLabel(label.TraefikFrontendReferrerPolicy, "foo"),
+				withLabel(label.TraefikFrontendSTSSeconds, "666"),
+				withLabel(label.TraefikFrontendSSLRedirect, "true"),
+				withLabel(label.TraefikFrontendSSLTemporaryRedirect, "true"),
+				withLabel(label.TraefikFrontendSTSIncludeSubdomains, "true"),
+				withLabel(label.TraefikFrontendSTSPreload, "true"),
+				withLabel(label.TraefikFrontendForceSTSHeader, "true"),
+				withLabel(label.TraefikFrontendFrameDeny, "true"),
+				withLabel(label.TraefikFrontendContentTypeNosniff, "true"),
+				withLabel(label.TraefikFrontendBrowserXSSFilter, "true"),
+				withLabel(label.TraefikFrontendIsDevelopment, "true"),
+
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "foobar"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "foo_query"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageStatus, "500,600"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageBackend, "foobar"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageQuery, "bar_query"),
+
+				withLabel(label.TraefikFrontendRateLimitExtractorFunc, "client.ip"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
+			),
+			task: task(
+				host("127.0.0.1"),
+				taskPorts(80),
+			),
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app": {
+					EntryPoints: []string{
+						"http",
+						"https",
+					},
+					Backend: "backendfoobar",
+					Routes: map[string]types.Route{
+						"route-host-app": {
+							Rule: "Host:traefik.io",
+						},
+					},
+					PassHostHeader: true,
+					PassTLSCert:    true,
+					Priority:       666,
+					BasicAuth: []string{
+						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					},
+					WhitelistSourceRange: []string{
+						"10.10.10.10",
+					},
+					Headers: &types.Headers{
+						CustomRequestHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						CustomResponseHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						AllowedHosts: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						HostsProxyHeaders: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						SSLRedirect:          true,
+						SSLTemporaryRedirect: true,
+						SSLHost:              "foo",
+						SSLProxyHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						STSSeconds:              666,
+						STSIncludeSubdomains:    true,
+						STSPreload:              true,
+						ForceSTSHeader:          true,
+						FrameDeny:               true,
+						CustomFrameOptionsValue: "foo",
+						ContentTypeNosniff:      true,
+						BrowserXSSFilter:        true,
+						ContentSecurityPolicy:   "foo",
+						PublicKey:               "foo",
+						ReferrerPolicy:          "foo",
+						IsDevelopment:           true,
+					},
+					Errors: map[string]*types.ErrorPage{
+						"bar": {
+							Status: []string{
+								"500",
+								"600",
+							},
+							Backend: "foobar",
+							Query:   "bar_query",
+						},
+						"foo": {
+							Status: []string{
+								"404",
+							},
+							Backend: "foobar",
+							Query:   "foo_query",
+						},
+					},
+					RateLimit: &types.RateLimit{
+						RateSet: map[string]*types.Rate{
+							"bar": {
+								Period:  flaeg.Duration(3 * time.Second),
+								Average: 6,
+								Burst:   9,
+							},
+							"foo": {
+								Period:  flaeg.Duration(6 * time.Second),
+								Average: 12,
+								Burst:   18,
+							},
+						},
+						ExtractorFunc: "client.ip",
+					},
+					Redirect: &types.Redirect{
+						EntryPoint: "https",
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backendfoobar": {
+					Servers: map[string]types.Server{
+						"server-task": {
+							URL:    "https://127.0.0.1:666",
+							Weight: 12,
+						},
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+						Sticky: true,
+						Stickiness: &types.Stickiness{
+							CookieName: "chocolate",
+						},
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        666,
+						ExtractorFunc: "client.ip",
+					},
+					HealthCheck: &types.HealthCheck{
+						Path:     "/health",
+						Port:     880,
+						Interval: "6",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			test.application.ID = "/app"
+			test.task.ID = "task"
+			if test.task.State == "" {
+				test.task.State = "TASK_RUNNING"
+			}
+			test.application.Tasks = []*marathon.Task{&test.task}
+
+			fakeClient := newFakeClient(false,
+				marathon.Applications{Apps: []marathon.Application{test.application}})
+
+			p := &Provider{
+				Domain:           "docker.localhost",
+				ExposedByDefault: true,
+				marathonClient:   fakeClient,
+			}
+
+			actualConfig := p.buildConfiguration()
+			fakeClient.AssertExpectations(t)
+
+			assert.NotNil(t, actualConfig)
+			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
+			assert.Equal(t, test.expectedFrontends, actualConfig.Frontends)
+		})
+	}
+}
+
+func TestBuildConfigurationServicesNonAPIErrors(t *testing.T) {
+	testCases := []struct {
+		desc              string
+		application       marathon.Application
+		task              marathon.Task
+		expectedFrontends map[string]*types.Frontend
+		expectedBackends  map[string]*types.Backend
+	}{
+		{
 			desc: "multiple ports with services",
 			application: application(
 				appPorts(80, 81),
 				withLabel(label.TraefikBackendMaxConnAmount, "1000"),
 				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
-				withLabel("traefik.web.port", "80"),
-				withLabel("traefik.admin.port", "81"),
+				withServiceLabel(label.TraefikPort, "80", "web"),
+				withServiceLabel(label.TraefikPort, "81", "admin"),
 				withLabel("traefik..port", "82"), // This should be ignored, as it fails to match the servicesPropertiesRegexp regex.
-				withLabel("traefik.web.frontend.rule", "Host:web.app.docker.localhost"),
-				withLabel("traefik.admin.frontend.rule", "Host:admin.app.docker.localhost"),
+				withServiceLabel(label.TraefikFrontendRule, "Host:web.app.docker.localhost", "web"),
+				withServiceLabel(label.TraefikFrontendRule, "Host:admin.app.docker.localhost", "admin"),
 			),
 			task: localhostTask(
 				taskPorts(80, 81),
@@ -311,6 +434,9 @@ func TestLoadConfigNonAPIErrors(t *testing.T) {
 							Rule: "Host:web.app.docker.localhost",
 						},
 					},
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+					EntryPoints:    []string{},
 				},
 				"frontend-app-service-admin": {
 					Backend: "backend-app-service-admin",
@@ -319,6 +445,9 @@ func TestLoadConfigNonAPIErrors(t *testing.T) {
 							Rule: "Host:admin.app.docker.localhost",
 						},
 					},
+					PassHostHeader: true,
+					BasicAuth:      []string{},
+					EntryPoints:    []string{},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
@@ -348,47 +477,241 @@ func TestLoadConfigNonAPIErrors(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "when all labels are set",
+			application: application(
+				appPorts(80, 81),
+
+				//withLabel(label.TraefikBackend, "foobar"),
+
+				withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+				withLabel(label.TraefikBackendHealthCheckPath, "/health"),
+				withLabel(label.TraefikBackendHealthCheckPort, "880"),
+				withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+				withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
+				withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
+				withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
+				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
+				withLabel(label.TraefikBackendMaxConnAmount, "666"),
+				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+
+				withServiceLabel(label.TraefikPort, "80", "containous"),
+				withServiceLabel(label.TraefikProtocol, "https", "containous"),
+				withServiceLabel(label.TraefikWeight, "12", "containous"),
+
+				withServiceLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0", "containous"),
+				withServiceLabel(label.TraefikFrontendEntryPoints, "http,https", "containous"),
+				withServiceLabel(label.TraefikFrontendPassHostHeader, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendPassTLSCert, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendPriority, "666", "containous"),
+				withServiceLabel(label.TraefikFrontendRedirectEntryPoint, "https", "containous"),
+				withServiceLabel(label.TraefikFrontendRedirectRegex, "nope", "containous"),
+				withServiceLabel(label.TraefikFrontendRedirectReplacement, "nope", "containous"),
+				withServiceLabel(label.TraefikFrontendRule, "Host:traefik.io", "containous"),
+				withServiceLabel(label.TraefikFrontendWhitelistSourceRange, "10.10.10.10", "containous"),
+
+				withServiceLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
+				withServiceLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
+				withServiceLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8", "containous"),
+				withServiceLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor", "containous"),
+				withServiceLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor", "containous"),
+				withServiceLabel(label.TraefikFrontendSSLHost, "foo", "containous"),
+				withServiceLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo", "containous"),
+				withServiceLabel(label.TraefikFrontendContentSecurityPolicy, "foo", "containous"),
+				withServiceLabel(label.TraefikFrontendPublicKey, "foo", "containous"),
+				withServiceLabel(label.TraefikFrontendReferrerPolicy, "foo", "containous"),
+				withServiceLabel(label.TraefikFrontendSTSSeconds, "666", "containous"),
+				withServiceLabel(label.TraefikFrontendSSLRedirect, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendSSLTemporaryRedirect, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendSTSIncludeSubdomains, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendSTSPreload, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendForceSTSHeader, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendFrameDeny, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendContentTypeNosniff, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendBrowserXSSFilter, "true", "containous"),
+				withServiceLabel(label.TraefikFrontendIsDevelopment, "true", "containous"),
+
+				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "foobar"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "foo_query"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageStatus, "500,600"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageBackend, "foobar"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageQuery, "bar_query"),
+
+				withServiceLabel(label.TraefikFrontendRateLimitExtractorFunc, "client.ip", "containous"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
+			),
+			task: localhostTask(
+				taskPorts(80, 81),
+			),
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-app-service-containous": {
+					EntryPoints: []string{
+						"http",
+						"https",
+					},
+					Backend: "backend-app-service-containous",
+					Routes: map[string]types.Route{
+						"route-host-app-service-containous": {
+							Rule: "Host:traefik.io",
+						},
+					},
+					PassHostHeader: true,
+					PassTLSCert:    true,
+					Priority:       666,
+					BasicAuth: []string{
+						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					},
+					WhitelistSourceRange: []string{
+						"10.10.10.10",
+					},
+					Headers: &types.Headers{
+						CustomRequestHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						CustomResponseHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						AllowedHosts: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						HostsProxyHeaders: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						SSLRedirect:          true,
+						SSLTemporaryRedirect: true,
+						SSLHost:              "foo",
+						SSLProxyHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						STSSeconds:              666,
+						STSIncludeSubdomains:    true,
+						STSPreload:              true,
+						ForceSTSHeader:          true,
+						FrameDeny:               true,
+						CustomFrameOptionsValue: "foo",
+						ContentTypeNosniff:      true,
+						BrowserXSSFilter:        true,
+						ContentSecurityPolicy:   "foo",
+						PublicKey:               "foo",
+						ReferrerPolicy:          "foo",
+						IsDevelopment:           true,
+					},
+					Errors: map[string]*types.ErrorPage{
+						"bar": {
+							Status: []string{
+								"500",
+								"600",
+							},
+							Backend: "foobar",
+							Query:   "bar_query",
+						},
+						"foo": {
+							Status: []string{
+								"404",
+							},
+							Backend: "foobar",
+							Query:   "foo_query",
+						},
+					},
+					RateLimit: &types.RateLimit{
+						RateSet: map[string]*types.Rate{
+							"bar": {
+								Period:  flaeg.Duration(3 * time.Second),
+								Average: 6,
+								Burst:   9,
+							},
+							"foo": {
+								Period:  flaeg.Duration(6 * time.Second),
+								Average: 12,
+								Burst:   18,
+							},
+						},
+						ExtractorFunc: "client.ip",
+					},
+					Redirect: &types.Redirect{
+						EntryPoint: "https",
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-app-service-containous": {
+					Servers: map[string]types.Server{
+						"server-task-service-containous": {
+							URL:    "https://localhost:80",
+							Weight: 12,
+						},
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+						Sticky: true,
+						Stickiness: &types.Stickiness{
+							CookieName: "chocolate",
+						},
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        666,
+						ExtractorFunc: "client.ip",
+					},
+					HealthCheck: &types.HealthCheck{
+						Path:     "/health",
+						Port:     880,
+						Interval: "6",
+					},
+				},
+			},
+		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			c.application.ID = "/app"
-			c.task.ID = "task"
-			if c.task.State == "" {
-				c.task.State = "TASK_RUNNING"
+			test.application.ID = "/app"
+			test.task.ID = "task"
+			if test.task.State == "" {
+				test.task.State = "TASK_RUNNING"
 			}
-			c.application.Tasks = []*marathon.Task{&c.task}
-
-			for _, frontend := range c.expectedFrontends {
-				frontend.PassHostHeader = true
-				frontend.BasicAuth = []string{}
-				frontend.EntryPoints = []string{}
-			}
+			test.application.Tasks = []*marathon.Task{&test.task}
 
 			fakeClient := newFakeClient(false,
-				marathon.Applications{Apps: []marathon.Application{c.application}})
-			provider := &Provider{
+				marathon.Applications{Apps: []marathon.Application{test.application}})
+
+			p := &Provider{
 				Domain:           "docker.localhost",
 				ExposedByDefault: true,
 				marathonClient:   fakeClient,
 			}
-			actualConfig := provider.buildConfiguration()
+
+			actualConfig := p.buildConfiguration()
 			fakeClient.AssertExpectations(t)
 
-			expectedConfig := &types.Configuration{
-				Backends:  c.expectedBackends,
-				Frontends: c.expectedFrontends,
-			}
-			assert.Equal(t, expectedConfig, actualConfig)
+			assert.NotNil(t, actualConfig)
+			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
+			assert.Equal(t, test.expectedFrontends, actualConfig.Frontends)
 		})
 	}
 }
 
 func TestApplicationFilterConstraints(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc                      string
 		application               marathon.Application
 		marathonLBCompatibility   bool
@@ -439,30 +762,34 @@ func TestApplicationFilterConstraints(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			provider := &Provider{
+
+			p := &Provider{
 				ExposedByDefault:          true,
-				MarathonLBCompatibility:   c.marathonLBCompatibility,
-				FilterMarathonConstraints: c.filterMarathonConstraints,
+				MarathonLBCompatibility:   test.marathonLBCompatibility,
+				FilterMarathonConstraints: test.filterMarathonConstraints,
 			}
+
 			constraint, err := types.NewConstraint("tag==valid")
 			if err != nil {
-				panic(fmt.Sprintf("failed to create constraint 'tag==valid': %s", err))
+				t.Fatalf("failed to create constraint 'tag==valid': %v", err)
 			}
-			provider.Constraints = types.Constraints{constraint}
-			actual := provider.applicationFilter(c.application)
-			if actual != c.expected {
-				t.Errorf("got %v, expected %v", actual, c.expected)
+			p.Constraints = types.Constraints{constraint}
+
+			actual := p.applicationFilter(test.application)
+
+			if actual != test.expected {
+				t.Errorf("got %v, expected %v", actual, test.expected)
 			}
 		})
 	}
 }
 
 func TestApplicationFilterEnabled(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc             string
 		exposedByDefault bool
 		enabledLabel     string
@@ -506,21 +833,24 @@ func TestApplicationFilterEnabled(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			provider := &Provider{ExposedByDefault: c.exposedByDefault}
-			app := application(withLabel(label.TraefikEnable, c.enabledLabel))
-			if provider.applicationFilter(app) != c.expected {
-				t.Errorf("got unexpected filtering = %t", !c.expected)
+
+			provider := &Provider{ExposedByDefault: test.exposedByDefault}
+
+			app := application(withLabel(label.TraefikEnable, test.enabledLabel))
+
+			if provider.applicationFilter(app) != test.expected {
+				t.Errorf("got unexpected filtering = %t", !test.expected)
 			}
 		})
 	}
 }
 
 func TestTaskFilter(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc         string
 		task         marathon.Task
 		application  marathon.Application
@@ -563,8 +893,8 @@ func TestTaskFilter(t *testing.T) {
 			task: task(taskPorts(80, 81)),
 			application: application(
 				appPorts(80, 81),
-				labelWithService(label.TraefikPort, "80", "web"),
-				labelWithService(label.TraefikPort, "illegal", "admin"),
+				withServiceLabel(label.TraefikPort, "80", "web"),
+				withServiceLabel(label.TraefikPort, "illegal", "admin"),
 			),
 			expected: true,
 		},
@@ -573,7 +903,7 @@ func TestTaskFilter(t *testing.T) {
 			task: task(taskPorts(80, 81)),
 			application: application(
 				appPorts(80, 81),
-				labelWithService(label.TraefikPort, "81", "admin"),
+				withServiceLabel(label.TraefikPort, "81", "admin"),
 			),
 			expected: true,
 		},
@@ -636,21 +966,54 @@ func TestTaskFilter(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			provider := &Provider{readyChecker: c.readyChecker}
-			actual := provider.taskFilter(c.task, c.application)
-			if actual != c.expected {
-				t.Errorf("actual %v, expected %v", actual, c.expected)
-			}
+
+			p := &Provider{readyChecker: test.readyChecker}
+
+			actual := p.taskFilter(test.task, test.application)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetSubDomain(t *testing.T) {
+	testCases := []struct {
+		path             string
+		expected         string
+		groupAsSubDomain bool
+	}{
+		{"/test", "test", false},
+		{"/test", "test", true},
+		{"/a/b/c/d", "d.c.b.a", true},
+		{"/b/a/d/c", "c.d.a.b", true},
+		{"/d/c/b/a", "a.b.c.d", true},
+		{"/c/d/a/b", "b.a.d.c", true},
+		{"/a/b/c/d", "a-b-c-d", false},
+		{"/b/a/d/c", "b-a-d-c", false},
+		{"/d/c/b/a", "d-c-b-a", false},
+		{"/c/d/a/b", "c-d-a-b", false},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(fmt.Sprintf("path=%s,group=%t", test.path, test.groupAsSubDomain), func(t *testing.T) {
+			t.Parallel()
+
+			p := &Provider{GroupsAsSubDomains: test.groupAsSubDomain}
+
+			actual := p.getSubDomain(test.path)
+
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
 func TestGetPort(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc        string
 		application marathon.Application
 		task        marathon.Task
@@ -757,50 +1120,20 @@ func TestGetPort(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
-			t.Parallel()
-			actual := getPort(c.task, c.application, c.serviceName)
-			if actual != c.expected {
-				t.Errorf("actual %q, expected %q", actual, c.expected)
-			}
-		})
-	}
-}
-
-func TestGetSticky(t *testing.T) {
-	testCases := []struct {
-		desc        string
-		application marathon.Application
-		expected    string
-	}{
-		{
-			desc:        "label missing",
-			application: application(),
-			expected:    "false",
-		},
-		{
-			desc:        "label existing",
-			application: application(withLabel(label.TraefikBackendLoadBalancerSticky, "true")),
-			expected:    "true",
-		},
-	}
-
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			actual := getSticky(test.application)
-			if actual != test.expected {
-				t.Errorf("actual %q, expected %q", actual, test.expected)
-			}
+
+			actual := getPort(test.task, test.application, test.serviceName)
+
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
 func TestGetFrontendRule(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc                    string
 		application             marathon.Application
 		serviceName             string
@@ -840,31 +1173,31 @@ func TestGetFrontendRule(t *testing.T) {
 		},
 		{
 			desc:                    "service label existing",
-			application:             application(labelWithService(label.TraefikFrontendRule, "Host:foo.bar", "app")),
+			application:             application(withServiceLabel(label.TraefikFrontendRule, "Host:foo.bar", "app")),
 			serviceName:             "app",
 			marathonLBCompatibility: true,
 			expected:                "Host:foo.bar",
 		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			prov := &Provider{
+			p := &Provider{
 				Domain:                  "docker.localhost",
-				MarathonLBCompatibility: c.marathonLBCompatibility,
+				MarathonLBCompatibility: test.marathonLBCompatibility,
 			}
-			actual := prov.getFrontendRule(c.application, c.serviceName)
-			if actual != c.expected {
-				t.Errorf("actual %q, expected %q", actual, c.expected)
-			}
+
+			actual := p.getFrontendRule(test.application, test.serviceName)
+
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
 func TestGetBackend(t *testing.T) {
-	cases := []struct {
+	testCases := []struct {
 		desc        string
 		application marathon.Application
 		serviceName string
@@ -882,59 +1215,29 @@ func TestGetBackend(t *testing.T) {
 		},
 		{
 			desc:        "service label existing",
-			application: application(labelWithService(label.TraefikBackend, "bar", "app")),
+			application: application(withServiceLabel(label.TraefikBackend, "bar", "app")),
 			serviceName: "app",
 			expected:    "backendbar",
 		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			prov := &Provider{}
-			actual := prov.getBackend(c.application, c.serviceName)
-			if actual != c.expected {
-				t.Errorf("actual %q, expected %q", actual, c.expected)
-			}
-		})
-	}
-}
 
-func TestGetSubDomain(t *testing.T) {
-	cases := []struct {
-		path             string
-		expected         string
-		groupAsSubDomain bool
-	}{
-		{"/test", "test", false},
-		{"/test", "test", true},
-		{"/a/b/c/d", "d.c.b.a", true},
-		{"/b/a/d/c", "c.d.a.b", true},
-		{"/d/c/b/a", "a.b.c.d", true},
-		{"/c/d/a/b", "b.a.d.c", true},
-		{"/a/b/c/d", "a-b-c-d", false},
-		{"/b/a/d/c", "b-a-d-c", false},
-		{"/d/c/b/a", "d-c-b-a", false},
-		{"/c/d/a/b", "c-d-a-b", false},
-	}
+			p := &Provider{}
 
-	for _, c := range cases {
-		c := c
-		t.Run(fmt.Sprintf("path=%s,group=%t", c.path, c.groupAsSubDomain), func(t *testing.T) {
-			t.Parallel()
-			prov := &Provider{GroupsAsSubDomains: c.groupAsSubDomain}
-			actual := prov.getSubDomain(c.path)
-			if actual != c.expected {
-				t.Errorf("actual %q, expected %q", actual, c.expected)
-			}
+			actual := p.getBackend(test.application, test.serviceName)
+
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
 func TestGetBackendServer(t *testing.T) {
 	host := "host"
-	cases := []struct {
+	testCases := []struct {
 		desc              string
 		application       marathon.Application
 		task              marathon.Task
@@ -990,80 +1293,71 @@ func TestGetBackendServer(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		c := c
-		t.Run(c.desc, func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
-			prov := &Provider{ForceTaskHostname: c.forceTaskHostname}
-			c.task.Host = host
-			actualServer := prov.getBackendServer(c.task, c.application)
-			if actualServer != c.expectedServer {
-				t.Errorf("actual %q, expected %q", actualServer, c.expectedServer)
+
+			p := &Provider{ForceTaskHostname: test.forceTaskHostname}
+			test.task.Host = host
+
+			actualServer := p.getBackendServer(test.task, test.application)
+
+			assert.Equal(t, test.expectedServer, actualServer)
+		})
+	}
+}
+
+func TestGetSticky(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		expected    bool
+	}{
+		{
+			desc:        "label missing",
+			application: application(),
+			expected:    false,
+		},
+		{
+			desc:        "label existing",
+			application: application(withLabel(label.TraefikBackendLoadBalancerSticky, "true")),
+			expected:    true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+			actual := getSticky(test.application)
+			if actual != test.expected {
+				t.Errorf("actual %q, expected %q", actual, test.expected)
 			}
 		})
 	}
 }
 
-func TestHasRedirect(t *testing.T) {
+func TestGetCircuitBreaker(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		application marathon.Application
-		serviceName string
-		expected    bool
+		expected    *types.CircuitBreaker
 	}{
 		{
-			desc:        "without redirect labels",
-			application: application(),
-			expected:    false,
+			desc:        "should return nil when no CB label",
+			application: application(appPorts(80)),
+			expected:    nil,
 		},
 		{
-			desc: "with entry point redirect label",
+			desc: "should return a struct when CB label is set",
 			application: application(
-				withLabel(label.TraefikFrontendRedirectEntryPoint, "bar"),
+				appPorts(80),
+				withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
 			),
-			expected: true,
-		},
-		{
-			desc: "with regex redirect labels",
-			application: application(
-				withLabel(label.TraefikFrontendRedirectRegex, "bar"),
-				withLabel(label.TraefikFrontendRedirectReplacement, "bar"),
-			),
-			expected: true,
-		},
-		{
-			desc: "with entry point redirect label on service",
-			application: application(
-				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectEntryPoint, "bar"),
-			),
-			serviceName: "foo",
-			expected:    true,
-		},
-		{
-			desc: "with entry point redirect label on service but not the same service",
-			application: application(
-				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectEntryPoint, "bar"),
-			),
-			serviceName: "foofoo",
-			expected:    false,
-		},
-		{
-			desc: "with regex redirect label on service",
-			application: application(
-				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectRegex, "bar"),
-				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectReplacement, "bar"),
-			),
-			serviceName: "foo",
-			expected:    true,
-		},
-		{
-			desc: "with regex redirect label on service but not the same service",
-			application: application(
-				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectRegex, "bar"),
-				withLabel(label.Prefix+"foo."+label.SuffixFrontendRedirectReplacement, "bar"),
-			),
-			serviceName: "foofoo",
-			expected:    false,
+			expected: &types.CircuitBreaker{
+				Expression: "NetworkErrorRatio() > 0.5",
+			},
 		},
 	}
 
@@ -1072,42 +1366,54 @@ func TestHasRedirect(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := hasRedirect(test.application, test.serviceName)
+			actual := getCircuitBreaker(test.application)
 
 			assert.Equal(t, test.expected, actual)
 		})
 	}
 }
 
-func TestHasPrefixFuncService(t *testing.T) {
+func TestGetLoadBalancer(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		application marathon.Application
-		serviceName string
-		expected    bool
+		expected    *types.LoadBalancer
 	}{
 		{
-			desc: "with one label",
-			application: application(
-				withLabel(label.Prefix+label.BaseFrontendErrorPage+"goo"+label.SuffixErrorPageBackend, "bar"),
-			),
-			expected: true,
+			desc:        "should return nil when no LB labels",
+			application: application(appPorts(80)),
+			expected:    nil,
 		},
 		{
-			desc: "with one label on service",
+			desc: "should return a struct when labels are set",
 			application: application(
-				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo"+label.SuffixErrorPageBackend, "bar"),
+				appPorts(80),
+				withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
+				withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
+				withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
+				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "foo"),
 			),
-			serviceName: "foo",
-			expected:    true,
+			expected: &types.LoadBalancer{
+				Method: "drr",
+				Sticky: true,
+				Stickiness: &types.Stickiness{
+					CookieName: "foo",
+				},
+			},
 		},
 		{
-			desc: "with one label on service but not the same service",
+			desc: "should return a nil Stickiness when Stickiness is not set",
 			application: application(
-				withLabel(label.Prefix+"foo."+label.BaseFrontendErrorPage+"goo"+label.SuffixErrorPageBackend, "bar"),
+				appPorts(80),
+				withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
+				withLabel(label.TraefikBackendLoadBalancerSticky, "true"),
+				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "foo"),
 			),
-			serviceName: "foofoo",
-			expected:    false,
+			expected: &types.LoadBalancer{
+				Method:     "drr",
+				Sticky:     true,
+				Stickiness: nil,
+			},
 		},
 	}
 
@@ -1116,7 +1422,273 @@ func TestHasPrefixFuncService(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			actual := hasPrefixFuncService(label.BaseFrontendErrorPage)(test.application, test.serviceName)
+			actual := getLoadBalancer(test.application)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetMaxConn(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		expected    *types.MaxConn
+	}{
+		{
+			desc:        "should return nil when no max conn labels",
+			application: application(appPorts(80)),
+			expected:    nil,
+		},
+		{
+			desc: "should return nil when no amount label",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return default when no empty extractorFunc label",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikBackendMaxConnExtractorFunc, ""),
+				withLabel(label.TraefikBackendMaxConnAmount, "666"),
+			),
+			expected: &types.MaxConn{
+				ExtractorFunc: "request.host",
+				Amount:        666,
+			},
+		},
+		{
+			desc: "should return a struct when max conn labels are set",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+				withLabel(label.TraefikBackendMaxConnAmount, "666"),
+			),
+			expected: &types.MaxConn{
+				ExtractorFunc: "client.ip",
+				Amount:        666,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getMaxConn(test.application)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetHealthCheck(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		expected    *types.HealthCheck
+	}{
+		{
+			desc:        "should return nil when no health check labels",
+			application: application(appPorts(80)),
+			expected:    nil,
+		},
+		{
+			desc: "should return nil when no health check Path label",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikBackendHealthCheckPort, "80"),
+				withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when health check labels are set",
+
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikBackendHealthCheckPath, "/health"),
+				withLabel(label.TraefikBackendHealthCheckPort, "80"),
+				withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+			),
+			expected: &types.HealthCheck{
+				Path:     "/health",
+				Port:     80,
+				Interval: "6",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getHealthCheck(test.application)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetServers(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		serviceName string
+		expected    map[string]types.Server
+	}{
+		{
+			desc:        "should return nil when no task",
+			application: application(ipAddrPerTask(80)),
+			expected:    nil,
+		},
+		{
+			desc: "should return nil when all hosts are empty",
+			application: application(
+				withTasks(
+					task(ipAddresses("1.1.1.1"), withTaskID("A"), taskPorts(80)),
+					task(ipAddresses("1.1.1.2"), withTaskID("B"), taskPorts(80)),
+					task(ipAddresses("1.1.1.3"), withTaskID("C"), taskPorts(80))),
+			),
+			expected: nil,
+		},
+		{
+			desc: "with 3 tasks",
+			application: application(
+				ipAddrPerTask(80),
+				withTasks(
+					task(ipAddresses("1.1.1.1"), withTaskID("A"), taskPorts(80)),
+					task(ipAddresses("1.1.1.2"), withTaskID("B"), taskPorts(80)),
+					task(ipAddresses("1.1.1.3"), withTaskID("C"), taskPorts(80))),
+			),
+			expected: map[string]types.Server{
+				"server-A": {
+					URL:    "http://1.1.1.1:80",
+					Weight: 0,
+				},
+				"server-B": {
+					URL:    "http://1.1.1.2:80",
+					Weight: 0,
+				},
+				"server-C": {
+					URL:    "http://1.1.1.3:80",
+					Weight: 0,
+				},
+			},
+		},
+	}
+
+	p := &Provider{}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := p.getServers(test.application, test.serviceName)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetRedirect(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		serviceName string
+		expected    *types.Redirect
+	}{
+		{
+			desc:        "should return nil when no redirect labels",
+			application: application(appPorts(80)),
+			expected:    nil,
+		},
+		{
+			desc: "should use only entry point tag when mix regex redirect and entry point redirect",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
+				withLabel(label.TraefikFrontendRedirectRegex, "(.*)"),
+				withLabel(label.TraefikFrontendRedirectReplacement, "$1"),
+			),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when entry point redirect label",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
+			),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect labels",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikFrontendRedirectRegex, "(.*)"),
+				withLabel(label.TraefikFrontendRedirectReplacement, "$1"),
+			),
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+			},
+		},
+		// Service
+		{
+			desc: "should use only entry point tag when mix regex redirect and entry point redirect on service",
+			application: application(
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRedirectEntryPoint, "https"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRedirectRegex, "(.*)"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRedirectReplacement, "$1"),
+			),
+			serviceName: "containous",
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when entry point redirect label on service",
+			application: application(
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRedirectEntryPoint, "https"),
+			),
+			serviceName: "containous",
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect labels on service",
+			application: application(
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRedirectRegex, "(.*)"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRedirectReplacement, "$1"),
+			),
+			serviceName: "containous",
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getRedirect(test.application, test.serviceName)
 
 			assert.Equal(t, test.expected, actual)
 		})
@@ -1201,68 +1773,101 @@ func TestGetErrorPages(t *testing.T) {
 	}
 }
 
-func TestGetRateLimits(t *testing.T) {
+func TestGetRateLimit(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		application marathon.Application
 		serviceName string
-		expected    map[string]*types.Rate
+		expected    *types.RateLimit
 	}{
 		{
-			desc: "with 2 rate limits",
+			desc:        "should return nil when no rate limit labels",
+			application: application(appPorts(80)),
+			expected:    nil,
+		},
+		{
+			desc: "should return a struct when rate limit labels are defined",
 			application: application(
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitAverage, "1"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitPeriod, "2"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitBurst, "3"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitAverage, "4"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitPeriod, "5"),
-				withLabel(label.Prefix+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitBurst, "6"),
+				appPorts(80),
+				withLabel(label.TraefikFrontendRateLimitExtractorFunc, "client.ip"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
 			),
-			expected: map[string]*types.Rate{
-				"goo": {
-					Average: 1,
-					Period:  flaeg.Duration(2 * time.Second),
-					Burst:   3,
-				},
-				"hoo": {
-					Average: 4,
-					Period:  flaeg.Duration(5 * time.Second),
-					Burst:   6,
+			expected: &types.RateLimit{
+				ExtractorFunc: "client.ip",
+				RateSet: map[string]*types.Rate{
+					"foo": {
+						Period:  flaeg.Duration(6 * time.Second),
+						Average: 12,
+						Burst:   18,
+					},
+					"bar": {
+						Period:  flaeg.Duration(3 * time.Second),
+						Average: 6,
+						Burst:   9,
+					},
 				},
 			},
 		},
 		{
-			desc: "with 2 rate limits on service",
+			desc: "should return nil when ExtractorFunc is missing",
 			application: application(
-				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitAverage, "1"),
-				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitPeriod, "2"),
-				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitBurst, "3"),
-				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitAverage, "4"),
-				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitPeriod, "5"),
-				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"hoo."+label.SuffixRateLimitBurst, "6"),
+				appPorts(80),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
 			),
-			serviceName: "foo",
-			expected: map[string]*types.Rate{
-				"goo": {
-					Average: 1,
-					Period:  flaeg.Duration(2 * time.Second),
-					Burst:   3,
-				},
-				"hoo": {
-					Average: 4,
-					Period:  flaeg.Duration(5 * time.Second),
-					Burst:   6,
+			expected: nil,
+		},
+		// Service
+		{
+			desc: "should return a struct when rate limit labels are defined on service",
+			application: application(
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRateLimitExtractorFunc, "client.ip"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
+			),
+			serviceName: "containous",
+			expected: &types.RateLimit{
+				ExtractorFunc: "client.ip",
+				RateSet: map[string]*types.Rate{
+					"foo": {
+						Period:  flaeg.Duration(6 * time.Second),
+						Average: 12,
+						Burst:   18,
+					},
+					"bar": {
+						Period:  flaeg.Duration(3 * time.Second),
+						Average: 6,
+						Burst:   9,
+					},
 				},
 			},
 		},
 		{
-			desc: "with 1 rate limit on service but not the same service",
+			desc: "should return nil when ExtractorFunc is missing on service",
 			application: application(
-				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitAverage, "1"),
-				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitPeriod, "2"),
-				withLabel(label.Prefix+"foo."+label.BaseFrontendRateLimit+"goo."+label.SuffixRateLimitBurst, "3"),
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+				withLabel(label.Prefix+"containous."+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
 			),
-			serviceName: "foofoo",
+			serviceName: "containous",
 			expected:    nil,
 		},
 	}
@@ -1272,9 +1877,151 @@ func TestGetRateLimits(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
-			limits := getRateLimits(test.application, test.serviceName)
+			actual := getRateLimit(test.application, test.serviceName)
 
-			assert.EqualValues(t, test.expected, limits)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetHeaders(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		application marathon.Application
+		serviceName string
+		expected    *types.Headers
+	}{
+		{
+			desc:        "should return nil when no custom headers options are set",
+			application: application(appPorts(80)),
+			expected:    nil,
+		},
+		{
+			desc: "should return a struct when all custom headers options are set",
+			application: application(
+				appPorts(80),
+				withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor"),
+				withLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor"),
+				withLabel(label.TraefikFrontendSSLHost, "foo"),
+				withLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo"),
+				withLabel(label.TraefikFrontendContentSecurityPolicy, "foo"),
+				withLabel(label.TraefikFrontendPublicKey, "foo"),
+				withLabel(label.TraefikFrontendReferrerPolicy, "foo"),
+				withLabel(label.TraefikFrontendSTSSeconds, "666"),
+				withLabel(label.TraefikFrontendSSLRedirect, "true"),
+				withLabel(label.TraefikFrontendSSLTemporaryRedirect, "true"),
+				withLabel(label.TraefikFrontendSTSIncludeSubdomains, "true"),
+				withLabel(label.TraefikFrontendSTSPreload, "true"),
+				withLabel(label.TraefikFrontendForceSTSHeader, "true"),
+				withLabel(label.TraefikFrontendFrameDeny, "true"),
+				withLabel(label.TraefikFrontendContentTypeNosniff, "true"),
+				withLabel(label.TraefikFrontendBrowserXSSFilter, "true"),
+				withLabel(label.TraefikFrontendIsDevelopment, "true"),
+			),
+			expected: &types.Headers{
+				CustomRequestHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				CustomResponseHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				SSLProxyHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				AllowedHosts:            []string{"foo", "bar", "bor"},
+				HostsProxyHeaders:       []string{"foo", "bar", "bor"},
+				SSLHost:                 "foo",
+				CustomFrameOptionsValue: "foo",
+				ContentSecurityPolicy:   "foo",
+				PublicKey:               "foo",
+				ReferrerPolicy:          "foo",
+				STSSeconds:              666,
+				SSLRedirect:             true,
+				SSLTemporaryRedirect:    true,
+				STSIncludeSubdomains:    true,
+				STSPreload:              true,
+				ForceSTSHeader:          true,
+				FrameDeny:               true,
+				ContentTypeNosniff:      true,
+				BrowserXSSFilter:        true,
+				IsDevelopment:           true,
+			},
+		},
+		// Service
+		{
+			desc: "should return a struct when all custom headers options are set on service",
+			application: application(
+				appPorts(80),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersAllowedHosts, "foo,bar,bor"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersHostsProxyHeaders, "foo,bar,bor"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersSSLHost, "foo"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersCustomFrameOptionsValue, "foo"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersContentSecurityPolicy, "foo"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersPublicKey, "foo"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersReferrerPolicy, "foo"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersSTSSeconds, "666"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersSSLRedirect, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersSSLTemporaryRedirect, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersSTSIncludeSubdomains, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersSTSPreload, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersForceSTSHeader, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersFrameDeny, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersContentTypeNosniff, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersBrowserXSSFilter, "true"),
+				withLabel(label.Prefix+"containous."+label.SuffixFrontendHeadersIsDevelopment, "true"),
+			),
+			serviceName: "containous",
+			expected: &types.Headers{
+				CustomRequestHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				CustomResponseHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				SSLProxyHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				AllowedHosts:            []string{"foo", "bar", "bor"},
+				HostsProxyHeaders:       []string{"foo", "bar", "bor"},
+				SSLHost:                 "foo",
+				CustomFrameOptionsValue: "foo",
+				ContentSecurityPolicy:   "foo",
+				PublicKey:               "foo",
+				ReferrerPolicy:          "foo",
+				STSSeconds:              666,
+				SSLRedirect:             true,
+				SSLTemporaryRedirect:    true,
+				STSIncludeSubdomains:    true,
+				STSPreload:              true,
+				ForceSTSHeader:          true,
+				FrameDeny:               true,
+				ContentTypeNosniff:      true,
+				BrowserXSSFilter:        true,
+				IsDevelopment:           true,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getHeaders(test.application, test.serviceName)
+
+			assert.Equal(t, test.expected, actual)
 		})
 	}
 }

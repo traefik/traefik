@@ -50,7 +50,7 @@ func constraint(value string) func(*marathon.Application) {
 	}
 }
 
-func labelWithService(key, value string, serviceName string) func(*marathon.Application) {
+func withServiceLabel(key, value string, serviceName string) func(*marathon.Application) {
 	if len(serviceName) == 0 {
 		panic("serviceName can not be empty")
 	}
@@ -121,20 +121,35 @@ func readinessCheckResult(taskID string, ready bool) func(*marathon.Application)
 	}
 }
 
+func withTasks(tasks ...marathon.Task) func(*marathon.Application) {
+	return func(application *marathon.Application) {
+		for _, task := range tasks {
+			tu := task
+			application.Tasks = append(application.Tasks, &tu)
+		}
+	}
+}
+
 // Functions related to building tasks.
 
 func task(ops ...func(*marathon.Task)) marathon.Task {
-	t := marathon.Task{
+	t := &marathon.Task{
 		ID: testTaskName,
 		// The vast majority of tests expect the task state to be TASK_RUNNING.
 		State: string(taskStateRunning),
 	}
 
 	for _, op := range ops {
-		op(&t)
+		op(t)
 	}
 
-	return t
+	return *t
+}
+
+func withTaskID(id string) func(*marathon.Task) {
+	return func(task *marathon.Task) {
+		task.ID = id
+	}
 }
 
 func localhostTask(ops ...func(*marathon.Task)) marathon.Task {
