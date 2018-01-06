@@ -45,7 +45,7 @@ func checkServiceLabelPort(container dockerData) error {
 		serviceLabels := make(map[string]struct{})
 		for lbl := range container.Labels {
 			// Get all port service labels
-			portLabel := label.PortRegexp.FindStringSubmatch(lbl)
+			portLabel := extractServicePort(lbl)
 			if len(portLabel) > 0 {
 				serviceLabelPorts[portLabel[0]] = struct{}{}
 			}
@@ -70,6 +70,15 @@ func checkServiceLabelPort(container dockerData) error {
 		}
 	}
 	return err
+}
+
+func extractServicePort(labelName string) []string {
+	if strings.HasPrefix(labelName, label.TraefikFrontend+".") ||
+		strings.HasPrefix(labelName, label.TraefikBackend+".") {
+		return nil
+	}
+
+	return label.PortRegexp.FindStringSubmatch(labelName)
 }
 
 // Extract backend from labels for a given service and a given docker container
