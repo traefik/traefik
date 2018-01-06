@@ -1233,6 +1233,18 @@ func TestTLSSecretLoad(t *testing.T) {
 				iTLS("myTlsSecret"),
 			),
 		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendEntryPoints, "ep3"),
+			iRules(
+				iRule(iHost("example.fail"), iPaths(
+					onePath(iBackend("example-fail", intstr.FromInt(80))),
+				)),
+			),
+			iTLSes(
+				iTLS("myUndefinedSecret"),
+			),
+		),
 	}
 	services := []*v1.Service{
 		buildService(
