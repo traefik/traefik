@@ -1295,6 +1295,7 @@ func TestTLSSecretLoad(t *testing.T) {
 		),
 		frontends(
 			frontend("example.com",
+				headers(),
 				entryPoints("ep1", "ep2"),
 				passHostHeader(),
 				routes(
@@ -1302,6 +1303,7 @@ func TestTLSSecretLoad(t *testing.T) {
 				),
 			),
 			frontend("example.org",
+				headers(),
 				entryPoints("ep1", "ep2"),
 				passHostHeader(),
 				routes(
