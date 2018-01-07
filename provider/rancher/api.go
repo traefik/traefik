@@ -92,18 +92,26 @@ func (p *Provider) apiProvide(configurationChan chan<- types.ConfigMessage, pool
 						select {
 						case <-ticker.C:
 
-							log.Debugf("Refreshing new Data from Provider API")
-							var stacks = listRancherStacks(rancherClient)
-							var services = listRancherServices(rancherClient)
-							var container = listRancherContainer(rancherClient)
+							checkRancherApi, rancherErrApi := p.createClient()
 
-							rancherData := parseAPISourcedRancherData(stacks, services, container)
+							if rancherErrApi != nil {
+								log.Errorf("Cannot establish connection: %+v, rancher API return: %+v;\nSkipping refresh Data from Provider API", rancherErrApi, checkRancherApi)
 
-							configuration := p.loadRancherConfig(rancherData)
-							if configuration != nil {
-								configurationChan <- types.ConfigMessage{
-									ProviderName:  "rancher",
-									Configuration: configuration,
+							} else {
+
+								log.Debugf("Refreshing new Data from Provider API")
+								var stacks = listRancherStacks(rancherClient)
+								var services = listRancherServices(rancherClient)
+								var container = listRancherContainer(rancherClient)
+
+								rancherData := parseAPISourcedRancherData(stacks, services, container)
+
+								configuration := p.loadRancherConfig(rancherData)
+								if configuration != nil {
+									configurationChan <- types.ConfigMessage{
+										ProviderName:  "rancher",
+										Configuration: configuration,
+									}
 								}
 							}
 						case <-stop:
