@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/containous/traefik/provider/label"
+	"github.com/containous/traefik/tls"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/pkg/api/v1"
@@ -1212,5 +1213,304 @@ func TestBasicAuthInTemplate(t *testing.T) {
 	got := actual.Frontends["basic/auth"].BasicAuth
 	if !reflect.DeepEqual(got, []string{"myUser:myEncodedPW"}) {
 		t.Fatalf("unexpected credentials: %+v", got)
+	}
+}
+
+func TestTLSSecretLoad(t *testing.T) {
+	ingresses := []*v1beta1.Ingress{
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendEntryPoints, "ep1,ep2"),
+			iRules(
+				iRule(iHost("example.com"), iPaths(
+					onePath(iBackend("example-com", intstr.FromInt(80))),
+				)),
+				iRule(iHost("example.org"), iPaths(
+					onePath(iBackend("example-org", intstr.FromInt(80))),
+				)),
+			),
+			iTLSes(
+				iTLS("myTlsSecret"),
+			),
+		),
+		buildIngress(
+			iNamespace("testing"),
+			iAnnotation(label.TraefikFrontendEntryPoints, "ep3"),
+			iRules(
+				iRule(iHost("example.fail"), iPaths(
+					onePath(iBackend("example-fail", intstr.FromInt(80))),
+				)),
+			),
+			iTLSes(
+				iTLS("myUndefinedSecret"),
+			),
+		),
+	}
+	services := []*v1.Service{
+		buildService(
+			sName("example-com"),
+			sNamespace("testing"),
+			sUID("1"),
+			sSpec(
+				clusterIP("10.0.0.1"),
+				sType("ClusterIP"),
+				sPorts(sPort(80, "http"))),
+		),
+		buildService(
+			sName("example-org"),
+			sNamespace("testing"),
+			sUID("2"),
+			sSpec(
+				clusterIP("10.0.0.2"),
+				sType("ClusterIP"),
+				sPorts(sPort(80, "http"))),
+		),
+	}
+	secrets := []*v1.Secret{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "myTlsSecret",
+				UID:       "1",
+				Namespace: "testing",
+			},
+			Data: map[string][]byte{
+				"tls.crt": []byte("-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----"),
+				"tls.key": []byte("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+			},
+		},
+	}
+	endpoints := []*v1.Endpoints{}
+	watchChan := make(chan interface{})
+	client := clientMock{
+		ingresses: ingresses,
+		services:  services,
+		secrets:   secrets,
+		endpoints: endpoints,
+		watchChan: watchChan,
+	}
+	provider := Provider{}
+	actual, err := provider.loadIngresses(client)
+	if err != nil {
+		t.Fatalf("error %+v", err)
+	}
+
+	expected := buildConfiguration(
+		backends(
+			backend("example.com",
+				servers(),
+				lbMethod("wrr"),
+			),
+			backend("example.org",
+				servers(),
+				lbMethod("wrr"),
+			),
+		),
+		frontends(
+			frontend("example.com",
+				headers(),
+				entryPoints("ep1", "ep2"),
+				passHostHeader(),
+				routes(
+					route("example.com", "Host:example.com"),
+				),
+			),
+			frontend("example.org",
+				headers(),
+				entryPoints("ep1", "ep2"),
+				passHostHeader(),
+				routes(
+					route("example.org", "Host:example.org"),
+				),
+			),
+		),
+		tlsConfigurations(
+			tlsConfiguration(
+				tlsEntryPoints("ep1", "ep2"),
+				certificate(
+					"-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----",
+					"-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----"),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, actual)
+}
+
+func TestGetTLSConfigurations(t *testing.T) {
+	testIngressWithoutHostname := buildIngress(
+		iNamespace("testing"),
+		iRules(
+			iRule(iHost("ep1.example.com")),
+			iRule(iHost("ep2.example.com")),
+		),
+		iTLSes(
+			iTLS("test-secret"),
+		),
+	)
+
+	tests := []struct {
+		desc      string
+		ingress   *v1beta1.Ingress
+		client    Client
+		result    []*tls.Configuration
+		errResult string
+	}{
+		{
+			desc:    "api client returns error",
+			ingress: testIngressWithoutHostname,
+			client: clientMock{
+				apiSecretError: errors.New("api secret error"),
+			},
+			errResult: "failed to fetch secret testing/test-secret: api secret error",
+		},
+		{
+			desc:      "api client doesn't find secret",
+			ingress:   testIngressWithoutHostname,
+			client:    clientMock{},
+			errResult: "secret testing/test-secret does not exist",
+		},
+		{
+			desc:    "entry 'tls.crt' in secret missing",
+			ingress: testIngressWithoutHostname,
+			client: clientMock{
+				secrets: []*v1.Secret{
+					{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{
+							"tls.key": []byte("tls-key"),
+						},
+					},
+				},
+			},
+			errResult: "secret testing/test-secret is missing the following TLS data entries: tls.crt",
+		},
+		{
+			desc:    "entry 'tls.key' in secret missing",
+			ingress: testIngressWithoutHostname,
+			client: clientMock{
+				secrets: []*v1.Secret{
+					{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{
+							"tls.crt": []byte("tls-crt"),
+						},
+					},
+				},
+			},
+			errResult: "secret testing/test-secret is missing the following TLS data entries: tls.key",
+		},
+		{
+			desc:    "secret doesn't provide any of the required fields",
+			ingress: testIngressWithoutHostname,
+			client: clientMock{
+				secrets: []*v1.Secret{
+					{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{},
+					},
+				},
+			},
+			errResult: "secret testing/test-secret is missing the following TLS data entries: tls.crt, tls.key",
+		},
+		{
+			desc: "add certificates to the configuration",
+			ingress: buildIngress(
+				iNamespace("testing"),
+				iRules(
+					iRule(iHost("ep1.example.com")),
+					iRule(iHost("ep2.example.com")),
+					iRule(iHost("ep3.example.com")),
+				),
+				iTLSes(
+					iTLS("test-secret"),
+					iTLS("test-secret"),
+				),
+			),
+			client: clientMock{
+				secrets: []*v1.Secret{
+					{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{
+							"tls.crt": []byte("tls-crt"),
+							"tls.key": []byte("tls-key"),
+						},
+					},
+				},
+			},
+			result: []*tls.Configuration{
+				{
+					Certificate: &tls.Certificate{
+						CertFile: tls.FileOrContent("tls-crt"),
+						KeyFile:  tls.FileOrContent("tls-key"),
+					},
+				},
+				{
+					Certificate: &tls.Certificate{
+						CertFile: tls.FileOrContent("tls-crt"),
+						KeyFile:  tls.FileOrContent("tls-key"),
+					},
+				},
+			},
+		},
+		{
+			desc: "pass the endpoints defined in the annotation to the certificate",
+			ingress: buildIngress(
+				iNamespace("testing"),
+				iAnnotation(label.TraefikFrontendEntryPoints, "https,api-secure"),
+				iRules(iRule(iHost("example.com"))),
+				iTLSes(iTLS("test-secret")),
+			),
+			client: clientMock{
+				secrets: []*v1.Secret{
+					{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-secret",
+							Namespace: "testing",
+						},
+						Data: map[string][]byte{
+							"tls.crt": []byte("tls-crt"),
+							"tls.key": []byte("tls-key"),
+						},
+					},
+				},
+			},
+			result: []*tls.Configuration{
+				{
+					EntryPoints: []string{"https", "api-secure"},
+					Certificate: &tls.Certificate{
+						CertFile: tls.FileOrContent("tls-crt"),
+						KeyFile:  tls.FileOrContent("tls-key"),
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			tlsConfigs, err := getTLSConfigurations(test.ingress, test.client)
+
+			if test.errResult != "" {
+				assert.EqualError(t, err, test.errResult)
+			} else {
+				assert.Nil(t, err)
+				assert.Equal(t, test.result, tlsConfigs)
+			}
+		})
 	}
 }

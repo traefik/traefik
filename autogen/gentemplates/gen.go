@@ -837,7 +837,18 @@ var _templatesKubernetesTmpl = []byte(`[backends]{{range $backendName, $backend 
     [frontends."{{$frontendName}}".routes."{{$routeName}}"]
     rule = "{{$route.Rule}}"
     {{end}}
-{{end}}`)
+{{end}}
+
+{{range $tlsConfiguration := .TLSConfiguration}}
+[[tlsConfiguration]]
+  entryPoints = [{{range $tlsConfiguration.EntryPoints}}
+    "{{.}}",
+   {{end}}]
+  [tlsConfiguration.certificate]
+    certFile = """{{$tlsConfiguration.Certificate.CertFile}}"""
+    keyFile = """{{$tlsConfiguration.Certificate.KeyFile}}"""
+{{end}}
+`)
 
 func templatesKubernetesTmplBytes() ([]byte, error) {
 	return _templatesKubernetesTmpl, nil

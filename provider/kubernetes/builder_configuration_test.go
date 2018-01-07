@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"testing"
 
+	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -201,6 +202,39 @@ func route(name string, rule string) func(*types.Route) string {
 	}
 }
 
+func tlsConfigurations(opts ...func(*tls.Configuration)) func(*types.Configuration) {
+	return func(c *types.Configuration) {
+		for _, opt := range opts {
+			tlsConf := &tls.Configuration{}
+			opt(tlsConf)
+			c.TLSConfiguration = append(c.TLSConfiguration, tlsConf)
+		}
+	}
+}
+
+func tlsConfiguration(opts ...func(*tls.Configuration)) func(*tls.Configuration) {
+	return func(c *tls.Configuration) {
+		for _, opt := range opts {
+			opt(c)
+		}
+	}
+}
+
+func tlsEntryPoints(entryPoints ...string) func(*tls.Configuration) {
+	return func(c *tls.Configuration) {
+		c.EntryPoints = entryPoints
+	}
+}
+
+func certificate(cert string, key string) func(*tls.Configuration) {
+	return func(c *tls.Configuration) {
+		c.Certificate = &tls.Certificate{
+			CertFile: tls.FileOrContent(cert),
+			KeyFile:  tls.FileOrContent(key),
+		}
+	}
+}
+
 // Test
 
 func TestBuildConfiguration(t *testing.T) {
@@ -245,6 +279,12 @@ func TestBuildConfiguration(t *testing.T) {
 				routes(
 					route("bar", "Host:bar"),
 				),
+			),
+		),
+		tlsConfigurations(
+			tlsConfiguration(
+				tlsEntryPoints("https"),
+				certificate("certificate", "key"),
 			),
 		),
 	)
@@ -332,6 +372,15 @@ func sampleConfiguration() *types.Configuration {
 					"bar": {
 						Rule: "Host:bar",
 					},
+				},
+			},
+		},
+		TLSConfiguration: []*tls.Configuration{
+			{
+				EntryPoints: []string{"https"},
+				Certificate: &tls.Certificate{
+					CertFile: tls.FileOrContent("certificate"),
+					KeyFile:  tls.FileOrContent("key"),
 				},
 			},
 		},

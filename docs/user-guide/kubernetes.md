@@ -333,6 +333,51 @@ echo "$(minikube ip) traefik-ui.minikube" | sudo tee -a /etc/hosts
 
 We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube) in the browser and view the Træfik Web UI.
 
+### Add a TLS Certificate to the Ingress
+
+!!! note
+    For this example to work you need a TLS entrypoint. You don't have to provide a TLS certificate at this point. For more details see [here](/configuration/entrypoints/).
+
+To setup an HTTPS-protected ingress, you can leverage the TLS feature of the ingress resource.
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: traefik-web-ui
+  namespace: kube-system
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: traefik-ui.minikube
+    http:
+      paths:
+      - backend:
+          serviceName: traefik-web-ui
+          servicePort: 80
+  tls:
+    secretName: traefik-ui-tls-cert
+```
+
+In addition to the modified ingress you need to provide the TLS certificate via a kubernetes secret in the same namespace as the ingress. The following two commands will generate a new certificate and create a secret containing the key and cert files.
+
+```shell
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=traefik-ui.minikube"
+kubectl -n kube-system create secret tls traefik-ui-tls-cert --key=tls.key --cert=tls.crt
+```
+
+If there are any errors while loading the TLS section of an ingress, the whole ingress will be skipped.
+
+!!! note
+    The secret must have two entries named `tls.key`and `tls.crt`. See the [kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls) for more details.
+
+!!! note
+    The TLS certificates will be added to all entrypoints defined by the ingress annotation `traefik.frontend.entryPoints`. If no such annotation is provided, the TLS certificates will be added to all TLS-enabled `defaultEntryPoints`.
+
+!!! note
+    The field `hosts` in the TLS configuration is ignored. Instead, the domains provided by the certificate are used for this purpose. It is recommended to not use wildcard certificates as they will match globally.
+
 ## Basic Authentication
 
 It's possible to add additional authentication annotations in the Ingress rule.

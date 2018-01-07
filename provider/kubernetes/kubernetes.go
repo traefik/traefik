@@ -19,6 +19,7 @@ import (
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/safe"
+	"github.com/containous/traefik/tls"
 	"github.com/containous/traefik/types"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
@@ -173,6 +174,13 @@ func (p *Provider) loadIngresses(k8sClient Client) (*types.Configuration, error)
 		if !shouldProcessIngress(ingressClass) {
 			continue
 		}
+
+		tlsConfigs, err := getTLSConfigurations(i, k8sClient)
+		if err != nil {
+			log.Errorf("Error configuring TLS for ingress %s/%s: %v", i.Namespace, i.Name, err)
+			continue
+		}
+		templateObjects.TLSConfiguration = append(templateObjects.TLSConfiguration, tlsConfigs...)
 
 		for _, r := range i.Spec.Rules {
 			if r.HTTP == nil {
@@ -439,6 +447,48 @@ func loadAuthCredentials(namespace, secretName string, k8sClient Client) ([]stri
 	}
 
 	return creds, nil
+}
+
+func getTLSConfigurations(ingress *v1beta1.Ingress, k8sClient Client) ([]*tls.Configuration, error) {
+	var tlsConfigs []*tls.Configuration
+
+	for _, t := range ingress.Spec.TLS {
+		tlsSecret, exists, err := k8sClient.GetSecret(ingress.Namespace, t.SecretName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch secret %s/%s: %v", ingress.Namespace, t.SecretName, err)
+		}
+		if !exists {
+			return nil, fmt.Errorf("secret %s/%s does not exist", ingress.Namespace, t.SecretName)
+		}
+
+		tlsCrtData, tlsCrtExists := tlsSecret.Data["tls.crt"]
+		tlsKeyData, tlsKeyExists := tlsSecret.Data["tls.key"]
+
+		var missingEntries []string
+		if !tlsCrtExists {
+			missingEntries = append(missingEntries, "tls.crt")
+		}
+		if !tlsKeyExists {
+			missingEntries = append(missingEntries, "tls.key")
+		}
+		if len(missingEntries) > 0 {
+			return nil, fmt.Errorf("secret %s/%s is missing the following TLS data entries: %s", ingress.Namespace, t.SecretName, strings.Join(missingEntries, ", "))
+		}
+
+		entryPoints := label.GetSliceStringValue(ingress.Annotations, label.TraefikFrontendEntryPoints)
+
+		tlsConfig := &tls.Configuration{
+			EntryPoints: entryPoints,
+			Certificate: &tls.Certificate{
+				CertFile: tls.FileOrContent(tlsCrtData),
+				KeyFile:  tls.FileOrContent(tlsKeyData),
+			},
+		}
+
+		tlsConfigs = append(tlsConfigs, tlsConfig)
+	}
+
+	return tlsConfigs, nil
 }
 
 func endpointPortNumber(servicePort v1.ServicePort, endpointPorts []v1.EndpointPort) int {

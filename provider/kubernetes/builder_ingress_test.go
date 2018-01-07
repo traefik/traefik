@@ -92,6 +92,23 @@ func iBackend(name string, port intstr.IntOrString) func(*v1beta1.HTTPIngressPat
 	}
 }
 
+func iTLSes(opts ...func(*v1beta1.IngressTLS)) func(*v1beta1.Ingress) {
+	return func(i *v1beta1.Ingress) {
+		for _, opt := range opts {
+			iTLS := v1beta1.IngressTLS{}
+			opt(&iTLS)
+			i.Spec.TLS = append(i.Spec.TLS, iTLS)
+		}
+	}
+}
+
+func iTLS(secret string, hosts ...string) func(*v1beta1.IngressTLS) {
+	return func(i *v1beta1.IngressTLS) {
+		i.SecretName = secret
+		i.Hosts = hosts
+	}
+}
+
 // Test
 
 func TestBuildIngress(t *testing.T) {
@@ -107,7 +124,11 @@ func TestBuildIngress(t *testing.T) {
 				onePath(iBackend("service2", intstr.FromInt(802))),
 			),
 			),
-		))
+		),
+		iTLSes(
+			iTLS("tls-secret", "foo"),
+		),
+	)
 
 	assert.EqualValues(t, sampleIngress(), i)
 }
@@ -162,6 +183,12 @@ func sampleIngress() *v1beta1.Ingress {
 							},
 						},
 					},
+				},
+			},
+			TLS: []v1beta1.IngressTLS{
+				{
+					Hosts:      []string{"foo"},
+					SecretName: "tls-secret",
 				},
 			},
 		},
