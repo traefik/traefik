@@ -562,6 +562,158 @@ func TestProviderSplitGet(t *testing.T) {
 	}
 }
 
+func TestProviderGetList(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		kvPairs  []*store.KVPair
+		kvError  error
+		keyParts []string
+		expected []string
+	}{
+		{
+			desc: "comma separated",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("entrypoints", "courgette, carotte, tomate, aubergine"),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: []string{"courgette", "carotte", "tomate", "aubergine"},
+		},
+		{
+			desc: "multiple entries",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("entrypoints/0", "courgette"),
+					withPair("entrypoints/1", "carotte"),
+					withPair("entrypoints/2", "tomate"),
+					withPair("entrypoints/3", "aubergine"),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: []string{"courgette", "carotte", "tomate", "aubergine"},
+		},
+		{
+			desc: "when empty value",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", ""),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: nil,
+		},
+		{
+			desc:     "when not existing key",
+			kvPairs:  nil,
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: nil,
+		},
+		{
+			desc:    "when KV error",
+			kvError: store.ErrNotReachable,
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", ""),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := &Provider{
+				kvClient: newKvClientMock(test.kvPairs, test.kvError),
+			}
+
+			values := p.getList(test.keyParts...)
+
+			assert.Equal(t, test.expected, values, "key: %v", test.keyParts)
+		})
+	}
+}
+
+func TestProviderGetSlice(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		kvPairs  []*store.KVPair
+		kvError  error
+		keyParts []string
+		expected []string
+	}{
+		{
+			desc: "multiple entries",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("entrypoints/0", "courgette"),
+					withPair("entrypoints/1", "carotte"),
+					withPair("entrypoints/2", "tomate"),
+					withPair("entrypoints/3", "aubergine"),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: []string{"courgette", "carotte", "tomate", "aubergine"},
+		},
+		{
+			desc: "comma separated",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("entrypoints", "courgette, carotte, tomate, aubergine"),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: nil,
+		},
+		{
+			desc: "when empty value",
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", ""),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: nil,
+		},
+		{
+			desc:     "when not existing key",
+			kvPairs:  nil,
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: nil,
+		},
+		{
+			desc:    "when KV error",
+			kvError: store.ErrNotReachable,
+			kvPairs: filler("traefik",
+				frontend("foo",
+					withPair("bar", ""),
+				),
+			),
+			keyParts: []string{"traefik/frontends/foo/entrypoints"},
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			p := &Provider{
+				kvClient: newKvClientMock(test.kvPairs, test.kvError),
+			}
+
+			values := p.getSlice(test.keyParts...)
+
+			assert.Equal(t, test.expected, values, "key: %v", test.keyParts)
+		})
+	}
+}
+
 func TestProviderGetBool(t *testing.T) {
 	testCases := []struct {
 		desc     string

@@ -33,6 +33,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"GetBool":     p.getBool,
 		"GetInt":      p.getInt,
 		"GetInt64":    p.getInt64,
+		"GetList":     p.getList,
 		"SplitGet":    p.splitGet,
 		"Last":        p.last,
 		"Has":         p.has,
@@ -44,9 +45,9 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getPriority":             p.getFuncInt(pathFrontendPriority, 0),
 		"getPassHostHeader":       p.getFuncBool(pathFrontendPassHostHeader, true),
 		"getPassTLSCert":          p.getFuncBool(pathFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":          p.getFuncSlice(pathFrontendEntryPoints),
-		"getWhitelistSourceRange": p.getFuncSlice(pathFrontendWhiteListSourceRange),
-		"getBasicAuth":            p.getFuncSlice(pathFrontendBasicAuth),
+		"getEntryPoints":          p.getFuncList(pathFrontendEntryPoints),
+		"getWhitelistSourceRange": p.getFuncList(pathFrontendWhiteListSourceRange),
+		"getBasicAuth":            p.getFuncList(pathFrontendBasicAuth),
 		"getRoutes":               p.getRoutes,
 		"getRedirect":             p.getRedirect,
 		"getErrorPages":           p.getErrorPages,
@@ -137,7 +138,7 @@ func (p *Provider) getErrorPages(rootPath string) map[string]*types.ErrorPage {
 		errorPages[pageName] = &types.ErrorPage{
 			Backend: p.get("", pathPage, pathFrontendErrorPagesBackend),
 			Query:   p.get("", pathPage, pathFrontendErrorPagesQuery),
-			Status:  p.splitGet(pathPage, pathFrontendErrorPagesStatus),
+			Status:  p.getList(pathPage, pathFrontendErrorPagesStatus),
 		}
 	}
 
@@ -187,8 +188,8 @@ func (p *Provider) getHeaders(rootPath string) *types.Headers {
 		CustomRequestHeaders:    p.getMap(rootPath, pathFrontendCustomRequestHeaders),
 		CustomResponseHeaders:   p.getMap(rootPath, pathFrontendCustomResponseHeaders),
 		SSLProxyHeaders:         p.getMap(rootPath, pathFrontendSSLProxyHeaders),
-		AllowedHosts:            p.splitGet("", rootPath, pathFrontendAllowedHosts),
-		HostsProxyHeaders:       p.splitGet(rootPath, pathFrontendHostsProxyHeaders),
+		AllowedHosts:            p.getList("", rootPath, pathFrontendAllowedHosts),
+		HostsProxyHeaders:       p.getList(rootPath, pathFrontendHostsProxyHeaders),
 		SSLRedirect:             p.getBool(false, rootPath, pathFrontendSSLRedirect),
 		SSLTemporaryRedirect:    p.getBool(false, rootPath, pathFrontendSSLTemporaryRedirect),
 		SSLHost:                 p.get("", rootPath, pathFrontendSSLHost),
@@ -284,7 +285,7 @@ func (p *Provider) getTLSConfigurations(prefix string) []*tls.Configuration {
 			continue
 		}
 
-		entryPoints := p.splitGet(tlsConfPath, pathTLSConfigurationEntryPoints)
+		entryPoints := p.getList(tlsConfPath, pathTLSConfigurationEntryPoints)
 		if len(entryPoints) == 0 {
 			log.Warnf("Invalid TLS configuration (no entry points): %s", tlsConfPath)
 			continue
@@ -406,9 +407,9 @@ func (p *Provider) getFuncInt(key string, defaultValue int) func(rootPath string
 	}
 }
 
-func (p *Provider) getFuncSlice(key string) func(rootPath string) []string {
+func (p *Provider) getFuncList(key string) func(rootPath string) []string {
 	return func(rootPath string) []string {
-		return p.splitGet(rootPath, key)
+		return p.getList(rootPath, key)
 	}
 }
 
@@ -499,6 +500,34 @@ func (p *Provider) list(keyParts ...string) []string {
 	keys := fun.Values(directoryKeys).([]string)
 	sort.Strings(keys)
 	return keys
+}
+
+func (p *Provider) getList(keyParts ...string) []string {
+	values := p.splitGet(keyParts...)
+	if len(values) > 0 {
+		return values
+	}
+
+	return p.getSlice(keyParts...)
+}
+
+// get sub keys. ex: foo/0, foo/1, foo/2
+func (p *Provider) getSlice(keyParts ...string) []string {
+	baseKey := strings.Join(keyParts, "")
+	if !strings.HasSuffix(baseKey, "/") {
+		baseKey += "/"
+	}
+
+	listKeys := p.list(baseKey)
+
+	var values []string
+	for _, entryKey := range listKeys {
+		val := p.get("", entryKey)
+		if len(val) > 0 {
+			values = append(values, val)
+		}
+	}
+	return values
 }
 
 func (p *Provider) splitGet(keyParts ...string) []string {
