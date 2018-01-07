@@ -56,34 +56,35 @@ func (fi bindataFileInfo) Sys() interface{} {
 
 var _templatesConsul_catalogTmpl = []byte(`[backends]
 {{range $service := .Services}}
+  {{ $backendName := getServiceBackendName $service }}
 
   {{ $circuitBreaker := getCircuitBreaker $service.Attributes }}
   {{if $circuitBreaker }}
-  [backends."backend-{{ getServiceBackendName $service }}".circuitBreaker]
+  [backends."backend-{{ $backendName }}".circuitBreaker]
     expression = "{{ $circuitBreaker.Expression }}"
   {{end}}
 
   {{ $loadBalancer := getLoadBalancer $service.Attributes }}
   {{if $loadBalancer }}
-  [backends."backend-{{ getServiceBackendName $service }}".loadBalancer]
+  [backends."backend-{{ $backendName }}".loadBalancer]
     method = "{{ $loadBalancer.Method }}"
     sticky = {{ $loadBalancer.Sticky }}
     {{if $loadBalancer.Stickiness }}
-    [backends."backend-{{ getServiceBackendName $service }}".loadBalancer.stickiness]
+    [backends."backend-{{ $backendName }}".loadBalancer.stickiness]
       cookieName = "{{ $loadBalancer.Stickiness.CookieName }}"
     {{end}}
   {{end}}
 
   {{ $maxConn := getMaxConn $service.Attributes }}
   {{if $maxConn }}
-  [backends."backend-{{ getServiceBackendName $service }}".maxConn]
+  [backends."backend-{{ $backendName }}".maxConn]
     extractorFunc = "{{ $maxConn.ExtractorFunc }}"
     amount = {{ $maxConn.Amount }}
   {{end}}
 
   {{ $healthCheck := getHealthCheck $service.Attributes }}
   {{if $healthCheck }}
-  [backends.backend-{{ getServiceBackendName $service }}.healthCheck]
+  [backends.backend-{{ $backendName }}.healthCheck]
     path = "{{ $healthCheck.Path }}"
     port = {{ $healthCheck.Port }}
     interval = "{{ $healthCheck.Interval }}"
@@ -113,7 +114,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
 
     {{ $whitelistSourceRange := getWhitelistSourceRange $service.Attributes }}
     {{if $whitelistSourceRange }}
-    whitelistSourceRange = [{{range $whitelistSourceRange}}
+    whitelistSourceRange = [{{range $whitelistSourceRange }}
       "{{.}}",
       {{end}}]
     {{end}}
@@ -130,25 +131,25 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       replacement = "{{ $redirect.Replacement }}"
     {{end}}
 
-    {{ if hasErrorPages $service.Attributes }}
+    {{if hasErrorPages $service.Attributes }}
     [frontends."frontend-{{ $service.ServiceName }}".errors]
-      {{ range $pageName, $page := getErrorPages $service.Attributes }}
+      {{range $pageName, $page := getErrorPages $service.Attributes }}
       [frontends."frontend-{{ $service.ServiceName }}".errors.{{ $pageName }}]
         status = [{{range $page.Status }}
-        "{{.}}",
-        {{end}}]
+          "{{.}}",
+          {{end}}]
         backend = "{{ $page.Backend }}"
         query = "{{ $page.Query }}"
       {{end}}
     {{end}}
 
-    {{ if hasRateLimit $service.Attributes }}
+    {{if hasRateLimit $service.Attributes }}
     {{ $rateLimit := getRateLimit $service.Attributes }}
     [frontends."frontend-{{ $service.ServiceName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
 
       [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet]
-        {{ range $limitName, $limit := $rateLimit.RateSet }}
+        {{range $limitName, $limit := $rateLimit.RateSet }}
         [frontends."frontend-{{ $service.ServiceName }}".rateLimit.rateSet.{{ $limitName }}]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
@@ -158,7 +159,7 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
     {{end}}
 
     {{ $headers := getHeaders $service.Attributes }}
-    {{ if $headers }}
+    {{if $headers }}
     [frontends."frontend-{{ $service.ServiceName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
@@ -176,33 +177,33 @@ var _templatesConsul_catalogTmpl = []byte(`[backends]
       ReferrerPolicy = "{{ $headers.ReferrerPolicy }}"
       IsDevelopment = {{ $headers.IsDevelopment }}
 
-      {{ if $headers.AllowedHosts }}
-      AllowedHosts = [{{ range $headers.AllowedHosts }}
+      {{if $headers.AllowedHosts }}
+      AllowedHosts = [{{range $headers.AllowedHosts }}
         "{{.}}",
         {{end}}]
       {{end}}
 
-      {{ if $headers.HostsProxyHeaders }}
-      HostsProxyHeaders = [{{ range $headers.HostsProxyHeaders }}
+      {{if $headers.HostsProxyHeaders }}
+      HostsProxyHeaders = [{{range $headers.HostsProxyHeaders }}
         "{{.}}",
         {{end}}]
       {{end}}
 
-      {{ if $headers.CustomRequestHeaders }}
+      {{if $headers.CustomRequestHeaders }}
       [frontends."frontend-{{ $service.ServiceName }}".headers.customRequestHeaders]
-        {{ range $k, $v := $headers.CustomRequestHeaders }}
+        {{range $k, $v := $headers.CustomRequestHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
-      {{ if $headers.CustomResponseHeaders }}
+      {{if $headers.CustomResponseHeaders }}
       [frontends."frontend-{{ $service.ServiceName }}".headers.customResponseHeaders]
-        {{ range $k, $v := $headers.CustomResponseHeaders }}
+        {{range $k, $v := $headers.CustomResponseHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
-      {{ if $headers.SSLProxyHeaders }}
+      {{if $headers.SSLProxyHeaders }}
       [frontends."frontend-{{ $service.ServiceName }}".headers.SSLProxyHeaders]
         {{range $k, $v := $headers.SSLProxyHeaders}}
         {{$k}} = "{{$v}}"
