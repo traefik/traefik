@@ -676,7 +676,7 @@ func TestSwarmGetFrontendRule(t *testing.T) {
 	}
 }
 
-func TestSwarmGetBackend(t *testing.T) {
+func TestSwarmGetBackendName(t *testing.T) {
 	testCases := []struct {
 		service  swarm.Service
 		expected string
@@ -706,7 +706,7 @@ func TestSwarmGetBackend(t *testing.T) {
 		t.Run(strconv.Itoa(serviceID), func(t *testing.T) {
 			t.Parallel()
 			dData := parseService(test.service, test.networks)
-			actual := getBackend(dData)
+			actual := getBackendName(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
 			}

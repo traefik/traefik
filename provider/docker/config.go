@@ -49,7 +49,8 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getStickinessCookieName": getFuncStringLabel(label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName),
 
 		// Frontend functions
-		"getBackend":              getBackend,
+		"getBackend":              getBackendName, // TODO Deprecated [breaking] replaced by getBackendName
+		"getBackendName":          getBackendName,
 		"getPriority":             getFuncIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
 		"getPassHostHeader":       getFuncBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getPassTLSCert":          getFuncBoolLabel(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
@@ -64,9 +65,10 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 		"getHeaders":    getHeaders,
 
 		// Services
-		"hasServices":       hasServices,
-		"getServiceNames":   getServiceNames,
-		"getServiceBackend": getServiceBackend,
+		"hasServices":           hasServices,
+		"getServiceNames":       getServiceNames,
+		"getServiceBackend":     getServiceBackendName, // TODO Deprecated [breaking] replaced by getServiceBackendName
+		"getServiceBackendName": getServiceBackendName,
 		// Services - Backend server functions
 		"getServicePort":     getServicePort,
 		"getServiceProtocol": getFuncServiceStringLabel(label.SuffixProtocol, label.DefaultProtocol),
@@ -102,7 +104,7 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 				serviceNames[container.ServiceName] = struct{}{}
 			}
 		}
-		backendName := getBackend(container)
+		backendName := getBackendName(container)
 		backends[backendName] = container
 		servers[backendName] = append(servers[backendName], container)
 	}

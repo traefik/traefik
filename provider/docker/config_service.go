@@ -82,11 +82,11 @@ func extractServicePort(labelName string) []string {
 }
 
 // Extract backend from labels for a given service and a given docker container
-func getServiceBackend(container dockerData, serviceName string) string {
+func getServiceBackendName(container dockerData, serviceName string) string {
 	if value, ok := getServiceLabels(container, serviceName)[label.SuffixFrontendBackend]; ok {
 		return provider.Normalize(container.ServiceName + "-" + value)
 	}
-	return provider.Normalize(container.ServiceName + "-" + getBackend(container) + "-" + serviceName)
+	return provider.Normalize(container.ServiceName + "-" + getBackendName(container) + "-" + serviceName)
 }
 
 // Extract port from labels for a given service and a given docker container

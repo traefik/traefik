@@ -869,7 +869,7 @@ func TestDockerCheckPortLabels(t *testing.T) {
 	}
 }
 
-func TestDockerGetServiceBackend(t *testing.T) {
+func TestDockerGetServiceBackendName(t *testing.T) {
 	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -907,7 +907,7 @@ func TestDockerGetServiceBackend(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dData := parseContainer(test.container)
-			actual := getServiceBackend(dData, "myservice")
+			actual := getServiceBackendName(dData, "myservice")
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
 			}

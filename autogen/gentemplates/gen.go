@@ -272,7 +272,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
     {{if hasServices $server }}
       {{ $services := getServiceNames $server }}
       {{range $serviceIndex, $serviceName := $services }}
-      [backends.backend-{{ getServiceBackend $server $serviceName }}.servers.service-{{ $serverName }}]
+      [backends.backend-{{ getServiceBackendName $server $serviceName }}.servers.service-{{ $serverName }}]
         url = "{{ getServiceProtocol $server $serviceName }}://{{ getIPAddress $server }}:{{ getServicePort $server $serviceName }}"
         weight = {{ getServiceWeight $server $serviceName }}
       {{end}}
@@ -286,15 +286,17 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 {{end}}
 
 [frontends]
-{{range $frontend, $containers := .Frontends }}
+{{range $frontendName, $containers := .Frontends }}
   {{$container := index $containers 0}}
 
   {{if hasServices $container }}
   {{ $services := getServiceNames $container }}
 
   {{range $serviceIndex, $serviceName := $services }}
-  [frontends."frontend-{{ getServiceBackend $container $serviceName }}"]
-    backend = "backend-{{ getServiceBackend $container $serviceName }}"
+  {{ $ServiceFrontendName := getServiceBackendName $container $serviceName }}
+
+  [frontends."frontend-{{ $ServiceFrontendName }}"]
+    backend = "backend-{{ $ServiceFrontendName }}"
     priority = {{ getServicePriority $container $serviceName }}
     passHostHeader = {{ getServicePassHostHeader $container $serviceName }}
     passTLSCert = {{ getServicePassTLSCert $container $serviceName }}
@@ -316,7 +318,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
     {{ $redirect := getServiceRedirect $container $serviceName }}
     {{if $redirect }}
-    [frontends."frontend-{{ getServiceBackend $container $serviceName }}".redirect]
+    [frontends."frontend-{{ $ServiceFrontendName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
@@ -324,9 +326,9 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
     {{ $errorPages := getServiceErrorPages $container $serviceName }}
     {{if $errorPages }}
-    [frontends."frontend-{{ getServiceBackend $container $serviceName }}".errors]
+    [frontends."frontend-{{ $ServiceFrontendName }}".errors]
       {{ range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ getServiceBackend $container $serviceName }}".errors.{{ $pageName }}]
+      [frontends."frontend-{{ $ServiceFrontendName }}".errors.{{ $pageName }}]
         status = [{{range $page.Status }}
           "{{.}}",
           {{end}}]
@@ -337,11 +339,11 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
     {{ $rateLimit := getServiceRateLimit $container $serviceName }}
     {{if $rateLimit }}
-    [frontends."frontend-{{ getServiceBackend $container $serviceName }}".rateLimit]
+    [frontends."frontend-{{ $ServiceFrontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
-      [frontends."frontend-{{ getServiceBackend $container $serviceName }}".rateLimit.rateSet]
+      [frontends."frontend-{{ $ServiceFrontendName }}".rateLimit.rateSet]
         {{range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ getServiceBackend $container $serviceName }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."frontend-{{ $ServiceFrontendName }}".rateLimit.rateSet.{{ $limitName }}]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -350,7 +352,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
     {{ $headers := getServiceHeaders $container $serviceName }}
     {{if $headers }}
-    [frontends."frontend-{{ getServiceBackend $container $serviceName }}".headers]
+    [frontends."frontend-{{ $ServiceFrontendName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
@@ -380,36 +382,36 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       {{end}}
 
       {{if $headers.CustomRequestHeaders }}
-      [frontends."frontend-{{ getServiceBackend $container $serviceName }}".headers.customRequestHeaders]
+      [frontends."frontend-{{ $ServiceFrontendName }}".headers.customRequestHeaders]
         {{range $k, $v := $headers.CustomRequestHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.CustomResponseHeaders }}
-      [frontends."frontend-{{ getServiceBackend $container $serviceName }}".headers.customResponseHeaders]
+      [frontends."frontend-{{ $ServiceFrontendName }}".headers.customResponseHeaders]
         {{range $k, $v := $headers.CustomResponseHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.SSLProxyHeaders }}
-      [frontends."frontend-{{ getServiceBackend $container $serviceName }}".headers.SSLProxyHeaders]
+      [frontends."frontend-{{ $ServiceFrontendName }}".headers.SSLProxyHeaders]
         {{range $k, $v := $headers.SSLProxyHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
     {{end}}
 
-    [frontends."frontend-{{ getServiceBackend $container $serviceName }}".routes."service-{{ $serviceName | replace "/" "" | replace "." "-" }}"]
+    [frontends."frontend-{{ $ServiceFrontendName }}".routes."service-{{ $serviceName | replace "/" "" | replace "." "-" }}"]
       rule = "{{ getServiceFrontendRule $container $serviceName }}"
 
   {{end}} ## end range services
 
   {{else}}
 
-  [frontends."frontend-{{ $frontend }}"]
-    backend = "backend-{{ getBackend $container }}"
+  [frontends."frontend-{{ $frontendName }}"]
+    backend = "backend-{{ getBackendName $container }}"
     priority = {{ getPriority $container }}
     passHostHeader = {{ getPassHostHeader $container }}
     passTLSCert = {{ getPassTLSCert $container }}
@@ -431,7 +433,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
     {{ $redirect := getRedirect $container }}
     {{if $redirect }}
-    [frontends."frontend-{{ $frontend }}".redirect]
+    [frontends."frontend-{{ $frontendName }}".redirect]
       entryPoint = "{{ $redirect.EntryPoint }}"
       regex = "{{ $redirect.Regex }}"
       replacement = "{{ $redirect.Replacement }}"
@@ -439,12 +441,12 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
     {{ $errorPages := getErrorPages $container }}
     {{if $errorPages }}
-    [frontends."frontend-{{ $frontend }}".errors]
+    [frontends."frontend-{{ $frontendName }}".errors]
       {{range $pageName, $page := $errorPages }}
-      [frontends."frontend-{{ $frontend }}".errors.{{ $pageName }}]
+      [frontends."frontend-{{ $frontendName }}".errors.{{ $pageName }}]
         status = [{{range $page.Status }}
-        "{{.}}",
-        {{end}}]
+          "{{.}}",
+          {{end}}]
         backend = "{{ $page.Backend }}"
         query = "{{ $page.Query }}"
       {{end}}
@@ -452,11 +454,11 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
     {{ $rateLimit := getRateLimit $container }}
     {{if $rateLimit }}
-    [frontends."frontend-{{ $frontend }}".rateLimit]
+    [frontends."frontend-{{ $frontendName }}".rateLimit]
       extractorFunc = "{{ $rateLimit.ExtractorFunc }}"
-      [frontends."frontend-{{ $frontend }}".rateLimit.rateSet]
+      [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet]
         {{ range $limitName, $limit := $rateLimit.RateSet }}
-        [frontends."frontend-{{ $frontend }}".rateLimit.rateSet.{{ $limitName }}]
+        [frontends."frontend-{{ $frontendName }}".rateLimit.rateSet.{{ $limitName }}]
           period = "{{ $limit.Period }}"
           average = {{ $limit.Average }}
           burst = {{ $limit.Burst }}
@@ -465,7 +467,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
 
     {{ $headers := getHeaders $container }}
     {{if $headers }}
-    [frontends."frontend-{{ $frontend }}".headers]
+    [frontends."frontend-{{ $frontendName }}".headers]
       SSLRedirect = {{ $headers.SSLRedirect }}
       SSLTemporaryRedirect = {{ $headers.SSLTemporaryRedirect }}
       SSLHost = "{{ $headers.SSLHost }}"
@@ -495,28 +497,28 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       {{end}}
 
       {{if $headers.CustomRequestHeaders }}
-      [frontends."frontend-{{ $frontend }}".headers.customRequestHeaders]
+      [frontends."frontend-{{ $frontendName }}".headers.customRequestHeaders]
         {{range $k, $v := $headers.CustomRequestHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.CustomResponseHeaders }}
-      [frontends."frontend-{{ $frontend }}".headers.customResponseHeaders]
+      [frontends."frontend-{{ $frontendName }}".headers.customResponseHeaders]
         {{range $k, $v := $headers.CustomResponseHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
 
       {{if $headers.SSLProxyHeaders }}
-      [frontends."frontend-{{ $frontend }}".headers.SSLProxyHeaders]
+      [frontends."frontend-{{ $frontendName }}".headers.SSLProxyHeaders]
         {{range $k, $v := $headers.SSLProxyHeaders }}
         {{$k}} = "{{$v}}"
         {{end}}
       {{end}}
     {{end}}
 
-    [frontends."frontend-{{ $frontend }}".routes."route-frontend-{{ $frontend }}"]
+    [frontends."frontend-{{ $frontendName }}".routes."route-frontend-{{ $frontendName }}"]
       rule = "{{ getFrontendRule $container }}"
 
   {{end}}

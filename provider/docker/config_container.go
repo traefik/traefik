@@ -100,7 +100,7 @@ func (p Provider) getIPAddress(container dockerData) string {
 	return ""
 }
 
-func getBackend(container dockerData) string {
+func getBackendName(container dockerData) string {
 	if value := label.GetStringValue(container.Labels, label.TraefikBackend, ""); len(value) != 0 {
 		return provider.Normalize(value)
 	}

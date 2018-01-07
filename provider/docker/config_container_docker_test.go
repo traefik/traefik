@@ -838,7 +838,7 @@ func TestDockerGetFrontendRule(t *testing.T) {
 	}
 }
 
-func TestDockerGetBackend(t *testing.T) {
+func TestDockerGetBackendName(t *testing.T) {
 	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -871,7 +871,7 @@ func TestDockerGetBackend(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dData := parseContainer(test.container)
-			actual := getBackend(dData)
+			actual := getBackendName(dData)
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
 			}
