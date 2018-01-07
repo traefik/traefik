@@ -147,6 +147,7 @@ func (p *Provider) loadConfig() *types.Configuration {
 		"getSticky":               p.getSticky,
 		"hasStickinessLabel":      p.hasStickinessLabel,
 		"getStickinessCookieName": p.getStickinessCookieName,
+		"GetList":                 p.getList,
 	}
 
 	configuration, err := p.GetConfiguration("templates/kv.tmpl", KvFuncMap, templateObjects)
@@ -263,4 +264,32 @@ func (p *Provider) hasStickinessLabel(rootPath string) bool {
 
 func (p *Provider) getStickinessCookieName(rootPath string) string {
 	return p.get("", rootPath, "/loadbalancer", "/stickiness", "/cookiename")
+}
+
+func (p *Provider) getList(keyParts ...string) []string {
+	values := p.splitGet(keyParts...)
+	if len(values) > 0 {
+		return values
+	}
+
+	return p.getSlice(keyParts...)
+}
+
+// get sub keys. ex: foo/0, foo/1, foo/2
+func (p *Provider) getSlice(keyParts ...string) []string {
+	baseKey := strings.Join(keyParts, "")
+	if !strings.HasSuffix(baseKey, "/") {
+		baseKey += "/"
+	}
+
+	listKeys := p.list(baseKey)
+
+	var values []string
+	for _, entryKey := range listKeys {
+		val := p.get("", entryKey)
+		if len(val) > 0 {
+			values = append(values, val)
+		}
+	}
+	return values
 }
