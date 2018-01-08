@@ -1506,5 +1506,11 @@ func (s *Server) buildRetryMiddleware(handler http.Handler, globalConfig configu
 
 	log.Debugf("Creating retries max attempts %d", retryAttempts)
 
-	return middlewares.NewRetry(retryAttempts, handler, retryListeners)
+	stg := &middlewares.RetrySettings{}
+	stg.Attempts = retryAttempts
+	stg.CacheInitialCapacity = globalConfig.Retry.CacheInitialCapacity
+	stg.CacheMaxCapacity = globalConfig.Retry.CacheMaxCapacity
+	stg.TempDir = globalConfig.Retry.TempDir
+	stg.RetryInterval = time.Duration(globalConfig.Retry.RetryInterval)
+	return middlewares.NewRetry(stg, handler, retryListeners)
 }

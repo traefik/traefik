@@ -434,7 +434,11 @@ type EntryPoint struct {
 
 // Retry contains request retry config
 type Retry struct {
-	Attempts int `description:"Number of attempts" export:"true"`
+	Attempts             int    `description:"Number of attempts" export:"true"`
+	CacheInitialCapacity int    `description:"Initial capacity of cache when creating (in bytes)" export:"true"`
+	CacheMaxCapacity     int    `description:"Maximum allowed capacity for cache (in bytes) when upstream data is bigger than this value, retry starts caching data into file" export:"true"`
+	TempDir              string `description:"Place to store temporary files" export:"true"`
+	RetryInterval        int64  `description:"Retry interval in milliseconds before next try" export:"true"`
 }
 
 // HealthCheckConfig contains health check configuration parameters.

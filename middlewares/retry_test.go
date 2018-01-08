@@ -36,13 +36,16 @@ func TestRetry(t *testing.T) {
 	for _, tc := range testCases {
 		// bind tc locally
 		tc := tc
+		stg := &RetrySettings{
+			Attempts: tc.attempts,
+		}
 		tcName := fmt.Sprintf("FailAtCalls(%v) RetryAttempts(%v)", tc.failAtCalls, tc.attempts)
 
 		t.Run(tcName, func(t *testing.T) {
 			t.Parallel()
 
 			var httpHandler http.Handler = &networkFailingHTTPHandler{failAtCalls: tc.failAtCalls, netErrorRecorder: &DefaultNetErrorRecorder{}}
-			httpHandler = NewRetry(tc.attempts, httpHandler, tc.listener)
+			httpHandler = NewRetry(stg, httpHandler, tc.listener)
 
 			recorder := httptest.NewRecorder()
 			req, err := http.NewRequest(http.MethodGet, "http://localhost:3000/ok", ioutil.NopCloser(nil))
