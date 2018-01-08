@@ -1,6 +1,6 @@
 # Kubernetes Ingress Controller
 
-This guide explains how to use Træfik as an Ingress controller in a Kubernetes cluster.
+This guide explains how to use Træfik as an Ingress controller for a Kubernetes cluster.
 
 If you are not familiar with Ingresses in Kubernetes you might want to read the [Kubernetes user guide](https://kubernetes.io/docs/concepts/services-networking/ingress/)
 
@@ -8,8 +8,10 @@ The config files used in this guide can be found in the [examples directory](htt
 
 ## Prerequisites
 
-1. A working Kubernetes cluster. If you want to follow along with this guide, you should setup [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/)
-on your machine, as it is the quickest way to get a local Kubernetes cluster setup for experimentation and development.
+1. A working Kubernetes cluster. If you want to follow along with this guide, you should setup [minikube](https://kubernetes.io/docs/getting-started-guides/minikube/) on your machine, as it is the quickest way to get a local Kubernetes cluster setup for experimentation and development.
+
+!!! note
+    The guide is likely not fully adequate for a production-ready setup.
 
 2. The `kubectl` binary should be [installed on your workstation](https://kubernetes.io/docs/getting-started-guides/minikube/#download-kubectl).
 
@@ -79,8 +81,8 @@ For namespaced restrictions, one RoleBinding is required per watched namespace a
 It is possible to use Træfik with a [Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) or a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) object,
  whereas both options have their own pros and cons:
 
-- The scalability is much better when using a Deployment, because you will have a Single-Pod-per-Node model when using the DeaemonSet.  
-- It is possible to exclusively run a Service on a dedicated set of machines using taints and tolerations with a DaemonSet.  
+- The scalability is much better when using a Deployment, because you will have a Single-Pod-per-Node model when using the DeaemonSet.
+- It is possible to exclusively run a Service on a dedicated set of machines using taints and tolerations with a DaemonSet.
 - On the other hand the DaemonSet allows you to access any Node directly on Port 80 and 443, where you have to setup a [Service](https://kubernetes.io/docs/concepts/services-networking/service/) object with a Deployment.
 
 The Deployment objects looks like this:
@@ -137,6 +139,7 @@ spec:
       name: admin
   type: NodePort
 ```
+
 [examples/k8s/traefik-deployment.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/traefik-deployment.yaml)
 
 !!! note
@@ -233,7 +236,7 @@ Start by listing the pods in the `kube-system` namespace:
 kubectl --namespace=kube-system get pods
 ```
 
-```
+```shell
 NAME                                         READY     STATUS    RESTARTS   AGE
 kube-addon-manager-minikubevm                1/1       Running   0          4h
 kubernetes-dashboard-s8krj                   1/1       Running   0          4h
@@ -250,19 +253,21 @@ _It might take a few moments for kubernetes to pull the Træfik image and start 
 
 You should now be able to access Træfik on port 80 of your Minikube instance when using the DaemonSet:
 
-```sh
+```shell
 curl $(minikube ip)
 ```
-```
+
+```shell
 404 page not found
 ```
 
 If you decided to use the deployment, then you need to target the correct NodePort, which can be seen when you execute `kubectl get services --namespace=kube-system`.
 
-```sh
+```shell
 curl $(minikube ip):<NODEPORT>
 ```
-```
+
+```shell
 404 page not found
 ```
 
@@ -273,19 +278,20 @@ All further examples below assume a DaemonSet installation. Deployment users wil
 
 ## Deploy Træfik using Helm Chart
 
-Instead of installing Træfik via an own object, you can also use the Træfik Helm chart.
+!!! note
+    The Helm Chart is maintained by the community, not the Traefik project maintainers.
 
-This allows more complex configuration via Kubernetes [ConfigMap](https://kubernetes.io/docs/tasks/configure-pod-container/configmap/) and enabled TLS certificates.
+Instead of installing Træfik via Kubernetes object directly, you can also use the Træfik Helm chart.
 
-Install Træfik chart by:
+Install the Træfik chart by:
 
 ```shell
 helm install stable/traefik
 ```
 
-For more information, check out [the doc](https://github.com/kubernetes/charts/tree/master/stable/traefik).
+For more information, check out [the documentation](https://github.com/kubernetes/charts/tree/master/stable/traefik).
 
-## Submitting An Ingress to the cluster.
+## Submitting an Ingress to the Cluster
 
 Lets start by creating a Service and an Ingress that will expose the [Træfik Web UI](https://github.com/containous/traefik#web-ui).
 
@@ -318,30 +324,29 @@ spec:
           serviceName: traefik-web-ui
           servicePort: 80
 ```
+
 [examples/k8s/ui.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/ui.yaml)
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/ui.yaml
 ```
 
-Now lets setup an entry in our /etc/hosts file to route `traefik-ui.minikube` to our cluster.
+Now lets setup an entry in our `/etc/hosts` file to route `traefik-ui.minikube` to our cluster.
 
-In production you would want to set up real dns entries.  
-You can get the ip address of your minikube instance by running `minikube ip`
+In production you would want to set up real DNS entries.
+You can get the IP address of your minikube instance by running `minikube ip`:
 
 ```shell
 echo "$(minikube ip) traefik-ui.minikube" | sudo tee -a /etc/hosts
 ```
 
-We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube) in the browser and view the Træfik Web UI.
+We should now be able to visit [traefik-ui.minikube](http://traefik-ui.minikube) in the browser and view the Træfik web UI.
 
 ## Basic Authentication
 
-It's possible to add additional authentication annotations in the Ingress rule.
-The source of the authentication is a secret that contains usernames and passwords inside the key auth.
-To read about basic auth limitations see the [Kubernetes Ingress](/configuration/backends/kubernetes) configuration page.
+It's possible to protect access to Traefik through basic authentication. (See the [Kubernetes Ingress](/configuration/backends/kubernetes) configuration page for syntactical details and restrictions.)
 
-#### Creating the Secret
+### Creating the Secret
 
 A. Use `htpasswd` to create a file containing the username and the base64-encoded password:
 
@@ -355,25 +360,28 @@ You will be prompted for a password which you will have to enter twice.
 ```shell
 cat auth
 ```
-```
+
+```shell
 myusername:$apr1$78Jyn/1K$ERHKVRPPlzAX8eBtLuvRZ0
 ```
 
-B. Now use `kubectl` to create a secret in the monitoring namespace using the file created by `htpasswd`.
+B. Now use `kubectl` to create a secret in the `monitoring` namespace using the file created by `htpasswd`.
 
 ```shell
 kubectl create secret generic mysecret --from-file auth --namespace=monitoring
 ```
 
 !!! note
-    Secret must be in same namespace as the ingress rule.
+    Secret must be in same namespace as the Ingress object.
 
-C. Create the ingress using the following annotations to specify basic auth and that the username and password is stored in `mysecret`.
+C. Attach the following annotations to the Ingress object:
 
 - `ingress.kubernetes.io/auth-type: "basic"`
 - `ingress.kubernetes.io/auth-secret: "mysecret"`
 
-Following is a full ingress example based on Prometheus:
+They specify basic authentication and reference the Secret `mysecret` containing the credentials.
+
+Following is a full Ingress example based on Prometheus:
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -395,17 +403,17 @@ spec:
          servicePort: 9090
 ```
 
-You can apply the example ingress as following:
+You can apply the example as following:
 
 ```shell
 kubectl create -f prometheus-ingress.yaml -n monitoring
 ```
 
-## Name based routing
+## Name-based Routing
 
-In this example we are going to setup websites for 3 of the United Kingdoms best loved cheeses, Cheddar, Stilton and Wensleydale.
+In this example we are going to setup websites for three of the United Kingdoms best loved cheeses: Cheddar, Stilton, and Wensleydale.
 
-First lets start by launching the 3 pods for the cheese websites.
+First lets start by launching the pods for the cheese websites.
 
 ```yaml
 ---
@@ -487,13 +495,14 @@ spec:
         ports:
         - containerPort: 80
 ```
+
 [examples/k8s/cheese-deployments.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-deployments.yaml)
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheese-deployments.yaml
 ```
 
-Next we need to setup a service for each of the cheese pods.
+Next we need to setup a Service for each of the cheese pods.
 
 ```yaml
 ---
@@ -542,7 +551,6 @@ spec:
 !!! note
     We also set a [circuit breaker expression](/basics/#backends) for one of the backends by setting the `traefik.backend.circuitbreaker` annotation on the service.
 
-
 [examples/k8s/cheese-services.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-services.yaml)
 
 ```shell
@@ -582,6 +590,7 @@ spec:
           serviceName: wensleydale
           servicePort: http
 ```
+
 [examples/k8s/cheese-ingress.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheese-ingress.yaml)
 
 !!! note
@@ -592,7 +601,7 @@ kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/exa
 ```
 
 Now visit the [Træfik dashboard](http://traefik-ui.minikube/) and you should see a frontend for each host.
-Along with a backend listing for each service with a Server set up for each pod.
+Along with a backend listing for each service with a server set up for each pod.
 
 If you edit your `/etc/hosts` again you should be able to access the cheese websites in your browser.
 
@@ -600,11 +609,11 @@ If you edit your `/etc/hosts` again you should be able to access the cheese webs
 echo "$(minikube ip) stilton.minikube cheddar.minikube wensleydale.minikube" | sudo tee -a /etc/hosts
 ```
 
-* [Stilton](http://stilton.minikube/)
-* [Cheddar](http://cheddar.minikube/)
-* [Wensleydale](http://wensleydale.minikube/)
+- [Stilton](http://stilton.minikube/)
+- [Cheddar](http://cheddar.minikube/)
+- [Wensleydale](http://wensleydale.minikube/)
 
-## Path based routing
+## Path-based Routing
 
 Now lets suppose that our fictional client has decided that while they are super happy about our cheesy web design, when they asked for 3 websites they had not really bargained on having to buy 3 domain names.
 
@@ -636,10 +645,11 @@ spec:
           serviceName: wensleydale
           servicePort: http
 ```
+
 [examples/k8s/cheeses-ingress.yaml](https://github.com/containous/traefik/tree/master/examples/k8s/cheeses-ingress.yaml)
 
 !!! note
-    we are configuring Træfik to strip the prefix from the url path with the `traefik.frontend.rule.type` annotation so that we can use the containers from the previous example without modification.
+    We are configuring Træfik to strip the prefix from the url path with the `traefik.frontend.rule.type` annotation so that we can use the containers from the previous example without modification.
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/containous/traefik/master/examples/k8s/cheeses-ingress.yaml
@@ -651,14 +661,14 @@ echo "$(minikube ip) cheeses.minikube" | sudo tee -a /etc/hosts
 
 You should now be able to visit the websites in your browser.
 
-* [cheeses.minikube/stilton](http://cheeses.minikube/stilton/)
-* [cheeses.minikube/cheddar](http://cheeses.minikube/cheddar/)
-* [cheeses.minikube/wensleydale](http://cheeses.minikube/wensleydale/)
+- [cheeses.minikube/stilton](http://cheeses.minikube/stilton/)
+- [cheeses.minikube/cheddar](http://cheeses.minikube/cheddar/)
+- [cheeses.minikube/wensleydale](http://cheeses.minikube/wensleydale/)
 
-## Specifying priority for routing
+## Specifying Routing Priorities
 
-Sometimes you need to specify priority for ingress route, especially when handling wildcard routes.
-This can be done by adding annotation `traefik.frontend.priority`, i.e.:
+Sometimes you need to specify priority for ingress routes, especially when handling wildcard routes.
+This can be done by adding the `traefik.frontend.priority` annotation, i.e.:
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -693,34 +703,33 @@ spec:
           servicePort: http
 ```
 
-Note that priority values must be quoted to avoid them being interpreted as numbers (which are illegal for annotations).
+Note that priority values must be quoted to avoid numeric interpretation (which are illegal for annotations).
 
 ## Forwarding to ExternalNames
 
 When specifying an [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#services-without-selectors),
-Træfik will forward requests to the given host accordingly and use HTTPS when the Service port matches 443.  
+Træfik will forward requests to the given host accordingly and use HTTPS when the Service port matches 443.
 This still requires setting up a proper port mapping on the Service from the Ingress port to the (external) Service port.
 
-## Disable passing the Host header
+## Disable passing the Host Header
 
-By default Træfik will pass the incoming Host header on to the upstream resource.
+By default Træfik will pass the incoming Host header to the upstream resource.
 
-There are times however where you may not want this to be the case.
-For example if your service is of the ExternalName type.
+However, there are times when you may not want this to be the case. For example, if your service is of the ExternalName type.
 
-### Disable entirely
+### Disable globally
 
-Add the following to your toml config:
+Add the following to your TOML configuration file:
 
 ```toml
 disablePassHostHeaders = true
 ```
 
-### Disable per ingress
+### Disable per Ingress
 
-To disable passing the Host header per ingress resource set the `traefik.frontend.passHostHeader` annotation on your ingress to `false`.
+To disable passing the Host header per ingress resource set the `traefik.frontend.passHostHeader` annotation on your ingress to `"false"`.
 
-Here is an example ingress definition:
+Here is an example definition:
 
 ```yaml
 apiVersion: extensions/v1beta1
@@ -756,12 +765,11 @@ spec:
   externalName: static.otherdomain.com
 ```
 
-If you were to visit `example.com/static` the request would then be passed onto `static.otherdomain.com/static` and s`tatic.otherdomain.com` would receive the request with the Host header being `static.otherdomain.com`.
+If you were to visit `example.com/static` the request would then be passed on to `static.otherdomain.com/static`, and `static.otherdomain.com` would receive the request with the Host header being `static.otherdomain.com`.
 
 !!! note
-    The per ingress annotation overides whatever the global value is set to.
-    So you could set `disablePassHostHeaders` to `true` in your toml file and then enable passing
-    the host header per ingress if you wanted.
+    The per-ingress annotation overrides whatever the global value is set to.
+    So you could set `disablePassHostHeaders` to `true` in your TOML configuration file and then enable passing the host header per ingress if you wanted.
 
 ## Partitioning the Ingress object space
 
