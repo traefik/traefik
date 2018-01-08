@@ -48,12 +48,8 @@ func New(minValue, maxValue int64, sigfigs int) *Histogram {
 		panic(fmt.Errorf("sigfigs must be [1,5] (was %d)", sigfigs))
 	}
 
-	largestValueWithSingleUnitResolution := 2 * power(10, int64(sigfigs))
-
-	// we need to shove these down to float32 or the math is wrong
-	a := float32(math.Log(float64(largestValueWithSingleUnitResolution)))
-	b := float32(math.Log(2))
-	subBucketCountMagnitude := int32(math.Ceil(float64(a / b)))
+	largestValueWithSingleUnitResolution := 2 * math.Pow10(sigfigs)
+	subBucketCountMagnitude := int32(math.Ceil(math.Log2(float64(largestValueWithSingleUnitResolution))))
 
 	subBucketHalfCountMagnitude := subBucketCountMagnitude
 	if subBucketHalfCountMagnitude < 1 {
@@ -61,7 +57,7 @@ func New(minValue, maxValue int64, sigfigs int) *Histogram {
 	}
 	subBucketHalfCountMagnitude--
 
-	unitMagnitude := int32(math.Floor(math.Log(float64(minValue)) / math.Log(2)))
+	unitMagnitude := int32(math.Floor(math.Log2(float64(minValue))))
 	if unitMagnitude < 0 {
 		unitMagnitude = 0
 	}
@@ -124,6 +120,11 @@ func (h *Histogram) Merge(from *Histogram) (dropped int64) {
 	return
 }
 
+// TotalCount returns total number of values recorded.
+func (h *Histogram) TotalCount() int64 {
+	return h.totalCount
+}
+
 // Max returns the approximate maximum recorded value.
 func (h *Histogram) Max() int64 {
 	var max int64
@@ -133,7 +134,7 @@ func (h *Histogram) Max() int64 {
 			max = i.highestEquivalentValue
 		}
 	}
-	return h.lowestEquivalentValue(max)
+	return h.highestEquivalentValue(max)
 }
 
 // Min returns the approximate minimum recorded value.
@@ -151,6 +152,9 @@ func (h *Histogram) Min() int64 {
 
 // Mean returns the approximate arithmetic mean of the recorded values.
 func (h *Histogram) Mean() float64 {
+	if h.totalCount == 0 {
+		return 0
+	}
 	var total int64
 	i := h.iterator()
 	for i.next() {
@@ -163,6 +167,10 @@ func (h *Histogram) Mean() float64 {
 
 // StdDev returns the approximate standard deviation of the recorded values.
 func (h *Histogram) StdDev() float64 {
+	if h.totalCount == 0 {
+		return 0
+	}
+
 	mean := h.Mean()
 	geometricDevTotal := 0.0
 
@@ -267,6 +275,49 @@ func (h *Histogram) CumulativeDistribution() []Bracket {
 	return result
 }
 
+// SignificantFigures returns the significant figures used to create the
+// histogram
+func (h *Histogram) SignificantFigures() int64 {
+	return h.significantFigures
+}
+
+// LowestTrackableValue returns the lower bound on values that will be added
+// to the histogram
+func (h *Histogram) LowestTrackableValue() int64 {
+	return h.lowestTrackableValue
+}
+
+// HighestTrackableValue returns the upper bound on values that will be added
+// to the histogram
+func (h *Histogram) HighestTrackableValue() int64 {
+	return h.highestTrackableValue
+}
+
+// Histogram bar for plotting
+type Bar struct {
+	From, To, Count int64
+}
+
+// Pretty print as csv for easy plotting
+func (b Bar) String() string {
+	return fmt.Sprintf("%v, %v, %v\n", b.From, b.To, b.Count)
+}
+
+// Distribution returns an ordered list of bars of the
+// distribution of recorded values, counts can be normalized to a probability
+func (h *Histogram) Distribution() (result []Bar) {
+	i := h.iterator()
+	for i.next() {
+		result = append(result, Bar{
+			Count: i.countAtIdx,
+			From:  h.lowestEquivalentValue(i.valueFromIdx),
+			To:    i.highestEquivalentValue,
+		})
+	}
+
+	return result
+}
+
 // Equals returns true if the two Histograms are equivalent, false if not.
 func (h *Histogram) Equals(other *Histogram) bool {
 	switch {
@@ -300,11 +351,12 @@ func (h *Histogram) Export() *Snapshot {
 		LowestTrackableValue:  h.lowestTrackableValue,
 		HighestTrackableValue: h.highestTrackableValue,
 		SignificantFigures:    h.significantFigures,
-		Counts:                h.counts,
+		Counts:                append([]int64(nil), h.counts...), // copy
 	}
 }
 
-// Import returns a new Histogram populated from the Snapshot data.
+// Import returns a new Histogram populated from the Snapshot data (which the
+// caller must stop accessing).
 func Import(s *Snapshot) *Histogram {
 	h := New(s.LowestTrackableValue, s.HighestTrackableValue, int(s.SignificantFigures))
 	h.counts = s.Counts
@@ -478,7 +530,7 @@ func (p *pIterator) next() bool {
 		currentPercentile := (100.0 * float64(p.countToIdx)) / float64(p.h.totalCount)
 		if p.countAtIdx != 0 && p.percentileToIteratorTo <= currentPercentile {
 			p.percentile = p.percentileToIteratorTo
-			halfDistance := math.Pow(2, (math.Log(100.0/(100.0-(p.percentileToIteratorTo)))/math.Log(2))+1)
+			halfDistance := math.Trunc(math.Pow(2, math.Trunc(math.Log2(100.0/(100.0-p.percentileToIteratorTo)))+1))
 			percentileReportingTicks := float64(p.ticksPerHalfDistance) * halfDistance
 			p.percentileToIteratorTo += 100.0 / percentileReportingTicks
 			return true
@@ -507,15 +559,6 @@ func bitLen(x int64) (n int64) {
 	}
 	if x >= 0x1 {
 		n++
-	}
-	return
-}
-
-func power(base, exp int64) (n int64) {
-	n = 1
-	for exp > 0 {
-		n *= base
-		exp--
 	}
 	return
 }
