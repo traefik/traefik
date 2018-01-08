@@ -42,7 +42,11 @@ type LoadBalancer struct {
 
 // Stickiness holds sticky session configuration.
 type Stickiness struct {
-	CookieName string `json:"cookieName,omitempty"`
+	Cookie           bool     `json:"cookie,omitempty"`
+	CookieEncryptKey string   `json:"cookieEncryptKey,omitempty"`
+	CookieName       string   `json:"cookieName,omitempty"`
+	IP               bool     `json:"ip,omitempty"`
+	Rules            []string `json:"rules,omitempty"`
 }
 
 // CircuitBreaker holds circuit breaker configuration.

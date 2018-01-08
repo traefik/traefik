@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/containous/traefik/testhelpers"
@@ -35,7 +36,7 @@ func TestEmptyBackendHandler(t *testing.T) {
 			nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			})
-			handler := NewEmptyBackendHandler(&healthCheckLoadBalancer{test.amountServer}, nextHandler)
+			handler := NewEmptyBackendHandler(newHealthCheckLoadBalancer(test.amountServer), nextHandler)
 
 			recorder := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "http://localhost", nil)
@@ -50,7 +51,15 @@ func TestEmptyBackendHandler(t *testing.T) {
 }
 
 type healthCheckLoadBalancer struct {
-	amountServer int
+	servers []*url.URL
+}
+
+func newHealthCheckLoadBalancer(amountServer int) *healthCheckLoadBalancer {
+	servers := make([]*url.URL, amountServer)
+	for i := 0; i < amountServer; i++ {
+		servers[i] = testhelpers.MustParseURL("http://localhost" + strconv.Itoa(i))
+	}
+	return &healthCheckLoadBalancer{servers: servers}
 }
 
 func (lb *healthCheckLoadBalancer) RemoveServer(u *url.URL) error {
@@ -62,9 +71,5 @@ func (lb *healthCheckLoadBalancer) UpsertServer(u *url.URL, options ...roundrobi
 }
 
 func (lb *healthCheckLoadBalancer) Servers() []*url.URL {
-	servers := make([]*url.URL, lb.amountServer)
-	for i := 0; i < lb.amountServer; i++ {
-		servers = append(servers, testhelpers.MustParseURL("http://localhost"))
-	}
-	return servers
+	return lb.servers
 }
