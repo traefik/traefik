@@ -3,18 +3,20 @@ ignore:
 - github.com/sirupsen/logrus
 import:
 - package: github.com/BurntSushi/toml
-  version: v0.3.0
+  version: master
 - package: github.com/BurntSushi/ty
   subpackages:
   - fun
 - package: github.com/Sirupsen/logrus
   version: 10f801ebc38b33738c9d17d50860f484a0988ff5
 - package: github.com/cenk/backoff
+  version: 5d150e7eec023ce7a124856b37c68e54b4050ac7
 - package: github.com/containous/flaeg
+  version: v1.0.1
 - package: github.com/containous/traefik-extra-service-fabric
   version: v1.0.5
 - package: github.com/vulcand/oxy
-  version: 812cebb8c764f2a78cb806267648b8728b4599ad
+  version: containous-fork
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:
@@ -41,7 +43,7 @@ import:
 - package: github.com/coreos/etcd
   version: v3.2.9
 - package: github.com/docker/libkv
-  repo: https://github.com/abronan/libkv.git
+  repo: github.com/abronan/libkv
   vcs: git
   subpackages:
   - store
@@ -218,6 +220,18 @@ import:
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - package: github.com/mitchellh/copystructure
 - package: github.com/mitchellh/hashstructure
+
+- package: github.com/boltdb/bolt
+  version: e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd
+- package: github.com/gorilla/websocket
+  version: a69d9f6de432e2c6b296a947d8a5ee88f68522cf
+- package: github.com/codahale/hdrhistogram
+  version: 9208b142303c12d8899bae836fd524ac9338b4fd
+- package: github.com/mailgun/timetools
+  version: 7e6055773c5137efbeb3bd2410d705fe10ab6bfd
+- package: github.com/mitchellh/mapstructure
+  version: d0303fe809921458f417bcf828397a65db30a7e4
+
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose
