@@ -261,14 +261,16 @@ func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEv
 	if strings.HasPrefix(ev.AuditType, "HMRC-SA-") && partial.Body != nil {
 		payload := xmlutils.XMLToDataMap(partial.Body.ChildElements(), []string{"AttachedFiles", "Attachment"})
 		body := payload.GetDataMap("Body")
-		if ev.RequestPayload != nil {
+		if ev.RequestPayload == nil {
 			ev.RequestPayload = types.DataMap{}
 		}
-		ev.RequestPayload["details"] = (body)
+		ev.RequestPayload["details"] = body
 		if strings.HasPrefix(ev.AuditType, "HMRC-SA-SA100") {
 			if el := partial.Body.FindElementPath(gtmSa110Repayment); el != nil {
 				if amount, err := strconv.ParseFloat(el.Text(), 64); err == nil {
 					ev.Detail.IsRepayment = strconv.FormatBool(amount < 0.00)
+				} else {
+					ev.Detail.IsRepayment = "false"
 				}
 
 			}
@@ -280,6 +282,8 @@ func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEv
 			if claim != nil && amount != nil {
 				if amount, err := strconv.ParseFloat(amount.Text(), 64); err == nil {
 					ev.Detail.IsRepayment = strconv.FormatBool(strings.ToLower(strings.TrimSpace(claim.Text())) == "yes" && amount > 0.00)
+				} else {
+					ev.Detail.IsRepayment = "false"
 				}
 
 			}

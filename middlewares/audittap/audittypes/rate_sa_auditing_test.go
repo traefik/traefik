@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/beevik/etree"
+
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -77,6 +79,66 @@ func TestRateSA100AuditEventIsRepayment(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA100-TIL", event.AuditType)
 	assert.Equal(t, "true", event.Detail.IsRepayment)
+}
+
+func TestRateSA100AuditEventIsRepaymentWhenEmpty(t *testing.T) {
+
+	types.TheClock = T0
+	x := `	
+	<Body>
+	<IRenvelope xmlns="http://www.govtalk.gov.uk/taxation/SA/SA100/15-16/1">
+		<MTR>
+			<SA110>
+				<SelfAssessment>
+					<TotalTaxEtcDue />
+				</SelfAssessment>
+				<UnderpaidTax>
+					<UnderpaidTaxForEarlierYearsIncludedInCode>0.00</UnderpaidTaxForEarlierYearsIncludedInCode>
+					<UnderpaidTaxForYearIncludedInFutureCode>0.00</UnderpaidTaxForYearIncludedInFutureCode>
+				</UnderpaidTax>
+			</SA110>
+		</MTR>
+	</IRenvelope>
+	</Body>	
+	`
+	gtm, err := makePartialGtmWithBody(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := &RATEAuditEvent{}
+	event.AuditType = "HMRC-SA-SA100"
+	gtm.populateSelfAssessmentData(event)
+
+	assert.Equal(t, "false", event.Detail.IsRepayment)
+}
+
+func TestRateSA100AuditEventIsRepaymentOmitted(t *testing.T) {
+
+	types.TheClock = T0
+	x := `	
+	<Body>
+	<IRenvelope xmlns="http://www.govtalk.gov.uk/taxation/SA/SA100/15-16/1">
+		<MTR>
+			<SA110>
+				<SelfAssessment />
+				<UnderpaidTax>
+					<UnderpaidTaxForEarlierYearsIncludedInCode>0.00</UnderpaidTaxForEarlierYearsIncludedInCode>
+					<UnderpaidTaxForYearIncludedInFutureCode>0.00</UnderpaidTaxForYearIncludedInFutureCode>
+				</UnderpaidTax>
+			</SA110>
+		</MTR>
+	</IRenvelope>
+	</Body>	
+	`
+	gtm, err := makePartialGtmWithBody(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := &RATEAuditEvent{}
+	event.AuditType = "HMRC-SA-SA100"
+	gtm.populateSelfAssessmentData(event)
+
+	assert.Equal(t, "", event.Detail.IsRepayment)
 }
 
 func TestRateSA800AuditEvent(t *testing.T) {
@@ -155,9 +217,76 @@ func TestRateSA900AuditEventIsRepayment(t *testing.T) {
 
 }
 
+func TestRateSA900AuditEventIsRepaymentWhenEmpty(t *testing.T) {
+
+	types.TheClock = T0
+	x := `	
+	<Body>
+	<IRenvelope>
+		<SAtrust>
+			<TrustEstate>
+				<TaxCalculation>
+					<ClaimRepaymentForNextYear />
+					<RepaymentForNextYear />
+				</TaxCalculation>
+			</TrustEstate>
+		</SAtrust>
+	</IRenvelope>
+	</Body>	
+	`
+	gtm, err := makePartialGtmWithBody(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := &RATEAuditEvent{}
+	event.AuditType = "HMRC-SA-SA900"
+	gtm.populateSelfAssessmentData(event)
+
+	assert.Equal(t, "false", event.Detail.IsRepayment)
+}
+
+func TestRateSA900AuditEventIsRepaymentOmitted(t *testing.T) {
+
+	types.TheClock = T0
+	x := `	
+	<Body>
+	<IRenvelope>
+		<SAtrust>
+			<TrustEstate>
+				<TaxCalculation>
+					<SomeOtherData>ABC</SomeOtherData>
+				</TaxCalculation>
+			</TrustEstate>
+		</SAtrust>
+	</IRenvelope>
+	</Body>	
+	`
+	gtm, err := makePartialGtmWithBody(x)
+	if err != nil {
+		t.Fatal(err)
+	}
+	event := &RATEAuditEvent{}
+	event.AuditType = "HMRC-SA-SA900"
+	gtm.populateSelfAssessmentData(event)
+
+	assert.Equal(t, "", event.Detail.IsRepayment)
+}
+
 // debugEvent debug utility function to output event JSON structure
 func debugEvent(t *testing.T, ev *RATEAuditEvent) {
 	s := string(ev.ToEncoded().Bytes)
 	t.Log(s)
 	t.Fatal("Stop the test")
+}
+
+func makePartialGtmWithBody(s string) (*partialGovTalkMessage, error) {
+	doc := etree.NewDocument()
+	err := doc.ReadFromString(s)
+	if err != nil {
+		return nil, err
+	}
+
+	gtm := &partialGovTalkMessage{}
+	gtm.Body = doc
+	return gtm, nil
 }
