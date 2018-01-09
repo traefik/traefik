@@ -314,7 +314,7 @@ func (p *Provider) listInstances(ctx context.Context, client *awsClient) ([]ecsI
 				}
 
 				instances = append(instances, ecsInstance{
-					fmt.Sprintf("%s-%s", strings.Replace(*task.Group, ":", "-", 1), *container.Name),
+					*container.Name,
 					(*task.TaskArn)[len(*task.TaskArn)-12:],
 					task,
 					taskDefinition,
