@@ -64,12 +64,7 @@ func (sb *SaveFrontend) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	sb.next.ServeHTTP(rw, r)
 }
 
-//-------------------------------------------------------------------------------------------------
-// the next 3 function (SaveNegroniFrontend, NewSaveNegroniFrontend, ServeHTTP) are temporary,
-// DON'T USE THIS FUNCTION, MUST BE SUPPRESS BEFORE MERGING #1485
-
-// SaveNegroniFrontend sends the frontend name to the logger. These are sometimes used with a corresponding
-// SaveBackend handler, but not always. For example, redirected requests don't reach a backend.
+// SaveNegroniFrontend sends the frontend name to the logger.
 type SaveNegroniFrontend struct {
 	next         negroni.Handler
 	frontendName string
@@ -87,9 +82,7 @@ func (sb *SaveNegroniFrontend) ServeHTTP(rw http.ResponseWriter, r *http.Request
 	sb.next.ServeHTTP(rw, r, next)
 }
 
-//-------------------------------------------------------------------------------------------------
-// SaveNegroniBackend sends the backend name to the logger. These are always used with a corresponding
-// SaveNegroniFrontend handler.
+// SaveNegroniBackend sends the backend name to the logger.
 type SaveNegroniBackend struct {
 	next        negroni.Handler
 	backendName string

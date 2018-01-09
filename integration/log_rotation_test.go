@@ -10,6 +10,10 @@ import (
 	"syscall"
 	"time"
 
+	"fmt"
+	"net"
+	"net/http/httptest"
+
 	"github.com/containous/traefik/integration/try"
 	"github.com/go-check/check"
 	checker "github.com/vdemeester/shakers"
@@ -124,6 +128,23 @@ func logAccessLogFile(c *check.C, fileName string) {
 	output, err := ioutil.ReadFile(fileName)
 	c.Assert(err, checker.IsNil)
 	c.Logf("Contents of file %s\n%s", fileName, string(output))
+}
+
+func startAccessLogServer(port int) (ts *httptest.Server) {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "Received query %s!\n", r.URL.Path[1:])
+	})
+
+	if listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port)); err != nil {
+		panic(err)
+	} else {
+		ts = &httptest.Server{
+			Listener: listener,
+			Config:   &http.Server{Handler: handler},
+		}
+		ts.Start()
+	}
+	return
 }
 
 func verifyEmptyErrorLog(c *check.C, name string) {

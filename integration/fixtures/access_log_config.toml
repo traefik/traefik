@@ -20,9 +20,6 @@ defaultEntryPoints = ["http"]
   [entryPoints.httpWhitelistReject]
     address = ":8002"
     whiteListSourceRange = ["8.8.8.8/32"]
-  [entryPoints.httpWhitelistAccept]
-    address = ":8003"
-    whiteListSourceRange = ["0.0.0.0/32"]
   [entryPoints.httpAuth]
     address = ":8004"
     [entryPoints.httpAuth.auth.basic]
@@ -31,6 +28,8 @@ defaultEntryPoints = ["http"]
     address = ":8005"
   [entryPoints.httpFrontendAuth]
     address = ":8006"
+  [entryPoints.httpRateLimit]
+    address = ":8007"
 
 checkNewVersion = false
 
@@ -39,32 +38,6 @@ checkNewVersion = false
 ################################################################
 [web]
   address = ":7888"
-
-################################################################
-# File configuration backend
-################################################################
-[file]
-  [frontends]
-    [frontends.frontend1]
-      backend = "backend1"
-    [frontends.frontend1.routes.test_1]
-      rule = "Path: /test1"
-    [frontends.frontend2]
-      backend = "backend2"
-      passHostHeader = true
-      [frontends.frontend2.routes.test_2]
-        rule = "Path: /test2"
-  [backends]
-    [backends.backend1]
-      [backends.backend1.servers.server1]
-      url = "http://127.0.0.1:8081"
-    [backends.backend2]
-      [backends.backend2.LoadBalancer]
-      method = "drr"
-      [backends.backend2.servers.server1]
-      url = "http://127.0.0.1:8082"
-      [backends.backend2.servers.server2]
-      url = "http://127.0.0.1:8083"
 
 [docker]
   exposedByDefault = false

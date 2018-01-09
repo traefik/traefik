@@ -333,7 +333,7 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
-		serverMiddlewares = append(serverMiddlewares, ipWhitelistMiddleware)
+		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", newServerEntryPointName)))
 		serverInternalMiddlewares = append(serverInternalMiddlewares, ipWhitelistMiddleware)
 	}
 	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.globalConfiguration.EntryPoints[newServerEntryPointName], newServerEntryPoint.httpRouter, serverMiddlewares, serverInternalMiddlewares)
@@ -418,8 +418,8 @@ func (s *Server) defaultConfigurationValues(configuration *types.Configuration) 
 	if configuration == nil || configuration.Frontends == nil {
 		return
 	}
-	s.configureFrontends(configuration.Frontends)
-	s.configureBackends(configuration.Backends)
+	configureFrontends(configuration.Frontends, s.globalConfiguration.DefaultEntryPoints)
+	configureBackends(configuration.Backends)
 }
 
 func (s *Server) listenConfigurations(stop chan bool) {
@@ -1110,7 +1110,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
-						lb, err = s.buildRateLimiter(lb, frontend.RateLimit)
+						lb, err = buildRateLimiter(lb, frontend.RateLimit)
 						lb = s.wrapHTTPHandlerWithAccessLog(lb, fmt.Sprintf("rate limit for %s", frontendName))
 						if err != nil {
 							log.Errorf("Error creating rate limiter: %v", err)
@@ -1420,16 +1420,16 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	return keys
 }
 
-func (s *Server) configureFrontends(frontends map[string]*types.Frontend) {
+func configureFrontends(frontends map[string]*types.Frontend, defaultEntrypoints []string) {
 	for _, frontend := range frontends {
 		// default endpoints if not defined in frontends
 		if len(frontend.EntryPoints) == 0 {
-			frontend.EntryPoints = s.globalConfiguration.DefaultEntryPoints
+			frontend.EntryPoints = defaultEntrypoints
 		}
 	}
 }
 
-func (*Server) configureBackends(backends map[string]*types.Backend) {
+func configureBackends(backends map[string]*types.Backend) {
 	for backendName := range backends {
 		backend := backends[backendName]
 		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
@@ -1537,9 +1537,8 @@ func (s *Server) wrapNegroniHandlerWithAccessLog(handler negroni.Handler, fronte
 		saveBackend := accesslog.NewSaveNegroniBackend(handler, "Træfik")
 		saveFrontend := accesslog.NewSaveNegroniFrontend(saveBackend, frontendName)
 		return saveFrontend
-	} else {
-		return handler
 	}
+	return handler
 }
 
 func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName string) http.Handler {
@@ -1547,7 +1546,6 @@ func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName
 		saveBackend := accesslog.NewSaveBackend(handler, "Træfik")
 		saveFrontend := accesslog.NewSaveFrontend(saveBackend, frontendName)
 		return saveFrontend
-	} else {
-		return handler
 	}
+	return handler
 }
