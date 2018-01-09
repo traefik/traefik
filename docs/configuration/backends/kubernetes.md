@@ -78,7 +78,8 @@ The Kubernetes server endpoint as URL.
 
 When deployed into Kubernetes, Traefik will read the environment variables `KUBERNETES_SERVICE_HOST` and `KUBERNETES_SERVICE_PORT` to construct the endpoint.
 
-The access token will be looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`. Both are provided mounted automatically when deployed inside Kubernetes.
+The access token will be looked up in `/var/run/secrets/kubernetes.io/serviceaccount/token` and the SSL CA certificate in `/var/run/secrets/kubernetes.io/serviceaccount/ca.crt`.
+Both are provided mounted automatically when deployed inside Kubernetes.
 
 The endpoint may be specified to override the environment variable values inside a cluster.
 
@@ -88,7 +89,8 @@ Specifically, it may be set to the URL used by `kubectl proxy` to connect to a K
 
 ### `labelselector`
 
-By default, Traefik processes all Ingress objects in the configured namespaces. A label selector can be defined to filter on specific Ingress objects only.
+By default, Traefik processes all Ingress objects in the configured namespaces.
+A label selector can be defined to filter on specific Ingress objects only.
 
 See [label-selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors) for details.
 
