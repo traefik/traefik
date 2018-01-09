@@ -46,8 +46,8 @@ func (p *Provider) buildConfiguration(catalog []catalogUpdate) *types.Configurat
 		"getBasicAuth":            p.getFuncSliceAttribute(label.SuffixFrontendAuthBasic),
 		"getEntryPoints":          getEntryPoints,                                           // TODO Deprecated [breaking]
 		"getFrontEndEntryPoints":  p.getFuncSliceAttribute(label.SuffixFrontendEntryPoints), // TODO [breaking] rename to getEntryPoints when getEntryPoints will be removed
-		"getPriority":             p.getFuncIntAttribute(label.SuffixFrontendPriority, 0),
-		"getPassHostHeader":       p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, true),
+		"getPriority":             p.getFuncIntAttribute(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader":       p.getFuncBoolAttribute(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getPassTLSCert":          p.getFuncBoolAttribute(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getWhitelistSourceRange": p.getFuncSliceAttribute(label.SuffixFrontendWhitelistSourceRange),
 		"getRedirect":             p.getRedirect,
@@ -201,7 +201,7 @@ func (p *Provider) getStickinessCookieName(tags []string) string {
 
 // Deprecated
 func (p *Provider) getWeight(tags []string) int {
-	weight := p.getIntAttribute(label.SuffixWeight, tags, 0)
+	weight := p.getIntAttribute(label.SuffixWeight, tags, label.DefaultWeightInt)
 
 	// Deprecated
 	deprecatedWeightTag := "backend." + label.SuffixWeight
@@ -209,7 +209,7 @@ func (p *Provider) getWeight(tags []string) int {
 		log.Warnf("Deprecated configuration found: %s. Please use %s.",
 			p.getPrefixedName(deprecatedWeightTag), p.getPrefixedName(label.SuffixWeight))
 
-		weight = p.getIntAttribute(deprecatedWeightTag, tags, 0)
+		weight = p.getIntAttribute(deprecatedWeightTag, tags, label.DefaultWeightInt)
 	}
 
 	return weight
