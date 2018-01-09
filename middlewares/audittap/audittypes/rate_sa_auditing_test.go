@@ -31,7 +31,7 @@ func TestRateSaInfoIgnoresNonSubmission(t *testing.T) {
 	event.AppendResponse(respHdrs, respInfo)
 
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
-	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap("details"))
+	assert.Equal(t, types.DataMap{}, event.RequestPayload.GetDataMap("contents"))
 }
 
 func TestRateSA100AuditEvent(t *testing.T) {
@@ -53,7 +53,7 @@ func TestRateSA100AuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA100-ATT", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	saData := event.RequestPayload.GetDataMap("details").GetDataMap("IRenvelope").GetDataMap("MTR").GetDataMap("SA100")
+	saData := event.RequestPayload.GetDataMap("contents").GetDataMap("IRenvelope").GetDataMap("MTR").GetDataMap("SA100")
 	assert.NotEmpty(t, saData)
 	assert.Equal(t, "GY001093A", saData.GetDataMap("YourPersonalDetails").GetString("NationalInsuranceNumber"))
 	assert.Nil(t, saData.Get("AttachedFiles"))
@@ -160,7 +160,7 @@ func TestRateSA800AuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA800-ATT-TIL", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	saData := event.RequestPayload.GetDataMap("details").GetDataMap("IRenvelope").GetDataMap("SApartnership")
+	saData := event.RequestPayload.GetDataMap("contents").GetDataMap("IRenvelope").GetDataMap("SApartnership")
 	assert.NotEmpty(t, saData)
 	assert.Equal(t, "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456", saData.GetString("PartnershipName"))
 	assert.Nil(t, saData.Get("AttachedFiles"))
@@ -186,7 +186,7 @@ func TestRateSA900AuditEvent(t *testing.T) {
 
 	assert.Equal(t, "HMRC-SA-SA900-ATT-TIL", event.AuditType)
 	assert.NotEmpty(t, event.RequestPayload)
-	saData := event.RequestPayload.GetDataMap("details").GetDataMap("IRenvelope").GetDataMap("SAtrust")
+	saData := event.RequestPayload.GetDataMap("contents").GetDataMap("IRenvelope").GetDataMap("SAtrust")
 	assert.NotEmpty(t, saData)
 	assert.Equal(t, "Cap Trust", saData.GetString("TrustName"))
 	assert.Equal(t, "yes", saData.GetDataMap("TrustEstate").GetDataMap("NotLiableAtTrustRate").GetString("NotLiable"))

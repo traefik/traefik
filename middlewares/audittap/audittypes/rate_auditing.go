@@ -264,7 +264,7 @@ func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEv
 		if ev.RequestPayload == nil {
 			ev.RequestPayload = types.DataMap{}
 		}
-		ev.RequestPayload["details"] = body
+		ev.RequestPayload["contents"] = body
 		if strings.HasPrefix(ev.AuditType, "HMRC-SA-SA100") {
 			if el := partial.Body.FindElementPath(gtmSa110Repayment); el != nil {
 				if amount, err := strconv.ParseFloat(el.Text(), 64); err == nil {
