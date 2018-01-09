@@ -92,7 +92,7 @@ func (p *Provider) apiProvide(configurationChan chan<- types.ConfigMessage, pool
 						select {
 						case <-ticker.C:
 
-							checkRancherApi, rancherErrApi := p.createClient()
+							checkRancherApi, rancherErrApi := rancherClient.ApiKey.List(withoutPagination)
 
 							if rancherErrApi != nil {
 								log.Errorf("Cannot establish connection: %+v, rancher API return: %+v;\nSkipping refresh Data from Provider API", rancherErrApi, checkRancherApi)
