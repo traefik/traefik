@@ -1,4 +1,4 @@
-hash: d7f811ac4a011308c6e1f73b618215dee90dae6cace9511f66d4b63d916a337a
+hash: 929364465b74114d3860b1301b9015f5badb731f21f9b74d40e100f763a6ee3f
 updated: 2017-12-15T10:34:41.246378337+01:00
 imports:
 - name: cloud.google.com/go
@@ -426,7 +426,7 @@ imports:
   repo: https://github.com/ijc25/Gotty.git
   vcs: git
 - name: github.com/NYTimes/gziphandler
-  version: d6f46609c7629af3a02d791a4666866eed3cbd3e
+  version: 47ca22a0aeea4c9ceddfb935d818d636d934c312
 - name: github.com/ogier/pflag
   version: 45c278ab3607870051a2ea9040bb85fcb8557481
 - name: github.com/opencontainers/go-digest
@@ -520,7 +520,7 @@ imports:
 - name: github.com/VividCortex/gohistogram
   version: 51564d9861991fb0ad0f531c99ef602d0f9866e6
 - name: github.com/vulcand/oxy
-  version: 7b6e758ab449705195df638765c4ca472248908a
+  version: 812cebb8c764f2a78cb806267648b8728b4599ad
   repo: https://github.com/containous/oxy.git
   vcs: git
   subpackages:

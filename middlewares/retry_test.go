@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRetry(t *testing.T) {
@@ -133,4 +135,70 @@ type countingRetryListener struct {
 
 func (l *countingRetryListener) Retried(req *http.Request, attempt int) {
 	l.timesCalled++
+}
+
+func TestRetryWithFlush(t *testing.T) {
+	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(200)
+		rw.Write([]byte("FULL "))
+		rw.(http.Flusher).Flush()
+		rw.Write([]byte("DATA"))
+	})
+
+	retry := NewRetry(1, next, &countingRetryListener{})
+	responseRecorder := httptest.NewRecorder()
+
+	retry.ServeHTTP(responseRecorder, &http.Request{})
+
+	if responseRecorder.Body.String() != "FULL DATA" {
+		t.Errorf("Wrong body %q want %q", responseRecorder.Body.String(), "FULL DATA")
+	}
+}
+
+func TestNewRetryResponseRecorder(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		rw       http.ResponseWriter
+		expected http.ResponseWriter
+	}{
+		{
+			desc:     "Without Close Notify",
+			rw:       httptest.NewRecorder(),
+			expected: &retryResponseRecorderWithoutCloseNotify{},
+		},
+		{
+			desc:     "With Close Notify",
+			rw:       &mockRWCloseNotify{},
+			expected: &retryResponseRecorderWithCloseNotify{},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			rec := newRetryResponseRecorder(test.rw)
+
+			assert.IsType(t, rec, test.expected)
+		})
+	}
+}
+
+type mockRWCloseNotify struct{}
+
+func (m *mockRWCloseNotify) CloseNotify() <-chan bool {
+	panic("implement me")
+}
+
+func (m *mockRWCloseNotify) Header() http.Header {
+	panic("implement me")
+}
+
+func (m *mockRWCloseNotify) Write([]byte) (int, error) {
+	panic("implement me")
+}
+
+func (m *mockRWCloseNotify) WriteHeader(int) {
+	panic("implement me")
 }

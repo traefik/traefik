@@ -1,5 +1,28 @@
 # Change Log
 
+## [v1.5.0-rc4](https://github.com/containous/traefik/tree/v1.5.0-rc4) (2018-01-04)
+[All Commits](https://github.com/containous/traefik/compare/v1.5.0-rc3...v1.5.0-rc4)
+
+**Bug fixes:**
+- **[consulcatalog]** Use prefix for sticky and stickiness tags. ([#2624](https://github.com/containous/traefik/pull/2624) by [ldez](https://github.com/ldez))
+- **[file,tls]** Send empty configuration from file provider ([#2609](https://github.com/containous/traefik/pull/2609) by [nmengin](https://github.com/nmengin))
+- **[middleware,docker,k8s]** Fix custom headers template ([#2621](https://github.com/containous/traefik/pull/2621) by [ldez](https://github.com/ldez))
+- **[middleware]** Don&#39;t panic if ResponseWriter does not implement CloseNotify ([#2651](https://github.com/containous/traefik/pull/2651) by [Juliens](https://github.com/Juliens))
+- **[middleware]** We need to flush the end of the body when retry is streamed ([#2644](https://github.com/containous/traefik/pull/2644) by [Juliens](https://github.com/Juliens))
+- **[tls]** Allow deleting dynamically all TLS certificates from an entryPoint ([#2603](https://github.com/containous/traefik/pull/2603) by [nmengin](https://github.com/nmengin))
+- **[websocket]** Use gorilla readMessage and writeMessage instead of just an io.Copy ([#2650](https://github.com/containous/traefik/pull/2650) by [Juliens](https://github.com/Juliens))
+
+**Documentation:**
+- **[consul,consulcatalog]** Split Consul and Consul Catalog documentation ([#2654](https://github.com/containous/traefik/pull/2654) by [ldez](https://github.com/ldez))
+- **[docker/swarm]** Typo in docker.endpoint TCP port. ([#2626](https://github.com/containous/traefik/pull/2626) by [redhandpl](https://github.com/redhandpl))
+- **[docker]** Add a note on how to add label to a docker compose file ([#2611](https://github.com/containous/traefik/pull/2611) by [jmaitrehenry](https://github.com/jmaitrehenry))
+- **[k8s]** k8s guide: Leave note about assumed DaemonSet usage. ([#2634](https://github.com/containous/traefik/pull/2634) by [timoreimann](https://github.com/timoreimann))
+- **[marathon]** Improve Marathon service label documentation. ([#2635](https://github.com/containous/traefik/pull/2635) by [timoreimann](https://github.com/timoreimann))
+
+**Misc:**
+- **[etcd,kv,tls]** Add tests for TLS dynamic configuration in ETCD3 ([#2606](https://github.com/containous/traefik/pull/2606) by [dahefanteng](https://github.com/dahefanteng))
+- Merge v1.4.6 into v1.5  ([#2642](https://github.com/containous/traefik/pull/2642) by [ldez](https://github.com/ldez))
+
 ## [v1.4.6](https://github.com/containous/traefik/tree/v1.4.6) (2018-01-02)
 [All Commits](https://github.com/containous/traefik/compare/v1.4.5...v1.4.6)
 

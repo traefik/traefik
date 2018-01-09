@@ -111,7 +111,7 @@ And there, the same global configuration in the Key-value Store (using `prefix =
 | `/traefik/entrypoints/https/tls/certificates/0/keyfile`   | `integration/fixtures/https/snitest.com.key`                  |
 | `/traefik/entrypoints/https/tls/certificates/1/certfile`  | `--BEGIN CERTIFICATE--<cert file content>--END CERTIFICATE--` |
 | `/traefik/entrypoints/https/tls/certificates/1/keyfile`   | `--BEGIN CERTIFICATE--<key file content>--END CERTIFICATE--`  |
-| `/traefik/entrypoints/other-https/address`                | `:4443`
+| `/traefik/entrypoints/other-https/address`                | `:4443`                                                       |
 | `/traefik/consul/endpoint`                                | `127.0.0.1:8500`                                              |
 | `/traefik/consul/watch`                                   | `true`                                                        |
 | `/traefik/consul/prefix`                                  | `traefik`                                                     |
@@ -342,9 +342,10 @@ And there, the same dynamic configuration in a KV Store (using `prefix = "traefi
 
 | Key                                                | Value                 |
 |----------------------------------------------------|-----------------------|
-| `/traefik/tlsconfiguration/2/entrypoints`          | `https,other-https`          |
+| `/traefik/tlsconfiguration/2/entrypoints`          | `https,other-https`   |
 | `/traefik/tlsconfiguration/2/certificate/certfile` | `<cert file content>` |
 | `/traefik/tlsconfiguration/2/certificate/certfile` | `<key file content>`  |
+
 ### Atomic configuration changes
 
 Træfik can watch the backends/frontends configuration changes and generate its configuration automatically.
@@ -379,9 +380,9 @@ Here, although the `/traefik_configurations/2/...` keys have been set, the old c
 | `/traefik_configurations/1/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
 | `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
 | `/traefik_configurations/2/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
-| `/traefik_configurations/2/backends/backend1/servers/server1/weight`    | `5`                        |
+| `/traefik_configurations/2/backends/backend1/servers/server1/weight`    | `5`                         |
 | `/traefik_configurations/2/backends/backend1/servers/server2/url`       | `http://172.17.0.3:80`      |
-| `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                        |
+| `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                         |
 
 Once the `/traefik/alias` key is updated, the new `/traefik_configurations/2` configuration becomes active atomically.
 
@@ -393,9 +394,9 @@ Here, we have a 50% balance between the `http://172.17.0.3:80` and the `http://1
 | `/traefik_configurations/1/backends/backend1/servers/server1/url`       | `http://172.17.0.2:80`      |
 | `/traefik_configurations/1/backends/backend1/servers/server1/weight`    | `10`                        |
 | `/traefik_configurations/2/backends/backend1/servers/server1/url`       | `http://172.17.0.3:80`      |
-| `/traefik_configurations/2/backends/backend1/servers/server1/weight`    | `5`                        |
+| `/traefik_configurations/2/backends/backend1/servers/server1/weight`    | `5`                         |
 | `/traefik_configurations/2/backends/backend1/servers/server2/url`       | `http://172.17.0.4:80`      |
-| `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                        |
+| `/traefik_configurations/2/backends/backend1/servers/server2/weight`    | `5`                         |
 
 !!! note
     Træfik *will not watch for key changes in the `/traefik_configurations` prefix*. It will only watch for changes in the `/traefik/alias`.  

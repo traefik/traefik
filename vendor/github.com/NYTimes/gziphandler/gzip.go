@@ -84,6 +84,14 @@ type GzipResponseWriter struct {
 	contentTypes []string // Only compress if the response is one of these content-types. All are accepted if empty.
 }
 
+type GzipResponseWriterWithCloseNotify struct {
+	*GzipResponseWriter
+}
+
+func (w *GzipResponseWriterWithCloseNotify) CloseNotify() <-chan bool {
+	return w.ResponseWriter.(http.CloseNotifier).CloseNotify()
+}
+
 // Write appends data to the gzip writer.
 func (w *GzipResponseWriter) Write(b []byte) (int, error) {
 	// If content type is not set.
@@ -264,7 +272,6 @@ func GzipHandlerWithOpts(opts ...option) (func(http.Handler) http.Handler, error
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add(vary, acceptEncoding)
-
 			if acceptsGzip(r) {
 				gw := &GzipResponseWriter{
 					ResponseWriter: w,
@@ -274,7 +281,13 @@ func GzipHandlerWithOpts(opts ...option) (func(http.Handler) http.Handler, error
 				}
 				defer gw.Close()
 
-				h.ServeHTTP(gw, r)
+				if _, ok := w.(http.CloseNotifier); ok {
+					gwcn := GzipResponseWriterWithCloseNotify{gw}
+					h.ServeHTTP(gwcn, r)
+				} else {
+					h.ServeHTTP(gw, r)
+				}
+
 			} else {
 				h.ServeHTTP(w, r)
 			}

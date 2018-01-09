@@ -5,7 +5,6 @@ package forward
 
 import (
 	"crypto/tls"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -214,7 +213,7 @@ func (f *Forwarder) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if f.log.Level >= log.DebugLevel {
 		logEntry := f.log.WithField("Request", utils.DumpHttpRequest(req))
 		logEntry.Debug("vulcand/oxy/forward: begin ServeHttp on request")
-		defer logEntry.Debug("vulcand/oxy/forward: competed ServeHttp on request")
+		defer logEntry.Debug("vulcand/oxy/forward: completed ServeHttp on request")
 	}
 
 	if f.stateListener != nil {
@@ -333,27 +332,27 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	defer targetConn.Close()
 
 	errc := make(chan error, 2)
-	replicate := func(dst io.Writer, src io.Reader, dstName string, srcName string) {
-		_, errCopy := io.Copy(dst, src)
-		if errCopy != nil {
-			f.log.Errorf("vulcand/oxy/forward/websocket: Error when copying from %s to %s using io.Copy: %v", srcName, dstName, errCopy)
-		} else {
-			f.log.Infof("vulcand/oxy/forward/websocket: Copying from %s to %s using io.Copy completed without error.", srcName, dstName)
+
+	replicateWebsocketConn := func(dst, src *websocket.Conn, dstName, srcName string) {
+		var err error
+		for {
+			msgType, msg, err := src.ReadMessage()
+			if err != nil {
+				f.log.Errorf("vulcand/oxy/forward/websocket: Error when copying from %s to %s using ReadMessage: %v", srcName, dstName, err)
+				break
+			}
+			err = dst.WriteMessage(msgType, msg)
+			if err != nil {
+				f.log.Errorf("vulcand/oxy/forward/websocket: Error when copying from %s to %s using WriteMessage: %v", srcName, dstName, err)
+				break
+			}
 		}
-		errc <- errCopy
+		errc <- err
 	}
 
-	go replicate(targetConn.UnderlyingConn(), underlyingConn.UnderlyingConn(), "backend", "client")
+	go replicateWebsocketConn(underlyingConn, targetConn, "client", "backend")
+	go replicateWebsocketConn(targetConn, underlyingConn, "backend", "client")
 
-	// Try to read the first message
-	msgType, msg, err := targetConn.ReadMessage()
-	if err != nil {
-		log.Errorf("vulcand/oxy/forward/websocket: Couldn't read first message : %v", err)
-	} else {
-		underlyingConn.WriteMessage(msgType, msg)
-	}
-
-	go replicate(underlyingConn.UnderlyingConn(), targetConn.UnderlyingConn(), "client", "backend")
 	<-errc
 }
 
