@@ -35,7 +35,7 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getServers":        p.getServers,
 
 		// TODO Deprecated [breaking]
-		"getWeight": getFuncStringService(label.SuffixWeight, label.DefaultWeight),
+		"getWeight": getFuncIntService(label.SuffixWeight, label.DefaultWeightInt),
 		// TODO Deprecated [breaking]
 		"getProtocol": getFuncStringService(label.SuffixProtocol, label.DefaultProtocol),
 		// TODO Deprecated [breaking]
@@ -68,9 +68,9 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		// Frontend functions
 		"getServiceNames":         getServiceNames,
 		"getServiceNameSuffix":    getServiceNameSuffix,
-		"getPassHostHeader":       getFuncStringService(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getPassHostHeader":       getFuncBoolService(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getPassTLSCert":          getFuncBoolService(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":             getFuncStringService(label.SuffixFrontendPriority, label.DefaultFrontendPriority),
+		"getPriority":             getFuncIntService(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
 		"getEntryPoints":          getFuncSliceStringService(label.SuffixFrontendEntryPoints),
 		"getFrontendRule":         p.getFrontendRule,
 		"getFrontendName":         p.getFrontendName,
@@ -406,8 +406,7 @@ func getCircuitBreaker(application marathon.Application) *types.CircuitBreaker {
 }
 
 func getLoadBalancer(application marathon.Application) *types.LoadBalancer {
-	// FIXME use constant
-	if !label.HasPrefixP(application.Labels, "traefik.backend.loadbalancer") {
+	if !label.HasPrefixP(application.Labels, label.TraefikBackendLoadBalancer) {
 		return nil
 	}
 
@@ -477,7 +476,7 @@ func (p *Provider) getServers(application marathon.Application, serviceName stri
 		serverName := provider.Normalize("server-" + task.ID + getServiceNameSuffix(serviceName))
 		servers[serverName] = types.Server{
 			URL:    fmt.Sprintf("%s://%s:%v", protocol, host, port),
-			Weight: label.GetIntValue(labels, getLabelName(serviceName, label.SuffixWeight), 0),
+			Weight: label.GetIntValue(labels, getLabelName(serviceName, label.SuffixWeight), label.DefaultWeightInt),
 		}
 	}
 
@@ -614,6 +613,14 @@ func getFuncBoolService(labelName string, defaultValue bool) func(application ma
 		labels := getLabels(application, serviceName)
 		lbName := getLabelName(serviceName, labelName)
 		return label.GetBoolValue(labels, lbName, defaultValue)
+	}
+}
+
+func getFuncIntService(labelName string, defaultValue int) func(application marathon.Application, serviceName string) int {
+	return func(application marathon.Application, serviceName string) int {
+		labels := getLabels(application, serviceName)
+		lbName := getLabelName(serviceName, labelName)
+		return label.GetIntValue(labels, lbName, defaultValue)
 	}
 }
 
