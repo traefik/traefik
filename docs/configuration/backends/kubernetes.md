@@ -112,6 +112,8 @@ Annotations can be used on containers to override default behaviour for the whol
     Override the default frontend endpoints.
 - `traefik.frontend.passTLSCert: true`  
     Override the default frontend PassTLSCert value. Default: `false`.
+- `ingress.kubernetes.io/rewrite-target: /users`
+    Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header.
 
 !!! note
     Please note that `traefik.frontend.redirect.regex` and `traefik.frontend.redirect.replacement` do not have to be set if `traefik.frontend.redirect.entryPoint` is defined for the redirection (they will not be used in this case).
