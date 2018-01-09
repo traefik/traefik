@@ -31,7 +31,7 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		// TODO Deprecated [breaking]
 		"getProtocol": getFuncString(label.TraefikProtocol, label.DefaultProtocol),
 		// TODO Deprecated [breaking]
-		"getWeight": getFuncInt(label.TraefikWeight, 0),
+		"getWeight": getFuncInt(label.TraefikWeight, label.DefaultWeightInt),
 		// TODO Deprecated [breaking]
 		"hasCircuitBreakerLabel": hasFunc(label.TraefikBackendCircuitBreakerExpression),
 		// TODO Deprecated [breaking]
@@ -43,7 +43,7 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		// TODO Deprecated [breaking]
 		"hasMaxConnLabels": hasMaxConnLabels,
 		// TODO Deprecated [breaking]
-		"getMaxConnAmount": getFuncInt64(label.TraefikBackendMaxConnAmount, math.MaxInt64),
+		"getMaxConnAmount": getFuncInt64(label.TraefikBackendMaxConnAmount, 0),
 		// TODO Deprecated [breaking]
 		"getMaxConnExtractorFunc": getFuncString(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
 		// TODO Deprecated [breaking]
@@ -57,8 +57,8 @@ func (p *Provider) buildConfiguration(services []rancherData) *types.Configurati
 		"getBackend":              getBackendName, // TODO Deprecated [breaking] replaced by getBackendName
 		"getBackendName":          getBackendName,
 		"getFrontendRule":         p.getFrontendRule,
-		"getPriority":             getFuncInt(label.TraefikFrontendPriority, 0),
-		"getPassHostHeader":       getFuncBool(label.TraefikFrontendPassHostHeader, true),
+		"getPriority":             getFuncInt(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader":       getFuncBool(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getPassTLSCert":          getFuncBool(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
 		"getEntryPoints":          getFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getBasicAuth":            getFuncSliceString(label.TraefikFrontendAuthBasic),
@@ -186,8 +186,7 @@ func getCircuitBreaker(service rancherData) *types.CircuitBreaker {
 }
 
 func getLoadBalancer(service rancherData) *types.LoadBalancer {
-	// FIXME use constant
-	if !label.HasPrefix(service.Labels, "traefik.backend.loadbalancer") {
+	if !label.HasPrefix(service.Labels, label.TraefikBackendLoadBalancer) {
 		return nil
 	}
 
@@ -246,7 +245,7 @@ func getServers(service rancherData) map[string]types.Server {
 
 		protocol := label.GetStringValue(service.Labels, label.TraefikProtocol, label.DefaultProtocol)
 		port := label.GetStringValue(service.Labels, label.TraefikPort, "")
-		weight := label.GetIntValue(service.Labels, label.TraefikWeight, 0)
+		weight := label.GetIntValue(service.Labels, label.TraefikWeight, label.DefaultWeightInt)
 
 		serverName := "server-" + strconv.Itoa(index)
 		servers[serverName] = types.Server{
