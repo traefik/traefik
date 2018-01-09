@@ -74,7 +74,7 @@ test-integration: build ## run the integration tests
 	TEST_HOST=1 ./script/make.sh test-integration
 
 validate: build  ## validate gofmt, golint and go vet
-	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-glide validate-gofmt validate-govet validate-golint validate-misspell validate-vendor validate-autogen
+	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt validate-govet validate-golint validate-misspell validate-vendor validate-autogen
 
 build: dist
 	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
@@ -126,6 +126,9 @@ fmt:
 
 pull-images:
 	grep --no-filename -E '^\s+image:' ./integration/resources/compose/*.yml | awk '{print $$2}' | sort | uniq  | xargs -P 6 -n 1 docker pull
+
+prune-dep:
+	./script/prune-dep.sh
 
 help: ## this help
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)

@@ -2,7 +2,8 @@
 
 ## Building
 
-You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` (Method 2) in order to build Traefik. For changes to its dependencies, the `glide` dependency management tool and `glide-vc` plugin are required.
+You need either [Docker](https://github.com/docker/docker) and `make` (Method 1), or `go` (Method 2) in order to build Traefik.
+For changes to its dependencies, the `dep` dependency management tool is required.
 
 ### Method 1: Using `Docker` and `Makefile`
 
@@ -14,7 +15,7 @@ docker build -t "traefik-dev:no-more-godep-ever" -f build.Dockerfile .
 Sending build context to Docker daemon 295.3 MB
 Step 0 : FROM golang:1.9-alpine
  ---> 8c6473912976
-Step 1 : RUN go get github.com/Masterminds/glide
+Step 1 : RUN go get github.com/golang/dep/cmd/dep
 [...]
 docker run --rm  -v "/var/run/docker.sock:/var/run/docker.sock" -it -e OS_ARCH_ARG -e OS_PLATFORM_ARG -e TESTFLAGS -v "/home/user/go/src/github.com/containous/traefik/"dist":/go/src/github.com/containous/traefik/"dist"" "traefik-dev:no-more-godep-ever" ./script/make.sh generate binary
 ---> Making bundle: generate (in .)
@@ -82,21 +83,20 @@ You will find the Træfik executable in the `~/go/src/github.com/containous/trae
 
 If you happen to update the provider templates (in `/templates`), you need to run `go generate` to update the `autogen` package.
 
-### Setting up `glide` and `glide-vc` for dependency management
+### Setting up dependency management
 
-- Glide is not required for building; however, it is necessary to modify dependencies (i.e., add, update, or remove third-party packages)
-- Glide can be installed either via homebrew: `$ brew install glide` or via the official glide script: `$ curl https://glide.sh/get | sh`
-- The glide plugin `glide-vc` must be installed from source: `go get github.com/sgotti/glide-vc`
+[dep](https://github.com/golang/dep) is not required for building; however, it is necessary to modify dependencies (i.e., add, update, or remove third-party packages)
 
-If you want to add a dependency, use `$ glide get` to have glide put it into the vendor folder and update the glide manifest/lock files (`glide.yaml` and `glide.lock`, respectively). A following `glide-vc` run should be triggered to trim down the size of the vendor folder. The final result must be committed into VCS.
+If you want to add a dependency, use `dep ensure -add` to have [dep](https://github.com/golang/dep) put it into the vendor folder and update the dep manifest/lock files (`Gopkg.toml` and `Gopkg.lock`, respectively).
 
-Care must be taken to choose the right arguments to `glide` when dealing with dependencies, or otherwise risk ending up with a broken build. For that reason, the helper script `script/glide.sh` encapsulates the gory details and conveniently calls `glide-vc` as well. Call it without parameters for basic usage instructions.
+A following `make prune-dep` run should be triggered to trim down the size of the vendor folder.
+The final result must be committed into VCS.
 
-Here's a full example using glide to add a new dependency:
+Here's a full example using dep to add a new dependency:
 
 ```bash
 # install the new main dependency github.com/foo/bar and minimize vendor size
-$ ./script/glide.sh get github.com/foo/bar
+$ dep ensure -add github.com/foo/bar
 # generate (Only required to integrate other components such as web dashboard)
 $ go generate
 # Standard go build
@@ -127,6 +127,7 @@ Test success
 ```
 
 For development purposes, you can specify which tests to run by using:
+
 ```bash
 # Run every tests in the MyTest suite
 TESTFLAGS="-check.f MyTestSuite" make test-integration
@@ -146,6 +147,7 @@ More: https://labix.org/gocheck
 #### Method 2: `go`
 
 Unit tests can be run from the cloned directory by `$ go test ./...` which should return `ok` similar to:
+
 ```
 ok      _/home/user/go/src/github/containous/traefik    0.004s
 ```

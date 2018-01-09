@@ -132,9 +132,9 @@ func (f *freelist) free(txid txid, p *page) {
 	allocTxid, ok := f.allocs[p.id]
 	if ok {
 		delete(f.allocs, p.id)
-	} else if (p.flags & (freelistPageFlag | metaPageFlag)) != 0 {
-		// Safe to claim txid as allocating since these types are private to txid.
-		allocTxid = txid
+	} else if (p.flags & freelistPageFlag) != 0 {
+		// Freelist is always allocated by prior tx.
+		allocTxid = txid - 1
 	}
 
 	for id := p.id; id <= p.id+pgid(p.overflow); id++ {
@@ -233,6 +233,9 @@ func (f *freelist) freed(pgid pgid) bool {
 
 // read initializes the freelist from a freelist page.
 func (f *freelist) read(p *page) {
+	if (p.flags & freelistPageFlag) == 0 {
+		panic(fmt.Sprintf("invalid freelist page: %d, page type is %s", p.id, p.typ()))
+	}
 	// If the page.count is at the max uint16 value (64k) then it's considered
 	// an overflow and the size of the freelist is stored as the first element.
 	idx, count := 0, int(p.count)
