@@ -14,117 +14,78 @@ import (
 func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.Configuration {
 	var DockerFuncMap = template.FuncMap{
 		"getDomain":        getFuncStringLabel(label.TraefikDomain, p.Domain),
+		"getSubDomain":     getSubDomain,
 		"isBackendLBSwarm": isBackendLBSwarm, // FIXME dead ?
 
 		// Backend functions
-		"getIPAddress":                p.getIPAddress,
-		"getPort":                     getPort,
-		"getWeight":                   getFuncStringLabel(label.TraefikWeight, label.DefaultWeight),
-		"getProtocol":                 getFuncStringLabel(label.TraefikProtocol, label.DefaultProtocol),
-		"hasHealthCheckLabels":        hasFunc(label.TraefikBackendHealthCheckPath),
-		"getHealthCheckPath":          getFuncStringLabel(label.TraefikBackendHealthCheckPath, ""),
-		"getHealthCheckPort":          getFuncIntLabel(label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort),
-		"getHealthCheckInterval":      getFuncStringLabel(label.TraefikBackendHealthCheckInterval, ""),
-		"hasCircuitBreakerLabel":      hasFunc(label.TraefikBackendCircuitBreakerExpression),
+		"getIPAddress":      p.getIPAddress,
+		"getPort":           getPort,
+		"getWeight":         getFuncIntLabel(label.TraefikWeight, label.DefaultWeightInt),
+		"getProtocol":       getFuncStringLabel(label.TraefikProtocol, label.DefaultProtocol),
+		"getMaxConn":        getMaxConn,
+		"getHealthCheck":    getHealthCheck,
+		"getCircuitBreaker": getCircuitBreaker,
+		"getLoadBalancer":   getLoadBalancer,
+
+		// TODO Deprecated [breaking]
+		"hasCircuitBreakerLabel": hasFunc(label.TraefikBackendCircuitBreakerExpression),
+		// TODO Deprecated [breaking]
 		"getCircuitBreakerExpression": getFuncStringLabel(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
-		"hasLoadBalancerLabel":        hasLoadBalancerLabel,
-		"getLoadBalancerMethod":       getFuncStringLabel(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
-		"hasMaxConnLabels":            hasMaxConnLabels,
-		"getMaxConnAmount":            getFuncInt64Label(label.TraefikBackendMaxConnAmount, math.MaxInt64),
-		"getMaxConnExtractorFunc":     getFuncStringLabel(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
-		"getSticky":                   getSticky,
-		"hasStickinessLabel":          hasFunc(label.TraefikBackendLoadBalancerStickiness),
-		"getStickinessCookieName":     getFuncStringLabel(label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName),
+		// TODO Deprecated [breaking]
+		"hasLoadBalancerLabel": hasLoadBalancerLabel,
+		// TODO Deprecated [breaking]
+		"getLoadBalancerMethod": getFuncStringLabel(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
+		// TODO Deprecated [breaking]
+		"hasMaxConnLabels": hasMaxConnLabels,
+		// TODO Deprecated [breaking]
+		"getMaxConnAmount": getFuncInt64Label(label.TraefikBackendMaxConnAmount, math.MaxInt64),
+		// TODO Deprecated [breaking]
+		"getMaxConnExtractorFunc": getFuncStringLabel(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
+		// TODO Deprecated [breaking]
+		"getSticky": getSticky,
+		// TODO Deprecated [breaking]
+		"hasStickinessLabel": hasFunc(label.TraefikBackendLoadBalancerStickiness),
+		// TODO Deprecated [breaking]
+		"getStickinessCookieName": getFuncStringLabel(label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName),
 
 		// Frontend functions
-		"getBackend":                 getBackend,
-		"getPriority":                getFuncStringLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
-		"getPassHostHeader":          getFuncStringLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":             getFuncBoolLabel(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getEntryPoints":             getFuncSliceStringLabel(label.TraefikFrontendEntryPoints),
-		"getBasicAuth":               getFuncSliceStringLabel(label.TraefikFrontendAuthBasic),
-		"getWhitelistSourceRange":    getFuncSliceStringLabel(label.TraefikFrontendWhitelistSourceRange),
-		"getFrontendRule":            p.getFrontendRule,
-		"hasRedirect":                hasRedirect,
-		"getRedirectEntryPoint":      getFuncStringLabel(label.TraefikFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
-		"getRedirectRegex":           getFuncStringLabel(label.TraefikFrontendRedirectRegex, ""),
-		"getRedirectReplacement":     getFuncStringLabel(label.TraefikFrontendRedirectReplacement, ""),
-		"hasErrorPages":              hasErrorPages,
-		"getErrorPages":              getErrorPages,
-		"hasRateLimits":              hasFunc(label.TraefikFrontendRateLimitExtractorFunc),
-		"getRateLimitsExtractorFunc": getFuncStringLabel(label.TraefikFrontendRateLimitExtractorFunc, ""),
-		"getRateLimits":              getRateLimits,
-		// Headers
-		"hasHeaders":                        hasHeaders,
-		"hasRequestHeaders":                 hasFunc(label.TraefikFrontendRequestHeaders),
-		"getRequestHeaders":                 getFuncMapLabel(label.TraefikFrontendRequestHeaders),
-		"hasResponseHeaders":                hasFunc(label.TraefikFrontendResponseHeaders),
-		"getResponseHeaders":                getFuncMapLabel(label.TraefikFrontendResponseHeaders),
-		"hasAllowedHostsHeaders":            hasFunc(label.TraefikFrontendAllowedHosts),
-		"getAllowedHostsHeaders":            getFuncSliceStringLabel(label.TraefikFrontendAllowedHosts),
-		"hasHostsProxyHeaders":              hasFunc(label.TraefikFrontendHostsProxyHeaders),
-		"getHostsProxyHeaders":              getFuncSliceStringLabel(label.TraefikFrontendHostsProxyHeaders),
-		"hasSSLRedirectHeaders":             hasFunc(label.TraefikFrontendSSLRedirect),
-		"getSSLRedirectHeaders":             getFuncBoolLabel(label.TraefikFrontendSSLRedirect, false),
-		"hasSSLTemporaryRedirectHeaders":    hasFunc(label.TraefikFrontendSSLTemporaryRedirect),
-		"getSSLTemporaryRedirectHeaders":    getFuncBoolLabel(label.TraefikFrontendSSLTemporaryRedirect, false),
-		"hasSSLHostHeaders":                 hasFunc(label.TraefikFrontendSSLHost),
-		"getSSLHostHeaders":                 getFuncStringLabel(label.TraefikFrontendSSLHost, ""),
-		"hasSSLProxyHeaders":                hasFunc(label.TraefikFrontendSSLProxyHeaders),
-		"getSSLProxyHeaders":                getFuncMapLabel(label.TraefikFrontendSSLProxyHeaders),
-		"hasSTSSecondsHeaders":              hasFunc(label.TraefikFrontendSTSSeconds),
-		"getSTSSecondsHeaders":              getFuncInt64Label(label.TraefikFrontendSTSSeconds, 0),
-		"hasSTSIncludeSubdomainsHeaders":    hasFunc(label.TraefikFrontendSTSIncludeSubdomains),
-		"getSTSIncludeSubdomainsHeaders":    getFuncBoolLabel(label.TraefikFrontendSTSIncludeSubdomains, false),
-		"hasSTSPreloadHeaders":              hasFunc(label.TraefikFrontendSTSPreload),
-		"getSTSPreloadHeaders":              getFuncBoolLabel(label.TraefikFrontendSTSPreload, false),
-		"hasForceSTSHeaderHeaders":          hasFunc(label.TraefikFrontendForceSTSHeader),
-		"getForceSTSHeaderHeaders":          getFuncBoolLabel(label.TraefikFrontendForceSTSHeader, false),
-		"hasFrameDenyHeaders":               hasFunc(label.TraefikFrontendFrameDeny),
-		"getFrameDenyHeaders":               getFuncBoolLabel(label.TraefikFrontendFrameDeny, false),
-		"hasCustomFrameOptionsValueHeaders": hasFunc(label.TraefikFrontendCustomFrameOptionsValue),
-		"getCustomFrameOptionsValueHeaders": getFuncStringLabel(label.TraefikFrontendCustomFrameOptionsValue, ""),
-		"hasContentTypeNosniffHeaders":      hasFunc(label.TraefikFrontendContentTypeNosniff),
-		"getContentTypeNosniffHeaders":      getFuncBoolLabel(label.TraefikFrontendContentTypeNosniff, false),
-		"hasBrowserXSSFilterHeaders":        hasFunc(label.TraefikFrontendBrowserXSSFilter),
-		"getBrowserXSSFilterHeaders":        getFuncBoolLabel(label.TraefikFrontendBrowserXSSFilter, false),
-		"hasContentSecurityPolicyHeaders":   hasFunc(label.TraefikFrontendContentSecurityPolicy),
-		"getContentSecurityPolicyHeaders":   getFuncStringLabel(label.TraefikFrontendContentSecurityPolicy, ""),
-		"hasPublicKeyHeaders":               hasFunc(label.TraefikFrontendPublicKey),
-		"getPublicKeyHeaders":               getFuncStringLabel(label.TraefikFrontendPublicKey, ""),
-		"hasReferrerPolicyHeaders":          hasFunc(label.TraefikFrontendReferrerPolicy),
-		"getReferrerPolicyHeaders":          getFuncStringLabel(label.TraefikFrontendReferrerPolicy, ""),
-		"hasIsDevelopmentHeaders":           hasFunc(label.TraefikFrontendIsDevelopment),
-		"getIsDevelopmentHeaders":           getFuncBoolLabel(label.TraefikFrontendIsDevelopment, false),
+		"getBackend":              getBackendName, // TODO Deprecated [breaking] replaced by getBackendName
+		"getBackendName":          getBackendName,
+		"getPriority":             getFuncIntLabel(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getPassHostHeader":       getFuncBoolLabel(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassTLSCert":          getFuncBoolLabel(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getEntryPoints":          getFuncSliceStringLabel(label.TraefikFrontendEntryPoints),
+		"getBasicAuth":            getFuncSliceStringLabel(label.TraefikFrontendAuthBasic),
+		"getWhitelistSourceRange": getFuncSliceStringLabel(label.TraefikFrontendWhitelistSourceRange),
+		"getFrontendRule":         p.getFrontendRule,
+
+		"getRedirect":   getRedirect,
+		"getErrorPages": getErrorPages,
+		"getRateLimit":  getRateLimit,
+		"getHeaders":    getHeaders,
 
 		// Services
-		"hasServices":       hasServices,
-		"getServiceNames":   getServiceNames,
-		"getServiceBackend": getServiceBackend,
+		"hasServices":           hasServices,
+		"getServiceNames":       getServiceNames,
+		"getServiceBackend":     getServiceBackendName, // TODO Deprecated [breaking] replaced by getServiceBackendName
+		"getServiceBackendName": getServiceBackendName,
 		// Services - Backend server functions
 		"getServicePort":     getServicePort,
 		"getServiceProtocol": getFuncServiceStringLabel(label.SuffixProtocol, label.DefaultProtocol),
 		"getServiceWeight":   getFuncServiceStringLabel(label.SuffixWeight, label.DefaultWeight),
 		// Services - Frontend functions
 		"getServiceEntryPoints":          getFuncServiceSliceStringLabel(label.SuffixFrontendEntryPoints),
-		"getServiceWhitelistSourceRange": getFuncServiceSliceStringLabel(label.TraefikFrontendWhitelistSourceRange),
+		"getServiceWhitelistSourceRange": getFuncServiceSliceStringLabel(label.SuffixFrontendWhitelistSourceRange),
 		"getServiceBasicAuth":            getFuncServiceSliceStringLabel(label.SuffixFrontendAuthBasic),
 		"getServiceFrontendRule":         p.getServiceFrontendRule,
-		"getServicePassHostHeader":       getFuncServiceStringLabel(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeader),
+		"getServicePassHostHeader":       getFuncServiceBoolLabel(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getServicePassTLSCert":          getFuncServiceBoolLabel(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getServicePriority":             getFuncServiceStringLabel(label.SuffixFrontendPriority, label.DefaultFrontendPriority),
-		"hasServiceRedirect":             hasServiceRedirect,
-		"getServiceRedirectEntryPoint":   getFuncServiceStringLabel(label.SuffixFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
-		"getServiceRedirectReplacement":  getFuncServiceStringLabel(label.SuffixFrontendRedirectReplacement, ""),
-		"getServiceRedirectRegex":        getFuncServiceStringLabel(label.SuffixFrontendRedirectRegex, ""),
-		"hasServiceRequestHeaders":       hasFuncServiceLabel(label.SuffixFrontendRequestHeaders),
-		"getServiceRequestHeaders":       getFuncServiceMapLabel(label.SuffixFrontendRequestHeaders),
-		"hasServiceResponseHeaders":      hasFuncServiceLabel(label.SuffixFrontendResponseHeaders),
-		"getServiceResponseHeaders":      getFuncServiceMapLabel(label.SuffixFrontendResponseHeaders),
-		"hasServiceErrorPages":           hasServiceErrorPages,
-		"getServiceErrorPages":           getServiceErrorPages,
-		"hasServiceRateLimits":           hasFuncServiceLabel(label.SuffixFrontendRateLimitExtractorFunc),
-		"getServiceRateLimits":           getServiceRateLimits,
+		"getServicePriority":             getFuncServiceIntLabel(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
+
+		"getServiceRedirect":   getServiceRedirect,
+		"getServiceErrorPages": getServiceErrorPages,
+		"getServiceRateLimit":  getServiceRateLimit,
+		"getServiceHeaders":    getServiceHeaders,
 	}
 	// filter containers
 	filteredContainers := fun.Filter(func(container dockerData) bool {
@@ -143,7 +104,7 @@ func (p *Provider) buildConfiguration(containersInspected []dockerData) *types.C
 				serviceNames[container.ServiceName] = struct{}{}
 			}
 		}
-		backendName := getBackend(container)
+		backendName := getBackendName(container)
 		backends[backendName] = container
 		servers[backendName] = append(servers[backendName], container)
 	}

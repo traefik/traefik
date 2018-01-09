@@ -19,11 +19,14 @@ const (
 
 // Default values
 const (
-	DefaultWeight                                  = "0"
+	DefaultWeight                                  = "0" // TODO [breaking] use int value
+	DefaultWeightInt                               = 0   // TODO rename to DefaultWeight
 	DefaultProtocol                                = "http"
-	DefaultPassHostHeader                          = "true"
+	DefaultPassHostHeader                          = "true" // TODO [breaking] use bool value
+	DefaultPassHostHeaderBool                      = true   // TODO rename to DefaultPassHostHeader
 	DefaultPassTLSCert                             = false
-	DefaultFrontendPriority                        = "0"
+	DefaultFrontendPriority                        = "0" // TODO [breaking] int value
+	DefaultFrontendPriorityInt                     = 0   // TODO rename to DefaultFrontendPriority
 	DefaultCircuitBreakerExpression                = "NetworkErrorRatio() > 1"
 	DefaultFrontendRedirectEntryPoint              = ""
 	DefaultBackendLoadBalancerMethod               = "wrr"
@@ -226,13 +229,24 @@ func HasPrefix(labels map[string]string, prefix string) bool {
 	return false
 }
 
+// FindServiceSubmatch split service label
+func FindServiceSubmatch(name string) []string {
+	matches := ServicesPropertiesRegexp.FindStringSubmatch(name)
+	if matches == nil ||
+		strings.HasPrefix(name, TraefikFrontend+".") ||
+		strings.HasPrefix(name, TraefikBackend+".") {
+		return nil
+	}
+	return matches
+}
+
 // ExtractServiceProperties Extract services labels
 func ExtractServiceProperties(labels map[string]string) ServiceProperties {
 	v := make(ServiceProperties)
 
 	for name, value := range labels {
-		matches := ServicesPropertiesRegexp.FindStringSubmatch(name)
-		if matches == nil || strings.HasPrefix(name, TraefikFrontend) {
+		matches := FindServiceSubmatch(name)
+		if matches == nil {
 			continue
 		}
 

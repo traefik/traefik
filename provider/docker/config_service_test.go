@@ -4,7 +4,9 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	docker "github.com/docker/docker/api/types"
@@ -15,24 +17,25 @@ import (
 
 func TestDockerServiceBuildConfiguration(t *testing.T) {
 	testCases := []struct {
+		desc              string
 		containers        []docker.ContainerJSON
 		expectedFrontends map[string]*types.Frontend
 		expectedBackends  map[string]*types.Backend
 	}{
 		{
+			desc:              "when no container",
 			containers:        []docker.ContainerJSON{},
 			expectedFrontends: map[string]*types.Frontend{},
 			expectedBackends:  map[string]*types.Backend{},
 		},
 		{
+			desc: "simple configuration",
 			containers: []docker.ContainerJSON{
 				containerJSON(
 					name("foo"),
 					labels(map[string]string{
-						"traefik.service.port":                         "2503",
-						"traefik.service.frontend.entryPoints":         "http,https",
-						"traefik.service.frontend.auth.basic":          "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
-						"traefik.service.frontend.redirect.entryPoint": "https",
+						"traefik.service.port":                 "2503",
+						"traefik.service.frontend.entryPoints": "http,https",
 					}),
 					ports(nat.PortMap{
 						"80/tcp": {},
@@ -45,10 +48,7 @@ func TestDockerServiceBuildConfiguration(t *testing.T) {
 					Backend:        "backend-foo-foo-service",
 					PassHostHeader: true,
 					EntryPoints:    []string{"http", "https"},
-					BasicAuth:      []string{"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/", "test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"},
-					Redirect: &types.Redirect{
-						EntryPoint: "https",
-					},
+					BasicAuth:      []string{},
 					Routes: map[string]types.Route{
 						"service-service": {
 							Rule: "Host:foo.docker.localhost",
@@ -69,6 +69,178 @@ func TestDockerServiceBuildConfiguration(t *testing.T) {
 			},
 		},
 		{
+			desc: "when all labels are set",
+			containers: []docker.ContainerJSON{
+				containerJSON(
+					name("foo"),
+					labels(map[string]string{
+						label.Prefix + "service." + label.SuffixPort:     "666",
+						label.Prefix + "service." + label.SuffixProtocol: "https",
+						label.Prefix + "service." + label.SuffixWeight:   "12",
+
+						label.Prefix + "service." + label.SuffixFrontendAuthBasic:            "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+						label.Prefix + "service." + label.SuffixFrontendEntryPoints:          "http,https",
+						label.Prefix + "service." + label.SuffixFrontendPassHostHeader:       "true",
+						label.Prefix + "service." + label.SuffixFrontendPassTLSCert:          "true",
+						label.Prefix + "service." + label.SuffixFrontendPriority:             "666",
+						label.Prefix + "service." + label.SuffixFrontendRedirectEntryPoint:   "https",
+						label.Prefix + "service." + label.SuffixFrontendRedirectRegex:        "nope",
+						label.Prefix + "service." + label.SuffixFrontendRedirectReplacement:  "nope",
+						label.Prefix + "service." + label.SuffixFrontendWhitelistSourceRange: "10.10.10.10",
+
+						label.Prefix + "service." + label.SuffixFrontendRequestHeaders:                 "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+						label.Prefix + "service." + label.SuffixFrontendResponseHeaders:                "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+						label.Prefix + "service." + label.SuffixFrontendHeadersSSLProxyHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+						label.Prefix + "service." + label.SuffixFrontendHeadersAllowedHosts:            "foo,bar,bor",
+						label.Prefix + "service." + label.SuffixFrontendHeadersHostsProxyHeaders:       "foo,bar,bor",
+						label.Prefix + "service." + label.SuffixFrontendHeadersSSLHost:                 "foo",
+						label.Prefix + "service." + label.SuffixFrontendHeadersCustomFrameOptionsValue: "foo",
+						label.Prefix + "service." + label.SuffixFrontendHeadersContentSecurityPolicy:   "foo",
+						label.Prefix + "service." + label.SuffixFrontendHeadersPublicKey:               "foo",
+						label.Prefix + "service." + label.SuffixFrontendHeadersReferrerPolicy:          "foo",
+						label.Prefix + "service." + label.SuffixFrontendHeadersSTSSeconds:              "666",
+						label.Prefix + "service." + label.SuffixFrontendHeadersSSLRedirect:             "true",
+						label.Prefix + "service." + label.SuffixFrontendHeadersSSLTemporaryRedirect:    "true",
+						label.Prefix + "service." + label.SuffixFrontendHeadersSTSIncludeSubdomains:    "true",
+						label.Prefix + "service." + label.SuffixFrontendHeadersSTSPreload:              "true",
+						label.Prefix + "service." + label.SuffixFrontendHeadersForceSTSHeader:          "true",
+						label.Prefix + "service." + label.SuffixFrontendHeadersFrameDeny:               "true",
+						label.Prefix + "service." + label.SuffixFrontendHeadersContentTypeNosniff:      "true",
+						label.Prefix + "service." + label.SuffixFrontendHeadersBrowserXSSFilter:        "true",
+						label.Prefix + "service." + label.SuffixFrontendHeadersIsDevelopment:           "true",
+
+						label.Prefix + "service." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageStatus:  "404",
+						label.Prefix + "service." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + "service." + label.BaseFrontendErrorPage + "foo." + label.SuffixErrorPageQuery:   "foo_query",
+						label.Prefix + "service." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageStatus:  "500,600",
+						label.Prefix + "service." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageBackend: "foobar",
+						label.Prefix + "service." + label.BaseFrontendErrorPage + "bar." + label.SuffixErrorPageQuery:   "bar_query",
+
+						label.Prefix + "service." + label.SuffixFrontendRateLimitExtractorFunc:                          "client.ip",
+						label.Prefix + "service." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
+						label.Prefix + "service." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
+						label.Prefix + "service." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
+						label.Prefix + "service." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
+						label.Prefix + "service." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
+						label.Prefix + "service." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
+					}),
+					ports(nat.PortMap{
+						"80/tcp": {},
+					}),
+					withNetwork("bridge", ipv4("127.0.0.1")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-foo-foo-service": {
+					Backend: "backend-foo-foo-service",
+					EntryPoints: []string{
+						"http",
+						"https",
+					},
+					PassHostHeader: true,
+					PassTLSCert:    true,
+					Priority:       666,
+					BasicAuth: []string{
+						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					},
+					WhitelistSourceRange: []string{
+						"10.10.10.10",
+					},
+					Headers: &types.Headers{
+						CustomRequestHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						CustomResponseHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						AllowedHosts: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						HostsProxyHeaders: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						SSLRedirect:          true,
+						SSLTemporaryRedirect: true,
+						SSLHost:              "foo",
+						SSLProxyHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						STSSeconds:              666,
+						STSIncludeSubdomains:    true,
+						STSPreload:              true,
+						ForceSTSHeader:          true,
+						FrameDeny:               true,
+						CustomFrameOptionsValue: "foo",
+						ContentTypeNosniff:      true,
+						BrowserXSSFilter:        true,
+						ContentSecurityPolicy:   "foo",
+						PublicKey:               "foo",
+						ReferrerPolicy:          "foo",
+						IsDevelopment:           true,
+					},
+
+					Errors: map[string]*types.ErrorPage{
+						"foo": {
+							Status:  []string{"404"},
+							Query:   "foo_query",
+							Backend: "foobar",
+						},
+						"bar": {
+							Status:  []string{"500", "600"},
+							Query:   "bar_query",
+							Backend: "foobar",
+						},
+					},
+					RateLimit: &types.RateLimit{
+						ExtractorFunc: "client.ip",
+						RateSet: map[string]*types.Rate{
+							"foo": {
+								Period:  flaeg.Duration(6 * time.Second),
+								Average: 12,
+								Burst:   18,
+							},
+							"bar": {
+								Period:  flaeg.Duration(3 * time.Second),
+								Average: 6,
+								Burst:   9,
+							},
+						},
+					},
+					Redirect: &types.Redirect{
+						EntryPoint:  "https",
+						Regex:       "",
+						Replacement: "",
+					},
+
+					Routes: map[string]types.Route{
+						"service-service": {
+							Rule: "Host:foo.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-foo-foo-service": {
+					Servers: map[string]types.Server{
+						"service-0": {
+							URL:    "https://127.0.0.1:666",
+							Weight: 12,
+						},
+					},
+					CircuitBreaker: nil,
+				},
+			},
+		},
+		{
+			desc: "several containers",
 			containers: []docker.ContainerJSON{
 				containerJSON(
 					name("test1"),
@@ -158,9 +330,9 @@ func TestDockerServiceBuildConfiguration(t *testing.T) {
 		ExposedByDefault: true,
 	}
 
-	for caseID, test := range testCases {
+	for _, test := range testCases {
 		test := test
-		t.Run(strconv.Itoa(caseID), func(t *testing.T) {
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 			var dockerDataList []dockerData
 			for _, container := range test.containers {
@@ -173,77 +345,6 @@ func TestDockerServiceBuildConfiguration(t *testing.T) {
 
 			assert.EqualValues(t, test.expectedBackends, actualConfig.Backends)
 			assert.EqualValues(t, test.expectedFrontends, actualConfig.Frontends)
-		})
-	}
-}
-
-func TestDockerGetFuncMapLabel(t *testing.T) {
-	serviceName := "myservice"
-	fakeSuffix := "frontend.foo"
-	fakeLabel := label.Prefix + fakeSuffix
-
-	testCases := []struct {
-		desc        string
-		container   docker.ContainerJSON
-		suffixLabel string
-		expectedKey string
-		expected    map[string]string
-	}{
-		{
-			desc: "fallback to container label value",
-			container: containerJSON(labels(map[string]string{
-				fakeLabel: "X-Custom-Header: ContainerRequestHeader",
-			})),
-			suffixLabel: fakeSuffix,
-			expected: map[string]string{
-				"X-Custom-Header": "ContainerRequestHeader",
-			},
-		},
-		{
-			desc: "use service label instead of container label",
-			container: containerJSON(labels(map[string]string{
-				fakeLabel: "X-Custom-Header: ContainerRequestHeader",
-				label.GetServiceLabel(fakeLabel, serviceName): "X-Custom-Header: ServiceRequestHeader",
-			})),
-			suffixLabel: fakeSuffix,
-			expected: map[string]string{
-				"X-Custom-Header": "ServiceRequestHeader",
-			},
-		},
-		{
-			desc: "use service label with an empty value instead of container label",
-			container: containerJSON(labels(map[string]string{
-				fakeLabel: "X-Custom-Header: ContainerRequestHeader",
-				label.GetServiceLabel(fakeLabel, serviceName): "X-Custom-Header: ",
-			})),
-			suffixLabel: fakeSuffix,
-			expected: map[string]string{
-				"X-Custom-Header": "",
-			},
-		},
-		{
-			desc: "multiple values",
-			container: containerJSON(labels(map[string]string{
-				fakeLabel: "X-Custom-Header: MultiHeaders || Authorization: Basic YWRtaW46YWRtaW4=",
-			})),
-			suffixLabel: fakeSuffix,
-			expected: map[string]string{
-				"X-Custom-Header": "MultiHeaders",
-				"Authorization":   "Basic YWRtaW46YWRtaW4=",
-			},
-		},
-	}
-
-	for _, test := range testCases {
-		test := test
-		t.Run(test.desc, func(t *testing.T) {
-			t.Parallel()
-
-			dData := parseContainer(test.container)
-
-			values := getFuncServiceMapLabel(test.suffixLabel)(dData, serviceName)
-
-			assert.EqualValues(t, test.expected, values)
 		})
 	}
 }
@@ -337,6 +438,387 @@ func TestDockerGetFuncServiceSliceStringLabel(t *testing.T) {
 	}
 }
 
+func TestDockerGetServiceStringValue(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		container     docker.ContainerJSON
+		serviceLabels map[string]string
+		labelSuffix   string
+		defaultValue  string
+		expected      string
+	}{
+		{
+			desc: "should use service label when label exists in service labels",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "bir",
+				})),
+			serviceLabels: map[string]string{
+				"foo": "bar",
+			},
+			labelSuffix:  "foo",
+			defaultValue: "fail",
+			expected:     "bar",
+		},
+		{
+			desc: "should use container label when label doesn't exist in service labels",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "bir",
+				})),
+			serviceLabels: map[string]string{
+				"fo": "bar",
+			},
+			labelSuffix:  "foo",
+			defaultValue: "fail",
+			expected:     "bir",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			actual := getServiceStringValue(dData, test.serviceLabels, test.labelSuffix, test.defaultValue)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerHasStrictServiceLabel(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		serviceLabels map[string]string
+		labelSuffix   string
+		expected      bool
+	}{
+		{
+			desc:          "should return false when service don't have label",
+			serviceLabels: map[string]string{},
+			labelSuffix:   "",
+			expected:      false,
+		},
+		{
+			desc: "should return true when service have label",
+			serviceLabels: map[string]string{
+				"foo": "bar",
+			},
+			labelSuffix: "foo",
+			expected:    true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := hasStrictServiceLabel(test.serviceLabels, test.labelSuffix)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetStrictServiceStringValue(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		serviceLabels map[string]string
+		labelSuffix   string
+		defaultValue  string
+		expected      string
+	}{
+		{
+			desc: "should return a string when the label exists",
+			serviceLabels: map[string]string{
+				"foo": "bar",
+			},
+			labelSuffix: "foo",
+			expected:    "bar",
+		},
+		{
+			desc: "should return a string when the label exists and value empty",
+			serviceLabels: map[string]string{
+				"foo": "",
+			},
+			labelSuffix:  "foo",
+			defaultValue: "cube",
+			expected:     "",
+		},
+		{
+			desc:          "should return the default value when the label doesn't exist",
+			serviceLabels: map[string]string{},
+			labelSuffix:   "foo",
+			defaultValue:  "cube",
+			expected:      "cube",
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getStrictServiceStringValue(test.serviceLabels, test.labelSuffix, test.defaultValue)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetServiceMapValue(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		container     docker.ContainerJSON
+		serviceLabels map[string]string
+		serviceName   string
+		labelSuffix   string
+		expected      map[string]string
+	}{
+		{
+			desc: "should return when no labels",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{})),
+			serviceLabels: map[string]string{},
+			serviceName:   "soo",
+			labelSuffix:   "foo",
+			expected:      nil,
+		},
+		{
+			desc: "should return a map when label exists",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "bir:fii",
+				})),
+			serviceLabels: map[string]string{
+				"foo": "bar:foo",
+			},
+			serviceName: "soo",
+			labelSuffix: "foo",
+			expected: map[string]string{
+				"Bar": "foo",
+			},
+		},
+		{
+			desc: "should return a map when label exists (fallback to container labels)",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "bir:fii",
+				})),
+			serviceLabels: map[string]string{
+				"fo": "bar:foo",
+			},
+			serviceName: "soo",
+			labelSuffix: "foo",
+			expected: map[string]string{
+				"Bir": "fii",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			actual := getServiceMapValue(dData, test.serviceLabels, test.serviceName, test.labelSuffix)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetServiceSliceValue(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		container     docker.ContainerJSON
+		serviceLabels map[string]string
+		labelSuffix   string
+		expected      []string
+	}{
+		{
+			desc: "should return nil when no label",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{})),
+			serviceLabels: map[string]string{},
+			expected:      nil,
+		},
+		{
+			desc: "should return a slice when label",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "bor, byr, ber",
+				})),
+			serviceLabels: map[string]string{
+				"foo": "bar, bir, bur",
+			},
+			labelSuffix: "foo",
+			expected:    []string{"bar", "bir", "bur"},
+		},
+		{
+			desc: "should return a slice when label (fallback to container labels)",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "bor, byr, ber",
+				})),
+			serviceLabels: map[string]string{
+				"fo": "bar, bir, bur",
+			},
+			labelSuffix: "foo",
+			expected:    []string{"bor", "byr", "ber"},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			actual := getServiceSliceValue(dData, test.serviceLabels, test.labelSuffix)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetServiceBoolValue(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		container     docker.ContainerJSON
+		serviceLabels map[string]string
+		labelSuffix   string
+		defaultValue  bool
+		expected      bool
+	}{
+		{
+			desc: "should return default value when no label",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{})),
+			serviceLabels: map[string]string{},
+			labelSuffix:   "foo",
+			defaultValue:  true,
+			expected:      true,
+		},
+		{
+			desc: "should return a bool when label",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "false",
+				})),
+			serviceLabels: map[string]string{
+				"foo": "true",
+			},
+			labelSuffix: "foo",
+			expected:    true,
+		},
+		{
+			desc: "should return a bool when label (fallback to container labels)",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "true",
+				})),
+			serviceLabels: map[string]string{
+				"fo": "false",
+			},
+			labelSuffix: "foo",
+			expected:    true,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			actual := getServiceBoolValue(dData, test.serviceLabels, test.labelSuffix, test.defaultValue)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetServiceInt64Value(t *testing.T) {
+	testCases := []struct {
+		desc          string
+		container     docker.ContainerJSON
+		serviceLabels map[string]string
+		labelSuffix   string
+		defaultValue  int64
+		expected      int64
+	}{
+		{
+			desc: "should return default value when no label",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{})),
+			serviceLabels: map[string]string{},
+			labelSuffix:   "foo",
+			defaultValue:  666,
+			expected:      666,
+		},
+		{
+			desc: "should return a int64 when label",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "20",
+				})),
+			serviceLabels: map[string]string{
+				"foo": "10",
+			},
+			labelSuffix: "foo",
+			expected:    10,
+		},
+		{
+			desc: "should return a int64 when label (fallback to container labels)",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					"traefik.foo": "20",
+				})),
+			serviceLabels: map[string]string{
+				"fo": "10",
+			},
+			labelSuffix: "foo",
+			expected:    20,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			actual := getServiceInt64Value(dData, test.serviceLabels, test.labelSuffix, test.defaultValue)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
 func TestDockerCheckPortLabels(t *testing.T) {
 	testCases := []struct {
 		container     docker.ContainerJSON
@@ -387,7 +869,7 @@ func TestDockerCheckPortLabels(t *testing.T) {
 	}
 }
 
-func TestDockerGetServiceBackend(t *testing.T) {
+func TestDockerGetServiceBackendName(t *testing.T) {
 	testCases := []struct {
 		container docker.ContainerJSON
 		expected  string
@@ -425,7 +907,7 @@ func TestDockerGetServiceBackend(t *testing.T) {
 		t.Run(strconv.Itoa(containerID), func(t *testing.T) {
 			t.Parallel()
 			dData := parseContainer(test.container)
-			actual := getServiceBackend(dData, "myservice")
+			actual := getServiceBackendName(dData, "myservice")
 			if actual != test.expected {
 				t.Errorf("expected %q, got %q", test.expected, actual)
 			}
@@ -507,7 +989,356 @@ func TestDockerGetServicePort(t *testing.T) {
 	}
 }
 
-func TestGetServiceErrorPages(t *testing.T) {
+func TestDockerGetServiceRedirect(t *testing.T) {
+	service := "rubiks"
+
+	testCases := []struct {
+		desc      string
+		container docker.ContainerJSON
+		expected  *types.Redirect
+	}{
+		{
+			desc: "should return nil when no redirect labels",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{})),
+			expected: nil,
+		},
+		{
+			desc: "should use only entry point tag when mix regex redirect and entry point redirect",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.Prefix + service + "." + label.SuffixFrontendRedirectEntryPoint:  "https",
+					label.Prefix + service + "." + label.SuffixFrontendRedirectRegex:       "(.*)",
+					label.Prefix + service + "." + label.SuffixFrontendRedirectReplacement: "$1",
+				}),
+			),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when entry point redirect label",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.Prefix + service + "." + label.SuffixFrontendRedirectEntryPoint: "https",
+				}),
+			),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when entry point redirect label (fallback to container labels)",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.TraefikFrontendRedirectEntryPoint: "https",
+				}),
+			),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect labels",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.Prefix + service + "." + label.SuffixFrontendRedirectRegex:       "(.*)",
+					label.Prefix + service + "." + label.SuffixFrontendRedirectReplacement: "$1",
+				}),
+			),
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect labels (fallback to container labels)",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.TraefikFrontendRedirectRegex:       "(.*)",
+					label.TraefikFrontendRedirectReplacement: "$1",
+				}),
+			),
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			actual := getServiceRedirect(dData, service)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetServiceHeaders(t *testing.T) {
+	service := "rubiks"
+
+	testCases := []struct {
+		desc      string
+		container docker.ContainerJSON
+		expected  *types.Headers
+	}{
+		{
+			desc: "should return nil when no custom headers options are set",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{})),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when all custom headers options are set",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.Prefix + service + "." + label.SuffixFrontendRequestHeaders:                 "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+					label.Prefix + service + "." + label.SuffixFrontendResponseHeaders:                "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersSSLProxyHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersAllowedHosts:            "foo,bar,bor",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersHostsProxyHeaders:       "foo,bar,bor",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersSSLHost:                 "foo",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersCustomFrameOptionsValue: "foo",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersContentSecurityPolicy:   "foo",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersPublicKey:               "foo",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersReferrerPolicy:          "foo",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersSTSSeconds:              "666",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersSSLRedirect:             "true",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersSSLTemporaryRedirect:    "true",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersSTSIncludeSubdomains:    "true",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersSTSPreload:              "true",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersForceSTSHeader:          "true",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersFrameDeny:               "true",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersContentTypeNosniff:      "true",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersBrowserXSSFilter:        "true",
+					label.Prefix + service + "." + label.SuffixFrontendHeadersIsDevelopment:           "true",
+				}),
+			),
+			expected: &types.Headers{
+				CustomRequestHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				CustomResponseHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				SSLProxyHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				AllowedHosts:            []string{"foo", "bar", "bor"},
+				HostsProxyHeaders:       []string{"foo", "bar", "bor"},
+				SSLHost:                 "foo",
+				CustomFrameOptionsValue: "foo",
+				ContentSecurityPolicy:   "foo",
+				PublicKey:               "foo",
+				ReferrerPolicy:          "foo",
+				STSSeconds:              666,
+				SSLRedirect:             true,
+				SSLTemporaryRedirect:    true,
+				STSIncludeSubdomains:    true,
+				STSPreload:              true,
+				ForceSTSHeader:          true,
+				FrameDeny:               true,
+				ContentTypeNosniff:      true,
+				BrowserXSSFilter:        true,
+				IsDevelopment:           true,
+			},
+		},
+		{
+			desc: "should return a struct when all custom headers options are set (fallback to container labels)",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.TraefikFrontendRequestHeaders:          "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+					label.TraefikFrontendResponseHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+					label.TraefikFrontendSSLProxyHeaders:         "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8",
+					label.TraefikFrontendAllowedHosts:            "foo,bar,bor",
+					label.TraefikFrontendHostsProxyHeaders:       "foo,bar,bor",
+					label.TraefikFrontendSSLHost:                 "foo",
+					label.TraefikFrontendCustomFrameOptionsValue: "foo",
+					label.TraefikFrontendContentSecurityPolicy:   "foo",
+					label.TraefikFrontendPublicKey:               "foo",
+					label.TraefikFrontendReferrerPolicy:          "foo",
+					label.TraefikFrontendSTSSeconds:              "666",
+					label.TraefikFrontendSSLRedirect:             "true",
+					label.TraefikFrontendSSLTemporaryRedirect:    "true",
+					label.TraefikFrontendSTSIncludeSubdomains:    "true",
+					label.TraefikFrontendSTSPreload:              "true",
+					label.TraefikFrontendForceSTSHeader:          "true",
+					label.TraefikFrontendFrameDeny:               "true",
+					label.TraefikFrontendContentTypeNosniff:      "true",
+					label.TraefikFrontendBrowserXSSFilter:        "true",
+					label.TraefikFrontendIsDevelopment:           "true",
+				}),
+			),
+			expected: &types.Headers{
+				CustomRequestHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				CustomResponseHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				SSLProxyHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				AllowedHosts:            []string{"foo", "bar", "bor"},
+				HostsProxyHeaders:       []string{"foo", "bar", "bor"},
+				SSLHost:                 "foo",
+				CustomFrameOptionsValue: "foo",
+				ContentSecurityPolicy:   "foo",
+				PublicKey:               "foo",
+				ReferrerPolicy:          "foo",
+				STSSeconds:              666,
+				SSLRedirect:             true,
+				SSLTemporaryRedirect:    true,
+				STSIncludeSubdomains:    true,
+				STSPreload:              true,
+				ForceSTSHeader:          true,
+				FrameDeny:               true,
+				ContentTypeNosniff:      true,
+				BrowserXSSFilter:        true,
+				IsDevelopment:           true,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			actual := getServiceHeaders(dData, service)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetServiceRateLimit(t *testing.T) {
+	service := "rubiks"
+
+	testCases := []struct {
+		desc      string
+		container docker.ContainerJSON
+		expected  *types.RateLimit
+	}{
+		{
+			desc: "should return nil when no rate limit labels",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{})),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when rate limit labels are defined",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.Prefix + service + "." + label.SuffixFrontendRateLimitExtractorFunc:                          "client.ip",
+					label.Prefix + service + "." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
+					label.Prefix + service + "." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
+					label.Prefix + service + "." + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
+					label.Prefix + service + "." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
+					label.Prefix + service + "." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
+					label.Prefix + service + "." + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
+				})),
+			expected: &types.RateLimit{
+				ExtractorFunc: "client.ip",
+				RateSet: map[string]*types.Rate{
+					"foo": {
+						Period:  flaeg.Duration(6 * time.Second),
+						Average: 12,
+						Burst:   18,
+					},
+					"bar": {
+						Period:  flaeg.Duration(3 * time.Second),
+						Average: 6,
+						Burst:   9,
+					},
+				},
+			},
+		},
+		{
+			desc: "should return nil when ExtractorFunc is missing",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
+					label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
+					label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
+					label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
+					label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
+					label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
+				})),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when rate limit labels are defined (fallback to container labels)",
+			container: containerJSON(
+				name("test1"),
+				labels(map[string]string{
+					label.TraefikFrontendRateLimitExtractorFunc:                                        "client.ip",
+					label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitPeriod:  "6",
+					label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitAverage: "12",
+					label.Prefix + label.BaseFrontendRateLimit + "foo." + label.SuffixRateLimitBurst:   "18",
+					label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitPeriod:  "3",
+					label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitAverage: "6",
+					label.Prefix + label.BaseFrontendRateLimit + "bar." + label.SuffixRateLimitBurst:   "9",
+				})),
+			expected: &types.RateLimit{
+				ExtractorFunc: "client.ip",
+				RateSet: map[string]*types.Rate{
+					"foo": {
+						Period:  flaeg.Duration(6 * time.Second),
+						Average: 12,
+						Burst:   18,
+					},
+					"bar": {
+						Period:  flaeg.Duration(3 * time.Second),
+						Average: 6,
+						Burst:   9,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			dData := parseContainer(test.container)
+
+			actual := getServiceRateLimit(dData, service)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestDockerGetServiceErrorPages(t *testing.T) {
 	service := "courgette"
 	testCases := []struct {
 		desc     string

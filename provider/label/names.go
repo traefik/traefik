@@ -17,10 +17,11 @@ const (
 	SuffixBackendHealthCheckPath                   = "backend.healthcheck.path"
 	SuffixBackendHealthCheckPort                   = "backend.healthcheck.port"
 	SuffixBackendHealthCheckInterval               = "backend.healthcheck.interval"
-	SuffixBackendLoadBalancerMethod                = "backend.loadbalancer.method"
-	SuffixBackendLoadBalancerSticky                = "backend.loadbalancer.sticky"
-	SuffixBackendLoadBalancerStickiness            = "backend.loadbalancer.stickiness"
-	SuffixBackendLoadBalancerStickinessCookieName  = "backend.loadbalancer.stickiness.cookieName"
+	SuffixBackendLoadBalancer                      = "backend.loadbalancer"
+	SuffixBackendLoadBalancerMethod                = SuffixBackendLoadBalancer + ".method"
+	SuffixBackendLoadBalancerSticky                = SuffixBackendLoadBalancer + ".sticky"
+	SuffixBackendLoadBalancerStickiness            = SuffixBackendLoadBalancer + ".stickiness"
+	SuffixBackendLoadBalancerStickinessCookieName  = SuffixBackendLoadBalancer + ".stickiness.cookieName"
 	SuffixBackendMaxConnAmount                     = "backend.maxconn.amount"
 	SuffixBackendMaxConnExtractorFunc              = "backend.maxconn.extractorfunc"
 	SuffixFrontend                                 = "frontend"
@@ -58,7 +59,6 @@ const (
 	SuffixFrontendRule                             = "frontend.rule"
 	SuffixFrontendRuleType                         = "frontend.rule.type"
 	SuffixFrontendWhitelistSourceRange             = "frontend.whitelistSourceRange"
-	SuffixFrontendValue                            = "frontend.value"
 	TraefikDomain                                  = Prefix + SuffixDomain
 	TraefikEnable                                  = Prefix + SuffixEnable
 	TraefikPort                                    = Prefix + SuffixPort
@@ -73,6 +73,7 @@ const (
 	TraefikBackendHealthCheckPath                  = Prefix + SuffixBackendHealthCheckPath
 	TraefikBackendHealthCheckPort                  = Prefix + SuffixBackendHealthCheckPort
 	TraefikBackendHealthCheckInterval              = Prefix + SuffixBackendHealthCheckInterval
+	TraefikBackendLoadBalancer                     = Prefix + SuffixBackendLoadBalancer
 	TraefikBackendLoadBalancerMethod               = Prefix + SuffixBackendLoadBalancerMethod
 	TraefikBackendLoadBalancerSticky               = Prefix + SuffixBackendLoadBalancerSticky
 	TraefikBackendLoadBalancerStickiness           = Prefix + SuffixBackendLoadBalancerStickiness
@@ -90,8 +91,7 @@ const (
 	TraefikFrontendRedirectRegex                   = Prefix + SuffixFrontendRedirectRegex
 	TraefikFrontendRedirectReplacement             = Prefix + SuffixFrontendRedirectReplacement
 	TraefikFrontendRule                            = Prefix + SuffixFrontendRule
-	TraefikFrontendRuleType                        = Prefix + SuffixFrontendRuleType
-	TraefikFrontendValue                           = Prefix + SuffixFrontendValue
+	TraefikFrontendRuleType                        = Prefix + SuffixFrontendRuleType // k8s only
 	TraefikFrontendWhitelistSourceRange            = Prefix + SuffixFrontendWhitelistSourceRange
 	TraefikFrontendHeaders                         = Prefix + SuffixFrontendHeaders
 	TraefikFrontendRequestHeaders                  = Prefix + SuffixFrontendRequestHeaders
