@@ -30,7 +30,7 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		// TODO Deprecated [breaking]
 		"getProtocol": getFuncStringValue(label.TraefikProtocol, label.DefaultProtocol),
 		// TODO Deprecated [breaking]
-		"getWeight": getFuncStringValue(label.TraefikWeight, label.DefaultWeight),
+		"getWeight": getFuncIntValue(label.TraefikWeight, label.DefaultWeightInt),
 		// TODO Deprecated [breaking]
 		"getLoadBalancerMethod": getFuncFirstStringValue(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
 		// TODO Deprecated [breaking]
@@ -49,9 +49,9 @@ func (p *Provider) buildConfiguration(services map[string][]ecsInstance) (*types
 		// Frontend functions
 		"filterFrontends":         filterFrontends,
 		"getFrontendRule":         p.getFrontendRule,
-		"getPassHostHeader":       getFuncBoolValue(label.TraefikFrontendPassHostHeader, true),
+		"getPassHostHeader":       getFuncBoolValue(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
 		"getPassTLSCert":          getFuncBoolValue(label.TraefikFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":             getFuncIntValue(label.TraefikFrontendPriority, 0),
+		"getPriority":             getFuncIntValue(label.TraefikFrontendPriority, label.DefaultFrontendPriorityInt),
 		"getBasicAuth":            getFuncSliceString(label.TraefikFrontendAuthBasic),
 		"getEntryPoints":          getFuncSliceString(label.TraefikFrontendEntryPoints),
 		"getWhitelistSourceRange": getFuncSliceString(label.TraefikFrontendWhitelistSourceRange),
@@ -125,8 +125,7 @@ func getCircuitBreaker(instance ecsInstance) *types.CircuitBreaker {
 }
 
 func getLoadBalancer(instance ecsInstance) *types.LoadBalancer {
-	// FIXME use constant
-	if !hasPrefix(instance, "traefik.backend.loadbalancer") {
+	if !hasPrefix(instance, label.TraefikBackendLoadBalancer) {
 		return nil
 	}
 
