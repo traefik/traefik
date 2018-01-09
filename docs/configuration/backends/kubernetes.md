@@ -117,7 +117,7 @@ The following general annotations are applicable on the Ingress object:
 - `ingress.kubernetes.io/rewrite-target: /users`
     Replaces each matched Ingress path with the specified one, and adds the old path to the `X-Replaced-Path` header.
 - `ingress.kubernetes.io/whitelist-source-range: "1.2.3.0/24, fe80::/16"`
-    A comma-separated list of IP ranges permitted for access. all source IPs are permitted if the list is empty or a single range is ill-formated.
+    A comma-separated list of IP ranges permitted for access. all source IPs are permitted if the list is empty or a single range is ill-formatted.
 
 !!! note
     Please note that `traefik.frontend.redirect.regex` and `traefik.frontend.redirect.replacement` do not have to be set if `traefik.frontend.redirect.entryPoint` is defined for the redirection (they will not be used in this case).
