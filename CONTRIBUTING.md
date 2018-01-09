@@ -85,14 +85,14 @@ If you happen to update the provider templates (in `/templates`), you need to ru
 
 ### Setting up dependency management
 
-[Dep](https://github.com/golang/dep) is not required for building; however, it is necessary to modify dependencies (i.e., add, update, or remove third-party packages)
+[dep](https://github.com/golang/dep) is not required for building; however, it is necessary to modify dependencies (i.e., add, update, or remove third-party packages)
 
-If you want to add a dependency, use `dep ensure -add` to have [Dep](https://github.com/golang/dep) put it into the vendor folder and update the [Dep](https://github.com/golang/dep) manifest/lock files (`Gopkg.toml` and `Gopkg.lock`, respectively).
+If you want to add a dependency, use `dep ensure -add` to have [dep](https://github.com/golang/dep) put it into the vendor folder and update the dep manifest/lock files (`Gopkg.toml` and `Gopkg.lock`, respectively).
 
 A following `make prune-dep` run should be triggered to trim down the size of the vendor folder.
 The final result must be committed into VCS.
 
-Here's a full example using [Dep](https://github.com/golang/dep) to add a new dependency:
+Here's a full example using dep to add a new dependency:
 
 ```bash
 # install the new main dependency github.com/foo/bar and minimize vendor size
