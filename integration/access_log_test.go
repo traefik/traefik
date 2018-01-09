@@ -517,7 +517,7 @@ func checkAccessLogExactValuesOutput(err error, c *check.C, values []accessLogVa
 	lines := extractLines(err, c)
 	count := 0
 	for i, line := range lines {
-		fmt.Printf("Line %s", line)
+		fmt.Printf(line)
 		fmt.Println()
 		if len(line) > 0 {
 			count++

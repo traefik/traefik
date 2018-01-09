@@ -35,7 +35,7 @@ func TestCommonLogFormatter_Format(t *testing.T) {
 				FrontendName:         "",
 				BackendURL:           "",
 			},
-			expectedLog: `10.0.0.1 - Client [10/Nov/2009:23:00:00 +0000] "GET /foo http" - - - - 0 - - 123000ms
+			expectedLog: `10.0.0.1 - Client [10/Nov/2009:23:00:00 +0000] "GET /foo http" - - "-" "-" 0 - - 123000ms
 `,
 		},
 		{
@@ -106,7 +106,7 @@ func Test_toLog(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			lg := toLog(test.value)
+			lg := toLog(test.value, defaultValue)
 
 			assert.Equal(t, test.expectedLog, lg)
 		})

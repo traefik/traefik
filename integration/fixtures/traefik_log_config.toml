@@ -1,8 +1,12 @@
 ################################################################
 # Global configuration
 ################################################################
-traefikLogsFile = "traefik.log"
-accessLogsFile = "access.log"
+[traefikLog]
+  filePath = "traefik.log"
+
+[accessLog]
+  filePath = "access.log"
+
 logLevel = "DEBUG"
 defaultEntryPoints = ["http"]
 
@@ -11,3 +15,11 @@ checkNewVersion = false
 [entryPoints]
   [entryPoints.http]
   address = ":8000"
+
+[web]
+  address = ":7888"
+
+[docker]
+  exposedByDefault = false
+  domain = "docker.local"
+  watch = true
