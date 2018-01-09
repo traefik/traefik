@@ -75,7 +75,6 @@ test-integration: build ## run the integration tests
 
 validate: build  ## validate gofmt, golint and go vet
 	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-gofmt validate-govet validate-golint validate-misspell validate-vendor validate-autogen
-#	$(DOCKER_RUN_TRAEFIK) ./script/make.sh validate-glide validate-gofmt validate-govet validate-golint validate-misspell validate-vendor validate-autogen
 
 build: dist
 	docker build $(DOCKER_BUILD_ARGS) -t "$(TRAEFIK_DEV_IMAGE)" -f build.Dockerfile .
