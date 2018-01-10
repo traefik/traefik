@@ -1,18 +1,29 @@
-{{$apps := .Applications}}
-[backends]{{range .Tasks}}
-    [backends.backend{{getBackend . $apps}}.servers.server-{{getID .}}]
-    url = "{{getProtocol . $apps}}://{{getHost .}}:{{getPort . $apps}}"
-    weight = {{getWeight . $apps}}
+{{ $apps := .Applications }}
+
+[backends]
+{{range $task := .Tasks }}
+  {{ $backendName := getBackend $task $apps }}
+
+    [backends.backend-{{ $backendName }}.servers.server-{{ getID $task }}]
+      url = "{{ getProtocol $task $apps }}://{{ getHost $task }}:{{ getPort $task $apps }}"
+      weight = {{ getWeight $task $apps }}
+
 {{end}}
 
-[frontends]{{range .Applications}}
-  [frontends.frontend-{{getFrontEndName .}}]
-  backend = "backend{{getFrontendBackend .}}"
-  passHostHeader = {{getPassHostHeader .}}
-  priority = {{getPriority .}}
-  entryPoints = [{{range getEntryPoints .}}
-    "{{.}}",
-  {{end}}]
-    [frontends.frontend-{{getFrontEndName .}}.routes.route-host{{getFrontEndName .}}]
-    rule = "{{getFrontendRule .}}"
+[frontends]
+{{range $app := $apps }}
+  {{ $frontendName := getFrontEndName $app }}
+
+  [frontends.frontend-{{ $frontendName }}]
+    backend = "backend-{{ getFrontendBackend $app }}"
+    priority = {{ getPriority $app }}
+    passHostHeader = {{ getPassHostHeader $app }}
+
+    entryPoints = [{{range getEntryPoints $app }}
+      "{{.}}",
+      {{end}}]
+
+    [frontends.frontend-{{ $frontendName }}.routes.route-host-{{ $frontendName }}]
+      rule = "{{ getFrontendRule $app }}"
+
 {{end}}
