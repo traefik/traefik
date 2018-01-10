@@ -86,6 +86,7 @@ import:
   vcs: git
 - package: github.com/abbot/go-http-auth
 - package: github.com/NYTimes/gziphandler
+  version: 1.0.0
 - package: github.com/docker/leadership
   repo: https://github.com/containous/leadership.git
   vcs: git
@@ -218,6 +219,22 @@ import:
   version: 48572f11356f1843b694f21a290d4f1006bc5e47
 - package: github.com/mitchellh/copystructure
 - package: github.com/mitchellh/hashstructure
+- package: github.com/opentracing/opentracing-go
+  version: ^1.0.2
+  subpackages:
+  - log
+- package: github.com/opentracing-contrib/go-stdlib
+- package: github.com/uber/jaeger-client-go
+  version: ^2.9.0
+  subpackages:
+  - log
+  - config
+- package: github.com/uber/jaeger-lib
+  version: ^1.1.0
+  subpackages:
+  - metrics
+- package: github.com/openzipkin/zipkin-go-opentracing
+  version: 1f5c07e90700ae93ddcba0c7af7d9c7201646ccc
 testImport:
 - package: github.com/stvp/go-udp-testing
 - package: github.com/docker/libcompose

@@ -32,6 +32,7 @@ import (
 	"github.com/containous/traefik/middlewares"
 	"github.com/containous/traefik/middlewares/accesslog"
 	mauth "github.com/containous/traefik/middlewares/auth"
+	"github.com/containous/traefik/middlewares/tracing"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/server/cookie"
@@ -68,6 +69,7 @@ type Server struct {
 	currentConfigurations         safe.Safe
 	globalConfiguration           configuration.GlobalConfiguration
 	accessLoggerMiddleware        *accesslog.LogHandler
+	tracingMiddleware             *tracing.Tracing
 	routinesPool                  *safe.Pool
 	leadership                    *cluster.Leadership
 	defaultForwardingRoundTripper http.RoundTripper
@@ -112,6 +114,11 @@ func NewServer(globalConfiguration configuration.GlobalConfiguration) *Server {
 
 	server.routinesPool = safe.NewPool(context.Background())
 	server.defaultForwardingRoundTripper = createHTTPTransport(globalConfiguration)
+
+	server.tracingMiddleware = globalConfiguration.Tracing
+	if globalConfiguration.Tracing != nil && globalConfiguration.Tracing.Backend != "" {
+		server.tracingMiddleware.Setup()
+	}
 
 	server.metricsRegistry = metrics.NewVoidRegistry()
 	if globalConfiguration.Metrics != nil {
@@ -286,6 +293,11 @@ func (s *Server) startHTTPServers() {
 func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServerEntryPoint *serverEntryPoint) *serverEntryPoint {
 	serverMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
 	serverInternalMiddlewares := []negroni.Handler{middlewares.NegroniRecoverHandler()}
+
+	if s.tracingMiddleware.IsEnabled() {
+		serverMiddlewares = append(serverMiddlewares, s.tracingMiddleware.NewEntryPoint(newServerEntryPointName))
+	}
+
 	if s.accessLoggerMiddleware != nil {
 		serverMiddlewares = append(serverMiddlewares, s.accessLoggerMiddleware)
 	}
@@ -306,7 +318,7 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 
 	}
 	if s.globalConfiguration.EntryPoints[newServerEntryPointName].Auth != nil {
-		authMiddleware, err := mauth.NewAuthenticator(s.globalConfiguration.EntryPoints[newServerEntryPointName].Auth)
+		authMiddleware, err := mauth.NewAuthenticator(s.globalConfiguration.EntryPoints[newServerEntryPointName].Auth, s.tracingMiddleware)
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
@@ -986,7 +998,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						responseModifier = headerMiddleware.ModifyResponseHeaders
 					}
 
-					fwd, err := forward.New(
+					var fwd http.Handler
+
+					fwd, err = forward.New(
 						forward.Stream(true),
 						forward.PassHostHeader(frontend.PassHostHeader),
 						forward.RoundTripper(roundTripper),
@@ -999,6 +1013,15 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						log.Errorf("Error creating forwarder for frontend %s: %v", frontendName, err)
 						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
+					}
+
+					if s.tracingMiddleware.IsEnabled() {
+						tm := s.tracingMiddleware.NewForwarderMiddleware(frontendName, frontend.Backend)
+
+						next := fwd
+						fwd = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+							tm.ServeHTTP(w, r, next.ServeHTTP)
+						})
 					}
 
 					var rr *roundrobin.RoundRobin
@@ -1130,7 +1153,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					if err != nil {
 						log.Errorf("Error creating IP Whitelister: %s", err)
 					} else if ipWhitelistMiddleware != nil {
-						n.Use(ipWhitelistMiddleware)
+						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("IP whitelist", ipWhitelistMiddleware, false))
 						log.Infof("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
 					}
 
@@ -1153,7 +1176,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						auth.Basic = &types.Basic{
 							Users: users,
 						}
-						authMiddleware, err := mauth.NewAuthenticator(auth)
+						authMiddleware, err := mauth.NewAuthenticator(auth, s.tracingMiddleware)
 						if err != nil {
 							log.Errorf("Error creating Auth: %s", err)
 						} else {
@@ -1163,7 +1186,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 					if headerMiddleware != nil {
 						log.Debugf("Adding header middleware for frontend %s", frontendName)
-						n.Use(headerMiddleware)
+						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Header", headerMiddleware, false))
 					}
 
 					secureMiddleware := middlewares.NewSecure(frontend.Headers)
@@ -1174,13 +1197,14 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 					if config.Backends[frontend.Backend].CircuitBreaker != nil {
 						log.Debugf("Creating circuit breaker %s", config.Backends[frontend.Backend].CircuitBreaker.Expression)
-						circuitBreaker, err := middlewares.NewCircuitBreaker(lb, config.Backends[frontend.Backend].CircuitBreaker.Expression)
+						expression := config.Backends[frontend.Backend].CircuitBreaker.Expression
+						circuitBreaker, err := middlewares.NewCircuitBreaker(lb, expression, middlewares.NewCircuitBreakerOptions(expression))
 						if err != nil {
 							log.Errorf("Error creating circuit breaker: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)
 							continue frontend
 						}
-						n.Use(circuitBreaker)
+						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("Circuit breaker", circuitBreaker, false))
 					} else {
 						n.UseHandler(lb)
 					}
@@ -1390,7 +1414,7 @@ func getRoute(serverRoute *serverRoute, route *types.Route) error {
 }
 
 func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
-	keys := []string{}
+	var keys []string
 	for key := range configuration.Frontends {
 		keys = append(keys, key)
 	}
@@ -1445,7 +1469,7 @@ func (*Server) configureBackends(backends map[string]*types.Backend) {
 }
 
 func (s *Server) registerMetricClients(metricsConfig *types.Metrics) {
-	registries := []metrics.Registry{}
+	var registries []metrics.Registry
 
 	if metricsConfig.Prometheus != nil {
 		registries = append(registries, metrics.RegisterPrometheus(metricsConfig.Prometheus))
@@ -1487,7 +1511,9 @@ func (s *Server) buildRateLimiter(handler http.Handler, rlConfig *types.RateLimi
 			return nil, err
 		}
 	}
-	return ratelimit.New(handler, extractFunc, rateSet)
+	rateLimiter, err := ratelimit.New(handler, extractFunc, rateSet)
+	return s.tracingMiddleware.NewHTTPHandlerWrapper("Rate limit", rateLimiter, false), err
+
 }
 
 func (s *Server) buildRetryMiddleware(handler http.Handler, globalConfig configuration.GlobalConfiguration, countServers int, backendName string) http.Handler {
@@ -1506,5 +1532,5 @@ func (s *Server) buildRetryMiddleware(handler http.Handler, globalConfig configu
 
 	log.Debugf("Creating retries max attempts %d", retryAttempts)
 
-	return middlewares.NewRetry(retryAttempts, handler, retryListeners)
+	return s.tracingMiddleware.NewHTTPHandlerWrapper("Retry", middlewares.NewRetry(retryAttempts, handler, retryListeners), false)
 }
