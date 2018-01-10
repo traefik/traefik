@@ -411,7 +411,7 @@ func (s *Etcd3Suite) TestCommandStoreConfig(c *check.C) {
 		"/traefik/loglevel":                 "DEBUG",
 		"/traefik/defaultentrypoints/0":     "http",
 		"/traefik/entrypoints/http/address": ":8000",
-		"/traefik/web/address":              ":8080",
+		"/traefik/api/entrypoint":           "traefik",
 		"/traefik/etcd/endpoint":            ipEtcd + ":4001",
 	}
 

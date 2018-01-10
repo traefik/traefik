@@ -5,6 +5,8 @@ logLevel = "DEBUG"
 [entryPoints]
   [entryPoints.http]
   address = ":8000"
+  [entryPoints.api]
+  address = ":8081"
 
 
 [consul]
@@ -12,5 +14,5 @@ logLevel = "DEBUG"
   watch = true
   prefix = "traefik"
 
-[web]
-  address = ":8081"
+[api]
+  entryPoint = "api"

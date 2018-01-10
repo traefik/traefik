@@ -5,9 +5,11 @@ logLevel = "DEBUG"
 [entryPoints]
   [entryPoints.http]
   address = ":8000"
+[entryPoints.api]
+  address = ":9090"
 
-[web]
-address = ":9090"
+[api]
+  entryPoint = "api"
 
 [marathon]
   endpoint = "{{.MarathonURL}}"

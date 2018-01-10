@@ -9,8 +9,7 @@ RootCAs =  [ "fixtures/https/rootcas/local.crt"]
   [entryPoints.http]
   address = ":8081"
 
-[web]
-  address = ":8080"
+[api]
 
 [file]
 

@@ -3,6 +3,8 @@ defaultEntryPoints = ["http","https"]
 logLevel = "DEBUG"
 
 [entryPoints]
+  [entryPoints.api]
+  address = ":8081"
   [entryPoints.http]
   address = ":8000"
   [entryPoints.https]
@@ -16,5 +18,5 @@ logLevel = "DEBUG"
   prefix = "traefik"
   watch = true
 
-[web]
-  address = ":8081"
+[api]
+  entryPoint = "api"

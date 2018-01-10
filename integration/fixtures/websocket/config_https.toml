@@ -11,8 +11,7 @@ InsecureSkipVerify=true
     certFile = "resources/tls/local.cert"
     keyFile = "resources/tls/local.key"
 
-[web]
-  address = ":8080"
+[api]
 
 [file]
 

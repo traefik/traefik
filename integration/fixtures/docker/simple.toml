@@ -6,7 +6,7 @@ logLevel = "DEBUG"
   [entryPoints.http]
   address = ":8000"
 
-[web]
+[api]
 
 [docker]
 

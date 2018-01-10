@@ -57,8 +57,7 @@ RootCAs = [ "./backend.cert" ]
      keyFile  = "./frontend.key"
 
 
-[web]
-  address = ":8080"
+[api]
 
 [file]
 

@@ -10,5 +10,4 @@ logLevel = "DEBUG"
 [eureka]
   endpoint = "http://{{.EurekaHost}}:8761/eureka"
   delay = "1s"
-[web]
-  address = ":8080"
+[api]

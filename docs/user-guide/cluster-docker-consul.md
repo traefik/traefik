@@ -90,7 +90,7 @@ services:
   traefik:
     image: traefik:1.5
     command:
-      - "--web"
+      - "--api"
       - "--entrypoints=Name:http Address::80 Redirect.EntryPoint:https"
       - "--entrypoints=Name:https Address::443 TLS"
       - "--defaultentrypoints=http,https"
@@ -155,7 +155,7 @@ The initializer in a docker-compose file will be:
     image: traefik:1.5
     command:
       - "storeconfig"
-      - "--web"
+      - "--api"
       [...]
       - "--consul"
       - "--consul.endpoint=consul:8500"
@@ -199,7 +199,7 @@ services:
     image: traefik:1.5
     command:
       - "storeconfig"
-      - "--web"
+      - "--api"
       - "--entrypoints=Name:http Address::80 Redirect.EntryPoint:https"
       - "--entrypoints=Name:https Address::443 TLS"
       - "--defaultentrypoints=http,https"

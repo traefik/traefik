@@ -70,10 +70,13 @@ logLevel = "DEBUG"
 defaultEntryPoints = ["http", "https"]
 
 [entryPoints]
+  [entryPoints.api]
+    address = ":8081"
   [entryPoints.http]
   address = ":80"
   [entryPoints.https]
   address = ":443"
+  
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
       certFile = "integration/fixtures/https/snitest.com.cert"
@@ -94,8 +97,8 @@ defaultEntryPoints = ["http", "https"]
   watch = true
   prefix = "traefik"
 
-[web]
-  address = ":8081"
+[api]
+  entrypoint = "api"
 ```
 
 And there, the same global configuration in the Key-value Store (using `prefix = "traefik"`):
@@ -105,6 +108,7 @@ And there, the same global configuration in the Key-value Store (using `prefix =
 | `/traefik/loglevel`                                       | `DEBUG`                                                       |
 | `/traefik/defaultentrypoints/0`                           | `http`                                                        |
 | `/traefik/defaultentrypoints/1`                           | `https`                                                       |
+| `/traefik/entrypoints/api/address`                        | `:8081`                                                       |
 | `/traefik/entrypoints/http/address`                       | `:80`                                                         |
 | `/traefik/entrypoints/https/address`                      | `:443`                                                        |
 | `/traefik/entrypoints/https/tls/certificates/0/certfile`  | `integration/fixtures/https/snitest.com.cert`                 |
@@ -115,7 +119,7 @@ And there, the same global configuration in the Key-value Store (using `prefix =
 | `/traefik/consul/endpoint`                                | `127.0.0.1:8500`                                              |
 | `/traefik/consul/watch`                                   | `true`                                                        |
 | `/traefik/consul/prefix`                                  | `traefik`                                                     |
-| `/traefik/web/address`                                    | `:8081`                                                       |
+| `/traefik/api/entrypoint`                                 | `api`                                                         |
 
 In case you are setting key values manually:
 
