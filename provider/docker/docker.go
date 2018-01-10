@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"io"
 	"math"
 	"net"
 	"net/http"
