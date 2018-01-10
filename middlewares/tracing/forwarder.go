@@ -36,7 +36,7 @@ func (f *forwarderMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request, 
 	ext.HTTPUrl.Set(span, r.URL.String())
 	span.SetTag("http.host", r.Host)
 
-	InjectHeadersInRequest(r)
+	InjectRequestHeaders(r)
 
 	w = &statusCodeTracker{w, 200}
 

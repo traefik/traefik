@@ -10,7 +10,6 @@ import (
 	"github.com/containous/traefik/middlewares/tracing/zipkin"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
-	otlog "github.com/opentracing/opentracing-go/log"
 )
 
 // Tracing middleware
@@ -100,8 +99,8 @@ func GetSpan(r *http.Request) opentracing.Span {
 	return opentracing.SpanFromContext(r.Context())
 }
 
-// InjectHeadersInRequest used to inject Opentracing headers into the request
-func InjectHeadersInRequest(r *http.Request) {
+// InjectRequestHeaders used to inject OpenTracing headers into the request
+func InjectRequestHeaders(r *http.Request) {
 	if span := GetSpan(r); span != nil {
 		opentracing.GlobalTracer().Inject(
 			span.Context(),
@@ -115,18 +114,6 @@ func LogEventf(r *http.Request, format string, args ...interface{}) {
 	if span := GetSpan(r); span != nil {
 		span.LogKV("event", fmt.Sprintf(format, args...))
 	}
-}
-
-// LogEventfAndDebugLog logs an event to the span in the request context and create a debug log
-func LogEventfAndDebugLog(r *http.Request, format string, args ...interface{}) {
-	log.Debugf(format, args...)
-	LogEventf(r, format, args...)
-}
-
-// LogEventfAndWarnLog logs an event to the span in the request context and create a warn log
-func LogEventfAndWarnLog(r *http.Request, format string, args ...interface{}) {
-	log.Warnf(format, args...)
-	LogEventf(r, format, args...)
 }
 
 // StartSpan starts a new span from the one in the request context
@@ -151,18 +138,13 @@ func SetError(r *http.Request) {
 // SetErrorAndDebugLog flags the span associated with this request as in error and create a debug log
 func SetErrorAndDebugLog(r *http.Request, format string, args ...interface{}) {
 	SetError(r)
-	LogEventfAndDebugLog(r, format, args...)
+	log.Debugf(format, args...)
+	LogEventf(r, format, args...)
 }
 
 // SetErrorAndWarnLog flags the span associated with this request as in error and create a debug log
 func SetErrorAndWarnLog(r *http.Request, format string, args ...interface{}) {
 	SetError(r)
-	LogEventfAndWarnLog(r, format, args...)
-}
-
-// LogFields logs the opentracing log fields to the span in the request context.
-func LogFields(r *http.Request, fields ...otlog.Field) {
-	if span := GetSpan(r); span != nil {
-		span.LogFields(fields...)
-	}
+	log.Warnf(format, args...)
+	LogEventf(r, format, args...)
 }

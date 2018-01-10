@@ -46,7 +46,7 @@ func Forward(config *types.Forward, w http.ResponseWriter, r *http.Request, next
 
 	writeHeader(r, forwardReq, config.TrustForwardHeader)
 
-	tracing.InjectHeadersInRequest(forwardReq)
+	tracing.InjectRequestHeaders(forwardReq)
 
 	forwardResponse, forwardErr := httpClient.Do(forwardReq)
 	if forwardErr != nil {
