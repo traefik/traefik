@@ -1,8 +1,6 @@
 package mesos
 
 import (
-	"reflect"
-	"strconv"
 	"testing"
 
 	"github.com/containous/traefik/provider/label"
@@ -10,238 +8,362 @@ import (
 	"github.com/mesos/mesos-go/upid"
 	"github.com/mesosphere/mesos-dns/records/state"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// FIXME fill this test!!
 func TestBuildConfiguration(t *testing.T) {
-	cases := []struct {
-		applicationsError bool
-		tasksError        bool
-		mesosTask         state.Task
-		expected          bool
-		exposedByDefault  bool
-		expectedNil       bool
+	p := &Provider{
+		Domain:           "docker.localhost",
+		ExposedByDefault: true,
+		IPSources:        "host",
+	}
+
+	testCases := []struct {
+		desc              string
+		tasks             []state.Task
 		expectedFrontends map[string]*types.Frontend
 		expectedBackends  map[string]*types.Backend
-	}{}
+	}{
+		{
+			desc:              "should return an empty configuration when no task",
+			tasks:             []state.Task{},
+			expectedFrontends: map[string]*types.Frontend{},
+			expectedBackends:  map[string]*types.Backend{},
+		},
+		{
+			desc: "2 applications with 2 tasks",
+			tasks: []state.Task{
+				// App 1
+				aTask("ID1",
+					withIP("10.10.10.10"),
+					withInfo("name1",
+						withPorts(withPort("TCP", 80, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+				),
+				aTask("ID2",
+					withIP("10.10.10.11"),
+					withInfo("name1",
+						withPorts(withPort("TCP", 81, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+				),
+				// App 2
+				aTask("ID3",
+					withIP("20.10.10.10"),
+					withInfo("name2",
+						withPorts(withPort("TCP", 80, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+				),
+				aTask("ID4",
+					withIP("20.10.10.11"),
+					withInfo("name2",
+						withPorts(withPort("TCP", 81, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-ID1": {
+					Backend:        "backend-name1",
+					EntryPoints:    []string{},
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-ID1": {
+							Rule: "Host:name1.docker.localhost",
+						},
+					},
+				},
+				"frontend-ID3": {
+					Backend:        "backend-name2",
+					EntryPoints:    []string{},
+					PassHostHeader: true,
+					Routes: map[string]types.Route{
+						"route-host-ID3": {
+							Rule: "Host:name2.docker.localhost",
+						},
+					},
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-name1": {
+					Servers: map[string]types.Server{
+						"server-ID1": {
+							URL:    "http://10.10.10.10:80",
+							Weight: 0,
+						},
+						"server-ID2": {
+							URL:    "http://10.10.10.11:81",
+							Weight: 0,
+						},
+					},
+				},
+				"backend-name2": {
+					Servers: map[string]types.Server{
+						"server-ID3": {
+							URL:    "http://20.10.10.10:80",
+							Weight: 0,
+						},
+						"server-ID4": {
+							URL:    "http://20.10.10.11:81",
+							Weight: 0,
+						},
+					},
+				},
+			},
+		},
+		{
+			desc: "with all labels",
+			tasks: []state.Task{
+				aTask("ID1",
+					withLabel(label.TraefikPort, "666"),
+					withLabel(label.TraefikProtocol, "https"),
+					withLabel(label.TraefikWeight, "12"),
 
-	for _, c := range cases {
-		provider := &Provider{
-			Domain:           "docker.localhost",
-			ExposedByDefault: true,
-		}
-		actualConfig := provider.buildConfiguration()
-		if c.expectedNil {
-			if actualConfig != nil {
-				t.Fatalf("Should have been nil, got %v", actualConfig)
-			}
-		} else {
-			// Compare backends
-			if !reflect.DeepEqual(actualConfig.Backends, c.expectedBackends) {
-				t.Fatalf("Expected %#v, got %#v", c.expectedBackends, actualConfig.Backends)
-			}
-			if !reflect.DeepEqual(actualConfig.Frontends, c.expectedFrontends) {
-				t.Fatalf("Expected %#v, got %#v", c.expectedFrontends, actualConfig.Frontends)
-			}
-		}
+					withLabel(label.TraefikBackend, "foobar"),
+
+					withLabel(label.TraefikFrontendEntryPoints, "http,https"),
+					withLabel(label.TraefikFrontendPassHostHeader, "true"),
+					withLabel(label.TraefikFrontendPassTLSCert, "true"),
+					withLabel(label.TraefikFrontendPriority, "666"),
+					withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
+
+					withIP("10.10.10.10"),
+					withInfo("name1", withPorts(
+						withPortTCP(80, "n"),
+						withPortTCP(666, "n"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+				),
+			},
+			expectedFrontends: map[string]*types.Frontend{
+				"frontend-ID1": {
+					EntryPoints: []string{
+						"http",
+						"https",
+					},
+					Backend: "backend-foobar",
+					Routes: map[string]types.Route{
+						"route-host-ID1": {
+							Rule: "Host:traefik.io",
+						},
+					},
+					PassHostHeader: true,
+					Priority:       666,
+				},
+			},
+			expectedBackends: map[string]*types.Backend{
+				"backend-foobar": {
+					Servers: map[string]types.Server{
+						"server-ID1": {
+							URL:    "https://10.10.10.10:666",
+							Weight: 12,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+
+			actualConfig := p.buildConfiguration(test.tasks)
+
+			require.NotNil(t, actualConfig)
+			assert.Equal(t, test.expectedBackends, actualConfig.Backends)
+			assert.Equal(t, test.expectedFrontends, actualConfig.Frontends)
+		})
 	}
 }
 
 func TestTaskFilter(t *testing.T) {
 	testCases := []struct {
+		desc             string
 		mesosTask        state.Task
-		expected         bool
 		exposedByDefault bool
+		expected         bool
 	}{
 		{
+			desc:             "no task",
 			mesosTask:        state.Task{},
+			exposedByDefault: true,
 			expected:         false,
-			exposedByDefault: true,
 		},
 		{
-			mesosTask:        task(statuses(status(setState("TASK_RUNNING")))),
+			desc:             "task not healthy",
+			mesosTask:        aTask("test", withStatus(withState("TASK_RUNNING"))),
+			exposedByDefault: true,
 			expected:         false,
-			exposedByDefault: true,
 		},
 		{
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "false"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			desc: "exposedByDefault false and traefik.enable false",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "false"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
 			),
-			expected:         false, // because label traefik.enable = false
 			exposedByDefault: false,
+			expected:         false,
 		},
 		{
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			desc: "traefik.enable = true",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
 			),
-			expected:         true,
 			exposedByDefault: false,
-		},
-		{
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
-			),
 			expected:         true,
-			exposedByDefault: true,
 		},
 		{
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "false"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			desc: "exposedByDefault true and traefik.enable true",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
 			),
-			expected:         false, // because label traefik.enable = false (even wherek exposedByDefault = true)
 			exposedByDefault: true,
-		},
-		{
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true",
-					label.TraefikPortIndex, "1",
-					label.TraefikPort, "80"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
-			),
-			expected:         false, // traefik.portIndex & traefik.port cannot be set both
-			exposedByDefault: true,
-		},
-		{
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true",
-					label.TraefikPortIndex, "1"),
-				discovery(setDiscoveryPorts("TCP", 80, "WEB HTTP", "TCP", 443, "WEB HTTPS")),
-			),
 			expected:         true,
-			exposedByDefault: true,
 		},
 		{
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true"),
-				discovery(setDiscoveryPorts("TCP", 80, "WEB HTTP", "TCP", 443, "WEB HTTPS")),
+			desc: "exposedByDefault true and traefik.enable false",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "false"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
 			),
-			expected:         true, // Default to first index
 			exposedByDefault: true,
+			expected:         false,
 		},
 		{
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true",
-					label.TraefikPortIndex, "1"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			desc: "traefik.portIndex and traefik.port both set",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withLabel(label.TraefikPortIndex, "1"),
+				withLabel(label.TraefikEnable, "80"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
 			),
-			expected:         false, // traefik.portIndex and discoveryPorts don't correspond
 			exposedByDefault: true,
-		}, {
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true",
-					label.TraefikPortIndex, "0"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			expected:         false,
+		},
+		{
+			desc: "valid traefik.portIndex",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withLabel(label.TraefikPortIndex, "1"),
+				withInfo("test", withPorts(
+					withPortTCP(80, "WEB"),
+					withPortTCP(443, "WEB HTTPS"),
+				)),
 			),
-			expected:         true, // traefik.portIndex and discoveryPorts correspond
 			exposedByDefault: true,
-		}, {
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true",
-					label.TraefikPort, "TRAEFIK"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			expected:         true,
+		},
+		{
+			desc: "default to first port index",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withInfo("test", withPorts(
+					withPortTCP(80, "WEB"),
+					withPortTCP(443, "WEB HTTPS"),
+				)),
 			),
-			expected:         false, // traefik.port is not an integer
 			exposedByDefault: true,
-		}, {
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true",
-					label.TraefikPort, "443"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			expected:         true,
+		},
+		{
+			desc: "traefik.portIndex and discoveryPorts don't correspond",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withLabel(label.TraefikPortIndex, "1"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
 			),
-			expected:         false, // traefik.port is not the same as discovery.port
 			exposedByDefault: true,
-		}, {
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(true))),
-				setLabels(label.TraefikEnable, "true",
-					label.TraefikPort, "80"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			expected:         false,
+		},
+		{
+			desc: "traefik.portIndex and discoveryPorts correspond",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withLabel(label.TraefikPortIndex, "0"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
 			),
-			expected:         true, // traefik.port is the same as discovery.port
 			exposedByDefault: true,
-		}, {
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"))),
-				setLabels(label.TraefikEnable, "true",
-					label.TraefikPort, "80"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			expected:         true,
+		},
+		{
+			desc: "traefik.port is not an integer",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withLabel(label.TraefikPort, "TRAEFIK"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
 			),
-			expected:         true, // No healthCheck
 			exposedByDefault: true,
-		}, {
-			mesosTask: task(
-				statuses(
-					status(
-						setState("TASK_RUNNING"),
-						setHealthy(false))),
-				setLabels(label.TraefikEnable, "true",
-					label.TraefikPort, "80"),
-				discovery(setDiscoveryPort("TCP", 80, "WEB")),
+			expected:         false,
+		},
+		{
+			desc: "traefik.port is not the same as discovery.port",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withLabel(label.TraefikPort, "443"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
 			),
-			expected:         false, // HealthCheck at false
 			exposedByDefault: true,
+			expected:         false,
+		},
+		{
+			desc: "traefik.port is the same as discovery.port",
+			mesosTask: aTask("test",
+				withDefaultStatus(),
+				withLabel(label.TraefikEnable, "true"),
+				withLabel(label.TraefikPort, "80"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
+			),
+			exposedByDefault: true,
+			expected:         true,
+		},
+		{
+			desc: "healthy nil",
+			mesosTask: aTask("test",
+				withStatus(
+					withState("TASK_RUNNING"),
+				),
+				withLabel(label.TraefikEnable, "true"),
+				withLabel(label.TraefikPort, "80"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
+			),
+			exposedByDefault: true,
+			expected:         true,
+		},
+		{
+			desc: "healthy false",
+			mesosTask: aTask("test",
+				withStatus(
+					withState("TASK_RUNNING"),
+					withHealthy(false),
+				),
+				withLabel(label.TraefikEnable, "true"),
+				withLabel(label.TraefikPort, "80"),
+				withInfo("test", withPorts(withPortTCP(80, "WEB"))),
+			),
+			exposedByDefault: true,
+			expected:         false,
 		},
 	}
 
-	for index, test := range testCases {
-		t.Run(strconv.Itoa(index), func(t *testing.T) {
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
 			t.Parallel()
 
 			actual := taskFilter(test.mesosTask, test.exposedByDefault)
-			if actual != test.expected {
+			ok := assert.Equal(t, test.expected, actual)
+			if !ok {
 				t.Logf("Statuses : %v", test.mesosTask.Statuses)
 				t.Logf("Label : %v", test.mesosTask.Labels)
 				t.Logf("DiscoveryInfo : %v", test.mesosTask.DiscoveryInfo)
@@ -303,7 +425,7 @@ func TestGetSubDomain(t *testing.T) {
 
 	for _, test := range testCases {
 		test := test
-		t.Run("", func(t *testing.T) {
+		t.Run(test.path, func(t *testing.T) {
 			t.Parallel()
 
 			actual := test.provider.getSubDomain(test.path)

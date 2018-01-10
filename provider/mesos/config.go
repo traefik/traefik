@@ -6,56 +6,48 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/provider"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
-	"github.com/mesosphere/mesos-dns/records"
 	"github.com/mesosphere/mesos-dns/records/state"
 )
 
-func (p *Provider) buildConfiguration() *types.Configuration {
+func (p *Provider) buildConfiguration(tasks []state.Task) *types.Configuration {
 	var mesosFuncMap = template.FuncMap{
-		"getBackend":         getBackend,
-		"getPort":            p.getPort,
-		"getHost":            p.getHost,
-		"getWeight":          getFuncApplicationStringValue(label.TraefikWeight, label.DefaultWeight),
-		"getDomain":          getFuncStringValue(label.TraefikDomain, p.Domain),
-		"getProtocol":        getFuncApplicationStringValue(label.TraefikProtocol, label.DefaultProtocol),
+		"getDomain": getFuncStringValue(label.TraefikDomain, p.Domain),
+		"getID":     getID,
+
+		// Backend functions
+		"getProtocol": getFuncApplicationStringValue(label.TraefikProtocol, label.DefaultProtocol),
+		"getPort":     p.getPort,
+		"getHost":     p.getHost,
+		"getWeight":   getFuncApplicationStringValue(label.TraefikWeight, label.DefaultWeight),
+		"getBackend":  getBackend,
+
+		// Frontend functions
 		"getPassHostHeader":  getFuncStringValue(label.TraefikFrontendPassHostHeader, label.DefaultPassHostHeader),
 		"getPriority":        getFuncStringValue(label.TraefikFrontendPriority, label.DefaultFrontendPriority),
 		"getEntryPoints":     getFuncSliceStringValue(label.TraefikFrontendEntryPoints),
 		"getFrontendRule":    p.getFrontendRule,
 		"getFrontendBackend": getFrontendBackend,
-		"getID":              getID,
 		"getFrontEndName":    getFrontEndName,
 	}
-
-	rg := records.NewRecordGenerator(time.Duration(p.StateTimeoutSecond) * time.Second)
-	st, err := rg.FindMaster(p.Masters...)
-	if err != nil {
-		log.Errorf("Failed to create a client for Mesos, error: %v", err)
-		return nil
-	}
-	tasks := taskRecords(st)
 
 	// filter tasks
 	filteredTasks := fun.Filter(func(task state.Task) bool {
 		return taskFilter(task, p.ExposedByDefault)
 	}, tasks).([]state.Task)
 
-	uniqueApps := make(map[string]state.Task)
-	for _, value := range filteredTasks {
-		if _, ok := uniqueApps[value.DiscoveryInfo.Name]; !ok {
-			uniqueApps[value.DiscoveryInfo.Name] = value
-		}
-	}
 	var filteredApps []state.Task
-	for _, value := range uniqueApps {
-		filteredApps = append(filteredApps, value)
+	uniqueApps := make(map[string]struct{})
+	for _, task := range filteredTasks {
+		if _, ok := uniqueApps[task.DiscoveryInfo.Name]; !ok {
+			uniqueApps[task.DiscoveryInfo.Name] = struct{}{}
+			filteredApps = append(filteredApps, task)
+		}
 	}
 
 	templateObjects := struct {
@@ -75,31 +67,12 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 	return configuration
 }
 
-func taskRecords(st state.State) []state.Task {
-	var tasks []state.Task
-	for _, f := range st.Frameworks {
-		for _, task := range f.Tasks {
-			for _, slave := range st.Slaves {
-				if task.SlaveID == slave.ID {
-					task.SlaveIP = slave.PID.Host
-				}
-			}
-
-			// only do running and discoverable tasks
-			if task.State == "TASK_RUNNING" {
-				tasks = append(tasks, task)
-			}
-		}
-	}
-
-	return tasks
-}
-
 func taskFilter(task state.Task, exposedByDefaultFlag bool) bool {
 	if len(task.DiscoveryInfo.Ports.DiscoveryPorts) == 0 {
 		log.Debugf("Filtering Mesos task without port %s", task.Name)
 		return false
 	}
+
 	if !isEnabled(task, exposedByDefaultFlag) {
 		log.Debugf("Filtering disabled Mesos task %s", task.DiscoveryInfo.Name)
 		return false
@@ -140,7 +113,7 @@ func taskFilter(task state.Task, exposedByDefaultFlag bool) bool {
 		}
 	}
 
-	//filter healthChecks
+	// filter healthChecks
 	if task.Statuses != nil && len(task.Statuses) > 0 && task.Statuses[0].Healthy != nil && !*task.Statuses[0].Healthy {
 		log.Debugf("Filtering Mesos task %s with bad healthCheck", task.DiscoveryInfo.Name)
 		return false
@@ -166,7 +139,7 @@ func getFrontendBackend(task state.Task) string {
 	if value := getStringValue(task, label.TraefikBackend, ""); len(value) > 0 {
 		return value
 	}
-	return "-" + provider.Normalize(task.DiscoveryInfo.Name)
+	return provider.Normalize(task.DiscoveryInfo.Name)
 }
 
 func getFrontEndName(task state.Task) string {

@@ -12,6 +12,9 @@ import (
 	"github.com/containous/traefik/safe"
 	"github.com/containous/traefik/types"
 	"github.com/mesos/mesos-go/detector"
+	"github.com/mesosphere/mesos-dns/records"
+	"github.com/mesosphere/mesos-dns/records/state"
+
 	// Register mesos zoo the detector
 	_ "github.com/mesos/mesos-go/detector/zoo"
 	"github.com/mesosphere/mesos-dns/detect"
@@ -76,7 +79,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 		for {
 			select {
 			case <-reload.C:
-				configuration := p.buildConfiguration()
+				tasks := p.getTasks()
+				configuration := p.buildConfiguration(tasks)
 				if configuration != nil {
 					configurationChan <- types.ConfigMessage{
 						ProviderName:  "mesos",
@@ -92,7 +96,8 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 				}
 				log.Debugf("new masters detected: %v", masters)
 				p.Masters = masters
-				configuration := p.buildConfiguration()
+				tasks := p.getTasks()
+				configuration := p.buildConfiguration(tasks)
 				if configuration != nil {
 					configurationChan <- types.ConfigMessage{
 						ProviderName:  "mesos",
@@ -128,4 +133,36 @@ func detectMasters(zk string, masters []string) <-chan []string {
 		changed <- masters
 	}
 	return changed
+}
+
+func (p *Provider) getTasks() []state.Task {
+	rg := records.NewRecordGenerator(time.Duration(p.StateTimeoutSecond) * time.Second)
+
+	st, err := rg.FindMaster(p.Masters...)
+	if err != nil {
+		log.Errorf("Failed to create a client for Mesos, error: %v", err)
+		return nil
+	}
+
+	return taskRecords(st)
+}
+
+func taskRecords(st state.State) []state.Task {
+	var tasks []state.Task
+	for _, f := range st.Frameworks {
+		for _, task := range f.Tasks {
+			for _, slave := range st.Slaves {
+				if task.SlaveID == slave.ID {
+					task.SlaveIP = slave.PID.Host
+				}
+			}
+
+			// only do running and discoverable tasks
+			if task.State == "TASK_RUNNING" {
+				tasks = append(tasks, task)
+			}
+		}
+	}
+
+	return tasks
 }
