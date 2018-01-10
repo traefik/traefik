@@ -2,7 +2,9 @@ package mesos
 
 import (
 	"testing"
+	"time"
 
+	"github.com/containous/flaeg"
 	"github.com/containous/traefik/provider/label"
 	"github.com/containous/traefik/types"
 	"github.com/mesos/mesos-go/upid"
@@ -11,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuildConfiguration(t *testing.T) {
+func TestBuildConfigurationNew(t *testing.T) {
 	p := &Provider{
 		Domain:           "docker.localhost",
 		ExposedByDefault: true,
@@ -25,7 +27,7 @@ func TestBuildConfiguration(t *testing.T) {
 		expectedBackends  map[string]*types.Backend
 	}{
 		{
-			desc:              "should return an empty configuration when no task",
+			desc:              "when no tasks",
 			tasks:             []state.Task{},
 			expectedFrontends: map[string]*types.Frontend{},
 			expectedBackends:  map[string]*types.Backend{},
@@ -64,6 +66,7 @@ func TestBuildConfiguration(t *testing.T) {
 				"frontend-ID1": {
 					Backend:        "backend-name1",
 					EntryPoints:    []string{},
+					BasicAuth:      []string{},
 					PassHostHeader: true,
 					Routes: map[string]types.Route{
 						"route-host-ID1": {
@@ -74,6 +77,7 @@ func TestBuildConfiguration(t *testing.T) {
 				"frontend-ID3": {
 					Backend:        "backend-name2",
 					EntryPoints:    []string{},
+					BasicAuth:      []string{},
 					PassHostHeader: true,
 					Routes: map[string]types.Route{
 						"route-host-ID3": {
@@ -119,12 +123,62 @@ func TestBuildConfiguration(t *testing.T) {
 
 					withLabel(label.TraefikBackend, "foobar"),
 
+					withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+					withLabel(label.TraefikBackendHealthCheckPath, "/health"),
+					withLabel(label.TraefikBackendHealthCheckPort, "880"),
+					withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+					withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
+					withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
+					withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "chocolate"),
+					withLabel(label.TraefikBackendMaxConnAmount, "666"),
+					withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+
+					withLabel(label.TraefikFrontendAuthBasic, "test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/,test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0"),
 					withLabel(label.TraefikFrontendEntryPoints, "http,https"),
 					withLabel(label.TraefikFrontendPassHostHeader, "true"),
 					withLabel(label.TraefikFrontendPassTLSCert, "true"),
 					withLabel(label.TraefikFrontendPriority, "666"),
+					withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
+					withLabel(label.TraefikFrontendRedirectRegex, "nope"),
+					withLabel(label.TraefikFrontendRedirectReplacement, "nope"),
 					withLabel(label.TraefikFrontendRule, "Host:traefik.io"),
+					withLabel(label.TraefikFrontendWhitelistSourceRange, "10.10.10.10"),
 
+					withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type:application/json; charset=utf-8"),
+					withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type:application/json; charset=utf-8"),
+					withLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type:application/json; charset=utf-8"),
+					withLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor"),
+					withLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor"),
+					withLabel(label.TraefikFrontendSSLHost, "foo"),
+					withLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo"),
+					withLabel(label.TraefikFrontendContentSecurityPolicy, "foo"),
+					withLabel(label.TraefikFrontendPublicKey, "foo"),
+					withLabel(label.TraefikFrontendReferrerPolicy, "foo"),
+					withLabel(label.TraefikFrontendSTSSeconds, "666"),
+					withLabel(label.TraefikFrontendSSLRedirect, "true"),
+					withLabel(label.TraefikFrontendSSLTemporaryRedirect, "true"),
+					withLabel(label.TraefikFrontendSTSIncludeSubdomains, "true"),
+					withLabel(label.TraefikFrontendSTSPreload, "true"),
+					withLabel(label.TraefikFrontendForceSTSHeader, "true"),
+					withLabel(label.TraefikFrontendFrameDeny, "true"),
+					withLabel(label.TraefikFrontendContentTypeNosniff, "true"),
+					withLabel(label.TraefikFrontendBrowserXSSFilter, "true"),
+					withLabel(label.TraefikFrontendIsDevelopment, "true"),
+
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "foobar"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "foo_query"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageStatus, "500,600"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageBackend, "foobar"),
+					withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageQuery, "bar_query"),
+
+					withLabel(label.TraefikFrontendRateLimitExtractorFunc, "client.ip"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+					withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
 					withIP("10.10.10.10"),
 					withInfo("name1", withPorts(
 						withPortTCP(80, "n"),
@@ -145,7 +199,86 @@ func TestBuildConfiguration(t *testing.T) {
 						},
 					},
 					PassHostHeader: true,
+					PassTLSCert:    true,
 					Priority:       666,
+					BasicAuth: []string{
+						"test:$apr1$H6uskkkW$IgXLP6ewTrSuBkTrqE8wj/",
+						"test2:$apr1$d9hr9HBB$4HxwgUir3HP4EsggP/QNo0",
+					},
+					WhitelistSourceRange: []string{
+						"10.10.10.10",
+					},
+					Headers: &types.Headers{
+						CustomRequestHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						CustomResponseHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						AllowedHosts: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						HostsProxyHeaders: []string{
+							"foo",
+							"bar",
+							"bor",
+						},
+						SSLRedirect:          true,
+						SSLTemporaryRedirect: true,
+						SSLHost:              "foo",
+						SSLProxyHeaders: map[string]string{
+							"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+							"Content-Type":                 "application/json; charset=utf-8",
+						},
+						STSSeconds:              666,
+						STSIncludeSubdomains:    true,
+						STSPreload:              true,
+						ForceSTSHeader:          true,
+						FrameDeny:               true,
+						CustomFrameOptionsValue: "foo",
+						ContentTypeNosniff:      true,
+						BrowserXSSFilter:        true,
+						ContentSecurityPolicy:   "foo",
+						PublicKey:               "foo",
+						ReferrerPolicy:          "foo",
+						IsDevelopment:           true,
+					},
+					Errors: map[string]*types.ErrorPage{
+						"foo": {
+							Status:  []string{"404"},
+							Query:   "foo_query",
+							Backend: "foobar",
+						},
+						"bar": {
+							Status:  []string{"500", "600"},
+							Query:   "bar_query",
+							Backend: "foobar",
+						},
+					},
+					RateLimit: &types.RateLimit{
+						ExtractorFunc: "client.ip",
+						RateSet: map[string]*types.Rate{
+							"foo": {
+								Period:  flaeg.Duration(6 * time.Second),
+								Average: 12,
+								Burst:   18,
+							},
+							"bar": {
+								Period:  flaeg.Duration(3 * time.Second),
+								Average: 6,
+								Burst:   9,
+							},
+						},
+					},
+					Redirect: &types.Redirect{
+						EntryPoint:  "https",
+						Regex:       "",
+						Replacement: "",
+					},
 				},
 			},
 			expectedBackends: map[string]*types.Backend{
@@ -155,6 +288,24 @@ func TestBuildConfiguration(t *testing.T) {
 							URL:    "https://10.10.10.10:666",
 							Weight: 12,
 						},
+					},
+					CircuitBreaker: &types.CircuitBreaker{
+						Expression: "NetworkErrorRatio() > 0.5",
+					},
+					LoadBalancer: &types.LoadBalancer{
+						Method: "drr",
+						Stickiness: &types.Stickiness{
+							CookieName: "chocolate",
+						},
+					},
+					MaxConn: &types.MaxConn{
+						Amount:        666,
+						ExtractorFunc: "client.ip",
+					},
+					HealthCheck: &types.HealthCheck{
+						Path:     "/health",
+						Port:     880,
+						Interval: "6",
 					},
 				},
 			},
@@ -429,6 +580,600 @@ func TestGetSubDomain(t *testing.T) {
 			t.Parallel()
 
 			actual := test.provider.getSubDomain(test.path)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetCircuitBreaker(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected *types.CircuitBreaker
+	}{
+		{
+			desc: "should return nil when no CB labels",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct CB when CB labels are set",
+			task: aTask("ID1",
+				withLabel(label.TraefikBackendCircuitBreakerExpression, "NetworkErrorRatio() > 0.5"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.CircuitBreaker{
+				Expression: "NetworkErrorRatio() > 0.5",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getCircuitBreaker(test.task)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetLoadBalancer(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected *types.LoadBalancer
+	}{
+		{
+			desc: "should return nil when no LB labels",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when labels are set",
+			task: aTask("ID1",
+				withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
+				withLabel(label.TraefikBackendLoadBalancerStickiness, "true"),
+				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "foo"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.LoadBalancer{
+				Method: "drr",
+				Stickiness: &types.Stickiness{
+					CookieName: "foo",
+				},
+			},
+		},
+		{
+			desc: "should return a nil Stickiness when Stickiness is not set",
+			task: aTask("ID1",
+				withLabel(label.TraefikBackendLoadBalancerMethod, "drr"),
+				withLabel(label.TraefikBackendLoadBalancerStickinessCookieName, "foo"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.LoadBalancer{
+				Method:     "drr",
+				Stickiness: nil,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getLoadBalancer(test.task)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetMaxConn(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected *types.MaxConn
+	}{
+		{
+			desc: "should return nil when no max conn labels",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return nil when no amount label",
+			task: aTask("ID1",
+				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return default when empty extractorFunc label",
+			task: aTask("ID1",
+				withLabel(label.TraefikBackendMaxConnExtractorFunc, ""),
+				withLabel(label.TraefikBackendMaxConnAmount, "666"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.MaxConn{
+				ExtractorFunc: "request.host",
+				Amount:        666,
+			},
+		},
+		{
+			desc: "should return a struct when max conn labels are set",
+			task: aTask("ID1",
+				withLabel(label.TraefikBackendMaxConnExtractorFunc, "client.ip"),
+				withLabel(label.TraefikBackendMaxConnAmount, "666"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.MaxConn{
+				ExtractorFunc: "client.ip",
+				Amount:        666,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getMaxConn(test.task)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetHealthCheck(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected *types.HealthCheck
+	}{
+		{
+			desc: "should return nil when no health check labels",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return nil when no health check Path label",
+			task: aTask("ID1",
+				withLabel(label.TraefikBackendHealthCheckPort, "80"),
+				withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when health check labels are set",
+			task: aTask("ID1",
+				withLabel(label.TraefikBackendHealthCheckPath, "/health"),
+				withLabel(label.TraefikBackendHealthCheckPort, "80"),
+				withLabel(label.TraefikBackendHealthCheckInterval, "6"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.HealthCheck{
+				Path:     "/health",
+				Port:     80,
+				Interval: "6",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getHealthCheck(test.task)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetServers(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		tasks    []state.Task
+		expected map[string]types.Server
+	}{
+		{
+			desc: "",
+			tasks: []state.Task{
+				// App 1
+				aTask("ID1",
+					withIP("10.10.10.10"),
+					withInfo("name1",
+						withPorts(withPort("TCP", 80, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+				),
+				aTask("ID2",
+					withIP("10.10.10.11"),
+					withLabel(label.TraefikWeight, "18"),
+					withInfo("name1",
+						withPorts(withPort("TCP", 81, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+				),
+				// App 2
+				aTask("ID3",
+					withLabel(label.TraefikWeight, "12"),
+					withIP("20.10.10.10"),
+					withInfo("name2",
+						withPorts(withPort("TCP", 80, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+				),
+				aTask("ID4",
+					withLabel(label.TraefikWeight, "6"),
+					withIP("20.10.10.11"),
+					withInfo("name2",
+						withPorts(withPort("TCP", 81, "WEB"))),
+					withStatus(withHealthy(true), withState("TASK_RUNNING")),
+				),
+			},
+			expected: map[string]types.Server{
+				"server-ID1": {
+					URL:    "http://10.10.10.10:80",
+					Weight: 0,
+				},
+				"server-ID2": {
+					URL:    "http://10.10.10.11:81",
+					Weight: 18,
+				},
+				"server-ID3": {
+					URL:    "http://20.10.10.10:80",
+					Weight: 12,
+				},
+				"server-ID4": {
+					URL:    "http://20.10.10.11:81",
+					Weight: 6,
+				},
+			},
+		},
+	}
+
+	p := &Provider{
+		Domain:           "docker.localhost",
+		ExposedByDefault: true,
+		IPSources:        "host",
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := p.getServers(test.tasks)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetRedirect(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected *types.Redirect
+	}{
+
+		{
+			desc: "should return nil when no redirect labels",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should use only entry point tag when mix regex redirect and entry point redirect",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
+				withLabel(label.TraefikFrontendRedirectRegex, "(.*)"),
+				withLabel(label.TraefikFrontendRedirectReplacement, "$1"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when entry point redirect label",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendRedirectEntryPoint, "https"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.Redirect{
+				EntryPoint: "https",
+			},
+		},
+		{
+			desc: "should return a struct when regex redirect labels",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendRedirectRegex, "(.*)"),
+				withLabel(label.TraefikFrontendRedirectReplacement, "$1"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.Redirect{
+				Regex:       "(.*)",
+				Replacement: "$1",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getRedirect(test.task)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetErrorPages(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected map[string]*types.ErrorPage
+	}{
+		{
+			desc: "2 errors pages",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageBackend, "foo_backend"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageQuery, "foo_query"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageStatus, "500,600"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageBackend, "bar_backend"),
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"bar."+label.SuffixErrorPageQuery, "bar_query"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Status:  []string{"404"},
+					Query:   "foo_query",
+					Backend: "foo_backend",
+				},
+				"bar": {
+					Status:  []string{"500", "600"},
+					Query:   "bar_query",
+					Backend: "bar_backend",
+				},
+			},
+		},
+		{
+			desc: "only status field",
+			task: aTask("ID1",
+				withLabel(label.Prefix+label.BaseFrontendErrorPage+"foo."+label.SuffixErrorPageStatus, "404"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: map[string]*types.ErrorPage{
+				"foo": {
+					Status: []string{"404"},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getErrorPages(test.task)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetRateLimit(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected *types.RateLimit
+	}{
+		{
+			desc: "should return nil when no rate limit labels",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when rate limit labels are defined",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendRateLimitExtractorFunc, "client.ip"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.RateLimit{
+				ExtractorFunc: "client.ip",
+				RateSet: map[string]*types.Rate{
+					"foo": {
+						Period:  flaeg.Duration(6 * time.Second),
+						Average: 12,
+						Burst:   18,
+					},
+					"bar": {
+						Period:  flaeg.Duration(3 * time.Second),
+						Average: 6,
+						Burst:   9,
+					},
+				},
+			},
+		},
+		{
+			desc: "should return nil when ExtractorFunc is missing",
+			task: aTask("ID1",
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitPeriod, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitAverage, "12"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"foo."+label.SuffixRateLimitBurst, "18"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitPeriod, "3"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitAverage, "6"),
+				withLabel(label.Prefix+label.BaseFrontendRateLimit+"bar."+label.SuffixRateLimitBurst, "9"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getRateLimit(test.task)
+
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
+func TestGetHeaders(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		task     state.Task
+		expected *types.Headers
+	}{
+		{
+			desc: "should return nil when no custom headers options are set",
+			task: aTask("ID1",
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: nil,
+		},
+		{
+			desc: "should return a struct when all custom headers options are set",
+			task: aTask("ID1",
+				withLabel(label.TraefikFrontendRequestHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.TraefikFrontendResponseHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.TraefikFrontendSSLProxyHeaders, "Access-Control-Allow-Methods:POST,GET,OPTIONS || Content-type: application/json; charset=utf-8"),
+				withLabel(label.TraefikFrontendAllowedHosts, "foo,bar,bor"),
+				withLabel(label.TraefikFrontendHostsProxyHeaders, "foo,bar,bor"),
+				withLabel(label.TraefikFrontendSSLHost, "foo"),
+				withLabel(label.TraefikFrontendCustomFrameOptionsValue, "foo"),
+				withLabel(label.TraefikFrontendContentSecurityPolicy, "foo"),
+				withLabel(label.TraefikFrontendPublicKey, "foo"),
+				withLabel(label.TraefikFrontendReferrerPolicy, "foo"),
+				withLabel(label.TraefikFrontendSTSSeconds, "666"),
+				withLabel(label.TraefikFrontendSSLRedirect, "true"),
+				withLabel(label.TraefikFrontendSSLTemporaryRedirect, "true"),
+				withLabel(label.TraefikFrontendSTSIncludeSubdomains, "true"),
+				withLabel(label.TraefikFrontendSTSPreload, "true"),
+				withLabel(label.TraefikFrontendForceSTSHeader, "true"),
+				withLabel(label.TraefikFrontendFrameDeny, "true"),
+				withLabel(label.TraefikFrontendContentTypeNosniff, "true"),
+				withLabel(label.TraefikFrontendBrowserXSSFilter, "true"),
+				withLabel(label.TraefikFrontendIsDevelopment, "true"),
+				withIP("10.10.10.10"),
+				withInfo("name1", withPorts(withPort("TCP", 80, "WEB"))),
+				withDefaultStatus(),
+			),
+			expected: &types.Headers{
+				CustomRequestHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				CustomResponseHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				SSLProxyHeaders: map[string]string{
+					"Access-Control-Allow-Methods": "POST,GET,OPTIONS",
+					"Content-Type":                 "application/json; charset=utf-8",
+				},
+				AllowedHosts:            []string{"foo", "bar", "bor"},
+				HostsProxyHeaders:       []string{"foo", "bar", "bor"},
+				SSLHost:                 "foo",
+				CustomFrameOptionsValue: "foo",
+				ContentSecurityPolicy:   "foo",
+				PublicKey:               "foo",
+				ReferrerPolicy:          "foo",
+				STSSeconds:              666,
+				SSLRedirect:             true,
+				SSLTemporaryRedirect:    true,
+				STSIncludeSubdomains:    true,
+				STSPreload:              true,
+				ForceSTSHeader:          true,
+				FrameDeny:               true,
+				ContentTypeNosniff:      true,
+				BrowserXSSFilter:        true,
+				IsDevelopment:           true,
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		test := test
+		t.Run(test.desc, func(t *testing.T) {
+			t.Parallel()
+
+			actual := getHeaders(test.task)
 
 			assert.Equal(t, test.expected, actual)
 		})
