@@ -33,7 +33,7 @@ type Provider struct {
 	GroupsAsSubDomains bool   `description:"Convert Mesos groups to subdomains" export:"true"`
 	ZkDetectionTimeout int    `description:"Zookeeper timeout (in seconds)" export:"true"`
 	RefreshSeconds     int    `description:"Polling interval (in seconds)" export:"true"`
-	IPSources          string `description:"IPSources (e.g. host, docker, mesos, rkt)" export:"true"`
+	IPSources          string `description:"IPSources (e.g. host, docker, mesos, netinfo)" export:"true"`
 	StateTimeoutSecond int    `description:"HTTP Timeout (in seconds)" export:"true"`
 	Masters            []string
 }
