@@ -16,8 +16,8 @@ checkNewVersion = false
   [entryPoints.http]
   address = ":8000"
 
-[web]
-  address = ":7888"
+[api]
+  dashboard = false
 
 [docker]
   exposedByDefault = false

@@ -33,11 +33,8 @@ defaultEntryPoints = ["http"]
 
 checkNewVersion = false
 
-################################################################
-# Web configuration backend
-################################################################
-[web]
-  address = ":7888"
+[api]
+  dashboard = false
 
 [docker]
   exposedByDefault = false

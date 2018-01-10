@@ -1110,7 +1110,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					}
 
 					if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
-						lb, err = buildRateLimiter(lb, frontend.RateLimit)
+						lb, err = s.buildRateLimiter(lb, frontend.RateLimit)
 						lb = s.wrapHTTPHandlerWithAccessLog(lb, fmt.Sprintf("rate limit for %s", frontendName))
 						if err != nil {
 							log.Errorf("Error creating rate limiter: %v", err)
