@@ -57,7 +57,7 @@ func (ev *RATEAuditEvent) AppendRequest(req *http.Request) {
 
 func appendMessageContent(ev *RATEAuditEvent, req *http.Request) {
 
-	body, err := copyBody(req)
+	body, _, err := copyBody(req)
 	url, err := url.ParseRequestURI(req.RequestURI)
 
 	if err != nil {
@@ -116,14 +116,15 @@ func NewRATEAuditEvent() Auditer {
 	return &ev
 }
 
+// TODO: Can req.GetBody replace it?
 // Need to take a copy of the body contents so a fresh reader for body is available to subsequent handlers
-func copyBody(req *http.Request) (io.ReadCloser, error) {
+func copyBody(req *http.Request) (io.ReadCloser, int, error) {
 	buf, err := ioutil.ReadAll(req.Body)
 	if err == nil {
 		req.Body = ioutil.NopCloser(bytes.NewBuffer(buf))
-		return ioutil.NopCloser(bytes.NewBuffer(buf)), nil
+		return ioutil.NopCloser(bytes.NewBuffer(buf)), len(buf), nil
 	}
-	return nil, err
+	return nil, 0, err
 }
 
 // GovTalkMessage Processing

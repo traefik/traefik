@@ -65,6 +65,7 @@ func appendCommonRequestFields(ev *AuditEvent, req *http.Request) types.DataMap 
 	flatHdr := hdr.Flatten()
 
 	requestPayload := types.DataMap{}
+	requestPayload["length"] = req.ContentLength
 
 	var requestContentType = flatHdr.GetString("content-type")
 

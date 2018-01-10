@@ -1,17 +1,20 @@
 package audittypes
 
 import (
-	"github.com/containous/traefik/middlewares/audittap/types"
-	"github.com/stretchr/testify/assert"
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/containous/traefik/middlewares/audittap/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestApiAuditEvent(t *testing.T) {
 
+	body := []byte("SomeData")
 	ev := APIAuditEvent{}
-	req := httptest.NewRequest("GET", "/some/api/resource?p1=v1", nil)
+	req := httptest.NewRequest("POST", "/some/api/resource?p1=v1", bytes.NewReader(body))
 	req.Header.Set("Authorization", "auth456")
 
 	respHdrs := http.Header{}
@@ -21,10 +24,11 @@ func TestApiAuditEvent(t *testing.T) {
 	ev.AppendRequest(req)
 	ev.AppendResponse(respHdrs, respInfo)
 
-	assert.Equal(t, "GET", ev.Method)
+	assert.Equal(t, "POST", ev.Method)
 	assert.Equal(t, "/some/api/resource", ev.Path)
 	assert.Equal(t, "p1=v1", ev.QueryString)
 	assert.Equal(t, "auth456", ev.AuthorisationToken)
+	assert.EqualValues(t, len(body), ev.RequestPayload.Get("length"))
 
 	assert.Equal(t, "404", ev.ResponseStatus)
 
