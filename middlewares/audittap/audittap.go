@@ -7,10 +7,11 @@ import (
 	"strings"
 	"unicode"
 
+	"net/url"
+
 	"github.com/containous/traefik/log"
 	"github.com/containous/traefik/middlewares/audittap/audittypes"
 	"github.com/containous/traefik/types"
-	"net/url"
 )
 
 // MaximumEntityLength sets the upper limit for request and response entities. This will
@@ -29,6 +30,7 @@ type AuditConfig struct {
 	AuditType   string
 	ProxyingFor string
 	Exclusions  []*types.Exclusion
+	audittypes.AuditConstraints
 }
 
 // AuditTap writes an event to the audit streams for every request.
@@ -49,6 +51,24 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	var maxAudit int64
+	if config.MaxAuditLength != "" {
+		if maxAudit, _, err = asSI(config.MaxAuditLength); err != nil {
+			return nil, err
+		}
+	} else {
+		maxAudit = 100000
+	}
+
+	var maxPayload int64
+	if config.MaxAuditLength != "" {
+		if maxPayload, _, err = asSI(config.MaxPayloadContentsLength); err != nil {
+			return nil, err
+		}
+	} else {
+		maxPayload = 96000
 	}
 
 	pf := strings.ToLower(config.ProxyingFor)
@@ -74,7 +94,14 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 		}
 	}
 
-	ac := AuditConfig{AuditSource: config.AuditSource, AuditType: config.AuditType, ProxyingFor: config.ProxyingFor, Exclusions: exclusions}
+	constraints := audittypes.AuditConstraints{MaxAuditLength: maxAudit, MaxRequestContentsLength: maxPayload}
+	ac := AuditConfig{
+		AuditSource:      config.AuditSource,
+		AuditType:        config.AuditType,
+		ProxyingFor:      config.ProxyingFor,
+		Exclusions:       exclusions,
+		AuditConstraints: constraints,
+	}
 	return &AuditTap{ac, streams, backend, int(th), next}, nil
 }
 

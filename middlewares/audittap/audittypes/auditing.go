@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"net/url"
 
+	"strconv"
+
 	ahttp "github.com/containous/traefik/middlewares/audittap/http"
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/satori/go.uuid"
-	"strconv"
 )
 
 // AuditEvent captures the content and metadata of an HTTP request and response.
@@ -33,6 +34,12 @@ type AuditEvent struct {
 	RequestHeaders  types.DataMap `json:"requestHeaders,omitempty"`
 	RequestPayload  types.DataMap `json:"requestPayload,omitempty"`
 	ResponseHeaders types.DataMap `json:"responseHeaders,omitempty"`
+}
+
+// AuditConstraints defines validation constraints an audit event must satisfy
+type AuditConstraints struct {
+	MaxAuditLength           int64
+	MaxRequestContentsLength int64
 }
 
 // AuditStream describes a type to which audit events can be sent.

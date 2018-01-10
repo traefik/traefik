@@ -145,6 +145,23 @@ func TestShouldExclude(t *testing.T) {
 	assert.False(t, shouldExclude("bcd", &types.Exclusion{HeaderName: "x", Contains: []string{"abcde"}}))
 }
 
+func TestAuditConstraintDefaults(t *testing.T) {
+	capture := &noopAuditStream{}
+	tap, err := NewAuditTap(&types.AuditSink{ProxyingFor: "Rate"}, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.NoError(t, err)
+	assert.Equal(t, int64(100000), tap.AuditConfig.AuditConstraints.MaxAuditLength)
+	assert.Equal(t, int64(96000), tap.AuditConfig.AuditConstraints.MaxRequestContentsLength)
+}
+
+func TestAuditConstraintsAssigned(t *testing.T) {
+	capture := &noopAuditStream{}
+	conf := types.AuditSink{ProxyingFor: "Rate", MaxAuditLength: "3M", MaxPayloadContentsLength: "39k"}
+	tap, err := NewAuditTap(&conf, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.NoError(t, err)
+	assert.Equal(t, int64(3000000), tap.AuditConfig.AuditConstraints.MaxAuditLength)
+	assert.Equal(t, int64(39000), tap.AuditConfig.AuditConstraints.MaxRequestContentsLength)
+}
+
 // simpleHandler replies to the request with the specified error message and HTTP code.
 // It does not otherwise end the request; the caller should ensure no further
 // writes are done to w.
