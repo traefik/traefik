@@ -31,7 +31,7 @@ type challengeProvider struct {
 }
 
 func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate, exists bool) {
-	log.Debugf("Challenge GetCertificate %s", domain)
+	log.Debugf("Looking for an existing ACME challenge for %s...", domain)
 	if !strings.HasSuffix(domain, ".acme.invalid") {
 		return nil, false
 	}

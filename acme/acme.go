@@ -351,7 +351,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		}
 		return a.loadCertificateOnDemand(clientHello)
 	}
-	log.Debugf("ACME got nothing %s", domain)
+	log.Debugf("No certificate found or generated for %s", domain)
 	return nil, nil
 }
 
@@ -623,7 +623,7 @@ func (a *ACME) LoadCertificateForDomains(domains []string) {
 // Get provided certificate which check a domains list (Main and SANs)
 // from static and dynamic provided certificates
 func (a *ACME) getProvidedCertificate(domains []string) *tls.Certificate {
-	log.Debugf("Look for provided certificate to validate %s...", domains)
+	log.Debugf("Looking for provided certificate to validate %s...", domains)
 	cert := searchProvidedCertificateForDomains(domains, a.TLSConfig.NameToCertificate)
 	if cert == nil && a.dynamicCerts != nil && a.dynamicCerts.Get() != nil {
 		cert = searchProvidedCertificateForDomains(domains, a.dynamicCerts.Get().(*traefikTls.DomainsCertificates).Get().(map[string]*tls.Certificate))
