@@ -351,7 +351,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		}
 		return a.loadCertificateOnDemand(clientHello)
 	}
-	log.Debugf("ACME got nothing %s", domain)
+	log.Debugf("None certificate found or generated for %s", domain)
 	return nil, nil
 }
 
