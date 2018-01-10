@@ -17,6 +17,8 @@ import (
 	"github.com/gambol99/go-marathon"
 )
 
+const defaultService = ""
+
 func (p *Provider) buildConfiguration() *types.Configuration {
 	var MarathonFuncMap = template.FuncMap{
 		"getBackend":   p.getBackend,
@@ -24,87 +26,60 @@ func (p *Provider) buildConfiguration() *types.Configuration {
 		"getSubDomain": p.getSubDomain,                                     // see https://github.com/containous/traefik/pull/1693
 
 		// Backend functions
-		"getBackendServer":            p.getBackendServer,
-		"getPort":                     getPort,
-		"getWeight":                   getFuncStringService(label.SuffixWeight, label.DefaultWeight),
-		"getProtocol":                 getFuncStringService(label.SuffixProtocol, label.DefaultProtocol),
-		"hasCircuitBreakerLabels":     hasFunc(label.TraefikBackendCircuitBreakerExpression),
+		"getBackendServer":  p.getBackendServer,
+		"getPort":           getPort,
+		"getCircuitBreaker": getCircuitBreaker,
+		"getLoadBalancer":   getLoadBalancer,
+		"getMaxConn":        getMaxConn,
+		"getHealthCheck":    getHealthCheck,
+		"getServers":        p.getServers,
+
+		// TODO Deprecated [breaking]
+		"getWeight": getFuncIntService(label.SuffixWeight, label.DefaultWeightInt),
+		// TODO Deprecated [breaking]
+		"getProtocol": getFuncStringService(label.SuffixProtocol, label.DefaultProtocol),
+		// TODO Deprecated [breaking]
+		"hasCircuitBreakerLabels": hasFunc(label.TraefikBackendCircuitBreakerExpression),
+		// TODO Deprecated [breaking]
 		"getCircuitBreakerExpression": getFuncString(label.TraefikBackendCircuitBreakerExpression, label.DefaultCircuitBreakerExpression),
-		"hasLoadBalancerLabels":       hasLoadBalancerLabels,
-		"getLoadBalancerMethod":       getFuncString(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
-		"getSticky":                   getSticky,
-		"hasStickinessLabel":          hasFunc(label.TraefikBackendLoadBalancerStickiness),
-		"getStickinessCookieName":     getFuncString(label.TraefikBackendLoadBalancerStickinessCookieName, ""),
-		"hasMaxConnLabels":            hasMaxConnLabels,
-		"getMaxConnExtractorFunc":     getFuncString(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
-		"getMaxConnAmount":            getFuncInt64(label.TraefikBackendMaxConnAmount, math.MaxInt64),
-		"hasHealthCheckLabels":        hasFunc(label.TraefikBackendHealthCheckPath),
-		"getHealthCheckPath":          getFuncString(label.TraefikBackendHealthCheckPath, ""),
-		"getHealthCheckPort":          getFuncInt(label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort),
-		"getHealthCheckInterval":      getFuncString(label.TraefikBackendHealthCheckInterval, ""),
+		// TODO Deprecated [breaking]
+		"hasLoadBalancerLabels": hasLoadBalancerLabels,
+		// TODO Deprecated [breaking]
+		"getLoadBalancerMethod": getFuncString(label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod),
+		// TODO Deprecated [breaking]
+		"getSticky": getSticky,
+		// TODO Deprecated [breaking]
+		"hasStickinessLabel": hasFunc(label.TraefikBackendLoadBalancerStickiness),
+		// TODO Deprecated [breaking]
+		"getStickinessCookieName": getFuncString(label.TraefikBackendLoadBalancerStickinessCookieName, ""),
+		// TODO Deprecated [breaking]
+		"hasMaxConnLabels": hasMaxConnLabels,
+		// TODO Deprecated [breaking]
+		"getMaxConnExtractorFunc": getFuncString(label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc),
+		// TODO Deprecated [breaking]
+		"getMaxConnAmount": getFuncInt64(label.TraefikBackendMaxConnAmount, math.MaxInt64),
+		// TODO Deprecated [breaking]
+		"hasHealthCheckLabels": hasFunc(label.TraefikBackendHealthCheckPath),
+		// TODO Deprecated [breaking]
+		"getHealthCheckPath": getFuncString(label.TraefikBackendHealthCheckPath, ""),
+		// TODO Deprecated [breaking]
+		"getHealthCheckInterval": getFuncString(label.TraefikBackendHealthCheckInterval, ""),
 
 		// Frontend functions
-		"getPassHostHeader":          getFuncStringService(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeader),
-		"getPassTLSCert":             getFuncBoolService(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
-		"getPriority":                getFuncStringService(label.SuffixFrontendPriority, label.DefaultFrontendPriority),
-		"getEntryPoints":             getFuncSliceStringService(label.SuffixFrontendEntryPoints),
-		"getFrontendRule":            p.getFrontendRule,
-		"getFrontendName":            p.getFrontendName,
-		"getBasicAuth":               getFuncSliceStringService(label.SuffixFrontendAuthBasic),
-		"getServiceNames":            getServiceNames,
-		"getServiceNameSuffix":       getServiceNameSuffix,
-		"getWhitelistSourceRange":    getFuncSliceStringService(label.SuffixFrontendWhitelistSourceRange),
-		"hasRedirect":                hasRedirect,
-		"getRedirectEntryPoint":      getFuncStringService(label.SuffixFrontendRedirectEntryPoint, label.DefaultFrontendRedirectEntryPoint),
-		"getRedirectRegex":           getFuncStringService(label.SuffixFrontendRedirectRegex, ""),
-		"getRedirectReplacement":     getFuncStringService(label.SuffixFrontendRedirectReplacement, ""),
-		"hasErrorPages":              hasPrefixFuncService(label.BaseFrontendErrorPage),
-		"getErrorPages":              getErrorPages,
-		"hasRateLimits":              hasFuncService(label.SuffixFrontendRateLimitExtractorFunc),
-		"getRateLimitsExtractorFunc": getFuncStringService(label.SuffixFrontendRateLimitExtractorFunc, ""),
-		"getRateLimits":              getRateLimits,
-		// Headers
-		"hasHeaders":                        hasPrefixFuncService(label.TraefikFrontendHeaders),
-		"hasRequestHeaders":                 hasFuncService(label.SuffixFrontendRequestHeaders),
-		"getRequestHeaders":                 getFuncMapService(label.SuffixFrontendRequestHeaders),
-		"hasResponseHeaders":                hasFuncService(label.SuffixFrontendResponseHeaders),
-		"getResponseHeaders":                getFuncMapService(label.SuffixFrontendResponseHeaders),
-		"hasAllowedHostsHeaders":            hasFuncService(label.SuffixFrontendHeadersAllowedHosts),
-		"getAllowedHostsHeaders":            getFuncSliceStringService(label.SuffixFrontendHeadersAllowedHosts),
-		"hasHostsProxyHeaders":              hasFuncService(label.SuffixFrontendHeadersHostsProxyHeaders),
-		"getHostsProxyHeaders":              getFuncSliceStringService(label.SuffixFrontendHeadersHostsProxyHeaders),
-		"hasSSLRedirectHeaders":             hasFuncService(label.SuffixFrontendHeadersSSLRedirect),
-		"getSSLRedirectHeaders":             getFuncBoolService(label.SuffixFrontendHeadersSSLRedirect, false),
-		"hasSSLTemporaryRedirectHeaders":    hasFuncService(label.SuffixFrontendHeadersSSLTemporaryRedirect),
-		"getSSLTemporaryRedirectHeaders":    getFuncBoolService(label.SuffixFrontendHeadersSSLTemporaryRedirect, false),
-		"hasSSLHostHeaders":                 hasFuncService(label.SuffixFrontendHeadersSSLHost),
-		"getSSLHostHeaders":                 getFuncStringService(label.SuffixFrontendHeadersSSLHost, ""),
-		"hasSSLProxyHeaders":                hasFuncService(label.SuffixFrontendHeadersSSLProxyHeaders),
-		"getSSLProxyHeaders":                getFuncMapService(label.SuffixFrontendHeadersSSLProxyHeaders),
-		"hasSTSSecondsHeaders":              hasFuncService(label.SuffixFrontendHeadersSTSSeconds),
-		"getSTSSecondsHeaders":              getFuncInt64Service(label.SuffixFrontendHeadersSTSSeconds, 0),
-		"hasSTSIncludeSubdomainsHeaders":    hasFuncService(label.SuffixFrontendHeadersSTSIncludeSubdomains),
-		"getSTSIncludeSubdomainsHeaders":    getFuncBoolService(label.SuffixFrontendHeadersSTSIncludeSubdomains, false),
-		"hasSTSPreloadHeaders":              hasFuncService(label.SuffixFrontendHeadersSTSPreload),
-		"getSTSPreloadHeaders":              getFuncBoolService(label.SuffixFrontendHeadersSTSPreload, false),
-		"hasForceSTSHeaderHeaders":          hasFuncService(label.SuffixFrontendHeadersForceSTSHeader),
-		"getForceSTSHeaderHeaders":          getFuncBoolService(label.SuffixFrontendHeadersForceSTSHeader, false),
-		"hasFrameDenyHeaders":               hasFuncService(label.SuffixFrontendHeadersFrameDeny),
-		"getFrameDenyHeaders":               getFuncBoolService(label.SuffixFrontendHeadersFrameDeny, false),
-		"hasCustomFrameOptionsValueHeaders": hasFuncService(label.SuffixFrontendHeadersCustomFrameOptionsValue),
-		"getCustomFrameOptionsValueHeaders": getFuncStringService(label.SuffixFrontendHeadersCustomFrameOptionsValue, ""),
-		"hasContentTypeNosniffHeaders":      hasFuncService(label.SuffixFrontendHeadersContentTypeNosniff),
-		"getContentTypeNosniffHeaders":      getFuncBoolService(label.SuffixFrontendHeadersContentTypeNosniff, false),
-		"hasBrowserXSSFilterHeaders":        hasFuncService(label.SuffixFrontendHeadersBrowserXSSFilter),
-		"getBrowserXSSFilterHeaders":        getFuncBoolService(label.SuffixFrontendHeadersBrowserXSSFilter, false),
-		"hasContentSecurityPolicyHeaders":   hasFuncService(label.SuffixFrontendHeadersContentSecurityPolicy),
-		"getContentSecurityPolicyHeaders":   getFuncStringService(label.SuffixFrontendHeadersContentSecurityPolicy, ""),
-		"hasPublicKeyHeaders":               hasFuncService(label.SuffixFrontendHeadersPublicKey),
-		"getPublicKeyHeaders":               getFuncStringService(label.SuffixFrontendHeadersPublicKey, ""),
-		"hasReferrerPolicyHeaders":          hasFuncService(label.SuffixFrontendHeadersReferrerPolicy),
-		"getReferrerPolicyHeaders":          getFuncStringService(label.SuffixFrontendHeadersReferrerPolicy, ""),
-		"hasIsDevelopmentHeaders":           hasFuncService(label.SuffixFrontendHeadersIsDevelopment),
-		"getIsDevelopmentHeaders":           getFuncBoolService(label.SuffixFrontendHeadersIsDevelopment, false),
+		"getServiceNames":         getServiceNames,
+		"getServiceNameSuffix":    getServiceNameSuffix,
+		"getPassHostHeader":       getFuncBoolService(label.SuffixFrontendPassHostHeader, label.DefaultPassHostHeaderBool),
+		"getPassTLSCert":          getFuncBoolService(label.SuffixFrontendPassTLSCert, label.DefaultPassTLSCert),
+		"getPriority":             getFuncIntService(label.SuffixFrontendPriority, label.DefaultFrontendPriorityInt),
+		"getEntryPoints":          getFuncSliceStringService(label.SuffixFrontendEntryPoints),
+		"getFrontendRule":         p.getFrontendRule,
+		"getFrontendName":         p.getFrontendName,
+		"getBasicAuth":            getFuncSliceStringService(label.SuffixFrontendAuthBasic),
+		"getWhitelistSourceRange": getFuncSliceStringService(label.SuffixFrontendWhitelistSourceRange),
+		"getRedirect":             getRedirect,
+		"getErrorPages":           getErrorPages,
+		"getRateLimit":            getRateLimit,
+		"getHeaders":              getHeaders,
 	}
 
 	v := url.Values{}
@@ -224,7 +199,7 @@ func (p *Provider) getBackend(application marathon.Application, serviceName stri
 	lblBackend := getLabelName(serviceName, label.SuffixBackend)
 	value := label.GetStringValue(labels, lblBackend, "")
 	if len(value) > 0 {
-		return "backend" + value
+		return provider.Normalize("backend" + value)
 	}
 	return provider.Normalize("backend" + application.ID + getServiceNameSuffix(serviceName))
 }
@@ -295,7 +270,7 @@ func getServiceNames(application marathon.Application) []string {
 	// An empty name "" will be added if no service specific properties exist,
 	// as an indication that there are no sub-services, but only main application
 	if len(names) == 0 {
-		names = append(names, "")
+		names = append(names, defaultService)
 	}
 	return names
 }
@@ -328,6 +303,7 @@ func logIllegalServices(task marathon.Task, application marathon.Application) {
 	}
 }
 
+// Deprecated
 func hasLoadBalancerLabels(application marathon.Application) bool {
 	method := label.HasP(application.Labels, label.TraefikBackendLoadBalancerMethod)
 	sticky := label.HasP(application.Labels, label.TraefikBackendLoadBalancerSticky)
@@ -335,6 +311,7 @@ func hasLoadBalancerLabels(application marathon.Application) bool {
 	return method || sticky || stickiness
 }
 
+// Deprecated
 func hasMaxConnLabels(application marathon.Application) bool {
 	mca := label.HasP(application.Labels, label.TraefikBackendMaxConnAmount)
 	mcef := label.HasP(application.Labels, label.TraefikBackendMaxConnExtractorFunc)
@@ -344,11 +321,11 @@ func hasMaxConnLabels(application marathon.Application) bool {
 // TODO: Deprecated
 // replaced by Stickiness
 // Deprecated
-func getSticky(application marathon.Application) string {
+func getSticky(application marathon.Application) bool {
 	if label.HasP(application.Labels, label.TraefikBackendLoadBalancerSticky) {
 		log.Warnf("Deprecated configuration found: %s. Please use %s.", label.TraefikBackendLoadBalancerSticky, label.TraefikBackendLoadBalancerStickiness)
 	}
-	return label.GetStringValueP(application.Labels, label.TraefikBackendLoadBalancerSticky, "false")
+	return label.GetBoolValueP(application.Labels, label.TraefikBackendLoadBalancerSticky, false)
 }
 
 func getPort(task marathon.Task, application marathon.Application, serviceName string) string {
@@ -420,14 +397,109 @@ func retrieveAvailablePorts(application marathon.Application, task marathon.Task
 	return []int{}
 }
 
-func hasRedirect(application marathon.Application, serviceName string) bool {
+func getCircuitBreaker(application marathon.Application) *types.CircuitBreaker {
+	circuitBreaker := label.GetStringValueP(application.Labels, label.TraefikBackendCircuitBreakerExpression, "")
+	if len(circuitBreaker) == 0 {
+		return nil
+	}
+	return &types.CircuitBreaker{Expression: circuitBreaker}
+}
+
+func getLoadBalancer(application marathon.Application) *types.LoadBalancer {
+	if !label.HasPrefixP(application.Labels, label.TraefikBackendLoadBalancer) {
+		return nil
+	}
+
+	method := label.GetStringValueP(application.Labels, label.TraefikBackendLoadBalancerMethod, label.DefaultBackendLoadBalancerMethod)
+
+	lb := &types.LoadBalancer{
+		Method: method,
+		Sticky: getSticky(application),
+	}
+
+	if label.GetBoolValueP(application.Labels, label.TraefikBackendLoadBalancerStickiness, false) {
+		cookieName := label.GetStringValueP(application.Labels, label.TraefikBackendLoadBalancerStickinessCookieName, label.DefaultBackendLoadbalancerStickinessCookieName)
+		lb.Stickiness = &types.Stickiness{CookieName: cookieName}
+	}
+
+	return lb
+}
+
+func getMaxConn(application marathon.Application) *types.MaxConn {
+	amount := label.GetInt64ValueP(application.Labels, label.TraefikBackendMaxConnAmount, math.MinInt64)
+	extractorFunc := label.GetStringValueP(application.Labels, label.TraefikBackendMaxConnExtractorFunc, label.DefaultBackendMaxconnExtractorFunc)
+
+	if amount == math.MinInt64 || len(extractorFunc) == 0 {
+		return nil
+	}
+
+	return &types.MaxConn{
+		Amount:        amount,
+		ExtractorFunc: extractorFunc,
+	}
+}
+
+func getHealthCheck(application marathon.Application) *types.HealthCheck {
+	path := label.GetStringValueP(application.Labels, label.TraefikBackendHealthCheckPath, "")
+	if len(path) == 0 {
+		return nil
+	}
+
+	port := label.GetIntValueP(application.Labels, label.TraefikBackendHealthCheckPort, label.DefaultBackendHealthCheckPort)
+	interval := label.GetStringValueP(application.Labels, label.TraefikBackendHealthCheckInterval, "")
+
+	return &types.HealthCheck{
+		Path:     path,
+		Port:     port,
+		Interval: interval,
+	}
+}
+
+func (p *Provider) getServers(application marathon.Application, serviceName string) map[string]types.Server {
+	var servers map[string]types.Server
+
+	for _, task := range application.Tasks {
+		host := p.getBackendServer(*task, application)
+		if len(host) == 0 {
+			continue
+		}
+
+		if servers == nil {
+			servers = make(map[string]types.Server)
+		}
+
+		labels := getLabels(application, serviceName)
+
+		port := getPort(*task, application, serviceName)
+		protocol := label.GetStringValue(labels, getLabelName(serviceName, label.SuffixProtocol), label.DefaultProtocol)
+
+		serverName := provider.Normalize("server-" + task.ID + getServiceNameSuffix(serviceName))
+		servers[serverName] = types.Server{
+			URL:    fmt.Sprintf("%s://%s:%v", protocol, host, port),
+			Weight: label.GetIntValue(labels, getLabelName(serviceName, label.SuffixWeight), label.DefaultWeightInt),
+		}
+	}
+
+	return servers
+}
+
+func getRedirect(application marathon.Application, serviceName string) *types.Redirect {
 	labels := getLabels(application, serviceName)
 
-	frep := label.Has(labels, getLabelName(serviceName, label.SuffixFrontendRedirectEntryPoint))
-	frrg := label.Has(labels, getLabelName(serviceName, label.SuffixFrontendRedirectRegex))
-	frrp := label.Has(labels, getLabelName(serviceName, label.SuffixFrontendRedirectReplacement))
+	if label.Has(labels, getLabelName(serviceName, label.SuffixFrontendRedirectEntryPoint)) {
+		return &types.Redirect{
+			EntryPoint: label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendRedirectEntryPoint), ""),
+		}
+	}
+	if label.Has(labels, getLabelName(serviceName, label.SuffixFrontendRedirectRegex)) &&
+		label.Has(labels, getLabelName(serviceName, label.SuffixFrontendRedirectReplacement)) {
+		return &types.Redirect{
+			Regex:       label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendRedirectRegex), ""),
+			Replacement: label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendRedirectReplacement), ""),
+		}
+	}
 
-	return frep || frrg && frrp
+	return nil
 }
 
 func getErrorPages(application marathon.Application, serviceName string) map[string]*types.ErrorPage {
@@ -440,14 +512,65 @@ func getErrorPages(application marathon.Application, serviceName string) map[str
 	return label.ParseErrorPages(labels, prefix, label.RegexpFrontendErrorPage)
 }
 
-func getRateLimits(application marathon.Application, serviceName string) map[string]*types.Rate {
+func getRateLimit(application marathon.Application, serviceName string) *types.RateLimit {
 	labels := getLabels(application, serviceName)
-	prefix := getLabelName(serviceName, label.BaseFrontendRateLimit)
+
+	extractorFunc := label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendRateLimitExtractorFunc), "")
+	if len(extractorFunc) == 0 {
+		return nil
+	}
+
+	limits := getRateSet(labels, serviceName)
+	if len(limits) == 0 {
+		return nil
+	}
+
+	return &types.RateLimit{
+		ExtractorFunc: extractorFunc,
+		RateSet:       limits,
+	}
+}
+
+func getRateSet(labels map[string]string, serviceName string) map[string]*types.Rate {
+	rateSetPrefix := getLabelName(serviceName, label.BaseFrontendRateLimit)
 
 	if len(serviceName) > 0 {
-		return label.ParseRateSets(labels, prefix, label.RegexpBaseFrontendRateLimit)
+		return label.ParseRateSets(labels, rateSetPrefix, label.RegexpBaseFrontendRateLimit)
 	}
-	return label.ParseRateSets(labels, prefix, label.RegexpFrontendRateLimit)
+	return label.ParseRateSets(labels, rateSetPrefix, label.RegexpFrontendRateLimit)
+}
+
+func getHeaders(application marathon.Application, serviceName string) *types.Headers {
+	labels := getLabels(application, serviceName)
+
+	headers := &types.Headers{
+		CustomRequestHeaders:    label.GetMapValue(labels, getLabelName(serviceName, label.SuffixFrontendRequestHeaders)),
+		CustomResponseHeaders:   label.GetMapValue(labels, getLabelName(serviceName, label.SuffixFrontendResponseHeaders)),
+		SSLProxyHeaders:         label.GetMapValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersSSLProxyHeaders)),
+		AllowedHosts:            label.GetSliceStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersAllowedHosts)),
+		HostsProxyHeaders:       label.GetSliceStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersHostsProxyHeaders)),
+		STSSeconds:              label.GetInt64Value(labels, getLabelName(serviceName, label.SuffixFrontendHeadersSTSSeconds), 0),
+		SSLRedirect:             label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersSSLRedirect), false),
+		SSLTemporaryRedirect:    label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersSSLTemporaryRedirect), false),
+		STSIncludeSubdomains:    label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersSTSIncludeSubdomains), false),
+		STSPreload:              label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersSTSPreload), false),
+		ForceSTSHeader:          label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersForceSTSHeader), false),
+		FrameDeny:               label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersFrameDeny), false),
+		ContentTypeNosniff:      label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersContentTypeNosniff), false),
+		BrowserXSSFilter:        label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersBrowserXSSFilter), false),
+		IsDevelopment:           label.GetBoolValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersIsDevelopment), false),
+		SSLHost:                 label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersSSLHost), ""),
+		CustomFrameOptionsValue: label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersCustomFrameOptionsValue), ""),
+		ContentSecurityPolicy:   label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersContentSecurityPolicy), ""),
+		PublicKey:               label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersPublicKey), ""),
+		ReferrerPolicy:          label.GetStringValue(labels, getLabelName(serviceName, label.SuffixFrontendHeadersReferrerPolicy), ""),
+	}
+
+	if !headers.HasSecureHeadersDefined() && !headers.HasCustomHeadersDefined() {
+		return nil
+	}
+
+	return headers
 }
 
 // Label functions
@@ -477,25 +600,6 @@ func hasFunc(labelName string) func(application marathon.Application) bool {
 	}
 }
 
-func hasFuncService(labelName string) func(application marathon.Application, serviceName string) bool {
-	return func(application marathon.Application, serviceName string) bool {
-		labels := getLabels(application, serviceName)
-		lbName := getLabelName(serviceName, labelName)
-
-		value, ok := labels[lbName]
-		return ok && len(value) > 0
-	}
-}
-
-func hasPrefixFuncService(prefix string) func(application marathon.Application, serviceName string) bool {
-	return func(application marathon.Application, serviceName string) bool {
-		labels := getLabels(application, serviceName)
-		lbName := getLabelName(serviceName, prefix)
-
-		return label.HasPrefix(labels, lbName)
-	}
-}
-
 func getFuncStringService(labelName string, defaultValue string) func(application marathon.Application, serviceName string) string {
 	return func(application marathon.Application, serviceName string) string {
 		labels := getLabels(application, serviceName)
@@ -512,11 +616,11 @@ func getFuncBoolService(labelName string, defaultValue bool) func(application ma
 	}
 }
 
-func getFuncInt64Service(labelName string, defaultValue int64) func(application marathon.Application, serviceName string) int64 {
-	return func(application marathon.Application, serviceName string) int64 {
+func getFuncIntService(labelName string, defaultValue int) func(application marathon.Application, serviceName string) int {
+	return func(application marathon.Application, serviceName string) int {
 		labels := getLabels(application, serviceName)
 		lbName := getLabelName(serviceName, labelName)
-		return label.GetInt64Value(labels, lbName, defaultValue)
+		return label.GetIntValue(labels, lbName, defaultValue)
 	}
 }
 
@@ -524,13 +628,6 @@ func getFuncSliceStringService(labelName string) func(application marathon.Appli
 	return func(application marathon.Application, serviceName string) []string {
 		labels := getLabels(application, serviceName)
 		return label.GetSliceStringValue(labels, getLabelName(serviceName, labelName))
-	}
-}
-
-func getFuncMapService(labelName string) func(application marathon.Application, serviceName string) map[string]string {
-	return func(application marathon.Application, serviceName string) map[string]string {
-		labels := getLabels(application, serviceName)
-		return label.GetMapValue(labels, getLabelName(serviceName, labelName))
 	}
 }
 
@@ -543,11 +640,5 @@ func getFuncString(labelName string, defaultValue string) func(application marat
 func getFuncInt64(labelName string, defaultValue int64) func(application marathon.Application) int64 {
 	return func(application marathon.Application) int64 {
 		return label.GetInt64ValueP(application.Labels, labelName, defaultValue)
-	}
-}
-
-func getFuncInt(labelName string, defaultValue int) func(application marathon.Application) int {
-	return func(application marathon.Application) int {
-		return label.GetIntValueP(application.Labels, labelName, defaultValue)
 	}
 }

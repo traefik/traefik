@@ -93,6 +93,14 @@ func GetBoolValue(labels map[string]string, labelName string, defaultValue bool)
 	return defaultValue
 }
 
+// GetBoolValueP get bool value associated to a label
+func GetBoolValueP(labels *map[string]string, labelName string, defaultValue bool) bool {
+	if labels == nil {
+		return defaultValue
+	}
+	return GetBoolValue(*labels, labelName, defaultValue)
+}
+
 // GetIntValue get int value associated to a label
 func GetIntValue(labels map[string]string, labelName string, defaultValue int) int {
 	if rawValue, ok := labels[labelName]; ok {
@@ -227,6 +235,14 @@ func HasPrefix(labels map[string]string, prefix string) bool {
 		}
 	}
 	return false
+}
+
+// HasPrefixP Check if a value is associated to a less one label with a prefix
+func HasPrefixP(labels *map[string]string, prefix string) bool {
+	if labels == nil {
+		return false
+	}
+	return HasPrefix(*labels, prefix)
 }
 
 // FindServiceSubmatch split service label
