@@ -99,9 +99,14 @@ func (ev *RATEAuditEvent) AppendResponse(responseHeaders http.Header, respInfo t
 	appendCommonResponseFields(&ev.AuditEvent, responseHeaders, respInfo)
 }
 
+// EnforceConstraints ensures the audit event satisfies constraints
+func (ev *RATEAuditEvent) EnforceConstraints(constraints AuditConstraints) {
+	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
+}
+
 // ToEncoded transforms the event into an Encoded
 func (ev *RATEAuditEvent) ToEncoded() types.Encoded {
-	return EncodeToJSON(ev)
+	return types.ToEncoded(ev)
 }
 
 // NewRATEAuditEvent creates a new APIAuditEvent with the provided auditSource and auditType
@@ -265,6 +270,7 @@ func (partial *partialGovTalkMessage) populateSelfAssessmentData(ev *RATEAuditEv
 			ev.RequestPayload = types.DataMap{}
 		}
 		ev.RequestPayload["contents"] = body
+		ev.RequestPayload["length"] = int64(types.ToEncoded(body).Length())
 		if strings.HasPrefix(ev.AuditType, "HMRC-SA-SA100") {
 			if el := partial.Body.FindElementPath(gtmSa110Repayment); el != nil {
 				if amount, err := strconv.ParseFloat(el.Text(), 64); err == nil {

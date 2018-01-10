@@ -6,9 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"strconv"
+
 	"github.com/containous/traefik/middlewares/audittap/types"
 	"github.com/stretchr/testify/assert"
-	"strconv"
 )
 
 func TestAppendCommonRequestFields(t *testing.T) {
@@ -111,6 +112,29 @@ func TestAuditResponseHeaders(t *testing.T) {
 
 	assert.Equal(t, types.DataMap{"type": "application/json"}, ev.ResponsePayload)
 	assert.Equal(t, expectRespHdrs, ev.ResponseHeaders)
+}
+
+func TestRequestContentsOmittedWhenTooLong(t *testing.T) {
+	max := 20
+	ev := RATEAuditEvent{}
+	ev.AuditEvent = AuditEvent{RequestPayload: types.DataMap{}}
+	constraints := AuditConstraints{MaxAuditLength: 1000, MaxRequestContentsLength: int64(max)}
+	ev.RequestPayload["contents"] = types.DataMap{"Key1": "MoreThan20Bytes"}
+	ev.RequestPayload["length"] = max + 1
+	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
+	assert.Equal(t, types.DataMap{}, ev.RequestPayload["contents"])
+}
+
+func TestRequestContentsRetained(t *testing.T) {
+	max := 1000
+	contents := types.DataMap{"Key1": "MoreThan20Bytes"}
+	ev := RATEAuditEvent{}
+	ev.AuditEvent = AuditEvent{RequestPayload: types.DataMap{}}
+	constraints := AuditConstraints{MaxAuditLength: 1000, MaxRequestContentsLength: int64(max)}
+	ev.RequestPayload["contents"] = contents
+	ev.RequestPayload["length"] = max - 1
+	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
+	assert.Equal(t, contents, ev.RequestPayload["contents"])
 }
 
 type fixedClock time.Time

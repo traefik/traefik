@@ -1,8 +1,6 @@
 package audittypes
 
 import (
-	"bytes"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -52,6 +50,7 @@ type AuditStream interface {
 type Auditer interface {
 	AppendRequest(req *http.Request)
 	AppendResponse(responseHeaders http.Header, resp types.ResponseInfo)
+	EnforceConstraints(constraints AuditConstraints)
 	types.Encodeable
 }
 
@@ -108,13 +107,10 @@ func appendCommonResponseFields(ev *AuditEvent, responseHeaders http.Header, inf
 	return flatHeaders
 }
 
-//-------------------------------------------------------------------------------------------------
-
-// EncodeToJSON transforms event event to JSON and then to bytes
-func EncodeToJSON(event interface{}) types.Encoded {
-	buffer := new(bytes.Buffer)
-	encoder := json.NewEncoder(buffer)
-	encoder.SetEscapeHTML(false)
-	err := encoder.Encode(event)
-	return types.Encoded{buffer.Bytes(), err}
+func enforcePrecedentConstraints(ev *AuditEvent, constraints AuditConstraints) {
+	payloadLen, _ := ev.RequestPayload["length"].(int) // Zero if not int or missing
+	contents := ev.RequestPayload["contents"]
+	if contents != nil && int64(payloadLen) > constraints.MaxRequestContentsLength {
+		ev.RequestPayload["contents"] = types.DataMap{} // Contents too big
+	}
 }

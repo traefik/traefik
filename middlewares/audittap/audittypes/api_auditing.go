@@ -1,8 +1,9 @@
 package audittypes
 
 import (
-	"github.com/containous/traefik/middlewares/audittap/types"
 	"net/http"
+
+	"github.com/containous/traefik/middlewares/audittap/types"
 )
 
 // APIAuditEvent is the audit event created for API calls
@@ -22,9 +23,14 @@ func (ev *APIAuditEvent) AppendResponse(responseHeaders http.Header, respInfo ty
 	appendCommonResponseFields(&ev.AuditEvent, responseHeaders, respInfo)
 }
 
+// EnforceConstraints ensures the audit event satisfies constraints
+func (ev *APIAuditEvent) EnforceConstraints(constraints AuditConstraints) {
+	enforcePrecedentConstraints(&ev.AuditEvent, constraints)
+}
+
 // ToEncoded transforms the event into an Encoded
 func (ev *APIAuditEvent) ToEncoded() types.Encoded {
-	return EncodeToJSON(ev)
+	return types.ToEncoded(ev)
 }
 
 // NewAPIAuditEvent creates a new APIAuditEvent with the provided auditSource and auditType
