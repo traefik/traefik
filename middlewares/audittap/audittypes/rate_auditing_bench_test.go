@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const saMsgXml string = `
+const saMsgXML string = `
 <?xml version="1.0" encoding="UTF-8"?>
 <GovTalkMessage xmlns="http://www.govtalk.gov.uk/CM/envelope">
 	<EnvelopeVersion>2.0</EnvelopeVersion>
@@ -476,7 +476,7 @@ func benchWithPayload(b *testing.B, payloadKbs int) {
 }
 
 func messageWithPayload(payloadKbs int) io.ReadCloser {
-	xml := saMsgXml
+	xml := saMsgXML
 	if i := strings.Index(xml, "</Attachment>"); i != -1 {
 		lenSlice := payloadKbs * 1024
 		dat := make([]byte, lenSlice, lenSlice)

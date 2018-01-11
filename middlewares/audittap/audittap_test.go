@@ -49,7 +49,7 @@ func TestAuditTap_noop(t *testing.T) {
 	tap.ServeHTTP(res, req)
 
 	assert.Equal(t, 1, len(capture.events))
-	if apiAudit, err := toApiAudit(capture.events[0]); err == nil {
+	if apiAudit, err := toAPIAudit(capture.events[0]); err == nil {
 		assert.Equal(t, "testSource", apiAudit.AuditSource)
 		assert.Equal(t, "testType", apiAudit.AuditType)
 		assert.Equal(t, "auth789", apiAudit.AuthorisationToken)
@@ -127,7 +127,7 @@ func TestAuditExclusion(t *testing.T) {
 	tap.ServeHTTP(httptest.NewRecorder(), incReq)
 
 	assert.Equal(t, 1, len(capture.events))
-	if apiAudit, err := toApiAudit(capture.events[0]); err == nil {
+	if apiAudit, err := toAPIAudit(capture.events[0]); err == nil {
 		assert.Equal(t, "as1", apiAudit.AuditSource)
 		assert.Equal(t, "at1", apiAudit.AuditType)
 		assert.Equal(t, "/includeme", apiAudit.Path)
@@ -200,7 +200,7 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 	simpleHandler(w, "404 page not found", http.StatusNotFound)
 }
 
-func toApiAudit(obj interface{}) (*audittypes.APIAuditEvent, error) {
+func toAPIAudit(obj interface{}) (*audittypes.APIAuditEvent, error) {
 	if enc, ok := obj.(atypes.Encoded); ok {
 		audit := &audittypes.APIAuditEvent{}
 		err := json.Unmarshal(enc.Bytes, audit)
