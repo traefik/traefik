@@ -117,7 +117,7 @@ spec:
       - image: traefik
         name: traefik-ingress-lb
         args:
-        - --web
+        - --api
         - --kubernetes
 ---
 kind: Service
@@ -182,7 +182,7 @@ spec:
           privileged: true
         args:
         - -d
-        - --web
+        - --api
         - --kubernetes
 ---
 kind: Service

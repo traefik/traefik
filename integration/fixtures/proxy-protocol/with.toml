@@ -7,8 +7,7 @@ address = ":8000"
 [entryPoints.http.proxyProtocol]
 trustedIPs = ["{{.HaproxyIP}}"]
 
-[web]
-address = ":8080"
+[api]
 
 [file]
 

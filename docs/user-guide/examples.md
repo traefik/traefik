@@ -306,7 +306,7 @@ idleTimeout = "360s"
 
 ## Securing Ping Health Check
 
-The `/ping` health-check URL is enabled together with the web admin panel, enabled with the command-line `--web` or config file option `[web]`.
+The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.
 Thus, if you have a regular path for `/foo` and an entrypoint on `:80`, you would access them as follows:
 
 * Regular path: `http://hostname:80/foo`

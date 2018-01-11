@@ -7,8 +7,7 @@ address = ":8000"
 [entryPoints.http.proxyProtocol]
 trustedIPs = ["1.2.3.4"]
 
-[web]
-address = ":8080"
+[api]
 
 [file]
 

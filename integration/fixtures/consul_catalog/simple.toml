@@ -1,8 +1,7 @@
 defaultEntryPoints = ["http"]
 logLevel = "DEBUG"
 
-[web]
-  address = ":8080"
+[api]
 
 [entryPoints]
   [entryPoints.http]

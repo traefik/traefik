@@ -8,8 +8,7 @@ logLevel = "DEBUG"
   [entryPoints.http2]
   address = ":9000"
 
-[web]
-  address = ":8080"
+[api]
 
 [file]
 [backends]

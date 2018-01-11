@@ -93,7 +93,7 @@ docker $(docker-machine config mhs-demo0) run \
     --docker.tls.key=/ssl/server-key.pem \
     --docker.tls.insecureSkipVerify \
     --docker.watch \
-    --web
+    --api
 ```
 
 Let's explain this command:
@@ -107,7 +107,7 @@ Let's explain this command:
 | `--docker`                                | enable docker backend                                         |
 | `--docker.endpoint=tcp://172.18.0.1:2376` | connect to the swarm master using the docker_gwbridge network |
 | `--docker.tls`                            | enable TLS using the docker-machine keys                      |
-| `--web`                                   | activate the webUI on port 8080                               |
+| `--api`                                   | activate the webUI on port 8080                               |
 
 
 ## Deploy your apps

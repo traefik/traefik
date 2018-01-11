@@ -161,7 +161,7 @@ curl -s "http://localhost:8080/health" | jq .
   // average response time in seconds
   "average_response_time_sec": 0.8648016000000001,
 
-  // request statistics [requires --web.statistics to be set]
+  // request statistics [requires --statistics to be set]
   // ten most recent requests with 4xx and 5xx status codes
   "recent_errors": [
     {

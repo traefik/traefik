@@ -10,8 +10,7 @@ defaultEntryPoints = ["https"]
   address = ":8443"
   [entryPoints.https02.tls]
 
-[web]
-  address = ":8080"
+[api]
 
 [file]
 
