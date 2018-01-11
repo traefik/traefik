@@ -3,27 +3,28 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"; export SCRIPTDIR
-source "${SCRIPTDIR}/.validate"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"; export SCRIPT_DIR
+source "${SCRIPT_DIR}/.validate"
 
 vendor_dir="./vendor/"
 IFS=$'\n' files=( $(validate_diff --diff-filter=ACMR --name-only -- ${vendor_dir} || true) )
 
 if [[ ${#files[@]} -gt 0 ]]; then
-    # We run glide install to and see if we have a diff afterwards
+    # We run dep install to and see if we have a diff afterwards
     echo "checking ${vendor_dir} for unintentional changes..."
-    (
-    "${SCRIPTDIR}/glide.sh" install
-    )
+
+    dep ensure -v
+    (${SCRIPT_DIR}/prune-dep.sh)
+
     # Let see if the working directory is clean
     diffs="$(git status --porcelain -- ${vendor_dir} 2>/dev/null)"
     if [[ "$diffs" ]]; then
         {
-            echo "The result of 'glide install' for vendor directory '${vendor_dir}' differs"
+            echo "The result of 'dep ensure' for vendor directory '${vendor_dir}' differs"
             echo
             echo "$diffs"
             echo
-            echo 'Please vendor your package(s) with script/glide.sh.'
+            echo 'Please vendor your package(s) with dep.'
             echo
         } >&2
         exit 2

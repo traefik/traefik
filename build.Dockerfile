@@ -7,20 +7,18 @@ RUN apk --update upgrade \
 RUN go get github.com/jteeuwen/go-bindata/... \
 && go get github.com/golang/lint/golint \
 && go get github.com/kisielk/errcheck \
-&& go get github.com/client9/misspell/cmd/misspell \
-&& go get github.com/mattfarina/glide-hash \
-&& go get github.com/sgotti/glide-vc
+&& go get github.com/client9/misspell/cmd/misspell
 
 # Which docker version to test on
 ARG DOCKER_VERSION=17.03.2
+ARG DEP_VERSION=0.3.2
 
-# Which glide version to test on
-ARG GLIDE_VERSION=v0.12.3
-
-# Download glide
+# Download dep binary to bin folder in $GOPATH
 RUN mkdir -p /usr/local/bin \
-    && curl -fL https://github.com/Masterminds/glide/releases/download/${GLIDE_VERSION}/glide-${GLIDE_VERSION}-linux-amd64.tar.gz \
-    | tar -xzC /usr/local/bin --transform 's#^.+/##x'
+    && curl -fsSL -o /usr/local/bin/dep https://github.com/golang/dep/releases/download/v${DEP_VERSION}/dep-linux-amd64 \
+    && chmod +x /usr/local/bin/dep
+
+
 
 # Download docker
 RUN mkdir -p /usr/local/bin \
