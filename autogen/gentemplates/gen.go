@@ -135,7 +135,7 @@ var _templatesDockerTmpl = []byte(`{{$backendServers := .Servers}}
       method = "{{getLoadBalancerMethod $backend}}"
       sticky = {{getSticky $backend}}
       {{if hasStickinessLabel $backend}}
-      [backends.backend-{{$backendName}}.loadBalancer.stickiness]
+      [backends.backend-{{$backendName}}.loadbalancer.stickiness]
         cookieName = "{{getStickinessCookieName $backend}}"
       {{end}}
     {{end}}
