@@ -1,6 +1,8 @@
 package audittap
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -16,7 +18,7 @@ type noopAuditStream struct {
 	events []interface{}
 }
 
-func (as *noopAuditStream) Audit(event atypes.Encodeable) error {
+func (as *noopAuditStream) Audit(event atypes.Encoded) error {
 	as.events = append(as.events, event)
 	return nil
 }
@@ -47,7 +49,7 @@ func TestAuditTap_noop(t *testing.T) {
 	tap.ServeHTTP(res, req)
 
 	assert.Equal(t, 1, len(capture.events))
-	if apiAudit, ok := capture.events[0].(*audittypes.APIAuditEvent); ok {
+	if apiAudit, err := toApiAudit(capture.events[0]); err == nil {
 		assert.Equal(t, "testSource", apiAudit.AuditSource)
 		assert.Equal(t, "testType", apiAudit.AuditType)
 		assert.Equal(t, "auth789", apiAudit.AuthorisationToken)
@@ -125,7 +127,7 @@ func TestAuditExclusion(t *testing.T) {
 	tap.ServeHTTP(httptest.NewRecorder(), incReq)
 
 	assert.Equal(t, 1, len(capture.events))
-	if apiAudit, ok := capture.events[0].(*audittypes.APIAuditEvent); ok {
+	if apiAudit, err := toApiAudit(capture.events[0]); err == nil {
 		assert.Equal(t, "as1", apiAudit.AuditSource)
 		assert.Equal(t, "at1", apiAudit.AuditType)
 		assert.Equal(t, "/includeme", apiAudit.Path)
@@ -162,6 +164,27 @@ func TestAuditConstraintsAssigned(t *testing.T) {
 	assert.Equal(t, int64(39000), tap.AuditConfig.AuditConstraints.MaxRequestContentsLength)
 }
 
+func TestOversizedAuditDropped(t *testing.T) {
+	capture := &noopAuditStream{}
+	cfg := &types.AuditSink{
+		ProxyingFor:    "API",
+		AuditSource:    "testSource",
+		AuditType:      "testType",
+		EncryptSecret:  "",
+		MaxAuditLength: "50", // bytes
+	}
+	tap, err := NewAuditTap(cfg, []audittypes.AuditStream{capture}, "backend1", http.HandlerFunc(notFound))
+	assert.NoError(t, err)
+	audit := &audittypes.APIAuditEvent{}
+	payload := atypes.DataMap{"SomeKey": "IAmLongerThan10Bytes"}
+	audit.RequestPayload = payload
+
+	err = tap.submitAudit(audit)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 0, len(capture.events))
+}
+
 // simpleHandler replies to the request with the specified error message and HTTP code.
 // It does not otherwise end the request; the caller should ensure no further
 // writes are done to w.
@@ -175,4 +198,13 @@ func simpleHandler(w http.ResponseWriter, error string, code int) {
 
 func notFound(w http.ResponseWriter, r *http.Request) {
 	simpleHandler(w, "404 page not found", http.StatusNotFound)
+}
+
+func toApiAudit(obj interface{}) (*audittypes.APIAuditEvent, error) {
+	if enc, ok := obj.(atypes.Encoded); ok {
+		audit := &audittypes.APIAuditEvent{}
+		err := json.Unmarshal(enc.Bytes, audit)
+		return audit, err
+	}
+	return nil, errors.New("obj is expected to be type Encoded")
 }

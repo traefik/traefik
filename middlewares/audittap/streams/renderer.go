@@ -16,11 +16,7 @@ func NewAuditStream(sink AuditSink) atypes.AuditStream {
 	return &stream{sink}
 }
 
-func (s *stream) Audit(encoder types.Encodeable) error {
-	enc := encoder.ToEncoded()
-	if enc.Err != nil {
-		return enc.Err
-	}
+func (s *stream) Audit(enc types.Encoded) error {
 	return s.sink.Audit(enc)
 }
 

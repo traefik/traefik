@@ -43,7 +43,7 @@ type AuditConstraints struct {
 // AuditStream describes a type to which audit events can be sent.
 type AuditStream interface {
 	io.Closer
-	Audit(encoder types.Encodeable) error
+	Audit(encoder types.Encoded) error
 }
 
 // Auditer is a type that audits information from a HTTP request and response

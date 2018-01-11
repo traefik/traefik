@@ -17,10 +17,10 @@ func (s *StubEncoder) ToEncoded() Encoded {
 }
 
 func TestAuditStream(t *testing.T) {
-	encoder := StubEncoder{Encoded{Bytes: []byte("AnyOldData")}}
+	enc := Encoded{Bytes: []byte("AnyOldData")}
 	sink := &noopSink{0, 0}
 	as := NewAuditStream(sink)
-	err := as.Audit(&encoder)
+	err := as.Audit(enc)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, sink.audits)
 

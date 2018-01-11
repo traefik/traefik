@@ -63,7 +63,7 @@ func NewAuditTap(config *types.AuditSink, streams []audittypes.AuditStream, back
 	}
 
 	var maxPayload int64
-	if config.MaxAuditLength != "" {
+	if config.MaxPayloadContentsLength != "" {
 		if maxPayload, _, err = asSI(config.MaxPayloadContentsLength); err != nil {
 			return nil, err
 		}
@@ -127,10 +127,24 @@ func (tap *AuditTap) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	if !excludeAudit {
 		auditer.AppendResponse(ww.Header(), ww.GetResponseInfo())
-		for _, sink := range tap.AuditStreams {
-			sink.Audit(auditer)
-		}
+		auditer.EnforceConstraints(tap.AuditConstraints)
+		tap.submitAudit(auditer)
 	}
+}
+
+func (tap *AuditTap) submitAudit(auditer audittypes.Auditer) error {
+	enc := auditer.ToEncoded()
+	if enc.Err != nil {
+		return enc.Err
+	}
+	if int64(enc.Length()) <= tap.AuditConstraints.MaxAuditLength {
+		for _, sink := range tap.AuditStreams {
+			sink.Audit(enc)
+		}
+	} else {
+		log.Errorf("Dropping audit event. Length %d exceeds limit %d", enc.Length(), tap.AuditConstraints.MaxAuditLength)
+	}
+	return nil
 }
 
 // isExcluded asserts if request metadata matches specified exclusions from config
