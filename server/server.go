@@ -322,7 +322,7 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
-		serverMiddlewares = append(serverMiddlewares, authMiddleware)
+		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for entrypoint %s", newServerEntryPointName)))
 		serverInternalMiddlewares = append(serverInternalMiddlewares, authMiddleware)
 	}
 	if s.globalConfiguration.EntryPoints[newServerEntryPointName].Compress {
@@ -333,7 +333,7 @@ func (s *Server) setupServerEntryPoint(newServerEntryPointName string, newServer
 		if err != nil {
 			log.Fatal("Error starting server: ", err)
 		}
-		serverMiddlewares = append(serverMiddlewares, ipWhitelistMiddleware)
+		serverMiddlewares = append(serverMiddlewares, s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for entrypoint %s", newServerEntryPointName)))
 		serverInternalMiddlewares = append(serverInternalMiddlewares, ipWhitelistMiddleware)
 	}
 	newSrv, listener, err := s.prepareServer(newServerEntryPointName, s.globalConfiguration.EntryPoints[newServerEntryPointName], newServerEntryPoint.httpRouter, serverMiddlewares, serverInternalMiddlewares)
@@ -418,8 +418,8 @@ func (s *Server) defaultConfigurationValues(configuration *types.Configuration) 
 	if configuration == nil || configuration.Frontends == nil {
 		return
 	}
-	s.configureFrontends(configuration.Frontends)
-	s.configureBackends(configuration.Backends)
+	configureFrontends(configuration.Frontends, s.globalConfiguration.DefaultEntryPoints)
+	configureBackends(configuration.Backends)
 }
 
 func (s *Server) listenConfigurations(stop chan bool) {
@@ -965,14 +965,9 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						log.Errorf("Skipping frontend %s...", frontendName)
 						continue frontend
 					} else {
-						if s.accessLoggerMiddleware != nil {
-							saveFrontend := accesslog.NewSaveNegroniFrontend(handler, frontendName)
-							n.Use(saveFrontend)
-							redirectHandlers[entryPointName] = saveFrontend
-						} else {
-							n.Use(handler)
-							redirectHandlers[entryPointName] = handler
-						}
+						handlerToUse := s.wrapNegroniHandlerWithAccessLog(handler, fmt.Sprintf("entrypoint redirect for %s", frontendName))
+						n.Use(handlerToUse)
+						redirectHandlers[entryPointName] = handlerToUse
 					}
 				}
 				if backends[entryPointName+frontend.Backend] == nil {
@@ -1116,6 +1111,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 
 					if frontend.RateLimit != nil && len(frontend.RateLimit.RateSet) > 0 {
 						lb, err = s.buildRateLimiter(lb, frontend.RateLimit)
+						lb = s.wrapHTTPHandlerWithAccessLog(lb, fmt.Sprintf("rate limit for %s", frontendName))
 						if err != nil {
 							log.Errorf("Error creating rate limiter: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)
@@ -1133,6 +1129,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						}
 						log.Debugf("Creating load-balancer connlimit")
 						lb, err = connlimit.New(lb, extractFunc, maxConns.Amount)
+						lb = s.wrapHTTPHandlerWithAccessLog(lb, fmt.Sprintf("connection limit for %s", frontendName))
 						if err != nil {
 							log.Errorf("Error creating connlimit: %v", err)
 							log.Errorf("Skipping frontend %s...", frontendName)
@@ -1153,6 +1150,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 					if err != nil {
 						log.Errorf("Error creating IP Whitelister: %s", err)
 					} else if ipWhitelistMiddleware != nil {
+						ipWhitelistMiddleware = s.wrapNegroniHandlerWithAccessLog(ipWhitelistMiddleware, fmt.Sprintf("ipwhitelister for %s", frontendName))
 						n.Use(s.tracingMiddleware.NewNegroniHandlerWrapper("IP whitelist", ipWhitelistMiddleware, false))
 						log.Infof("Configured IP Whitelists: %s", frontend.WhitelistSourceRange)
 					}
@@ -1162,7 +1160,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						if err != nil {
 							log.Errorf("Error creating Frontend Redirect: %v", err)
 						}
-						n.Use(rewrite)
+						n.Use(s.wrapNegroniHandlerWithAccessLog(rewrite, fmt.Sprintf("frontend redirect for %s", frontendName)))
 						log.Debugf("Frontend %s redirect created", frontendName)
 					}
 
@@ -1180,7 +1178,7 @@ func (s *Server) loadConfig(configurations types.Configurations, globalConfigura
 						if err != nil {
 							log.Errorf("Error creating Auth: %s", err)
 						} else {
-							n.Use(authMiddleware)
+							n.Use(s.wrapNegroniHandlerWithAccessLog(authMiddleware, fmt.Sprintf("Auth for %s", frontendName)))
 						}
 					}
 
@@ -1370,7 +1368,7 @@ func (s *Server) buildRedirect(entryPointName string) (string, string, error) {
 
 func (s *Server) buildDefaultHTTPRouter() *mux.Router {
 	router := mux.NewRouter()
-	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	router.NotFoundHandler = s.wrapHTTPHandlerWithAccessLog(http.HandlerFunc(notFoundHandler), "backend not found")
 	router.StrictSlash(true)
 	router.SkipClean(true)
 	return router
@@ -1422,16 +1420,16 @@ func sortedFrontendNamesForConfig(configuration *types.Configuration) []string {
 	return keys
 }
 
-func (s *Server) configureFrontends(frontends map[string]*types.Frontend) {
+func configureFrontends(frontends map[string]*types.Frontend, defaultEntrypoints []string) {
 	for _, frontend := range frontends {
 		// default endpoints if not defined in frontends
 		if len(frontend.EntryPoints) == 0 {
-			frontend.EntryPoints = s.globalConfiguration.DefaultEntryPoints
+			frontend.EntryPoints = defaultEntrypoints
 		}
 	}
 }
 
-func (*Server) configureBackends(backends map[string]*types.Backend) {
+func configureBackends(backends map[string]*types.Backend) {
 	for backendName := range backends {
 		backend := backends[backendName]
 		if backend.LoadBalancer != nil && backend.LoadBalancer.Sticky {
@@ -1533,4 +1531,21 @@ func (s *Server) buildRetryMiddleware(handler http.Handler, globalConfig configu
 	log.Debugf("Creating retries max attempts %d", retryAttempts)
 
 	return s.tracingMiddleware.NewHTTPHandlerWrapper("Retry", middlewares.NewRetry(retryAttempts, handler, retryListeners), false)
+}
+func (s *Server) wrapNegroniHandlerWithAccessLog(handler negroni.Handler, frontendName string) negroni.Handler {
+	if s.accessLoggerMiddleware != nil {
+		saveBackend := accesslog.NewSaveNegroniBackend(handler, "Træfik")
+		saveFrontend := accesslog.NewSaveNegroniFrontend(saveBackend, frontendName)
+		return saveFrontend
+	}
+	return handler
+}
+
+func (s *Server) wrapHTTPHandlerWithAccessLog(handler http.Handler, frontendName string) http.Handler {
+	if s.accessLoggerMiddleware != nil {
+		saveBackend := accesslog.NewSaveBackend(handler, "Træfik")
+		saveFrontend := accesslog.NewSaveFrontend(saveBackend, frontendName)
+		return saveFrontend
+	}
+	return handler
 }

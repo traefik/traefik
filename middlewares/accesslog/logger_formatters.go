@@ -31,19 +31,19 @@ func (f *CommonLogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		entry.Data[RequestMethod],
 		entry.Data[RequestPath],
 		entry.Data[RequestProtocol],
-		toLog(entry.Data[OriginStatus]),
-		toLog(entry.Data[OriginContentSize]),
-		toLog(entry.Data["request_Referer"]),
-		toLog(entry.Data["request_User-Agent"]),
-		toLog(entry.Data[RequestCount]),
-		toLog(entry.Data[FrontendName]),
-		toLog(entry.Data[BackendURL]),
+		toLog(entry.Data[OriginStatus], defaultValue),
+		toLog(entry.Data[OriginContentSize], defaultValue),
+		toLog(entry.Data["request_Referer"], `"-"`),
+		toLog(entry.Data["request_User-Agent"], `"-"`),
+		toLog(entry.Data[RequestCount], defaultValue),
+		toLog(entry.Data[FrontendName], defaultValue),
+		toLog(entry.Data[BackendURL], defaultValue),
 		elapsedMillis)
 
 	return b.Bytes(), err
 }
 
-func toLog(v interface{}) interface{} {
+func toLog(v interface{}, defaultValue string) interface{} {
 	if v == nil {
 		return defaultValue
 	}
