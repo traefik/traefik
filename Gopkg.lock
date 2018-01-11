@@ -120,10 +120,11 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "containous-fork"
   name = "github.com/abbot/go-http-auth"
   packages = ["."]
-  revision = "0ddd408d5d60ea76e320503cc7dd091992dee608"
-  version = "v0.4.0"
+  revision = "65b0cdae8d7fe5c05c7430e055938ef6d24a66c9"
+  source = "github.com/containous/go-http-auth"
 
 [[projects]]
   name = "github.com/aokoli/goutils"
@@ -1385,6 +1386,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8cd40e70454298aa3ef967edf2c501aef87f1964b9e5cef3318f2c99fc5e620e"
+  inputs-digest = "bd1e7a1b07d95ff85c675468bbfc4bc7a91c39cf1feceeb58dfcdba9592180a5"
   solver-name = "gps-cdcl"
   solver-version = 1
