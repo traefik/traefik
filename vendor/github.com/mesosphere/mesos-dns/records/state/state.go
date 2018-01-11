@@ -50,7 +50,7 @@ type Status struct {
 	State           string          `json:"state"`
 	Labels          []Label         `json:"labels,omitempty"`
 	ContainerStatus ContainerStatus `json:"container_status,omitempty"`
-	Healthy         *bool           `json:"healthy"`
+	Healthy         *bool          	`json:"healthy"`
 }
 
 // ContainerStatus holds container metadata as defined in the /state.json
@@ -253,8 +253,8 @@ type DiscoveryInfo struct {
 	Location    string `json:"location,omitempty"`
 	Environment string `json:"environment,omitempty"`
 	Labels      struct {
-		Labels []Label `json:"labels"`
-	} `json:"labels"`
+			    Labels []Label `json:"labels"`
+		    } `json:"labels"`
 	Ports Ports `json:"ports"`
 }
 
