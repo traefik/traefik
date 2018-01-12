@@ -5,6 +5,7 @@ package forward
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -281,6 +282,9 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	outReq := f.copyWebSocketRequest(req)
 
 	dialer := websocket.DefaultDialer
+
+	dialer.EnableCompression = strings.Contains(req.Header.Get("Sec-Websocket-Extensions"), "permessage-deflate")
+
 	if outReq.URL.Scheme == "wss" && f.tlsClientConfig != nil {
 		dialer.TLSClientConfig = f.tlsClientConfig.Clone()
 		// WebSocket is only in http/1.1
@@ -322,7 +326,10 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 		return true
 	}}
 
+	upgrader.EnableCompression = strings.Contains(resp.Header.Get("Sec-Websocket-Extensions"), "permessage-deflate")
+
 	utils.RemoveHeaders(resp.Header, WebsocketUpgradeHeaders...)
+
 	underlyingConn, err := upgrader.Upgrade(w, req, resp.Header)
 	if err != nil {
 		log.Errorf("vulcand/oxy/forward/websocket: Error while upgrading connection : %v", err)
@@ -331,29 +338,45 @@ func (f *httpForwarder) serveWebSocket(w http.ResponseWriter, req *http.Request,
 	defer underlyingConn.Close()
 	defer targetConn.Close()
 
-	errc := make(chan error, 2)
-
-	replicateWebsocketConn := func(dst, src *websocket.Conn, dstName, srcName string) {
-		var err error
+	errClient := make(chan error)
+	errBackend := make(chan error)
+	replicateWebsocketConn := func(dst, src *websocket.Conn, errc chan error) {
 		for {
 			msgType, msg, err := src.ReadMessage()
+
 			if err != nil {
-				f.log.Errorf("vulcand/oxy/forward/websocket: Error when copying from %s to %s using ReadMessage: %v", srcName, dstName, err)
+				m := websocket.FormatCloseMessage(websocket.CloseNormalClosure, fmt.Sprintf("%v", err))
+				if e, ok := err.(*websocket.CloseError); ok {
+					if e.Code != websocket.CloseNoStatusReceived {
+						m = websocket.FormatCloseMessage(e.Code, e.Text)
+					}
+				}
+				errc <- err
+				dst.WriteMessage(websocket.CloseMessage, m)
 				break
 			}
 			err = dst.WriteMessage(msgType, msg)
 			if err != nil {
-				f.log.Errorf("vulcand/oxy/forward/websocket: Error when copying from %s to %s using WriteMessage: %v", srcName, dstName, err)
+				errc <- err
 				break
 			}
 		}
-		errc <- err
 	}
 
-	go replicateWebsocketConn(underlyingConn, targetConn, "client", "backend")
-	go replicateWebsocketConn(targetConn, underlyingConn, "backend", "client")
+	go replicateWebsocketConn(underlyingConn, targetConn, errClient)
+	go replicateWebsocketConn(targetConn, underlyingConn, errBackend)
 
-	<-errc
+	var message string
+	select {
+	case err = <-errClient:
+		message = "vulcand/oxy/forward/websocket: Error when copying from backend to client: %v"
+	case err = <-errBackend:
+		message = "vulcand/oxy/forward/websocket: Error when copying from client to backend: %v"
+
+	}
+	if e, ok := err.(*websocket.CloseError); !ok || e.Code == websocket.CloseAbnormalClosure {
+		f.log.Errorf(message, err)
+	}
 }
 
 // copyWebsocketRequest makes a copy of the specified request.
