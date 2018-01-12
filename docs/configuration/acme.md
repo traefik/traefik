@@ -168,11 +168,11 @@ docker run -v "/my/host/acme:/etc/traefik/acme" traefik
 
 ### `dnsProvider` (Deprecated)
 
-Please refer to [DNSChallenge.DNSProvider section](/configuration/acme/#dnsProvider02)
+Please refer to [DNSChallenge.DNSProvider section](/configuration/acme/#dnsProvider)
 
 ### `delayDontCheckDNS` (Deprecated)
 
-Please refer to [DNSChallenge.delayDontCheckDNS section](/configuration/acme/#delayDontCheckDNS02)
+Please refer to [DNSChallenge.delayDontCheckDNS section](/configuration/acme/#delayDontCheckDNS)
 
 ### `httpChallenge`
 
