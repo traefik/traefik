@@ -40,13 +40,13 @@ type ACME struct {
 	Domains               []Domain       `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
 	Storage               string         `description:"File or key used for certificates storage."`
 	StorageFile           string         // deprecated
-	OnDemand              bool           `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
+	OnDemand              bool           `description:"Enable on demand certificate generation. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
 	OnHostRule            bool           `description:"Enable certificate generation on frontends Host rules."`
 	CAServer              string         `description:"CA server to use."`
 	EntryPoint            string         `description:"Entrypoint to proxy acme challenge to."`
-	DNSChallenge          *DNSChallenge  `description:"Activate DNS Challenge"`
-	HTTPChallenge         *HTTPChallenge `description:"Activate HTTP Challenge"`
-	DNSProvider           string         `description:"Use a DNS based challenge provider rather than HTTPS."`                                        // deprecated
+	DNSChallenge          *DNSChallenge  `description:"Activate DNS-01 Challenge"`
+	HTTPChallenge         *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
+	DNSProvider           string         `description:"Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge."`                                // deprecated
 	DelayDontCheckDNS     int            `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // deprecated
 	ACMELogging           bool           `description:"Enable debug logging of ACME actions."`
 	client                *acme.Client
@@ -62,8 +62,8 @@ type ACME struct {
 
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
-	Provider          string `description:"Use a DNS based challenge provider rather than HTTPS."`
-	DelayDontCheckDNS int    `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	Provider       string `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
+	DelayDontCheck int    `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
@@ -131,29 +131,31 @@ func (a *ACME) init() error {
 
 // AddRoutes add routes on internal router
 func (a *ACME) AddRoutes(router *mux.Router) {
-	router.Methods(http.MethodGet).Path(acme.HTTP01ChallengePath("{token}")).Handler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		if a.challengeHTTPProvider == nil {
-			rw.WriteHeader(http.StatusNotFound)
-			return
-		}
+	router.Methods(http.MethodGet).
+		Path(acme.HTTP01ChallengePath("{token}")).
+		Handler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+			if a.challengeHTTPProvider == nil {
+				rw.WriteHeader(http.StatusNotFound)
+				return
+			}
 
-		vars := mux.Vars(req)
-		if token, ok := vars["token"]; ok {
-			domain, _, err := net.SplitHostPort(req.Host)
-			if err != nil {
-				log.Errorf("Error while ACME challenge: %v", err)
-				rw.WriteHeader(http.StatusInternalServerError)
-				return
+			vars := mux.Vars(req)
+			if token, ok := vars["token"]; ok {
+				domain, _, err := net.SplitHostPort(req.Host)
+				if err != nil {
+					log.Errorf("Error while ACME challenge: %v", err)
+					rw.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				tokenValue := a.challengeHTTPProvider.getTokenValue(token, domain)
+				if len(tokenValue) > 0 {
+					rw.WriteHeader(http.StatusOK)
+					rw.Write(tokenValue)
+					return
+				}
 			}
-			tokenValue := a.challengeHTTPProvider.getTokenValue(token, domain)
-			if len(tokenValue) > 0 {
-				rw.WriteHeader(http.StatusOK)
-				rw.Write(tokenValue)
-				return
-			}
-		}
-		rw.WriteHeader(http.StatusNotFound)
-	}))
+			rw.WriteHeader(http.StatusNotFound)
+		}))
 }
 
 // CreateClusterConfig creates a tls.config using ACME configuration in cluster mode
@@ -521,7 +523,7 @@ func dnsOverrideDelay(delay int) error {
 			return true, nil
 		}
 	} else if delay < 0 {
-		err = fmt.Errorf("invalid negative DelayDontCheckDNS: %d", delay)
+		err = fmt.Errorf("invalid negative DelayDontCheck: %d", delay)
 	}
 	return err
 }
@@ -540,7 +542,7 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	if a.DNSChallenge != nil && len(a.DNSChallenge.Provider) > 0 {
 		log.Debugf("Using DNS Challenge provider: %s", a.DNSChallenge.Provider)
 
-		err = dnsOverrideDelay(a.DNSChallenge.DelayDontCheckDNS)
+		err = dnsOverrideDelay(a.DNSChallenge.DelayDontCheck)
 		if err != nil {
 			return nil, err
 		}
@@ -703,7 +705,7 @@ func (a *ACME) getDomainsCertificates(domains []string) (*Certificate, error) {
 	certificate, failures := a.client.ObtainCertificate(domains, bundle, nil, OSCPMustStaple)
 	if len(failures) > 0 {
 		log.Error(failures)
-		return nil, fmt.Errorf("Cannot obtain certificates %s+v", failures)
+		return nil, fmt.Errorf("cannot obtain certificates %+v", failures)
 	}
 	log.Debugf("Loaded ACME certificates %s", domains)
 	return &Certificate{
