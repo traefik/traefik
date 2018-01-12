@@ -38,8 +38,9 @@ ignored = ["github.com/sirupsen/logrus"]
   name = "github.com/NYTimes/gziphandler"
 
 [[constraint]]
+  branch = "containous-fork"
   name = "github.com/abbot/go-http-auth"
-  version = "0.4.0"
+  source = "github.com/containous/go-http-auth"
 
 [[constraint]]
   branch = "master"
