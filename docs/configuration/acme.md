@@ -125,8 +125,8 @@ entryPoint = "https"
     If `TLS-SNI-01` challenge is not re-enabled in the future, it we will be removed from Træfik.
 
 !!! note
-    If `TLS-SNI-01` challenge is used, `acme.entryPoint` has to be reachable by Let's Encrypt throught the port 443.
-    If `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt throught the port 80.
+    If `TLS-SNI-01` challenge is used, `acme.entryPoint` has to be reachable by Let's Encrypt through the port 443.
+    If `HTTP-01` challenge is used, `acme.httpChallenge.entryPoint` has to be defined and reachable by Let's Encrypt through the port 80.
     These are Let's Encrypt limitations as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
 ### `storage`
@@ -198,7 +198,7 @@ entryPoint = "http"
 ```
 
 !!! note
-    `acme.httpChallenge.entryPoint` has to be reachable by Let's Encrypt throught the port 80.
+    `acme.httpChallenge.entryPoint` has to be reachable by Let's Encrypt through the port 80.
     It's a Let's Encrypt limitation as described on the [community forum](https://community.letsencrypt.org/t/support-for-ports-other-than-80-and-443/3419/72).
 
 ### `dnsChallenge`
