@@ -62,13 +62,13 @@ type ACME struct {
 
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
-	DNSProvider       string `description:"Use a DNS based challenge provider rather than HTTPS."`
+	Provider          string `description:"Use a DNS based challenge provider rather than HTTPS."`
 	DelayDontCheckDNS int    `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
 type HTTPChallenge struct {
-	EntryPoint string `description:"HTTP EntryPoint for challenge to"`
+	EntryPoint string `description:"HTTP challenge EntryPoint"`
 }
 
 //Domains parse []Domain
@@ -124,20 +124,6 @@ func (a *ACME) init() error {
 		return err
 	}
 	a.defaultCertificate = cert
-	// TODO: to remove in the futurs
-	if len(a.StorageFile) > 0 && len(a.Storage) == 0 {
-		log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
-		a.Storage = a.StorageFile
-	}
-
-	if len(a.DNSProvider) > 0 {
-		log.Warn("ACME.DNSProvider is deprecated, use ACME.DNSChallenge instead")
-		a.DNSChallenge = &DNSChallenge{DNSProvider: a.DNSProvider, DelayDontCheckDNS: a.DelayDontCheckDNS}
-	}
-
-	if a.OnDemand {
-		log.Warn("ACME.OnDemand is deprecated")
-	}
 
 	a.jobs = channels.NewInfiniteChannel()
 	return nil
@@ -146,9 +132,19 @@ func (a *ACME) init() error {
 // AddRoutes add routes on internal router
 func (a *ACME) AddRoutes(router *mux.Router) {
 	router.Methods(http.MethodGet).Path(acme.HTTP01ChallengePath("{token}")).Handler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		if a.challengeHTTPProvider == nil {
+			rw.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		vars := mux.Vars(req)
 		if token, ok := vars["token"]; ok {
-			domain, _, _ := net.SplitHostPort(req.Host)
+			domain, _, err := net.SplitHostPort(req.Host)
+			if err != nil {
+				log.Errorf("Error while ACME challenge: %v", err)
+				rw.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 			tokenValue := a.challengeHTTPProvider.getTokenValue(token, domain)
 			if len(tokenValue) > 0 {
 				rw.WriteHeader(http.StatusOK)
@@ -200,7 +196,6 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 
 	a.store = datastore
 	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
-	a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 
 	ticker := time.NewTicker(24 * time.Hour)
 	leadership.Pool.AddGoCtx(func(ctx context.Context) {
@@ -299,7 +294,6 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkO
 	localStore := NewLocalStore(a.Storage)
 	a.store = localStore
 	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
-	a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 
 	var needRegister bool
 	var account *Account
@@ -543,8 +537,8 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 		return nil, err
 	}
 
-	if a.DNSChallenge != nil && len(a.DNSChallenge.DNSProvider) > 0 {
-		log.Debugf("Using DNS Challenge provider: %s", a.DNSChallenge.DNSProvider)
+	if a.DNSChallenge != nil && len(a.DNSChallenge.Provider) > 0 {
+		log.Debugf("Using DNS Challenge provider: %s", a.DNSChallenge.Provider)
 
 		err = dnsOverrideDelay(a.DNSChallenge.DelayDontCheckDNS)
 		if err != nil {
@@ -552,7 +546,7 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 		}
 
 		var provider acme.ChallengeProvider
-		provider, err = dns.NewDNSChallengeProviderByName(a.DNSChallenge.DNSProvider)
+		provider, err = dns.NewDNSChallengeProviderByName(a.DNSChallenge.Provider)
 		if err != nil {
 			return nil, err
 		}
@@ -561,6 +555,7 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 		err = client.SetChallengeProvider(acme.DNS01, provider)
 	} else if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
 		client.ExcludeChallenges([]acme.Challenge{acme.DNS01, acme.TLSSNI01})
+		a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 		err = client.SetChallengeProvider(acme.HTTP01, a.challengeHTTPProvider)
 	} else {
 		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
