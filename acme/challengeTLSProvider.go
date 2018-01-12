@@ -23,14 +23,14 @@ import (
 	"github.com/xenolf/lego/acme"
 )
 
-var _ acme.ChallengeProviderTimeout = (*challengeProvider)(nil)
+var _ acme.ChallengeProviderTimeout = (*challengeTLSProvider)(nil)
 
-type challengeProvider struct {
+type challengeTLSProvider struct {
 	store cluster.Store
 	lock  sync.RWMutex
 }
 
-func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate, exists bool) {
+func (c *challengeTLSProvider) getCertificate(domain string) (cert *tls.Certificate, exists bool) {
 	log.Debugf("Looking for an existing ACME challenge for %s...", domain)
 	if !strings.HasSuffix(domain, ".acme.invalid") {
 		return nil, false
@@ -67,7 +67,7 @@ func (c *challengeProvider) getCertificate(domain string) (cert *tls.Certificate
 	return result, true
 }
 
-func (c *challengeProvider) Present(domain, token, keyAuth string) error {
+func (c *challengeTLSProvider) Present(domain, token, keyAuth string) error {
 	log.Debugf("Challenge Present %s", domain)
 	cert, _, err := tlsSNI01ChallengeCert(keyAuth)
 	if err != nil {
@@ -88,7 +88,7 @@ func (c *challengeProvider) Present(domain, token, keyAuth string) error {
 	return transaction.Commit(account)
 }
 
-func (c *challengeProvider) CleanUp(domain, token, keyAuth string) error {
+func (c *challengeTLSProvider) CleanUp(domain, token, keyAuth string) error {
 	log.Debugf("Challenge CleanUp %s", domain)
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -101,7 +101,7 @@ func (c *challengeProvider) CleanUp(domain, token, keyAuth string) error {
 	return transaction.Commit(account)
 }
 
-func (c *challengeProvider) Timeout() (timeout, interval time.Duration) {
+func (c *challengeTLSProvider) Timeout() (timeout, interval time.Duration) {
 	return 60 * time.Second, 5 * time.Second
 }
 

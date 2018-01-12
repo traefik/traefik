@@ -267,7 +267,7 @@ cijFkALeQp/qyeXdFld2v9gUN3eCgljgcl0QweRoIc=---`)
 }`))
 	}))
 	defer ts.Close()
-	a := ACME{DNSProvider: "manual", DelayDontCheckDNS: 10, CAServer: ts.URL}
+	a := ACME{DNSChallenge: &DNSChallenge{DNSProvider: "manual", DelayDontCheckDNS: 10}, CAServer: ts.URL}
 
 	client, err := a.buildACMEClient(account)
 	if err != nil {

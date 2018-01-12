@@ -758,6 +758,10 @@ func (s *Server) addInternalPublicRoutes(entryPointName string, router *mux.Rout
 	if s.globalConfiguration.Ping != nil && s.globalConfiguration.Ping.EntryPoint != "" && s.globalConfiguration.Ping.EntryPoint == entryPointName {
 		s.globalConfiguration.Ping.AddRoutes(router)
 	}
+
+	if s.globalConfiguration.ACME != nil && s.globalConfiguration.ACME.HTTPChallenge != nil && s.globalConfiguration.ACME.HTTPChallenge.EntryPoint == entryPointName {
+		s.globalConfiguration.ACME.AddRoutes(router)
+	}
 }
 
 func (s *Server) prepareServer(entryPointName string, entryPoint *configuration.EntryPoint, router *middlewares.HandlerSwitcher, middlewares []negroni.Handler, internalMiddlewares []negroni.Handler) (*http.Server, net.Listener, error) {

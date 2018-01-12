@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	fmtlog "log"
+	"net"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
+	"github.com/containous/mux"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
 	"github.com/containous/traefik/log"
@@ -33,25 +36,39 @@ var (
 
 // ACME allows to connect to lets encrypt and retrieve certs
 type ACME struct {
-	Email               string   `description:"Email address used for registration"`
-	Domains             []Domain `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
-	Storage             string   `description:"File or key used for certificates storage."`
-	StorageFile         string   // deprecated
-	OnDemand            bool     `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."`
-	OnHostRule          bool     `description:"Enable certificate generation on frontends Host rules."`
-	CAServer            string   `description:"CA server to use."`
-	EntryPoint          string   `description:"Entrypoint to proxy acme challenge to."`
-	DNSProvider         string   `description:"Use a DNS based challenge provider rather than HTTPS."`
-	DelayDontCheckDNS   int      `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
-	ACMELogging         bool     `description:"Enable debug logging of ACME actions."`
-	client              *acme.Client
-	defaultCertificate  *tls.Certificate
-	store               cluster.Store
-	challengeProvider   *challengeProvider
-	checkOnDemandDomain func(domain string) bool
-	jobs                *channels.InfiniteChannel
-	TLSConfig           *tls.Config `description:"TLS config in case wildcard certs are used"`
-	dynamicCerts        *safe.Safe
+	Email                 string         `description:"Email address used for registration"`
+	Domains               []Domain       `description:"SANs (alternative domains) to each main domain using format: --acme.domains='main.com,san1.com,san2.com' --acme.domains='main.net,san1.net,san2.net'"`
+	Storage               string         `description:"File or key used for certificates storage."`
+	StorageFile           string         // deprecated
+	OnDemand              bool           `description:"Enable on demand certificate. This will request a certificate from Let's Encrypt during the first TLS handshake for a hostname that does not yet have a certificate."` //deprecated
+	OnHostRule            bool           `description:"Enable certificate generation on frontends Host rules."`
+	CAServer              string         `description:"CA server to use."`
+	EntryPoint            string         `description:"Entrypoint to proxy acme challenge to."`
+	DNSChallenge          *DNSChallenge  `description:"Activate DNS Challenge"`
+	HTTPChallenge         *HTTPChallenge `description:"Activate HTTP Challenge"`
+	DNSProvider           string         `description:"Use a DNS based challenge provider rather than HTTPS."`                                        // deprecated
+	DelayDontCheckDNS     int            `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // deprecated
+	ACMELogging           bool           `description:"Enable debug logging of ACME actions."`
+	client                *acme.Client
+	defaultCertificate    *tls.Certificate
+	store                 cluster.Store
+	challengeTLSProvider  *challengeTLSProvider
+	challengeHTTPProvider *challengeHTTPProvider
+	checkOnDemandDomain   func(domain string) bool
+	jobs                  *channels.InfiniteChannel
+	TLSConfig             *tls.Config `description:"TLS config in case wildcard certs are used"`
+	dynamicCerts          *safe.Safe
+}
+
+// DNSChallenge contains DNS challenge Configuration
+type DNSChallenge struct {
+	DNSProvider       string `description:"Use a DNS based challenge provider rather than HTTPS."`
+	DelayDontCheckDNS int    `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+}
+
+// HTTPChallenge contains HTTP challenge Configuration
+type HTTPChallenge struct {
+	EntryPoint string `description:"HTTP EntryPoint for challenge to"`
 }
 
 //Domains parse []Domain
@@ -112,8 +129,35 @@ func (a *ACME) init() error {
 		log.Warn("ACME.StorageFile is deprecated, use ACME.Storage instead")
 		a.Storage = a.StorageFile
 	}
+
+	if len(a.DNSProvider) > 0 {
+		log.Warn("ACME.DNSProvider is deprecated, use ACME.DNSChallenge instead")
+		a.DNSChallenge = &DNSChallenge{DNSProvider: a.DNSProvider, DelayDontCheckDNS: a.DelayDontCheckDNS}
+	}
+
+	if a.OnDemand {
+		log.Warn("ACME.OnDemand is deprecated")
+	}
+
 	a.jobs = channels.NewInfiniteChannel()
 	return nil
+}
+
+// AddRoutes add routes on internal router
+func (a *ACME) AddRoutes(router *mux.Router) {
+	router.Methods(http.MethodGet).Path(acme.HTTP01ChallengePath("{token}")).Handler(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		if token, ok := vars["token"]; ok {
+			domain, _, _ := net.SplitHostPort(req.Host)
+			tokenValue := a.challengeHTTPProvider.getTokenValue(token, domain)
+			if len(tokenValue) > 0 {
+				rw.WriteHeader(http.StatusOK)
+				rw.Write(tokenValue)
+				return
+			}
+		}
+		rw.WriteHeader(http.StatusNotFound)
+	}))
 }
 
 // CreateClusterConfig creates a tls.config using ACME configuration in cluster mode
@@ -155,7 +199,8 @@ func (a *ACME) CreateClusterConfig(leadership *cluster.Leadership, tlsConfig *tl
 	}
 
 	a.store = datastore
-	a.challengeProvider = &challengeProvider{store: a.store}
+	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
+	a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 
 	ticker := time.NewTicker(24 * time.Hour)
 	leadership.Pool.AddGoCtx(func(ctx context.Context) {
@@ -253,7 +298,8 @@ func (a *ACME) CreateLocalConfig(tlsConfig *tls.Config, certs *safe.Safe, checkO
 	a.TLSConfig = tlsConfig
 	localStore := NewLocalStore(a.Storage)
 	a.store = localStore
-	a.challengeProvider = &challengeProvider{store: a.store}
+	a.challengeTLSProvider = &challengeTLSProvider{store: a.store}
+	a.challengeHTTPProvider = &challengeHTTPProvider{store: a.store}
 
 	var needRegister bool
 	var account *Account
@@ -337,7 +383,7 @@ func (a *ACME) getCertificate(clientHello *tls.ClientHelloInfo) (*tls.Certificat
 		return providedCertificate, nil
 	}
 
-	if challengeCert, ok := a.challengeProvider.getCertificate(domain); ok {
+	if challengeCert, ok := a.challengeTLSProvider.getCertificate(domain); ok {
 		log.Debugf("ACME got challenge %s", domain)
 		return challengeCert, nil
 	}
@@ -497,25 +543,28 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 		return nil, err
 	}
 
-	if len(a.DNSProvider) > 0 {
-		log.Debugf("Using DNS Challenge provider: %s", a.DNSProvider)
+	if a.DNSChallenge != nil && len(a.DNSChallenge.DNSProvider) > 0 {
+		log.Debugf("Using DNS Challenge provider: %s", a.DNSChallenge.DNSProvider)
 
-		err = dnsOverrideDelay(a.DelayDontCheckDNS)
+		err = dnsOverrideDelay(a.DNSChallenge.DelayDontCheckDNS)
 		if err != nil {
 			return nil, err
 		}
 
 		var provider acme.ChallengeProvider
-		provider, err = dns.NewDNSChallengeProviderByName(a.DNSProvider)
+		provider, err = dns.NewDNSChallengeProviderByName(a.DNSChallenge.DNSProvider)
 		if err != nil {
 			return nil, err
 		}
 
 		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.TLSSNI01})
 		err = client.SetChallengeProvider(acme.DNS01, provider)
+	} else if a.HTTPChallenge != nil && len(a.HTTPChallenge.EntryPoint) > 0 {
+		client.ExcludeChallenges([]acme.Challenge{acme.DNS01, acme.TLSSNI01})
+		err = client.SetChallengeProvider(acme.HTTP01, a.challengeHTTPProvider)
 	} else {
 		client.ExcludeChallenges([]acme.Challenge{acme.HTTP01, acme.DNS01})
-		err = client.SetChallengeProvider(acme.TLSSNI01, a.challengeProvider)
+		err = client.SetChallengeProvider(acme.TLSSNI01, a.challengeTLSProvider)
 	}
 
 	if err != nil {
