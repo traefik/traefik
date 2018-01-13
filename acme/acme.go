@@ -143,9 +143,8 @@ func (a *ACME) AddRoutes(router *mux.Router) {
 			if token, ok := vars["token"]; ok {
 				domain, _, err := net.SplitHostPort(req.Host)
 				if err != nil {
-					log.Errorf("Error while ACME challenge: %v", err)
-					rw.WriteHeader(http.StatusInternalServerError)
-					return
+					log.Warnf("Error while ACME challenge: %v. Fallback to request host.", err)
+					domain = req.Host
 				}
 				tokenValue := a.challengeHTTPProvider.getTokenValue(token, domain)
 				if len(tokenValue) > 0 {
