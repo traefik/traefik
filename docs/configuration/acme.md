@@ -46,7 +46,7 @@ entryPoint = "https"
 
 # Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge
 #
-# Optional (Deprecated)
+# Optional (Deprecated, replaced by [acme.dnsChallenge])
 #
 # dnsProvider = "digitalocean"
 
@@ -54,7 +54,7 @@ entryPoint = "https"
 # If delayDontCheckDNS is greater than zero, avoid this & instead just wait so many seconds.
 # Useful if internal networks block external DNS queries.
 #
-# Optional (Deprecated)
+# Optional (Deprecated, replaced by [acme.dnsChallenge])
 # Default: 0
 #
 # delayDontCheckDNS = 0
