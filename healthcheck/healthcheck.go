@@ -48,6 +48,7 @@ type BackendHealthCheck struct {
 
 //HealthCheck struct
 type HealthCheck struct {
+	mutex    sync.Mutex
 	Backends map[string]*BackendHealthCheck
 	cancel   context.CancelFunc
 }
@@ -75,14 +76,16 @@ func NewBackendHealthCheck(options Options) *BackendHealthCheck {
 
 //SetBackendsConfiguration set backends configuration
 func (hc *HealthCheck) SetBackendsConfiguration(parentCtx context.Context, backends map[string]*BackendHealthCheck) {
+	hc.mutex.Lock()
 	hc.Backends = backends
 	if hc.cancel != nil {
 		hc.cancel()
 	}
 	ctx, cancel := context.WithCancel(parentCtx)
 	hc.cancel = cancel
+	hc.mutex.Unlock()
 
-	for backendID, backend := range hc.Backends {
+	for backendID, backend := range backends {
 		currentBackendID := backendID
 		currentBackend := backend
 		safe.Go(func() {

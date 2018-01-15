@@ -19,9 +19,9 @@ type Handler struct {
 	Dashboard             bool   `description:"Activate dashboard" export:"true"`
 	Debug                 bool   `export:"true"`
 	CurrentConfigurations *safe.Safe
-	Statistics            *types.Statistics `description:"Enable more detailed statistics" export:"true"`
-	Stats                 *thoas_stats.Stats
-	StatsRecorder         *middlewares.StatsRecorder
+	Statistics            *types.Statistics          `description:"Enable more detailed statistics" export:"true"`
+	Stats                 *thoas_stats.Stats         `json:"-"`
+	StatsRecorder         *middlewares.StatsRecorder `json:"-"`
 }
 
 var (
