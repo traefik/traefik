@@ -104,7 +104,7 @@ entryPoint = "https"
 
 # Use a HTTP-01 acme challenge rather than TLS-SNI-01 challenge
 #
-# Optional but advisable
+# Optional but recommend
 #
 [acme.httpChallenge]
 
@@ -127,13 +127,13 @@ entryPoint = "https"
   # provider = "digitalocean"
 
   # By default, the provider will verify the TXT DNS challenge record before letting ACME verify.
-  # If delayDontCheck is greater than zero, avoid this & instead just wait so many seconds.
+  # If delayBeforeCheck is greater than zero, avoid this & instead just wait so many seconds.
   # Useful if internal networks block external DNS queries.
   #
   # Optional
   # Default: 0
   #
-  # delayDontCheck = 0
+  # delayBeforeCheck = 0
 ```
 !!! note
     Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188) for the moment, it stays the _by default_ ACME Challenge in Træfik.
@@ -227,7 +227,7 @@ Use `DNS-01` challenge to generate/renew ACME certificates.
 # ...
 [acme.dnsChallenge]
   provider = "digitalocean"
-  delayDontCheck = 0
+  delayBeforeCheck = 0
 # ...
 ```
 
@@ -261,10 +261,10 @@ Select the provider that matches the DNS domain that will host the challenge TXT
 | [Route 53](https://aws.amazon.com/route53/)            | `route53`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_HOSTED_ZONE_ID` or configured user/instance IAM profile. |
 | [VULTR](https://www.vultr.com)                         | `vultr`        | `VULTR_API_KEY`                                                                                                           |
 
-#### `delayDontCheck`
+#### `delayBeforeCheck`
 
 By default, the `provider` will verify the TXT DNS challenge record before letting ACME verify.  
-If `delayDontCheck` is greater than zero, avoid this & instead just wait so many seconds.
+If `delayBeforeCheck` is greater than zero, avoid this & instead just wait so many seconds.
 
 Useful if internal networks block external DNS queries.
 
@@ -358,4 +358,4 @@ Each domain & SANs will lead to a certificate request.
 
 !!! warning
     This option is deprecated.
-    Please refer to [DNSChallenge.delayDontCheck section](/configuration/acme/#delaydontcheck)
+    Please refer to [DNSChallenge.delayBeforeCheck section](/configuration/acme/#delaybeforecheck)

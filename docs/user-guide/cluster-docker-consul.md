@@ -66,7 +66,7 @@ To enable Let's Encrypt support, you need to add `--acme` flag.
 
 Now, Træfik needs to know where to store the certificates, we can choose between a key in a Key-Value store, or a file path: `--acme.storage=my/key` or `--acme.storage=/path/to/acme.json`.
 
-The `acme.httpChallenge.entryPoint` flag enables the `HTTP-01` challenge and specifies the entryPoint to use for the challenges.
+The `acme.httpChallenge.entryPoint` flag enables the `HTTP-01` challenge and specifies the entryPoint to use during the challenges.
 
 For your email and the entry point, it's `--acme.entryPoint` and `--acme.email` flags.
 

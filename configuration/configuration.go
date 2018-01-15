@@ -250,7 +250,7 @@ func (gc *GlobalConfiguration) SetEffectiveConfiguration(configFile string) {
 
 		if len(gc.ACME.DNSProvider) > 0 {
 			log.Warn("ACME.DNSProvider is deprecated, use ACME.DNSChallenge instead")
-			gc.ACME.DNSChallenge = &acme.DNSChallenge{Provider: gc.ACME.DNSProvider, DelayDontCheck: gc.ACME.DelayDontCheckDNS}
+			gc.ACME.DNSChallenge = &acme.DNSChallenge{Provider: gc.ACME.DNSProvider, DelayBeforeCheck: gc.ACME.DelayDontCheckDNS}
 		}
 
 		if gc.ACME.OnDemand {

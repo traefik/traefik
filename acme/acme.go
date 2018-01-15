@@ -16,6 +16,7 @@ import (
 
 	"github.com/BurntSushi/ty/fun"
 	"github.com/cenk/backoff"
+	"github.com/containous/flaeg"
 	"github.com/containous/mux"
 	"github.com/containous/staert"
 	"github.com/containous/traefik/cluster"
@@ -47,7 +48,7 @@ type ACME struct {
 	DNSChallenge          *DNSChallenge  `description:"Activate DNS-01 Challenge"`
 	HTTPChallenge         *HTTPChallenge `description:"Activate HTTP-01 Challenge"`
 	DNSProvider           string         `description:"Use a DNS-01 acme challenge rather than TLS-SNI-01 challenge."`                                // deprecated
-	DelayDontCheckDNS     int            `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // deprecated
+	DelayDontCheckDNS     flaeg.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."` // deprecated
 	ACMELogging           bool           `description:"Enable debug logging of ACME actions."`
 	client                *acme.Client
 	defaultCertificate    *tls.Certificate
@@ -62,8 +63,8 @@ type ACME struct {
 
 // DNSChallenge contains DNS challenge Configuration
 type DNSChallenge struct {
-	Provider       string `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
-	DelayDontCheck int    `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
+	Provider         string         `description:"Use a DNS-01 based challenge provider rather than HTTPS."`
+	DelayBeforeCheck flaeg.Duration `description:"Assume DNS propagates after a delay in seconds rather than finding and querying nameservers."`
 }
 
 // HTTPChallenge contains HTTP challenge Configuration
@@ -235,9 +236,6 @@ func (a *ACME) leadershipListener(elected bool) error {
 				return err
 			}
 			needRegister = true
-		}
-		if err != nil {
-			return err
 		}
 		a.client, err = a.buildACMEClient(account)
 		if err != nil {
@@ -516,16 +514,16 @@ func (a *ACME) storeRenewedCertificate(account *Account, certificateResource *Do
 	return nil
 }
 
-func dnsOverrideDelay(delay int) error {
+func dnsOverrideDelay(delay flaeg.Duration) error {
 	var err error
 	if delay > 0 {
-		log.Debugf("Delaying %d seconds rather than validating DNS propagation", delay)
+		log.Debugf("Delaying %d rather than validating DNS propagation", delay)
 		acme.PreCheckDNS = func(_, _ string) (bool, error) {
-			time.Sleep(time.Duration(delay) * time.Second)
+			time.Sleep(time.Duration(delay))
 			return true, nil
 		}
 	} else if delay < 0 {
-		err = fmt.Errorf("invalid negative DelayDontCheck: %d", delay)
+		err = fmt.Errorf("invalid negative DelayBeforeCheck: %d", delay)
 	}
 	return err
 }
@@ -544,7 +542,7 @@ func (a *ACME) buildACMEClient(account *Account) (*acme.Client, error) {
 	if a.DNSChallenge != nil && len(a.DNSChallenge.Provider) > 0 {
 		log.Debugf("Using DNS Challenge provider: %s", a.DNSChallenge.Provider)
 
-		err = dnsOverrideDelay(a.DNSChallenge.DelayDontCheck)
+		err = dnsOverrideDelay(a.DNSChallenge.DelayBeforeCheck)
 		if err != nil {
 			return nil, err
 		}

@@ -176,7 +176,7 @@ caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
   [acme.dnsChallenge]
   provider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)
-  delayDontCheck = 0
+  delayBeforeCheck = 0
 
 [[acme.domains]]
   main = "local1.com"
