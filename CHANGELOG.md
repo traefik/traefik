@@ -1,5 +1,28 @@
 # Change Log
 
+## [v1.5.0-rc5](https://github.com/containous/traefik/tree/v1.5.0-rc5) (2018-01-15)
+[All Commits](https://github.com/containous/traefik/compare/v1.5.0-rc4...v1.5.0-rc5)
+
+**Enhancements:**
+- **[acme]** Add Let&#39;s Encrypt HTTP Challenge ([#2701](https://github.com/containous/traefik/pull/2701) by [Juliens](https://github.com/Juliens))
+
+**Bug fixes:**
+- **[acme,logs]** Modify DEBUG messages to get ACME certificates ([#2685](https://github.com/containous/traefik/pull/2685) by [nmengin](https://github.com/nmengin))
+- **[authentication,middleware]** Fix concurrent map writes on digest auth ([#2695](https://github.com/containous/traefik/pull/2695) by [mmatur](https://github.com/mmatur))
+- **[docker]** Typo in Docker template. ([#2692](https://github.com/containous/traefik/pull/2692) by [ldez](https://github.com/ldez))
+- **[docker]** Return errors from Docker client.Events ([#2689](https://github.com/containous/traefik/pull/2689) by [BlakeMesdag](https://github.com/BlakeMesdag))
+- **[kv]** List entries parsing. ([#2669](https://github.com/containous/traefik/pull/2669) by [ldez](https://github.com/ldez))
+- **[metrics]** Fix data races. ([#2287](https://github.com/containous/traefik/pull/2287) by [tcolgate](https://github.com/tcolgate))
+- **[middleware]** GzipResponse must implement CloseNotifier if ResponseWriter implement it ([#2657](https://github.com/containous/traefik/pull/2657) by [Juliens](https://github.com/Juliens))
+- **[websocket]** Add compression and better error handling ([#2702](https://github.com/containous/traefik/pull/2702) by [Juliens](https://github.com/Juliens))
+- Fix: timeout integration test ([#2679](https://github.com/containous/traefik/pull/2679) by [ldez](https://github.com/ldez))
+
+**Documentation:**
+- **[cluster]** Add a clustering example with Docker Swarm ([#2589](https://github.com/containous/traefik/pull/2589) by [jmaitrehenry](https://github.com/jmaitrehenry))
+- **[k8s]** Apply various contentual and stylish improvements to the k8s docs. ([#2677](https://github.com/containous/traefik/pull/2677) by [timoreimann](https://github.com/timoreimann))
+- **[k8s]** Document rewrite-target annotation. ([#2676](https://github.com/containous/traefik/pull/2676) by [timoreimann](https://github.com/timoreimann))
+- **[provider,webui]** Fix redirect problem on dashboard + docs/tests on [web] ([#2686](https://github.com/containous/traefik/pull/2686) by [Juliens](https://github.com/Juliens))
+
 ## [v1.5.0-rc4](https://github.com/containous/traefik/tree/v1.5.0-rc4) (2018-01-04)
 [All Commits](https://github.com/containous/traefik/compare/v1.5.0-rc3...v1.5.0-rc4)
 
