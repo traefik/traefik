@@ -80,11 +80,11 @@ func (p *Provider) newK8sClient() (Client, error) {
 	}
 
 	if os.Getenv("KUBERNETES_SERVICE_HOST") != "" && os.Getenv("KUBERNETES_SERVICE_PORT") != "" {
-		log.Infof("Creating in-cluster Provider client%s\n", withEndpoint)
+		log.Infof("Creating in-cluster Provider client%s", withEndpoint)
 		return NewInClusterClient(p.Endpoint)
 	}
 
-	log.Infof("Creating cluster-external Provider client%s\n", withEndpoint)
+	log.Infof("Creating cluster-external Provider client%s", withEndpoint)
 	return NewExternalClusterClient(p.Endpoint, p.Token, p.CertAuthFilePath)
 }
 
