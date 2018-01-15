@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"io"
 	"net"
 	"net/http"
 	"strconv"
@@ -218,15 +219,21 @@ func (p *Provider) Provide(configurationChan chan<- types.ConfigMessage, pool *s
 					}
 
 					eventsc, errc := dockerClient.Events(ctx, options)
-					for event := range eventsc {
-						if event.Action == "start" ||
-							event.Action == "die" ||
-							strings.HasPrefix(event.Action, "health_status") {
-							startStopHandle(event)
+					for {
+						select {
+						case event := <-eventsc:
+							if event.Action == "start" ||
+								event.Action == "die" ||
+								strings.HasPrefix(event.Action, "health_status") {
+								startStopHandle(event)
+							}
+						case err := <-errc:
+							if err == io.EOF {
+								log.Debug("Provider event stream closed")
+							}
+
+							return err
 						}
-					}
-					if err := <-errc; err != nil {
-						return err
 					}
 				}
 			}

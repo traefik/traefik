@@ -104,6 +104,8 @@ email = "your-email-here@my-awesome-app.org"
 storage = "acme.json"
 entryPoint = "https"
 OnHostRule = true
+[acme.httpChallenge]
+entryPoint = "http"
 ```
 
 This is the minimum configuration required to do the following:

@@ -632,8 +632,7 @@ Once a day (the first call begins 10 minutes after the start of Træfik), we col
     [entryPoints.http]
        address = ":80"
 
-[web]
-  address = ":8080"
+[api]
 
 [Docker]
   endpoint = "tcp://10.10.10.10:2375"
@@ -663,8 +662,7 @@ Once a day (the first call begins 10 minutes after the start of Træfik), we col
     [entryPoints.http]
        address = ":80"
 
-[web]
-  address = ":8080"
+[api]
 
 [Docker]
   Endpoint = "xxxx"

@@ -7,8 +7,7 @@ logLevel = "DEBUG"
   address = ":8000"
 
 
-[web]
-  address = ":8080"
+[api]
 
 [file]
 

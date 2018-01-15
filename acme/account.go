@@ -24,6 +24,7 @@ type Account struct {
 	PrivateKey         []byte
 	DomainsCertificate DomainsCertificates
 	ChallengeCerts     map[string]*ChallengeCert
+	HTTPChallenge      map[string]map[string][]byte
 }
 
 // ChallengeCert stores a challenge certificate

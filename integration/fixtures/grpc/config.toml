@@ -11,8 +11,7 @@ RootCAs = [ """{{ .CertContent }}""" ]
      keyFile  = """{{ .KeyContent }}"""
 
 
-[web]
-  address = ":8080"
+[api]
 
 [file]
 

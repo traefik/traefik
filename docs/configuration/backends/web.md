@@ -35,6 +35,15 @@ address = ":8080"
 # Default: false
 #
 readOnly = true
+
+ 
+# Set the root path for webui and API
+#
+# Deprecated
+# Optional
+#
+# path = "/mypath"
+#
 ```
 
 ## Web UI
@@ -80,7 +89,7 @@ Users can be specified directly in the toml file, or indirectly by referencing a
 
 # To enable digest auth on the webui with 2 user/realm/pass: test:traefik:test and test2:traefik:test2
 [web.auth.digest]
-users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
 usersFile = "/path/to/.htdigest"
 
 # ...
@@ -374,4 +383,36 @@ curl -s "http://localhost:8080/api" | jq .
     }
   }
 }
+```
+
+## Path
+
+As web is deprecated, you can handle the `Path` option like this
+
+```toml
+[entrypoints.http]
+address=":80"
+
+[entrypoints.dashboard]
+address=":8080"
+
+[entrypoints.api]
+address=":8081"
+
+#Activate API and Dashboard
+[api]
+entrypoint="api"
+
+[file]
+  [backends]
+    [backends.backend1]
+      [backends.backend1.servers.server1]
+      url = "http://127.0.0.1:8081"
+
+  [frontends]
+    [frontends.frontend1]
+    entrypoints=["dashboard"]
+    backend = "backend1"
+      [frontends.frontend1.routes.test_1]
+      rule = "PathPrefixStrip:/yourprefix;PathPrefix:/yourprefix"
 ```

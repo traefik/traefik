@@ -125,10 +125,11 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "containous-fork"
   name = "github.com/abbot/go-http-auth"
   packages = ["."]
-  revision = "0ddd408d5d60ea76e320503cc7dd091992dee608"
-  version = "v0.4.0"
+  revision = "65b0cdae8d7fe5c05c7430e055938ef6d24a66c9"
+  source = "github.com/containous/go-http-auth"
 
 [[projects]]
   name = "github.com/aokoli/goutils"
@@ -418,7 +419,7 @@
   name = "github.com/docker/leadership"
   packages = ["."]
   revision = "af20da7d3e62be9259835e93261acf931b5adecf"
-  source = "https://github.com/containous/leadership.git"
+  source = "github.com/containous/leadership"
 
 [[projects]]
   name = "github.com/docker/libcompose"
@@ -552,7 +553,7 @@
   name = "github.com/go-check/check"
   packages = ["."]
   revision = "ca0bf163426aa183d03fd4949101785c0347f273"
-  source = "https://github.com/containous/check.git"
+  source = "github.com/containous/check"
 
 [[projects]]
   name = "github.com/go-ini/ini"
@@ -1481,6 +1482,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0f85e152f938507b05ee27ce99b5d2ffe7999d4c27123277a1c398deba0c08b1"
+  inputs-digest = "aa1aa76d15a49bbeee747782a71809fcfbaccf4586e924e70a6d93c51c173a30"
   solver-name = "gps-cdcl"
   solver-version = 1

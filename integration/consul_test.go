@@ -294,7 +294,10 @@ func (s *ConsulSuite) skipTestGlobalConfigurationWithClientTLS(c *check.C) {
 	s.setupConsulTLS(c)
 	consulHost := s.composeProject.Container(c, "consul").NetworkSettings.IPAddress
 
-	err := s.kv.Put("traefik/web/address", []byte(":8081"), nil)
+	err := s.kv.Put("traefik/api/entrypoint", []byte("api"), nil)
+	c.Assert(err, checker.IsNil)
+
+	err = s.kv.Put("traefik/entrypoints/api/address", []byte(":8081"), nil)
 	c.Assert(err, checker.IsNil)
 
 	// wait for consul
@@ -341,7 +344,7 @@ func (s *ConsulSuite) TestCommandStoreConfig(c *check.C) {
 		"/traefik/loglevel":                 "DEBUG",
 		"/traefik/defaultentrypoints/0":     "http",
 		"/traefik/entrypoints/http/address": ":8000",
-		"/traefik/web/address":              ":8080",
+		"/traefik/api/entrypoint":           "traefik",
 		"/traefik/consul/endpoint":          consulHost + ":8500",
 	}
 

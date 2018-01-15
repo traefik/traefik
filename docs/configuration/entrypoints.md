@@ -135,8 +135,8 @@ Users can be specified directly in the toml file, or indirectly by referencing a
 [entryPoints]
   [entryPoints.http]
   address = ":80"
-  [entryPoints.http.auth.basic]
-  users = ["test:traefik:a2688e031edb4be6a3797f3882655c05 ", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
+  [entryPoints.http.auth.digest]
+  users = ["test:traefik:a2688e031edb4be6a3797f3882655c05", "test2:traefik:518845800f9e2bfb1f1f740ec24f074e"]
   usersFile = "/path/to/.htdigest"
 ```
 

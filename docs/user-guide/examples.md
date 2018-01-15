@@ -6,6 +6,7 @@ You will find here some configuration examples of Træfik.
 
 ```toml
 defaultEntryPoints = ["http"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
@@ -15,6 +16,7 @@ defaultEntryPoints = ["http"]
 
 ```toml
 defaultEntryPoints = ["http", "https"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
@@ -34,6 +36,7 @@ Note that we can either give path to certificate file or directly the file conte
 
 ```toml
 defaultEntryPoints = ["http", "https"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
@@ -52,10 +55,16 @@ defaultEntryPoints = ["http", "https"]
 
 ## Let's Encrypt support
 
-### Basic example
+!!! note
+    Even if `TLS-SNI-01` challenge is [disabled](https://community.letsencrypt.org/t/2018-01-11-update-regarding-acme-tls-sni-and-shared-hosting-infrastructure/50188), for the moment, it stays the _by default_ ACME Challenge in Træfik but all the examples use the `HTTP-01` challenge (except DNS challenge examples).
+    If `TLS-SNI-01` challenge is not re-enabled in the future, it we will be removed from Træfik.
+
+### Basic example with HTTP challenge
 
 ```toml
 [entryPoints]
+  [entryPoints.http]
+  address = ":80"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -65,6 +74,8 @@ email = "test@traefik.io"
 storage = "acme.json"
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
+  [acme.httpChallenge]
+  entryPoint = "http"
 
 [[acme.domains]]
   main = "local1.com"
@@ -78,14 +89,16 @@ entryPoint = "https"
   main = "local4.com"
 ```
 
-This configuration allows generating Let's Encrypt certificates for the four domains `local[1-4].com` with described SANs.
+This configuration allows generating Let's Encrypt certificates (thanks to `HTTP-01` challenge) for the four domains `local[1-4].com` with described SANs.
 
 Traefik generates these certificates when it starts and it needs to be restart if new domains are added.
 
-### OnHostRule option
+### OnHostRule option (with HTTP challenge)
 
 ```toml
 [entryPoints]
+  [entryPoints.http]
+  address = ":80"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -96,6 +109,8 @@ storage = "acme.json"
 onHostRule = true
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
+  [acme.httpChallenge]
+  entryPoint = "http"
 
 [[acme.domains]]
   main = "local1.com"
@@ -109,16 +124,18 @@ entryPoint = "https"
   main = "local4.com"
 ```
 
-This configuration allows generating Let's Encrypt certificates for the four domains `local[1-4].com`.
+This configuration allows generating Let's Encrypt certificates (thanks to `HTTP-01` challenge) for the four domains `local[1-4].com`.
 
 Traefik generates these certificates when it starts.
 
 If a backend is added with a `onHost` rule, Traefik will automatically generate the Let's Encrypt certificate for the new domain.
 
-### OnDemand option
+### OnDemand option (with HTTP challenge)
 
 ```toml
 [entryPoints]
+  [entryPoints.http]
+  address = ":80"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -129,9 +146,11 @@ storage = "acme.json"
 onDemand = true
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
+  [acme.httpChallenge]
+  entryPoint = "http"
 ```
 
-This configuration allows generating a Let's Encrypt certificate during the first HTTPS request on a new domain.
+This configuration allows generating a Let's Encrypt certificate (thanks to `HTTP-01` challenge) during the first HTTPS request on a new domain.
 
 
 !!! note
@@ -153,10 +172,11 @@ This configuration allows generating a Let's Encrypt certificate during the firs
 [acme]
 email = "test@traefik.io"
 storage = "acme.json"
-dnsProvider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)
-delayDontCheckDNS = 0
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
+  [acme.dnsChallenge]
+  provider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)
+  delayBeforeCheck = 0
 
 [[acme.domains]]
   main = "local1.com"
@@ -173,12 +193,14 @@ entryPoint = "https"
 DNS challenge needs environment variables to be executed.
 This variables have to be set on the machine/container which host Traefik.
 
-These variables are described [in this section](/configuration/acme/#dnsprovider).
+These variables are described [in this section](/configuration/acme/#provider).
 
-### OnHostRule option and provided certificates
+### OnHostRule option and provided certificates (with HTTP challenge)
 
 ```toml
 [entryPoints]
+  [entryPoints.http]
+  address = ":80"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -192,10 +214,11 @@ storage = "acme.json"
 onHostRule = true
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
-
+  [acme.httpChallenge]
+  entryPoint = "http"
 ```
 
-Traefik will only try to generate a Let's encrypt certificate if the domain cannot be checked by the provided certificates.
+Traefik will only try to generate a Let's encrypt certificate (thanks to `HTTP-01` challenge) if the domain cannot be checked by the provided certificates.
 
 ### Cluster mode
 
@@ -207,6 +230,8 @@ Before you use Let's Encrypt in a Traefik cluster, take a look to [the key-value
 
 ```toml
 [entryPoints]
+  [entryPoints.http]
+  address = ":80"
   [entryPoints.https]
   address = ":443"
     [entryPoints.https.tls]
@@ -216,6 +241,9 @@ email = "test@traefik.io"
 storage = "traefik/acme/account"
 caServer = "http://172.18.0.1:4000/directory"
 entryPoint = "https"
+
+[acme.httpChallenge]
+    entryPoint = "http"
 
 [[acme.domains]]
   main = "local1.com"
@@ -244,10 +272,12 @@ The `consul` provider contains the configuration.
 
 ```toml
 [frontends]
+
   [frontends.frontend1]
   backend = "backend2"
     [frontends.frontend1.routes.test_1]
     rule = "Host:test.localhost"
+
   [frontends.frontend2]
   backend = "backend1"
   passHostHeader = true
@@ -255,10 +285,11 @@ The `consul` provider contains the configuration.
   entrypoints = ["https"] # overrides defaultEntryPoints
     [frontends.frontend2.routes.test_1]
     rule = "Host:{subdomain:[a-z]+}.localhost"
+
   [frontends.frontend3]
   entrypoints = ["http", "https"] # overrides defaultEntryPoints
   backend = "backend2"
-    rule = "Path:/test"
+  rule = "Path:/test"
 ```
 
 ## Enable Basic authentication in an entrypoint
@@ -272,6 +303,7 @@ Passwords are encoded in MD5: you can use htpasswd to generate those ones.
 
 ```toml
 defaultEntryPoints = ["http"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
@@ -286,6 +318,7 @@ via a configurable header value.
 
 ```toml
 defaultEntryPoints = ["http"]
+
 [entryPoints]
   [entryPoints.http]
   address = ":80"
@@ -306,7 +339,7 @@ idleTimeout = "360s"
 
 ## Securing Ping Health Check
 
-The `/ping` health-check URL is enabled together with the web admin panel, enabled with the command-line `--web` or config file option `[web]`.
+The `/ping` health-check URL is enabled with the command-line `--ping` or config file option `[ping]`.
 Thus, if you have a regular path for `/foo` and an entrypoint on `:80`, you would access them as follows:
 
 * Regular path: `http://hostname:80/foo`

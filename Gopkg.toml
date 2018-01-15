@@ -38,8 +38,9 @@ ignored = ["github.com/sirupsen/logrus"]
   name = "github.com/NYTimes/gziphandler"
 
 [[constraint]]
+  branch = "containous-fork"
   name = "github.com/abbot/go-http-auth"
-  version = "0.4.0"
+  source = "github.com/containous/go-http-auth"
 
 [[constraint]]
   branch = "master"
@@ -74,8 +75,9 @@ ignored = ["github.com/sirupsen/logrus"]
   version = "14.0.0"
 
 [[constraint]]
+  branch = "master"
   name = "github.com/docker/leadership"
-  source = "https://github.com/containous/leadership.git"
+  source = "github.com/containous/leadership"
 
 [[constraint]]
   name = "github.com/docker/libkv"
@@ -92,7 +94,7 @@ ignored = ["github.com/sirupsen/logrus"]
 [[constraint]]
   branch = "fork-containous"
   name = "github.com/go-check/check"
-  source = "https://github.com/containous/check.git"
+  source = "github.com/containous/check"
 
 [[constraint]]
   name = "github.com/go-kit/kit"
@@ -189,13 +191,13 @@ ignored = ["github.com/sirupsen/logrus"]
   source = "github.com/ijc25/Gotty"
 
 [[override]]
+  name = "github.com/gorilla/websocket"
+  revision = "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
+
+[[override]]
   # ALWAYS keep this override
   name = "github.com/mailgun/timetools"
   revision = "7e6055773c5137efbeb3bd2410d705fe10ab6bfd"
-
-[[override]]
-  name = "github.com/gorilla/websocket"
-  revision = "a69d9f6de432e2c6b296a947d8a5ee88f68522cf"
 
 # Must be remove when  logrus migration happen
 [[override]]

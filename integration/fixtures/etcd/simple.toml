@@ -5,6 +5,8 @@ logLevel = "DEBUG"
 [entryPoints]
   [entryPoints.http]
   address = ":8000"
+  [entryPoints.api]
+  address = ":8081"
 
 
 [etcd]
@@ -13,5 +15,5 @@ logLevel = "DEBUG"
   watch = true
   useAPIV3 = {{.UseAPIV3}}
 
-[web]
-  address = ":8081"
+[api]
+  entryPoint = "api"

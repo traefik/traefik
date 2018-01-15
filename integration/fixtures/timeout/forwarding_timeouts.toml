@@ -8,8 +8,7 @@ defaultEntryPoints = ["http"]
 [accessLog]
 format = "json"
 
-[web]
-address = ":8080"
+[api]
 
 [forwardingTimeouts]
 dialTimeout = "300ms"

@@ -136,11 +136,13 @@ services:
       expose:
         - "443"
         - "5001"
+        - "5002"
       ports:
         - "80:80"
         - "8080:8080"
         - "443:443"
         - "5001:443" # Needed for SNI challenge
+        - "5002:80" # Needed for HTTP challenge
       networks:
         net:
           ipv4_address: 10.0.1.8
@@ -157,6 +159,7 @@ services:
       expose:
         - "443"
         - "5001"
+        - "5002"
       ports:
         - "88:80"
         - "8888:8080"
